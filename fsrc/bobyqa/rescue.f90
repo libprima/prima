@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM11:19:20
+! Last Modified: Monday, February 28, 2022 AM01:21:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,7 +21,7 @@ contains
 
 subroutine rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, &
      &  fval, xopt, gopt, hq, pq, bmat, zmat, sl, su, nf, delta, &
-     &  kopt, vlag, ptsaux, ptsid, w, f, ftarget, xhist, fhist)
+     &  kopt, vlag, f, ftarget, xhist, fhist)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
@@ -50,28 +50,28 @@ real(RP), intent(in) :: xu(n)
 ! In-outputs
 integer(IK), intent(inout) :: kopt
 integer(IK), intent(inout) :: nf
-real(RP), intent(inout) :: f
 real(RP), intent(inout) :: bmat(n, npt + n)
 real(RP), intent(inout) :: fval(npt)
 real(RP), intent(inout) :: gopt(n)
 real(RP), intent(inout) :: hq(n * (n + 1_IK) / 2_IK)
 real(RP), intent(inout) :: pq(npt)
-real(RP), intent(inout) :: ptsaux(2, n)
-real(RP), intent(inout) :: ptsid(npt)
 real(RP), intent(inout) :: sl(n)
 real(RP), intent(inout) :: su(n)
 real(RP), intent(inout) :: vlag(npt + n)
-real(RP), intent(inout) :: w(2_IK * npt + n)
 real(RP), intent(inout) :: xbase(n)
 real(RP), intent(inout) :: xopt(n)
 real(RP), intent(inout) :: xpt(n, npt)
 real(RP), intent(inout) :: zmat(npt, npt - n - 1_IK)
+real(RP), intent(inout) :: fhist(:)
+real(RP), intent(inout) :: xhist(:, :)
 
 ! Outputs
-real(RP), intent(out) :: fhist(:)
-real(RP), intent(out) :: xhist(:, :)
+real(RP), intent(out) :: f
 
 ! Local variables
+real(RP) :: ptsaux(2, n)
+real(RP) :: ptsid(npt)
+real(RP) :: w(2_IK * npt + n)
 real(RP) :: x(n)
 real(RP) :: beta, bsum, den, denom, diff,      &
 &        distsq, dsqmin, fbase, hdiag, sfrac,    &
@@ -95,7 +95,7 @@ integer(IK) :: i, ih, ihp, ihq, ip, iq, iw, j, jp, jpn, k, &
 !       They are part of a product that requires VLAG to be of length NDIM.
 !     PTSAUX is also a working space array. For J=1,2,...,N, PTSAUX(1,J) and
 !       PTSAUX(2,J) specify the two positions of provisional interpolation
-!       points when a nonZERO step is taken along e_J (the J-th coordinate
+!       points when a nonzero step is taken along e_J (the J-th coordinate
 !       direction) through XBASE+XOPT, as specified below. Usually these
 !       steps have length DELTA, but other lengths are chosen if necessary
 !       in order to satisfy the given bounds on the variables.
@@ -103,7 +103,7 @@ integer(IK) :: i, ih, ihp, ihq, ip, iq, iw, j, jp, jpn, k, &
 !       provisional new positions of the original interpolation points, in
 !       case changes are needed to restore the linear independence of the
 !       interpolation conditions. The K-th point is a candidate for change
-!       if and only if PTSID(K) is nonZERO. In this case let p and q be the
+!       if and only if PTSID(K) is nonzero. In this case let p and q be the
 !       integer parts of PTSID(K) and (PTSID(K)-p) multiplied by N+1. If p
 !       and q are both positive, the step from XBASE+XOPT to the new K-th
 !       interpolation point is PTSAUX(1,p)*e_p + PTSAUX(1,q)*e_q. Otherwise
@@ -186,7 +186,7 @@ fbase = fval(kopt)
 !
 !     Set the identifiers of the artificial interpolation points that are
 !     along a coordinate direction from XOPT, and set the corresponding
-!     nonZERO elements of BMAT and ZMAT.
+!     nonzero elements of BMAT and ZMAT.
 !
 ptsid(1) = sfrac
 do j = 1, n
@@ -209,7 +209,7 @@ do j = 1, n
     end if
 end do
 !
-!     Set any remaining identifiers with their nonZERO elements of ZMAT.
+!     Set any remaining identifiers with their nonzero elements of ZMAT.
 !
 if (npt >= n + np) then
     do k = 2 * np, npt
