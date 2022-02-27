@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 AM12:42:48
+! Last Modified: Monday, February 28, 2022 AM12:56:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -507,8 +507,7 @@ do j = 1, nptm
         end if
     end do
 end do
-call geostep(n, npt, xpt, xopt, bmat, zmat, sl, su, kopt, &
-& knew, adelt, xnew, xalt, alpha, cauchy, w, w(np), w(npt + n + 1))
+call geostep(n, npt, xpt, xopt, bmat, zmat, sl, su, kopt, knew, adelt, xnew, xalt, alpha, cauchy)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do i = 1, n
     d(i) = xnew(i) - xopt(i)
