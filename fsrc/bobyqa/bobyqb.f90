@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM11:42:44
+! Last Modified: Monday, February 28, 2022 AM12:42:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -90,6 +90,8 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        summw, summz, temp, vquad, xoptsq
 integer(IK) :: i, ih, ip, itest, j, jj, jp, k, kbase, knew, &
 &           kopt, ksav, nfsav, nh, np, nptm, nresc, ntrits
+
+real(RP) :: gnew(n)
 
 sl = sl_in
 su = su_in
@@ -244,8 +246,7 @@ do i = 1, npt
         goto 720
     end if
 end do
-call trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, xnew, d, &
-& w, w(np), w(np + n), w(np + 2 * n), w(np + 3 * n), dsq, crvmin)
+call trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, xnew, d, gnew, dsq, crvmin)
 dnorm = min(delta, sqrt(dsq))
 if (dnorm < HALF * rho) then
     ntrits = -1
@@ -264,8 +265,8 @@ if (dnorm < HALF * rho) then
     bdtol = errbig / rho
     do j = 1, n
         bdtest = bdtol
-        if (xnew(j) == sl(j)) bdtest = w(j)
-        if (xnew(j) == su(j)) bdtest = -w(j)
+        if (xnew(j) == sl(j)) bdtest = gnew(j)
+        if (xnew(j) == su(j)) bdtest = -gnew(j)
         if (bdtest < bdtol) then
             curv = hq((j + j * j) / 2)
             do k = 1, npt

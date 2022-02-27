@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM11:55:08
+! Last Modified: Sunday, February 27, 2022 PM11:58:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -331,10 +331,6 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Working space (to be removed)
-call safealloc(sl, n)
-call safealloc(su, n)
-
 !
 !     Partition the working space array, so that different parts of it can
 !     be treated separately during the calculation of BOBYQB. The partition
@@ -349,6 +345,8 @@ call safealloc(su, n)
 !     partitions of W, in order to provide useful and exact information about
 !     components of X that become within distance RHOBEG from their bounds.
 !
+call safealloc(sl, n)
+call safealloc(su, n)
 do j = 1, n
     temp = xu_loc(j) - xl_loc(j)
     if (temp < rhobeg_loc + rhobeg_loc) then
@@ -383,8 +381,7 @@ end do
 !     Make the call of BOBYQB.
 !
 call bobyqb(calfun, n, npt_loc, x, xl_loc, xu_loc, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, &
-    & sl, su, &
-    & f, info_loc, ftarget_loc, nf_loc, xhist_loc, fhist_loc)
+    & sl, su, f, info_loc, ftarget_loc, nf_loc, xhist_loc, fhist_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 deallocate (sl)
 deallocate (su)
