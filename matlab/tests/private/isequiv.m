@@ -312,13 +312,13 @@ n = length(x0);
 % Set seed using pname, n, and ir. We ALTER THE SEED weekly to test the solvers as much as possible.
 % N.B.: The weeknum function considers the week containing January 1 to be the first week of the
 % year, and increments the number every SUNDAY.
-timezone = 'Asia/Shanghai';  % Specify the timezone for reproducibility.
 if isfield(options, 'yw')
     yw = options.yw;
 elseif isfield(options, 'seed')
     yw = options.seed;
 else
-    dt = datetime('now', 'TimeZone', timezone);
+    tz = 'Asia/Shanghai';  % Specify the timezone for reproducibility.
+    dt = datetime('now', 'TimeZone', tz);
     yw = 100*mod(year(dt), 10) + week(dt);
 end
 fprintf('\nYW = %d\n', yw);
