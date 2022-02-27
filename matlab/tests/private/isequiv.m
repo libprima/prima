@@ -319,7 +319,7 @@ elseif isfield(options, 'seed')
 else
     tz = 'Asia/Shanghai';  % Specify the timezone for reproducibility.
     dt = datetime('now', 'TimeZone', tz);
-    yw = 100*mod(year(dt), 10) + week(dt);
+    yw = 100*mod(year(dt), 100) + week(dt);
 end
 fprintf('\nYW = %d\n', yw);
 rseed = max(0, min(2^32, yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir)))))));
