@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM09:38:26
+! Last Modified: Sunday, February 27, 2022 PM10:42:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,6 +39,7 @@ integer(IK), intent(in) :: nact
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: amat(n, m)
 real(RP), intent(in) :: del
+real(RP), intent(in) :: gl_in(n)
 real(RP), intent(in) :: pqw(npt)
 real(RP), intent(in) :: qfac(n, n)
 real(RP), intent(in) :: rescon(m)
@@ -50,7 +51,6 @@ integer(IK), intent(out) :: ifeas
 real(RP), intent(out) :: step(n)
 
 ! Local variables
-real(RP) :: gl_in(n)
 real(RP) :: rstat(m)
 real(RP) :: w(n)
 real(RP) :: gl(n)

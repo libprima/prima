@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM10:20:04
+! Last Modified: Sunday, February 27, 2022 PM10:50:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ real(RP) :: w(npt + n)
 real(RP) :: alpha, beta, bsumm, denabs, denmax, denom, distsq,  &
 &        dx, hdiag, scala, scalb, sqrtdn, ssq,  &
 &        summ, tau, tausq, temp, tempa, tempb
-integer(IK) :: i, iflag, j, ja, jb, jl, jp, k, nptm
+integer(IK) :: i, iflag, j, ja, jb, jl, jp, k
 
 !
 !     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
@@ -73,7 +73,6 @@ integer(IK) :: i, iflag, j, ja, jb, jl, jp, k, nptm
 !
 !     Set some constants.
 !
-nptm = npt - n - 1
 !
 !     Calculate VLAG and BETA for the current choice of STEP. The first NPT
 !       elements of VLAG are set to the values of the Lagrange functions at
@@ -89,7 +88,7 @@ do k = 1, npt
     vlag(k) = summ
 end do
 beta = ZERO
-do k = 1, nptm
+do k = 1, npt - n - 1_IK
     summ = ZERO
     do i = 1, npt
         summ = summ + zmat(i, k) * w(i)
@@ -134,7 +133,7 @@ if (knew == 0) then
     denmax = ZERO
     do k = 1, npt
         hdiag = ZERO
-        do j = 1, nptm
+        do j = 1, npt - n - 1_IK
             temp = ONE
             if (j < idz) temp = -ONE
             hdiag = hdiag + temp * zmat(k, j)**2
@@ -155,8 +154,8 @@ end if
 !     Apply the rotations that put ZEROs in the KNEW-th row of ZMAT.
 !
 jl = 1
-if (nptm >= 2) then
-    do j = 2, nptm
+if (npt - n >= 3) then
+    do j = 2, npt - n - 1_IK
         if (j == idz) then
             jl = idz
         else if (zmat(knew, j) /= ZERO) then
