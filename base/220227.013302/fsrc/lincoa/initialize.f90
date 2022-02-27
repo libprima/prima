@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:37:21
+! Last Modified: Sunday, February 27, 2022 PM06:00:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -65,7 +65,7 @@ real(RP), intent(inout) :: f
 real(RP), intent(inout) :: fval(npt)
 real(RP), intent(inout) :: gopt(n)
 real(RP), intent(inout) :: pq(npt)
-real(RP), intent(inout) :: pqw(npt)
+real(RP), intent(inout) :: pqw(npt + n)
 real(RP), intent(inout) :: rsp(2_IK * npt)
 real(RP), intent(inout) :: step(n)
 real(RP), intent(inout) :: w(n + npt)
