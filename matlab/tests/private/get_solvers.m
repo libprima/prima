@@ -11,6 +11,13 @@ if isa(solvers, 'char') || isa(solvers, 'string')
     solvers = {solvers};
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ready_solvers = {'newuoa', 'cobyla'};  % Solvers whose development is (almost) finished.
+test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Directories.
 neupdfo_dir = test_dir;  % `test_dir` is the root directly of a copy of the package made for the test.
 callstack = dbstack;
@@ -41,6 +48,9 @@ try
 
             mexopt = struct();
             mexopt.debug = strcmp(invoker, 'verify');
+            mexopt.classical = test_ready_solvers;
+            mexopt.single = test_ready_solvers;
+            mexopt.quadruple = test_ready_solvers;
 
             cd(neupdfo_dir);
             clear('setup');  % Without this, the next line may not call the latest version of `setup`

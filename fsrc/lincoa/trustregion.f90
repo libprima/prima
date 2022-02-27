@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM10:40:03
+! Last Modified: Sunday, February 27, 2022 PM08:20:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ contains
 
 
 subroutine trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
-     &  qfac, rfac, snorm, step, g, resnew, resact, d, dw, w)
+     &  qfac, rfac, snorm, step, g_in, ngetact)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF
@@ -38,29 +38,35 @@ integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: amat(n, m)
+real(RP), intent(in) :: g_in(n)
 real(RP), intent(in) :: hq(n * (n + 1_IK) / 2_IK)
 real(RP), intent(in) :: pq(npt)
 real(RP), intent(in) :: rescon(m)
 real(RP), intent(in) :: xpt(n, npt)
 
 ! In-outputs
-integer(IK), intent(inout) :: iact(m)
-integer(IK), intent(inout) :: nact
-real(RP), intent(inout) :: d(n)
-real(RP), intent(inout) :: dw(n)
-real(RP), intent(inout) :: g(n)
-real(RP), intent(inout) :: qfac(n, n)
-real(RP), intent(inout) :: rfac(n * (n + 1_IK) / 2_IK)
-real(RP), intent(inout) :: resact(m)
-real(RP), intent(inout) :: resnew(m)
-real(RP), intent(inout) :: snorm
-real(RP), intent(inout) :: step(n)
-real(RP), intent(inout) :: w(max(m, 2_IK * n))
+integer(IK), intent(inout) :: iact(m)  ! Will be updated in GETACT
+integer(IK), intent(inout) :: nact  ! Will be updated in GETACT
+real(RP), intent(inout) :: qfac(n, n)  ! Will be updated in GETACT
+real(RP), intent(inout) :: rfac(n * (n + 1_IK) / 2_IK)  ! Will be updated in GETACT
+
+! Outputs
+integer(IK), intent(out) :: ngetact
+real(RP), intent(out) :: snorm
+real(RP), intent(out) :: step(n)
 
 ! Local variables
+real(RP) :: d(n)
+real(RP) :: dw(n)
+real(RP) :: w(max(m, 2_IK * n))
+real(RP) :: resact(m)
+real(RP) :: resnew(m)
+real(RP) :: g(n)
 real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, tinynum, wgd
-integer(IK) :: i, icount, ih, ir, j, jsav, k, ncall
+integer(IK) :: i, icount, ih, ir, j, jsav, k
+
+g = g_in
 
 !
 !     N, NPT, M, AMAT, B, XPT, HQ, PQ, NACT, IACT, RESCON, QFAC and RFAC
@@ -113,19 +119,17 @@ if (m > 0) then
         end do
     end if
 end if
-do i = 1, n
-    step(i) = ZERO
-end do
+step = ZERO
 ss = ZERO
 reduct = ZERO
-ncall = 0
+ngetact = 0
 !
 !     GETACT picks the active set for the current STEP. It also sets DW to
 !       the vector closest to -G that is orthogonal to the normals of the
 !       active constraints. DW is scaled to have length 0.2*SNORM, as then
 !       a move of DW from STEP is allowed by the linear constraints.
 !
-40 ncall = ncall + 1
+40 ngetact = ngetact + 1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: B is never used in GETACT
 !      CALL GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,RESNEW,
@@ -342,7 +346,7 @@ reduct = reduct - alpha * (dg + HALF * alpha * dgd)
 !
 ! Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN
 ! values. Exit when NCALL is large or NaN detected.
-if (ncall > min(10000, 100 * (m + 1) * n) .or.  &
+if (ngetact > min(10000, 100 * (m + 1) * n) .or.  &
 & alpha /= alpha .or. alpht /= alpht .or. &
 & alphm /= alphm .or. dgd /= dgd .or. dg /= dg .or. &
 & ss /= ss .or. snsq /= snsq .or. reduct /= reduct) then
@@ -399,8 +403,6 @@ goto 150
 !
 320 snorm = ZERO
 if (reduct > ZERO) snorm = sqrt(ss)
-g(1) = ZERO
-if (ncall > 1) g(1) = ONE
 
 end subroutine trstep
 
