@@ -327,10 +327,12 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 ! the history that is not requested.
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc)
 
+
 !-------------------- Call NEWUOB, which performs the real calculations. --------------------------!
 call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
     & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, f, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
+
 
 ! Write the outputs.
 

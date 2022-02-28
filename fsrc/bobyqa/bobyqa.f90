@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM05:12:18
+! Last Modified: Monday, February 28, 2022 PM08:51:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -152,8 +152,8 @@ integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
 integer(IK) :: n
 integer(IK) :: nf_loc
-integer(IK) :: npt_loc
 integer(IK) :: nhist
+integer(IK) :: npt_loc
 logical :: honour_x0_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
@@ -165,13 +165,13 @@ real(RP) :: rhoend_loc
 real(RP) :: xl_loc(size(x))
 real(RP) :: xu_loc(size(x))
 real(RP), allocatable :: fhist_loc(:)
+real(RP), allocatable :: sl(:)
+real(RP), allocatable :: su(:)
 real(RP), allocatable :: xhist_loc(:, :)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Working variables (to be removed)
 real(RP) :: temp
-real(RP), allocatable :: sl(:)
-real(RP), allocatable :: su(:)
 integer(IK) :: j
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -377,15 +377,15 @@ do j = 1, n
         end if
     end if
 end do
-!
-!     Make the call of BOBYQB.
-!
+
+
+!-------------------- Call BOBYQB, which performs the real calculations. --------------------------!
 call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
     & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, sl, su, xl_loc, xu_loc, x, nf_loc, f, &
     & fhist_loc, xhist_loc, info_loc)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!--------------------------------------------------------------------------------------------------!
 
-! Deallocate variables that are not needed any more.
+! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
 deallocate (sl)
 deallocate (su)
 
