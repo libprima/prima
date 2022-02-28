@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM10:50:30
+! Last Modified: Monday, February 28, 2022 PM03:58:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,36 +22,57 @@ public :: update
 contains
 
 
-subroutine update(n, npt, xpt, bmat, zmat, idz, rsp, step, kopt, knew, vlag)
+subroutine update(kopt, rsp, step, xpt, idz, knew, bmat, zmat, vlag)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: kopt
-integer(IK), intent(in) :: n
-integer(IK), intent(in) :: npt
-real(RP), intent(in) :: rsp(2_IK * npt)
-real(RP), intent(in) :: step(n)
-real(RP), intent(in) :: xpt(n, npt)
+real(RP), intent(in) :: rsp(:)  ! RSP(2*NPT)
+real(RP), intent(in) :: step(:)  ! STEP(N)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! In-outputs
 integer(IK), intent(inout) :: idz
 integer(IK), intent(inout) :: knew
-real(RP), intent(inout) :: bmat(n, npt + n)
-real(RP), intent(inout) :: zmat(npt, npt - n - 1)
+real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
+real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
 ! Outputs
-real(RP), intent(out) :: vlag(npt + n)
+real(RP), intent(out) :: vlag(:)  ! VLAG(NPT + N)
 
 ! Local variables
-real(RP) :: w(npt + n)
-real(RP) :: alpha, beta, bsumm, denabs, denmax, denom, distsq,  &
+character(len=*), parameter :: srname = 'UPDATE'
+real(RP) :: w(size(vlag))
+real(RP) :: alpha, beta, bsum, denabs, denmax, denom, distsq,  &
 &        dx, hdiag, scala, scalb, sqrtdn, ssq,  &
 &        summ, tau, tausq, temp, tempa, tempb
 integer(IK) :: i, iflag, j, ja, jb, jl, jp, k
+integer(IK) :: n
+integer(IK) :: npt
+
+
+! Sizes.
+n = size(xpt, 1)
+npt = size(xpt, 2)
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(size(rsp) == 2_IK * npt, 'SIZE(RSP) == 2*NPT', srname)
+    call assert(size(step) == n, 'SIZE(STEP) == N', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT+N', srname)
+end if
 
 !
 !     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
@@ -103,7 +124,7 @@ do k = 1, npt - n - 1_IK
         vlag(i) = vlag(i) + summ * zmat(i, k)
     end do
 end do
-bsumm = ZERO
+bsum = ZERO
 dx = ZERO
 ssq = ZERO
 do j = 1, n
@@ -111,17 +132,17 @@ do j = 1, n
     do i = 1, npt
         summ = summ + w(i) * bmat(j, i)
     end do
-    bsumm = bsumm + summ * step(j)
+    bsum = bsum + summ * step(j)
     jp = npt + j
     do k = 1, n
         summ = summ + bmat(k, jp) * step(k)
     end do
     vlag(jp) = summ
-    bsumm = bsumm + summ * step(j)
+    bsum = bsum + summ * step(j)
     dx = dx + step(j) * xpt(j, kopt)
     ssq = ssq + step(j)**2
 end do
-beta = dx * dx + ssq * (rsp(kopt) + dx + dx + HALF * ssq) + beta - bsumm
+beta = dx * dx + ssq * (rsp(kopt) + dx + dx + HALF * ssq) + beta - bsum
 vlag(kopt) = vlag(kopt) + ONE
 !
 !     If KNEW is ZERO initially, then pick the index of the interpolation

@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM11:02:39
+! Last Modified: Monday, February 28, 2022 PM03:45:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -225,7 +225,7 @@ do nf = 1, npt
         end do
         knew = nf
 
-        call update(n, npt, xpt, bmat, zmat, idz, rsp, step, kbase, knew, vlag)
+        call update(kbase, rsp, step, xpt, idz, knew, bmat, zmat, vlag)
 
         do i = 1, n
             xpt(i, nf) = step(i)
