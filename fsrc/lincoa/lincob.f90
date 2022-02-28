@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM02:34:58
+! Last Modified: Monday, February 28, 2022 PM03:33:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -83,7 +83,7 @@ real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x) * (size(x) + 1) / 2)
 real(RP) :: pq(npt)
-real(RP) :: pqw(npt + size(x))  ! Note that the size is npt + N instead of npt; Isn't it VLAG in NEWUOA???
+real(RP) :: pqw(npt + size(x))  ! Note that the size is npt + N instead of npt; Isn't it VLAG in NEWUOA??? Better name?
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: rescon(size(bvec))
 real(RP) :: rfac(size(x) * (size(x) + 1) / 2)
@@ -127,7 +127,8 @@ if (DEBUGGING) then
     call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(maxfun >= n + 3, 'MAXFUN >= N + 3', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(maxfun >= npt + 1, 'MAXFUN >= NPT+1', srname)
     call assert(size(A_orig, 1) == n .and. size(A_orig, 2) == m, 'SIZE(A_ORIG) == [N, M]', srname)
     call assert(size(b_orig) == m, 'SIZE(B_ORIG) == M', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
@@ -403,7 +404,7 @@ ksave = knew
 if (knew == 0) then
     snorm = delta
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    call trstep(amat, xpt, hq, pq, nact, iact, rescon, qfac, rfac, snorm, step, gopt, ngetact)
+    call trstep(amat, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
 !
 !     A trust region step is applied whenever its length, namely SNORM, is at
 !       least HALF*DELTA. It is also applied if its length is at least 0.1999
@@ -482,8 +483,7 @@ else
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: B is never used in QMSTEP
 !          CALL QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,RESCON,
-    call geostep(n, npt, m, amat, xpt, xopt, nact, iact, rescon, &
-&   qfac, kopt, knew, del, step, bmat(:, knew), pqw, ifeas)
+    call geostep(iact, knew, kopt, nact, amat, del, bmat(:, knew), pqw(1:npt), qfac, rescon, xopt, xpt, ifeas, step)
 end if
 !
 !     Set VQUAD to the change to the quadratic model when the move STEP is

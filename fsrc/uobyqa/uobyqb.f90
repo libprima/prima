@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 AM11:59:58
+! Last Modified: Monday, February 28, 2022 PM02:58:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -254,9 +254,9 @@ do j = 1, n
         g(i) = g(i) + pq(ih) * xopt(j)
         if (i < j) g(j) = g(j) + pq(ih) * xopt(i)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: For ill-conditiONEd problems, NaN may occur in the
+! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
 ! models. In such a case, we terminate the code. Otherwise, the behavior
-! of TRSTEM or LAGMAX is not predictable, and Segmentation Fault or
+! of TRSTEP or LAGMAX is not predictable, and Segmentation Fault or
 ! infinite cycling may happen. This is because any equality/inequality
 ! comparison involving NaN returns FALSE, which can lead to unintended
 ! behavior of the code, including uninitialized indices.
