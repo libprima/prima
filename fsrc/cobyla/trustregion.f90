@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, February 26, 2022 PM07:46:05
+! Last Modified: Monday, February 28, 2022 PM02:44:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -83,6 +83,7 @@ m = int(size(A, 2) - 1, kind(m))
 
 ! Preconditions
 if (DEBUGGING) then
+    call assert(m >= 0, 'M >= 0', srname)
     call assert(size(A, 1) >= 1 .and. size(A, 2) >= 1, 'SIZE(A) >= [1, 1]', srname)
     call assert(size(b) == size(A, 2), 'SIZE(B) == size(A, 2)', srname)
 end if
@@ -187,7 +188,10 @@ mcon = int(size(A, 2), kind(mcon))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1 .or. mcon == 0, 'N >= 1 when MCON > 0', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(stage == 1 .or. stage == 2, 'STAGE == 1 or 2', srname)
+    call assert((mcon >= 0 .and. stage == 1) .or. (mcon >= 1 .and. stage == 2), &
+        & 'MCON >= 1 in stage 1 and MCON >= 0 in stage 2', srname)
     call assert(size(b) == mcon, 'SIZE(B) == MCON', srname)
     call assert(size(iact) == mcon, 'SIZE(IACT) == MCON', srname)
     call assert(size(vmultc) == mcon, 'SIZE(VMULTC) == MCON', srname)

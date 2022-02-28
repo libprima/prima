@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM09:10:33
+! Last Modified: Monday, February 28, 2022 PM02:40:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,10 +22,11 @@ public :: trstep
 contains
 
 
-subroutine trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, qfac, rfac, snorm, step, g_in, ngetact)
+subroutine trstep(amat, xpt, hq, pq, nact, iact, rescon, qfac, rfac, snorm, step, g_in, ngetact)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 
 ! Solver-specific modules
 use, non_intrinsic :: getact_mod, only : getact
@@ -33,39 +34,71 @@ use, non_intrinsic :: getact_mod, only : getact
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: m
-integer(IK), intent(in) :: n
-integer(IK), intent(in) :: npt
-real(RP), intent(in) :: amat(n, m)
-real(RP), intent(in) :: g_in(n)
-real(RP), intent(in) :: hq(n * (n + 1_IK) / 2_IK)
-real(RP), intent(in) :: pq(npt)
-real(RP), intent(in) :: rescon(m)
-real(RP), intent(in) :: xpt(n, npt)
+real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
+real(RP), intent(in) :: g_in(:)  ! G_IN(N)
+real(RP), intent(in) :: hq(:)  ! HQ(N, N)
+real(RP), intent(in) :: pq(:)  ! PQ(NPT)
+real(RP), intent(in) :: rescon(:)  ! RESCON(M)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! In-outputs
-integer(IK), intent(inout) :: iact(m)  ! Will be updated in GETACT
+integer(IK), intent(inout) :: iact(:)  ! IACT(M); Will be updated in GETACT
 integer(IK), intent(inout) :: nact  ! Will be updated in GETACT
-real(RP), intent(inout) :: qfac(n, n)  ! Will be updated in GETACT
-real(RP), intent(inout) :: rfac(n * (n + 1_IK) / 2_IK)  ! Will be updated in GETACT
+real(RP), intent(inout) :: qfac(:, :)  ! QFAC(N, N); Will be updated in GETACT
+real(RP), intent(inout) :: rfac(:)  ! RFAC(N, N); Will be updated in GETACT
 
 ! Outputs
 integer(IK), intent(out) :: ngetact
 real(RP), intent(out) :: snorm
-real(RP), intent(out) :: step(n)
+real(RP), intent(out) :: step(:)  ! STEP(N)
 
 ! Local variables
-real(RP) :: d(n)
-real(RP) :: dw(n)
-real(RP) :: w(max(m, 2_IK * n))
-real(RP) :: resact(m)
-real(RP) :: resnew(m)
-real(RP) :: g(n)
-real(RP) :: vlam(n)
+character(len=*), parameter :: srname = 'TRSTEP'
+real(RP) :: d(size(amat, 1))
+real(RP) :: dw(size(amat, 1))
+real(RP) :: w(max(size(amat, 2), 2 * size(amat, 1)))
+real(RP) :: resact(size(amat, 2))
+real(RP) :: resnew(size(amat, 2))
+real(RP) :: g(size(amat, 1))
+real(RP) :: vlam(size(amat, 1))
 real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, tinynum, wgd
 integer(IK) :: i, icount, ih, ir, j, jsav, k
+integer(IK) :: m
+integer(IK) :: n
+integer(IK) :: npt
 
+! Sizes.
+m = int(size(amat, 2), kind(m))
+n = int(size(amat, 1), kind(n))
+npt = int(size(pq), kind(npt))
+
+if (DEBUGGING) then
+    call assert(m >= 0, 'M >= 0', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(size(g_in) == n, 'SIZE(G_IN) == N', srname)
+
+    !----------------------------------------------------------------------------------------------!
+    !call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
+    call assert(size(hq) == n * (n + 1_IK) / 2_IK, 'HQ is n-by-n and symmetric', srname)
+    !----------------------------------------------------------------------------------------------!
+
+    call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
+    call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
+    call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
+
+    !----------------------------------------------------------------------------------------------!
+    !tol == ???
+    !call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    !call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    !call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
+    !call assert(istriu(rfac, tol), 'RFAC is upper triangular', srname)
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    call assert(size(rfac) == n * (n + 1_IK) / 2_IK, 'RFAC is n-by-n and upper triangular', srname)
+    !----------------------------------------------------------------------------------------------!
+end if
 
 g = g_in
 

@@ -64,6 +64,8 @@ n = int(size(sim, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
+    call assert(m >= 0, 'M >= 0', srname)
+    call assert(n >= 1, 'N >= 1', srname)
     call assert(jdrop >= 0 .and. jdrop <= n, '1 <= JDROP <= N', srname)
     call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), 'CONSTR does not contain NaN/-Inf', srname)
     call assert(.not. (is_nan(cstrv) .or. is_posinf(cstrv)), 'CSTRV is not NaN/+Inf', srname)
@@ -107,6 +109,7 @@ call updatepole(cpen, conmat, cval, fval, sim, simi, info)
 !  Calculation ends  !
 !====================!
 
+! Postconditions
 if (DEBUGGING) then
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
@@ -194,6 +197,7 @@ n = int(size(sim, 1), kind(n))
 ! Preconditions
 if (DEBUGGING) then
     call assert(cpen >= 0, 'CPEN >= 0', srname)
+    call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
