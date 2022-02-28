@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 23, 2022 PM05:46:47
+! Last Modified: Monday, February 28, 2022 PM09:43:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,18 +35,18 @@ implicit none
 
 ! Inputs
 integer(IK), intent(in) :: jdrop
-real(RP), intent(in) :: constr(:)
+real(RP), intent(in) :: constr(:)   ! CONSTR(M)
 real(RP), intent(in) :: cpen
 real(RP), intent(in) :: cstrv
-real(RP), intent(in) :: d(:)
+real(RP), intent(in) :: d(:)    ! D(N)
 real(RP), intent(in) :: f
 
 ! In-outputs
-real(RP), intent(inout) :: conmat(:, :)
-real(RP), intent(inout) :: cval(:)
-real(RP), intent(inout) :: fval(:)
-real(RP), intent(inout) :: sim(:, :)
-real(RP), intent(inout) :: simi(:, :)
+real(RP), intent(inout) :: conmat(:, :)     ! CONMAT(M, N+1)
+real(RP), intent(inout) :: cval(:)  ! CVAL(N+1)
+real(RP), intent(inout) :: fval(:)  ! FVAL(N+1)
+real(RP), intent(inout) :: sim(:, :)! SIM(N, N+1)
+real(RP), intent(inout) :: simi(:, :)   ! SIMI(N, N)
 
 ! Outputs
 integer(IK), intent(out) :: info
@@ -167,11 +167,11 @@ implicit none
 real(RP), intent(in) :: cpen
 
 ! In-outputs
-real(RP), intent(inout) :: conmat(:, :)
-real(RP), intent(inout) :: cval(:)
-real(RP), intent(inout) :: fval(:)
-real(RP), intent(inout) :: sim(:, :)
-real(RP), intent(inout) :: simi(:, :)
+real(RP), intent(inout) :: conmat(:, :) ! CONMAT(M, N+1)
+real(RP), intent(inout) :: cval(:)  ! CVAL(N+1)
+real(RP), intent(inout) :: fval(:)  ! FVAL(N+1)
+real(RP), intent(inout) :: sim(:, :)! SIM(N, N+1)
+real(RP), intent(inout) :: simi(:, :)    ! SIMI(N, N)
 
 ! Outputs
 integer(IK), intent(out) :: info
@@ -309,8 +309,8 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: cpen
-real(RP), intent(inout) :: cval(:)
-real(RP), intent(inout) :: fval(:)
+real(RP), intent(inout) :: cval(:)  ! CVAL(N+1)
+real(RP), intent(inout) :: fval(:)  ! FVAL(N+1)
 
 ! Outputs
 integer(IK) :: jopt

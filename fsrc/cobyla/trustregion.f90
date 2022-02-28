@@ -63,12 +63,12 @@ use, non_intrinsic :: linalg_mod, only : norm
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: A(:, :)  ! (N, M+1)
-real(RP), intent(in) :: b(:)  ! M+1
+real(RP), intent(in) :: A(:, :) ! A(N, M+1)
+real(RP), intent(in) :: b(:)    ! B(M+1)
 real(RP), intent(in) :: delta
 
 ! Outputs
-real(RP) :: d(size(A, 1))  ! N
+real(RP) :: d(size(A, 1))   ! D(N) 
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTLP'
@@ -140,16 +140,16 @@ implicit none
 
 ! Inputs
 integer(IK), intent(in) :: stage
-real(RP), intent(in) :: A(:, :)  ! (N, MCON)
-real(RP), intent(in) :: b(:)  ! MCON
+real(RP), intent(in) :: A(:, :) ! A(N, MCON)
+real(RP), intent(in) :: b(:)    ! A(N, MCON)
 real(RP), intent(in) :: delta
 
 ! In-outputs
-integer(IK), intent(inout) :: iact(:)  ! MCON
+integer(IK), intent(inout) :: iact(:)  ! IACT(MCON)
 integer(IK), intent(inout) :: nact
-real(RP), intent(inout) :: d(:)  ! N
-real(RP), intent(inout) :: vmultc(:)  ! MCON
-real(RP), intent(inout) :: z(:, :)  ! (N, N)
+real(RP), intent(inout) :: d(:)  ! D(N)
+real(RP), intent(inout) :: vmultc(:)  ! VMULTC(MCON)
+real(RP), intent(inout) :: z(:, :)  ! Z(N, N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTLP_SUB'

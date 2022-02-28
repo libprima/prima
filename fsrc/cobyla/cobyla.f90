@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, February 28, 2022 PM08:49:38
+! Last Modified: Monday, February 28, 2022 PM09:29:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -235,7 +235,7 @@ implicit none
 
 ! Compulsory arguments
 procedure(OBJCON) :: calcfc
-real(RP), intent(inout) :: x(:)
+real(RP), intent(inout) :: x(:)     ! X(N)
 real(RP), intent(out) :: f
 integer(IK), intent(in) :: m
 
@@ -244,7 +244,7 @@ integer(IK), intent(in), optional :: iprint
 integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
-real(RP), intent(in), optional :: constr0(:)
+real(RP), intent(in), optional :: constr0(:)    ! CONSTR0(M)
 real(RP), intent(in), optional :: ctol
 real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
@@ -259,11 +259,11 @@ real(RP), intent(in), optional :: rhoend
 ! Optional outputs
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
-real(RP), intent(out), allocatable, optional :: chist(:)
-real(RP), intent(out), allocatable, optional :: conhist(:, :)
-real(RP), intent(out), allocatable, optional :: constr(:)
-real(RP), intent(out), allocatable, optional :: fhist(:)
-real(RP), intent(out), allocatable, optional :: xhist(:, :)
+real(RP), intent(out), allocatable, optional :: chist(:)    ! CHIST(MAXCHIST)
+real(RP), intent(out), allocatable, optional :: conhist(:, :)   ! CONHIST(M, MAXCONHIST)
+real(RP), intent(out), allocatable, optional :: constr(:)   ! CONSTR(M)
+real(RP), intent(out), allocatable, optional :: fhist(:)    ! FHIST(MAXFHIST)
+real(RP), intent(out), allocatable, optional :: xhist(:, :) ! XHIST(N, MAXXHIST)
 real(RP), intent(out), optional :: cstrv
 
 ! Local variables
@@ -290,11 +290,11 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
-real(RP), allocatable :: chist_loc(:)
-real(RP), allocatable :: conhist_loc(:, :)
-real(RP), allocatable :: constr_loc(:)
-real(RP), allocatable :: fhist_loc(:)
-real(RP), allocatable :: xhist_loc(:, :)
+real(RP), allocatable :: chist_loc(:)   ! CHIST_LOC(MAXCHIST)
+real(RP), allocatable :: conhist_loc(:, :)  ! CONHIST_LOC(M, MAXCONHIST)
+real(RP), allocatable :: constr_loc(:)  ! CONSTR_LOC(M)
+real(RP), allocatable :: fhist_loc(:)   ! FHIST_LOC(MAXFHIST)
+real(RP), allocatable :: xhist_loc(:, :)    ! ! XHIST_LOC(N, MAXXHIST)
 
 ! Preconditions
 if (DEBUGGING) then
