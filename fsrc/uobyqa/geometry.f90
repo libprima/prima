@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM12:01:58
+! Last Modified: Monday, February 28, 2022 PM08:22:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,32 +19,47 @@ public :: geostep
 contains
 
 
-subroutine geostep(n, g, h_in, rho, d, vmax)
+subroutine geostep(g, h_in, rho, d, vmax)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: n
-real(RP), intent(in) :: g(n)
-real(RP), intent(in) :: h_in(n, n**2)
-real(RP), intent(in) :: rho
+real(RP), intent(in) :: g(:)  ! G(N)
+real(RP), intent(in) :: h_in(:, :)  ! H_IN(N, N**2)
+real(RP), intent(in) :: rho  ! NEWUOA etc uses DELBAR, which is NOT RHO; possible improvement?
 
 ! Outputs
-real(RP), intent(out) :: d(n)
+real(RP), intent(out) :: d(:)  ! D(N)
 real(RP), intent(out) :: vmax
 
 ! Local variables
-real(RP) :: h(n, n**2)
-real(RP) :: v(n)
+character(len=*), parameter :: srname = 'GEOSTEP'
+integer(IK) :: n
+real(RP) :: h(size(h_in, 1), size(h_in, 2))
+real(RP) :: v(size(g))
 real(RP) :: dd, dhd, dlin, dsq, gd, gg, ghg, gnorm, &
 &        halfrt, hmax, ratio, scaling, summ, sumv, temp, &
 &        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhw, &
 &        vlin, vmu, vnorm, vsq, vv, wcos, whw, wsin, wsq
 integer(IK) :: i, j, k
+
+
+! Sizes.
+n = int(size(g), kind(n))
+
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(rho > 0, 'RHO > 0', srname)
+    call assert(size(h_in, 1) == n .and. size(h_in, 2) == n**2, 'SIZE(H) == [N, N**2]', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
+end if
+
 h = h_in
+
 !
 !     N is the number of variables of a quadratic objective function, q say.
 !     G is the gradient of Q at the origin.
