@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 AM01:26:39
+! Last Modified: Monday, February 28, 2022 PM05:25:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,12 +19,13 @@ public :: bobyqb
 contains
 
 
-subroutine bobyqb(calfun, n, npt, x, xl, xu, rhobeg, rhoend, iprint, &
-    & maxfun, sl_in, su_in, f, info, ftarget, nf, xhist, fhist)
+subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, &
+    & sl_in, su_in, xl, xu, x, nf, f, fhist, xhist, info)
 
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
@@ -44,43 +45,52 @@ implicit none
 procedure(OBJ) :: calfun
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: n
 integer(IK), intent(in) :: npt
+real(RP), intent(in) :: eta1
+real(RP), intent(in) :: eta2
 real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: gamma1
+real(RP), intent(in) :: gamma2
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
-real(RP), intent(in) :: sl_in(n)
-real(RP), intent(in) :: su_in(n)
-real(RP), intent(in) :: xl(n)
-real(RP), intent(in) :: xu(n)
+real(RP), intent(in) :: sl_in(:)  ! SL_IN(N)
+real(RP), intent(in) :: su_in(:)  ! SU_IN(N)
+real(RP), intent(in) :: xl(:)  ! XL(N)
+real(RP), intent(in) :: xu(:)  ! XU(N)
 
 ! In-outputs
-real(RP), intent(inout) :: x(n)
+real(RP), intent(inout) :: x(:)  ! X(N)
 
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
 real(RP), intent(out) :: f
-real(RP), intent(out) :: fhist(:)
-real(RP), intent(out) :: xhist(:, :)
+real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
+real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
-real(RP) :: bmat(n, npt + n)
-real(RP) :: d(n)
+character(len=*), parameter :: srname = 'BOBYQB'
+integer(IK) :: maxfhist
+integer(IK) :: maxhist
+integer(IK) :: maxxhist
+integer(IK) :: n
+real(RP) :: bmat(size(x), npt + size(x))
+real(RP) :: d(size(x))
 real(RP) :: fval(npt)
-real(RP) :: gopt(n)
-real(RP) :: hq(n * (n + 1_IK) / 2_IK)
+real(RP) :: gopt(size(x))
+real(RP) :: hq(size(x) * (size(x) + 1) / 2)
 real(RP) :: pq(npt)
-real(RP) :: vlag(npt + n)
-real(RP) :: w(3_IK * (npt + n))
-real(RP) :: sl(n)
-real(RP) :: su(n)
-real(RP) :: xalt(n)
-real(RP) :: xbase(n)
-real(RP) :: xnew(n)
-real(RP) :: xopt(n)
-real(RP) :: xpt(n, npt)
-real(RP) :: zmat(npt, npt - n - 1_IK)
+real(RP) :: vlag(npt + size(x))
+real(RP) :: w(3 * (npt + size(x)))
+real(RP) :: sl(size(x))
+real(RP) :: su(size(x))
+real(RP) :: xalt(size(x))
+real(RP) :: xbase(size(x))
+real(RP) :: xnew(size(x))
+real(RP) :: xopt(size(x))
+real(RP) :: xpt(size(x), npt)
+real(RP) :: zmat(npt, npt - size(x) - 1)
+real(RP) :: gnew(size(x))
 real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        biglsq, bsumm, cauchy, crvmin, curv, delsq, delta,  &
 &        den, denom, densav, diff, diffa, diffb, diffc,     &
@@ -91,7 +101,30 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 integer(IK) :: i, ih, ip, itest, j, jj, jp, k, kbase, knew, &
 &           kopt, ksav, nfsav, nh, np, nptm, nresc, ntrits
 
-real(RP) :: gnew(n)
+
+! Sizes.
+n = int(size(x), kind(n))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(maxfun >= npt + 1, 'MAXFUN >= NPT+1', srname)
+    call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
+    call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
+    call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
+    call assert(size(sl_in) == n .and. size(su_in) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
+    call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
+    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+end if
+
 
 sl = sl_in
 su = su_in
