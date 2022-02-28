@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM07:39:23
+! Last Modified: Monday, February 28, 2022 PM07:51:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -802,7 +802,8 @@ end if
 !     Update BMAT and ZMAT, so that the KNEW-th interpolation point can be
 !     moved. Also update the second derivative terms of the model.
 !
-call update(n, npt, bmat, zmat, vlag, beta, denom, knew)
+call update(knew, beta, denom, bmat, vlag, zmat)
+
 ih = 0
 pqold = pq(knew)
 pq(knew) = ZERO

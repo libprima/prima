@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 AM01:27:43
+! Last Modified: Monday, February 28, 2022 PM07:54:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,29 +19,45 @@ public :: update
 contains
 
 
-subroutine update(n, npt, bmat, zmat, vlag, beta, denom, knew)
+subroutine update(knew, beta, denom, bmat, vlag, zmat)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: knew
-integer(IK), intent(in) :: n
-integer(IK), intent(in) :: npt
 real(RP), intent(in) :: beta
 real(RP), intent(in) :: denom
 
 ! In-outputs
-real(RP), intent(inout) :: bmat(n, npt + n)
-real(RP), intent(inout) :: vlag(npt + n)
-real(RP), intent(inout) :: zmat(npt, npt - n - 1_IK)
+real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
+real(RP), intent(inout) :: vlag(:)  ! VLAG(NPT + N)
+real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
-real(RP) :: w(npt + n)
+character(len=*), parameter :: srname = 'UPDATE'
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: w(size(vlag))
 real(RP) :: alpha, tau, temp, tempa, tempb, ztest
-integer(IK) :: i, j, jp, k, nptm
+integer(IK) :: i, j, jp, k
+
+! Sizes.
+n = int(size(bmat, 1), kind(n))
+npt = int(size(bmat, 2) - size(bmat, 1), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT + N', srname)
+end if
+
 
 
 !     The arrays BMAT and ZMAT are updated, as required by the new position
@@ -55,10 +71,9 @@ integer(IK) :: i, j, jp, k, nptm
 !
 !     Set some constants.
 !
-nptm = npt - n - 1
 ztest = ZERO
 do k = 1, npt
-    do j = 1, nptm
+    do j = 1, npt - n - 1_IK
         ztest = max(ztest, abs(zmat(k, j)))
     end do
 end do
@@ -69,7 +84,7 @@ ztest = 1.0D-20 * ztest
 ! Zaikun 2019-08-15: JL is never used
 !      JL=1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do j = 2, nptm
+do j = 2, npt - n - 1_IK
     if (abs(zmat(knew, j)) > ztest) then
         temp = sqrt(zmat(knew, 1)**2 + zmat(knew, j)**2)
         tempa = zmat(knew, 1) / temp
