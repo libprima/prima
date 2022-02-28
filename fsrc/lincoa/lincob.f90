@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM01:39:23
+! Last Modified: Monday, February 28, 2022 PM02:34:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,10 +53,10 @@ integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfilt
 integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: npt
-real(RP), intent(in) :: A_orig(:, :)  ! Better names? necessary?
-real(RP), intent(in) :: amat(:, :)  ! Better names? necessary?
-real(RP), intent(in) :: b_orig(:) ! Better names? necessary?
-real(RP), intent(in) :: bvec(:)  ! Better names? necessary?
+real(RP), intent(in) :: A_orig(:, :)  ! A_ORIG(N, M) ; Better names? necessary?
+real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M) ; Better names? necessary?
+real(RP), intent(in) :: b_orig(:) ! B_ORIG(M) ; Better names? necessary?
+real(RP), intent(in) :: bvec(:)  ! BVEC(M) ; Better names? necessary?
 real(RP), intent(in) :: eta1
 real(RP), intent(in) :: eta2
 real(RP), intent(in) :: ftarget
@@ -66,16 +66,16 @@ real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! In-outputs
-real(RP), intent(inout) :: x(:)
+real(RP), intent(inout) :: x(:)  ! X(N)
 
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: chist(:)
+real(RP), intent(out) :: chist(:)  ! CHIST(MAXCHIST)
 real(RP), intent(out) :: cstrv
 real(RP), intent(out) :: f
-real(RP), intent(out) :: fhist(:)
-real(RP), intent(out) :: xhist(:, :)
+real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
+real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
 character(len=*), parameter :: srname = 'LINCOB'
@@ -125,6 +125,7 @@ maxhist = int(max(maxxhist, maxfhist, maxchist), kind(maxhist))
 ! Preconditions
 if (DEBUGGING) then
     call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(maxfun >= n + 3, 'MAXFUN >= N + 3', srname)
     call assert(size(A_orig, 1) == n .and. size(A_orig, 2) == m, 'SIZE(A_ORIG) == [N, M]', srname)
@@ -402,8 +403,7 @@ ksave = knew
 if (knew == 0) then
     snorm = delta
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    call trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
-   & qfac, rfac, snorm, step, gopt, ngetact)
+    call trstep(amat, xpt, hq, pq, nact, iact, rescon, qfac, rfac, snorm, step, gopt, ngetact)
 !
 !     A trust region step is applied whenever its length, namely SNORM, is at
 !       least HALF*DELTA. It is also applied if its length is at least 0.1999

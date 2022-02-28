@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, February 12, 2022 PM02:52:07
+! Last Modified: Monday, February 28, 2022 PM01:47:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -315,6 +315,7 @@ n = int(size(simi, 1), kind(m))
 
 ! Preconditions
 if (DEBUGGING) then
+    call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(cpen >= 0, 'CPEN >= 0', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)

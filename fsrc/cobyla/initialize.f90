@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, February 12, 2022 PM02:52:31
+! Last Modified: Monday, February 28, 2022 PM01:46:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -97,6 +97,7 @@ maxhist = int(max(maxchist, maxconhist, maxfhist, maxxhist), kind(maxhist))
 
 ! Preconditions
 if (DEBUGGING) then
+    call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
@@ -267,6 +268,7 @@ maxfilt = int(size(ffilt), kind(maxfilt))
 
 ! Preconditions
 if (DEBUGGING) then
+    call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(maxfilt >= 1, 'MAXFILT >= 1', srname)
     call assert(size(confilt, 1) == m .and. size(confilt, 2) == maxfilt, 'SIZE(CONFILT) == [M, MAXFILT]', srname)

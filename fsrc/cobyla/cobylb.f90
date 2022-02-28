@@ -8,7 +8,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, February 25, 2022 AM12:59:24
+! Last Modified: Monday, February 28, 2022 PM01:44:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -153,6 +153,7 @@ maxhist = int(max(maxxhist, maxfhist, maxconhist, maxchist), kind(maxhist))
 ! Preconditions
 if (DEBUGGING) then
     call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(maxfun >= n + 2, 'MAXFUN >= N + 2', srname)
     call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
