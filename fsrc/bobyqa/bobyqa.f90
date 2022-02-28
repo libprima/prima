@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM08:51:35
+! Last Modified: Monday, February 28, 2022 PM09:19:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,7 +116,7 @@ implicit none
 
 ! Compulsory arguments
 procedure(OBJ) :: calfun
-real(RP), intent(inout) :: x(:)
+real(RP), intent(inout) :: x(:)  ! X(N)
 real(RP), intent(out) :: f
 
 ! Optional inputs
@@ -132,14 +132,14 @@ real(RP), intent(in), optional :: gamma1
 real(RP), intent(in), optional :: gamma2
 real(RP), intent(in), optional :: rhobeg
 real(RP), intent(in), optional :: rhoend
-real(RP), intent(in), optional :: xl(:)
-real(RP), intent(in), optional :: xu(:)
+real(RP), intent(in), optional :: xl(:)  ! XL(N)
+real(RP), intent(in), optional :: xu(:)  ! XU(N)
 
 ! Optional outputs
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
-real(RP), intent(out), allocatable, optional :: fhist(:)
-real(RP), intent(out), allocatable, optional :: xhist(:, :)
+real(RP), intent(out), allocatable, optional :: fhist(:)  ! FHIST(MAXFHIST)
+real(RP), intent(out), allocatable, optional :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
 character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
@@ -164,10 +164,11 @@ real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP) :: xl_loc(size(x))
 real(RP) :: xu_loc(size(x))
-real(RP), allocatable :: fhist_loc(:)
-real(RP), allocatable :: sl(:)
-real(RP), allocatable :: su(:)
-real(RP), allocatable :: xhist_loc(:, :)
+real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
+real(RP), allocatable :: sl(:)  ! SL(N)
+real(RP), allocatable :: su(:)  ! SU(N)
+real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
+
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Working variables (to be removed)

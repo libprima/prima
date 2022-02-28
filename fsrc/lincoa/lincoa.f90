@@ -3,7 +3,7 @@ module lincoa_mod
 ! LINCOA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
 ! LINCOA algorithm. The algorithm approximately solves
 !
-!   min F(X) subject to A'*X <= B,
+!   min F(X) subject to A^T*X <= B,
 !
 ! where X is a vector of variables that has N components, F is a real-valued objective function,
 ! A is an N-by-M matrix, and B is an M-dimensional real vector. It tackles the problem by a trust
@@ -27,7 +27,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM08:40:03
+! Last Modified: Monday, February 28, 2022 PM09:15:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -127,7 +127,7 @@ implicit none
 
 ! Compulsory arguments
 procedure(OBJ) :: calfun
-real(RP), intent(inout) :: x(:)
+real(RP), intent(inout) :: x(:)  ! X(N)
 real(RP), intent(out) :: f
 
 ! Optional inputs
@@ -136,8 +136,8 @@ integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(in), optional :: npt
-real(RP), intent(in), optional :: A(:, :)
-real(RP), intent(in), optional :: b(:)
+real(RP), intent(in), optional :: A(:, :)  ! A(N, M)
+real(RP), intent(in), optional :: b(:)  ! B(M)
 real(RP), intent(in), optional :: ctol
 real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
@@ -151,9 +151,9 @@ real(RP), intent(in), optional :: rhoend
 ! Optional outputs
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
-real(RP), intent(out), allocatable, optional :: chist(:)
-real(RP), intent(out), allocatable, optional :: fhist(:)
-real(RP), intent(out), allocatable, optional :: xhist(:, :)
+real(RP), intent(out), allocatable, optional :: chist(:)  ! CHIST(MAXCHIST)
+real(RP), intent(out), allocatable, optional :: fhist(:)  ! FHIST(MAXFHIST)
+real(RP), intent(out), allocatable, optional :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(out), optional :: cstrv
 
 ! Local variables
@@ -186,13 +186,13 @@ real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP) :: smallx
 real(RP) :: summ
-real(RP), allocatable :: A_loc(:, :)
-real(RP), allocatable :: A_normalized(:, :)
-real(RP), allocatable :: b_loc(:)
-real(RP), allocatable :: b_normalized(:)
-real(RP), allocatable :: chist_loc(:)
-real(RP), allocatable :: fhist_loc(:)
-real(RP), allocatable :: xhist_loc(:, :)
+real(RP), allocatable :: A_loc(:, :)  ! A_LOC(N, M)
+real(RP), allocatable :: A_normalized(:, :)  ! A_NORMALIZED(N, M)
+real(RP), allocatable :: b_loc(:)  ! B_LOC(M)
+real(RP), allocatable :: b_normalized(:)  ! B_NORMALIZED(M)
+real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
+real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
+real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Working variables (to be removed)

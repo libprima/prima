@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, February 28, 2022 PM01:47:24
+! Last Modified: Monday, February 28, 2022 PM09:40:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,8 +36,8 @@ implicit none
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: factor_alpha
 real(RP), intent(in) :: factor_beta
-real(RP), intent(in) :: sim(:, :)
-real(RP), intent(in) :: simi(:, :)
+real(RP), intent(in) :: sim(:, :)   ! SIM(N, N+1)
+real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
 
 ! Outputs
 logical :: good_geo
@@ -106,12 +106,12 @@ implicit none
 
 ! Inputs
 logical, intent(in) :: tr_success
-real(RP), intent(in) :: d(:)
+real(RP), intent(in) :: d(:)    ! D(N)
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: factor_alpha
 real(RP), intent(in) :: factor_delta
-real(RP), intent(in) :: sim(:, :)
-real(RP), intent(in) :: simi(:, :)
+real(RP), intent(in) :: sim(:, :)   ! SIM(N, N+1)
+real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
 
 ! Outputs
 integer(IK) :: jdrop
@@ -210,8 +210,8 @@ implicit none
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: factor_alpha
 real(RP), intent(in) :: factor_beta
-real(RP), intent(in) :: sim(:, :)
-real(RP), intent(in) :: simi(:, :)
+real(RP), intent(in) :: sim(:, :)   ! SIM(N, N+1)
+real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
 
 ! Outputs
 integer(IK) :: jdrop
@@ -289,16 +289,16 @@ implicit none
 
 ! Inputs
 integer(IK), intent(in) :: jdrop
-real(RP), intent(in) :: conmat(:, :)
+real(RP), intent(in) :: conmat(:, :)    ! CONMAT(M, N+1)
 real(RP), intent(in) :: cpen
-real(RP), intent(in) :: cval(:)
+real(RP), intent(in) :: cval(:)     ! CVAL(N+1)
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: factor_gamma
-real(RP), intent(in) :: fval(:)
-real(RP), intent(in) :: simi(:, :)
+real(RP), intent(in) :: fval(:)     ! FVAL(N+1)
+real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
 
 ! Outputs
-real(RP) :: d(size(simi, 1))
+real(RP) :: d(size(simi, 1))  ! D(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GEOSTEP'

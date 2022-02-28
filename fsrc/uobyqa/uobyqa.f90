@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM08:08:32
+! Last Modified: Monday, February 28, 2022 PM09:22:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -176,7 +176,7 @@ implicit none
 ! Arguments
 procedure(OBJ) :: calfun
 ! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute
-real(RP), intent(inout) :: x(:)
+real(RP), intent(inout) :: x(:)  ! X(N)
 real(RP), intent(out) :: f
 integer(IK), intent(out), optional :: nf
 real(RP), intent(in), optional :: rhobeg
@@ -188,8 +188,8 @@ real(RP), intent(in), optional :: eta1
 real(RP), intent(in), optional :: eta2
 real(RP), intent(in), optional :: gamma1
 real(RP), intent(in), optional :: gamma2
-real(RP), intent(out), optional, allocatable :: fhist(:)
-real(RP), intent(out), optional, allocatable :: xhist(:, :)
+real(RP), intent(out), optional, allocatable :: fhist(:)  ! FHIST(MAXFHIST)
+real(RP), intent(out), optional, allocatable :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(out), optional :: info
 
@@ -212,8 +212,8 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
-real(RP), allocatable :: fhist_loc(:)
-real(RP), allocatable :: xhist_loc(:, :)
+real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
+real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 
 
 ! Sizes

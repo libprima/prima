@@ -8,7 +8,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, February 28, 2022 PM01:44:34
+! Last Modified: Monday, February 28, 2022 PM09:32:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,18 +68,18 @@ real(RP), intent(in) :: rhoend
 
 ! In-outputs
 ! On entry, [X, F, CONSTR] = [X0, F(X0), CONSTR(X0)]
-real(RP), intent(inout) :: constr(:) ! M
+real(RP), intent(inout) :: constr(:)    ! CONSTR(M)
 real(RP), intent(inout) :: f
-real(RP), intent(inout) :: x(:)  ! N
+real(RP), intent(inout) :: x(:)     ! X(N)
 
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: chist(:)
-real(RP), intent(out) :: conhist(:, :)
+real(RP), intent(out) :: chist(:)   ! CHIST(MAXCHIST)
+real(RP), intent(out) :: conhist(:, :)  ! CONHIST(M, MAXCONHIST)
 real(RP), intent(out) :: cstrv
-real(RP), intent(out) :: fhist(:)
-real(RP), intent(out) :: xhist(:, :)
+real(RP), intent(out) :: fhist(:)   ! FHIST(MAXFHIST)
+real(RP), intent(out) :: xhist(:, :)    ! XHIST(N, MAXXHIST)
 
 ! Local variables
 character(len=*), parameter :: solver = 'COBYLA'
@@ -541,8 +541,8 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: fval(:)
-real(RP), intent(in) :: conmat(:, :)
+real(RP), intent(in) :: fval(:)     ! FVAL(N+1)
+real(RP), intent(in) :: conmat(:, :)    ! CONMAT(M, N+1)
 
 ! Outputs
 real(RP) :: r

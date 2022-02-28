@@ -46,26 +46,26 @@ implicit none
 procedure(OBJCON) :: calcfc
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
-real(RP), intent(in) :: constr0(:)
+real(RP), intent(in) :: constr0(:)  ! CONSTR0(M)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: f0
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
-real(RP), intent(in) :: x0(:)
+real(RP), intent(in) :: x0(:)   ! X0(N)
 
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
-logical, intent(out) :: evaluated(:)
-real(RP), intent(out) :: chist(:)
-real(RP), intent(out) :: conhist(:, :)
-real(RP), intent(out) :: conmat(:, :)
-real(RP), intent(out) :: cval(:)
-real(RP), intent(out) :: fhist(:)
-real(RP), intent(out) :: fval(:)
-real(RP), intent(out) :: sim(:, :)
-real(RP), intent(out) :: simi(:, :)
-real(RP), intent(out) :: xhist(:, :)
+logical, intent(out) :: evaluated(:)    ! EVALUATED(N+1)
+real(RP), intent(out) :: chist(:)   ! CHIST(MAXCHIST)
+real(RP), intent(out) :: conhist(:, :)  ! CONHIST(M, MAXCONHIST)
+real(RP), intent(out) :: conmat(:, :)   ! CONMAT(M, N+1)
+real(RP), intent(out) :: cval(:)    ! CVAL(N+1)
+real(RP), intent(out) :: fhist(:)   ! FHIST(MAXFHIST)
+real(RP), intent(out) :: fval(:)    ! FVAL(N+1)
+real(RP), intent(out) :: sim(:, :)  ! SIM(N, N+1)
+real(RP), intent(out) :: simi(:, :) ! SIMI(N, N)
+real(RP), intent(out) :: xhist(:, :)! XHIST(N, MAXXHIST)
 
 ! Local variables
 character(len=*), parameter :: solver = 'COBYLA'
