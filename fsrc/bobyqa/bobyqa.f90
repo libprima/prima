@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 AM01:36:44
+! Last Modified: Monday, February 28, 2022 PM05:12:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -380,9 +380,12 @@ end do
 !
 !     Make the call of BOBYQB.
 !
-call bobyqb(calfun, n, npt_loc, x, xl_loc, xu_loc, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, &
-    & sl, su, f, info_loc, ftarget_loc, nf_loc, xhist_loc, fhist_loc)
+call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
+    & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, sl, su, xl_loc, xu_loc, x, nf_loc, f, &
+    & fhist_loc, xhist_loc, info_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Deallocate variables that are not needed any more.
 deallocate (sl)
 deallocate (su)
 
