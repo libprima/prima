@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM05:25:12
+! Last Modified: Monday, February 28, 2022 PM06:49:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -175,8 +175,8 @@ nh = (n * np) / 2
 !     initial XOPT is set too. The branch to label 720 occurs if MAXFUN is
 !     less than NPT. GOPT will be updated if KOPT is different from KBASE.
 !
-call initialize(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, xpt, &
-& fval, gopt, hq, pq, bmat, zmat, sl, su, nf, kopt, f, ftarget, xhist, fhist)
+call initialize(calfun, iprint, ftarget, rhobeg, sl, su, xl, xu, x, kopt, nf, bmat, f, fhist, fval, &
+    & gopt, hq, pq, xbase, xhist, xpt, zmat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 xoptsq = ZERO
@@ -448,9 +448,8 @@ end do
 
 !------------------------------------------------------------------------------------------------!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-call rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, fval, &
-& xopt, gopt, hq, pq, bmat, zmat, sl, su, nf, delta, kopt, &
-& vlag, f, ftarget, xhist, fhist)
+call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fval, &
+    & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !------------------------------------------------------------------------------------------------!
 

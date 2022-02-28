@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM11:18:17
+! Last Modified: Monday, February 28, 2022 PM05:44:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,10 +19,11 @@ public :: initialize
 contains
 
 
-subroutine initialize(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, &
-& xpt, fval, gopt, hq, pq, bmat, zmat, sl, su, nf, kopt, f, ftarget, xhist, fhist)
+subroutine initialize(calfun, iprint, ftarget, rhobeg, sl, su, xl, xu, x, &
+    & kopt, nf, bmat, f, fhist, fval, gopt, hq, pq, xbase, xhist, xpt, zmat)
 
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
@@ -34,37 +35,72 @@ implicit none
 ! Inputs
 procedure(OBJ) :: calfun
 integer(IK), intent(in) :: iprint
-integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: n
-integer(IK), intent(in) :: npt
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
-real(RP), intent(in) :: sl(n)
-real(RP), intent(in) :: su(n)
-real(RP), intent(in) :: xl(n)
-real(RP), intent(in) :: xu(n)
+real(RP), intent(in) :: sl(:)  ! SL(N)
+real(RP), intent(in) :: su(:)  ! SU(N)
+real(RP), intent(in) :: xl(:)  ! XL(N)
+real(RP), intent(in) :: xu(:)  ! XU(N)
 
 ! In-outputs
-real(RP), intent(inout) :: x(n)
+real(RP), intent(inout) :: x(:)  ! X(N)
 
 ! Outputs
 integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: bmat(n, npt + n)
+real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(:)
-real(RP), intent(out) :: fval(npt)
-real(RP), intent(out) :: gopt(n)
-real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
-real(RP), intent(out) :: pq(npt)
-real(RP), intent(out) :: xbase(n)
-real(RP), intent(out) :: xhist(:, :)
-real(RP), intent(out) :: xpt(n, npt)
-real(RP), intent(out) :: zmat(npt, npt - n - 1_IK)
+real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
+real(RP), intent(out) :: gopt(:)  ! GOPT(N)
+real(RP), intent(out) :: hq(:)  ! HQ(N, N)
+real(RP), intent(out) :: pq(:)  ! PQ(NPT)
+real(RP), intent(out) :: xbase(:)  ! XBASE(N)
+real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
+real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
+real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
+character(len=*), parameter :: srname = 'INITIIALIZE'
+integer(IK) :: maxfhist
+integer(IK) :: maxhist
+integer(IK) :: maxxhist
+integer(IK) :: n
+integer(IK) :: npt
 real(RP) :: diff, fbeg, recip, rhosq, stepa, stepb, temp
 integer(IK) :: i, ih, ipt, itemp, j, jpt, k, nfm, nfx, np
+
+! Sizes.
+n = int(size(x), kind(n))
+npt = int(size(fval), kind(npt))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(rhobeg > 0, 'RHOBEG > 0', srname)
+    call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
+    call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
+
+    !----------------------------------------------------------------------------------------------!
+    !call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
+    call assert(size(hq) == n * (n + 1_IK) / 2_IK, 'HQ is n-by-n and symmetric', srname)
+    !----------------------------------------------------------------------------------------------!
+
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+end if
 
 !
 !     The arguments N, NPT, X, XL, XU, RHOBEG, IPRINT and MAXFUN are the
@@ -228,7 +264,7 @@ if (is_nan(f) .or. is_posinf(f)) goto 80
 if (f <= ftarget) goto 80
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-if (nf < npt .and. nf < maxfun) goto 50
+if (nf < npt) goto 50
 80 nf = min(nf, npt)  ! nf = npt + 1 at exit of the loop
 
 end subroutine initialize
