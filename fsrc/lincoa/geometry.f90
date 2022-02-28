@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM03:34:50
+! Last Modified: Monday, February 28, 2022 PM03:55:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,7 +54,7 @@ integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: rstat(size(amat, 2))
-real(RP) :: w(size(amat, 1))
+real(RP) :: w(size(xopt))
 real(RP) :: gl(size(gl_in))
 real(RP) :: bigv, ctol, gg, ghg, resmax, sp, ss,  &
 &        stp, stpsav, summ, temp, test, vbig, vgrad, &
@@ -66,6 +66,7 @@ m = int(size(amat, 2), kind(m))
 n = int(size(xopt), kind(n))
 npt = int(size(pqw), kind(npt))
 
+! Preconditions
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)

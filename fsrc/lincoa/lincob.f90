@@ -670,7 +670,7 @@ end if
 !       can be moved. If STEP is a trust region step, then KNEW is ZERO at
 !       present, but a positive value is picked by subroutine UPDATE.
 !
-call update(n, npt, xpt, bmat, zmat, idz, rsp, step, kopt, knew, pqw)
+call update(kopt, rsp, step, xpt, idz, knew, bmat, zmat, pqw)
 if (knew == 0) then
     info = 9
     goto 600

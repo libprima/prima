@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM03:18:27
+! Last Modified: Monday, February 28, 2022 PM03:54:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,13 +54,13 @@ real(RP), intent(out) :: step(:)  ! STEP(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTEP'
-real(RP) :: d(size(amat, 1))
-real(RP) :: dw(size(amat, 1))
-real(RP) :: w(max(size(amat, 2), 2 * size(amat, 1)))
+real(RP) :: d(size(gq))
+real(RP) :: dw(size(gq))
+real(RP) :: w(max(size(amat, 2), 2 * size(gq)))
 real(RP) :: resact(size(amat, 2))
 real(RP) :: resnew(size(amat, 2))
-real(RP) :: g(size(amat, 1))
-real(RP) :: vlam(size(amat, 1))
+real(RP) :: g(size(gq))
+real(RP) :: vlam(size(gq))
 real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, tinynum, wgd
 integer(IK) :: i, icount, ih, ir, j, jsav, k
@@ -73,6 +73,7 @@ m = int(size(amat, 2), kind(m))
 n = int(size(gq), kind(n))
 npt = int(size(pq), kind(npt))
 
+! Preconditions
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
