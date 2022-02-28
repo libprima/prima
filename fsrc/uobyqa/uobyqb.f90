@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM02:58:45
+! Last Modified: Monday, February 28, 2022 PM08:09:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,10 +19,12 @@ public :: uobyqb
 contains
 
 
-subroutine uobyqb(calfun, n, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, nf, xhist, fhist)
+subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, &
+    & x, nf, f, fhist, xhist, info)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
@@ -37,24 +39,33 @@ implicit none
 
 ! Inputs
 procedure(OBJ) :: calfun
-integer(IK) :: n
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
+real(RP), intent(in) :: eta1
+real(RP), intent(in) :: eta2
 real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: gamma1
+real(RP), intent(in) :: gamma2
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! In-outputs
-real(RP), intent(inout) :: x(n)
+real(RP), intent(inout) :: x(:)  ! X(N)
 
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
 real(RP), intent(out) :: f
-real(RP), intent(out) :: fhist(:)
-real(RP), intent(out) :: xhist(:, :)
+real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
+real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
+character(len=*), parameter :: srname = 'UOBYQB'
+integer(IK) :: n
+integer(IK) :: npt
+integer(IK) :: maxhist
+integer(IK) :: maxfhist
+integer(IK) :: maxxhist
 real(RP) :: d(size(x))
 real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x)**2)
@@ -73,7 +84,28 @@ real(RP) :: ddknew, delta, detrat, diff,        &
 &        vquad, wmult
 integer(IK) :: i, ih, ip, iq, iw, j, jswitch, k, knew, kopt,&
 &           ksave, ktemp, nftest, nnp
-integer(IK) :: npt
+
+! Sizes.
+n = int(size(x), kind(n))
+npt = (n + 1_IK) * (n + 2_IK) / 2_IK
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxhist = max(maxxhist, maxfhist)
+
+if (DEBUGGING) then
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', srname)
+    call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
+    call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
+    call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
+    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+end if
+
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     The arguments N, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to
@@ -100,7 +132,6 @@ integer(IK) :: npt
 !
 tol = 0.01D0
 nnp = n + n + 1
-npt = (n + 1_IK) * (n + 2_IK) / 2_IK
 nftest = maxfun
 !
 !     Initialization. NF is the number of function calculations so far.
