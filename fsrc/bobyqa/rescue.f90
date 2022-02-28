@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM07:00:54
+! Last Modified: Monday, February 28, 2022 PM07:52:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -298,7 +298,7 @@ if (knew /= kopt) then
 !     branch to label 350 occurs if all the original points are reinstated.
 !     The nonnegative values of W(NDIM+K) are required in the search below.
 !
-    call update(n, npt, bmat, zmat, vlag, beta, denom, knew)
+    call update(knew, beta, denom, bmat, vlag, zmat)
     if (nrem == 0) goto 350
     do k = 1, npt
         w(npt + n + k) = abs(w(npt + n + k))
