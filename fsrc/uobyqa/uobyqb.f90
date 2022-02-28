@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:03:44
+! Last Modified: Monday, February 28, 2022 AM11:47:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,9 +19,7 @@ public :: uobyqb
 contains
 
 
-subroutine uobyqb(calfun, n, x, rhobeg, rhoend, iprint, maxfun, npt, xbase, &
-     &  xopt, xnew, xpt, pq, pl, h, g, d, vlag, w, f, info, ftarget, &
-    & nf, xhist, maxxhist, fhist, maxfhist)
+subroutine uobyqb(calfun, n, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, nf, xhist, fhist)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
@@ -41,10 +39,7 @@ implicit none
 procedure(OBJ) :: calfun
 integer(IK) :: n
 integer(IK), intent(in) :: iprint
-integer(IK), intent(in) :: maxfhist
 integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: maxxhist
-integer(IK), intent(in) :: npt
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
@@ -55,29 +50,30 @@ real(RP), intent(inout) :: x(n)
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: d(n)
 real(RP), intent(out) :: f
-real(RP), intent(out) :: fhist(maxfhist)
-real(RP), intent(out) :: g(n)
-real(RP), intent(out) :: h(n, n**2)
-real(RP), intent(out) :: pl(npt, npt - 1_IK)
-real(RP), intent(out) :: pq(npt - 1_IK)
-real(RP), intent(out) :: vlag(npt)
-real(RP), intent(out) :: xbase(n)
-real(RP), intent(out) :: xhist(n, maxxhist)
-real(RP), intent(out) :: xnew(n)
-real(RP), intent(out) :: xopt(n)
-real(RP), intent(out) :: xpt(n, npt)
-real(RP), intent(out) :: w(max(6_IK * n, (n**2 + 3_IK * n + 2_IK) / 2_IK))
+real(RP), intent(out) :: fhist(:)
+real(RP), intent(out) :: xhist(:, :)
 
 ! Local variables
+real(RP) :: d(size(x))
+real(RP) :: g(size(x))
+real(RP) :: h(size(x), size(x)**2)
+real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2, (size(x) + 1) * (size(x) + 2) / 2 - 1)
+real(RP) :: pq(size(pl, 2))
+real(RP) :: vlag(size(pl, 1))
+real(RP) :: w(max(6_IK * size(x), (size(x)**2 + 3_IK * size(x) + 2_IK) / 2_IK))
+real(RP) :: xbase(size(x))
+real(RP) :: xnew(size(x))
+real(RP) :: xopt(size(x))
+real(RP) :: xpt(size(x), size(pl, 1))
 real(RP) :: ddknew, delta, detrat, diff,        &
 &        distest, dnorm, errtol, estim, evalue, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
 &        sumg, sumh, temp, tempa, tol, tworsq, vmax,  &
 &        vquad, wmult
 integer(IK) :: i, ih, ip, iq, iw, j, jswitch, k, knew, kopt,&
-&           ksave, ktemp, nftest, nnp, nptm
+&           ksave, ktemp, nftest, nnp
+integer(IK) :: npt
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     The arguments N, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to
@@ -104,7 +100,7 @@ integer(IK) :: i, ih, ip, iq, iw, j, jswitch, k, knew, kopt,&
 !
 tol = 0.01D0
 nnp = n + n + 1
-nptm = npt - 1
+npt = (n + 1_IK) * (n + 2_IK) / 2_IK
 nftest = maxfun
 !
 !     Initialization. NF is the number of function calculations so far.
@@ -119,7 +115,7 @@ do i = 1, n
     end do
 end do
 do k = 1, npt
-    do j = 1, nptm
+    do j = 1, npt - 1_IK
         pl(k, j) = ZERO
     end do
 end do
@@ -382,7 +378,7 @@ do j = 1, n
 end do
 do k = 1, npt
     temp = ZERO
-    do j = 1, nptm
+    do j = 1, npt - 1_IK
         temp = temp + w(j) * pl(k, j)
     end do
     vlag(k) = temp
@@ -465,14 +461,14 @@ if (knew == 0) goto 290
     xpt(i, knew) = xnew(i)
 end do
 temp = ONE / vlag(knew)
-do j = 1, nptm
+do j = 1, npt - 1_IK
     pl(knew, j) = temp * pl(knew, j)
     pq(j) = pq(j) + diff * pl(knew, j)
 end do
 do k = 1, npt
     if (k /= knew) then
         temp = vlag(k)
-        do j = 1, nptm
+        do j = 1, npt - 1_IK
             pl(k, j) = pl(k, j) - temp * pl(knew, j)
         end do
     end if
