@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM03:54:42
+! Last Modified: Monday, February 28, 2022 PM04:13:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -166,7 +166,7 @@ ngetact = 0
 !       a move of DW from STEP is allowed by the linear constraints.
 !
 40 ngetact = ngetact + 1
-call getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, dw, vlam, dd)
+call getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw, vlam)
 if (dd == ZERO) goto 320
 scaling = 0.2D0 * snorm / sqrt(dd)
 do i = 1, n

@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM09:00:07
+! Last Modified: Monday, February 28, 2022 PM04:14:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,41 +22,73 @@ public :: getact
 contains
 
 
-subroutine getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, dw, vlam, dd)
-use, non_intrinsic :: linalg_mod, only : inprod
+subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw, vlam)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : inprod
 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: m
-integer(IK), intent(in) :: n
-real(RP), intent(in) :: amat(n, m)
-real(RP), intent(in) :: g(n)
+real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
+real(RP), intent(in) :: g(:)  ! G(N)
 real(RP), intent(in) :: snorm
 
 ! In-outputs
-integer(IK), intent(inout) :: iact(m)
+integer(IK), intent(inout) :: iact(:)  ! IACT(M)
 integer(IK), intent(inout) :: nact
-real(RP), intent(inout) :: qfac(n, n)
-real(RP), intent(inout) :: resact(m)
-real(RP), intent(inout) :: resnew(m)
-real(RP), intent(inout) :: rfac(n * (n + 1_IK) / 2_IK)
+real(RP), intent(inout) :: qfac(:, :)  ! QFAC(N, N)
+real(RP), intent(inout) :: resact(:)  ! RESACT(M)
+real(RP), intent(inout) :: resnew(:)  ! RESNEW(M)
+real(RP), intent(inout) :: rfac(:)  ! RFAC(N, N)
 
 ! Outputs
 real(RP), intent(out) :: dd
-real(RP), intent(out) :: dw(n)
-real(RP), intent(out) :: vlam(n)
+real(RP), intent(out) :: dw(:)  ! DW(N)  ; better name?
+real(RP), intent(out) :: vlam(:)  ! VLAM(N)
 
 ! Local variables
-real(RP) :: w(n)
+character(len=*), parameter :: srname = 'GETACT'
+real(RP) :: w(size(g))
 real(RP) :: cosv, ctol, cval, ddsav, dnorm, rdiag,   &
 &        sinv, sprod, summ, sval, tdel, temp, test, tinynum,   &
 &        violmx, vmult
 integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag, jw,   &
 &           k, l, nactp
+
+integer(IK) :: m
+integer(IK) :: n
+
+! Sizes.
+m = int(size(amat, 2), kind(m))
+n = int(size(g), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(m >= 0, 'M >= 0', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
+    call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
+    call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
+    call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
+    call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
+    call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
+
+    !----------------------------------------------------------------------------------------------!
+    !tol == ???
+    !call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    !call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    !call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
+    !call assert(istriu(rfac, tol), 'RFAC is upper triangular', srname)
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    call assert(size(rfac) == n * (n + 1_IK) / 2_IK, 'RFAC is n-by-n and upper triangular', srname)
+    !----------------------------------------------------------------------------------------------!
+
+    call assert(size(dw) == n, 'SIZE(DW) == N', srname)
+    call assert(size(vlam) == n, 'SIZE(VLAM) == N', srname)
+end if
 
 
 !     N, M, AMAT, B, NACT, IACT, QFAC and RFAC are the same as the terms
