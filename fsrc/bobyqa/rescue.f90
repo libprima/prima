@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 AM01:28:38
+! Last Modified: Monday, February 28, 2022 PM07:00:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,12 +19,12 @@ public :: rescue
 contains
 
 
-subroutine rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, &
-     &  fval, xopt, gopt, hq, pq, bmat, zmat, sl, su, nf, delta, &
-     &  kopt, vlag, f, ftarget, xhist, fhist)
+subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fval, &
+    & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
@@ -38,46 +38,85 @@ implicit none
 
 ! Inputs
 procedure(OBJ) :: calfun
-integer(IK) :: n
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: npt
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: ftarget
-real(RP), intent(in) :: xl(n)
-real(RP), intent(in) :: xu(n)
+real(RP), intent(in) :: xl(:)  ! XL(N)
+real(RP), intent(in) :: xu(:)  ! XU(N)
 
 ! In-outputs
 integer(IK), intent(inout) :: kopt
 integer(IK), intent(inout) :: nf
-real(RP), intent(inout) :: bmat(n, npt + n)
-real(RP), intent(inout) :: fval(npt)
-real(RP), intent(inout) :: gopt(n)
-real(RP), intent(inout) :: hq(n * (n + 1_IK) / 2_IK)
-real(RP), intent(inout) :: pq(npt)
-real(RP), intent(inout) :: sl(n)
-real(RP), intent(inout) :: su(n)
-real(RP), intent(inout) :: vlag(npt + n)
-real(RP), intent(inout) :: xbase(n)
-real(RP), intent(inout) :: xopt(n)
-real(RP), intent(inout) :: xpt(n, npt)
-real(RP), intent(inout) :: zmat(npt, npt - n - 1_IK)
-real(RP), intent(inout) :: fhist(:)
-real(RP), intent(inout) :: xhist(:, :)
+real(RP), intent(inout) :: bmat(:, :)  !  BMAT(N, NPT + N)
+real(RP), intent(inout) :: fhist(:)  ! FHIST(MAXFHIST)
+real(RP), intent(inout) :: fval(:)  ! FVAL(NPT)
+real(RP), intent(inout) :: gopt(:)  ! GOPT(N)
+real(RP), intent(inout) :: hq(:)  ! HQ(N, N)
+real(RP), intent(inout) :: pq(:)  ! PQ(NPT)
+real(RP), intent(inout) :: sl(:)  ! SL(N)
+real(RP), intent(inout) :: su(:)  ! SU(N)
+real(RP), intent(inout) :: vlag(:)  ! VLAG(NPT+N)
+real(RP), intent(inout) :: xbase(:)  ! XBASE(N)
+real(RP), intent(inout) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
+real(RP), intent(inout) :: xopt(:)  ! XOPT(N)
+real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
+real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Outputs
 real(RP), intent(out) :: f
 
 ! Local variables
-real(RP) :: ptsaux(2, n)
-real(RP) :: ptsid(npt)
-real(RP) :: w(2_IK * npt + n)
-real(RP) :: x(n)
+character(len=*), parameter :: srname = 'RESCUE'
+integer(IK) :: maxfhist
+integer(IK) :: maxhist
+integer(IK) :: maxxhist
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: ptsaux(2, size(xopt))
+real(RP) :: ptsid(size(fval))
+real(RP) :: w(2 * size(fval) + size(xopt))
+real(RP) :: x(size(xopt))
 real(RP) :: beta, bsum, den, denom, diff,      &
 &        distsq, dsqmin, fbase, hdiag, sfrac,    &
 &        summ, sumpq, temp, vlmxsq, vquad, winc, xp, xq
 integer(IK) :: i, ih, ihp, ihq, ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nptm, nrem
+
+n = int(size(xopt), kind(n))
+npt = int(size(fval), kind(npt))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(maxfun >= npt + 1, 'MAXFUN >= NPT+1', srname)
+    call assert(delta > 0, 'DELTA > 0', srname)
+    call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
+    call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
+
+    !----------------------------------------------------------------------------------------------!
+    !call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
+    call assert(size(hq) == n * (n + 1_IK) / 2_IK, 'HQ is n-by-n and symmetric', srname)
+    !----------------------------------------------------------------------------------------------!
+
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(size(vlag) == n + npt, 'SIZE(PQ) == N + NPT', srname)
+    call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+end if
+
 
 !
 !     The arguments N, NPT, XL, XU, IPRINT, MAXFUN, XBASE, XPT, FVAL, XOPT,
