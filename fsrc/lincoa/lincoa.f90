@@ -27,7 +27,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM01:37:05
+! Last Modified: Monday, February 28, 2022 PM08:40:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -164,13 +164,16 @@ character(len=MSGLEN) :: wmsg
 integer(IK) :: i
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
+integer(IK) :: j
+integer(IK) :: m
 integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
 integer(IK) :: n
 integer(IK) :: nf_loc
-integer(IK) :: npt_loc
 integer(IK) :: nhist
+integer(IK) :: npt_loc
+logical :: constr_modified
 real(RP) :: cstrv_loc
 real(RP) :: ctol_loc
 real(RP) :: cweight_loc
@@ -181,6 +184,8 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
+real(RP) :: smallx
+real(RP) :: summ
 real(RP), allocatable :: A_loc(:, :)
 real(RP), allocatable :: A_normalized(:, :)
 real(RP), allocatable :: b_loc(:)
@@ -188,15 +193,10 @@ real(RP), allocatable :: b_normalized(:)
 real(RP), allocatable :: chist_loc(:)
 real(RP), allocatable :: fhist_loc(:)
 real(RP), allocatable :: xhist_loc(:, :)
-real(RP) :: smallx
-real(RP) :: sum
-logical :: constr_modified
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Working variables (to be removed)
 real(RP) :: temp
-real(RP), allocatable :: w(:)
-integer(IK) :: j, m
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Sizes
@@ -354,11 +354,6 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc, present(chist), chist_loc)
 
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Working space (to be removed)
-call safealloc(w, m * (2_IK + n) + npt_loc * (4_IK + n + npt_loc) + n * (9_IK + 3_IK * n) + &
-    & max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt_loc))
-
 ! Normalize the constraints, and copy the resultant constraint matrix and right hand sides into
 ! working space, after increasing the right hand sides if necessary so that the starting point
 ! is feasible.
@@ -368,10 +363,10 @@ call safealloc(A_normalized, n, m)
 call safealloc(b_normalized, m)
 if (m > 0) then
     do j = 1, m
-        sum = ZERO
+        summ = ZERO
         temp = ZERO
         do i = 1, n
-            sum = sum + A_loc(i, j) * x(i)
+            summ = summ + A_loc(i, j) * x(i)
             temp = temp + A_loc(i, j)**2
         end do
         if (temp <= 0) then
@@ -379,20 +374,22 @@ if (m > 0) then
             return
         end if
         temp = sqrt(temp)
-        constr_modified = constr_modified .or. (sum - b_loc(j) > smallx * temp)
-        b_normalized(j) = max(b_loc(j), sum) / temp
+        constr_modified = constr_modified .or. (summ - b_loc(j) > smallx * temp)
+        b_normalized(j) = max(b_loc(j), summ) / temp
         do i = 1, n
             A_normalized(i, j) = A_loc(i, j) / temp
         end do
     end do
 end if
 
+
+!-------------------- Call LINCOB, which performs the real calculations. --------------------------!
 call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, A_loc, A_normalized, &
     & b_loc, b_normalized, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, &
     & rhobeg_loc, rhoend_loc, x, nf_loc, chist_loc, cstrv_loc, f, fhist_loc, xhist_loc, info_loc)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!--------------------------------------------------------------------------------------------------!
 
-! Deallocate A_LOC, etc. Indeed, automatic allocation will take place at exit.
+! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
 deallocate (A_loc)
 deallocate (A_normalized)
 deallocate (b_loc)
