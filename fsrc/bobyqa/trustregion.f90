@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 AM12:42:43
+! Last Modified: Monday, February 28, 2022 PM07:37:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,38 +19,39 @@ public :: trsbox
 contains
 
 
-subroutine trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, xnew, d, gnew, dsq, crvmin)
+subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: n
-integer(IK), intent(in) :: npt
 real(RP), intent(in) :: delta
-real(RP), intent(in) :: gopt(n)
-real(RP), intent(in) :: hq(n * (n + 1_IK) / 2_IK)
-real(RP), intent(in) :: pq(npt)
-real(RP), intent(in) :: sl(n)
-real(RP), intent(in) :: su(n)
-real(RP), intent(in) :: xopt(n)
-real(RP), intent(in) :: xpt(n, npt)
+real(RP), intent(in) :: gopt(:)  ! GOPT(N)
+real(RP), intent(in) :: hq(:)  ! HQ(N, N)
+real(RP), intent(in) :: pq(:)  ! PQ(NPT)
+real(RP), intent(in) :: sl(:)  ! SL(N)
+real(RP), intent(in) :: su(:)  ! SU(N)
+real(RP), intent(in) :: xopt(:)  ! XOPT(N)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! Outputs
 real(RP), intent(out) :: crvmin
-real(RP), intent(out) :: d(n)
+real(RP), intent(out) :: d(:)  ! D(N)
 real(RP), intent(out) :: dsq
-real(RP), intent(out) :: gnew(n)
-real(RP), intent(out) :: xnew(n)
-
+real(RP), intent(out) :: gnew(:)  ! GNEW(N)
+real(RP), intent(out) :: xnew(:)  ! XNEW(N)
 
 ! Local variables
-real(RP) :: hred(n)
-real(RP) :: hs(n)
-real(RP) :: s(n)
-real(RP) :: xbdi(n)
+character(len=*), parameter :: srname = 'TRSBOX'
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: hred(size(gopt))
+real(RP) :: hs(size(gopt))
+real(RP) :: s(size(gopt))
+real(RP) :: xbdi(size(gopt))
 real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, rdnext, rdprev, redmax, rednew,       &
@@ -58,6 +59,30 @@ real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        stplen, temp, tempa, tempb, xsav, xsum
 integer(IK) :: i, iact, ih, isav, itcsav, iterc, itermax, iu, &
 &           j, k, nact
+
+! Sizes
+n = int(size(gopt), kind(n))
+npt = int(size(pq), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(delta > 0, 'DELTA > 0', srname)
+
+    !----------------------------------------------------------------------------------------------!
+    !call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
+    call assert(size(hq) == n * (n + 1_IK) / 2_IK, 'HQ is n-by-n and symmetric', srname)
+    !----------------------------------------------------------------------------------------------!
+
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
+    call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
+    call assert(size(gnew) == n, 'SIZE(GNEW) == N', srname)
+    call assert(size(xnew) == n, 'SIZE(XNEW) == N', srname)
+end if
 
 !
 !     The arguments N, NPT, XPT, XOPT, GOPT, HQ, PQ, SL and SU have the same

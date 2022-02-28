@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM07:21:07
+! Last Modified: Monday, February 28, 2022 PM07:39:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -279,7 +279,9 @@ do i = 1, npt
         goto 720
     end if
 end do
-call trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, xnew, d, gnew, dsq, crvmin)
+
+call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
+
 dnorm = min(delta, sqrt(dsq))
 if (dnorm < HALF * rho) then
     ntrits = -1
