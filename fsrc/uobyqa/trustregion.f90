@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM08:36:51
+! Last Modified: Monday, February 28, 2022 AM11:55:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: trstep
 contains
 
 
-subroutine trstep(n, g, h, delta, tol, d, gg, td, tn, w, piv, z, evalue)
+subroutine trstep(n, g, h_in, delta, tol, d, evalue)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO
 
@@ -29,22 +29,21 @@ implicit none
 integer(IK), intent(in) :: n
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: g(n)
+real(RP), intent(in) :: h_in(n, n**2)
 real(RP), intent(in) :: tol
 
 ! In-outputs
-real(RP), intent(inout) :: d(n)
-real(RP), intent(inout) :: gg(n)
-real(RP), intent(inout) :: h(n, n**2)
-real(RP), intent(inout) :: piv(n)
-real(RP), intent(inout) :: td(n)
-real(RP), intent(inout) :: tn(n)
-real(RP), intent(inout) :: w(n)
-real(RP), intent(inout) :: z(n)
-
-! Outputs
+real(RP), intent(out) :: d(n)
 real(RP), intent(out) :: evalue
 
 ! Local variables
+real(RP) :: gg(n)
+real(RP) :: h(n, n**2)
+real(RP) :: piv(n)
+real(RP) :: td(n)
+real(RP) :: tn(n)
+real(RP) :: w(n)
+real(RP) :: z(n)
 real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, pivksv, pivot, posdef,   &
@@ -52,7 +51,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        tdmin, temp, tempa, tempb, wsq, wwsq, wz, zsq
 real(RP) :: dsav(n)
 integer(IK) :: i, iterc, j, jp, k, kp, kpp, ksav, ksave, nm
-
+h = h_in
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     N is the number of variables of a quadratic objective function, Q say.

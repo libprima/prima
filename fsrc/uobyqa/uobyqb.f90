@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 AM11:47:06
+! Last Modified: Monday, February 28, 2022 AM11:57:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -279,9 +279,8 @@ end do
 !     Generate the next trust region step and test its length. Set KNEW
 !     to -1 if the purpose of the next F will be to improve conditioning,
 !     and also calculate a lower bound on the Hessian term of the model Q.
-!
-call trstep(n, g, h, delta, tol, d, w(1), w(n + 1), w(2 * n + 1), w(3 * n + 1), &
-& w(4 * n + 1), w(5 * n + 1), evalue)
+call trstep(n, g, h, delta, tol, d, evalue)
+
 temp = ZERO
 do i = 1, n
     temp = temp + d(i)**2
