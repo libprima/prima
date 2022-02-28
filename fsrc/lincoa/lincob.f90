@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM11:03:00
+! Last Modified: Monday, February 28, 2022 PM01:39:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,8 +22,8 @@ public :: lincob
 contains
 
 
-subroutine lincob(calfun, n, npt, m, amat, b_in, x, rhobeg, rhoend, iprint, maxfun, f, info, &
-    & ftarget, A_orig, b_orig, cstrv, nf, xhist, fhist, chist)
+subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bvec, eta1, eta2, &
+    & ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, chist, cstrv, f, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of LINCOA. The arguments IPRINT, MAXFILT, MAXFUN,
 ! MAXHIST, NPT, CTOL, CWEIGHT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, XHIST,
@@ -31,7 +31,8 @@ subroutine lincob(calfun, n, npt, m, amat, b_in, x, rhobeg, rhoend, iprint, maxf
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic models
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, MIN_MAXFILT, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
@@ -49,20 +50,23 @@ implicit none
 ! Inputs
 procedure(OBJ) :: calfun
 integer(IK), intent(in) :: iprint
-integer(IK), intent(in) :: m
+integer(IK), intent(in) :: maxfilt
 integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: n
 integer(IK), intent(in) :: npt
-real(RP), intent(in) :: A_orig(n, m)  ! Better names? necessary?
-real(RP), intent(in) :: amat(n, m)  ! Better names? necessary?
-real(RP), intent(in) :: b_in(m)  ! Better names? necessary?
-real(RP), intent(in) :: b_orig(m) ! Better names? necessary?
+real(RP), intent(in) :: A_orig(:, :)  ! Better names? necessary?
+real(RP), intent(in) :: amat(:, :)  ! Better names? necessary?
+real(RP), intent(in) :: b_orig(:) ! Better names? necessary?
+real(RP), intent(in) :: bvec(:)  ! Better names? necessary?
+real(RP), intent(in) :: eta1
+real(RP), intent(in) :: eta2
 real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: gamma1
+real(RP), intent(in) :: gamma2
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! In-outputs
-real(RP), intent(inout) :: x(n)
+real(RP), intent(inout) :: x(:)
 
 ! Outputs
 integer(IK), intent(out) :: info
@@ -74,25 +78,32 @@ real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: xhist(:, :)
 
 ! Local variables
+character(len=*), parameter :: srname = 'LINCOB'
 real(RP) :: fval(npt)
-real(RP) :: gopt(n)
-real(RP) :: hq(n * (n + 1_IK) / 2_IK)
+real(RP) :: gopt(size(x))
+real(RP) :: hq(size(x) * (size(x) + 1) / 2)
 real(RP) :: pq(npt)
-real(RP) :: pqw(npt + n)  ! Note that the size is NPT + N instead of NPT; Isn't it VLAG in NEWUOA???
-real(RP) :: qfac(n, n)
-real(RP) :: rescon(m)
-real(RP) :: rfac(n * (n + 1_IK) / 2_IK)
-real(RP) :: rsp(2_IK * npt)
-real(RP) :: step(n)
-real(RP) :: xbase(n)
-real(RP) :: xnew(n)
-real(RP) :: xopt(n)
-real(RP) :: xpt(n, npt)
-real(RP) :: xsav(n)
+real(RP) :: pqw(npt + size(x))  ! Note that the size is npt + N instead of npt; Isn't it VLAG in NEWUOA???
+real(RP) :: qfac(size(x), size(x))
+real(RP) :: rescon(size(bvec))
+real(RP) :: rfac(size(x) * (size(x) + 1) / 2)
+real(RP) :: rsp(2 * npt)
+real(RP) :: step(size(x))
+real(RP) :: xbase(size(x))
+real(RP) :: xnew(size(x))
+real(RP) :: xopt(size(x))
+real(RP) :: xpt(size(x), npt)
+real(RP) :: xsav(size(x))
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
-real(RP) :: b(size(b_in))
-integer(IK) :: iact(m)
+real(RP) :: b(size(bvec))
+integer(IK) :: iact(size(bvec))
+integer(IK) :: m
+integer(IK) :: maxchist
+integer(IK) :: maxfhist
+integer(IK) :: maxhist
+integer(IK) :: maxxhist
+integer(IK) :: n
 real(RP) :: del, delsav, delta, dffalt, diff,  &
 &        distsq, fopt, fsave, qoptsq, ratio,     &
 &        rho, snorm, ssq, summ, summz, temp, vqalt,   &
@@ -100,7 +111,36 @@ real(RP) :: del, delsav, delta, dffalt, diff,  &
 integer(IK) :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
-real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
+real(RP) :: w(max(int(size(bvec), IK) + 3_IK * int(size(x), IK), 2_IK * int(size(bvec), IK) + int(size(x), IK), 2_IK * npt))
+
+
+! Sizes.
+m = int(size(bvec), kind(m))
+n = int(size(x), kind(n))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxchist = int(size(chist), kind(maxchist))
+maxhist = int(max(maxxhist, maxfhist, maxchist), kind(maxhist))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(maxfun >= n + 3, 'MAXFUN >= N + 3', srname)
+    call assert(size(A_orig, 1) == n .and. size(A_orig, 2) == m, 'SIZE(A_ORIG) == [N, M]', srname)
+    call assert(size(b_orig) == m, 'SIZE(B_ORIG) == M', srname)
+    call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
+    call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
+    call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
+    call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
+    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
+    call assert(maxfilt >= min(MIN_MAXFILT, maxfun) .and. maxfilt <= maxfun, &
+        & 'MIN(MIN_MAXFILT, MAXFUN) <= MAXFILT <= MAXFUN', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
+end if
 
 !
 !     The arguments N, NPT, M, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
@@ -157,7 +197,7 @@ real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
 !
 !     Set some constants.
 !
-b = b_in
+b = bvec
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019

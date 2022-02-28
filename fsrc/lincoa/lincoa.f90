@@ -27,7 +27,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM10:45:11
+! Last Modified: Monday, February 28, 2022 PM01:37:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -182,7 +182,9 @@ real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP), allocatable :: A_loc(:, :)
+real(RP), allocatable :: A_normalized(:, :)
 real(RP), allocatable :: b_loc(:)
+real(RP), allocatable :: b_normalized(:)
 real(RP), allocatable :: chist_loc(:)
 real(RP), allocatable :: fhist_loc(:)
 real(RP), allocatable :: xhist_loc(:, :)
@@ -194,7 +196,7 @@ logical :: constr_modified
 ! Working variables (to be removed)
 real(RP) :: temp
 real(RP), allocatable :: w(:)
-integer(IK) :: iw, iamat, ib, j, m
+integer(IK) :: j, m
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Sizes
@@ -221,12 +223,14 @@ end if
 
 x = moderatex(x)
 
-call safealloc(A_loc, n, m)
-if (present(A)) then
+call safealloc(A_loc, n, m)  ! NOT removable even in F2003, as A may be absent or of size 0-by-0.
+if (present(A) .and. m > 0) then
+    ! We must check M > 0. Otherwise, the size of A_LOC may be changed to 0-by-0 due to automatic
+    ! (re)allocation if that is the size of A; we allow A to be 0-by-0, but A_LOC should be n-by-0.
     A_loc = A
 end if
 
-call safealloc(b_loc, m)
+call safealloc(b_loc, m)  ! NOT removable even in F2003, as B may be absent.
 if (present(b)) then
     b_loc = b
 end if
@@ -358,12 +362,11 @@ call safealloc(w, m * (2_IK + n) + npt_loc * (4_IK + n + npt_loc) + n * (9_IK + 
 ! Normalize the constraints, and copy the resultant constraint matrix and right hand sides into
 ! working space, after increasing the right hand sides if necessary so that the starting point
 ! is feasible.
-iamat = max(m + 3 * n, 2 * m + n, 2 * npt_loc) + 1
-ib = iamat + m * n
 constr_modified = .false.; 
 smallx = 1.0E-6_RP * rhoend_loc
+call safealloc(A_normalized, n, m)
+call safealloc(b_normalized, m)
 if (m > 0) then
-    iw = iamat - 1
     do j = 1, m
         sum = ZERO
         temp = ZERO
@@ -377,22 +380,23 @@ if (m > 0) then
         end if
         temp = sqrt(temp)
         constr_modified = constr_modified .or. (sum - b_loc(j) > smallx * temp)
-        w(ib + j - 1) = max(b_loc(j), sum) / temp
+        b_normalized(j) = max(b_loc(j), sum) / temp
         do i = 1, n
-            iw = iw + 1
-            w(iw) = A_loc(i, j) / temp
+            A_normalized(i, j) = A_loc(i, j) / temp
         end do
     end do
 end if
 
-call lincob(calfun, n, npt_loc, m, w(iamat), w(ib), x, rhobeg_loc, rhoend_loc, iprint_loc, &
-& maxfun_loc, f, info_loc, ftarget_loc, A_loc, b_loc, cstrv_loc, nf_loc, &
-& xhist_loc, fhist_loc, chist_loc)
+call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, A_loc, A_normalized, &
+    & b_loc, b_normalized, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, &
+    & rhobeg_loc, rhoend_loc, x, nf_loc, chist_loc, cstrv_loc, f, fhist_loc, xhist_loc, info_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Deallocate A_LOC and B_LOC. Indeed, automatic allocation will take place at exit.
+! Deallocate A_LOC, etc. Indeed, automatic allocation will take place at exit.
 deallocate (A_loc)
+deallocate (A_normalized)
 deallocate (b_loc)
+deallocate (b_normalized)
 
 
 ! Write the outputs.
