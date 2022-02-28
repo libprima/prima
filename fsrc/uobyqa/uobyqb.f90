@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM08:09:34
+! Last Modified: Monday, February 28, 2022 PM08:22:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -592,7 +592,7 @@ if (knew > 0) then
 !     value of the modulus of its Lagrange function within the trust region.
 !     Here the vector XNEW is used as temporary working space.
 !
-    call geostep(n, g, h, rho, d, vmax)
+    call geostep(g, h, rho, d, vmax)
     if (errtol > ZERO) then
         if (wmult * vmax <= errtol) goto 310
     end if
