@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM08:55:38
+! Last Modified: Monday, February 28, 2022 PM12:01:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: geostep
 contains
 
 
-subroutine geostep(n, g, h, rho, d, v, vmax)
+subroutine geostep(n, g, h_in, rho, d, vmax)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
@@ -29,22 +29,22 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: n
 real(RP), intent(in) :: g(n)
+real(RP), intent(in) :: h_in(n, n**2)
 real(RP), intent(in) :: rho
 
-! In-outputs
-real(RP), intent(inout) :: d(n)
-real(RP), intent(inout) :: h(n, n**2)
-real(RP), intent(inout) :: v(n)
-
 ! Outputs
+real(RP), intent(out) :: d(n)
 real(RP), intent(out) :: vmax
 
 ! Local variables
+real(RP) :: h(n, n**2)
+real(RP) :: v(n)
 real(RP) :: dd, dhd, dlin, dsq, gd, gg, ghg, gnorm, &
 &        halfrt, hmax, ratio, scaling, summ, sumv, temp, &
 &        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhw, &
 &        vlin, vmu, vnorm, vsq, vv, wcos, whw, wsin, wsq
 integer(IK) :: i, j, k
+h = h_in
 !
 !     N is the number of variables of a quadratic objective function, q say.
 !     G is the gradient of Q at the origin.
