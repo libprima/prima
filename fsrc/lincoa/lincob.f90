@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM03:33:59
+! Last Modified: Monday, February 28, 2022 PM04:48:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -214,9 +214,9 @@ imprv = 0
 !       so that the constraint violation is at least 0.2*RHOBEG. Also KOPT
 !       is set so that XPT(KOPT,.) is the initial trust region centre.
 !
-call initialize(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval, &
-& xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, rsp, rescon, step, pqw, f, ftarget, &
-& A_orig, b_orig, cstrv, nf, xhist, fhist, chist)
+call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, b, &
+    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, rsp, &
+    & step, pqw, x, xbase, xhist, xopt, xpt, xsav, zmat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
