@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 AM12:55:48
+! Last Modified: Monday, February 28, 2022 PM07:20:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,41 +19,65 @@ public :: geostep
 contains
 
 
-subroutine geostep(n, npt, xpt, xopt, bmat, zmat, sl, su, kopt, knew, adelt, xnew, xalt, alpha, cauchy)
+subroutine geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, alpha, cauchy, xalt, xnew)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: knew
 integer(IK), intent(in) :: kopt
-integer(IK), intent(in) :: n
-integer(IK), intent(in) :: npt
 real(RP), intent(in) :: adelt
-real(RP), intent(in) :: bmat(n, npt + n)
-real(RP), intent(in) :: sl(n)
-real(RP), intent(in) :: su(n)
-real(RP), intent(in) :: xopt(n)
-real(RP), intent(in) :: xpt(n, npt)
-real(RP), intent(in) :: zmat(npt, npt - n - 1_IK)
+real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
+real(RP), intent(in) :: sl(:)  ! SL(N)
+real(RP), intent(in) :: su(:)  ! SU(N)
+real(RP), intent(in) :: xopt(:)  ! XOPT(N)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Outputs
-real(RP), intent(out) :: xnew(n)
 real(RP), intent(out) :: alpha
 real(RP), intent(out) :: cauchy
-real(RP), intent(out) :: xalt(n)
+real(RP), intent(out) :: xalt(:)  ! XALT(N)
+real(RP), intent(out) :: xnew(:)  ! XNEW(N)
 
 ! Local variables
-real(RP) :: glag(n)
-real(RP) :: hcol(npt)
-real(RP) :: w(2_IK * n)
+character(len=*), parameter :: srname = 'GEOSTEP'
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: glag(size(xpt, 1))
+real(RP) :: hcol(size(xpt, 2))
+real(RP) :: w(2 * size(xpt, 1))
 real(RP) :: bigstp, const, csave, curv, dderiv, diff, distsq,  &
 &        ggfree, gw, ha, predsq, presav, scaling, &
 &        slbd, step, stpsav, subd, sumin, temp, tempa,      &
 &        tempb, tempd, vlag, wfixsq, wsqsav
 integer(IK) :: i, ibdsav, iflag, ilbd, isbd, iubd, j, k, ksav
+
+
+! Sizes.
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(knew /= kopt, 'KNEW /= KOPT', srname)
+    call assert(adelt > 0, 'ADELT > 0', srname)
+    call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
+    call assert(size(xalt) == n, 'SIZE(XALT) == N', srname)
+    call assert(size(xnew) == n, 'SIZE(XNEW) == N', srname)
+end if
+
 
 !
 !     The arguments N, NPT, XPT, XOPT, BMAT, ZMAT, NDIM, SL and SU all have
