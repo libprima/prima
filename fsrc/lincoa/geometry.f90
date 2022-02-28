@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM10:42:58
+! Last Modified: Monday, February 28, 2022 PM03:34:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,42 +22,74 @@ public :: geostep
 contains
 
 
-subroutine geostep(n, npt, m, amat, xpt, xopt, nact, iact, rescon, qfac, kopt, knew, del, step, gl_in, pqw, ifeas)
+subroutine geostep(iact, knew, kopt, nact, amat, del, gl_in, pqw, qfac, rescon, xopt, xpt, ifeas, step)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: iact(:)
+integer(IK), intent(in) :: iact(:)  ! IACT(M)
 integer(IK), intent(in) :: knew
 integer(IK), intent(in) :: kopt
-integer(IK), intent(in) :: m
-integer(IK), intent(in) :: n
 integer(IK), intent(in) :: nact
-integer(IK), intent(in) :: npt
-real(RP), intent(in) :: amat(n, m)
+real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: del
-real(RP), intent(in) :: gl_in(n)
-real(RP), intent(in) :: pqw(npt)
-real(RP), intent(in) :: qfac(n, n)
-real(RP), intent(in) :: rescon(m)
-real(RP), intent(in) :: xopt(n)
-real(RP), intent(in) :: xpt(n, npt)
+real(RP), intent(in) :: gl_in(:)  ! GL_IN(N)
+real(RP), intent(in) :: pqw(:)  ! PQW(NPT)  ; better name?
+real(RP), intent(in) :: qfac(:, :)  ! QFAC(N, N)
+real(RP), intent(in) :: rescon(:)  ! RESCON(M)
+real(RP), intent(in) :: xopt(:)  ! XOPT(N)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! Outputs
 integer(IK), intent(out) :: ifeas
-real(RP), intent(out) :: step(n)
+real(RP), intent(out) :: step(:)  ! STEP(N)
 
 ! Local variables
-real(RP) :: rstat(m)
-real(RP) :: w(n)
-real(RP) :: gl(n)
+character(len=*), parameter :: srname = 'GEOSTEP'
+integer(IK) :: m
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: rstat(size(amat, 2))
+real(RP) :: w(size(amat, 1))
+real(RP) :: gl(size(gl_in))
 real(RP) :: bigv, ctol, gg, ghg, resmax, sp, ss,  &
 &        stp, stpsav, summ, temp, test, vbig, vgrad, &
 &        vlag, vnew, ww
 integer(IK) :: i, j, jsav, k, ksav
+
+! Sizes.
+m = int(size(amat, 2), kind(m))
+n = int(size(xopt), kind(n))
+npt = int(size(pqw), kind(npt))
+
+if (DEBUGGING) then
+    call assert(m >= 0, 'M >= 0', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
+    call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
+    call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
+    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(knew /= kopt, 'KNEW /= KOPT', srname)
+    call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
+    call assert(del > 0, 'DEL > 0', srname)
+    call assert(size(gl_in) == n, 'SIZE(GL_IN) == N', srname)
+
+    !----------------------------------------------------------------------------------------------!
+    !tol == ???
+    !call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    !call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    !----------------------------------------------------------------------------------------------!
+
+    call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+end if
 
 ifeas = 0_IK !??? Added by Zaikun 20220227
 gl = gl_in

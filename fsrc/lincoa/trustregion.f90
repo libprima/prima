@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM02:40:05
+! Last Modified: Monday, February 28, 2022 PM03:18:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: trstep
 contains
 
 
-subroutine trstep(amat, xpt, hq, pq, nact, iact, rescon, qfac, rfac, snorm, step, g_in, ngetact)
+subroutine trstep(amat, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, DEBUGGING
@@ -35,7 +35,7 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
-real(RP), intent(in) :: g_in(:)  ! G_IN(N)
+real(RP), intent(in) :: gq(:)  ! GQ(N)
 real(RP), intent(in) :: hq(:)  ! HQ(N, N)
 real(RP), intent(in) :: pq(:)  ! PQ(NPT)
 real(RP), intent(in) :: rescon(:)  ! RESCON(M)
@@ -70,13 +70,14 @@ integer(IK) :: npt
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
-n = int(size(amat, 1), kind(n))
+n = int(size(gq), kind(n))
 npt = int(size(pq), kind(npt))
 
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(size(g_in) == n, 'SIZE(G_IN) == N', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
 
     !----------------------------------------------------------------------------------------------!
     !call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
@@ -100,7 +101,7 @@ if (DEBUGGING) then
     !----------------------------------------------------------------------------------------------!
 end if
 
-g = g_in
+g = gq
 
 !
 !     N, NPT, M, AMAT, B, XPT, HQ, PQ, NACT, IACT, RESCON, QFAC and RFAC
