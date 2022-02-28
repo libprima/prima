@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM03:45:51
+! Last Modified: Monday, February 28, 2022 PM04:44:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,13 +22,13 @@ public :: initialize
 contains
 
 
-subroutine initialize(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
-     &  xpt, fval, xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, &
-     &  rsp, rescon, step, vlag, f, ftarget, &
-     &  A_orig, b_orig, cstrv, nf, xhist, fhist, chist)
+subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, b, &
+    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, rsp, &
+    & step, vlag, x, xbase, xhist, xopt, xpt, xsav, zmat)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
@@ -43,48 +43,96 @@ implicit none
 ! Inputs
 procedure(OBJ) :: calfun
 integer(IK), intent(in) :: iprint
-integer(IK), intent(in) :: m
-integer(IK), intent(in) :: n
-integer(IK), intent(in) :: npt
-real(RP), intent(in) :: A_orig(n, m)
-real(RP), intent(in) :: amat(n, m)
-real(RP), intent(in) :: b_orig(m)
+real(RP), intent(in) :: A_orig(:, :)  ! AMAT(N, M)
+real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
+real(RP), intent(in) :: b_orig(:)  ! B_ORIG(M)
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 
 ! In-outputs
-real(RP), intent(inout) :: b(m)
+real(RP), intent(inout) :: b(:)  ! B(M)
 
 ! Outputs
 integer(IK), intent(out) :: idz
 integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: bmat(n, npt + n)
-real(RP), intent(out) :: chist(:)
+real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT+N)
+real(RP), intent(out) :: chist(:)  ! CHIST(MAXCHIST)
 real(RP), intent(out) :: cstrv
 real(RP), intent(out) :: f
-real(RP), intent(out) :: fhist(:)
-real(RP), intent(out) :: fval(npt)
-real(RP), intent(out) :: gopt(n)
-real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
-real(RP), intent(out) :: pq(npt)
-real(RP), intent(out) :: rescon(m)
-real(RP), intent(out) :: rsp(2_IK * npt)
-real(RP), intent(out) :: step(n)
-real(RP), intent(out) :: vlag(npt + n)  ! The size is NPT + N instead of NPT
-real(RP), intent(out) :: x(n)
-real(RP), intent(out) :: xbase(n)
-real(RP), intent(out) :: xhist(:, :)
-real(RP), intent(out) :: xopt(n)
-real(RP), intent(out) :: xpt(n, npt)
-real(RP), intent(out) :: xsav(n)
-real(RP), intent(out) :: zmat(npt, npt - size(x) - 1)
+real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
+real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
+real(RP), intent(out) :: gopt(:)  ! GOPT(N)
+real(RP), intent(out) :: hq(:)  ! HQ(N, N)
+real(RP), intent(out) :: pq(:)  ! PQ(NPT)
+real(RP), intent(out) :: rescon(:)  ! RESCON(M)
+real(RP), intent(out) :: rsp(:)  ! RSP(2*NPT)
+real(RP), intent(out) :: step(:)  ! STEP(N)
+real(RP), intent(out) :: vlag(:)  ! VLAG(NPT+N) The size is NPT + N instead of NPT
+real(RP), intent(out) :: x(:)  ! X(N)
+real(RP), intent(out) :: xbase(:)  ! XBASE(N)
+real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
+real(RP), intent(out) :: xopt(:)  ! XOPT(N)
+real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
+real(RP), intent(out) :: xsav(:)  ! XSAV(N)  ; necessary ???
+real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
-real(RP) :: w(npt - n - 1_IK)
+character(len=*), parameter :: srname = 'INITIIALIZE'
+integer(IK) :: m
+integer(IK) :: maxchist
+integer(IK) :: maxfhist
+integer(IK) :: maxhist
+integer(IK) :: maxxhist
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: w(size(zmat, 2))
 real(RP) :: bigv, feas, recip, reciq, resid, rhosq, temp, test
 integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, knew
 
+
+! Sizes.
+m = int(size(b), kind(m))
+n = int(size(x), kind(n))
+npt = int(size(fval), kind(npt))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxchist = int(size(chist), kind(maxchist))
+maxhist = int(max(maxxhist, maxfhist, maxchist), kind(maxhist))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(m >= 0, 'M >= 0', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(size(A_orig, 1) == n .and. size(A_orig, 2) == m, 'SIZE(A_ORIG) == [N, M]', srname)
+    call assert(size(b_orig) == m, 'SIZE(B_ORIG) == M', srname)
+    call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
+    call assert(rhobeg > 0, 'RHOBEG > 0', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
+    call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
+    call assert(size(rsp) == 2_IK * npt, 'SIZE(RSP) == 2*NPT', srname)
+    call assert(size(step) == n, 'SIZE(STEP) == N', srname)
+    call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT+N', srname)
+    call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
+    call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
+    call assert(size(xsav) == n, 'SIZE(XSAV) == N', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+
+    !----------------------------------------------------------------------------------------------!
+    !call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
+    call assert(size(hq) == n * (n + 1_IK) / 2_IK, 'HQ is n-by-n and symmetric', srname)
+    !----------------------------------------------------------------------------------------------!
+
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
+end if
 
 
 !*++
