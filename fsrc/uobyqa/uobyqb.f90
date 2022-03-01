@@ -1,3 +1,5 @@
+!4.SIZE of d in TRSTEP is N + 1 instead of N, maybe also other arrays and other places.
+!5.THE checks in rangehist cannot pass(xhist does not contain NaN)
 module uobyqb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of UOBYQA.
@@ -8,7 +10,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM08:30:09
+! Last Modified: Tuesday, March 01, 2022 PM03:00:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,7 +70,7 @@ integer(IK) :: maxfhist
 integer(IK) :: maxxhist
 real(RP) :: d(size(x))
 real(RP) :: g(size(x))
-real(RP) :: h(size(x), size(x)**2)
+real(RP) :: h(size(x), size(x))
 real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2, (size(x) + 1) * (size(x) + 2) / 2 - 1)
 real(RP) :: pq(size(pl, 2))
 real(RP) :: vlag(size(pl, 1))
@@ -335,7 +337,6 @@ end do
     info = 3
     goto 420
 end if
-nf = nf + 1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do i = 1, n
@@ -355,6 +356,7 @@ end do
 
 !------------------------------------------------------------------------!
 call evaluate(calfun, x, f)
+nf = nf + 1
 call savehist(nf, x, xhist, f, fhist)
 !------------------------------------------------------------------------!
 

@@ -51,6 +51,7 @@ try
                 options.debug = debug_flags{idbg};
                 for ivar = 1 : length(variants)
                     options.classical = strcmp(variants{ivar}, 'classical');
+                    options.output_xhist = true;
                     options
                     format long
                     [a, b, c, d] = solver(fun, x0, options)

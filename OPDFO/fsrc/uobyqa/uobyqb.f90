@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:03:44
+! Last Modified: Tuesday, March 01, 2022 PM03:28:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,8 +20,8 @@ contains
 
 
 subroutine uobyqb(calfun, n, x, rhobeg, rhoend, iprint, maxfun, npt, xbase, &
-     &  xopt, xnew, xpt, pq, pl, h, g, d, vlag, w, f, info, ftarget, &
-    & nf, xhist, maxxhist, fhist, maxfhist)
+     &  xopt, xnew, xpt, pq, pl, h, g, d, f, info, ftarget, nf, xhist, maxxhist, fhist, maxfhist)
+!     &  xopt, xnew, xpt, pq, pl, h, g, d, vlag, w, f, info, ftarget, nf, xhist, maxxhist, fhist, maxfhist)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
@@ -59,16 +59,21 @@ real(RP), intent(out) :: d(n)
 real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(maxfhist)
 real(RP), intent(out) :: g(n)
-real(RP), intent(out) :: h(n, n**2)
+real(RP), intent(out) :: h(n, n)
 real(RP), intent(out) :: pl(npt, npt - 1_IK)
 real(RP), intent(out) :: pq(npt - 1_IK)
-real(RP), intent(out) :: vlag(npt)
+!real(RP), intent(out) :: vlag(npt)
+real(RP) :: vlag(npt)
 real(RP), intent(out) :: xbase(n)
 real(RP), intent(out) :: xhist(n, maxxhist)
 real(RP), intent(out) :: xnew(n)
 real(RP), intent(out) :: xopt(n)
 real(RP), intent(out) :: xpt(n, npt)
-real(RP), intent(out) :: w(max(6_IK * n, (n**2 + 3_IK * n + 2_IK) / 2_IK))
+!real(RP), intent(out) :: w(max(6_IK * n, (n**2 + 3_IK * n + 2_IK) / 2_IK))
+!real(RP) :: w(max(6_IK * n, (n**2 + 3_IK * n + 2_IK) / 2_IK))
+! In Powell's TRSTEP code, n-dimensional vectors may be accessed at N+1, leading to memory errors.
+! We assign one more place to the vectors to avoid such problems. Thus W is enlarged for this.
+real(RP) :: w(max(6_IK * n, (n**2 + 3_IK * n + 2_IK) / 2_IK) + 100_IK * (n + 1_IK))
 
 ! Local variables
 real(RP) :: ddknew, delta, detrat, diff,        &
@@ -284,8 +289,13 @@ end do
 !     to -1 if the purpose of the next F will be to improve conditioning,
 !     and also calculate a lower bound on the Hessian term of the model Q.
 !
-call trstep(n, g, h, delta, tol, d, w(1), w(n + 1), w(2 * n + 1), w(3 * n + 1), &
-& w(4 * n + 1), w(5 * n + 1), evalue)
+!call trstep(n, g, h, delta, tol, d, w(1), w(n + 1), w(2 * n + 1), w(3 * n + 1), &
+!& w(4 * n + 1), w(5 * n + 1), evalue)
+! In Powell's TRSTEP code, n-dimensional vectors may be accessed at N+1, leading to memory errors.
+! We assign one more place to the vectors to avoid such problems.
+call trstep(n, g, h, delta, tol, d, w(1), w(n + 1), w(2 * n + 2), w(3 * n + 3), &
+& w(4 * n + 4), w(5 * n + 5), evalue)
+!trstep(n, g, h, delta, tol, d, gg, td, tn, w, piv, z, evalue)
 temp = ZERO
 do i = 1, n
     temp = temp + d(i)**2
@@ -309,7 +319,7 @@ end do
     info = 3
     goto 420
 end if
-nf = nf + 1
+!nf = nf + 1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do i = 1, n
@@ -329,6 +339,7 @@ end do
 
 !------------------------------------------------------------------------!
 call evaluate(calfun, x, f)
+nf = nf + 1
 call savehist(nf, x, xhist, f, fhist)
 !------------------------------------------------------------------------!
 

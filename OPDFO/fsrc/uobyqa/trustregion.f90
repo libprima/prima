@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM08:36:51
+! Last Modified: Tuesday, March 01, 2022 PM03:29:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: trstep
 contains
 
 
-subroutine trstep(n, g, h, delta, tol, d, gg, td, tn, w, piv, z, evalue)
+subroutine trstep(n, g, h, delta, tol, d_out, gg, td, tn, w, piv, z, evalue)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO
 
@@ -32,12 +32,16 @@ real(RP), intent(in) :: g(n)
 real(RP), intent(in) :: tol
 
 ! In-outputs
-real(RP), intent(inout) :: d(n)
+real(RP), intent(inout) :: d_out(n)
+real(RP) :: d(n + 1)  !!! D(N+1) may be accessed
 real(RP), intent(inout) :: gg(n)
-real(RP), intent(inout) :: h(n, n**2)
-real(RP), intent(inout) :: piv(n)
-real(RP), intent(inout) :: td(n)
-real(RP), intent(inout) :: tn(n)
+real(RP), intent(inout) :: h(n, n)
+!real(RP), intent(inout) :: piv(n)
+!real(RP), intent(inout) :: td(n)
+!real(RP), intent(inout) :: tn(n)
+real(RP), intent(inout) :: piv(n + 1)  !!! PIV(N+1) may be accessed
+real(RP), intent(inout) :: td(n + 1)  !!! TD(N+1) may be accessed
+real(RP), intent(inout) :: tn(n + 1)  !!! TN(N+1) may be accessed
 real(RP), intent(inout) :: w(n)
 real(RP), intent(inout) :: z(n)
 
@@ -483,7 +487,8 @@ end do
 !
 !     Return from the subroutine.
 !
-400 return
+400 d_out(1:n) = d(1:n)
+return
 end subroutine trstep
 
 

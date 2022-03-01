@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM08:55:38
+! Last Modified: Tuesday, March 01, 2022 PM02:24:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,7 +33,7 @@ real(RP), intent(in) :: rho
 
 ! In-outputs
 real(RP), intent(inout) :: d(n)
-real(RP), intent(inout) :: h(n, n**2)
+real(RP), intent(inout) :: h(n, n)
 real(RP), intent(inout) :: v(n)
 
 ! Outputs
