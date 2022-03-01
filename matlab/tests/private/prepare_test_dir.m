@@ -1,4 +1,4 @@
-function test_dir = prepare_test_dir(test_name)
+function test_dir = prepare_test_dir(solver, test_name, test_options)
 %PREPARE_TEST_DIR prepares a copy of the package in `test_dir` for the test named `test_name`.
 
 mfilepath = fileparts(mfilename('fullpath'));  % Directory where this .m file resides.
@@ -11,7 +11,7 @@ s_root_dir = fileparts(fileparts(fileparts(mfilepath)));
 % Define the name for the test directory. We do not add a rand stamp to `test_dir_name`, so that we
 % can reuse it easily. It is needed if we want to repeat a test without recompiling the solvers.
 [~, root_dir_name] = fileparts(s_root_dir);
-test_dir_name = [test_name, '_', root_dir_name];
+test_dir_name = [solver, '_', test_name, '_', root_dir_name];
 test_dir = fullfile(tempdir, test_dir_name);  % Full path to the test directory
 
 % Check that `test_dir` is not a substring of `mfilepath`, so that `mfilepath` is not subdirectory of
@@ -21,6 +21,13 @@ assert(~contains(mfilepath, test_dir));
 assert(~contains(s_root_dir, test_dir));
 
 d_root_dir = test_dir;
+% If test_options.compile = true, then remove `d_root_dir` to sure that we are testing the latest
+% code in `s_root_dir`
+if test_options.compile
+    if exist(d_root_dir, 'dir')
+        rmdir(d_root_dir, 's');
+    end
+end
 if ~exist(d_root_dir, 'dir')
     mkdir(d_root_dir);
 end

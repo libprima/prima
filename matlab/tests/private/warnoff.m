@@ -11,4 +11,6 @@ cellfun(@(solver) warning('off', [solver, ':ExtremeBarrier']), solvers);
 cellfun(@(solver) warning('off', [solver, ':IprintContradictFortran']), solvers);
 cellfun(@(solver) warning('off', [solver, ':InvalidMaxhist']), solvers);
 cellfun(@(solver) warning('off', [solver, ':InvalidNpt']), solvers);
+cellfun(@(solver) warning('off', [solver, ':ObjectiveFailure']), solvers);
+cellfun(@(solver) warning('off', [solver, ':ConstraintFailure']), solvers);
 return

@@ -9,7 +9,9 @@ olddir = pwd();  % Record the current directory.
 % Prepare the test directory, i.e., `test_dir`.
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
-test_dir = prepare_test_dir(funname);
+fake_solver_name = funname;
+options.compile = true;
+test_dir = prepare_test_dir(fake_solver_name, funname, options);
 
 exception = [];
 

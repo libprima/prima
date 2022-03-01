@@ -31,17 +31,18 @@ restoredefaultpath;  % Restore the "right out of the box" path of MATLAB
 
 olddir = pwd();  % Record the current directory.
 
+% Parse the inputs.
+[solver, options] = parse_input(varargin);
+
+
 % Prepare the test directory, i.e., `test_dir`.
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
-test_dir = prepare_test_dir(funname);
+test_dir = prepare_test_dir(solver, funname, options);
 
 exception = [];
 
 try
-
-    % Parse the inputs.
-    [solver, options] = parse_input(varargin);
 
     % Make the solvers available. Note that the solvers are under `test_dir`.
     get_solvers(solver, test_dir, options.compile);
