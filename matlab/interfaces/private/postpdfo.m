@@ -41,7 +41,7 @@ obligatory_probinfo_fields = {'raw_data', 'refined_data', 'fixedx', 'fixedx_valu
     'shift', 'reduced', 'raw_type', 'raw_dim', 'refined_type', 'refined_dim', ...
     'feasibility_problem', 'user_options_fields', 'options', 'warnings', ...
     'hugenum', 'hugefun', 'hugecon'};
-obligatory_options_fields = {'classical', 'debug', 'chkfunval'};
+obligatory_options_fields = {'classical', 'debug', 'chkfunval', 'precision'};
 
 % Who is calling this function? Is it a correct invoker?
 invoker_list = ['pdfon', all_solvers()];
@@ -579,7 +579,7 @@ if options.debug && ~options.classical
         error(sprintf('%s:InvalidChist', invoker), ...
              '%s: UNEXPECTED ERROR: %s is a feasible solver yet it returns positive constrviolations.', invoker, solver);
     end
-    if (strcmp(solver, 'lincoan') && ~constr_modified) || strcmp(solver, 'cobylan')
+    if strcmp(options.precision, 'double') && ((strcmp(solver, 'lincoan') && ~constr_modified) || strcmp(solver, 'cobylan'))
         Aineq = probinfo.raw_data.Aineq;
         bineq = probinfo.raw_data.bineq;
         Aeq = probinfo.raw_data.Aeq;
