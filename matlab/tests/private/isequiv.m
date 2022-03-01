@@ -356,7 +356,7 @@ ready_solvers = {'newuoa', 'cobyla'};  % Solvers whose development is (almost) f
 test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-test_options.classical = (rand < 0.2) && test_ready_solvers;
+test_options.classical = (rand < 0.2);  % If test_ready_solvers = false, the packages call automatically the modernized variant
 test_options.iprint = floor(3*rand);
 test_options.quiet = (rand < 0.8);
 %if rand < 0.5

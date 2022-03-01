@@ -47,7 +47,9 @@ try
         if compile_flag  % Compilation requested.
 
             mexopt = struct();
-            mexopt.debug_only = strcmp(invoker, 'verify');
+            % Do not remove `~test_ready_solvers` in `mexopt.debug_only`; otherwise, we will be
+            % comparing classical solvers and modernized ones!!!
+            mexopt.debug_only = strcmp(invoker, 'verify') && ~test_ready_solvers;
             mexopt.debug = strcmp(invoker, 'verify');
             mexopt.classical = test_ready_solvers;
             mexopt.single = test_ready_solvers;

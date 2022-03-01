@@ -32,7 +32,7 @@ if strcmpi(precision_or_variant, default_variant)
 end
 
 % `availability` set to true if `gethuge` and all the solvers present in `directory` are available
-% with the version specified by the following [precision, debug_flag, variant].
+% with the version specified by the following [precision, default_debug_flag, variant].
 % N.B.: If no solver is present in `directory`, then `availability` is totally defined by the
 % availability of `gethuge`.
 precision = default_precision;
@@ -43,10 +43,10 @@ variant = default_variant;
 if ismember(precision_or_variant, variant_list)  % `precision_or_variant` is a variant.
     variant = precision_or_variant;
 end
-debug_flag = false;  % Default `debug_flag`: non-debugging.
+default_debug_flag = false;  % Default debug flag: non-debugging.
 
 % Check the availability of `gethuge` corresponding to `precision` (note that the availability
-% of `gethuge` does not depend on `debug_flag` or `variant`). If it is unavailable, then set
+% of `gethuge` does not depend on `default_debug_flag` or `variant`). If it is unavailable, then set
 % `availability` to false and return.
 mexname = get_mexname('gethuge', precision);
 if ~exist(fullfile(directory, [mexname, '.', mexext()]), 'file')
@@ -54,16 +54,16 @@ if ~exist(fullfile(directory, [mexname, '.', mexext()]), 'file')
     return
 end
 
-% If `gethuge` is available corresponding to [precision, debug_flag, variant], then we set
-% `availability` to true if and only if [precision, debug_flag, variant] is available for all the
+% If `gethuge` is available corresponding to [precision, default_debug_flag, variant], then we set
+% `availability` to true if and only if [precision, default_debug_flag, variant] is available for all the
 % solvers that are present under `directory`. A solver is considered present if it is available for
-% at least one combination of precision and variant with the default debug_flag. The following lines
+% at least one combination of precision and variant with the default debug flag. The following lines
 % decide the presence of the solvers.
 solver_present = false(length(solver_list), 1);
 for isol = 1 : length(solver_list)
     for iprc = 1 : length(precision_list)
         for ivar = 1 : length(variant_list)
-            mexname = get_mexname(solver_list{isol}, precision_list{iprc}, debug_flag, variant_list{ivar});
+            mexname = get_mexname(solver_list{isol}, precision_list{iprc}, default_debug_flag, variant_list{ivar});
             if exist(fullfile(directory, [mexname, '.', mexext()]), 'file')
                 solver_present(isol) = true;
                 break
@@ -76,13 +76,15 @@ for isol = 1 : length(solver_list)
 end
 
 % Now set `availability` according to all the solvers that are present under `directory`.
-availability = true;  % Default `availability` to true, which is necessary.
-for isol = 1 : length(solver_list)
-    if solver_present(isol)
-        mexname = get_mexname(solver_list{isol}, precision, debug_flag, variant);
-        if ~exist(fullfile(directory, [mexname, '.', mexext()]), 'file')
-            availability = false;
-            return
+availability = any(solver_present);  % Default `availability` to true unless there is no solver present.
+if availability
+    for isol = 1 : length(solver_list)
+        if solver_present(isol)
+            mexname = get_mexname(solver_list{isol}, precision, default_debug_flag, variant);
+            if ~exist(fullfile(directory, [mexname, '.', mexext()]), 'file')
+                availability = false;
+                return
+            end
         end
     end
 end
