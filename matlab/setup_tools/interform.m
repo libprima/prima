@@ -10,6 +10,9 @@ function interform(directory)
 % Output directory
 outputdir = '.interform';  % The leading dot makes the directory hidden on Linux systems.
 
+% Time stamp
+time_stamp = datestr(datetime(), 'yymmdd.HH:MM:SS');
+
 % Do not perform refactoring in these subdirectories (if exist)
 ignoredir = {'original', 'backup', '.interform', 'trash', 'example', 'examples', 'test', 'tests', 'results', 'test_data', 'bak', 'bakf90'};
 
@@ -53,7 +56,7 @@ fprintf(fid, 'in such a form can be compiled both as fixed form and as free form
 fprintf(fid, '\n');
 fprintf(fid, 'See http://fortranwiki.org/fortran/show/Continuation+lines for details.\n');
 fprintf(fid, '\n');
-fprintf(fid, 'Zaikun ZHANG (www.zhangzk.net), %s', date);
+fprintf(fid, 'Zaikun ZHANG (www.zhangzk.net), %s', time_stamp);
 fclose(fid);
 
 % The following lines perform the refactoring in the current directory
@@ -134,6 +137,8 @@ function refactor_file(filename)
 % the new file has the same name as the original one, then the original
 % file will be backed up in "ORIGINAL_FILE_NAME.bak".
 
+time_stamp = datestr(datetime(), 'yymmdd.HH:MM:SS');
+
 fid = fopen(filename, 'r');  % Open file for reading.
 if fid == -1
     error('Cannot open file %s.', filename);
@@ -197,7 +202,7 @@ fprintf(fid, '! file in such a form can be compiled both as fixed form and as fr
 fprintf(fid, '!\n');
 fprintf(fid, '! See http://fortranwiki.org/fortran/show/Continuation+lines for details.\n');
 fprintf(fid, '!\n');
-fprintf(fid, '! Generated using the %s.m script by Zaikun ZHANG (www.zhangzk.net)\n! on %s.\n', mfilename, date);
+fprintf(fid, '! Generated using the %s.m script by Zaikun ZHANG (www.zhangzk.net)\n! at %s.\n', mfilename, time_stamp);
 fprintf(fid, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n');
 
 for i = 1 : length(strs)

@@ -47,6 +47,7 @@ try
         if compile_flag  % Compilation requested.
 
             mexopt = struct();
+            mexopt.debug_only = strcmp(invoker, 'verify');
             mexopt.debug = strcmp(invoker, 'verify');
             mexopt.classical = test_ready_solvers;
             mexopt.single = test_ready_solvers;

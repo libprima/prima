@@ -29,6 +29,10 @@ restoredefaultpath;  % Restore the "right out of the box" path of MATLAB
 
 olddir = pwd();  % Record the current directory.
 
+% Parse the inputs.
+[solver, options] = parse_input(varargin);
+
+
 % Set up the directory to save the testing data, i.e., `data_dir`.
 mfiledir = fileparts(mfilename('fullpath')); % Directory where this .m file resides.
 data_dir = fullfile(mfiledir, 'testdata');
@@ -39,14 +43,11 @@ end
 % Prepare the test directory, i.e., `test_dir`.
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
-test_dir = prepare_test_dir(funname);
+test_dir = prepare_test_dir(solver, funname, options);
 
 exception = [];
 
 try
-
-    % Parse the inputs.
-    [solver, options] = parse_input(varargin);
 
     % Specify where to store the test data.
     options.data_dir = data_dir;

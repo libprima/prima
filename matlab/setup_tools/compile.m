@@ -38,11 +38,15 @@ classical_src = fullfile(fsrc, 'classical');
 % `common`: the directory that contains some common source files shared by all the Fortran solvers
 common = fullfile(fsrc, 'common');
 
-% `options.debug` indicates whether to compile the debugging version of the solvers.
-if isfield(options, 'debug') && islogicalscalar(options.debug) && options.debug
+% `options.debug_only` and `options.debug` indicate whether to compile the debugging version of the
+% solvers. `debug_only` prevails if both of them are present (e.g., debug_only = true, debug = false).
+% `debug_only` is needed only during the development to save compilation time.
+if isfield(options, 'debug_only') && islogicalscalar(options.debug_only) && options.debug_only
+    debug_flags = {true};
+elseif isfield(options, 'debug') && islogicalscalar(options.debug) && options.debug
     debug_flags = {true, false};
 else
-    debug_flags = {false};
+    debug_flags = {false};  % This is the default: only compile the non-debugging optimized version.
 end
 precisions = all_precisions();
 variants = all_variants();
@@ -84,27 +88,22 @@ common_files = [list_files(common, filelist), fullfile(gateways, 'fmxapi.F'), fu
 
 fprintf('Compiling the common files ... ');
 for idbg = 1 : length(debug_flags)
-    if debug_flags{idbg}
-        mex_options = {ad_option, '-silent', '-g'};
-    else
-        mex_options = {ad_option, '-silent', '-O'};
-    end
+    mex_options = {ad_option, '-silent', ['-', dbgstr(debug_flags{idbg})]};
     for iprc = 1 : length(precisions)
         prepare_header(header_file, precisions{iprc}, debug_flags{idbg});
         work_dir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
         prepare_work_dir(work_dir);
         cd(work_dir);
-        % One may write the loop below as
-        %%mex(mex_options{:}, '-c', common_files{:});
-        % But it does not work for some variants of MATLAB. This may be because the compilation above does
-        % not respect the order of common_files{:}, which is critical due to the dependence among modules.
+        % We can NOT write the loop below as `mex(mex_options{:}, '-c', common_files{:});`
+        % Because such a command may not respect the order of common_files{:}, which is critical here.
         for icf = 1 : length(common_files)
             mex(mex_options{:}, '-c', common_files{icf});
             % The module/object files are dumped to the current directory, namely `work_dir`.
         end
         common_obj_files = list_obj_files(work_dir);
-        % Compile `gethuge`. We only provide a non-debugging version of `gethuge`.
-        if ~debug_flags{idbg}
+        % Compile `gethuge`. We only provide a non-debugging version of `gethuge` unless `debug_flags`
+        % contains only true.
+        if all([debug_flags{:}]) || ~debug_flags{idbg}
             gateway = fullfile(gateways, 'gethuge.F');
             mexname = get_mexname('gethuge', precisions{iprc});
             mex(mex_options{:}, common_obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
@@ -130,11 +129,7 @@ for isol = 1 : length(solvers)
                 % The support for the classical variant is limited. No debugging version.
                 continue
             end
-            if debug_flags{idbg}
-                mex_options = {ad_option, '-silent', '-g'};
-            else
-                mex_options = {ad_option, '-silent', '-O'};
-            end
+            mex_options = {ad_option, '-silent', ['-', dbgstr(debug_flags{idbg})]};
             for iprc = 1 : length(precisions)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -151,6 +146,8 @@ for isol = 1 : length(solvers)
                 copyfiles(list_mod_files(common_dir), work_dir);
                 cd(work_dir);
                 src_files = list_files(soldir, filelist);
+                % We can NOT write the loop below as `mex(mex_options{:}, '-c', common_files{:});`
+                % Because such a command may not respect the order of common_files{:}, which is critical here.
                 for isf = 1 : length(src_files)
                     mex(mex_options{:}, '-c', src_files{isf});
                     % The module/object files are dumped to the current directory, namely `work_dir`.
