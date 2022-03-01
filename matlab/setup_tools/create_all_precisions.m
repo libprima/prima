@@ -16,8 +16,8 @@ function create_all_precisions(options_or_directory)
 
 % Default values for the availability of 'single' and 'quadruple'. They are used only if
 % `options_or_directory` is a structure (i.e., it is indeed the compilation options).
-single_precision = true;  
-quadruple_precision = false;  
+single_precision = true;
+quadruple_precision = false;
 
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
