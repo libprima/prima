@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM07:38:04
+! Last Modified: Tuesday, March 01, 2022 PM02:32:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -331,7 +331,10 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 !--------------------------------------------------------------------------------------------------!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Working space (to be removed)
-call safealloc(w, int(n**4 + 8 * n**3 + 23 * n**2 + 42 * n + max(2 * n**2 + 4, 18 * n) / 4, IK))
+!call safealloc(w, int(n**4 + 8 * n**3 + 23 * n**2 + 42 * n + max(2 * n**2 + 4, 18 * n) / 4, IK))
+! Zaikun 20220301: In Powell's code, d(k) with k > n may be accessed. Thus we give
+! more space to w(id:) and make w(iw:) internal in UOBYQB.
+call safealloc(w, int(n**4 + 8 * n**3 + 23 * n**2 + 42 * n + max(2 * n**2 + 4, 18 * n) / 4 + 2 * (n + 10), IK))
 npt = (n * n + 3 * n + 2) / 2
 ixb = 1
 ixo = ixb + n
@@ -342,12 +345,19 @@ ipl = ipq + npt - 1
 ih = ipl + (npt - 1) * npt
 ig = ih + n * n
 id = ig + n
-ivl = ih
-iw = id + n
+! Zaikun 20220301: In Powell's code, H and VLAG share memory. We decouple them by making VLAG
+! internal in UOBYQB.
+!ivl = ih
+! Zaikun 20220301: In Powell's code, d(k) with k > n (even k > n+1) may be accessed. Thus we give
+! more space to w(id:) and make w(iw:) internal in UOBYQB.
+!iw = id + n
 call uobyqb(calfun, n, x, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, npt, w(ixb), w(ixo), &
-     &  w(ixn), w(ixp), w(ipq), w(ipl), w(ih), w(ig), w(id), w(ivl), w(iw), f, &
+     &  w(ixn), w(ixp), w(ipq), w(ipl), w(ih), w(ig), w(id), f, &
      &  info_loc, ftarget_loc, &
      &  nf_loc, xhist_loc, size(xhist_loc, 2, kind=IK), fhist_loc, size(fhist_loc, kind=IK))
+!     &  w(ixn), w(ixp), w(ipq), w(ipl), w(ih), w(ig), w(id), w(ivl), w(iw), f, &
+!     &  info_loc, ftarget_loc, &
+!     &  nf_loc, xhist_loc, size(xhist_loc, 2, kind=IK), fhist_loc, size(fhist_loc, kind=IK))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !--------------------------------------------------------------------------------------------------!
 

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM08:31:37
+! Last Modified: Tuesday, March 01, 2022 PM03:35:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: trstep
 contains
 
 
-subroutine trstep(delta, g, h_in, tol, d, evalue)
+subroutine trstep(delta, g, h_in, tol, d_out, evalue)   !!!! Possible to use D instead of D_OUT?
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -29,24 +29,26 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: g(:)  ! G(N)
-real(RP), intent(in) :: h_in(:, :)  ! H_IN(N, N**2)
+real(RP), intent(in) :: h_in(:, :)  ! H_IN(N, N)
 real(RP), intent(in) :: tol
 
 ! In-outputs
-real(RP), intent(out) :: d(:)  ! D(N)
+!real(RP), intent(out) :: d(:)  ! D(N)
+real(RP), intent(out) :: d_out(:)  ! D(N)  !!!! Temporary; the code below accesses D(N+1)
 real(RP), intent(out) :: evalue
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTEP'
 integer(IK) :: n
+real(RP) :: d(size(g) + 1) !!! D(N+1) may be accessed. !!! Possible to avoid this and spare D_OUT?
 real(RP) :: gg(size(g))
-real(RP) :: h(size(g), size(g)**2)
-real(RP) :: piv(size(g))
-real(RP) :: td(size(g))
-real(RP) :: tn(size(g))
+real(RP) :: h(size(g), size(g))
+real(RP) :: piv(size(g) + 1) !!! PIV(N+1) may be accessed
+real(RP) :: td(size(g) + 1) !!! TD(N+1) may be accessed
+real(RP) :: tn(size(g) + 1) !!! TN(N+1) may be accessed
 real(RP) :: w(size(g))
 real(RP) :: z(size(g))
-real(RP) :: dsav(size(g))
+real(RP) :: dsav(size(g) + 1) !!!
 real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, pivksv, pivot, posdef,   &
@@ -61,8 +63,8 @@ n = int(size(g), kind(n))
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(delta > 0, 'DELTA > 0', srname)
-    call assert(size(h_in, 1) == n .and. size(h_in, 2) == n**2, 'SIZE(H) == [N, N**2]', srname)
-    call assert(size(d) == n, 'SIZE(D) == N', srname)
+    call assert(size(h_in, 1) == n .and. size(h_in, 2) == n, 'SIZE(H) == [N, N]', srname)
+    call assert(size(d_out) == n, 'SIZE(D) == N', srname)
 end if
 
 h = h_in
@@ -241,6 +243,8 @@ end if
 ksav = 0
 piv(1) = td(1) + par
 k = 1
+! Zaikun 20220301: The code below accesses PIV(2), TD(2) when N = 1 !!!!
+! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 150 if (piv(k) > ZERO) then
     piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)
 else
@@ -248,6 +252,7 @@ else
     ksav = k
     piv(k + 1) = td(k + 1) + par
 end if
+! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 k = k + 1
 if (k < n) goto 150
 if (piv(k) < ZERO) goto 160
@@ -273,6 +278,8 @@ if (abs(tn(k)) <= abs(piv(k))) then
     dsq = ONE
     dhd = piv(k)
 else
+! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Zaikun 20220301: The code below accesses TD(N+1), D(N+1) when K = N!!!
     temp = td(k + 1) + par
     if (temp <= abs(piv(k))) then
         d(k + 1) = sign(ONE, -tn(k))
@@ -283,6 +290,7 @@ else
     end if
     dsq = ONE + d(k + 1)**2
 end if
+! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 170 if (k > 1) then
     k = k - 1
     if (tn(k) /= ZERO) then
@@ -496,7 +504,8 @@ end do
 !
 !     Return from the subroutine.
 !
-400 return
+400 d_out(1:n) = d(1:n)  !!!! Temporary
+return
 end subroutine trstep
 
 
