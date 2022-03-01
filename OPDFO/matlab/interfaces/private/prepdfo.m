@@ -1388,12 +1388,17 @@ if isfield(options, 'chkfunval')
         wmsg = sprintf('%s: chkfunval = true but debug = false; chkfunval is set to false; set both flags to true to check function values.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
+    elseif logical(options.chkfunval) && ~strcmp(options.precision, 'double')
+        wid = sprintf('%s:InvalidChkfunval', invoker);
+        wmsg = sprintf('%s: chkfunval = true but options.precision = %s; chkfunval is set to false.', invoker, options.precision);
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
     else
         validated = true;
     end
 end
 if ~validated % options.chkfunval has not got a valid value yet
-    options.chkfunval = logical(chkfunval) && options.debug;
+    options.chkfunval = logical(chkfunval) && options.debug && strcmp(options.precision, 'double');
 end
 if options.chkfunval
     wid = sprintf('%s:Chkfunval', invoker);
