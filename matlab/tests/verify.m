@@ -53,12 +53,10 @@ try
     % Go to the test directory. This is not really necessary. It will not affect the test, but any
     % output (e.g., NEWUOA_output.txt, fort.6) will be dumped to `test_dir`.
     cd(test_dir);
+
     % Record `olddir` in `options` so that we can come back to `olddir` during `isequiv` if
     % necessary (for example, when a single test fails).
     options.olddir = olddir;
-
-    % Show current path information.
-    showpath();
 
     % Conduct the verification.
     if isfield(options, 'reverse') && options.reverse
@@ -66,7 +64,14 @@ try
     else
         solvers = {[solver, 'n'], solver};
     end
+
+    % Show current path information.
+    showpath(solvers);
+
     isequiv(solvers, options);  % `isequiv` raises an error in case the solver behave differently.
+
+    % Show current path information at the end of test.
+    showpath(solvers);
 
 catch exception
 
@@ -76,6 +81,7 @@ end
 
 setpath(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
+fprintf('\nCurrently in %s\n\n', pwd());
 
 if ~isempty(exception)  % Rethrow any exception caught above.
     rethrow(exception);

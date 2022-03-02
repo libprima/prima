@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM04:13:53
+! Last Modified: Wednesday, March 02, 2022 PM11:47:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: trstep
 contains
 
 
-subroutine trstep(amat, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
+subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, DEBUGGING
@@ -35,6 +35,7 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
+real(RP), intent(in) :: delta
 real(RP), intent(in) :: gq(:)  ! GQ(N)
 real(RP), intent(in) :: hq(:)  ! HQ(N, N)
 real(RP), intent(in) :: pq(:)  ! PQ(NPT)
@@ -135,6 +136,11 @@ g = gq
 !
 tinynum = real(tiny(0.0), RP)
 ctest = 0.01D0
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220302: The following line is added so that SNORM is INTENT(OUT) rather than
+! INTNT(INOUT). Is SNORM really the norm of step, or just DELTA??? Check also GETACT.
+snorm = delta
+!--------------------------------------------------------------------------------------------------!
 snsq = snorm * snorm
 !
 !     Set the initial elements of RESNEW, RESACT and STEP.

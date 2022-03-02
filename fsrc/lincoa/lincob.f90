@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM06:57:08
+! Last Modified: Wednesday, March 02, 2022 PM11:16:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -402,9 +402,8 @@ end do
 delsav = delta
 ksave = knew
 if (knew == 0) then
-    snorm = delta
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    call trstep(amat, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
+    call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
 !
 !     A trust region step is applied whenever its length, namely SNORM, is at
 !       least HALF*DELTA. It is also applied if its length is at least 0.1999

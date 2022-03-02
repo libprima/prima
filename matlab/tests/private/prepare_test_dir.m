@@ -46,10 +46,9 @@ end
 % It must be done BEFORE copying the files from `s_matlab_dir` to `d_matlab_dir`.
 setup_tools = fullfile(s_root_dir, 'matlab', 'setup_tools');
 addpath(setup_tools);  % We use `clean_mex` from `setup_tools` to clean up the compiled MEX files.
-s_pdfo_mexdir = fullfile(s_root_dir, 'PDFO', 'matlab', 'interfaces', 'private');
 s_opdfo_mexdir = fullfile(s_root_dir, 'OPDFO', 'matlab', 'interfaces', 'private');
 s_mexdir = fullfile(s_matlab_dir, 'interfaces', 'private');
-mexdir_list = {s_pdfo_mexdir, s_opdfo_mexdir, s_mexdir};
+mexdir_list = {s_opdfo_mexdir, s_mexdir};
 cellfun(@clean_mex, mexdir_list);
 rmpath(setup_tools);  % Remove `setup_tools` from path since it has finishes its job.
 %%%!!!----------------------------------------------------------------------------------------!!!%%%
@@ -68,19 +67,14 @@ if exist(s_mex_interform, 'dir')
 end
 
 % `root_sub_list: directories/files to be copied under `root_dir`
-root_sub_list = {'fsrc', 'PDFO', 'OPDFO', 'setup.m'};
+root_sub_list = {'fsrc', 'OPDFO', 'setup.m'};
 for il = 1 : length(root_sub_list)
     copyfile(fullfile(s_root_dir, root_sub_list{il}), fullfile(d_root_dir, root_sub_list{il}));
 end
 %!------------------------------------------------------------------------------------------------!%
-% Remove the (O)PDFO/matlab/tests directories under d_root_dir. This is IMPORTANT! Without this, the
-% test will mistakenly call scripts from there, because (O)PDFO/matlab/tests may be added to the path
+% Remove the OPDFO/matlab/tests directories under d_root_dir. This is IMPORTANT! Without this, the
+% test will mistakenly call scripts from there, because OPDFO/matlab/tests may be added to the path
 % by the corresponding setup.m. This problem occurred on 2022-02-18 and took two days to debug.
-d_pdfo_matlab_test = fullfile(d_root_dir, 'PDFO', 'matlab', 'tests');
-if exist(d_pdfo_matlab_test, 'dir')
-    rmdir(d_pdfo_matlab_test, 's');
-end
-mkdir(d_pdfo_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 d_opdfo_matlab_test = fullfile(d_root_dir, 'OPDFO', 'matlab', 'tests');
 if exist(d_opdfo_matlab_test, 'dir')
     rmdir(d_opdfo_matlab_test, 's');

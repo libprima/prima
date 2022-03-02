@@ -15,7 +15,8 @@ ctol = 1e-10;
 cpenalty = 1e10;
 type = 'ubln'; % The types of problems to test
 mindim = 1; % The minimal dimension of problems to test
-if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')
+solvers = lower(solvers);
+if startsWith(solvers{1}, 'cobyla') || startsWith(solvers{2}, 'cobyla')
     maxdim = 20; % The maximal dimension of problems to test
 else
     maxdim = 50; % The maximal dimension of problems to test
@@ -36,7 +37,7 @@ requirements.maxdim = options.maxdim;
 requirements.mincon = options.mincon;
 requirements.maxcon = options.maxcon;
 requirements.type = options.type;
-if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')
+if startsWith(solvers{1}, 'cobyla') || startsWith(solvers{2}, 'cobyla')
     requirements.blacklist = {};
     requirements.blacklist = [requirements.blacklist, {'CHEBYQADNE','HAIFAM','HIMMELBI','HYDCAR20','LUKSAN12','LUKSAN13','MSS1','SPANHYD','VANDERM1','VANDERM2','VANDERM3', 'TAX13322', 'TAXR13322'}]; % Takes more than 2 min to solve
     requirements.blacklist = [requirements.blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Time-consuming
@@ -111,11 +112,9 @@ function [fval_history, cv_history] = testsolv(solver, prob, options)
 prob.options = setsolvopt(solver, length(prob.x0), options); % Set the options for the solver
 
 if ischstr(solver)
-    if any(regexp(solver, '_classical'))
-        prob.options.classical = true;
-        solver = regexprep(solver, '_classical', '');
-    end
-    solver = str2func(solver);
+    prob.options.classical = endsWith(solver, '_classical');
+    solver = str2func(regexprep(solver, '_classical$', ''));
+    % `regexprep` removes '_classical' in case 'solver' ends with it.
 end
 
 maxfun = options.maxfun;

@@ -62,16 +62,20 @@ try
     % output (e.g., NEWUOA_output.txt, fort.6) will be dumped to `test_dir`.
     cd(test_dir);
 
-    % Show current path information.
-    showpath();
-
     % Profile the solvers.
     if isfield(options, 'reverse') && options.reverse
-        solvers = {solver, [solver, 'n']};
+        solvers = {[solver, 'n_classical'], [solver, 'n']};
     else
-        solvers = {[solver, 'n'], solver};
+        solvers = {[solver, 'n'], [solver, 'n_classical']};
     end
+
+    % Show current path information.
+    showpath(solvers);
+
     tic; perfdata(solvers, options); toc;
+
+    % Show current path information at the end of test.
+    showpath(solvers);
 
 catch exception
 
@@ -81,6 +85,7 @@ end
 
 setpath(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
+fprintf('\nCurrently in %s\n\n', pwd());
 
 if ~isempty(exception)  % Rethrow any exception caught above.
     rethrow(exception);
