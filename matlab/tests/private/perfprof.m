@@ -119,6 +119,7 @@ yticklabels({'0', '', '0.2', '', '0.4', '', '0.6', '', '0.8', '', '1'});
 solvers = options.solvers;
 for is = 1:ns
     solvers{is} = regexprep(solvers{is}, '_4test', '');
+    solvers{is} = regexprep(solvers{is}, '_classical$', ' (classical)');
     %solvers{is} = regexprep(solvers{is}, 'newuoa', 'NEWUOA');
 end
 if (ns > 3)

@@ -53,8 +53,9 @@ try  % We use `try ... catch ...` in order to restore `allvar_file` in case of a
             classical_variant = options.classical;
         end
         if isfield(options, 'debug_only') && islogicalscalar(options.debug_only) && options.debug_only
-            % If options.debug_only = true, we compile only the debugging version, which is not
-            % available for the classical variant.
+            % If options.debug_only = true, we compile only the debugging version, which is unavailable
+            % for the classical variant. Set classical_variant = false regardless of options.classical.
+            % Therefore, the classical variant will NOT be compiled even if options.classical = true!
             classical_variant = false;
         end
 
