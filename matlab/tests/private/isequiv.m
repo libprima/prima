@@ -429,8 +429,6 @@ else
     prob.nonlcon = nonlcon;
 end
 prob.options = test_options;
-prob.options.chkfunval
-prob.options.precision
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
