@@ -350,20 +350,9 @@ if single_test
     test_options.output_nlchist = true;
 end
 test_options.maxfilt = ceil(randn*500);
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%ready_solvers = {'newuoa', 'cobyla'};  % Solvers whose development is (almost) finished.
-%test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 test_options.iprint = floor(3*rand);
 test_options.quiet = (rand < 0.9);
-% Test all precisions. If test_ready_solvers = false, the packages call automatically the
-% double-precision version.
+% Test all precisions. For unavailable precisions, the double-precision version will be called.
 if rand < 0.6  % Prob = 0.6
     test_options.precision = 'double';
 elseif rand < 0.8  % Prob = 0.32
@@ -371,8 +360,7 @@ elseif rand < 0.8  % Prob = 0.32
 else  % Prob = 0.08
     test_options.precision = 'quadruple';
 end
-% Test all variants. If test_ready_solvers = false, the packages call automatically the
-% modernized variant.
+% Test all variants. If the classical variant is unavailable,  the modernized variant will be called.
 test_options.classical = (rand < 0.1);
 % Test only double for the classical version.
 if test_options.classical

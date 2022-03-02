@@ -52,8 +52,8 @@ try
             mexopt.debug_only = strcmp(invoker, 'verify') && ~test_ready_solvers;
             mexopt.debug = strcmp(invoker, 'verify');
             mexopt.classical = test_ready_solvers;
-            mexopt.single = test_ready_solvers;
             mexopt.quadruple = test_ready_solvers;
+            mexopt.single = true;
 
             cd(neupdfo_dir);
             clear('setup');  % Without this, the next line may not call the latest version of `setup`
