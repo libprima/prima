@@ -69,6 +69,10 @@ try
         solvers = {[solver, 'n'], [solver, 'n_classical']};
     end
 
+    % The following line can be used for testing the single-precision version. If such a test is
+    % intended, remember to set mexopt.single = true in `get_solvers`.
+    %solvers = {[solver, 'n'], [solver, 'n_single']};
+
     % Show current path information.
     showpath(solvers);
 

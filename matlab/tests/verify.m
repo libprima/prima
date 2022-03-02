@@ -68,7 +68,7 @@ try
     % Show current path information.
     showpath(solvers);
 
-    isequiv(solvers, options);  % `isequiv` raises an error in case the solver behave differently.
+    tic; isequiv(solvers, options); toc;  % `isequiv` raises an error in case the solver behave differently.
 
     % Show current path information at the end of test.
     showpath(solvers);

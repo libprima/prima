@@ -16,7 +16,10 @@ end
 fprintf('\n\nSolver paths:\n');
 for isol = 1 : length(solvers)
     solver = solvers{isol};
-    fprintf('\n%s: %s', solver, which(regexprep(solver, '_classical$', '')));
     % `regexprep` removes '_classical' in case 'solver' ends with it.
+    solver = regexprep(solver, '_classical$', '');
+    solver = regexprep(solver, '_single$', '');
+    solver = regexprep(solver, '_quadruple$', '');
+    fprintf('\n%s: %s', solvers{isol}, which(solver));
 end
 fprintf('\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n');
