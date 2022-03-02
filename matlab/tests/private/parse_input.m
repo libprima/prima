@@ -191,13 +191,16 @@ if isempty(prob)
             options.mindim = 51;
         end
         if options.maxdim == 200
-            if strcmpi(solver, 'uobyqa') && strcmpi(invoker, 'profile')
+            if strcmpi(solver, 'uobyqa') && strcmpi(invoker, 'verify')
                 options.maxdim = 90;
             else
                 options.maxdim = 100;
             end
             options.maxcon = 2000;
         end
+    end
+    if options.maxdim == 200
+        optional.maxdim = 199; %!!!
     end
 
     % Define the number of random runs. The actual number of run is 20 + nr.
