@@ -44,13 +44,9 @@ try
             % Define the compilation options.
             mexopt = struct();
 
-            % During verification, save compilation time for non-ready solvers by specifying
-            % debug_only = true: only the debugging version will be compiled.
-            % N.B.: In this case, the classical variant will NOT be compiled and hence not be tested
-            % even if mexopt.classical is set to true.
-            mexopt.debug_only = isverify && ~test_ready_solvers;
-
             % When we are not in verification, only the non-debugging version will be compiled.
+            % We test both the debugging and non-debugging version during the verification.
+            mexopt.debug_only = false;
             mexopt.debug = isverify;
 
             % Save compilation time during the verification of non-ready solvers by not compiling

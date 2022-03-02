@@ -327,8 +327,6 @@ rseed = max(0, min(2^32, yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*i
 rng(rseed);
 prob.x0 = x0 + 0.5*randn(size(x0));
 test_options = struct();
-test_options.debug = true;
-test_options.chkfunval = true;
 test_options.rhobeg = 1 + 0.5*(2*rand-1);
 test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
 test_options.npt = max(min(floor(6*rand*n), (n+2)*(n+1)/2), n+2);
@@ -360,11 +358,25 @@ elseif rand < 0.8  % Prob = 0.32
 else  % Prob = 0.08
     test_options.precision = 'quadruple';
 end
+
+%!------------------------------------------------------------------------------------------------!%
+% Test both debugging and non-debugging versions. They may behave differently.
+% On 20220302, it is observed that, when the Fortran code is compiled with the '-g' (debugging)
+% option, the INTENT(OUT) arguments will keep the values that they get before entering subroutines,
+% even though such values should be cleared on entry of the subroutines. This behavior makes it
+% impossible to detect the arguments that should be INTENT(INOUT) but mistakenly declared as
+% INTENT(OUT). The observation was made on the argument named SNORM in the subroutine TRSTEP of
+% LINCOA, and it took a whole day to debug.
+test_options.debug = (rand < 0.7);
+test_options.chkfunval = test_options.debug;
+%!------------------------------------------------------------------------------------------------!%
 % Test all variants. If the classical variant is unavailable,  the modernized variant will be called.
 test_options.classical = (rand < 0.1);
-% Test only double for the classical version.
+% Test only double for the classical variant; debugging version is unavailable for the classical variant.
 if test_options.classical
     test_options.precision = 'double';
+    test_options.debug = false;
+    test_options.chkfunval = false;
 end
 call_by_package = (rand < 0.5);  % Call by the package instead of the solver
 call_by_structure = (rand < 0.5);  % Pass the problem by a structure

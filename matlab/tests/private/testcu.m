@@ -113,8 +113,17 @@ prob.options = setsolvopt(solver, length(prob.x0), options); % Set the options f
 
 if ischstr(solver)
     prob.options.classical = endsWith(solver, '_classical');
-    solver = str2func(regexprep(solver, '_classical$', ''));
-    % `regexprep` removes '_classical' in case 'solver' ends with it.
+    if endsWith(solver, '_single')
+        prob.options.precision = 'single';
+    end
+    if endsWith(solver, '_quadruple')
+        prob.options.precision = 'quadruple';
+    end
+    % `regexprep` removes '_classical' in case 'solver' ends with it. Similar for '_single', '_quadruple'.
+    solver = regexprep(solver, '_classical$', '');
+    solver = regexprep(solver, '_single$', '');
+    solver = regexprep(solver, '_quadruple$', '');
+    solver = str2func(solver);
 end
 
 maxfun = options.maxfun;
