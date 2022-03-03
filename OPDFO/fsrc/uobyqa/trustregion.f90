@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 01, 2022 PM03:29:58
+! Last Modified: Thursday, March 03, 2022 PM05:52:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,6 +22,8 @@ contains
 subroutine trstep(n, g, h, delta, tol, d_out, gg, td, tn, w, piv, z, evalue)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : maximum
 
 implicit none
 
@@ -183,10 +185,24 @@ if (hnorm == ZERO) then
     end do
     goto 370
 end if
-!
+
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220303: Exit if H, G, TD, or TN are not finite. Otherwise, the behavior of this
+! subroutine is not predictable. For example, if HNORM = GNORM = Inf, it is observed that the
+! initial value of PARL defined below will change when we add code that should not affect PARL
+! (e.g., print it, or add TD = 0, TN = 0, PIV = 0 at the beginning of this subroutine).
+! This is probably because the behavior of MAX is undefined if it receives NaN (when GNORM = HNORM
+! = Inf, GNORM/DELTA - HNORM = NaN). This also motivates us to replace the intrinsic MAX by the
+! MAXIMUM defined in LINALG_MOD. MAXIMUM will return NaN if it receives NaN, making it easier for us
+! to notice that there is a problem and hence debug.
+if (.not. (is_finite(hnorm) .and. is_finite(gnorm) .and. all(is_finite(td(1:n))) .and. all(is_finite(tn(1:n))))) then
+    goto 400
+end if
+!--------------------------------------------------------------------------------------------------!
+
 !     Set the initial values of PAR and its bounds.
 !
-parl = max(ZERO, -tdmin, gnorm / delta - hnorm)
+parl = maximum([ZERO, -tdmin, gnorm / delta - hnorm])
 parlest = parl
 par = parl
 paru = ZERO

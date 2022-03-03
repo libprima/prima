@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 01, 2022 PM03:35:04
+! Last Modified: Thursday, March 03, 2022 PM03:42:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,8 @@ subroutine trstep(delta, g, h_in, tol, d_out, evalue)   !!!! Possible to use D i
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : maximum
 
 implicit none
 
@@ -180,7 +182,7 @@ end do
 !
 hnorm = abs(td(1)) + abs(tn(1))
 tdmin = td(1)
-tn(n) = ZERO
+tn(n) = ZERO  ! This is necessary, as TN(N) will be accessed.
 do i = 2, n
     temp = abs(tn(i - 1)) + abs(td(i)) + abs(tn(i))
     hnorm = max(hnorm, temp)
@@ -194,10 +196,28 @@ if (hnorm == ZERO) then
     end do
     goto 370
 end if
+
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220303: Exit if H, G, TD, or TN are not finite. Otherwise, the behavior of this
+! subroutine is not predictable. For example, if HNORM = GNORM = Inf, it is observed that the
+! initial value of PARL defined below will change when we add code that should not affect PARL
+! (e.g., print it, or add TD = 0, TN = 0, PIV = 0 at the beginning of this subroutine).
+! This is probably because the behavior of MAX is undefined if it receives NaN (when GNORM = HNORM
+! = Inf, GNORM/DELTA - HNORM = NaN). This also motivates us to replace the intrinsic MAX by the
+! MAXIMUM defined in LINALG_MOD. MAXIMUM will return NaN if it receives NaN, making it easier for us
+! to notice that there is a problem and hence debug.
+if (.not. (is_finite(hnorm) .and. is_finite(gnorm) .and. all(is_finite(td(1:n))) .and. all(is_finite(tn(1:n))))) then
+    ! If we declare TD and TN as N+1 dimensional vectors, then we have to specify the range of TD
+    ! and TN in the condition above; also, TN(N) must be set to ZERO.
+    goto 400
+end if
+!--------------------------------------------------------------------------------------------------!
+
 !
 !     Set the initial values of PAR and its bounds.
 !
-parl = max(ZERO, -tdmin, gnorm / delta - hnorm)
+!parl = max(ZERO, -tdmin, gnorm / delta - hnorm)
+parl = maximum([ZERO, -tdmin, gnorm / delta - hnorm])
 parlest = parl
 par = parl
 paru = ZERO
@@ -243,7 +263,10 @@ end if
 ksav = 0
 piv(1) = td(1) + par
 k = 1
-! Zaikun 20220301: The code below accesses PIV(2), TD(2) when N = 1 !!!!
+! Zaikun 20220301:
+! The code below accesses PIV(2), TD(2) when N = 1, even though Powell's code configures PIV and TD
+! as N-dimensional arrays! This is indeed why the original version of UOBYQA constantly terminates
+! with "a trust region step has failed to reduce the quadratic model" when solving univariate problems.
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 150 if (piv(k) > ZERO) then
     piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)

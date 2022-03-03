@@ -58,19 +58,20 @@ try
     % necessary (for example, when a single test fails).
     options.olddir = olddir;
 
-    % Conduct the verification.
+    % Define the solvers to test.
     if isfield(options, 'reverse') && options.reverse
-        solvers = {solver, [solver, 'n']};
+        solvers = {solver, [solver, 'n']};  % Reverse order: first run 'SOLVER', and then run 'SOLVERn'
     else
-        solvers = {[solver, 'n'], solver};
+        solvers = {[solver, 'n'], solver};  % Default order: first run 'SOLVERn', and then run 'SOLVER'
     end
 
     % Show current path information.
     showpath(solvers);
 
+    % Conduct the verification.
     tic; isequiv(solvers, options); toc;  % `isequiv` raises an error in case the solver behave differently.
 
-    % Show current path information at the end of test.
+    % Show current path information again at the end of test.
     showpath(solvers);
 
 catch exception
