@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 01, 2022 PM03:28:27
+! Last Modified: Thursday, March 03, 2022 PM09:08:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ contains
 
 
 subroutine uobyqb(calfun, n, x, rhobeg, rhoend, iprint, maxfun, npt, xbase, &
-     &  xopt, xnew, xpt, pq, pl, h, g, d, f, info, ftarget, nf, xhist, maxxhist, fhist, maxfhist)
+     &  xopt, xnew, pq, pl, h, g, f, info, ftarget, nf, xhist, maxxhist, fhist, maxfhist)
 !     &  xopt, xnew, xpt, pq, pl, h, g, d, vlag, w, f, info, ftarget, nf, xhist, maxxhist, fhist, maxfhist)
 
 ! Generic modules
@@ -55,7 +55,8 @@ real(RP), intent(inout) :: x(n)
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: d(n)
+!real(RP), intent(out) :: d(n)
+real(RP) :: d(n + 1)  ! D(2) may be accessed even if N = 1
 real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(maxfhist)
 real(RP), intent(out) :: g(n)
@@ -68,7 +69,8 @@ real(RP), intent(out) :: xbase(n)
 real(RP), intent(out) :: xhist(n, maxxhist)
 real(RP), intent(out) :: xnew(n)
 real(RP), intent(out) :: xopt(n)
-real(RP), intent(out) :: xpt(n, npt)
+!real(RP), intent(out) :: xpt(n, npt)
+real(RP) :: xpt(n + 1, npt)  ! XPT(2, :) may be accessed even if N = 1
 !real(RP), intent(out) :: w(max(6_IK * n, (n**2 + 3_IK * n + 2_IK) / 2_IK))
 !real(RP) :: w(max(6_IK * n, (n**2 + 3_IK * n + 2_IK) / 2_IK))
 ! In Powell's TRSTEP code, n-dimensional vectors may be accessed at N+1, leading to memory errors.
@@ -293,7 +295,7 @@ end do
 !& w(4 * n + 1), w(5 * n + 1), evalue)
 ! In Powell's TRSTEP code, n-dimensional vectors may be accessed at N+1, leading to memory errors.
 ! We assign one more place to the vectors to avoid such problems.
-call trstep(n, g, h, delta, tol, d, w(1), w(n + 1), w(2 * n + 2), w(3 * n + 3), &
+call trstep(n, g, h, delta, tol, d(1:n), w(1), w(n + 1), w(2 * n + 2), w(3 * n + 3), &
 & w(4 * n + 4), w(5 * n + 5), evalue)
 !trstep(n, g, h, delta, tol, d, gg, td, tn, w, piv, z, evalue)
 temp = ZERO
@@ -577,7 +579,7 @@ if (knew > 0) then
 !     value of the modulus of its Lagrange function within the trust region.
 !     Here the vector XNEW is used as temporary working space.
 !
-    call geostep(n, g, h, rho, d, xnew, vmax)
+    call geostep(n, g, h, rho, d(1:n), xnew, vmax)
     if (errtol > ZERO) then
         if (wmult * vmax <= errtol) goto 310
     end if

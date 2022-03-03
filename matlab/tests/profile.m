@@ -62,11 +62,11 @@ try
     % output (e.g., NEWUOA_output.txt, fort.6) will be dumped to `test_dir`.
     cd(test_dir);
 
-    % Profile the solvers.
+    % Define the solvers to test.
     if isfield(options, 'reverse') && options.reverse
-        solvers = {[solver, 'n_classical'], [solver, 'n']};
+        solvers = {[solver, 'n_classical'], [solver, 'n']};  % Reverse order: first run 'SOLVERn_classical', and then run 'SOLVERn'
     else
-        solvers = {[solver, 'n'], [solver, 'n_classical']};
+        solvers = {[solver, 'n'], [solver, 'n_classical']};  % % Default order: first run 'SOLVERn', and then run 'SOLVERn_classical'.
     end
 
     % The following line can be used for testing the single-precision version. If such a test is
@@ -76,9 +76,10 @@ try
     % Show current path information.
     showpath(solvers);
 
+    % Profile the solvers.
     tic; perfdata(solvers, options); toc;
 
-    % Show current path information at the end of test.
+    % Show current path information again at the end of test.
     showpath(solvers);
 
 catch exception

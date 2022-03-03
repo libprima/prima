@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 01, 2022 PM02:32:15
+! Last Modified: Thursday, March 03, 2022 PM09:08:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -352,9 +352,10 @@ id = ig + n
 ! more space to w(id:) and make w(iw:) internal in UOBYQB.
 !iw = id + n
 call uobyqb(calfun, n, x, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, npt, w(ixb), w(ixo), &
-     &  w(ixn), w(ixp), w(ipq), w(ipl), w(ih), w(ig), w(id), f, &
+     &  w(ixn), w(ipq), w(ipl), w(ih), w(ig), f, &
      &  info_loc, ftarget_loc, &
      &  nf_loc, xhist_loc, size(xhist_loc, 2, kind=IK), fhist_loc, size(fhist_loc, kind=IK))
+!&  w(ixn), w(ixp), w(ipq), w(ipl), w(ih), w(ig), w(id), f, &
 !     &  w(ixn), w(ixp), w(ipq), w(ipl), w(ih), w(ig), w(id), w(ivl), w(iw), f, &
 !     &  info_loc, ftarget_loc, &
 !     &  nf_loc, xhist_loc, size(xhist_loc, 2, kind=IK), fhist_loc, size(fhist_loc, kind=IK))

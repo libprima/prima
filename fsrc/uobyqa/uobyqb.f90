@@ -10,7 +10,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 01, 2022 PM03:00:53
+! Last Modified: Thursday, March 03, 2022 PM09:02:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,7 +68,7 @@ integer(IK) :: npt
 integer(IK) :: maxhist
 integer(IK) :: maxfhist
 integer(IK) :: maxxhist
-real(RP) :: d(size(x))
+real(RP) :: d(size(x) + 1)  ! D(N+1) is accessed when N = 1
 real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x))
 real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2, (size(x) + 1) * (size(x) + 2) / 2 - 1)
@@ -78,7 +78,8 @@ real(RP) :: w(max(6_IK * size(x), (size(x)**2 + 3_IK * size(x) + 2_IK) / 2_IK))
 real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
-real(RP) :: xpt(size(x), size(pl, 1))
+!real(RP) :: xpt(size(x), size(pl, 1))
+real(RP) :: xpt(size(x) + 1, size(pl, 1))  ! XPT(2, :) is accessed when N = 1
 real(RP) :: ddknew, delta, detrat, diff,        &
 &        distest, dnorm, errtol, estim, evalue, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
@@ -242,6 +243,7 @@ ih = ih + 1
 if (nf > nnp) then
     temp = ONE / (w(ip) * w(iq))
     tempa = f - fbase - w(ip) * pq(ip) - w(iq) * pq(iq)
+    ! N.B.: D(2) is accessed by D(IQ) even if N = 1.
     pq(ih) = (tempa - HALF * rhosq * (d(ip) + d(iq))) * temp
     pl(1, ih) = temp
     iw = ip + ip
@@ -264,6 +266,7 @@ if (ip == iq) then
 end if
 if (nf < npt) then
     xpt(ip, nf + 1) = w(ip)
+    ! N.B.: XPT(2, NF+1) is accessed by XPT(IQ, NF+1) even if N = 1.
     xpt(iq, nf + 1) = w(iq)
     goto 30
 end if
@@ -312,7 +315,7 @@ end do
 !     Generate the next trust region step and test its length. Set KNEW
 !     to -1 if the purpose of the next F will be to improve conditioning,
 !     and also calculate a lower bound on the Hessian term of the model Q.
-call trstep(delta, g, h, tol, d, evalue)
+call trstep(delta, g, h, tol, d(1:n), evalue)
 
 temp = ZERO
 do i = 1, n
@@ -594,7 +597,7 @@ if (knew > 0) then
 !     value of the modulus of its Lagrange function within the trust region.
 !     Here the vector XNEW is used as temporary working space.
 !
-    call geostep(g, h, rho, d, vmax)
+    call geostep(g, h, rho, d(1:n), vmax)
     if (errtol > ZERO) then
         if (wmult * vmax <= errtol) goto 310
     end if

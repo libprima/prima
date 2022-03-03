@@ -84,6 +84,10 @@ halfrt = sqrt(HALF)
 !
 !     Pick V such that ||HV|| / ||V|| is large.
 !
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220303: The procedure below may leave K uninitialized due to NaN, leading to SEGFAULT.
+k = 1_IK  
+!--------------------------------------------------------------------------------------------------!
 hmax = ZERO
 do i = 1, n
     summ = ZERO

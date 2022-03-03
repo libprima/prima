@@ -370,6 +370,7 @@ end
 test_options.debug = (rand < 0.7);
 test_options.chkfunval = test_options.debug;
 %!------------------------------------------------------------------------------------------------!%
+
 % Test all variants. If the classical variant is unavailable,  the modernized variant will be called.
 test_options.classical = (rand < 0.1);
 % Test only double for the classical variant; debugging version is unavailable for the classical variant.
@@ -432,17 +433,25 @@ prob.options = test_options;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% N.B.: In some tests, we may invoke this function with solvers{1} == solvers{2}. So do NOT assume
+% that one of the solvers is 'SOLVER' and the other is 'SOLVERn'.
+
 solver1 = str2func(solvers{1});  % Use function handle to avoid `feval`.
 solver2 = str2func(solvers{2});  % Use function handle to avoid `feval`.
-if length(solvers{1}) > length(solvers{2})
+
+if endsWith(solvers{1}, 'n')
     package1 = @pdfon;
-    package2 = @pdfo;
-    tested_solver_name = solvers{2};
 else
     package1 = @pdfo;
-    package2 = @pdfon;
-    tested_solver_name = solvers{1};
 end
+if endsWith(solvers{2}, 'n')
+    package2 = @pdfon;
+else
+    package2 = @pdfo;
+end
+
+tested_solver_name = regexprep(solvers{1}, 'n$', '');
+
 if call_by_package
     if call_by_structure
         prob.options.solver = solvers{1};

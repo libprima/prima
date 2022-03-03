@@ -33,14 +33,15 @@ try
     testpdfon
     toc
 
-    % Show current path information.
-    showpath();
-
-    % Test the solvers.
     solvers = {'cobylan', 'uobyqan', 'newuoan', 'bobyqan', 'lincoan'};
     precisions = {'double', 'single', 'quadruple'};
     debug_flags = {true, false};
     variants = {'modern', 'classical'};
+
+    % Show current path information.
+    showpath(solvers);
+
+    % Test the solvers.
     fun = @sin;
     x0 = 1;
     for isol = 1 : length(solvers)
@@ -56,11 +57,14 @@ try
                     options.output_xhist = true;
                     options
                     format long
-                    [a, b, c, d] = solver(fun, x0, options)
+                    [x, f, exitflag, output] = solver(fun, x0, options)
                 end
             end
         end
     end
+
+    % Show current path information again at the end of test.
+    showpath(solvers);
 
 catch exception
 
@@ -70,6 +74,7 @@ end
 
 setpath(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
+fprintf('\nCurrently in %s\n\n', pwd());
 
 if ~isempty(exception)  % Rethrow any exception caught above.
     rethrow(exception);

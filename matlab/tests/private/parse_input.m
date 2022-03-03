@@ -199,8 +199,14 @@ if isempty(prob)
             options.maxcon = 2000;
         end
     end
-    if options.maxdim == 200 && strcmpi(invoker, 'verify')
-        options.maxdim = 199; %!!!
+    if strcmpi(invoker, 'verify')
+        if strcmpi(solver, 'cobyla')
+            options.maxdim = min(options.maxdim, 100); %!!!
+        elseif strcmpi(solver, 'newuoa')
+            options.maxdim = min(options.maxdim, 190); %!!!
+        elseif strcmpi(solver, 'lincoa')
+            options.maxdim = min(options.maxdim, 190); %!!!
+        end
     end
 
     % Define the number of random runs. The actual number of run is 20 + nr.

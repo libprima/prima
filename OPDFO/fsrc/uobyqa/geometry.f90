@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 01, 2022 PM02:24:26
+! Last Modified: Thursday, March 03, 2022 PM08:45:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,9 +32,9 @@ real(RP), intent(in) :: g(n)
 real(RP), intent(in) :: rho
 
 ! In-outputs
-real(RP), intent(inout) :: d(n)
+real(RP), intent(out) :: d(n)
 real(RP), intent(inout) :: h(n, n)
-real(RP), intent(inout) :: v(n)
+real(RP), intent(out) :: v(n)
 
 ! Outputs
 real(RP), intent(out) :: vmax
@@ -69,6 +69,10 @@ halfrt = sqrt(HALF)
 !
 !     Pick V such that ||HV|| / ||V|| is large.
 !
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220303: The procedure below may leave K uninitialized due to NaN, leading to SEGFAULT.
+k = 1_IK
+!--------------------------------------------------------------------------------------------------!
 hmax = ZERO
 do i = 1, n
     summ = ZERO
