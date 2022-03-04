@@ -201,7 +201,7 @@ if isempty(prob)
     end
     if strcmpi(invoker, 'verify')
         if strcmpi(solver, 'cobyla')
-            options.maxdim = min(options.maxdim, 90); %!!!
+            options.maxdim = min(options.maxdim, 80); %!!!
         elseif strcmpi(solver, 'newuoa')
             options.maxdim = min(options.maxdim, 190); %!!!
         elseif strcmpi(solver, 'lincoa')
