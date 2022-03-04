@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, March 04, 2022 AM01:36:55
+! Last Modified: Friday, March 04, 2022 AM10:38:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -78,7 +78,7 @@ else
     probs_loc(1:nprobs) = ['tetrahedron', 'chebyquad  ', 'chrosen    ', 'trigsabs   ', 'trigssqs   ', 'vardim     ']
 end if
 fix_dim_probs = '           '   ! Initialization, or compilers complain that the array is not (completely) defined.
-fix_dim_probs(1:7) = ['tetrahedron']
+fix_dim_probs(1:1) = ['tetrahedron']
 
 if (present(mindim)) then
     mindim_loc = mindim
@@ -101,7 +101,7 @@ end if
 if (present(nrand)) then
     nrand_loc = nrand
 else
-    nrand_loc = NRAND_DFT * 5_IK  ! More tests since we cannot vary NPT as other solvers.
+    nrand_loc = NRAND_DFT
 end if
 
 if (present(randseed)) then
