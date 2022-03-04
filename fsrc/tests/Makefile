@@ -59,7 +59,7 @@ MAKEFILE_DIR := $(FTEST_DIR)/makefiles
 	@mkdir -p $(TEST_ROOT)
 	@cp -r $(ROOT_DIR)/fsrc $(TEST_ROOT)/
 	@mkdir -p $(SOLVER_FTEST_DIR)
-	@cp $(MAKEFILE_DIR)/Makefile.common $(SOLVER_FTEST_DIR)/
+	@cp $(MAKEFILE_DIR)/Makefile.* $(SOLVER_FTEST_DIR)/
 	@cp $(MAKEFILE_DIR)/Makefile.$(SOLVER) $(SOLVER_FTEST_DIR)/Makefile
 	@cd $(SOLVER_FTEST_DIR) && $(MAKE) $(subst .$(SOLVER),,$@) --no-print-directory
 

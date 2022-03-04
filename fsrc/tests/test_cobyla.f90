@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, March 04, 2022 AM01:34:34
+! Last Modified: Friday, March 04, 2022 AM10:03:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,7 +104,7 @@ end if
 if (present(nrand)) then
     nrand_loc = nrand
 else
-    nrand_loc = NRAND_DFT * 5_IK  ! More tests since we cannot vary NPT as other solvers.
+    nrand_loc = NRAND_DFT * 5_IK  ! More random tests than default since we cannot vary NPT as other solvers.
 end if
 
 if (present(randseed)) then

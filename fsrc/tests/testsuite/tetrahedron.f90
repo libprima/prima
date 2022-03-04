@@ -29,10 +29,10 @@ integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: n
 integer(IK), parameter :: np = 50_IK
-real :: ss
-real :: xs
-real :: ys
-real :: zs
+real(RP) :: ss
+real(RP) :: xs
+real(RP) :: ys
+real(RP) :: zs
 real(RP) :: theta(np)
 real(RP) :: xp(np)
 real(RP) :: yp(np)
@@ -56,11 +56,11 @@ zs = minval([ZERO, zp])
 ss = maxval([ZERO, xp + yp + zp])
 
 call safealloc(prob % x0, prob % n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
-x0(2:8) = ZERO
-x0(1) = ONE / xs
-x0(5) = ONE / ys
-x0(9) = ONE / zs
-x0(10:12) = ONE / ss
+prob % x0(2:8) = ZERO
+prob % x0(1) = ONE / xs
+prob % x0(5) = ONE / ys
+prob % x0(9) = ONE / zs
+prob % x0(10:12) = ONE / ss
 
 prob % Delta0 = ONE
 prob % calfun => calfun_tetrahedron
@@ -86,7 +86,7 @@ end subroutine construct_tetrahedron
 
 
 subroutine calfun_tetrahedron(x, f)
-use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TWO, PI
+use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, TWO, PI
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -99,12 +99,11 @@ real(RP), intent(out) :: f
 ! Local variables
 character(len=*), parameter :: srname = 'CALFUN_TETRAHEDRON'
 integer(IK), parameter :: np = 50_IK
-integer(IK) :: i
 integer(IK) :: j
-real :: ss
-real :: xs
-real :: ys
-real :: zs
+real(RP) :: ss
+real(RP) :: xs
+real(RP) :: ys
+real(RP) :: zs
 real(RP) :: theta(np)
 real(RP) :: xp(np)
 real(RP) :: yp(np)
