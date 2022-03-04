@@ -205,7 +205,7 @@ if isempty(prob)
         elseif strcmpi(solver, 'newuoa')
             options.maxdim = min(options.maxdim, 190); %!!!
         elseif strcmpi(solver, 'lincoa')
-            options.maxdim = min(options.maxdim, 180); %!!!
+            options.maxdim = min(options.maxdim, 170); %!!!
         end
     end
 

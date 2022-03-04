@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, February 22, 2022 PM04:09:59
+! Last Modified: Friday, March 04, 2022 AM01:34:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,7 +133,7 @@ do iprob = 1, nprobs
         n = prob % n
         do irand = 1, max(1_IK, nrand_loc)
             ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
-            ! that the results for different IK are the same. 
+            ! that the results for different IK are the same.
             rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
             call setseed(rseed)
             iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
@@ -176,9 +176,11 @@ do iprob = 1, nprobs
             orig_calcfc => prob % calcfc
 
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
+
             call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
                 & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
                 & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
+
             if (m == 0) then  ! Run the test without constraints
                 call cobyla(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
                     & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)

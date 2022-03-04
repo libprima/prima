@@ -9,6 +9,9 @@ module prob_mod
 ! trigssqs
 ! vardim
 !
+! Linearly constrained:
+! tetrahedron
+!
 ! Nonlinearly constrained:
 ! circle
 ! ellipsoid
@@ -100,6 +103,8 @@ case ('hs100')
     call construct_hs100(prob)
 case ('rsnszk')
     call construct_rsnszk(prob)
+case ('tetrahedron')
+    call construct_tetrahedron(prob)
 case ('trigsabs')
     call construct_trigsabs(prob, n_loc)
 case ('trigssqs')
@@ -169,6 +174,8 @@ include 'hexagon.f90'
 include 'hs100.f90'
 
 include 'rsnszk.f90'
+
+include 'tetrahedron.f90'
 
 include 'trigsabs.f90'
 
