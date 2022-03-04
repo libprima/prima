@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, February 22, 2022 PM04:23:47
+! Last Modified: Friday, March 04, 2022 AM01:36:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,11 +19,11 @@ contains
 
 subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed)
 
-!use, non_intrinsic :: lincoa_mod, only : lincoa
+use, non_intrinsic :: lincoa_mod, only : lincoa
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM
 use, non_intrinsic :: datetime_mod, only : year, week
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: noise_mod, only : noisy, noisy_calcfc, orig_calcfc
+use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
@@ -49,7 +49,6 @@ integer(IK) :: idim
 integer(IK) :: iprint
 integer(IK) :: iprob
 integer(IK) :: irand
-integer(IK) :: m
 integer(IK) :: maxdim_loc
 integer(IK) :: maxfilt
 integer(IK) :: maxfun
@@ -59,29 +58,27 @@ integer(IK) :: n
 integer(IK) :: ndim
 integer(IK) :: nprobs
 integer(IK) :: nrand_loc
-!real(RP) :: cstrv
+real(RP) :: cstrv
 real(RP) :: ctol
-!real(RP) :: f
+real(RP) :: f
 real(RP) :: ftarget
 real(RP) :: rhobeg
 real(RP) :: rhoend
-!real(RP), allocatable :: chist(:)
-!real(RP), allocatable :: conhist(:, :)
-!real(RP), allocatable :: fhist(:)
+real(RP), allocatable :: chist(:)
+real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
-!real(RP), allocatable :: xhist(:, :)
+real(RP), allocatable :: xhist(:, :)
 type(PROB_T) :: prob
 
 if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))
     probs_loc(1:nprobs) = probs
 else
-    nprobs = 12_IK
-    probs_loc(1:nprobs) = ['circle   ', 'ellipsoid', 'fletcheq1', 'fletcheq2', 'hs100    ', 'hexagon  ', 'rsnszk   ', &
-        & 'chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
+    nprobs = 6_IK
+    probs_loc(1:nprobs) = ['tetrahedron', 'chebyquad  ', 'chrosen    ', 'trigsabs   ', 'trigssqs   ', 'vardim     ']
 end if
-fix_dim_probs = '         '   ! Initialization, or compilers complain that the array is not (completely) defined.
-fix_dim_probs(1:7) = ['circle   ', 'ellipsoid', 'fletcheq1', 'fletcheq2', 'hs100    ', 'hexagon  ', 'rsnszk   ']
+fix_dim_probs = '           '   ! Initialization, or compilers complain that the array is not (completely) defined.
+fix_dim_probs(1:7) = ['tetrahedron']
 
 if (present(mindim)) then
     mindim_loc = mindim
@@ -129,7 +126,6 @@ do iprob = 1, nprobs
         else
             call construct(prob, probname, n=dimlist(idim))
         end if
-        m = prob % m
         n = prob % n
         do irand = 1, max(1_IK, nrand_loc)
             ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
@@ -173,19 +169,22 @@ do iprob = 1, nprobs
             end if
             call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
             x = noisy(prob % x0)
-            orig_calcfc => prob % calcfc
+            orig_calfun => prob % calfun
 
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
-            !call lincoa(noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
-            !    & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
-            !    & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
-            !if (m == 0) then  ! Run the test without constraints
-            !    call lincoa(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
-            !        & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
-            !end if
+
+            call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=prob % Aineq, b=prob % bineq, &
+                & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
+                & xhist=xhist, chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
+
+            if (prob % probtype == 'u') then  ! Run the test without constraints
+                call lincoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+                    & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, &
+                    & iprint=iprint)
+            end if
 
             deallocate (x)
-            nullify (orig_calcfc)
+            nullify (orig_calfun)
         end do
         call destruct(prob)  ! Destruct the testing problem.
     end do

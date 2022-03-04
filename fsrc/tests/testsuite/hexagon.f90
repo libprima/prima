@@ -1,5 +1,5 @@
 subroutine construct_hexagon(prob)
-use, non_intrinsic :: consts_mod, only : ONE, HALF, HUGENUM
+use, non_intrinsic :: consts_mod, only : IK, ONE, HALF, HUGENUM
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
