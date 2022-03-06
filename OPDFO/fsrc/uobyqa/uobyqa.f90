@@ -42,13 +42,13 @@ subroutine uobyqa(calfun, x, f, &
 !
 ! or
 !
-! call uobyqa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! call uobyqa(calfun, x, f, rhobeg = 0.5_RP, rhoend = 1.0D-3, maxfun = 100)
 !
 ! See examples/uobyqa_exmp.f90 for a concrete example.
 !
 ! A detailed introduction to the arguments is as follows.
 ! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory name
-! "common". By default, RP = kind(0.0D0) and IK = kind(0), with REAL(RP) being the double-precision
+! "common". By default, RP = kind(0.0_RP) and IK = kind(0), with REAL(RP) being the double-precision
 ! real, and INTEGER(IK) being the default integer. For ADVANCED USERS, RP and IK can be defined by
 ! setting __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if unsure.
 !

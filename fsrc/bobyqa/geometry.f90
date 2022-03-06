@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM07:20:12
+! Last Modified: Saturday, March 05, 2022 PM05:30:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, alpha, cauchy, xalt, xnew)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -78,6 +78,10 @@ if (DEBUGGING) then
     call assert(size(xnew) == n, 'SIZE(XNEW) == N', srname)
 end if
 
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220305: Temporary fix for G95 warning: ‘ksav’/'ibdsav' may be used uninitialized in this function
+ksav = 1_IK; ibdsav = 1_IK
+!--------------------------------------------------------------------------------------------------!
 
 !
 !     The arguments N, NPT, XPT, XOPT, BMAT, ZMAT, NDIM, SL and SU all have
@@ -226,9 +230,9 @@ do k = 1, npt
             isbd = iubd
         end if
         if (subd > HALF) then
-            if (abs(vlag) < 0.25D0) then
+            if (abs(vlag) < QUART) then
                 step = HALF
-                vlag = 0.25D0
+                vlag = QUART
                 isbd = 0
             end if
         end if

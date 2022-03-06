@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM04:44:24
+! Last Modified: Saturday, March 05, 2022 AM01:07:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,9 +22,9 @@ public :: initialize
 contains
 
 
-subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, b, &
+subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x0, b, &
     & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, rsp, &
-    & step, vlag, x, xbase, xhist, xopt, xpt, xsav, zmat)
+    & step, vlag, xbase, xhist, xopt, xpt, xsav, zmat)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
@@ -32,11 +32,14 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
+use, non_intrinsic :: linalg_mod, only : matprod, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
 use, non_intrinsic :: update_mod, only : update
+
+! Development modules (to be removed)
+use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
 
@@ -48,6 +51,7 @@ real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: b_orig(:)  ! B_ORIG(M)
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
+real(RP), intent(in) :: x0(:)  ! X0(N)
 
 ! In-outputs
 real(RP), intent(inout) :: b(:)  ! B(M)
@@ -69,7 +73,6 @@ real(RP), intent(out) :: rescon(:)  ! RESCON(M)
 real(RP), intent(out) :: rsp(:)  ! RSP(2*NPT)
 real(RP), intent(out) :: step(:)  ! STEP(N)
 real(RP), intent(out) :: vlag(:)  ! VLAG(NPT+N) The size is NPT + N instead of NPT
-real(RP), intent(out) :: x(:)  ! X(N)
 real(RP), intent(out) :: xbase(:)  ! XBASE(N)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(out) :: xopt(:)  ! XOPT(N)
@@ -87,6 +90,7 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: w(size(zmat, 2))
+real(RP) :: x(size(x0))
 real(RP) :: bigv, feas, recip, reciq, resid, rhosq, temp, test
 integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, knew
 
@@ -157,10 +161,15 @@ end if
 !
 !     Set some constants.
 !
+!--------------------------------------------------------------------------------------------------!
+! Temporary fix for uninitialized variables when initialization terminates because of f < ftarget etc
+bmat = ieeenan(); zmat = ieeenan(); fval = ieeenan()
+!--------------------------------------------------------------------------------------------------!
+
 rhosq = rhobeg * rhobeg
 recip = ONE / rhosq
 reciq = sqrt(HALF) / rhosq
-test = 0.2D0 * rhobeg
+test = 0.2_RP * rhobeg
 idz = 1
 kbase = 1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -168,7 +177,7 @@ kbase = 1
 !     Set the initial elements of XPT, BMAT, SP and ZMAT to ZERO.
 !
 do j = 1, n
-    xbase(j) = x(j)
+    xbase(j) = x0(j)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     xopt(j) = ZERO
     xsav(j) = xbase(j)
@@ -242,6 +251,9 @@ end if
 !     Go through the initial points, shifting every infeasible point if
 !       necessary so that its constraint violation is at least 0.2*RHOBEG.
 !
+!--------------------------------------------------------------------------------------------------!
+jsav = 1_IK  ! Temporary fix for attention: «jsav» may be used uninitialized in this function from g95
+!--------------------------------------------------------------------------------------------------!
 do nf = 1, npt
     feas = ONE
     bigv = ZERO
@@ -288,7 +300,7 @@ do nf = 1, npt
     end do
     f = feas
     !---------------------------------------------------!
-    call evaluate(calfun, x, f)
+    call evaluate(calfun, x, f)  ! What if X contains NaN?
     cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
     !---------------------------------------------------!

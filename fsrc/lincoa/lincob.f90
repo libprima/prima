@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, March 02, 2022 PM11:16:49
+! Last Modified: Saturday, March 05, 2022 PM07:35:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -31,12 +31,12 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic models
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, MIN_MAXFILT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, MIN_MAXFILT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
+use, non_intrinsic :: linalg_mod, only : matprod, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
@@ -214,9 +214,9 @@ imprv = 0
 !       so that the constraint violation is at least 0.2*RHOBEG. Also KOPT
 !       is set so that XPT(KOPT,.) is the initial trust region centre.
 !
-call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, b, &
+call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
     & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, rsp, &
-    & step, pqw, x, xbase, xhist, xopt, xpt, xsav, zmat)
+    & step, pqw, xbase, xhist, xopt, xpt, xsav, zmat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -260,7 +260,7 @@ do i = 1, n
     xoptsq = xoptsq + xopt(i)**2
 end do
 if (xoptsq >= 1.0D4 * delta * delta) then
-    qoptsq = 0.25D0 * xoptsq
+    qoptsq = QUART * xoptsq
     do k = 1, npt
         summ = ZERO
         do i = 1, n
@@ -411,10 +411,10 @@ if (knew == 0) then
 !       active set. Otherwise there is a branch below to label 530 or 560.
 !
     temp = HALF * delta
-    if (ngetact > 1) temp = 0.1999D0 * delta
+    if (ngetact > 1) temp = 0.1999_RP * delta
     if (snorm <= temp) then
         delta = HALF * delta
-        if (delta <= 1.4D0 * rho) delta = rho
+        if (delta <= 1.4_RP * rho) delta = rho
         nvala = nvala + 1
         nvalb = nvalb + 1
         temp = snorm / rho
@@ -655,14 +655,14 @@ if (ksave == 0) then
     ratio = (f - fopt) / vquad
     if (ratio <= TENTH) then
         delta = HALF * delta
-    else if (ratio <= 0.7D0) then
+    else if (ratio <= 0.7_RP) then
         delta = max(HALF * delta, snorm)
     else
-        temp = sqrt(2.0D0) * delta
+        temp = sqrt(TWO) * delta
         delta = max(HALF * delta, snorm + snorm)
         delta = min(delta, temp)
     end if
-    if (delta <= 1.4D0 * rho) delta = rho
+    if (delta <= 1.4_RP * rho) delta = rho
 end if
 !
 !     Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
@@ -869,7 +869,7 @@ if (ratio >= TENTH) goto 20
 !     Alternatively, find out if the interpolation points are close enough
 !       to the best point so far.
 !
-530 distsq = max(delta * delta, 4.0D0 * rho * rho)
+530 distsq = max(delta * delta, 4.0_RP * rho * rho)
 do k = 1, npt
     summ = ZERO
     do j = 1, n
@@ -903,9 +903,9 @@ if (delsav > rho) goto 20
 if (rho > rhoend) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     delta = HALF * rho
-    if (rho > 250.0D0 * rhoend) then
+    if (rho > 250.0_RP * rhoend) then
         rho = TENTH * rho
-    else if (rho <= 16.0D0 * rhoend) then
+    else if (rho <= 16.0_RP * rhoend) then
         rho = rhoend
     else
         rho = sqrt(rho * rhoend)

@@ -205,9 +205,9 @@ do k = 1, npt
             isbd = iubd
         end if
         if (subd > HALF) then
-            if (abs(vlag) < 0.25D0) then
+            if (abs(vlag) < 0.25_RP) then
                 step = HALF
-                vlag = 0.25D0
+                vlag = 0.25_RP
                 isbd = 0
             end if
         end if

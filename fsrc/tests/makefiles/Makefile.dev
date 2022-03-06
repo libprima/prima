@@ -88,8 +88,8 @@ CHCKTST := $(TEST_DIR)/checktest
 # Flang and nvfortran do not support REAL128;
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # ifx encounters an internal error when compiling with REAL128.
-TESTS_QP = atest gtest ltest ntest itest stest 9test
-TESTS_NO_QP = dtest ftest vtest xtest
+TESTS_QP = atest gtest ltest itest stest 9test
+TESTS_NO_QP = dtest ftest vtest xtest ntest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
 # When listing the tests, we first put the ones that are more likely to raise errors.
 $(foreach TST, $(TESTS_QP), $(eval $(TST): SUBTESTS := \
@@ -112,8 +112,8 @@ $(foreach TST, $(TESTS), $(eval $(TST): TST_C := $(TST)_c))
 
 # The following tests compile the code but do not run the binary. This is useful if we want to
 # check whether the code can compile.
-TESTS_C_QP = atest_c gtest_c ltest_c ntest_c itest_c stest_c 9test_c
-TESTS_C_NO_QP = dtest_c ftest_c vtest_c xtest_c
+TESTS_C_QP = atest_c gtest_c ltest_c itest_c stest_c 9test_c
+TESTS_C_NO_QP = dtest_c ftest_c vtest_c xtest_c ntest_c
 TESTS_C = $(TESTS_C_QP) $(TESTS_C_NO_QP)
 $(foreach TST, $(TESTS_C_QP), $(eval $(TST): SUBTESTS_C := \
 	$(subst _c,,$(TST))_i2_r16_d1_tst_c $(subst _c,,$(TST))_i2_r4_d1_tst_c $(subst _c,,$(TST))_i2_r8_d1_tst_c \
@@ -138,13 +138,13 @@ $(foreach TST, $(TESTS_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 TESTS_INT_QP = atest_i2 atest_i4 atest_i8 \
 			   gtest_i2 gtest_i4 gtest_i8 \
 			   ltest_i2 ltest_i4 ltest_i8 \
-			   ntest_i2 ntest_i4 ntest_i8 \
 			   itest_i2 itest_i4 itest_i8 \
 			   stest_i2 stest_i4 stest_i8 \
 			   9test_i2 9test_i4 9test_i8
 TESTS_INT_NO_QP = dtest_i2 dtest_i4 dtest_i8 \
 				  ftest_i2 ftest_i4 ftest_i8 \
 				  vtest_i2 vtest_i4 vtest_i8 \
+				  ntest_i2 ntest_i4 ntest_i8 \
 				  xtest_i2 xtest_i4 xtest_i8
 TESTS_INT = $(TESTS_INT_QP) $(TESTS_INT_NO_QP)
 $(foreach TST, $(TESTS_INT_QP), $(eval $(TST): SUBTESTS := \
@@ -162,13 +162,13 @@ $(foreach TST, $(TESTS_INT), $(eval $(TST): TST_C := $(TST)_c))
 TESTS_INT_C_QP = atest_i2_c atest_i4_c atest_i8_c \
 				 gtest_i2_c gtest_i4_c gtest_i8_c \
 				 ltest_i2_c ltest_i4_c ltest_i8_c \
-				 ntest_i2_c ntest_i4_c ntest_i8_c \
 				 itest_i2_c itest_i4_c itest_i8_c \
 				 stest_i2_c stest_i4_c stest_i8_c \
 				 9test_i2_c 9test_i4_c 9test_i8_c
 TESTS_INT_C_NO_QP = dtest_i2_c dtest_i4_c dtest_i8_c \
 					ftest_i2_c ftest_i4_c ftest_i8_c \
 					vtest_i2_c vtest_i4_c vtest_i8_c \
+				    ntest_i2_c ntest_i4_c ntest_i8_c \
 					xtest_i2_c xtest_i4_c xtest_i8_c
 TESTS_INT_C = $(TESTS_INT_C_QP) $(TESTS_INT_C_NO_QP)
 $(foreach TST, $(TESTS_INT_C_QP), $(eval $(TST): SUBTESTS_C := \
@@ -239,9 +239,9 @@ endif
 AFORT := $(AFORT) -m1 -en -et -Rb -Rc -Rs -Rp
 
 atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
-	FC1 := $(AFORT) $(FFLAGS1) -TENV:simd_zmask=off
+	FC1 := $(AFORT) $(FFLAGS1) #-TENV:simd_zmask=off
 atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
-	FC2 := $(AFORT) $(FFLAGS2) -TENV:simd_zmask=off
+	FC2 := $(AFORT) $(FFLAGS2) #-TENV:simd_zmask=off
 
 atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
 	FC1 := $(AFORT) $(FFLAGS1) \
@@ -301,9 +301,9 @@ ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d
 # makes the code not standard-conforming. So -std=f$(FSTD) cannot be imposed without -fall-intrinsics.
 # As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
 GFORT := gfortran
-GFORT := $(GFORT) #-Werror
+GFORT := $(GFORT) -Wno-compare-reals -Wno-conversion
 GFORT := $(GFORT) -std=f$(FSTD) -fall-intrinsics \
-	-Wall -Wextra -pedantic -Wampersand -Wconversion  -Wuninitialized -Wmaybe-uninitialized \
+	-Wall -Wextra -pedantic -Wampersand  -Wuninitialized -Wmaybe-uninitialized \
 	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \
 	-Wuse-without-only -Wunused-parameter \
 	-fPIC -fimplicit-none -fbacktrace -fcheck=all \
@@ -311,9 +311,9 @@ GFORT := $(GFORT) -std=f$(FSTD) -fall-intrinsics \
 	#-Wrealloc-lhs -Wrealloc-lhs-all
 
 gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
-	FC1 := $(GFORT) $(FFLAGS1) -Wno-function-elimination -ffpe-trap=zero
+	FC1 := $(GFORT) $(FFLAGS1) -Wno-function-elimination
 gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
-	FC2 := $(GFORT) $(FFLAGS2) -ffpe-trap=zero
+	FC2 := $(GFORT) $(FFLAGS2)
 
 gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
 	FC1 := $(GFORT) $(FFLAGS1) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
@@ -420,9 +420,9 @@ VFORT := $(VFORT) #-Werror
 VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr
 
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
-	FC1 := $(VFORT) $(FFLAGS1) -Kieee -Ktrap=divz
+	FC1 := $(VFORT) $(FFLAGS1) -Kieee #-Ktrap=divz
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
-	FC2 := $(VFORT) $(FFLAGS2) -Kieee -Ktrap=divz
+	FC2 := $(VFORT) $(FFLAGS2) -Kieee #-Ktrap=divz
 
 vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
 	FC1 := $(VFORT) $(FFLAGS1) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
@@ -484,10 +484,10 @@ xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d
 
 # G95
 # G95 supports f2003, but not higher.
-9FORT := g95
+9FORT := g95 -Wno=140
 9FORT := $(9FORT) -std=f2003 -pedantic -Wall -Wextra \
 	-Werror=100,113,115,137,146,147,159,163 \
-	-Wimplicit-none -Wline-truncation -Wprecision-loss -Wunused-module-vars -Wunused-vars -Wunset-vars \
+	-Wimplicit-none -Wline-truncation -Wunused-module-vars -Wunused-vars -Wunset-vars \
 	-fimplicit-none -fbounds-check -ftrace=full -freal=nan -fmodule-private
 
 9test_i2_r4_d1_tst_c 9test_i4_r4_d1_tst_c 9test_i8_r4_d1_tst_c 9test_i2_r4_d0_tst_c 9test_i4_r4_d0_tst_c 9test_i8_r4_d0_tst_c: \
@@ -626,6 +626,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "WARNING --  When --chk x is specified" \
 	| grep -v "bin/ld.*bisheng.*unsupported GNU_PROPERTY_TYPE (5) type: 0xc0000000" \
 	| grep -v "all warnings being treated as errors" \
+	| grep -v "Value of real or complex expression being compared by relational operator" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"

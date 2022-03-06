@@ -27,7 +27,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM09:15:52
+! Last Modified: Friday, March 04, 2022 PM09:35:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -111,13 +111,13 @@ use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
-use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
+use, non_intrinsic :: debug_mod, only : assert, warning
+use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_neginf, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: selectx_mod, only : isbetter
+!use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
 
 ! Solver-specific modules
@@ -370,7 +370,9 @@ if (m > 0) then
             temp = temp + A_loc(i, j)**2
         end do
         if (temp <= 0) then
-            info = 12
+            if (present(info)) then
+                info = 12
+            end if
             return
         end if
         temp = sqrt(temp)
@@ -456,7 +458,7 @@ deallocate (chist_loc)
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist) .or. present(chist)) .and. maxhist_loc < nf_loc) then
     write (wmsg, ifmt) maxhist_loc
-    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
+    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recorded')
 end if
 
 ! Postconditions

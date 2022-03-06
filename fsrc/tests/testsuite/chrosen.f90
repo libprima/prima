@@ -17,9 +17,9 @@ call safealloc(prob % lb, n)
 prob % lb = -HUGENUM
 call safealloc(prob % ub, n)
 prob % ub = HUGENUM
-call safealloc(prob % Aeq, 0_IK, n)
+call safealloc(prob % Aeq, n, 0_IK)
 call safealloc(prob % beq, 0_IK)
-call safealloc(prob % Aineq, 0_IK, n)
+call safealloc(prob % Aineq, n, 0_IK)
 call safealloc(prob % bineq, 0_IK)
 
 ! Problem-specific code

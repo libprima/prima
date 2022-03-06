@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM09:19:35
+! Last Modified: Sunday, March 06, 2022 PM12:09:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -99,14 +99,14 @@ subroutine bobyqa(calfun, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, HUGENUM, MSGLEN
-use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH
+use, non_intrinsic :: consts_mod, only : EPS, HUGEBOUND, MSGLEN
+use, non_intrinsic :: debug_mod, only : assert, warning
+use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_neginf, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
 
 ! Solver-specific modules
@@ -195,19 +195,19 @@ end if
 if (present(xl)) then
     xl_loc = xl
 else
-    xl_loc = -HUGENUM
+    xl_loc = -HUGEBOUND
 end if
-where (is_nan(xl_loc))
-    xl_loc = -HUGENUM
+where (is_nan(xl_loc) .or. xl_loc < -HUGEBOUND)
+    xl_loc = -HUGEBOUND
 end where
 
 if (present(xu)) then
     xu_loc = xu
 else
-    xu_loc = HUGENUM
+    xu_loc = HUGEBOUND
 end if
-where (is_nan(xu_loc))
-    xu_loc = HUGENUM
+where (is_nan(xu_loc) .or. xu_loc > HUGEBOUND)
+    xu_loc = HUGEBOUND
 end where
 
 x = max(xl_loc, min(xu_loc, moderatex(x)))
@@ -307,19 +307,32 @@ else
     honour_x0_loc = .false.
 end if
 
+!--------------------------------------------------------------------------------------------------!
+if (honour_x0_loc) then
+    ! Do nothing. Temporary fix for 'HONOUR_X0_LOC is set but unused'
+end if
+!--------------------------------------------------------------------------------------------------!
+
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
     & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! !!! Revise X (see below) and RHOBEG, RHOEND
+! !!! Revise X (see below) and RHOBEG, RHOEND 
+! Shouldn't this be included into PREPROC?
 ! Zaikun, 2020-05-05
 ! When the data is passed from the interfaces to the Fortran code, RHOBEG,
 ! XU and XL may change a bit (due to rounding ???). It was oberved in
 ! a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 ! If we set RHOBEG = MIN(XU-XL)/2 in the interfaces, then it may happen
-! that RHOBEG > MIN(XU-XL)/2. That is why we do the following. After
-! this, INFO=6 should never occur.
-rhobeg_loc = min(0.5D0 * (1.0D0 - 1.0D-5) * minval(xu_loc(1:n) - xl_loc(1:n)), rhobeg_loc)
+! that RHOBEG > MIN(XU-XL)/2. That is why we do the following. 
+rhobeg_loc = minval([rhobeg_loc, HALF * (xu_loc - xl_loc)])
+if (rhobeg_loc < EPS) then
+    if (present(info)) then
+        info = 6
+    end if
+    ! Print a message here.
+    return
+end if
 ! For the same reason, we ensure RHOEND <= RHOBEG by the following.
 rhoend_loc = min(rhobeg_loc, rhoend_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -350,10 +363,12 @@ call safealloc(sl, n)
 call safealloc(su, n)
 do j = 1, n
     temp = xu_loc(j) - xl_loc(j)
-    if (temp < rhobeg_loc + rhobeg_loc) then
-        info = 6
-        return
-    end if
+    !if (temp < rhobeg_loc + rhobeg_loc) then
+    !    if (present(info)) then
+    !        info = 6
+    !    end if
+    !    return
+    !end if
     sl(j) = xl_loc(j) - x(j)
     su(j) = xu_loc(j) - x(j)
     if (sl(j) >= -rhobeg_loc) then
@@ -437,7 +452,7 @@ deallocate (fhist_loc)
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
     write (wmsg, ifmt) maxhist_loc
-    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
+    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recorded')
 end if
 
 ! Postconditions

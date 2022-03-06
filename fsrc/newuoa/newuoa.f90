@@ -380,7 +380,7 @@ deallocate (fhist_loc)
 ! If MAXFHIST_IN >= NF_LOC > MAXFHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
     write (wmsg, ifmt) maxhist_loc
-    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
+    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recorded')
 end if
 
 ! Postconditions

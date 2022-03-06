@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 01, 2022 PM02:25:06
+! Last Modified: Saturday, March 05, 2022 PM06:21:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine geostep(g, h_in, rho, d, vmax)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -86,7 +86,7 @@ halfrt = sqrt(HALF)
 !
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20220303: The procedure below may leave K uninitialized due to NaN, leading to SEGFAULT.
-k = 1_IK  
+k = 1_IK
 !--------------------------------------------------------------------------------------------------!
 hmax = ZERO
 do i = 1, n
@@ -120,7 +120,7 @@ do i = 1, n
     vhv = vhv + v(i) * d(i)
     dsq = dsq + d(i)**2
 end do
-if (vhv * vhv <= 0.9999D0 * dsq * vsq) then
+if (vhv * vhv <= 0.9999_RP * dsq * vsq) then
     temp = vhv / vsq
     wsq = ZERO
     do i = 1, n
@@ -172,7 +172,7 @@ do i = 1, n
     d(i) = scaling * d(i)
 end do
 gnorm = sqrt(gg)
-if (gnorm * dd <= 0.5D-2 * rho * abs(dhd) .or. vv / dd <= 1.0D-4) then
+if (gnorm * dd <= 0.5E-2_RP * rho * abs(dhd) .or. vv / dd <= 1.0E-4_RP) then
     vmax = abs(scaling * (gd + HALF * scaling * dhd))
     goto 170
 end if
@@ -199,7 +199,7 @@ vnorm = sqrt(vv)
 ghg = ghg / gg
 vhg = vhg / (vnorm * gnorm)
 vhv = vhv / vv
-if (abs(vhg) <= 0.01D0 * max(abs(ghg), abs(vhv))) then
+if (abs(vhg) <= 0.01_RP * max(abs(ghg), abs(vhv))) then
     vmu = ghg - vhv
     wcos = ONE
     wsin = ZERO
@@ -226,7 +226,7 @@ dlin = wcos * gnorm / rho
 vlin = -wsin * gnorm / rho
 tempa = abs(dlin) + HALF * abs(vmu + vhv)
 tempb = abs(vlin) + HALF * abs(ghg - vmu)
-tempc = halfrt * (abs(dlin) + abs(vlin)) + 0.25D0 * abs(ghg + vhv)
+tempc = halfrt * (abs(dlin) + abs(vlin)) + QUART * abs(ghg + vhv)
 if (tempa >= tempb .and. tempa >= tempc) then
     tempd = sign(rho, dlin * (vmu + vhv))
     tempv = ZERO

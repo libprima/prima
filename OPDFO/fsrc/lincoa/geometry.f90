@@ -90,7 +90,7 @@ integer(IK) :: i, j, jsav, k, ksav
 !
 !     Set some constants.
 !
-test = 0.2D0 * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
+test = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
 !
 !     Replace GL by the gradient of LFUNC at the trust region centre, and
 !       set the elements of RSTAT.
@@ -231,7 +231,7 @@ end do
 !       of CTOL below is to provide a check on feasibility that includes
 !       a tolerance for contributions from computer rounding errors.
 !
-if (vnew / vbig >= 0.2D0) then
+if (vnew / vbig >= 0.2_RP) then
     ifeas = 1
     bigv = ZERO
     j = 0
@@ -248,7 +248,7 @@ if (vnew / vbig >= 0.2D0) then
         ifeas = 0
     end if
     ctol = ZERO
-    temp = 0.01D0 * sqrt(ww)
+    temp = 0.01_RP * sqrt(ww)
     if (bigv > ZERO .and. bigv < temp) then
         do k = 1, nact
             j = iact(k)
@@ -259,7 +259,7 @@ if (vnew / vbig >= 0.2D0) then
             ctol = max(ctol, abs(summ))
         end do
     end if
-    if (bigv <= 10.0D0 * ctol .or. bigv >= test) then
+    if (bigv <= 10.0_RP * ctol .or. bigv >= test) then
         do i = 1, n
             step(i) = w(i)
         end do

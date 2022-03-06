@@ -280,7 +280,9 @@ iw = ivl + ndim
 do j = 1, n
     temp = xu_loc(j) - xl_loc(j)
     if (temp < rhobeg_loc + rhobeg_loc) then
-        info = 6
+        if (present(info)) then
+            info = 6
+        end if
         return
     end if
     jsl = isl + j - 1
@@ -365,7 +367,7 @@ deallocate (fhist_loc)
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
     write (wmsg, ifmt) maxhist_loc
-    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
+    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recorded')
 end if
 
 end subroutine bobyqa

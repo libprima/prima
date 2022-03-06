@@ -10,7 +10,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 03, 2022 PM09:02:59
+! Last Modified: Sunday, March 06, 2022 PM04:53:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,17 +25,20 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
     & x, nf, f, fhist, xhist, info)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+!use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: trustregion_mod, only : trstep
+
+! Development modules (to be removed)
+use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
 
@@ -109,6 +112,12 @@ if (DEBUGGING) then
 end if
 
 
+!--------------------------------------------------------------------------------------------------!
+! Temporary fix for the G95 warning that these variables are used uninitialized.
+knew = 1; iq = 1; ip = 1; ih = 1; j = 1; jswitch = 1; kopt = 1
+f = ieeenan()
+!--------------------------------------------------------------------------------------------------!
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     The arguments N, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to
@@ -133,7 +142,7 @@ end if
 !
 !     Set some constants.
 !
-tol = 0.01D0
+tol = 0.01_RP
 nnp = n + n + 1
 nftest = maxfun
 !
@@ -202,9 +211,9 @@ if (nf <= nnp) then
                 pl(nf - 1, j) = HALF / rho
                 pl(nf - 1, ih) = ONE / rhosq
             else
-                pq(j) = (4.0D0 * fsave - 3.0D0 * fbase - f) / (TWO * rho)
+                pq(j) = (4.0_RP * fsave - 3.0_RP * fbase - f) / (TWO * rho)
                 d(j) = (fbase + f - TWO * fsave) / rhosq
-                pl(1, j) = -1.5D0 / rho
+                pl(1, j) = -1.5_RP / rho
                 pl(1, ih) = ONE / rhosq
                 pl(nf - 1, j) = TWO / rho
                 pl(nf - 1, ih) = -TWO / rhosq
@@ -298,6 +307,8 @@ do j = 1, n
 ! behavior of the code, including uninitialized indices.
 !   80 H(I,J)=PQ(IH)
         h(i, j) = pq(ih)
+        ! This must be done, otherwise, compilers will complain that H is not (completely) defined. 
+        h(j, i) = pq(ih)
         if (h(i, j) /= h(i, j)) then
             info = -3
             goto 420
@@ -420,7 +431,7 @@ do k = 1, npt
 end do
 vlag(kopt) = vlag(kopt) + ONE
 !
-!     Update SIXTHM, which is a lower bound on ONE sixth of the greatest
+!     Update SIXTHM, which is a lower bound on one sixth of the greatest
 !     third derivative of F.
 !
 diff = f - fopt - vquad
@@ -433,7 +444,10 @@ do k = 1, npt
     temp = sqrt(temp)
     summ = summ + abs(temp * temp * temp * vlag(k))
 end do
-sixthm = max(sixthm, abs(diff) / summ)
+! SUMM may become 0 due to rounding, even in double precision. Detected by ifort.
+if (abs(diff) > 0 .and. summ > 0) then
+    sixthm = max(sixthm, abs(diff) / summ)
+end if
 !
 !     Update FOPT and XOPT if the new F is the least value of the objective
 !     function so far. Then branch if D is not a trust region step.
@@ -457,14 +471,14 @@ if (.not. (vquad < ZERO)) then
     goto 420
 end if
 ratio = (f - fsave) / vquad
-if (ratio <= 0.1D0) then
+if (ratio <= TENTH) then
     delta = HALF * dnorm
-else if (ratio <= 0.7D0) then
+else if (ratio <= 0.7_RP) then
     delta = max(HALF * delta, dnorm)
 else
-    delta = max(delta, 1.25D0 * dnorm, dnorm + rho)
+    delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
 end if
-if (delta <= 1.5D0 * rho) delta = rho
+if (delta <= 1.5_RP * rho) delta = rho
 !
 !     Set KNEW to the index of the next interpolation point to be deleted.
 !
@@ -480,7 +494,7 @@ do k = 1, npt
         summ = summ + (xpt(i, k) - xopt(i))**2
     end do
     temp = abs(vlag(k))
-    if (summ > rhosq) temp = temp * (summ / rhosq)**1.5D0
+    if (summ > rhosq) temp = temp * (summ / rhosq)**1.5_RP
     if (temp > detrat .and. k /= ktemp) then
         detrat = temp
         ddknew = summ
@@ -589,7 +603,7 @@ if (knew > 0) then
             sumg = sumg + g(i)**2
         end do
         estim = rho * (sqrt(sumg) + rho * sqrt(HALF * sumh))
-        wmult = sixthm * distest**1.5D0
+        wmult = sixthm * distest**1.5_RP
         if (wmult * estim <= errtol) goto 310
     end if
 !
@@ -635,12 +649,12 @@ if (rho > rhoend) then
 !
     delta = HALF * rho
     ratio = rho / rhoend
-    if (ratio <= 16.0D0) then
+    if (ratio <= 16.0_RP) then
         rho = rhoend
-    else if (ratio <= 250.0D0) then
+    else if (ratio <= 250.0_RP) then
         rho = sqrt(ratio) * rhoend
     else
-        rho = 0.1D0 * rho
+        rho = TENTH * rho
     end if
     delta = max(delta, rho)
     goto 60

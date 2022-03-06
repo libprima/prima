@@ -97,7 +97,12 @@ else
     maxir = ir;
 end
 
-if isempty(requirements.list)
+if ~isempty(requirements.list)
+    plist = requirements.list; % Use the list provided by the user
+    if (ischstr(plist))  % In case plist is indeed the name of a problem
+        plist = {plist};
+    end
+else
     blacklist = {};
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
     switch lower(solvers{1})
@@ -139,11 +144,6 @@ if isempty(requirements.list)
     end
     requirements.blacklist = blacklist;
     plist = secup(requirements);
-else
-    plist = requirements.list; % Use the list provided by the user
-    if (ischstr(plist))  % In case plist is indeed the name of a problem
-        plist = {plist};
-    end
 end
 
 

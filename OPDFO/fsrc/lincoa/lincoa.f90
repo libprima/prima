@@ -27,7 +27,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 25, 2022 AM01:07:30
+! Last Modified: Friday, March 04, 2022 PM09:37:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -374,7 +374,9 @@ if (m > 0) then
             temp = temp + A_loc(i, j)**2
         end do
         if (temp <= 0) then
-            info = 12
+            if (present(info)) then
+                info = 12
+            end if
             return
         end if
         temp = sqrt(temp)

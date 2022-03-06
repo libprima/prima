@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM03:55:02
+! Last Modified: Friday, March 04, 2022 PM12:15:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,7 +25,7 @@ contains
 subroutine geostep(iact, knew, kopt, nact, amat, del, gl_in, pqw, qfac, rescon, xopt, xpt, ifeas, step)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -125,11 +125,14 @@ gl = gl_in
 !
 !     Set some constants.
 !
-test = 0.2D0 * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
+test = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
 !
 !     Replace GL by the gradient of LFUNC at the trust region centre, and
 !       set the elements of RSTAT.
 !
+!--------------------------------------------------------------------------------------------------!
+ksav = 1_IK; jsav = 1_IK  ! Temporary fix for ksav/jsav may be uninitialized from G95
+!--------------------------------------------------------------------------------------------------!
 do k = 1, npt
     temp = ZERO
     do j = 1, n
@@ -266,7 +269,7 @@ end do
 !       of CTOL below is to provide a check on feasibility that includes
 !       a tolerance for contributions from computer rounding errors.
 !
-if (vnew / vbig >= 0.2D0) then
+if (vnew / vbig >= 0.2_RP) then
     ifeas = 1
     bigv = ZERO
     j = 0
@@ -283,7 +286,7 @@ if (vnew / vbig >= 0.2D0) then
         ifeas = 0
     end if
     ctol = ZERO
-    temp = 0.01D0 * sqrt(ww)
+    temp = 0.01_RP * sqrt(ww)
     if (bigv > ZERO .and. bigv < temp) then
         do k = 1, nact
             j = iact(k)
@@ -294,7 +297,7 @@ if (vnew / vbig >= 0.2D0) then
             ctol = max(ctol, abs(summ))
         end do
     end if
-    if (bigv <= 10.0D0 * ctol .or. bigv >= test) then
+    if (bigv <= TEN * ctol .or. bigv >= test) then
         do i = 1, n
             step(i) = w(i)
         end do

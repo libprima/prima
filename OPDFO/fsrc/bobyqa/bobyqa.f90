@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 25, 2022 PM11:44:52
+! Last Modified: Sunday, March 06, 2022 PM12:11:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -99,7 +99,8 @@ subroutine bobyqa(calfun, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, HUGENUM, MSGLEN
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH
+use, non_intrinsic :: consts_mod, only : EPS, HUGEBOUND, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
 use, non_intrinsic :: history_mod, only : prehist
@@ -194,19 +195,19 @@ end if
 if (present(xl)) then
     xl_loc = xl
 else
-    xl_loc = -HUGENUM
+    xl_loc = -HUGEBOUND
 end if
-where (is_nan(xl_loc))
-    xl_loc = -HUGENUM
+where (is_nan(xl_loc) .or. xl_loc < -HUGEBOUND)
+    xl_loc = -HUGEBOUND
 end where
 
 if (present(xu)) then
     xu_loc = xu
 else
-    xu_loc = HUGENUM
+    xu_loc = HUGEBOUND
 end if
-where (is_nan(xu_loc))
-    xu_loc = HUGENUM
+where (is_nan(xu_loc) .or. xu_loc > HUGEBOUND)
+    xu_loc = HUGEBOUND
 end where
 
 x = max(xl_loc, min(xu_loc, moderatex(x)))
@@ -316,9 +317,16 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 ! XU and XL may change a bit (due to rounding ???). It was oberved in
 ! a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 ! If we set RHOBEG = MIN(XU-XL)/2 in the interfaces, then it may happen
-! that RHOBEG > MIN(XU-XL)/2. That is why we do the following. After
-! this, INFO=6 should never occur.
-rhobeg_loc = min(0.5D0 * (1.0D0 - 1.0D-5) * minval(xu_loc(1:n) - xl_loc(1:n)), rhobeg_loc)
+! that RHOBEG > MIN(XU-XL)/2. That is why we do the following.
+!rhobeg_loc = min(0.5_RP * (1.0_RP - 1.0E-5_RP) * minval(xu_loc(1:n) - xl_loc(1:n)), rhobeg_loc)
+rhobeg_loc = minval([rhobeg_loc, HALF * (xu_loc - xl_loc)])
+if (rhobeg_loc < EPS) then
+    if (present(info)) then
+        info = 6
+    end if
+    ! Print a message here.
+    return
+end if
 ! For the same reason, we ensure RHOEND <= RHOBEG by the following.
 rhoend_loc = min(rhobeg_loc, rhoend_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -367,10 +375,12 @@ iw = ivl + ndim
 !
 do j = 1, n
     temp = xu_loc(j) - xl_loc(j)
-    if (temp < rhobeg_loc + rhobeg_loc) then
-        info = 6
-        return
-    end if
+    !if (temp < rhobeg_loc + rhobeg_loc) then
+    !    if (present(info)) then
+    !        info = 6
+    !    end if
+    !    return
+    !end if
     jsl = isl + j - 1
     jsu = jsl + n
     w(jsl) = xl_loc(j) - x(j)
