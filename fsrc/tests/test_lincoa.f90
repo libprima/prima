@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, March 04, 2022 AM10:38:05
+! Last Modified: Monday, March 07, 2022 AM01:08:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,7 +21,9 @@ subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed)
 
 use, non_intrinsic :: lincoa_mod, only : lincoa
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM
-use, non_intrinsic :: datetime_mod, only : year, week
+use, non_intrinsic :: debug_mod, only : validate
+use, non_intrinsic :: infnan_mod, only : is_neginf
+use, non_intrinsic :: linalg_mod, only : eye
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
@@ -38,6 +40,7 @@ integer(IK), intent(in), optional :: mindim
 integer(IK), intent(in), optional :: nrand
 integer, intent(in), optional :: randseed
 
+character(len=*), parameter :: srname = 'TEST_LINCOA'
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
 character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed dimensions
@@ -57,16 +60,23 @@ integer(IK) :: mindim_loc
 integer(IK) :: n
 integer(IK) :: ndim
 integer(IK) :: nprobs
+integer(IK) :: npt
+integer(IK) :: npt_list(10)
 integer(IK) :: nrand_loc
 real(RP) :: cstrv
 real(RP) :: ctol
 real(RP) :: f
+real(RP) :: f_unc
 real(RP) :: ftarget
 real(RP) :: rhobeg
 real(RP) :: rhoend
+real(RP), allocatable :: Aineq(:, :)
+real(RP), allocatable :: bineq(:)
 real(RP), allocatable :: chist(:)
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
+real(RP), allocatable :: x0(:)
+real(RP), allocatable :: x_unc(:)
 real(RP), allocatable :: xhist(:, :)
 type(PROB_T) :: prob
 
@@ -74,8 +84,8 @@ if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))
     probs_loc(1:nprobs) = probs
 else
-    nprobs = 6_IK
-    probs_loc(1:nprobs) = ['tetrahedron', 'chebyquad  ', 'chrosen    ', 'trigsabs   ', 'trigssqs   ', 'vardim     ']
+    nprobs = 7_IK
+    probs_loc(1:nprobs) = ['tetrahedron', 'ptinsq     ', 'chebyquad  ', 'chrosen    ', 'trigsabs   ', 'trigssqs   ', 'vardim     ']
 end if
 fix_dim_probs = '           '   ! Initialization, or compilers complain that the array is not (completely) defined.
 fix_dim_probs(1:1) = ['tetrahedron']
@@ -120,6 +130,9 @@ do iprob = 1, nprobs
         ndim = (maxdim_loc - mindim_loc) / dimstride_loc + 1_IK
         dimlist(1:ndim) = mindim_loc + dimstride_loc*[(idim - 1_IK, idim=1_IK, ndim)]
     end if
+    if (trim(probname) == 'ptinsq') then
+        dimlist(1:ndim) = ceiling(real(dimlist(1:ndim)) / 2.0) * 2_IK  ! Must be even
+    end if
     do idim = 1, ndim
         if (any(probname == fix_dim_probs)) then
             call construct(prob, probname)
@@ -127,12 +140,28 @@ do iprob = 1, nprobs
             call construct(prob, probname, n=dimlist(idim))
         end if
         n = prob % n
-        do irand = 1, max(1_IK, nrand_loc)
+
+        ! NPT_LIST defines some extreme values of NPT.
+        npt_list = [1_IK, &
+            & n + 1_IK, n + 2_IK, n + 3_IK, &
+            & 2_IK * n, 2_IK * n + 1_IK, 2_IK * n + 2_IK, &
+            & (n + 1_IK) * (n + 2_IK) / 2_IK - 1_IK, (n + 1_IK) * (n + 2_IK) / 2_IK, &
+            & (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK]
+        do irand = 1, int(size(npt_list) + max(0_IK, nrand_loc), kind(irand))
             ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
             ! that the results for different IK are the same.
-            rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
+            rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc + 618_IK)
             call setseed(rseed)
-            iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
+            if (irand <= size(npt_list)) then
+                npt = npt_list(irand)
+            else
+                npt = int(TEN * rand() * real(n, RP), kind(npt))
+            end if
+            if (rand() <= 0.2_RP) then
+                npt = 0
+            end if
+            !iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
+            iprint = 3_IK
             maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
             if (rand() <= 0.2_RP) then
                 maxfun = 0
@@ -167,20 +196,44 @@ do iprob = 1, nprobs
             elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
                 rhobeg = ZERO
             end if
-            call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
-            x = noisy(prob % x0)
+
+            call safealloc(x0, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
+            x0 = noisy(prob % x0)
+
             orig_calfun => prob % calfun
+
+            if (prob % probtype == 'b') then
+                call safealloc(Aineq, n, 2_IK * n)
+                Aineq(:, 1_IK:n) = eye(n)
+                Aineq(:, n + 1_IK:2_IK * n) = -eye(n)
+                call safealloc(bineq, 2_IK * n)
+                bineq = [prob % ub, -prob % lb]
+            else
+                call safealloc(Aineq, int(size(prob % Aineq, 1), IK), int(size(prob % Aineq, 2), IK))
+                Aineq = prob % Aineq
+                call safealloc(bineq, int(size(prob % bineq), IK))
+                bineq = prob % bineq
+            end if
 
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
 
-            call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=prob % Aineq, b=prob % bineq, &
+            call safealloc(x, n)
+            x = x0
+            call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=Aineq, b=bineq, &
                 & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
                 & xhist=xhist, chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
+            print *, 'Result: ', f, cstrv, x
+
             if (prob % probtype == 'u') then  ! Run the test without constraints
-                call lincoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+                call safealloc(x_unc, n)
+                x_unc = x0
+                call lincoa(noisy_calfun, x_unc, f_unc, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
                     & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, &
                     & iprint=iprint)
+                print *, 'Result (unconstrained): ', f, cstrv, x
+                call validate(all(abs(x - x_unc) <= 0), 'X == X_UNC', srname)
+                call validate(abs(f - f_unc) <= 0 .or. (is_neginf(f) .and. is_neginf(f_unc)), 'F == F_UNC', srname)
             end if
 
             deallocate (x)

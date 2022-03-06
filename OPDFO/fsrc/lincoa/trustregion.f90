@@ -92,7 +92,7 @@ integer(IK) :: i, icount, ih, ir, j, jsav, k, ncall
 !     Set some numbers for the conjugate gradient iterations.
 !
 tinynum = real(tiny(0.0), RP)
-ctest = 0.01D0
+ctest = 0.01_RP
 snsq = snorm * snorm
 !
 !     Set the initial elements of RESNEW, RESACT and STEP.
@@ -132,7 +132,7 @@ ncall = 0
 call getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, &
 & resact, g, dw, w, w(n + 1))
 if (w(n + 1) == ZERO) goto 320
-scaling = 0.2D0 * snorm / sqrt(w(n + 1))
+scaling = 0.2_RP * snorm / sqrt(w(n + 1))
 do i = 1, n
     dw(i) = scaling * dw(i)
 end do
@@ -353,7 +353,7 @@ if (alpha == alpht) goto 320
 temp = -alphm * (dg + HALF * alphm * dgd)
 if (temp <= ctest * reduct) goto 320
 if (jsav > 0) then
-    if (ss <= 0.64D0 * snsq) goto 40
+    if (ss <= 0.64_RP * snsq) goto 40
     goto 320
 end if
 if (icount == n) goto 320

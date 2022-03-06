@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM04:14:54
+! Last Modified: Saturday, March 05, 2022 PM09:24:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,7 +25,7 @@ contains
 subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw, vlam)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TEN, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : inprod
 
@@ -115,7 +115,7 @@ end if
 !     Set some constants and a temporary VLAM.
 !
 tinynum = real(tiny(0.0), RP)
-tdel = 0.2D0 * snorm
+tdel = 0.2_RP * snorm
 ddsav = inprod(g, g) + inprod(g, g)
 vlam = ZERO
 !
@@ -167,7 +167,8 @@ if (ic > 0) goto 70
 !       hull of the constraint gradients.
 !
 100 if (nact == n) goto 290
-do j = nact + 1, n
+!!if (nact < 0) return !??? See next line.
+do j = nact + 1, n  ! Here we have to ensure NACT >= 0; is it guaranteed in theory?
     w(j) = ZERO
     do i = 1, n
         w(j) = w(j) + qfac(i, j) * g(i)
@@ -176,7 +177,7 @@ end do
 dd = ZERO
 do i = 1, n
     dw(i) = ZERO
-    do j = nact + 1, n
+    do j = nact + 1, n  ! Here we have to ensure NACT >= 0; is it guaranteed in theory?
         dw(i) = dw(i) - w(j) * qfac(i, j)
     end do
     dd = dd + dw(i)**2
@@ -210,7 +211,7 @@ if (m > 0) then
         end if
     end do
     ctol = ZERO
-    temp = 0.01D0 * dnorm
+    temp = 0.01_RP * dnorm
     if (violmx > ZERO .and. violmx < temp) then
         if (nact > 0) then
             do k = 1, nact
@@ -226,17 +227,24 @@ if (m > 0) then
 end if
 w(1) = ONE
 if (l == 0) goto 300
-if (violmx <= 10.0D0 * ctol) goto 300
+if (violmx <= TEN * ctol) goto 300
 !
 !     Apply Givens rotations to the last (N-NACT) columns of QFAC so that
-!       the first (NACT+1) columns of QFAC are the ONEs required for the
+!       the first (NACT+1) columns of QFAC are the ones required for the
 !       addition of the L-th constraint, and add the appropriate column
 !       to RFAC.
 !
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220305: If NACT >= N, then NACTP >= N+1, RFAC(IDIAT+J) and QFAC(I, NACTP) will be
+! invalid. Is it guaranteed that NACT < N in theory? Probably yes because of line number 100, where
+! NACT == N leads to return.
+if (nact >= n) return
+!--------------------------------------------------------------------------------------------------!
 nactp = nact + 1
 idiag = (nactp * nactp - nactp) / 2
 rdiag = ZERO
 do j = n, 1, -1
+!do j = n - 1, 1, -1  ! Why does this lead to SEGFAULT in DEGENLPA when calling profile('lincoa')?
     sprod = ZERO
     do i = 1, n
         sprod = sprod + qfac(i, j) * amat(i, l)
@@ -244,7 +252,12 @@ do j = n, 1, -1
     if (j <= nact) then
         rfac(idiag + j) = sprod
     else
-        if (abs(rdiag) <= 1.0D-20 * abs(sprod)) then
+        !if (abs(rdiag) <= 1.0D-20 * abs(sprod)) then
+        if (j == n .or. abs(rdiag) <= 1.0D-20 * abs(sprod)) then
+            ! Zaikun 20220304: what if j = n ? How to ensure that we will not go to the else? Is it
+            ! because RDIAG = 0 when J = n? What if SPROD = NaN?
+            ! Why do we observe out of boundary error in stest_i8_r4_d1_tst?
+            ! Why does stest encounter NaN in X when calling evaluate?
             rdiag = sprod
         else
             temp = sqrt(sprod * sprod + rdiag * rdiag)
@@ -252,6 +265,7 @@ do j = n, 1, -1
             sinv = rdiag / temp
             rdiag = temp
             do i = 1, n
+                !if (j >= n) cycle
                 temp = cosv * qfac(i, j) + sinv * qfac(i, j + 1)
                 qfac(i, j + 1) = -sinv * qfac(i, j) + cosv * qfac(i, j + 1)
                 qfac(i, j) = temp
@@ -273,7 +287,8 @@ resnew(l) = ZERO
 !
 !     Set the components of the vector VMU in W.
 !
-220 w(nact) = ONE / rfac((nact * nact + nact) / 2)**2
+220 continue
+w(nact) = ONE / rfac((nact * nact + nact) / 2)**2
 if (nact > 1) then
     do i = nact - 1, 1, -1
         idiag = (i * i + i) / 2
@@ -292,7 +307,8 @@ end if
 vmult = violmx
 ic = 0
 j = 1
-250 if (j < nact) then
+250 continue
+if (j < nact) then
     if (vlam(j) >= vmult * w(j)) then
         ic = j
         vmult = vlam(j) / w(j)
@@ -300,6 +316,9 @@ j = 1
     j = j + 1
     goto 250
 end if
+! Very strangely, if we (mistakenly) change 'J = N, 1, -1' to 'J = N-1, 1, -1' in
+! "Apply Givens rotations to the last (N-NACT) columns of QFAC", then the following lines
+! encounter a SEGFAULT when this subroutine is called with NACT = 0 and we arrive here with NACT = IC = 0.
 do j = 1, nact
     vlam(j) = vlam(j) - vmult * w(j)
 end do
@@ -307,15 +326,20 @@ if (ic > 0) vlam(ic) = ZERO
 violmx = max(violmx - vmult, ZERO)
 if (ic == 0) violmx = ZERO
 !
-!     Reduce the active set if necessary, so that all compONEnts of the
+!     Reduce the active set if necessary, so that all components of the
 !       new VLAM are negative, with resetting of the residuals of the
 !       constraints that become inactive.
 !
 iflag = 3
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 2021 July, 20220305:
+! If NACT <= 0, then IC <= 0, and hence memory errors will occur when accessing VLAM(IC),
+! IACT(IC), RESNEW(IACT(IC)). Is NACT >= 1 ensured theoretically? What about NACT <= N?
+if (nact <= 0) return  ! What about DD and W(1)???
+!--------------------------------------------------------------------------------------------------!
 ic = nact
-!!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
-!RESNEW(IACT(IC)) is accessed.
-270 if (vlam(ic) < ZERO) goto 280
+270 continue
+if (vlam(ic) < ZERO) goto 280
 resnew(iact(ic)) = max(resact(ic), tinynum)
 goto 800
 280 ic = ic - 1
@@ -334,7 +358,7 @@ if (nact < n) goto 100
 !     These instructions rearrange the active constraints so that the new
 !       value of IACT(NACT) is the old value of IACT(IC). A sequence of
 !       Givens rotations is applied to the current QFAC and RFAC. Then NACT
-!       is reduced by ONE.
+!       is reduced by one.
 !
 800 resnew(iact(ic)) = max(resact(ic), tinynum)
 jc = ic
@@ -373,6 +397,10 @@ jc = ic
     jc = jcp
     goto 810
 end if
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220305: without the next line, SEGFAULT may occur below line number 100. Better choice? GOTO 100?
+if (nact <= 0) return  ! What about DD and W(1)???
+!--------------------------------------------------------------------------------------------------!
 nact = nact - 1
 if (iflag == 1) then
     goto 50

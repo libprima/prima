@@ -24,32 +24,47 @@ end
 mincon = 0; % The minimal number of constraints of problems to test
 maxcon = min(5000, 100*maxdim); % The maximal number of constraints of problems to test
 sequential = false;
+debug = false;
 thorough_test = 0;
+minip = 1;
 
 % Set options
 options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, ...
-    noiselevel, dnoiselevel, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, sequential, thorough_test);
+    noiselevel, dnoiselevel, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, sequential, debug, thorough_test, minip);
 
 % Select the problems to test.
-requirements = struct();
-requirements.mindim = options.mindim;
-requirements.maxdim = options.maxdim;
-requirements.mincon = options.mincon;
-requirements.maxcon = options.maxcon;
-requirements.type = options.type;
-if startsWith(solvers{1}, 'cobyla') || startsWith(solvers{2}, 'cobyla')
+if isfield(options, 'list')
+    plist = options.list;  % Only test problems in this list
+    if (ischstr(plist))  % In case plist is indeed the name of a problem
+        plist = {plist};
+    end
+else
+    requirements = struct();
+    requirements.mindim = options.mindim;
+    requirements.maxdim = options.maxdim;
+    requirements.mincon = options.mincon;
+    requirements.maxcon = options.maxcon;
+    requirements.type = options.type;
     requirements.blacklist = {};
-    requirements.blacklist = [requirements.blacklist, {'CHEBYQADNE','HAIFAM','HIMMELBI','HYDCAR20','LUKSAN12','LUKSAN13','MSS1','SPANHYD','VANDERM1','VANDERM2','VANDERM3', 'TAX13322', 'TAXR13322'}]; % Takes more than 2 min to solve
-    requirements.blacklist = [requirements.blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Time-consuming
-    requirements.blacklist = [requirements.blacklist, {'GMNCASE2'}];
+    if startsWith(solvers{1}, 'cobyla') || startsWith(solvers{2}, 'cobyla')
+        requirements.blacklist = [requirements.blacklist, {'CHEBYQADNE','HAIFAM','HIMMELBI','HYDCAR20','LUKSAN12','LUKSAN13','MSS1','SPANHYD','VANDERM1','VANDERM2','VANDERM3', 'TAX13322', 'TAXR13322'}]; % Takes more than 2 min to solve
+        requirements.blacklist = [requirements.blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Time-consuming
+        requirements.blacklist = [requirements.blacklist, {'GMNCASE2'}];
+    end
+    if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
+%        requirements.blacklist = [requirements.blacklist, {'DEGENLPA', 'HATFLDH', 'LOTSCHD', ...
+%            'LSNNODOC', 'OET3', 'SIMPLLPA', 'SIMPLLPB', 'SIPOW1', 'SIPOW1M', 'SIPOW2', 'SIPOW2M',...
+%            'STANCMIN', 'TFI3', 'ZECEVIC2'}];  % profile('lincoa') SEGFAULT!
+    end
+    plist = secup(requirements);
 end
-plist = secup(requirements);
 
 np = length(plist);
 ns = length(solvers);
 nr = options.randrun;
 maxfun = options.maxfun;
 sequential = options.sequential;
+minip = options.minip;
 
 % These arrays will record the function values and constraint values during the tests.
 frec = NaN(np, ns, nr, maxfun);
@@ -57,7 +72,7 @@ crec = NaN(np, ns, nr, maxfun);
 pdim = NaN(np, 1);  % Data profile needs the dimension of the problem.
 
 if sequential
-    for ip = 1 : np
+    for ip = minip : np
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};
@@ -76,7 +91,7 @@ if sequential
         warning(orig_warning_state); % Restore the behavior of displaying warnings
     end
 else
-    parfor ip = 1 : np
+    parfor ip = minip : np
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};
@@ -153,7 +168,8 @@ return
 
 
 function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, ...
-        noiselevel, dnoiselevel, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, sequential, thorough_test) % Set options
+        noiselevel, dnoiselevel, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
+        sequential, debug, thorough_test, minip) % Set options
 
 if (~isfield(options, 'rhoend'))
     options.rhoend = rhoend;
@@ -212,8 +228,14 @@ end
 if (~isfield(options, 'sequential'))
     options.sequential = sequential;
 end
+if (~isfield(options, 'debug'))
+    options.debug = debug;
+end
 if (~isfield(options, 'thorough_test'))
     options.thorough_test = thorough_test;
+end
+if (~isfield(options, 'minip'))
+    options.minip = minip;
 end
 
 return
@@ -231,9 +253,8 @@ solv_options.output_xhist = false;
 solv_options.output_nlchist = false;
 solv_options.iprint = 0;
 solv_options.quiet = true;
-solv_options.debug = false;
+solv_options.debug = options.debug;
 solv_options.chkfunval = false;
-solv_options.classical = false;
 %solv_options.scale = true;
 
 if (strcmpi(solv, 'fmincon'))

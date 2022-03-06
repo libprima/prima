@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 03, 2022 PM03:42:04
+! Last Modified: Sunday, March 06, 2022 AM10:49:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,7 +21,7 @@ contains
 
 subroutine trstep(delta, g, h_in, tol, d_out, evalue)   !!!! Possible to use D instead of D_OUT?
 
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : maximum
@@ -45,12 +45,13 @@ integer(IK) :: n
 real(RP) :: d(size(g) + 1) !!! D(N+1) may be accessed. !!! Possible to avoid this and spare D_OUT?
 real(RP) :: gg(size(g))
 real(RP) :: h(size(g), size(g))
-real(RP) :: piv(size(g) + 1) !!! PIV(N+1) may be accessed
+real(RP) :: piv(size(g))
 real(RP) :: td(size(g) + 1) !!! TD(N+1) may be accessed
-real(RP) :: tn(size(g) + 1) !!! TN(N+1) may be accessed
+real(RP) :: tn(size(g))
 real(RP) :: w(size(g))
 real(RP) :: z(size(g))
 real(RP) :: dsav(size(g) + 1) !!!
+real(RP) :: dnewton(size(g))  ! Newton-Raphson step; only calculated when N = 1.
 real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, pivksv, pivot, posdef,   &
@@ -70,6 +71,28 @@ if (DEBUGGING) then
 end if
 
 h = h_in
+
+evalue = ZERO
+
+! Zaikun 20220301, 20220305:
+! Powell's original code requires that N >= 2.  When N = 1, the code does not work (sometimes even
+! encounter memory errors). This is indeed why the original version of UOBYQA constantly terminates
+! with "a trust region step has failed to reduce the quadratic model" when solving univariate problems.
+if (n == 1) then
+    if (h(1, 1) > 0) then
+        dnewton = -g / h(1, 1)
+        if (abs(dnewton(1)) <= delta) then
+            d_out = dnewton
+            evalue = h(1, 1)
+        else
+            d_out = sign(delta, dnewton)  ! MATLAB: D_OUT = DELTA * SIGN(DNEWTON)
+        end if
+    else
+        d_out = sign(delta, -g)  ! MATLAB: D_OUT = -DELTA * SIGN(G)
+    end if
+    return
+end if
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     N is the number of variables of a quadratic objective function, Q say.
@@ -99,7 +122,6 @@ h = h_in
 !
 !
 delsq = delta * delta
-evalue = ZERO
 nm = n - 1
 do i = 1, n
     d(i) = ZERO
@@ -206,9 +228,9 @@ end if
 ! = Inf, GNORM/DELTA - HNORM = NaN). This also motivates us to replace the intrinsic MAX by the
 ! MAXIMUM defined in LINALG_MOD. MAXIMUM will return NaN if it receives NaN, making it easier for us
 ! to notice that there is a problem and hence debug.
-if (.not. (is_finite(hnorm) .and. is_finite(gnorm) .and. all(is_finite(td(1:n))) .and. all(is_finite(tn(1:n))))) then
-    ! If we declare TD and TN as N+1 dimensional vectors, then we have to specify the range of TD
-    ! and TN in the condition above; also, TN(N) must be set to ZERO.
+if (.not. (is_finite(hnorm) .and. is_finite(gnorm) .and. all(is_finite(td(1:n))) .and. all(is_finite(tn)))) then
+    ! If we declare TD as an N+1 dimensional vectors, then we have to specify its range
+    ! in the condition above; also, TN(N) must be set to ZERO.
     goto 400
 end if
 !--------------------------------------------------------------------------------------------------!
@@ -256,30 +278,24 @@ else
         dsav(i) = d(i)
     end do
 end if
-if (iterc > min(10000, 100 * n)) then
+if (iterc > min(10000, 100 * int(n))) then
     goto 370
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ksav = 0
 piv(1) = td(1) + par
-k = 1
-! Zaikun 20220301:
-! The code below accesses PIV(2), TD(2) when N = 1, even though Powell's code configures PIV and TD
-! as N-dimensional arrays! This is indeed why the original version of UOBYQA constantly terminates
-! with "a trust region step has failed to reduce the quadratic model" when solving univariate problems.
+do k = 1, n - 1
+    if (piv(k) > ZERO) then
+        piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)
+    else
+        if (piv(k) < ZERO .or. tn(k) /= ZERO) goto 160
+        ksav = k
+        piv(k + 1) = td(k + 1) + par
+    end if
+end do
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-150 if (piv(k) > ZERO) then
-    piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)
-else
-    if (piv(k) < ZERO .or. tn(k) /= ZERO) goto 160
-    ksav = k
-    piv(k + 1) = td(k + 1) + par
-end if
-! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-k = k + 1
-if (k < n) goto 150
-if (piv(k) < ZERO) goto 160
-if (piv(k) == ZERO) ksav = k
+if (piv(n) < ZERO) goto 160
+if (piv(n) == ZERO) ksav = n
 !
 !     Branch if all the pivots are positive, allowing for the case when
 !     G is ZERO.
@@ -350,7 +366,7 @@ end if
 220 if (paru == ZERO) then
     par = TWO * parlest + gnorm / delta
 else
-    par = 0.5D0 * (parl + paru)
+    par = HALF * (parl + paru)
     par = max(par, parlest)
 end if
 if (paruest > ZERO) par = min(par, paruest)
@@ -480,7 +496,7 @@ end do
 !     adjusted by the rule of false position.
 !
 ksave = 0
-340 shift = 0.5D0 * (shfmin + shfmax)
+340 shift = HALF * (shfmin + shfmax)
 k = 1
 temp = td(1) - shift
 350 if (temp > ZERO) then
@@ -508,7 +524,7 @@ else
         shfmax = shift
     end if
 end if
-if (shfmin <= 0.99D0 * shfmax) goto 340
+if (shfmin <= 0.99_RP * shfmax) goto 340
 360 evalue = shfmin
 !
 !     Apply the inverse Householder transformations to D.

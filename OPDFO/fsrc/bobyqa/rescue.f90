@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:54:39
+! Last Modified: Saturday, March 05, 2022 PM04:53:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -203,7 +203,7 @@ do j = 1, n
         bmat(j, jp) = -temp + ONE / ptsaux(1, j)
         bmat(j, jpn) = temp + ONE / ptsaux(2, j)
         bmat(j, 1) = -bmat(j, jp) - bmat(j, jpn)
-        zmat(1, j) = sqrt(2.0D0) / abs(ptsaux(1, j) * ptsaux(2, j))
+        zmat(1, j) = sqrt(2.0_RP) / abs(ptsaux(1, j) * ptsaux(2, j))
         zmat(jp, j) = zmat(1, j) * ptsaux(2, j) * temp
         zmat(jpn, j) = -zmat(1, j) * ptsaux(1, j) * temp
     else
@@ -378,7 +378,7 @@ do k = 1, npt
     end if
     vlmxsq = max(vlmxsq, vlag(k)**2)
 end do
-if (denom <= 1.0D-2 * vlmxsq) then
+if (denom <= 1.0E-2_RP * vlmxsq) then
     w(ndim + knew) = -w(ndim + knew) - winc
     goto 120
 end if

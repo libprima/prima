@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, March 02, 2022 PM11:47:18
+! Last Modified: Friday, March 04, 2022 PM01:32:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -135,7 +135,7 @@ g = gq
 !     Set some numbers for the conjugate gradient iterations.
 !
 tinynum = real(tiny(0.0), RP)
-ctest = 0.01D0
+ctest = 0.01_RP
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20220302: The following line is added so that SNORM is INTENT(OUT) rather than
 ! INTNT(INOUT). Is SNORM really the norm of step, or just DELTA??? Check also GETACT.
@@ -174,7 +174,7 @@ ngetact = 0
 40 ngetact = ngetact + 1
 call getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw, vlam)
 if (dd == ZERO) goto 320
-scaling = 0.2D0 * snorm / sqrt(dd)
+scaling = 0.2_RP * snorm / sqrt(dd)
 do i = 1, n
     dw(i) = scaling * dw(i)
 end do
@@ -383,8 +383,9 @@ reduct = reduct - alpha * (dg + HALF * alpha * dgd)
 !       boundary is at least 0.2*SNORM.
 !
 ! Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN
-! values. Exit when NCALL is large or NaN detected.
-if (ngetact > min(10000, 100 * (m + 1) * n) .or.  &
+! values. Exit when NGETACT is large or NaN detected.
+! Caution: 1. MIN accepts only data with the same KIND; 2. Integer overflow.
+if (ngetact > min(10000, 100 * int(m + 1) * int(n)) .or.  &
 & alpha /= alpha .or. alpht /= alpht .or. &
 & alphm /= alphm .or. dgd /= dgd .or. dg /= dg .or. &
 & ss /= ss .or. snsq /= snsq .or. reduct /= reduct) then
@@ -395,7 +396,7 @@ if (alpha == alpht) goto 320
 temp = -alphm * (dg + HALF * alphm * dgd)
 if (temp <= ctest * reduct) goto 320
 if (jsav > 0) then
-    if (ss <= 0.64D0 * snsq) goto 40
+    if (ss <= 0.64_RP * snsq) goto 40
     goto 320
 end if
 if (icount == n) goto 320

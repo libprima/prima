@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM07:51:51
+! Last Modified: Sunday, March 06, 2022 PM02:51:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,12 +24,12 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+!use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
@@ -175,9 +175,13 @@ nh = (n * np) / 2
 !     initial XOPT is set too. The branch to label 720 occurs if MAXFUN is
 !     less than NPT. GOPT will be updated if KOPT is different from KBASE.
 !
-call initialize(calfun, iprint, ftarget, rhobeg, sl, su, xl, xu, x, kopt, nf, bmat, f, fhist, fval, &
+call initialize(calfun, iprint, ftarget, rhobeg, sl, su, x, xl, xu, kopt, nf, bmat, f, fhist, fval, &
     & gopt, hq, pq, xbase, xhist, xpt, zmat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+xopt = xpt(:, kopt)
+fopt = fval(kopt)
+x = xbase + xopt  ! Set X.
+f = fopt  ! Set F.
 
 xoptsq = ZERO
 do i = 1, n
@@ -295,7 +299,7 @@ if (dnorm < HALF * rho) then
 !     of likely improvements to the model within distance HALF*RHO of XOPT.
 !
     errbig = max(diffa, diffb, diffc)
-    frhosq = 0.125D0 * rho * rho
+    frhosq = 0.125_RP * rho * rho
     if (crvmin > ZERO .and. errbig > frhosq * crvmin) goto 650
     bdtol = errbig / rho
     do j = 1, n
@@ -321,8 +325,8 @@ ntrits = ntrits + 1
 !     derivatives of the current model, beginning with the changes to BMAT
 !     that do not depend on ZMAT. VLAG is used temporarily for working space.
 !
-90 if (dsq <= 1.0D-3 * xoptsq) then
-    fracsq = 0.25D0 * xoptsq
+90 if (dsq <= 1.0E-3_RP * xoptsq) then
+    fracsq = QUART * xoptsq
     summpq = ZERO
     do k = 1, npt
         summpq = summpq + pq(k)
@@ -468,14 +472,10 @@ if (kopt /= kbase) then
     end do
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     By Tom/Zaikun (on 04-06-2019/07-06-2019):
 if (is_nan(f) .or. is_posinf(f)) then
     info = -2
     goto 720
 end if
-!     By Tom (on 04-06-2019):
-!     If F reached the target function, RESCUE will stop and BOBYQB
-!     should stop here.
 if (f <= ftarget) then
     info = 1
     goto 736
@@ -758,12 +758,12 @@ if (ntrits > 0) then
     ratio = (f - fopt) / vquad
     if (ratio <= TENTH) then
         delta = min(HALF * delta, dnorm)
-    else if (ratio <= 0.7D0) then
+    else if (ratio <= 0.7_RP) then
         delta = max(HALF * delta, dnorm)
     else
         delta = max(HALF * delta, dnorm + dnorm)
     end if
-    if (delta <= 1.5D0 * rho) delta = rho
+    if (delta <= 1.5_RP * rho) delta = rho
 !
 !     Recalculate KNEW and DENOM if the new F is less than FOPT.
 !
@@ -926,7 +926,7 @@ if (ntrits > 0) then
     itest = itest + 1
     if (gqsq < TEN * gisq) itest = 0
     if (itest >= 3) then
-        do i = 1, max0(npt, nh)
+        do i = 1, max(npt, nh)
             if (i <= n) gopt(i) = vlag(npt + i)
             if (i <= npt) pq(i) = w(npt + i)
             if (i <= nh) hq(i) = ZERO
@@ -968,7 +968,7 @@ if (knew > 0) then
     dist = sqrt(distsq)
     if (ntrits == -1) then
         delta = min(TENTH * delta, HALF * dist)
-        if (delta <= 1.5D0 * rho) delta = rho
+        if (delta <= 1.5_RP * rho) delta = rho
     end if
     ntrits = 0
     adelt = max(min(TENTH * dist, delta), rho)
@@ -985,9 +985,9 @@ if (max(delta, dnorm) > rho) goto 60
 680 if (rho > rhoend) then
     delta = HALF * rho
     ratio = rho / rhoend
-    if (ratio <= 16.0D0) then
+    if (ratio <= 16.0_RP) then
         rho = rhoend
-    else if (ratio <= 250.0D0) then
+    else if (ratio <= 250.0_RP) then
         rho = sqrt(ratio) * rhoend
     else
         rho = TENTH * rho

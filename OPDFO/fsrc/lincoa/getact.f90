@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 25, 2022 PM08:32:43
+! Last Modified: Saturday, March 05, 2022 PM07:43:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,7 +79,7 @@ integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag, jw,   &
 !     Set some constants and a temporary VLAM.
 !
 tinynum = real(tiny(0.0), RP)
-tdel = 0.2D0 * snorm
+tdel = 0.2_RP * snorm
 ddsav = inprod(g, g) + inprod(g, g)
 vlam = ZERO
 !
@@ -174,7 +174,7 @@ if (m > 0) then
         end if
     end do
     ctol = ZERO
-    temp = 0.01D0 * dnorm
+    temp = 0.01_RP * dnorm
     if (violmx > ZERO .and. violmx < temp) then
         if (nact > 0) then
             do k = 1, nact
@@ -190,7 +190,7 @@ if (m > 0) then
 end if
 w(1) = ONE
 if (l == 0) goto 300
-if (violmx <= 10.0D0 * ctol) goto 300
+if (violmx <= 10.0_RP * ctol) goto 300
 !
 !     Apply Givens rotations to the last (N-NACT) columns of QFAC so that
 !       the first (NACT+1) columns of QFAC are the ONEs required for the
@@ -208,7 +208,8 @@ do j = n, 1, -1
     if (j <= nact) then
         rfac(idiag + j) = sprod
     else
-        if (abs(rdiag) <= 1.0D-20 * abs(sprod)) then
+        !if (abs(rdiag) <= 1.0D-20 * abs(sprod)) then
+        if (j == n .or. abs(rdiag) <= 1.0D-20 * abs(sprod)) then
             rdiag = sprod
         else
             temp = sqrt(sprod * sprod + rdiag * rdiag)
@@ -276,9 +277,13 @@ if (ic == 0) violmx = ZERO
 !       constraints that become inactive.
 !
 iflag = 3
+
+if (nact <= 0) return  ! What about DD?
+
 ic = nact
 !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
 !RESNEW(IACT(IC)) is accessed.
+
 270 if (vlam(ic) < ZERO) goto 280
 resnew(iact(ic)) = max(resact(ic), tinynum)
 goto 800
@@ -337,6 +342,9 @@ jc = ic
     jc = jcp
     goto 810
 end if
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if (nact <= 0) return  ! What about DD and W(1)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 nact = nact - 1
 if (iflag == 1) then
     goto 50

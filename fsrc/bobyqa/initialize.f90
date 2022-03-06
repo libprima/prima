@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM05:44:06
+! Last Modified: Saturday, March 05, 2022 PM06:32:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: initialize
 contains
 
 
-subroutine initialize(calfun, iprint, ftarget, rhobeg, sl, su, xl, xu, x, &
+subroutine initialize(calfun, iprint, ftarget, rhobeg, sl, su, x0, xl, xu, &
     & kopt, nf, bmat, f, fhist, fval, gopt, hq, pq, xbase, xhist, xpt, zmat)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
@@ -27,7 +27,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+!use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 implicit none
@@ -39,11 +39,9 @@ real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: sl(:)  ! SL(N)
 real(RP), intent(in) :: su(:)  ! SU(N)
+real(RP), intent(in) :: x0(:)  ! X(N)
 real(RP), intent(in) :: xl(:)  ! XL(N)
 real(RP), intent(in) :: xu(:)  ! XU(N)
-
-! In-outputs
-real(RP), intent(inout) :: x(:)  ! X(N)
 
 ! Outputs
 integer(IK), intent(out) :: kopt
@@ -67,6 +65,7 @@ integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: x(size(x0))
 real(RP) :: diff, fbeg, recip, rhosq, stepa, stepb, temp
 integer(IK) :: i, ih, ipt, itemp, j, jpt, k, nfm, nfx, np
 
@@ -102,6 +101,9 @@ if (DEBUGGING) then
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
 end if
 
+!--------------------------------------------------------------------------------------------------!
+ipt = 1; jpt = 1  ! Temporary fix for G95 warning about these variables used uninitialized
+!--------------------------------------------------------------------------------------------------!
 !
 !     The arguments N, NPT, X, XL, XU, RHOBEG, IPRINT and MAXFUN are the
 !       same as the corresponding arguments in SUBROUTINE BOBYQA.
@@ -110,7 +112,7 @@ end if
 !       of SL and SU being set in BOBYQA.
 !     GOPT is usually the gradient of the quadratic model at XOPT+XBASE, but
 !       it is set by PRELIM to the gradient of the quadratic model at XBASE.
-!       If XOPT is nonZERO, BOBYQB will change it to its usual value later.
+!       If XOPT is nonzero, BOBYQB will change it to its usual value later.
 !     NF is maintaned as the number of calls of CALFUN so far.
 !     KOPT will be such that the least calculated value of F so far is at
 !       the point XPT(KOPT,.)+XBASE in the space of the variables.
@@ -129,7 +131,7 @@ np = n + 1
 !     elements of XPT, BMAT, HQ, PQ and ZMAT to ZERO.
 !
 do j = 1, n
-    xbase(j) = x(j)
+    xbase(j) = x0(j)
     do k = 1, npt
         xpt(j, k) = ZERO
     end do
@@ -155,7 +157,7 @@ nf = 0
 50 nfm = nf
 nfx = nf - n
 nf = nf + 1
-if (nfm <= 2 * n) then
+if (nf <= 2 * n + 1) then
     if (nfm >= 1 .and. nfm <= n) then
         stepa = rhobeg
         if (su(nfm) == ZERO) stepa = -stepa
@@ -205,7 +207,7 @@ else if (f < fval(kopt)) then
     kopt = nf
 end if
 !
-!     Set the nonZERO initial elements of BMAT and the quadratic model in the
+!     Set the nonzero initial elements of BMAT and the quadratic model in the
 !     cases when NF is at most 2*N+1. If NF exceeds N+1, then the positions
 !     of the NF-th and (NF-N)-th interpolation points may be switched, in
 !     order that the function value at the first of them contributes to the

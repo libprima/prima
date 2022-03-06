@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM03:58:00
+! Last Modified: Friday, March 04, 2022 PM10:28:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -181,6 +181,7 @@ if (npt - n >= 3) then
             jl = idz
         else if (zmat(knew, j) /= ZERO) then
             temp = sqrt(zmat(knew, jl)**2 + zmat(knew, j)**2)
+            ! Zaikun 20220304: TEMP can be 0 in single precision. Detected by Absoft and nvfortran. Should call GROT.
             tempa = zmat(knew, jl) / temp
             tempb = zmat(knew, j) / temp
             do i = 1, npt

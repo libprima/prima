@@ -284,7 +284,9 @@ if (m > 0) then
             temp = temp + A_loc(i, j)**2
         end do
         if (temp <= 0) then
-            info = 12
+            if (present(info)) then
+                info = 12
+            end if
             return
         end if
         temp = sqrt(temp)

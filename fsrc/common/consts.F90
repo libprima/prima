@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, February 03, 2022 PM09:15:10
+! Last Modified: Sunday, March 06, 2022 AM11:47:54
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -80,7 +80,7 @@ public :: DEBUGGING
 public :: IK, IK_DFT
 public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
-public :: REALMIN, EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
+public :: REALMIN, EPS, HUGENUM, HUGEFUN, HUGECON, HUGEBOUND
 public :: MSGLEN, FNAMELEN
 public :: OUTUNIT, STDIN, STDOUT, STDERR
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, CWEIGHT_DFT
@@ -162,11 +162,12 @@ real(RP), parameter :: PI = 3.141592653589793238462643383279502884_RP
 real(RP), parameter :: REALMIN = tiny(ZERO)
 real(RP), parameter :: EPS = epsilon(ZERO)  ! Machine epsilon
 real(RP), parameter :: HUGENUM = huge(ZERO)
-real(RP), parameter :: ALMOST_INFINITY = HALF * HUGENUM
 
 integer, parameter :: MAXE = maxexponent(ZERO)
 real(RP), parameter :: HUGEFUN = TWO**min(100, MAXE / 2)
 real(RP), parameter :: HUGECON = HUGEFUN
+! Any bound with an absolute value at least HUGEBOUND is considered as no bound.
+real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 
 ! The maximal length of messages; used in output.f90 and fmexapi.F90
 integer, parameter :: MSGLEN = 1000

@@ -280,7 +280,9 @@ iw = ivl + ndim
 do j = 1, n
     temp = xu_loc(j) - xl_loc(j)
     if (temp < rhobeg_loc + rhobeg_loc) then
-        info = 6
+        if (present(info)) then
+            info = 6
+        end if
         return
     end if
     jsl = isl + j - 1

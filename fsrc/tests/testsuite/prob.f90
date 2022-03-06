@@ -103,6 +103,8 @@ case ('hs100')
     call construct_hs100(prob)
 case ('rsnszk')
     call construct_rsnszk(prob)
+case ('ptinsq')
+    call construct_ptinsq(prob, n_loc)
 case ('tetrahedron')
     call construct_tetrahedron(prob)
 case ('trigsabs')
@@ -174,6 +176,8 @@ include 'hexagon.f90'
 include 'hs100.f90'
 
 include 'rsnszk.f90'
+
+include 'ptinsq.f90'
 
 include 'tetrahedron.f90'
 

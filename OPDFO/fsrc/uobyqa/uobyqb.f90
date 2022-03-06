@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 03, 2022 PM09:08:27
+! Last Modified: Sunday, March 06, 2022 PM01:50:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -109,7 +109,7 @@ integer(IK) :: i, ih, ip, iq, iw, j, jswitch, k, knew, kopt,&
 !
 !     Set some constants.
 !
-tol = 0.01D0
+tol = 0.01_RP
 nnp = n + n + 1
 nptm = npt - 1
 nftest = maxfun
@@ -179,9 +179,9 @@ if (nf <= nnp) then
                 pl(nf - 1, j) = HALF / rho
                 pl(nf - 1, ih) = ONE / rhosq
             else
-                pq(j) = (4.0D0 * fsave - 3.0D0 * fbase - f) / (TWO * rho)
+                pq(j) = (4.0_RP * fsave - 3.0_RP * fbase - f) / (TWO * rho)
                 d(j) = (fbase + f - TWO * fsave) / rhosq
-                pl(1, j) = -1.5D0 / rho
+                pl(1, j) = -1.5_RP / rho
                 pl(1, ih) = ONE / rhosq
                 pl(nf - 1, j) = TWO / rho
                 pl(nf - 1, ih) = -TWO / rhosq
@@ -415,7 +415,10 @@ do k = 1, npt
     temp = sqrt(temp)
     summ = summ + abs(temp * temp * temp * vlag(k))
 end do
-sixthm = max(sixthm, abs(diff) / summ)
+!sixthm = max(sixthm, abs(diff) / summ)
+if (abs(diff) > 0 .and. summ > 0) then
+    sixthm = max(sixthm, abs(diff) / summ)
+end if
 !
 !     Update FOPT and XOPT if the new F is the least value of the objective
 !     function so far. Then branch if D is not a trust region step.
@@ -439,14 +442,14 @@ if (.not. (vquad < ZERO)) then
     goto 420
 end if
 ratio = (f - fsave) / vquad
-if (ratio <= 0.1D0) then
+if (ratio <= 0.1_RP) then
     delta = HALF * dnorm
-else if (ratio <= 0.7D0) then
+else if (ratio <= 0.7_RP) then
     delta = max(HALF * delta, dnorm)
 else
-    delta = max(delta, 1.25D0 * dnorm, dnorm + rho)
+    delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
 end if
-if (delta <= 1.5D0 * rho) delta = rho
+if (delta <= 1.5_RP * rho) delta = rho
 !
 !     Set KNEW to the index of the next interpolation point to be deleted.
 !
@@ -462,7 +465,7 @@ do k = 1, npt
         summ = summ + (xpt(i, k) - xopt(i))**2
     end do
     temp = abs(vlag(k))
-    if (summ > rhosq) temp = temp * (summ / rhosq)**1.5D0
+    if (summ > rhosq) temp = temp * (summ / rhosq)**1.5_RP
     if (temp > detrat .and. k /= ktemp) then
         detrat = temp
         ddknew = summ
@@ -571,7 +574,7 @@ if (knew > 0) then
             sumg = sumg + g(i)**2
         end do
         estim = rho * (sqrt(sumg) + rho * sqrt(HALF * sumh))
-        wmult = sixthm * distest**1.5D0
+        wmult = sixthm * distest**1.5_RP
         if (wmult * estim <= errtol) goto 310
     end if
 !
@@ -617,12 +620,12 @@ if (rho > rhoend) then
 !
     delta = HALF * rho
     ratio = rho / rhoend
-    if (ratio <= 16.0D0) then
+    if (ratio <= 16.0_RP) then
         rho = rhoend
-    else if (ratio <= 250.0D0) then
+    else if (ratio <= 250.0_RP) then
         rho = sqrt(ratio) * rhoend
     else
-        rho = 0.1D0 * rho
+        rho = 0.1_RP * rho
     end if
     delta = max(delta, rho)
     goto 60

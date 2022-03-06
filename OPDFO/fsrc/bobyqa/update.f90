@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:56:43
+! Last Modified: Saturday, March 05, 2022 PM04:53:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,7 +60,7 @@ do k = 1, npt
         ztest = max(ztest, abs(zmat(k, j)))
     end do
 end do
-ztest = 1.0D-20 * ztest
+ztest = 1.0E-20_RP * ztest
 !
 !     Apply the rotations that put zeros in the KNEW-th row of ZMAT.
 !

@@ -326,7 +326,7 @@ end if
 220 if (paru == ZERO) then
     par = TWO * parlest + gnorm / delta
 else
-    par = 0.5D0 * (parl + paru)
+    par = 0.5_RP * (parl + paru)
     par = max(par, parlest)
 end if
 if (paruest > ZERO) par = min(par, paruest)
@@ -456,7 +456,7 @@ end do
 !     adjusted by the rule of false position.
 !
 ksave = 0
-340 shift = 0.5D0 * (shfmin + shfmax)
+340 shift = 0.5_RP * (shfmin + shfmax)
 k = 1
 temp = td(1) - shift
 350 if (temp > ZERO) then
@@ -484,7 +484,7 @@ else
         shfmax = shift
     end if
 end if
-if (shfmin <= 0.99D0 * shfmax) goto 340
+if (shfmin <= 0.99_RP * shfmax) goto 340
 360 evalue = shfmin
 !
 !     Apply the inverse Householder transformations to D.

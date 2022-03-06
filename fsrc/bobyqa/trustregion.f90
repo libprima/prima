@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM07:37:40
+! Last Modified: Sunday, March 06, 2022 PM12:55:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -111,7 +111,7 @@ end if
 !     CRVMIN is set to ZERO if D reaches the trust region boundary. Otherwise
 !       it is set to the least curvature of H that occurs in the conjugate
 !       gradient searches that are not restricted by any constraints. The
-!       value CRVMIN=-1.0D0 is set, however, if all of these searches are
+!       value CRVMIN=-ONE is set, however, if all of these searches are
 !       constrained.
 !
 !     A version of the truncated conjugate gradient is applied. If a line
@@ -135,6 +135,9 @@ end if
 !
 iterc = 0
 nact = 0
+!--------------------------------------------------------------------------------------------------!
+iact = 0; itcsav = 0; itermax = n  ! Without this, G95 complains that they are used uninitialized.
+!--------------------------------------------------------------------------------------------------!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-15: SQSTP is never used
 !      SQSTP=ZERO
@@ -177,7 +180,7 @@ if (beta == ZERO) then
     gredsq = stepsq
     itermax = iterc + n - nact
 end if
-if (gredsq * delsq <= 1.0D-4 * qred * qred) go to 190
+if (gredsq * delsq <= 1.0E-4_RP * qred * qred) go to 190
 !
 !     Multiply the search direction by the second derivative matrix of Q and
 !     calculate some scalars for the choice of steplength. Then set BSTEP to
@@ -220,13 +223,25 @@ iact = 0
 do i = 1, n
     if (s(i) /= ZERO) then
         xsum = xopt(i) + d(i)
-        if (s(i) > ZERO) then
-            temp = (su(i) - xsum) / s(i)
-        else
-            temp = (sl(i) - xsum) / s(i)
-        end if
-        if (temp < stplen) then
-            stplen = temp
+
+        !------------------------------------------------------------------------------------------!
+        ! Powell's code as follows encounters overflow due to huge values in SU or SL.
+        !if (s(i) > ZERO) then
+        !    temp = (su(i) - xsum) / s(i)
+        !else
+        !    temp = (sl(i) - xsum) / s(i)
+        !end if
+        !if (temp < stplen) then
+        !    stplen = temp
+        !    iact = i
+        !end if
+        !------------------------------------------------------------------------------------------!
+
+        if (s(i) > 0 .and. su(i) - xsum < stplen * s(i)) then
+            stplen = (su(i) - xsum) / s(i)
+            iact = i
+        else if (s(i) < 0 .and. sl(i) - xsum > stplen * s(i)) then
+            stplen = (sl(i) - xsum) / s(i)
             iact = i
         end if
     end if
@@ -269,7 +284,7 @@ end if
 !
 if (stplen < bstep) then
     if (iterc == itermax) goto 190
-    if (sdec <= 0.01D0 * qred) goto 190
+    if (sdec <= 0.01_RP * qred) goto 190
     beta = gredsq / ggsav
     goto 30
 end if
@@ -300,7 +315,7 @@ goto 210
 !
 120 iterc = iterc + 1
 temp = gredsq * dredsq - dredg * dredg
-if (temp <= 1.0D-4 * qred * qred) goto 190
+if (temp <= 1.0E-4_RP * qred * qred) goto 190
 temp = sqrt(temp)
 do i = 1, n
     if (xbdi(i) == ZERO) then
@@ -343,8 +358,12 @@ do i = 1, n
 !          RATIO=ONE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ssq = d(i)**2 + s(i)**2
-        temp = ssq - (xopt(i) - sl(i))**2
-        if (temp > ZERO) then
+        !------------------------------------------------------------------------------------------!
+        !temp = ssq - (xopt(i) - sl(i))**2  ! Overflow can occur due to huge values in SL
+        !if (temp > ZERO) then
+        !------------------------------------------------------------------------------------------!
+        if (xopt(i) - sl(i) < sqrt(ssq)) then
+            temp = ssq - (xopt(i) - sl(i))**2
             temp = sqrt(temp) - s(i)
             if (angbd * temp > tempa) then
                 angbd = tempa / temp
@@ -352,8 +371,12 @@ do i = 1, n
                 xsav = -ONE
             end if
         end if
-        temp = ssq - (su(i) - xopt(i))**2
-        if (temp > ZERO) then
+        !------------------------------------------------------------------------------------------!
+        !temp = ssq - (su(i) - xopt(i))**2  ! Overflow can occur due to huge values in SU
+        !if (temp > ZERO) then
+        !------------------------------------------------------------------------------------------!
+        if (su(i) - xopt(i) < sqrt(ssq)) then
+            temp = ssq - (su(i) - xopt(i))**2
             temp = sqrt(temp) + s(i)
             if (angbd * temp > tempb) then
                 angbd = tempb / temp
@@ -386,8 +409,8 @@ redmax = ZERO
 isav = 0
 redsav = ZERO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IU=17.0D0*ANGBD+3.1D0
-iu = int(17.0D0 * angbd + 3.1D0)
+!      IU=17.0_RP*ANGBD+3.1_RP
+iu = int(17.0_RP * angbd + 3.1_RP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do i = 1, iu
     angt = angbd * real(i, RP) / real(iu, RP)
@@ -443,7 +466,7 @@ end if
 !     If SDEC is sufficiently small, then RETURN after setting XNEW to
 !     XOPT+D, giving careful attention to the bounds.
 !
-if (sdec > 0.01D0 * qred) goto 120
+if (sdec > 0.01_RP * qred) goto 120
 190 dsq = ZERO
 do i = 1, n
     xnew(i) = max(min(xopt(i) + d(i), su(i)), sl(i))

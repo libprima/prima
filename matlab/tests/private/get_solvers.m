@@ -1,4 +1,4 @@
-function spaths = get_solvers(solvers, test_dir, compile_flag)
+function spaths = get_solvers(solvers, test_dir, options)
 
 olddir = pwd();  % Record the current directory
 oldpath = path();  % Record the current path.
@@ -28,7 +28,9 @@ solver_dir = fullfile(pdfo_dir, 'matlab', 'interfaces');
 solvern_dir = fullfile(neupdfo_dir, 'matlab', 'interfaces');
 spaths={solver_dir, solvern_dir};
 
-% Set up the solvers, taking particularly `compile_flag` (true/false) into account.
+% Set up the solvers, taking particularly `compile_flag` and `debug_flag` (true/false) into account.
+compile_flag = ~isfield(options, 'compile') || options.compile;
+debug_flag = isverify || (isfield(options, 'debug') && options.debug);
 
 try
     for is = 1 : length(solvers)
@@ -47,7 +49,7 @@ try
             % When we are not in verification, only the non-debugging version will be compiled.
             % We test both the debugging and non-debugging version during the verification.
             mexopt.debug_only = false;
-            mexopt.debug = isverify;
+            mexopt.debug = debug_flag;
 
             % Save compilation time during the verification of non-ready solvers by not compiling
             % the classical variant; focus on the verification of the modernized variant.

@@ -284,7 +284,9 @@ if (m > 0) then
             temp = temp + A_loc(i, j)**2
         end do
         if (temp <= 0) then
-            info = 12
+            if (present(info)) then
+                info = 12
+            end if
             return
         end if
         temp = sqrt(temp)
@@ -393,7 +395,7 @@ deallocate (chist_loc)
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist) .or. present(chist)) .and. maxhist_loc < nf_loc) then
     write (wmsg, ifmt) maxhist_loc
-    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
+    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recorded')
 end if
 
 end subroutine lincoa

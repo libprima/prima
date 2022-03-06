@@ -38,7 +38,7 @@
 ROOT_DIR := $(CURDIR)/../..
 # Temporary directory. It should not be a subdirectory of $(ROOT_DIR). The ?= assignment assigns the
 # value to TEST_DIR if TEST_DIR is not an exported environment variable of the shell.
-TEST_DIR ?= /tmp
+TEST_DIR ?= /tmp/fsrc_test
 # Root directory of this test. It is a subdirectory of $(TEST_DIR) and a partial copy of $(ROOT_DIR).
 TEST_ROOT := $(TEST_DIR)/neupdfo
 # The test directory

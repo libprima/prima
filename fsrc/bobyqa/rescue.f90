@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 PM07:52:23
+! Last Modified: Sunday, March 06, 2022 PM03:22:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,12 +23,12 @@ subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat
     & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+!use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specif modules
@@ -64,7 +64,13 @@ real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
 real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Outputs
-real(RP), intent(out) :: f
+!real(RP), intent(out) :: f
+! Zaikun: 20220306
+! For the moment, declare F as INOUT; otherwise, F is undefined if the subroutine exits in abnormal
+! cases before the first evaluation of F. This should be resolved later when we can always keep the
+! consistency between FOPT, XOPT, FVAL(KOPT), XPT(:, KOPT), F, and X. Maybe we do not even need to
+! output F at all.
+real(RP), intent(inout) :: f
 
 ! Local variables
 character(len=*), parameter :: srname = 'RESCUE'
@@ -156,6 +162,10 @@ end if
 !
 !     Set some constants.
 !
+!--------------------------------------------------------------------------------------------------!
+ihp = 1  ! Temporary fix for G95 warning about this variable is used uninitialized
+!--------------------------------------------------------------------------------------------------!
+
 np = n + 1
 sfrac = HALF / real(np, RP)
 nptm = npt - np
@@ -238,7 +248,7 @@ do j = 1, n
         bmat(j, jp) = -temp + ONE / ptsaux(1, j)
         bmat(j, jpn) = temp + ONE / ptsaux(2, j)
         bmat(j, 1) = -bmat(j, jp) - bmat(j, jpn)
-        zmat(1, j) = sqrt(2.0D0) / abs(ptsaux(1, j) * ptsaux(2, j))
+        zmat(1, j) = sqrt(TWO) / abs(ptsaux(1, j) * ptsaux(2, j))
         zmat(jp, j) = zmat(1, j) * ptsaux(2, j) * temp
         zmat(jpn, j) = -zmat(1, j) * ptsaux(1, j) * temp
     else
@@ -254,7 +264,7 @@ if (npt >= n + np) then
     do k = 2 * np, npt
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !          IW=(DFLOAT(K-NP)-HALF)/DFLOAT(N)
-        iw = int((real(k - np, RP) - HALF) / real(n, RP))
+        iw = floor((real(k - np) - HALF) / real(n))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ip = k - np - iw * n
         iq = ip + iw
@@ -413,7 +423,7 @@ do k = 1, npt
     end if
     vlmxsq = max(vlmxsq, vlag(k)**2)
 end do
-if (denom <= 1.0D-2 * vlmxsq) then
+if (denom <= 1.0E-2_RP * vlmxsq) then
     w(npt + n + knew) = -w(npt + n + knew) - winc
     goto 120
 end if

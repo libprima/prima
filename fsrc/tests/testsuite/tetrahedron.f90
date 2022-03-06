@@ -27,20 +27,21 @@ type(PROB_T), intent(out) :: prob
 ! Local variables
 integer(IK) :: i
 integer(IK) :: j
-integer(IK) :: n
+integer(IK), parameter :: n = 12_IK
 integer(IK), parameter :: np = 50_IK
+real(RP) :: Aineq(n, 4 * np)
 real(RP) :: ss
-real(RP) :: xs
-real(RP) :: ys
-real(RP) :: zs
 real(RP) :: theta(np)
 real(RP) :: xp(np)
+real(RP) :: xs
 real(RP) :: yp(np)
+real(RP) :: ys
 real(RP) :: zp(np)
+real(RP) :: zs
 
 prob % probname = 'tetrahedron'
 prob % probtype = 'l'
-prob % n = 12_IK
+prob % n = n
 
 ! Set the parameters needed for defining X0, Aineq, and bineq.
 theta = PI*[(real(j - 1_IK, RP) / real(np - 1_IK, RP), j=1, np)]
@@ -55,7 +56,7 @@ ys = minval([ZERO, yp])
 zs = minval([ZERO, zp])
 ss = maxval([ZERO, xp + yp + zp])
 
-call safealloc(prob % x0, prob % n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
+call safealloc(prob % x0, n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
 prob % x0(2:8) = ZERO
 prob % x0(1) = ONE / xs
 prob % x0(5) = ONE / ys
@@ -65,23 +66,27 @@ prob % x0(10:12) = ONE / ss
 prob % Delta0 = ONE
 prob % calfun => calfun_tetrahedron
 
-n = prob % n
 call safealloc(prob % lb, n)
 prob % lb = -HUGENUM
 call safealloc(prob % ub, n)
 prob % ub = HUGENUM
 
-call safealloc(prob % Aeq, 0_IK, n)
+call safealloc(prob % Aeq, n, 0_IK)
 call safealloc(prob % beq, 0_IK)
 call safealloc(prob % Aineq, n, 4_IK * np)
 call safealloc(prob % bineq, 4_IK * np)
-prob % bineq = ONE
-prob % Aineq = ZERO
+
+Aineq = ZERO
 do j = 1_IK, np
     do i = 1_IK, 4_IK
-        prob % Aineq(3_IK * i - [2_IK, 1_IK, 0_IK], 4_IK * j + i - 4_IK) = [xp(j), yp(j), zp(j)]
+        Aineq(3_IK * i - 2_IK, 4_IK * j + i - 4_IK) = xp(j)
+        Aineq(3_IK * i - 1_IK, 4_IK * j + i - 4_IK) = yp(j)
+        Aineq(3_IK * i, 4_IK * j + i - 4_IK) = zp(j)
     end do
 end do
+prob % Aineq = Aineq
+prob % bineq = ONE
+
 end subroutine construct_tetrahedron
 
 
@@ -98,17 +103,17 @@ real(RP), intent(out) :: f
 
 ! Local variables
 character(len=*), parameter :: srname = 'CALFUN_TETRAHEDRON'
-integer(IK), parameter :: np = 50_IK
 integer(IK) :: j
+integer(IK), parameter :: np = 50_IK
 real(RP) :: ss
-real(RP) :: xs
-real(RP) :: ys
-real(RP) :: zs
 real(RP) :: theta(np)
-real(RP) :: xp(np)
-real(RP) :: yp(np)
-real(RP) :: zp(np)
 real(RP) :: v12, v13, v14, v23, v24, v34, del1, del2, del3, del4, temp
+real(RP) :: xp(np)
+real(RP) :: xs
+real(RP) :: yp(np)
+real(RP) :: ys
+real(RP) :: zp(np)
+real(RP) :: zs
 
 call assert(size(x) == 12, 'SIZE(X) == 12', srname)
 

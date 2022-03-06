@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM06:00:44
+! Last Modified: Friday, March 04, 2022 PM05:30:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,7 +116,7 @@ nptm = npt - n - 1
 rhosq = rhobeg * rhobeg
 recip = ONE / rhosq
 reciq = sqrt(HALF) / rhosq
-test = 0.2D0 * rhobeg
+test = 0.2_RP * rhobeg
 idz = 1
 kbase = 1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

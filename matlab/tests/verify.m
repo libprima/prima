@@ -45,7 +45,7 @@ exception = [];
 try
 
     % Make the solvers available. Note that the solvers are under `test_dir`.
-    get_solvers(solver, test_dir, options.compile);
+    get_solvers(solver, test_dir, options);
 
     % Tell MATLAB where to find CUTEST.
     locate_cutest();

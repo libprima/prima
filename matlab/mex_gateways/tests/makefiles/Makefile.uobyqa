@@ -29,4 +29,4 @@
 
 SOLVER = uobyqa
 
-include Makefile.common
+include Makefile.dev

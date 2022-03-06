@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:46:03
+! Last Modified: Saturday, March 05, 2022 PM04:52:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -143,6 +143,10 @@ call initialize(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, xpt, &
 & fval, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, kopt, f, ftarget, &
 & xhist, maxxhist, fhist, maxfhist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+xopt = xpt(:, kopt)
+fopt = fval(kopt)
+x = xbase + xopt  ! Set X.
+f = fopt  ! Set F.
 
 xoptsq = ZERO
 do i = 1, n
@@ -259,7 +263,7 @@ if (dnorm < HALF * rho) then
 !     of likely improvements to the model within distance HALF*RHO of XOPT.
 !
     errbig = max(diffa, diffb, diffc)
-    frhosq = 0.125D0 * rho * rho
+    frhosq = 0.125_RP * rho * rho
     if (crvmin > ZERO .and. errbig > frhosq * crvmin) goto 650
     bdtol = errbig / rho
     do j = 1, n
@@ -285,8 +289,8 @@ ntrits = ntrits + 1
 !     derivatives of the current model, beginning with the changes to BMAT
 !     that do not depend on ZMAT. VLAG is used temporarily for working space.
 !
-90 if (dsq <= 1.0D-3 * xoptsq) then
-    fracsq = 0.25D0 * xoptsq
+90 if (dsq <= 1.0E-3_RP * xoptsq) then
+    fracsq = 0.25_RP * xoptsq
     summpq = ZERO
     do k = 1, npt
         summpq = summpq + pq(k)
@@ -724,12 +728,12 @@ if (ntrits > 0) then
     ratio = (f - fopt) / vquad
     if (ratio <= TENTH) then
         delta = min(HALF * delta, dnorm)
-    else if (ratio <= 0.7D0) then
+    else if (ratio <= 0.7_RP) then
         delta = max(HALF * delta, dnorm)
     else
         delta = max(HALF * delta, dnorm + dnorm)
     end if
-    if (delta <= 1.5D0 * rho) delta = rho
+    if (delta <= 1.5_RP * rho) delta = rho
 !
 !     Recalculate KNEW and DENOM if the new F is less than FOPT.
 !
@@ -933,7 +937,7 @@ if (knew > 0) then
     dist = sqrt(distsq)
     if (ntrits == -1) then
         delta = min(TENTH * delta, HALF * dist)
-        if (delta <= 1.5D0 * rho) delta = rho
+        if (delta <= 1.5_RP * rho) delta = rho
     end if
     ntrits = 0
     adelt = max(min(TENTH * dist, delta), rho)
@@ -950,9 +954,9 @@ if (max(delta, dnorm) > rho) goto 60
 680 if (rho > rhoend) then
     delta = HALF * rho
     ratio = rho / rhoend
-    if (ratio <= 16.0D0) then
+    if (ratio <= 16.0_RP) then
         rho = rhoend
-    else if (ratio <= 250.0D0) then
+    else if (ratio <= 250.0_RP) then
         rho = sqrt(ratio) * rhoend
     else
         rho = TENTH * rho
