@@ -1280,7 +1280,7 @@ subroutine qradd(c, Q, Rdiag, n)
 ! This subroutine updates the QR factorization of an MxN matrix A of full column rank, attempting to
 ! add a new column C is to this matrix as the LAST column while maintaining the full-rankness.
 ! Case 1. If C is not in range(A) (theoretically, it implies N < M), then the new matrix is [A, C];
-! Case 2. If C is in range(A), then the new matrix is [A(:, N-1), C].
+! Case 2. If C is in range(A), then the new matrix is [A(:, 1:N-1), C].
 ! N.B.:
 ! 0. Instead of R, this subroutine updates Rdiag, which is diag(R), whose size is min(M, N).
 ! 1. With the two cases specified as above, this function does not need A as an input.
