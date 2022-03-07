@@ -112,6 +112,7 @@ else
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
     case {'lincoa', 'lincoan'}
         blacklist = [blacklist, {'LSNNODOC', 'HS55'}]; % possible reason for a segfault; should test it after the modernization.
+        blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
     case {'cobyla', 'cobylan'}
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that

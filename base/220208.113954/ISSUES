@@ -1,21 +1,21 @@
 - LINCOA
 
 1. SEGFAULT
-Version: base 2202.113954
+Version: base 220208.113954
 Date: 20220209
 YW: 27
 %%%%%%
-cd('base/2202.113954/matlab/tests');
+cd('base/220208.113954/matlab/tests');
 options = []; options.yw = 27; verify('lincoa', 'LSNNODOC', 0, options);
 %%%%%%
 Fix: blacklist 'LSNNODOC'
 
-22. SEGFAULT
-Version: base 2202.113954
+2. SEGFAULT
+Version: base 220208.113954
 Date: 20220213
 YW: 28
 %%%%%%
-cd('base/2202.113954/matlab/tests');
+cd('base/220208.113954/matlab/tests');
 options = []; options.yw = 28; verify('lincoa', 'HS55', 13, options);
 %%%%%%
 Fix: blacklist 'HS55'
@@ -24,12 +24,12 @@ Fix: blacklist 'HS55'
 - BOBYQA
 
 1. bobyqa returns an fx that does not match x.
-Version: base 2202.113954
+Version: base 220208.113954
 Date: 20220209
 YW: 27
 Reproduce:
 %%%%%%
-cd('base/2202.113954/matlab/tests');
+cd('base/220208.113954/matlab/tests');
 options = []; options.yw = 27; verify('bobyqa', 'STREG', 27, options);
 %%%%%%
 Fix: blacklist 'STREG'
@@ -37,11 +37,11 @@ Fix: blacklist 'STREG'
 - COBYLA
 
 1. cobylan and cobyla selects different x for CHACONN1, 8; no one is better than the other
-Version: base 2202.113954
+Version: base 220208.113954
 Date: 20220213
 YW: 28
 %%%%%%
-cd('base/2202.113954/matlab/tests');
+cd('base/220208.113954/matlab/tests');
 options=[]; options.yw=28; verify('cobyla', 'CHACONN1', 8, options);
 %%%%%%
-Fix: for this version, ignore this kind of difference by modifying isequiv.m 
+Fix: for this version, ignore this kind of difference by modifying isequiv.m
