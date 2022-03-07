@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, March 07, 2022 PM12:46:27
+! Last Modified: Monday, March 07, 2022 PM03:04:18
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1287,8 +1287,8 @@ subroutine qradd(c, Q, Rdiag, n)
 ! 2. Indeed, when C is in range(A), Powell wrote in comments that "set IOUT to the index of the
 ! constraint (here, column of A -- Zaikun) to be deleted, but branch if no suitable index can be
 ! found". The idea is to replace a column of A by C so that the new matrix still has full rank
-! (such a column must exist unless C = 0). But his code essentially set IOUT = N always. Maybe he
-! found this works well enough in practice. Meanwhile, Powell's code includes a snippet that can
+! (such a column must exist unless C = 0). But his code essentially sets IOUT = N always. Maybe he
+! found this worked well enough in practice. Meanwhile, Powell's code includes a snippet that can
 ! never be reached, which was probably intended to deal with the case with IOUT =/= N.
 !--------------------------------------------------------------------------------------------------!
 
@@ -1332,6 +1332,8 @@ end if
 
 nsav = n  ! Needed for debugging.
 
+! As in Powell's COBYLA, CQ is set to 0 at the positions where CQ is negligible according to ISMINOR.
+! It may not be the best choice when the subroutine is used elsewhere, e.g., LINCOA. Tests needed.
 cq = matprod(c, Q)
 cqa = matprod(abs(c), abs(Q))
 where (isminor(cq, cqa))  ! Code in MATLAB: CQ(ISMINOR(CQ, CQA)) = ZERO
