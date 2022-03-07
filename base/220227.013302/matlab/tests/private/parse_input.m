@@ -203,7 +203,7 @@ if isempty(prob)
         if strcmpi(solver, 'cobyla')
             options.maxdim = min(options.maxdim, 70); %!!!
         elseif strcmpi(solver, 'newuoa')
-            options.maxdim = min(options.maxdim, 190); %!!!
+            %options.maxdim = min(options.maxdim, 190); %!!!  No problem in range
         elseif strcmpi(solver, 'lincoa')
             options.maxdim = min(options.maxdim, 160); %!!!
         end
