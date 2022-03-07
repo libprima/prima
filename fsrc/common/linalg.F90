@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, February 08, 2022 PM09:58:37
+! Last Modified: Monday, March 07, 2022 PM12:46:27
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -745,7 +745,7 @@ function lsqr(A, b, Q, Rdiag) result(x)
 ! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
 ! This function is used in COBYLA, where,
 ! 1. Q is supplied externally (called Z);
-! 2. Rdiag (the diagonal of R) is supplied externally (called ZDOTA);
+! 2. RDIAG (the diagonal of R) is supplied externally (called ZDOTA);
 ! 3. A HAS FULL COLUMN RANK;
 ! 4. It seems that b (CGRAD and DNEW) is in the column space of A (not sure yet).
 !--------------------------------------------------------------------------------------------------!
@@ -1282,7 +1282,7 @@ subroutine qradd(c, Q, Rdiag, n)
 ! Case 1. If C is not in range(A) (theoretically, it implies N < M), then the new matrix is [A, C];
 ! Case 2. If C is in range(A), then the new matrix is [A(:, 1:N-1), C].
 ! N.B.:
-! 0. Instead of R, this subroutine updates Rdiag, which is diag(R), whose size is min(M, N).
+! 0. Instead of R, this subroutine updates RDIAG, which is diag(R), whose size is min(M, N).
 ! 1. With the two cases specified as above, this function does not need A as an input.
 ! 2. Indeed, when C is in range(A), Powell wrote in comments that "set IOUT to the index of the
 ! constraint (here, column of A -- Zaikun) to be deleted, but branch if no suitable index can be
@@ -1360,8 +1360,8 @@ if (n < m) then
     end if
 end if
 
-! Update Rdiag so that RDIAG(N) = CQ(N) = INPROD(C, Q(:, N)). Note that N may have been augmented.
-if (n >= 1 .and. n <= m) then  ! N > M should not happen unless the input is wrong.
+! Update RDIAG so that RDIAG(N) = CQ(N) = INPROD(C, Q(:, N)). Note that N may have been augmented.
+if (n >= 1 .and. n <= m) then  ! Indeed, N > M should not happen unless the input is wrong.
     Rdiag(n) = cq(n)  ! Indeed, RDIAG(N) = INPROD(C, Q(:, N))
 end if
 
@@ -1389,7 +1389,7 @@ subroutine qrexc(A, Q, Rdiag, i)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates the QR factorization of A when its [I, I+1, ..., N] columns are reordered
 ! as [I+1, ..., N, I]. Here, A IS ASSUMED TO HAVE FULL COLUMN RANK.
-! N.B. Instead of R, this subroutine updates Rdiag, which is diag(R), whose size is min(M, N).
+! N.B. Instead of R, this subroutine updates RDIAG, which is diag(R), whose size is min(M, N).
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -1431,13 +1431,14 @@ end if
 ! Calculation starts !
 !====================!
 
-if (i <= 0 .or. i >= n) then   ! I <= 0 or I > N should not happen.
+if (i <= 0 .or. i >= n) then
+    ! Only I == N is really needed, as I <= 0 or I > N should not happen unless the input is wrong.
     return
 end if
 
 ! For each K, find a Givens rotation G so that G*Q(:, [K+1, K])^T*A(:, K+1) = [r, 0].
 ! Then update Q(:, [K, K+1]) to Q(:, [K+1, K])*G^T, and A(:, [K, K+1]) to A(:, [K+1, K]). After
-! this, Q(:, [K, K+1])^T*A(:, [K, K+1]) is upper triangular, the diagonal being Rdiag([K, K+1])
+! this, Q(:, [K, K+1])^T*A(:, [K, K+1]) is upper triangular, the diagonal being RDIAG([K, K+1])
 ! defined below. In this way, we obtain the QR factorization of A when its Kth and (K+1)th columns
 ! are exhanged. After this is done for each K = 1, ..., N-1, we obtain the QR factorization of
 ! A when its [I, I+1, ..., N] columns are reordered as [I+1, ..., N, I].
@@ -1451,12 +1452,12 @@ do k = i, n - 1_IK
     !!Rdiag([k, k + 1_IK]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]!
     !----------------------------------------------------------------!
     ! Note that RDIAG(N) inherits all rounding in RDIAG(I:N-1) and Q(:, I:N-1) and hence contain
-    ! significant errors. Thus we may modify the code as follows, only calculating RDIAG(K) here and
-    ! calculating RDIAG(N) by an inner product after the loop.
+    ! significant errors. Thus we may modify Powell's code as follows, only calculating RDIAG(K)
+    ! here and calculating RDIAG(N) by an inner product after the loop.
     !----------------!
     !!Rdiag(k) = hypt!
     !----------------!
-    ! Or we simply calculate RDIAG from scratch as follows.
+    ! Here, nevertheless, we simply calculate RDIAG from scratch as follows.
     Rdiag(k) = inprod(Q(:, k), A(:, k + 1))
 end do
 
