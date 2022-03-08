@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, March 07, 2022 PM03:04:18
+! Last Modified: Tuesday, March 08, 2022 AM10:00:03
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1282,7 +1282,8 @@ subroutine qradd(c, Q, Rdiag, n)
 ! Case 1. If C is not in range(A) (theoretically, it implies N < M), then the new matrix is [A, C];
 ! Case 2. If C is in range(A), then the new matrix is [A(:, 1:N-1), C].
 ! N.B.:
-! 0. Instead of R, this subroutine updates RDIAG, which is diag(R), whose size is min(M, N).
+! 0. Instead of R, this subroutine updates RDIAG, which is diag(R), with a size at least MIN(M, N+1).
+! The number is MIN(M, N+1) rather than MIN(M, N) as N may be augmented by 1 in the subroutine.
 ! 1. With the two cases specified as above, this function does not need A as an input.
 ! 2. Indeed, when C is in range(A), Powell wrote in comments that "set IOUT to the index of the
 ! constraint (here, column of A -- Zaikun) to be deleted, but branch if no suitable index can be
@@ -1321,7 +1322,8 @@ m = int(size(Q, 2), kind(m))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    call assert(size(Rdiag) >= min(m, n + 1), 'SIZE(Rdiag) >= MIN(M, N+1)', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
 end if
@@ -1330,7 +1332,7 @@ end if
 ! Calculation starts !
 !====================!
 
-nsav = n  ! Needed for debugging.
+nsav = n  ! Needed for debugging (only).
 
 ! As in Powell's COBYLA, CQ is set to 0 at the positions where CQ is negligible according to ISMINOR.
 ! It may not be the best choice when the subroutine is used elsewhere, e.g., LINCOA. Tests needed.
@@ -1373,8 +1375,9 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(n >= nsav .and. n <= min(nsav + 1_IK, m), 'NSAV <= N <= min(NSAV + 1, M)', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    call assert(n >= nsav .and. n <= min(nsav + 1_IK, m), 'NSAV <= N <= MIN(NSAV + 1, M)', srname)
+    call assert(size(Rdiag) >= n, 'SIZE(Rdiag) >= N', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
     if (n < m .and. is_finite(norm(c))) then
         call assert(norm(matprod(c, Q(:, n + 1:m))) <= max(tol, tol * norm(c)), 'C^T*Q(:, N+1:M) == 0', srname)
@@ -1389,9 +1392,9 @@ end subroutine qradd
 
 subroutine qrexc(A, Q, Rdiag, i)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates the QR factorization of A when its [I, I+1, ..., N] columns are reordered
-! as [I+1, ..., N, I]. Here, A IS ASSUMED TO HAVE FULL COLUMN RANK.
-! N.B. Instead of R, this subroutine updates RDIAG, which is diag(R), whose size is min(M, N).
+! This subroutine updates the QR factorization of an MxN matrix A when its [I, I+1, ..., N] columns
+! are reordered as [I+1, ..., N, I]. Here, A IS ASSUMED TO HAVE FULL COLUMN RANK.
+! N.B. Instead of R, this subroutine updates RDIAG, which is diag(R), the size being N.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -1420,11 +1423,12 @@ real(RP) :: tol
 m = int(size(A, 1), kind(m))
 n = int(size(A, 2), kind(n))
 
-! Postconditions
+! Preconditions
 if (DEBUGGING) then
     call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
     call assert(i >= 1 .and. i <= n, '1 <= i <= N', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    call assert(size(Rdiag) == N, 'SIZE(Rdiag) == N', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
 end if
@@ -1459,7 +1463,7 @@ do k = i, n - 1_IK
     !----------------!
     !!Rdiag(k) = hypt!
     !----------------!
-    ! Here, nevertheless, we simply calculate RDIAG from scratch as follows.
+    ! Nevertheless, we simply calculate RDIAG from scratch as follows.
     Rdiag(k) = inprod(Q(:, k), A(:, k + 1))
 end do
 
@@ -1471,7 +1475,8 @@ Rdiag(n) = inprod(Q(:, n), A(:, i))  ! Calculate RDIAG(N) from scratch. See the 
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    call assert(size(Rdiag) == n, 'SIZE(Rdiag) == N', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
     A_test = reshape([A(:, 1:i - 1), A(:, i + 1:n), A(:, i)], shape(A))
     QA_test = matprod(transpose(Q), A_test)

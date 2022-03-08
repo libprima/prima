@@ -22,7 +22,7 @@ WARNINGS="$(grep -i "warning\|Remark\|Questionable\|attention\|F[0-9]*-W\|F[0-9]
 	| grep -vi "Warining: UOBYQA: \|Warning: NEWUOA: \|Warning: BOBYQA: \|Warning: LINCOA: \|Warning: COBYLA: " \
     | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
 
-ERRORS="$(grep -i "err\|fail\|exception\|invalid\|bad\|overflow\|backtrace\|segmentation\|fault\|illegal\|F[0-9]*-S\|F[0-9]*-F\|F[0-9]*-E\|Could\ not\ resolve\|not\ defined" "$LOGFILE" \
+ERRORS="$(grep -i "error\|fail\|exception\|invalid\|bad\|overflow\|backtrace\|segmentation\|fault\|illegal\|F[0-9]*-S\|F[0-9]*-F\|F[0-9]*-E\|Could\ not\ resolve\|not\ defined" "$LOGFILE" \
     | grep -vi "libbacktrac" \
     | grep -vi "default" \
     | grep -vi "[0-9]\s*error" \
