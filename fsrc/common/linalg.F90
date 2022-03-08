@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 08, 2022 AM10:54:04
+! Last Modified: Tuesday, March 08, 2022 PM09:43:58
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1172,7 +1172,15 @@ end function hypotenuse
 
 
 function planerot(x) result(G)
+!--------------------------------------------------------------------------------------------------!
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
+! Roughly speaking, using a MATLAB-style formulation of matrices,
+! G = [X(1)/R, X(2)/R; -X(2)/R, X(1)/R] with R = SQRT(X(1)^2+X(2)^2), and G*X = [R; 0].
+! However, we need to take care of the possibilities of R = 0, Inf, NaN, and over/underflow.
+! The G defined in this way is continuous with respect to X except at 0. Following this definition,
+! G = [sign(X(1)), 0; 0, sign(X(1))] if X(2) = 0, G = [0, sign(X(2)); -sign(X(2)), 0] if X(2) = 0.
+! Yet some implementations ignore the signs, leading to discontinuity and numerical instability.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, REALMIN, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_inf
@@ -1252,7 +1260,7 @@ else
     end if
 end if
 
-G = reshape([c, -s, s, c], [2, 2])
+G = reshape([c, -s, s, c], [2, 2])  ! MATLAB: G = [c, s; -s, c]
 
 !====================!
 !  Calculation ends  !
@@ -1349,6 +1357,7 @@ end where
 do k = m - 1_IK, n + 1_IK, -1
     if (abs(cq(k + 1)) > 0) then
         ! Powell wrote CQ(K+1) /= 0 instead of ABS(CQ(K+1)) > 0. The two differ if CQ(K+1) is NaN.
+        ! If we apply the rotation below when CQ(K+1) = 0, then CQ(K) will get updated to |CQ(K)|.
         G = planerot(cq([k, k + 1_IK]))
         Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
         cq(k) = hypotenuse(cq(k), cq(k + 1))
