@@ -54,7 +54,7 @@ else
     if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
 %        requirements.blacklist = [requirements.blacklist, {'DEGENLPA', 'HATFLDH', 'LOTSCHD', ...
 %            'LSNNODOC', 'OET3', 'SIMPLLPA', 'SIMPLLPB', 'SIPOW1', 'SIPOW1M', 'SIPOW2', 'SIPOW2M',...
-%            'STANCMIN', 'TFI3', 'ZECEVIC2'}];  % profile('lincoa') SEGFAULT!
+%            'STANCMIN', 'TFI3', 'ZECEVIC2'}];  % profile('lincoa') SEGFAULT for a deprecated  version of lincoa!
     end
     plist = secup(requirements);
 end
@@ -147,7 +147,7 @@ cv_history = NaN(maxfun, 1);
 
 [~, ~, ~, output] = solver(prob);
 
-nf = min(maxfun, output.funcCount); % The solvers may not respect maxfun.
+nf = min(maxfun, output.funcCount); % Some solvers (e.g., fmincon) may not respect maxfun.
 
 if (nf >= 1)
     fval_history(1:nf) = output.fhist(1:nf);
@@ -159,7 +159,7 @@ if (nf >= 1)
     fval_history(nf+1:maxfun) = fval_history(nf);
     cv_history(nf+1:maxfun) = cv_history(nf);
 else
-    % Sometimes pdfo may return nf = 0, e.g., when it detects infeasiblity.
+    % Sometimes pdfo may return nf = 0, e.g., when it detects infeasibility.
     fval_history = prob.f0;
     cv_history = prob.constrv0;
 end
