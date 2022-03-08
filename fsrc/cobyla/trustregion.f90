@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, March 08, 2022 AM10:24:47
+! Last Modified: Tuesday, March 08, 2022 AM10:45:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -298,7 +298,7 @@ do iter = 1, maxiter
         nactsav = nact
         call qradd(A(:, iact(icon)), z, zdota, nact)  ! QRADD may update NACT tp NACT + 1.
         ! Indeed, it suffices to pass ZDOTA(1:MIN(N, NACT+_1)) to QRADD as follows.
-        !call qradd(A(:, iact(icon)), z, zdota(1:min(n, nact + 1)), nact)
+        !call qradd(A(:, iact(icon)), z, zdota(1:min(n, nact + 1_IK)), nact)
 
         if (nact == nactsav + 1) then
             ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
