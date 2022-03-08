@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 08, 2022 AM10:00:03
+! Last Modified: Tuesday, March 08, 2022 AM10:41:54
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1282,8 +1282,9 @@ subroutine qradd(c, Q, Rdiag, n)
 ! Case 1. If C is not in range(A) (theoretically, it implies N < M), then the new matrix is [A, C];
 ! Case 2. If C is in range(A), then the new matrix is [A(:, 1:N-1), C].
 ! N.B.:
-! 0. Instead of R, this subroutine updates RDIAG, which is diag(R), with a size at least MIN(M, N+1).
-! The number is MIN(M, N+1) rather than MIN(M, N) as N may be augmented by 1 in the subroutine.
+! 0. Instead of R, this subroutine updates RDIAG, which is diag(R), with a size at most M and at
+! least MIN(M, N+1). The number is MIN(M, N+1) rather than MIN(M, N) as N may be augmented by 1 in
+! the subroutine.
 ! 1. With the two cases specified as above, this function does not need A as an input.
 ! 2. Indeed, when C is in range(A), Powell wrote in comments that "set IOUT to the index of the
 ! constraint (here, column of A -- Zaikun) to be deleted, but branch if no suitable index can be
@@ -1321,8 +1322,8 @@ m = int(size(Q, 2), kind(m))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
-    call assert(size(Rdiag) >= min(m, n + 1), 'SIZE(Rdiag) >= MIN(M, N+1)', srname)
+    call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)  ! N = 0 is possible.
+    call assert(size(Rdiag) >= min(m, n + 1_IK) .and. size(Rdiag) <= m, 'MIN(M, N+1) <= SIZE(Rdiag) <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
@@ -1376,13 +1377,13 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(n >= nsav .and. n <= min(nsav + 1_IK, m), 'NSAV <= N <= MIN(NSAV + 1, M)', srname)
-    call assert(size(Rdiag) >= n, 'SIZE(Rdiag) >= N', srname)
+    call assert(size(Rdiag) >= n .and. size(Rdiag) <= m, 'N <= SIZE(Rdiag) <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
     if (n < m .and. is_finite(norm(c))) then
         call assert(norm(matprod(c, Q(:, n + 1:m))) <= max(tol, tol * norm(c)), 'C^T*Q(:, N+1:M) == 0', srname)
     end if
-    if (n >= 1) then
+    if (n >= 1) then  ! N = 0 is possible.
         call assert(abs(inprod(c, Q(:, n)) - Rdiag(n)) <= max(tol, tol * inprod(abs(c), abs(Q(:, n)))) &
             & .or. .not. is_finite(Rdiag(n)), 'C^T*Q(:, N) == Rdiag(N)', srname)
     end if
