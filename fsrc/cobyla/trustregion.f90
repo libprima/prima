@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Monday, February 28, 2022 PM02:44:45
+! Last Modified: Tuesday, March 08, 2022 AM10:24:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,7 +68,7 @@ real(RP), intent(in) :: b(:)    ! B(M+1)
 real(RP), intent(in) :: delta
 
 ! Outputs
-real(RP) :: d(size(A, 1))   ! D(N) 
+real(RP) :: d(size(A, 1))   ! D(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTLP'
@@ -297,6 +297,8 @@ do iter = 1, maxiter
         zdasav(1:nact) = zdota(1:nact)
         nactsav = nact
         call qradd(A(:, iact(icon)), z, zdota, nact)  ! QRADD may update NACT tp NACT + 1.
+        ! Indeed, it suffices to pass ZDOTA(1:MIN(N, NACT+_1)) to QRADD as follows.
+        !call qradd(A(:, iact(icon)), z, zdota(1:min(n, nact + 1)), nact)
 
         if (nact == nactsav + 1) then
             ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
