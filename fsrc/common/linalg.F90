@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 08, 2022 AM10:41:54
+! Last Modified: Tuesday, March 08, 2022 AM10:54:04
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1428,7 +1428,7 @@ n = int(size(A, 2), kind(n))
 if (DEBUGGING) then
     call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
     call assert(i >= 1 .and. i <= n, '1 <= i <= N', srname)
-    call assert(size(Rdiag) == N, 'SIZE(Rdiag) == N', srname)
+    call assert(size(Rdiag) == n, 'SIZE(Rdiag) == N', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
