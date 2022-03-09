@@ -1,0 +1,19 @@
+1. Implement a module pdfo, and then newuoa_mod etc as submodules. Use the solvers by
+
+use, non_intrinsic :: pdfo_mod, only : newuoa
+use, non_intrinsic :: pdfo_mod, only : RP, IK
+
+2. Let COBYLA receive bounds and linear constraints directly. Offer an option to respect bound.
+
+3. Let LINCOA receive bounds directly. Offer an option to respect bounds.
+
+4. Offer a subroutine called `pdfo`, which behaves similarly as the function `pdfo` in
+MATLAB/Python. It should be accessible by
+
+use, non_intrinsic :: pdfo_mod, only : pdfo
+
+5. Make subroutines trstep (maybe others) available to users by
+
+use, non_intrinsic :: pdfo_mod, only : trstep
+
+It should solve unconstrained/bound-constrained/linearly-constrained trust region subproblems.
