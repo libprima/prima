@@ -10,14 +10,11 @@ cdir_dft = fullfile(homedir(), 'local', 'cutesif', 'cutest');
 %    setenv('CUTEST', cdir);  % This is needed by `cutestdir`, which will be called by `macup`.
 %end
 
-%cmtools = fullfile(fileparts(cdir), 'mtools', 'msrc');
 cmtools = fullfile(fileparts(cdir_dft), 'mtools', 'msrc');
+%cmtools = fullfile(fileparts(cdir), 'mtools', 'msrc');
 cpaths = {cmtools};
 
-old_dir = cd(fileparts(cmtools))
-clear('setup');
-setup
-cd(old_dir)
+olddir=cd(fullfile(cmtools, 'mtools')); clear('setup'); setup; cd(olddir);
 
 for ip = 1 : length(cpaths)
     addpath(cpaths{ip});
