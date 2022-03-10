@@ -98,7 +98,7 @@ function [x, fx, exitflag, output] = uobyqan(varargin)
 %       if it is set to true and iprint = 1, 2, or 3, the effect is the
 %       same as setting iprint to -1, -2, or -3, respectively; default: true
 %   *** maxhist: a nonnegative integer controlling how much history will
-%       be included in the output structure; default: maxfun;
+%       be included in the output structure; default: maxfun
 %       *******************************************************************
 %       IMPORTANT NOTICE:
 %       If maxhist is so large that recording the history takes too much memory,
@@ -108,7 +108,7 @@ function [x, fx, exitflag, output] = uobyqan(varargin)
 %   *** output_xhist: a boolean value indicating whether to output the
 %       history of the iterates; if it is set to true, then the output
 %       structure will include a field "xhist", which contains the last
-%       maxhist iterates of the algorithm; default: false;
+%       maxhist iterates of the algorithm; default: false
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function value or not; default: false

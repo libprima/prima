@@ -185,7 +185,7 @@ if isempty(prob)
         end
         if options.maxdim == 100
             options.maxdim = 50;
-            options.maxcon = 1000;
+            options.maxcon = 20*options.maxdim;
         end
         if options.mindim == 101
             options.mindim = 51;
@@ -196,16 +196,7 @@ if isempty(prob)
             else
                 options.maxdim = 100;
             end
-            options.maxcon = 2000;
-        end
-    end
-    if strcmpi(invoker, 'verify')
-        if strcmpi(solver, 'cobyla')
-            options.maxdim = min(options.maxdim, 80); %!!!
-        elseif strcmpi(solver, 'newuoa')
-            %options.maxdim = min(options.maxdim, 190); % There is no unstrained problem in [101, 190]!!!
-        elseif strcmpi(solver, 'lincoa')
-            options.maxdim = min(options.maxdim, 170); %!!!
+            options.maxcon = 20*options.maxdim;
         end
     end
 
