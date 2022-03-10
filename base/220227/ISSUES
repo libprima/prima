@@ -1,0 +1,11 @@
+- LINCOA
+
+1. SEGFAULT
+Version: base 220227
+Date: 20220306
+YW: 2211
+%%%%%%
+cd('base/220227/matlab/tests');
+options = []; options.yw = 2211; verify('lincoa', options);
+%%%%%%
+Fix: This seems to be caused by problem AVGASA or AVGASB; block them for the moment
