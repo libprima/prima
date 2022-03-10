@@ -14,7 +14,7 @@ cmtools = fullfile(fileparts(cdir_dft), 'mtools', 'msrc');
 %cmtools = fullfile(fileparts(cdir), 'mtools', 'msrc');
 cpaths = {cmtools};
 
-olddir=cd(fullfile(cmtools, 'mtools')); clear('setup'); setup; cd(olddir);
+olddir=cd(fullfile(cdir_dft, 'mtools')); clear('setup'); setup; cd(olddir);
 
 for ip = 1 : length(cpaths)
     addpath(cpaths{ip});
