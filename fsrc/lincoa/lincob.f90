@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 05, 2022 PM07:35:02
+! Last Modified: Saturday, March 12, 2022 AM12:48:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,7 +36,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : matprod, maximum
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
@@ -86,7 +86,7 @@ real(RP) :: pq(npt)
 real(RP) :: pqw(npt + size(x))  ! Note that the size is npt + N instead of npt; Isn't it VLAG in NEWUOA??? Better name?
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: rescon(size(bvec))
-real(RP) :: rfac(size(x) * (size(x) + 1) / 2)
+real(RP) :: rfac(size(x), size(x))
 real(RP) :: rsp(2 * npt)
 real(RP) :: step(size(x))
 real(RP) :: xbase(size(x))
@@ -144,6 +144,8 @@ if (DEBUGGING) then
     call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
 end if
 
+qfac = eye(n)
+rfac = ZERO
 !
 !     The arguments N, NPT, M, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
 !       identical to the corresponding arguments in SUBROUTINE LINCOA.

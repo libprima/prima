@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 04, 2022 PM01:32:48
+! Last Modified: Saturday, March 12, 2022 AM12:52:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,6 +27,7 @@ subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : istriu
 
 ! Solver-specific modules
 use, non_intrinsic :: getact_mod, only : getact
@@ -46,7 +47,7 @@ real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 integer(IK), intent(inout) :: iact(:)  ! IACT(M); Will be updated in GETACT
 integer(IK), intent(inout) :: nact  ! Will be updated in GETACT
 real(RP), intent(inout) :: qfac(:, :)  ! QFAC(N, N); Will be updated in GETACT
-real(RP), intent(inout) :: rfac(:)  ! RFAC(N, N); Will be updated in GETACT
+real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N); Will be updated in GETACT
 
 ! Outputs
 integer(IK), intent(out) :: ngetact
@@ -64,7 +65,7 @@ real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
 real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, tinynum, wgd
-integer(IK) :: i, icount, ih, ir, j, jsav, k
+integer(IK) :: i, icount, ih, j, jsav, k
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
@@ -96,10 +97,9 @@ if (DEBUGGING) then
     !tol == ???
     !call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     !call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
-    !call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
-    !call assert(istriu(rfac, tol), 'RFAC is upper triangular', srname)
+    call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
+    call assert(istriu(rfac), 'RFAC is upper triangular', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    call assert(size(rfac) == n * (n + 1_IK) / 2_IK, 'RFAC is n-by-n and upper triangular', srname)
     !----------------------------------------------------------------------------------------------!
 end if
 
@@ -191,17 +191,14 @@ if (nact > 0) then
 end if
 bstep = ZERO
 if (resmax > 1.0D-4 * snorm) then
-    ir = 0
     do k = 1, nact
         temp = resact(k)
         if (k >= 2) then
             do i = 1, k - 1
-                ir = ir + 1
-                temp = temp - rfac(ir) * vlam(i)
+                temp = temp - rfac(i, k) * vlam(i)
             end do
         end if
-        ir = ir + 1
-        vlam(k) = temp / rfac(ir)
+        vlam(k) = temp / rfac(k, k)
     end do
     do i = 1, n
         d(i) = ZERO
@@ -442,6 +439,17 @@ goto 150
 !
 320 snorm = ZERO
 if (reduct > ZERO) snorm = sqrt(ss)
+
+if (DEBUGGING) then
+    !----------------------------------------------------------------------------------------------!
+    !tol == ???
+    !call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    !call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
+    call assert(istriu(rfac), 'RFAC is upper triangular', srname)
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    !----------------------------------------------------------------------------------------------!
+end if
 
 end subroutine trstep
 

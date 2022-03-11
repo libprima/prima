@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 08, 2022 PM09:43:58
+! Last Modified: Saturday, March 12, 2022 AM12:40:27
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -39,7 +39,7 @@ public :: calquad, errquad, hess_mul
 public :: omega_col, omega_mul, omega_inprod
 public :: errh
 public :: isminor
-public :: issymmetric, isorth
+public :: issymmetric, isorth, istriu
 public :: norm
 public :: sort
 public :: int

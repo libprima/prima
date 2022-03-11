@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 05, 2022 PM07:43:26
+! Last Modified: Friday, March 11, 2022 PM10:20:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,7 +26,7 @@ subroutine getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, 
 use, non_intrinsic :: linalg_mod, only : inprod
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, ZERO
 
 implicit none
 
@@ -80,7 +80,7 @@ integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag, jw,   &
 !
 tinynum = real(tiny(0.0), RP)
 tdel = 0.2_RP * snorm
-ddsav = inprod(g, g) + inprod(g, g)
+ddsav = TWO * inprod(g, g)
 vlam = ZERO
 !
 !     Set the initial QFAC to the identity matrix in the case NACT=0.
