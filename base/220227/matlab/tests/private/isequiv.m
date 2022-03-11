@@ -123,6 +123,16 @@ if isempty(requirements.list)
         %    'MANCINONE', 'QPNBLEND', 'SPANHYD', 'SWOPF', 'TAX13322', 'TAXR13322', 'TRO4X4', ...
         %    'VANDERM1', 'VANDERM2', 'VANDERM3'}];  % Takes more than 10 sec to solve
 
+        % 51-100 dimensional problems that take too long time to be used in the verification.
+        blacklist = [blacklist, {'HYDCAR20', 'LUKSAN13', 'CHEBYQADNE', 'HAIFAM', 'LUKSAN12', 'HIMMELBI', 'DUAL1', ...
+            'AIRPORT', 'CHEBYQAD', 'LUKSAN14LS', 'LUKSAN13LS', 'HYDC20LS', 'LUKSAN11LS', 'LUKSAN12LS', 'CORE1', ...
+            'LUKSAN14', 'DUAL2', 'LUKSAN15', 'ACOPP30', ...  % 6~10 min
+            'VANDERM3', 'CHANDHEQ', ... % > 5 min
+            'DECONVB', 'ACOPR30', ... % > 4 min
+            'DECONVC', 'LAKES', 'KISSING2', ... % > 3 min
+            'LUKSAN11', 'FEEDLOC', 'VANDERM2', 'MSS1', 'VANDERM1', 'GROUPING', 'LINSPANH', ...  % > 2 min
+            'DECONVU', 'DUAL4'}];  % > 1 min
+
         % blacklist when QRADD/QREXC calls ISORTH
         blacklist = [blacklist, {'ACOPP30', 'ACOPR30', 'AIRPORT', 'BATCH', 'CHANDHEQ', 'CHEBYQAD', 'CHEBYQADNE', 'CHNRSBNE', 'CHNRSNBMNE', ...
         'CORE1', 'CRESC132', 'DALLASS', 'DECONVB', 'DECONVBNE', 'DECONVU', 'DEGENQPC', 'DUAL1', 'DUAL2', 'ERRINRSM', ...
