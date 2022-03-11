@@ -364,10 +364,6 @@ C          TEMPA=0.0
 !write(17,*) 'sim', sim(1:n, 1:n+1)
 !write(17,*) 'simi', simi(1:n, 1:n)
 
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-! Zaikun 2021-05-30
-      IF (INFO == 3) GOTO 600  ! MAXFUN is reached
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 C
 C     Make an error return if SIGI is a poor approximation to the inverse of
@@ -424,6 +420,10 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           GOTO 600
       END IF
 
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 2021-05-30
+      IF (INFO == 3) GOTO 600  ! MAXFUN is reached
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if (from_tr == 1) then
