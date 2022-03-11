@@ -8,7 +8,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, February 28, 2022 PM09:32:10
+! Last Modified: Friday, March 11, 2022 PM02:22:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -338,9 +338,6 @@ do tr = 1, maxtr
             prerem = prerec
             actrem = cval(n + 1) - cstrv
         end if
-        if (is_nan(actrem)) then
-            actrem = -HUGENUM  ! Signify a bad trust-region step.
-        end if
 
         !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')
         !prerem = max(prerem, tiny(prerem))
@@ -356,7 +353,7 @@ do tr = 1, maxtr
         ! there is no good point to replace, and X will not be included into the simplex; in this
         ! case, the geometry of the simplex likely needs improvement, which will be handled below.
         ! N.B.: COBYLA never sets JDROP_TR = N + 1.
-        tr_success = (actrem > 0)
+        tr_success = (actrem > 0)  ! N.B.: If ACTREM is NaN, then TR_SUCCESS should & will be FALSE.
         jdrop_tr = setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi)
 
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
@@ -392,7 +389,11 @@ do tr = 1, maxtr
     ! 2. Powell's definition of BAD_TRSTEP is
     !!bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
     ! But the following one seems to work better, especially for linearly constrained problems.
-    bad_trstep = (shortd .or. actrem <= 0 .or. jdrop_tr == 0)
+    ! 3. Note that ACTREM may be NaN. Thus it is not enough to check whether ACTREM <= 0. What we
+    ! need is .NOT. (ACTREM > 0), or equivalently ACTREM <= 0 .OR. IS_NAN(ACTREM). It is attempting
+    ! to write .NOT. TR_SUCCESS, but Fortran compilers will complain that TR_SUCCESS is undefined
+    ! when SHORTD is TRUE; in addition, doing so would couple the code, which we try to avoid.
+    bad_trstep = (shortd .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
     improve_geo = (bad_trstep .and. .not. good_geo)
@@ -430,7 +431,7 @@ do tr = 1, maxtr
         ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
         jdrop_geo = setdrop_geo(delta, factor_alpha, factor_beta, sim, simi)
 
-        ! JDROP_GEO is between 1 and N unless SIM and SIMI contains NaN, which should not happen
+        ! JDROP_GEO is between 1 and N unless SIM and SIMI contain NaN, which should not happen
         ! at this point unless there is a bug. Nevertheless, for robustness, we include the
         ! following instruction to exit when JDROP_GEO == 0 (if JDROP_GEO does become 0, then
         ! memory error will occur if we continue, as JDROP_GEO is used as an index of arrays.)
