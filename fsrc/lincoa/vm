@@ -1,0 +1,39 @@
+function v2m(rfacv) result(rfacm)
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+real(RP), intent(in) :: rfacv(:)
+real(RP) :: rfacm((floor(sqrt(real(8 * size(rfacv) + 1))) - 1) / 2, (floor(sqrt(real(8 * size(rfacv) + 1))) - 1) / 2)
+integer(IK) :: n, i, j, ir
+
+n = int(size(rfacm, 1), kind(n))
+call assert(size(rfacv) == n * (n + 1) / 2, 'SIZE(RFACV) = N*(N+1)/2', 'v2m')
+
+rfacm = ZERO
+ir = 0_IK
+do j = 1_IK, n
+    do i = 1_IK, j
+        ir = ir + 1_IK
+        rfacm(i, j) = rfacv(ir)
+    end do
+end do
+
+end function v2m
+
+function m2v(rfacm) result(rfacv)
+use, non_intrinsic :: consts_mod, only : RP, IK
+implicit none
+real(RP), intent(in) :: rfacm(:, :)
+real(RP) :: rfacv((size(rfacm, 1) * (size(rfacm, 1) + 1)) / 2)
+integer(IK) :: n, i, j, ir
+
+n = int(size(rfacm, 1), kind(n))
+ir = 0_IK
+do j = 1_IK, n
+    do i = 1_IK, j
+        ir = ir + 1_IK
+        rfacv(ir) = rfacm(i, j)
+    end do
+end do
+
+end function m2v
