@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 12, 2022 AM12:54:20
+! Last Modified: Saturday, March 12, 2022 AM11:53:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -55,14 +55,10 @@ real(RP) :: w(size(g))
 real(RP) :: cosv, ctol, cval, ddsav, dnorm, rdiag,   &
 &        sinv, sprod, summ, sval, tdel, temp, test, tinynum,   &
 &        violmx, vmult
-integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag,  &
-&           k, l, nactp, jw
+integer(IK) :: i, ic, iflag, j, jc, k, l
 
 integer(IK) :: m
 integer(IK) :: n
-
-real(RP) :: rfacv(size(g) * (size(g) + 1) / 2)
-
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -236,9 +232,9 @@ if (violmx <= TEN * ctol) goto 300
 ! NACT == N leads to return.
 if (nact >= n) goto 300
 !--------------------------------------------------------------------------------------------------!
-nactp = nact + 1
 rdiag = ZERO
 
+! This part is QRADD !-----------------------------------------------------------------------------!
 do j = n, 1, -1
 !do j = n - 1, 1, -1  ! Why does this lead to SEGFAULT in DEGENLPA when calling profile('lincoa')?
     sprod = ZERO
@@ -272,12 +268,13 @@ end do
 
 if (rdiag < ZERO) then
     do i = 1, n
-        qfac(i, nactp) = -qfac(i, nactp)
+        qfac(i, nact + 1) = -qfac(i, nact + 1)
     end do
 end if
 rfac(nact + 1, nact + 1) = abs(rdiag)
+nact = nact + 1
+! QRADD ends !-------------------------------------------------------------------------------------!
 
-nact = nactp
 iact(nact) = l
 resact(nact) = resnew(l)
 vlam(nact) = ZERO
@@ -383,51 +380,33 @@ return
 !
 800 continue
 
-!-------------------!
-rfacv = m2v(rfac)
-!-------------------!
-
+!-----------! This part is QREXC !-----------------------------------------------------------------!
 resnew(iact(ic)) = max(resact(ic), tinynum)
-jc = ic
-810 if (jc < nact) then
-    jcp = jc + 1
-    idiag = jc * jcp / 2
-    jw = idiag + jcp
-    temp = sqrt(rfacv(jw - 1)**2 + rfacv(jw)**2)
-    cval = rfacv(jw) / temp
-    sval = rfacv(jw - 1) / temp
-    rfacv(jw - 1) = sval * rfacv(idiag)
-    rfacv(jw) = cval * rfacv(idiag)
-    rfacv(idiag) = temp
-    if (jcp < nact) then
-        do j = jcp + 1, nact
-            temp = sval * rfacv(jw + jc) + cval * rfacv(jw + jcp)
-            rfacv(jw + jcp) = cval * rfacv(jw + jc) - sval * rfacv(jw + jcp)
-            rfacv(jw + jc) = temp
-            jw = jw + j
-        end do
-    end if
-    jdiag = idiag - jc
+do jc = ic, nact - 1
+    temp = sqrt(rfac(jc, jc + 1)**2 + rfac(jc + 1, jc + 1)**2)
+    cval = rfac(jc + 1, jc + 1) / temp
+    sval = rfac(jc, jc + 1) / temp
+    rfac(jc, jc + 1) = sval * rfac(jc, jc)
+    rfac(jc + 1, jc + 1) = cval * rfac(jc, jc)
+    rfac(jc, jc) = temp
+    do j = jc + 2, nact
+        temp = sval * rfac(jc, j) + cval * rfac(jc + 1, j)
+        rfac(jc + 1, j) = cval * rfac(jc, j) - sval * rfac(jc + 1, j)
+        rfac(jc, j) = temp
+    end do
+
+    rfac(1:jc - 1, [jc, jc + 1_IK]) = rfac(1:jc - 1, [jc + 1_IK, jc])
+
     do i = 1, n
-        if (i < jc) then
-            temp = rfacv(idiag + i)
-            rfacv(idiag + i) = rfacv(jdiag + i)
-            rfacv(jdiag + i) = temp
-        end if
-        temp = sval * qfac(i, jc) + cval * qfac(i, jcp)
-        qfac(i, jcp) = cval * qfac(i, jc) - sval * qfac(i, jcp)
+        temp = sval * qfac(i, jc) + cval * qfac(i, jc + 1)
+        qfac(i, jc + 1) = cval * qfac(i, jc) - sval * qfac(i, jc + 1)
         qfac(i, jc) = temp
     end do
-    iact(jc) = iact(jcp)
-    resact(jc) = resact(jcp)
-    vlam(jc) = vlam(jcp)
-    jc = jcp
-    goto 810
-end if
-
-!-------------------!
-rfac = v2m(rfacv)
-!-------------------!
+    iact(jc) = iact(jc + 1)
+    resact(jc) = resact(jc + 1)
+    vlam(jc) = vlam(jc + 1)
+end do
+!-----------! QREXC ends !-------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20220305: without the next line, SEGFAULT may occur below line number 100. Better choice? GOTO 100?
@@ -442,46 +421,5 @@ elseif (iflag == 3) then
     goto 280
 end if
 end subroutine getact
-
-
-function v2m(rfacv) result(rfacm)
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
-real(RP), intent(in) :: rfacv(:)
-real(RP) :: rfacm((floor(sqrt(real(8 * size(rfacv) + 1))) - 1) / 2, (floor(sqrt(real(8 * size(rfacv) + 1))) - 1) / 2)
-integer(IK) :: n, i, j, ir
-
-n = int(size(rfacm, 1), kind(n))
-call assert(size(rfacv) == n * (n + 1) / 2, 'SIZE(RFACV) = N*(N+1)/2', 'v2m')
-
-rfacm = ZERO
-ir = 0_IK
-do j = 1_IK, n
-    do i = 1_IK, j
-        ir = ir + 1_IK
-        rfacm(i, j) = rfacv(ir)
-    end do
-end do
-
-end function v2m
-
-function m2v(rfacm) result(rfacv)
-use, non_intrinsic :: consts_mod, only : RP, IK
-implicit none
-real(RP), intent(in) :: rfacm(:, :)
-real(RP) :: rfacv((size(rfacm, 1) * (size(rfacm, 1) + 1)) / 2)
-integer(IK) :: n, i, j, ir
-
-n = int(size(rfacm, 1), kind(n))
-ir = 0_IK
-do j = 1_IK, n
-    do i = 1_IK, j
-        ir = ir + 1_IK
-        rfacv(ir) = rfacm(i, j)
-    end do
-end do
-
-end function m2v
 
 end module getact_mod

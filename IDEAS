@@ -17,3 +17,19 @@ use, non_intrinsic :: pdfo_mod, only : pdfo
 use, non_intrinsic :: pdfo_mod, only : trstep
 
 It should solve unconstrained/bound-constrained/linearly-constrained trust region subproblems.
+
+6. Create a module called palg_mod. It should contain the Powell-style linear algebra subroutines,
+   examples including calquad, shiftbase, updateq, updateh, maybe also trstep.
+
+7. In the implementation of trstep, do not pass the Hessian but pass a function hprod that
+calculates the Hessian vector product. This will make the subroutine independent of the Powell-style
+Hessian triplet (HQ, PQ, XPT). In Fortran, the function hprod should have the following signature:
+!----------------------------!
+function hprod(x) result(y)
+real(RP), intent(in) :: x(:)
+real(RP) :: y(size(x))
+end function
+!----------------------------!
+Note that hprod must have access to the Hessian. Thus it has to be implemented an internal
+function in the function that calls trstep. In MATLAB/Python/R/C++, it can be implemented as an
+anonymous/lambda function the Hessian as a parameter.
