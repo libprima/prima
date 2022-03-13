@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 13, 2022 PM11:30:36
+! Last Modified: Sunday, March 13, 2022 PM11:50:49
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1545,7 +1545,7 @@ subroutine qradd_Rfull(c, Q, R, n)  ! Used in LINCOA
 ! 1. At entry, Q is a MxM orthonormal matrix, and R is a MxL upper triangular matrix with N < L <= M.
 ! 2. The subroutine changes only Q(:, N+1:M) and R(:, N+1), where N takes the original value.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -1565,6 +1565,7 @@ real(RP) :: cq(size(Q, 2))
 real(RP) :: G(2, 2)
 real(RP) :: Qsave(size(Q, 1), n)
 real(RP) :: Rsave(size(R, 1), n)
+real(RP) :: tol
 
 ! Sizes
 m = int(size(Q, 1), kind(m))
@@ -1575,8 +1576,8 @@ if (DEBUGGING) then
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) = [M, M]', srname)
     call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
     call assert(size(R, 2) >= n + 1 .and. size(R, 2) <= m, 'N+1 <= SIZE(R, 2) <= M', srname)
-    !tol == ???
-    !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
     Qsave = Q(:, 1:n)  ! For debugging only.
     Rsave = R(:, 1:n)  ! For debugging only.
@@ -1610,14 +1611,13 @@ if (DEBUGGING) then
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) = [M, M]', srname)
     call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
     call assert(size(R, 2) >= n .and. size(R, 2) <= m, 'N <= SIZE(R, 2) <= M', srname)
-    !tol == ???
-    !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
-    call assert(.not. any(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) > 0), 'Q(:, 1:N-1) is unchanged', srname)
-    call assert(.not. any(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) > 0), 'R(:, 1:N-1) is unchanged', srname)
+    !call assert(.not. any(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) > 0), 'Q(:, 1:N-1) is unchanged', srname)
+    !call assert(.not. any(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) > 0), 'R(:, 1:N-1) is unchanged', srname)
     ! If we can ensure that Q and R do not contain NaN or Inf, use the following lines instead.
-    !call assert(all(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) <= 0), 'Q(:, 1:N-1) is unchanged', srname)
-    !call assert(all(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) <= 0), 'R(:, 1:N-1) is unchanged', srname)
+    call assert(all(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) <= 0), 'Q(:, 1:N-1) is unchanged', srname)
+    call assert(all(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) <= 0), 'R(:, 1:N-1) is unchanged', srname)
 end if
 end subroutine qradd_Rfull
 
@@ -1633,7 +1633,7 @@ subroutine qrexc_Rfull(Q, R, i)  ! Used in LINCOA
 ! 1. With L = SIZE(Q, 2) = SIZE(R, 1), we have M >= L >= N. Most often, L = M or N.
 ! 2. The subroutine changes only Q(:, I:N) and R(:, I:N).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -1653,6 +1653,7 @@ real(RP) :: G(2, 2)
 real(RP) :: hypt
 real(RP) :: Qsave(size(Q, 1), size(Q, 2))  ! Debugging only
 real(RP) :: Rsave(size(R, 1), i)  ! Debugging only
+real(RP) :: tol
 
 ! Sizes
 m = int(size(Q, 1), kind(m))
@@ -1665,8 +1666,8 @@ if (DEBUGGING) then
     call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
     call assert(size(Q, 2) >= n .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
     call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
-    !tol == ???
-    !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
     Qsave = Q  ! For debugging only.
     Rsave = R(:, 1:i)  ! For debugging only.
@@ -1736,16 +1737,15 @@ if (DEBUGGING) then
     call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
     call assert(size(Q, 2) >= n .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
     call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
-    !tol == ???
-    !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
-    call assert(.not. any(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) > 0) .and. &
-        & .not. any(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) > 0), 'Q is unchanged except Q(:, I:N)', srname)
-    call assert(.not. any(abs(R(:, 1:i - 1) - Rsave(:, 1:i - 1)) > 0), 'R(:, 1:I-1) is unchanged', srname)
+    !call assert(.not. any(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) > 0) .and. &
+    !    & .not. any(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) > 0), 'Q is unchanged except Q(:, I:N)', srname)
+    !call assert(.not. any(abs(R(:, 1:i - 1) - Rsave(:, 1:i - 1)) > 0), 'R(:, 1:I-1) is unchanged', srname)
     ! If we can ensure that Q and R do not contain NaN or Inf, use the following lines instead.
-    !call assert(all(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) <= 0) .and. &
-    !    & all(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
-    !call assert(all(abs(R(:, 1:i - 1) - Rsave(:, 1:i - 1)) <= 0), 'R(:, 1:I-1) is unchanged', srname)
+    call assert(all(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) <= 0) .and. &
+        & all(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
+    call assert(all(abs(R(:, 1:i - 1) - Rsave(:, 1:i - 1)) <= 0), 'R(:, 1:I-1) is unchanged', srname)
 end if
 
 end subroutine qrexc_Rfull
