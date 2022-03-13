@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 13, 2022 PM07:21:55
+! Last Modified: Sunday, March 13, 2022 PM10:17:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
-use, non_intrinsic :: linalg_mod, only : inprod, eye, istriu
+use, non_intrinsic :: linalg_mod, only : inprod, eye, istriu, qradd, qrexc
 
 implicit none
 
@@ -230,9 +230,15 @@ if (violmx <= TEN * ctol) goto 300
 ! invalid. Is it guaranteed that NACT < N in theory? Probably yes because of line number 100, where
 ! NACT == N leads to return.
 if (nact >= n) goto 300
-!--------------------------------------------------------------------------------------------------!
 call validate(nact < n, 'NACT < N', srname)
-call qradd(amat(:, l), qfac, rfac, nact)
+!--------------------------------------------------------------------------------------------------!
+
+! N.B.: QRADD always augment NACT by 1. This is different from the strategy in COBYLA. Is it ensured
+! that AMAT(:, L) is not in the range of AMAT(:, IACT(1:NACT)) or Q(1:NACT)? If not, why NACT is
+! always augmented by 1 in QRADD?
+call qradd(amat(:, l), qfac, rfac, nact)  ! NACT is increased by 1!
+! Indeed, it suffices to pass RFAC(:, 1:NACT+1) to QRADD as follows.
+!!call qradd(amat(:, l), qfac, rfac(:, 1:nact + 1), nact)  ! NACT is increased by 1!
 
 iact(nact) = l
 resact(nact) = resnew(l)
@@ -339,13 +345,12 @@ return
 !
 800 continue
 
-
 call validate(ic <= nact, 'IC <= NACT', srname)  ! When IC > NACT, the following lines are invalid.
 resnew(iact(ic)) = max(resact(ic), tinynum)
 
-!call qrexc(qfac, rfac(:, 1:nact), ic)
-! It suffices to pass only the first NACT columns of QFAC and the first NACT rows of RFAC as follows.
-call qrexc(qfac(:, 1:nact), rfac(1:nact, 1:nact), ic)
+call qrexc(qfac, rfac(:, 1:nact), ic)
+! Indeed, it suffices to pass QFAC(:, 1:NACT) and RFAC(1:NACT, 1:NACT) to QREXC as follows.
+!!call qrexc(qfac(:, 1:nact), rfac(1:nact, 1:nact), ic)
 
 iact(ic:nact) = [iact(ic + 1:nact), iact(ic)]
 resact(ic:nact) = [resact(ic + 1:nact), resact(ic)]
@@ -358,193 +363,8 @@ elseif (iflag == 2) then
 elseif (iflag == 3) then
     goto 280
 end if
+
 end subroutine getact
 
-
-subroutine qradd(c, Q, R, n)
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : istriu, inprod, matprod, planerot
-implicit none
-
-integer(IK), intent(inout) :: n
-real(RP), intent(in) :: c(:)
-real(RP), intent(inout) :: Q(:, :)
-real(RP), intent(inout) :: R(:, :)
-
-
-character(len=*), parameter :: srname = 'QRADD'
-integer(IK) :: k, m
-real(RP) :: G(2, 2)
-real(RP) :: cq(size(Q, 2))
-
-m = int(size(Q, 1), kind(m))
-
-if (DEBUGGING) then
-    call assert(n >= 0 .and. n <= m - 1, '0 <= N <= M - 1', srname)
-    call assert(size(c) == m, 'SIZE(C) == M', srname)
-    call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
-    call assert(size(Q, 2) >= n .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
-    call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
-    !tol == ???
-    !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
-    call assert(istriu(R), 'R is upper triangular', srname)
-    !Qsave = Q  ! For debugging only.
-    !Rsave = R(:, 1:i - 1)  ! For debugging only.
-end if
-
-cq = matprod(c, Q)
-
-! Update Q so that the columns of Q(:, N+2:M) are orthogonal to C. This is done by applying a 2D
-! Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out for K = N+1, ..., M-1.
-! Nothing will be done if N >= M-1.
-do k = m - 1_IK, n + 1_IK, -1
-    !if (abs(cq(k + 1)) > 1.0D-20 * abs(cq(k))) then  ! Powell's version
-    if (abs(cq(k + 1)) > 0) then
-        G = planerot(cq([k, k + 1_IK]))
-        Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
-        cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
-    end if
-end do
-
-R(1:n, n + 1) = matprod(c, Q(:, 1:n))
-
-if (cq(n + 1) < 0) then
-    Q(:, n + 1) = -Q(:, n + 1)
-end if
-R(n + 1, n + 1) = abs(cq(n + 1))
-
-n = n + 1_IK
-
-end subroutine qradd
-
-
-subroutine qrexc(Q, R, i)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine updates the QR factorization for an MxN matrix A = Q*R so that the updated Q and
-! R form a QR factorization of [A_1, ..., A_{I-1}, A_{I+1}, ..., A_N, A_I], which is the matrix
-! obtained by rearranging columns [I, I+1, ..., N] of A to [I+1, ..., N, I]. At entry, A = Q*R
-! is ASSUMED TO BE OF FULL COLUMN RANK, Q is a matrix whose columns are orthogonal, and R is an
-! upper triangular matrix whose diagonal entries are all nonzero. Q and R need not to be square.
-! N.B.:
-! 1. With L = SIZE(Q, 2) = SIZE(R, 1), we have M >= L >= N. Most often, L = M or N.
-! 2. The subroutine changes only Q(:, I:N) and R(:, I:N).
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : matprod, planerot, istriu
-
-! Inputs
-integer(IK), intent(in) :: i
-
-! In-outputs
-real(RP), intent(inout) :: Q(:, :)  ! Q(M, :), SIZE(Q, 2) <= M
-real(RP), intent(inout) :: R(:, :)  ! R(:, N), SIZE(R, 1) >= N
-
-! Local variables
-character(len=*), parameter :: srname = 'QREXC'
-integer(IK) :: k
-integer(IK) :: m
-integer(IK) :: n
-real(RP) :: G(2, 2)
-real(RP) :: hypt
-real(RP) :: Qsave(size(Q, 1), size(Q, 2))  ! Debugging only
-real(RP) :: Rsave(size(R, 1), max(i - 1_IK, 0_IK))  ! I >= 1 if the input is correct; debugging only
-
-! Sizes
-m = size(Q, 1)
-n = size(R, 2)
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(n >= 1 .and. n <= m, '1 <= N <= M', srname)
-    call assert(i >= 1 .and. i <= n, '1 <= I <= N', srname)
-    call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
-    call assert(size(Q, 2) >= n .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
-    call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
-    !tol == ???
-    !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
-    call assert(istriu(R), 'R is upper triangular', srname)
-    Qsave = Q  ! For debugging only.
-    Rsave = R(:, 1:i - 1)  ! For debugging only.
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-if (i <= 0 .or. i >= n) then
-    ! Only I == N is really needed, as 1 <= I <= N unless the input is wrong.
-    return
-end if
-
-! For each K, find the Givens rotation G with G*R([K, K+1], K+1) = [HYPT, 0]. Then make two updates.
-! First, update Q(:, [K, K+1]) to Q(:, [K, K+1])*G^T, and R([K, K+1], :) to G*R[K+1, K], :), which
-! keeps Q*R unchanged and maintains orthogonality of Q's columns. Second, exchange columns K and K+1
-! of R. Then R becomes upper triangular, and the new product Q*R exchanges columns K and K+1 of
-! the original one. After this is done for each K = 1, ..., N-1, we obtain the QR factorization of
-! the matrix that rearranges columns [I, I+1, ..., N] of A as [I+1, ..., N, I].
-! Powell's code, however, is slightly different: before everything, he first exchanged columns K and
-! K+1 of Q as well as rows K and K+1 of R. This makes sure that the diagonal entries of the updated
-! R are all positive if it is the case for the original R.
-do k = i, n - 1_IK
-    G = planerot(R([k + 1_IK, k], k + 1))  ! G = [c, -s; s, c]
-    hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)  ! HYPT must be calculated before R is updated
-    !!hypt = G(1, 1) * R(k + 1, k + 1) + G(1, 2) * R(k, k + 1)  ! Does not perform well on 20220312
-    !!hypt = hypotenuse(R(k + 1, k + 1), R(k, k + 1))  ! Does not perform well on 20220312
-
-    ! Update Q(:, [K, K+1]).
-    Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
-
-    ! Update R([K, K+1], :).
-    R([k, k + 1_IK], k:n) = matprod(G, R([k + 1_IK, k], k:n))
-    R(1:k + 1, [k, k + 1_IK]) = R(1:k + 1, [k + 1_IK, k])
-    ! N.B.: The above two lines implement the following while noting that R is upper triangular.
-    !!R([k, k + 1_IK], :) = matprod(G, R([k + 1_IK, k], :))  ! No need for R([K, K+1], 1:K-1) = 0
-    !!R(:, [k, k + 1_IK]) = R(:, [k + 1_IK, k])  ! No need for R(K+2:, [K, K+1]) = 0
-
-    ! Revise R([K, K+1], K). Changes nothing in theory but seems good for the practical performance.
-    R([k, k + 1_IK], k) = [hypt, ZERO]
-
-    !----------------------------------------------------------------------------------------------!
-    ! The following code performs the update without exchanging columns K and K+1 of Q or rows K and
-    ! K+1 of R beforehand. If the diagonal entries of the original R are positive, then all the
-    ! updated ones become negative.
-    !
-    !G = planerot(R([k, k + 1_IK], k + 1))
-    !hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
-    !!hypt = G(1, 1) * R(k, k + 1) + G(1, 2) * R(k+1, k + 1)  ! Does not perform well on 20220312
-    !!hypt = hypotenuse(R(k, k + 1), R(k + 1, k + 1))  ! Does not perform well on 20220312
-    !
-    !Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
-    !
-    !R([k, k + 1_IK], k:n) = matprod(G, R([k, k + 1_IK], k:n))
-    !R(1:k + 1, [k, k + 1_IK]) = R(1:k + 1, [k + 1_IK, k])
-    !R([k, k + 1_IK], k) = [hypt, ZERO]
-    !----------------------------------------------------------------------------------------------!
-end do
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
-    call assert(size(Q, 2) >= n .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
-    call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
-    !tol == ???
-    !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
-    call assert(istriu(R), 'R is upper triangular', srname)
-    call assert(.not. any(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) > 0) .and. &
-        & .not. any(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) > 0), 'Q is unchanged except Q(:, I:N)', srname)
-    call assert(.not. any(abs(R(:, 1:i - 1) - Rsave) > 0), 'R(:, 1:N-1) is unchanged', srname)
-    ! If we can ensure that Q and R do not contain NaN or Inf, use the following lines instead.
-    !call assert(all(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) <= 0) .and. &
-    !    & all(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
-    !call assert(all(abs(R(:, 1:i - 1) - Rsave) <= 0), 'R(:, 1:N-1) is unchanged', srname)
-end if
-
-end subroutine qrexc
 
 end module getact_mod

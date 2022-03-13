@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, March 12, 2022 PM04:18:53
+! Last Modified: Sunday, March 13, 2022 PM10:18:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -368,9 +368,9 @@ do iter = 1, maxiter
         ! the last of IACT(1:NACT)?
         if (stage == 2 .and. iact(nact) /= mcon) then
             call validate(nact > 1, 'NACT > 1', srname)  ! NACT must be at least 2.
-            !call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), nact - 1_IK)
+            call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), nact - 1_IK)
             ! Indeed, it suffices to pass Z(:, 1:NACT) to QREXC as follows.
-            call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), nact - 1_IK)
+            !!call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), nact - 1_IK)
             iact([nact - 1_IK, nact]) = iact([nact, nact - 1_IK])
             vmultc([nact - 1_IK, nact]) = vmultc([nact, nact - 1_IK])
         end if
@@ -400,9 +400,9 @@ do iter = 1, maxiter
         ! reordering IACT(ICONT:NACT) into [IACT(ICON+1:NACT), IACT(ICON)]. In theory, ICON > 0.
         ! To be safe, the condition below requires ICON > 0, which does not exist in Powell's code.
         if (icon < nact .and. icon > 0) then
-            !call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), icon)
+            call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), icon)
             ! Indeed, it suffices to pass Z(:, 1:NACT) to QREXC as follows.
-            call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), icon)
+            !!call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), icon)
             iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
             vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
         end if
