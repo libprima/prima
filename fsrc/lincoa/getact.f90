@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 13, 2022 PM03:45:25
+! Last Modified: Sunday, March 13, 2022 PM07:21:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -231,6 +231,7 @@ if (violmx <= TEN * ctol) goto 300
 ! NACT == N leads to return.
 if (nact >= n) goto 300
 !--------------------------------------------------------------------------------------------------!
+call validate(nact < n, 'NACT < N', srname)
 call qradd(amat(:, l), qfac, rfac, nact)
 
 iact(nact) = l
@@ -360,30 +361,31 @@ end if
 end subroutine getact
 
 
-subroutine qradd(c, Q, R, nact)
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+subroutine qradd(c, Q, R, n)
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : istriu, inprod
+use, non_intrinsic :: linalg_mod, only : istriu, inprod, matprod, planerot
 implicit none
 
-integer(IK), intent(inout) :: nact
+integer(IK), intent(inout) :: n
 real(RP), intent(in) :: c(:)
 real(RP), intent(inout) :: Q(:, :)
 real(RP), intent(inout) :: R(:, :)
 
 
 character(len=*), parameter :: srname = 'QRADD'
-integer(IK) :: i, j, m
-real(RP) :: sprod, temp, rdiag, cosv, sinv
+integer(IK) :: k, m
+real(RP) :: G(2, 2)
+real(RP) :: cq(size(Q, 2))
 
 m = int(size(Q, 1), kind(m))
 
 if (DEBUGGING) then
-    call assert(nact >= 0 .and. nact <= m, '0 <= N <= M', srname)
+    call assert(n >= 0 .and. n <= m - 1, '0 <= N <= M - 1', srname)
     call assert(size(c) == m, 'SIZE(C) == M', srname)
     call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
-    call assert(size(Q, 2) >= nact .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
-    call assert(size(R, 1) >= nact .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
+    call assert(size(Q, 2) >= n .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
+    call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
     !tol == ???
     !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
@@ -391,47 +393,28 @@ if (DEBUGGING) then
     !Rsave = R(:, 1:i - 1)  ! For debugging only.
 end if
 
-rdiag = ZERO
+cq = matprod(c, Q)
 
-!do j = m - 1, 1, -1  ! Why does this lead to SEGFAULT in DEGENLPA when calling profile('lincoa')?
-do j = m, 1, -1
-    !sprod = ZERO
-    !do i = 1, m
-    !    sprod = sprod + Q(i, j) * c(i)
-    !end do
-    sprod = inprod(Q(:, j), c)
-    if (j <= nact) then
-        R(j, nact + 1) = sprod
-    else
-        !if (abs(rdiag) <= 1.0D-20 * abs(sprod)) then
-        if (j == m .or. abs(rdiag) <= 1.0D-20 * abs(sprod)) then
-            ! Zaikun 20220304: what if j = n ? How to ensure that we will not go to the else? Is it
-            ! because RDIAG = 0 when J = n? What if SPROD = NaN?
-            ! Why do we observe out of boundary error in stest_i8_r4_d1_tst?
-            ! Why does stest encounter NaN in X when calling evaluate?
-            rdiag = sprod
-        else
-            temp = sqrt(sprod * sprod + rdiag * rdiag)
-            cosv = sprod / temp
-            sinv = rdiag / temp
-            rdiag = temp
-            do i = 1, m
-                !if (j >= m) cycle
-                temp = cosv * Q(i, j) + sinv * Q(i, j + 1)
-                Q(i, j + 1) = -sinv * Q(i, j) + cosv * Q(i, j + 1)
-                Q(i, j) = temp
-            end do
-        end if
+! Update Q so that the columns of Q(:, N+2:M) are orthogonal to C. This is done by applying a 2D
+! Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out for K = N+1, ..., M-1.
+! Nothing will be done if N >= M-1.
+do k = m - 1_IK, n + 1_IK, -1
+    !if (abs(cq(k + 1)) > 1.0D-20 * abs(cq(k))) then  ! Powell's version
+    if (abs(cq(k + 1)) > 0) then
+        G = planerot(cq([k, k + 1_IK]))
+        Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
+        cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
     end if
 end do
 
-if (rdiag < 0) then
-    do i = 1, m
-        Q(i, nact + 1) = -Q(i, nact + 1)
-    end do
+R(1:n, n + 1) = matprod(c, Q(:, 1:n))
+
+if (cq(n + 1) < 0) then
+    Q(:, n + 1) = -Q(:, n + 1)
 end if
-R(nact + 1, nact + 1) = abs(rdiag)
-nact = nact + 1
+R(n + 1, n + 1) = abs(cq(n + 1))
+
+n = n + 1_IK
 
 end subroutine qradd
 

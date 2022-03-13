@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 13, 2022 PM01:11:01
+! Last Modified: Sunday, March 13, 2022 PM07:10:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -209,12 +209,17 @@ do j = n, 1, -1
         rfac(idiag + j) = sprod
     else
         !if (abs(rdiag) <= 1.0D-20 * abs(sprod)) then
-        if (j == n .or. abs(rdiag) <= 1.0D-20 * abs(sprod)) then
+        !if (j == n .or. abs(rdiag) <= 1.0D-20 * abs(sprod)) then
+        !if (j == n .or. .not. abs(rdiag) > 1.0D-20 * abs(sprod)) then
+        if (j == n .or. .not. abs(rdiag) > 0) then
             rdiag = sprod
         else
             temp = sqrt(sprod * sprod + rdiag * rdiag)
-            cosv = sprod / temp
-            sinv = rdiag / temp
+            !------------------------------------------------------------------------!
+            !cosv = sprod / temp
+            !sinv = rdiag / temp
+            grot = planerot([sprod, rdiag]); cosv = grot(1, 1); sinv = grot(1, 2)
+            !------------------------------------------------------------------------!
             rdiag = temp
             do i = 1, n
                 temp = cosv * qfac(i, j) + sinv * qfac(i, j + 1)
@@ -312,13 +317,11 @@ jc = ic
     idiag = jc * jcp / 2
     jw = idiag + jcp
     temp = sqrt(rfac(jw - 1)**2 + rfac(jw)**2)
-    !-------------------------------------!
+    !------------------------------------------------------------------------!
     !cval = rfac(jw) / temp
     !sval = rfac(jw - 1) / temp
-    grot = planerot(rfac([jw, jw - 1]))
-    cval = grot(1, 1)
-    sval = grot(1, 2)
-    !-------------------------------------!
+    grot = planerot(rfac([jw, jw - 1])); cval = grot(1, 1); sval = grot(1, 2)
+    !------------------------------------------------------------------------!
     rfac(jw - 1) = sval * rfac(idiag) + cval * ZERO
     rfac(jw) = cval * rfac(idiag) - sval * ZERO
     rfac(idiag) = temp
