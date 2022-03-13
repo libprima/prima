@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, March 08, 2022 AM10:45:18
+! Last Modified: Saturday, March 12, 2022 PM04:18:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,7 +133,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HUGENUM, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrexc, norm
 implicit none
@@ -367,9 +367,11 @@ do iter = 1, maxiter
         ! IACT(NACT) /= MCON??? If not, then how does the following procedure ensure that MCON is
         ! the last of IACT(1:NACT)?
         if (stage == 2 .and. iact(nact) /= mcon) then
-            call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), nact - 1_IK)
+            call validate(nact > 1, 'NACT > 1', srname)  ! NACT must be at least 2.
+            !call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), nact - 1_IK)
+            ! Indeed, it suffices to pass Z(:, 1:NACT) to QREXC as follows.
+            call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), nact - 1_IK)
             iact([nact - 1_IK, nact]) = iact([nact, nact - 1_IK])
-            !!??zdota(nact-1:nact) = [(inprod(z(:, k), A(:, iact(k))), k = nact-1_IK, nact)]
             vmultc([nact - 1_IK, nact]) = vmultc([nact, nact - 1_IK])
         end if
         ! Zaikun 20211117: It turns out that the last few lines do not guarantee IACT(NACT) == N in
@@ -398,9 +400,10 @@ do iter = 1, maxiter
         ! reordering IACT(ICONT:NACT) into [IACT(ICON+1:NACT), IACT(ICON)]. In theory, ICON > 0.
         ! To be safe, the condition below requires ICON > 0, which does not exist in Powell's code.
         if (icon < nact .and. icon > 0) then
-            call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), icon)
+            !call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), icon)
+            ! Indeed, it suffices to pass Z(:, 1:NACT) to QREXC as follows.
+            call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), icon)
             iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
-            !!??zdota(icon:nact) = [(inprod(z(:, k), A(:, iact(k))), k = icon, nact)]
             vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
         end if
         nact = nact - 1_IK

@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, February 08, 2022 PM09:58:37
+! Last Modified: Sun 13 Mar 2022 03:46:45 PM CST
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -726,8 +726,8 @@ if (DEBUGGING) then
         call assert(all(abs(matprod(Q_loc, transpose(T)) - A(:, P)) <= &
                         max(tol, tol * maxval(abs(A)))), 'A(:, P) == Q*R', srname)
         do j = 1, min(m, n) - 1_IK
-            call assert(abs(T(j, j)) + max(tol, tol * abs(T(j, j))) >= &
-                & abs(T(j + 1, j + 1)), '|R(J, J)| >= |R(J + 1, J + 1)|', srname)
+            !call assert(abs(T(j, j)) + max(tol, tol * abs(T(j, j))) >= &
+            !    & abs(T(j + 1, j + 1)), '|R(J, J)| >= |R(J + 1, J + 1)|', srname)
             call assert(all(T(j, j)**2 + max(tol, tol * T(j, j)**2) >= &
                 & sum(T(j + 1:n, j:min(m, n))**2, dim=2)), &
                 & 'R(J, J)^2 >= SUM(R(J : MIN(M, N), J + 1 : N).^2', srname)

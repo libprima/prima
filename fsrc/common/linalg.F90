@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 12, 2022 AM12:40:27
+! Last Modified: Sunday, March 13, 2022 PM03:26:42
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -726,8 +726,9 @@ if (DEBUGGING) then
         call assert(all(abs(matprod(Q_loc, transpose(T)) - A(:, P)) <= &
                         max(tol, tol * maxval(abs(A)))), 'A(:, P) == Q*R', srname)
         do j = 1, min(m, n) - 1_IK
-            call assert(abs(T(j, j)) + max(tol, tol * abs(T(j, j))) >= &
-                & abs(T(j + 1, j + 1)), '|R(J, J)| >= |R(J + 1, J + 1)|', srname)
+            ! The following test cannot be passed on ill-conditioned problems.
+            !call assert(abs(T(j, j)) + max(tol, tol * abs(T(j, j))) >= &
+            !    & abs(T(j + 1, j + 1)), '|R(J, J)| >= |R(J + 1, J + 1)|', srname)
             call assert(all(T(j, j)**2 + max(tol, tol * T(j, j)**2) >= &
                 & sum(T(j + 1:n, j:min(m, n))**2, dim=2)), &
                 & 'R(J, J)^2 >= SUM(R(J : MIN(M, N), J + 1 : N).^2', srname)
@@ -1308,12 +1309,12 @@ use, non_intrinsic :: infnan_mod, only : is_finite
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: c(:)
+real(RP), intent(in) :: c(:)  ! C(M)
 
 ! In-outputs
 integer(IK), intent(inout) :: n
-real(RP), intent(inout) :: Q(:, :)
-real(RP), intent(inout) :: Rdiag(:)
+real(RP), intent(inout) :: Q(:, :)  ! Q(M, M)
+real(RP), intent(inout) :: Rdiag(:)  ! MIN(M, N+1) <= SIZE(Rdiag) <= M
 
 ! Local variables
 character(len=*), parameter :: srname = 'QRADD'
@@ -1331,6 +1332,7 @@ m = int(size(Q, 2), kind(m))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)  ! N = 0 is possible.
+    call assert(size(c) == m, 'SIZE(C) == M', srname)
     call assert(size(Rdiag) >= min(m, n + 1_IK) .and. size(Rdiag) <= m, 'MIN(M, N+1) <= SIZE(Rdiag) <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(m + 1_IK, RP)))
@@ -1402,9 +1404,15 @@ end subroutine qradd
 
 subroutine qrexc(A, Q, Rdiag, i)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates the QR factorization of an MxN matrix A when its [I, I+1, ..., N] columns
-! are reordered as [I+1, ..., N, I]. Here, A IS ASSUMED TO HAVE FULL COLUMN RANK.
-! N.B. Instead of R, this subroutine updates RDIAG, which is diag(R), the size being N.
+! This subroutine updates the QR factorization for an MxN matrix A = Q*R so that the updated Q and
+! R form a QR factorization of [A_1, ..., A_{I-1}, A_{I+1}, ..., A_N, A_I], which is the matrix
+! obtained by rearranging columns [I, I+1, ..., N] of A to [I+1, ..., N, I]. Here, A is ASSUMED TO
+! BE OF FULL COLUMN RANK, Q is a matrix whose columns are orthogonal, and R, which is not present,
+! is an upper triangular matrix whose diagonal entries are nonzero. Q and R need not to be square.
+! N.B.:
+! 0. Instead of R, this subroutine updates RDIAG, which is diag(R), the size being N.
+! 1. With L = SIZE(Q, 2) = SIZE(R, 1), we have M >= L >= N. Most often, L = M or N.
+! 2. The subroutine changes only Q(:, I:N) and Rdiag(I:N).
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -1414,8 +1422,8 @@ implicit none
 real(RP), intent(in) :: A(:, :)
 
 ! In-outputs
-real(RP), intent(inout) :: Q(:, :)
-real(RP), intent(inout) :: Rdiag(:)
+real(RP), intent(inout) :: Q(:, :)  ! Q(M, :), N <= SIZE(Q, 2) <= M
+real(RP), intent(inout) :: Rdiag(:)  ! Rdiag(N)
 integer(IK), intent(in) :: i
 
 ! Local variables
@@ -1423,10 +1431,11 @@ character(len=*), parameter :: srname = 'QREXC'
 integer(IK) :: k
 integer(IK) :: m
 integer(IK) :: n
-real(RP) :: A_test(size(A, 1), size(A, 2))
+real(RP) :: Anew(size(A, 1), size(A, 2))
 real(RP) :: G(2, 2)
-!real(RP) :: hypt
-real(RP) :: QA_test(size(A, 1), size(A, 2))
+real(RP) :: Qsave(size(Q, 1), size(Q, 2))  ! Debugging only
+real(RP) :: QtAnew(size(Q, 2), size(A, 2))  ! Debugging only
+real(RP) :: Rdsave(max(i - 1_IK, 0_IK))  ! I >= 1 if the input is correct; debugging only
 real(RP) :: tol
 
 ! Sizes
@@ -1435,12 +1444,15 @@ n = int(size(A, 2), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
+    call assert(n >= 1 .and. n <= m, '1 <= N <= M', srname)
     call assert(i >= 1 .and. i <= n, '1 <= i <= N', srname)
     call assert(size(Rdiag) == n, 'SIZE(Rdiag) == N', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
+        & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
+    Qsave = Q  ! For debugging only.
+    Rdsave = Rdiag(1:i - 1)  ! For debugging only.
 end if
 
 !====================!
@@ -1448,35 +1460,39 @@ end if
 !====================!
 
 if (i <= 0 .or. i >= n) then
-    ! Only I == N is really needed, as I <= 0 or I > N should not happen unless the input is wrong.
+    ! Only I == N is really needed, as 1 <= I <= N unless the input is wrong.
     return
 end if
 
-! For each K, find a Givens rotation G so that G*Q(:, [K+1, K])^T*A(:, K+1) = [r, 0].
-! Then update Q(:, [K, K+1]) to Q(:, [K+1, K])*G^T, and A(:, [K, K+1]) to A(:, [K+1, K]). After
-! this, Q(:, [K, K+1])^T*A(:, [K, K+1]) is upper triangular, the diagonal being RDIAG([K, K+1])
-! defined below. In this way, we obtain the QR factorization of A when its Kth and (K+1)th columns
-! are exhanged. After this is done for each K = 1, ..., N-1, we obtain the QR factorization of
-! A when its [I, I+1, ..., N] columns are reordered as [I+1, ..., N, I].
+! Let R be the upper triangular matrix in the QR factorization, namely R = Q^T*A.
+! For each K, find the Givens rotation G with G*R([K, K+1], :) = [HYPT, 0], and update Q(:, [K,K+1])
+! to Q(:, [K, K+1])*G^T. Then R = Q^T*A is an upper triangular matrix as long as A(:, [K, K+1]) is
+! updated to A(:, [K+1, K]). Indeed, this new upper triangular matrix can be obtained by first
+! updating R([K, K+1], :) to G*R([K, K+1], :) and then exchanging its columns K and K+1; at the same
+! time, entries K and K+1 of R's diagonal RDIAG become [HYPT, -(RDIAG(K+1) / HYPT) * RDIAG(K)].
+! After this is done for each K = 1, ..., N-1, we obtain the QR factorization of the matrix that
+! rearranges columns [I, I+1, ..., N] of A as [I+1, ..., N, I].
+! Powell's code, however, is slightly different: before everything, he first exchanged columns K and
+! K+1 of Q (as well as rows K and K+1 of R). This makes sure that the entires of the update RDIAG
+! are all positive if it is the case for the original RDIAG.
 do k = i, n - 1_IK
     !hypt = hypotenuse(Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1)))
     !hypt = sqrt(Rdiag(k + 1)**2 + inprod(Q(:, k), A(:, k + 1))**2)
     G = planerot([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
     Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
+
     ! Powell's code updates RDIAG in the following way.
     !----------------------------------------------------------------!
     !!Rdiag([k, k + 1_IK]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]!
     !----------------------------------------------------------------!
     ! Note that RDIAG(N) inherits all rounding in RDIAG(I:N-1) and Q(:, I:N-1) and hence contain
-    ! significant errors. Thus we may modify Powell's code as follows, only calculating RDIAG(K)
-    ! here and calculating RDIAG(N) by an inner product after the loop.
-    !----------------!
-    !!Rdiag(k) = hypt!
-    !----------------!
-    ! Nevertheless, we simply calculate RDIAG from scratch as follows.
-    Rdiag(k) = inprod(Q(:, k), A(:, k + 1))
+    ! significant errors. Thus we may modify Powell's code to set only RDIAG(K) = HYPT here and then
+    ! calculate RDIAG(N) by an inner product after the loop. Nevertheless, we simply calculate RDIAG
+    ! from scratch we do below.
 end do
 
+! Calculate RDIAG(I:N) from scratch.
+Rdiag(i:n - 1) = [(inprod(Q(:, k), A(:, k + 1)), k=i, n - 1_IK)]
 Rdiag(n) = inprod(Q(:, n), A(:, i))  ! Calculate RDIAG(N) from scratch. See the comments above.
 
 !====================!
@@ -1486,14 +1502,18 @@ Rdiag(n) = inprod(Q(:, n), A(:, i))  ! Calculate RDIAG(N) from scratch. See the 
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(Rdiag) == n, 'SIZE(Rdiag) == N', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
+        & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
-    A_test = reshape([A(:, 1:i - 1), A(:, i + 1:n), A(:, i)], shape(A))
-    QA_test = matprod(transpose(Q), A_test)
-    call assert(istriu(QA_test, tol), 'QA_test is upper triangular', srname)
+    call assert(all(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) <= 0) .and. &
+        & all(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
+    call assert(all(abs(Rdiag(1:i - 1) - Rdsave) <= 0), 'Rdiag(1:I-1) is unchanged', srname)
+    Anew = reshape([A(:, 1:i - 1), A(:, i + 1:n), A(:, i)], shape(A))
+    QtAnew = matprod(transpose(Q), Anew)
+    call assert(istriu(QtAnew, tol), 'Q^T*Anew is upper triangular', srname)
     ! The following test may fail if RDIAG is not calculated from scratch.
-    call assert(norm(diag(QA_test) - Rdiag) <= max(tol, tol * norm([(inprod(abs(Q(:, k)), &
-        & abs(A_test(:, k))), k=1, n)])), 'Rdiag == diag(QA_test)', srname)
+    call assert(norm(diag(QtAnew) - Rdiag) <= max(tol, tol * norm([(inprod(abs(Q(:, k)), &
+        & abs(Anew(:, k))), k=1, n)])), 'Rdiag == diag(Q^T*Anew)', srname)
 end if
 end subroutine qrexc
 

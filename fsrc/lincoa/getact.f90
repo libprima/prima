@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 12, 2022 AM11:53:00
+! Last Modified: Sunday, March 13, 2022 PM03:45:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,7 +26,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: linalg_mod, only : inprod, eye, istriu
 
 implicit none
@@ -52,10 +52,9 @@ real(RP), intent(out) :: vlam(:)  ! VLAM(N)
 ! Local variables
 character(len=*), parameter :: srname = 'GETACT'
 real(RP) :: w(size(g))
-real(RP) :: cosv, ctol, cval, ddsav, dnorm, rdiag,   &
-&        sinv, sprod, summ, sval, tdel, temp, test, tinynum,   &
+real(RP) :: ctol, ddsav, dnorm, summ, tdel, temp, test, tinynum,   &
 &        violmx, vmult
-integer(IK) :: i, ic, iflag, j, jc, k, l
+integer(IK) :: i, ic, iflag, j, k, l
 
 integer(IK) :: m
 integer(IK) :: n
@@ -232,48 +231,7 @@ if (violmx <= TEN * ctol) goto 300
 ! NACT == N leads to return.
 if (nact >= n) goto 300
 !--------------------------------------------------------------------------------------------------!
-rdiag = ZERO
-
-! This part is QRADD !-----------------------------------------------------------------------------!
-do j = n, 1, -1
-!do j = n - 1, 1, -1  ! Why does this lead to SEGFAULT in DEGENLPA when calling profile('lincoa')?
-    sprod = ZERO
-    do i = 1, n
-        sprod = sprod + qfac(i, j) * amat(i, l)
-    end do
-    if (j <= nact) then
-        rfac(j, nact + 1) = sprod
-    else
-        !if (abs(rdiag) <= 1.0D-20 * abs(sprod)) then
-        if (j == n .or. abs(rdiag) <= 1.0D-20 * abs(sprod)) then
-            ! Zaikun 20220304: what if j = n ? How to ensure that we will not go to the else? Is it
-            ! because RDIAG = 0 when J = n? What if SPROD = NaN?
-            ! Why do we observe out of boundary error in stest_i8_r4_d1_tst?
-            ! Why does stest encounter NaN in X when calling evaluate?
-            rdiag = sprod
-        else
-            temp = sqrt(sprod * sprod + rdiag * rdiag)
-            cosv = sprod / temp
-            sinv = rdiag / temp
-            rdiag = temp
-            do i = 1, n
-                !if (j >= n) cycle
-                temp = cosv * qfac(i, j) + sinv * qfac(i, j + 1)
-                qfac(i, j + 1) = -sinv * qfac(i, j) + cosv * qfac(i, j + 1)
-                qfac(i, j) = temp
-            end do
-        end if
-    end if
-end do
-
-if (rdiag < ZERO) then
-    do i = 1, n
-        qfac(i, nact + 1) = -qfac(i, nact + 1)
-    end do
-end if
-rfac(nact + 1, nact + 1) = abs(rdiag)
-nact = nact + 1
-! QRADD ends !-------------------------------------------------------------------------------------!
+call qradd(amat(:, l), qfac, rfac, nact)
 
 iact(nact) = l
 resact(nact) = resnew(l)
@@ -380,38 +338,17 @@ return
 !
 800 continue
 
-!-----------! This part is QREXC !-----------------------------------------------------------------!
+
+call validate(ic <= nact, 'IC <= NACT', srname)  ! When IC > NACT, the following lines are invalid.
 resnew(iact(ic)) = max(resact(ic), tinynum)
-do jc = ic, nact - 1
-    temp = sqrt(rfac(jc, jc + 1)**2 + rfac(jc + 1, jc + 1)**2)
-    cval = rfac(jc + 1, jc + 1) / temp
-    sval = rfac(jc, jc + 1) / temp
-    rfac(jc, jc + 1) = sval * rfac(jc, jc)
-    rfac(jc + 1, jc + 1) = cval * rfac(jc, jc)
-    rfac(jc, jc) = temp
-    do j = jc + 2, nact
-        temp = sval * rfac(jc, j) + cval * rfac(jc + 1, j)
-        rfac(jc + 1, j) = cval * rfac(jc, j) - sval * rfac(jc + 1, j)
-        rfac(jc, j) = temp
-    end do
 
-    rfac(1:jc - 1, [jc, jc + 1_IK]) = rfac(1:jc - 1, [jc + 1_IK, jc])
+!call qrexc(qfac, rfac(:, 1:nact), ic)
+! It suffices to pass only the first NACT columns of QFAC and the first NACT rows of RFAC as follows.
+call qrexc(qfac(:, 1:nact), rfac(1:nact, 1:nact), ic)
 
-    do i = 1, n
-        temp = sval * qfac(i, jc) + cval * qfac(i, jc + 1)
-        qfac(i, jc + 1) = cval * qfac(i, jc) - sval * qfac(i, jc + 1)
-        qfac(i, jc) = temp
-    end do
-    iact(jc) = iact(jc + 1)
-    resact(jc) = resact(jc + 1)
-    vlam(jc) = vlam(jc + 1)
-end do
-!-----------! QREXC ends !-------------------------------------------------------------------------!
-
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20220305: without the next line, SEGFAULT may occur below line number 100. Better choice? GOTO 100?
-if (nact <= 0) goto 300  ! What about DD and W(1)???
-!--------------------------------------------------------------------------------------------------!
+iact(ic:nact) = [iact(ic + 1:nact), iact(ic)]
+resact(ic:nact) = [resact(ic + 1:nact), resact(ic)]
+vlam(ic:nact) = [vlam(ic + 1:nact), vlam(ic)]
 nact = nact - 1
 if (iflag == 1) then
     goto 50
@@ -421,5 +358,210 @@ elseif (iflag == 3) then
     goto 280
 end if
 end subroutine getact
+
+
+subroutine qradd(c, Q, R, nact)
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : istriu, inprod
+implicit none
+
+integer(IK), intent(inout) :: nact
+real(RP), intent(in) :: c(:)
+real(RP), intent(inout) :: Q(:, :)
+real(RP), intent(inout) :: R(:, :)
+
+
+character(len=*), parameter :: srname = 'QRADD'
+integer(IK) :: i, j, m
+real(RP) :: sprod, temp, rdiag, cosv, sinv
+
+m = int(size(Q, 1), kind(m))
+
+if (DEBUGGING) then
+    call assert(nact >= 0 .and. nact <= m, '0 <= N <= M', srname)
+    call assert(size(c) == m, 'SIZE(C) == M', srname)
+    call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
+    call assert(size(Q, 2) >= nact .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
+    call assert(size(R, 1) >= nact .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
+    !tol == ???
+    !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    call assert(istriu(R), 'R is upper triangular', srname)
+    !Qsave = Q  ! For debugging only.
+    !Rsave = R(:, 1:i - 1)  ! For debugging only.
+end if
+
+rdiag = ZERO
+
+!do j = m - 1, 1, -1  ! Why does this lead to SEGFAULT in DEGENLPA when calling profile('lincoa')?
+do j = m, 1, -1
+    !sprod = ZERO
+    !do i = 1, m
+    !    sprod = sprod + Q(i, j) * c(i)
+    !end do
+    sprod = inprod(Q(:, j), c)
+    if (j <= nact) then
+        R(j, nact + 1) = sprod
+    else
+        !if (abs(rdiag) <= 1.0D-20 * abs(sprod)) then
+        if (j == m .or. abs(rdiag) <= 1.0D-20 * abs(sprod)) then
+            ! Zaikun 20220304: what if j = n ? How to ensure that we will not go to the else? Is it
+            ! because RDIAG = 0 when J = n? What if SPROD = NaN?
+            ! Why do we observe out of boundary error in stest_i8_r4_d1_tst?
+            ! Why does stest encounter NaN in X when calling evaluate?
+            rdiag = sprod
+        else
+            temp = sqrt(sprod * sprod + rdiag * rdiag)
+            cosv = sprod / temp
+            sinv = rdiag / temp
+            rdiag = temp
+            do i = 1, m
+                !if (j >= m) cycle
+                temp = cosv * Q(i, j) + sinv * Q(i, j + 1)
+                Q(i, j + 1) = -sinv * Q(i, j) + cosv * Q(i, j + 1)
+                Q(i, j) = temp
+            end do
+        end if
+    end if
+end do
+
+if (rdiag < 0) then
+    do i = 1, m
+        Q(i, nact + 1) = -Q(i, nact + 1)
+    end do
+end if
+R(nact + 1, nact + 1) = abs(rdiag)
+nact = nact + 1
+
+end subroutine qradd
+
+
+subroutine qrexc(Q, R, i)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine updates the QR factorization for an MxN matrix A = Q*R so that the updated Q and
+! R form a QR factorization of [A_1, ..., A_{I-1}, A_{I+1}, ..., A_N, A_I], which is the matrix
+! obtained by rearranging columns [I, I+1, ..., N] of A to [I+1, ..., N, I]. At entry, A = Q*R
+! is ASSUMED TO BE OF FULL COLUMN RANK, Q is a matrix whose columns are orthogonal, and R is an
+! upper triangular matrix whose diagonal entries are all nonzero. Q and R need not to be square.
+! N.B.:
+! 1. With L = SIZE(Q, 2) = SIZE(R, 1), we have M >= L >= N. Most often, L = M or N.
+! 2. The subroutine changes only Q(:, I:N) and R(:, I:N).
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : matprod, planerot, istriu
+
+! Inputs
+integer(IK), intent(in) :: i
+
+! In-outputs
+real(RP), intent(inout) :: Q(:, :)  ! Q(M, :), SIZE(Q, 2) <= M
+real(RP), intent(inout) :: R(:, :)  ! R(:, N), SIZE(R, 1) >= N
+
+! Local variables
+character(len=*), parameter :: srname = 'QREXC'
+integer(IK) :: k
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: G(2, 2)
+real(RP) :: hypt
+real(RP) :: Qsave(size(Q, 1), size(Q, 2))  ! Debugging only
+real(RP) :: Rsave(size(R, 1), max(i - 1_IK, 0_IK))  ! I >= 1 if the input is correct; debugging only
+
+! Sizes
+m = size(Q, 1)
+n = size(R, 2)
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. n <= m, '1 <= N <= M', srname)
+    call assert(i >= 1 .and. i <= n, '1 <= I <= N', srname)
+    call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
+    call assert(size(Q, 2) >= n .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
+    call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
+    !tol == ???
+    !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    call assert(istriu(R), 'R is upper triangular', srname)
+    Qsave = Q  ! For debugging only.
+    Rsave = R(:, 1:i - 1)  ! For debugging only.
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (i <= 0 .or. i >= n) then
+    ! Only I == N is really needed, as 1 <= I <= N unless the input is wrong.
+    return
+end if
+
+! For each K, find the Givens rotation G with G*R([K, K+1], K+1) = [HYPT, 0]. Then make two updates.
+! First, update Q(:, [K, K+1]) to Q(:, [K, K+1])*G^T, and R([K, K+1], :) to G*R[K+1, K], :), which
+! keeps Q*R unchanged and maintains orthogonality of Q's columns. Second, exchange columns K and K+1
+! of R. Then R becomes upper triangular, and the new product Q*R exchanges columns K and K+1 of
+! the original one. After this is done for each K = 1, ..., N-1, we obtain the QR factorization of
+! the matrix that rearranges columns [I, I+1, ..., N] of A as [I+1, ..., N, I].
+! Powell's code, however, is slightly different: before everything, he first exchanged columns K and
+! K+1 of Q as well as rows K and K+1 of R. This makes sure that the diagonal entries of the updated
+! R are all positive if it is the case for the original R.
+do k = i, n - 1_IK
+    G = planerot(R([k + 1_IK, k], k + 1))  ! G = [c, -s; s, c]
+    hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)  ! HYPT must be calculated before R is updated
+    !!hypt = G(1, 1) * R(k + 1, k + 1) + G(1, 2) * R(k, k + 1)  ! Does not perform well on 20220312
+    !!hypt = hypotenuse(R(k + 1, k + 1), R(k, k + 1))  ! Does not perform well on 20220312
+
+    ! Update Q(:, [K, K+1]).
+    Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
+
+    ! Update R([K, K+1], :).
+    R([k, k + 1_IK], k:n) = matprod(G, R([k + 1_IK, k], k:n))
+    R(1:k + 1, [k, k + 1_IK]) = R(1:k + 1, [k + 1_IK, k])
+    ! N.B.: The above two lines implement the following while noting that R is upper triangular.
+    !!R([k, k + 1_IK], :) = matprod(G, R([k + 1_IK, k], :))  ! No need for R([K, K+1], 1:K-1) = 0
+    !!R(:, [k, k + 1_IK]) = R(:, [k + 1_IK, k])  ! No need for R(K+2:, [K, K+1]) = 0
+
+    ! Revise R([K, K+1], K). Changes nothing in theory but seems good for the practical performance.
+    R([k, k + 1_IK], k) = [hypt, ZERO]
+
+    !----------------------------------------------------------------------------------------------!
+    ! The following code performs the update without exchanging columns K and K+1 of Q or rows K and
+    ! K+1 of R beforehand. If the diagonal entries of the original R are positive, then all the
+    ! updated ones become negative.
+    !
+    !G = planerot(R([k, k + 1_IK], k + 1))
+    !hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
+    !!hypt = G(1, 1) * R(k, k + 1) + G(1, 2) * R(k+1, k + 1)  ! Does not perform well on 20220312
+    !!hypt = hypotenuse(R(k, k + 1), R(k + 1, k + 1))  ! Does not perform well on 20220312
+    !
+    !Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
+    !
+    !R([k, k + 1_IK], k:n) = matprod(G, R([k, k + 1_IK], k:n))
+    !R(1:k + 1, [k, k + 1_IK]) = R(1:k + 1, [k + 1_IK, k])
+    !R([k, k + 1_IK], k) = [hypt, ZERO]
+    !----------------------------------------------------------------------------------------------!
+end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
+    call assert(size(Q, 2) >= n .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
+    call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
+    !tol == ???
+    !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    call assert(istriu(R), 'R is upper triangular', srname)
+    call assert(.not. any(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) > 0) .and. &
+        & .not. any(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) > 0), 'Q is unchanged except Q(:, I:N)', srname)
+    call assert(.not. any(abs(R(:, 1:i - 1) - Rsave) > 0), 'R(:, 1:N-1) is unchanged', srname)
+    ! If we can ensure that Q and R do not contain NaN or Inf, use the following lines instead.
+    !call assert(all(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) <= 0) .and. &
+    !    & all(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
+    !call assert(all(abs(R(:, 1:i - 1) - Rsave) <= 0), 'R(:, 1:N-1) is unchanged', srname)
+end if
+
+end subroutine qrexc
 
 end module getact_mod
