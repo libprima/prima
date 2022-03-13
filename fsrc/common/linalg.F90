@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 13, 2022 PM03:26:42
+! Last Modified: Sunday, March 13, 2022 PM07:16:26
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1355,7 +1355,7 @@ end where
 
 ! Update Q so that the columns of Q(:, N+2:M) are orthogonal to C. This is done by applying a 2D
 ! Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out for K = N+1, ..., M-1.
-! Nothing will be done if N >= M-2.
+! Nothing will be done if N >= M-1.
 do k = m - 1_IK, n + 1_IK, -1
     if (abs(cq(k + 1)) > 0) then
         ! Powell wrote CQ(K+1) /= 0 instead of ABS(CQ(K+1)) > 0. The two differ if CQ(K+1) is NaN.
