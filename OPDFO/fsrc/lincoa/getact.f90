@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 11, 2022 PM10:20:19
+! Last Modified: Sunday, March 13, 2022 PM01:11:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ contains
 
 
 subroutine getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, dw, vlam, w)
-use, non_intrinsic :: linalg_mod, only : inprod
+use, non_intrinsic :: linalg_mod, only : inprod, planerot
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, ZERO
@@ -51,7 +51,7 @@ real(RP), intent(inout) :: w(n)
 ! Local variables
 real(RP) :: cosv, ctol, cval, dd, ddsav, dnorm, rdiag,   &
 &        sinv, sprod, summ, sval, tdel, temp, test, tinynum,   &
-&        violmx, vmult
+&        violmx, vmult, grot(2, 2)
 integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag, jw,   &
 &           k, l, nactp
 
@@ -312,10 +312,15 @@ jc = ic
     idiag = jc * jcp / 2
     jw = idiag + jcp
     temp = sqrt(rfac(jw - 1)**2 + rfac(jw)**2)
-    cval = rfac(jw) / temp
-    sval = rfac(jw - 1) / temp
-    rfac(jw - 1) = sval * rfac(idiag)
-    rfac(jw) = cval * rfac(idiag)
+    !-------------------------------------!
+    !cval = rfac(jw) / temp
+    !sval = rfac(jw - 1) / temp
+    grot = planerot(rfac([jw, jw - 1]))
+    cval = grot(1, 1)
+    sval = grot(1, 2)
+    !-------------------------------------!
+    rfac(jw - 1) = sval * rfac(idiag) + cval * ZERO
+    rfac(jw) = cval * rfac(idiag) - sval * ZERO
     rfac(idiag) = temp
     if (jcp < nact) then
         do j = jcp + 1, nact
