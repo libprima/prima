@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, March 14, 2022 PM05:41:50
+! Last Modified: Tuesday, March 15, 2022 AM12:43:37
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1407,8 +1407,10 @@ if (DEBUGGING) then
     call assert(size(Rdiag) >= n .and. size(Rdiag) <= m, 'N <= SIZE(Rdiag) <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
+
     call assert(all(abs(Q(:, 1:nsave) - Qsave(:, 1:nsave)) <= 0), 'Q(:, 1:NSAVE) is unchanged', srname)
     call assert(all(abs(Rdiag(1:n - 1) - Rdsave(1:n - 1)) <= 0), 'Rdiag(1:N-1) is unchanged', srname)
+
     if (n < m .and. is_finite(norm(c))) then
         call assert(norm(matprod(c, Q(:, n + 1:m))) <= max(tol, tol * norm(c)), 'C^T*Q(:, N+1:M) == 0', srname)
     end if
@@ -1503,6 +1505,7 @@ if (DEBUGGING) then
     call assert(size(R, 2) >= n .and. size(R, 2) <= m, 'N <= SIZE(R, 2) <= M', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
+
     !!call assert(.not. any(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) > 0), 'Q(:, 1:N-1) is unchanged', srname)
     !!call assert(.not. any(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) > 0), 'R(:, 1:N-1) is unchanged', srname)
     ! If we can ensure that Q and R do not contain NaN or Inf, use the following lines instead of the last two.
@@ -1620,9 +1623,11 @@ if (DEBUGGING) then
     call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
         & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
+
     Qsave(:, i:n) = Q(:, i:n)
     call assert(all(abs(Q - Qsave) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
     call assert(all(abs(Rdiag(1:i - 1) - Rdsave(1:i - 1)) <= 0), 'Rdiag(1:I-1) is unchanged', srname)
+
     Anew = reshape([A(:, 1:i - 1), A(:, i + 1:n), A(:, i)], shape(Anew))
     QtAnew = matprod(transpose(Q), Anew)
     call assert(istriu(QtAnew, tol), 'Q^T*Anew is upper triangular', srname)
@@ -1700,8 +1705,8 @@ end if
 
 ! For each K, find the Givens rotation G with G*R([K, K+1], K+1) = [HYPT, 0]. Then make two updates.
 ! First, update Q(:, [K, K+1]) to Q(:, [K, K+1])*G^T, and R([K, K+1], :) to G*R[K+1, K], :), which
-! keeps Q*R unchanged and maintains orthogonality of Q's columns. Second, exchange columns K and K+1
-! of R. Then R becomes upper triangular, and the new product Q*R exchanges columns K and K+1 of
+! keeps Q*R unchanged and maintains the orthogonality of Q's columns. Second, exchange columns K and
+! K+1 of R. Then R becomes upper triangular, and the new product Q*R exchanges columns K and K+1 of
 ! the original one. After this is done for each K = 1, ..., N-1, we obtain the QR factorization of
 ! the matrix that rearranges columns [I, I+1, ..., N] of A as [I+1, ..., N, I].
 ! Powell's code, however, is slightly different: before everything, he first exchanged columns K and
@@ -1755,6 +1760,7 @@ if (DEBUGGING) then
     call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
+
     Qsave(:, i:n) = Q(:, i:n)
     !!call assert(.not. any(abs(Q - Qsave) > 0), 'Q is unchanged except Q(:, I:N)', srname)
     !!call assert(.not. any(abs(R(:, 1:i - 1) - Rsave(:, 1:i - 1)) > 0), 'R(:, 1:I-1) is unchanged', srname)
