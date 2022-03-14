@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 13, 2022 PM11:50:49
+! Last Modified: Monday, March 14, 2022 PM05:41:50
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1334,9 +1334,11 @@ integer(IK) :: nsave
 real(RP) :: cq(size(Q, 2))
 real(RP) :: cqa(size(Q, 2))
 real(RP) :: G(2, 2)
+!------------------------------------------------------------!
 real(RP) :: Qsave(size(Q, 1), n)  ! Debugging only
 real(RP) :: Rdsave(n)  ! Debugging only
-real(RP) :: tol
+real(RP) :: tol  ! Debugging only
+!------------------------------------------------------------!
 
 ! Sizes
 m = int(size(Q, 2), kind(m))
@@ -1418,6 +1420,101 @@ end if
 end subroutine qradd_Rdiag
 
 
+subroutine qradd_Rfull(c, Q, R, n)  ! Used in LINCOA
+!--------------------------------------------------------------------------------------------------!
+! This subroutine updates the QR factorization of an MxN matrix A = Q*R(:, 1:N) when a new column C
+! is appended to this matrix A as the LAST column.
+! N.B.:
+! 0. Different from QRADD_RDIAG, it seems that QRADD_RFULL does not try to maintain that A is of
+! full column rank after the update; QRADD_RFULL always append C to A, and always increase N by 1,
+! but QRADD_RDIAG does so only if C is not in the column space of A.
+! 1. At entry, Q is a MxM orthonormal matrix, and R is a MxL upper triangular matrix with N < L <= M.
+! 2. The subroutine changes only Q(:, N+1:M) and R(:, N+1), where N takes the original value.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+real(RP), intent(in) :: c(:)
+
+! In-outputs
+integer(IK), intent(inout) :: n
+real(RP), intent(inout) :: Q(:, :)  ! Q(M, M)
+real(RP), intent(inout) :: R(:, :)  ! R(M, :), N+1 <= SIZE(R, 2) <= M
+
+! Local variables
+character(len=*), parameter :: srname = 'QRADD_RFULL'
+integer(IK) :: k
+integer(IK) :: m
+real(RP) :: cq(size(Q, 2))
+real(RP) :: G(2, 2)
+!------------------------------------------------------------!
+real(RP) :: Anew(size(Q, 1), n + 1)  ! Debugging only
+real(RP) :: Qsave(size(Q, 1), n)  ! Debugging only
+real(RP) :: Rsave(size(R, 1), n)  ! Debugging only
+real(RP) :: tol  ! Debugging only
+!------------------------------------------------------------!
+
+! Sizes
+m = int(size(Q, 1), kind(m))
+
+if (DEBUGGING) then
+    call assert(n >= 0 .and. n <= m - 1, '0 <= N <= M - 1', srname)
+    call assert(size(c) == m, 'SIZE(C) == M', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) = [M, M]', srname)
+    call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
+    call assert(size(R, 2) >= n + 1 .and. size(R, 2) <= m, 'N+1 <= SIZE(R, 2) <= M', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    call assert(istriu(R), 'R is upper triangular', srname)
+    Anew = reshape([matprod(Q, R(:, 1:n)), c], shape(Anew))
+    Qsave = Q(:, 1:n)  ! For debugging only.
+    Rsave = R(:, 1:n)  ! For debugging only.
+end if
+
+cq = matprod(c, Q)
+
+! Update Q so that the columns of Q(:, N+2:M) are orthogonal to C. This is done by applying a 2D
+! Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out for K = N+1, ..., M-1.
+! Nothing will be done if N >= M-1.
+do k = m - 1_IK, n + 1_IK, -1
+    if (abs(cq(k + 1)) > 0) then  ! Powell: IF (ABS(CQ(K + 1)) > 1.0D-20 * ABS(CQ(K))) THEN
+        G = planerot(cq([k, k + 1_IK]))
+        Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
+        cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
+    end if
+end do
+
+R(1:n, n + 1) = matprod(c, Q(:, 1:n))
+
+! Maintain the positiveness of the diagonal entries of R.
+if (cq(n + 1) < 0) then
+    Q(:, n + 1) = -Q(:, n + 1)
+end if
+R(n + 1, n + 1) = abs(cq(n + 1))
+
+n = n + 1_IK
+
+if (DEBUGGING) then
+    call assert(n >= 1 .and. n <= m, '1 <= N <= M', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) = [M, M]', srname)
+    call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
+    call assert(size(R, 2) >= n .and. size(R, 2) <= m, 'N <= SIZE(R, 2) <= M', srname)
+    call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    call assert(istriu(R), 'R is upper triangular', srname)
+    !!call assert(.not. any(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) > 0), 'Q(:, 1:N-1) is unchanged', srname)
+    !!call assert(.not. any(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) > 0), 'R(:, 1:N-1) is unchanged', srname)
+    ! If we can ensure that Q and R do not contain NaN or Inf, use the following lines instead of the last two.
+    call assert(all(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) <= 0), 'Q(:, 1:N-1) is unchanged', srname)
+    call assert(all(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) <= 0), 'R(:, 1:N-1) is unchanged', srname)
+
+    ! The following test may fail.
+    call assert(all(abs(Anew - matprod(Q, R(:, 1:n))) <= max(tol, tol * maxval(abs(Anew)))), 'Anew = Q*R', srname)
+end if
+end subroutine qradd_Rfull
+
+
 subroutine qrexc_Rdiag(A, Q, Rdiag, i)  ! Used in COBYLA
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates the QR factorization for an MxN matrix A = Q*R so that the updated Q and
@@ -1447,12 +1544,14 @@ character(len=*), parameter :: srname = 'QREXC_RDIAG'
 integer(IK) :: k
 integer(IK) :: m
 integer(IK) :: n
-real(RP) :: Anew(size(A, 1), size(A, 2))
 real(RP) :: G(2, 2)
+!------------------------------------------------------------!
+real(RP) :: Anew(size(A, 1), size(A, 2))  ! Debugging only
 real(RP) :: Qsave(size(Q, 1), size(Q, 2))  ! Debugging only
 real(RP) :: QtAnew(size(Q, 2), size(A, 2))  ! Debugging only
 real(RP) :: Rdsave(i)  ! Debugging only
-real(RP) :: tol
+real(RP) :: tol  ! Debugging only
+!------------------------------------------------------------!
 
 ! Sizes
 m = int(size(A, 1), kind(m))
@@ -1521,10 +1620,10 @@ if (DEBUGGING) then
     call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
         & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
-    call assert(all(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) <= 0) .and. &
-        & all(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
+    Qsave(:, i:n) = Q(:, i:n)
+    call assert(all(abs(Q - Qsave) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
     call assert(all(abs(Rdiag(1:i - 1) - Rdsave(1:i - 1)) <= 0), 'Rdiag(1:I-1) is unchanged', srname)
-    Anew = reshape([A(:, 1:i - 1), A(:, i + 1:n), A(:, i)], shape(A))
+    Anew = reshape([A(:, 1:i - 1), A(:, i + 1:n), A(:, i)], shape(Anew))
     QtAnew = matprod(transpose(Q), Anew)
     call assert(istriu(QtAnew, tol), 'Q^T*Anew is upper triangular', srname)
     ! The following test may fail if RDIAG is not calculated from scratch.
@@ -1532,94 +1631,6 @@ if (DEBUGGING) then
         & abs(Anew(:, k))), k=1, n)])), 'Rdiag == diag(Q^T*Anew)', srname)
 end if
 end subroutine qrexc_Rdiag
-
-
-subroutine qradd_Rfull(c, Q, R, n)  ! Used in LINCOA
-!--------------------------------------------------------------------------------------------------!
-! This subroutine updates the QR factorization of an MxN matrix A = Q*R(:, 1:N) when a new column C
-! is appended to this matrix A as the LAST column.
-! N.B.:
-! 0. Different from QRADD_RDIAG, it seems that QRADD_RFULL does not try to maintain that A is of
-! full column rank after the update; QRADD_RFULL always append C to A, and always increase N by 1,
-! but QRADD_RDIAG does so only if C is not in the column space of A.
-! 1. At entry, Q is a MxM orthonormal matrix, and R is a MxL upper triangular matrix with N < L <= M.
-! 2. The subroutine changes only Q(:, N+1:M) and R(:, N+1), where N takes the original value.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
-
-! Inputs
-real(RP), intent(in) :: c(:)
-
-! In-outputs
-integer(IK), intent(inout) :: n
-real(RP), intent(inout) :: Q(:, :)  ! Q(M, M)
-real(RP), intent(inout) :: R(:, :)  ! R(M, :), N+1 <= SIZE(R, 2) <= M
-
-! Local variables
-character(len=*), parameter :: srname = 'QRADD_RFULL'
-integer(IK) :: k
-integer(IK) :: m
-real(RP) :: cq(size(Q, 2))
-real(RP) :: G(2, 2)
-real(RP) :: Qsave(size(Q, 1), n)
-real(RP) :: Rsave(size(R, 1), n)
-real(RP) :: tol
-
-! Sizes
-m = int(size(Q, 1), kind(m))
-
-if (DEBUGGING) then
-    call assert(n >= 0 .and. n <= m - 1, '0 <= N <= M - 1', srname)
-    call assert(size(c) == m, 'SIZE(C) == M', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) = [M, M]', srname)
-    call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
-    call assert(size(R, 2) >= n + 1 .and. size(R, 2) <= m, 'N+1 <= SIZE(R, 2) <= M', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
-    call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
-    call assert(istriu(R), 'R is upper triangular', srname)
-    Qsave = Q(:, 1:n)  ! For debugging only.
-    Rsave = R(:, 1:n)  ! For debugging only.
-end if
-
-cq = matprod(c, Q)
-
-! Update Q so that the columns of Q(:, N+2:M) are orthogonal to C. This is done by applying a 2D
-! Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out for K = N+1, ..., M-1.
-! Nothing will be done if N >= M-1.
-do k = m - 1_IK, n + 1_IK, -1
-    if (abs(cq(k + 1)) > 0) then  ! Powell: IF (ABS(CQ(K + 1)) > 1.0D-20 * ABS(CQ(K))) THEN
-        G = planerot(cq([k, k + 1_IK]))
-        Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
-        cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
-    end if
-end do
-
-R(1:n, n + 1) = matprod(c, Q(:, 1:n))
-
-! Maintain the positiveness of the diagonal entries of R.
-if (cq(n + 1) < 0) then
-    Q(:, n + 1) = -Q(:, n + 1)
-end if
-R(n + 1, n + 1) = abs(cq(n + 1))
-
-n = n + 1_IK
-
-if (DEBUGGING) then
-    call assert(n >= 1 .and. n <= m, '1 <= N <= M', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) = [M, M]', srname)
-    call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
-    call assert(size(R, 2) >= n .and. size(R, 2) <= m, 'N <= SIZE(R, 2) <= M', srname)
-    call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
-    call assert(istriu(R), 'R is upper triangular', srname)
-    !call assert(.not. any(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) > 0), 'Q(:, 1:N-1) is unchanged', srname)
-    !call assert(.not. any(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) > 0), 'R(:, 1:N-1) is unchanged', srname)
-    ! If we can ensure that Q and R do not contain NaN or Inf, use the following lines instead.
-    call assert(all(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) <= 0), 'Q(:, 1:N-1) is unchanged', srname)
-    call assert(all(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) <= 0), 'R(:, 1:N-1) is unchanged', srname)
-end if
-end subroutine qradd_Rfull
 
 
 subroutine qrexc_Rfull(Q, R, i)  ! Used in LINCOA
@@ -1651,9 +1662,12 @@ integer(IK) :: m
 integer(IK) :: n
 real(RP) :: G(2, 2)
 real(RP) :: hypt
+!------------------------------------------------------------!
+real(RP) :: Anew(size(Q, 1), size(R, 2))  ! Debugging only
 real(RP) :: Qsave(size(Q, 1), size(Q, 2))  ! Debugging only
 real(RP) :: Rsave(size(R, 1), i)  ! Debugging only
-real(RP) :: tol
+real(RP) :: tol  ! Debugging only
+!------------------------------------------------------------!
 
 ! Sizes
 m = int(size(Q, 1), kind(m))
@@ -1669,6 +1683,8 @@ if (DEBUGGING) then
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
+    Anew = matprod(Q, R)
+    Anew = reshape([Anew(:, 1:i - 1), Anew(:, i + 1:n), Anew(:, i)], shape(Anew))
     Qsave = Q  ! For debugging only.
     Rsave = R(:, 1:i)  ! For debugging only.
 end if
@@ -1739,13 +1755,15 @@ if (DEBUGGING) then
     call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
-    !call assert(.not. any(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) > 0) .and. &
-    !    & .not. any(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) > 0), 'Q is unchanged except Q(:, I:N)', srname)
-    !call assert(.not. any(abs(R(:, 1:i - 1) - Rsave(:, 1:i - 1)) > 0), 'R(:, 1:I-1) is unchanged', srname)
-    ! If we can ensure that Q and R do not contain NaN or Inf, use the following lines instead.
-    call assert(all(abs(Q(:, 1:i - 1) - Qsave(:, 1:i - 1)) <= 0) .and. &
-        & all(abs(Q(:, n + 1:) - Qsave(:, n + 1:)) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
+    Qsave(:, i:n) = Q(:, i:n)
+    !!call assert(.not. any(abs(Q - Qsave) > 0), 'Q is unchanged except Q(:, I:N)', srname)
+    !!call assert(.not. any(abs(R(:, 1:i - 1) - Rsave(:, 1:i - 1)) > 0), 'R(:, 1:I-1) is unchanged', srname)
+    ! If we can ensure that Q and R do not contain NaN or Inf, use the following lines instead of the last two.
+    call assert(all(abs(Q - Qsave) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
     call assert(all(abs(R(:, 1:i - 1) - Rsave(:, 1:i - 1)) <= 0), 'R(:, 1:I-1) is unchanged', srname)
+
+    ! The following test may fail.
+    call assert(all(abs(Anew - matprod(Q, R)) <= max(tol, tol * maxval(abs(Anew)))), 'Anew = Q*R', srname)
 end if
 
 end subroutine qrexc_Rfull
