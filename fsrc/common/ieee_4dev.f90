@@ -1,15 +1,15 @@
 module ieee_4dev_mod
 !--------------------------------------------------------------------------------------------------!
-! This module makes some components of ieee_arithmetic available. Only for development and tests.
+! This module makes some components of IEEE_ARITHMETIC available. Only for development and tests.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, March 04, 2022 PM05:23:55
+! Last Modified: Monday, March 14, 2022 PM02:40:12
 !--------------------------------------------------------------------------------------------------!
 
-use, intrinsic :: ieee_arithmetic, only : IEEE_VALUE, &
+use, intrinsic :: IEEE_ARITHMETIC, only : IEEE_VALUE, &
     & IEEE_QUIET_NAN, IEEE_SIGNALING_NAN, IEEE_POSITIVE_INF, IEEE_NEGATIVE_INF
 use, non_intrinsic :: consts_mod, only : RP
 

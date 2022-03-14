@@ -200,6 +200,19 @@ if isempty(prob)
         end
     end
 
+
+    if strcmpi(invoker, 'verify')
+        if strcmpi(solver, 'cobyla')
+            options.maxdim = min(options.maxdim, 80); %!!!
+        elseif strcmpi(solver, 'newuoa')
+            %options.maxdim = min(options.maxdim, 190); % There is no unstrained problem in [101, 190]!!!
+        elseif strcmpi(solver, 'lincoa')
+            options.maxdim = min(options.maxdim, 170); %!!!
+            options.maxcon = 20*options.maxdim;
+        end
+    end
+
+
     % Define the number of random runs. The actual number of run is 20 + nr.
     if ~isfield(options, 'nr')
         options.nr = 10;

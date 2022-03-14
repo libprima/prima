@@ -2,6 +2,7 @@
 # This script prepares the Fortran source code for lf95, which does not support the following:
 # ```
 # public ::
+# use, intrinsic ::
 # use, non_intrinsic ::
 # abstract interface
 # [] as array constructor
@@ -41,10 +42,10 @@ sed -i "s|^procedure(FUNC_WITH_ARGS) :: fun$|include \"$INTRF_CIRCLE\"|" "$CIRCL
 # replace "abstract interface" with "interface", "OBJCON" with "calcfc", and "OBJ" with "calfun".
 sed -i '0,/^\s*public ::/d ; /^\s*end module/d ; s/abstract interface/interface/ ; s/OBJCON/calcfc/g ; s/OBJ/calfun/g' "$PINTRF"
 
-# For any Fortran file under DIR, remove ", non_intrinsic ::"`, replace "[]" with "\(\)", remove
+# For any Fortran file under DIR, remove ", [non_]intrinsic ::"`, replace "[]" with "\(\)", remove
 # "use pintrf_mod", replace "procedure(OBJ) :: calfun" and "procedure(OBJCON)" with "include $PINTRF".
 find "$DIR" -type f \( -name "*.f90" -o -name "*.F90" \) -print0 \
-    | xargs -0 sed -i "s/, non_intrinsic ::// ; s/\[/\(\//g ; s/\]/\/\)/g ; /^\s*use pintrf_mod/d ; \
+    | xargs -0 sed -i "s/, .*intrinsic ::// ; s/\[/\(\//g ; s/\]/\/\)/g ; /^\s*use pintrf_mod/d ; \
     s|^procedure(OBJ) :: calfun$|include \"$PINTRF\"| ; s|^procedure(OBJCON) :: calcfc$|include \"$PINTRF\"|"
 
 find "$DIR" -type f  -name "ffiles.txt" -print0 | xargs -0 sed -i "/^$PINTRFF90$/d"
