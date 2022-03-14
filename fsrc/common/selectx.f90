@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, February 04, 2022 PM01:14:17
+! Last Modified: Monday, March 14, 2022 PM12:38:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -271,7 +271,7 @@ else
     chist_shifted = max(chist - ctol, ZERO)
     ! CMIN is the minimal shifted constraint violation attained in the history.
     cmin = minval(chist_shifted, mask=(fhist < fref))
-    ! We select X among the points whose shifted constraint violations are at most CREF.
+    ! We consider only the points whose shifted constraint violations are at most the CREF below.
     cref = TWO * cmin  ! CREF = 0 if CMIN = 0; thus asking for CSTRV_SHIFTED < CREF is WRONG!
     ! We use the following PHI as our merit function to select X.
     if (cweight <= 0) then
@@ -284,7 +284,8 @@ else
         phi = max(fhist, -HUGENUM) + cweight * chist_shifted
         ! MAX(FHIST, -HUGENUM) makes sure that PHI will not contain NaN (unless there is a bug).
     end if
-    ! We select X to minimize PHI subject to F < FREF and CSTRV_SHIFTED <= CREF. In case there are
+    ! We select X to minimize PHI subject to F < FREF and CSTRV_SHIFTED <= CREF (seee the comments
+    ! above for the reason of taking "<" and "<=" in these two constraints). In case there are
     ! multiple minimizers, we take the one with the least CSTRV_SHIFTED; if there are more than one
     ! choices, we take the one with the least F; if there are several candidates, we take the one
     ! with the least CSTRV; if the last comparison still leads to more than one possibilities, then
