@@ -74,7 +74,8 @@ ntest: FC := nagfor -C -f$(FSTD)
 
 # NVIDIA nvfortran (aka, pgfortran)
 VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
-vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard
+#vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard  # As of nvfortran 22.2-0, `-C` leads to a false positive of out of boundary subscript.
+vtest: FC := $(VFORT) -Wall -Wextra -Mstandard
 
 # Oracle sunf95
 stest: FC := sunf95 -w3 -u -U
