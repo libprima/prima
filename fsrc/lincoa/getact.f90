@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM05:18:49
+! Last Modified: Tuesday, March 15, 2022 PM08:40:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -488,7 +488,7 @@ end if
 ! the old value of IACT(IC). QREXC implements the updates of QFAC and RFAC by sequence of Givens
 ! rotations. Then NACT is reduced by one.
 
-call qrexc(qfac, rfac(:, 1:nact), ic)
+call qrexc(qfac, rfac(:, 1:nact), ic)  ! QREXC does nothing if IC == NACT.
 ! Indeed, it suffices to pass QFAC(:, 1:NACT) and RFAC(1:NACT, 1:NACT) to QREXC as follows.
 !!call qrexc(qfac(:, 1:nact), rfac(1:nact, 1:nact), ic)
 

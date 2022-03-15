@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 15, 2022 AM12:43:37
+! Last Modified: Tuesday, March 15, 2022 PM09:23:56
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1806,12 +1806,13 @@ end if
 
 #if __USE_POWELL_ALGEBRA__ == 1
 ! A is symmetrized by setting A(UPPER_TRI) = A(LOWER_TRI).
+! N.B.: The following assumes that A(LOWER_TRI) has been properly defined.
 do j = 1, int(size(A, 1), kind(j))
     A(1:j - 1, j) = A(j, 1:j - 1)
 end do
 #else
-A = A + transpose(A)
-A = A * HALF
+! N.B.: The following assumes that both A(UPPER_TRI) and A(LOWER_TRI) have been properly defined.
+A = HALF * (A + transpose(A))
 #endif
 
 #if __DEBUGGING__ == 1

@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM03:34:53
+! Last Modified: Tuesday, March 15, 2022 PM09:30:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : istriu
+use, non_intrinsic :: linalg_mod, only : istriu, issymmetric
 
 ! Solver-specific modules
 use, non_intrinsic :: getact_mod, only : getact
@@ -38,7 +38,7 @@ implicit none
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: gq(:)  ! GQ(N)
-real(RP), intent(in) :: hq(:)  ! HQ(N, N)
+real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(in) :: pq(:)  ! PQ(NPT)
 real(RP), intent(in) :: rescon(:)  ! RESCON(M)
 real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
@@ -65,7 +65,7 @@ real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
 real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, wgd
-integer(IK) :: i, icount, ih, j, jsav, k
+integer(IK) :: i, icount, j, jsav, k
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
@@ -81,11 +81,7 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
-
-    !----------------------------------------------------------------------------------------------!
-    !call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
-    call assert(size(hq) == n * (n + 1_IK) / 2_IK, 'HQ is n-by-n and symmetric', srname)
-    !----------------------------------------------------------------------------------------------!
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
 
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
@@ -296,13 +292,11 @@ if (-alpha * dg <= ctest * reduct) goto 320
 !
 !     Set DW to the change in gradient along D.
 !
-ih = 0
 do j = 1, n
     dw(j) = ZERO
     do i = 1, j
-        ih = ih + 1
-        if (i < j) dw(j) = dw(j) + hq(ih) * d(i)
-        dw(i) = dw(i) + hq(ih) * d(j)
+        if (i < j) dw(j) = dw(j) + hq(i, j) * d(i)
+        dw(i) = dw(i) + hq(i, j) * d(j)
     end do
 end do
 do k = 1, npt
