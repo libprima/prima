@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM03:55:05
+! Last Modified: Tuesday, March 15, 2022 PM05:18:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -381,8 +381,8 @@ if (DEBUGGING) then
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
 
-    call assert(size(resact) == M, 'SIZE(RESACT) == M', srname)
-    call assert(size(resnew) == M, 'SIZE(RESNEW) == M', srname)
+    call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
+    call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
 end if
 
 !====================!
@@ -419,8 +419,8 @@ if (DEBUGGING) then
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
 
-    call assert(size(resact) == M, 'SIZE(RESACT) == M', srname)
-    call assert(size(resnew) == M, 'SIZE(RESNEW) == M', srname)
+    call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
+    call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
 end if
 
 end subroutine add_act
@@ -463,9 +463,9 @@ n = size(vlam)
 ! Preconditions
 ! Preconditions
 if (DEBUGGING) then
-    call assert(m >= 0, 'M >= 1', srname)  ! Should not be called when M == 0.
+    call assert(m >= 1, 'M >= 1', srname)  ! Should not be called when M == 0.
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(nact >= 1 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
+    call assert(nact >= 1 .and. nact <= min(m, n), '1 <= NACT <= MIN(M, N)', srname)
     call assert(ic >= 1 .and. ic <= nact, '1 <= IC <= NACT', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
 

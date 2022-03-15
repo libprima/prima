@@ -623,6 +623,10 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "ANSI: PROCEDURE is a Fortran 2003 feature" \
 	| grep -v "remark #5415: Feature not yet implemented" \
 	| grep -v "interpolation error" \
+	| grep -v "In file ./common/evaluate.f90:134" \
+	| grep -v "In file ./common/evaluate.f90:201" \
+	| grep -v "./common/linalg.F90: In function ‘linalg_mod_MP_lsqr’:" \
+	| grep -v "./common/preproc.f90: In function ‘preproc_mod_MP_preproc’:" \
 	| grep -v "WARNING --  When --chk x is specified" \
 	| grep -v "bin/ld.*bisheng.*unsupported GNU_PROPERTY_TYPE (5) type: 0xc0000000" \
 	| grep -v "all warnings being treated as errors" \
@@ -645,7 +649,17 @@ source_%: $(SRC_DIRS)
 	@printf "\nMaking a copy of the source code for the test.\n"
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
 	@for SRC in $(DRIVER_SRC); do cp $(DRIVER_DIR)/"$$SRC" ./; done
-	@rm -f *.mod *.o *.dbg *.cmdx *.cmod *.ilm *.stb *.out *__genmod.f90  # Cleaning up; important!!!
+	@find ./ -type f \( \
+		-name "*.mod" \
+		-o -name "*.o" \
+		-o -name "*.dbg" \
+		-o -name "*.cmdx" \
+		-o -name "*.cmod" \
+		-o -name "*.ilm" \
+		-o -name "*.stb" \
+		-o -name "*.out" \
+		-o -name "*__genmod.f90" \
+		\) -exec rm {} \;  # Cleaning up; important!!!
 	@if echo $@ | grep -q "ltest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../lfsrc ./ ; \
