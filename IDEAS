@@ -1,3 +1,5 @@
+Fortran
+
 1. Implement a module pdfo, and then newuoa_mod etc as submodules. Use the solvers by
 
 use, non_intrinsic :: pdfo_mod, only : newuoa
@@ -33,3 +35,9 @@ end function
 Note that hprod must have access to the Hessian. Thus it has to be implemented an internal
 function in the function that calls trstep. In MATLAB/Python/R/C++, it can be implemented as an
 anonymous/lambda function the Hessian as a parameter.
+
+
+C++
+
+Use Eigen ( https://eigen.tuxfamily.org ) to get support for matrices, vectors, and basic linear
+algebra.

@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 06, 2022 AM11:47:54
+! Last Modified: Tuesday, March 15, 2022 PM12:57:16
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -80,7 +80,7 @@ public :: DEBUGGING
 public :: IK, IK_DFT
 public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
-public :: REALMIN, EPS, HUGENUM, HUGEFUN, HUGECON, HUGEBOUND
+public :: REALMIN, EPS, TINYCV, HUGENUM, HUGEFUN, HUGECON, HUGEBOUND
 public :: MSGLEN, FNAMELEN
 public :: OUTUNIT, STDIN, STDOUT, STDERR
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, CWEIGHT_DFT
@@ -161,6 +161,9 @@ real(RP), parameter :: PI = 3.141592653589793238462643383279502884_RP
 ! Julia: realmin(Float64)
 real(RP), parameter :: REALMIN = tiny(ZERO)
 real(RP), parameter :: EPS = epsilon(ZERO)  ! Machine epsilon
+
+real(RP), parameter :: TINYCV = real(tiny(0.0), RP)  ! Used in LINCOA
+
 real(RP), parameter :: HUGENUM = huge(ZERO)
 
 integer, parameter :: MAXE = maxexponent(ZERO)
