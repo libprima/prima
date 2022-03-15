@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM02:08:10
+! Last Modified: Tuesday, March 15, 2022 PM03:55:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,9 +35,9 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, TINYCV, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
-use, non_intrinsic :: linalg_mod, only : inprod, eye, istriu
+use, non_intrinsic :: linalg_mod, only : inprod, eye, istriu, isorth
 
 implicit none
 
@@ -61,10 +61,12 @@ real(RP), intent(out) :: vlam(:)  ! VLAM(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GETACT'
-real(RP) :: w(size(g))
+real(RP) :: w(size(g)), tol
 real(RP) :: ctol, ddsav, dnorm, summ, tdel, temp, test,   &
 &        violmx, vmult
 integer(IK) :: i, ic, j, k, l
+
+logical :: to_loop
 
 integer(IK) :: m
 integer(IK) :: n
@@ -84,14 +86,11 @@ if (DEBUGGING) then
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
 
-    !----------------------------------------------------------------------------------------------!
-    !tol == ???
-    !call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    !call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
-    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    !----------------------------------------------------------------------------------------------!
 
     call assert(size(dw) == n, 'SIZE(DW) == N', srname)
     call assert(size(vlam) == n, 'SIZE(VLAM) == N', srname)
@@ -119,45 +118,42 @@ vlam = ZERO
 !
 if (nact == 0) then
     qfac = eye(n)
-    goto 100
 end if
-!
-!     Remove any constraints from the initial active set whose residuals
-!       exceed TDEL.
+
+! Remove any constraints from the initial active set whose residuals exceed TDEL.
 do ic = nact, 1, -1
     if (resact(ic) > tdel) then
-        call validate(ic <= nact, 'IC <= NACT', srname)  ! When IC > NACT, the following lines are invalid.
         ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
         call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
     end if
 end do
-!
-!     Remove any constraints from the initial active set whose Lagrange
-!       multipliers are nonnegative, and set the surviving multipliers.
-!
-!iflag = 2
-60 if (nact == 0) goto 100
 
-ic = nact
-70 temp = ZERO
-do i = 1, n
-    temp = temp + qfac(i, ic) * g(i)
-end do
-if (ic < nact) then
-    do j = ic + 1, nact
-        temp = temp - rfac(ic, j) * vlam(j)
+! Remove any constraints from the initial active set whose Lagrange multipliers are nonnegative,
+! and set the surviving multipliers.
+to_loop = (nact > 0)  ! Better implementation?
+do while (to_loop)  ! Zaikun 20220315: Is infinite cycling possible?
+    to_loop = .false.
+    do ic = nact, 1, -1
+        temp = ZERO
+        do i = 1, n
+            temp = temp + qfac(i, ic) * g(i)
+        end do
+        if (ic < nact) then
+            do j = ic + 1, nact
+                temp = temp - rfac(ic, j) * vlam(j)
+            end do
+        end if
+        if (temp >= ZERO) then
+            ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
+            call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+            to_loop = (nact > 0)  ! Restart the loop if any active constraint is removed.
+            exit
+        else
+            vlam(ic) = temp / rfac(ic, ic)
+        end if
     end do
-end if
-if (temp >= ZERO) then
-    call validate(ic <= nact, 'IC <= NACT', srname)  ! When IC > NACT, the following lines are invalid.
-    ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
-    call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
-    goto 60
-end if
-
-vlam(ic) = temp / rfac(ic, ic)
-ic = ic - 1_IK
-if (ic > 0) goto 70
+end do
+ic = 0_IK  ! Added by Zaikun on 20220315. Needed or not?
 
 !
 !     Set the new search direction D. Terminate if the 2-norm of D is ZERO
@@ -165,6 +161,7 @@ if (ic > 0) goto 70
 !       occurs for sufficiently large SNORM if the origin is in the convex
 !       hull of the constraint gradients.
 !
+
 100 if (nact == n) goto 290
 !!if (nact < 0) return !??? See next line.
 do j = nact + 1, n  ! Here we have to ensure NACT >= 0; is it guaranteed in theory?
@@ -321,14 +318,10 @@ if (DEBUGGING) then
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
 
-    !----------------------------------------------------------------------------------------------!
-    !tol == ???
-    !call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    !call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
-    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    !----------------------------------------------------------------------------------------------!
 
     call assert(size(dw) == n, 'SIZE(DW) == N', srname)
     call assert(size(vlam) == n, 'SIZE(VLAM) == N', srname)
@@ -345,8 +338,9 @@ subroutine add_act(l, c, iact, nact, qfac, resact, resnew, rfac, vlam)
 ! gradient of the new active constraint.
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
-use, non_intrinsic :: linalg_mod, only : qradd
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : qradd, istriu, isorth
 implicit none
 
 ! Inputs
@@ -361,6 +355,39 @@ real(RP), intent(inout) :: resact(:)  ! RESACT(M)
 real(RP), intent(inout) :: resnew(:)  ! RESNEW(M)
 real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N)
 real(RP), intent(inout) :: vlam(:)  ! VLAM(N)
+
+! Local variables (debugging only)
+character(len=*), parameter :: srname = 'ADD_ACT'
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: tol
+
+! Sizes
+m = size(iact)
+n = size(vlam)
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(m >= 1, 'M >= 1', srname)  ! Should not be called when M == 0.
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(nact >= 0 .and. nact <= min(m, n) - 1_IK, '0 <= NACT <= MIN(M, N)-1', srname)
+    call assert(l >= 1 .and. l <= m, '1 <= L <= M', srname)
+    call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
+    call assert(.not. any(iact(1:nact) == l), 'L is not in IACT(1:NACT)', srname)
+
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
+    call assert(istriu(rfac), 'RFAC is upper triangular', srname)
+
+    call assert(size(resact) == M, 'SIZE(RESACT) == M', srname)
+    call assert(size(resnew) == M, 'SIZE(RESNEW) == M', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! QRADD applies Givens rotations to the last (N-NACT) columns of QFAC so that the first (NACT+1)
 ! columns of QFAC are the ones required for the addition of the L-th constraint, and add the
@@ -378,6 +405,24 @@ resact(nact) = resnew(l)  ! RESACT(NACT) = RESNEW(IACT(NACT))
 resnew(l) = ZERO  ! RESNEW(IACT(NACT)) = ZERO  ! Why not TINYCV? See DECACT.
 vlam(nact) = ZERO
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(nact >= 1 .and. nact <= min(m, n), '1 <= NACT <= MIN(M, N)', srname)
+    call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
+
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
+    call assert(istriu(rfac), 'RFAC is upper triangular', srname)
+
+    call assert(size(resact) == M, 'SIZE(RESACT) == M', srname)
+    call assert(size(resnew) == M, 'SIZE(RESNEW) == M', srname)
+end if
+
 end subroutine add_act
 
 
@@ -387,8 +432,9 @@ subroutine del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
 ! QFAC, etc accordingly, and reduces NACT to NACT-1.
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, IK, TINYCV
-use, non_intrinsic :: linalg_mod, only : qrexc
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, TINYCV, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : qrexc, isorth, istriu
 implicit none
 
 ! Inputs
@@ -403,6 +449,41 @@ real(RP), intent(inout) :: resnew(:)  ! RESNEW(M)
 real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N)
 real(RP), intent(inout) :: vlam(:)  ! VLAM(N)
 
+! Local variables (debugging only)
+character(len=*), parameter :: srname = 'DEL_ACT'
+integer(IK) :: l
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: tol
+
+! Sizes
+m = size(iact)
+n = size(vlam)
+
+! Preconditions
+! Preconditions
+if (DEBUGGING) then
+    call assert(m >= 0, 'M >= 1', srname)  ! Should not be called when M == 0.
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(nact >= 1 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
+    call assert(ic >= 1 .and. ic <= nact, '1 <= IC <= NACT', srname)
+    call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
+
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
+    call assert(istriu(rfac), 'RFAC is upper triangular', srname)
+
+    call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
+    call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
+    l = iact(ic)  ! For debugging only
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
 ! The following instructions rearrange the active constraints so that the new value of IACT(NACT) is
 ! the old value of IACT(IC). QREXC implements the updates of QFAC and RFAC by sequence of Givens
 ! rotations. Then NACT is reduced by one.
@@ -416,6 +497,25 @@ resact(ic:nact) = [resact(ic + 1:nact), resact(ic)]
 resnew(iact(nact)) = max(resact(nact), TINYCV)
 vlam(ic:nact) = [vlam(ic + 1:nact), vlam(ic)]
 nact = nact - 1_IK
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(nact >= 0 .and. nact <= min(m, n) - 1, '1 <= NACT <= MIN(M, N)-1', srname)
+    call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
+    call assert(.not. any(iact(1:nact) == l), 'L is not in IACT(1:NACT)', srname)
+
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
+    call assert(istriu(rfac), 'RFAC is upper triangular', srname)
+
+    call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
+    call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
+end if
 
 end subroutine del_act
 
