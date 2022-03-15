@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 12, 2022 AM12:52:44
+! Last Modified: Tuesday, March 15, 2022 PM12:56:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,7 +25,7 @@ contains
 subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : istriu
 
@@ -64,7 +64,7 @@ real(RP) :: resnew(size(amat, 2))
 real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
 real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, tinynum, wgd
+&        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, wgd
 integer(IK) :: i, icount, ih, j, jsav, k
 integer(IK) :: m
 integer(IK) :: n
@@ -134,7 +134,6 @@ g = gq
 !
 !     Set some numbers for the conjugate gradient iterations.
 !
-tinynum = real(tiny(0.0), RP)
 ctest = 0.01_RP
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20220302: The following line is added so that SNORM is INTENT(OUT) rather than
@@ -151,7 +150,7 @@ if (m > 0) then
         if (rescon(j) >= snorm) then
             resnew(j) = -ONE
         else if (rescon(j) >= ZERO) then
-            resnew(j) = max(resnew(j), tinynum)
+            resnew(j) = max(resnew(j), TINYCV)
         end if
     end do
     if (nact > 0) then
@@ -364,7 +363,7 @@ end do
 if (m > 0) then
     do j = 1, m
         if (resnew(j) > ZERO) then
-            resnew(j) = max(resnew(j) - alpha * w(j), tinynum)
+            resnew(j) = max(resnew(j) - alpha * w(j), TINYCV)
         end if
     end do
 end if

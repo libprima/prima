@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 13, 2022 PM10:17:46
+! Last Modified: Tuesday, March 15, 2022 PM02:08:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,11 +23,21 @@ contains
 
 
 subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw, vlam)
+!--------------------------------------------------------------------------------------------------!
+! The main purpose of GETACT is to pick the current active set. It is defined by the property that
+! the projection of -G into the space orthogonal to the active constraint normals is as large as
+! possible, subject to this projected steepest descent direction moving no closer to the boundary of
+! every constraint whose current residual is at most 0.2*SNORM. On return, the settings in NACT,
+! IACT, QFAC and RFAC are all appropriate to this choice of active set.
+! Occasionally this projected direction is ZERO, and then the final value of W(1) is set to ZERO.
+! Otherwise, the direction itself is returned in DW, and W(1) is set to the square of the length of
+! the direction.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
-use, non_intrinsic :: linalg_mod, only : inprod, eye, istriu, qradd, qrexc
+use, non_intrinsic :: linalg_mod, only : inprod, eye, istriu
 
 implicit none
 
@@ -52,9 +62,9 @@ real(RP), intent(out) :: vlam(:)  ! VLAM(N)
 ! Local variables
 character(len=*), parameter :: srname = 'GETACT'
 real(RP) :: w(size(g))
-real(RP) :: ctol, ddsav, dnorm, summ, tdel, temp, test, tinynum,   &
+real(RP) :: ctol, ddsav, dnorm, summ, tdel, temp, test,   &
 &        violmx, vmult
-integer(IK) :: i, ic, iflag, j, k, l
+integer(IK) :: i, ic, j, k, l
 
 integer(IK) :: m
 integer(IK) :: n
@@ -98,20 +108,9 @@ end if
 !     VLAM and W are used for working space, the vector VLAM being reserved
 !       for the Lagrange multipliers of the calculation. Their lengths must
 !       be at least N.
-!     The main purpose of GETACT is to pick the current active set. It is
-!       defined by the property that the projection of -G into the space
-!       orthogonal to the active constraint normals is as large as possible,
-!       subject to this projected steepest descent direction moving no closer
-!       to the boundary of every constraint whose current residual is at most
-!       0.2*SNORM. On return, the settings in NACT, IACT, QFAC and RFAC are
-!       all appropriate to this choice of active set.
-!     Occasionally this projected direction is ZERO, and then the final value
-!       of W(1) is set to ZERO. Otherwise, the direction itself is returned
-!       in DW, and W(1) is set to the square of the length of the direction.
 !
 !     Set some constants and a temporary VLAM.
 !
-tinynum = real(tiny(0.0), RP)
 tdel = 0.2_RP * snorm
 ddsav = TWO * inprod(g, g)
 vlam = ZERO
@@ -125,18 +124,20 @@ end if
 !
 !     Remove any constraints from the initial active set whose residuals
 !       exceed TDEL.
-!
-iflag = 1
-ic = nact
-40 if (resact(ic) > tdel) goto 800
-50 ic = ic - 1
-if (ic > 0) goto 40
+do ic = nact, 1, -1
+    if (resact(ic) > tdel) then
+        call validate(ic <= nact, 'IC <= NACT', srname)  ! When IC > NACT, the following lines are invalid.
+        ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
+        call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+    end if
+end do
 !
 !     Remove any constraints from the initial active set whose Lagrange
 !       multipliers are nonnegative, and set the surviving multipliers.
 !
-iflag = 2
+!iflag = 2
 60 if (nact == 0) goto 100
+
 ic = nact
 70 temp = ZERO
 do i = 1, n
@@ -147,10 +148,17 @@ if (ic < nact) then
         temp = temp - rfac(ic, j) * vlam(j)
     end do
 end if
-if (temp >= ZERO) goto 800
+if (temp >= ZERO) then
+    call validate(ic <= nact, 'IC <= NACT', srname)  ! When IC > NACT, the following lines are invalid.
+    ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
+    call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+    goto 60
+end if
+
 vlam(ic) = temp / rfac(ic, ic)
 ic = ic - 1_IK
 if (ic > 0) goto 70
+
 !
 !     Set the new search direction D. Terminate if the 2-norm of D is ZERO
 !       or does not decrease, or if NACT=N holds. The situation NACT=N
@@ -219,31 +227,16 @@ end if
 w(1) = ONE
 if (l == 0) goto 300
 if (violmx <= TEN * ctol) goto 300
-!
-!     Apply Givens rotations to the last (N-NACT) columns of QFAC so that
-!       the first (NACT+1) columns of QFAC are the ones required for the
-!       addition of the L-th constraint, and add the appropriate column
-!       to RFAC.
-!
+
 !--------------------------------------------------------------------------------------------------!
-! Zaikun 20220305: If NACT >= N, then NACTP >= N+1, RFAC(IDIAT+J) and QFAC(I, NACTP) will be
-! invalid. Is it guaranteed that NACT < N in theory? Probably yes because of line number 100, where
+! Zaikun 20220305:
+! Is it guaranteed that NACT < N in theory? Probably yes because of line number 100, where
 ! NACT == N leads to return.
 if (nact >= n) goto 300
 call validate(nact < n, 'NACT < N', srname)
-!--------------------------------------------------------------------------------------------------!
+! Add the constraint with index L to the active set, and set NACT = NACT + 1.
+call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)
 
-! N.B.: QRADD always augment NACT by 1. This is different from the strategy in COBYLA. Is it ensured
-! that AMAT(:, L) is not in the range of AMAT(:, IACT(1:NACT)) or Q(1:NACT)? If not, why NACT is
-! always augmented by 1 in QRADD?
-call qradd(amat(:, l), qfac, rfac, nact)  ! NACT is increased by 1!
-! Indeed, it suffices to pass RFAC(:, 1:NACT+1) to QRADD as follows.
-!!call qradd(amat(:, l), qfac, rfac(:, 1:nact + 1), nact)  ! NACT is increased by 1!
-
-iact(nact) = l
-resact(nact) = resnew(l)
-vlam(nact) = ZERO
-resnew(l) = ZERO
 !
 !     Set the components of the vector VMU in W.
 !
@@ -288,7 +281,7 @@ if (ic == 0) violmx = ZERO
 !       new VLAM are negative, with resetting of the residuals of the
 !       constraints that become inactive.
 !
-iflag = 3
+!iflag = 3
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 2021 July, 20220305:
 ! If NACT <= 0, then IC <= 0, and hence memory errors will occur when accessing VLAM(IC),
@@ -298,8 +291,12 @@ if (nact <= 0) goto 300  ! What about DD and W(1)???
 ic = nact
 270 continue
 if (vlam(ic) < ZERO) goto 280
-resnew(iact(ic)) = max(resact(ic), tinynum)
-goto 800
+resnew(iact(ic)) = max(resact(ic), TINYCV)
+
+call validate(ic <= nact, 'IC <= NACT', srname)  ! When IC > NACT, the following lines are invalid.
+! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
+call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+
 280 ic = ic - 1
 if (ic > 0) goto 270
 !
@@ -337,16 +334,78 @@ if (DEBUGGING) then
     call assert(size(vlam) == n, 'SIZE(VLAM) == N', srname)
 end if
 return
-!
-!     These instructions rearrange the active constraints so that the new
-!       value of IACT(NACT) is the old value of IACT(IC). A sequence of
-!       Givens rotations is applied to the current QFAC and RFAC. Then NACT
-!       is reduced by one.
-!
-800 continue
 
-call validate(ic <= nact, 'IC <= NACT', srname)  ! When IC > NACT, the following lines are invalid.
-resnew(iact(ic)) = max(resact(ic), tinynum)
+end subroutine getact
+
+
+subroutine add_act(l, c, iact, nact, qfac, resact, resnew, rfac, vlam)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine adds the constraint with index L to the active set as the (NACT+ )-th active
+! constriant, updates IACT, QFAC, etc accordingly, and increments NACT to NACT+1. Here, C is the
+! gradient of the new active constraint.
+!--------------------------------------------------------------------------------------------------!
+
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
+use, non_intrinsic :: linalg_mod, only : qradd
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: l
+real(RP), intent(in) :: c(:)  ! C(N)
+
+! In-outputs
+integer(IK), intent(inout) :: iact(:)  ! IACT(M)
+integer(IK), intent(inout) :: nact
+real(RP), intent(inout) :: qfac(:, :)  ! QFAC(N, N)
+real(RP), intent(inout) :: resact(:)  ! RESACT(M)
+real(RP), intent(inout) :: resnew(:)  ! RESNEW(M)
+real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N)
+real(RP), intent(inout) :: vlam(:)  ! VLAM(N)
+
+! QRADD applies Givens rotations to the last (N-NACT) columns of QFAC so that the first (NACT+1)
+! columns of QFAC are the ones required for the addition of the L-th constraint, and add the
+! appropriate column to RFAC.
+! N.B.: QRADD always augment NACT by 1. This is different from the strategy in COBYLA. Is it ensured
+! that C cannot be linearly represented by the gradients of the existing active constraints?
+call qradd(c, qfac, rfac, nact)  ! NACT is increased by 1!
+
+! Indeed, it suffices to pass RFAC(:, 1:NACT+1) to QRADD as follows.
+!!call qradd(c, qfac, rfac(:, 1:nact + 1), nact)  ! NACT is increased by 1!
+
+! Update IACT, RESACT, RESNEW, and VLAM. N.B.: NACT has been increased by 1 in QRADD.
+iact(nact) = l
+resact(nact) = resnew(l)  ! RESACT(NACT) = RESNEW(IACT(NACT))
+resnew(l) = ZERO  ! RESNEW(IACT(NACT)) = ZERO  ! Why not TINYCV? See DECACT.
+vlam(nact) = ZERO
+
+end subroutine add_act
+
+
+subroutine del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine deletes the constraint with index IACT(IC) from the active set, updates IACT,
+! QFAC, etc accordingly, and reduces NACT to NACT-1.
+!--------------------------------------------------------------------------------------------------!
+
+use, non_intrinsic :: consts_mod, only : RP, IK, TINYCV
+use, non_intrinsic :: linalg_mod, only : qrexc
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: ic
+
+! In-outputs
+integer(IK), intent(inout) :: iact(:)  ! IACT(M)
+integer(IK), intent(inout) :: nact
+real(RP), intent(inout) :: qfac(:, :)  ! QFAC(N, N)
+real(RP), intent(inout) :: resact(:)  ! RESACT(M)
+real(RP), intent(inout) :: resnew(:)  ! RESNEW(M)
+real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N)
+real(RP), intent(inout) :: vlam(:)  ! VLAM(N)
+
+! The following instructions rearrange the active constraints so that the new value of IACT(NACT) is
+! the old value of IACT(IC). QREXC implements the updates of QFAC and RFAC by sequence of Givens
+! rotations. Then NACT is reduced by one.
 
 call qrexc(qfac, rfac(:, 1:nact), ic)
 ! Indeed, it suffices to pass QFAC(:, 1:NACT) and RFAC(1:NACT, 1:NACT) to QREXC as follows.
@@ -354,17 +413,11 @@ call qrexc(qfac, rfac(:, 1:nact), ic)
 
 iact(ic:nact) = [iact(ic + 1:nact), iact(ic)]
 resact(ic:nact) = [resact(ic + 1:nact), resact(ic)]
+resnew(iact(nact)) = max(resact(nact), TINYCV)
 vlam(ic:nact) = [vlam(ic + 1:nact), vlam(ic)]
-nact = nact - 1
-if (iflag == 1) then
-    goto 50
-elseif (iflag == 2) then
-    goto 60
-elseif (iflag == 3) then
-    goto 280
-end if
+nact = nact - 1_IK
 
-end subroutine getact
+end subroutine del_act
 
 
 end module getact_mod
