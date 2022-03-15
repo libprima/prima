@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 06, 2022 PM02:51:17
+! Last Modified: Tuesday, March 15, 2022 PM10:30:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,7 +21,6 @@ contains
 
 subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, &
     & sl_in, su_in, xl, xu, x, nf, f, fhist, xhist, info)
-
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, DEBUGGING
@@ -78,7 +77,7 @@ real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: d(size(x))
 real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
-real(RP) :: hq(size(x) * (size(x) + 1) / 2)
+real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
 real(RP) :: vlag(npt + size(x))
 real(RP) :: w(3 * (npt + size(x)))
@@ -98,7 +97,7 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        fracsq, frhosq, gisq, gqsq, hdiag,      &
 &        pqold, ratio, rho, scaden, summ, summa, summb, summpq,&
 &        summw, summz, temp, vquad, xoptsq
-integer(IK) :: i, ih, ip, itest, j, jj, jp, k, kbase, knew, &
+integer(IK) :: i, ip, itest, j, jj, jp, k, kbase, knew, &
 &           kopt, ksav, nfsav, nh, np, nptm, nresc, ntrits
 
 
@@ -227,12 +226,10 @@ nfsav = nf
 !     call of RESCUE that makes a call of CALFUN.
 !
 20 if (kopt /= kbase) then
-    ih = 0
     do j = 1, n
         do i = 1, j
-            ih = ih + 1
-            if (i < j) gopt(j) = gopt(j) + hq(ih) * xopt(i)
-            gopt(i) = gopt(i) + hq(ih) * xopt(j)
+            if (i < j) gopt(j) = gopt(j) + hq(i, j) * xopt(i)
+            gopt(i) = gopt(i) + hq(i, j) * xopt(j)
         end do
     end do
     if (nf > npt) then
@@ -257,7 +254,7 @@ end if
 !     label 650 or 680 with NTRITS=-1, instead of calculating F at XNEW.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: For ill-conditiONEd problems, NaN may occur in the
+! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
 ! models. In such a case, we terminate the code. Otherwise, the behavior
 ! of TRBOX, ALTMOV, or RESCUE is not predictable, and Segmentation Fault or
 ! infinite cycling may happen. This is because any equality/inequality
@@ -271,18 +268,17 @@ end if
         goto 720
     end if
 end do
-do i = 1, nh
-    if (hq(i) /= hq(i)) then
-        info = -3
-        goto 720
-    end if
-end do
+if (is_nan(sum(abs(hq)))) then
+    info = -3
+    goto 720
+end if
 do i = 1, npt
     if (pq(i) /= pq(i)) then
         info = -3
         goto 720
     end if
 end do
+
 
 call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 
@@ -307,7 +303,7 @@ if (dnorm < HALF * rho) then
         if (xnew(j) == sl(j)) bdtest = gnew(j)
         if (xnew(j) == su(j)) bdtest = -gnew(j)
         if (bdtest < bdtol) then
-            curv = hq((j + j * j) / 2)
+            curv = hq(j, j)
             do k = 1, npt
                 curv = curv + pq(k) * xpt(j, k)**2
             end do
@@ -378,7 +374,6 @@ ntrits = ntrits + 1
 !     The following instructions complete the shift, including the changes
 !     to the second derivative parameters of the quadratic model.
 !
-    ih = 0
     do j = 1, n
         w(j) = -HALF * summpq * xopt(j)
         do k = 1, npt
@@ -386,8 +381,8 @@ ntrits = ntrits + 1
             xpt(j, k) = xpt(j, k) - xopt(j)
         end do
         do i = 1, j
-            ih = ih + 1
-            hq(ih) = hq(ih) + w(i) * xopt(j) + xopt(i) * w(j)
+            hq(i, j) = hq(i, j) + w(i) * xopt(j) + xopt(i) * w(j)
+            hq(j, i) = hq(i, j)
             bmat(j, npt + i) = bmat(i, npt + j)
         end do
     end do
@@ -423,12 +418,10 @@ do i = 1, n
         goto 720
     end if
 end do
-do i = 1, nh
-    if (hq(i) /= hq(i)) then
-        info = -3
-        goto 720
-    end if
-end do
+if (is_nan(sum(abs(hq)))) then
+    info = -3
+    goto 720
+end if
 do i = 1, npt
     if (pq(i) /= pq(i)) then
         info = -3
@@ -727,14 +720,12 @@ end if
 !
 fopt = fval(kopt)
 vquad = ZERO
-ih = 0
 do j = 1, n
     vquad = vquad + d(j) * gopt(j)
     do i = 1, j
-        ih = ih + 1
         temp = d(i) * d(j)
         if (i == j) temp = HALF * temp
-        vquad = vquad + hq(ih) * temp
+        vquad = vquad + hq(i, j) * temp
     end do
 end do
 do k = 1, npt
@@ -804,14 +795,13 @@ end if
 !
 call update(knew, beta, denom, bmat, vlag, zmat)
 
-ih = 0
 pqold = pq(knew)
 pq(knew) = ZERO
 do i = 1, n
     temp = pqold * xpt(i, knew)
     do j = 1, i
-        ih = ih + 1
-        hq(ih) = hq(ih) + temp * xpt(j, knew)
+        hq(i, j) = hq(i, j) + temp * xpt(j, knew)
+        hq(j, i) = hq(i, j)
     end do
 end do
 do jj = 1, nptm
@@ -852,14 +842,12 @@ end do
 if (f < fopt) then
     kopt = knew
     xoptsq = ZERO
-    ih = 0
     do j = 1, n
         xopt(j) = xnew(j)
         xoptsq = xoptsq + xopt(j)**2
         do i = 1, j
-            ih = ih + 1
-            if (i < j) gopt(j) = gopt(j) + hq(ih) * d(i)
-            gopt(i) = gopt(i) + hq(ih) * d(j)
+            if (i < j) gopt(j) = gopt(j) + hq(i, j) * d(i)
+            gopt(i) = gopt(i) + hq(i, j) * d(j)
         end do
     end do
     do k = 1, npt
@@ -929,9 +917,9 @@ if (ntrits > 0) then
         do i = 1, max(npt, nh)
             if (i <= n) gopt(i) = vlag(npt + i)
             if (i <= npt) pq(i) = w(npt + i)
-            if (i <= nh) hq(i) = ZERO
-            itest = 0
         end do
+        itest = 0
+        hq = ZERO
     end if
 end if
 !

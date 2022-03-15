@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 06, 2022 PM03:22:32
+! Last Modified: Tuesday, March 15, 2022 PM10:25:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-!use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+use, non_intrinsic :: linalg_mod, only : issymmetric !inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specif modules
@@ -52,7 +52,7 @@ real(RP), intent(inout) :: bmat(:, :)  !  BMAT(N, NPT + N)
 real(RP), intent(inout) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(inout) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(inout) :: gopt(:)  ! GOPT(N)
-real(RP), intent(inout) :: hq(:)  ! HQ(N, N)
+real(RP), intent(inout) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(inout) :: pq(:)  ! PQ(NPT)
 real(RP), intent(inout) :: sl(:)  ! SL(N)
 real(RP), intent(inout) :: su(:)  ! SU(N)
@@ -86,7 +86,7 @@ real(RP) :: x(size(xopt))
 real(RP) :: beta, bsum, den, denom, diff,      &
 &        distsq, dsqmin, fbase, hdiag, sfrac,    &
 &        summ, sumpq, temp, vlmxsq, vquad, winc, xp, xq
-integer(IK) :: i, ih, ihp, ihq, ip, iq, iw, j, jp, jpn, k, &
+integer(IK) :: i, ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nptm, nrem
 
 n = int(size(xopt), kind(n))
@@ -107,12 +107,7 @@ if (DEBUGGING) then
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
-
-    !----------------------------------------------------------------------------------------------!
-    !call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
-    call assert(size(hq) == n * (n + 1_IK) / 2_IK, 'HQ is n-by-n and symmetric', srname)
-    !----------------------------------------------------------------------------------------------!
-
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(size(vlag) == n + npt, 'SIZE(PQ) == N + NPT', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
@@ -162,9 +157,6 @@ end if
 !
 !     Set some constants.
 !
-!--------------------------------------------------------------------------------------------------!
-ihp = 1  ! Temporary fix for G95 warning about this variable is used uninitialized
-!--------------------------------------------------------------------------------------------------!
 
 np = n + 1
 sfrac = HALF / real(np, RP)
@@ -197,15 +189,14 @@ end do
 !     Update HQ so that HQ and PQ define the second derivatives of the model
 !     after XBASE has been shifted to the trust region centre.
 !
-ih = 0
 do j = 1, n
     w(j) = HALF * sumpq * xopt(j)
     do k = 1, npt
         w(j) = w(j) + pq(k) * xpt(j, k)
     end do
     do i = 1, j
-        ih = ih + 1
-        hq(ih) = hq(ih) + w(i) * xopt(j) + w(j) * xopt(i)
+        hq(i, j) = hq(i, j) + w(i) * xopt(j) + w(j) * xopt(i)
+        hq(j, i) = hq(i, j)
     end do
 end do
 !
@@ -443,14 +434,13 @@ goto 80
         nf = -1
         goto 350
     end if
-    ih = 0
     do j = 1, n
         w(j) = xpt(j, kpt)
         xpt(j, kpt) = ZERO
         temp = pq(kpt) * w(j)
         do i = 1, j
-            ih = ih + 1
-            hq(ih) = hq(ih) + temp * w(i)
+            hq(i, j) = hq(i, j) + temp * w(i)
+            hq(j, i) = hq(i, j)
         end do
     end do
     pq(kpt) = ZERO
@@ -474,15 +464,12 @@ goto 80
 !
     vquad = fbase
     if (ip > 0) then
-        ihp = (ip + ip * ip) / 2
-        vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ihp))
+        vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
     end if
     if (iq > 0) then
-        ihq = (iq + iq * iq) / 2
-        vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(ihq))
+        vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
         if (ip > 0) then
-            iw = max(ihp, ihq) - abs(ip - iq)
-            vquad = vquad + xp * xq * hq(iw)
+            vquad = vquad + xp * xq * hq(ip, iq)
         end if
     end if
     do k = 1, npt
@@ -535,16 +522,14 @@ goto 80
             ip = int(ptsid(k))
             iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ihq = (iq * iq + iq) / 2
             if (ip == 0) then
-                hq(ihq) = hq(ihq) + temp * ptsaux(2, iq)**2
+                hq(iq, iq) = hq(iq, iq) + temp * ptsaux(2, iq)**2
             else
-                ihp = (ip * ip + ip) / 2
-                hq(ihp) = hq(ihp) + temp * ptsaux(1, ip)**2
+                hq(ip, ip) = hq(ip, ip) + temp * ptsaux(1, ip)**2
                 if (iq > 0) then
-                    hq(ihq) = hq(ihq) + temp * ptsaux(1, iq)**2
-                    iw = max(ihp, ihq) - abs(iq - ip)
-                    hq(iw) = hq(iw) + temp * ptsaux(1, ip) * ptsaux(1, iq)
+                    hq(iq, iq) = hq(iq, iq) + temp * ptsaux(1, iq)**2
+                    hq(ip, iq) = hq(ip, iq) + temp * ptsaux(1, ip) * ptsaux(1, iq)
+                    hq(iq, ip) = hq(ip, iq)
                 end if
             end if
         end if
