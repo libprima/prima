@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 05, 2022 PM06:21:04
+! Last Modified: Tuesday, March 15, 2022 PM10:53:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,17 +19,18 @@ public :: geostep
 contains
 
 
-subroutine geostep(g, h_in, rho, d, vmax)
+subroutine geostep(g, h, rho, d, vmax)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : issymmetric
 
 implicit none
 
 ! Inputs
 real(RP), intent(in) :: g(:)  ! G(N)
-real(RP), intent(in) :: h_in(:, :)  ! H_IN(N, N)
+real(RP), intent(in) :: h(:, :)  ! H_IN(N, N)
 real(RP), intent(in) :: rho  ! NEWUOA etc uses DELBAR, which is NOT RHO; possible improvement?
 
 ! Outputs
@@ -39,7 +40,6 @@ real(RP), intent(out) :: vmax
 ! Local variables
 character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
-real(RP) :: h(size(h_in, 1), size(h_in, 2))
 real(RP) :: v(size(g))
 real(RP) :: dd, dhd, dlin, dsq, gd, gg, ghg, gnorm, &
 &        halfrt, hmax, ratio, scaling, summ, sumv, temp, &
@@ -54,11 +54,9 @@ n = int(size(g), kind(n))
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(rho > 0, 'RHO > 0', srname)
-    call assert(size(h_in, 1) == n .and. size(h_in, 2) == n, 'SIZE(H) == [N, N]', srname)
+    call assert(size(h, 1) == n .and. issymmetric(h), 'H is n-by-n and symmetric', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
 end if
-
-h = h_in
 
 !
 !     N is the number of variables of a quadratic objective function, q say.
@@ -92,7 +90,6 @@ hmax = ZERO
 do i = 1, n
     summ = ZERO
     do j = 1, n
-        h(j, i) = h(i, j)
         summ = summ + h(i, j)**2
     end do
     if (summ > hmax) then
