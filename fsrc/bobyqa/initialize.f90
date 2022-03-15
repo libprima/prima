@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 05, 2022 PM06:32:57
+! Last Modified: Tuesday, March 15, 2022 PM10:40:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(out) :: gopt(:)  ! GOPT(N)
-real(RP), intent(out) :: hq(:)  ! HQ(N, N)
+real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
 real(RP), intent(out) :: xbase(:)  ! XBASE(N)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
@@ -67,7 +67,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: x(size(x0))
 real(RP) :: diff, fbeg, recip, rhosq, stepa, stepb, temp
-integer(IK) :: i, ih, ipt, itemp, j, jpt, k, nfm, nfx, np
+integer(IK) :: i, ipt, itemp, j, jpt, k, nfm, nfx, np
 
 ! Sizes.
 n = int(size(x), kind(n))
@@ -87,12 +87,7 @@ if (DEBUGGING) then
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
-
-    !----------------------------------------------------------------------------------------------!
-    !call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
-    call assert(size(hq) == n * (n + 1_IK) / 2_IK, 'HQ is n-by-n and symmetric', srname)
-    !----------------------------------------------------------------------------------------------!
-
+    call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) == [N, N]', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
@@ -139,9 +134,9 @@ do j = 1, n
         bmat(j, i) = ZERO
     end do
 end do
-do ih = 1, (n * np) / 2
-    hq(ih) = ZERO
-end do
+
+hq = ZERO
+
 do k = 1, npt
     pq(k) = ZERO
     do j = 1, npt - np
@@ -222,10 +217,9 @@ if (nf <= 2 * n + 1) then
             bmat(nfm, npt + nfm) = -HALF * rhosq
         end if
     else if (nf >= n + 2) then
-        ih = (nfx * (nfx + 1)) / 2
         temp = (f - fbeg) / stepb
         diff = stepb - stepa
-        hq(ih) = TWO * (temp - gopt(nfx)) / diff
+        hq(nfx, nfx) = TWO * (temp - gopt(nfx)) / diff
         gopt(nfx) = (gopt(nfx) * stepb - temp * stepa) / diff
         if (stepa * stepb < ZERO) then
             if (f < fval(nf - n)) then
@@ -248,13 +242,13 @@ if (nf <= 2 * n + 1) then
 !     the initial quadratic model.
 !
 else
-    ih = (ipt * (ipt - 1)) / 2 + jpt
     zmat(1, nfx) = recip
     zmat(nf, nfx) = recip
     zmat(ipt + 1, nfx) = -recip
     zmat(jpt + 1, nfx) = -recip
     temp = xpt(ipt, nf) * xpt(jpt, nf)
-    hq(ih) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
+    hq(ipt, jpt) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
+    hq(jpt, ipt) = hq(ipt, jpt)
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):

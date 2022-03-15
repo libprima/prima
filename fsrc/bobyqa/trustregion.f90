@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 06, 2022 PM12:55:06
+! Last Modified: Tuesday, March 15, 2022 PM09:51:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,7 @@ subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, 
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: linalg_mod, only : issymmetric
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -30,7 +31,7 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: gopt(:)  ! GOPT(N)
-real(RP), intent(in) :: hq(:)  ! HQ(N, N)
+real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(in) :: pq(:)  ! PQ(NPT)
 real(RP), intent(in) :: sl(:)  ! SL(N)
 real(RP), intent(in) :: su(:)  ! SU(N)
@@ -57,7 +58,7 @@ real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        qred, rdnext, rdprev, redmax, rednew,       &
 &        redsav, resid, sdec, shs, sredg, ssq, stepsq, sth,&
 &        stplen, temp, tempa, tempb, xsav, xsum
-integer(IK) :: i, iact, ih, isav, itcsav, iterc, itermax, iu, &
+integer(IK) :: i, iact, isav, itcsav, iterc, itermax, iu, &
 &           j, k, nact
 
 ! Sizes
@@ -69,12 +70,7 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(delta > 0, 'DELTA > 0', srname)
-
-    !----------------------------------------------------------------------------------------------!
-    !call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
-    call assert(size(hq) == n * (n + 1_IK) / 2_IK, 'HQ is n-by-n and symmetric', srname)
-    !----------------------------------------------------------------------------------------------!
-
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
     call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
@@ -482,13 +478,12 @@ return
 !     They are reached from three different parts of the software above and
 !     they can be regarded as an external subroutine.
 !
-210 ih = 0
+210 continue
 do j = 1, n
     hs(j) = ZERO
     do i = 1, j
-        ih = ih + 1
-        if (i < j) hs(j) = hs(j) + hq(ih) * s(i)
-        hs(i) = hs(i) + hq(ih) * s(j)
+        if (i < j) hs(j) = hs(j) + hq(i, j) * s(i)
+        hs(i) = hs(i) + hq(i, j) * s(j)
     end do
 end do
 do k = 1, npt
