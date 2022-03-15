@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, March 13, 2022 PM10:18:54
+! Last Modified: Tue 15 Mar 2022 08:38:46 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -298,7 +298,7 @@ do iter = 1, maxiter
         nactsav = nact
         call qradd(A(:, iact(icon)), z, zdota, nact)  ! QRADD may update NACT tp NACT + 1.
         ! Indeed, it suffices to pass ZDOTA(1:MIN(N, NACT+_1)) to QRADD as follows.
-        !call qradd(A(:, iact(icon)), z, zdota(1:min(n, nact + 1_IK)), nact)
+        !!call qradd(A(:, iact(icon)), z, zdota(1:min(n, nact + 1_IK)), nact)
 
         if (nact == nactsav + 1) then
             ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
@@ -361,8 +361,7 @@ do iter = 1, maxiter
             iact([icon, nact]) = iact([nact, icon])
         end if
 
-        ! Ensure that the objective function continues to be treated as the last active constraint
-        ! if stage 2 is in progress.
+        ! In stage 2, ensure that the objective continues to be treated as the last active constraint.
         ! Zaikun 20211011, 20211111: Is it guaranteed for stage 2 that IACT(NACT-1) = MCON when
         ! IACT(NACT) /= MCON??? If not, then how does the following procedure ensure that MCON is
         ! the last of IACT(1:NACT)?
@@ -395,17 +394,16 @@ do iter = 1, maxiter
             ! SDIRN^T*A(:, IACT(NACT)) = 1, SDIRN is orthogonal to A(:, IACT(1:NACT-1)) and is
             ! parallel to Z(:, NACT).
         end if
-    else
+    else  ! ICON <= NACT
         ! Delete the constraint with the index IACT(ICON) from the active set, which is done by
-        ! reordering IACT(ICONT:NACT) into [IACT(ICON+1:NACT), IACT(ICON)]. In theory, ICON > 0.
-        ! To be safe, the condition below requires ICON > 0, which does not exist in Powell's code.
-        if (icon < nact .and. icon > 0) then
-            call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), icon)
-            ! Indeed, it suffices to pass Z(:, 1:NACT) to QREXC as follows.
-            !!call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), icon)
-            iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
-            vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
-        end if
+        ! reordering IACT(ICONT:NACT) into [IACT(ICON+1:NACT), IACT(ICON)] and then reduce NACT to
+        ! NACT-1. In theory, ICON > 0.
+        call validate(icon > 0, 'ICON > 0', srname)
+        call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), icon)  ! QREXC does nothing if ICON==NACT.
+        ! Indeed, it suffices to pass Z(:, 1:NACT) to QREXC as follows.
+        !!call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), icon)
+        iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
+        vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
         nact = nact - 1_IK
 
         !------- Powell's code does not include the following ------!

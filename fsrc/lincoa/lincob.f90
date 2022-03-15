@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 12, 2022 AM12:48:44
+! Last Modified: Tuesday, March 15, 2022 PM09:28:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -81,7 +81,7 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 character(len=*), parameter :: srname = 'LINCOB'
 real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
-real(RP) :: hq(size(x) * (size(x) + 1) / 2)
+real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
 real(RP) :: pqw(npt + size(x))  ! Note that the size is npt + N instead of npt; Isn't it VLAG in NEWUOA??? Better name?
 real(RP) :: qfac(size(x), size(x))
@@ -108,10 +108,11 @@ real(RP) :: del, delsav, delta, dffalt, diff,  &
 &        distsq, fopt, fsave, qoptsq, ratio,     &
 &        rho, snorm, ssq, summ, summz, temp, vqalt,   &
 &        vquad, xdiff, xoptsq
-integer(IK) :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
+integer(IK) :: i, idz, ifeas, imprv, ip, itest, j, k,    &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
 real(RP) :: w(max(int(size(bvec), IK) + 3_IK * int(size(x), IK), 2_IK * int(size(bvec), IK) + int(size(x), IK), 2_IK * npt))
+
 
 
 ! Sizes.
@@ -221,7 +222,6 @@ call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
     & step, pqw, xbase, xhist, xopt, xpt, xsav, zmat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
 if (is_nan(f) .or. is_posinf(f)) then
@@ -326,7 +326,6 @@ if (xoptsq >= 1.0D4 * delta * delta) then
 !     The following instructions complete the shift of XBASE, including the
 !       changes to the parameters of the quadratic model.
 !
-    ih = 0
     do j = 1, n
         w(j) = ZERO
         do k = 1, npt
@@ -334,8 +333,8 @@ if (xoptsq >= 1.0D4 * delta * delta) then
             xpt(j, k) = xpt(j, k) - HALF * xopt(j)
         end do
         do i = 1, j
-            ih = ih + 1
-            hq(ih) = hq(ih) + w(i) * xopt(j) + xopt(i) * w(j)
+            hq(i, j) = hq(i, j) + w(i) * xopt(j) + xopt(i) * w(j)  ! Outer product
+            hq(j, i) = hq(i, j)
             bmat(j, npt + i) = bmat(i, npt + j)
         end do
     end do
@@ -388,12 +387,10 @@ do j = 1, n
         goto 600
     end if
 end do
-do i = 1, (n * (n + 1_IK)) / 2_IK
-    if (hq(i) /= hq(i)) then
-        info = -3
-        goto 600
-    end if
-end do
+if (is_nan(sum(abs(hq)))) then
+    info = -3
+    goto 600
+end if
 do i = 1, npt
     if (pq(i) /= pq(i)) then
         info = -3
@@ -493,14 +490,12 @@ end if
 !       there is a branch to label 530 to try to improve the model.
 !
 vquad = ZERO
-ih = 0
 do j = 1, n
     vquad = vquad + step(j) * gopt(j)
     do i = 1, j
-        ih = ih + 1
         temp = step(i) * step(j)
         if (i == j) temp = HALF * temp
-        vquad = vquad + temp * hq(ih)
+        vquad = vquad + temp * hq(i, j)
     end do
 end do
 do k = 1, npt
@@ -728,13 +723,12 @@ if (itest < 3) then
             end do
         end if
     end do
-    ih = 0
     do i = 1, n
         w(i) = bmat(i, knew)
         temp = pq(knew) * xpt(i, knew)
         do j = 1, i
-            ih = ih + 1
-            hq(ih) = hq(ih) + temp * xpt(j, knew)
+            hq(i, j) = hq(i, j) + temp * xpt(j, knew)  ! Outer product
+            hq(j, i) = hq(i, j)
         end do
     end do
     pq(knew) = ZERO
@@ -808,12 +802,10 @@ if (f < fopt .and. ifeas == 1) then
 !     Also revise GOPT when symmetric Broyden updating is applied.
 !
     if (itest < 3) then
-        ih = 0
         do j = 1, n
             do i = 1, j
-                ih = ih + 1
-                if (i < j) gopt(j) = gopt(j) + hq(ih) * step(i)
-                gopt(i) = gopt(i) + hq(ih) * step(j)
+                if (i < j) gopt(j) = gopt(j) + hq(i, j) * step(i)
+                gopt(i) = gopt(i) + hq(i, j) * step(j)
             end do
         end do
         do k = 1, npt

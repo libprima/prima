@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 05, 2022 AM01:07:59
+! Last Modified: Tuesday, March 15, 2022 PM09:28:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -67,7 +67,7 @@ real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(out) :: gopt(:)  ! GOPT(N)
-real(RP), intent(out) :: hq(:)  ! HQ(N, N)
+real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
 real(RP), intent(out) :: rescon(:)  ! RESCON(M)
 real(RP), intent(out) :: rsp(:)  ! RSP(2*NPT)
@@ -125,12 +125,7 @@ if (DEBUGGING) then
     call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
     call assert(size(xsav) == n, 'SIZE(XSAV) == N', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
-
-    !----------------------------------------------------------------------------------------------!
-    !call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
-    call assert(size(hq) == n * (n + 1_IK) / 2_IK, 'HQ is n-by-n and symmetric', srname)
-    !----------------------------------------------------------------------------------------------!
-
+    call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) = [N, N]', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
@@ -359,9 +354,9 @@ do k = 1, npt
         gopt(j) = gopt(j) + fval(k) * bmat(j, k) + temp * xpt(j, k)
     end do
 end do
-do i = 1, (n * n + n) / 2
-    hq(i) = ZERO
-end do
+
+hq = ZERO
+
 !
 !     Set the initial elements of RESCON.
 !
