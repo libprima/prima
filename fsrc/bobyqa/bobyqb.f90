@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM10:30:14
+! Last Modified: Tuesday, March 15, 2022 PM11:52:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -98,7 +98,7 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        pqold, ratio, rho, scaden, summ, summa, summb, summpq,&
 &        summw, summz, temp, vquad, xoptsq
 integer(IK) :: i, ip, itest, j, jj, jp, k, kbase, knew, &
-&           kopt, ksav, nfsav, nh, np, nptm, nresc, ntrits
+&           kopt, ksav, nfsav, np, nptm, nresc, ntrits
 
 
 ! Sizes.
@@ -164,7 +164,6 @@ su = su_in
 !
 np = n + 1
 nptm = npt - np
-nh = (n * np) / 2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     The call of PRELIM sets the elements of XBASE, XPT, FVAL, GOPT, HQ, PQ,
@@ -914,12 +913,10 @@ if (ntrits > 0) then
     itest = itest + 1
     if (gqsq < TEN * gisq) itest = 0
     if (itest >= 3) then
-        do i = 1, max(npt, nh)
-            if (i <= n) gopt(i) = vlag(npt + i)
-            if (i <= npt) pq(i) = w(npt + i)
-        end do
-        itest = 0
+        gopt = vlag(npt + 1:npt + n)
+        pq = w(npt + 1:2 * npt)
         hq = ZERO
+        itest = 0
     end if
 end if
 !
