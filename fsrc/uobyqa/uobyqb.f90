@@ -10,7 +10,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 06, 2022 PM04:53:28
+! Last Modified: Tuesday, March 15, 2022 PM10:58:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -307,8 +307,8 @@ do j = 1, n
 ! behavior of the code, including uninitialized indices.
 !   80 H(I,J)=PQ(IH)
         h(i, j) = pq(ih)
-        ! This must be done, otherwise, compilers will complain that H is not (completely) defined. 
-        h(j, i) = pq(ih)
+        ! This must be done, otherwise, compilers will complain that H is not (completely) defined.
+        h(j, i) = h(i, j)
         if (h(i, j) /= h(i, j)) then
             info = -3
             goto 420
@@ -574,6 +574,7 @@ if (knew > 0) then
 ! Zaikun 2019-08-29: See the comments below line number 70
 !  330     H(I,J)=TEMP
             h(i, j) = temp
+            h(j, i) = h(i, j)
             if (h(i, j) /= h(i, j)) then
                 info = -3
                 goto 420

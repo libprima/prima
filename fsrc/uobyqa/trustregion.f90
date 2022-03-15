@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 06, 2022 AM10:49:29
+! Last Modified: Tuesday, March 15, 2022 PM10:56:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,7 +24,7 @@ subroutine trstep(delta, g, h_in, tol, d_out, evalue)   !!!! Possible to use D i
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : maximum
+use, non_intrinsic :: linalg_mod, only : maximum, issymmetric
 
 implicit none
 
@@ -59,6 +59,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        tdmin, temp, tempa, tempb, wsq, wwsq, wz, zsq
 integer(IK) :: i, iterc, j, jp, k, kp, kpp, ksav, ksave, nm
 
+h = h_in  ! To be removed
 
 ! Sizes.
 n = int(size(g), kind(n))
@@ -66,11 +67,10 @@ n = int(size(g), kind(n))
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(delta > 0, 'DELTA > 0', srname)
-    call assert(size(h_in, 1) == n .and. size(h_in, 2) == n, 'SIZE(H) == [N, N]', srname)
+    call assert(size(h, 1) == n .and. issymmetric(h), 'H is n-by-n and symmetric', srname)
     call assert(size(d_out) == n, 'SIZE(D) == N', srname)
 end if
 
-h = h_in
 
 evalue = ZERO
 
@@ -126,9 +126,6 @@ nm = n - 1
 do i = 1, n
     d(i) = ZERO
     td(i) = h(i, i)
-    do j = 1, i
-        h(i, j) = h(j, i)
-    end do
 end do
 !
 !     Apply Householder transformations to obtain a tridiagonal matrix that
