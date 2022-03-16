@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, March 16, 2022 PM11:49:51
+! Last Modified: Thursday, March 17, 2022 AM12:27:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,7 +36,8 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, TINYCV, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert !, validate
+use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : inprod, eye, istriu, isorth
 
 implicit none
@@ -162,11 +163,13 @@ ic = 0_IK  ! Added by Zaikun on 20220315. Needed or not?
 !       hull of the constraint gradients.
 !
 
+dd = ZERO
+
 !if (nact == n) goto 290
 !!if (nact < 0) return !??? See next line.
 !100 continue
 
-do while (nact < n)
+do while (nact < n)  ! (NACT < N .and. NACT > 0) ???
 
     do j = nact + 1, n  ! Here we have to ensure NACT >= 0; is it guaranteed in theory?
         w(j) = ZERO
@@ -182,7 +185,11 @@ do while (nact < n)
         end do
         dd = dd + dw(i)**2
     end do
-    if (dd >= ddsav) goto 290
+    !if (dd >= ddsav) goto 290
+    if (dd >= ddsav) then
+        dd = ZERO
+        goto 300
+    end if
     if (dd == ZERO) goto 300
     ddsav = dd
     dnorm = sqrt(dd)
@@ -227,51 +234,54 @@ do while (nact < n)
     end if
     w(1) = ONE
     if (l == 0) goto 300
-    if (violmx <= TEN * ctol) goto 300
+    !if (violmx <= TEN * ctol) goto 300
+    if (violmx <= TEN * ctol .or. is_nan(violmx)) goto 300
 
     call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT + 1
 
 !
 !     Set the components of the vector VMU in W.
 !
-220 continue
+!220 continue
 
-    w(nact) = ONE / rfac(nact, nact)**2
-    if (nact > 1) then
-        do i = nact - 1, 1, -1
-            summ = ZERO
-            do j = i + 1, nact
-                summ = summ - rfac(i, j) * w(j)
+    do while (violmx > 0)
+
+        w(nact) = ONE / rfac(nact, nact)**2
+        if (nact > 1) then
+            do i = nact - 1, 1, -1
+                summ = ZERO
+                do j = i + 1, nact
+                    summ = summ - rfac(i, j) * w(j)
+                end do
+                w(i) = summ / rfac(i, i)
             end do
-            w(i) = summ / rfac(i, i)
-        end do
-    end if
+        end if
 !
 !     Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
 !
-    vmult = violmx
-    ic = 0
-    j = 1
+        vmult = violmx
+        ic = 0
+        !j = 1
 
-250 continue
-    if (j < nact) then
-        if (vlam(j) >= vmult * w(j)) then
-            ic = j
-            vmult = vlam(j) / w(j)
-        end if
-        j = j + 1
-        goto 250
-    end if
-    !j = nact
+
+!250 continue
+!    if (j < nact) then
+        do j = 1, nact
+            if (vlam(j) >= vmult * w(j)) then
+                ic = j
+                vmult = vlam(j) / w(j)
+            end if
+        end do
+        !goto 250
 ! Very strangely, if we (mistakenly) change 'J = N, 1, -1' to 'J = N-1, 1, -1' in
 ! "Apply Givens rotations to the last (N-NACT) columns of QFAC", then the following lines
 ! encounter a SEGFAULT when this subroutine is called with NACT = 0 and we arrive here with NACT = IC = 0.
-    do j = 1, nact
-        vlam(j) = vlam(j) - vmult * w(j)
-    end do
-    if (ic > 0) vlam(ic) = ZERO
-    violmx = max(violmx - vmult, ZERO)
-    if (ic == 0) violmx = ZERO
+        do j = 1, nact
+            vlam(j) = vlam(j) - vmult * w(j)
+        end do
+        if (ic > 0) vlam(ic) = ZERO
+        violmx = max(violmx - vmult, ZERO)
+        if (ic == 0) violmx = ZERO
 !
 !     Reduce the active set if necessary, so that all components of the
 !       new VLAM are negative, with resetting of the residuals of the
@@ -282,33 +292,38 @@ do while (nact < n)
 ! Zaikun 2021 July, 20220305:
 ! If NACT <= 0, then IC <= 0, and hence memory errors will occur when accessing VLAM(IC),
 ! IACT(IC), RESNEW(IACT(IC)). Is NACT >= 1 ensured theoretically? What about NACT <= N?
-    if (nact <= 0) goto 300  ! What about DD and W(1)???
+        if (nact <= 0) goto 300  ! What about DD and W(1)??? Possible at all?
 !--------------------------------------------------------------------------------------------------!
 !    ic = nact
 !270 continue
 
-    do ic = nact, 1, -1
-        !if (vlam(ic) < ZERO) goto 280
-        if (.not. vlam(ic) < ZERO) then
-            resnew(iact(ic)) = max(resact(ic), TINYCV)  ! Necessary? Isn't it included in DEL_ACT?
-            ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
-            call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT - 1
-        end if
-    end do
+        do ic = nact, 1, -1
+            !if (vlam(ic) < ZERO) goto 280
+            if (.not. vlam(ic) < ZERO) then
+                resnew(iact(ic)) = max(resact(ic), TINYCV)  ! Necessary? Isn't it included in DEL_ACT?
+                ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
+                call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT - 1
+            end if
+        end do
 
 !280 ic = ic - 1
 !    if (ic > 0) goto 270
-    ic = 0_IK
+        ic = 0_IK
 !
 !     Calculate the next VMU if VIOLMX is positive. Return if NACT=N holds,
 !       as then the active constraints imply D=0. Otherwise, go to label
 !       100, to calculate the new D and to test for termination.
 !
-    if (violmx > ZERO) goto 220
+        !if (violmx > ZERO) goto 220
+    end do  ! End of DO WHILE (VIOLMX > 0)
 end do  ! End of DO WHILE (NACT < N)
 !if (nact < n) goto 100
 
-290 dd = ZERO
+if (nact == n) then  ! Natural exit of the DO WHILE loop.
+    dd = ZERO  ! Why?
+end if
+
+!290 dd = ZERO
 !300 w(1) = dd
 300 continue
 
