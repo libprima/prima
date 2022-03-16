@@ -525,11 +525,11 @@ if output2.funcCount == test_options.maxfun && (exitflag2 == 0 || exitflag2 == 2
 end
 if fx1 <= test_options.ftarget
     exitflag1 = 1;
-    fprintf('exitflag1 changed to 1.\n')
+    %fprintf('exitflag1 changed to 1.\n')
 end
 if fx2 <= test_options.ftarget
     exitflag2 = 1;
-    fprintf('exitflag2 changed to 1.\n')
+    %fprintf('exitflag2 changed to 1.\n')
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Special Treatments%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

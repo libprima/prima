@@ -22,5 +22,15 @@ cellfun(@(solver) warning('off', [solver, ':InvalidMaxhist']), solvers);
 cellfun(@(solver) warning('off', [solver, ':InvalidNpt']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ObjectiveFailure']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ConstraintFailure']), solvers);
+cellfun(@(solver) warning('off', [solver, ':InvalidChkfunval']), solvers);
+cellfun(@(solver) warning('off', [solver, ':FortranContradictPrecision']), solvers);
+cellfun(@(solver) warning('off', [solver, ':InvalidMaxfun']), solvers);
+cellfun(@(solver) warning('off', [solver, ':InvalidMaxfilt']), solvers);
+cellfun(@(solver) warning('off', [solver, ':ClassicalUnavailable']), solvers);
+cellfun(@(solver) warning('off', [solver, ':InvalidPrecision']), solvers);
+cellfun(@(solver) warning('off', [solver, ':IprintContradictQuiet']), solvers);
+cellfun(@(solver) warning('off', [solver, ':FortranContradictClassical']), solvers);
+cellfun(@(solver) warning('off', [solver, ':FortranContradictPrecision']), solvers);
+%cellfun(@(solver) warning('off', ['FMXAPI:', upper(solver)]), solvers);
 
 return

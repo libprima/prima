@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 23, 2022 PM05:46:47
+! Last Modified: Wednesday, March 16, 2022 AM11:24:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -152,11 +152,11 @@ subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING, INFO_DFT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, eye, inv, isinv
+use, non_intrinsic :: linalg_mod, only : matprod, eye, inv, isinv, maximum
 
 implicit none
 
@@ -180,12 +180,14 @@ integer(IK) :: m
 integer(IK) :: n
 real(RP) :: conmat_old(size(conmat, 1), size(conmat, 2))
 real(RP) :: cval_old(size(cval))
-real(RP) :: erri(size(sim, 1), size(sim, 1))
+real(RP) :: erri
+real(RP) :: erri_test
 real(RP) :: fval_old(size(fval))
 real(RP) :: sim_jopt(size(sim, 1))
 real(RP) :: sim_old(size(sim, 1), size(sim, 2))
 real(RP) :: simi_old(size(simi, 1), size(simi, 2))
-real(RP), parameter :: itol = TENTH
+real(RP) :: simi_test(size(simi, 1), size(simi, 2))
+real(RP), parameter :: itol = ONE
 
 ! Sizes
 m = int(size(conmat, 1), kind(m))
@@ -246,16 +248,19 @@ if (jopt >= 1 .and. jopt <= n) then
 end if
 
 ! Check whether SIMI is a poor approximation to the inverse of SIM(:, 1:N).
-erri = matprod(simi, sim(:, 1:n)) - eye(n)
-
 ! Calculate SIMI from scratch if the current one is damaged by rounding errors.
-if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
-    simi = inv(sim(:, 1:n))
-    erri = matprod(simi, sim(:, 1:n)) - eye(n)
+erri = maximum(abs(matprod(simi, sim(:, 1:n)) - eye(n)))  ! MAXIMUM(X) returns NaN if X contains NaN
+if (erri > TENTH * itol .or. is_nan(erri)) then
+    simi_test = inv(sim(:, 1:n))
+    erri_test = maximum(abs(matprod(simi_test, sim(:, 1:n)) - eye(n)))
+    if (erri_test < erri .or. (is_nan(erri) .and. .not. is_nan(erri_test))) then
+        simi = simi_test
+        erri = erri_test
+    end if
 end if
 
 ! If the recalculated SIMI is still damaged, then restore the data to the version before the update.
-if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
+if (erri > itol .or. is_nan(erri)) then
     info = DAMAGING_ROUNDING
     fval = fval_old
     conmat = conmat_old
