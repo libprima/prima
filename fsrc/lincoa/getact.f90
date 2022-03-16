@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, March 16, 2022 PM10:43:08
+! Last Modified: Wednesday, March 16, 2022 PM11:49:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,7 +36,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, TINYCV, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, validate
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : inprod, eye, istriu, isorth
 
 implicit none
@@ -262,7 +262,7 @@ do while (nact < n)
         j = j + 1
         goto 250
     end if
-    !j = nact 
+    !j = nact
 ! Very strangely, if we (mistakenly) change 'J = N, 1, -1' to 'J = N-1, 1, -1' in
 ! "Apply Givens rotations to the last (N-NACT) columns of QFAC", then the following lines
 ! encounter a SEGFAULT when this subroutine is called with NACT = 0 and we arrive here with NACT = IC = 0.
@@ -284,17 +284,21 @@ do while (nact < n)
 ! IACT(IC), RESNEW(IACT(IC)). Is NACT >= 1 ensured theoretically? What about NACT <= N?
     if (nact <= 0) goto 300  ! What about DD and W(1)???
 !--------------------------------------------------------------------------------------------------!
-    ic = nact
-270 continue
-    if (vlam(ic) < ZERO) goto 280
-    resnew(iact(ic)) = max(resact(ic), TINYCV)
+!    ic = nact
+!270 continue
 
-    call validate(ic <= nact, 'IC <= NACT', srname)  ! When IC > NACT, the following lines are invalid.
-! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
-    call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT - 1
+    do ic = nact, 1, -1
+        !if (vlam(ic) < ZERO) goto 280
+        if (.not. vlam(ic) < ZERO) then
+            resnew(iact(ic)) = max(resact(ic), TINYCV)  ! Necessary? Isn't it included in DEL_ACT?
+            ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
+            call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT - 1
+        end if
+    end do
 
-280 ic = ic - 1
-    if (ic > 0) goto 270
+!280 ic = ic - 1
+!    if (ic > 0) goto 270
+    ic = 0_IK
 !
 !     Calculate the next VMU if VIOLMX is positive. Return if NACT=N holds,
 !       as then the active constraints imply D=0. Otherwise, go to label
