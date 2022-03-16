@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 17, 2022 AM07:29:05
+! Last Modified: Thursday, March 17, 2022 AM07:31:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -321,7 +321,7 @@ do while (nact < n)    ! Infinite cycling possible?
         !if (violmx > ZERO) goto 220
     end do  ! End of DO WHILE (VIOLMX > 0)
 
-    !if (nact == 0) exit  ! Possible?
+    if (nact == 0) exit  ! Possible?
 end do  ! End of DO WHILE (NACT < N)
 !if (nact < n) goto 100
 
