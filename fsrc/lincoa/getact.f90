@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 17, 2022 AM12:27:41
+! Last Modified: Thursday, March 17, 2022 AM12:49:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -169,7 +169,7 @@ dd = ZERO
 !!if (nact < 0) return !??? See next line.
 !100 continue
 
-do while (nact < n)  ! (NACT < N .and. NACT > 0) ???
+do while (nact < n)    ! Infinite cycling possible?
 
     do j = nact + 1, n  ! Here we have to ensure NACT >= 0; is it guaranteed in theory?
         w(j) = ZERO
@@ -188,9 +188,11 @@ do while (nact < n)  ! (NACT < N .and. NACT > 0) ???
     !if (dd >= ddsav) goto 290
     if (dd >= ddsav) then
         dd = ZERO
-        goto 300
+        !goto 300
+        exit
     end if
-    if (dd == ZERO) goto 300
+    !if (dd == ZERO) goto 300
+    if (dd == ZERO) exit
     ddsav = dd
     dnorm = sqrt(dd)
 !
@@ -233,9 +235,11 @@ do while (nact < n)  ! (NACT < N .and. NACT > 0) ???
         end if
     end if
     w(1) = ONE
-    if (l == 0) goto 300
+    !if (l == 0) goto 300
+    if (l == 0) exit
     !if (violmx <= TEN * ctol) goto 300
-    if (violmx <= TEN * ctol .or. is_nan(violmx)) goto 300
+    !if (violmx <= TEN * ctol .or. is_nan(violmx)) goto 300
+    if (violmx <= TEN * ctol .or. is_nan(violmx)) exit
 
     call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT + 1
 
@@ -244,9 +248,9 @@ do while (nact < n)  ! (NACT < N .and. NACT > 0) ???
 !
 !220 continue
 
-    do while (violmx > 0)
+    do while (violmx > 0)  ! Infinite cycling possible?
 
-        w(nact) = ONE / rfac(nact, nact)**2
+        w(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive! Reason for SIGFAULT?
         if (nact > 1) then
             do i = nact - 1, 1, -1
                 summ = ZERO
