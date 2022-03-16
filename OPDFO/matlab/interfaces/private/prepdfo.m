@@ -1189,7 +1189,7 @@ if isfield(options, 'classical')
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif options.classical && ~ismember('classical', all_variants())
-        wid = sprintf('%s:ClassicalNotAvailable', invoker);
+        wid = sprintf('%s:ClassicalUnavailable', invoker);
         wmsg = sprintf('%s: classical = true but the classical version is unavailable; classical is set to false.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
