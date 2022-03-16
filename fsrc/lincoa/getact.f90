@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM08:40:37
+! Last Modified: Wednesday, March 16, 2022 PM10:43:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -162,117 +162,116 @@ ic = 0_IK  ! Added by Zaikun on 20220315. Needed or not?
 !       hull of the constraint gradients.
 !
 
-100 if (nact == n) goto 290
+!if (nact == n) goto 290
 !!if (nact < 0) return !??? See next line.
-do j = nact + 1, n  ! Here we have to ensure NACT >= 0; is it guaranteed in theory?
-    w(j) = ZERO
-    do i = 1, n
-        w(j) = w(j) + qfac(i, j) * g(i)
-    end do
-end do
-dd = ZERO
-do i = 1, n
-    dw(i) = ZERO
+!100 continue
+
+do while (nact < n)
+
     do j = nact + 1, n  ! Here we have to ensure NACT >= 0; is it guaranteed in theory?
-        dw(i) = dw(i) - w(j) * qfac(i, j)
+        w(j) = ZERO
+        do i = 1, n
+            w(j) = w(j) + qfac(i, j) * g(i)
+        end do
     end do
-    dd = dd + dw(i)**2
-end do
-if (dd >= ddsav) goto 290
-if (dd == ZERO) goto 300
-ddsav = dd
-dnorm = sqrt(dd)
+    dd = ZERO
+    do i = 1, n
+        dw(i) = ZERO
+        do j = nact + 1, n  ! Here we have to ensure NACT >= 0; is it guaranteed in theory?
+            dw(i) = dw(i) - w(j) * qfac(i, j)
+        end do
+        dd = dd + dw(i)**2
+    end do
+    if (dd >= ddsav) goto 290
+    if (dd == ZERO) goto 300
+    ddsav = dd
+    dnorm = sqrt(dd)
 !
 !     Pick the next integer L or terminate, a positive value of L being
 !       the index of the most violated constraint. The purpose of CTOL
 !       below is to estimate whether a positive value of VIOLMX may be
 !       due to computer rounding errors.
 !
-l = 0
-if (m > 0) then
-    test = dnorm / snorm
-    violmx = ZERO
-    do j = 1, m
-        if (resnew(j) > ZERO .and. resnew(j) <= tdel) then
-            summ = ZERO
-            do i = 1, n
-                summ = summ + amat(i, j) * dw(i)
-            end do
-            if (summ > test * resnew(j)) then
-                if (summ > violmx) then
-                    l = j
-                    violmx = summ
-                end if
-            end if
-        end if
-    end do
-    ctol = ZERO
-    temp = 0.01_RP * dnorm
-    if (violmx > ZERO .and. violmx < temp) then
-        if (nact > 0) then
-            do k = 1, nact
-                j = iact(k)
+    l = 0
+    if (m > 0) then
+        test = dnorm / snorm
+        violmx = ZERO
+        do j = 1, m
+            if (resnew(j) > ZERO .and. resnew(j) <= tdel) then
                 summ = ZERO
                 do i = 1, n
-                    summ = summ + dw(i) * amat(i, j)
+                    summ = summ + amat(i, j) * dw(i)
                 end do
-                ctol = max(ctol, abs(summ))
-            end do
+                if (summ > test * resnew(j)) then
+                    if (summ > violmx) then
+                        l = j
+                        violmx = summ
+                    end if
+                end if
+            end if
+        end do
+        ctol = ZERO
+        temp = 0.01_RP * dnorm
+        if (violmx > ZERO .and. violmx < temp) then
+            if (nact > 0) then
+                do k = 1, nact
+                    j = iact(k)
+                    summ = ZERO
+                    do i = 1, n
+                        summ = summ + dw(i) * amat(i, j)
+                    end do
+                    ctol = max(ctol, abs(summ))
+                end do
+            end if
         end if
     end if
-end if
-w(1) = ONE
-if (l == 0) goto 300
-if (violmx <= TEN * ctol) goto 300
+    w(1) = ONE
+    if (l == 0) goto 300
+    if (violmx <= TEN * ctol) goto 300
 
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20220305:
-! Is it guaranteed that NACT < N in theory? Probably yes because of line number 100, where
-! NACT == N leads to return.
-if (nact >= n) goto 300
-call validate(nact < n, 'NACT < N', srname)
-! Add the constraint with index L to the active set, and set NACT = NACT + 1.
-call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)
+    call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT + 1
 
 !
 !     Set the components of the vector VMU in W.
 !
 220 continue
 
-w(nact) = ONE / rfac(nact, nact)**2
-if (nact > 1) then
-    do i = nact - 1, 1, -1
-        summ = ZERO
-        do j = i + 1, nact
-            summ = summ - rfac(i, j) * w(j)
+    w(nact) = ONE / rfac(nact, nact)**2
+    if (nact > 1) then
+        do i = nact - 1, 1, -1
+            summ = ZERO
+            do j = i + 1, nact
+                summ = summ - rfac(i, j) * w(j)
+            end do
+            w(i) = summ / rfac(i, i)
         end do
-        w(i) = summ / rfac(i, i)
-    end do
-end if
+    end if
 !
 !     Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
 !
-vmult = violmx
-ic = 0
-j = 1
+    vmult = violmx
+    ic = 0
+    j = 1
+
 250 continue
-if (j < nact) then
-    if (vlam(j) >= vmult * w(j)) then
-        ic = j
-        vmult = vlam(j) / w(j)
+    if (j < nact) then
+        if (vlam(j) >= vmult * w(j)) then
+            ic = j
+            vmult = vlam(j) / w(j)
+        end if
+        j = j + 1
+        goto 250
     end if
-    j = j + 1
-    goto 250
-end if
+    !j = nact 
 ! Very strangely, if we (mistakenly) change 'J = N, 1, -1' to 'J = N-1, 1, -1' in
 ! "Apply Givens rotations to the last (N-NACT) columns of QFAC", then the following lines
 ! encounter a SEGFAULT when this subroutine is called with NACT = 0 and we arrive here with NACT = IC = 0.
-do j = 1, nact
-    vlam(j) = vlam(j) - vmult * w(j)
-end do
-if (ic > 0) vlam(ic) = ZERO
-violmx = max(violmx - vmult, ZERO)
-if (ic == 0) violmx = ZERO
+    do j = 1, nact
+        vlam(j) = vlam(j) - vmult * w(j)
+    end do
+    if (ic > 0) vlam(ic) = ZERO
+    violmx = max(violmx - vmult, ZERO)
+    if (ic == 0) violmx = ZERO
 !
 !     Reduce the active set if necessary, so that all components of the
 !       new VLAM are negative, with resetting of the residuals of the
@@ -283,26 +282,28 @@ if (ic == 0) violmx = ZERO
 ! Zaikun 2021 July, 20220305:
 ! If NACT <= 0, then IC <= 0, and hence memory errors will occur when accessing VLAM(IC),
 ! IACT(IC), RESNEW(IACT(IC)). Is NACT >= 1 ensured theoretically? What about NACT <= N?
-if (nact <= 0) goto 300  ! What about DD and W(1)???
+    if (nact <= 0) goto 300  ! What about DD and W(1)???
 !--------------------------------------------------------------------------------------------------!
-ic = nact
+    ic = nact
 270 continue
-if (vlam(ic) < ZERO) goto 280
-resnew(iact(ic)) = max(resact(ic), TINYCV)
+    if (vlam(ic) < ZERO) goto 280
+    resnew(iact(ic)) = max(resact(ic), TINYCV)
 
-call validate(ic <= nact, 'IC <= NACT', srname)  ! When IC > NACT, the following lines are invalid.
+    call validate(ic <= nact, 'IC <= NACT', srname)  ! When IC > NACT, the following lines are invalid.
 ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
-call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+    call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT - 1
 
 280 ic = ic - 1
-if (ic > 0) goto 270
+    if (ic > 0) goto 270
 !
 !     Calculate the next VMU if VIOLMX is positive. Return if NACT=N holds,
 !       as then the active constraints imply D=0. Otherwise, go to label
 !       100, to calculate the new D and to test for termination.
 !
-if (violmx > ZERO) goto 220
-if (nact < n) goto 100
+    if (violmx > ZERO) goto 220
+end do  ! End of DO WHILE (NACT < N)
+!if (nact < n) goto 100
+
 290 dd = ZERO
 !300 w(1) = dd
 300 continue
