@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, March 16, 2022 AM11:09:35
+! Last Modified: Wednesday, March 16, 2022 PM06:54:55
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -2638,7 +2638,7 @@ real(RP), intent(in) :: x(:)
 real(RP) :: y
 character(len=*), parameter :: srname = 'MINIMUM1'
 !y = merge(tsource=sum(x), fsource=minval(x), mask=any(is_nan(x)))
-y = merge(tsource=sum(x), fsource=minval(x), mask=is_nan(sum(abs(x))))
+y = merge(tsource=sum(x), fsource=minval(x), mask=is_nan(sum(abs(x))))  ! Avoid enormous calls to IS_NAN
 if (DEBUGGING) then
     call assert(.not. any(x < y), 'No entry of X is smaller than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
@@ -2664,7 +2664,7 @@ real(RP), intent(in) :: x(:, :)
 real(RP) :: y
 character(len=*), parameter :: srname = 'MINIMUM2'
 !y = merge(tsource=sum(x), fsource=minval(x), mask=any(is_nan(x)))
-y = merge(tsource=sum(x), fsource=minval(x), mask=is_nan(sum(abs(x))))
+y = merge(tsource=sum(x), fsource=minval(x), mask=is_nan(sum(abs(x))))  ! Avoid enormous calls to IS_NAN
 if (DEBUGGING) then
     call assert(.not. any(x < y), 'No entry of X is smaller than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
@@ -2691,7 +2691,7 @@ real(RP), intent(in) :: x(:)
 real(RP) :: y
 character(len=*), parameter :: srname = 'MAXIMUM1'
 !y = merge(tsource=sum(x), fsource=maxval(x), mask=any(is_nan(x)))
-y = merge(tsource=sum(x), fsource=maxval(x), mask=is_nan(sum(abs(x))))
+y = merge(tsource=sum(x), fsource=maxval(x), mask=is_nan(sum(abs(x))))  ! Avoid enormous calls to IS_NAN
 if (DEBUGGING) then
     call assert(.not. any(x > y), 'No entry of X is larger than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
@@ -2717,7 +2717,7 @@ real(RP), intent(in) :: x(:, :)
 real(RP) :: y
 character(len=*), parameter :: srname = 'MAXIMUM2'
 !y = merge(tsource=sum(x), fsource=maxval(x), mask=any(is_nan(x)))
-y = merge(tsource=sum(x), fsource=maxval(x), mask=is_nan(sum(abs(x))))
+y = merge(tsource=sum(x), fsource=maxval(x), mask=is_nan(sum(abs(x))))  ! Avoid enormous calls to IS_NAN
 if (DEBUGGING) then
     call assert(.not. any(x > y), 'No entry of X is larger than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
