@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 17, 2022 AM12:49:03
+! Last Modified: Thursday, March 17, 2022 AM07:29:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -248,18 +248,18 @@ do while (nact < n)    ! Infinite cycling possible?
 !
 !220 continue
 
-    do while (violmx > 0)  ! Infinite cycling possible?
+
+    !do while (violmx > 0)  ! Infinite cycling possible?
+    do while (violmx > 0 .and. nact > 0)  ! Infinite cycling possible?
 
         w(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive! Reason for SIGFAULT?
-        if (nact > 1) then
-            do i = nact - 1, 1, -1
-                summ = ZERO
-                do j = i + 1, nact
-                    summ = summ - rfac(i, j) * w(j)
-                end do
-                w(i) = summ / rfac(i, i)
+        do i = nact - 1, 1, -1
+            summ = ZERO
+            do j = i + 1, nact
+                summ = summ - rfac(i, j) * w(j)
             end do
-        end if
+            w(i) = summ / rfac(i, i)
+        end do
 !
 !     Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
 !
@@ -296,7 +296,7 @@ do while (nact < n)    ! Infinite cycling possible?
 ! Zaikun 2021 July, 20220305:
 ! If NACT <= 0, then IC <= 0, and hence memory errors will occur when accessing VLAM(IC),
 ! IACT(IC), RESNEW(IACT(IC)). Is NACT >= 1 ensured theoretically? What about NACT <= N?
-        if (nact <= 0) goto 300  ! What about DD and W(1)??? Possible at all?
+        !if (nact <= 0) goto 300  ! What about DD and W(1)??? Possible at all?
 !--------------------------------------------------------------------------------------------------!
 !    ic = nact
 !270 continue
@@ -320,6 +320,8 @@ do while (nact < n)    ! Infinite cycling possible?
 !
         !if (violmx > ZERO) goto 220
     end do  ! End of DO WHILE (VIOLMX > 0)
+
+    !if (nact == 0) exit  ! Possible?
 end do  ! End of DO WHILE (NACT < N)
 !if (nact < n) goto 100
 
