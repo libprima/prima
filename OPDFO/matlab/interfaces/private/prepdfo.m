@@ -1472,7 +1472,7 @@ if isfield(options, 'maxfilt')
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif options.maxfilt < min_maxfilt
-        wid = sprintf('%s:MaxfiltTooSmall', invoker);
+        wid = sprintf('%s:InvalidMaxfilt', invoker);
         wmsg = sprintf('%s: maxfilt is too small; it should be an integer at least %d; it is set to %d.', invoker, min_maxfilt, maxfilt);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];

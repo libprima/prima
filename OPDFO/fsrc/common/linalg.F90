@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 13, 2022 PM11:31:43
+! Last Modified: Wednesday, March 16, 2022 AM11:26:38
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -83,6 +83,14 @@ end interface isminor
 interface sort
     module procedure sort_i1, sort_i2
 end interface sort
+
+interface minimum
+    module procedure minimum1, minimum2
+end interface minimum
+
+interface maximum
+    module procedure maximum1, maximum2
+end interface maximum
 
 interface int
     module procedure logical_to_int
@@ -2316,42 +2324,110 @@ loc = trueloc(.not. x)
 end function falseloc
 
 
-function minimum(x) result(y)
+function minimum1(x) result(y)
 !--------------------------------------------------------------------------------------------------!
-! This function returns NaN if X contains NaN; otherwise, it returns MINVAL(X).
-! F2018 does not specify MINVAL(X) when X contain NaN, which motivates this function.
-! Regarding NaN, the behavior of MINIMUM is the same as the following functions in various languages:
+! This function returns NaN if X contains NaN; otherwise, it returns MINVAL(X). Vector version.
+! F2018 does not specify MINVAL(X) when X contains NaN, which motivates this function. The behavior
+! of this function is the same as the following functions in various languages:
 ! MATLAB: min(x, [], 'includenan')
 ! Python: numpy.min(x)
 ! Julia: minimum(x)
 ! R: min(x)
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 real(RP), intent(in) :: x(:)
 real(RP) :: y
-y = merge(tsource=sum(x), fsource=minval(x), mask=any(is_nan(x)))
-end function minimum
+character(len=*), parameter :: srname = 'MINIMUM1'
+!y = merge(tsource=sum(x), fsource=minval(x), mask=any(is_nan(x)))
+y = merge(tsource=sum(x), fsource=minval(x), mask=is_nan(sum(abs(x))))
+if (DEBUGGING) then
+    call assert(.not. any(x < y), 'No entry of X is smaller than Y', srname)
+    call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
+    call assert(is_nan(y) .or. .not. any(is_nan(x)), 'Y is NaN if X contains NaN', srname)
+end if
+end function minimum1
 
-
-function maximum(x) result(y)
+function minimum2(x) result(y)
 !--------------------------------------------------------------------------------------------------!
-! This function returns NaN if X contains NaN; otherwise, it returns MAXVAL(X).
-! F2018 does not specify MAXVAL(X) when X contain NaN, which motivates this function.
-! Regarding NaN, the behavior of MAXIMUM is the same as the following functions in various languages:
+! This function returns NaN if X contains NaN; otherwise, it returns MINVAL(X). Mateix version.
+! F2018 does not specify MINVAL(X) when X contains NaN, which motivates this function. The behavior
+! of this function is the same as the following functions in various languages:
+! MATLAB: min(x, [], 'all', 'includenan')
+! Python: numpy.min(x)
+! Julia: minimum(x)
+! R: min(x)
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
+implicit none
+real(RP), intent(in) :: x(:, :)
+real(RP) :: y
+character(len=*), parameter :: srname = 'MINIMUM2'
+!y = merge(tsource=sum(x), fsource=minval(x), mask=any(is_nan(x)))
+y = merge(tsource=sum(x), fsource=minval(x), mask=is_nan(sum(abs(x))))
+if (DEBUGGING) then
+    call assert(.not. any(x < y), 'No entry of X is smaller than Y', srname)
+    call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
+    call assert(is_nan(y) .or. .not. any(is_nan(x)), 'Y is NaN if X contains NaN', srname)
+end if
+end function minimum2
+
+
+function maximum1(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function returns NaN if X contains NaN; otherwise, it returns MAXVAL(X). Vector version.
+! F2018 does not specify MAXVAL(X) when X contains NaN, which motivates this function. The behavior
+! of this function is the same as the following functions in various languages:
 ! MATLAB: max(x, [], 'includenan')
 ! Python: numpy.max(x)
 ! Julia: maximum(x)
 ! R: max(x)
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 real(RP), intent(in) :: x(:)
 real(RP) :: y
-y = merge(tsource=sum(x), fsource=maxval(x), mask=any(is_nan(x)))
-end function maximum
+character(len=*), parameter :: srname = 'MAXIMUM1'
+!y = merge(tsource=sum(x), fsource=maxval(x), mask=any(is_nan(x)))
+y = merge(tsource=sum(x), fsource=maxval(x), mask=is_nan(sum(abs(x))))
+if (DEBUGGING) then
+    call assert(.not. any(x > y), 'No entry of X is larger than Y', srname)
+    call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
+    call assert(is_nan(y) .or. .not. any(is_nan(x)), 'Y is NaN if X contains NaN', srname)
+end if
+end function maximum1
+
+function maximum2(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function returns NaN if X contains NaN; otherwise, it returns MAXVAL(X). Matrix version.
+! F2018 does not specify MAXVAL(X) when X contains NaN, which motivates this function. The behavior
+! of this function is the same as the following functions in various languages:
+! MATLAB: max(x, [],  'all', 'includenan')
+! Python: numpy.max(x)
+! Julia: maximum(x)
+! R: max(x)
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
+implicit none
+real(RP), intent(in) :: x(:, :)
+real(RP) :: y
+character(len=*), parameter :: srname = 'MAXIMUM2'
+!y = merge(tsource=sum(x), fsource=maxval(x), mask=any(is_nan(x)))
+y = merge(tsource=sum(x), fsource=maxval(x), mask=is_nan(sum(abs(x))))
+if (DEBUGGING) then
+    call assert(.not. any(x > y), 'No entry of X is larger than Y', srname)
+    call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
+    call assert(is_nan(y) .or. .not. any(is_nan(x)), 'Y is NaN if X contains NaN', srname)
+end if
+end function maximum2
 
 
 end module linalg_mod

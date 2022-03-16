@@ -1189,7 +1189,7 @@ if isfield(options, 'classical')
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif options.classical && ~ismember('classical', all_variants())
-        wid = sprintf('%s:ClassicalNotAvailable', invoker);
+        wid = sprintf('%s:ClassicalUnavailable', invoker);
         wmsg = sprintf('%s: classical = true but the classical version is unavailable; classical is set to false.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
@@ -1390,7 +1390,7 @@ if isfield(options, 'chkfunval')
         warnings = [warnings, wmsg];
     elseif logical(options.chkfunval) && ~strcmp(options.precision, 'double')
         wid = sprintf('%s:InvalidChkfunval', invoker);
-        wmsg = sprintf('%s: chkfunval = true but options.precision = %s; chkfunval is set to false.', invoker, options.precision);
+        wmsg = sprintf('%s: chkfunval = true but precision = %s; chkfunval is set to false.', invoker, options.precision);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1472,7 +1472,7 @@ if isfield(options, 'maxfilt')
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif options.maxfilt < min_maxfilt
-        wid = sprintf('%s:MaxfiltTooSmall', invoker);
+        wid = sprintf('%s:InvalidMaxfilt', invoker);
         wmsg = sprintf('%s: maxfilt is too small; it should be an integer at least %d; it is set to %d.', invoker, min_maxfilt, maxfilt);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
