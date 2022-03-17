@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 17, 2022 PM08:53:26
+! Last Modified: Thursday, March 17, 2022 PM11:46:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,22 +22,20 @@ public :: getact
 contains
 
 
-subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw, vlam)
+subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd, vlam)
 !--------------------------------------------------------------------------------------------------!
 ! The main purpose of GETACT is to pick the current active set. It is defined by the property that
 ! the projection of -G into the space orthogonal to the active constraint normals is as large as
 ! possible, subject to this projected steepest descent direction moving no closer to the boundary of
 ! every constraint whose current residual is at most 0.2*SNORM. On return, the settings in NACT,
-! IACT, QFAC and RFAC are all appropriate to this choice of active set.
-! Occasionally this projected direction is ZERO, and then the final value of W(1) is set to ZERO.
-! Otherwise, the direction itself is returned in DW, and W(1) is set to the square of the length of
-! the direction.
+! IACT, QFAC and RFAC are all appropriate to this choice of active set. The projected steepest
+! descent direction itself is returned in PSD, which can be ZERO occasionally.
 !
 ! AMAT, NACT, IACT, QFAC and RFAC are the same as the terms with these names in SUBROUTINE LINCOB.
 ! The current values must be set on entry. NACT, IACT, QFAC and RFAC are kept up to date when GETACT
 ! changes the current active set.
 !
-! SNORM, RESNEW, RESACT, G and DW are the same as the terms with these names in SUBROUTINE TRSTEP.
+! SNORM, RESNEW, RESACT, G and PSD are the same as the terms with these names in SUBROUTINE TRSTEP.
 ! The elements of RESNEW and RESACT are also kept up to date.
 !
 ! VLAM and W are used for working space, the vector VLAM being reserved for the Lagrange multipliers
@@ -65,15 +63,16 @@ real(RP), intent(inout) :: resnew(:)  ! RESNEW(M)
 real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N)
 
 ! Outputs
-real(RP), intent(out) :: dd
-real(RP), intent(out) :: dw(:)  ! DW(N)  ; better name?
+real(RP), intent(out) :: psd(:)  ! PSD(N)
 real(RP), intent(out) :: vlam(:)  ! VLAM(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GETACT'
-real(RP) :: dwa(size(amat, 2))
-real(RP) :: w(size(g)), tol
-real(RP) :: cvtol, ddsav, dnorm, tdel, temp, violmx, vmult
+real(RP) :: apsd(size(amat, 2))
+real(RP) :: dd
+real(RP) :: tol
+real(RP) :: vmu(size(g))
+real(RP) :: ddsav, dnorm, tdel, temp, violmx, vmult
 integer(IK) :: i, ic, j, l
 
 logical :: to_loop
@@ -103,13 +102,15 @@ if (DEBUGGING) then
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
 
-    call assert(size(dw) == n, 'SIZE(DW) == N', srname)
+    call assert(size(psd) == n, 'SIZE(PSD) == N', srname)
     call assert(size(vlam) == n, 'SIZE(VLAM) == N', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
+
+! Quick return when M = 0?
 
 ! Set some constants and a temporary VLAM.
 tdel = 0.2_RP * snorm
@@ -136,15 +137,16 @@ to_loop = (nact > 0)  ! Better implementation?
 do while (to_loop)
     to_loop = .false.
     do ic = nact, 1, -1
-        temp = ZERO
-        do i = 1, n
-            temp = temp + qfac(i, ic) * g(i)
+        !temp = ZERO
+        !do i = 1, n
+        !    temp = temp + qfac(i, ic) * g(i)
+        !end do
+        temp = inprod(g, qfac(:, ic))
+        do j = ic + 1, nact
+            temp = temp - rfac(ic, j) * vlam(j)
         end do
-        if (ic < nact) then
-            do j = ic + 1, nact
-                temp = temp - rfac(ic, j) * vlam(j)
-            end do
-        end if
+        !temp = inprod(g, qfac(:, ic)) - inprod(rfac(ic, ic + 1:nact), vlam(ic + 1:nact))
+
         if (temp >= ZERO) then
             ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
             call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
@@ -156,16 +158,26 @@ do while (to_loop)
     end do
 end do  ! End of DO WHILE (TO_LOOP)
 
+!do while (nact > 0)
+! vlam(1:nact) = lsqr(qfac(:, 1:nact), rfac(1:nact, 1:nact), g)
+! if (any(vlam(1:nact) >= 0)) then
+!     ic = findloc(vlam(1:nact) >= 0, back = .true.)
+!     call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+! end if
+!end do
+
 ! Set the new search direction D. Terminate if the 2-norm of D is ZERO or does not decrease, or if
 ! NACT=N holds. The situation NACT=N occurs for sufficiently large SNORM if the origin is in the
 ! convex hull of the constraint gradients.
 dd = ZERO  ! Must be set, in case NACT = N at this point.
+psd = ZERO
 do while (nact < n)    ! Infinite cycling possible?
-    w(nact + 1:n) = matprod(g, qfac(:, nact + 1:n)) 
-    dw = -matprod(qfac(:, nact + 1:n), w(nact + 1:n))  ! Projection of -G to range(QFAC(:, NACT+1:N))
-    dd = inprod(dw, dw)
+    psd(nact + 1:n) = matprod(g, qfac(:, nact + 1:n))
+    psd = -matprod(qfac(:, nact + 1:n), psd(nact + 1:n))  ! Projection of -G to range(QFAC(:, NACT+1:N))
+    dd = inprod(psd, psd)
 
     if (dd >= ddsav) then
+        psd = ZERO
         dd = ZERO  ! Why???
         exit
     end if
@@ -173,31 +185,22 @@ do while (nact < n)    ! Infinite cycling possible?
     ddsav = dd
     dnorm = sqrt(dd)
 
-    ! Pick the next integer L or terminate, a positive value of L being the index of the most
-    ! violated constraint. The purpose of CVTOL below is to estimate whether a positive value of
-    ! VIOLMX may be due to computer rounding errors.
-    l = 0
-    violmx = ZERO  ! Without this, VIOLMX is undefined if M = 0, and compilers will complain.
-    cvtol = ZERO  ! Without this, CVTOL is undefined if M = 0, and compilers will complain.
-    if (m > 0) then
-        dwa = matprod(dw, amat)
-        mask = (resnew > 0 .and. resnew <= tdel .and. dwa > (dnorm / snorm) * resnew)
-        if (any(mask)) then
-            l = int(maxloc(dwa, mask=mask, dim=1), IK)
-            violmx = dwa(l)
-            ! MATLAB: dwa(mask) = -Inf; [violmx , l] = max(dwa);
-        end if
-
-        if (violmx > ZERO .and. violmx < 0.01_RP * dnorm) then
-            cvtol = maxval([abs(dwa(iact(1:nact))), cvtol])
-        end if
-    end if
-
-    w(1) = ONE  ! Why?
-
-    if (l == 0 .or. violmx <= TEN * cvtol) then
+    ! Pick L, which is the index of the most violated constraint. Terminate if this violation is 0.
+    !l = 0_IK
+    !violmx = ZERO
+    !if (m > 0) then
+    apsd = matprod(psd, amat)
+    mask = (resnew > 0 .and. resnew <= tdel .and. apsd > (dnorm / snorm) * resnew)
+    if (any(mask)) then
+        l = int(maxloc(apsd, mask=mask, dim=1), IK)
+        violmx = apsd(l)
+        ! MATLAB: apsd(mask) = -Inf; [violmx , l] = max(apsd);
+    else
         exit
     end if
+
+    ! Terminate if a positive value of VIOLMX may be due to computer rounding errors.
+    if (violmx < 0.01_RP * dnorm .and. violmx <= TEN * maxval(abs(apsd(iact(1:nact))))) exit
 
     call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT + 1
 
@@ -205,27 +208,26 @@ do while (nact < n)    ! Infinite cycling possible?
     ! N.B.: In theory, NACT > 0 is not needed in the condition below, because VIOLMX is necessarily
     ! 0 when NACT is 0. We keep NACT > 0 for security: when NACT <= 0, RFAC(NACT, NACT) is invalid.
     do while (violmx > 0 .and. nact > 0)  ! Infinite cycling possible?
-        w(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive! Reason for SIGFAULT?
+        vmu(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive! Reason for SIGFAULT?
         do i = nact - 1, 1, -1
-            w(i) = -inprod(rfac(i, i + 1:nact), w(i + 1:nact)) / rfac(i, i)
+            vmu(i) = -inprod(rfac(i, i + 1:nact), vmu(i + 1:nact)) / rfac(i, i)
         end do
+        ! vmu(1:nact) = lsqr(qfac(:, 1:nact), rfac(1:nact, 1:nact), qfac(:, nact)/rfac(nact, nact))
 
         ! Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
-        !vmult = minval([violmx, vlam(1:nact)/w(1:nact)])
-        !ic = int(minloc([violmx, vlam(1:nact)/w(1:nact)], dim = 1) - 1, IK)
+        !vmult = minval([violmx, vlam(1:nact)/vmu(1:nact)])
+        !ic = int(minloc([violmx, vlam(1:nact)/vmu(1:nact)], dim = 1) - 1, IK)
 
         vmult = violmx
         ic = 0
         do j = 1, nact
-            if (vlam(j) >= vmult * w(j)) then
+            if (vlam(j) >= vmult * vmu(j)) then
                 ic = j
-                vmult = vlam(j) / w(j)  ! What if W(J) <= 0?
+                vmult = vlam(j) / vmu(j)  ! What if W(J) <= 0?
             end if
         end do
-        !do j = 1, nact
-        !    vlam(j) = vlam(j) - vmult * w(j)
-        !end do
-        vlam(1:nact) = vlam(1:nact) - vmult * w(1:nact)
+
+        vlam(1:nact) = vlam(1:nact) - vmult * vmu(1:nact)
         if (ic > 0) then
             vlam(ic) = ZERO
         end if
@@ -246,12 +248,13 @@ do while (nact < n)    ! Infinite cycling possible?
     if (nact == 0) exit  ! It can only come from DEL_ACT when VLAM(1:NACT) >= 0. Possible at all?
 end do  ! End of DO WHILE (NACT < N)
 
-if (nact == n) then
-    ! Why DD should be 0? Because DD is the square of length of the projected steepest descent
-    ! direction, projection made to the orthogonal complement of the active constraint gradients.
-    ! NACT = N means that the orthogonal complement is {0}.
-    dd = ZERO
+if (nact == n) then  ! The projected steepest gradient descent direction must be ZERO in this case.
+    psd = ZERO
 end if
+
+! if (nact == 0) then
+!   psd = -g
+! end if
 
 !====================!
 !  Calculation ends  !
@@ -268,7 +271,7 @@ if (DEBUGGING) then
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
 
-    call assert(size(dw) == n, 'SIZE(DW) == N', srname)
+    call assert(size(psd) == n, 'SIZE(PSD) == N', srname)
     call assert(size(vlam) == n, 'SIZE(VLAM) == N', srname)
 end if
 
