@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, March 16, 2022 PM06:54:55
+! Last Modified: Thursday, March 17, 2022 PM03:33:49
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -2634,11 +2634,21 @@ use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
+
+! Inputs
 real(RP), intent(in) :: x(:)
+
+! Outputs
 real(RP) :: y
+
+! Local variables
 character(len=*), parameter :: srname = 'MINIMUM1'
+real(RP) :: nan_test
+
 !y = merge(tsource=sum(x), fsource=minval(x), mask=any(is_nan(x)))
-y = merge(tsource=sum(x), fsource=minval(x), mask=is_nan(sum(abs(x))))  ! Avoid enormous calls to IS_NAN
+nan_test = sum(abs(x))  ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
+y = merge(tsource=nan_test, fsource=minval(x), mask=is_nan(nan_test))
+
 if (DEBUGGING) then
     call assert(.not. any(x < y), 'No entry of X is smaller than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
@@ -2648,7 +2658,7 @@ end function minimum1
 
 function minimum2(x) result(y)
 !--------------------------------------------------------------------------------------------------!
-! This function returns NaN if X contains NaN; otherwise, it returns MINVAL(X). Mateix version.
+! This function returns NaN if X contains NaN; otherwise, it returns MINVAL(X). Matrix version.
 ! F2018 does not specify MINVAL(X) when X contains NaN, which motivates this function. The behavior
 ! of this function is the same as the following functions in various languages:
 ! MATLAB: min(x, [], 'all', 'includenan')
@@ -2660,11 +2670,21 @@ use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
+
+! Inputs
 real(RP), intent(in) :: x(:, :)
+
+! Outputs
 real(RP) :: y
+
+! Local variables
 character(len=*), parameter :: srname = 'MINIMUM2'
+real(RP) :: nan_test
+
 !y = merge(tsource=sum(x), fsource=minval(x), mask=any(is_nan(x)))
-y = merge(tsource=sum(x), fsource=minval(x), mask=is_nan(sum(abs(x))))  ! Avoid enormous calls to IS_NAN
+nan_test = sum(abs(x))  ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
+y = merge(tsource=nan_test, fsource=minval(x), mask=is_nan(nan_test))
+
 if (DEBUGGING) then
     call assert(.not. any(x < y), 'No entry of X is smaller than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
@@ -2687,11 +2707,21 @@ use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
+
+! Inputs
 real(RP), intent(in) :: x(:)
+
+! Outputs
 real(RP) :: y
+
+! Local variables
 character(len=*), parameter :: srname = 'MAXIMUM1'
+real(RP) :: nan_test
+
 !y = merge(tsource=sum(x), fsource=maxval(x), mask=any(is_nan(x)))
-y = merge(tsource=sum(x), fsource=maxval(x), mask=is_nan(sum(abs(x))))  ! Avoid enormous calls to IS_NAN
+nan_test = sum(abs(x))  ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
+y = merge(tsource=nan_test, fsource=maxval(x), mask=is_nan(nan_test))
+
 if (DEBUGGING) then
     call assert(.not. any(x > y), 'No entry of X is larger than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
@@ -2713,11 +2743,21 @@ use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
+
+! Inputs
 real(RP), intent(in) :: x(:, :)
+
+! Outputs
 real(RP) :: y
+
+! Local variables
 character(len=*), parameter :: srname = 'MAXIMUM2'
+real(RP) :: nan_test
+
 !y = merge(tsource=sum(x), fsource=maxval(x), mask=any(is_nan(x)))
-y = merge(tsource=sum(x), fsource=maxval(x), mask=is_nan(sum(abs(x))))  ! Avoid enormous calls to IS_NAN
+nan_test = sum(abs(x))  ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
+y = merge(tsource=nan_test, fsource=maxval(x), mask=is_nan(nan_test))
+
 if (DEBUGGING) then
     call assert(.not. any(x > y), 'No entry of X is larger than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)

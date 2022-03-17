@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 17, 2022 AM10:33:18
+! Last Modified: Thursday, March 17, 2022 PM04:22:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,6 +32,16 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw
 ! Occasionally this projected direction is ZERO, and then the final value of W(1) is set to ZERO.
 ! Otherwise, the direction itself is returned in DW, and W(1) is set to the square of the length of
 ! the direction.
+!
+! AMAT, NACT, IACT, QFAC and RFAC are the same as the terms with these names in SUBROUTINE LINCOB.
+! The current values must be set on entry. NACT, IACT, QFAC and RFAC are kept up to date when GETACT
+! changes the current active set.
+!
+! SNORM, RESNEW, RESACT, G and DW are the same as the terms with these names in SUBROUTINE TRSTEP.
+! The elements of RESNEW and RESACT are also kept up to date.
+!
+! VLAM and W are used for working space, the vector VLAM being reserved for the Lagrange multipliers
+! of the calculation.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -63,8 +73,7 @@ real(RP), intent(out) :: vlam(:)  ! VLAM(N)
 ! Local variables
 character(len=*), parameter :: srname = 'GETACT'
 real(RP) :: w(size(g)), tol
-real(RP) :: ctol, ddsav, dnorm, summ, tdel, temp, test,   &
-&        violmx, vmult
+real(RP) :: cvtol, ddsav, dnorm, summ, tdel, temp, test, violmx, vmult
 integer(IK) :: i, ic, j, k, l
 
 logical :: to_loop
@@ -97,26 +106,16 @@ if (DEBUGGING) then
     call assert(size(vlam) == n, 'SIZE(VLAM) == N', srname)
 end if
 
+!====================!
+! Calculation starts !
+!====================!
 
-!     N, M, AMAT, B, NACT, IACT, QFAC and RFAC are the same as the terms
-!       with these names in SUBROUTINE LINCOB. The current values must be
-!       set on entry. NACT, IACT, QFAC and RFAC are kept up to date when
-!       GETACT changes the current active set.
-!     SNORM, RESNEW, RESACT, G and DW are the same as the terms with these
-!       names in SUBROUTINE TRSTEP. The elements of RESNEW and RESACT are
-!       also kept up to date.
-!     VLAM and W are used for working space, the vector VLAM being reserved
-!       for the Lagrange multipliers of the calculation. Their lengths must
-!       be at least N.
-!
-!     Set some constants and a temporary VLAM.
-!
+! Set some constants and a temporary VLAM.
 tdel = 0.2_RP * snorm
 ddsav = TWO * inprod(g, g)
 vlam = ZERO
-!
-!     Set the initial QFAC to the identity matrix in the case NACT=0.
-!
+
+! Set the initial QFAC to the identity matrix in the case NACT = 0.
 if (nact == 0) then
     qfac = eye(n)
 end if
@@ -156,51 +155,38 @@ do while (to_loop)  ! Zaikun 20220315: Is infinite cycling possible?
 end do
 ic = 0_IK  ! Added by Zaikun on 20220315. Needed or not?
 
-!
-!     Set the new search direction D. Terminate if the 2-norm of D is ZERO
-!       or does not decrease, or if NACT=N holds. The situation NACT=N
-!       occurs for sufficiently large SNORM if the origin is in the convex
-!       hull of the constraint gradients.
-!
-
+! Set the new search direction D. Terminate if the 2-norm of D is ZERO or does not decrease, or if
+! NACT=N holds. The situation NACT=N occurs for sufficiently large SNORM if the origin is in the
+! convex hull of the constraint gradients.
 dd = ZERO
-
-!if (nact == n) goto 290
-!!if (nact < 0) return !??? See next line.
-!100 continue
-
 do while (nact < n)    ! Infinite cycling possible?
-
-    do j = nact + 1, n  ! Here we have to ensure NACT >= 0; is it guaranteed in theory?
+    do j = nact + 1, n
         w(j) = ZERO
         do i = 1, n
             w(j) = w(j) + qfac(i, j) * g(i)
         end do
     end do
+
     dd = ZERO
     do i = 1, n
         dw(i) = ZERO
-        do j = nact + 1, n  ! Here we have to ensure NACT >= 0; is it guaranteed in theory?
+        do j = nact + 1, n
             dw(i) = dw(i) - w(j) * qfac(i, j)
         end do
         dd = dd + dw(i)**2
     end do
-    !if (dd >= ddsav) goto 290
+
     if (dd >= ddsav) then
-        dd = ZERO
-        !goto 300
+        dd = ZERO  ! Why???
         exit
     end if
-    !if (dd == ZERO) goto 300
     if (dd == ZERO) exit
     ddsav = dd
     dnorm = sqrt(dd)
-!
-!     Pick the next integer L or terminate, a positive value of L being
-!       the index of the most violated constraint. The purpose of CTOL
-!       below is to estimate whether a positive value of VIOLMX may be
-!       due to computer rounding errors.
-!
+
+    ! Pick the next integer L or terminate, a positive value of L being the index of the most
+    ! violated constraint. The purpose of CVTOL below is to estimate whether a positive value of
+    ! VIOLMX may be due to computer rounding errors.
     l = 0
     if (m > 0) then
         test = dnorm / snorm
@@ -219,7 +205,7 @@ do while (nact < n)    ! Infinite cycling possible?
                 end if
             end if
         end do
-        ctol = ZERO
+        cvtol = ZERO
         temp = 0.01_RP * dnorm
         if (violmx > ZERO .and. violmx < temp) then
             if (nact > 0) then
@@ -229,29 +215,18 @@ do while (nact < n)    ! Infinite cycling possible?
                     do i = 1, n
                         summ = summ + dw(i) * amat(i, j)
                     end do
-                    ctol = max(ctol, abs(summ))
+                    cvtol = max(cvtol, abs(summ))
                 end do
             end if
         end if
     end if
     w(1) = ONE
-    !if (l == 0) goto 300
-    if (l == 0) exit
-    !if (violmx <= TEN * ctol) goto 300
-    !if (violmx <= TEN * ctol .or. is_nan(violmx)) goto 300
-    if (violmx <= TEN * ctol .or. is_nan(violmx)) exit
+    if (l == 0 .or. violmx <= TEN * cvtol .or. is_nan(violmx)) exit
 
     call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT + 1
 
-!
-!     Set the components of the vector VMU in W.
-!
-!220 continue
-
-
-    !do while (violmx > 0)  ! Infinite cycling possible?
-    do while (violmx > 0 .and. nact > 0)  ! Infinite cycling possible?
-
+    ! Set the components of the vector VMU if VIOLMX is positive.
+    do while (violmx > 0)  ! Infinite cycling possible?
         w(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive! Reason for SIGFAULT?
         do i = nact - 1, 1, -1
             summ = ZERO
@@ -260,49 +235,26 @@ do while (nact < n)    ! Infinite cycling possible?
             end do
             w(i) = summ / rfac(i, i)
         end do
-!
-!     Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
-!
+
+        ! Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
         vmult = violmx
         ic = 0
-        !j = 1
-
-
-!250 continue
-!    if (j < nact) then
         do j = 1, nact
             if (vlam(j) >= vmult * w(j)) then
                 ic = j
                 vmult = vlam(j) / w(j)
             end if
         end do
-        !goto 250
-! Very strangely, if we (mistakenly) change 'J = N, 1, -1' to 'J = N-1, 1, -1' in
-! "Apply Givens rotations to the last (N-NACT) columns of QFAC", then the following lines
-! encounter a SEGFAULT when this subroutine is called with NACT = 0 and we arrive here with NACT = IC = 0.
         do j = 1, nact
             vlam(j) = vlam(j) - vmult * w(j)
         end do
         if (ic > 0) vlam(ic) = ZERO
         violmx = max(violmx - vmult, ZERO)
-        if (ic == 0) violmx = ZERO
-!
-!     Reduce the active set if necessary, so that all components of the
-!       new VLAM are negative, with resetting of the residuals of the
-!       constraints that become inactive.
-!
-!iflag = 3
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 2021 July, 20220305:
-! If NACT <= 0, then IC <= 0, and hence memory errors will occur when accessing VLAM(IC),
-! IACT(IC), RESNEW(IACT(IC)). Is NACT >= 1 ensured theoretically? What about NACT <= N?
-        !if (nact <= 0) goto 300  ! What about DD and W(1)??? Possible at all?
-!--------------------------------------------------------------------------------------------------!
-!    ic = nact
-!270 continue
+        if (ic == 0) violmx = ZERO  ! NACT = 0 ==> IC = 0 ==> VIOLMX = 0.
 
+        ! Reduce the active set if necessary, so that all components of the new VLAM are negative,
+        ! with resetting of the residuals of the constraints that become inactive.
         do ic = nact, 1, -1
-            !if (vlam(ic) < ZERO) goto 280
             if (.not. vlam(ic) < ZERO) then
                 resnew(iact(ic)) = max(resact(ic), TINYCV)  ! Necessary? Isn't it included in DEL_ACT?
                 ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
@@ -310,20 +262,10 @@ do while (nact < n)    ! Infinite cycling possible?
             end if
         end do
 
-!280 ic = ic - 1
-!    if (ic > 0) goto 270
-        ic = 0_IK
-!
-!     Calculate the next VMU if VIOLMX is positive. Return if NACT=N holds,
-!       as then the active constraints imply D=0. Otherwise, go to label
-!       100, to calculate the new D and to test for termination.
-!
-        !if (violmx > ZERO) goto 220
     end do  ! End of DO WHILE (VIOLMX > 0)
 
-    if (nact == 0) exit  ! Possible?
+    if (nact == 0) exit  ! It can only come from DEL_ACT when VLAM(1:NACT) >= 0. Possible at all?
 end do  ! End of DO WHILE (NACT < N)
-!if (nact < n) goto 100
 
 if (nact == n) then  ! Natural exit of the DO WHILE loop.
     ! Why DD should be 0? Because DD is the square of length of the projected steepest descent
