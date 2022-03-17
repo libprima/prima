@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 17, 2022 PM07:45:51
+! Last Modified: Thursday, March 17, 2022 PM08:53:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,6 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert !, validate
-use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth
 
 implicit none
@@ -74,7 +73,7 @@ real(RP), intent(out) :: vlam(:)  ! VLAM(N)
 character(len=*), parameter :: srname = 'GETACT'
 real(RP) :: dwa(size(amat, 2))
 real(RP) :: w(size(g)), tol
-real(RP) :: cvtol, ddsav, dnorm, summ, tdel, temp, violmx, vmult
+real(RP) :: cvtol, ddsav, dnorm, tdel, temp, violmx, vmult
 integer(IK) :: i, ic, j, l
 
 logical :: to_loop
@@ -162,23 +161,8 @@ end do  ! End of DO WHILE (TO_LOOP)
 ! convex hull of the constraint gradients.
 dd = ZERO  ! Must be set, in case NACT = N at this point.
 do while (nact < n)    ! Infinite cycling possible?
-    !do j = nact + 1, n
-    !    w(j) = ZERO
-    !    do i = 1, n
-    !        w(j) = w(j) + qfac(i, j) * g(i)
-    !    end do
-    !end do
-    w(nact + 1:n) = matprod(g, qfac(:, nact + 1:n))
-
-    !dd = ZERO
-    !do i = 1, n
-    !    dw(i) = ZERO
-    !    do j = nact + 1, n
-    !        dw(i) = dw(i) - w(j) * qfac(i, j)
-    !    end do
-    !    dd = dd + dw(i)**2
-    !end do
-    dw = -matprod(qfac(:, nact + 1:n), w(nact + 1:n))
+    w(nact + 1:n) = matprod(g, qfac(:, nact + 1:n)) 
+    dw = -matprod(qfac(:, nact + 1:n), w(nact + 1:n))  ! Projection of -G to range(QFAC(:, NACT+1:N))
     dd = inprod(dw, dw)
 
     if (dd >= ddsav) then
@@ -196,53 +180,24 @@ do while (nact < n)    ! Infinite cycling possible?
     violmx = ZERO  ! Without this, VIOLMX is undefined if M = 0, and compilers will complain.
     cvtol = ZERO  ! Without this, CVTOL is undefined if M = 0, and compilers will complain.
     if (m > 0) then
-        !test = dnorm / snorm
-        !violmx = ZERO
         dwa = matprod(dw, amat)
         mask = (resnew > 0 .and. resnew <= tdel .and. dwa > (dnorm / snorm) * resnew)
         if (any(mask)) then
-            l = maxloc(dwa, mask=mask, dim=1)
+            l = int(maxloc(dwa, mask=mask, dim=1), IK)
             violmx = dwa(l)
             ! MATLAB: dwa(mask) = -Inf; [violmx , l] = max(dwa);
         end if
-        !if (any((resnew > 0 .and. resnew <= tdel .and. dwa > test * resnew))) then
-        !    l = maxloc(dwa, mask=(resnew > 0 .and. resnew <= tdel .and. dwa > test * resnew), dim=1)
-        !    violmx = dwa(l)
-        !end if
-        !do j = 1, m
-        !    if (resnew(j) > ZERO .and. resnew(j) <= tdel) then
-        !        summ = inprod(dw, amat(:, j))
-        !        !summ = ZERO
-        !        !do i = 1, n
-        !        !    summ = summ + amat(i, j) * dw(i)
-        !        !end do
-        !        if (summ > test * resnew(j)) then
-        !            if (summ > violmx) then
-        !                l = j
-        !                violmx = summ
-        !            end if
-        !        end if
-        !    end if
-        !end do
-        !temp = 0.01_RP * dnorm
+
         if (violmx > ZERO .and. violmx < 0.01_RP * dnorm) then
-            !cvtol = maxval([abs(matprod(dw, amat(:, iact(1:nact)))), cvtol])
             cvtol = maxval([abs(dwa(iact(1:nact))), cvtol])
-            !if (nact > 0) then
-            !    do k = 1, nact
-            !        summ = inprod(dw, amat(:, iact(k)))
-            !        !j = iact(k)
-            !        !summ = ZERO
-            !        !do i = 1, n
-            !        !    summ = summ + dw(i) * amat(i, iact(k))
-            !        !end do
-            !        cvtol = max(cvtol, abs(summ))
-            !    end do
-            !end if
         end if
     end if
+
     w(1) = ONE  ! Why?
-    if (l == 0 .or. violmx <= TEN * cvtol .or. is_nan(violmx)) exit
+
+    if (l == 0 .or. violmx <= TEN * cvtol) then
+        exit
+    end if
 
     call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT + 1
 
@@ -252,28 +207,30 @@ do while (nact < n)    ! Infinite cycling possible?
     do while (violmx > 0 .and. nact > 0)  ! Infinite cycling possible?
         w(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive! Reason for SIGFAULT?
         do i = nact - 1, 1, -1
-            summ = ZERO
-            do j = i + 1, nact
-                summ = summ - rfac(i, j) * w(j)
-            end do
-            w(i) = summ / rfac(i, i)
+            w(i) = -inprod(rfac(i, i + 1:nact), w(i + 1:nact)) / rfac(i, i)
         end do
 
         ! Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
+        !vmult = minval([violmx, vlam(1:nact)/w(1:nact)])
+        !ic = int(minloc([violmx, vlam(1:nact)/w(1:nact)], dim = 1) - 1, IK)
+
         vmult = violmx
         ic = 0
         do j = 1, nact
             if (vlam(j) >= vmult * w(j)) then
                 ic = j
-                vmult = vlam(j) / w(j)
+                vmult = vlam(j) / w(j)  ! What if W(J) <= 0?
             end if
         end do
-        do j = 1, nact
-            vlam(j) = vlam(j) - vmult * w(j)
-        end do
-        if (ic > 0) vlam(ic) = ZERO
+        !do j = 1, nact
+        !    vlam(j) = vlam(j) - vmult * w(j)
+        !end do
+        vlam(1:nact) = vlam(1:nact) - vmult * w(1:nact)
+        if (ic > 0) then
+            vlam(ic) = ZERO
+        end if
         violmx = max(violmx - vmult, ZERO)
-        if (ic == 0) violmx = ZERO  ! NACT = 0 ==> IC = 0 ==> VIOLMX = 0. It seems artificial.
+        !if (ic == 0) violmx = ZERO  ! NACT = 0 ==> IC = 0 ==> VIOLMX = 0. It seems artificial.
 
         ! Reduce the active set if necessary, so that all components of the new VLAM are negative,
         ! with resetting of the residuals of the constraints that become inactive.
