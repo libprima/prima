@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 17, 2022 AM07:31:09
+! Last Modified: Thursday, March 17, 2022 AM10:33:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -326,13 +326,11 @@ end do  ! End of DO WHILE (NACT < N)
 !if (nact < n) goto 100
 
 if (nact == n) then  ! Natural exit of the DO WHILE loop.
-    dd = ZERO  ! Why?
+    ! Why DD should be 0? Because DD is the square of length of the projected steepest descent
+    ! direction, projection made to the orthogonal complement of the active constraint gradients.
+    ! NACT = N means that the orthogonal complement is {0}.
+    dd = ZERO
 end if
-
-!290 dd = ZERO
-!300 w(1) = dd
-300 continue
-
 
 !====================!
 !  Calculation ends  !
@@ -340,7 +338,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
+    call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)  ! Is NACT = 0 possible?
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
 
@@ -352,7 +350,6 @@ if (DEBUGGING) then
     call assert(size(dw) == n, 'SIZE(DW) == N', srname)
     call assert(size(vlam) == n, 'SIZE(VLAM) == N', srname)
 end if
-return
 
 end subroutine getact
 
