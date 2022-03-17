@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM09:30:33
+! Last Modified: Thursday, March 17, 2022 PM11:32:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : istriu, issymmetric
+use, non_intrinsic :: linalg_mod, only : inprod, istriu, issymmetric
 
 ! Solver-specific modules
 use, non_intrinsic :: getact_mod, only : getact
@@ -167,7 +167,8 @@ ngetact = 0
 !       a move of DW from STEP is allowed by the linear constraints.
 !
 40 ngetact = ngetact + 1
-call getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw, vlam)
+call getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dw, vlam)
+dd = inprod(dw, dw)
 if (dd == ZERO) goto 320
 scaling = 0.2_RP * snorm / sqrt(dd)
 do i = 1, n
