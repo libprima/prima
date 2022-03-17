@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 17, 2022 PM04:22:29
+! Last Modified: Thursday, March 17, 2022 PM07:45:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,10 +45,10 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dd, dw
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, TINYCV, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert !, validate
 use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: linalg_mod, only : inprod, eye, istriu, isorth
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth
 
 implicit none
 
@@ -72,11 +72,13 @@ real(RP), intent(out) :: vlam(:)  ! VLAM(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GETACT'
+real(RP) :: dwa(size(amat, 2))
 real(RP) :: w(size(g)), tol
-real(RP) :: cvtol, ddsav, dnorm, summ, tdel, temp, test, violmx, vmult
-integer(IK) :: i, ic, j, k, l
+real(RP) :: cvtol, ddsav, dnorm, summ, tdel, temp, violmx, vmult
+integer(IK) :: i, ic, j, l
 
 logical :: to_loop
+logical :: mask(size(amat, 2))
 
 integer(IK) :: m
 integer(IK) :: n
@@ -130,8 +132,9 @@ end do
 
 ! Remove any constraints from the initial active set whose Lagrange multipliers are nonnegative,
 ! and set the surviving multipliers.
+! The following loop will run for at most NACT times, since each call of DEL_ACT reduces NACT by 1.
 to_loop = (nact > 0)  ! Better implementation?
-do while (to_loop)  ! Zaikun 20220315: Is infinite cycling possible?
+do while (to_loop)
     to_loop = .false.
     do ic = nact, 1, -1
         temp = ZERO
@@ -152,29 +155,31 @@ do while (to_loop)  ! Zaikun 20220315: Is infinite cycling possible?
             vlam(ic) = temp / rfac(ic, ic)
         end if
     end do
-end do
-ic = 0_IK  ! Added by Zaikun on 20220315. Needed or not?
+end do  ! End of DO WHILE (TO_LOOP)
 
 ! Set the new search direction D. Terminate if the 2-norm of D is ZERO or does not decrease, or if
 ! NACT=N holds. The situation NACT=N occurs for sufficiently large SNORM if the origin is in the
 ! convex hull of the constraint gradients.
-dd = ZERO
+dd = ZERO  ! Must be set, in case NACT = N at this point.
 do while (nact < n)    ! Infinite cycling possible?
-    do j = nact + 1, n
-        w(j) = ZERO
-        do i = 1, n
-            w(j) = w(j) + qfac(i, j) * g(i)
-        end do
-    end do
+    !do j = nact + 1, n
+    !    w(j) = ZERO
+    !    do i = 1, n
+    !        w(j) = w(j) + qfac(i, j) * g(i)
+    !    end do
+    !end do
+    w(nact + 1:n) = matprod(g, qfac(:, nact + 1:n))
 
-    dd = ZERO
-    do i = 1, n
-        dw(i) = ZERO
-        do j = nact + 1, n
-            dw(i) = dw(i) - w(j) * qfac(i, j)
-        end do
-        dd = dd + dw(i)**2
-    end do
+    !dd = ZERO
+    !do i = 1, n
+    !    dw(i) = ZERO
+    !    do j = nact + 1, n
+    !        dw(i) = dw(i) - w(j) * qfac(i, j)
+    !    end do
+    !    dd = dd + dw(i)**2
+    !end do
+    dw = -matprod(qfac(:, nact + 1:n), w(nact + 1:n))
+    dd = inprod(dw, dw)
 
     if (dd >= ddsav) then
         dd = ZERO  ! Why???
@@ -188,45 +193,63 @@ do while (nact < n)    ! Infinite cycling possible?
     ! violated constraint. The purpose of CVTOL below is to estimate whether a positive value of
     ! VIOLMX may be due to computer rounding errors.
     l = 0
+    violmx = ZERO  ! Without this, VIOLMX is undefined if M = 0, and compilers will complain.
+    cvtol = ZERO  ! Without this, CVTOL is undefined if M = 0, and compilers will complain.
     if (m > 0) then
-        test = dnorm / snorm
-        violmx = ZERO
-        do j = 1, m
-            if (resnew(j) > ZERO .and. resnew(j) <= tdel) then
-                summ = ZERO
-                do i = 1, n
-                    summ = summ + amat(i, j) * dw(i)
-                end do
-                if (summ > test * resnew(j)) then
-                    if (summ > violmx) then
-                        l = j
-                        violmx = summ
-                    end if
-                end if
-            end if
-        end do
-        cvtol = ZERO
-        temp = 0.01_RP * dnorm
-        if (violmx > ZERO .and. violmx < temp) then
-            if (nact > 0) then
-                do k = 1, nact
-                    j = iact(k)
-                    summ = ZERO
-                    do i = 1, n
-                        summ = summ + dw(i) * amat(i, j)
-                    end do
-                    cvtol = max(cvtol, abs(summ))
-                end do
-            end if
+        !test = dnorm / snorm
+        !violmx = ZERO
+        dwa = matprod(dw, amat)
+        mask = (resnew > 0 .and. resnew <= tdel .and. dwa > (dnorm / snorm) * resnew)
+        if (any(mask)) then
+            l = maxloc(dwa, mask=mask, dim=1)
+            violmx = dwa(l)
+            ! MATLAB: dwa(mask) = -Inf; [violmx , l] = max(dwa);
+        end if
+        !if (any((resnew > 0 .and. resnew <= tdel .and. dwa > test * resnew))) then
+        !    l = maxloc(dwa, mask=(resnew > 0 .and. resnew <= tdel .and. dwa > test * resnew), dim=1)
+        !    violmx = dwa(l)
+        !end if
+        !do j = 1, m
+        !    if (resnew(j) > ZERO .and. resnew(j) <= tdel) then
+        !        summ = inprod(dw, amat(:, j))
+        !        !summ = ZERO
+        !        !do i = 1, n
+        !        !    summ = summ + amat(i, j) * dw(i)
+        !        !end do
+        !        if (summ > test * resnew(j)) then
+        !            if (summ > violmx) then
+        !                l = j
+        !                violmx = summ
+        !            end if
+        !        end if
+        !    end if
+        !end do
+        !temp = 0.01_RP * dnorm
+        if (violmx > ZERO .and. violmx < 0.01_RP * dnorm) then
+            !cvtol = maxval([abs(matprod(dw, amat(:, iact(1:nact)))), cvtol])
+            cvtol = maxval([abs(dwa(iact(1:nact))), cvtol])
+            !if (nact > 0) then
+            !    do k = 1, nact
+            !        summ = inprod(dw, amat(:, iact(k)))
+            !        !j = iact(k)
+            !        !summ = ZERO
+            !        !do i = 1, n
+            !        !    summ = summ + dw(i) * amat(i, iact(k))
+            !        !end do
+            !        cvtol = max(cvtol, abs(summ))
+            !    end do
+            !end if
         end if
     end if
-    w(1) = ONE
+    w(1) = ONE  ! Why?
     if (l == 0 .or. violmx <= TEN * cvtol .or. is_nan(violmx)) exit
 
     call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT + 1
 
     ! Set the components of the vector VMU if VIOLMX is positive.
-    do while (violmx > 0)  ! Infinite cycling possible?
+    ! N.B.: In theory, NACT > 0 is not needed in the condition below, because VIOLMX is necessarily
+    ! 0 when NACT is 0. We keep NACT > 0 for security: when NACT <= 0, RFAC(NACT, NACT) is invalid.
+    do while (violmx > 0 .and. nact > 0)  ! Infinite cycling possible?
         w(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive! Reason for SIGFAULT?
         do i = nact - 1, 1, -1
             summ = ZERO
@@ -250,13 +273,12 @@ do while (nact < n)    ! Infinite cycling possible?
         end do
         if (ic > 0) vlam(ic) = ZERO
         violmx = max(violmx - vmult, ZERO)
-        if (ic == 0) violmx = ZERO  ! NACT = 0 ==> IC = 0 ==> VIOLMX = 0.
+        if (ic == 0) violmx = ZERO  ! NACT = 0 ==> IC = 0 ==> VIOLMX = 0. It seems artificial.
 
         ! Reduce the active set if necessary, so that all components of the new VLAM are negative,
         ! with resetting of the residuals of the constraints that become inactive.
         do ic = nact, 1, -1
             if (.not. vlam(ic) < ZERO) then
-                resnew(iact(ic)) = max(resact(ic), TINYCV)  ! Necessary? Isn't it included in DEL_ACT?
                 ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
                 call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT - 1
             end if
@@ -267,7 +289,7 @@ do while (nact < n)    ! Infinite cycling possible?
     if (nact == 0) exit  ! It can only come from DEL_ACT when VLAM(1:NACT) >= 0. Possible at all?
 end do  ! End of DO WHILE (NACT < N)
 
-if (nact == n) then  ! Natural exit of the DO WHILE loop.
+if (nact == n) then
     ! Why DD should be 0? Because DD is the square of length of the projected steepest descent
     ! direction, projection made to the orthogonal complement of the active constraint gradients.
     ! NACT = N means that the orthogonal complement is {0}.
