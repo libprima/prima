@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 18, 2022 PM11:37:34
+! Last Modified: Saturday, March 19, 2022 AM12:09:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -289,8 +289,8 @@ ic = nact
 !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
 !RESNEW(IACT(IC)) is accessed.
 
-270 if (vlam(ic) < ZERO) goto 280
-!270 if (.not. vlam(ic) >= ZERO) goto 280
+!270 if (vlam(ic) < ZERO) goto 280
+270 if (.not. vlam(ic) >= ZERO) goto 280
 resnew(iact(ic)) = max(resact(ic), tinynum)
 goto 800
 280 ic = ic - 1
