@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 04, 2022 PM10:28:05
+! Last Modified: Friday, March 18, 2022 PM09:08:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,7 +26,7 @@ subroutine update(kopt, rsp, step, xpt, idz, knew, bmat, zmat, vlag)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, validate
 
 implicit none
 
@@ -54,6 +54,8 @@ real(RP) :: alpha, beta, bsum, denabs, denmax, denom, distsq,  &
 integer(IK) :: i, iflag, j, ja, jb, jl, jp, k
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: xopt(size(xpt, 1))
+real(RP) :: xdist(size(xpt, 2))
 
 
 ! Sizes.
@@ -171,6 +173,21 @@ if (knew == 0) then
         end if
     end do
 end if
+
+!---------------------------------------------------------------------!
+!---------------------------------------------------------------------!
+!---------------------------------------------------------------------!
+! Zaikun 20220318: KNEW can be 0 due to NaN
+if (knew == 0) then
+    xopt = xpt(:, kopt)
+    xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
+    knew = maxloc(xdist, dim=1)
+end if
+call validate(1 <= knew .and. knew <= npt, '1 <= KNEW <= NPT', srname)
+!---------------------------------------------------------------------!
+!---------------------------------------------------------------------!
+!---------------------------------------------------------------------!
+
 !
 !     Apply the rotations that put ZEROs in the KNEW-th row of ZMAT.
 !

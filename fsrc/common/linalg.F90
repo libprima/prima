@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, March 17, 2022 PM03:33:49
+! Last Modified: Friday, March 18, 2022 PM11:28:22
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1490,7 +1490,7 @@ cq = matprod(c, Q)
 ! Nothing will be done if N >= M-1.
 do k = m - 1_IK, n + 1_IK, -1
     if (abs(cq(k + 1)) > 0) then  ! Powell: IF (ABS(CQ(K + 1)) > 1.0D-20 * ABS(CQ(K))) THEN
-        G = planerot(cq([k, k + 1_IK]))
+        G = planerot(cq([k, k + 1_IK]))  ! G = [c, -s; s, c]. It improves the performance of LINCOA
         Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
         cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
     end if
@@ -1721,7 +1721,7 @@ end if
 ! K+1 of Q as well as rows K and K+1 of R. This makes sure that the diagonal entries of the updated
 ! R are all positive if it is the case for the original R.
 do k = i, n - 1_IK
-    G = planerot(R([k + 1_IK, k], k + 1))  ! G = [c, -s; s, c]
+    G = planerot(R([k + 1_IK, k], k + 1))  ! G = [c, -s; s, c]. It improves the performance of LINCOA
     hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)  ! HYPT must be calculated before R is updated
     !!hypt = G(1, 1) * R(k + 1, k + 1) + G(1, 2) * R(k, k + 1)  ! Does not perform well on 20220312
     !!hypt = hypotenuse(R(k + 1, k + 1), R(k, k + 1))  ! Does not perform well on 20220312

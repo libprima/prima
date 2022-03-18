@@ -10,7 +10,7 @@ s_root_dir = fileparts(fileparts(fileparts(mfilepath)));
 
 % Define the name for the test directory. We do not add a rand stamp to `test_dir_name`, so that we
 % can reuse it easily. It is needed if we want to repeat a test without recompiling the solvers.
-[~, root_dir_name] = fileparts(s_root_dir);
+root_dir_name = strrep(s_root_dir, [fileparts(s_root_dir), filesep],'');
 test_dir_name = [solver, '_', test_name, '_', root_dir_name];
 test_dir = fullfile(tempdir, test_dir_name);  % Full path to the test directory
 
