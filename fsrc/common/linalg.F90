@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 19, 2022 AM01:36:27
+! Last Modified: Saturday, March 19, 2022 AM02:03:50
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -901,10 +901,10 @@ real(RP) :: x(size(R, 2))
 ! Local variables
 character(len=*), parameter :: srname = 'LSQR_RFULL'
 integer(IK) :: i
-integer(IK) :: j
+!integer(IK) :: j
 integer(IK) :: m
 integer(IK) :: n
-real(RP) :: temp
+!real(RP) :: temp
 real(RP) :: tol
 
 ! Sizes
@@ -927,12 +927,13 @@ end if
 !====================!
 
 do i = n, 1, -1
-    temp = inprod(b, Q(:, i))
-    do j = i + 1, n
-        temp = temp - R(i, j) * x(j)
-    end do
-    !temp = inprod(b, Q(:, i)) - inprod(R(i, i + 1:n), x(i + 1:n))
-    x(i) = temp / R(i, i)
+    !temp = inprod(Q(:, i), b)
+    !do j = i + 1, n
+    !    temp = temp - R(i, j) * x(j)
+    !end do
+    !!temp = inprod(b, Q(:, i)) - inprod(R(i, i + 1:n), x(i + 1:n))
+    !x(i) = temp / R(i, i)
+    x(i) = (inprod(Q(:, i), b) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
 end do
 
 

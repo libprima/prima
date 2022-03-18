@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 19, 2022 AM01:52:28
+! Last Modified: Saturday, March 19, 2022 AM02:09:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ real(RP), intent(inout) :: w(n)
 ! Local variables
 real(RP) :: cosv, ctol, cval, dd, ddsav, dnorm, rdiag,   &
 &        sinv, sprod, summ, sval, tdel, temp, test, tinynum,   &
-&        violmx, vmult, grot(2, 2)
+&        violmx, vmult, grot(2, 2), temp1, temp2
 integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag, jw,   &
 &           k, l, nactp
 
@@ -108,18 +108,36 @@ if (ic > 0) goto 40
 iflag = 2
 60 if (nact == 0) goto 100
 ic = nact
-70 temp = ZERO
+
+!---------------------------------------------!
+!70 temp = ZERO
+!do i = 1, n
+!    temp = temp + qfac(i, ic) * g(i)
+!end do
+!idiag = (ic * ic + ic) / 2
+!if (ic < nact) then
+!    jw = idiag + ic
+!    do j = ic + 1, nact
+!        temp = temp - rfac(jw) * vlam(j)
+!        jw = jw + j
+!    end do
+!end if
+
+70 temp1 = ZERO
 do i = 1, n
-    temp = temp + qfac(i, ic) * g(i)
+    temp1 = temp1 + qfac(i, ic) * g(i)
 end do
 idiag = (ic * ic + ic) / 2
+temp2 = ZERO
 if (ic < nact) then
     jw = idiag + ic
     do j = ic + 1, nact
-        temp = temp - rfac(jw) * vlam(j)
+        temp2 = temp2 + rfac(jw) * vlam(j)
         jw = jw + j
     end do
 end if
+temp = temp1 - temp2
+!---------------------------------------------!
 
 !--------------------------------!
 !if (temp >= ZERO) goto 800
