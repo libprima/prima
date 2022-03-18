@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:35:57
+! Last Modified: Friday, March 18, 2022 PM11:46:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,6 +51,8 @@ real(RP) :: alpha, beta, bsumm, denabs, denmax, denom, distsq,  &
 &        dx, hdiag, scala, scalb, sqrtdn, ssq,  &
 &        summ, tau, tausq, temp, tempa, tempb
 integer(IK) :: i, iflag, j, ja, jb, jl, jp, k, nptm
+real(RP) :: xopt(n)
+real(RP) :: xdist(npt)
 
 !
 !     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
@@ -150,6 +152,19 @@ if (knew == 0) then
         end if
     end do
 end if
+
+!---------------------------------------------------------------------!
+!---------------------------------------------------------------------!
+!---------------------------------------------------------------------!
+! Zaikun 20220318: KNEW can be 0 due to NaN
+if (knew == 0) then
+    xopt = xpt(:, kopt)
+    xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
+    knew = maxloc(xdist, dim=1)
+end if
+!---------------------------------------------------------------------!
+!---------------------------------------------------------------------!
+!---------------------------------------------------------------------!
 !
 !     Apply the rotations that put ZEROs in the KNEW-th row of ZMAT.
 !

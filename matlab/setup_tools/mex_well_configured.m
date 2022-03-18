@@ -21,12 +21,13 @@ ulang = upper(language);
 % NOTE: MATLAB MAY CHANGE THE LOCATION OF THIS FILE IN THE FUTURE.
 switch ulang
 case 'FORTRAN'
-    example_file = fullfile(matlabroot, 'extern', 'examples', 'refbook', 'timestwo.F');
+    example_file_name = 'timestwo.F';
 case {'C', 'C++', 'CPP'}
-    example_file = fullfile(matlabroot, 'extern', 'examples', 'refbook', 'timestwo.c');
+    example_file_name = 'timestwo.c';
 otherwise
     error(sprintf('%s:UnsupportedLang', funname), '%s: Language ''%s'' is not supported by %s.', funname, language, funname);
 end
+example_file = fullfile(matlabroot, 'extern', 'examples', 'refbook', example_file_name);
 
 % Try `mex('-setup', ulang)`
 mex_setup = -1;
@@ -38,7 +39,9 @@ catch exception
     % Do nothing
 end
 if ~isempty(exception) || mex_setup ~= 0
-    fprintf('\nYour MATLAB failed to run mex(''-setup'', ''%s'').\n', language);
+    fprintf('\nYour MATLAB failed to run mex(''-setup'', ''%s'').', language);
+    fprintf('\nTo see the detailed error message, execute the following command:\n');
+    fprintf('\n  mex(''-v'', ''-setup'', ''%s'')\n\n', language)
     success = 0;
     return
 end
@@ -71,9 +74,11 @@ end
 
 trash_files = files_with_wildcard(temp_mexdir, 'timestwo.*');
 
-if ~isempty(exception) || mex_status ~= 0
+if ~isempty(exception) || mex_status ~= 0 
     cellfun(@(filename) delete(filename), trash_files);  % Clean up the trash before returning
     fprintf('\nThe MEX of your MATLAB failed to compile\n%s,\nwhich is a MATLAB built-in example for trying MEX on %s.\n', example_file, language);
+    fprintf('\nTo see the detailed error message, execute the following command:\n');
+    fprintf('\n  mex(''-v'', fullfile(matlabroot, ''extern'', ''examples'', ''refbook'', ''%s''));\n\n', example_file_name);
     success = 0;
     return
 end

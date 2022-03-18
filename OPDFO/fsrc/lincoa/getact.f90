@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 17, 2022 AM12:13:51
+! Last Modified: Friday, March 18, 2022 PM11:37:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,6 @@ contains
 
 
 subroutine getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, dw, vlam, w)
-use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : inprod, planerot
 
 ! Generic modules
@@ -191,8 +190,7 @@ if (m > 0) then
 end if
 w(1) = ONE
 if (l == 0) goto 300
-!if (violmx <= 10.0_RP * ctol) goto 300
-if (violmx <= 10.0_RP * ctol .or. is_nan(violmx)) goto 300
+if (violmx <= 10.0_RP * ctol) goto 300
 !
 !     Apply Givens rotations to the last (N-NACT) columns of QFAC so that
 !       the first (NACT+1) columns of QFAC are the ONEs required for the
@@ -292,6 +290,7 @@ ic = nact
 !RESNEW(IACT(IC)) is accessed.
 
 270 if (vlam(ic) < ZERO) goto 280
+!270 if (.not. vlam(ic) >= ZERO) goto 280
 resnew(iact(ic)) = max(resact(ic), tinynum)
 goto 800
 280 ic = ic - 1

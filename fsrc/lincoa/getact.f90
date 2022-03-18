@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 17, 2022 PM11:46:22
+! Last Modified: Friday, March 18, 2022 PM09:09:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -163,6 +163,8 @@ end do  ! End of DO WHILE (TO_LOOP)
 ! if (any(vlam(1:nact) >= 0)) then
 !     ic = findloc(vlam(1:nact) >= 0, back = .true.)
 !     call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+! else
+!     exit
 ! end if
 !end do
 
@@ -170,10 +172,10 @@ end do  ! End of DO WHILE (TO_LOOP)
 ! NACT=N holds. The situation NACT=N occurs for sufficiently large SNORM if the origin is in the
 ! convex hull of the constraint gradients.
 dd = ZERO  ! Must be set, in case NACT = N at this point.
-psd = ZERO
+psd = ZERO  ! Must be set, in case NACT = N at this point.
 do while (nact < n)    ! Infinite cycling possible?
     psd(nact + 1:n) = matprod(g, qfac(:, nact + 1:n))
-    psd = -matprod(qfac(:, nact + 1:n), psd(nact + 1:n))  ! Projection of -G to range(QFAC(:, NACT+1:N))
+    psd = -matprod(qfac(:, nact + 1:n), psd(nact + 1:n)) ! Projection of -G to range(QFAC(:,NACT+1:N))
     dd = inprod(psd, psd)
 
     if (dd >= ddsav) then
@@ -186,9 +188,6 @@ do while (nact < n)    ! Infinite cycling possible?
     dnorm = sqrt(dd)
 
     ! Pick L, which is the index of the most violated constraint. Terminate if this violation is 0.
-    !l = 0_IK
-    !violmx = ZERO
-    !if (m > 0) then
     apsd = matprod(psd, amat)
     mask = (resnew > 0 .and. resnew <= tdel .and. apsd > (dnorm / snorm) * resnew)
     if (any(mask)) then
@@ -200,19 +199,25 @@ do while (nact < n)    ! Infinite cycling possible?
     end if
 
     ! Terminate if a positive value of VIOLMX may be due to computer rounding errors.
-    if (violmx < 0.01_RP * dnorm .and. violmx <= TEN * maxval(abs(apsd(iact(1:nact))))) exit
+    ! N.B.: Theoretically (but not numerically), APSD(IACT(1:NACT)) = 0.
+    ! Caution: when NACT = 0, MAXVAL returns -HUGE(APSD)!
+    !if (violmx < 0.01_RP * dnorm .and. violmx <= TEN * maxval(abs(apsd(iact(1:nact))))) exit
+    if (violmx < 0.01_RP * dnorm .and. violmx <= TEN * maxval([ZERO, abs(apsd(iact(1:nact)))])) exit
 
-    call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT + 1
+    call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT + 1, VLAM(NACT) = 0.
 
     ! Set the components of the vector VMU if VIOLMX is positive.
-    ! N.B.: In theory, NACT > 0 is not needed in the condition below, because VIOLMX is necessarily
-    ! 0 when NACT is 0. We keep NACT > 0 for security: when NACT <= 0, RFAC(NACT, NACT) is invalid.
+    ! N.B.:
+    ! 1. In theory, NACT > 0 is not needed in the condition below, because VIOLMX is necessarily 0
+    ! when NACT is 0. We keep NACT > 0 for security: when NACT <= 0, RFAC(NACT, NACT) is invalid.
+    ! 2. The loop will run for at most NACT <= N times: if VIOLMX > 0, then IC > 0, and hence
+    ! VLAM(IC) = 0, which implies that DEL_ACT will be called to reduce NACT by 1.
     do while (violmx > 0 .and. nact > 0)  ! Infinite cycling possible?
         vmu(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive! Reason for SIGFAULT?
         do i = nact - 1, 1, -1
             vmu(i) = -inprod(rfac(i, i + 1:nact), vmu(i + 1:nact)) / rfac(i, i)
         end do
-        ! vmu(1:nact) = lsqr(qfac(:, 1:nact), rfac(1:nact, 1:nact), qfac(:, nact)/rfac(nact, nact))
+        ! vmu(1:nact) = lsqr(qfac(:, 1:nact), rfac(1:nact, 1:nact), qfac(:, nact)) / rfac(nact, nact)
 
         ! Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
         !vmult = minval([violmx, vlam(1:nact)/vmu(1:nact)])
@@ -221,29 +226,30 @@ do while (nact < n)    ! Infinite cycling possible?
         vmult = violmx
         ic = 0
         do j = 1, nact
-            if (vlam(j) >= vmult * vmu(j)) then
+            if (vlam(j) >= vmult * vmu(j)) then  ! VLAM(1:NACT) <= 0 according to its updates.
+                ! What about vlam(j) > vmult * vmu(j) ?
                 ic = j
-                vmult = vlam(j) / vmu(j)  ! What if W(J) <= 0?
+                vmult = vlam(j) / vmu(j)  ! What if VMU(J) = 0?
             end if
         end do
+        violmx = max(violmx - vmult, ZERO)
 
         vlam(1:nact) = vlam(1:nact) - vmult * vmu(1:nact)
         if (ic > 0) then
             vlam(ic) = ZERO
         end if
-        violmx = max(violmx - vmult, ZERO)
-        !if (ic == 0) violmx = ZERO  ! NACT = 0 ==> IC = 0 ==> VIOLMX = 0. It seems artificial.
 
         ! Reduce the active set if necessary, so that all components of the new VLAM are negative,
         ! with resetting of the residuals of the constraints that become inactive.
         do ic = nact, 1, -1
-            if (.not. vlam(ic) < ZERO) then
+            !if (vlam(ic) >= 0) then
+            if (.not. vlam(ic) < 0) then
+                ! Powell's version: IF (.NOT. VLAM(IC) < 0) THEN
                 ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
                 call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT - 1
             end if
         end do
-
-    end do  ! End of DO WHILE (VIOLMX > 0)
+    end do  ! End of DO WHILE (VIOLMX > 0 .AND. NACT > 0)
 
     if (nact == 0) exit  ! It can only come from DEL_ACT when VLAM(1:NACT) >= 0. Possible at all?
 end do  ! End of DO WHILE (NACT < N)
