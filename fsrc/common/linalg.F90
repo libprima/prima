@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 19, 2022 AM12:56:15
+! Last Modified: Saturday, March 19, 2022 AM01:36:27
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -31,9 +31,10 @@ public :: inprod, matprod, outprod
 public :: r1update, r2update, symmetrize
 public :: Ax_plus_y
 public :: eye
-public :: hypotenuse, planerot, lsqr
+public :: hypotenuse, planerot
 public :: project
 public :: inv, isinv
+public :: lsqr
 public :: qradd, qrexc
 public :: calquad, errquad, hess_mul
 public :: omega_col, omega_mul, omega_inprod
@@ -74,6 +75,10 @@ end interface eye
 
 interface project
     module procedure project1, project2
+end interface
+
+interface lsqr
+    module procedure lsqr_Rdiag, lsqr_Rfull
 end interface
 
 interface qradd
@@ -761,7 +766,7 @@ end if
 end subroutine qr
 
 
-function lsqr(A, b, Q, Rdiag) result(x)
+function lsqr_Rdiag(A, b, Q, Rdiag) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
 ! This function is used in COBYLA, where,
@@ -784,7 +789,7 @@ real(RP), intent(in), optional :: Rdiag(:)
 real(RP) :: x(size(A, 2))
 
 ! Local variables
-character(len=*), parameter :: srname = 'LSQR'
+character(len=*), parameter :: srname = 'LSQR_RDIAG'
 logical :: pivote
 integer(IK) :: i
 integer(IK) :: j
@@ -872,7 +877,70 @@ end do
 !    !call assert(norm(matprod(b - matprod(A, x), A)) <= max(tol, tol * norm(matprod(b, A))), &
 !    !    & 'A*X is the projection of B to the column space of A', srname)
 !end if
-end function lsqr
+end function lsqr_Rdiag
+
+function lsqr_Rfull(b, Q, R) result(x)
+!--------------------------------------------------------------------------------------------------!
+! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
+! This function is used in LINCOA, where,
+! 1. The economy-size QR factorization is supplied externally (Q is called QFAC and R is called RFAC);
+! 3. R is non-singular.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+real(RP), intent(in) :: b(:)  ! B(M)
+real(RP), intent(in) :: Q(:, :)  ! Q(M, N)
+real(RP), intent(in) :: R(:, :)  ! R(N, N)
+
+! Outputs
+real(RP) :: x(size(R, 2))
+
+! Local variables
+character(len=*), parameter :: srname = 'LSQR_RFULL'
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: temp
+real(RP) :: tol
+
+! Sizes
+m = int(size(Q, 1), kind(m))
+n = int(size(R, 2), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(m >= n .and. n >= 0, 'M >= N >= 0', srname)
+    call assert(size(b) == m, 'SIZE(B) == M', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == n, 'SIZE(Q) == [M, N]', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(m + 1_IK, RP)))
+    call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    call assert(size(R, 1) == n .and. size(R, 2) == n, 'SIZE(R) == [N, N]', srname)
+    call assert(istriu(R), 'R is upper triangular', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+do i = n, 1, -1
+    temp = inprod(b, Q(:, i))
+    do j = i + 1, n
+        temp = temp - R(i, j) * x(j)
+    end do
+    !temp = inprod(b, Q(:, i)) - inprod(R(i, i + 1:n), x(i + 1:n))
+    x(i) = temp / R(i, i)
+end do
+
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function lsqr_Rfull
 
 
 function diag(A) result(D)

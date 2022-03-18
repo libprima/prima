@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 19, 2022 AM12:54:18
+! Last Modified: Saturday, March 19, 2022 AM01:38:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,7 +45,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd, v
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert !, validate
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth, norm
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth, norm, lsqr, trueloc
 
 implicit none
 
@@ -72,10 +72,10 @@ real(RP) :: apsd(size(amat, 2))
 real(RP) :: dd
 real(RP) :: tol
 real(RP) :: vmu(size(g))
-real(RP) :: ddsav, dnorm, tdel, temp, violmx, vmult
+real(RP) :: ddsav, dnorm, tdel, violmx, vmult
 integer(IK) :: i, ic, j, l
 
-logical :: to_loop
+!logical :: to_loop
 logical :: mask(size(amat, 2))
 
 integer(IK) :: m
@@ -133,40 +133,41 @@ end do
 ! Remove any constraints from the initial active set whose Lagrange multipliers are nonnegative,
 ! and set the surviving multipliers.
 ! The following loop will run for at most NACT times, since each call of DEL_ACT reduces NACT by 1.
-to_loop = (nact > 0)  ! Better implementation?
-do while (to_loop)
-    to_loop = .false.
-    do ic = nact, 1, -1
-        !temp = ZERO
-        !do i = 1, n
-        !    temp = temp + qfac(i, ic) * g(i)
-        !end do
-        temp = inprod(g, qfac(:, ic))
-        do j = ic + 1, nact
-            temp = temp - rfac(ic, j) * vlam(j)
-        end do
-        !temp = inprod(g, qfac(:, ic)) - inprod(rfac(ic, ic + 1:nact), vlam(ic + 1:nact))
 
-        if (temp >= ZERO) then
-            ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
-            call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
-            to_loop = (nact > 0)  ! Restart the loop if any active constraint is removed.
-            exit
-        else
-            vlam(ic) = temp / rfac(ic, ic)
-        end if
-    end do
-end do  ! End of DO WHILE (TO_LOOP)
+!to_loop = (nact > 0)  ! Better implementation?
+!do while (to_loop)
+!    to_loop = .false.
+!    do ic = nact, 1, -1
+!        !temp = ZERO
+!        !do i = 1, n
+!        !    temp = temp + qfac(i, ic) * g(i)
+!        !end do
+!        temp = inprod(g, qfac(:, ic))
+!        do j = ic + 1, nact
+!            temp = temp - rfac(ic, j) * vlam(j)
+!        end do
+!        !temp = inprod(g, qfac(:, ic)) - inprod(rfac(ic, ic + 1:nact), vlam(ic + 1:nact))
 
-!do while (nact > 0)
-! vlam(1:nact) = lsqr(qfac(:, 1:nact), rfac(1:nact, 1:nact), g)
-! if (any(vlam(1:nact) >= 0)) then
-!     ic = findloc(vlam(1:nact) >= 0, back = .true.)
-!     call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
-! else
-!     exit
-! end if
-!end do
+!        if (temp >= ZERO) then
+!            ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
+!            call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+!            to_loop = (nact > 0)  ! Restart the loop if any active constraint is removed.
+!            exit
+!        else
+!            vlam(ic) = temp / rfac(ic, ic)
+!        end if
+!    end do
+!end do  ! End of DO WHILE (TO_LOOP)
+
+do while (nact > 0)
+    vlam(1:nact) = lsqr(g, qfac(:, 1:nact), rfac(1:nact, 1:nact))
+    if (any(vlam(1:nact) >= 0)) then
+        ic = maxval(trueloc(vlam(1:nact) >= 0))  ! MATLAB: ic = max(find(vlam(1:nact) >= 0))
+        call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+    else
+        exit
+    end if
+end do
 
 ! Set the new search direction D. Terminate if the 2-norm of D is ZERO or does not decrease, or if
 ! NACT=N holds. The situation NACT=N occurs for sufficiently large SNORM if the origin is in the
