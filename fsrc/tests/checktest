@@ -27,6 +27,7 @@ ERRORS="$(grep -i "error\|fail\|exception\|invalid\|bad\|overflow\|backtrace\|se
     | grep -vi "default" \
     | grep -vi "[0-9]\s*error" \
     | grep -vi "[0-9a-z]bad\|bad[0-9a-z]" \
+    | grep -vi "[0-9a-z]fail" \
     | grep -vi "Warning: [A-Z]*MS.*G: Failed to open file .*_output" \
     | grep -vi "Warning:\ Floating\ overflow\ occurred" \
     | grep -vi "Warning:\ Floating\ invalid\ operation\ occurred" \
