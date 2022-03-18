@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 19, 2022 AM12:09:55
+! Last Modified: Saturday, March 19, 2022 AM01:52:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -120,8 +120,15 @@ if (ic < nact) then
         jw = jw + j
     end do
 end if
-if (temp >= ZERO) goto 800
+
+!--------------------------------!
+!if (temp >= ZERO) goto 800
+!vlam(ic) = temp / rfac(idiag)
+
 vlam(ic) = temp / rfac(idiag)
+if (vlam(ic) >= ZERO) goto 800
+!--------------------------------!
+
 ic = ic - 1_IK
 if (ic > 0) goto 70
 !
