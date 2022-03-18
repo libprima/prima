@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, March 18, 2022 PM11:28:22
+! Last Modified: Saturday, March 19, 2022 AM12:56:15
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -40,10 +40,10 @@ public :: omega_col, omega_mul, omega_inprod
 public :: errh
 public :: isminor
 public :: issymmetric, isorth, istriu
-public :: norm
 public :: sort
 public :: trueloc, falseloc
 public :: minimum, maximum
+public :: norm
 public :: int
 
 interface matprod
@@ -99,6 +99,10 @@ end interface minimum
 interface maximum
     module procedure maximum1, maximum2
 end interface maximum
+
+interface norm
+    module procedure p_norm, named_norm
+end interface norm
 
 interface int
     module procedure logical_to_int
@@ -2388,7 +2392,7 @@ end if
 end function issymmetric
 
 
-function norm(x, p) result(y)
+function p_norm(x, p) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates the P-norm of a vector X.
 !--------------------------------------------------------------------------------------------------!
@@ -2405,7 +2409,7 @@ real(RP), intent(in), optional :: p
 real(RP) :: y
 
 ! Local variables
-character(len=*), parameter :: srname = 'NORM'
+character(len=*), parameter :: srname = 'P_NORM'
 real(RP) :: scaling
 real(RP) :: p_loc
 
@@ -2423,12 +2427,14 @@ elseif (p_loc <= 0) then
 elseif (.not. all(is_finite(x))) then
     ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
     y = sum(abs(x))
-elseif (.not. any(abs(x) > ZERO)) then
+elseif (.not. any(abs(x) > 0)) then
     ! The following is incorrect without checking the last case, as X may be all NaN.
     y = ZERO
 else
     if (is_posinf(p_loc)) then
-        y = maxval(abs(x))
+        ! If SIZE(X) = 0, then MAXVAL(ABS(X)) = -HUGE(X); since we have handled such a case in the
+        ! above, it is OK to write Y = MAXVAL(ABS(X)) below, but we append 0 for robustness.
+        y = maxval([abs(x), ZERO])
     elseif (.not. present(p) .or. abs(p_loc - TWO) <= 0) then
         !y = sqrt(sum(x**2))
         scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
@@ -2439,8 +2445,50 @@ else
         y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
     end if
 end if
+end function p_norm
 
-end function norm
+function named_norm(x, nname) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates named norms of a vector X.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, ZERO
+use, non_intrinsic :: debug_mod, only : errstop
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: string_mod, only : lower, trimstr
+implicit none
+
+! Inputs
+real(RP), intent(in) :: x(:)
+character(len=*), intent(in) :: nname
+
+! Outputs
+real(RP) :: y
+
+! Local variables
+character(len=*), parameter :: srname = 'NAMED_NORM'
+
+if (size(x) == 0) then
+    y = ZERO
+elseif (.not. all(is_finite(x))) then
+    ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
+    y = sum(abs(x))
+elseif (.not. any(abs(x) > 0)) then
+    ! The following is incorrect without checking the last case, as X may be all NaN.
+    y = ZERO
+else
+    select case (lower(trimstr(nname)))
+    case ('fro')
+        y = p_norm(x)  ! 2-norm, which is the default case of P_NORM.
+    case ('inf')
+        ! If SIZE(X) = 0, then MAXVAL(ABS(X)) = -HUGE(X); since we have handled such a case in the
+        ! above, it is OK to write Y = MAXVAL(ABS(X)) below, but we append 0 for robustness.
+        y = maxval([abs(x), ZERO])
+    case default
+        call errstop(srname, 'Unknown name of norm: '//trimstr(nname))
+    end select
+end if
+end function named_norm
+
 
 function sort_i1(x, direction) result(y)
 ! This function sorts X according to DIRECTION, which should be 'ascend' (default) or 'descend'.

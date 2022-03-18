@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 18, 2022 PM09:09:54
+! Last Modified: Saturday, March 19, 2022 AM12:54:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,7 +45,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd, v
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert !, validate
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth, norm
 
 implicit none
 
@@ -199,10 +199,12 @@ do while (nact < n)    ! Infinite cycling possible?
     end if
 
     ! Terminate if a positive value of VIOLMX may be due to computer rounding errors.
-    ! N.B.: Theoretically (but not numerically), APSD(IACT(1:NACT)) = 0.
-    ! Caution: when NACT = 0, MAXVAL returns -HUGE(APSD)!
-    !if (violmx < 0.01_RP * dnorm .and. violmx <= TEN * maxval(abs(apsd(iact(1:nact))))) exit
-    if (violmx < 0.01_RP * dnorm .and. violmx <= TEN * maxval([ZERO, abs(apsd(iact(1:nact)))])) exit
+    ! N.B.:
+    ! 1. Theoretically (but not numerically), APSD(IACT(1:NACT)) = 0 or empty.
+    ! 2. CAUTION: the inf-norm of APSD(IACT(1:NACT)) is NOT always MAXVAL(ABS(APSD(IACT(1:NACT)))),
+    ! as the latter returns -HUGE(APSD) instead of 0 when NACT = 0! In MATLAB, max([]) = []; in
+    ! Python, R, and Julia, the maximum of an empty array raises errors/warnings (as of 20220318).
+    if (violmx < 0.01_RP * dnorm .and. violmx <= TEN * norm(apsd(iact(1:nact)), 'inf')) exit
 
     call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT + 1, VLAM(NACT) = 0.
 
@@ -242,9 +244,7 @@ do while (nact < n)    ! Infinite cycling possible?
         ! Reduce the active set if necessary, so that all components of the new VLAM are negative,
         ! with resetting of the residuals of the constraints that become inactive.
         do ic = nact, 1, -1
-            !if (vlam(ic) >= 0) then
-            if (.not. vlam(ic) < 0) then
-                ! Powell's version: IF (.NOT. VLAM(IC) < 0) THEN
+            if (vlam(ic) >= 0) then  ! Powell's version: IF (.NOT. VLAM(IC) < 0) THEN
                 ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
                 call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT - 1
             end if
