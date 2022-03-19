@@ -83,19 +83,20 @@ try
     tic;
     perfdata(solvers, options);
     options.reload = true;
-    if strcmpi(solver, 'cobyla')
+    problem_type=options.type;
+    if strcmpi(solver, 'cobyla') && contains(problem_type, 'n')
         options.type = 'n';
         perfdata(solvers, options);
     end
-    if ismember(solver, {'cobyla', 'lincoa'})
+    if ismember(solver, {'cobyla', 'lincoa'}) && contains(problem_type, 'l')
         options.type = 'l';
         perfdata(solvers, options);
     end
-    if ismember(solver, {'cobyla', 'lincoa', 'bobyqa'})
+    if ismember(solver, {'cobyla', 'lincoa', 'bobyqa'}) && contains(problem_type, 'b')
         options.type = 'b';
         perfdata(solvers, options);
     end
-    if ismember(solver, {'cobyla', 'lincoa', 'bobyqa', 'newuoa', 'uobyqa'})
+    if ismember(solver, {'cobyla', 'lincoa', 'bobyqa', 'newuoa', 'uobyqa'}) && contains(problem_type, 'u')
         options.type = 'u';
         perfdata(solvers, options);
     end

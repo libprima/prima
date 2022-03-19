@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 19, 2022 AM01:38:54
+! Last Modified: Saturday, March 19, 2022 PM01:13:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -75,7 +75,6 @@ real(RP) :: vmu(size(g))
 real(RP) :: ddsav, dnorm, tdel, violmx, vmult
 integer(IK) :: i, ic, j, l
 
-!logical :: to_loop
 logical :: mask(size(amat, 2))
 
 integer(IK) :: m
@@ -133,32 +132,6 @@ end do
 ! Remove any constraints from the initial active set whose Lagrange multipliers are nonnegative,
 ! and set the surviving multipliers.
 ! The following loop will run for at most NACT times, since each call of DEL_ACT reduces NACT by 1.
-
-!to_loop = (nact > 0)  ! Better implementation?
-!do while (to_loop)
-!    to_loop = .false.
-!    do ic = nact, 1, -1
-!        !temp = ZERO
-!        !do i = 1, n
-!        !    temp = temp + qfac(i, ic) * g(i)
-!        !end do
-!        temp = inprod(g, qfac(:, ic))
-!        do j = ic + 1, nact
-!            temp = temp - rfac(ic, j) * vlam(j)
-!        end do
-!        !temp = inprod(g, qfac(:, ic)) - inprod(rfac(ic, ic + 1:nact), vlam(ic + 1:nact))
-
-!        if (temp >= ZERO) then
-!            ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
-!            call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
-!            to_loop = (nact > 0)  ! Restart the loop if any active constraint is removed.
-!            exit
-!        else
-!            vlam(ic) = temp / rfac(ic, ic)
-!        end if
-!    end do
-!end do  ! End of DO WHILE (TO_LOOP)
-
 do while (nact > 0)
     vlam(1:nact) = lsqr(g, qfac(:, 1:nact), rfac(1:nact, 1:nact))
     if (any(vlam(1:nact) >= 0)) then
@@ -215,7 +188,7 @@ do while (nact < n)    ! Infinite cycling possible?
     ! when NACT is 0. We keep NACT > 0 for security: when NACT <= 0, RFAC(NACT, NACT) is invalid.
     ! 2. The loop will run for at most NACT <= N times: if VIOLMX > 0, then IC > 0, and hence
     ! VLAM(IC) = 0, which implies that DEL_ACT will be called to reduce NACT by 1.
-    do while (violmx > 0 .and. nact > 0)  ! Infinite cycling possible?
+    do while (violmx > 0 .and. nact > 0)
         vmu(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive! Reason for SIGFAULT?
         do i = nact - 1, 1, -1
             vmu(i) = -inprod(rfac(i, i + 1:nact), vmu(i + 1:nact)) / rfac(i, i)

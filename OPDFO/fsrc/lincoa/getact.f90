@@ -268,7 +268,9 @@ resnew(l) = ZERO
 !
 !     Set the compONEnts of the vector VMU in W.
 !
-220 w(nact) = ONE / rfac((nact * nact + nact) / 2)**2
+220  continue
+if (nact <= 0) return  ! What about DD?
+w(nact) = ONE / rfac((nact * nact + nact) / 2)**2
 if (nact > 1) then
     do i = nact - 1, 1, -1
         idiag = (i * i + i) / 2
@@ -307,8 +309,6 @@ if (ic == 0) violmx = ZERO
 !       constraints that become inactive.
 !
 iflag = 3
-
-if (nact <= 0) return  ! What about DD?
 
 ic = nact
 !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
