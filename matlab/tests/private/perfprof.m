@@ -138,7 +138,7 @@ ylabel('$\pi_s(\alpha)$', 'fontsize', fontsize, 'interpreter', 'latex');
 set(gca,'FontSize',fontsize);
 
 % Save the figure as eps.
-figname = strcat(options.stamp, '.', 'perf_', int2str(int32(-log10(tau))));
+figname = strcat(options.stamp, '.', 'perf_', int2str(int32(-log10(tau))), '.', options.time);
 epsname = fullfile(options.outdir, strcat(figname,'.eps'));
 saveas(hfig, epsname, 'epsc2');
 

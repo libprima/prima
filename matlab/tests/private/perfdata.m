@@ -1,7 +1,7 @@
 function perfdata(solvers, options)
 
-time = datestr(datetime(), 'yymmdd_HHMM');
 stamp = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim), '.', options.type);
+time = options.time;
 data_dir = options.data_dir;
 matfile = fullfile(data_dir, strcat(stamp, '.perfdata.mat'));
 
@@ -40,7 +40,7 @@ if ~exist(outdir, 'dir')
 end
 
 % Record the tested problems in `problems.txt`.
-fprob = fullfile(outdir, strcat(stamp, '.', 'problems.txt'));
+fprob = fullfile(outdir, strcat(stamp, '.', time, '.', 'problems.txt'));
 fid = fopen(fprob, 'w');
 if fid >= 3
     for k = 1 : length(plist)
@@ -56,6 +56,7 @@ prof_options = struct();
 prof_options.solvers = solvers;
 prof_options.outdir = outdir;
 prof_options.stamp = stamp;
+prof_options.time = time;
 for tau = 10.^(-1:-1:-10)
     prof_options.tau = tau;
     perfprof(frec, fmin, prof_options);
@@ -64,6 +65,9 @@ end
 
 % For convenience, save a copy of `problems.txt` and the figures in data_dir. They will be
 % overwritten in next test with the same `solvers` and `dimrange`.
+delete(fullfile(data_dir, strcat(stamp, '.perf_*.pdf')));
+delete(fullfile(data_dir, strcat(stamp, '.perf_*.eps')));
+delete(fullfile(data_dir, strcat(stamp, '*.problems.txt')));
 copyfile(fprob, data_dir);
 epsfiles = dir(fullfile(outdir, '*.eps'));
 for k = 1 : length(epsfiles)

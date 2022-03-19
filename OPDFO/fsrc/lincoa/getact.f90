@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 19, 2022 AM02:09:10
+! Last Modified: Saturday, March 19, 2022 AM11:20:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,33 +110,33 @@ iflag = 2
 ic = nact
 
 !---------------------------------------------!
-!70 temp = ZERO
-!do i = 1, n
-!    temp = temp + qfac(i, ic) * g(i)
-!end do
-!idiag = (ic * ic + ic) / 2
-!if (ic < nact) then
-!    jw = idiag + ic
-!    do j = ic + 1, nact
-!        temp = temp - rfac(jw) * vlam(j)
-!        jw = jw + j
-!    end do
-!end if
-
-70 temp1 = ZERO
+70 temp = ZERO
 do i = 1, n
-    temp1 = temp1 + qfac(i, ic) * g(i)
+    temp = temp + qfac(i, ic) * g(i)
 end do
 idiag = (ic * ic + ic) / 2
-temp2 = ZERO
 if (ic < nact) then
     jw = idiag + ic
     do j = ic + 1, nact
-        temp2 = temp2 + rfac(jw) * vlam(j)
+        temp = temp - rfac(jw) * vlam(j)
         jw = jw + j
     end do
 end if
-temp = temp1 - temp2
+
+!!70 temp1 = ZERO
+!!do i = 1, n
+!!    temp1 = temp1 + qfac(i, ic) * g(i)
+!!end do
+!!idiag = (ic * ic + ic) / 2
+!!temp2 = ZERO
+!!if (ic < nact) then
+!!    jw = idiag + ic
+!!    do j = ic + 1, nact
+!!        temp2 = temp2 + rfac(jw) * vlam(j)
+!!        jw = jw + j
+!!    end do
+!!end if
+!!temp = temp1 - temp2
 !---------------------------------------------!
 
 !--------------------------------!
