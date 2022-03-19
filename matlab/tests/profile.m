@@ -52,6 +52,9 @@ try
     % Specify where to store the test data.
     options.data_dir = data_dir;
 
+    % Time stamp
+    options.time = datestr(datetime(), 'yymmdd_HHMM');
+
     % Make the solvers available. Note that the solvers are under `test_dir`.
     get_solvers(solver, test_dir, options);
 
@@ -77,7 +80,26 @@ try
     showpath(solvers);
 
     % Profile the solvers.
-    tic; perfdata(solvers, options); toc;
+    tic;
+    perfdata(solvers, options);
+    options.reload = true;
+    if strcmpi(solver, 'cobyla')
+        options.type = 'n';
+        perfdata(solvers, options);
+    end
+    if ismember(solver, {'cobyla', 'lincoa'})
+        options.type = 'l';
+        perfdata(solvers, options);
+    end
+    if ismember(solver, {'cobyla', 'lincoa', 'bobyqa'})
+        options.type = 'b';
+        perfdata(solvers, options);
+    end
+    if ismember(solver, {'cobyla', 'lincoa', 'bobyqa', 'newuoa', 'uobyqa'})
+        options.type = 'u';
+        perfdata(solvers, options);
+    end
+    toc;
 
     % Show current path information again at the end of test.
     showpath(solvers);
