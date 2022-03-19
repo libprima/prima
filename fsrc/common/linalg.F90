@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 19, 2022 AM02:03:50
+! Last Modified: Saturday, March 19, 2022 AM09:52:51
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -2553,6 +2553,7 @@ else
         ! above, it is OK to write Y = MAXVAL(ABS(X)) below, but we append 0 for robustness.
         y = maxval([abs(x), ZERO])
     case default
+        y = -huge(x)  ! Without this, compiles complain that Y may be uninitialized.
         call errstop(srname, 'Unknown name of norm: '//trimstr(nname))
     end select
 end if
