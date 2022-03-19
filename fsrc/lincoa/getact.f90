@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 19, 2022 PM01:13:45
+! Last Modified: Sunday, March 20, 2022 AM12:23:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,29 +22,50 @@ public :: getact
 contains
 
 
-subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd, vlam)
+subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 !--------------------------------------------------------------------------------------------------!
-! The main purpose of GETACT is to pick the current active set. It is defined by the property that
-! the projection of -G into the space orthogonal to the active constraint normals is as large as
-! possible, subject to this projected steepest descent direction moving no closer to the boundary of
-! every constraint whose current residual is at most 0.2*SNORM. On return, the settings in NACT,
-! IACT, QFAC and RFAC are all appropriate to this choice of active set. The projected steepest
-! descent direction itself is returned in PSD, which can be ZERO occasionally.
+! This subroutine solves a linearly constrained projected problem (LCPP)
 !
-! AMAT, NACT, IACT, QFAC and RFAC are the same as the terms with these names in SUBROUTINE LINCOB.
-! The current values must be set on entry. NACT, IACT, QFAC and RFAC are kept up to date when GETACT
-! changes the current active set.
+! min ||D + G|| subject to AMAT(:, J)^T * D <= 0.
 !
-! SNORM, RESNEW, RESACT, G and PSD are the same as the terms with these names in SUBROUTINE TRSTEP.
+!The solution is PSD, which is a projected steepest descent direction PSD for a linearly
+! constrained trust-region subproblem (LCTRS)
+!
+! min Q(X_k + D)  subject to ||D|| <= Delta_k and AMAT^T*(X_k + D) <= B,
+!
+! where X_k is in R^N, B is in R^M, and AMAT is in R^{NxM}.
+!
+! In (LCPP), J is the index set defined in (3.3) of Powell 2015 as
+!
+! J = {j : B_j - A_j^T*Y <= 0.2*Delta_k*||A_j||, 1 <= j <= M} with A_j = AMAT(:, j),
+!
+! i.e., the index set of constraints in (LCTRS) that are nearly active (as per Powell, j is in J if
+! and only if the distance from Y to the boundary of the j-th constraint is at most 0.2*Delta_k.).
+! Here, Y is the point where G is taken, namely G = grad Q(Y). Y is not necessarily X_k, but an
+! iterate of the algorithm (truncated conjugate gradient) that solves (LCTRS). In LINCOA, ||A_j|| is
+! one because the gradients of the linear constraints are normalized before the algorithm starts.
+!
+! The subroutine solves (LCPP) by the active set method of Goldfarb-Idnani 1983. It does not only
+! calculate PSD, but also identify the active set of (LCPP) at the solution PSD, and maintains a QR
+! factorization of A corresponding to the active set. More specifically, IACT(1:NACT) is a set of
+! indices such that the columns of AMAT(:, IACT(1:NACT)) constitute a basis of the active constraint
+! gradients, ans QFAC*RFAC(:, 1:NACT) is the QR factorization of AMAT(:, IACT(1:NACT)) such that
+!
+! SIZE(QFAC) = [M, M], SIZE(RFAC, 1) = M, diag(RFAC(:, 1:NACT)) > 0.
+!
+! NACT, IACT, QFAC and RFAC across invocations of GETACT for warm starts.
+!
+! SNORM, RESNEW, RESACT, and G are the same as the terms with these names in SUBROUTINE TRSTEP.
 ! The elements of RESNEW and RESACT are also kept up to date.
 !
-! VLAM and W are used for working space, the vector VLAM being reserved for the Lagrange multipliers
-! of the calculation.
+! VLAM is the vector of Lagrange multipliers of the calculation.
+!
+! See Section 3 of Powell 2015 for more information.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert !, validate
+use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth, norm, lsqr, trueloc
 
 implicit none
@@ -64,7 +85,6 @@ real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N)
 
 ! Outputs
 real(RP), intent(out) :: psd(:)  ! PSD(N)
-real(RP), intent(out) :: vlam(:)  ! VLAM(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GETACT'
@@ -72,11 +92,14 @@ real(RP) :: apsd(size(amat, 2))
 real(RP) :: dd
 real(RP) :: tol
 real(RP) :: vmu(size(g))
+real(RP) :: vlam(size(g))
 real(RP) :: ddsav, dnorm, tdel, violmx, vmult
 integer(IK) :: i, ic, j, l
 
 logical :: mask(size(amat, 2))
 
+integer(IK) :: iter
+integer(IK) :: maxiter
 integer(IK) :: m
 integer(IK) :: n
 
@@ -147,16 +170,30 @@ end do
 ! convex hull of the constraint gradients.
 dd = ZERO  ! Must be set, in case NACT = N at this point.
 psd = ZERO  ! Must be set, in case NACT = N at this point.
-do while (nact < n)    ! Infinite cycling possible?
+! What about the default for others? QFAC? RFAC?
+!k = 0_IK
+
+! What is the theoretical maximal number of iterations in the following procedure? Powell's code for
+! this part is essentially a `DO WHILE (NACT < N) ... END DO` loop. We enforce the following maximal
+! number of iterations, which is never reached in our tests (indeed, even 2*N cannot be reached).
+maxiter = 2_IK * (m + n)
+do iter = 1_IK, maxiter
+    ! When NACT == N, exit with PSD = 0. Indeed, with a correctly implemented MATPROD, the lines
+    ! below this IF should render DD = 0 and trigger the exit. We do it explicitly for clarity.
+    if (nact >= n) then  ! Indeed, NACT > N should never happen.
+        psd = ZERO
+        exit
+    end if
+
     psd(nact + 1:n) = matprod(g, qfac(:, nact + 1:n))
     psd = -matprod(qfac(:, nact + 1:n), psd(nact + 1:n)) ! Projection of -G to range(QFAC(:,NACT+1:N))
     dd = inprod(psd, psd)
 
     if (dd >= ddsav) then
-        psd = ZERO
-        dd = ZERO  ! Why???
+        psd = ZERO  ! Why???
         exit
     end if
+
     if (dd == ZERO) exit
     ddsav = dd
     dnorm = sqrt(dd)
@@ -225,12 +262,16 @@ do while (nact < n)    ! Infinite cycling possible?
         end do
     end do  ! End of DO WHILE (VIOLMX > 0 .AND. NACT > 0)
 
+    !------------------------------------------!
+    !------------------------------------------!
+    !------------------------------------------!
+    call validate(nact > 0, 'NACT > 0', srname)
+    !------------------------------------------!
+    !------------------------------------------!
+    !------------------------------------------!
+
     if (nact == 0) exit  ! It can only come from DEL_ACT when VLAM(1:NACT) >= 0. Possible at all?
 end do  ! End of DO WHILE (NACT < N)
-
-if (nact == n) then  ! The projected steepest gradient descent direction must be ZERO in this case.
-    psd = ZERO
-end if
 
 ! if (nact == 0) then
 !   psd = -g
@@ -242,7 +283,10 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)  ! Is NACT = 0 possible?
+    ! During the development, we want to get informed if ITER reaches MAXITER.
+    call assert(iter < maxiter, 'ITER < MAXITER', srname)
+
+    call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)! Can NACT be 0?
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
 
