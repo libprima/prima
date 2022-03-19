@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 19, 2022 AM11:18:59
+! Last Modified: Saturday, March 19, 2022 PM01:12:02
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -932,8 +932,14 @@ do i = n, 1_IK, -1_IK
         temp = temp - R(i, j) * x(j)
     end do
     x(i) = temp / R(i, i)
-    !!x(i) = (inprod(Q(:, i), b) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
 end do
+
+!--------------------------------------------------------------------------------------------------!
+! The following is equivalent to the above, yet the above version works slightly better in LINCOA.
+!!do i = n, 1_IK, -1_IK
+!!    x(i) = (inprod(Q(:, i), b) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
+!!end do
+!--------------------------------------------------------------------------------------------------!
 
 !====================!
 !  Calculation ends  !

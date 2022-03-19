@@ -64,10 +64,13 @@ for tau = 10.^(-1:-1:-10)
 end
 
 % For convenience, save a copy of `problems.txt` and the figures in data_dir. They will be
-% overwritten in next test with the same `solvers` and `dimrange`.
+% replaced in next test with the same `solvers` and `dimrange`.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Remove the old files.
+delete(fullfile(data_dir, strcat(stamp, '.*.problems.txt')));
 delete(fullfile(data_dir, strcat(stamp, '.perf_*.pdf')));
 delete(fullfile(data_dir, strcat(stamp, '.perf_*.eps')));
-delete(fullfile(data_dir, strcat(stamp, '*.problems.txt')));
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 copyfile(fprob, data_dir);
 epsfiles = dir(fullfile(outdir, '*.eps'));
 for k = 1 : length(epsfiles)
