@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 04, 2022 PM12:15:11
+! Last Modified: Sunday, March 20, 2022 PM08:38:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,6 +27,7 @@ subroutine geostep(iact, knew, kopt, nact, amat, del, gl_in, pqw, qfac, rescon, 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : inprod
 
 implicit none
 
@@ -57,7 +58,7 @@ real(RP) :: rstat(size(amat, 2))
 real(RP) :: w(size(xopt))
 real(RP) :: gl(size(gl_in))
 real(RP) :: bigv, ctol, gg, ghg, resmax, sp, ss,  &
-&        stp, stpsav, summ, temp, test, vbig, vgrad, &
+&        stp, stpsav, summ, temp, mincv, vbig, vgrad, &
 &        vlag, vnew, ww
 integer(IK) :: i, j, jsav, k, ksav
 
@@ -116,16 +117,16 @@ gl = gl_in
 !       LFUNC(XOPT+STEP), subject to ||STEP|| .LE. DEL. A projected STEP is
 !       calculated too, within the trust region, that does not alter the
 !       residuals of the active constraints. The projected step is preferred
-!       if its value of | LFUNC(XOPT+STEP) | is at least ONE fifth of the
+!       if its value of |LFUNC(XOPT+STEP)| is at least ONE fifth of the
 !       original ONE, but the greatest violation of a linear constraint must
-!       be at least 0.2*DEL, in order to keep the interpolation points apart.
+!       be at least MINCV = 0.2*DEL, in order to keep the interpolation points apart.
 !       The remedy when the maximum constraint violation is too small is to
 !       restore the original step, which is perturbed if necessary so that
-!       its maximum constraint violation becomes 0.2*DEL.
+!       its maximum constraint violation becomes MINCV.
 !
 !     Set some constants.
 !
-test = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
+mincv = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
 !
 !     Replace GL by the gradient of LFUNC at the trust region centre, and
 !       set the elements of RSTAT.
@@ -143,15 +144,22 @@ do k = 1, npt
         gl(i) = gl(i) + temp * xpt(i, k)
     end do
 end do
-if (m > 0) then
-    do j = 1, m
-        rstat(j) = ONE
-        if (abs(rescon(j)) >= del) rstat(j) = -ONE
-    end do
-    do k = 1, nact
-        rstat(iact(k)) = ZERO
-    end do
-end if
+!if (m > 0) then
+!    do j = 1, m
+!        rstat(j) = ONE
+!        if (abs(rescon(j)) >= del) rstat(j) = -ONE
+!    end do
+!    do k = 1, nact
+!        rstat(iact(k)) = ZERO
+!    end do
+!end if
+
+rstat = ONE
+where (abs(rescon) >= del)
+    rstat = -ONE
+end where
+rstat(iact(1:nact)) = ZERO
+
 !
 !     Find the greatest modulus of LFUNC on a line through XOPT and
 !       another interpolation point within the trust region.
@@ -265,26 +273,44 @@ end do
 !
 !     Set STEP to W if W gives a sufficiently large value of the modulus
 !       of the Lagrange function, and if W either preserves feasibility
-!       or gives a constraint violation of at least 0.2*DEL. The purpose
+!       or gives a constraint violation of at least MINCV. The purpose
 !       of CTOL below is to provide a check on feasibility that includes
 !       a tolerance for contributions from computer rounding errors.
 !
 if (vnew / vbig >= 0.2_RP) then
     ifeas = 1
     bigv = ZERO
-    j = 0
-170 j = j + 1
-    if (j <= m) then
+    !j = 0
+!170 j = j + 1
+    !if (j <= m) then
+    !    if (rstat(j) == ONE) then
+    !        temp = -rescon(j)
+    !        do i = 1, n
+    !            temp = temp + w(i) * amat(i, j)
+    !        end do
+    !        bigv = max(bigv, temp)
+    !    end if
+    !    if (bigv < mincv) goto 170
+    !    ifeas = 0
+    !end if
+    do j = 1, m
         if (rstat(j) == ONE) then
-            temp = -rescon(j)
-            do i = 1, n
-                temp = temp + w(i) * amat(i, j)
-            end do
-            bigv = max(bigv, temp)
+            !temp = -rescon(j)
+            !do i = 1, n
+            !    temp = temp + w(i) * amat(i, j)
+            !end do
+            !bigv = max(bigv, temp)
+
+            bigv = max(bigv, inprod(amat(:, j), w) - rescon(j))  ! Calculation changed
         end if
-        if (bigv < test) goto 170
-        ifeas = 0
-    end if
+        if (.not. bigv < mincv) then
+            ifeas = 0
+            exit
+        end if
+    end do
+
+    !bigv = max(ZERO, cummax(matrod(w, amat) - rescon, mask=(rstat == ONE)))
+
     ctol = ZERO
     temp = 0.01_RP * sqrt(ww)
     if (bigv > ZERO .and. bigv < temp) then
@@ -297,7 +323,7 @@ if (vnew / vbig >= 0.2_RP) then
             ctol = max(ctol, abs(summ))
         end do
     end if
-    if (bigv <= TEN * ctol .or. bigv >= test) then
+    if (bigv <= TEN * ctol .or. bigv >= mincv) then
         do i = 1, n
             step(i) = w(i)
         end do
@@ -322,7 +348,7 @@ if (j <= m) then
     resmax = max(resmax, temp)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !          IF (TEMP .LT. TEST) THEN
-    if (.not. (temp >= test)) then
+    if (.not. (temp >= mincv)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (temp <= bigv) goto 230
         bigv = temp
@@ -334,7 +360,7 @@ if (j <= m) then
 end if
 if (ifeas == -1) then
     do i = 1, n
-        step(i) = step(i) + (test - bigv) * amat(i, jsav)
+        step(i) = step(i) + (mincv - bigv) * amat(i, jsav)
     end do
     ifeas = 0
 end if
