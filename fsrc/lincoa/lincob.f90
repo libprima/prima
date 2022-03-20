@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 PM05:18:55
+! Last Modified: Sunday, March 20, 2022 PM05:46:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -792,7 +792,7 @@ if (f < fopt .and. ifeas == 1) then
     !!END WHERE
 
     where (abs(rescon) >= snorm + delta)
-        rescon = max(-abs(rescon) + snorm, -delta)
+        rescon = min(-abs(rescon) + snorm, -delta)
     elsewhere
         rescon = max(b - matprod(xopt, amat), ZERO)
         where (rescon >= delta)

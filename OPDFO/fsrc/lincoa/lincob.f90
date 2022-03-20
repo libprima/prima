@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 PM05:18:13
+! Last Modified: Sunday, March 20, 2022 PM05:36:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -783,7 +783,7 @@ if (f < fopt .and. ifeas == 1) then
         !end if
         if (rescon(j) >= delta + snorm) then
             rescon(j) = min(-rescon(j) + snorm, -delta)
-        elseif (rescon(j) <= -delta - snorm) then
+        elseif (rescon(j) <= -(delta + snorm)) then
             rescon(j) = min(rescon(j) + snorm, -delta)
         else
             !if (rescon(j) +snorm + delta > ZERO) then
