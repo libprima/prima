@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 AM12:23:10
+! Last Modified: Sunday, March 20, 2022 AM11:10:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,15 +35,15 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 !
 ! where X_k is in R^N, B is in R^M, and AMAT is in R^{NxM}.
 !
-! In (LCPP), J is the index set defined in (3.3) of Powell 2015 as
+! In (LCPP), J is the index set defined in (3.3) of Powell (2015) as
 !
 ! J = {j : B_j - A_j^T*Y <= 0.2*Delta_k*||A_j||, 1 <= j <= M} with A_j = AMAT(:, j),
 !
 ! i.e., the index set of constraints in (LCTRS) that are nearly active (as per Powell, j is in J if
-! and only if the distance from Y to the boundary of the j-th constraint is at most 0.2*Delta_k.).
+! and only if the distance from Y to the boundary of the j-th constraint is at most 0.2*Delta_k).
 ! Here, Y is the point where G is taken, namely G = grad Q(Y). Y is not necessarily X_k, but an
-! iterate of the algorithm (truncated conjugate gradient) that solves (LCTRS). In LINCOA, ||A_j|| is
-! one because the gradients of the linear constraints are normalized before the algorithm starts.
+! iterate of the algorithm (e.g., truncated conjugate gradient) that solves (LCTRS). In LINCOA,
+! ||A_j|| is 1 as the gradients of the linear constraints are normalized before LINCOA starts.
 !
 ! The subroutine solves (LCPP) by the active set method of Goldfarb-Idnani 1983. It does not only
 ! calculate PSD, but also identify the active set of (LCPP) at the solution PSD, and maintains a QR
@@ -60,7 +60,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 !
 ! VLAM is the vector of Lagrange multipliers of the calculation.
 !
-! See Section 3 of Powell 2015 for more information.
+! See Section 3 of Powell (2015) for more information.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -147,7 +147,7 @@ end if
 ! Remove any constraints from the initial active set whose residuals exceed TDEL.
 do ic = nact, 1, -1
     if (resact(ic) > tdel) then
-        ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
+        ! Delete constraint IACT(IC) from the active set, and set NACT = NACT - 1.
         call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
     end if
 end do
@@ -178,8 +178,8 @@ psd = ZERO  ! Must be set, in case NACT = N at this point.
 ! number of iterations, which is never reached in our tests (indeed, even 2*N cannot be reached).
 maxiter = 2_IK * (m + n)
 do iter = 1_IK, maxiter
-    ! When NACT == N, exit with PSD = 0. Indeed, with a correctly implemented MATPROD, the lines
-    ! below this IF should render DD = 0 and trigger the exit. We do it explicitly for clarity.
+    ! When NACT == N, exit with PSD = 0. Indeed, with a correctly implemented matrix product, the
+    ! lines below this IF should render DD = 0 and trigger the exit. We do it explicitly for clarity.
     if (nact >= n) then  ! Indeed, NACT > N should never happen.
         psd = ZERO
         exit
@@ -190,7 +190,7 @@ do iter = 1_IK, maxiter
     dd = inprod(psd, psd)
 
     if (dd >= ddsav) then
-        psd = ZERO  ! Why???
+        psd = ZERO  ! This is from Powell's code. Why???
         exit
     end if
 
@@ -198,7 +198,8 @@ do iter = 1_IK, maxiter
     ddsav = dd
     dnorm = sqrt(dd)
 
-    ! Pick L, which is the index of the most violated constraint. Terminate if this violation is 0.
+    ! Pick the next integer L or terminate, a positive value of L being the index of the most
+    ! violated constraint.
     apsd = matprod(psd, amat)
     mask = (resnew > 0 .and. resnew <= tdel .and. apsd > (dnorm / snorm) * resnew)
     if (any(mask)) then
@@ -217,7 +218,8 @@ do iter = 1_IK, maxiter
     ! Python, R, and Julia, the maximum of an empty array raises errors/warnings (as of 20220318).
     if (violmx < 0.01_RP * dnorm .and. violmx <= TEN * norm(apsd(iact(1:nact)), 'inf')) exit
 
-    call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT + 1, VLAM(NACT) = 0.
+    ! Add constraint L to the active set. It sets NACT = NACT + 1 and VLAM(NACT) = 0.
+    call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)
 
     ! Set the components of the vector VMU if VIOLMX is positive.
     ! N.B.:
@@ -226,7 +228,7 @@ do iter = 1_IK, maxiter
     ! 2. The loop will run for at most NACT <= N times: if VIOLMX > 0, then IC > 0, and hence
     ! VLAM(IC) = 0, which implies that DEL_ACT will be called to reduce NACT by 1.
     do while (violmx > 0 .and. nact > 0)
-        vmu(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive! Reason for SIGFAULT?
+        vmu(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive!
         do i = nact - 1, 1, -1
             vmu(i) = -inprod(rfac(i, i + 1:nact), vmu(i + 1:nact)) / rfac(i, i)
         end do

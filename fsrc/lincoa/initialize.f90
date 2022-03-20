@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM09:28:13
+! Last Modified: Sunday, March 20, 2022 PM03:14:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -357,18 +357,36 @@ end do
 
 hq = ZERO
 
+!!
+!!     Set the initial elements of RESCON.
+!!
+!do j = 1, m
+!    temp = b(j)
+!    do i = 1, n
+!        temp = temp - xopt(i) * amat(i, j)
+!    end do
+!    temp = max(temp, ZERO)
+!    if (temp >= rhobeg) temp = -temp
+!    rescon(j) = temp
+!end do
+
 !
 !     Set the initial elements of RESCON.
 !
-do j = 1, m
-    temp = b(j)
-    do i = 1, n
-        temp = temp - xopt(i) * amat(i, j)
-    end do
-    temp = max(temp, ZERO)
-    if (temp >= rhobeg) temp = -temp
-    rescon(j) = temp
-end do
+!     RESCON holds useful information about the constraint residuals. Every
+!       nonnegative RESCON(J) is the residual of the J-th constraint at the
+!       current trust region centre. Otherwise, if RESCON(J) is negative, the
+!       J-th constraint holds as a strict inequality at the trust region
+!       centre, its residual being at least |RESCON(J)|; further, the value
+!       of |RESCON(J)| is at least the current trust region radius DELTA.
+!
+! 1. Normally, RESCON = B - AMAT^T*XOPT (theoretically, B - AMAT^T*XOPT >= 0 since XOPT is feasible)
+! 2. If RESCON(J) >= DELTA (current trust-region radius), its sign is flipped: RESCON(J) = -RESCON(J).
+rescon = max(b - matprod(xopt, amat), ZERO)
+where (rescon >= rhobeg)
+    rescon = -rescon
+end where
+
 
 end subroutine initialize
 
