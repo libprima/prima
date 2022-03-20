@@ -88,7 +88,8 @@ common_files = [list_files(common, filelist), fullfile(gateways, 'fmxapi.F'), fu
 
 fprintf('Compiling the common files ... ');
 for idbg = 1 : length(debug_flags)
-    mex_options = {ad_option, '-silent', ['-', dbgstr(debug_flags{idbg})]};
+    %mex_options = {ad_option, '-silent', ['-', dbgstr(debug_flags{idbg})]};
+    mex_options = {ad_option, 'FFLAGS=-ffp-contract=off'};
     for iprc = 1 : length(precisions)
         prepare_header(header_file, precisions{iprc}, debug_flags{idbg});
         work_dir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
@@ -129,7 +130,8 @@ for isol = 1 : length(solvers)
                 % The support for the classical variant is limited. No debugging version.
                 continue
             end
-            mex_options = {ad_option, '-silent', ['-', dbgstr(debug_flags{idbg})]};
+            %mex_options = {ad_option, '-silent', ['-', dbgstr(debug_flags{idbg})]};
+            mex_options = {ad_option, 'FFLAGS=-ffp-contract=off'};
             for iprc = 1 : length(precisions)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
