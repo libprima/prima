@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 04, 2022 PM05:30:10
+! Last Modified: Sunday, March 20, 2022 PM03:12:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -310,10 +310,17 @@ end do
 !     Set the initial elements of RESCON.
 !
 do j = 1, m
-    temp = b(j)
+    !---------------------------------------!
+    !temp = b(j)
+    !do i = 1, n
+    !    temp = temp - xopt(i) * amat(i, j)
+    !end do
+    temp = ZERO
     do i = 1, n
-        temp = temp - xopt(i) * amat(i, j)
+        temp = temp + xopt(i) * amat(i, j)
     end do
+    temp = b(j) - temp
+    !---------------------------------------!
     temp = max(temp, ZERO)
     if (temp >= rhobeg) temp = -temp
     rescon(j) = temp

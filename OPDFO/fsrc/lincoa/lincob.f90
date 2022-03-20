@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:33:39
+! Last Modified: Sunday, March 20, 2022 PM04:35:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -765,10 +765,17 @@ if (f < fopt .and. ifeas == 1) then
         else
             rescon(j) = rescon(j) + snorm
             if (rescon(j) + delta > ZERO) then
-                temp = b(j)
+                !-----------------------------------------!
+                !temp = b(j)
+                !do i = 1, n
+                !    temp = temp - xopt(i) * amat(i, j)
+                !end do
+                temp = ZERO
                 do i = 1, n
-                    temp = temp - xopt(i) * amat(i, j)
+                    temp = temp + xopt(i) * amat(i, j)
                 end do
+                temp = b(j) - temp
+                !-----------------------------------------!
                 temp = max(temp, ZERO)
                 if (temp >= delta) temp = -temp
                 rescon(j) = temp
