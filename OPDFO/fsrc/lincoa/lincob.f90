@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 PM04:35:35
+! Last Modified: Sunday, March 20, 2022 PM05:18:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -760,26 +760,48 @@ if (f < fopt .and. ifeas == 1) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     snorm = sqrt(ssq)
     do j = 1, m
+        !if (rescon(j) >= delta + snorm) then
+        !    rescon(j) = snorm - rescon(j)
+        !else
+        !    rescon(j) = rescon(j) + snorm
+        !    if (rescon(j) + delta > ZERO) then
+        !        !-----------------------------------------!
+        !        !temp = b(j)
+        !        !do i = 1, n
+        !        !    temp = temp - xopt(i) * amat(i, j)
+        !        !end do
+        !        temp = ZERO
+        !        do i = 1, n
+        !            temp = temp + xopt(i) * amat(i, j)
+        !        end do
+        !        temp = b(j) - temp
+        !        !-----------------------------------------!
+        !        temp = max(temp, ZERO)
+        !        if (temp >= delta) temp = -temp
+        !        rescon(j) = temp
+        !    end if
+        !end if
         if (rescon(j) >= delta + snorm) then
-            rescon(j) = snorm - rescon(j)
+            rescon(j) = min(-rescon(j) + snorm, -delta)
+        elseif (rescon(j) <= -delta - snorm) then
+            rescon(j) = min(rescon(j) + snorm, -delta)
         else
-            rescon(j) = rescon(j) + snorm
-            if (rescon(j) + delta > ZERO) then
-                !-----------------------------------------!
-                !temp = b(j)
-                !do i = 1, n
-                !    temp = temp - xopt(i) * amat(i, j)
-                !end do
-                temp = ZERO
-                do i = 1, n
-                    temp = temp + xopt(i) * amat(i, j)
-                end do
-                temp = b(j) - temp
-                !-----------------------------------------!
-                temp = max(temp, ZERO)
-                if (temp >= delta) temp = -temp
-                rescon(j) = temp
-            end if
+            !if (rescon(j) +snorm + delta > ZERO) then
+            !-----------------------------------------!
+            !temp = b(j)
+            !do i = 1, n
+            !    temp = temp - xopt(i) * amat(i, j)
+            !end do
+            temp = ZERO
+            do i = 1, n
+                temp = temp + xopt(i) * amat(i, j)
+            end do
+            temp = b(j) - temp
+            !-----------------------------------------!
+            temp = max(temp, ZERO)
+            if (temp >= delta) temp = -temp
+            rescon(j) = temp
+            !end if
         end if
     end do
     do k = 1, npt

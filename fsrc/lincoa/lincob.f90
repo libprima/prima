@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 PM04:53:54
+! Last Modified: Sunday, March 20, 2022 PM05:18:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -786,56 +786,39 @@ if (f < fopt .and. ifeas == 1) then
     ! RESCON can be updated without evaluating the constraints that are far from being active:
     !
     !!WHERE (RESCON >= DELTA + SNORM)
-    !!    RESCON = RESCON - SNORM
+    !!    RESCON = MAX(RESCON - SNORM, DELTA)
     !!ELSEWHERE
     !!    RESCON = MAX(B - MATPROD(XOPT, AMAT), ZERO)
     !!END WHERE
 
-    !where (abs(rescon) >= snorm + delta)
-    !    rescon = snorm - abs(rescon)
-    !elsewhere
-    !    rescon = max(b - matprod(xopt, amat), ZERO)
-    !    where (rescon >= delta)
-    !        rescon = -rescon
-    !    end where
-    !end where
-
-    where (rescon >= delta + snorm)
-        rescon = snorm - rescon
-        ! Before the update, RESCON(J) >= 0. Hence RESCON(J) = B(J) - AMAT(:, J)^T*XOPT_OLD. In
-        ! addition, RESCON(J) so large constraint J has a residual at least DELTA at the new XOPT,
-        ! i.e., XNEW, because B(J) - AMAT(:, J)^T*XNEW >= RESCON(J)-|STEP| = RESCON(J) - SNORM.
-        ! Thus RESCON(J) = SNORM - RESCON satisfies B(J) - AMAT(:, J)^T*XNEW >= |RESCON(J)| >= DELTA.
+    where (abs(rescon) >= snorm + delta)
+        rescon = max(-abs(rescon) + snorm, -delta)
     elsewhere
-        rescon = snorm + rescon
-        ! If RESCON(J) + DELTA <= 0, then, before the update, SNORM + RESCON(J) + DELTA <= 0, i.e.,
-        ! RESCON(J) <= -(SNORM + DELTA) < 0, and hence B(J) - AMAT(:, J)^T*XOPT_OLD >= |RESCON(J)|
-        ! >= SNORM + DELTA. Thus RESCON(J) = SNORM + RESCON(J) satisfies  B(J) - AMAT(:, J)^T*XNEW
-        ! >= B(J) - AMAT(:, J)^T*XOPT_OLD - SNORM >= |RESCON(J)| >= DELTA.
-        where (rescon + delta > 0)
-            rescon = max(b - matprod(xopt, amat), ZERO)
-            where (rescon >= delta)
-                rescon = -rescon
-            end where
+        rescon = max(b - matprod(xopt, amat), ZERO)
+        where (rescon >= delta)
+            rescon = -rescon
         end where
     end where
 
-    !do j = 1, m
-    !    if (rescon(j) >= delta + snorm) then
-    !        rescon(j) = snorm - rescon(j)
-    !    else
-    !        rescon(j) = rescon(j) + snorm
-    !        if (rescon(j) + delta > ZERO) then
-    !            temp = b(j)
-    !            do i = 1, n
-    !                temp = temp - xopt(i) * amat(i, j)
-    !            end do
-    !            temp = max(temp, ZERO)
-    !            if (temp >= delta) temp = -temp
-    !            rescon(j) = temp
-    !        end if
-    !    end if
-    !end do
+    !where (rescon >= delta + snorm)
+    !    rescon = snorm - rescon
+    !    ! Before the update, RESCON(J) >= 0. Hence RESCON(J) = B(J) - AMAT(:, J)^T*XOPT_OLD. In
+    !    ! addition, RESCON(J) so large constraint J has a residual at least DELTA at the new XOPT,
+    !    ! i.e., XNEW, because B(J) - AMAT(:, J)^T*XNEW >= RESCON(J)-|STEP| = RESCON(J) - SNORM.
+    !    ! Thus RESCON(J) = SNORM - RESCON satisfies B(J) - AMAT(:, J)^T*XNEW >= |RESCON(J)| >= DELTA.
+    !elsewhere
+    !    rescon = snorm + rescon
+    !    ! If RESCON(J) + DELTA <= 0, then, before the update, SNORM + RESCON(J) + DELTA <= 0, i.e.,
+    !    ! RESCON(J) <= -(SNORM + DELTA) < 0, and hence B(J) - AMAT(:, J)^T*XOPT_OLD >= |RESCON(J)|
+    !    ! >= SNORM + DELTA. Thus RESCON(J) = SNORM + RESCON(J) satisfies  B(J) - AMAT(:, J)^T*XNEW
+    !    ! >= B(J) - AMAT(:, J)^T*XOPT_OLD - SNORM >= |RESCON(J)| >= DELTA.
+    !    where (rescon + delta > 0)
+    !        rescon = max(b - matprod(xopt, amat), ZERO)
+    !        where (rescon >= delta)
+    !            rescon = -rescon
+    !        end where
+    !    end where
+    !end where
 
     do k = 1, npt
         rsp(k) = rsp(k) + rsp(npt + k)
