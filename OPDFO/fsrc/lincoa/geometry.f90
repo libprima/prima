@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM10:39:35
+! Last Modified: Sunday, March 20, 2022 PM07:46:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -238,10 +238,15 @@ if (vnew / vbig >= 0.2_RP) then
 170 j = j + 1
     if (j <= m) then
         if (rstat(j) == ONE) then
-            temp = -rescon(j)
+            !temp = -rescon(j)
+            !do i = 1, n
+            !    temp = temp + w(i) * amat(i, j)
+            !end do
+            temp = ZERO
             do i = 1, n
                 temp = temp + w(i) * amat(i, j)
             end do
+            temp = temp - rescon(j)
             bigv = max(bigv, temp)
         end if
         if (bigv < test) goto 170

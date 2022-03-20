@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 PM03:14:10
+! Last Modified: Sunday, March 20, 2022 PM08:13:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -382,7 +382,7 @@ hq = ZERO
 !
 ! 1. Normally, RESCON = B - AMAT^T*XOPT (theoretically, B - AMAT^T*XOPT >= 0 since XOPT is feasible)
 ! 2. If RESCON(J) >= DELTA (current trust-region radius), its sign is flipped: RESCON(J) = -RESCON(J).
-rescon = max(b - matprod(xopt, amat), ZERO)
+rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
 where (rescon >= rhobeg)
     rescon = -rescon
 end where
