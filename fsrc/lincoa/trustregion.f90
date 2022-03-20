@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 19, 2022 PM11:05:45
+! Last Modified: Sunday, March 20, 2022 PM07:17:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -138,24 +138,39 @@ snorm = delta
 !--------------------------------------------------------------------------------------------------!
 snsq = snorm * snorm
 !
-!     Set the initial elements of RESNEW, RESACT and STEP.
+! Set the initial elements of RESNEW, RESACT and STEP.
 !
-if (m > 0) then
-    do j = 1, m
-        resnew(j) = rescon(j)
-        if (rescon(j) >= snorm) then
-            resnew(j) = -ONE
-        else if (rescon(j) >= ZERO) then
-            resnew(j) = max(resnew(j), TINYCV)
-        end if
-    end do
-    if (nact > 0) then
-        do k = 1, nact
-            resact(k) = rescon(iact(k))
-            resnew(iact(k)) = ZERO
-        end do
-    end if
-end if
+! 1. RESNEW(J) < 0 indicates that the J-th constraint does not restrict the CG steps of the current
+! trust region calculation. In other words, RESCON >= DELTA.
+! 2. RESNEW(J) = 0 indicates that the J-th constraint is active, namely B(J) = AMAT(:, J)^T*(XOPT+D).
+! 3. RESNEW(J) > 0 means that RESNEW(J) = max(B(J) - AMAT(:, J)^T*(XOPT+D), TINYCV).
+!if (m > 0) then
+!do j = 1, m
+!    resnew(j) = rescon(j)
+!    if (rescon(j) >= snorm) then
+!        resnew(j) = -ONE
+!    else if (rescon(j) >= ZERO) then
+!        resnew(j) = max(resnew(j), TINYCV)
+!    end if
+!end do
+!if (nact > 0) then
+!    do k = 1, nact
+!        resact(k) = rescon(iact(k))
+!        resnew(iact(k)) = ZERO
+!    end do
+!end if
+!end if
+
+where (rescon >= snorm)
+    resnew = -ONE
+elsewhere(rescon >= 0)
+    resnew = max(rescon, TINYCV)
+elsewhere
+    resnew = rescon
+end where
+resnew(iact(1:nact)) = ZERO
+resact(1:nact) = rescon(iact(1:nact))
+
 step = ZERO
 ss = ZERO
 reduct = ZERO
@@ -231,9 +246,26 @@ if (resmax > 1.0D-4 * snorm) then
 !     Reduce the steplength BSTEP if necessary so that the move along D
 !       also satisfies the linear constraints.
 !
-    j = 0
-110 if (bstep > ZERO) then
-        j = j + 1
+    !j = 0
+!110 if (bstep > ZERO) then
+    !    j = j + 1
+    !    if (resnew(j) > ZERO) then
+    !        ad = ZERO
+    !        adw = ZERO
+    !        do i = 1, n
+    !            ad = ad + amat(i, j) * d(i)
+    !            adw = adw + amat(i, j) * dw(i)
+    !        end do
+    !        if (ad > ZERO) then
+    !            temp = max((resnew(j) - adw) / ad, ZERO)
+    !            bstep = min(bstep, temp)
+    !        end if
+    !    end if
+    !    if (j < m) goto 110
+    !end if
+
+    do j = 1, m
+        if (.not. bstep > 0) exit
         if (resnew(j) > ZERO) then
             ad = ZERO
             adw = ZERO
@@ -246,8 +278,8 @@ if (resmax > 1.0D-4 * snorm) then
                 bstep = min(bstep, temp)
             end if
         end if
-        if (j < m) goto 110
-    end if
+    end do
+
     bstep = min(bstep, ONE)
 end if
 !
@@ -328,21 +360,21 @@ end if
 !
 alphm = alpha
 jsav = 0
-if (m > 0) then
-    do j = 1, m
-        ad = ZERO
-        if (resnew(j) > ZERO) then
-            do i = 1, n
-                ad = ad + amat(i, j) * d(i)
-            end do
-            if (alpha * ad > resnew(j)) then
-                alpha = resnew(j) / ad
-                jsav = j
-            end if
+!if (m > 0) then
+do j = 1, m
+    ad = ZERO
+    if (resnew(j) > ZERO) then
+        do i = 1, n
+            ad = ad + amat(i, j) * d(i)
+        end do
+        if (alpha * ad > resnew(j)) then
+            alpha = resnew(j) / ad
+            jsav = j
         end if
-        w(j) = ad
-    end do
-end if
+    end if
+    w(j) = ad
+end do
+!end if
 alpha = max(alpha, alpbd)
 alpha = min(alpha, alphm)
 if (icount == nact) alpha = min(alpha, ONE)
@@ -355,13 +387,18 @@ do i = 1, n
     ss = ss + step(i)**2
     g(i) = g(i) + alpha * dw(i)
 end do
-if (m > 0) then
-    do j = 1, m
-        if (resnew(j) > ZERO) then
-            resnew(j) = max(resnew(j) - alpha * w(j), TINYCV)
-        end if
-    end do
-end if
+
+where (resnew > 0)
+    resnew = max(resnew - alpha * w, TINYCV)
+end where
+
+!if (m > 0) then
+!do j = 1, m
+!    if (resnew(j) > ZERO) then
+!        resnew(j) = max(resnew(j) - alpha * w(j), TINYCV)
+!    end if
+!end do
+!end if
 if (icount == nact .and. nact > 0) then
     do k = 1, nact
         resact(k) = (ONE - bstep) * resact(k)
