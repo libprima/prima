@@ -389,7 +389,7 @@ do i = 1, n
 end do
 
 where (resnew > 0)
-    resnew = max(resnew - alpha * w, TINYCV)
+    resnew = max(resnew - alpha * w(1:m), TINYCV)
 end where
 
 !if (m > 0) then
