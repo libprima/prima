@@ -8,7 +8,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:48:50
+! Last Modified: Tuesday, March 22, 2022 PM01:36:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,10 @@ subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 !--------------------------------------------------------------------------------------------------!
 ! SHIFTBASE shifts the base point for XBASE to XBASE + XOPT and updates GQ, HQ, and BMAT
 ! accordingly. PQ and ZMAT remain the same after the shifting. See Section 7 of the NEWUOA paper.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: SUMZ(NPT-N-1), VLAG(N), W1(NPT), W2(N), XPQ(N)
+! Size of local arrays: REAL(RP)*(2*NPT+2*N-1)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

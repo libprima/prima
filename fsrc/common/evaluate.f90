@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Tuesday, February 08, 2022 PM09:59:49
+! Last Modified: Tuesday, March 22, 2022 PM04:57:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -114,7 +114,7 @@ real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
 
 ! Local variables
-character(len=*), parameter :: srname = 'EVALF'
+character(len=*), parameter :: srname = 'EVALUATEF'
 
 ! Preconditions
 if (DEBUGGING) then
@@ -178,7 +178,7 @@ real(RP), intent(out) :: constr(:)
 real(RP), intent(out) :: cstrv
 
 ! Local variables
-character(len=*), parameter :: srname = 'EVALFC'
+character(len=*), parameter :: srname = 'EVALUATEFC'
 
 ! Preconditions
 if (DEBUGGING) then

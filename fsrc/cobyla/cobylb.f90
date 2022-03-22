@@ -8,7 +8,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, March 11, 2022 PM10:04:21
+! Last Modified: Tuesday, March 22, 2022 PM04:51:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -537,6 +537,11 @@ function fcratio(fval, conmat) result(r)
 ! This function calculates the ratio between the "typical change" of F and that of CONSTR.
 ! See equations (12)--(13) in Section 3 of the COBYLA paper for the definition of the ratio.
 !--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: CMAX(M), CMIN(M)
+! Size of local arrays: REAL(RP)*(2*M)
+!--------------------------------------------------------------------------------------------------!
+
 use, non_intrinsic :: consts_mod, only : RP, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none

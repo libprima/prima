@@ -85,6 +85,8 @@ else
 end if
 
 select case (lower(trimstr(probname)))
+case ('bigprob')
+    call construct_bigprob(prob, n_loc)
 case ('chebyquad')
     call construct_chebyquad(prob, n_loc)
 case ('chrosen')
@@ -158,6 +160,7 @@ nullify (prob % calfun)
 nullify (prob % calcfc)
 end subroutine destruct
 
+include 'bigprob.f90'
 
 include 'chebyquad.f90'
 

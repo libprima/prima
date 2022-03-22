@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tue 15 Mar 2022 08:38:46 PM CST
+! Last Modified: Tuesday, March 22, 2022 PM04:28:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,6 +53,19 @@ function trstlp(A, b, delta) result(d)
 ! constraints at d, the ordering of the components of VMULTC being in agreement with the permutation
 ! of the indices of the constraints that is in IACT. All these residuals are nonnegative, which is
 ! achieved by the shift CSTRV that makes the least residual zero.
+!
+! N.B.:
+! 1. The algorithm was NOT documented in the COBYLA paper. A note should be written to introduce it!
+! 2. As a major part of the algorithm (see TRSTLP_SUB), the code maintains and updates the QR
+! factorization of A(IACT(1:NACT)), i.e., the gradients of all the active (linear) constraints. The
+! matrix Z is indeed Q, and the vector ZDOTA is the diagonal of R. The factorization is updated by
+! Givens rotations when an index is added in or removed from IACT.
+! 3. There are probably better algorithms available for this trust-region linear programming problem.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! INTEGER(IK) :: IACT(M+1)
+! REAL(RP) :: D(N), VMULTC(M+1), Z(N, N)
+! Size of local arrays: INTEGER(IK)*(M+1) + REAL(RP)*(1+M+N+N^2)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -108,17 +121,6 @@ end if
 end function trstlp
 
 
-!--------------------------------------------------------------------------------------------------!
-! N.B.:
-! 1. The algorithm was NOT documented in the COBYLA paper. A note should be written to introduce it!
-! 2. As a major part of the algorithm, the code maintains and updates the QR factorization of
-! A(IACT(1:NACT)), i.e., the gradients of all the active (linear) constraints. The matrix Z is
-! indeed Q, and the vector ZDOTA is the diagonal of R. The factorization is updated by Givens
-! rotations when an index is added in or removed from IACT.
-! 3. There are probably better algorithms available for this trust-region linear programming problem.
-!--------------------------------------------------------------------------------------------------!
-
-
 subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the real calculations for TRSTLP, both stage 1 and stage 2.
@@ -129,6 +131,11 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 ! 3. SDIRN. See the definition of SDIRN in the code for details.
 ! 4. OPTNEW. The two stages have different objectives, so OPTNEW is updated differently.
 ! 5. STEP. STEP <= CSTRV in stage 1.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: D(N), CVSABA(MCON), CVSHIFT(MCON), DNEW(N), DOLD(N), FRACMULT(MCON), SDIRN(N), &
+!    & VMULTD(MCON), ZDASAV(N), ZDOTA(N)
+! Size of local arrays: REAL(RP)*(4*MCON+6*N) (MCON = M+1 or M)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -559,6 +566,8 @@ end subroutine trstlp_sub
 function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
 !--------------------------------------------------------------------------------------------------!
 ! This function updates the trust region radius according to RATIO and DNORM.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic module
