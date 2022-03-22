@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, February 25, 2022 PM08:35:17
+! Last Modified: Tuesday, March 22, 2022 PM02:33:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ contains
 
 subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 !--------------------------------------------------------------------------------------------------!
-! TRSAPP finds an approximate solution to the N-dimensional trust region subproblem
+! This subroutine finds an approximate solution to the N-dimensional trust region subproblem
 !
 ! min <X+S, GQ> + 0.5*<X+S, HESSIAN*(X+S)> s.t. ||S|| <= DELTA
 !
@@ -44,6 +44,11 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 ! INFO = 1: the iteration is reducing Q only slightly;
 ! INFO = 2: the maximal number of iterations is attained;
 ! INFO = -1: too much rounding error to continue
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: ARGS(4), G(N), D(N) HD(N), HS(N), HX(N), SOLD(N)
+! Size of local arrays: REAL(RP)*(4+6*N)
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, DEBUGGING
@@ -364,6 +369,11 @@ end subroutine trsapp
 
 
 function circle_fun_trsapp(theta, args) result(f)
+!--------------------------------------------------------------------------------------------------!
+! This function defines the objective function of the 2D search on a circle in TRSAPP.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
@@ -401,6 +411,8 @@ end function circle_fun_trsapp
 function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
 !--------------------------------------------------------------------------------------------------!
 ! This function updates the trust region radius according to RATIO and DNORM.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic module

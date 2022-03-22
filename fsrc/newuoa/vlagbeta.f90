@@ -10,7 +10,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:46:25
+! Last Modified: Tuesday, March 22, 2022 PM01:44:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,6 +24,10 @@ contains
 function calvlag(idz, kopt, bmat, d, xpt, zmat) result(vlag)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates VLAG = Hw for a given step D. See (4.11) of the NEWUOA paper.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: VLAG(NPT+N), WCHECK(NPT), XOPT(N)
+! Size of local arrays: REAL(RP)*(2*NPT+2*N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -102,6 +106,10 @@ end function calvlag
 function calbeta(idz, kopt, bmat, d, xpt, zmat) result(beta)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates BETA for a given step D. See (4.12) of the NEWUOA paper.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: BW(N), BD(N), WCHECK(NPT), XOPT(N)
+! Size of local arrays: REAL(RP)*(NPT+3*N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

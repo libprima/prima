@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Saturday, February 12, 2022 PM02:45:25
+! Last Modified: Tuesday, March 22, 2022 PM01:37:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -38,6 +38,11 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhi
 ! INFO = FTARGET_ACHIEVED: return because F <= FTARGET
 ! INFO = NAN_INF_X: return because X contains NaN
 ! INFO = NAN_INF_F: return because F is either NaN or +Inf
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! LOGICAL :: EVALUATED(NPT)
+! REAL(RP) :: X(N)
+! Size of local arrays: LOGICAL*NPT + REAL(RP)*N
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -246,6 +251,8 @@ subroutine initq(ij, fval, xpt, gq, hq, pq, info)
 ! This subroutine initializes the quadratic model, which is represented by (GQ, HQ, PQ) so that its
 ! gradient at XBASE is GQ; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
 !--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
@@ -335,8 +342,6 @@ do k = 1, npt - 2_IK * n - 1_IK
     hq(j, i) = hq(i, j)
 end do
 
-
-
 if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq))) then
     info = NAN_MODEL
 else
@@ -360,6 +365,8 @@ end subroutine initq
 subroutine inith(ij, xpt, idz, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine initializes IDZ, BMAT, and ZMAT.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

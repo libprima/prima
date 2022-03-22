@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, March 16, 2022 AM11:00:14
+! Last Modified: Tuesday, March 22, 2022 PM05:20:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,6 +22,10 @@ contains
 subroutine updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine revises the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: SIMI_JDROP(N)
+! Size of local arrays: REAL(RP)*N
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -152,6 +156,12 @@ subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 ! SIM is updated only by UPDATEXFC, which itself calls UPDATEPOLE internally. Therefore, we only
 ! need to call UPDATEPOLE after updating CPEN at the beginning of each trust-region iteration and
 ! after each invocation of RESENHANCE.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: CONMAT_OLD(M, N+1), CVAL_OLD(N+1), FVAL_OLD(N+1), SIM_JDROP(N), SIM_OLD(N, N+1), &
+!    & SIMI_OLD(N, N), SIMI_TEST(N, N)
+! Size of local arrays: REAL(RP)*((M+N+2)*(N+1) + N + 2*N^2)  (TO BE REDUCED TO 2*N +N^2 by removing
+! *_OLD. Should we allocate SIMI_TEST? Maybe not, as the subroutine is called frequently)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -303,6 +313,10 @@ function findpole(cpen, cval, fval) result(jopt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine identifies the best vertex of the current simplex with respect to the merit
 ! function PHI = F + CPEN * CSTRV.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: PHI(N+1)
+! Size of local arrays: REAL(RP)*(N+1)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

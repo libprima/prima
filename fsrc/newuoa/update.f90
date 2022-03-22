@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:46:14
+! Last Modified: Tuesday, March 22, 2022 PM01:40:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,6 +30,10 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 ! ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
 ! except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th are not saved as
 ! they are unnecessary for the calculation.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: GROT(2, 2), V1(N), V2(N), VLAG(NPT+N), W(NPT+N)
+! Size of local arrays: REAL(RP)*(4+4*N+2*NPT)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -298,6 +302,8 @@ subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 ! Section 4 of the NEWUOA paper.
 ! N.B.: Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
 !--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
@@ -403,6 +409,8 @@ subroutine updatexf(knew, d, f, kopt, fval, xpt, fopt, xopt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates XPT, FVAL, KOPT, XOPT, and FOPT so that X(:, KNEW) is replaced by XOPT+D.
 !--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
@@ -501,6 +509,10 @@ subroutine tryqalt(idz, fval, ratio, bmat, zmat, itest, gq, hq, pq)
 ! the F-norm of the Hessian subject to the interpolation conditions. It does the replacement
 ! when certain criteria are satisfied (i.e., when ITEST = 3). See Section 8 of the NEWUOA paper.
 ! N.B.: Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: GALT(N)
+! Size of local arrays: REAL(RP)*(N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

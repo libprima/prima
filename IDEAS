@@ -1,5 +1,57 @@
 Fortran
 
+0. Stack management
+Local arrays (array with a constant size that is known at compilation time) are usually stored on
+the stack by default. Automatic arrays (arrays with declared variable sizes that depend on the dummy
+variables) can be either on the stack (e.g., ifort, which is adjustable by -heap-arrays [n]) or on
+the heap (e.g., gfortran, adjustable by fmax-stack-var-size=) by default. To avoid stack overflow
+on all platforms, of course we should assume the former.
+
+As of 20220321, the typical default stack size limits are:
+
+8 MB on Linux (8B*1024*1024)
+512 KB on macOS (8B*256*256)
+1 MB on Windows (8B*512*256).
+
+These numbers are small if we use automatic arrays as matrices in scientific computing. Therefore,
+we have to carefully control the usage of automatic arrays. The case for C/C++ is similar, but it is
+not a major concern for MATLAB, Python, Julia, or R.
+
+This partially explains why Powell always declare a large working space at the beginning of the
+code, and then partition this working space to small pieces, and use them throughout the code
+without declaring new arrays. It was how he controlled the use of memory, particularly stack memory.
+
+Note that dynamic memory allocation was not supported by Fortran until Fortran 90. So Powell had no
+choice. In Modern Fortran, however, we can declare arrays as allocatable and allocate them when
+needed. Such arrays will typically be stored on the heap, which is much more available than stack.
+
+Note that The Fortran standard talks nothing about where to store the arrays. It is totally decided
+by the implementation of the compiler.
+
+Talking about Fortran/C/C++ implementation of DFO solvers, arrays in the main subroutine (*OB)
+should be allocated --- they tend to be relatively large, and they are not allocated/deallocated
+frequently (normally only once). Also those in SELECTX.
+
+Note particularly:
+1.) For gfortran, -Ofast implies -fstack-arrays, which forces automatic arrays to be on the stack.
+2.) Temporary arrays created at runtime (e.g., by an expression, or by passing non-contiguous arrays)
+are on the stack by default, at least for ifort.
+
+See https://jblevins.org/log/segfault for some discussion.
+
+Maximal size of local/automatic arrays in the subroutines of the solvers
+
+NEWUOA: 23+12*N+11*NPT (classical: (NPT+13)*(NPT+N)+3*N*(N+3)/2), OK if N+NPT < 4096
+COBYLA: max(4+4M+6N, (M+2)*N, (N+2)*N) (classical: N*(3*N+2*M+11)+4*M+6), OK if (M+2)*(N+2) < 256*256
+
+However,
+1. it is not true that we use (stack) memory more efficiently --- it is only true that we keep
+the maximal local/automatic array small.
+2. the actual use of stack size may be larger than these maximal values, because, when subroutines
+are called, the stack memory of the caller still takes the memory; in addition, we did not calculate
+the temporary arrays or the local/automatic arrays in the linear algebra subroutines, which take at
+most a multiple of the stack size calculated above.
+
 1. Implement a module pdfo, and then newuoa_mod etc as submodules. Use the solvers by
 
 use, non_intrinsic :: pdfo_mod, only : newuoa

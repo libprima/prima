@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, February 28, 2022 PM09:40:40
+! Last Modified: Tuesday, March 22, 2022 PM04:15:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,6 +22,10 @@ contains
 function goodgeo(delta, factor_alpha, factor_beta, sim, simi) result(good_geo)
 !--------------------------------------------------------------------------------------------------!
 ! This function checks whether an interpolation set has good geometry as (14) of the COBYLA paper.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: VETA(N), VSIG(N)
+! Size of local arrays: REAL(RP)*(2*N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -94,6 +98,10 @@ function setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi)
 ! N.B.:
 ! 1. If TR_SUCCESS == TRUE, then JDROP > 0 so that D is included into XPT. Otherwise, it is a bug.
 ! 2. COBYLA never sets JDROP = N + 1.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: SIGBAR(N), SIMID(N), VETA(N), VSIG(N)
+! Size of local arrays: REAL(RP)*(4*N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -197,6 +205,10 @@ function setdrop_geo(delta, factor_alpha, factor_beta, sim, simi) result(jdrop)
 ! a geometry-improving point. See (15)--(16) of the COBYLA paper.
 ! N.B.: COBYLA never sets JDROP = N + 1.
 !--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: VETA(N), VSIG(N)
+! Size of local arrays: REAL(RP)*(2*N)
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
@@ -277,6 +289,11 @@ function geostep(jdrop, cpen, conmat, cval, delta, fval, factor_gamma, simi) res
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates a geometry step so that the geometry of the interpolation set is improved
 ! when SIM(:, JDRO_GEO) is replaced by SIM(:, N+1) + D.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: D(N), A(N, M+1)
+! Size of local arrays: REAL(RP)*(N*(M+2)) (TO BE REDUCED? Maybe not: this subroutine is called
+! frequently, so it may not be a good idea to allocate A every time)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

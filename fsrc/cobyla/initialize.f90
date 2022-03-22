@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, March 11, 2022 PM03:22:29
+! Last Modified: Tuesday, March 22, 2022 PM04:17:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,10 @@ subroutine initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x
     & conhist, conmat, cval, fhist, fval, sim, simi, xhist, evaluated, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the initialization concerning X, function values, and constraints.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: CONSTR(M), X(N)
+! Size of local arrays: REAL(RP)*(M+N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -228,6 +232,10 @@ subroutine initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cf
 ! 1. Why not initialize the filters using XHIST, etc? Because the history is empty if the user
 ! chooses not to output it.
 ! 2. We decouple INITXFC and INITFILT so that it is easier to parallelize the former if needed.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: X(N)
+! Size of local arrays: REAL(RP)*N
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

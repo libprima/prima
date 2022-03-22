@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, March 06, 2022 PM08:15:51
+! Last Modified: Wednesday, March 23, 2022 AM02:07:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,13 +39,15 @@ integer(IK), intent(in), optional :: mindim
 integer(IK), intent(in), optional :: nrand
 integer, intent(in), optional :: randseed
 
+character(len=*), parameter :: bigprob = 'bigprob'
 character(len=*), parameter :: srname = 'TEST_COBYLA'
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
 character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed dimensions
 integer :: randseed_loc
 integer :: rseed
-integer(IK) :: dimlist(100)  ! Maximal number of dimensions to test: 100
+integer(IK), parameter :: bign = 500_IK
+integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
 integer(IK) :: iprint
@@ -61,6 +63,7 @@ integer(IK) :: n
 integer(IK) :: ndim
 integer(IK) :: nprobs
 integer(IK) :: nrand_loc
+logical :: test_bigprob = .false.
 real(RP) :: cstrv
 real(RP) :: ctol
 real(RP) :: f
@@ -124,16 +127,16 @@ do iprob = 1, nprobs
     if (any(probname == fix_dim_probs)) then
         call construct(prob, probname)  ! Construct the testing problem.
         ndim = 1_IK
-        dimlist(1) = prob % n
+        dim_list(1) = prob % n
     else
         ndim = (maxdim_loc - mindim_loc) / dimstride_loc + 1_IK
-        dimlist(1:ndim) = mindim_loc + dimstride_loc*[(idim - 1_IK, idim=1_IK, ndim)]
+        dim_list(1:ndim) = mindim_loc + dimstride_loc*[(idim - 1_IK, idim=1_IK, ndim)]
     end if
     do idim = 1, ndim
         if (any(probname == fix_dim_probs)) then
             call construct(prob, probname)
         else
-            call construct(prob, probname, n=dimlist(idim))
+            call construct(prob, probname, n=dim_list(idim))
         end if
         m = prob % m
         n = prob % n
@@ -181,7 +184,7 @@ do iprob = 1, nprobs
             x0 = noisy(prob % x0)
             orig_calcfc => prob % calcfc
 
-            print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
+            print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' M = ', m, ', Random test ', irand
 
             call safealloc(x, n)
             x = x0
@@ -201,10 +204,44 @@ do iprob = 1, nprobs
             deallocate (x)
             nullify (orig_calcfc)
         end do
+
+        ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
         call destruct(prob)  ! Destruct the testing problem.
     end do
-    ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
 end do
+
+
+! Test the big problem
+if (test_bigprob) then
+    probname = bigprob
+    n = bign
+    call construct(prob, probname, n)
+    m = prob % m
+    nrand_loc = 2_IK
+    do irand = 1, nrand_loc
+        rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
+        iprint = 2_IK
+        maxfun = int(minval([10**min(range(0), range(0_IK)), 10 * int(n), int(n) + 1000]), IK)
+        maxhist = maxfun
+        ftarget = -HUGENUM
+        rhobeg = noisy(prob % Delta0)
+        rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
+        call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
+        x = noisy(prob % x0)
+        orig_calcfc => prob % calcfc
+
+        print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' M = ', m, ', Random test ', irand
+        call cobyla(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+            & maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
+            & ftarget=ftarget, iprint=iprint)
+
+        deallocate (x)
+        nullify (orig_calcfc)
+    end do
+! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
+    call destruct(prob)  ! Destruct the testing problem.
+end if
+
 
 end subroutine test_solver
 

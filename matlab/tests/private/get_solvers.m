@@ -33,6 +33,11 @@ compile_flag = ~isfield(options, 'compile') || options.compile;
 debug_flag = isverify || (isfield(options, 'debug') && options.debug);
 
 try
+
+    if isfield(options, 'compiler_options') && (isa(options.compiler_options, 'char') || isa(options.compiler_options, 'str'))
+        configure_compiler_options(options.compiler_options);
+    end
+
     for is = 1 : length(solvers)
 
         if strcmp(solvers{is}(end), 'n')
@@ -45,6 +50,9 @@ try
 
             % Define the compilation options.
             mexopt = struct();
+            if isfield(options, 'verbose')
+                mexopt.verbose = options.verbose;
+            end
 
             % When we are not in verification, only the non-debugging version will be compiled.
             % We test both the debugging and non-debugging version during the verification.
@@ -88,9 +96,11 @@ try
 
     end
 catch exception
+    restore_compiler_options();  % Restore the compiler options.
     cd(olddir);  % Go back to olddir.
     setpath(oldpath);  % Restore the path to oldpath.
     rethrow(exception);
 end
 
+restore_compiler_options();  % Restore the compiler options.
 cd(olddir);

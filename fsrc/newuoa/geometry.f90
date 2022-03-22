@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:44:54
+! Last Modified: Tuesday, March 22, 2022 PM05:21:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,6 +34,10 @@ function setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat) resul
 ! necessarily a good interpolation set. In contrast, a good interpolation set needs to include
 ! points with relatively high function values; otherwise, the interpolant will unlikely reflect the
 ! landscape of the function sufficiently.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: HDIAG(NPT), SIGMA(NPT), VLAG(N+NPT), XDIST(NPT)
+! Size of local arrays: REAL(RP)*(4*NPT+N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -66,7 +70,7 @@ character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: beta
-real(RP) :: hdiag(size(zmat, 1))
+real(RP) :: hdiag(size(xpt, 2))
 real(RP) :: sigma(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: xdist(size(xpt, 2))
@@ -155,6 +159,10 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 ! KNEW is the index of the interpolation point to be dropped.
 ! DELBAR is the trust region bound for the geometry step
 ! D will be set to the step from X to the new point.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: D(N), HCOL(NPT), VLAG(N+NPT), XOPT(N)
+! Size of local arrays: REAL(RP)*(2*NPT+3*N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -260,6 +268,10 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 ! max |LFUNC(X + D)|, subject to ||D|| <= DELBAR,
 !
 ! where LFUNC is the KNEW-th Lagrange function. See Section 6 of the NEWUOA paper.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: D(N), CF(5), DOLD(N), GC(N), GD(N), HCOL(NPT), S(N), W(N)
+! Size of local arrays: REAL(RP)*(5+6*N+NPT)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -477,6 +489,11 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 ! coupling of code, we return only D but compute VLAG and BETA outside by calling VLAGBETA. It makes
 ! no difference mathematically, but the computed VLAG/BETA will change slightly due to rounding.
 !--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: D(N), DEN(9), DENEX(9), DOLD(N), DSTEMP(NPT), HCOL(NPT), PAR(5), PROD(NPT+N, 5), &
+!     & S(N), SSTEMP(NPT), V(NPT), VLAG(NPT+N), W(NPT+N, 5), X(N), XNEW(N), XPTEMP(N, NPT)
+! Size of local arrays: REAL(RP)*(23+12*N+11*NPT+N*NPT) (TO BE REDUCED by removing XPTEMP)
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, QUART, EPS, DEBUGGING
@@ -521,7 +538,7 @@ real(RP) :: dtest
 real(RP) :: dxn
 real(RP) :: hcol(size(xpt, 2))
 real(RP) :: par(5)
-real(RP) :: prod(size(xpt, 2) + size(xpt, 1), 5)
+real(RP) :: prod(size(xpt, 1) + size(xpt, 2), 5)
 real(RP) :: s(size(xpt, 1))
 real(RP) :: ss
 real(RP) :: sstemp(size(xpt, 2))
@@ -532,7 +549,7 @@ real(RP) :: tempc
 real(RP) :: tol
 real(RP) :: v(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
-real(RP) :: w(size(xpt, 2) + size(xpt, 1), 5)
+real(RP) :: w(size(xpt, 1) + size(xpt, 2), 5)
 real(RP) :: x(size(xpt, 1))
 real(RP) :: xd
 real(RP) :: xnew(size(xpt, 1))
@@ -779,6 +796,11 @@ end function bigden
 
 
 function circle_fun_biglag(theta, args) result(f)
+!--------------------------------------------------------------------------------------------------!
+! This function defines the objective function of the 2D search on a circle in BIGLAG.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
@@ -814,6 +836,13 @@ end function circle_fun_biglag
 
 
 function circle_fun_bigden(theta, args) result(f)
+!--------------------------------------------------------------------------------------------------!
+! This function defines the objective function of the 2D search on a circle in BIGDEN.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
+! REAL(RP) :: PAR(9)
+! Size of local arrays: REAL(RP)*9
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : inprod

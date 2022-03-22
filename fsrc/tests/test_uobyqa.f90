@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, March 06, 2022 PM01:32:46
+! Last Modified: Wednesday, March 23, 2022 AM02:06:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -37,10 +37,12 @@ integer(IK), intent(in), optional :: dimstride
 integer(IK), intent(in), optional :: nrand
 integer, intent(in), optional :: randseed
 
+character(len=*), parameter :: bigprob = 'bigprob'
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
 integer :: randseed_loc
 integer :: rseed
+integer(IK), parameter :: bign = int(min(500, int(10**(range(0_IK) / 2))), IK)
 integer(IK) :: dimstride_loc
 integer(IK) :: iprint
 integer(IK) :: iprob
@@ -51,11 +53,13 @@ integer(IK) :: maxhist
 integer(IK) :: mindim_loc
 integer(IK) :: n
 integer(IK) :: nprobs
+integer(IK) :: npt
 integer(IK) :: nrand_loc
 real(RP) :: f
 real(RP) :: ftarget
 real(RP) :: rhobeg
 real(RP) :: rhoend
+logical :: test_bigprob = .false.
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
@@ -102,6 +106,8 @@ end if
 do iprob = 1, nprobs
     probname = probs_loc(iprob)
     do n = mindim_loc, maxdim_loc, dimstride_loc
+        call construct(prob, probname, n)  ! Construct the testing problem.
+
         do irand = 1, nrand_loc
             ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
             ! that the results for different IK are the same.
@@ -124,8 +130,6 @@ do iprob = 1, nprobs
                 ftarget = -HUGENUM
             end if
 
-            call construct(prob, probname, n)  ! Construct the testing problem.
-
             rhobeg = noisy(prob % Delta0)
             rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
             if (rand() <= 0.2_RP) then
@@ -137,17 +141,50 @@ do iprob = 1, nprobs
             x = noisy(prob % x0)
             orig_calfun => prob % calfun
 
-            print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
+            print '(/1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', Random test ', irand
             call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
                 & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
 
-            call destruct(prob)  ! Destruct the testing problem.
-            ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
             deallocate (x)
             nullify (orig_calfun)
         end do
+
+        ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
+        call destruct(prob)  ! Destruct the testing problem.
     end do
 end do
+
+
+! Test the big problem
+if (test_bigprob) then
+    probname = bigprob
+    n = bign
+    call construct(prob, probname, n)
+    nrand_loc = 2_IK
+    do irand = 1, nrand_loc
+        rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
+        iprint = 2_IK
+        npt = (n + 2_IK) * (n + 1_IK) / 2_IK
+        maxfun = int(minval([10**min(range(0), range(0_IK)), 10 * int(npt), int(npt) + 1000]), IK)
+        maxhist = maxfun
+        ftarget = -HUGENUM
+        rhobeg = noisy(prob % Delta0)
+        rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
+        call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
+        x = noisy(prob % x0)
+        orig_calfun => prob % calfun
+
+        print '(/1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', Random test ', irand
+        call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+            & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
+
+        deallocate (x)
+        nullify (orig_calfun)
+    end do
+    ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
+    call destruct(prob)  ! Destruct the testing problem.
+end if
+
 
 end subroutine test_solver
 
