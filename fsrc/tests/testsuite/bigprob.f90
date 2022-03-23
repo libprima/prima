@@ -20,7 +20,7 @@ integer(IK) :: i, j, m_loc
 if (present(m)) then
     m_loc = m
 else
-    m_loc = int(min(50 * int(n), 10**(range(0_IK) / 2)), IK)
+    m_loc = int(min(50 * int(n), 10**ceiling(real(range(0_IK)) / 2.0)), IK)
 end if
 
 prob % probtype = 'n'

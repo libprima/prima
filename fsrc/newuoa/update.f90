@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 22, 2022 PM01:40:52
+! Last Modified: Wednesday, March 23, 2022 AM11:09:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -289,8 +289,7 @@ if (DEBUGGING) then
     !xpt_test = xpt
     !xpt_test(:, knew) = xpt(:, kopt) + d
     ! The following test cannot be passed.
-    !call assert(errh(idz, bmat, zmat, xpt_test) <= htol, &
-    !    & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
+    !call assert(errh(idz, bmat, zmat, xpt_test) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
 end subroutine updateh
@@ -334,6 +333,7 @@ character(len=*), parameter :: srname = 'UPDATEQ'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: moderr
+!real(RP), parameter :: intp_tol = 10.0_RP * EPS**(0.5_RP) ! Tolerance of interpolation error.
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -400,6 +400,8 @@ if (DEBUGGING) then
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    ! [GQ, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
+    !call assert(errquad(gq, hq, pq, xpt, fval) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 end subroutine updateq
@@ -547,6 +549,7 @@ character(len=*), parameter :: srname = 'TRYQALT'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: galt(size(gq))
+!real(RP), parameter :: intp_tol = 10.0_RP * EPS**(0.5_RP) ! Tolerance of interpolation error.
 
 ! Sizes
 n = int(size(gq), kind(n))
@@ -568,6 +571,8 @@ if (DEBUGGING) then
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    ! [GQ, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
+    !call assert(errquad(gq, hq, pq, xpt, fval) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 !====================!
@@ -607,6 +612,8 @@ if (DEBUGGING) then
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    ! [GQ, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
+    !call assert(errquad(gq, hq, pq, xpt, fval) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 end subroutine tryqalt

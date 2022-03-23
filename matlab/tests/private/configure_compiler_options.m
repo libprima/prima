@@ -9,6 +9,7 @@ mfilepath = fileparts(mfilename('fullpath')); % The directory containing this se
 setup_tools = fullfile(fileparts(fileparts(mfilepath)), 'setup_tools');
 addpath(setup_tools);  % We use `rep_str` from `setup_tools`.
 
+% Modify mexopts files in `config_dir` after making backups.
 config_dir = fullfile(matlabroot,'bin', 'glnxa64', 'mexopts');
 config_files = {dir(fullfile(config_dir, 'gfortran*.xml')).name};
 fileattrib(config_dir, '+w');
@@ -41,18 +42,18 @@ end
 rmpath(setup_tools);  % Remove `setup_tools` from path since it has finishes its job.
 
 % If MEX has been set up before, then the configuration is already written in the following file.
-% We back it up and delete it so that MEX will be reconfigured according to `config_files`.
-fileattrib(prefdir, '+w');
+% We delete it so that MEX will be reconfigured according to `config_files`.
+% Why not making a backup for it? Because the existing version may be generated using the modified
+% `config_files` when this script was called the last time (N.B.: `mex_setup_file` does not exist
+% in a fresh installation of MATLAB), in which case it would be wrong to store % this copy and
+% restore `mex_setup_file` using it.
 mex_setup_file = fullfile(prefdir, ['mex_FORTRAN_', computer('arch'), '.xml']);
-mex_setup_file_orig = fullfile(prefdir, ['mex_FORTRAN_', computer('arch'), '.xml.orig']);
-mex_setup_file_bak = fullfile(prefdir, ['mex_FORTRAN_', computer('arch'), '.xml.bak']);
-
-if exist(mex_setup_file, 'file') && ~exist(mex_setup_file_orig, 'file')
-    % This will be true if the script is called for the first time.
-    copyfile(mex_setup_file, mex_setup_file_orig, 'f');
-end
 if exist(mex_setup_file, 'file')
-    movefile(mex_setup_file, mex_setup_file_bak, 'f');
+    fileattrib(prefdir, '+w');
+    fileattrib(mex_setup_file, '+w');
+    delete(mex_setup_file);
 end
+
+fprintf('\nCompiler options set to \n\n%s.\n\n', compiler_options);
 
 return

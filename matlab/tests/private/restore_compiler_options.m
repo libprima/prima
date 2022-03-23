@@ -19,7 +19,7 @@ for ifile = 1 : length(config_files)
                 [~, difference] = system(['diff ''', cfile_orig, ''' ''', cfile_bak, '''']);
             end
             if ~isempty(difference)
-                warning('Two different back-ups found:\n\n%s\n%s\n\nRestoration done by\n%s\n\n', cfile_orig, cfile_bak, cfile_orig);
+                warning('Two different backups found:\n\n%s\n%s\n\nRestoration done by\n%s\n\n', cfile_orig, cfile_bak, cfile_orig);
             else
                 delete(cfile_bak);
             end
@@ -31,27 +31,16 @@ for ifile = 1 : length(config_files)
     end
 end
 
+% Delete `mex_setup_file` so that it will be regenerated next time when `mex -setup` is called.
+% Why not restore it using a backup? See the comments in `configure_compiler_options` when this file
+% was deleted.
 mex_setup_file = fullfile(prefdir, ['mex_FORTRAN_', computer('arch'), '.xml']);
-mex_setup_file_orig = fullfile(prefdir, ['mex_FORTRAN_', computer('arch'), '.xml.orig']);
-mex_setup_file_bak = fullfile(prefdir, ['mex_FORTRAN_', computer('arch'), '.xml.bak']);
-if exist(mex_setup_file_orig, 'file')
-    copyfile(mex_setup_file_orig, mex_setup_file, 'f');
-    if exist(mex_setup_file_bak, 'file')
-        difference = [];
-        if isunix
-            [~, difference] = system(['diff ''', mex_setup_file_orig, ''' ''', mex_setup_file_bak, '''']);
-        end
-        if ~isempty(difference)
-            warning('Two different back-ups found:\n\n%s\n%s\n\nRestoration done by\n%s\n\n', mex_setup_file_orig, mex_setup_file_bak, mex_setup_file_orig);
-        else
-            delete(mex_setup_file_bak);
-        end
-    end
-elseif exist(mex_setup_file_bak, 'file')
-    movefile(mex_setup_file_bak, mex_setup_file, 'f');
-else
+if exist(mex_setup_file, 'file')
+    fileattrib(prefdir, '+w');
+    fileattrib(mex_setup_file, '+w');
     delete(mex_setup_file);
-    warning('Failed to restore %s.\nIt is deleted and will be regenerated when MEX is set up for the next time.\n', mex_setup_file);
 end
+
+fprintf('\nCompiler options restored successfully.\n\n');
 
 return

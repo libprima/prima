@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, March 23, 2022 AM02:08:27
+! Last Modified: Wednesday, March 23, 2022 AM08:17:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -175,7 +175,7 @@ do iprob = 1, nprobs
             x0 = noisy(prob % x0)
             orig_calfun => prob % calfun
 
-            print '(/1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', Random test ', irand
+            print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' NPT = ', npt, ', Random test ', irand
 
             call safealloc(x, n)
             x = x0
@@ -227,7 +227,7 @@ if (test_bigprob) then
         x = noisy(prob % x0)
         orig_calfun => prob % calfun
 
-        print '(/1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', Random test ', irand
+        print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' NPT = ', npt, ', Random test ', irand
         call bobyqa(noisy_calfun, x, f, xl=prob % lb, xu=prob % ub, &
             & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
             & xhist=xhist, ftarget=ftarget, iprint=iprint)

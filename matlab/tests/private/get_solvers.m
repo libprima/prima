@@ -34,8 +34,11 @@ debug_flag = isverify || (isfield(options, 'debug') && options.debug);
 
 try
 
-    if isfield(options, 'compiler_options') && (isa(options.compiler_options, 'char') || isa(options.compiler_options, 'str'))
+    compiler_options_modified = false;
+    if isfield(options, 'compiler_options') && (isa(options.compiler_options, 'char') ...
+            || isa(options.compiler_options, 'str'))
         configure_compiler_options(options.compiler_options);
+        compiler_options_modified = true;
     end
 
     for is = 1 : length(solvers)
@@ -96,11 +99,15 @@ try
 
     end
 catch exception
-    restore_compiler_options();  % Restore the compiler options.
+    if compiler_options_modified
+        restore_compiler_options();  % Restore the compiler options.
+    end
     cd(olddir);  % Go back to olddir.
     setpath(oldpath);  % Restore the path to oldpath.
     rethrow(exception);
 end
 
-restore_compiler_options();  % Restore the compiler options.
+if compiler_options_modified
+    restore_compiler_options();  % Restore the compiler options.
+end
 cd(olddir);

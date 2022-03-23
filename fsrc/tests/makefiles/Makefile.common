@@ -302,7 +302,11 @@ ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d
 # As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
 GFORT := gfortran
 GFORT := $(GFORT) -Werror -pedantic-errors
-GFORT := $(GFORT) -fstack-arrays  # Force all automatic arrays to be on the stack to test whether stack overflow can occur
+# `-fstack-arrays` forces all automatic arrays to be on the stack. We enable it to verify that we
+# will not have stack overflows even in the worst case.
+# Zaikun 20220323: Not sure how it will work when __DEBUGGING__ is 1, as the debugging facilities
+# involve many automatic arrays.
+GFORT := $(GFORT) -fstack-arrays
 GFORT := $(GFORT) -std=f$(FSTD) -fall-intrinsics \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion -Wuninitialized -Wmaybe-uninitialized \
 	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \
@@ -342,7 +346,10 @@ IFORT := ifort
 IFORT := $(IFORT) -warn errors #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
-# and temporary arrays in the stack storage area. We enable them to detect possible stack overflows.
+# and temporary arrays in the stack storage area. We enable them to verify that we will not have
+# stack overflows even in the worst case.
+# Zaikun 20220323: Not sure how it will work when __DEBUGGING__ is 1, as the debugging facilities
+# involve many automatic arrays.
 IFORT := $(IFORT) -auto -no-heap-arrays
 IFORT := $(IFORT) -stand f$(FS) -standard-semantics -assume norecursion -warn all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all -fp-stack-check
@@ -461,6 +468,12 @@ stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d
 # Intel ifx
 XFORT := ifx
 XFORT := $(XFORT) -warn errors
+# `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
+# `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
+# and temporary arrays in the stack storage area. We enable them to verify that we will not have
+# stack overflows even in the worst case.
+# Zaikun 20220323: Not sure how it will work when __DEBUGGING__ is 1, as the debugging facilities
+# involve many automatic arrays.
 XFORT := $(XFORT) -auto -no-heap-arrays
 XFORT := $(XFORT) -stand f$(FS) -warn all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all -fp-stack-check

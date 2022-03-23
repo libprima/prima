@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, March 22, 2022 PM05:20:10
+! Last Modified: Wednesday, March 23, 2022 AM11:51:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -161,7 +161,7 @@ subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 ! REAL(RP) :: CONMAT_OLD(M, N+1), CVAL_OLD(N+1), FVAL_OLD(N+1), SIM_JDROP(N), SIM_OLD(N, N+1), &
 !    & SIMI_OLD(N, N), SIMI_TEST(N, N)
 ! Size of local arrays: REAL(RP)*((M+N+2)*(N+1) + N + 2*N^2)  (TO BE REDUCED TO 2*N +N^2 by removing
-! *_OLD. Should we allocate SIMI_TEST? Maybe not, as the subroutine is called frequently)
+! *_OLD. Should we allocate SIMI_TEST? Yes, it is needed quite rarely!)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
