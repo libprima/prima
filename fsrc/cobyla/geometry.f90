@@ -292,8 +292,8 @@ function geostep(jdrop, cpen, conmat, cval, delta, fval, factor_gamma, simi) res
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: D(N), A(N, M+1)
-! Size of local arrays: REAL(RP)*(N*(M+2)) (TO BE REDUCED? Maybe not: this subroutine is called
-! frequently, so it may not be a good idea to allocate A every time)
+! Size of local arrays: REAL(RP)*(N*(M+2)) (TO BE REDUCED: not pass SIMI and JDROP but SIMI_JDROP
+! and A
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

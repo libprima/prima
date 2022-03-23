@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, March 23, 2022 AM02:10:13
+! Last Modified: Wednesday, March 23, 2022 AM08:24:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -220,7 +220,8 @@ do iprob = 1, nprobs
                 bineq = prob % bineq
             end if
 
-            print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' M = ', size(Aineq, 1), ', Random test ', irand
+            print '(/1A, I0, 1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' NPT = ', npt, &
+                & ' M = ', size(Aineq, 1), ', Random test ', irand
 
             call safealloc(x, n)
             x = x0
@@ -276,7 +277,8 @@ if (test_bigprob) then
         call safealloc(bineq, int(size(prob % bineq), IK))
         bineq = prob % bineq
 
-        print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' M = ', size(Aineq, 1), ', Random test ', irand
+        print '(/1A, I0, 1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' NPT = ', npt, &
+            & ' M = ', size(Aineq, 1), ', Random test ', irand
 
         call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=Aineq, b=bineq, &
             & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &

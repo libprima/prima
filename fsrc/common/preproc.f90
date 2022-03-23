@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, February 03, 2022 PM11:01:08
+! Last Modified: Wednesday, March 23, 2022 AM11:59:29
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -150,8 +150,8 @@ if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver)
     if (npt < n + 2 .or. npt > min(maxfun - 1, ((n + 2) * (n + 1)) / 2)) then
         npt = int(min(maxfun - 1, 2 * n + 1), kind(npt))
         write (wmsg, ifmt) npt
-        call warning(solver, 'Invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2], '// &
-            & 'and it should be less than MAXFUN; it is set to '//trimstr(wmsg))
+        call warning(solver, 'Invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2]'// &
+            & ' and less than MAXFUN; it is set to '//trimstr(wmsg))
     end if
 end if
 

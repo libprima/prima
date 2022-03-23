@@ -165,7 +165,7 @@ do iprob = 1, nprobs
             x = noisy(prob % x0)
             orig_calfun => prob % calfun
 
-            print '(/1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', Random test ', irand
+            print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' NPT = ', npt, ', Random test ', irand
             call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
                 & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
 
@@ -200,7 +200,7 @@ if (test_bigprob) then
         x = noisy(prob % x0)
         orig_calfun => prob % calfun
 
-        print '(/1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', Random test ', irand
+        print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' NPT = ', npt, ', Random test ', irand
         call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
             & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
 

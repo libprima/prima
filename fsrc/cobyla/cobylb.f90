@@ -1,3 +1,13 @@
+! TODO for COBYLA: implement
+!  getmodel(conmat, fval, simi, A)
+! and call it before TR step and GEO step, so that we do not need to calculate A within GEOSTEP,
+! which would necessitate a array of (m+1)*n in GEOSTEP. With the new implementation, change GEOSTEP to
+!  d = geostep(A, cpen, conmat, cval, delta, fval, factor_gamma, simi_jdrop)
+! N.B.:
+! 1.) Do not implement GETMODEL as a function, or it will create an automatic/temporary array of (m+1)*n.
+! 2.) Do not call GETMODEL after updatexfc: if we do that, we would also need to call it at three other
+! places: after initialization, after CPEN is upadated and we call UPDATEPOLE (two places).
+
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of COBYLA.
@@ -8,7 +18,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, March 22, 2022 PM04:51:00
+! Last Modified: Wednesday, March 23, 2022 AM11:32:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
