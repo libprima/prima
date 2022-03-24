@@ -52,7 +52,29 @@ try
     % Specify where to store the test data.
     options.data_dir = data_dir;
 
-    % Time stamp
+    % Stamp and time
+    if isfield(options, 'compiler_options') && (isa(options.compiler_options, 'char') || ...
+          isa(options.compiler_options, 'string')) && ~isempty(options.compiler_options)
+        if isfield(options, 'stamp') && ~isempty(options.stamp)
+            options.stamp = [options.stamp, '.', regexprep(options.compiler_options, '\s*','_')];
+        else
+            options.stamp = regexprep(options.compiler_options, '\s*','_');
+        end
+    end
+    if isfield(options, 'randomizex0') && isnumeric(options.randomizex0) && isscalar(options.randomizex0)
+        if isfield(options, 'stamp') && ~isempty(options.stamp)
+            options.stamp = [options.stamp, '.', 'randomizex0_', sprintf('%g', options.randomizex0)];
+        else
+            options.stamp = ['randomizex0_', sprintf('%g', options.randomizex0)];
+        end
+    end
+    if isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(options.eval_options)
+        if isfield(options, 'stamp') && ~isempty(options.stamp)
+            options.stamp = [options.stamp, '.', strjoin(fieldnames(options.eval_options), '_')];
+        else
+            options.stamp = strjoin(fieldnames(options.eval_options), '_');
+        end
+    end
     options.time = datestr(datetime(), 'yymmdd_HHMM');
 
     % Make the solvers available. Note that the solvers are under `test_dir`.

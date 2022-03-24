@@ -4,12 +4,11 @@ function [mrec, output] = testcu(solvers, options)
 rhobeg = 1;
 rhoend = 1e-6;
 maxfun_dim = 500;
-maxfun = 50000;
+%maxfun = 50000;
+maxfun = 20000;
 maxit = 1000;
 ftarget = -inf;
 randomizex0 = 0;
-noiselevel = 0;
-dnoiselevel = 0;
 nr = 5;
 ctol = 1e-10;
 cpenalty = 1e10;
@@ -30,7 +29,7 @@ minip = 1;
 
 % Set options
 options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, ...
-    noiselevel, dnoiselevel, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, sequential, debug, thorough_test, minip);
+    nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, sequential, debug, thorough_test, minip);
 
 % Select the problems to test.
 if isfield(options, 'list')
@@ -59,6 +58,7 @@ else
     plist = secup(requirements);
 end
 
+%plist={'ALLINITU'};
 np = length(plist);
 ns = length(solvers);
 nr = options.randrun;
@@ -71,6 +71,16 @@ frec = NaN(np, ns, nr, maxfun);
 crec = NaN(np, ns, nr, maxfun);
 pdim = NaN(np, 1);  % Data profile needs the dimension of the problem.
 
+has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(options.eval_options);
+eval_options = struct();  % Without this, `parfor` may not work.
+if has_eval_options
+    eval_options = options.eval_options;
+end
+
+if isfield(options, 'randomizex0') && isnumeric(options.randomizex0) && isscalar(options.randomizex0)
+    randomizex0 = abs(options.randomizex0);
+end
+
 if sequential
     for ip = minip : np
         orig_warning_state = warnoff(solvers);
@@ -80,9 +90,24 @@ if sequential
         fprintf('\n%3d. \t%s:\n', ip, upper(pname));
 
         prob = macup(pname);
+        prob.orig_objective = prob.objective;
+        prob.orig_nonlcon = prob.nonlcon;
+        prob.orig_x0 = prob.x0;
         pdim(ip) = length(prob.x0);
 
         for ir = 1 : nr
+            if has_eval_options
+                prob.objective = @(x) evalfun(prob.orig_objective, x, eval_options, ir);
+                if ~isempty(prob.orig_nonlcon)
+                    prob.nonlcon = @(x) evalcon(prob.orig_nonlcon, x, eval_options, ir);
+                end
+            end
+            if randomizex0 > 0
+                rng(ir);
+                r = randn(length(prob.x0), 1);
+                prob.x0 = prob.orig_x0 + randomizex0*norm(prob.orig_x0)*r/norm(r);
+            end
+
             for is = 1 : ns
                 [frec(ip, is, ir, :), crec(ip, is, ir, :)] = testsolv(solvers{is}, prob, options);
             end
@@ -99,9 +124,24 @@ else
         fprintf('\n%3d. \t%s:\n', ip, upper(pname));
 
         prob = macup(pname);
+        prob.orig_objective = prob.objective;
+        prob.orig_nonlcon = prob.nonlcon;
+        prob.orig_x0 = prob.x0;
         pdim(ip) = length(prob.x0);
 
         for ir = 1 : nr
+            if has_eval_options
+                prob.objective = @(x) evalfun(prob.orig_objective, x, eval_options, ir);
+                if ~isempty(prob.orig_nonlcon)
+                    prob.nonlcon = @(x) evalcon(prob.orig_nonlcon, x, eval_options, ir);
+                end
+            end
+            if randomizex0 > 0
+                rng(ir);
+                r = randn(length(prob.x0), 1);
+                prob.x0 = prob.orig_x0 + randomizex0*norm(prob.orig_x0)*r/norm(r);
+            end
+
             for is = 1 : ns
                 [frec(ip, is, ir, :), crec(ip, is, ir, :)] = testsolv(solvers{is}, prob, options);
             end
@@ -122,7 +162,7 @@ output.pdim = pdim;
 return
 
 
-function [fval_history, cv_history] = testsolv(solver, prob, options)
+function [fval_history, cv_history, output] = testsolv(solver, prob, options)
 
 prob.options = setsolvopt(solver, length(prob.x0), options); % Set the options for the solver
 
@@ -142,20 +182,36 @@ if ischstr(solver)
 end
 
 maxfun = options.maxfun;
-fval_history = NaN(maxfun, 1);
-cv_history = NaN(maxfun, 1);
+fval_history = NaN(1, maxfun);
+cv_history = NaN(1, maxfun);
+
+has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(options.eval_options);
+prob.options.output_xhist = has_eval_options;
 
 [~, ~, ~, output] = solver(prob);
-
-nf = min(maxfun, output.funcCount); % Some solvers (e.g., fmincon) may not respect maxfun.
+% Some solvers (e.g., fmincon) may not respect maxfun. Indeed, PDFO solvers may also increase maxfun
+% if it is too small (e.g., <= npt for NEWUOA).
+nf = min(maxfun, output.funcCount);
 
 if (nf >= 1)
-    fval_history(1:nf) = output.fhist(1:nf);
-    if isfield(output, 'chist')
-        cv_history(1:nf) = max(0, output.chist(1:nf));
+    if has_eval_options
+        xhist_cell = num2cell(output.xhist(:, 1:nf), 1);
+        fval_history(1:nf) = cellfun(prob.orig_objective, xhist_cell);
+        if ~isempty(prob.orig_nonlcon)
+            orig_cstrv = @(x) get_cstrv(x, prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.orig_nonlcon);
+            cv_history(1:nf) = cellfun(orig_cstrv, xhist_cell);
+        else
+            cv_history(1:nf) = zeros(1,nf);
+        end
     else
-        cv_history(1:nf) = zeros(nf, 1);
+        fval_history(1:nf) = output.fhist(1:nf);
+        if isfield(output, 'chist')
+            cv_history(1:nf) = max(0, output.chist(1:nf));
+        else
+            cv_history(1:nf) = zeros(1, nf);
+        end
     end
+
     fval_history(nf+1:maxfun) = fval_history(nf);
     cv_history(nf+1:maxfun) = cv_history(nf);
 else
@@ -168,7 +224,7 @@ return
 
 
 function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, ...
-        noiselevel, dnoiselevel, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
+        nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
         sequential, debug, thorough_test, minip) % Set options
 
 if (~isfield(options, 'rhoend'))
@@ -176,12 +232,6 @@ if (~isfield(options, 'rhoend'))
 end
 if (~isfield(options, 'rhobeg'))
     options.rhobeg = rhobeg;
-end
-if (~isfield(options, 'maxfun_dim'))
-    options.maxfun_dim = maxfun_dim;
-end
-if (~isfield(options, 'maxfun'))
-    options.maxfun = maxfun;
 end
 if (~isfield(options, 'maxit'))
     options.maxit = maxit;
@@ -198,16 +248,11 @@ end
 if (~isfield(options, 'randomizex0'))
     options.randomizex0 = randomizex0;
 end
-if (~isfield(options, 'noiselevel'))
-    options.noiselevel = noiselevel;
-end
-if (~isfield(options, 'dnoiselevel'))
-    options.dnoiselevel = dnoiselevel;
-end
 if (~isfield(options, 'randrun'))
     options.randrun = nr;
 end
-if (options.randomizex0 == 0 && options.noiselevel == 0)
+noisy_eval = isfield(options, 'eval_options') && isstruct(options.eval_options) && isfield(options.eval_options, 'noise');
+if (options.randomizex0 == 0 && ~noisy_eval)
     options.randrun = 1;
 end
 if (~isfield(options, 'type'))
@@ -225,6 +270,13 @@ end
 if (~isfield(options, 'maxcon'))
     options.maxcon = maxcon;
 end
+if (~isfield(options, 'maxfun_dim'))
+    options.maxfun_dim = maxfun_dim;
+end
+if (~isfield(options, 'maxfun'))
+    options.maxfun = maxfun;
+end
+options.maxfun = min(options.maxfun, options.maxfun_dim*options.maxdim);
 if (~isfield(options, 'sequential'))
     options.sequential = sequential;
 end
@@ -266,4 +318,151 @@ if (strcmpi(solv, 'fmincon'))
     solv_options.StepTolerance = options.rhoend;
     solv_options.ConstraintTolerance = min(1e-6, options.rhoend);
 end
+return
+
+
+function f = evalf(f, x, options)
+
+if isfield(options, 'noise')
+    if isstruct(options.noise)
+        noise = options.noise;
+    else
+        noise = struct();
+    end
+    if ~isfield(noise, 'type')
+        noise.type = 'relative';
+    end
+    if ~isfield(noise, 'nature')
+        noise.nature = 'normal';
+    end
+    if ~isfield(noise, 'level')
+        noise.level = 1e-3;
+    end
+    noise.level = abs(noise.level);
+    if noise.level > 0
+        seed = 0.3*sin(1e8*abs(f))+0.3*cos(1e8*norm(x,9)) + 0.3*sin(100*norm(x,1))*cos(100*norm(x,Inf)) + 0.1*cos(norm(x));
+        rng(min(options.ir*ceil(abs(10e6*seed)), 2^31));  % rng accept integers between 0 and 2^32 - 1.
+
+        switch lower(noise.nature)
+        case {'uniform', 'u'}
+            r = 2*rand-1;
+        otherwise
+            r = randn;
+        end
+
+        switch lower(noise.type)
+        case {'absolute', 'additive', 'add', 'a', '+'}
+            f = f + noise.level*r;
+        otherwise
+            f = f * (1 + noise.level*r);
+        end
+    end
+end
+
+if isfield(options, 'dnoise')
+    if isstruct(options.dnoise)
+        dnoise = options.dnoise;
+    else
+        dnoise = struct();
+    end
+    if ~isfield(dnoise, 'type')
+        dnoise.type = 'relative';
+    end
+    if ~isfield(dnoise, 'level')
+        dnoise.level = 1e-3;
+    end
+    dnoise.level = abs(dnoise.level);
+    if dnoise.level > 0
+        phi0 = 0.6*cos(1e8*norm(x,9)) + 0.3*sin(100*norm(x,1))*cos(100*norm(x,Inf)) + 0.1*cos(norm(x));
+        noisimul = phi0*(4*phi0^2-3);
+        switch lower(dnoise.type)
+        case {'absolute', 'additive', 'add', 'a', '+'}
+            f = f + dnoise.level*noisimul;
+        otherwise
+            f = f * (1 + dnoise.level*noisimul);
+        end
+    end
+end
+
+if isfield(options, 'single') && isscalar(options.single) && islogical(options.single) && options.single
+    f = double(single(f));
+end
+
+if isfield(options, 'signif1')
+    options.signif = 1;
+elseif isfield(options, 'signif2')
+    options.signif = 2;
+elseif isfield(options, 'signif3')
+    options.signif = 3;
+elseif isfield(options, 'signif4')
+    options.signif = 4;
+elseif isfield(options, 'signif5')
+    options.signif = 5;
+end
+
+if (isfield(options, 'signif'))
+    sig = min(max(1, options.signif), 16);
+    sf = eval(mat2str(f, sig));
+    r = sin(sin(sig) + sin(1e8*f) + sum(abs(sin(1e8*x))) + sin(length(x)));
+    f = sf + (f-sf)*(r+1);   % This makes the truncation more "irregular".
+end
+
+return
+
+
+function f = evalfun(fun, x, options, ir)
+if isfield(options, 'single') && isscalar(options.single) && islogical(options.single) && options.single
+    f = fun(double(single(x)));
+else
+    f = fun(x);
+end
+options.ir = ir;
+f = evalf(f, x, options);
+return
+
+
+function [cineq, ceq] = evalcon(con, x, options, ir)
+if isfield(options, 'single') && isscalar(options.single) && islogical(options.single) && options.single
+    [cineq, ceq] = con(double(single(x)));
+else
+    [cineq, ceq] = con(x);
+end
+options.ir = ir;
+afun = @(f) evalf(f, x, options);
+cineq = arrayfun(afun, cineq);
+ceq = arrayfun(afun, ceq);
+return
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function cstrv = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
+lb(isnan(lb)) = -inf; % Replace the NaN in lb with -inf
+ub(isnan(ub)) = inf; % Replace the NaN in ub with inf
+bineq(isnan(bineq)) = inf; % Replace the NaN in bineq with inf
+if ~isempty(Aeq)
+    nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); % NaN equality constraints
+    Aeq = Aeq(~nan_eq, :); % Remove NaN equality constraints
+    beq = beq(~nan_eq);
+end
+if isempty(lb)
+    lb = -inf(size(x));
+end
+if isempty(ub)
+    ub = inf(size(x));
+end
+rineq = [];
+req = [];
+if ~isempty(Aineq)
+    rineq = Aineq*x-bineq;
+end
+if ~isempty(Aeq)
+    req = Aeq*x-beq;
+end
+if ~isempty(nonlcon)
+    [nlcineq, nlceq] = nonlcon(x);
+else
+    nlcineq = [];
+    nlceq = [];
+end
+cstrv = max([0; rineq; abs(req); lb-x; x-ub; nlcineq; abs(nlceq)], [], 'includenan');
+% max(X, [], 'includenan') returns NaN if X contains NaN, and maximum of X otherwise
 return

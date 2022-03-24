@@ -240,7 +240,8 @@ C
           IF (DELTA <= 1.5D0*RHO) DELTA=RHO
           IF (NF <= NFSAV+2) GOTO 460
           TEMP=0.125D0*CRVMIN*RHO*RHO
-          IF (TEMP <= MAX(DIFFA,DIFFB,DIFFC)) GOTO 460
+          !IF (TEMP <= MAX(DIFFA,DIFFB,DIFFC)) GOTO 460
+          IF (TEMP < MAX(DIFFA,DIFFB,DIFFC)) GOTO 460  ! According to the NEWUOA paper
           GOTO 490
       END IF
 C

@@ -2,6 +2,9 @@ function perfdata(solvers, options)
 
 stamp = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim), '.', options.type);
 time = options.time;
+if isfield(options, 'stamp') && (isa(options.stamp, 'char') || isa(options.stamp, 'string')) && ~isempty(options.stamp)
+    time = strcat(time, '.', options.stamp);
+end
 data_dir = options.data_dir;
 matfile = fullfile(data_dir, strcat(stamp, '.perfdata.mat'));
 

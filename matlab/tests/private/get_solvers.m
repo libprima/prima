@@ -36,7 +36,7 @@ try
 
     compiler_options_modified = false;
     if isfield(options, 'compiler_options') && (isa(options.compiler_options, 'char') ...
-            || isa(options.compiler_options, 'str'))
+            || isa(options.compiler_options, 'string'))
         configure_compiler_options(options.compiler_options);
         compiler_options_modified = true;
     end
