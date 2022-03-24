@@ -54,6 +54,6 @@ if exist(mex_setup_file, 'file')
     delete(mex_setup_file);
 end
 
-fprintf('\nCompiler options set to \n\n%s.\n\n', compiler_options);
+fprintf('\nCompiler options set to \n\n%s\n\n', compiler_options);
 
 return

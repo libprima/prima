@@ -7,9 +7,13 @@ succ = true;
 
 try
     f = fun(x);
-catch
+catch exception
     succ = false;
     f = NaN;
+    wid = sprintf('%s:ObjectiveFailure', invoker);
+    wmsg = sprintf('%s: Objective function fails with the following error:\n  %s: %s\n  Error occurred in %s, line %d', ...
+        invoker, exception.identifier, exception.message, exception.stack(1).file, exception.stack(1).line);
+    warning(wid, '%s', wmsg);
 end
 
 if numel(f) ~= 1
@@ -25,7 +29,7 @@ end
 
 % Use a 'moderated extreme barrier' to cope with 'hidden constraints' or evaluation failures.
 if isnan(f) || ~isreal(f) || f > hugefun
-    wid = sprintf('%s:ObjectiveFailure', invoker);
+    wid = sprintf('%s:ObjectiveAbnormalReturn', invoker);
     xstr = sprintf('%g    ', x);
     if ~isreal(f)
         fstr = sprintf('%g%+gi', real(f), imag(f));
