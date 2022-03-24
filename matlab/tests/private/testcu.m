@@ -51,9 +51,7 @@ else
         requirements.blacklist = [requirements.blacklist, {'GMNCASE2'}];
     end
     if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
-%        requirements.blacklist = [requirements.blacklist, {'DEGENLPA', 'HATFLDH', 'LOTSCHD', ...
-%            'LSNNODOC', 'OET3', 'SIMPLLPA', 'SIMPLLPB', 'SIPOW1', 'SIPOW1M', 'SIPOW2', 'SIPOW2M',...
-%            'STANCMIN', 'TFI3', 'ZECEVIC2'}];  % profile('lincoa') SEGFAULT for a deprecated  version of lincoa!
+        requirements.blacklist = [requirements.blacklist, {'3PK'}]; % The classical version encounters SIGFAULT
     end
     plist = secup(requirements);
 end
