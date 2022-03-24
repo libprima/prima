@@ -88,6 +88,7 @@ C       denominator of the updating formula times a weighting factor.
 C
 C
       IF (KNEW == 0) THEN
+          knew = 1  ! Without this, SIGSEV may occur due to uninitialized KNEW.
           DENMAX=ZERO
           DO K=1,NPT
               HDIAG=ZERO

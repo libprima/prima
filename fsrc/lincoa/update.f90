@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 18, 2022 PM09:08:35
+! Last Modified: Friday, March 25, 2022 AM12:13:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -153,6 +153,7 @@ vlag(kopt) = vlag(kopt) + ONE
 !
 !
 if (knew == 0) then
+    knew = 1  ! Without this, SIGSEV may occur due to uninitialized KNEW.
     denmax = ZERO
     do k = 1, npt
         hdiag = ZERO
