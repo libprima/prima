@@ -1,4 +1,4 @@
-function configure_compiler_options(compiler_options)
+function set_compiler_options(compiler_options)
 %Configure the compiler options by editing the mexopts files. It is hacky!!!
 
 if ~isunix || ismac

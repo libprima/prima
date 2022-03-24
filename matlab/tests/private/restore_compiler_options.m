@@ -32,7 +32,7 @@ for ifile = 1 : length(config_files)
 end
 
 % Delete `mex_setup_file` so that it will be regenerated next time when `mex -setup` is called.
-% Why not restore it using a backup? See the comments in `configure_compiler_options` when this file
+% Why not restore it using a backup? See the comments in `set_compiler_options` when this file
 % was deleted.
 mex_setup_file = fullfile(prefdir, ['mex_FORTRAN_', computer('arch'), '.xml']);
 if exist(mex_setup_file, 'file')
