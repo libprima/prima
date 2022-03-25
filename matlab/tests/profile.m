@@ -74,7 +74,32 @@ try
         else
             options.stamp = strjoin(fieldnames(options.eval_options), '_');
         end
+        if isfield(options.eval_options, 'dnoise')
+            if isnumeric(options.eval_options.dnoise) && isscalar(options.eval_options)
+                dnoise_level = abs(options.eval_options.dnoise);
+            elseif isstruct(options.eval_options.dnoise) && isfield(options.eval_options.dnoise, 'level')
+                dnoise_level = abs(options.eval_options.dnoise.level);
+            else
+                dnoise_level = 0;
+            end
+            if dnoise_level > 0
+                options.stamp = regexprep(options.stamp, 'dnoise', ['dnoise', '_', sprintf('%g', dnoise_level)]);
+            end
+        end
+        if isfield(options.eval_options, 'noise')
+            if isnumeric(options.eval_options.noise) && isscalar(options.eval_options)
+                noise_level = abs(options.eval_options.noise);
+            elseif isstruct(options.eval_options.noise) && isfield(options.eval_options.noise, 'level')
+                noise_level = abs(options.eval_options.noise.level);
+            else
+                noise_level = 0;
+            end
+            if noise_level > 0
+                options.stamp = regexprep(options.stamp, 'noise', ['noise', '_', sprintf('%g', noise_level)]);
+            end
+        end
     end
+
     options.time = datestr(datetime(), 'yymmdd_HHMM');
 
     % Make the solvers available. Note that the solvers are under `test_dir`.

@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM10:40:03
+! Last Modified: Friday, March 25, 2022 PM01:15:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,7 +26,7 @@ subroutine trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
      &  qfac, rfac, snorm, step, g, resnew, resact, d, dw, w)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, TINYCV
 
 ! Solver-specific modules
 use, non_intrinsic :: getact_mod, only : getact
@@ -59,7 +59,7 @@ real(RP), intent(inout) :: w(max(m, 2_IK * n))
 
 ! Local variables
 real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, tinynum, wgd
+&        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, wgd
 integer(IK) :: i, icount, ih, ir, j, jsav, k, ncall
 
 !
@@ -91,7 +91,6 @@ integer(IK) :: i, icount, ih, ir, j, jsav, k, ncall
 !
 !     Set some numbers for the conjugate gradient iterations.
 !
-tinynum = real(tiny(0.0), RP)
 ctest = 0.01_RP
 snsq = snorm * snorm
 !
@@ -103,7 +102,7 @@ if (m > 0) then
         if (rescon(j) >= snorm) then
             resnew(j) = -ONE
         else if (rescon(j) >= ZERO) then
-            resnew(j) = max(resnew(j), tinynum)
+            resnew(j) = max(resnew(j), TINYCV)
         end if
     end do
     if (nact > 0) then
@@ -325,7 +324,7 @@ end do
 if (m > 0) then
     do j = 1, m
         if (resnew(j) > ZERO) then
-            resnew(j) = max(resnew(j) - alpha * w(j), tinynum)
+            resnew(j) = max(resnew(j) - alpha * w(j), TINYCV)
         end if
     end do
 end if

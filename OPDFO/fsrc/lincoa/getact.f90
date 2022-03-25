@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 19, 2022 AM11:20:19
+! Last Modified: Friday, March 25, 2022 PM01:15:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,7 +26,7 @@ subroutine getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, 
 use, non_intrinsic :: linalg_mod, only : inprod, planerot
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, ZERO
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, ZERO, TINYCV
 
 implicit none
 
@@ -50,7 +50,7 @@ real(RP), intent(inout) :: w(n)
 
 ! Local variables
 real(RP) :: cosv, ctol, cval, dd, ddsav, dnorm, rdiag,   &
-&        sinv, sprod, summ, sval, tdel, temp, test, tinynum,   &
+&        sinv, sprod, summ, sval, tdel, temp, test, &
 &        violmx, vmult, grot(2, 2), temp1, temp2
 integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag, jw,   &
 &           k, l, nactp
@@ -78,7 +78,6 @@ integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag, jw,   &
 !
 !     Set some constants and a temporary VLAM.
 !
-tinynum = real(tiny(0.0), RP)
 tdel = 0.2_RP * snorm
 ddsav = TWO * inprod(g, g)
 vlam = ZERO
@@ -268,7 +267,7 @@ resnew(l) = ZERO
 !
 !     Set the compONEnts of the vector VMU in W.
 !
-220  continue
+220 continue
 if (nact <= 0) return  ! What about DD?
 w(nact) = ONE / rfac((nact * nact + nact) / 2)**2
 if (nact > 1) then
@@ -316,7 +315,7 @@ ic = nact
 
 !270 if (vlam(ic) < ZERO) goto 280
 270 if (.not. vlam(ic) >= ZERO) goto 280
-resnew(iact(ic)) = max(resact(ic), tinynum)
+resnew(iact(ic)) = max(resact(ic), TINYCV)
 goto 800
 280 ic = ic - 1
 if (ic > 0) goto 270
@@ -336,7 +335,7 @@ return
 !       Givens rotations is applied to the current QFAC and RFAC. Then NACT
 !       is reduced by ONE.
 !
-800 resnew(iact(ic)) = max(resact(ic), tinynum)
+800 resnew(iact(ic)) = max(resact(ic), TINYCV)
 jc = ic
 810 if (jc < nact) then
     jcp = jc + 1
