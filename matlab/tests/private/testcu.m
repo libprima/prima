@@ -195,12 +195,8 @@ if (nf >= 1)
     if has_eval_options
         xhist_cell = num2cell(output.xhist(:, 1:nf), 1);
         fval_history(1:nf) = cellfun(prob.orig_objective, xhist_cell);
-        if ~isempty(prob.orig_nonlcon)
-            orig_cstrv = @(x) get_cstrv(x, prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.orig_nonlcon);
-            cv_history(1:nf) = cellfun(orig_cstrv, xhist_cell);
-        else
-            cv_history(1:nf) = zeros(1,nf);
-        end
+        orig_cstrv = @(x) get_cstrv(x, prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.orig_nonlcon);
+        cv_history(1:nf) = cellfun(orig_cstrv, xhist_cell);
     else
         fval_history(1:nf) = output.fhist(1:nf);
         if isfield(output, 'chist')
