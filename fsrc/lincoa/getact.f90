@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 AM11:10:52
+! Last Modified: Friday, March 25, 2022 AM08:04:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -462,7 +462,8 @@ end if
 ! rotations. Then NACT is reduced by one.
 
 call qrexc(qfac, rfac(:, 1:nact), ic)  ! QREXC does nothing if IC == NACT.
-! Indeed, it suffices to pass QFAC(:, 1:NACT) and RFAC(1:NACT, 1:NACT) to QREXC as follows.
+! Indeed, it suffices to pass QFAC(:, 1:NACT) and RFAC(1:NACT, 1:NACT) to QREXC as follows. However,
+! compilers may create a temporary copy of RFAC(1:NACT, 1:NACT), which is not contiguous in memory.
 !!call qrexc(qfac(:, 1:nact), rfac(1:nact, 1:nact), ic)
 
 iact(ic:nact) = [iact(ic + 1:nact), iact(ic)]
