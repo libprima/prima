@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 06, 2022 AM11:47:54
+! Last Modified: Friday, March 25, 2022 AM08:53:30
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -80,7 +80,7 @@ public :: DEBUGGING
 public :: IK, IK_DFT
 public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
-public :: REALMIN, EPS, HUGENUM, HUGEFUN, HUGECON, HUGEBOUND
+public :: REALMIN, EPS, TINYCV, HUGENUM, HUGEFUN, HUGECON, HUGEBOUND
 public :: MSGLEN, FNAMELEN
 public :: OUTUNIT, STDIN, STDOUT, STDERR
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, CWEIGHT_DFT
@@ -161,10 +161,15 @@ real(RP), parameter :: PI = 3.141592653589793238462643383279502884_RP
 ! Julia: realmin(Float64)
 real(RP), parameter :: REALMIN = tiny(ZERO)
 real(RP), parameter :: EPS = epsilon(ZERO)  ! Machine epsilon
+
+integer, parameter :: MINE = minexponent(ZERO)
+! TINYCV is used in LINCOA. Powell set TINYCV = 1.0D-60. What about setting TINYCV = REALMIN?
+real(RP), parameter :: TINYCV = real(radix(ZERO), RP)**max(-200, MINE)  ! Normally, RADIX = 2.
+
 real(RP), parameter :: HUGENUM = huge(ZERO)
 
 integer, parameter :: MAXE = maxexponent(ZERO)
-real(RP), parameter :: HUGEFUN = TWO**min(100, MAXE / 2)
+real(RP), parameter :: HUGEFUN = real(radix(ZERO), RP)**min(100, MAXE / 2)  ! Normally, RADIX = 2.
 real(RP), parameter :: HUGECON = HUGEFUN
 ! Any bound with an absolute value at least HUGEBOUND is considered as no bound.
 real(RP), parameter :: HUGEBOUND = QUART * HUGENUM

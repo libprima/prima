@@ -7,10 +7,14 @@ succ = true;
 
 try
     [cineq, ceq] = nonlcon(x);
-catch
+catch exception
     succ = false;
     cineq = NaN;
     ceq = NaN;
+    wid = sprintf('%s:ConstraintFailure', invoker);
+    wmsg = sprintf('%s: Constraint function fails with the following error:\n  %s: %s\n  Error occurred in %s, line %d', ...
+        invoker, exception.identifier, exception.message, exception.stack(1).file, exception.stack(1).line);
+    warning(wid, '%s', wmsg);
 end
 
 if ~(isempty(cineq) || isnumeric(cineq))
@@ -25,7 +29,7 @@ end
 
 % Use a 'moderated extreme barrier' to cope with 'hidden constraints' or evaluation failures.
 if any(isnan(cineq) | ~isreal(cineq) | cineq > hugecon)
-    wid = sprintf('%s:ConstraintFailure', invoker);
+    wid = sprintf('%s:ConstraintAbnormalReturn', invoker);
     xstr = sprintf('%g    ', x);
     if any(~isreal(cineq))
         cstr = sprintf('%g%+gi    ', [real(cineq(:)), imag(cineq(:))].');
@@ -41,7 +45,7 @@ if any(isnan(cineq) | ~isreal(cineq) | cineq > hugecon)
 end
 
 if any(isnan(ceq) | ~isreal(ceq) | abs(ceq) > hugecon)
-    wid = sprintf('%s:ConstraintFailure', invoker);
+    wid = sprintf('%s:ConstraintAbnormalReturn', invoker);
     xstr = sprintf('%g    ', x);
     if any(~isreal(ceq))
         cstr = sprintf('%g%+gi    ', [real(ceq(:)), imag(ceq(:))].');

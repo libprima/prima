@@ -9,6 +9,7 @@ maxfun = 20000;
 maxit = 1000;
 ftarget = -inf;
 randomizex0 = 0;
+eval_options = struct();
 nr = 5;
 ctol = 1e-10;
 cpenalty = 1e10;
@@ -28,7 +29,7 @@ thorough_test = 0;
 minip = 1;
 
 % Set options
-options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, ...
+options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, eval_options, ...
     nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, sequential, debug, thorough_test, minip);
 
 % Select the problems to test.
@@ -59,7 +60,7 @@ end
 %plist={'ALLINITU'};
 np = length(plist);
 ns = length(solvers);
-nr = options.randrun;
+nr = options.nr;
 maxfun = options.maxfun;
 sequential = options.sequential;
 minip = options.minip;
@@ -69,15 +70,22 @@ frec = NaN(np, ns, nr, maxfun);
 crec = NaN(np, ns, nr, maxfun);
 pdim = NaN(np, 1);  % Data profile needs the dimension of the problem.
 
-has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(options.eval_options);
-eval_options = struct();  % Without this, `parfor` may not work.
-if has_eval_options
-    eval_options = options.eval_options;
+has_eval_options = ~isempty(options.eval_options);
+eval_options = options.eval_options;
+randomizex0 = abs(options.randomizex0);
+
+
+fprintf('\n\nThe testing options:\n')
+display(options);
+fprintf('\n\nThe evaluation options:\n')
+display(eval_options);
+if isfield(eval_options, 'noise')
+    display(eval_options.noise);
+end
+if isfield(eval_options, 'dnoise')
+    display(eval_options.dnoise);
 end
 
-if isfield(options, 'randomizex0') && isnumeric(options.randomizex0) && isscalar(options.randomizex0)
-    randomizex0 = abs(options.randomizex0);
-end
 
 if sequential
     for ip = minip : np
@@ -218,7 +226,7 @@ return
 
 
 function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, ...
-        nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
+        eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
         sequential, debug, thorough_test, minip) % Set options
 
 if (~isfield(options, 'rhoend'))
@@ -242,12 +250,9 @@ end
 if (~isfield(options, 'randomizex0'))
     options.randomizex0 = randomizex0;
 end
-if (~isfield(options, 'randrun'))
-    options.randrun = nr;
-end
-noisy_eval = isfield(options, 'eval_options') && isstruct(options.eval_options) && isfield(options.eval_options, 'noise');
-if (options.randomizex0 == 0 && ~noisy_eval)
-    options.randrun = 1;
+options.randomizex0 = abs(options.randomizex0);
+if (~isfield(options, 'nr'))
+    options.nr = nr;
 end
 if (~isfield(options, 'type'))
     options.type = type;
@@ -284,6 +289,108 @@ if (~isfield(options, 'minip'))
     options.minip = minip;
 end
 
+% Set eval_options
+has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(options.eval_options);
+if ~has_eval_options
+    options.eval_options = eval_options;
+end
+
+if has_eval_options
+    eval_options = options.eval_options;
+
+    noise.type = 'relative';
+    noise.nature = 'normal';
+    noise.level = 0;
+    if isfield(eval_options, 'noise') && isnumeric(eval_options.noise) && isscalar(eval_options.noise)
+        noise.level = abs(eval_options.noise);
+    elseif isfield(eval_options, 'noise') && isstruct(eval_options.noise)
+        noise = eval_options.noise;
+        if ~isfield(noise, 'type')
+            noise.type = 'relative';
+        end
+        if ~isfield(noise, 'nature')
+            noise.nature = 'normal';
+        end
+        if ~isfield(noise, 'level')
+            noise.level = 1e-3;  % The default noise level if `noise` is present in `eval_options`
+        end
+        noise.level = abs(noise.level);
+    end
+    eval_options.noise = noise;
+    if eval_options.noise.level == 0
+        eval_options = rmfield(eval_options, 'noise');
+    end
+
+    dnoise.type = 'relative';
+    dnoise.level = 0;
+    if isfield(eval_options, 'dnoise') && isnumeric(eval_options.dnoise) && isscalar(eval_options.dnoise)
+        dnoise.level = abs(eval_options.dnoise);
+    elseif isfield(eval_options, 'dnoise') && isstruct(eval_options.dnoise)
+        dnoise = eval_options.dnoise;
+        if ~isfield(dnoise, 'type')
+            dnoise.type = 'relative';
+        end
+        if ~isfield(dnoise, 'level')
+            dnoise.level = 1e-3;  % The default dnoise level if `dnoise` is present in `eval_options`
+        end
+        dnoise.level = abs(dnoise.level);
+    end
+    eval_options.dnoise = dnoise;
+    if eval_options.dnoise.level == 0
+        eval_options = rmfield(eval_options, 'dnoise');
+    end
+
+    if isfield(eval_options, 'signif1')
+        eval_options.signif = 1;
+    elseif isfield(eval_options, 'signif2')
+        eval_options.signif = 2;
+    elseif isfield(eval_options, 'signif3')
+        eval_options.signif = 3;
+    elseif isfield(eval_options, 'signif4')
+        eval_options.signif = 4;
+    elseif isfield(eval_options, 'signif5')
+        eval_options.signif = 5;
+    elseif isfield(eval_options, 'signif6')
+        eval_options.signif = 6;
+    end
+
+    if isfield(eval_options, 'single')
+        eval_options.single = true;
+    end
+
+    options.eval_options = eval_options;
+end
+
+eval_options = options.eval_options;
+
+% Revise options.nr
+noisy_eval = (isfield(eval_options, 'noise') && eval_options.noise.level > 0);
+if ~(options.randomizex0 > 0 || noisy_eval)
+    options.nr = 1;
+end
+
+% Revise options.ctol and options.cpenalty
+if isfield(eval_options, 'dnoise')
+    options.ctol = max(options.ctol, eval_options.dnoise.level);
+    options.cpenalty = min(options.cpenalty, 100/options.ctol);
+end
+if isfield(eval_options, 'noise')
+    options.ctol = max(options.ctol, eval_options.noise.level);
+    options.cpenalty = min(options.cpenalty, 100/options.ctol);
+end
+if isfield(eval_options, 'signif')
+    options.ctol = max(options.ctol, 10^(-eval_options.signif));
+    options.cpenalty = min(options.cpenalty, 100/options.ctol);
+end
+if isfield(eval_options, 'single') && eval_options.single
+    options.ctol = max(options.ctol, 1e-5);
+    options.cpenalty = min(options.cpenalty, 100/options.ctol);
+end
+if options.randomizex0 > 0
+    options.ctol = max(options.ctol, 1e-5);
+    options.cpenalty = min(options.cpenalty, 100/options.ctol);
+end
+
 return
 
 
@@ -318,24 +425,10 @@ return
 function f = evalf(f, x, options)
 
 if isfield(options, 'noise')
-    if isstruct(options.noise)
-        noise = options.noise;
-    else
-        noise = struct();
-    end
-    if ~isfield(noise, 'type')
-        noise.type = 'relative';
-    end
-    if ~isfield(noise, 'nature')
-        noise.nature = 'normal';
-    end
-    if ~isfield(noise, 'level')
-        noise.level = 1e-3;
-    end
-    noise.level = abs(noise.level);
-    if noise.level > 0
+    noise = options.noise;
+    if isstruct(noise) && isfield(noise, 'level') && noise.level > 0
         seed = 0.3*sin(1e8*abs(f))+0.3*cos(1e8*norm(x,9)) + 0.3*sin(100*norm(x,1))*cos(100*norm(x,Inf)) + 0.1*cos(norm(x));
-        rng(min(options.ir*ceil(abs(10e6*seed)), 2^31));  % rng accept integers between 0 and 2^32 - 1.
+        rng(min(options.ir*ceil(abs(10e6*seed)), 2^31));  % rng accepts integers between 0 and 2^32 - 1.
 
         switch lower(noise.nature)
         case {'uniform', 'u'}
@@ -354,19 +447,8 @@ if isfield(options, 'noise')
 end
 
 if isfield(options, 'dnoise')
-    if isstruct(options.dnoise)
-        dnoise = options.dnoise;
-    else
-        dnoise = struct();
-    end
-    if ~isfield(dnoise, 'type')
-        dnoise.type = 'relative';
-    end
-    if ~isfield(dnoise, 'level')
-        dnoise.level = 1e-3;
-    end
-    dnoise.level = abs(dnoise.level);
-    if dnoise.level > 0
+    dnoise = options.dnoise;
+    if isstruct(dnoise) && isfield(dnoise, 'level') && dnoise.level > 0
         phi0 = 0.6*cos(1e8*norm(x,9)) + 0.3*sin(100*norm(x,1))*cos(100*norm(x,Inf)) + 0.1*cos(norm(x));
         noisimul = phi0*(4*phi0^2-3);
         switch lower(dnoise.type)
@@ -380,18 +462,6 @@ end
 
 if isfield(options, 'single') && isscalar(options.single) && islogical(options.single) && options.single
     f = double(single(f));
-end
-
-if isfield(options, 'signif1')
-    options.signif = 1;
-elseif isfield(options, 'signif2')
-    options.signif = 2;
-elseif isfield(options, 'signif3')
-    options.signif = 3;
-elseif isfield(options, 'signif4')
-    options.signif = 4;
-elseif isfield(options, 'signif5')
-    options.signif = 5;
 end
 
 if (isfield(options, 'signif'))
