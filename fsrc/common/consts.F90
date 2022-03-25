@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 15, 2022 PM12:57:16
+! Last Modified: Friday, March 25, 2022 AM08:49:14
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -162,12 +162,14 @@ real(RP), parameter :: PI = 3.141592653589793238462643383279502884_RP
 real(RP), parameter :: REALMIN = tiny(ZERO)
 real(RP), parameter :: EPS = epsilon(ZERO)  ! Machine epsilon
 
-real(RP), parameter :: TINYCV = real(tiny(0.0), RP)  ! Used in LINCOA
+integer, parameter :: MINE = minexponent(ZERO)
+! TINYCV is used in LINCOA. Powell set TINYCV = 1.0D-60. What about setting TINYCV = REALMIN?
+real(RP), parameter :: TINYCV = real(radix(ZERO), RP)**max(-200, MINE)
 
 real(RP), parameter :: HUGENUM = huge(ZERO)
 
 integer, parameter :: MAXE = maxexponent(ZERO)
-real(RP), parameter :: HUGEFUN = TWO**min(100, MAXE / 2)
+real(RP), parameter :: HUGEFUN = real(radix(ZERO), RP)**min(100, MAXE / 2)
 real(RP), parameter :: HUGECON = HUGEFUN
 ! Any bound with an absolute value at least HUGEBOUND is considered as no bound.
 real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
