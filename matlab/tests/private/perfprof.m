@@ -97,6 +97,7 @@ r = sort(r);
 success_rate = cell(1, ns);
 perf_prof = cell(1, ns);
 
+return
 clf;
 hfig=figure("visible", false);  % Plot the figure without displaying it.
 for is = 1:ns
