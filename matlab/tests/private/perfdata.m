@@ -60,11 +60,55 @@ prof_options.solvers = solvers;
 prof_options.outdir = outdir;
 prof_options.stamp = stamp;
 prof_options.time = time;
-for tau = 10.^(-1:-1:-10)
-    prof_options.tau = tau;
-    perfprof(frec, fmin, prof_options);
-    %dataprof(frec, fmin, pdim, prof_options);
+
+prec = (1:10);
+nprec = length(prec);
+tau = 10.^(-prec);
+output = cell(1, nprec);
+for k = 1 : nprec
+    prof_options.tau = tau(k);
+    output{k} = perfprof(frec, fmin, prof_options);
 end
+
+ns = length(solvers);
+for is = 1:ns
+    solvers{is} = regexprep(solvers{is}, '_4test', '');
+    solvers{is} = regexprep(solvers{is}, '_classical$', ' (classical)');
+    solvers{is} = regexprep(solvers{is}, '_single$', ' (single)');
+    solvers{is} = regexprep(solvers{is}, '_quadruple$', ' (quadruple)');
+    %solvers{is} = regexprep(solvers{is}, 'newuoa', 'NEWUOA');
+end
+
+hfig = figure("visible", false, 'DefaultAxesPosition', [0, 0, 1, 1]);
+for k = 1 : nprec
+    %dataprof(frec, fmin, pdim, prof_options);
+    subplot(1, nprec, k);
+    for is = 1 : ns
+       plot(output{k}.profile{is}(1,:), output{k}.profile{is}(2,:));
+       hold on;
+    end
+    xlabel(sprintf('%d', k));
+    axis([0 output{k}.cut_ratio 0 1]);
+    grid on;
+end
+for k = 1 : nprec
+    ha=get(gcf,'children');
+    set(ha(k),'position', [0.01+(nprec-k)/nprec, 0.1, 0.9/nprec, 0.9]);
+end
+legend(solvers,'Location', 'southeast','Orientation','vertical');
+% Save the figure as eps.
+figname = strcat(stamp, '.', 'summary', '.', time);
+epsname = fullfile(outdir, strcat(figname,'.eps'));
+set(gcf,'position',[0, 0, 4600,460]);
+saveas(hfig, epsname, 'epsc2');
+
+% Try converting the eps to pdf.
+try
+    system(['epstopdf ',epsname]);
+catch
+    % Do nothing in case of failure.
+end
+
 
 % For convenience, save a copy of `problems.txt` and the figures in data_dir. They will be
 % replaced in next test with the same `solvers` and `dimrange`.
@@ -73,6 +117,8 @@ end
 delete(fullfile(data_dir, strcat(stamp, '.*.problems.txt')));
 delete(fullfile(data_dir, strcat(stamp, '.perf_*.pdf')));
 delete(fullfile(data_dir, strcat(stamp, '.perf_*.eps')));
+delete(fullfile(data_dir, strcat(stamp, '.summary.*.eps')));
+delete(fullfile(data_dir, strcat(stamp, '.summary.*.pdf')));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 copyfile(fprob, data_dir);
 epsfiles = dir(fullfile(outdir, '*.eps'));
