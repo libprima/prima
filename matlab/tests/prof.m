@@ -53,7 +53,6 @@ output{4} = profile(argin{:});
 outputfiles = struct();
 prob_types = fieldnames(output{1});
 for ipt = 1 : length(prob_types)
-    keyboard
     ptype = prob_types{ipt};
     [~, outputfile] = fileparts(output{1}.(ptype));
     outputfile = fullfile(data_dir, [outputfile, '.pdf']);
