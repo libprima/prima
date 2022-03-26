@@ -121,7 +121,7 @@ for is = 1:ns
     success_rate{is}(1) = yy(1);  % The success rate corresponding to NF/NFMIN = 1 (i.e., NF=NFMIN).
     success_rate{is}(3) = yy(end);  % The success rate with "infinite budget".
     % The following lines calculates the average success rate.
-    k = length(xx)/2;
+    k = length(xx)/2
     % The following line calculates the simple average
     %success_rate(is, 2) = sum(yy(2*(1:k)-1).*(xx(2*(1:k))-xx(2*(1:k)-1)))/xx(end);
     % The following line calculates the weighted average with the weight = exp(-NF/NFMIN), putting
