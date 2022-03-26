@@ -114,6 +114,7 @@ for is = 1:ns
     % Evaluate the success rate.
     x
     penalty_ratio
+    y
     1
     xx = x(x>0 & x < penalty_ratio)
     2
