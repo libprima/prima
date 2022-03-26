@@ -97,7 +97,6 @@ r = sort(r);
 success_rate = cell(1, ns);
 perf_prof = cell(1, ns);
 
-return
 clf;
 hfig=figure("visible", false);  % Plot the figure without displaying it.
 for is = 1:ns
@@ -130,6 +129,8 @@ for is = 1:ns
     %success_rate{is}(2) = sum(yy(2*(1:k)-1).*(xx(2*(1:k))-xx(2*(1:k)-1)).*exp(-xx(2*(1:k)-1)))/sum((xx(2*(1:k))-xx(2*(1:k)-1)).*exp(-xx(2*(1:k)-1)));
     perf_prof{is} = [x'; y'];
 end
+
+return
 
 %output.success_rate = success_rate;
 output.profile = perf_prof;
