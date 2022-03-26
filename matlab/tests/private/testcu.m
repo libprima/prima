@@ -50,9 +50,10 @@ else
         requirements.blacklist = [requirements.blacklist, {'CHEBYQADNE','HAIFAM','HIMMELBI','HYDCAR20','LUKSAN12','LUKSAN13','MSS1','SPANHYD','VANDERM1','VANDERM2','VANDERM3', 'TAX13322', 'TAXR13322'}]; % Takes more than 2 min to solve
         requirements.blacklist = [requirements.blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Time-consuming
         requirements.blacklist = [requirements.blacklist, {'GMNCASE2'}];
+        requirements.blacklist = [requirements.blacklist, {'VANDERM4'}]; % The classical COBYLA encounters SIGFAULT
     end
     if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
-        requirements.blacklist = [requirements.blacklist, {'3PK'}]; % The classical version encounters SIGFAULT
+        requirements.blacklist = [requirements.blacklist, {'3PK'}]; % The classical LINCOA encounters SIGFAULT
     end
     plist = secup(requirements);
 end

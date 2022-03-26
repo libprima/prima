@@ -143,7 +143,7 @@ try
         options.type = 'b';
         perfdata(solvers, options);
     end
-    if ismember(solver, {'cobyla', 'lincoa', 'bobyqa', 'newuoa', 'uobyqa'}) && contains(problem_type, 'u')
+    if ismember(solver, {'cobyla', 'lincoa', 'bobyqa'}) && contains(problem_type, 'u')
         options.type = 'u';
         perfdata(solvers, options);
     end

@@ -1,4 +1,4 @@
-function T = perfprof(frec, fmin, options)
+function output = perfprof(frec, fmin, options)
 %This function plots the performance profiles of solvers.
 % frec: trajectory of function values; frec(ip, is, ir, k) is the function value of the ip-th problem
 % obtained by the is-th solver at the ir-th random run at the k-th iteration.
@@ -9,7 +9,7 @@ function T = perfprof(frec, fmin, options)
 % Parameters.
 delsame = 0;
 penalty = 2;
-cut = 1.1;
+cut = 1.05;
 fontsize = 12;
 linewidth = 1;
 % Colors.
@@ -94,20 +94,46 @@ cut_ratio = cut*max_ratio;
 r(isnan(r)) = penalty_ratio;
 r = sort(r);
 
+success_rate = cell(1, ns);
+perf_prof = cell(1, ns);
+
 clf;
 hfig=figure("visible", false);  % Plot the figure without displaying it.
 for is = 1:ns
-    [xs,ys] = stairs(r(:,is), (1:np)/np);
+    [x,y] = stairs(r(:,is), (1:np)/np);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % The following ensures the correctness of the profiles in extreme
-    % cases like one the solvers always performs the best, or one of
+    % cases like one the solvers alway performs the best, or one of
     % the solvers cannot solve any problem.
-    xs = [0; xs(1); xs; penalty_ratio];
-    ys = [0; 0; ys; ys(end)];
+    x = [0; x(1); x; penalty_ratio];
+    y = [0; 0; y; y(end)];
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    plot(xs, ys, lines{is}, 'Color', colors{is},  'Linewidth', linewidth);
+    plot(x, y, lines{is}, 'Color', colors{is},  'Linewidth', linewidth);
     hold on;
+
+    % Evaluate the success rate.
+    xx = x(x>0 & x < penalty_ratio);
+    yy = y(x>0 & x < penalty_ratio);
+    xx = [0; xx; xx(end)*cut];
+    yy = [yy(1); yy; yy(end)];
+
+    success_rate{is} = NaN(1,3);
+    success_rate{is}(1) = yy(1);  % The success rate corresponding to NF/NFMIN = 1 (i.e., NF=NFMIN).
+    success_rate{is}(3) = yy(end);  % The success rate with "infinite budget".
+    % The following lines calculates the average success rate.
+    k = length(xx)/2;
+    % The following line calculates the simple average
+    %success_rate(is, 2) = sum(yy(2*(1:k)-1).*(xx(2*(1:k))-xx(2*(1:k)-1)))/xx(end);
+    % The following line calculates the weighted average with the weight = exp(-NF/NFMIN), putting
+    % more weight when NF/NFMIN is small.
+    success_rate{is}(2) = sum(yy(2*(1:k)-1).*(xx(2*(1:k))-xx(2*(1:k)-1)).*exp(-xx(2*(1:k)-1)))/sum((xx(2*(1:k))-xx(2*(1:k)-1)).*exp(-xx(2*(1:k)-1)));
+    perf_prof{is} = [x'; y'];
 end
+
+output.success_rate = success_rate;
+output.profile = perf_prof;
+output.cut_ratio = cut_ratio;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 axis([0 cut_ratio 0 1]);
 yticks(0 : 0.1 : 1);
