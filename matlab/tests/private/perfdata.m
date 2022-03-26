@@ -46,8 +46,8 @@ end
 fprob = fullfile(outdir, strcat(stamp, '.', time, '.', 'problems.txt'));
 fid = fopen(fprob, 'w');
 if fid >= 3
-    for k = 1 : length(plist)
-        fprintf(fid, "%s\n", plist{k});
+    for ip = 1 : length(plist)
+        fprintf(fid, "%s\n", plist{ip});
     end
     fclose(fid);
 else
@@ -75,27 +75,27 @@ nprec = length(prec)
 tau = 10.^(-prec);
 prof_output = repmat({struct()}, 1, nprec)
 size(prof_output)
-for k = 1 : nprec
-    k
-    prof_options.tau = tau(k);
-    prof_output{k} = perfprof(frec, fmin, prof_options);
+for iprec = 1 : nprec
+    iprec
+    prof_options.tau = tau(iprec);
+    prof_output{iprec} = perfprof(frec, fmin, prof_options);
 end
 
 hfig = figure("visible", false, 'DefaultAxesPosition', [0, 0, 1, 1]);
-for k = 1 : nprec
+for iprec = 1 : nprec
     %dataprof(frec, fmin, pdim, prof_options);
-    subplot(1, nprec, k);
+    subplot(1, nprec, iprec);
     for is = 1 : ns
-       plot(prof_output{k}.profile{is}(1,:), prof_output{k}.profile{is}(2,:));
+       plot(prof_output{iprec}.profile{is}(1,:), prof_output{iprec}.profile{is}(2,:));
        hold on;
     end
-    xlabel(sprintf('%d', k));
-    axis([0 prof_output{k}.cut_ratio 0 1]);
+    xlabel(sprintf('%d', iprec));
+    axis([0 prof_output{iprec}.cut_ratio 0 1]);
     grid on;
 end
-for k = 1 : nprec
+for iprec = 1 : nprec
     ha=get(gcf,'children');
-    set(ha(k),'position', [0.01+(nprec-k)/nprec, 0.1, 0.9/nprec, 0.9]);
+    set(ha(iprec),'position', [0.01+(nprec-iprec)/nprec, 0.1, 0.9/nprec, 0.9]);
 end
 
 % The following appears only in the last subplot, but it is sufficient for our use.
