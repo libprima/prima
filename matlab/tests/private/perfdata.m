@@ -1,4 +1,4 @@
-function perfdata(solvers, options)
+function summary = perfdata(solvers, options)
 
 stamp = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim), '.', options.type);
 time = options.time;
@@ -111,8 +111,9 @@ saveas(hfig, epsname, 'epsc2');
 % Try converting the eps to pdf.
 try
     system(['epstopdf ',epsname]);
+    summary = fullfile(outdir, strcat(figname,'.pdf'));
 catch
-    % Do nothing in case of failure.
+    summary = epsname;
 end
 
 

@@ -1,4 +1,4 @@
-function profile(varargin)
+function output = profile(varargin)
 %This function profiles the modernized version of Powell's solver against Powell's version.
 %
 % Usage:
@@ -34,8 +34,12 @@ olddir = pwd();  % Record the current directory.
 
 
 % Set up the directory to save the testing data, i.e., `data_dir`.
-mfiledir = fileparts(mfilename('fullpath')); % Directory where this .m file resides.
-data_dir = fullfile(mfiledir, 'testdata');
+if ~isfield(options, 'data_dir')
+    data_dir = options.data_dir;
+else
+    mfiledir = fileparts(mfilename('fullpath')); % Directory where this .m file resides.
+    data_dir = fullfile(mfiledir, 'testdata');
+end
 if ~exist(data_dir, 'dir')
     mkdir(data_dir);
 end
@@ -100,7 +104,9 @@ try
         end
     end
 
-    options.time = datestr(datetime(), 'yymmdd_HHMM');
+    if ~isfield(options, 'time')
+        options.time = datestr(datetime(), 'yymmdd_HHMM');
+    end
 
     % Make the solvers available. Note that the solvers are under `test_dir`.
     get_solvers(solver, test_dir, options);
@@ -128,24 +134,26 @@ try
 
     % Profile the solvers.
     tic;
-    perfdata(solvers, options);
-    options.reload = true;
+    output = struct(options.type, perfdata(solvers, options));
     problem_type=options.type;
-    if strcmpi(solver, 'cobyla') && contains(problem_type, 'n')
-        options.type = 'n';
-        perfdata(solvers, options);
-    end
-    if ismember(solver, {'cobyla', 'lincoa'}) && contains(problem_type, 'l')
-        options.type = 'l';
-        perfdata(solvers, options);
-    end
-    if ismember(solver, {'cobyla', 'lincoa', 'bobyqa'}) && contains(problem_type, 'b')
-        options.type = 'b';
-        perfdata(solvers, options);
-    end
-    if ismember(solver, {'cobyla', 'lincoa', 'bobyqa'}) && contains(problem_type, 'u')
-        options.type = 'u';
-        perfdata(solvers, options);
+    if length(problem_type) > 1
+        options.reload = true;
+        if strcmpi(solver, 'cobyla') && contains(problem_type, 'n')
+            options.type = 'n';
+            output.n = perfdata(solvers, options);
+        end
+        if ismember(solver, {'cobyla', 'lincoa'}) && contains(problem_type, 'l')
+            options.type = 'l';
+            output.l = perfdata(solvers, options);
+        end
+        if ismember(solver, {'cobyla', 'lincoa', 'bobyqa'}) && contains(problem_type, 'b')
+            options.type = 'b';
+            output.b = perfdata(solvers, options);
+        end
+        if ismember(solver, {'cobyla', 'lincoa', 'bobyqa'}) && contains(problem_type, 'u')
+            options.type = 'u';
+            output.u = perfdata(solvers, options);
+        end
     end
     toc;
 
