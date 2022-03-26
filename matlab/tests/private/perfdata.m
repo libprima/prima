@@ -61,11 +61,12 @@ prof_options.outdir = outdir;
 prof_options.stamp = stamp;
 prof_options.time = time;
 
-prec = (1:10);
-nprec = length(prec);
+prec = (1:10)
+nprec = length(prec)
 tau = 10.^(-prec);
 output = cell(1, nprec);
 for k = 1 : nprec
+    k
     prof_options.tau = tau(k);
     output{k} = perfprof(frec, fmin, prof_options);
 end
@@ -95,7 +96,11 @@ for k = 1 : nprec
     ha=get(gcf,'children');
     set(ha(k),'position', [0.01+(nprec-k)/nprec, 0.1, 0.9/nprec, 0.9]);
 end
+
+% The following appears only in the last subplot, but it is sufficient for our use.
+ylabel(options.stamp);
 legend(solvers,'Location', 'southeast','Orientation','vertical');
+
 % Save the figure as eps.
 figname = strcat(stamp, '.', 'summary', '.', time);
 epsname = fullfile(outdir, strcat(figname,'.eps'));
