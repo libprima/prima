@@ -70,20 +70,18 @@ prof_options.outdir = outdir;
 prof_options.stamp = stamp;
 prof_options.time = time;
 
-prec = (1:10)
-nprec = length(prec)
+prec = (1:10);
+nprec = length(prec);
 tau = 10.^(-prec);
-prof_output = repmat({struct()}, 1, nprec)
-size(prof_output)
+prof_output = cell(1,nprec);
 for iprec = 1 : nprec
-    iprec
     prof_options.tau = tau(iprec);
     prof_output{iprec} = perfprof(frec, fmin, prof_options);
+    %dataprof(frec, fmin, pdim, prof_options);
 end
 
 hfig = figure("visible", false, 'DefaultAxesPosition', [0, 0, 1, 1]);
 for iprec = 1 : nprec
-    %dataprof(frec, fmin, pdim, prof_options);
     subplot(1, nprec, iprec);
     for is = 1 : ns
        plot(prof_output{iprec}.profile{is}(1,:), prof_output{iprec}.profile{is}(2,:));
