@@ -108,38 +108,34 @@ for is = 1:ns
     x = [0; x(1); x; penalty_ratio];
     y = [0; 0; y; y(end)];
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    perf_prof{is} = [x'; y'];
     plot(x, y, lines{is}, 'Color', colors{is},  'Linewidth', linewidth);
     hold on;
 
     % Evaluate the success rate.
-    x
-    penalty_ratio
-    y
-    1
-    xx = x(x>0 & x < penalty_ratio)
-    2
-    yy = y(x>0 & x < penalty_ratio)
-    3
-    xx = [0; xx; xx(end)*cut]
-    4
-    yy = [yy(1); yy; yy(end)]
+    if ~any(x > 0 & x < penalty_ratio)
+        success_rate{is} = ones(1,3);
+        continue;
+    end
+    success_rate{is} = NaN(1,3);
+    success_rate{is}(1) = yy(1);  % The success rate corresponding to NF/NFMIN = 1 (i.e., NF=NFMIN).
+    success_rate{is}(3) = yy(end);  % The success rate with "infinite budget".
 
-    %success_rate{is} = NaN(1,3);
-    %success_rate{is}(1) = yy(1);  % The success rate corresponding to NF/NFMIN = 1 (i.e., NF=NFMIN).
-    %success_rate{is}(3) = yy(end);  % The success rate with "infinite budget".
-    %% The following lines calculates the average success rate.
-    %k = length(xx)/2
-    %% The following line calculates the simple average
-    %%success_rate(is, 2) = sum(yy(2*(1:k)-1).*(xx(2*(1:k))-xx(2*(1:k)-1)))/xx(end);
-    %% The following line calculates the weighted average with the weight = exp(-NF/NFMIN), putting
-    %% more weight when NF/NFMIN is small.
-    %success_rate{is}(2) = sum(yy(2*(1:k)-1).*(xx(2*(1:k))-xx(2*(1:k)-1)).*exp(-xx(2*(1:k)-1)))/sum((xx(2*(1:k))-xx(2*(1:k)-1)).*exp(-xx(2*(1:k)-1)));
-    perf_prof{is} = [x'; y'];
+    xx = x(x>0 & x < penalty_ratio);
+    yy = y(x>0 & x < penalty_ratio);
+    xx = [0; xx; xx(end)*cut];
+    yy = [yy(1); yy; yy(end)];
+
+    % The following lines calculates the average success rate.
+    k = floor(length(xx)/2);  % In theory, length(xx) is even
+    % The following line calculates the simple average
+    %success_rate(is, 2) = sum(yy(2*(1:k)-1).*(xx(2*(1:k))-xx(2*(1:k)-1)))/xx(end);
+    % The following line calculates the weighted average with the weight = exp(-NF/NFMIN), putting
+    % more weight when NF/NFMIN is small.
+    success_rate{is}(2) = sum(yy(2*(1:k)-1).*(xx(2*(1:k))-xx(2*(1:k)-1)).*exp(-xx(2*(1:k)-1)))/sum((xx(2*(1:k))-xx(2*(1:k)-1)).*exp(-xx(2*(1:k)-1)));
 end
 
-return
-
-%output.success_rate = success_rate;
+output.success_rate = success_rate;
 output.profile = perf_prof;
 output.cut_ratio = cut_ratio;
 

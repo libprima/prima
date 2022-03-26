@@ -45,9 +45,9 @@ callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 test_dir = prepare_test_dir(solver, funname, options);
 
-%exception = [];
+exception = [];
 
-%try
+try
 
     % Specify where to store the test data.
     options.data_dir = data_dir;
@@ -152,16 +152,16 @@ test_dir = prepare_test_dir(solver, funname, options);
     % Show current path information again at the end of test.
     showpath(solvers);
 
-%catch exception
+catch exception
 
     % Do nothing for the moment.
 
-%end
+end
 
 setpath(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
 fprintf('\nCurrently in %s\n\n', pwd());
 
-%if ~isempty(exception)  % Rethrow any exception caught above.
-%    rethrow(exception);
-%end
+if ~isempty(exception)  % Rethrow any exception caught above.
+    rethrow(exception);
+end
