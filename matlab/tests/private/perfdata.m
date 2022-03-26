@@ -55,6 +55,15 @@ else
 end
 
 % Plot the profiles.
+ns = length(solvers);
+for is = 1:ns
+    solvers{is} = regexprep(solvers{is}, '_4test', '');
+    solvers{is} = regexprep(solvers{is}, '_classical$', ' (classical)');
+    solvers{is} = regexprep(solvers{is}, '_single$', ' (single)');
+    solvers{is} = regexprep(solvers{is}, '_quadruple$', ' (quadruple)');
+    %solvers{is} = regexprep(solvers{is}, 'newuoa', 'NEWUOA');
+end
+
 prof_options = struct();
 prof_options.solvers = solvers;
 prof_options.outdir = outdir;
@@ -64,21 +73,12 @@ prof_options.time = time;
 prec = (1:10)
 nprec = length(prec)
 tau = 10.^(-prec);
-output = cell(1, nprec)
+output = repmat({struct()}, 1, nprec)
 size(output)
 for k = 1 : nprec
     k
     prof_options.tau = tau(k);
     output{k} = perfprof(frec, fmin, prof_options);
-end
-
-ns = length(solvers);
-for is = 1:ns
-    solvers{is} = regexprep(solvers{is}, '_4test', '');
-    solvers{is} = regexprep(solvers{is}, '_classical$', ' (classical)');
-    solvers{is} = regexprep(solvers{is}, '_single$', ' (single)');
-    solvers{is} = regexprep(solvers{is}, '_quadruple$', ' (quadruple)');
-    %solvers{is} = regexprep(solvers{is}, 'newuoa', 'NEWUOA');
 end
 
 hfig = figure("visible", false, 'DefaultAxesPosition', [0, 0, 1, 1]);
