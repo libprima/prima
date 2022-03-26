@@ -112,10 +112,10 @@ for is = 1:ns
     hold on;
 
     % Evaluate the success rate.
-    xx = x(x>0 & x < penalty_ratio);
-    yy = y(x>0 & x < penalty_ratio);
-    xx = [0; xx; xx(end)*cut];
-    yy = [yy(1); yy; yy(end)];
+    %xx = x(x>0 & x < penalty_ratio);
+    %yy = y(x>0 & x < penalty_ratio);
+    %xx = [0; xx; xx(end)*cut];
+    %yy = [yy(1); yy; yy(end)];
 
     %success_rate{is} = NaN(1,3);
     %success_rate{is}(1) = yy(1);  % The success rate corresponding to NF/NFMIN = 1 (i.e., NF=NFMIN).
