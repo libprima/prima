@@ -73,12 +73,12 @@ prof_options.time = time;
 prec = (1:10)
 nprec = length(prec)
 tau = 10.^(-prec);
-output = repmat({struct()}, 1, nprec)
-size(output)
+prof_output = repmat({struct()}, 1, nprec)
+size(prof_output)
 for k = 1 : nprec
     k
     prof_options.tau = tau(k);
-    output{k} = perfprof(frec, fmin, prof_options);
+    prof_output{k} = perfprof(frec, fmin, prof_options);
 end
 
 hfig = figure("visible", false, 'DefaultAxesPosition', [0, 0, 1, 1]);
@@ -86,11 +86,11 @@ for k = 1 : nprec
     %dataprof(frec, fmin, pdim, prof_options);
     subplot(1, nprec, k);
     for is = 1 : ns
-       plot(output{k}.profile{is}(1,:), output{k}.profile{is}(2,:));
+       plot(prof_output{k}.profile{is}(1,:), prof_output{k}.profile{is}(2,:));
        hold on;
     end
     xlabel(sprintf('%d', k));
-    axis([0 output{k}.cut_ratio 0 1]);
+    axis([0 prof_output{k}.cut_ratio 0 1]);
     grid on;
 end
 for k = 1 : nprec
