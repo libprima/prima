@@ -64,7 +64,8 @@ prof_options.time = time;
 prec = (1:10)
 nprec = length(prec)
 tau = 10.^(-prec);
-output = cell(1, nprec);
+output = cell(1, nprec)
+size(output)
 for k = 1 : nprec
     k
     prof_options.tau = tau(k);
