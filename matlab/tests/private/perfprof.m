@@ -117,14 +117,14 @@ for is = 1:ns
         success_rate{is} = ones(1,3);
         continue;
     end
-    success_rate{is} = NaN(1,3);
-    success_rate{is}(1) = yy(1);  % The success rate corresponding to NF/NFMIN = 1 (i.e., NF=NFMIN).
-    success_rate{is}(3) = yy(end);  % The success rate with "infinite budget".
-
     xx = x(x>0 & x < penalty_ratio);
     yy = y(x>0 & x < penalty_ratio);
     xx = [0; xx; xx(end)*cut];
     yy = [yy(1); yy; yy(end)];
+    success_rate{is} = NaN(1,3);
+    success_rate{is}(1) = yy(1);  % The success rate corresponding to NF/NFMIN = 1 (i.e., NF=NFMIN).
+    success_rate{is}(3) = yy(end);  % The success rate with "infinite budget".
+
 
     % The following lines calculates the average success rate.
     k = floor(length(xx)/2);  % In theory, length(xx) is even
