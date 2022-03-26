@@ -98,7 +98,9 @@ for k = 1 : nprec
 end
 
 % The following appears only in the last subplot, but it is sufficient for our use.
-ylabel(options.stamp);
+if isfield(options, 'stamp')
+    ylabel(options.stamp);
+end
 legend(solvers,'Location', 'southeast','Orientation','vertical');
 
 % Save the figure as eps.
