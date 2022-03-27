@@ -24,7 +24,7 @@ options.data_dir = data_dir;
 output = cell(1,4);
 
 
-tic;
+timerVal = tic;
 
 argin = [varargin, {options}];
 output{1} = profile(argin{:});
@@ -67,4 +67,4 @@ for ipt = 1 : length(prob_types)
     fprintf('\nSummary for problem type %s:\n\n%s\n\n', ptype, outputfile);
 end
 
-toc;
+toc(timerVal);  % Use `timerVal` to specify which call of `tic` we are comparing with.
