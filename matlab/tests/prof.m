@@ -46,7 +46,7 @@ options.eval_options = struct('signif', 5);
 argin = [varargin, {options}];
 output{3} = profile(argin{:});
 
-options.eval_options = struct('denoise', 1e-5);
+options.eval_options = struct('dnoise', 1e-5);
 argin = [varargin, {options}];
 output{4} = profile(argin{:});
 
@@ -55,6 +55,7 @@ prob_types = fieldnames(output{1});
 for ipt = 1 : length(prob_types)
     ptype = prob_types{ipt};
     [~, outputfile] = fileparts(output{1}.(ptype));
+    outputfile = strrep(outputfile, '.plain.', '.');
     outputfile = fullfile(data_dir, [outputfile, '.pdf']);
     delete(regexprep(outputfile, 'summary.*$','*.pdf'));
     inputfiles = '';
@@ -63,6 +64,7 @@ for ipt = 1 : length(prob_types)
     end
     system(['bash ', fullfile(mfiledir, 'compdf'), ' ', inputfiles, ' -o ', outputfile]);
     outputfiles.(ptype) = outputfile;
+    fprintf('\nSummary for problem type %s:\n\n%s\n\n', ptype, outputfile);
 end
 
 toc;

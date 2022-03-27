@@ -10,6 +10,8 @@ function output = perfprof(frec, fmin, options)
 delsame = 0;
 penalty = 2;
 cut = 1.05;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Appearance of the plots.
 fontsize = 12;
 linewidth = 1;
 % Colors.
@@ -17,6 +19,7 @@ bleu=[0.16, 0.4470, 0.7410];
 vert=[0, 0.6, 0];
 colors  = {bleu, 'k', 'b', 'r', vert, bleu, 'k', 'b', 'r', vert};
 lines   = {'-', '-.', '--', ':', '-', '-.', '--', ':', '-', '-.'};
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 [np, ns, nr, maxfun] = size(frec);
 M = maxfun;

@@ -34,7 +34,7 @@ olddir = pwd();  % Record the current directory.
 
 
 % Set up the directory to save the testing data, i.e., `data_dir`.
-if ~isfield(options, 'data_dir')
+if isfield(options, 'data_dir')
     data_dir = options.data_dir;
 else
     mfiledir = fileparts(mfilename('fullpath')); % Directory where this .m file resides.
@@ -56,28 +56,17 @@ try
     % Specify where to store the test data.
     options.data_dir = data_dir;
 
-    % Stamp and time
+    % Test feature and time
+    test_feature = '';
     if isfield(options, 'compiler_options') && (isa(options.compiler_options, 'char') || ...
           isa(options.compiler_options, 'string')) && ~isempty(options.compiler_options)
-        if isfield(options, 'stamp') && ~isempty(options.stamp)
-            options.stamp = [options.stamp, '.', regexprep(options.compiler_options, '\s*','_')];
-        else
-            options.stamp = regexprep(options.compiler_options, '\s*','_');
-        end
+        test_feature = [test_feature, '.', regexprep(options.compiler_options, '\s*','_')];
     end
     if isfield(options, 'randomizex0') && isnumeric(options.randomizex0) && isscalar(options.randomizex0)
-        if isfield(options, 'stamp') && ~isempty(options.stamp)
-            options.stamp = [options.stamp, '.', 'randomizex0_', sprintf('%g', options.randomizex0)];
-        else
-            options.stamp = ['randomizex0_', sprintf('%g', options.randomizex0)];
-        end
+        test_feature = [test_feature, '.', 'randomizex0_', sprintf('%g', options.randomizex0)];
     end
     if isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(options.eval_options)
-        if isfield(options, 'stamp') && ~isempty(options.stamp)
-            options.stamp = [options.stamp, '.', strjoin(fieldnames(options.eval_options), '_')];
-        else
-            options.stamp = strjoin(fieldnames(options.eval_options), '_');
-        end
+        test_feature = [test_feature, '.', strjoin(fieldnames(options.eval_options), '_')];
         if isfield(options.eval_options, 'dnoise')
             if isnumeric(options.eval_options.dnoise) && isscalar(options.eval_options)
                 dnoise_level = abs(options.eval_options.dnoise);
@@ -87,7 +76,7 @@ try
                 dnoise_level = 0;
             end
             if dnoise_level > 0
-                options.stamp = regexprep(options.stamp, 'dnoise', ['dnoise', '_', sprintf('%g', dnoise_level)]);
+                test_feature = regexprep(test_feature, 'dnoise', ['dnoise', sprintf('%g', dnoise_level)]);
             end
         end
         if isfield(options.eval_options, 'noise')
@@ -99,10 +88,18 @@ try
                 noise_level = 0;
             end
             if noise_level > 0
-                options.stamp = regexprep(options.stamp, 'noise', ['noise', '_', sprintf('%g', noise_level)]);
+                test_feature = regexprep(test_feature, 'noise', ['noise', sprintf('%g', noise_level)]);
             end
         end
+        if isfield(options.eval_options, 'signif')
+            test_feature = regexprep(test_feature, 'signif', ['signif', sprintf('%d', options.eval_options.signif)]);
+        end
     end
+    test_feature = regexprep(test_feature, '^\.', '');
+    if isempty(test_feature)
+        test_feature = 'plain';
+    end
+    options.test_feature = test_feature;
 
     if ~isfield(options, 'time')
         options.time = datestr(datetime(), 'yymmdd_HHMM');

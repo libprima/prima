@@ -1,4 +1,4 @@
-function [mrec, output] = testcu(solvers, options)
+function [mrec, mmin, output] = testcu(solvers, options)
 
 % Default options
 rhobeg = 1;
@@ -67,13 +67,19 @@ sequential = options.sequential;
 minip = options.minip;
 
 % These arrays will record the function values and constraint values during the tests.
+pdim = NaN(np, 1);  % Data profile needs the dimension of the problem.
 frec = NaN(np, ns, nr, maxfun);
 crec = NaN(np, ns, nr, maxfun);
-pdim = NaN(np, 1);  % Data profile needs the dimension of the problem.
 
-has_eval_options = ~isempty(options.eval_options);
+% These arrays will record the reference function values and constraint values when there is an
+% eval_options or `randomizex0` is positive.
+fref = NaN(np, ns, maxfun);
+cref = NaN(np, ns, maxfun);
+
+has_eval_options = ~isempty(fieldnames(options.eval_options));
 eval_options = options.eval_options;
 randomizex0 = abs(options.randomizex0);
+ref_options = rmfield(options, {'eval_options', 'randomizex0'})
 
 
 fprintf('\n\nThe testing options:\n')
@@ -101,6 +107,13 @@ if sequential
         prob.orig_nonlcon = prob.nonlcon;
         prob.orig_x0 = prob.x0;
         pdim(ip) = length(prob.x0);
+
+        if has_eval_options || randomizex0 > 0
+            fprintf('\nCalculate frec and cref\n');
+            for is = 1 : ns
+                [fref(ip, is, :), cref(ip, is, :)] = testsolv(solvers{is}, prob, ref_options);
+            end
+        end
 
         for ir = 1 : nr
             if has_eval_options
@@ -136,6 +149,13 @@ else
         prob.orig_x0 = prob.x0;
         pdim(ip) = length(prob.x0);
 
+        if has_eval_options || randomizex0 > 0
+            fprintf('\nCalculate frec and cref\n');
+            for is = 1 : ns
+                [fref(ip, is, :), cref(ip, is, :)] = testsolv(solvers{is}, prob, ref_options);
+            end
+        end
+
         for ir = 1 : nr
             if has_eval_options
                 prob.objective = @(x) evalfun(prob.orig_objective, x, eval_options, ir);
@@ -161,6 +181,15 @@ end
 mrec = frec + options.cpenalty*crec;
 mrec(crec > options.ctol) = NaN;
 mrec(:,:,:,1) = frec(:,:,:,1) + options.cpenalty*crec(:,:,:,1); % Prevent mrec(:,:,:,1) from being NaN
+mrec_min = min(min(min(mrec, [], 4), [], 3), [], 2);
+
+if has_eval_options || randomizex0
+    mref = fref + options.cpenalty*cref;
+    mref_min = min(min(mref, [], 3), [], 2);
+    mmin = min(mrec_min, mref_min);
+else
+    mmin = mrec_min;
+end
 
 output = struct();
 output.plist = plist;
