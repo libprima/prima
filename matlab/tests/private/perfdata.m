@@ -23,6 +23,7 @@ matfile = fullfile(data_dir, strcat(stamp, '.perfdata.', test_feature, '.mat'));
 if (isfield(options, 'reload') && options.reload == true)
     % Use directly the data of the last computation for the same solvers and dimensions.
     % `stamp_with_wildcard` replaces `options.type` in `stamp` by a wildcard that contains `options.type`.
+    % Be careful with the replacement, as `prob.type` may consist of only one letter (e.g., 'u').
     stamp_with_wildcard = regexprep(stamp, ['\.', options.type, '$'], ['\.\*', options.type, '\*']);
     matfile_with_wildcard = strrep(matfile, stamp, stamp_with_wildcard);
     mlist = dir(matfile_with_wildcard);
@@ -76,7 +77,7 @@ prof_options = struct();
 prof_options.solvers = solvers;
 prof_options.outdir = outdir;
 prof_options.stamp = stamp;
-prof_options.time = feature_and_time;
+prof_options.feature_and_time = feature_and_time;
 
 prec = (1:10);
 nprec = length(prec);

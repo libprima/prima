@@ -51,6 +51,7 @@ else
         requirements.blacklist = [requirements.blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Time-consuming
         requirements.blacklist = [requirements.blacklist, {'GMNCASE2'}];
         requirements.blacklist = [requirements.blacklist, {'VANDERM4'}]; % The classical COBYLA encounters SIGFAULT
+        requirements.blacklist = [requirements.blacklist, {'DALLASS'}]; % The profiling script on GitHub Actions seems to be blocked by this example
     end
     if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
         requirements.blacklist = [requirements.blacklist, {'3PK'}]; % The classical LINCOA encounters SIGFAULT
@@ -96,6 +97,7 @@ end
 
 if sequential
     for ip = minip : np
+        tic
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};
@@ -109,7 +111,7 @@ if sequential
         pdim(ip) = length(prob.x0);
 
         if has_eval_options || randomizex0 > 0
-            fprintf('\nCalculate frec and cref\n');
+            fprintf('\nCalculate fref and cref\n');
             for is = 1 : ns
                 [fref(ip, is, :), cref(ip, is, :)] = testsolv(solvers{is}, prob, ref_options);
             end
@@ -134,6 +136,7 @@ if sequential
         end
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
+        toc
     end
 else
     parfor ip = minip : np
@@ -150,7 +153,7 @@ else
         pdim(ip) = length(prob.x0);
 
         if has_eval_options || randomizex0 > 0
-            fprintf('\nCalculate frec and cref\n');
+            fprintf('\nCalculate fref and cref\n');
             for is = 1 : ns
                 [fref(ip, is, :), cref(ip, is, :)] = testsolv(solvers{is}, prob, ref_options);
             end

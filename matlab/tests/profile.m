@@ -63,7 +63,7 @@ try
         test_feature = [test_feature, '.', regexprep(options.compiler_options, '\s*','_')];
     end
     if isfield(options, 'randomizex0') && isnumeric(options.randomizex0) && isscalar(options.randomizex0)
-        test_feature = [test_feature, '.', 'randomizex0_', sprintf('%g', options.randomizex0)];
+        test_feature = [test_feature, '.', 'randomizex0', sprintf('%g', options.randomizex0)];
     end
     if isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(options.eval_options)
         test_feature = [test_feature, '.', strjoin(fieldnames(options.eval_options), '_')];
