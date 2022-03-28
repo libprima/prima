@@ -62,7 +62,10 @@ try
           isa(options.compiler_options, 'string')) && ~isempty(options.compiler_options)
         test_feature = [test_feature, '.', regexprep(options.compiler_options, '\s*','_')];
     end
-    if isfield(options, 'randomizex0') && isnumeric(options.randomizex0) && isscalar(options.randomizex0)
+    if isfield(options, 'perm') && islogical(options.perm) && isscalar(options.perm) && options.perm
+        test_feature = [test_feature, '.', 'perm'];
+    end
+    if isfield(options, 'randomizex0') && isnumeric(options.randomizex0) && isscalar(options.randomizex0) && abs(options.randomizex0) > 0
         test_feature = [test_feature, '.', 'randomizex0', sprintf('%g', options.randomizex0)];
     end
     if isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(options.eval_options)

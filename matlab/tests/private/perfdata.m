@@ -44,7 +44,9 @@ if (isfield(options, 'reload') && options.reload == true)
     %pdim = pdim(pind);
     plist = plist(pind);
 else
-    delete(matfile);
+    if exist(matfile, 'file')
+        delete(matfile);
+    end
     [frec, fmin, output] = testcu(solvers, options);
     pdim = output.pdim;
     plist = output.plist;

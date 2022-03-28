@@ -8,6 +8,7 @@ maxfun_dim = 500;
 maxfun = 20000;
 maxit = 1000;
 ftarget = -inf;
+perm = false;
 randomizex0 = 0;
 eval_options = struct();
 nr = 5;
@@ -29,8 +30,9 @@ thorough_test = 0;
 minip = 1;
 
 % Set options
-options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, eval_options, ...
-    nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, sequential, debug, thorough_test, minip);
+options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
+    eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
+    sequential, debug, thorough_test, minip);
 
 % Select the problems to test.
 if isfield(options, 'list')
@@ -51,7 +53,7 @@ else
         requirements.blacklist = [requirements.blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Time-consuming
         requirements.blacklist = [requirements.blacklist, {'GMNCASE2'}];
         requirements.blacklist = [requirements.blacklist, {'VANDERM4'}]; % The classical COBYLA encounters SIGFAULT
-        requirements.blacklist = [requirements.blacklist, {'DALLASS'}]; % The profiling script on GitHub Actions seems to be blocked by this example
+        requirements.blacklist = [requirements.blacklist, {'DALLASS', 'QPCBLEND'}]; % The profiling script on GitHub Actions seems to be blocked by them
     end
     if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
         requirements.blacklist = [requirements.blacklist, {'3PK'}]; % The classical LINCOA encounters SIGFAULT
@@ -77,10 +79,15 @@ crec = NaN(np, ns, nr, maxfun);
 fref = NaN(np, ns, maxfun);
 cref = NaN(np, ns, maxfun);
 
+isperm = options.perm;
 has_eval_options = ~isempty(fieldnames(options.eval_options));
 eval_options = options.eval_options;
 randomizex0 = abs(options.randomizex0);
-ref_options = rmfield(options, {'eval_options', 'randomizex0'})
+ref_options = rmfield(options, {'perm', 'randomizex0', 'eval_options'});
+
+% `eval_options` and `randomizex0` can occur at the same time, but neither of them are compatible
+% with `perm`.
+assert(~isperm || ~(has_eval_options || randomizex0));
 
 
 fprintf('\n\nThe testing options:\n')
@@ -105,6 +112,7 @@ if sequential
         fprintf('\n%3d. \t%s:\n', ip, upper(pname));
 
         prob = macup(pname);
+        orig_prob = prob;
         prob.orig_objective = prob.objective;
         prob.orig_nonlcon = prob.nonlcon;
         prob.orig_x0 = prob.x0;
@@ -128,6 +136,11 @@ if sequential
                 rng(ir);
                 r = randn(length(prob.x0), 1);
                 prob.x0 = prob.orig_x0 + randomizex0*norm(prob.orig_x0)*r/norm(r);
+            end
+            if isperm
+                rng(ir);
+                permutation = randperm(length(orig_prob.x0));
+                prob = permprob(orig_prob, permutation);
             end
 
             for is = 1 : ns
@@ -147,6 +160,7 @@ else
         fprintf('\n%3d. \t%s:\n', ip, upper(pname));
 
         prob = macup(pname);
+        orig_prob = prob;
         prob.orig_objective = prob.objective;
         prob.orig_nonlcon = prob.nonlcon;
         prob.orig_x0 = prob.x0;
@@ -170,6 +184,11 @@ else
                 rng(ir);
                 r = randn(length(prob.x0), 1);
                 prob.x0 = prob.orig_x0 + randomizex0*norm(prob.orig_x0)*r/norm(r);
+            end
+            if isperm
+                rng(ir);
+                permutation = randperm(length(orig_prob.x0));
+                prob = permprob(orig_prob, permutation);
             end
 
             for is = 1 : ns
@@ -258,8 +277,8 @@ end
 return
 
 
-function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, ...
-        eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
+function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, ...
+        randomizex0, eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
         sequential, debug, thorough_test, minip) % Set options
 
 if (~isfield(options, 'rhoend'))
@@ -280,6 +299,10 @@ end
 if (~isfield(options, 'cpenalty'))
     options.cpenalty = cpenalty;
 end
+if ~isfield(options, 'perm')
+    options.perm = perm;
+end
+options.perm = logical(options.perm);
 if (~isfield(options, 'randomizex0'))
     options.randomizex0 = randomizex0;
 end
@@ -398,7 +421,7 @@ eval_options = options.eval_options;
 
 % Revise options.nr
 noisy_eval = (isfield(eval_options, 'noise') && eval_options.noise.level > 0);
-if ~(options.randomizex0 > 0 || noisy_eval)
+if ~(options.perm || options.randomizex0 > 0 || noisy_eval)
     options.nr = 1;
 end
 
