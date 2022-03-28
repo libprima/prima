@@ -193,8 +193,6 @@ if isempty(prob)
         if options.maxdim == 200
             if strcmpi(solver, 'uobyqa') && strcmpi(invoker, 'profile')  % It is indeed 'profile', not a typo
                 options.maxdim = 90;
-            else
-                options.maxdim = 100;
             end
             options.maxcon = 20*options.maxdim;
         end
