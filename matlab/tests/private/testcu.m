@@ -79,7 +79,7 @@ crec = NaN(np, ns, nr, maxfun);
 fref = NaN(np, ns, maxfun);
 cref = NaN(np, ns, maxfun);
 
-isperm = options.perm;
+permuted = options.perm;
 has_eval_options = ~isempty(fieldnames(options.eval_options));
 eval_options = options.eval_options;
 randomizex0 = abs(options.randomizex0);
@@ -87,7 +87,7 @@ ref_options = rmfield(options, {'perm', 'randomizex0', 'eval_options'});
 
 % `eval_options` and `randomizex0` can occur at the same time, but neither of them are compatible
 % with `perm`.
-assert(~isperm || ~(has_eval_options || randomizex0));
+assert(~permuted || ~(has_eval_options || randomizex0));
 
 
 fprintf('\n\nThe testing options:\n')
@@ -104,7 +104,6 @@ end
 
 if sequential
     for ip = minip : np
-        tic
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};
@@ -125,6 +124,8 @@ if sequential
             end
         end
 
+        rng(ip); permutations = get_perms(nr, length(prob.x0));
+
         for ir = 1 : nr
             if has_eval_options
                 prob.objective = @(x) evalfun(prob.orig_objective, x, eval_options, ir);
@@ -132,15 +133,14 @@ if sequential
                     prob.nonlcon = @(x) evalcon(prob.orig_nonlcon, x, eval_options, ir);
                 end
             end
+
             if randomizex0 > 0
-                rng(ir);
-                r = randn(length(prob.x0), 1);
+                rng(ir); r = randn(length(prob.x0), 1);
                 prob.x0 = prob.orig_x0 + randomizex0*norm(prob.orig_x0)*r/norm(r);
             end
-            if isperm
-                rng(ir);
-                permutation = randperm(length(orig_prob.x0));
-                prob = permprob(orig_prob, permutation);
+
+            if permuted
+                prob = permprob(orig_prob, permutations(ir, :));
             end
 
             for is = 1 : ns
@@ -149,7 +149,6 @@ if sequential
         end
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
-        toc
     end
 else
     parfor ip = minip : np
@@ -173,6 +172,8 @@ else
             end
         end
 
+        rng(ip); permutations = get_perms(nr, length(prob.x0));
+
         for ir = 1 : nr
             if has_eval_options
                 prob.objective = @(x) evalfun(prob.orig_objective, x, eval_options, ir);
@@ -180,15 +181,14 @@ else
                     prob.nonlcon = @(x) evalcon(prob.orig_nonlcon, x, eval_options, ir);
                 end
             end
+
             if randomizex0 > 0
-                rng(ir);
-                r = randn(length(prob.x0), 1);
+                rng(ir); r = randn(length(prob.x0), 1);
                 prob.x0 = prob.orig_x0 + randomizex0*norm(prob.orig_x0)*r/norm(r);
             end
-            if isperm
-                rng(ir);
-                permutation = randperm(length(orig_prob.x0));
-                prob = permprob(orig_prob, permutation);
+
+            if permuted
+                prob = permprob(orig_prob, permutations(ir, :));
             end
 
             for is = 1 : ns
@@ -243,7 +243,7 @@ maxfun = options.maxfun;
 fval_history = NaN(1, maxfun);
 cv_history = NaN(1, maxfun);
 
-has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(options.eval_options);
+has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options));
 prob.options.output_xhist = has_eval_options;
 
 [~, ~, ~, output] = solver(prob);
@@ -346,7 +346,7 @@ if (~isfield(options, 'minip'))
 end
 
 % Set eval_options
-has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(options.eval_options);
+has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options));
 if ~has_eval_options
     options.eval_options = eval_options;
 end

@@ -50,6 +50,11 @@ options.eval_options = struct('dnoise', 1e-5);
 argin = [varargin, {options}];
 output{4} = profile(argin{:});
 
+options = rmfield(options, 'eval_options');
+options.perm = true;
+argin = [varargin, {options}];
+output{5} = profile(argin{:});
+
 outputfiles = struct();
 prob_types = fieldnames(output{1});
 for ipt = 1 : length(prob_types)

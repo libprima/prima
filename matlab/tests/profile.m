@@ -68,7 +68,7 @@ try
     if isfield(options, 'randomizex0') && isnumeric(options.randomizex0) && isscalar(options.randomizex0) && abs(options.randomizex0) > 0
         test_feature = [test_feature, '.', 'randomizex0', sprintf('%g', options.randomizex0)];
     end
-    if isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(options.eval_options)
+    if isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options))
         test_feature = [test_feature, '.', strjoin(fieldnames(options.eval_options), '_')];
         if isfield(options.eval_options, 'dnoise')
             if isnumeric(options.eval_options.dnoise) && isscalar(options.eval_options)
