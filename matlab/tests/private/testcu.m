@@ -56,7 +56,7 @@ else
         requirements.blacklist = [requirements.blacklist, {'DALLASS', 'QPCBLEND'}]; % The profiling script on GitHub Actions seems to be blocked by them
     end
     if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
-        requirements.blacklist = [requirements.blacklist, {'3PK', 'SIPOW4'}]; % The classical LINCOA encounters SIGFAULT
+        requirements.blacklist = [requirements.blacklist, {'3PK', 'SIPOW4', 'OET1'}]; % The classical LINCOA encounters SIGFAULT
     end
     plist = secup(requirements);
 end
