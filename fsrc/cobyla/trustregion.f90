@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, March 22, 2022 PM04:28:08
+! Last Modified: Tuesday, March 29, 2022 PM01:09:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -513,7 +513,7 @@ do iter = 1, maxiter
     end where
     ! Only the places where VMULTD < 0 is relevant below, if any.
     frac = minval([ONE, fracmult])
-    icon = int(minloc([ONE, fracmult], dim=1), kind(icon)) - 1_IK
+    icon = int(minloc([ONE, fracmult], dim=1), IK) - 1_IK
 
     ! Update D, VMULTC and CSTRV.
     dold = d

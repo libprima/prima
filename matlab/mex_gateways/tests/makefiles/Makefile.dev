@@ -540,10 +540,24 @@ source_%: $(SRC_DIRS)
 	@for SRC in $(MEXGATE_SRC); do cp $(MEXGATE_DIR)/"$$SRC" ./; done
 	@cp $(MEXGATE_DIR)/$(DEBUGF90) ./$(COMMON)  # Use the MEX version of debug.F90 instead of the Fortran version.
 	@cp $(TEST_DIR)/fintrf.h ./  # The MathWorks header file for Fortran MEX
-	@rm -f *.mod *.o *.dbg *.cmdx *.cmod *.ilm *.stb *.out *__genmod.f90  # Cleaning up; important!!!
+	@find ./ -type f \( \
+		-name "*.mod" \
+		-o -name "*.o" \
+		-o -name "*.dbg" \
+		-o -name "*.cmdx" \
+		-o -name "*.cmod" \
+		-o -name "*.ilm" \
+		-o -name "*.stb" \
+		-o -name "*.out" \
+		-o -name "*__genmod.f90" \
+		\) -exec rm {} \;  # Cleaning up; important!!!
 	@if echo $@ | grep -q "stest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../sunsrc ./ ; \
+	fi
+	@if echo $@ | grep -q "atest\|9test"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../a9src ./ ; \
 	fi
 	@if echo $@ | grep -q "stest\|9test"; then \
 		printf "\nPreparing the source code for $@.\n" ; \

@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 25, 2022 PM01:15:08
+! Last Modified: Tuesday, March 29, 2022 PM01:54:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -199,7 +199,8 @@ if (m > 0) then
     end do
     ctol = ZERO
     temp = 0.01_RP * dnorm
-    if (violmx > ZERO .and. violmx < temp) then
+    !if (violmx > ZERO .and. violmx < temp) then
+    if (violmx > ZERO .and. violmx <= temp) then
         if (nact > 0) then
             do k = 1, nact
                 j = iact(k)
@@ -289,13 +290,26 @@ vmult = violmx
 ic = 0
 j = 1
 250 if (j < nact) then
-    if (vlam(j) >= vmult * w(j)) then
+!------------------------------------------------------!
+! Zaikun 20220329
+!    if (vlam(j) >= vmult * w(j)) then
+    if (w(j) < 0 .and. vmult >= vlam(j) / w(j)) then
+!------------------------------------------------------!
         ic = j
         vmult = vlam(j) / w(j)
     end if
     j = j + 1
     goto 250
 end if
+
+!write (17, *) 'VIOLMX', violmx
+!write (17, *) 'NACT', nact
+!write (17, *) 'VLAM', vlam(1:nact)
+!write (17, *) 'VMU', w(1:nact)
+!write (17, *) 'VLAM/VMU', vlam(1:nact) / w(1:nact)
+!write (17, *) 'VMULT', vmult
+!write (17, *) 'IC', ic
+
 do j = 1, nact
     vlam(j) = vlam(j) - vmult * w(j)
 end do

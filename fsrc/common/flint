@@ -1,10 +1,10 @@
 #!/bin/bash
 # This script checks the Fortran code of the solver corresponding to this directory.
-# Usage: flint [-a|--all]
+# Usage: flint [--compiler_name [--all]] or flint -c|--clean
 
 # Parse inputs.
 if ! [[ $# -eq 0 || $# -eq 1 || $# -eq 2 ]] ; then
-    printf "Usage: flint [--compiler_name [-a|--all]] or flint -c|--clean\n"
+    printf "Usage: flint [--compiler_name [--all]] or flint -c|--clean\n"
     exit 2
 fi
 
@@ -70,7 +70,7 @@ while [[ -n "$1" ]]; do
             COMP_LIST=" l"
             ;;
         *)
-            printf "Usage: flint [--compiler_name [-a|--all]] or flint -c|--clean\n"
+            printf "Usage: flint [--compiler_name [--all]] or flint -c|--clean\n"
             exit 2
             ;;
     esac

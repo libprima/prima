@@ -12,7 +12,7 @@ end
 
 if verbose
     fprintf('\nRemoving the compiled MEX files (if any) in the following directory:\n\n');
-    fprintf('%s\n\n', directory);
+    fprintf('    %s\n\n', directory);
 end
 
 % List  the compiled MEX files
