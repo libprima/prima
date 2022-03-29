@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 29, 2022 PM04:15:43
+! Last Modified: Tuesday, March 29, 2022 PM09:11:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -71,7 +71,8 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, HUGENUM, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, validate
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth, norm, lsqr, trueloc
 
 implicit none
@@ -94,21 +95,28 @@ real(RP), intent(out) :: psd(:)  ! PSD(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GETACT'
-real(RP) :: apsd(size(amat, 2))
-real(RP) :: fracmult(size(g))
-real(RP) :: dd
-real(RP) :: tol
-real(RP) :: vmu(size(g))
-real(RP) :: vlam(size(g))
-real(RP) :: ddsav, dnorm, tdel, violmx, vmult
-integer(IK) :: i, ic, l
-
-logical :: mask(size(amat, 2))
-
+integer(IK) :: i
+integer(IK) :: ic
 integer(IK) :: iter
-integer(IK) :: maxiter
+integer(IK) :: l
 integer(IK) :: m
+integer(IK) :: maxiter
 integer(IK) :: n
+logical :: mask(size(amat, 2))
+real(RP) :: apsd(size(amat, 2))
+real(RP) :: dd
+real(RP) :: ddsav
+real(RP) :: dg
+real(RP) :: dnorm
+real(RP) :: gg
+real(RP) :: fracmult(size(g))
+real(RP) :: psdsav(size(psd))
+real(RP) :: tdel
+real(RP) :: tol
+real(RP) :: violmx
+real(RP) :: vlam(size(g))
+real(RP) :: vmu(size(g))
+real(RP) :: vmult
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -132,18 +140,23 @@ if (DEBUGGING) then
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
 
     call assert(size(psd) == n, 'SIZE(PSD) == N', srname)
-    call assert(size(vlam) == n, 'SIZE(VLAM) == N', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
 
-! Quick return when M = 0?
+! Quick return when M = 0.
+if (m <= 0) then
+    nact = 0_IK
+    qfac = eye(n)
+    psd = -g
+    return
+end if
 
 ! Set some constants and a temporary VLAM.
 tdel = 0.2_RP * snorm
-ddsav = TWO * inprod(g, g)
+gg = inprod(g, g)
 vlam = ZERO
 
 ! Set the initial QFAC to the identity matrix in the case NACT = 0.
@@ -175,10 +188,11 @@ end do
 ! Set the new search direction D. Terminate if the 2-norm of D is ZERO or does not decrease, or if
 ! NACT=N holds. The situation NACT=N occurs for sufficiently large SNORM if the origin is in the
 ! convex hull of the constraint gradients.
-dd = ZERO  ! Must be set, in case NACT = N at this point.
+! Start with initialization of  PSD, PSDSAV, DD, and DDSAV.
 psd = ZERO  ! Must be set, in case NACT = N at this point.
-! What about the default for others? QFAC? RFAC?
-!k = 0_IK
+psdsav = ZERO
+dd = ZERO
+ddsav = TWO * gg  ! By Powell. The value is used at iteration 1 for testing whether DD > DDSAV. Why?
 
 ! What is the theoretical maximal number of iterations in the following procedure? Powell's code for
 ! this part is essentially a `DO WHILE (NACT < N) ... END DO` loop. We enforce the following maximal
@@ -195,18 +209,32 @@ do iter = 1_IK, maxiter
     psd(nact + 1:n) = matprod(g, qfac(:, nact + 1:n))
     psd = -matprod(qfac(:, nact + 1:n), psd(nact + 1:n)) ! Projection of -G to range(QFAC(:,NACT+1:N))
     dd = inprod(psd, psd)
-
-    if (dd >= ddsav) then
-        psd = ZERO  ! This is from Powell's code. Why???
-        exit
-    end if
+    dnorm = sqrt(dd)
 
     if (dd == ZERO) then
         exit
     end if
 
+    if (dd >= ddsav) then
+        psd = ZERO  ! Zaikun 20220329: Powell wrote this. Why? What about PSD = PSDSAV?
+        exit
+    end if
+
+    !--------------------------------------------------------!
+    ! Powell's code does not include the following two cases.
+    dg = inprod(psd, g)
+    if (dg > 0 .or. .not. is_finite(sum(abs(psd)))) then
+        psd = psdsav
+        exit
+    end if
+    if (dg < -gg .or. dd > gg) then
+        psd = (psd / dnorm) * sqrt(gg)
+        exit
+    end if
+    !--------------------------------------------------------!
+
+    psdsav = psd
     ddsav = dd
-    dnorm = sqrt(dd)
 
     ! Pick the next integer L or terminate, a positive value of L being the index of the most
     ! violated constraint.
@@ -266,11 +294,11 @@ do iter = 1_IK, maxiter
         ! N.B.: 0. The definition of IC given above is mathematically equivalent to the following.
         !!IC = MAXVAL(TRUELOC([VIOLMX, FRACMULT(1:NACT)] <= VMULT)) - 1_IK, or:
         !!IC = INT(MINLOC([VIOLMX, FRACMULT(1:NACT)], DIM=1, BACK=.TRUE.), IK) - 1_IK
-        ! However, these implementations will be problematic if VMULT is NaN: IC will be -Inf in the
-        ! first implementation and unspecified in the second one. The MATLAB counterpart of the
-        ! first implementation will end up with IC = [] as TRUELOC (or find in MATLAB) returns [].
+        ! However, such implementations are problematic in the unlikely case of VMULT = NaN: IC will
+        ! be -Inf in the first and unspecified in the second. The MATLAB counterpart of the first
+        ! implementation will render IC = [] as `find` (the MATLAB version of TRUELOC) returns [].
         ! 1. The BACK argument in MINLOC is available in F2008. Not supported by Absoft as of 2022.
-        ! 2. A motivation for backward MINLOC is to save computation in DEL_ACT below. What else?
+        ! 2. A motivation for backward MINLOC is to save computation in DEL_ACT below (what else?).
 
         violmx = max(violmx - vmult, ZERO)
         vlam(1:nact) = vlam(1:nact) - vmult * vmu(1:nact)
@@ -288,17 +316,17 @@ do iter = 1_IK, maxiter
         end do
     end do  ! End of DO WHILE (VIOLMX > 0 .AND. NACT > 0)
 
-    !----------------------------------------------!
-    !----------------------------------------------!
-    !----------------------------------------------!
-    ! Why does the following validation never fail?
-    call validate(nact > 0, 'NACT > 0', srname)
-    !----------------------------------------------!
-    !----------------------------------------------!
-    !----------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
+    ! NACT can become 0 only iif VLAM(1:NACT) >= 0 before calling DEL_ACT, which is true if NACT = 1
+    ! when the WHILE loop starts. However, we have never observed a failure of the following
+    ! assertion as of 20220329. Why?
+    !-----------------------------------------!
+    call assert(nact > 0, 'NACT > 0', srname) !
+    !-----------------------------------------!
     if (nact == 0) then
-        exit  ! It can only come from DEL_ACT when VLAM(1:NACT) >= 0. Possible at all?
+        exit
     end if
+    !----------------------------------------------------------------------------------------------!
 end do  ! End of DO WHILE (NACT < N)
 
 ! if (nact == 0) then
@@ -324,7 +352,16 @@ if (DEBUGGING) then
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
 
     call assert(size(psd) == n, 'SIZE(PSD) == N', srname)
-    call assert(size(vlam) == n, 'SIZE(VLAM) == N', srname)
+    write (16, *) norm(psd), dd, psd
+    write (16, *) norm(g), gg, g
+    write (16, *) inprod(psd, g), gg
+    write (16, *) psd
+    write (16, *) g
+    close (16)
+    ! In theory, |PSD|^2 <= GG and -GG <= PSD^T*G <= 0 (do not use DD, which may not be up to date).
+    call assert(inprod(psd, psd) <= TWO * gg, '|PSD|^2 <= 2*GG', srname)
+    dg = inprod(psd, g)  ! DG can be NaN if G contains huge values.
+    call assert((dg <= 0 .and. dg >= -TWO * gg) .or. is_nan(dg), '-2*GG <= PSD^T*G <= 0', srname)
 end if
 
 end subroutine getact

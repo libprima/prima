@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 29, 2022 PM01:54:54
+! Last Modified: Tuesday, March 29, 2022 PM08:41:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,6 +24,7 @@ contains
 
 subroutine getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, dw, vlam, w)
 use, non_intrinsic :: linalg_mod, only : inprod, planerot
+use, non_intrinsic :: infnan_mod, only : is_finite
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, ZERO, TINYCV
@@ -51,7 +52,7 @@ real(RP), intent(inout) :: w(n)
 ! Local variables
 real(RP) :: cosv, ctol, cval, dd, ddsav, dnorm, rdiag,   &
 &        sinv, sprod, summ, sval, tdel, temp, test, &
-&        violmx, vmult, grot(2, 2), temp1, temp2
+&        violmx, vmult, grot(2, 2), temp1, temp2, psdsav(n), gg
 integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag, jw,   &
 &           k, l, nactp
 
@@ -79,6 +80,7 @@ integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag, jw,   &
 !     Set some constants and a temporary VLAM.
 !
 tdel = 0.2_RP * snorm
+gg = inprod(g, g)
 ddsav = TWO * inprod(g, g)
 vlam = ZERO
 !
@@ -154,6 +156,9 @@ if (ic > 0) goto 70
 !       occurs for sufficiently large SNORM if the origin is in the convex
 !       hull of the constraint gradients.
 !
+dw = ZERO
+dd = ZERO
+psdsav = ZERO
 100 if (nact == n) goto 290
 do j = nact + 1, n
     w(j) = ZERO
@@ -173,6 +178,20 @@ if (dd >= ddsav) goto 290
 if (dd == ZERO) goto 300
 ddsav = dd
 dnorm = sqrt(dd)
+!--------------------------------------------------------!
+! Powell's code does not include the following two cases.
+if ((.not. is_finite(sum(abs(dw(1:n))))) .or. inprod(dw, g) > 0) then
+    dw = psdsav
+    dd = inprod(dw, dw)
+    goto 300
+end if
+if (dd > gg .or. inprod(dw, g) < -gg) then
+    dw = (dw / dnorm) * sqrt(gg)
+    dd = inprod(dw, dw)
+    goto 300
+end if
+psdsav = dw
+!--------------------------------------------------------!
 !
 !     Pick the next integer L or terminate, a positive value of L being
 !       the index of the most violated constraint. The purpose of CTOL
