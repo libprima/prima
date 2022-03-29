@@ -159,7 +159,7 @@ else
         %'VANDERM2', 'VANDERM3', 'VESUVIOU'}];  % 20211125 version of COBYLAN takes more than 2 minutes to solve
     end
     requirements.blacklist = blacklist;
-    plist = secup(requirements)
+    plist = secup(requirements);
 end
 
 single_test = (length(plist) <= 1);
