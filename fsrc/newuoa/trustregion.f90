@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 22, 2022 PM02:33:20
+! Last Modified: Tuesday, March 29, 2022 AM11:21:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,15 +35,14 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 !
 ! At return, S will be the approximate solution. CRVMIN will be set to the least curvature of
 ! HESSIAN along the conjugate directions that occur, except that it is set to ZERO if S goes all the
-! way to the trust-region boundary. INFO is an exit flag:
-! INFO = 0: an approximate solution satisfying one of the
-! following conditions is found:
-! 1. ||G+HS||/||GBEG|| <= TOL,
+! way to the trust-region boundary. INFO is an exit flag with the following possible values.
+! - INFO = 0: an approximate solution satisfying one of the following conditions is found:
+! 1. ||G+HS||/||G0|| <= TOL,
 ! 2. ||S|| = DELTA and <S, -(G+HS)> >= (1 - TOL)*||S||*||G+HS||,
-! where TOL is a tolerance that is set to 1e-2 in NEWUOA.
-! INFO = 1: the iteration is reducing Q only slightly;
-! INFO = 2: the maximal number of iterations is attained;
-! INFO = -1: too much rounding error to continue
+! where TOL is set to 1e-2 in NEWUOA;
+! - INFO = 1: the last iteration reduces Q only insignificantly;
+! - INFO = 2: the maximal number of iterations is attained;
+! - INFO = -1: too much rounding error to continue.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: ARGS(4), G(N), D(N) HD(N), HS(N), HX(N), SOLD(N)
@@ -69,12 +68,13 @@ real(RP), intent(in) :: x(:)    ! X(N)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 
 ! Outputs
-integer(IK), intent(out) :: info
 real(RP), intent(out) :: crvmin
 real(RP), intent(out) :: s(:)   ! S(N)
+integer(IK), intent(out), optional :: info
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSAPP'
+integer(IK) :: info_loc
 integer(IK) :: iter
 integer(IK) :: itermax
 integer(IK) :: n
@@ -130,7 +130,7 @@ end if
 s = ZERO
 crvmin = ZERO
 qred = ZERO
-info = 2  ! Default exit flag is 2, i.e., itermax is attained
+info_loc = 2_IK  ! Default exit flag is 2, i.e., ITERMAX is attained
 
 ! Prepare for the first line search.
 hx = hess_mul(hq, pq, xpt, x)
@@ -156,9 +156,9 @@ twod_search = .false.
 !
 ! The iteration will be terminated in 4 possible cases:
 ! 1. the maximal number of iterations is attained;
-! 2. QADD <= TOL*QRED or ||G|| <= TOL*||GBEG||, where QADD is the reduction of Q due to the latest
+! 2. QADD <= TOL*QRED or ||G|| <= TOL*||G0||, where QADD is the reduction of Q due to the latest
 ! CG step, QRED is the reduction of Q since the beginning until the latest CG step, G is the
-! current gradient, and GBEG is the initial gradient; see (5.13) of the NEWUOA paper;
+! current gradient, and G0 is the initial gradient; see (5.13) of the NEWUOA paper;
 ! 3. DS <= 0
 ! 4. ||S|| = DELTA, i.e., CG path cuts the trust region boundary.
 !
@@ -168,7 +168,7 @@ do iter = 1, itermax
     ! Exit if GG is small. This must be done first; otherwise, DD can be 0 and BSTEP is not well
     ! defined. The inequality below must be non-strict so that GG = 0 will trigger the exit.
     if (gg <= (tol**2) * gg0) then
-        info = 0_IK
+        info_loc = 0_IK
         exit
     end if
 
@@ -222,7 +222,7 @@ do iter = 1, itermax
     ! contains NaN and fulfills other exit conditions.
     if (.not. is_finite(sum(abs(s)))) then
         s = sold
-        info = -1_IK
+        info_loc = -1_IK
         exit
     end if
 
@@ -236,7 +236,7 @@ do iter = 1, itermax
 
     ! Exit due to small QADD.
     if (qadd <= tol * qred) then
-        info = 1_IK
+        info_loc = 1_IK
         exit
     end if
 
@@ -246,14 +246,14 @@ do iter = 1, itermax
     ds = inprod(d, s)
     if (ds <= 0) then
         ! DS is positive in theory.
-        info = -1_IK
+        info_loc = -1_IK
         exit
     end if
 end do
 
 if (ss <= 0 .or. is_nan(ss)) then
     ! This may occur for ill-conditioned problems due to rounding.
-    info = -1_IK
+    info_loc = -1_IK
     twod_search = .false.
 end if
 
@@ -271,7 +271,7 @@ end if
 do iter = 1, itermax
     ! Exit if GG is small. The inequality must be non-strict so that GG = 0 can trigger the exit.
     if (gg <= (tol**2) * gg0) then
-        info = 0_IK
+        info_loc = 0_IK
         exit
     end if
     sg = inprod(s, g)
@@ -281,7 +281,7 @@ do iter = 1, itermax
     !!----------------------------------------------!
     !!sgk = sg + shs
     !!if (sgk / sqrt(gg * delsq) <= tol - ONE) then
-    !!    info = 0_IK
+    !!    info_loc = 0_IK
     !!    exit
     !!end if
     !!t = sqrt(delsq * gg - sgk**2)
@@ -306,13 +306,13 @@ do iter = 1, itermax
     ! 2. SQRT(TOL)*SQRT(GG) is less likely to encounter underflow than SQRT(TOL*GG).
     ! 3. The condition below should be non-strict so that |D| = 0 can trigger the exit.
     if (norm(d) <= sqrt(tol) * sqrt(gg)) then
-        info = 0_IK
+        info_loc = 0_IK
         exit
     end if
     d = (d / norm(d)) * norm(s)
     ! In precise arithmetic, INPROD(D, S) = 0 and |D| = |S| = DELTA.
     if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(d) >= TWO * delta) then
-        info = -1_IK
+        info_loc = -1_IK
         exit
     end if
 
@@ -337,7 +337,7 @@ do iter = 1, itermax
     ! Exit in case of Inf/NaN in S.
     if (.not. is_finite(sum(abs(s)))) then
         s = sold
-        info = -1_IK
+        info_loc = -1_IK
         exit
     end if
 
@@ -345,7 +345,7 @@ do iter = 1, itermax
     reduc = circle_fun_trsapp(ZERO, args) - circle_fun_trsapp(angle, args)
     qred = qred + reduc
     if (reduc / qred <= tol) then
-        info = 1_IK
+        info_loc = 1_IK
         exit
     end if
 
@@ -353,6 +353,10 @@ do iter = 1, itermax
     hs = cth * hs + sth * hd
     gg = inprod(g + hs, g + hs)
 end do
+
+if (present(info)) then
+    info = info_loc
+end if
 
 !====================!
 !  Calculation ends  !
