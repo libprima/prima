@@ -13,7 +13,7 @@ options = struct();
 for iin = 1 : nargin
     if isstruct(varargin{iin})
         options = varargin{iin};
-        varargin = [varargin{1:iin-1}, varargin{iin+1:end}];
+        varargin = {varargin{1:iin-1}, varargin{iin+1:end}};
         break;
     end
 end
@@ -50,7 +50,7 @@ options.eval_options = struct('dnoise', 1e-5);
 argin = [varargin, {options}];
 output{4} = profile(argin{:});
 
-options = rmfield(options, 'eval_options');
+options = rmfield(options, {'eval_options'});
 options.perm = true;
 argin = [varargin, {options}];
 output{5} = profile(argin{:});
