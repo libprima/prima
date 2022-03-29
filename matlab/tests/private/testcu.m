@@ -118,7 +118,7 @@ if sequential
         pdim(ip) = length(prob.x0);
 
         if has_eval_options || randomizex0 > 0
-            fprintf('\nCalculate fref and cref\n');
+            %fprintf('\nCalculate fref and cref\n');
             for is = 1 : ns
                 [fref(ip, is, :), cref(ip, is, :)] = testsolv(solvers{is}, prob, ref_options);
             end
@@ -166,7 +166,7 @@ else
         pdim(ip) = length(prob.x0);
 
         if has_eval_options || randomizex0 > 0
-            fprintf('\nCalculate fref and cref\n');
+            %fprintf('\nCalculate fref and cref\n');
             for is = 1 : ns
                 [fref(ip, is, :), cref(ip, is, :)] = testsolv(solvers{is}, prob, ref_options);
             end
