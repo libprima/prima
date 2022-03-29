@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 29, 2022 PM08:41:30
+! Last Modified: Tuesday, March 29, 2022 PM10:53:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -185,11 +185,12 @@ if ((.not. is_finite(sum(abs(dw(1:n))))) .or. inprod(dw, g) > 0) then
     dd = inprod(dw, dw)
     goto 300
 end if
-if (dd > gg .or. inprod(dw, g) < -gg) then
-    dw = (dw / dnorm) * sqrt(gg)
-    dd = inprod(dw, dw)
-    goto 300
-end if
+!if (dd > gg) then
+!    dw = (dw / dnorm) * sqrt(gg)
+!    dd = inprod(dw, dw)
+!    goto 300
+!end if
+!if (inprod(dw, g) < -gg) then goto 300
 psdsav = dw
 !--------------------------------------------------------!
 !
@@ -360,7 +361,15 @@ if (ic > 0) goto 270
 if (violmx > ZERO) goto 220
 if (nact < n) goto 100
 290 dd = ZERO
-300 w(1) = dd
+300 continue
+!---------------------------------------------------!
+! Zaikun 20220329
+if (nact == 0) then
+    dw(1:n) = -g
+    dd = inprod(dw(1:n), dw(1:n))
+end if
+!---------------------------------------------------!
+w(1) = dd
 return
 !
 !     These instructions rearrange the active constraints so that the new
