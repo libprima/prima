@@ -11,10 +11,10 @@ if ~isempty(prob.ub)
     prob.ub = prob.ub(inv_perm);
 end
 if ~isempty(prob.Aineq)
-    prob.Aineq = prob.Aineq(:, permutation);
+    prob.Aineq = prob.Aineq(:, inv_perm);
 end
 if ~isempty(prob.Aeq)
-    prob.Aeq = prob.Aeq(:, permutation);
+    prob.Aeq = prob.Aeq(:, inv_perm);
 end
 
 if ~isempty(prob.nonlcon)
