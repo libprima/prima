@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 29, 2022 PM09:11:05
+! Last Modified: Tuesday, March 29, 2022 PM09:27:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -352,12 +352,6 @@ if (DEBUGGING) then
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
 
     call assert(size(psd) == n, 'SIZE(PSD) == N', srname)
-    write (16, *) norm(psd), dd, psd
-    write (16, *) norm(g), gg, g
-    write (16, *) inprod(psd, g), gg
-    write (16, *) psd
-    write (16, *) g
-    close (16)
     ! In theory, |PSD|^2 <= GG and -GG <= PSD^T*G <= 0 (do not use DD, which may not be up to date).
     call assert(inprod(psd, psd) <= TWO * gg, '|PSD|^2 <= 2*GG', srname)
     dg = inprod(psd, g)  ! DG can be NaN if G contains huge values.
