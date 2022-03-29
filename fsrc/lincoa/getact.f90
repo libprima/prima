@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 25, 2022 AM08:04:38
+! Last Modified: Tuesday, March 29, 2022 PM03:19:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,11 +24,17 @@ contains
 
 subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 !--------------------------------------------------------------------------------------------------!
+!!!----------------------------------------------------------!!!
+! !!! THE FOLLOWING DESCRIPTION NEEDS VERIFICATION !!!
+! !!! Note that the set J gets updated within this subroutine,
+! !!! which seems inconsistent with the description given here.
+!!!----------------------------------------------------------!!!
+!
 ! This subroutine solves a linearly constrained projected problem (LCPP)
 !
 ! min ||D + G|| subject to AMAT(:, J)^T * D <= 0.
 !
-!The solution is PSD, which is a projected steepest descent direction PSD for a linearly
+! The solution is PSD, which is a projected steepest descent direction PSD for a linearly
 ! constrained trust-region subproblem (LCTRS)
 !
 ! min Q(X_k + D)  subject to ||D|| <= Delta_k and AMAT^T*(X_k + D) <= B,
@@ -64,7 +70,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth, norm, lsqr, trueloc
 
@@ -89,12 +95,13 @@ real(RP), intent(out) :: psd(:)  ! PSD(N)
 ! Local variables
 character(len=*), parameter :: srname = 'GETACT'
 real(RP) :: apsd(size(amat, 2))
+real(RP) :: fracmult(size(g))
 real(RP) :: dd
 real(RP) :: tol
 real(RP) :: vmu(size(g))
 real(RP) :: vlam(size(g))
 real(RP) :: ddsav, dnorm, tdel, violmx, vmult
-integer(IK) :: i, ic, j, l
+integer(IK) :: i, ic, l
 
 logical :: mask(size(amat, 2))
 
@@ -194,7 +201,10 @@ do iter = 1_IK, maxiter
         exit
     end if
 
-    if (dd == ZERO) exit
+    if (dd == ZERO) then
+        exit
+    end if
+
     ddsav = dd
     dnorm = sqrt(dd)
 
@@ -212,11 +222,14 @@ do iter = 1_IK, maxiter
 
     ! Terminate if a positive value of VIOLMX may be due to computer rounding errors.
     ! N.B.:
+    ! 0. Powell wrote VIOLMX < 0.01*DNORM instead of VIOLMX <= 0.01*DNORM.
     ! 1. Theoretically (but not numerically), APSD(IACT(1:NACT)) = 0 or empty.
     ! 2. CAUTION: the inf-norm of APSD(IACT(1:NACT)) is NOT always MAXVAL(ABS(APSD(IACT(1:NACT)))),
     ! as the latter returns -HUGE(APSD) instead of 0 when NACT = 0! In MATLAB, max([]) = []; in
     ! Python, R, and Julia, the maximum of an empty array raises errors/warnings (as of 20220318).
-    if (violmx < 0.01_RP * dnorm .and. violmx <= TEN * norm(apsd(iact(1:nact)), 'inf')) exit
+    if (violmx <= 0.01_RP * dnorm .and. violmx <= TEN * norm(apsd(iact(1:nact)), 'inf')) then
+        exit
+    end if
 
     ! Add constraint L to the active set. It sets NACT = NACT + 1 and VLAM(NACT) = 0.
     call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)
@@ -228,25 +241,30 @@ do iter = 1_IK, maxiter
     ! 2. The loop will run for at most NACT <= N times: if VIOLMX > 0, then IC > 0, and hence
     ! VLAM(IC) = 0, which implies that DEL_ACT will be called to reduce NACT by 1.
     do while (violmx > 0 .and. nact > 0)
-        vmu(nact) = ONE / rfac(nact, nact)**2  ! Here, NACT must be positive!
+        !------------------------------------------------------------------------------------------!
+        ! Zaikun 20220329: What is VMU exactly???
+        ! VMU(1:NACT) = LSQR(QFAC(:, 1:NACT),RFAC(1:NACT, 1:NACT),QFAC(:, NACT)) / RFAC(NACT, NACT)?
+        vmu(nact) = ONE / rfac(nact, nact)**2  ! We must ensure NACT > 0. In theory, VMU(NACT) > 0.
         do i = nact - 1, 1, -1
             vmu(i) = -inprod(rfac(i, i + 1:nact), vmu(i + 1:nact)) / rfac(i, i)
         end do
-        ! vmu(1:nact) = lsqr(qfac(:, 1:nact), rfac(1:nact, 1:nact), qfac(:, nact)) / rfac(nact, nact)
+        !------------------------------------------------------------------------------------------!
 
         ! Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
-        !vmult = minval([violmx, vlam(1:nact)/vmu(1:nact)])
-        !ic = int(minloc([violmx, vlam(1:nact)/vmu(1:nact)], dim = 1) - 1, IK)
+        ! N.B.: 1. VLAM(1:NACT-1) < 0 and VLAM(NACT) <= 0 by the updates of VLAM. 2. VMU(NACT) > 0.
+        ! 3. Only the places where VMU(1:NACT) < 0 is relevant below, if any.
+        fracmult = HUGENUM
+        where (vmu(1:nact) < 0)
+            fracmult(1:nact) = vlam(1:nact) / vmu(1:nact)
+        end where
+        vmult = minval([violmx, fracmult(1:nact)])
+        ic = maxval(trueloc([violmx, fracmult(1:nact)] <= vmult)) - 1_IK
+        ! MATLAB: ic = max(find([violmx, fracmult(1:nact)] <= vmult))
+        ! N.B.: 0. The definition of IC given above is equivalent to the following.
+        !!IC = INT(MINLOC([VIOLMX, FRACMULT(1:NACT)], DIM=1, BACK=.TRUE.), IK) - 1_IK
+        ! 1. The BACK argument in MINLOC is available in F2008. Not supported by Absoft as of 2022.
+        ! 2. A motivation for backward MINLOC is to save computation in DEL_ACT below. What else?
 
-        vmult = violmx
-        ic = 0
-        do j = 1, nact
-            if (vlam(j) >= vmult * vmu(j)) then  ! VLAM(1:NACT) <= 0 according to its updates.
-                ! What about vlam(j) > vmult * vmu(j) ?
-                ic = j
-                vmult = vlam(j) / vmu(j)  ! What if VMU(J) = 0?
-            end if
-        end do
         violmx = max(violmx - vmult, ZERO)
 
         vlam(1:nact) = vlam(1:nact) - vmult * vmu(1:nact)
@@ -258,21 +276,23 @@ do iter = 1_IK, maxiter
         ! with resetting of the residuals of the constraints that become inactive.
         do ic = nact, 1, -1
             if (vlam(ic) >= 0) then  ! Powell's version: IF (.NOT. VLAM(IC) < 0) THEN
-                ! Delete the constraint with index IACT(IC) from the active set, and set NACT = NACT - 1.
-                call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)  ! NACT = NACT - 1
+                ! Delete the constraint with index IACT(IC) from the active set; set NACT = NACT - 1.
+                call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
             end if
         end do
     end do  ! End of DO WHILE (VIOLMX > 0 .AND. NACT > 0)
 
-    !------------------------------------------!
-    !------------------------------------------!
-    !------------------------------------------!
+    !----------------------------------------------!
+    !----------------------------------------------!
+    !----------------------------------------------!
+    ! Why does the following validation never fail?
     call validate(nact > 0, 'NACT > 0', srname)
-    !------------------------------------------!
-    !------------------------------------------!
-    !------------------------------------------!
-
-    if (nact == 0) exit  ! It can only come from DEL_ACT when VLAM(1:NACT) >= 0. Possible at all?
+    !----------------------------------------------!
+    !----------------------------------------------!
+    !----------------------------------------------!
+    if (nact == 0) then
+        exit  ! It can only come from DEL_ACT when VLAM(1:NACT) >= 0. Possible at all?
+    end if
 end do  ! End of DO WHILE (NACT < N)
 
 ! if (nact == 0) then
@@ -285,7 +305,7 @@ end do  ! End of DO WHILE (NACT < N)
 
 ! Postconditions
 if (DEBUGGING) then
-    ! During the development, we want to get informed if ITER reaches MAXITER.
+    ! During the development, we want to get alerted if ITER reaches MAXITER.
     call assert(iter < maxiter, 'ITER < MAXITER', srname)
 
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)! Can NACT be 0?

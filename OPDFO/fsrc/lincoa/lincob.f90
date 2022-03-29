@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 PM05:36:50
+! Last Modified: Tuesday, March 29, 2022 PM01:53:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -944,6 +944,8 @@ w(2) = real(nf, RP) + HALF
 
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist)
+
+!close (17)
 
 end subroutine lincob
 
