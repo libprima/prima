@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 29, 2022 PM09:27:54
+! Last Modified: Tuesday, March 29, 2022 PM10:55:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -106,7 +106,6 @@ logical :: mask(size(amat, 2))
 real(RP) :: apsd(size(amat, 2))
 real(RP) :: dd
 real(RP) :: ddsav
-real(RP) :: dg
 real(RP) :: dnorm
 real(RP) :: gg
 real(RP) :: fracmult(size(g))
@@ -154,10 +153,9 @@ if (m <= 0) then
     return
 end if
 
-! Set some constants and a temporary VLAM.
-tdel = 0.2_RP * snorm
+! Set some constants.
 gg = inprod(g, g)
-vlam = ZERO
+tdel = 0.2_RP * snorm
 
 ! Set the initial QFAC to the identity matrix in the case NACT = 0.
 if (nact == 0) then
@@ -165,6 +163,8 @@ if (nact == 0) then
 end if
 
 ! Remove any constraints from the initial active set whose residuals exceed TDEL.
+! Compilers may complain if we do not set VLAM. The value does not matter, as it will be overwritten.
+vlam = ZERO
 do ic = nact, 1, -1
     if (resact(ic) > tdel) then
         ! Delete constraint IACT(IC) from the active set, and set NACT = NACT - 1.
@@ -192,7 +192,7 @@ end do
 psd = ZERO  ! Must be set, in case NACT = N at this point.
 psdsav = ZERO
 dd = ZERO
-ddsav = TWO * gg  ! By Powell. The value is used at iteration 1 for testing whether DD > DDSAV. Why?
+ddsav = TWO * gg  ! By Powell. This value is used at iteration 1 to test whether DD >= DDSAV. Why?
 
 ! What is the theoretical maximal number of iterations in the following procedure? Powell's code for
 ! this part is essentially a `DO WHILE (NACT < N) ... END DO` loop. We enforce the following maximal
@@ -220,24 +220,26 @@ do iter = 1_IK, maxiter
         exit
     end if
 
-    !--------------------------------------------------------!
-    ! Powell's code does not include the following two cases.
-    dg = inprod(psd, g)
-    if (dg > 0 .or. .not. is_finite(sum(abs(psd)))) then
+    !---------------------------------------------------------------------------------------!
+    ! Powell's code does not handle the following pathological cases.
+    if (inprod(psd, g) > 0 .or. .not. is_finite(sum(abs(psd)))) then
         psd = psdsav
         exit
     end if
-    if (dg < -gg .or. dd > gg) then
-        psd = (psd / dnorm) * sqrt(gg)
-        exit
-    end if
-    !--------------------------------------------------------!
+    ! In our tests, tolerating the following cases seems to render better numerical results.
+    !!if (dd > gg) then
+    !!    psd = (psd / dnorm) * sqrt(gg)
+    !!    exit
+    !!end if
+    !!if (inprod(psd, g) < -gg) then
+    !!    exit
+    !!end if
+    !---------------------------------------------------------------------------------------!
 
     psdsav = psd
     ddsav = dd
 
-    ! Pick the next integer L or terminate, a positive value of L being the index of the most
-    ! violated constraint.
+    ! Pick the next integer L or terminate; a positive L is the index of the most violated constraint.
     apsd = matprod(psd, amat)
     mask = (resnew > 0 .and. resnew <= tdel .and. apsd > (dnorm / snorm) * resnew)
     if (any(mask)) then
@@ -249,8 +251,7 @@ do iter = 1_IK, maxiter
     end if
 
     ! Terminate if a positive value of VIOLMX may be due to computer rounding errors.
-    ! N.B.:
-    ! 0. Powell wrote VIOLMX < 0.01*DNORM instead of VIOLMX <= 0.01*DNORM.
+    ! N.B.: 0. Powell wrote VIOLMX < 0.01*DNORM instead of VIOLMX <= 0.01*DNORM.
     ! 1. Theoretically (but not numerically), APSD(IACT(1:NACT)) = 0 or empty.
     ! 2. CAUTION: the inf-norm of APSD(IACT(1:NACT)) is NOT always MAXVAL(ABS(APSD(IACT(1:NACT)))),
     ! as the latter returns -HUGE(APSD) instead of 0 when NACT = 0! In MATLAB, max([]) = []; in
@@ -259,12 +260,11 @@ do iter = 1_IK, maxiter
         exit
     end if
 
-    ! Add constraint L to the active set. It sets NACT = NACT + 1 and VLAM(NACT) = 0.
+    ! Add constraint L to the active set. ADD_ACT sets NACT = NACT + 1 and VLAM(NACT) = 0.
     call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)
 
     ! Set the components of the vector VMU if VIOLMX is positive.
-    ! N.B.:
-    ! 1. In theory, NACT > 0 is not needed in the condition below, because VIOLMX is necessarily 0
+    ! N.B.: 1. In theory, NACT > 0 is not needed in the condition below, because VIOLMX must be 0
     ! when NACT is 0. We keep NACT > 0 for security: when NACT <= 0, RFAC(NACT, NACT) is invalid.
     ! 2. The loop will run for at most NACT <= N times: if VIOLMX > 0, then IC > 0, and hence
     ! VLAM(IC) = 0, which implies that DEL_ACT will be called to reduce NACT by 1.
@@ -310,16 +310,16 @@ do iter = 1_IK, maxiter
         ! with resetting of the residuals of the constraints that become inactive.
         do ic = nact, 1, -1
             if (vlam(ic) >= 0) then  ! Powell's version: IF (.NOT. VLAM(IC) < 0) THEN
-                ! Delete the constraint with index IACT(IC) from the active set; set NACT = NACT - 1.
+                ! Delete the constraint with index IACT(IC) from the active set; set NACT = NACT-1.
                 call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
             end if
         end do
     end do  ! End of DO WHILE (VIOLMX > 0 .AND. NACT > 0)
 
     !----------------------------------------------------------------------------------------------!
-    ! NACT can become 0 only iif VLAM(1:NACT) >= 0 before calling DEL_ACT, which is true if NACT = 1
-    ! when the WHILE loop starts. However, we have never observed a failure of the following
-    ! assertion as of 20220329. Why?
+    ! NACT can become 0 at this point iif VLAM(1:NACT) >= 0 before calling DEL_ACT, which is true
+    ! if NACT = 1 when the WHILE loop starts. However, we have never observed a failure of the
+    ! assertion below as of 20220329. Why?
     !-----------------------------------------!
     call assert(nact > 0, 'NACT > 0', srname) !
     !-----------------------------------------!
@@ -329,9 +329,11 @@ do iter = 1_IK, maxiter
     !----------------------------------------------------------------------------------------------!
 end do  ! End of DO WHILE (NACT < N)
 
-! if (nact == 0) then
-!   psd = -g
-! end if
+! NACT == 0 can happen here. The following lines improve the performance of LINCOA. Powell's code
+! does not take care of this case explicitly.
+if (nact == 0) then
+    psd = -g
+end if
 
 !====================!
 !  Calculation ends  !
@@ -352,10 +354,10 @@ if (DEBUGGING) then
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
 
     call assert(size(psd) == n, 'SIZE(PSD) == N', srname)
-    ! In theory, |PSD|^2 <= GG and -GG <= PSD^T*G <= 0 (do not use DD, which may not be up to date).
+    ! In theory, |PSD|^2 <= GG and -GG <= PSD^T*G <= 0.
+    ! N.B. 1. Do not use DD, which may not be up to date. 2. PSD^T*G can be NaN if G is huge.
     call assert(inprod(psd, psd) <= TWO * gg, '|PSD|^2 <= 2*GG', srname)
-    dg = inprod(psd, g)  ! DG can be NaN if G contains huge values.
-    call assert((dg <= 0 .and. dg >= -TWO * gg) .or. is_nan(dg), '-2*GG <= PSD^T*G <= 0', srname)
+    call assert(.not. (inprod(psd, g) > 0 .or. inprod(psd, g) < -TWO * gg), '-2*GG <= PSD^T*G <= 0', srname)
 end if
 
 end subroutine getact
