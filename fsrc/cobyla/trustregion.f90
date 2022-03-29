@@ -514,6 +514,7 @@ do iter = 1, maxiter
     ! Only the places where VMULTD < 0 is relevant below, if any.
     frac = minval([ONE, fracmult])
     icon = int(minloc([ONE, fracmult], dim=1), IK) - 1_IK
+    ! MATLAB: [frac, icon] = min([1, fracmult]); icon = icon - 1
 
     ! Update D, VMULTC and CSTRV.
     dold = d

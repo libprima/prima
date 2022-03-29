@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 29, 2022 PM03:19:35
+! Last Modified: Tuesday, March 29, 2022 PM04:15:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -254,21 +254,27 @@ do iter = 1_IK, maxiter
         ! N.B.: 1. VLAM(1:NACT-1) < 0 and VLAM(NACT) <= 0 by the updates of VLAM. 2. VMU(NACT) > 0.
         ! 3. Only the places where VMU(1:NACT) < 0 is relevant below, if any.
         fracmult = HUGENUM
-        where (vmu(1:nact) < 0)
+        where (vmu(1:nact) < 0 .and. vlam(1:nact) < 0)
             fracmult(1:nact) = vlam(1:nact) / vmu(1:nact)
         end where
         vmult = minval([violmx, fracmult(1:nact)])
-        ic = maxval(trueloc([violmx, fracmult(1:nact)] <= vmult)) - 1_IK
-        ! MATLAB: ic = max(find([violmx, fracmult(1:nact)] <= vmult))
-        ! N.B.: 0. The definition of IC given above is equivalent to the following.
+        ic = 0_IK
+        if (any(fracmult(1:nact) <= vmult)) then
+            ic = maxval(trueloc(fracmult(1:nact) <= vmult))
+            ! MATLAB: ic = max(find(fracmult(1:nact)] <= vmult))
+        end if
+        ! N.B.: 0. The definition of IC given above is mathematically equivalent to the following.
+        !!IC = MAXVAL(TRUELOC([VIOLMX, FRACMULT(1:NACT)] <= VMULT)) - 1_IK, or:
         !!IC = INT(MINLOC([VIOLMX, FRACMULT(1:NACT)], DIM=1, BACK=.TRUE.), IK) - 1_IK
+        ! However, these implementations will be problematic if VMULT is NaN: IC will be -Inf in the
+        ! first implementation and unspecified in the second one. The MATLAB counterpart of the
+        ! first implementation will end up with IC = [] as TRUELOC (or find in MATLAB) returns [].
         ! 1. The BACK argument in MINLOC is available in F2008. Not supported by Absoft as of 2022.
         ! 2. A motivation for backward MINLOC is to save computation in DEL_ACT below. What else?
 
         violmx = max(violmx - vmult, ZERO)
-
         vlam(1:nact) = vlam(1:nact) - vmult * vmu(1:nact)
-        if (ic > 0) then
+        if (ic > 0 .and. ic <= nact) then  ! Powell's code: IF (IC>0). We check IC<=NACT for safety.
             vlam(ic) = ZERO
         end if
 
