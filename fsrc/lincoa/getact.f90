@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, March 30, 2022 AM12:14:40
+! Last Modified: Wednesday, March 30, 2022 AM06:38:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -188,10 +188,8 @@ end do
 ! Set the new search direction D. Terminate if the 2-norm of D is ZERO or does not decrease, or if
 ! NACT=N holds. The situation NACT=N occurs for sufficiently large SNORM if the origin is in the
 ! convex hull of the constraint gradients.
-! Start with initialization of  PSD, PSDSAV, DD, and DDSAV.
-psd = ZERO  ! Must be set, in case NACT = N at this point.
-psdsav = ZERO
-dd = ZERO
+! Start with initialization of PSDSAV and DDSAV.
+psdsav = ZERO  ! Must be set, in case the loop exits due to abnormality at iteration 1.
 ddsav = TWO * gg  ! By Powell. This value is used at iteration 1 to test whether DD >= DDSAV. Why?
 
 ! What is the theoretical maximal number of iterations in the following procedure? Powell's code for
