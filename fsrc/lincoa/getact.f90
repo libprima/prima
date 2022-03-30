@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, March 30, 2022 AM06:38:14
+! Last Modified: Wednesday, March 30, 2022 AM09:16:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,9 +25,9 @@ contains
 subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 !--------------------------------------------------------------------------------------------------!
 !!!----------------------------------------------------------!!!
-! !!! THE FOLLOWING DESCRIPTION NEEDS VERIFICATION !!!
-! !!! Note that the set J gets updated within this subroutine,
-! !!! which seems inconsistent with the description given here.
+!!!! THE FOLLOWING DESCRIPTION NEEDS VERIFICATION!           !!!
+!!!! Note that the set J gets updated within this subroutine,!!!
+!!!! which seems inconsistent with the description below.    !!!
 !!!----------------------------------------------------------!!!
 !
 ! This subroutine solves a linearly constrained projected problem (LCPP)
@@ -59,7 +59,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 !
 ! SIZE(QFAC) = [M, M], SIZE(RFAC, 1) = M, diag(RFAC(:, 1:NACT)) > 0.
 !
-! NACT, IACT, QFAC and RFAC across invocations of GETACT for warm starts.
+! NACT, IACT, QFAC and RFAC are maintained up to date across invocations of GETACT for warm starts.
 !
 ! SNORM, RESNEW, RESACT, and G are the same as the terms with these names in SUBROUTINE TRSTEP.
 ! The elements of RESNEW and RESACT are also kept up to date.
@@ -184,6 +184,7 @@ do while (nact > 0)
         exit
     end if
 end do
+! Zaikun 20220330: What if NACT = 0 at this point?
 
 ! Set the new search direction D. Terminate if the 2-norm of D is ZERO or does not decrease, or if
 ! NACT=N holds. The situation NACT=N occurs for sufficiently large SNORM if the origin is in the
@@ -327,8 +328,8 @@ do iter = 1_IK, maxiter
     !----------------------------------------------------------------------------------------------!
 end do  ! End of DO WHILE (NACT < N)
 
-! NACT == 0 can happen here. The following lines improve the performance of LINCOA. Powell's code
-! does not take care of this case explicitly.
+! It is possible to have NACT == 0 here. The following lines improve the performance of LINCOA.
+! Powell's code does not take care of this case explicitly.
 if (nact == 0) then
     psd = -g
 end if
@@ -422,8 +423,8 @@ end if
 ! QRADD applies Givens rotations to the last (N-NACT) columns of QFAC so that the first (NACT+1)
 ! columns of QFAC are the ones required for the addition of the L-th constraint, and add the
 ! appropriate column to RFAC.
-! N.B.: QRADD always augment NACT by 1. This is different from the strategy in COBYLA. Is it ensured
-! that C cannot be linearly represented by the gradients of the existing active constraints?
+! N.B.: QRADD always augment NACT by 1, which differs from the corresponding subroutine in COBYLA.
+! Is it ensured that C cannot be represented by the gradients of the existing active constraints?
 call qradd(c, qfac, rfac, nact)  ! NACT is increased by 1!
 
 ! Indeed, it suffices to pass RFAC(:, 1:NACT+1) to QRADD as follows.
@@ -515,7 +516,7 @@ end if
 !====================!
 
 ! The following instructions rearrange the active constraints so that the new value of IACT(NACT) is
-! the old value of IACT(IC). QREXC implements the updates of QFAC and RFAC by sequence of Givens
+! the old value of IACT(IC). QREXC implements the updates of QFAC and RFAC by a sequence of Givens
 ! rotations. Then NACT is reduced by one.
 
 call qrexc(qfac, rfac(:, 1:nact), ic)  ! QREXC does nothing if IC == NACT.
