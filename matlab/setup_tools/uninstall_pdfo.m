@@ -33,5 +33,8 @@ if exist(user_startup, 'file')
     end
 end
 
-fprintf('Done.\nYou may now remove the current directory if it contains nothing you want to keep.\n\n');
+callstack = dbstack('-completenames');
+root_dir = fileparts(callstack(2).file);  % Root directory of the package
+fprintf('Done.\nYou may now remove\n\n    %s\n\nif it contains nothing you want to keep.\n\n', root_dir);
+
 return
