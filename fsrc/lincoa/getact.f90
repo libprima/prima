@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, March 30, 2022 AM09:16:39
+! Last Modified: Wednesday, March 30, 2022 AM09:42:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -215,7 +215,8 @@ do iter = 1_IK, maxiter
     end if
 
     if (dd >= ddsav) then
-        psd = ZERO  ! Zaikun 20220329: Powell wrote this. Why? What about PSD = PSDSAV?
+        psd = ZERO  ! Zaikun 20220329: Powell wrote this. Why?
+        !psd = psdsav  ! This does not seem to improve the performance.
         exit
     end if
 
