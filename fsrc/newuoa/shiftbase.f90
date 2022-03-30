@@ -8,7 +8,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 22, 2022 PM01:36:26
+! Last Modified: Wednesday, March 30, 2022 PM08:50:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -97,7 +97,8 @@ gq = hess_mul(hq, pq, xpt, xopt) + gq
 ! Update HQ. See (7.14) of the NEWUOA paper.
 w1 = matprod(xopt, xpt) - HALF * xoptsq
 ! W1 equals MATPROD(XPT, XOPT) after XPT is updated TEMPORARILY as follows.
-xpt = xpt - HALF * spread(xopt, dim=2, ncopies=npt)  ! TEMPORARY
+xpt = xpt - HALF * spread(xopt, dim=2, ncopies=npt)  ! TEMPORARY; will be updated again at the end.
+! MATLAB: xpt = xpt - xopt/2  % xopt should be a column!! Implicit expansion
 xpq = matprod(xpt, pq)
 call r2update(hq, ONE, xopt, xpq)  ! Implement R2UPDATE properly so that HQ is symmetric.
 
@@ -125,6 +126,7 @@ end do
 ! The following instructions complete the shift of XBASE. Recall the we have already subtracted
 ! HALF*XOPT from XPT. Therefore, overall, the new XPT is XPT - XOPT.
 xpt = xpt - HALF * spread(xopt, dim=2, ncopies=npt)
+! MATLAB: xpt = xpt - xopt/2  % xopt should be a column!! Implicit expansion
 xbase = xbase + xopt
 xopt = ZERO
 

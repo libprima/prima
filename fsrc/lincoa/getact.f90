@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, March 30, 2022 AM09:42:19
+! Last Modified: Thursday, March 31, 2022 AM01:14:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -73,7 +73,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth, norm, lsqr, trueloc
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth, norm, lsqr, solve, trueloc
 
 implicit none
 
@@ -95,7 +95,6 @@ real(RP), intent(out) :: psd(:)  ! PSD(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GETACT'
-integer(IK) :: i
 integer(IK) :: ic
 integer(IK) :: iter
 integer(IK) :: l
@@ -112,6 +111,7 @@ real(RP) :: fracmult(size(g))
 real(RP) :: psdsav(size(psd))
 real(RP) :: tdel
 real(RP) :: tol
+real(RP) :: v(size(g))
 real(RP) :: violmx
 real(RP) :: vlam(size(g))
 real(RP) :: vmu(size(g))
@@ -269,14 +269,10 @@ do iter = 1_IK, maxiter
     ! 2. The loop will run for at most NACT <= N times: if VIOLMX > 0, then IC > 0, and hence
     ! VLAM(IC) = 0, which implies that DEL_ACT will be called to reduce NACT by 1.
     do while (violmx > 0 .and. nact > 0)
-        !------------------------------------------------------------------------------------------!
-        ! Zaikun 20220329: What is VMU exactly???
-        ! VMU(1:NACT) = LSQR(QFAC(:, 1:NACT),RFAC(1:NACT, 1:NACT),QFAC(:, NACT)) / RFAC(NACT, NACT)?
-        vmu(nact) = ONE / rfac(nact, nact)**2  ! We must ensure NACT > 0. In theory, VMU(NACT) > 0.
-        do i = nact - 1, 1, -1
-            vmu(i) = -inprod(rfac(i, i + 1:nact), vmu(i + 1:nact)) / rfac(i, i)
-        end do
-        !------------------------------------------------------------------------------------------!
+        v(1:nact - 1) = ZERO
+        v(nact) = ONE / rfac(nact, nact) ! We must ensure NACT > 0. In theory, VMU(NACT) > 0.
+        ! Solve the linear system RFAC(1:NACT, 1:NACT) * VMU(1:NACT) = V(1:NACT)
+        vmu(1:nact) = solve(rfac(1:nact, 1:nact), v(1:nact))
 
         ! Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
         ! N.B.: 1. VLAM(1:NACT-1) < 0 and VLAM(NACT) <= 0 by the updates of VLAM. 2. VMU(NACT) > 0.
@@ -292,7 +288,7 @@ do iter = 1_IK, maxiter
             ! MATLAB: ic = max(find(fracmult(1:nact)] <= vmult))
         end if
         ! N.B.: 0. The definition of IC given above is mathematically equivalent to the following.
-        !!IC = MAXVAL(TRUELOC([VIOLMX, FRACMULT(1:NACT)] <= VMULT)) - 1_IK, or:
+        !!IC = MAXVAL(TRUELOC([VIOLMX, FRACMULT(1:NACT)] <= VMULT)) - 1_IK, OR
         !!IC = INT(MINLOC([VIOLMX, FRACMULT(1:NACT)], DIM=1, BACK=.TRUE.), IK) - 1_IK
         ! However, such implementations are problematic in the unlikely case of VMULT = NaN: IC will
         ! be -Inf in the first and unspecified in the second. The MATLAB counterpart of the first
@@ -354,6 +350,8 @@ if (DEBUGGING) then
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
 
     call assert(size(psd) == n, 'SIZE(PSD) == N', srname)
+    ! PSD = -G when NACT == 0; G may contain Inf/NaN.
+    call assert(all(is_finite(psd)) .or. nact == 0, 'PSD is finite unless NACT == 0', srname)
     ! In theory, |PSD|^2 <= GG and -GG <= PSD^T*G <= 0.
     ! N.B. 1. Do not use DD, which may not be up to date. 2. PSD^T*G can be NaN if G is huge.
     call assert(inprod(psd, psd) <= TWO * gg, '|PSD|^2 <= 2*GG', srname)
@@ -392,6 +390,7 @@ real(RP), intent(inout) :: vlam(:)  ! VLAM(N)
 character(len=*), parameter :: srname = 'ADD_ACT'
 integer(IK) :: m
 integer(IK) :: n
+integer(IK) :: nsave
 real(RP) :: tol
 
 ! Sizes
@@ -415,6 +414,7 @@ if (DEBUGGING) then
 
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
+    nsave = nact  ! For debugging only
 end if
 
 !====================!
@@ -443,6 +443,7 @@ vlam(nact) = ZERO
 
 ! Postconditions
 if (DEBUGGING) then
+    call assert(nact == nsave + 1, 'NACT = NSAVE + 1', srname)
     call assert(nact >= 1 .and. nact <= min(m, n), '1 <= NACT <= MIN(M, N)', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
 
@@ -486,6 +487,7 @@ character(len=*), parameter :: srname = 'DEL_ACT'
 integer(IK) :: l
 integer(IK) :: m
 integer(IK) :: n
+integer(IK) :: nsave
 real(RP) :: tol
 
 ! Sizes
@@ -509,6 +511,7 @@ if (DEBUGGING) then
 
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
+    nsave = nact  ! For debugging only
     l = iact(ic)  ! For debugging only
 end if
 
@@ -537,6 +540,7 @@ nact = nact - 1_IK
 
 ! Postconditions
 if (DEBUGGING) then
+    call assert(nact == nsave - 1, 'NACT = NSAVE - 1', srname)
     call assert(nact >= 0 .and. nact <= min(m, n) - 1, '1 <= NACT <= MIN(M, N)-1', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(.not. any(iact(1:nact) == l), 'L is not in IACT(1:NACT)', srname)
