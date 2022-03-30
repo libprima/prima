@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 29, 2022 PM10:53:35
+! Last Modified: Wednesday, March 30, 2022 PM11:34:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -290,7 +290,8 @@ resnew(l) = ZERO
 !
 220 continue
 if (nact <= 0) return  ! What about DD?
-w(nact) = ONE / rfac((nact * nact + nact) / 2)**2
+!w(nact) = ONE / rfac((nact * nact + nact) / 2)**2
+w(nact) = (ONE / rfac((nact * nact + nact) / 2)) / rfac((nact * nact + nact) / 2)
 if (nact > 1) then
     do i = nact - 1, 1, -1
         idiag = (i * i + i) / 2

@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 19, 2022 PM01:12:02
+! Last Modified: Thursday, March 31, 2022 AM01:21:14
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -34,6 +34,7 @@ public :: eye
 public :: hypotenuse, planerot
 public :: project
 public :: inv, isinv
+public :: solve
 public :: lsqr
 public :: qradd, qrexc
 public :: calquad, errquad, hess_mul
@@ -527,6 +528,81 @@ end if
 end function eye2
 
 
+function solve(A, b) result(x)
+!--------------------------------------------------------------------------------------------------!
+! This function solves the linear system A*X = B. We assume that A is a square matrix that is small
+! and invertible, and B is a vector of length SIZE(A, 1). The implementation is NAIVE.
+! TODO: Better to implement it into several subfunctions: triu, tril, and general square.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in) :: b(:)
+
+! Outputs
+real(RP) :: x(size(A, 2))
+
+! Local variables
+character(len=*), parameter :: srname = 'SOLVE'
+integer(IK) :: P(size(A, 1))
+integer(IK) :: i
+integer(IK) :: n
+real(RP) :: Q(size(A, 1), size(A, 1))
+real(RP) :: R(size(A, 1), size(A, 2))
+real(RP) :: tol
+
+! Sizes
+n = int(size(A, 1), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(A, 1) == size(A, 2), 'A is square', srname)
+    call assert(size(b) == size(A, 1), 'SIZE(B) == SIZE(A, 1)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (n <= 0) then  ! Of course, N < 0 should never happen.
+    return
+end if
+
+if (istril(A)) then
+    do i = 1, n
+        x(i) = (b(i) - inprod(A(i, 1:i - 1), x(1:i - 1))) / A(i, i)
+    end do
+elseif (istriu(A)) then  ! This case is invoked in LINCOA.
+    do i = n, 1, -1
+        x(i) = (b(i) - inprod(A(i, i + 1:n), x(i + 1:n))) / A(i, i)
+    end do
+else
+    ! This is NOT the best algorithm for linear systems, but since the QR subroutine is available ...
+    call qr(A, Q, R, P)
+    x = matprod(b, Q)
+    do i = n, 1, -1
+        x(i) = (x(i) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
+    end do
+    x(P) = x
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(x) == size(A, 2), 'SIZE(X) == SIZE(A, 2)', srname)
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n + 1_IK, RP)))
+    call assert(norm(matprod(A, x) - b) <= tol * maxval([ONE, norm(b), norm(x)]), 'A*X == B', srname)
+end if
+
+end function solve
+
+
 function inv(A) result(B)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates the inverse of a matrix A, which is ASSUMED TO BE SMALL AND INVERTIBLE.
@@ -549,7 +625,7 @@ real(RP) :: B(size(A, 1), size(A, 1))
 ! Local variables
 character(len=*), parameter :: srname = 'INV'
 integer(IK) :: P(size(A, 1))
-integer(IK) :: PI(size(A, 1))
+integer(IK) :: InvP(size(A, 1))
 integer(IK) :: i
 integer(IK) :: n
 real(RP) :: Q(size(A, 1), size(A, 1))
@@ -561,12 +637,16 @@ n = int(size(A, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(size(A, 1) == size(A, 2), 'A is squre', srname)
+    call assert(size(A, 1) == size(A, 2), 'A is square', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
+
+if (n <= 0) then  ! Of course, N < 0 should never happen.
+    return
+end if
 
 if (istril(A)) then
     ! This case is invoked in COBYLA.
@@ -584,14 +664,14 @@ elseif (istriu(A)) then
         B(1:i - 1, i) = -matprod(B(1:i - 1, 1:i - 1), A(1:i - 1, i) / A(i, i))
     end do
 else
-    ! This is NOT the best algorithm for INV, but since the QR subroutine is available ...
+    ! This is NOT the best algorithm for the inverse, but since the QR subroutine is available ...
     call qr(A, Q, R, P)
     R = transpose(R)  ! Take transpose to work on columns.
     do i = n, 1, -1
         B(:, i) = (Q(:, i) - matprod(B(:, i + 1:n), R(i + 1:n, i))) / R(i, i)
     end do
-    PI(P) = [(i, i=1, n)]  ! The inverse permutation
-    B = transpose(B(:, PI))
+    InvP(P) = [(i, i=1, n)]  ! The inverse permutation
+    B = transpose(B(:, InvP))
 end if
 
 !====================!
@@ -827,6 +907,10 @@ end if
 ! Calculation starts !
 !====================!
 
+if (n <= 0) then  ! Of course, N < 0 should never happen.
+    return
+end if
+
 if (present(Q)) then
     Q_loc = Q(:, 1:size(Q_loc, 2))
     if (present(Rdiag)) then
@@ -904,7 +988,6 @@ integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: m
 integer(IK) :: n
-real(RP) :: temp
 real(RP) :: tol
 
 ! Sizes
@@ -926,14 +1009,17 @@ end if
 ! Calculation starts !
 !====================!
 
-do i = n, 1_IK, -1_IK
-    temp = inprod(Q(:, i), b)
-    do j = i + 1_IK, n
-        temp = temp - R(i, j) * x(j)
-    end do
-    x(i) = temp / R(i, i)
-end do
+if (n <= 0) then  ! Of course, N < 0 should never happen.
+    return
+end if
 
+x = matprod(b, Q)
+do i = n, 1, -1
+    do j = i + 1_IK, n
+        x(i) = x(i) - R(i, j) * x(j)
+    end do
+    x(i) = x(i) / R(i, i)
+end do
 !--------------------------------------------------------------------------------------------------!
 ! The following is equivalent to the above, yet the above version works slightly better in LINCOA.
 !!do i = n, 1_IK, -1_IK

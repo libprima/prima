@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 25, 2022 AM12:13:00
+! Last Modified: Wednesday, March 30, 2022 PM08:53:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -182,6 +182,7 @@ end if
 if (knew == 0) then
     xopt = xpt(:, kopt)
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
+    ! MATLAB: xdist = sqrt(sum((xpt - xopt).^2))  % xopt should be a column!! Implicit expansion
     knew = maxloc(xdist, dim=1)
 end if
 call validate(1 <= knew .and. knew <= npt, '1 <= KNEW <= NPT', srname)
