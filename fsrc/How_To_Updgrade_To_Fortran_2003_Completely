@@ -61,3 +61,10 @@ However, the above example can be simplified to the following without ALLOCATE u
 
 real, allocatable :: x(:)
 x = [(real(i), i = 1, n)]
+
+3. Related to 2: explicit deallocation v.s. automatic deallocation (maybe we should stick to the former)
+In F2003, automatic deallocation happens to allocatable objects when they go out of scope. However,
+we prefer to deallocate them explicitly and immediately after they finish their mission. In
+addition, as of 20220331, automatic deallocate may not be well implemented in some compilers
+including (even) gfortran. See
+https://fortran-lang.discourse.group/t/best-practice-deallocating-allocatable-arrays-explicitly-vs-implicitly
