@@ -17,11 +17,14 @@ module linalg_mod
 ! Powell's original code, which cannot be translated directly to matrix/vector operations that
 ! produce the same results in floating-point arithmetic.
 !
+! TODO: To avoid stack overflows, functions that return a potentially large array (e.g., MATPROD)
+! should declare the array as ALLOCATABLE rather than automatic.
+!
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, March 31, 2022 AM01:21:14
+! Last Modified: Thursday, March 31, 2022 AM10:42:55
 !--------------------------------------------------------------------------------------------------
 
 implicit none

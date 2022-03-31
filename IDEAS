@@ -29,13 +29,16 @@ Note that The Fortran standard talks nothing about where to store the arrays. It
 by the implementation of the compiler.
 
 Talking about Fortran/C/C++ implementation of DFO solvers, arrays in the main subroutine (*OB)
-should be allocated --- they tend to be relatively large, and they are not allocated/deallocated
+should be allocatable --- they tend to be relatively large, and they are not allocated/deallocated
 frequently (normally only once). Also those in SELECTX.
 
 Note particularly:
 1.) For gfortran, -Ofast implies -fstack-arrays, which forces automatic arrays to be on the stack.
 2.) Temporary arrays created at runtime (e.g., by an expression, or by passing non-contiguous arrays)
 are on the stack by default, at least for ifort.
+3.) Fortran functions can return allocatable arrays. Functions that define potentially large arrays
+(e.g., MATPROD) should declare such arrays allocatable instead of automatic. See
+https://stackoverflow.com/questions/58750161/fortran-function-returning-allocatable-array
 
 See https://jblevins.org/log/segfault for some discussion.
 
