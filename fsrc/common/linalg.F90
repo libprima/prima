@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, March 31, 2022 AM10:42:55
+! Last Modified: Friday, April 01, 2022 AM12:03:57
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -575,18 +575,24 @@ if (n <= 0) then  ! Of course, N < 0 should never happen.
 end if
 
 if (istril(A)) then
-    do i = 1, n
+    x(1) = b(1) / A(1, 1)  ! Ensure N >= 1!
+    do i = 2, n
         x(i) = (b(i) - inprod(A(i, 1:i - 1), x(1:i - 1))) / A(i, i)
     end do
 elseif (istriu(A)) then  ! This case is invoked in LINCOA.
-    do i = n, 1, -1
+    x(n) = b(n) / A(n, n)  ! Ensure N >= 1!
+    ! Indeed, the last line should be merged to the following loop, but some compilers (particularly
+    ! Flang 7.0.1) are buggy concerning the array sections here when I == N.
+    ! See https://github.com/flang-compiler/flang/issues/1238
+    do i = n - 1_IK, 1, -1
         x(i) = (b(i) - inprod(A(i, i + 1:n), x(i + 1:n))) / A(i, i)
     end do
 else
     ! This is NOT the best algorithm for linear systems, but since the QR subroutine is available ...
     call qr(A, Q, R, P)
     x = matprod(b, Q)
-    do i = n, 1, -1
+    x(n) = x(n) / R(n, n)  ! Ensure N >= 1!
+    do i = n - 1_IK, 1, -1
         x(i) = (x(i) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
     end do
     x(P) = x

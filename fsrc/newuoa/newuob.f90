@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, March 30, 2022 PM08:56:00
+! Last Modified: Thursday, March 31, 2022 PM06:43:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -333,7 +333,7 @@ do tr = 1, maxtr
         if (knew_tr > 0 .and. delta <= rho) then  ! DELTA = RHO.
             call tryqalt(idz, fval - fopt, ratio, bmat, zmat, itest, gq, hq, pq)
         end if
-    end if  ! End of if (.NOT. SHORTD). The normal trust-region calculation ends here.
+    end if  ! End of IF (.NOT. SHORTD). The normal trust-region calculation ends here.
 
 
     !----------------------------------------------------------------------------------------------!

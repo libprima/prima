@@ -4,8 +4,8 @@ module memory_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning memory management.
 !
-! In particular, the intrinsic ALLOCATE is wrapped into the procedure SAFEALLOC, which may be
-! a controversial practice. We choose to do this because it did help us a couple of times to locate
+! In particular, the intrinsic ALLOCATE is wrapped into the procedure SAFEALLOC, which may be a 
+! controversial practice. We choose to do this because it has helped us a couple of times to locate 
 ! bugs or problems in our code or even in compilers (e.g., Absoft). See the below for discussions:
 ! https://fortran-lang.discourse.group/t/best-practice-of-allocating-memory-in-fortran
 !
