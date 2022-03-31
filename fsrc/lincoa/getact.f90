@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 31, 2022 AM01:14:49
+! Last Modified: Thursday, March 31, 2022 AM09:49:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -270,9 +270,9 @@ do iter = 1_IK, maxiter
     ! VLAM(IC) = 0, which implies that DEL_ACT will be called to reduce NACT by 1.
     do while (violmx > 0 .and. nact > 0)
         v(1:nact - 1) = ZERO
-        v(nact) = ONE / rfac(nact, nact) ! We must ensure NACT > 0. In theory, VMU(NACT) > 0.
+        v(nact) = ONE / rfac(nact, nact) ! We must ensure NACT > 0.
         ! Solve the linear system RFAC(1:NACT, 1:NACT) * VMU(1:NACT) = V(1:NACT)
-        vmu(1:nact) = solve(rfac(1:nact, 1:nact), v(1:nact))
+        vmu(1:nact) = solve(rfac(1:nact, 1:nact), v(1:nact)) ! VMU(NACT) = V(NACT)/RFAC(NACT,NACT)>0
 
         ! Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
         ! N.B.: 1. VLAM(1:NACT-1) < 0 and VLAM(NACT) <= 0 by the updates of VLAM. 2. VMU(NACT) > 0.
