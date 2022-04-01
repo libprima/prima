@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 PM07:17:36
+! Last Modified: Friday, April 01, 2022 AM11:44:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,9 +25,9 @@ contains
 subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, TINYCV, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, EPS, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : inprod, istriu, issymmetric
+use, non_intrinsic :: linalg_mod, only : inprod, isorth, istriu, issymmetric
 
 ! Solver-specific modules
 use, non_intrinsic :: getact_mod, only : getact
@@ -61,6 +61,7 @@ real(RP) :: dw(size(gq))
 real(RP) :: w(max(size(amat, 2), 2 * size(gq)))
 real(RP) :: resact(size(amat, 2))
 real(RP) :: resnew(size(amat, 2))
+real(RP) :: tol
 real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
 real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
@@ -88,15 +89,12 @@ if (DEBUGGING) then
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
-
-    !----------------------------------------------------------------------------------------------!
-    !tol == ???
-    !call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    !call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    !----------------------------------------------------------------------------------------------!
 end if
 
 g = gq
@@ -472,14 +470,10 @@ goto 150
 if (reduct > ZERO) snorm = sqrt(ss)
 
 if (DEBUGGING) then
-    !----------------------------------------------------------------------------------------------!
-    !tol == ???
-    !call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    !call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
+    call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
-    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    !----------------------------------------------------------------------------------------------!
 end if
 
 end subroutine trstep

@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 29, 2022 PM01:53:39
+! Last Modified: Friday, April 01, 2022 AM11:45:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,7 +104,7 @@ integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
-real(RP) :: del, delsav, delta, dffalt, diff,  &
+real(RP) :: del, delsav, delta, dffalt, diff, &
 &        distsq, fopt, fsave, qoptsq, ratio,     &
 &        rho, snorm, ssq, summ, summz, temp, vqalt,   &
 &        vquad, xdiff, xoptsq

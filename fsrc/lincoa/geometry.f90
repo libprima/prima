@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 PM08:38:16
+! Last Modified: Friday, April 01, 2022 AM11:46:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,9 +25,9 @@ contains
 subroutine geostep(iact, knew, kopt, nact, amat, del, gl_in, pqw, qfac, rescon, xopt, xpt, ifeas, step)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : inprod
+use, non_intrinsic :: linalg_mod, only : inprod, isorth
 
 implicit none
 
@@ -57,7 +57,7 @@ integer(IK) :: npt
 real(RP) :: rstat(size(amat, 2))
 real(RP) :: w(size(xopt))
 real(RP) :: gl(size(gl_in))
-real(RP) :: bigv, ctol, gg, ghg, resmax, sp, ss,  &
+real(RP) :: bigv, ctol, gg, ghg, resmax, sp, ss, tol, &
 &        stp, stpsav, summ, temp, mincv, vbig, vgrad, &
 &        vlag, vnew, ww
 integer(IK) :: i, j, jsav, k, ksav
@@ -81,14 +81,10 @@ if (DEBUGGING) then
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
     call assert(del > 0, 'DEL > 0', srname)
     call assert(size(gl_in) == n, 'SIZE(GL_IN) == N', srname)
-
-    !----------------------------------------------------------------------------------------------!
-    !tol == ???
-    !call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    !call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    !----------------------------------------------------------------------------------------------!
-
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
 end if
