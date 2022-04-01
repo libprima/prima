@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM09:51:33
+! Last Modified: Friday, April 01, 2022 PM01:16:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,6 +24,7 @@ subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
 use, non_intrinsic :: linalg_mod, only : issymmetric
+use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -263,6 +264,9 @@ if (stplen > ZERO) then
     sdec = max(stplen * (ggsav - HALF * stplen * shs), ZERO)
     qred = qred + sdec
 end if
+!----------------------------------------------------------------------!
+!if (is_nan(stplen) .or. iterc > 100 * itermax) goto 190 ! Zaikun 20220401
+!----------------------------------------------------------------------!
 !
 !     Restart the conjugate gradient method if it has hit a new bound.
 !
@@ -280,7 +284,11 @@ end if
 !
 if (stplen < bstep) then
     if (iterc == itermax) goto 190
-    if (sdec <= 0.01_RP * qred) goto 190
+    !if (iterc >= itermax) goto 190 ??? Zaikun 20220401
+    !----------------------------------------------------------------------------------------------!
+    !if (sdec <= 0.01_RP * qred) goto 190  ! An infinite loop occurred because sdec became NaN
+    if (sdec <= 0.01_RP * qred .or. is_nan(sdec) .or. is_nan(qred)) goto 190  ! Zaikun 20220401
+    !----------------------------------------------------------------------------------------------!
     beta = gredsq / ggsav
     goto 30
 end if
@@ -310,6 +318,9 @@ goto 210
 !     and the reduced G that is orthogonal to the reduced D.
 !
 120 iterc = iterc + 1
+!-------------------------------------------------------!
+!if (iterc > 100 * itermax) goto 190 ! Zaikun 20220401
+!-------------------------------------------------------!
 temp = gredsq * dredsq - dredg * dredg
 if (temp <= 1.0E-4_RP * qred * qred) goto 190
 temp = sqrt(temp)
