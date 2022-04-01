@@ -1,6 +1,6 @@
 module getact_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides the GETACT subroutine of LINCOA, which picks the current active set.
+! This module provides the GETACT subroutine of LINCOA.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper
 !
@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 31, 2022 AM09:49:45
+! Last Modified: Fri 01 Apr 2022 10:44:10 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,11 +24,12 @@ contains
 
 subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 !--------------------------------------------------------------------------------------------------!
-!!!----------------------------------------------------------!!!
-!!!! THE FOLLOWING DESCRIPTION NEEDS VERIFICATION!           !!!
-!!!! Note that the set J gets updated within this subroutine,!!!
-!!!! which seems inconsistent with the description below.    !!!
-!!!----------------------------------------------------------!!!
+!!!-------------------------------------------------------------!!!
+!!! THE FOLLOWING DESCRIPTION NEEDS VERIFICATION!               !!!
+!!! Note that the set J gets updated within this subroutine,    !!!
+!!! which seems inconsistent with the description below.        !!!
+!!! See the lines below "Pick the next integer L or terminate". !!!
+!!!-------------------------------------------------------------!!!
 !
 ! This subroutine solves a linearly constrained projected problem (LCPP)
 !
@@ -51,7 +52,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 ! iterate of the algorithm (e.g., truncated conjugate gradient) that solves (LCTRS). In LINCOA,
 ! ||A_j|| is 1 as the gradients of the linear constraints are normalized before LINCOA starts.
 !
-! The subroutine solves (LCPP) by the active set method of Goldfarb-Idnani 1983. It does not only
+! The subroutine solves (LCPP) by the active set method of Goldfarb-Idnani (1983). It does not only
 ! calculate PSD, but also identify the active set of (LCPP) at the solution PSD, and maintains a QR
 ! factorization of A corresponding to the active set. More specifically, IACT(1:NACT) is a set of
 ! indices such that the columns of AMAT(:, IACT(1:NACT)) constitute a basis of the active constraint
@@ -131,13 +132,11 @@ if (DEBUGGING) then
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
-
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
-
     call assert(size(psd) == n, 'SIZE(PSD) == N', srname)
 end if
 
@@ -199,7 +198,7 @@ ddsav = TWO * gg  ! By Powell. This value is used at iteration 1 to test whether
 maxiter = 2_IK * (m + n)
 do iter = 1_IK, maxiter
     ! When NACT == N, exit with PSD = 0. Indeed, with a correctly implemented matrix product, the
-    ! lines below this IF should render DD = 0 and trigger the exit. We do it explicitly for clarity.
+    ! lines below this IF should render DD = 0 and trigger an exit. We do it explicitly for clarity.
     if (nact >= n) then  ! Indeed, NACT > N should never happen.
         psd = ZERO
         exit
@@ -242,21 +241,20 @@ do iter = 1_IK, maxiter
     ! Pick the next integer L or terminate; a positive L is the index of the most violated constraint.
     apsd = matprod(psd, amat)
     mask = (resnew > 0 .and. resnew <= tdel .and. apsd > (dnorm / snorm) * resnew)
-    if (any(mask)) then
-        l = int(maxloc(apsd, mask=mask, dim=1), IK)
-        violmx = apsd(l)
-        ! MATLAB: apsd(mask) = -Inf; [violmx , l] = max(apsd);
-    else
-        exit
-    end if
+    violmx = maxval(apsd, mask=mask)  ! F2003 standard: MAXVAL() = -HUGE(APSD) if MASK is all FALSE.
+    l = int(maxloc(apsd, mask=mask, dim=1), IK) ! F2003 standard: MAXLOC() = 0 if MASK is all FALSE.
+    ! MATLAB code (the value of L will differ from the Fortran version if MASK is all FALSE):
+    !!apsd(mask) = -Inf; [violmx , l] = max(apsd);
 
-    ! Terminate if a positive value of VIOLMX may be due to computer rounding errors.
-    ! N.B.: 0. Powell wrote VIOLMX < 0.01*DNORM instead of VIOLMX <= 0.01*DNORM.
-    ! 1. Theoretically (but not numerically), APSD(IACT(1:NACT)) = 0 or empty.
-    ! 2. CAUTION: the inf-norm of APSD(IACT(1:NACT)) is NOT always MAXVAL(ABS(APSD(IACT(1:NACT)))),
+    ! Terminate if VIOLMX <= 0 (when MASK contains only FALSE) or a positive value of VIOLMX may be
+    ! due to computer rounding errors.
+    ! N.B.: 0. `L <= 0` makes no difference in the condition below. Added for robustness.
+    ! 1. Powell wrote VIOLMX < 0.01*DNORM instead of VIOLMX <= 0.01*DNORM.
+    ! 2. Theoretically (but not numerically), APSD(IACT(1:NACT)) = 0 or empty.
+    ! 3. CAUTION: the Inf-norm of APSD(IACT(1:NACT)) is NOT always MAXVAL(ABS(APSD(IACT(1:NACT)))),
     ! as the latter returns -HUGE(APSD) instead of 0 when NACT = 0! In MATLAB, max([]) = []; in
     ! Python, R, and Julia, the maximum of an empty array raises errors/warnings (as of 20220318).
-    if (violmx <= 0.01_RP * dnorm .and. violmx <= TEN * norm(apsd(iact(1:nact)), 'inf')) then
+    if (l <= 0 .or. violmx <= min(0.01_RP * dnorm, TEN * norm(apsd(iact(1:nact)), 'inf'))) then
         exit
     end if
 
@@ -270,8 +268,8 @@ do iter = 1_IK, maxiter
     ! VLAM(IC) = 0, which implies that DEL_ACT will be called to reduce NACT by 1.
     do while (violmx > 0 .and. nact > 0)
         v(1:nact - 1) = ZERO
-        v(nact) = ONE / rfac(nact, nact) ! We must ensure NACT > 0.
-        ! Solve the linear system RFAC(1:NACT, 1:NACT) * VMU(1:NACT) = V(1:NACT)
+        v(nact) = ONE / rfac(nact, nact) ! This is why we must ensure NACT > 0.
+        ! Solve the linear system RFAC(1:NACT, 1:NACT) * VMU(1:NACT) = V(1:NACT) .
         vmu(1:nact) = solve(rfac(1:nact, 1:nact), v(1:nact)) ! VMU(NACT) = V(NACT)/RFAC(NACT,NACT)>0
 
         ! Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
@@ -314,8 +312,8 @@ do iter = 1_IK, maxiter
 
     !----------------------------------------------------------------------------------------------!
     ! NACT can become 0 at this point iif VLAM(1:NACT) >= 0 before calling DEL_ACT, which is true
-    ! if NACT = 1 when the WHILE loop starts. However, we have never observed a failure of the
-    ! assertion below as of 20220329. Why?
+    ! if NACT happens to be 1 when the WHILE loop starts. However, we have never observed a failure
+    ! of the assertion below as of 20220329. Why?
     !-----------------------------------------!
     call assert(nact > 0, 'NACT > 0', srname) !
     !-----------------------------------------!
@@ -339,16 +337,13 @@ end if
 if (DEBUGGING) then
     ! During the development, we want to get alerted if ITER reaches MAXITER.
     call assert(iter < maxiter, 'ITER < MAXITER', srname)
-
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)! Can NACT be 0?
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
-
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
-
     call assert(size(psd) == n, 'SIZE(PSD) == N', srname)
     ! PSD = -G when NACT == 0; G may contain Inf/NaN.
     call assert(all(is_finite(psd)) .or. nact == 0, 'PSD is finite unless NACT == 0', srname)
@@ -405,13 +400,11 @@ if (DEBUGGING) then
     call assert(l >= 1 .and. l <= m, '1 <= L <= M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(.not. any(iact(1:nact) == l), 'L is not in IACT(1:NACT)', srname)
-
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
-
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
     nsave = nact  ! For debugging only
@@ -446,12 +439,10 @@ if (DEBUGGING) then
     call assert(nact == nsave + 1, 'NACT = NSAVE + 1', srname)
     call assert(nact >= 1 .and. nact <= min(m, n), '1 <= NACT <= MIN(M, N)', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
-
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
-
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
 end if
@@ -502,13 +493,11 @@ if (DEBUGGING) then
     call assert(nact >= 1 .and. nact <= min(m, n), '1 <= NACT <= MIN(M, N)', srname)
     call assert(ic >= 1 .and. ic <= nact, '1 <= IC <= NACT', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
-
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
-
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
     nsave = nact  ! For debugging only
@@ -544,12 +533,10 @@ if (DEBUGGING) then
     call assert(nact >= 0 .and. nact <= min(m, n) - 1, '1 <= NACT <= MIN(M, N)-1', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(.not. any(iact(1:nact) == l), 'L is not in IACT(1:NACT)', srname)
-
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
-
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
 end if

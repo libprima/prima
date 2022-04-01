@@ -1,5 +1,5 @@
 function [x, fx, exitflag, output] = project (Ai, bi, Ae, be, lb, ub, x0, options)
-%PROJECT is a (naive) semismooth-Newton method for solving
+%PROJECT is a (NAIVE) semismooth-Newton method for solving
 %   min f(x) = 0.5*||x-x0||^2
 %   s.t. Ai*x <= bi
 %   Ae*x = be
@@ -24,10 +24,13 @@ function [x, fx, exitflag, output] = project (Ai, bi, Ae, be, lb, ub, x0, option
 %
 % Remarks
 %
-% 1. Critial issues:
-% 1.1. How to define sigma (intial value, maximal value, update)
-% 1.2. The Semismooth-Newton method may have difficulty when the Jacobin
-% is badly conditioned, which will happen when sigma is large.
+% 1. Critical issues:
+% 1.1. How to define sigma (initial value, maximal value, update)
+% 1.2. This NAIVE implementation of semismooth-Newton method may have difficulty when the
+% Jacobin is badly conditioned, which will happen when sigma is large.
+% 1.3. Zaikun 20220401: Try the following while setting TryMatlab = false. What is happening there???
+% Is it because of the line search strategy?
+% project (1, -1, [], [], [], [], 0)
 %
 % 2. exitflag:
 % If output.algorithm = 'semismooth-newton':
@@ -38,7 +41,7 @@ function [x, fx, exitflag, output] = project (Ai, bi, Ae, be, lb, ub, x0, option
 % exitflag of these MATLAB functions.
 %
 % 3. Although the code may be used to solve the above mentioned problem for
-% general purposes, it was written to provide a feasilble starting point for
+% general purposes, it was written to provide a feasible starting point for
 % Powell's LINCOA code, where the problem size is normally not big
 % (typically tens of variables/constraints; at most thousands of them),
 % and a feasible point is adequate.
@@ -46,21 +49,21 @@ function [x, fx, exitflag, output] = project (Ai, bi, Ae, be, lb, ub, x0, option
 % 4. Testing results (without using 'quadprog' or 'fmincon'):
 % For all the 235 bound/linearly constrained CUTEst problems with at
 % most 5,000 variables and 50,000 linear constraints, the code can find a
-% point with relative constration violation (RCV) at most 10^(-6) except the
+% point with relative constraint violation (RCV) at most 10^(-6) except the
 % following problems:
 % a. BLOWEYA, BLOWEYB: final RCV between 10^(-5) and 10^(-6);
 % b. DTOC3: final RCV between 10^(-5) and 10^(-4);
 % c. POWELL20: final RCV between 10^(-4) and 10^(-3);
 % d. HUES-MOD, HUESTIS: final RCV between 10^(-2) and 10^(-1);
 % e. LINCONT: quadprog and fmincon of MATLAB cannot find a feasible point either
-% f. ARGLALE, ARGLBLE, ARGLCLE, MODEL, NASH: problems infeasible accoring to quadprog
+% f. ARGLALE, ARGLBLE, ARGLCLE, MODEL, NASH: problems infeasible according to quadprog
 %
 % 5. If no feasible point is found and TryMatlab = 1, then we check whether the
 % MATLAB on this machine has 'quadprog' or 'fmincon'. If yes, we use them to
 % solve the problem. Be realistic. Our objective here is more to solve the
-% problem than to develope a new algorithm!
+% problem than to develop a new algorithm!
 %
-% TODO: Better algorithm/implemention for solving this projection problem
+% TODO: Better algorithm/implementation for solving this projection problem
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % project starts
@@ -225,7 +228,7 @@ for k = 1 : maxit
     else
         J = I + sigma*(Ae'*Ae + Ji + double(diag(rlb>0)) + double(diag(rub>0)));
     end
-    % There should be much better ways to solve the linear equation J*d = -g !
+    % There should be much better ways to solve the linear equation J*d = -Pg !
     % We are lazy here.
     d = -J\Pg;
     if (norm(J*d+Pg)/norm(Pg) >= 1e-1) && ~isempty(which('lsqminnorm'))
@@ -245,13 +248,14 @@ for k = 1 : maxit
             alpha = ainc*alpha;
         end
     else
-        while (F(x+alpha*d) - Fx > mu*alpha*dPg && alpha > minalpha && alpha*normd > StepTol*normx && -alpha*dPg > FunTol*max(abs(Fx),1))
+        while (F(x+alpha*d) - Fx > mu*alpha*dPg && alpha > minalpha && alpha*normd > StepTol*normx ...
+                && -alpha*dPg > FunTol*max(abs(Fx),1))
             alpha = adec*alpha;
         end
     end
     if (alpha > minalpha && alpha*normd > StepTol*normx && -alpha*dPg > FunTol*max(abs(Fx),1))
         x = x + alpha*d;
-    elseif (sigma == maxsigma)
+    elseif (sigma >= maxsigma)
         break;
     end
 end
@@ -283,8 +287,8 @@ output_save = output;
 exitflag_save = exitflag;
 
 MatlabVersion = ver;
-TryMatlab = TryMatlab && any(strcmp({MatlabVersion.Name}, 'Optimization Toolbox')); % Do not try matlab unless Optimization Toolbox is available
-if output.constrviolation > 10*CTol && TryMatlab % No feasible ponit was found. Try quadprog or fmincon.
+TryMatlab = TryMatlab && any(strcmp({MatlabVersion.Name}, 'Optimization Toolbox')); % Do not try MATLAB unless Optimization Toolbox is available
+if output.constrviolation > 10*CTol && TryMatlab % No feasible point was found. Try quadprog or fmincon.
     if ~isempty(which('quadprog'))
         options = optimoptions('quadprog');
         options.Display = 'off'; % No talking
