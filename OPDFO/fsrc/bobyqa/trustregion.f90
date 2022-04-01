@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 01, 2022 PM01:15:35
+! Last Modified: Friday, April 01, 2022 PM01:51:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,6 +24,7 @@ subroutine trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, &
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
+use, non_intrinsic :: infnan_mod, only : is_nan
 
 implicit none
 
