@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Fri 01 Apr 2022 10:44:10 AM CST
+! Last Modified: Friday, April 01, 2022 AM11:39:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,7 +133,7 @@ if (DEBUGGING) then
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
@@ -326,6 +326,7 @@ end do  ! End of DO WHILE (NACT < N)
 ! It is possible to have NACT == 0 here. The following lines improve the performance of LINCOA.
 ! Powell's code does not take care of this case explicitly.
 if (nact == 0) then
+    qfac = eye(n)
     psd = -g
 end if
 
@@ -401,7 +402,7 @@ if (DEBUGGING) then
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(.not. any(iact(1:nact) == l), 'L is not in IACT(1:NACT)', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
@@ -420,7 +421,6 @@ end if
 ! N.B.: QRADD always augment NACT by 1, which differs from the corresponding subroutine in COBYLA.
 ! Is it ensured that C cannot be represented by the gradients of the existing active constraints?
 call qradd(c, qfac, rfac, nact)  ! NACT is increased by 1!
-
 ! Indeed, it suffices to pass RFAC(:, 1:NACT+1) to QRADD as follows.
 !!call qradd(c, qfac, rfac(:, 1:nact + 1), nact)  ! NACT is increased by 1!
 
@@ -494,7 +494,7 @@ if (DEBUGGING) then
     call assert(ic >= 1 .and. ic <= nact, '1 <= IC <= NACT', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
