@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, April 01, 2022 PM12:40:00
+! Last Modified: Friday, April 01, 2022 PM01:19:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -124,7 +124,6 @@ do iprob = 1, nprobs
     end if
     do idim = 1, ndim
         n = dim_list(idim)
-        n = 4
         call construct(prob, probname, n)  ! Construct the testing problem.
 
         ! NPT_LIST defines some extreme values of NPT.
@@ -134,7 +133,7 @@ do iprob = 1, nprobs
             & 2_IK * n, 2_IK * n + 1_IK, 2_IK * n + 2_IK, &
             & (n + 1_IK) * (n + 2_IK) / 2_IK - 1_IK, (n + 1_IK) * (n + 2_IK) / 2_IK, &
             & (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK]
-        do irand = 15, 15!1, nnpt + max(0_IK, nrand_loc)
+        do irand = 1, nnpt + max(0_IK, nrand_loc)
             ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
             ! that the results for different IK are the same.
             rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
@@ -147,7 +146,6 @@ do iprob = 1, nprobs
             if (rand() <= 0.2_RP) then
                 npt = 0
             end if
-            npt = 13
             !iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
             iprint = 3_IK
             maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
