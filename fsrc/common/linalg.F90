@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, April 01, 2022 AM12:03:57
+! Last Modified: Sunday, April 03, 2022 AM01:47:23
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -49,6 +49,7 @@ public :: sort
 public :: trueloc, falseloc
 public :: minimum, maximum
 public :: norm
+public :: linspace
 public :: int
 
 interface matprod
@@ -112,6 +113,10 @@ end interface maximum
 interface norm
     module procedure p_norm, named_norm
 end interface norm
+
+interface linspace
+    module procedure linspace_r, linspace_i
+end interface linspace
 
 interface int
     module procedure logical_to_int
@@ -679,7 +684,7 @@ else
     do i = n, 1, -1
         B(:, i) = (Q(:, i) - matprod(B(:, i + 1:n), R(i + 1:n, i))) / R(i, i)
     end do
-    InvP(P) = [(i, i=1, n)]  ! The inverse permutation
+    InvP(P) = linspace(1_IK, n, n)  ! The inverse permutation
     B = transpose(B(:, InvP))
 end if
 
@@ -803,7 +808,7 @@ pivote = (present(P))
 Q_loc = eye(m)
 T = transpose(A)  ! T is the transpose of R. We consider T in order to work on columns.
 if (pivote) then
-    P = [(j, j=1, n)]
+    P = linspace(1_IK, n, n)
 end if
 
 do j = 1, n
@@ -2817,9 +2822,11 @@ use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 logical, intent(in) :: x(:)
 integer(IK), allocatable :: loc(:)  ! INTEGER(IK) :: LOC(COUNT(X)) does not work with Absoft 22.0
-integer(IK) :: i
+integer(IK) :: n
 call safealloc(loc, int(count(x), IK))  ! Removable in F03.
-loc = pack([(i, i=1_IK, int(size(x), IK))], mask=x)
+!loc = pack([(i, i=1_IK, int(size(x), IK))], mask=x)
+n = int(size(x), IK)
+loc = pack(linspace(1_IK, n, n), mask=x)
 end function trueloc
 
 
@@ -2983,7 +2990,106 @@ end if
 end function maximum2
 
 
+function linspace_r(xstart, xstop, n) result(x)
+!--------------------------------------------------------------------------------------------------!
+! Similar to the function `linspace` in MATLAB and Python, this function generates N evenly spaced
+! numbers, the space between the consecutive points being (XSTOP-XSTART)/(N-1).
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: memory_mod, only : safealloc
+implicit none
 
+! Inputs
+real(RP), intent(in) :: xstart
+real(RP), intent(in) :: xstop
+integer(IK), intent(in) :: n
+
+! Outputs
+real(RP), allocatable :: x(:)
+
+! Local variables
+character(len=*), parameter :: srname = 'LINSPACE_R'
+integer(IK) :: i
+integer(IK) :: nm
+real(RP) :: xunit
+
+!====================!
+! Calculation starts !
+!====================!
+
+call safealloc(x, max(n, 0_IK))
+
+if (n <= 0) then  ! Quick return when N <= 0.
+    return
+end if
+
+nm = n - 1_IK
+
+if (n == 1 .or. (xstart <= xstop .and. xstop <= xstart)) then
+    x = xstop
+elseif (abs(xstart) <= abs(xstop) .and. abs(xstop) <= abs(xstart)) then
+    xunit = xstop / real(nm, RP)
+    x = xunit * real([(i, i=-nm, nm, 2_IK)], RP)
+    if (modulo(nm, 2_IK) == 0) then
+        x(1_IK + nm / 2_IK) = ZERO
+    end if
+else
+    xunit = (xstop - xstart) / real(nm, RP)
+    x = xstart + xunit * real([(i, i=0, nm)], RP)
+end if
+
+if (n >= 1) then  ! Indeed, N < 1 cannot happen due to the quick return when N <= 0.
+    x(1) = xstart
+    x(n) = xstop
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(x) == max(n, 0_IK), 'SIZE(X) == MAX(N, 0)', srname)
+end if
+end function linspace_r
+
+function linspace_i(xstart, xstop, n) result(x)
+!--------------------------------------------------------------------------------------------------!
+! This function returns INT(LINSPACE_R(REAL(XSTART, RP), REAL(XSTOP, RP), N), IK).
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: memory_mod, only : safealloc
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: xstart
+integer(IK), intent(in) :: xstop
+integer(IK), intent(in) :: n
+
+! Outputs
+integer(IK), allocatable :: x(:)
+
+! Local variables
+character(len=*), parameter :: srname = 'LINSPACE_I'
+
+!====================!
+! Calculation starts !
+!====================!
+
+call safealloc(x, max(n, 0_IK))
+x = int(linspace_r(real(xstart, RP), real(xstop, RP), n), IK)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(x) == max(n, 0_IK), 'SIZE(X) == MAX(N, 0)', srname)
+end if
+end function linspace_i
 
 
 end module linalg_mod
