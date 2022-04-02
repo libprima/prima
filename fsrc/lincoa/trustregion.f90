@@ -166,6 +166,7 @@ elsewhere(rescon >= 0)
 elsewhere
     resnew = rescon
 end where
+!!MATLAB: resnew = rescon; resnew(rescon >= 0) = max(rescon, TINYCV); resnew(rescon >= snorm) = -1; 
 resnew(iact(1:nact)) = ZERO
 resact(1:nact) = rescon(iact(1:nact))
 
@@ -389,6 +390,7 @@ end do
 where (resnew > 0)
     resnew = max(resnew - alpha * w(1:m), TINYCV)
 end where
+!!MATLAB: mask = (resnew > 0); resnew(mask) = max(resnew(mask) - alpha * w(mask), TINYCV);
 
 !if (m > 0) then
 !do j = 1, m

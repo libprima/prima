@@ -386,6 +386,7 @@ rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
 where (rescon >= rhobeg)
     rescon = -rescon
 end where
+!!MATLAB: rescon(rescon >= rhobeg) = -rescon
 
 
 end subroutine initialize

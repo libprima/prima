@@ -186,7 +186,7 @@ ij = ij + 1_IK
 ! IJ, then the evaluations of FVAL(1 : NPT) can be merged, and they are totally PARALLELIZABLE; this
 ! can be beneficial if the function evaluations are expensive, which is likely the case.
 ! 4. MATLAB can index a vector using a 2D array of indices (not in Fortran), thus the MATLAB code is
-! % IJ(FVAL(IJ + N) < FVAL(IJ)) = IJ + N;
+!!MATLAB: ij(fval(ij + n) < fval(ij)) = ij + n;
 where (fval(ij(:, 1) + n) < fval(ij(:, 1)))
     ij(:, 1) = ij(:, 1) + n
 end where

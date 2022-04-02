@@ -61,6 +61,7 @@ try
     if isfield(options, 'compiler_options') && (isa(options.compiler_options, 'char') || ...
           isa(options.compiler_options, 'string')) && ~isempty(options.compiler_options)
         test_feature = [test_feature, '.', regexprep(options.compiler_options, '\s*','_')];
+        test_feature = regexprep(test_feature, '=','_');
     end
     if isfield(options, 'perm') && islogical(options.perm) && isscalar(options.perm) && options.perm
         test_feature = [test_feature, '.', 'perm'];
