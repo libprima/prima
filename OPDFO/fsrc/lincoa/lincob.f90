@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 29, 2022 PM01:53:47
+! Last Modified: Saturday, April 02, 2022 PM07:15:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -230,7 +230,7 @@ xoptsq = ZERO
 do i = 1, n
     xoptsq = xoptsq + xopt(i)**2
 end do
-if (xoptsq >= 1.0D4 * delta * delta) then
+if (xoptsq >= 1.0E4_RP * delta**2) then
     qoptsq = 0.25_RP * xoptsq
     do k = 1, npt
         summ = ZERO

@@ -4,8 +4,8 @@ module memory_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning memory management.
 !
-! In particular, the intrinsic ALLOCATE is wrapped into the procedure SAFEALLOC, which may be a 
-! controversial practice. We choose to do this because it has helped us a couple of times to locate 
+! In particular, the intrinsic ALLOCATE is wrapped into the procedure SAFEALLOC, which may be a
+! controversial practice. We choose to do this because it has helped us a couple of times to locate
 ! bugs or problems in our code or even in compilers (e.g., Absoft). See the below for discussions:
 ! https://fortran-lang.discourse.group/t/best-practice-of-allocating-memory-in-fortran
 !
@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, February 02, 2022 PM08:07:20
+! Last Modified: Saturday, April 02, 2022 PM08:26:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,6 +29,7 @@ interface cstyle_sizeof
 end interface cstyle_sizeof
 
 interface safealloc
+    module procedure alloc_lvector
     module procedure alloc_ivector, alloc_imatrix
     module procedure alloc_rvector_sp, alloc_rmatrix_sp
     module procedure alloc_rvector_dp, alloc_rmatrix_dp
@@ -328,6 +329,41 @@ call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname
 end subroutine alloc_rmatrix_qp
 
 #endif
+
+
+subroutine alloc_lvector(x, n)
+!--------------------------------------------------------------------------------------------------!
+! Allocate space for an allocatable LOGICAL vector X, whose size is N after allocation.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : IK
+use, non_intrinsic :: debug_mod, only : validate
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: n
+
+! Outputs
+logical, allocatable, intent(out) :: x(:)
+
+! Local variables
+integer :: alloc_status
+character(len=*), parameter :: srname = 'ALLOC_LVECTOR'
+
+! Preconditions (checked even not debugging)
+call validate(n >= 0, 'N >= 0', srname)
+
+!!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
+! Allocate memory for X
+allocate (x(1:n), stat=alloc_status)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+
+! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
+x = .false.
+
+! Postconditions (checked even not debugging)
+call validate(size(x) == n, 'SIZE(X) == N', srname)
+end subroutine alloc_lvector
 
 
 subroutine alloc_ivector(x, n)

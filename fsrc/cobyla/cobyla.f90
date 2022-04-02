@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, February 28, 2022 PM09:29:13
+! Last Modified: Saturday, April 02, 2022 PM09:30:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -271,7 +271,6 @@ character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of di
 character(len=*), parameter :: solver = 'COBYLA'
 character(len=*), parameter :: srname = 'COBYLA'
 character(len=MSGLEN) :: wmsg
-integer(IK) :: i
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: maxfilt_loc
@@ -553,7 +552,7 @@ if (DEBUGGING) then
         call assert(.not. any(is_nan(conhist) .or. is_neginf(conhist)), 'CONHIST does not contain NaN/-Inf', srname)
     end if
     if (present(fhist) .and. present(chist)) then
-        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol_loc), i=1, nhist)]),&
+        call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv_loc, ctol_loc)), &
             & 'No point in the history is better than X', srname)
     end if
 end if
