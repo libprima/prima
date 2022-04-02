@@ -154,6 +154,7 @@ rstat = ONE
 where (abs(rescon) >= del)
     rstat = -ONE
 end where
+!!MATLAB: rstat(abs(rescon) >= del) = -1;
 rstat(iact(1:nact)) = ZERO
 
 !

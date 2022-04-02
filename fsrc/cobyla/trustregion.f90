@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, March 29, 2022 PM01:09:02
+! Last Modified: Saturday, April 02, 2022 PM12:23:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -334,11 +334,11 @@ do iter = 1, maxiter
             vmultd(nact + 1:mcon) = -ONE  ! SIZE(VMULTD) = MCON
 
             ! Revise the Lagrange multipliers. The revision is not applicable to VMULTC(NACT + 1:M).
+            fracmult = HUGENUM
             where (vmultd > 0 .and. iact <= m)
                 fracmult = vmultc / vmultd
-            elsewhere
-                fracmult = HUGENUM
             end where
+            !!MATLAB: mask = (vmultd > 0 & iact <= m); fracmult(mask) = vmultc(mask) / vmultd(mask);
             ! Only the places where VMULTD > 0 and IACT <= M is relevant blow, if any.
             frac = minval(fracmult(1:nact))  ! FRACMULT(NACT+1:MCON) may contain garbage.
             vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac * vmultd(1:nact))
@@ -503,18 +503,19 @@ do iter = 1, maxiter
     where (isminor(cvshift, cvsabs))
         cvshift = ZERO
     end where
+    !!MATLAB: cvshift(isminor(cvshift, cvsabs)) = 0;
     vmultd(nact + 1:mcon) = cvshift(nact + 1:mcon)
 
     ! Calculate the fraction of the step from D to DNEW that will be taken.
+    fracmult = HUGENUM
     where (vmultd < 0)
         fracmult = vmultc / (vmultc - vmultd)
-    elsewhere
-        fracmult = HUGENUM
     end where
+    !!MATLAB: mask = (vmultd < 0); fracmult(mask) = vmultc(mask) / (vmultc(mask) - vmultd(mask));
     ! Only the places where VMULTD < 0 is relevant below, if any.
     frac = minval([ONE, fracmult])
     icon = int(minloc([ONE, fracmult], dim=1), IK) - 1_IK
-    ! MATLAB: [frac, icon] = min([1, fracmult]); icon = icon - 1
+    !!MATLAB: [frac, icon] = min([1, fracmult]); icon = icon - 1
 
     ! Update D, VMULTC and CSTRV.
     dold = d

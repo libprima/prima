@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 01, 2022 AM11:45:18
+! Last Modified: Saturday, April 02, 2022 PM12:40:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -781,21 +781,21 @@ if (f < fopt .and. ifeas == 1) then
     snorm = sqrt(ssq)
 
     ! RESCON holds useful information about the constraint residuals.
-    ! 1. RESCON(J) = B(J) - AMAT(:, J)^XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
+    ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
     ! 2. Otherwise, RESCON(J) is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA.
     ! RESCON can be updated without evaluating the constraints that are far from being active:
     !
-    !!WHERE (RESCON >= DELTA + SNORM)
-    !!    RESCON = MAX(RESCON - SNORM, DELTA)
-    !!ELSEWHERE
+    !!RESCON = MAX(RESCON - SNORM, DELTA)
+    !!WHERE (.NOT. RESCON >= DELTA + SNORM)
     !!    RESCON = MAX(B - MATPROD(XOPT, AMAT), ZERO)
     !!END WHERE
+    !!!MATLAB: mask = ~(rescon >= delta+snorm); rescon(mask) = max(b(mask) - (xopt'*amat(:, mask))', 0);
+    ! Powell set RESCON to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
 
     where (abs(rescon) >= snorm + delta)
         rescon = min(-abs(rescon) + snorm, -delta)
     elsewhere
         rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-        !rescon = max(xA_plus_y(-amat, xopt, b), ZERO)  ! Calculation changed
         where (rescon >= delta)
             rescon = -rescon
         end where

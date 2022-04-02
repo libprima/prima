@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 01, 2022 PM01:16:48
+! Last Modified: Friday, April 01, 2022 PM01:46:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -286,7 +286,7 @@ if (stplen < bstep) then
     if (iterc == itermax) goto 190
     !if (iterc >= itermax) goto 190 ??? Zaikun 20220401
     !----------------------------------------------------------------------------------------------!
-    !if (sdec <= 0.01_RP * qred) goto 190  ! An infinite loop occurred because sdec became NaN
+    !if (sdec <= 0.01_RP * qred) goto 190  ! An infinite loop to 30 occurred because sdec became NaN
     if (sdec <= 0.01_RP * qred .or. is_nan(sdec) .or. is_nan(qred)) goto 190  ! Zaikun 20220401
     !----------------------------------------------------------------------------------------------!
     beta = gredsq / ggsav

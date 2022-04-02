@@ -279,11 +279,12 @@ do iter = 1_IK, maxiter
         where (vmu(1:nact) < 0 .and. vlam(1:nact) < 0)
             fracmult(1:nact) = vlam(1:nact) / vmu(1:nact)
         end where
+        !!MATLAB: fracmult = vlam / vmu; fracmult(vmu >= 0 | vlam >= 0) = Inf; 
         vmult = minval([violmx, fracmult(1:nact)])
         ic = 0_IK
         if (any(fracmult(1:nact) <= vmult)) then
             ic = maxval(trueloc(fracmult(1:nact) <= vmult))
-            ! MATLAB: ic = max(find(fracmult(1:nact)] <= vmult))
+            !!MATLAB: ic = max(find(fracmult(1:nact)] <= vmult))
         end if
         ! N.B.: 0. The definition of IC given above is mathematically equivalent to the following.
         !!IC = MAXVAL(TRUELOC([VIOLMX, FRACMULT(1:NACT)] <= VMULT)) - 1_IK, OR
