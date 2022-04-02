@@ -7,7 +7,7 @@ module circle_mod
 !
 ! Started: January 2021
 !
-! Last Modified: Thursday, January 06, 2022 PM07:22:38
+! Last Modified: Sunday, April 03, 2022 AM01:47:06
 !
 ! N.B.: Both CIRCLE_MIN and CIRCLE_MAXABS require an input GRID_SIZE, the size of the grid used in
 ! the search. Powell chose GRID_SIZE = 50 in NEWUOA. MAGICALLY, this number works the best for
@@ -44,6 +44,7 @@ function circle_min(fun, args, grid_size) result(angle)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: linalg_mod, only : linspace
 implicit none
 
 ! Inputs
@@ -76,7 +77,7 @@ end if
 !====================!
 
 unit_angle = (TWO * PI) / real(grid_size, RP)
-angles = unit_angle * real([(i, i=1, grid_size)] - 1, RP)
+angles = unit_angle * linspace(ZERO, real(grid_size - 1_IK, RP), grid_size)
 fval = [(fun(angles(i), args), i=1, grid_size)]
 
 if (all(is_nan(fval))) then
@@ -121,6 +122,7 @@ function circle_maxabs(fun, args, grid_size) result(angle)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: linalg_mod, only : linspace
 implicit none
 
 ! Inputs
@@ -153,7 +155,7 @@ end if
 !====================!
 
 unit_angle = (TWO * PI) / real(grid_size, RP)
-angles = unit_angle * real([(i, i=1, grid_size)] - 1, RP)
+angles = unit_angle * linspace(ZERO, real(grid_size - 1_IK, RP), grid_size)
 fval = [(fun(angles(i), args), i=1, grid_size)]
 
 if (all(is_nan(fval))) then

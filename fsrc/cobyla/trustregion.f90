@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, April 02, 2022 PM12:23:09
+! Last Modified: Sunday, April 03, 2022 AM12:47:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -142,7 +142,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrexc, norm
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrexc, norm, linspace
 implicit none
 
 ! Inputs
@@ -221,7 +221,7 @@ end if
 
 ! Initialization according to STAGE.
 if (stage == 1) then
-    iact = [(k, k=1, int(size(iact), IK))]
+    iact = linspace(1_IK, mcon, mcon)
     nact = 0_IK
     d = ZERO
     cstrv = maxval([b, ZERO])
