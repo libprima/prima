@@ -18,7 +18,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, March 31, 2022 AM09:44:22
+! Last Modified: Saturday, April 02, 2022 PM09:15:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -226,8 +226,9 @@ if (subinfo /= INFO_DFT) then
         call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
         call assert(.not. any(is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist)))), &
             & 'CHIST does not contain NaN/+Inf', srname)
-        call assert(.not. any([(isbetter([fhist(k), chist(k)], [f, cstrv], ctol), &
-            & k=1, minval([nf, maxfhist, maxchist]))]), 'No point in the history is better than X', srname)
+        k = minval([nf, maxfhist, maxchist])
+        call assert(.not. any(isbetter(fhist(1:k), chist(1:k), f, cstrv, ctol)), &
+            & 'No point in the history is better than X', srname)
     end if
     return
 end if
@@ -536,8 +537,9 @@ if (DEBUGGING) then
     call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
     call assert(.not. any(is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist)))), &
         & 'CHIST does not contain NaN/+Inf', srname)
-    call assert(.not. any([(isbetter([fhist(k), chist(k)], [f, cstrv], ctol), &
-        & k=1, minval([nf, maxfhist, maxchist]))]), 'No point in the history is better than X', srname)
+    k = minval([nf, maxfhist, maxchist])
+    call assert(.not. any(isbetter(fhist(1:k), chist(1:k), f, cstrv, ctol)), &
+        & 'No point in the history is better than X', srname)
 end if
 
 end subroutine cobylb

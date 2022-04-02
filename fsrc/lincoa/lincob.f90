@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 02, 2022 PM12:40:47
+! Last Modified: Saturday, April 02, 2022 PM07:51:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -229,12 +229,11 @@ if (is_nan(f) .or. is_posinf(f)) then
     info = -2
     goto 600
 end if
-!     By Tom/Zaikun (on 04-06-2019/07-06-2019):
 !     Note that we should NOT compare F and FTARGET, because X may not
 !     be feasible at the exit of PRELIM.
 if (fval(kopt) <= ftarget) then
     f = fval(kopt)
-    x(1:n) = xsav(1:n)
+    x = xsav
     info = 1
     goto 616
 end if
@@ -257,12 +256,16 @@ nvalb = 0
 !       to BMAT that do not depend on ZMAT.
 !
 20 fsave = fopt
-xoptsq = ZERO
-do i = 1, n
-    xoptsq = xoptsq + xopt(i)**2
-end do
-if (xoptsq >= 1.0D4 * delta * delta) then
+!xoptsq = ZERO
+!do i = 1, n
+!    xoptsq = xoptsq + xopt(i)**2
+!end do
+xoptsq = sum(xopt**2)
+if (xoptsq >= 1.0E4 * delta**2) then
+    rsp(1:npt) = ZERO
+    b = b - matprod(xopt, amat)
     qoptsq = QUART * xoptsq
+
     do k = 1, npt
         summ = ZERO
         do i = 1, n
@@ -270,7 +273,6 @@ if (xoptsq >= 1.0D4 * delta * delta) then
         end do
         summ = summ - HALF * xoptsq
         w(npt + k) = summ
-        rsp(k) = ZERO
         do i = 1, n
             xpt(i, k) = xpt(i, k) - HALF * xopt(i)
             step(i) = bmat(i, k)
@@ -310,18 +312,17 @@ if (xoptsq >= 1.0D4 * delta * delta) then
             end do
         end do
     end do
-!
-!     Update the right hand sides of the constraints.
-!
-    if (m > 0) then
-        do j = 1, m
-            temp = ZERO
-            do i = 1, n
-                temp = temp + amat(i, j) * xopt(i)
-            end do
-            b(j) = b(j) - temp
-        end do
-    end if
+
+    ! Update the right hand sides of the constraints.
+
+    !do j = 1, m
+    !    temp = ZERO
+    !    do i = 1, n
+    !        temp = temp + amat(i, j) * xopt(i)
+    !    end do
+    !    b(j) = b(j) - temp
+    !end do
+
 !
 !     The following instructions complete the shift of XBASE, including the
 !       changes to the parameters of the quadratic model.
@@ -923,16 +924,15 @@ info = 0
 if (ksave == -1) goto 220
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !  600 IF (FOPT .LE. F .OR. IFEAS .EQ. 0) THEN
-600 if (fopt <= f .or. ifeas == 0 .or. f /= f) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do i = 1, n
-        x(i) = xsav(i)
-    end do
+600 continue
+if (fopt <= f .or. ifeas == 0 .or. is_nan(f)) then
+    x = xsav
     f = fopt
 end if
-616 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
-w(1) = f
-w(2) = real(nf, RP) + HALF
+616 continue
+cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+!w(1) = f
+!w(2) = real(nf, RP) + HALF
 
 
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.

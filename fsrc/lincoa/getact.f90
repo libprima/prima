@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 01, 2022 AM11:39:48
+! Last Modified: Saturday, April 02, 2022 PM06:51:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -177,7 +177,7 @@ end do
 do while (nact > 0)
     vlam(1:nact) = lsqr(g, qfac(:, 1:nact), rfac(1:nact, 1:nact))
     if (any(vlam(1:nact) >= 0)) then
-        ic = maxval(trueloc(vlam(1:nact) >= 0))  ! MATLAB: ic = max(find(vlam(1:nact) >= 0))
+        ic = maxval(trueloc(vlam(1:nact) >= 0))  !!MATLAB: ic = max(find(vlam(1:nact) >= 0))
         call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
     else
         exit
@@ -243,8 +243,8 @@ do iter = 1_IK, maxiter
     mask = (resnew > 0 .and. resnew <= tdel .and. apsd > (dnorm / snorm) * resnew)
     violmx = maxval(apsd, mask=mask)  ! F2003 standard: MAXVAL() = -HUGE(APSD) if MASK is all FALSE.
     l = int(maxloc(apsd, mask=mask, dim=1), IK) ! F2003 standard: MAXLOC() = 0 if MASK is all FALSE.
-    ! MATLAB code (the value of L will differ from the Fortran version if MASK is all FALSE):
-    !!apsd(mask) = -Inf; [violmx , l] = max(apsd);
+    !!MATLAB: apsd(mask) = -Inf; [violmx , l] = max(apsd);
+    !(the value of L will differ from the Fortran version if MASK is all FALSE)
 
     ! Terminate if VIOLMX <= 0 (when MASK contains only FALSE) or a positive value of VIOLMX may be
     ! due to computer rounding errors.
@@ -279,13 +279,11 @@ do iter = 1_IK, maxiter
         where (vmu(1:nact) < 0 .and. vlam(1:nact) < 0)
             fracmult(1:nact) = vlam(1:nact) / vmu(1:nact)
         end where
-        !!MATLAB: fracmult = vlam / vmu; fracmult(vmu >= 0 | vlam >= 0) = Inf; 
+        !!MATLAB: fracmult = vlam / vmu; fracmult(vmu >= 0 | vlam >= 0) = Inf;
         vmult = minval([violmx, fracmult(1:nact)])
-        ic = 0_IK
-        if (any(fracmult(1:nact) <= vmult)) then
-            ic = maxval(trueloc(fracmult(1:nact) <= vmult))
-            !!MATLAB: ic = max(find(fracmult(1:nact)] <= vmult))
-        end if
+        ic = maxval([0_IK, trueloc(fracmult(1:nact) <= vmult)])
+        !!MATLAB: vmult = min([violmx; fracmult(1:nact)]); ic = max([0; find(fracmult(1:nact) <= vmult)])
+
         ! N.B.: 0. The definition of IC given above is mathematically equivalent to the following.
         !!IC = MAXVAL(TRUELOC([VIOLMX, FRACMULT(1:NACT)] <= VMULT)) - 1_IK, OR
         !!IC = INT(MINLOC([VIOLMX, FRACMULT(1:NACT)], DIM=1, BACK=.TRUE.), IK) - 1_IK

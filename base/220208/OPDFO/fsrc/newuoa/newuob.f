@@ -315,6 +315,7 @@ C
                       BMAT(I,J)=BMAT(I,J)+SUMM*ZMAT(I,K)
                   END DO
               END DO
+
               DO I=1,N
                   IP=I+NPT
                   TEMP=VLAG(I)
