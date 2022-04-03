@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Tuesday, March 22, 2022 PM01:37:06
+! Last Modified: Sunday, April 03, 2022 AM11:09:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -166,7 +166,9 @@ end do
 ! of {(I, J) : 1 <= J < I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first
 ! NPT - (2*N + 1) elements of such a permutation. Powell took the following one.
 ij(:, 1) = int(([(k, k=2_IK * n + 2_IK, npt)] - n - 2) / n, IK) ! [(K, K=1, NPT)] = [1, 2, ..., NPT]
-ij(:, 2) = int([(k, k=2_IK * n + 2_IK, npt)] - (ij(:, 1) + 1) * n - 1, IK)
+!! MATLAB: ij(:, 1) = floor((n : npt - n - 2) / n);
+ij(:, 2) = int([(k, k=2_IK * n + 2_IK, npt)] - n * (ij(:, 1) + 1) - 1, IK)
+!! MATLAB: ij(:, 2) = (2*n+2 : npt) - n*(ij(:, 1) + 1) - 1
 ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
 ! The next line ensures IJ(:, 1) > IJ(:, 2).
 ij = sort(ij, 2, 'descend')
