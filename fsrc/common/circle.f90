@@ -7,7 +7,7 @@ module circle_mod
 !
 ! Started: January 2021
 !
-! Last Modified: Sunday, April 03, 2022 AM01:47:06
+! Last Modified: Sunday, April 03, 2022 AM10:32:18
 !
 ! N.B.: Both CIRCLE_MIN and CIRCLE_MAXABS require an input GRID_SIZE, the size of the grid used in
 ! the search. Powell chose GRID_SIZE = 50 in NEWUOA. MAGICALLY, this number works the best for
@@ -79,6 +79,7 @@ end if
 unit_angle = (TWO * PI) / real(grid_size, RP)
 angles = unit_angle * linspace(ZERO, real(grid_size - 1_IK, RP), grid_size)
 fval = [(fun(angles(i), args), i=1, grid_size)]
+!!MATLAB: fval = arrayfun(@(angle) fun(angle, args), angles);  % The same shape as `angles`
 
 if (all(is_nan(fval))) then
     angle = ZERO
@@ -157,6 +158,7 @@ end if
 unit_angle = (TWO * PI) / real(grid_size, RP)
 angles = unit_angle * linspace(ZERO, real(grid_size - 1_IK, RP), grid_size)
 fval = [(fun(angles(i), args), i=1, grid_size)]
+!!MATLAB: fval = arrayfun(@(angle) fun(angle, args), angles);  % The same shape as `angles`
 
 if (all(is_nan(fval))) then
     angle = ZERO
