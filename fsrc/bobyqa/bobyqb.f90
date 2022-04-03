@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 03, 2022 PM11:20:13
+! Last Modified: Sunday, April 03, 2022 PM11:34:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -324,10 +324,12 @@ ntrits = ntrits + 1
 !
 90 continue
 
-if (dsq <= 1.0E-3_RP * xoptsq) then
+!if (dsq <= 1.0E-3_RP * xoptsq) then
+if (sum(xopt**2) >= 1.0E3_RP * dsq) then
     !gq = ZERO
     !call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt, sl, su)
 
+    xoptsq = sum(xopt**2)
     qxoptq = QUART * xoptsq
 
     w1 = matprod(xopt, xpt) - HALF * xoptsq

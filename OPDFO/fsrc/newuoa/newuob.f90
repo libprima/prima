@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, February 24, 2022 PM12:13:20
+! Last Modified: Sunday, April 03, 2022 PM11:41:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -256,7 +256,8 @@ do tr = 1, maxtr
 
         ! Shift XBASE if XOPT may be too far from XBASE.
         !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell's code
-        if (dnorm**2 <= 1.0E-3_RP * inprod(xopt, xopt)) then
+        !if (dnorm**2 <= 1.0E-3_RP * inprod(xopt, xopt)) then
+        if (inprod(xopt, xopt) >= 1.0E3_RP * dnorm**2) then
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
 
@@ -427,7 +428,8 @@ do tr = 1, maxtr
         delbar = max(min(TENTH * maxval(xdist), HALF * delta), rho)
 
         ! Shift XBASE if XOPT may be too far from XBASE.
-        if (delbar**2 <= 1.0E-3_RP * inprod(xopt, xopt)) then
+        !if (delbar**2 <= 1.0E-3_RP * inprod(xopt, xopt)) then
+        if (inprod(xopt, xopt) >= 1.0E3_RP * delbar**2) then
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
 
