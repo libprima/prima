@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 03, 2022 PM11:15:35
+! Last Modified: Sunday, April 03, 2022 PM11:38:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -257,106 +257,16 @@ nvalb = 0
 !     Shift XBASE if XOPT may be too far from XBASE. First make the changes
 !       to BMAT that do not depend on ZMAT.
 !
-20 fsave = fopt
-!xoptsq = sum(xopt**2)
+20 continue
 
-if (sum(xopt**2) >= 1.0E4 * delta**2) then
+fsave = fopt
+
+if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
     rsp(1:npt) = ZERO
     b = b - matprod(xopt, amat)
     gq = ZERO
     call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 end if
-
-!goto 9999
-
-!qxoptsq = QUART * xoptsq
-!do k = 1, npt
-!    summ = ZERO
-!    do i = 1, n
-!        summ = summ + xpt(i, k) * xopt(i)
-!    end do
-!    summ = summ - HALF * xoptsq
-!    w(npt + k) = summ
-!    do i = 1, n
-!        xpt(i, k) = xpt(i, k) - HALF * xopt(i)
-!        step(i) = bmat(i, k)
-!        w(i) = summ * xpt(i, k) + qxoptsq * xopt(i)
-!        ip = npt + i
-!        do j = 1, i
-!            bmat(j, ip) = bmat(j, ip) + step(i) * w(j) + w(i) * step(j)
-!        end do
-!    end do
-!end do
-!!
-!!     Then the revisions of BMAT that depend on ZMAT are calculated.
-!!
-!do k = 1, npt - n - 1_IK
-!    summz = ZERO
-!    do i = 1, npt
-!        summz = summz + zmat(i, k)
-!        w(i) = w(npt + i) * zmat(i, k)
-!    end do
-!    do j = 1, n
-!        summ = qxoptsq * summz * xopt(j)
-!        do i = 1, npt
-!            summ = summ + w(i) * xpt(j, i)
-!        end do
-!        step(j) = summ
-!        if (k < idz) summ = -summ
-!        do i = 1, npt
-!            bmat(j, i) = bmat(j, i) + summ * zmat(i, k)
-!        end do
-!    end do
-!    do i = 1, n
-!        ip = i + npt
-!        temp = step(i)
-!        if (k < idz) temp = -temp
-!        do j = 1, i
-!            bmat(j, ip) = bmat(j, ip) + temp * step(j)
-!        end do
-!    end do
-!end do
-
-    !! Update the right hand sides of the constraints.
-
-    !!do j = 1, m
-    !!    temp = ZERO
-    !!    do i = 1, n
-    !!        temp = temp + amat(i, j) * xopt(i)
-    !!    end do
-    !!    b(j) = b(j) - temp
-    !!end do
-
-!!
-!!     The following instructions complete the shift of XBASE, including the
-!!       changes to the parameters of the quadratic model.
-
-!do j = 1, n
-!    do i = 1, j
-!        bmat(j, npt + i) = bmat(i, npt + j)
-!    end do
-!end do
-!!
-!do j = 1, n
-!    w(j) = ZERO
-!    do k = 1, npt
-!        w(j) = w(j) + pq(k) * xpt(j, k)
-!        xpt(j, k) = xpt(j, k) - HALF * xopt(j)
-!    end do
-!    do i = 1, j
-!        hq(i, j) = hq(i, j) + w(i) * xopt(j) + xopt(i) * w(j)  ! Outer product
-!        hq(j, i) = hq(i, j)
-!    end do
-!end do
-!do j = 1, n
-!    xbase(j) = xbase(j) + xopt(j)
-!    xopt(j) = ZERO
-!    xpt(j, kopt) = ZERO
-!end do
-
-!9999 continue
-
-!end if
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 21-03-2020
