@@ -7,7 +7,7 @@ module circle_mod
 !
 ! Started: January 2021
 !
-! Last Modified: Sunday, April 03, 2022 AM10:32:18
+! Last Modified: Sunday, April 03, 2022 PM12:30:01
 !
 ! N.B.: Both CIRCLE_MIN and CIRCLE_MAXABS require an input GRID_SIZE, the size of the grid used in
 ! the search. Powell chose GRID_SIZE = 50 in NEWUOA. MAGICALLY, this number works the best for
@@ -59,7 +59,7 @@ real(RP) :: angle
 character(len=*), parameter :: srname = 'CIRCLE_MIN'
 integer(IK) :: i
 integer(IK) :: iopt
-real(RP) :: angles(grid_size)
+real(RP) :: angles(grid_size + 1)
 real(RP) :: fa
 real(RP) :: fb
 real(RP) :: fopt
@@ -76,12 +76,9 @@ end if
 ! Calculation starts !
 !====================!
 
-unit_angle = (TWO * PI) / real(grid_size, RP)
-angles = unit_angle * linspace(ZERO, real(grid_size - 1_IK, RP), grid_size)
+angles = linspace(ZERO, TWO * PI, grid_size + 1_IK) ! Size: GRID_SIZE+1; the last entry will be unused
 fval = [(fun(angles(i), args), i=1, grid_size)]
-!!MATLAB: 
-!!angles = linspace(0, 2*pi, grid_size+1);  % The length is grid_size + 1.
-!!fval = arrayfun(@(angle) fun(angle, args), angles(1:grid_size));  % The same shape as `angles`.
+!!MATLAB: fval = arrayfun(@(angle) fun(angle, args), angles(1:grid_size));  % Same shape as `angles`
 
 if (all(is_nan(fval))) then
     angle = ZERO
@@ -99,6 +96,8 @@ if (abs(fa - fb) > 0) then
 else
     step = ZERO
 end if
+
+unit_angle = (TWO * PI) / real(grid_size, RP)
 angle = unit_angle * (real(iopt, RP) + step)  ! It may not be in [0, 2*PI].
 
 !====================!
@@ -140,7 +139,7 @@ real(RP) :: angle
 character(len=*), parameter :: srname = 'CIRCLE_MAXABS'
 integer(IK) :: i
 integer(IK) :: iopt
-real(RP) :: angles(grid_size)
+real(RP) :: angles(grid_size + 1)
 real(RP) :: fa
 real(RP) :: fb
 real(RP) :: fopt
@@ -157,12 +156,9 @@ end if
 ! Calculation starts !
 !====================!
 
-unit_angle = (TWO * PI) / real(grid_size, RP)
-angles = unit_angle * linspace(ZERO, real(grid_size - 1_IK, RP), grid_size)
+angles = linspace(ZERO, TWO * PI, grid_size + 1_IK) ! Size: GRID_SIZE+1; the last entry will be unused
 fval = [(fun(angles(i), args), i=1, grid_size)]
-!!MATLAB: 
-!!angles = linspace(0, 2*pi, grid_size+1);  % The length is grid_size + 1.
-!!fval = arrayfun(@(angle) fun(angle, args), angles(1:grid_size));  % The same shape as `angles`.
+!!MATLAB: fval = arrayfun(@(angle) fun(angle, args), angles(1:grid_size));  % Same shape as `angles`
 
 if (all(is_nan(fval))) then
     angle = ZERO
@@ -180,6 +176,8 @@ if (abs(fa - fb) > 0) then
 else
     step = ZERO
 end if
+
+unit_angle = (TWO * PI) / real(grid_size, RP)
 angle = unit_angle * (real(iopt, RP) + step)  ! It may not be in [0, 2*PI].
 
 ! Postconditions
