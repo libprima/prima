@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, March 23, 2022 AM11:09:49
+! Last Modified: Sunday, April 03, 2022 PM05:14:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -134,7 +134,7 @@ do j = 2, int(npt - n - 1, kind(j))
         cycle
     end if
     if (abs(zmat(knew, j)) > ZERO) then
-        grot = planerot(zmat(knew, [jl, j]))  ! MATLAB code: GROT = PLANEROT(ZMAT(KNEW, [JL, J])')
+        grot = planerot(zmat(knew, [jl, j]))  !!MATLAB: grot = planerot(zmat(knew, [jl, j])')
         zmat(:, [jl, j]) = matprod(zmat(:, [jl, j]), transpose(grot))
         zmat(knew, j) = ZERO
     end if

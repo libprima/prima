@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 01, 2022 PM01:03:31
+! Last Modified: Sunday, April 03, 2022 PM11:20:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-!use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+use, non_intrinsic :: linalg_mod, only : matprod, r1update, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
@@ -80,6 +80,8 @@ real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
 real(RP) :: vlag(npt + size(x))
+real(RP) :: w1(npt)
+real(RP) :: w2(size(x))
 real(RP) :: w(3 * (npt + size(x)))
 real(RP) :: sl(size(x))
 real(RP) :: su(size(x))
@@ -94,10 +96,10 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        biglsq, bsumm, cauchy, crvmin, curv, delsq, delta,  &
 &        den, denom, densav, diff, diffa, diffb, diffc,     &
 &        dist, distsq, dnorm, dsq, dx, errbig, fopt,        &
-&        fracsq, frhosq, gisq, gqsq, hdiag,      &
-&        pqold, ratio, rho, scaden, summ, summa, summb, summpq,&
-&        summw, summz, temp, vquad, xoptsq
-integer(IK) :: i, ip, itest, j, jj, jp, k, kbase, knew, &
+&        qxoptq, frhosq, gisq, gqsq, hdiag,      &
+&        pqold, ratio, rho, scaden, summ, summa, summb, &
+&        wz(npt - size(x) - 1), sumz(npt - size(x) - 1), temp, vquad, xoptsq
+integer(IK) :: i, itest, j, jj, jp, k, kbase, knew, &
 &           kopt, ksav, nfsav, np, nptm, nresc, ntrits
 
 
@@ -320,80 +322,121 @@ ntrits = ntrits + 1
 !     derivatives of the current model, beginning with the changes to BMAT
 !     that do not depend on ZMAT. VLAG is used temporarily for working space.
 !
-90 if (dsq <= 1.0E-3_RP * xoptsq) then
-    fracsq = QUART * xoptsq
-    summpq = ZERO
+90 continue
+
+if (dsq <= 1.0E-3_RP * xoptsq) then
+    !gq = ZERO
+    !call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt, sl, su)
+
+    qxoptq = QUART * xoptsq
+
+    w1 = matprod(xopt, xpt) - HALF * xoptsq
     do k = 1, npt
-        summpq = summpq + pq(k)
-        summ = -HALF * xoptsq
-        do i = 1, n
-            summ = summ + xpt(i, k) * xopt(i)
-        end do
-        w(npt + k) = summ
-        temp = fracsq - HALF * summ
-        do i = 1, n
-            w(i) = bmat(i, k)
-            vlag(i) = summ * xpt(i, k) + temp * xopt(i)
-            ip = npt + i
-            do j = 1, i
-                bmat(j, ip) = bmat(j, ip) + w(i) * vlag(j) + vlag(i) * w(j)
-            end do
-        end do
+        vlag(1:n) = w1(k) * xpt(:, k) + (qxoptq - HALF * w1(k)) * xopt  ! Should it be called VLAG or W2?
+        call r2update(bmat(:, npt + 1:npt + n), ONE, bmat(:, k), vlag(1:n))
     end do
+
+    ! Then the revisions of BMAT that depend on ZMAT are calculated.
+    sumz = sum(zmat, dim=1)
+    wz = matprod(w1, zmat)
+    do k = 1, npt - n - 1_IK
+        w2 = (qxoptq * sumz(k) - HALF * wz(k)) * xopt + matprod(xpt, w1 * zmat(:, k))  ! Should it be called VLAG or W2?
+        call r1update(bmat(:, 1:npt), ONE, w2, zmat(:, k))
+        call r1update(bmat(:, npt + 1:npt + n), ONE, w2)  ! R1UPDATE should ensure the symmetry.
+    end do
+
+    ! The following instructions complete the shift, including the changes to the second derivative
+    ! parameters of the quadratic model.
+    w2 = -HALF * sum(pq) * xopt + matprod(xpt, pq)
+    call r2update(hq, ONE, xopt, w2)  ! R2UPDATE should ensure symmetry.
+
+    xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+    !!MATLAB: xpt = xpt - xopt  % xopt should be a column!! Implicit expansion
+    xbase = xbase + xopt
+    xnew = xnew - xopt
+    sl = sl - xopt
+    su = su - xopt
+    xopt = ZERO
+    xoptsq = ZERO
+end if
+
+
+!90 if (dsq <= 1.0E-3_RP * xoptsq) then
 !
 !     Then the revisions of BMAT that depend on ZMAT are calculated.
 !
-    do jj = 1, nptm
-        summz = ZERO
-        summw = ZERO
-        do k = 1, npt
-            summz = summz + zmat(k, jj)
-            vlag(k) = w(npt + k) * zmat(k, jj)
-            summw = summw + vlag(k)
-        end do
-        do j = 1, n
-            summ = (fracsq * summz - HALF * summw) * xopt(j)
-            do k = 1, npt
-                summ = summ + vlag(k) * xpt(j, k)
-            end do
-            w(j) = summ
-            do k = 1, npt
-                bmat(j, k) = bmat(j, k) + summ * zmat(k, jj)
-            end do
-        end do
-        do i = 1, n
-            ip = i + npt
-            temp = w(i)
-            do j = 1, i
-                bmat(j, ip) = bmat(j, ip) + temp * w(j)
-            end do
-        end do
-    end do
+!do jj = 1, nptm
+
+!        summz = ZERO
+!        summw = ZERO
+!        do k = 1, npt
+!            summz = summz + zmat(k, jj)
+!           vlag(k) = w(npt + k) * zmat(k, jj)
+!            summw = summw + vlag(k)
+!        end do
+
+!do j = 1, n
+!    summ = (qxoptq * summz - HALF * summw) * xopt(j)
+!    do k = 1, npt
+!        summ = summ + vlag(k) * xpt(j, k)
+!    end do
+!    w(j) = summ
+!end do
+
+!do j = 1, n
+!    do k = 1, npt
+!        bmat(j, k) = bmat(j, k) + w(j) * zmat(k, jj)
+!    end do
+!end do
+
+!do i = 1, n
+!    ip = i + npt
+!    !temp = w(i)
+!    do j = 1, i
+!        bmat(j, ip) = bmat(j, ip) + w(i) * w(j)
+!    end do
+!end do
+!
+!end do
+
 !
 !     The following instructions complete the shift, including the changes
 !     to the second derivative parameters of the quadratic model.
 !
-    do j = 1, n
-        w(j) = -HALF * summpq * xopt(j)
-        do k = 1, npt
-            w(j) = w(j) + pq(k) * xpt(j, k)
-            xpt(j, k) = xpt(j, k) - xopt(j)
-        end do
-        do i = 1, j
-            hq(i, j) = hq(i, j) + w(i) * xopt(j) + xopt(i) * w(j)
-            hq(j, i) = hq(i, j)
-            bmat(j, npt + i) = bmat(i, npt + j)
-        end do
-    end do
-    do i = 1, n
-        xbase(i) = xbase(i) + xopt(i)
-        xnew(i) = xnew(i) - xopt(i)
-        sl(i) = sl(i) - xopt(i)
-        su(i) = su(i) - xopt(i)
-        xopt(i) = ZERO
-    end do
-    xoptsq = ZERO
-end if
+!do j = 1, n
+!    do i = 1, j
+!        bmat(j, npt + i) = bmat(i, npt + j)
+!    end do
+!end do
+
+!do j = 1, n
+!    w(j) = -HALF * summpq * xopt(j)
+!    do k = 1, npt
+!        w(j) = w(j) + pq(k) * xpt(j, k)
+!        !xpt(j, k) = xpt(j, k) - xopt(j)
+!    end do
+!end do
+
+
+!do j = 1, n
+!    do i = 1, j
+!        hq(i, j) = hq(i, j) + w(i) * xopt(j) + xopt(i) * w(j)
+!        hq(j, i) = hq(i, j)
+!        !bmat(j, npt + i) = bmat(i, npt + j)
+!    end do
+!end do
+
+!do i = 1, n
+!    xbase(i) = xbase(i) + xopt(i)
+!    xnew(i) = xnew(i) - xopt(i)
+!    sl(i) = sl(i) - xopt(i)
+!    su(i) = su(i) - xopt(i)
+!    xopt(i) = ZERO
+!end do
+
+!end if
+
+
 if (ntrits == 0) goto 210
 goto 230
 !

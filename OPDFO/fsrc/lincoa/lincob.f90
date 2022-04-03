@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 02, 2022 PM07:15:17
+! Last Modified: Sunday, April 03, 2022 PM07:25:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -260,10 +260,15 @@ if (xoptsq >= 1.0E4_RP * delta**2) then
             w(i) = w(npt + i) * zmat(i, k)
         end do
         do j = 1, n
-            summ = qoptsq * summz * xopt(j)
+            !---------------------------------!
+            ! Zaikun 20220403
+            !summ = qoptsq * summz * xopt(j)
+            summ = ZERO
             do i = 1, npt
                 summ = summ + w(i) * xpt(j, i)
             end do
+            summ = summ + qoptsq * summz * xopt(j)
+            !---------------------------------!
             step(j) = summ
             if (k < idz) summ = -summ
             do i = 1, npt

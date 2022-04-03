@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, March 31, 2022 PM06:43:44
+! Last Modified: Sunday, April 03, 2022 PM05:14:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -376,7 +376,7 @@ do tr = 1, maxtr
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
 
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
-    ! MATLAB: xdist = sqrt(sum((xpt - xopt).^2))  ! xopt should be a column!! Implicit expansion
+    !!MATLAB: xdist = sqrt(sum((xpt - xopt).^2))  % xopt should be a column!! Implicit expansion
     ! KNEW_TR == 0 implies RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definition
     ! of BAD_TRSTEP. Nevertheless, we keep it for robustness.
     bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO

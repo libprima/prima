@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, March 30, 2022 PM08:55:42
+! Last Modified: Sunday, April 03, 2022 PM05:13:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,10 +103,10 @@ beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
 ! Calculate the distance between the interpolation points and the optimal point up to now.
 if (tr_success) then
     xdist = sqrt(sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1))
-    ! MATLAB: xdist = sqrt(sum((xpt - (xpt(:, kopt) + d)).^2))  % d should be a column!! Implicit expansion
+    !!MATLAB: xdist = sqrt(sum((xpt - (xpt(:, kopt) + d)).^2))  % d should be a column!! Implicit expansion
 else
     xdist = sqrt(sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1))
-    ! MATLAB: xdist = sqrt(sum((xpt - xpt(:, kopt)).^2))  % Implicit expansion
+    !!MATLAB: xdist = sqrt(sum((xpt - xpt(:, kopt)).^2))  % Implicit expansion
 end if
 
 hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
@@ -603,7 +603,7 @@ if (.not. (ds**2 <= 0.99_RP * dd * ss)) then
     ! `.NOT. (A <= B)` differs from `A > B`.  The former holds iff A > B or {A, B} contains NaN.
     dtest = ds**2 / ss
     xptemp = xpt - spread(x, dim=2, ncopies=npt)
-    ! MATLAB: xptemp = xpt - x  % x should be a column!! Implicit expansion
+    !!MATLAB: xptemp = xpt - x  % x should be a column!! Implicit expansion
     !----------------------------------------------------------------!
     !---------!dstemp = matprod(d, xpt) - inprod(x, d) !-------------!
     dstemp = matprod(d, xptemp)

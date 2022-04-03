@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 05, 2022 PM04:52:55
+! Last Modified: Sunday, April 03, 2022 PM10:35:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -294,12 +294,16 @@ ntrits = ntrits + 1
     summpq = ZERO
     do k = 1, npt
         summpq = summpq + pq(k)
-        summ = -HALF * xoptsq
+        !-----------------------------------------!
+        !summ = -HALF * xoptsq
+        summ = ZERO
         do i = 1, n
             summ = summ + xpt(i, k) * xopt(i)
         end do
+        summ = -HALF * xoptsq + summ
         w(npt + k) = summ
         temp = fracsq - HALF * summ
+        !-----------------------------------------!
         do i = 1, n
             w(i) = bmat(i, k)
             vlag(i) = summ * xpt(i, k) + temp * xopt(i)
@@ -321,10 +325,12 @@ ntrits = ntrits + 1
             summw = summw + vlag(k)
         end do
         do j = 1, n
-            summ = (fracsq * summz - HALF * summw) * xopt(j)
+            !summ = (fracsq * summz - HALF * summw) * xopt(j)
+            summ = ZERO
             do k = 1, npt
                 summ = summ + vlag(k) * xpt(j, k)
             end do
+            summ = (fracsq * summz - HALF * summw) * xopt(j) + summ
             w(j) = summ
             do k = 1, npt
                 bmat(j, k) = bmat(j, k) + summ * zmat(k, jj)
@@ -344,11 +350,13 @@ ntrits = ntrits + 1
 !
     ih = 0
     do j = 1, n
-        w(j) = -HALF * summpq * xopt(j)
+        !w(j) = -HALF * summpq * xopt(j)
+        w(j) = ZERO
         do k = 1, npt
             w(j) = w(j) + pq(k) * xpt(j, k)
             xpt(j, k) = xpt(j, k) - xopt(j)
         end do
+        w(j) = -HALF * summpq * xopt(j) + w(j)
         do i = 1, j
             ih = ih + 1
             hq(ih) = hq(ih) + w(i) * xopt(j) + xopt(i) * w(j)

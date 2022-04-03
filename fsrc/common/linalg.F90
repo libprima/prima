@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 03, 2022 AM10:30:13
+! Last Modified: Sunday, April 03, 2022 PM06:49:58
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1372,10 +1372,12 @@ function planerot(x) result(G)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
 ! Roughly speaking, using a MATLAB-style formulation of matrices,
 ! G = [X(1)/R, X(2)/R; -X(2)/R, X(1)/R] with R = SQRT(X(1)^2+X(2)^2), and G*X = [R; 0].
-! However, we need to take care of the possibilities of R = 0, Inf, NaN, and over/underflow.
-! The G defined in this way is continuous with respect to X except at 0. Following this definition,
+! 0. We need to take care of the possibilities of R = 0, Inf, NaN, and over/underflow.
+! 1. The G defined above is continuous with respect to X except at 0. Following this definition,
 ! G = [sign(X(1)), 0; 0, sign(X(1))] if X(2) = 0, G = [0, sign(X(2)); -sign(X(2)), 0] if X(2) = 0.
 ! Yet some implementations ignore the signs, leading to discontinuity and numerical instability.
+! 2. Difference from MATLAB: if X contains NaN or consists of only Inf, MATLAB returns a NaN matrix,
+! but we return an identity matrix or a matrix of +/-SQRT(2). We intend to keep G always orthogonal.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, REALMIN, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -1408,11 +1410,11 @@ end if
 
 ! Define C = X(1) / R and S = X(2) / R with R = HYPOT(X(1), X(2)). Handle Inf/NaN, over/underflow.
 if (any(is_nan(x))) then
-    ! In this case, MATLAB sets G to NaN(2, 2). We refrain from doing this to keep G orthogonal.
+    ! In this case, MATLAB sets G to NaN(2, 2). We refrain from doing so to keep G orthogonal.
     c = ONE
     s = ZERO
 elseif (all(is_inf(x))) then
-    ! In this case, MATLAB sets G to NaN(2, 2). We refrain from doing this to keep G orthogonal.
+    ! In this case, MATLAB sets G to NaN(2, 2). We refrain from doing so to keep G orthogonal.
     c = sign(1 / sqrt(2.0_RP), x(1))
     s = sign(1 / sqrt(2.0_RP), x(2))
 elseif (abs(x(1)) <= 0 .and. abs(x(2)) <= 0) then  ! X(1) == 0 == X(2).
@@ -1420,43 +1422,43 @@ elseif (abs(x(1)) <= 0 .and. abs(x(2)) <= 0) then  ! X(1) == 0 == X(2).
     s = ZERO
 elseif (abs(x(2)) <= EPS * abs(x(1))) then
     ! N.B.:
-    ! 0. With <= instead of <, this case covers X(1)==0==X(2), which is treated above separately to
-    ! avoid the confusing SIGN(.,0) (see 1).
+    ! 0. With <= instead of <, this case covers X(1) == 0 == X(2), which is treated above separately
+    ! to avoid the confusing SIGN(., 0) (see 1).
     ! 1. SIGN(A, 0) = ABS(A) in Fortran but sign(0) = 0 in MATLAB, Python, Julia, and R!!!
     ! 2. Taking SIGN(X(1)) into account ensures the continuity of G with respect to X except at 0.
-    c = sign(ONE, x(1))  ! MATLAB: c = sign(x(1))
+    c = sign(ONE, x(1))  !!MATLAB: c = sign(x(1))
     s = ZERO
 elseif (abs(x(1)) <= EPS * abs(x(2))) then
     ! N.B.: SIGN(A, X) = ABS(A) * sign of X /= A * sign of X !!! Therefore, it is WRONG to define G
-    ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)). ! This mistake was committed on on
-    ! 20211206, taking a whole day to debug! NEVER use SIGN on arrays unless you are really sure.
+    ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)). This mistake was committed on
+    ! 20211206 and took a whole day to debug! NEVER use SIGN on arrays unless you are really sure.
     c = ZERO
-    s = sign(ONE, x(2))  ! MATLAB: s = sign(x(2))
+    s = sign(ONE, x(2))  !!MATLAB: s = sign(x(2))
 else
-    ! The following is a stable and continuous implementation of the Givens rotation. It follows
-    ! Bindel, D., Demmel, J., Kahan, W., & Marques, O. (2002). On computing Givens rotations reliably
-    ! and efficiently. ACM Transactions on Mathematical Software (TOMS), 28(2), 206-238.
-    ! 1. Modern compilers compute SQRT(REALMIN) and SQRT(HUGENUM/2.1) at compilation time.
+    ! Here is the normal case. It implements the Givens rotation in a stable & continuous way as in:
+    ! Bindel, D., Demmel, J., Kahan, W., and Marques, O. (2002). On computing Givens rotations
+    ! reliably and efficiently. ACM Transactions on Mathematical Software (TOMS), 28(2), 206-238.
+    ! N.B.: 1. Modern compilers compute SQRT(REALMIN) and SQRT(HUGENUM/2.1) at compilation time.
     ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
     if (minval(abs(x)) > sqrt(REALMIN) .and. maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
-        ! Do NOT use HYPOTENUSE here; the best implementation for one may not be the best for the other
+        ! Do NOT use HYPOTENUSE here; the best implementation for one may be suboptimal for the other
         r = sqrt(sum(x**2))
         c = x(1) / r
         s = x(2) / r
     elseif (abs(x(1)) > abs(x(2))) then
         t = x(2) / x(1)
-        u = sign(sqrt(ONE + t**2), x(1))  ! MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
+        u = sign(sqrt(ONE + t**2), x(1))  !!MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
         c = ONE / u
         s = t / u
     else
         t = x(1) / x(2)
-        u = sign(sqrt(ONE + t**2), x(2))  ! MATLAB: u = sign(x(2))*sqrt(ONE + t**2)
+        u = sign(sqrt(ONE + t**2), x(2))  !!MATLAB: u = sign(x(2))*sqrt(ONE + t**2)
         c = t / u
         s = ONE / u
     end if
 end if
 
-G = reshape([c, -s, s, c], [2, 2])  ! MATLAB: G = [c, s; -s, c]
+G = reshape([c, -s, s, c], [2, 2])  !!MATLAB: G = [c, s; -s, c]
 
 !====================!
 !  Calculation ends  !
@@ -1994,7 +1996,7 @@ end if
 #endif
 
 #if __USE_POWELL_ALGEBRA__ == 1
-! A is symmetrized by setting A(UPPER_TRI) = A(LOWER_TRI).
+! A is symmetrized by copying A(LOWER_TRI) to A(UPPER_TRI).
 ! N.B.: The following assumes that A(LOWER_TRI) has been properly defined.
 do j = 1, int(size(A, 1), kind(j))
     A(1:j - 1, j) = A(j, 1:j - 1)
