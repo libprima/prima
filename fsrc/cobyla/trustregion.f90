@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, April 03, 2022 AM12:47:34
+! Last Modified: Sunday, April 03, 2022 AM10:39:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -222,6 +222,8 @@ end if
 ! Initialization according to STAGE.
 if (stage == 1) then
     iact = linspace(1_IK, mcon, mcon)
+    ! N.B.: 1. The MATLAB version of LINSPACE returns a row vector. Take a transpose if needed.
+    ! 2. In MATLAB, linspace(1, mcon, mcon) can also be written as (1:mcon).
     nact = 0_IK
     d = ZERO
     cstrv = maxval([b, ZERO])
@@ -255,6 +257,7 @@ else
     cstrv = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
 end if
 zdota(1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=1, nact)]
+!!MATLAB: zdota(1:nact) = sum(z(:, 1:nact).*A(:, iact(1:nact)), 1);  % Row vector
 
 ! More initialization.
 optold = HUGENUM

@@ -480,7 +480,7 @@ if (DEBUGGING) then
     end if
 ! The following test cannot be passed YET.
 !!!    if (present(fhist) .and. present(chist)) then
-!!!        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol_loc), i=1, nhist)]),&
+!!!        call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv_loc, ctol_loc)),&
 !!!            & 'No point in the history is better than X', srname)
 !!!    end if
 end if

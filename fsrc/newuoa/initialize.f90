@@ -162,9 +162,9 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
 end do
 
 ! Set IJ.
-! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(2*N + 2 : NPT, :) to ANY permutation
+! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(1 : NPT - (2*N+1), :) to ANY permutation
 ! of {(I, J) : 1 <= J < I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first
-! NPT - (2*N + 1) elements of such a permutation. Powell took the following permutation.
+! NPT - (2*N + 1) elements of such a permutation. Powell took the following one.
 ij(:, 1) = int(([(k, k=2_IK * n + 2_IK, npt)] - n - 2) / n, IK) ! [(K, K=1, NPT)] = [1, 2, ..., NPT]
 ij(:, 2) = int([(k, k=2_IK * n + 2_IK, npt)] - (ij(:, 1) + 1) * n - 1, IK)
 ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]

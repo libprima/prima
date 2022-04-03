@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 03, 2022 AM01:47:23
+! Last Modified: Sunday, April 03, 2022 AM10:30:13
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -874,10 +874,10 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: A(:, :)
-real(RP), intent(in) :: b(:)
-real(RP), intent(in), optional :: Q(:, :)
-real(RP), intent(in), optional :: Rdiag(:)
+real(RP), intent(in) :: A(:, :)  ! A(M, N)
+real(RP), intent(in) :: b(:)  ! B(M)
+real(RP), intent(in), optional :: Q(:, :)  ! Q(M, :), SIZE(Q, 2) = M or MIN(M, N)
+real(RP), intent(in), optional :: Rdiag(:) ! Rdiag(MIN(M, N))
 
 ! Outputs
 real(RP) :: x(size(A, 2))
@@ -931,6 +931,7 @@ if (present(Q)) then
         Rdiag_loc = Rdiag
     else
         Rdiag_loc = [(inprod(Q_loc(:, i), A(:, i)), i=1, min(m, n))]
+        !!MATLAB: Rdiag_loc = sum(Q_loc(:, 1:min(m,n)) .* A(:, 1:min(m,n)), 1);  % Row vector
     end if
     rank = min(m, n)
     pivote = .false.
@@ -940,6 +941,7 @@ end if
 if (.not. present(Q)) then
     call qr(A, Q=Q_loc, P=P)
     Rdiag_loc = [(inprod(Q_loc(:, i), A(:, P(i))), i=1, min(m, n))]
+    !!MATLAB: Rdiag_loc = sum(Q_loc(:, 1:min(m,n)) .* A(:, P(1:min(m,n))), 1);  % Row vector
     rank = maxval([0_IK, trueloc(abs(Rdiag_loc) > 0)])
     pivote = .true.
 end if
@@ -1623,7 +1625,7 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: c(:)
+real(RP), intent(in) :: c(:)  ! C(M)
 
 ! In-outputs
 integer(IK), intent(inout) :: n
@@ -1720,7 +1722,7 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: A(:, :)
+real(RP), intent(in) :: A(:, :)  ! A(M, N)
 
 ! In-outputs
 real(RP), intent(inout) :: Q(:, :)  ! Q(M, :), N <= SIZE(Q, 2) <= M
@@ -1796,6 +1798,7 @@ end do
 
 ! Calculate RDIAG(I:N) from scratch.
 Rdiag(i:n - 1) = [(inprod(Q(:, k), A(:, k + 1)), k=i, n - 1_IK)]
+!!MATLAB: Rdiag(i:n-1) = sum(Q(:, i:n-1) .* A(:, i+1:n), 1);  % Row vector
 Rdiag(n) = inprod(Q(:, n), A(:, i))  ! Calculate RDIAG(N) from scratch. See the comments above.
 
 !====================!
@@ -1819,6 +1822,7 @@ if (DEBUGGING) then
     ! The following test may fail if RDIAG is not calculated from scratch.
     call assert(norm(diag(QtAnew) - Rdiag) <= max(tol, tol * norm([(inprod(abs(Q(:, k)), &
         & abs(Anew(:, k))), k=1, n)])), 'Rdiag == diag(Q^T*Anew)', srname)
+    !!MATLAB: norm(diag(QtAnew) - Rdiag) <= max(tol, tol * norm(sum(abs(Q(:, 1:n)) .* abs(Anew), 1)))
 end if
 end subroutine qrexc_Rdiag
 
@@ -2204,6 +2208,7 @@ end if
 
 zeros = ZERO
 qval = [(-calquad(xpt(:, k), gq, hq, pq, zeros, xpt), k=1, npt)]
+!!MATLAB: qval = cellfun(@(x) -calquad(x, gq, hq, pq, zeros, xpt), num2cell(xpt, 1));  % Row vector
 if (.not. all(is_finite(qval))) then
     err = HUGENUM
 else
@@ -2824,7 +2829,6 @@ logical, intent(in) :: x(:)
 integer(IK), allocatable :: loc(:)  ! INTEGER(IK) :: LOC(COUNT(X)) does not work with Absoft 22.0
 integer(IK) :: n
 call safealloc(loc, int(count(x), IK))  ! Removable in F03.
-!loc = pack([(i, i=1_IK, int(size(x), IK))], mask=x)
 n = int(size(x), IK)
 loc = pack(linspace(1_IK, n, n), mask=x)
 end function trueloc
