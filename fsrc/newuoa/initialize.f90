@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Sunday, April 03, 2022 AM11:09:20
+! Last Modified: Sunday, April 03, 2022 AM11:19:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -165,10 +165,10 @@ end do
 ! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(1 : NPT - (2*N+1), :) to ANY permutation
 ! of {(I, J) : 1 <= J < I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first
 ! NPT - (2*N + 1) elements of such a permutation. Powell took the following one.
-ij(:, 1) = int(([(k, k=2_IK * n + 2_IK, npt)] - n - 2) / n, IK) ! [(K, K=1, NPT)] = [1, 2, ..., NPT]
+ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
 !! MATLAB: ij(:, 1) = floor((n : npt - n - 2) / n);
-ij(:, 2) = int([(k, k=2_IK * n + 2_IK, npt)] - n * (ij(:, 1) + 1) - 1, IK)
-!! MATLAB: ij(:, 2) = (2*n+2 : npt) - n*(ij(:, 1) + 1) - 1
+ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
+!! MATLAB: ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1
 ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
 ! The next line ensures IJ(:, 1) > IJ(:, 2).
 ij = sort(ij, 2, 'descend')

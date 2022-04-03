@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, April 03, 2022 AM10:39:26
+! Last Modified: Sunday, April 03, 2022 AM10:49:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -257,7 +257,7 @@ else
     cstrv = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
 end if
 zdota(1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=1, nact)]
-!!MATLAB: zdota(1:nact) = sum(z(:, 1:nact).*A(:, iact(1:nact)), 1);  % Row vector
+!!MATLAB: zdota(1:nact) = sum(z(:, 1:nact) .* A(:, iact(1:nact)), 1);  % Row vector
 
 ! More initialization.
 optold = HUGENUM
