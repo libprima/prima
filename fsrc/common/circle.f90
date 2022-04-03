@@ -79,7 +79,9 @@ end if
 unit_angle = (TWO * PI) / real(grid_size, RP)
 angles = unit_angle * linspace(ZERO, real(grid_size - 1_IK, RP), grid_size)
 fval = [(fun(angles(i), args), i=1, grid_size)]
-!!MATLAB: fval = arrayfun(@(angle) fun(angle, args), angles);  % The same shape as `angles`
+!!MATLAB: 
+!!angles = linspace(0, 2*pi, grid_size+1);  % The length is grid_size + 1.
+!!fval = arrayfun(@(angle) fun(angle, args), angles(1:grid_size));  % The same shape as `angles`.
 
 if (all(is_nan(fval))) then
     angle = ZERO
@@ -158,7 +160,9 @@ end if
 unit_angle = (TWO * PI) / real(grid_size, RP)
 angles = unit_angle * linspace(ZERO, real(grid_size - 1_IK, RP), grid_size)
 fval = [(fun(angles(i), args), i=1, grid_size)]
-!!MATLAB: fval = arrayfun(@(angle) fun(angle, args), angles);  % The same shape as `angles`
+!!MATLAB: 
+!!angles = linspace(0, 2*pi, grid_size+1);  % The length is grid_size + 1.
+!!fval = arrayfun(@(angle) fun(angle, args), angles(1:grid_size));  % The same shape as `angles`.
 
 if (all(is_nan(fval))) then
     angle = ZERO
