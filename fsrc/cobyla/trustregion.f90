@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, April 03, 2022 AM10:49:03
+! Last Modified: Sunday, April 03, 2022 PM12:33:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -221,7 +221,7 @@ end if
 
 ! Initialization according to STAGE.
 if (stage == 1) then
-    iact = linspace(1_IK, mcon, mcon)
+    iact = linspace(1_IK, mcon, mcon)  !!MATLAB: iact = (1:mcon);  % Row vector
     ! N.B.: 1. The MATLAB version of LINSPACE returns a row vector. Take a transpose if needed.
     ! 2. In MATLAB, linspace(1, mcon, mcon) can also be written as (1:mcon).
     nact = 0_IK
