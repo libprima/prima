@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, March 25, 2022 AM08:53:30
+! Last Modified: Sunday, April 03, 2022 PM05:17:42
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -156,7 +156,7 @@ real(RP), parameter :: PI = 3.141592653589793238462643383279502884_RP
 
 ! REALMIN is the smallest positive normalized floating-point number, which is 2^(-1022), ~2.225E-308
 ! for IEEE double precision. Taking double precision as an example, REALMIN in other languages:
-! MATLAB: realmin or realmin('double')
+!!MATLAB: realmin or realmin('double')
 ! Python: numpy.finfo(numpy.float64).tiny
 ! Julia: realmin(Float64)
 real(RP), parameter :: REALMIN = tiny(ZERO)

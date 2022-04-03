@@ -18,7 +18,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, April 02, 2022 PM09:15:53
+! Last Modified: Sunday, April 03, 2022 PM05:15:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -276,7 +276,7 @@ do tr = 1, maxtr
     ! finite-precision arithmetic.
     ! 2. TRSTLP accesses A mostly by columns, so it is not more reasonable to save A^T instead of A.
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
-    ! MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
+    !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
 
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.

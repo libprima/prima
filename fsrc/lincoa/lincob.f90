@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 02, 2022 PM07:51:31
+! Last Modified: Sunday, April 03, 2022 PM11:15:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -31,7 +31,7 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic models
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, MIN_MAXFILT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, MIN_MAXFILT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -42,6 +42,7 @@ use, non_intrinsic :: pintrf_mod, only : OBJ
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: initialize_mod, only : initialize
+use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trstep
 use, non_intrinsic :: update_mod, only : update
 
@@ -105,13 +106,14 @@ integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
 real(RP) :: del, delsav, delta, dffalt, diff, &
-&        distsq, fopt, fsave, qoptsq, ratio,     &
-&        rho, snorm, ssq, summ, summz, temp, vqalt,   &
-&        vquad, xdiff, xoptsq
-integer(IK) :: i, idz, ifeas, imprv, ip, itest, j, k,    &
+&        distsq, fopt, fsave, ratio,     &
+&        rho, snorm, ssq, summ, temp, vqalt,   &
+&        vquad, xdiff
+integer(IK) :: i, idz, ifeas, imprv, itest, j, k,    &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
 real(RP) :: w(max(int(size(bvec), IK) + 3_IK * int(size(x), IK), 2_IK * int(size(bvec), IK) + int(size(x), IK), 2_IK * npt))
+real(RP) :: gq(size(x))
 
 
 
@@ -256,95 +258,105 @@ nvalb = 0
 !       to BMAT that do not depend on ZMAT.
 !
 20 fsave = fopt
-!xoptsq = ZERO
-!do i = 1, n
-!    xoptsq = xoptsq + xopt(i)**2
-!end do
-xoptsq = sum(xopt**2)
-if (xoptsq >= 1.0E4 * delta**2) then
+!xoptsq = sum(xopt**2)
+
+if (sum(xopt**2) >= 1.0E4 * delta**2) then
     rsp(1:npt) = ZERO
     b = b - matprod(xopt, amat)
-    qoptsq = QUART * xoptsq
-
-    do k = 1, npt
-        summ = ZERO
-        do i = 1, n
-            summ = summ + xpt(i, k) * xopt(i)
-        end do
-        summ = summ - HALF * xoptsq
-        w(npt + k) = summ
-        do i = 1, n
-            xpt(i, k) = xpt(i, k) - HALF * xopt(i)
-            step(i) = bmat(i, k)
-            w(i) = summ * xpt(i, k) + qoptsq * xopt(i)
-            ip = npt + i
-            do j = 1, i
-                bmat(j, ip) = bmat(j, ip) + step(i) * w(j) + w(i) * step(j)
-            end do
-        end do
-    end do
-!
-!     Then the revisions of BMAT that depend on ZMAT are calculated.
-!
-    do k = 1, npt - n - 1_IK
-        summz = ZERO
-        do i = 1, npt
-            summz = summz + zmat(i, k)
-            w(i) = w(npt + i) * zmat(i, k)
-        end do
-        do j = 1, n
-            summ = qoptsq * summz * xopt(j)
-            do i = 1, npt
-                summ = summ + w(i) * xpt(j, i)
-            end do
-            step(j) = summ
-            if (k < idz) summ = -summ
-            do i = 1, npt
-                bmat(j, i) = bmat(j, i) + summ * zmat(i, k)
-            end do
-        end do
-        do i = 1, n
-            ip = i + npt
-            temp = step(i)
-            if (k < idz) temp = -temp
-            do j = 1, i
-                bmat(j, ip) = bmat(j, ip) + temp * step(j)
-            end do
-        end do
-    end do
-
-    ! Update the right hand sides of the constraints.
-
-    !do j = 1, m
-    !    temp = ZERO
-    !    do i = 1, n
-    !        temp = temp + amat(i, j) * xopt(i)
-    !    end do
-    !    b(j) = b(j) - temp
-    !end do
-
-!
-!     The following instructions complete the shift of XBASE, including the
-!       changes to the parameters of the quadratic model.
-!
-    do j = 1, n
-        w(j) = ZERO
-        do k = 1, npt
-            w(j) = w(j) + pq(k) * xpt(j, k)
-            xpt(j, k) = xpt(j, k) - HALF * xopt(j)
-        end do
-        do i = 1, j
-            hq(i, j) = hq(i, j) + w(i) * xopt(j) + xopt(i) * w(j)  ! Outer product
-            hq(j, i) = hq(i, j)
-            bmat(j, npt + i) = bmat(i, npt + j)
-        end do
-    end do
-    do j = 1, n
-        xbase(j) = xbase(j) + xopt(j)
-        xopt(j) = ZERO
-        xpt(j, kopt) = ZERO
-    end do
+    gq = ZERO
+    call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 end if
+
+!goto 9999
+
+!qxoptsq = QUART * xoptsq
+!do k = 1, npt
+!    summ = ZERO
+!    do i = 1, n
+!        summ = summ + xpt(i, k) * xopt(i)
+!    end do
+!    summ = summ - HALF * xoptsq
+!    w(npt + k) = summ
+!    do i = 1, n
+!        xpt(i, k) = xpt(i, k) - HALF * xopt(i)
+!        step(i) = bmat(i, k)
+!        w(i) = summ * xpt(i, k) + qxoptsq * xopt(i)
+!        ip = npt + i
+!        do j = 1, i
+!            bmat(j, ip) = bmat(j, ip) + step(i) * w(j) + w(i) * step(j)
+!        end do
+!    end do
+!end do
+!!
+!!     Then the revisions of BMAT that depend on ZMAT are calculated.
+!!
+!do k = 1, npt - n - 1_IK
+!    summz = ZERO
+!    do i = 1, npt
+!        summz = summz + zmat(i, k)
+!        w(i) = w(npt + i) * zmat(i, k)
+!    end do
+!    do j = 1, n
+!        summ = qxoptsq * summz * xopt(j)
+!        do i = 1, npt
+!            summ = summ + w(i) * xpt(j, i)
+!        end do
+!        step(j) = summ
+!        if (k < idz) summ = -summ
+!        do i = 1, npt
+!            bmat(j, i) = bmat(j, i) + summ * zmat(i, k)
+!        end do
+!    end do
+!    do i = 1, n
+!        ip = i + npt
+!        temp = step(i)
+!        if (k < idz) temp = -temp
+!        do j = 1, i
+!            bmat(j, ip) = bmat(j, ip) + temp * step(j)
+!        end do
+!    end do
+!end do
+
+    !! Update the right hand sides of the constraints.
+
+    !!do j = 1, m
+    !!    temp = ZERO
+    !!    do i = 1, n
+    !!        temp = temp + amat(i, j) * xopt(i)
+    !!    end do
+    !!    b(j) = b(j) - temp
+    !!end do
+
+!!
+!!     The following instructions complete the shift of XBASE, including the
+!!       changes to the parameters of the quadratic model.
+
+!do j = 1, n
+!    do i = 1, j
+!        bmat(j, npt + i) = bmat(i, npt + j)
+!    end do
+!end do
+!!
+!do j = 1, n
+!    w(j) = ZERO
+!    do k = 1, npt
+!        w(j) = w(j) + pq(k) * xpt(j, k)
+!        xpt(j, k) = xpt(j, k) - HALF * xopt(j)
+!    end do
+!    do i = 1, j
+!        hq(i, j) = hq(i, j) + w(i) * xopt(j) + xopt(i) * w(j)  ! Outer product
+!        hq(j, i) = hq(i, j)
+!    end do
+!end do
+!do j = 1, n
+!    xbase(j) = xbase(j) + xopt(j)
+!    xopt(j) = ZERO
+!    xpt(j, kopt) = ZERO
+!end do
+
+!9999 continue
+
+!end if
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 21-03-2020

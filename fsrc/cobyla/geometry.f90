@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, March 31, 2022 AM09:43:53
+! Last Modified: Sunday, April 03, 2022 PM05:16:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -164,7 +164,7 @@ end if
 
 if (tr_success) then
     veta = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
-    ! MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2))  % d should be a column!! Implicit expansion
+    !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2))  % d should be a column!! Implicit expansion
 else
     veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
@@ -365,7 +365,7 @@ d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 ! Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
 ! finite-precision arithmetic.
 A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
-! MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
+!!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
 A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
 cvmaxp = maxval([ZERO, -matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
 cvmaxn = maxval([ZERO, matprod(d, A(:, 1:m)) - conmat(:, n + 1)])

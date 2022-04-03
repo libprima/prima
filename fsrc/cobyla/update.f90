@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, March 30, 2022 PM08:47:31
+! Last Modified: Sunday, April 03, 2022 PM05:16:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -252,7 +252,7 @@ if (jopt >= 1 .and. jopt <= n) then
     sim_jopt = sim(:, jopt)
     sim(:, jopt) = ZERO
     sim(:, 1:n) = sim(:, 1:n) - spread(sim_jopt, dim=2, ncopies=n)
-    ! MATLAB: sim(:, 1:n) = sim(:, 1:n) - sim_jopt % sim_jopt should be a column!! Implicit expansion
+    !!MATLAB: sim(:, 1:n) = sim(:, 1:n) - sim_jopt % sim_jopt should be a column!! Implicit expansion
     ! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
     ! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
     ! identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,

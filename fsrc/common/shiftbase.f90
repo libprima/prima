@@ -8,7 +8,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 02, 2022 PM08:05:40
+! Last Modified: Sunday, April 03, 2022 PM05:14:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -98,21 +98,21 @@ gq = hess_mul(hq, pq, xpt, xopt) + gq
 w1 = matprod(xopt, xpt) - HALF * xoptsq
 ! W1 equals MATPROD(XPT, XOPT) after XPT is updated TEMPORARILY as follows.
 xpt = xpt - HALF * spread(xopt, dim=2, ncopies=npt)  ! TEMPORARY; will be updated again at the end.
-! MATLAB: xpt = xpt - xopt/2  % xopt should be a column!! Implicit expansion
+!!MATLAB: xpt = xpt - xopt/2  % xopt should be a column!! Implicit expansion
 xpq = matprod(xpt, pq)
 call r2update(hq, ONE, xopt, xpq)  ! Implement R2UPDATE properly so that HQ is symmetric.
 
 ! Update BMAT. See (7.11)--(7.12) of the NEWUOA paper.
 ! First, make the changes to BMAT that do not depend on ZMAT.
 do k = 1, npt
-    w2 = w1(k) * xpt(:, k) + qxoptq * xopt
+    w2 = w1(k) * xpt(:, k) + qxoptq * xopt  ! Should it be called VLAG or W2?
     ! Implement R2UPDATE properly so that BMAT(:, NPT+1:NPT+N) is symmetric.
     call r2update(bmat(:, npt + 1:npt + n), ONE, bmat(:, k), w2)
 end do
 ! Then the revisions of BMAT that depend on ZMAT are calculated.
 sumz = sum(zmat, dim=1)
 do k = 1, npt - n - 1_IK
-    vlag = qxoptq * sumz(k) * xopt + matprod(xpt, w1 * zmat(:, k))
+    vlag = qxoptq * sumz(k) * xopt + matprod(xpt, w1 * zmat(:, k))  ! Should it be called VLAG or W2?
     if (k <= idz - 1) then
         t = -ONE
     else
@@ -126,7 +126,7 @@ end do
 ! The following instructions complete the shift of XBASE. Recall the we have already subtracted
 ! HALF*XOPT from XPT. Therefore, overall, the new XPT is XPT - XOPT.
 xpt = xpt - HALF * spread(xopt, dim=2, ncopies=npt)
-! MATLAB: xpt = xpt - xopt/2  % xopt should be a column!! Implicit expansion
+!!MATLAB: xpt = xpt - xopt/2  % xopt should be a column!! Implicit expansion
 xbase = xbase + xopt
 xopt = ZERO
 

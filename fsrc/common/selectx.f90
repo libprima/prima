@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, April 02, 2022 PM09:55:29
+! Last Modified: Sunday, April 03, 2022 PM03:23:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -113,7 +113,7 @@ if (any(isbetter(ffilt(1:nfilt), cfilt(1:nfilt), f, cstrv, ctol))) then
     return
 end if
 
-! Decide which columns of XFILT to keep. We use again an array constructor with an implied do loop.
+! Decide which columns of XFILT to keep.
 keep = (.not. isbetter(f, cstrv, ffilt(1:nfilt), cfilt(1:nfilt), ctol))
 
 ! If NFILT == MAXFILT and X is not better than any column of XFILT, then we remove the worst column
@@ -313,8 +313,8 @@ end function selectx
 
 function isbetter00(f1, c1, f2, c2, ctol) result(is_better)
 !--------------------------------------------------------------------------------------------------!
-! This function compares whether FC1 = (F1, C1) is (strictly) better than FC2 = (F2, C2),
-! roughly meaning that (F1 < F2 and C1 <= C2) or (F1 <= F2 and C1 < C2).
+! This function compares whether FC1 = (F1, C1) is (strictly) better than FC2 = (F2, C2), which
+! basically means that (F1 < F2 and C1 <= C2) or (F1 <= F2 and C1 < C2).
 ! It takes care of the cases where some of these values are NaN or Inf, even though some cases
 ! should never happen due to the moderated extreme barrier.
 ! At return, BETTER = TRUE if and only if (F1, C1) is better than (F2, C2).
