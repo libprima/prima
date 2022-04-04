@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 03, 2022 PM06:49:58
+! Last Modified: Monday, April 04, 2022 PM12:35:34
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -165,13 +165,13 @@ n = int(size(x), kind(n))
 do j = 1, n
     A(j:n, j) = A(j:n, j) + alpha * x(j:n) * x(j)
 end do
-call symmetrize(A)  ! Set A(UPPER_TRI) by COPYING A(LOWER_TRI).
+call symmetrize(A)  ! Copy A(LOWER_TRI) to A(UPPER_TRI).
 #else
 ! For some reason, A + alpha*outprod(x,x), A + (outprod(alpha*x, x) + outprod(x, alpha*x))/2,
 ! A + symmetrize(x, alpha*x), or A = A + sign(alpha) * outprod(sqrt(|alpha|) * x, sqrt(|alpha|) * x)
-! does not work as well as the following lines for NEWUOA, where SYMMETRIZE should set A(UPPER_TRI)
-! by COPYING A(LOWER_TRI) rather than set A = (A'+A)/2. This is essentially the same as Powell's
-! code, although it computes A(UPPER_TRI) unnecessarily. When X is rather small or large, calculating
+! does not work as well as the following lines for NEWUOA, where SYMMETRIZE should copy A(LOWER_TRI)
+! to A(UPPER_TRI) rather than set A = (A'+A)/2. This is essentially the same as Powell's code,
+! although it computes A(UPPER_TRI) unnecessarily. When X is rather small or large, calculating
 ! OUTPROD(X, X) can be a bad idea, even though it guarantees symmetry in finite-precision arithmetic.
 A = A + outprod(alpha * x, x)
 call symmetrize(A)
@@ -255,11 +255,11 @@ n = int(size(x), kind(n))
 do j = 1, n
     A(j:n, j) = A(j:n, j) + alpha * x(j:n) * y(j) + alpha * y(j:n) * x(j)
 end do
-! Set A(UPPER_TRI) by copying A(LOWER_TRI).
+! Copy A(LOWER_TRI) to A(UPPER_TRI).
 call symmetrize(A)
 #else
 ! For some reason, A = A + ALPHA * (OUTPROD(X, Y) + OUTPROD(Y, X)) does not work as well as the
-! following lines for NEWUOA, where SYMMETRIZE should set A(UPPER_TRI) by copying A(LOWER_TRI),
+! following lines for NEWUOA, where SYMMETRIZE should copy A(LOWER_TRI) to A(UPPER_TRI),
 ! although ALPHA*( X*Y^T + Y*X^T) is guaranteed symmetric even in floating-point arithmetic. These
 ! lines are essentially the same as Powell's code, although it calculates A(UPPER_TRI) unnecessarily.
 A = A + outprod(alpha * x, y) + outprod(alpha * y, x)
