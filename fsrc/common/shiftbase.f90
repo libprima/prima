@@ -8,7 +8,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 03, 2022 PM05:14:22
+! Last Modified: Tuesday, April 05, 2022 AM02:34:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,15 +25,16 @@ subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 ! accordingly. PQ and ZMAT remain the same after the shifting. See Section 7 of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: SUMZ(NPT-N-1), VLAG(N), W1(NPT), W2(N), XPQ(N)
-! Size of local arrays: REAL(RP)*(2*NPT+2*N-1)
+! REAL(RP) :: BY(N, N), SXPT(NPT), V(N), VXOPT(N, N), XPTXAV(N, NPT), YMAT(N, NPT), 
+! YZMAT(N, NPT-N-1), YZMAT_C(N, NPT-N-1).
+! Size of local arrays: REAL(RP)*(4*N*NPT+NPT-N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : r1update, r2update, inprod, matprod, issymmetric, hess_mul
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric, hess_mul
 
 implicit none
 
@@ -55,14 +56,16 @@ character(len=*), parameter :: srname = 'SHIFTBASE'
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: by(size(xopt), size(xopt))
 real(RP) :: qxoptq
-real(RP) :: sumz(size(zmat, 2))
-real(RP) :: t
-real(RP) :: vlag(size(xopt))
-real(RP) :: w1(size(pq))
-real(RP) :: w2(size(xopt))
+real(RP) :: sxpt(size(pq))
+real(RP) :: v(size(xopt))
+real(RP) :: vxopt(size(xopt), size(xopt))
 real(RP) :: xoptsq
-real(RP) :: xpq(size(xopt))
+real(RP) :: xptxav(size(xpt, 1), size(xpt, 2))
+real(RP) :: ymat(size(xopt), size(pq))
+real(RP) :: yzmat(size(xopt), size(zmat, 2))
+real(RP) :: yzmat_c(size(xopt), size(zmat, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -89,44 +92,41 @@ end if
 !====================!
 
 xoptsq = inprod(xopt, xopt)
-qxoptq = QUART * xoptsq
 
-! Update GQ.
-gq = hess_mul(hq, pq, xpt, xopt) + gq
+xptxav = xpt - HALF * spread(xopt, dim=2, ncopies=npt)
+!!MATLAB: xptxav = xpt - xopt/2  % xopt should be a column!! Implicit expansion
+sxpt = matprod(xopt, xptxav)
+!sxpt = matprod(xopt, xpt) - HALF * xoptsq
 
-! Update HQ. See (7.14) of the NEWUOA paper.
-w1 = matprod(xopt, xpt) - HALF * xoptsq
-! W1 equals MATPROD(XPT, XOPT) after XPT is updated TEMPORARILY as follows.
-xpt = xpt - HALF * spread(xopt, dim=2, ncopies=npt)  ! TEMPORARY; will be updated again at the end.
-!!MATLAB: xpt = xpt - xopt/2  % xopt should be a column!! Implicit expansion
-xpq = matprod(xpt, pq)
-call r2update(hq, ONE, xopt, xpq)  ! Implement R2UPDATE properly so that HQ is symmetric.
+! Update BMAT. See (7.11)--(7.12) of the NEWUOA paper and the elaborations around.
 
-! Update BMAT. See (7.11)--(7.12) of the NEWUOA paper.
 ! First, make the changes to BMAT that do not depend on ZMAT.
+qxoptq = QUART * xoptsq
 do k = 1, npt
-    w2 = w1(k) * xpt(:, k) + qxoptq * xopt  ! Should it be called VLAG or W2?
-    ! Implement R2UPDATE properly so that BMAT(:, NPT+1:NPT+N) is symmetric.
-    call r2update(bmat(:, npt + 1:npt + n), ONE, bmat(:, k), w2)
+    ymat(:, k) = sxpt(k) * xptxav(:, k) + qxoptq * xopt  ! Should it be called VLAG or W2?
 end do
-! Then the revisions of BMAT that depend on ZMAT are calculated.
-sumz = sum(zmat, dim=1)
-do k = 1, npt - n - 1_IK
-    vlag = qxoptq * sumz(k) * xopt + matprod(xpt, w1 * zmat(:, k))  ! Should it be called VLAG or W2?
-    if (k <= idz - 1) then
-        t = -ONE
-    else
-        t = ONE
-    end if
-    call r1update(bmat(:, 1:npt), t, vlag, zmat(:, k))
-    ! Implement R1UPDATE properly so that BMAT(:, NPT+1:NPT+N) is symmetric.
-    call r1update(bmat(:, npt + 1:npt + n), t, vlag)
-end do
+!!MATLAB: ymat = xptxav .* sxpt + qxoptq * xopt  % sxpt should be a row, xopt should be a column
+by = matprod(bmat(:, 1:npt), transpose(ymat))  ! BMAT(:, 1:NPT) is not updated yet.
+bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + (by + transpose(by))
+!call symmetrize(bmat(:, npt + 1:npt + n))  ! Do this if the update above does not ensure symmetry
 
-! The following instructions complete the shift of XBASE. Recall the we have already subtracted
-! HALF*XOPT from XPT. Therefore, overall, the new XPT is XPT - XOPT.
-xpt = xpt - HALF * spread(xopt, dim=2, ncopies=npt)
-!!MATLAB: xpt = xpt - xopt/2  % xopt should be a column!! Implicit expansion
+! Then the revisions of BMAT that depend on ZMAT are calculated.
+yzmat = matprod(ymat, zmat)
+yzmat_c(:, 1:idz - 1) = -yzmat(:, 1:idz - 1)
+yzmat_c(:, idz:npt - n - 1) = yzmat(:, idz:npt - n - 1)
+bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + matprod(yzmat, transpose(yzmat_c))
+bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
+
+! Update the quadratic model. Only GQ and HQ need revision. For HQ, see (7.14) of the NEWUOA paper.
+gq = hess_mul(hq, pq, xpt, xopt) + gq
+v = matprod(xptxav, pq)  ! Vector V in (7.14) of the NEWUOA paper
+vxopt = outprod(v, xopt)  !!MATLAB: vxopt = v * xopt';  % v and xopt should be both columns
+hq = hq + (vxopt + transpose(vxopt))
+!call symmetrize(hq)  ! Do this if the update above does not ensure symmetry
+
+! The following instructions complete the shift of XBASE.
+xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+!!MATLAB: xpt = xpt - xopt  % xopt should be a column!! Implicit expansion
 xbase = xbase + xopt
 xopt = ZERO
 
