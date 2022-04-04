@@ -8,7 +8,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 05, 2022 AM02:34:55
+! Last Modified: Tuesday, April 05, 2022 AM02:45:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,9 +25,9 @@ subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 ! accordingly. PQ and ZMAT remain the same after the shifting. See Section 7 of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: BY(N, N), SXPT(NPT), V(N), VXOPT(N, N), XPTXAV(N, NPT), YMAT(N, NPT), 
+! REAL(RP) :: BY(N, N), SXPT(NPT), V(N), VXOPT(N, N), XPTXAV(N, NPT), YMAT(N, NPT),
 ! YZMAT(N, NPT-N-1), YZMAT_C(N, NPT-N-1).
-! Size of local arrays: REAL(RP)*(4*N*NPT+NPT-N)
+! Size of local arrays: REAL(RP)*(4*N*NPT+NPT-N), LARGE!!!
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -95,8 +95,8 @@ xoptsq = inprod(xopt, xopt)
 
 xptxav = xpt - HALF * spread(xopt, dim=2, ncopies=npt)
 !!MATLAB: xptxav = xpt - xopt/2  % xopt should be a column!! Implicit expansion
-sxpt = matprod(xopt, xptxav)
-!sxpt = matprod(xopt, xpt) - HALF * xoptsq
+!sxpt = matprod(xopt, xptxav)
+sxpt = matprod(xopt, xpt) - HALF * xoptsq
 
 ! Update BMAT. See (7.11)--(7.12) of the NEWUOA paper and the elaborations around.
 
