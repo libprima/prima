@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 05, 2022 PM06:39:16
+! Last Modified: Tuesday, April 05, 2022 PM07:25:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -113,18 +113,17 @@ sxpt = matprod(xopt, xpt) - HALF * xoptsq  ! This one seems to work better numer
 ! First, make the changes to BMAT that do not depend on ZMAT.
 qxoptq = QUART * xoptsq
 do k = 1, npt
-    ymat(:, k) = sxpt(k) * xptxav(:, k) + qxoptq * xopt  ! Should it be called VLAG or W2?
+    ymat(:, k) = sxpt(k) * xptxav(:, k) + qxoptq * xopt
 end do
 !!MATLAB: ymat = xptxav .* sxpt + qxoptq * xopt  % sxpt should be a row, xopt should be a column
 by = matprod(bmat(:, 1:npt), transpose(ymat))  ! BMAT(:, 1:NPT) is not updated yet.
 bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + (by + transpose(by))
-!call symmetrize(bmat(:, npt + 1:npt + n))  ! Do this if the update above does not ensure symmetry
-
 ! Then the revisions of BMAT that depend on ZMAT are calculated.
 yzmat = matprod(ymat, zmat)
-yzmat_c(:, 1:idz - 1) = -yzmat(:, 1:idz - 1)
-yzmat_c(:, idz:npt - n - 1) = yzmat(:, idz:npt - n - 1)
+yzmat_c = yzmat
+yzmat_c(:, 1:idz - 1) = -yzmat(:, 1:idz - 1)  ! IDZ is usually small, if not 1.
 bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + matprod(yzmat, transpose(yzmat_c))
+!call symmetrize(bmat(:, npt + 1:npt + n))  ! Do this if the update above does not ensure symmetry
 bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
 
 ! Update the quadratic model. Only GQ and HQ need revision. For HQ, see (7.14) of the NEWUOA paper.
