@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 03, 2022 PM07:25:12
+! Last Modified: Tuesday, April 05, 2022 PM08:42:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -109,6 +109,7 @@ integer(IK) :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
 &           knew, kopt, ksave, nact, nh, np, nptm,     &
 &           nvala, nvalb
 real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
+real(RP) :: xptsav(n, npt), bup1(n, npt), bup2(n, n)
 
 !
 !     The arguments N, NPT, M, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
@@ -232,47 +233,71 @@ do i = 1, n
 end do
 if (xoptsq >= 1.0E4_RP * delta**2) then
     qoptsq = 0.25_RP * xoptsq
+    rsp(1:npt) = ZERO
+
+    xptsav = xpt
+
+    bup2 = ZERO
     do k = 1, npt
         summ = ZERO
         do i = 1, n
-            summ = summ + xpt(i, k) * xopt(i)
+            summ = summ + xptsav(i, k) * xopt(i)
         end do
         summ = summ - HALF * xoptsq
         w(npt + k) = summ
-        rsp(k) = ZERO
+
         do i = 1, n
             xpt(i, k) = xpt(i, k) - HALF * xopt(i)
             step(i) = bmat(i, k)
             w(i) = summ * xpt(i, k) + qoptsq * xopt(i)
-            ip = npt + i
+            !----------------------------------------------------------------!
+            ! Zaikun 20220405
+            !ip = npt + i
             do j = 1, i
-                bmat(j, ip) = bmat(j, ip) + step(i) * w(j) + w(i) * step(j)
+                !bmat(j, ip) = bmat(j, ip) + step(i) * w(j) + w(i) * step(j)
+                bup2(i, j) = bup2(i, j) + step(i) * w(j)
+                if (j < i) bup2(j, i) = bup2(j, i) + w(i) * step(j)
             end do
+            !----------------------------------------------------------------!
         end do
     end do
+
+    !----------------------------------------------------------------!
+    ! Zaikun 20220405
+    do i = 1, n
+        ip = npt + i
+        do j = 1, i
+            bmat(j, ip) = bmat(j, ip) + (bup2(i, j) + bup2(j, i))
+        end do
+    end do
+    !----------------------------------------------------------------!
 !
 !     Then the revisions of BMAT that depend on ZMAT are calculated.
 !
+    bup1 = ZERO; bup2 = ZERO
     do k = 1, nptm
         summz = ZERO
         do i = 1, npt
             summz = summz + zmat(i, k)
             w(i) = w(npt + i) * zmat(i, k)
         end do
+
         do j = 1, n
             !---------------------------------!
             ! Zaikun 20220403
             !summ = qoptsq * summz * xopt(j)
             summ = ZERO
             do i = 1, npt
-                summ = summ + w(i) * xpt(j, i)
+                !summ = summ + w(i) * xpt(j, i)
+                summ = summ + (w(npt + i) * xpt(j, i) + qoptsq * xopt(j)) * zmat(i, k)
             end do
-            summ = summ + qoptsq * summz * xopt(j)
+            !summ = summ + qoptsq * summz * xopt(j)
             !---------------------------------!
             step(j) = summ
             if (k < idz) summ = -summ
             do i = 1, npt
-                bmat(j, i) = bmat(j, i) + summ * zmat(i, k)
+                !bmat(j, i) = bmat(j, i) + summ * zmat(i, k)
+                bup1(j, i) = bup1(j, i) + summ * zmat(i, k)
             end do
         end do
         do i = 1, n
@@ -280,10 +305,28 @@ if (xoptsq >= 1.0E4_RP * delta**2) then
             temp = step(i)
             if (k < idz) temp = -temp
             do j = 1, i
-                bmat(j, ip) = bmat(j, ip) + temp * step(j)
+                !bmat(j, ip) = bmat(j, ip) + temp * step(j)
+                bup2(j, i) = bup2(j, i) + temp * step(j)
             end do
         end do
     end do
+
+    !----------------------------------------------------------------!
+    ! Zaikun 20220405
+    do i = 1, n
+        do j = 1, npt
+            bmat(i, j) = bmat(i, j) + bup1(i, j)
+        end do
+    end do
+
+    do i = 1, n
+        ip = npt + i
+        do j = 1, i
+            bmat(j, ip) = bmat(j, ip) + bup2(j, i)
+        end do
+    end do
+    !----------------------------------------------------------------!
+
 !
 !     Update the right hand sides of the constraints.
 !
@@ -303,20 +346,32 @@ if (xoptsq >= 1.0E4_RP * delta**2) then
     ih = 0
     do j = 1, n
         w(j) = ZERO
+        !-----------------------------------------------!
+        ! Zaikun 20220405
         do k = 1, npt
-            w(j) = w(j) + pq(k) * xpt(j, k)
-            xpt(j, k) = xpt(j, k) - HALF * xopt(j)
+            !w(j) = w(j) + pq(k) * xpt(j, k)
+            !xpt(j, k) = xpt(j, k) - HALF * xopt(j)
+
+            w(j) = w(j) + pq(k) * xptsav(j, k)
+            xpt(j, k) = xptsav(j, k) - xopt(j)
         end do
+        w(j) = w(j) - HALF * sum(pq) * xopt(j)
+        !-----------------------------------------------!
+
         do i = 1, j
             ih = ih + 1
-            hq(ih) = hq(ih) + w(i) * xopt(j) + xopt(i) * w(j)
+
+            !hq(ih) = hq(ih) + w(i) * xopt(j) + xopt(i) * w(j)
+            hq(ih) = hq(ih) + (w(i) * xopt(j) + xopt(i) * w(j))
+
             bmat(j, npt + i) = bmat(i, npt + j)
         end do
     end do
     do j = 1, n
         xbase(j) = xbase(j) + xopt(j)
         xopt(j) = ZERO
-        xpt(j, kopt) = ZERO
+        !!xpt(j, kopt) = ZERO  ! Zaikun 20220406: This is the original code. Removed for the moment.
+        ! Should bring it back later.
     end do
 end if
 
