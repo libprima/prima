@@ -119,7 +119,8 @@ bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
 
 ! Update the quadratic model. Only GQ and HQ need revision. For HQ, see (7.14) of the NEWUOA paper.
 gq = hess_mul(hq, pq, xpt, xopt) + gq
-v = matprod(xptxav, pq)  ! Vector V in (7.14) of the NEWUOA paper
+!v = matprod(xptxav, pq)  ! Vector V in (7.14) of the NEWUOA paper
+v = matprod(xpt, pq) - HALF*sum(pq)*xopt ! Vector V in (7.14) of the NEWUOA paper
 vxopt = outprod(v, xopt)  !!MATLAB: vxopt = v * xopt';  % v and xopt should be both columns
 hq = hq + (vxopt + transpose(vxopt))
 !call symmetrize(hq)  ! Do this if the update above does not ensure symmetry
