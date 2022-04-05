@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 05, 2022 PM05:43:03
+! Last Modified: Wednesday, April 06, 2022 AM12:10:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -327,7 +327,7 @@ if (sum(xopt**2) >= 1.0E3_RP * dsq) then
     xnew = xnew - xopt  ! Needed?
     sl = sl - xopt
     su = su - xopt
-    call shiftbase(xbase, xopt, xpt, 1_IK, zmat, bmat, pq, hq)
+    call shiftbase(kopt, xbase, xopt, xpt, 1_IK, zmat, bmat, pq, hq)
     xoptsq = ZERO  ! Needed?
 end if
 

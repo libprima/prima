@@ -92,7 +92,7 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        summw, summz, temp, vquad, xoptsq
 integer(IK) :: i, ih, ip, itest, j, jj, jp, k, kbase, knew, &
 &           kopt, ksav, nfsav, nh, np, nptm, nresc, ntrits
-real(RP) :: xptsav(n, npt), bup1(n, npt), bup2(n, n)
+real(RP) :: bup1(n, npt), bup2(n, n)
 
 !     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
 !       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
@@ -294,7 +294,6 @@ ntrits = ntrits + 1
 90 continue
 
 if (xoptsq >= 1.0E3_RP * dsq) then
-    xptsav = xpt
     fracsq = 0.25_RP * xoptsq
     summpq = ZERO
 
@@ -306,7 +305,7 @@ if (xoptsq >= 1.0E3_RP * dsq) then
         !summ = -HALF * xoptsq
         summ = ZERO
         do i = 1, n
-            summ = summ + xptsav(i, k) * xopt(i)
+            summ = summ + xpt(i, k) * xopt(i)
         end do
         !summ = -HALF * xoptsq + summ
         summ = summ - HALF * xoptsq
