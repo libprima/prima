@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 03, 2022 PM11:34:13
+! Last Modified: Tuesday, April 05, 2022 AM08:46:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -37,6 +37,7 @@ use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox
 use, non_intrinsic :: update_mod, only : update
+use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 implicit none
 
@@ -76,6 +77,7 @@ integer(IK) :: n
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: d(size(x))
 real(RP) :: fval(npt)
+real(RP) :: gq(size(x))
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
@@ -100,7 +102,7 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        pqold, ratio, rho, scaden, summ, summa, summb, &
 &        wz(npt - size(x) - 1), sumz(npt - size(x) - 1), temp, vquad, xoptsq
 integer(IK) :: i, itest, j, jj, jp, k, kbase, knew, &
-&           kopt, ksav, nfsav, np, nptm, nresc, ntrits
+&           kopt, ksav, nfsav, np, nptm, nresc, ntrits, idz
 
 
 ! Sizes.
@@ -325,41 +327,51 @@ ntrits = ntrits + 1
 90 continue
 
 !if (dsq <= 1.0E-3_RP * xoptsq) then
+!if (sum(xopt**2) >= 1.0E3_RP * dsq) then
+!    !gq = ZERO
+!    !call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt, sl, su)
+
+!    xoptsq = sum(xopt**2)
+!    qxoptq = QUART * xoptsq
+
+!    w1 = matprod(xopt, xpt) - HALF * xoptsq
+!    do k = 1, npt
+!        vlag(1:n) = w1(k) * xpt(:, k) + (qxoptq - HALF * w1(k)) * xopt  ! Should it be called VLAG or W2?
+!        call r2update(bmat(:, npt + 1:npt + n), ONE, bmat(:, k), vlag(1:n))
+!    end do
+
+!    ! Then the revisions of BMAT that depend on ZMAT are calculated.
+!    sumz = sum(zmat, dim=1)
+!    wz = matprod(w1, zmat)
+!    do k = 1, npt - n - 1_IK
+!        w2 = (qxoptq * sumz(k) - HALF * wz(k)) * xopt + matprod(xpt, w1 * zmat(:, k))  ! Should it be called VLAG or W2?
+!        call r1update(bmat(:, 1:npt), ONE, w2, zmat(:, k))
+!        call r1update(bmat(:, npt + 1:npt + n), ONE, w2)  ! R1UPDATE should ensure the symmetry.
+!    end do
+
+!    ! The following instructions complete the shift, including the changes to the second derivative
+!    ! parameters of the quadratic model.
+!    w2 = -HALF * sum(pq) * xopt + matprod(xpt, pq)
+!    call r2update(hq, ONE, xopt, w2)  ! R2UPDATE should ensure symmetry.
+
+!    xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+!    !!MATLAB: xpt = xpt - xopt  % xopt should be a column!! Implicit expansion
+!    xbase = xbase + xopt
+!    xnew = xnew - xopt
+!    sl = sl - xopt
+!    su = su - xopt
+!    xopt = ZERO
+!    xoptsq = ZERO
+!end if
+!
 if (sum(xopt**2) >= 1.0E3_RP * dsq) then
-    !gq = ZERO
-    !call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt, sl, su)
-
-    xoptsq = sum(xopt**2)
-    qxoptq = QUART * xoptsq
-
-    w1 = matprod(xopt, xpt) - HALF * xoptsq
-    do k = 1, npt
-        vlag(1:n) = w1(k) * xpt(:, k) + (qxoptq - HALF * w1(k)) * xopt  ! Should it be called VLAG or W2?
-        call r2update(bmat(:, npt + 1:npt + n), ONE, bmat(:, k), vlag(1:n))
-    end do
-
-    ! Then the revisions of BMAT that depend on ZMAT are calculated.
-    sumz = sum(zmat, dim=1)
-    wz = matprod(w1, zmat)
-    do k = 1, npt - n - 1_IK
-        w2 = (qxoptq * sumz(k) - HALF * wz(k)) * xopt + matprod(xpt, w1 * zmat(:, k))  ! Should it be called VLAG or W2?
-        call r1update(bmat(:, 1:npt), ONE, w2, zmat(:, k))
-        call r1update(bmat(:, npt + 1:npt + n), ONE, w2)  ! R1UPDATE should ensure the symmetry.
-    end do
-
-    ! The following instructions complete the shift, including the changes to the second derivative
-    ! parameters of the quadratic model.
-    w2 = -HALF * sum(pq) * xopt + matprod(xpt, pq)
-    call r2update(hq, ONE, xopt, w2)  ! R2UPDATE should ensure symmetry.
-
-    xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-    !!MATLAB: xpt = xpt - xopt  % xopt should be a column!! Implicit expansion
-    xbase = xbase + xopt
     xnew = xnew - xopt
     sl = sl - xopt
     su = su - xopt
-    xopt = ZERO
     xoptsq = ZERO
+    gq = ZERO
+    idz = 1_IK
+    call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 end if
 
 
