@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 05, 2022 AM08:46:32
+! Last Modified: Tuesday, April 05, 2022 PM05:43:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,12 +23,12 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
     & sl_in, su_in, xl, xu, x, nf, f, fhist, xhist, info)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : matprod, r1update, r2update!, norm
+!use, non_intrinsic :: linalg_mod, only : matprod, r1update, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
@@ -77,13 +77,10 @@ integer(IK) :: n
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: d(size(x))
 real(RP) :: fval(npt)
-real(RP) :: gq(size(x))
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
 real(RP) :: vlag(npt + size(x))
-real(RP) :: w1(npt)
-real(RP) :: w2(size(x))
 real(RP) :: w(3 * (npt + size(x)))
 real(RP) :: sl(size(x))
 real(RP) :: su(size(x))
@@ -98,11 +95,11 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        biglsq, bsumm, cauchy, crvmin, curv, delsq, delta,  &
 &        den, denom, densav, diff, diffa, diffb, diffc,     &
 &        dist, distsq, dnorm, dsq, dx, errbig, fopt,        &
-&        qxoptq, frhosq, gisq, gqsq, hdiag,      &
+&        frhosq, gisq, gqsq, hdiag,      &
 &        pqold, ratio, rho, scaden, summ, summa, summb, &
-&        wz(npt - size(x) - 1), sumz(npt - size(x) - 1), temp, vquad, xoptsq
+&        temp, vquad, xoptsq
 integer(IK) :: i, itest, j, jj, jp, k, kbase, knew, &
-&           kopt, ksav, nfsav, np, nptm, nresc, ntrits, idz
+&           kopt, ksav, nfsav, np, nptm, nresc, ntrits
 
 
 ! Sizes.
@@ -326,93 +323,13 @@ ntrits = ntrits + 1
 !
 90 continue
 
-!if (dsq <= 1.0E-3_RP * xoptsq) then
-!if (sum(xopt**2) >= 1.0E3_RP * dsq) then
-!    !gq = ZERO
-!    !call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt, sl, su)
-
-!    xoptsq = sum(xopt**2)
-!    qxoptq = QUART * xoptsq
-
-!    w1 = matprod(xopt, xpt) - HALF * xoptsq
-!    do k = 1, npt
-!        vlag(1:n) = w1(k) * xpt(:, k) + (qxoptq - HALF * w1(k)) * xopt  ! Should it be called VLAG or W2?
-!        call r2update(bmat(:, npt + 1:npt + n), ONE, bmat(:, k), vlag(1:n))
-!    end do
-
-!    ! Then the revisions of BMAT that depend on ZMAT are calculated.
-!    sumz = sum(zmat, dim=1)
-!    wz = matprod(w1, zmat)
-!    do k = 1, npt - n - 1_IK
-!        w2 = (qxoptq * sumz(k) - HALF * wz(k)) * xopt + matprod(xpt, w1 * zmat(:, k))  ! Should it be called VLAG or W2?
-!        call r1update(bmat(:, 1:npt), ONE, w2, zmat(:, k))
-!        call r1update(bmat(:, npt + 1:npt + n), ONE, w2)  ! R1UPDATE should ensure the symmetry.
-!    end do
-
-!    ! The following instructions complete the shift, including the changes to the second derivative
-!    ! parameters of the quadratic model.
-!    w2 = -HALF * sum(pq) * xopt + matprod(xpt, pq)
-!    call r2update(hq, ONE, xopt, w2)  ! R2UPDATE should ensure symmetry.
-
-!    xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-!    !!MATLAB: xpt = xpt - xopt  % xopt should be a column!! Implicit expansion
-!    xbase = xbase + xopt
-!    xnew = xnew - xopt
-!    sl = sl - xopt
-!    su = su - xopt
-!    xopt = ZERO
-!    xoptsq = ZERO
-!end if
-!
 if (sum(xopt**2) >= 1.0E3_RP * dsq) then
-    xnew = xnew - xopt
+    xnew = xnew - xopt  ! Needed?
     sl = sl - xopt
     su = su - xopt
-    xoptsq = ZERO
-    gq = ZERO
-    idz = 1_IK
-    call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
+    call shiftbase(xbase, xopt, xpt, 1_IK, zmat, bmat, pq, hq)
+    xoptsq = ZERO  ! Needed?
 end if
-
-
-!90 if (dsq <= 1.0E-3_RP * xoptsq) then
-!
-!     Then the revisions of BMAT that depend on ZMAT are calculated.
-!
-!do jj = 1, nptm
-
-!        summz = ZERO
-!        summw = ZERO
-!        do k = 1, npt
-!            summz = summz + zmat(k, jj)
-!           vlag(k) = w(npt + k) * zmat(k, jj)
-!            summw = summw + vlag(k)
-!        end do
-
-!do j = 1, n
-!    summ = (qxoptq * summz - HALF * summw) * xopt(j)
-!    do k = 1, npt
-!        summ = summ + vlag(k) * xpt(j, k)
-!    end do
-!    w(j) = summ
-!end do
-
-!do j = 1, n
-!    do k = 1, npt
-!        bmat(j, k) = bmat(j, k) + w(j) * zmat(k, jj)
-!    end do
-!end do
-
-!do i = 1, n
-!    ip = i + npt
-!    !temp = w(i)
-!    do j = 1, i
-!        bmat(j, ip) = bmat(j, ip) + w(i) * w(j)
-!    end do
-!end do
-!
-!end do
-
 !
 !     The following instructions complete the shift, including the changes
 !     to the second derivative parameters of the quadratic model.
@@ -799,6 +716,9 @@ if (ntrits > 0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !          IF (VQUAD .GE. ZERO) THEN
     if (.not. (vquad < ZERO)) then
+        !------------------------------------------------------------------------------------------!
+        ! Zaikun 20220405: LINCOA improves the model in this case. BOBYQA should do the same.
+        !------------------------------------------------------------------------------------------!
         info = 2
         goto 720
     end if

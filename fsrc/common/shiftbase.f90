@@ -1,6 +1,7 @@
 module shiftbase_mod
 !--------------------------------------------------------------------------------------------------!
-! This module contanis a subroutine that shifts the base point from XBASE to XBASE + XPT.
+! This module contanis a subroutine that shifts the base point from XBASE to XBASE + XPT. It is
+! used in NEWUOA, BOBYQA, and LINCOA.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
@@ -8,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 05, 2022 AM08:54:52
+! Last Modified: Tuesday, April 05, 2022 PM05:39:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,10 +20,15 @@ public :: shiftbase
 contains
 
 
-subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
+subroutine shiftbase(xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
 !--------------------------------------------------------------------------------------------------!
-! SHIFTBASE shifts the base point for XBASE to XBASE + XOPT and updates GQ, HQ, and BMAT
+! SHIFTBASE shifts the base point from XBASE to XBASE + XOPT and updates BMAT, HQ, and GQ
 ! accordingly. PQ and ZMAT remain the same after the shifting. See Section 7 of the NEWUOA paper.
+! N.B.: [IDZ, ZMAT] provides the factorization of Omega in (3.17) of the NEWUOA paper; in specific,
+! Omega = sum_{i=1}^{NPT-N-1} s_i*ZMAT(:,i)*ZMAT(:,i)^T, s_i = -1 if i < IDZ, and si = 1 if i >= IDZ.
+! In precise arithmetic, IDZ should be always 1; to cope with rounding errors, NEWUOA and LINCOA
+! allow IDZ = -1 (see (4.18)--(4.20) of the NEWUOA paper); in BOBYQA, IDZ is always 1, and the
+! rounding errors are handled by the RESCUE subroutine (Sec. 5 of the BOBYQA paper).
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: BY(N, N), SXPT(NPT), V(N), VXOPT(N, N), XPTXAV(N, NPT), YMAT(N, NPT),
@@ -39,17 +45,19 @@ use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric, 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: idz
+integer(IK), intent(in) :: idz  ! In BOBYQA, IDZ is always 1.
 real(RP), intent(in) :: pq(:)   ! PQ(NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
 ! In-outputs
 real(RP), intent(inout) :: bmat(:, :)   ! BMAT(N, NPT + N)
-real(RP), intent(inout) :: gq(:)    ! GQ(N)
 real(RP), intent(inout) :: hq(:, :) ! HQ(N, N)
 real(RP), intent(inout) :: xbase(:) ! XBASE(N)
 real(RP), intent(inout) :: xopt(:)  ! XOPT(N)
 real(RP), intent(inout) :: xpt(:, :)    ! XPT(N, NPT)
+real(RP), intent(inout), optional :: gq(:)    ! GQ(N)
+! N.B.: GQ is the gradient of the quadratic model at XBASE. It is present in NEWUOA. BOBYQA & LINCOA
+! do not use GQ but always use GOPT, namely the gradient at XBASE+XOPT. Shouldn't NEWUOA do the same?
 
 ! Local variables
 character(len=*), parameter :: srname = 'SHIFTBASE'
@@ -93,12 +101,12 @@ end if
 
 xoptsq = inprod(xopt, xopt)
 
+! Update BMAT. See (7.11)--(7.12) of the NEWUOA paper and the elaborations around.
+! XPTXAV corresponds to XPT - XAV in the NEWUOA paper, with XAV  (X0 + XOPT)/2.
 xptxav = xpt - HALF * spread(xopt, dim=2, ncopies=npt)
 !!MATLAB: xptxav = xpt - xopt/2  % xopt should be a column!! Implicit expansion
 !sxpt = matprod(xopt, xptxav)
-sxpt = matprod(xopt, xpt) - HALF * xoptsq
-
-! Update BMAT. See (7.11)--(7.12) of the NEWUOA paper and the elaborations around.
+sxpt = matprod(xopt, xpt) - HALF * xoptsq  ! This one seems to work better numerically.
 
 ! First, make the changes to BMAT that do not depend on ZMAT.
 qxoptq = QUART * xoptsq
@@ -118,9 +126,11 @@ bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + matprod(yzmat, transpose(y
 bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
 
 ! Update the quadratic model. Only GQ and HQ need revision. For HQ, see (7.14) of the NEWUOA paper.
-gq = hess_mul(hq, pq, xpt, xopt) + gq
+if (present(gq)) then
+    gq = hess_mul(hq, pq, xpt, xopt) + gq
+end if
 !v = matprod(xptxav, pq)  ! Vector V in (7.14) of the NEWUOA paper
-v = matprod(xpt, pq) - HALF*sum(pq)*xopt ! Vector V in (7.14) of the NEWUOA paper
+v = matprod(xpt, pq) - HALF * sum(pq) * xopt ! This one seems to work better numerically.
 vxopt = outprod(v, xopt)  !!MATLAB: vxopt = v * xopt';  % v and xopt should be both columns
 hq = hq + (vxopt + transpose(vxopt))
 !call symmetrize(hq)  ! Do this if the update above does not ensure symmetry
@@ -141,7 +151,6 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
     call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
