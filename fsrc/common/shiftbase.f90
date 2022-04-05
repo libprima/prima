@@ -8,7 +8,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 05, 2022 AM02:45:48
+! Last Modified: Tuesday, April 05, 2022 AM08:34:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -95,8 +95,8 @@ xoptsq = inprod(xopt, xopt)
 
 xptxav = xpt - HALF * spread(xopt, dim=2, ncopies=npt)
 !!MATLAB: xptxav = xpt - xopt/2  % xopt should be a column!! Implicit expansion
-!sxpt = matprod(xopt, xptxav)
-sxpt = matprod(xopt, xpt) - HALF * xoptsq
+sxpt = matprod(xopt, xptxav)
+!sxpt = matprod(xopt, xpt) - HALF * xoptsq
 
 ! Update BMAT. See (7.11)--(7.12) of the NEWUOA paper and the elaborations around.
 
