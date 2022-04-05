@@ -330,42 +330,6 @@ if (sum(xopt**2) >= 1.0E3_RP * dsq) then
     call shiftbase(xbase, xopt, xpt, 1_IK, zmat, bmat, pq, hq)
     xoptsq = ZERO  ! Needed?
 end if
-!
-!     The following instructions complete the shift, including the changes
-!     to the second derivative parameters of the quadratic model.
-!
-!do j = 1, n
-!    do i = 1, j
-!        bmat(j, npt + i) = bmat(i, npt + j)
-!    end do
-!end do
-
-!do j = 1, n
-!    w(j) = -HALF * summpq * xopt(j)
-!    do k = 1, npt
-!        w(j) = w(j) + pq(k) * xpt(j, k)
-!        !xpt(j, k) = xpt(j, k) - xopt(j)
-!    end do
-!end do
-
-
-!do j = 1, n
-!    do i = 1, j
-!        hq(i, j) = hq(i, j) + w(i) * xopt(j) + xopt(i) * w(j)
-!        hq(j, i) = hq(i, j)
-!        !bmat(j, npt + i) = bmat(i, npt + j)
-!    end do
-!end do
-
-!do i = 1, n
-!    xbase(i) = xbase(i) + xopt(i)
-!    xnew(i) = xnew(i) - xopt(i)
-!    sl(i) = sl(i) - xopt(i)
-!    su(i) = su(i) - xopt(i)
-!    xopt(i) = ZERO
-!end do
-
-!end if
 
 
 if (ntrits == 0) goto 210

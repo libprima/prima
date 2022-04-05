@@ -301,7 +301,7 @@ if (xoptsq >= 1.0E4_RP * delta**2) then
             end do
         end do
         do i = 1, n
-            ip = i + npt
+            !ip = i + npt
             temp = step(i)
             if (k < idz) temp = -temp
             do j = 1, i

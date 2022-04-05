@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 04, 2022 AM12:24:42
+! Last Modified: Tuesday, April 05, 2022 PM09:27:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -92,6 +92,7 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        summw, summz, temp, vquad, xoptsq
 integer(IK) :: i, ih, ip, itest, j, jj, jp, k, kbase, knew, &
 &           kopt, ksav, nfsav, nh, np, nptm, nresc, ntrits
+real(RP) :: xptsav(n, npt), bup1(n, npt), bup2(n, n)
 
 !     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
 !       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
@@ -290,9 +291,14 @@ ntrits = ntrits + 1
 !     that do not depend on ZMAT. VLAG is used temporarily for working space.
 !
 !90 if (dsq <= 1.0E-3_RP * xoptsq) then
-90 if (xoptsq >= 1.0E3_RP * dsq) then
+90 continue
+
+if (xoptsq >= 1.0E3_RP * dsq) then
+    xptsav = xpt
     fracsq = 0.25_RP * xoptsq
     summpq = ZERO
+
+    bup2 = ZERO
     do k = 1, npt
         summpq = summpq + pq(k)
         !-----------------------------------------!
@@ -300,24 +306,42 @@ ntrits = ntrits + 1
         !summ = -HALF * xoptsq
         summ = ZERO
         do i = 1, n
-            summ = summ + xpt(i, k) * xopt(i)
+            summ = summ + xptsav(i, k) * xopt(i)
         end do
-        summ = -HALF * xoptsq + summ
+        !summ = -HALF * xoptsq + summ
+        summ = summ - HALF * xoptsq
         !-----------------------------------------!
         w(npt + k) = summ
         temp = fracsq - HALF * summ
+
         do i = 1, n
             w(i) = bmat(i, k)
-            vlag(i) = summ * xpt(i, k) + temp * xopt(i)
-            ip = npt + i
+            !vlag(i) = summ * xpt(i, k) + temp * xopt(i)
+            vlag(i) = summ * (xpt(i, k) - HALF * xopt(i)) + fracsq * xopt(i)
+
+            !ip = npt + i
             do j = 1, i
-                bmat(j, ip) = bmat(j, ip) + w(i) * vlag(j) + vlag(i) * w(j)
+                !bmat(j, ip) = bmat(j, ip) + w(i) * vlag(j) + vlag(i) * w(j)
+                bup2(i, j) = bup2(i, j) + w(i) * vlag(j)
+                if (j < i) bup2(j, i) = bup2(j, i) + vlag(i) * w(j)
             end do
         end do
     end do
+
+    !----------------------------------------------------------------!
+    ! Zaikun 20220405
+    do i = 1, n
+        ip = npt + i
+        do j = 1, i
+            bmat(j, ip) = bmat(j, ip) + (bup2(i, j) + bup2(j, i))
+        end do
+    end do
+    !----------------------------------------------------------------!
+!
 !
 !     Then the revisions of BMAT that depend on ZMAT are calculated.
 !
+    bup1 = ZERO; bup2 = ZERO
     do jj = 1, nptm
         summz = ZERO
         summw = ZERO
@@ -326,29 +350,55 @@ ntrits = ntrits + 1
             vlag(k) = w(npt + k) * zmat(k, jj)
             summw = summw + vlag(k)
         end do
+
         do j = 1, n
             !--------------------------------------------------------------!
             ! Zaikun 20220403
             !summ = (fracsq * summz - HALF * summw) * xopt(j)
             summ = ZERO
+
+            !do k = 1, npt
+            !    summ = summ + vlag(k) * xpt(j, k)
+            !end do
+            !summ = (fracsq * summz - HALF * summw) * xopt(j) + summ
+            !--------------------------------------------------------------!
+            !--------------------------------------------------------------!
+            ! Zaikun 20220405
             do k = 1, npt
-                summ = summ + vlag(k) * xpt(j, k)
+                summ = summ + (w(npt + k) * (xpt(j, k) - HALF * xopt(j)) + fracsq * xopt(j)) * zmat(k, jj)
             end do
-            summ = (fracsq * summz - HALF * summw) * xopt(j) + summ
             !--------------------------------------------------------------!
             w(j) = summ
             do k = 1, npt
-                bmat(j, k) = bmat(j, k) + summ * zmat(k, jj)
+                !bmat(j, k) = bmat(j, k) + summ * zmat(k, jj)
+                bup1(j, k) = bup1(j, k) + summ * zmat(k, jj)
             end do
         end do
         do i = 1, n
-            ip = i + npt
+            !ip = i + npt
             temp = w(i)
             do j = 1, i
-                bmat(j, ip) = bmat(j, ip) + temp * w(j)
+                !bmat(j, ip) = bmat(j, ip) + temp * w(j)
+                bup2(j, i) = bup2(j, i) + temp * w(j)
             end do
         end do
     end do
+
+    !----------------------------------------------------------------!
+    ! Zaikun 20220405
+    do i = 1, n
+        do j = 1, npt
+            bmat(i, j) = bmat(i, j) + bup1(i, j)
+        end do
+    end do
+
+    do i = 1, n
+        ip = npt + i
+        do j = 1, i
+            bmat(j, ip) = bmat(j, ip) + bup2(j, i)
+        end do
+    end do
+    !----------------------------------------------------------------!
 !
 !     The following instructions complete the shift, including the changes
 !     to the second derivative parameters of the quadratic model.
@@ -367,7 +417,8 @@ ntrits = ntrits + 1
         !--------------------------------------------------!
         do i = 1, j
             ih = ih + 1
-            hq(ih) = hq(ih) + w(i) * xopt(j) + xopt(i) * w(j)
+            !hq(ih) = hq(ih) + w(i) * xopt(j) + xopt(i) * w(j)
+            hq(ih) = hq(ih) + (w(i) * xopt(j) + xopt(i) * w(j))
             bmat(j, npt + i) = bmat(i, npt + j)
         end do
     end do
