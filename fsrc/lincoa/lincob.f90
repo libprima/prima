@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 03, 2022 PM11:38:35
+! Last Modified: Tuesday, April 05, 2022 PM05:17:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -113,7 +113,6 @@ integer(IK) :: i, idz, ifeas, imprv, itest, j, k,    &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
 real(RP) :: w(max(int(size(bvec), IK) + 3_IK * int(size(x), IK), 2_IK * int(size(bvec), IK) + int(size(x), IK), 2_IK * npt))
-real(RP) :: gq(size(x))
 
 
 
@@ -264,8 +263,7 @@ fsave = fopt
 if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
     rsp(1:npt) = ZERO
     b = b - matprod(xopt, amat)
-    gq = ZERO
-    call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
+    call shiftbase(xbase, xopt, xpt, idz, zmat, bmat, pq, hq)
 end if
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -411,6 +409,9 @@ end if
 !       made from XOPT. If STEP is a trust region step, then VQUAD should be
 !       negative. If it is nonnegative due to rounding errors in this case,
 !       there is a branch to label 530 to try to improve the model.
+!-------------------------------------------------------------------------------------------!
+! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should do the same.
+!-------------------------------------------------------------------------------------------!
 !
 vquad = ZERO
 do j = 1, n
