@@ -97,7 +97,7 @@ qxoptq = QUART * xoptsq
 gq = hess_mul(hq, pq, xpt, xopt) + gq
 
 ! Update HQ. See (7.14) of the NEWUOA paper.
-w1 = matprod(xopt, xpt) - HALF * xoptsq
+w1 = matprod(xopt, xptsav) - HALF * xoptsq
 ! W1 equals MATPROD(XPT, XOPT) after XPT is updated TEMPORARILY as follows.
 xpt = xpt - HALF * spread(xopt, dim=2, ncopies=npt)  ! TEMPORARY
 !xpq = matprod(xpt, pq)

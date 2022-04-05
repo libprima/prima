@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 05, 2022 PM07:25:24
+! Last Modified: Tuesday, April 05, 2022 PM08:46:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,6 +29,9 @@ subroutine shiftbase(xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
 ! In precise arithmetic, IDZ should be always 1; to cope with rounding errors, NEWUOA and LINCOA
 ! allow IDZ = -1 (see (4.18)--(4.20) of the NEWUOA paper); in BOBYQA, IDZ is always 1, and the
 ! rounding errors are handled by the RESCUE subroutine (Sec. 5 of the BOBYQA paper).
+!--------------------------------------------------------------------------------------------------!
+! TODO: Pass KOPT instead of XOPT, and set XPT(:, KOPT) = ZERO at the end. Before this, we need to
+! guarantee the consistency between XOPT and KOPT, namely to maintain always XPT(:, KOPT) = XOPT.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: BY(N, N), SXPT(NPT), V(N), VXOPT(N, N), XPTXAV(N, NPT), YMAT(N, NPT),
@@ -139,6 +142,7 @@ hq = hq + (vxopt + transpose(vxopt))
 ! The following instructions complete the shift of XBASE.
 xpt = xpt - spread(xopt, dim=2, ncopies=npt)
 !!MATLAB: xpt = xpt - xopt  % xopt should be a column!! Implicit expansion
+!xpt(:, kopt) = ZERO  !!TODO!!
 xbase = xbase + xopt
 xopt = ZERO
 
