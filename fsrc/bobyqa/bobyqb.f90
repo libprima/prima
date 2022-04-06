@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 06, 2022 AM11:41:51
+! Last Modified: Wednesday, April 06, 2022 AM11:48:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -262,22 +262,6 @@ if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
     goto 720
 end if
 
-!do i = 1, n
-!    if (gopt(i) /= gopt(i)) then
-!        info = -3
-!        goto 720
-!    end if
-!end do
-!if (is_nan(sum(abs(hq)))) then
-!    info = -3
-!    goto 720
-!end if
-!do i = 1, npt
-!    if (pq(i) /= pq(i)) then
-!        info = -3
-!        goto 720
-!    end if
-!end do
 
 
 call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
@@ -359,38 +343,6 @@ if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
     goto 720
 end if
 
-!do i = 1, n
-!    if (gopt(i) /= gopt(i)) then
-!        info = -3
-!        goto 720
-!    end if
-!end do
-!if (is_nan(sum(abs(hq)))) then
-!    info = -3
-!    goto 720
-!end if
-!do i = 1, npt
-!    if (pq(i) /= pq(i)) then
-!        info = -3
-!        goto 720
-!    end if
-!end do
-!do j = 1, n
-!    do i = 1, npt + n
-!        if (bmat(j, i) /= bmat(j, i)) then
-!            info = -3
-!            goto 720
-!        end if
-!    end do
-!end do
-!do j = 1, nptm
-!    do i = 1, npt
-!        if (zmat(i, j) /= zmat(i, j)) then
-!            info = -3
-!            goto 720
-!        end if
-!    end do
-!end do
 
 !------------------------------------------------------------------------------------------------!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -473,22 +425,6 @@ if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
     goto 720
 end if
 
-!do j = 1, n
-!    do i = 1, npt + n
-!        if (bmat(j, i) /= bmat(j, i)) then
-!            info = -3
-!            goto 720
-!        end if
-!    end do
-!end do
-!do j = 1, nptm
-!    do i = 1, npt
-!        if (zmat(i, j) /= zmat(i, j)) then
-!            info = -3
-!            goto 720
-!        end if
-!    end do
-!end do
 
 call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, alpha, cauchy, xalt, xnew)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -658,13 +594,7 @@ end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 if (ntrits == -1) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: FSAVE is not needed any more. See line number 720.
-!          FSAVE=F
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    info = INFO_DFT
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    info = INFO_DFT  !!??
     goto 720
 end if
 !
