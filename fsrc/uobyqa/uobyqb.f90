@@ -312,20 +312,8 @@ do j = 1, n
         ! This must be done, otherwise, compilers will complain that H is not (completely) defined.
         h(j, i) = h(i, j)
 
-!        if (h(i, j) /= h(i, j)) then
-!            info = -3
-!            goto 420
-!        end if
-
     end do
 end do
-
-!do i = 1, n
-!    if (g(i) /= g(i)) then
-!        info = -3
-!        goto 420
-!    end if
-!end do
 
 if (is_nan(sum(abs(g)) + sum(abs(h)))) then
     info = NAN_MODEL
@@ -354,15 +342,6 @@ end if
 !
 !     Calculate the next value of the objective function.
 
-
-!100 do i = 1, n
-!    xnew(i) = xopt(i) + d(i)
-!    x(i) = xbase(i) + xnew(i)
-!end do
-!120 if (nf >= nftest) then
-!    info = 3
-!    goto 420
-!end if
 
 100 continue
 xnew = xopt + d
@@ -398,7 +377,7 @@ call savehist(nf, x, xhist, f, fhist)
 !     Exit if F has an NaN or almost infinite value.
 !     If this happends at the very first function evaluation (i.e.,
 !     NF=1), then it is necessary to set FOPT and XOPT before going to
-!     530, because these TWO variables have not been set yet.
+!     530, because these two variables have not been set yet.
 if (is_nan(f) .or. is_posinf(f)) then
     if (nf == 1) then
         fopt = f
@@ -407,8 +386,7 @@ if (is_nan(f) .or. is_posinf(f)) then
     info = NAN_INF_F
     goto 420
 end if
-!     By Zaikun (commented on 02-06-2019; implemented in 2016):
-!     Exit if F .LE. FTARGET.
+
 if (f <= ftarget) then
     info = FTARGET_ACHIEVED
     goto 430  ! Should not goto 420. fopt may not be defined yet
@@ -482,7 +460,6 @@ if (knew > 0) goto 240
 !     Pick the next value of DELTA after a trust region step.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IF (VQUAD .GE. ZERO) THEN
 if (.not. (vquad < ZERO)) then
     info = TRSUBP_FAILED
     goto 420
@@ -546,11 +523,10 @@ end do
 !
 if (f < fsave) then
     kopt = knew
-    goto 70
 end if
-if (ksave > 0) goto 70
-if (dnorm > TWO * rho) goto 70
-if (ddknew > tworsq) goto 70
+
+if (f < fsave .or. ksave > 0 .or. dnorm > TWO*rho .or. ddknew > tworsq) goto 70
+
 !
 !     Alternatively, find out if the interpolation points are close
 !     enough to the best point so far.
@@ -593,23 +569,11 @@ if (knew > 0) then
             h(i, j) = temp
             h(j, i) = h(i, j)
 
-            !if (h(i, j) /= h(i, j)) then
-            !    info = -3
-            !    goto 420
-            !end if
 
         end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         sumh = sumh + HALF * temp * temp
     end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: See the comments below line number 70
-    !do i = 1, n
-    !    if (g(i) /= g(i)) then
-    !        info = -3
-    !        goto 420
-    !    end if
-    !end do
 
     if (is_nan(sum(abs(g)) + sum(abs(h)))) then
         info = NAN_MODEL
@@ -686,21 +650,16 @@ if (rho > rhoend) then
     delta = max(delta, rho)
     goto 60
 end if
-!
+
+info = SMALL_TR_RADIUS !!??
+
 !     Return from the calculation, after another Newton-Raphson step, if
 !     it is too short to have been tried before.
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-info = SMALL_TR_RADIUS !!??
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 if (errtol >= ZERO) goto 100
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!  420 IF (FOPT .LE. F) THEN
+
 420 if (fopt <= f .or. is_nan(f)) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do i = 1, n
-        x(i) = xbase(i) + xopt(i)
-    end do
+    x = xbase + xopt
     f = fopt
 end if
 
