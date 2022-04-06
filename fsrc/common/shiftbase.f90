@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 06, 2022 AM12:09:40
+! Last Modified: Wednesday, April 06, 2022 AM09:17:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ public :: shiftbase
 contains
 
 
-subroutine shiftbase(kopt, xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
+subroutine shiftbase(xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
 !--------------------------------------------------------------------------------------------------!
 ! SHIFTBASE shifts the base point from XBASE to XBASE + XOPT and updates BMAT, HQ, and GQ
 ! accordingly. PQ and ZMAT remain the same after the shifting. See Section 7 of the NEWUOA paper.
@@ -29,9 +29,6 @@ subroutine shiftbase(kopt, xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
 ! In precise arithmetic, IDZ should be always 1; to cope with rounding errors, NEWUOA and LINCOA
 ! allow IDZ = -1 (see (4.18)--(4.20) of the NEWUOA paper); in BOBYQA, IDZ is always 1, and the
 ! rounding errors are handled by the RESCUE subroutine (Sec. 5 of the BOBYQA paper).
-!--------------------------------------------------------------------------------------------------!
-! TODO: Pass KOPT instead of XOPT, and set XPT(:, KOPT) = ZERO at the end. Before this, we need to
-! guarantee the consistency between XOPT and KOPT, namely to maintain always XPT(:, KOPT) = XOPT.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: BY(N, N), SXPT(NPT), V(N), VXOPT(N, N), XPTXAV(N, NPT), YMAT(N, NPT),
@@ -48,7 +45,6 @@ use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric, 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: kopt
 integer(IK), intent(in) :: idz  ! In BOBYQA, IDZ is always 1.
 real(RP), intent(in) :: pq(:)   ! PQ(NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
@@ -86,11 +82,11 @@ npt = int(size(xpt, 2), kind(npt))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
-    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
     call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(all(abs(xpt(:, kopt) - xopt) <= 0), 'XPT(:, KOPT) == XOPT', srname)
+    !call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    !call assert(all(abs(xpt(:, kopt) - xopt) <= 0), 'XPT(:, KOPT) == XOPT', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
@@ -122,7 +118,7 @@ do k = 1, npt
     ymat(:, k) = sxpt(k) * xptxav(:, k) + qxoptq * xopt
 end do
 !!MATLAB: ymat = xptxav .* sxpt + qxoptq * xopt  % sxpt should be a row, xopt should be a column
-ymat(:, kopt) = HALF * xoptsq * xopt !!TODO!!
+!ymat(:, kopt) = HALF * xoptsq * xopt ! This makes no difference according to a test on 20220406
 by = matprod(bmat(:, 1:npt), transpose(ymat))  ! BMAT(:, 1:NPT) is not updated yet.
 bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + (by + transpose(by))
 ! Then the revisions of BMAT that depend on ZMAT are calculated.
@@ -146,7 +142,7 @@ hq = hq + (vxopt + transpose(vxopt))
 ! The following instructions complete the shift of XBASE.
 xpt = xpt - spread(xopt, dim=2, ncopies=npt)
 !!MATLAB: xpt = xpt - xopt  % xopt should be a column!! Implicit expansion
-xpt(:, kopt) = ZERO  !!TODO!!
+!xpt(:, kopt) = ZERO  ! This makes no difference according to a test on 20220406
 xbase = xbase + xopt
 xopt = ZERO
 
@@ -156,10 +152,10 @@ xopt = ZERO
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(size(xopt) == n .and. all(abs(xopt) <= 0), 'SIZE(XOPT) == N, XOPT == 0', srname)
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
-    call assert(all(abs(xpt(:, kopt)) <= 0 .and. abs(xopt) <= 0), 'XPT(:, KOPT) == XOPT == 0', srname)
+    !call assert(all(abs(xpt(:, kopt)) <= 0), 'XPT(:, KOPT) == 0', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
