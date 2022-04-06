@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 05, 2022 PM08:42:04
+! Last Modified: Wednesday, April 06, 2022 AM11:09:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -38,6 +38,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -612,7 +613,8 @@ if (ksave == -1) xdiff = rho
 if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ifeas = 0
-    info = 8
+    !info = 8
+    info = DAMAGING_ROUNDING
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     goto 600
 end if
@@ -707,7 +709,8 @@ end if
 !
 call update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kopt, knew, pqw, w)
 if (knew == 0) then
-    info = 9
+    !info = 9
+    info = DAMAGING_ROUNDING
     goto 600
 end if
 

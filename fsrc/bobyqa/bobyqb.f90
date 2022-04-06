@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 05, 2022 PM05:43:03
+! Last Modified: Wednesday, April 06, 2022 AM10:27:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -424,7 +424,7 @@ if (nfsav < nf) then
 end if
 if (ntrits > 0) goto 60
 !
-!     Pick TWO alternative vectors of variables, relative to XBASE, that
+!     Pick two alternative vectors of variables, relative to XBASE, that
 !     are suitable as new positions of the KNEW-th interpolation point.
 !     Firstly, XNEW is set to the point on a line through XOPT and another
 !     interpolation point that minimizes the predicted value of the next
