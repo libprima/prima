@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 06, 2022 AM12:10:24
+! Last Modified: Tuesday, April 05, 2022 PM05:17:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -263,7 +263,7 @@ fsave = fopt
 if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
     rsp(1:npt) = ZERO
     b = b - matprod(xopt, amat)
-    call shiftbase(kopt, xbase, xopt, xpt, idz, zmat, bmat, pq, hq)
+    call shiftbase(xbase, xopt, xpt, idz, zmat, bmat, pq, hq)
 end if
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

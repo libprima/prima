@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 06, 2022 AM12:32:24
+! Last Modified: Tuesday, April 05, 2022 PM05:29:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -257,7 +257,7 @@ do tr = 1, maxtr
         ! Shift XBASE if XOPT may be too far from XBASE.
         !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell's code
         if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
-            call shiftbase(kopt, xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
+            call shiftbase(xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
         end if
 
         ! Calculate the next value of the objective function.
@@ -434,7 +434,7 @@ do tr = 1, maxtr
 
         ! Shift XBASE if XOPT may be too far from XBASE.
         if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
-            call shiftbase(kopt, xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
+            call shiftbase(xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
         end if
 
         ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
