@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 06, 2022 AM10:27:45
+! Last Modified: Wednesday, April 06, 2022 AM11:41:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,6 +28,8 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
+    & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 !use, non_intrinsic :: linalg_mod, only : matprod, r1update, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -187,26 +189,17 @@ do i = 1, n
     xopt(i) = xpt(i, kopt)
     xoptsq = xoptsq + xopt(i)**2
 end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: FSAVE is not needed any more. See line number 720.
-!      FSAVE=FVAL(1)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     By Tom/Zaikun (on 04-06-2019/07-06-2019):
+
 if (is_nan(f) .or. is_posinf(f)) then
-    info = -2
+    info = NAN_INF_F
     goto 720
 end if
-!     By Tom (on 04-06-2019):
-!     If F reached the target function, PRELIM will stop and BOBYQB
-!     should stop here.
 if (f <= ftarget) then
-    info = 1
+    info = FTARGET_ACHIEVED
     goto 736
 end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (nf < npt) then
-    info = 3
+    info = MAXFUN_REACHED  ! Zaikun 20220406: Should not happen here.
     goto 720
 end if
 kbase = 1
@@ -262,22 +255,29 @@ end if
 ! behavior of the code, including uninitialized indices.
 !
 !   60 CALL TRSBOX (N,NPT,XPT,XOPT,GOPT,HQ,PQ,SL,SU,DELTA,XNEW,D,
-60 do i = 1, n
-    if (gopt(i) /= gopt(i)) then
-        info = -3
-        goto 720
-    end if
-end do
-if (is_nan(sum(abs(hq)))) then
-    info = -3
+60 continue
+
+if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
+    info = NAN_MODEL
     goto 720
 end if
-do i = 1, npt
-    if (pq(i) /= pq(i)) then
-        info = -3
-        goto 720
-    end if
-end do
+
+!do i = 1, n
+!    if (gopt(i) /= gopt(i)) then
+!        info = -3
+!        goto 720
+!    end if
+!end do
+!if (is_nan(sum(abs(hq)))) then
+!    info = -3
+!    goto 720
+!end if
+!do i = 1, npt
+!    if (pq(i) /= pq(i)) then
+!        info = -3
+!        goto 720
+!    end if
+!end do
 
 
 call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
@@ -349,38 +349,48 @@ kbase = kopt
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29
 ! See the comments above line number 60.
-do i = 1, n
-    if (gopt(i) /= gopt(i)) then
-        info = -3
-        goto 720
-    end if
-end do
-if (is_nan(sum(abs(hq)))) then
-    info = -3
+
+if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
+    info = NAN_MODEL
     goto 720
 end if
-do i = 1, npt
-    if (pq(i) /= pq(i)) then
-        info = -3
-        goto 720
-    end if
-end do
-do j = 1, n
-    do i = 1, npt + n
-        if (bmat(j, i) /= bmat(j, i)) then
-            info = -3
-            goto 720
-        end if
-    end do
-end do
-do j = 1, nptm
-    do i = 1, npt
-        if (zmat(i, j) /= zmat(i, j)) then
-            info = -3
-            goto 720
-        end if
-    end do
-end do
+if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+    info = NAN_MODEL
+    goto 720
+end if
+
+!do i = 1, n
+!    if (gopt(i) /= gopt(i)) then
+!        info = -3
+!        goto 720
+!    end if
+!end do
+!if (is_nan(sum(abs(hq)))) then
+!    info = -3
+!    goto 720
+!end if
+!do i = 1, npt
+!    if (pq(i) /= pq(i)) then
+!        info = -3
+!        goto 720
+!    end if
+!end do
+!do j = 1, n
+!    do i = 1, npt + n
+!        if (bmat(j, i) /= bmat(j, i)) then
+!            info = -3
+!            goto 720
+!        end if
+!    end do
+!end do
+!do j = 1, nptm
+!    do i = 1, npt
+!        if (zmat(i, j) /= zmat(i, j)) then
+!            info = -3
+!            goto 720
+!        end if
+!    end do
+!end do
 
 !------------------------------------------------------------------------------------------------!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -402,19 +412,20 @@ if (kopt /= kbase) then
     end do
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 if (is_nan(f) .or. is_posinf(f)) then
-    info = -2
+    info = NAN_INF_F
     goto 720
 end if
 if (f <= ftarget) then
-    info = 1
+    info = FTARGET_ACHIEVED
     goto 736
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 if (nf < 0) then
     nf = maxfun
-    info = 3
+    info = MAXFUN_REACHED
     goto 720
 end if
 nresc = nf
@@ -455,22 +466,29 @@ if (ntrits > 0) goto 60
 !  below, which led to abnormal values in BMAT (indeed, BETA defined in
 !  lines 366--389 took NaN/infinite values).
 !
-210 do j = 1, n
-    do i = 1, npt + n
-        if (bmat(j, i) /= bmat(j, i)) then
-            info = -3
-            goto 720
-        end if
-    end do
-end do
-do j = 1, nptm
-    do i = 1, npt
-        if (zmat(i, j) /= zmat(i, j)) then
-            info = -3
-            goto 720
-        end if
-    end do
-end do
+210 continue
+
+if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+    info = NAN_MODEL
+    goto 720
+end if
+
+!do j = 1, n
+!    do i = 1, npt + n
+!        if (bmat(j, i) /= bmat(j, i)) then
+!            info = -3
+!            goto 720
+!        end if
+!    end do
+!end do
+!do j = 1, nptm
+!    do i = 1, npt
+!        if (zmat(i, j) /= zmat(i, j)) then
+!            info = -3
+!            goto 720
+!        end if
+!    end do
+!end do
 
 call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, alpha, cauchy, xalt, xnew)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -546,7 +564,7 @@ if (ntrits == 0) then
     if (.not. (denom > HALF * vlag(knew)**2)) then
 !111111111111111111111!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (nf > nresc) goto 190
-        info = 4
+        info = DAMAGING_ROUNDING
         goto 720
     end if
 !
@@ -582,7 +600,7 @@ else
     end do
     if (scaden <= HALF * biglsq) then
         if (nf > nresc) goto 190
-        info = 4
+        info = DAMAGING_ROUNDING
         goto 720
     end if
 end if
@@ -600,22 +618,20 @@ end if
     if (xnew(i) == su(i)) x(i) = xu(i)
 end do
 if (nf >= maxfun) then
-    info = 3
+    info = MAXFUN_REACHED
     goto 720
 end if
 nf = nf + 1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do i = 1, n
-    if (x(i) /= x(i)) then
-        f = x(i) ! set f to nan
-        if (nf == 1) then
-            fopt = f
-            xopt(1:n) = ZERO
-        end if
-        info = -1
-        goto 720
+if (is_nan(abs(sum(x)))) then
+    f = sum(x)  ! Set F to NaN
+    if (nf == 1) then
+        fopt = f
+        xopt = ZERO
     end if
-end do
+    info = NAN_INF_X
+    goto 720
+end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !------------------------------------------------------------------------!
@@ -628,15 +644,15 @@ call savehist(nf, x, xhist, f, fhist)
 if (is_nan(f) .or. is_posinf(f)) then
     if (nf == 1) then
         fopt = f
-        xopt(1:n) = ZERO
+        xopt = ZERO
     end if
-    info = -2
+    info = NAN_INF_F
     goto 720
 end if
 !     By Tom (on 04-06-2019):
 !     If F achieves the function value, the algorithm exits.
 if (f <= ftarget) then
-    info = 1
+    info = FTARGET_ACHIEVED
     goto 736
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -647,7 +663,7 @@ if (ntrits == -1) then
 !          FSAVE=F
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    info = 0
+    info = INFO_DFT
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     goto 720
 end if
@@ -683,7 +699,7 @@ if (ntrits > 0) then
         !------------------------------------------------------------------------------------------!
         ! Zaikun 20220405: LINCOA improves the model in this case. BOBYQA should do the same.
         !------------------------------------------------------------------------------------------!
-        info = 2
+        info = TRSUBP_FAILED
         goto 720
     end if
     ratio = (f - fopt) / vquad
@@ -924,7 +940,7 @@ if (max(delta, dnorm) > rho) goto 60
     goto 60
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 else
-    info = 0
+    info = SMALL_TR_RADIUS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end if
 !
@@ -937,7 +953,7 @@ if (ntrits == -1) goto 360
 !  Why update X only when FVAL(KOPT) .LE. FSAVE? This seems INCORRECT,
 !  because it may lead to a return with F and X that are not the best
 !  available.
-720 if (fval(kopt) <= f .or. f /= f) then
+720 if (fval(kopt) <= f .or. is_nan(f)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do i = 1, n
         x(i) = min(max(xl(i), xbase(i) + xopt(i)), xu(i))
