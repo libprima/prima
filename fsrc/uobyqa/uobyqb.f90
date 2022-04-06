@@ -1,5 +1,6 @@
 !4.SIZE of d in TRSTEP is N + 1 instead of N, maybe also other arrays and other places.
 !5.THE checks in rangehist cannot pass(xhist does not contain NaN)
+
 module uobyqb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of UOBYQA.
@@ -10,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 06, 2022 PM12:00:23
+! Last Modified: Wednesday, April 06, 2022 PM12:18:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,8 +31,8 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
-    & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
+use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
+    & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 !use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -525,7 +526,7 @@ if (f < fsave) then
     kopt = knew
 end if
 
-if (f < fsave .or. ksave > 0 .or. dnorm > TWO*rho .or. ddknew > tworsq) goto 70
+if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > tworsq) goto 70
 
 !
 !     Alternatively, find out if the interpolation points are close
