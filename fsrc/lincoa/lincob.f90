@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 05, 2022 PM05:17:27
+! Last Modified: Wednesday, April 06, 2022 AM11:19:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,6 +36,8 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
+    & MAXFUN_REACHED, DAMAGING_ROUNDING!, SMALL_TR_RADIUS, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -80,6 +82,15 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
 character(len=*), parameter :: srname = 'LINCOB'
+integer(IK) :: iact(size(bvec))
+integer(IK) :: m
+integer(IK) :: maxchist
+integer(IK) :: maxfhist
+integer(IK) :: maxhist
+integer(IK) :: maxxhist
+integer(IK) :: n
+real(RP) :: b(size(bvec))
+real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
@@ -95,16 +106,8 @@ real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: xsav(size(x))
-real(RP) :: bmat(size(x), npt + size(x))
+real(RP) :: zknew(npt - size(x) - 1)
 real(RP) :: zmat(npt, npt - size(x) - 1)
-real(RP) :: b(size(bvec))
-integer(IK) :: iact(size(bvec))
-integer(IK) :: m
-integer(IK) :: maxchist
-integer(IK) :: maxfhist
-integer(IK) :: maxhist
-integer(IK) :: maxxhist
-integer(IK) :: n
 real(RP) :: del, delsav, delta, dffalt, diff, &
 &        distsq, fopt, fsave, ratio,     &
 &        rho, snorm, ssq, summ, temp, vqalt,   &
@@ -223,19 +226,16 @@ call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
     & step, pqw, xbase, xhist, xopt, xpt, xsav, zmat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     By Tom (on 04-06-2019):
 if (is_nan(f) .or. is_posinf(f)) then
     fopt = fval(kopt)
-    info = -2
+    info = NAN_INF_F
     goto 600
 end if
-!     Note that we should NOT compare F and FTARGET, because X may not
-!     be feasible at the exit of PRELIM.
+! Note that we should NOT compare F and FTARGET, because X may not be feasible.
 if (fval(kopt) <= ftarget) then
     f = fval(kopt)
     x = xsav
-    info = 1
+    info = FTARGET_ACHIEVED
     goto 616
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -252,14 +252,12 @@ itest = 3
 10 knew = 0
 nvala = 0
 nvalb = 0
-!
-!     Shift XBASE if XOPT may be too far from XBASE. First make the changes
-!       to BMAT that do not depend on ZMAT.
-!
+
 20 continue
 
 fsave = fopt
 
+! Shift XBASE if XOPT may be too far from XBASE.
 if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
     rsp(1:npt) = ZERO
     b = b - matprod(xopt, amat)
@@ -267,27 +265,12 @@ if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
 end if
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 21-03-2020
-! Exit if BMAT or ZMAT contians NaN
-do j = 1, n
-    do i = 1, npt + n
-        if (bmat(j, i) /= bmat(j, i)) then
-            info = -3
-            goto 600
-        end if
-    end do
-end do
-do j = 1, npt - n - 1_IK
-    do i = 1, npt
-        if (zmat(i, j) /= zmat(i, j)) then
-            info = -3
-            goto 600
-        end if
-    end do
-end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Zaikun 21-03-2020: Exit if BMAT or ZMAT contians NaN
+if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+    info = NAN_MODEL
+    goto 600
+end if
 
-!
 !     In the case KNEW=0, generate the next trust region step by calling
 !       TRSTEP, where SNORM is the current trust region radius initially.
 !       The final value of SNORM is the length of the calculated step,
@@ -302,27 +285,14 @@ end do
 ! comparison involving NaN returns FALSE, which can lead to unintended
 ! behavior of the code, including uninitialized indices, which can lead
 ! to segmentation faults.
-do j = 1, n
-    if (gopt(j) /= gopt(j)) then
-        info = -3
-        goto 600
-    end if
-end do
-if (is_nan(sum(abs(hq)))) then
-    info = -3
+if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
+    info = NAN_MODEL
     goto 600
 end if
-do i = 1, npt
-    if (pq(i) /= pq(i)) then
-        info = -3
-        goto 600
-    end if
-end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 delsav = delta
 ksave = knew
 if (knew == 0) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
 !
 !     A trust region step is applied whenever its length, namely SNORM, is at
@@ -339,26 +309,16 @@ if (knew == 0) then
         nvalb = nvalb + 1
         temp = snorm / rho
         if (delsav > rho) temp = ONE
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 24-07-2019
-!              IF (TEMP .GE. HALF) NVALA=ZERO
-!              IF (TEMP .GE. TENTH) NVALB=ZERO
         if (temp >= HALF) nvala = 0
         if (temp >= TENTH) nvalb = 0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (delsav > rho) goto 530
         if (nvala < 5 .and. nvalb < 3) goto 530
         if (snorm > ZERO) ksave = -1
         goto 560
     end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 24-07-2019
-!          NVALA=ZERO
-!          NVALB=ZERO
     nvala = 0
     nvalb = 0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
+
 !     Alternatively, KNEW is positive. Then the model step is calculated
 !       within a trust region of radius DEL, after setting the gradient at
 !       XBASE and the second derivative parameters of the KNEW-th Lagrange
@@ -366,44 +326,23 @@ if (knew == 0) then
 !
 else
     del = max(TENTH * delta, rho)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: See the comments below line number 140
-!          DO 160 I=1,N
-!  160     W(I)=BMAT(KNEW,I)
-    !w = bmat(:, knew)
-    do i = 1, n
-        !if (w(i) /= w(i)) then
-        if (bmat(i, knew) /= bmat(i, knew)) then
-            info = -3
-            goto 600
-        end if
-    end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do k = 1, npt
-        pqw(k) = ZERO
-    end do
-    do j = 1, npt - n - 1_IK
-        temp = zmat(knew, j)
-        if (j < idz) temp = -temp
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: See the comments below line number 140
-! Note that the data in PQW is used in QMSTEP below
-!          DO 180 K=1,NPT
-!  180     PQW(K)=PQW(K)+TEMP*ZMAT(K,J)
-        do k = 1, npt
-            pqw(k) = pqw(k) + temp * zmat(k, j)
-            if (pqw(k) /= pqw(k)) then
-                info = -3
-                goto 600
-            end if
-        end do
-    end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: B is never used in QMSTEP
-!          CALL QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,RESCON,
+
+    if (is_nan(sum(abs(bmat(:, knew))))) then  ! Necessary?
+        info = NAN_MODEL
+        goto 600
+    end if
+
+    zknew = zmat(knew, :)
+    zknew(1:idz - 1) = -zknew(1:idz - 1)
+    pqw(1:npt) = matprod(zmat, zknew)
+    if (is_nan(sum(abs(pqw(1:npt))))) then
+        info = NAN_MODEL
+        goto 600
+    end if
+
     call geostep(iact, knew, kopt, nact, amat, del, bmat(:, knew), pqw(1:npt), qfac, rescon, xopt, xpt, ifeas, step)
 end if
+
 !
 !     Set VQUAD to the change to the quadratic model when the move STEP is
 !       made from XOPT. If STEP is a trust region step, then VQUAD should be
@@ -481,7 +420,7 @@ end if
 220 nf = nf + 1
 if (nf > maxfun) then
     nf = nf - 1
-    info = 3
+    info = MAXFUN_REACHED
     goto 600
 end if
 xdiff = ZERO
@@ -497,24 +436,22 @@ if (ksave == -1) xdiff = rho
 if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ifeas = 0
-    info = 8
+    info = DAMAGING_ROUNDING
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     goto 600
 end if
 if (ksave <= 0) ifeas = 1
 f = real(ifeas, RP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do i = 1, n
-    if (x(i) /= x(i)) then
-        f = x(i) ! set f to nan
-        if (nf == 1) then
-            fopt = f
-            xopt(1:n) = ZERO
-        end if
-        info = -1
-        goto 600
+if (is_nan(sum(abs(x)))) then
+    f = sum(x)  ! Set F to NaN
+    if (nf == 1) then
+        fopt = f
+        xopt = ZERO
     end if
-end do
+    info = NAN_INF_X
+    goto 600
+end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 call evaluate(calfun, x, f)
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
@@ -524,13 +461,13 @@ call savehist(nf, x, xhist, f, fhist, cstrv, chist)
 if (is_nan(f) .or. is_posinf(f)) then
     if (nf == 1) then
         fopt = f
-        xopt(1:n) = ZERO
+        xopt = ZERO
     end if
-    info = -2
+    info = NAN_INF_F
     goto 600
 end if
 if (ksave == -1) then
-    info = 0
+    info = INFO_DFT !!??
     goto 600
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -592,30 +529,15 @@ end if
 !
 call update(kopt, rsp, step, xpt, idz, knew, bmat, zmat, pqw)
 if (knew == 0) then
-    info = 9
+    info = DAMAGING_ROUNDING
     goto 600
 end if
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 19-03-2020
-! Exit if BMAT or ZMAT contians NaN
-do j = 1, n
-    do i = 1, npt + n
-        if (bmat(j, i) /= bmat(j, i)) then
-            info = -3
-            goto 600
-        end if
-    end do
-end do
-do j = 1, npt - n - 1_IK
-    do i = 1, npt
-        if (zmat(i, j) /= zmat(i, j)) then
-            info = -3
-            goto 600
-        end if
-    end do
-end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Zaikun 19-03-2020: Exit if BMAT or ZMAT contians NaN
+if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+    info = NAN_MODEL
+    goto 600
+end if
 
 !
 !     If ITEST is increased to 3, then the next quadratic model is the
@@ -690,15 +612,11 @@ end if
 !
 if (f < fopt .and. ifeas == 1) then
     fopt = f
-    do j = 1, n
-        xsav(j) = x(j)
-        xopt(j) = xnew(j)
-    end do
+    xsav = x
+    xopt = xnew
     kopt = knew
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!         By Tom (on 04-06-2019):
     if (fopt <= ftarget) then
-        info = 1
+        info = FTARGET_ACHIEVED
         goto 616
     end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -842,7 +760,7 @@ end if
 !       Newton-Raphson step if it has not been tried before.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-info = 0
+info = INFO_DFT  !!info = SMALL_TR_RADIUS !!??
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (ksave == -1) goto 220
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
