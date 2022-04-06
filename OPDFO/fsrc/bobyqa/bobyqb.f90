@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 05, 2022 PM09:27:13
+! Last Modified: Wednesday, April 06, 2022 AM11:32:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,6 +29,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENT
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING, SMALL_TR_RADIUS
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -652,7 +653,8 @@ if (ntrits == 0) then
     if (.not. (denom > HALF * vlag(knew)**2)) then
 !111111111111111111111!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (nf > nresc) goto 190
-        info = 4
+        !info = 4
+        info = DAMAGING_ROUNDING
         goto 720
     end if
 !
@@ -688,7 +690,8 @@ else
     end do
     if (scaden <= HALF * biglsq) then
         if (nf > nresc) goto 190
-        info = 4
+        !info = 4
+        info = DAMAGING_ROUNDING
         goto 720
     end if
 end if
@@ -1033,7 +1036,7 @@ if (max(delta, dnorm) > rho) goto 60
     goto 60
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 else
-    info = 0
+    info = SMALL_TR_RADIUS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end if
 !
