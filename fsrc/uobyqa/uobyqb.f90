@@ -10,7 +10,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM10:58:00
+! Last Modified: Wednesday, April 06, 2022 PM12:00:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,6 +30,8 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
+    & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 !use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -309,18 +311,27 @@ do j = 1, n
         h(i, j) = pq(ih)
         ! This must be done, otherwise, compilers will complain that H is not (completely) defined.
         h(j, i) = h(i, j)
-        if (h(i, j) /= h(i, j)) then
-            info = -3
-            goto 420
-        end if
+
+!        if (h(i, j) /= h(i, j)) then
+!            info = -3
+!            goto 420
+!        end if
+
     end do
 end do
-do i = 1, n
-    if (g(i) /= g(i)) then
-        info = -3
-        goto 420
-    end if
-end do
+
+!do i = 1, n
+!    if (g(i) /= g(i)) then
+!        info = -3
+!        goto 420
+!    end if
+!end do
+
+if (is_nan(sum(abs(g)) + sum(abs(h)))) then
+    info = NAN_MODEL
+    goto 420
+end if
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Generate the next trust region step and test its length. Set KNEW
@@ -342,30 +353,38 @@ if (dnorm < HALF * rho) then
 end if
 !
 !     Calculate the next value of the objective function.
-!
-100 do i = 1, n
-    xnew(i) = xopt(i) + d(i)
-    x(i) = xbase(i) + xnew(i)
-end do
-120 if (nf >= nftest) then
-    info = 3
+
+
+!100 do i = 1, n
+!    xnew(i) = xopt(i) + d(i)
+!    x(i) = xbase(i) + xnew(i)
+!end do
+!120 if (nf >= nftest) then
+!    info = 3
+!    goto 420
+!end if
+
+100 continue
+xnew = xopt + d
+x = xbase + xnew
+
+120 continue
+if (nf >= nftest) then
+    info = MAXFUN_REACHED
     goto 420
 end if
 
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do i = 1, n
-    if (x(i) /= x(i)) then
-        f = x(i) ! set f to nan
-        if (nf == 1) then
-            fopt = f
-            do j = 1, n
-                xopt(j) = ZERO
-            end do
-        end if
-        info = -1
-        goto 420
+if (is_nan(sum(abs(x)))) then
+    f = sum(x) ! Set F to NaN
+    if (nf == 1) then
+        fopt = f
+        xopt = ZERO
     end if
-end do
+    info = NAN_INF_X
+    goto 420
+end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !------------------------------------------------------------------------!
@@ -383,17 +402,15 @@ call savehist(nf, x, xhist, f, fhist)
 if (is_nan(f) .or. is_posinf(f)) then
     if (nf == 1) then
         fopt = f
-        do i = 1, n
-            xopt(i) = ZERO
-        end do
+        xopt = ZERO
     end if
-    info = -2
+    info = NAN_INF_F
     goto 420
 end if
 !     By Zaikun (commented on 02-06-2019; implemented in 2016):
 !     Exit if F .LE. FTARGET.
 if (f <= ftarget) then
-    info = 1
+    info = FTARGET_ACHIEVED
     goto 430  ! Should not goto 420. fopt may not be defined yet
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -402,7 +419,7 @@ if (nf <= npt) goto 50
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IF (KNEW .EQ. -1) GOTO 420
 if (knew == -1) then
-    info = 0
+    info = SMALL_TR_RADIUS !!??
     goto 420
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -467,7 +484,7 @@ if (knew > 0) goto 240
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IF (VQUAD .GE. ZERO) THEN
 if (.not. (vquad < ZERO)) then
-    info = 2
+    info = TRSUBP_FAILED
     goto 420
 end if
 ratio = (f - fsave) / vquad
@@ -575,22 +592,31 @@ if (knew > 0) then
 !  330     H(I,J)=TEMP
             h(i, j) = temp
             h(j, i) = h(i, j)
-            if (h(i, j) /= h(i, j)) then
-                info = -3
-                goto 420
-            end if
+
+            !if (h(i, j) /= h(i, j)) then
+            !    info = -3
+            !    goto 420
+            !end if
+
         end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         sumh = sumh + HALF * temp * temp
     end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: See the comments below line number 70
-    do i = 1, n
-        if (g(i) /= g(i)) then
-            info = -3
-            goto 420
-        end if
-    end do
+    !do i = 1, n
+    !    if (g(i) /= g(i)) then
+    !        info = -3
+    !        goto 420
+    !    end if
+    !end do
+
+    if (is_nan(sum(abs(g)) + sum(abs(h)))) then
+        info = NAN_MODEL
+        goto 420
+    end if
+
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     If ERRTOL is positive, test whether to replace the interpolation point
@@ -665,12 +691,12 @@ end if
 !     it is too short to have been tried before.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-info = 0
+info = SMALL_TR_RADIUS !!??
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (errtol >= ZERO) goto 100
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !  420 IF (FOPT .LE. F) THEN
-420 if (fopt <= f .or. f /= f) then
+420 if (fopt <= f .or. is_nan(f)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do i = 1, n
         x(i) = xbase(i) + xopt(i)
