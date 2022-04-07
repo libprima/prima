@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 06, 2022 AM09:17:06
+! Last Modified: Wednesday, April 06, 2022 PM10:32:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -136,7 +136,16 @@ end if
 !v = matprod(xptxav, pq)  ! Vector V in (7.14) of the NEWUOA paper
 v = matprod(xpt, pq) - HALF * sum(pq) * xopt ! This one seems to work better numerically.
 vxopt = outprod(v, xopt)  !!MATLAB: vxopt = v * xopt';  % v and xopt should be both columns
+
+write (*, *) 1, (vxopt + transpose(vxopt) == transpose(vxopt + transpose(vxopt)))
+write (*, *) 2, (hq == transpose(hq))
+write (*, *) vxopt
+write (*, *) vxopt + transpose(vxopt)
+write (*, *) hq
+
 hq = hq + (vxopt + transpose(vxopt))
+
+write (*, *) 3, hq - transpose(hq)
 !call symmetrize(hq)  ! Do this if the update above does not ensure symmetry
 
 ! The following instructions complete the shift of XBASE.

@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 01, 2022 PM03:00:30
+! Last Modified: Thursday, April 07, 2022 PM12:18:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -174,8 +174,7 @@ use, non_intrinsic :: uobyqb_mod, only : uobyqb
 implicit none
 
 ! Arguments
-procedure(OBJ) :: calfun
-! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute
+procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)  ! X(N)
 real(RP), intent(out) :: f
 integer(IK), intent(out), optional :: nf

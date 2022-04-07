@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 04, 2022 PM12:35:34
+! Last Modified: Wednesday, April 06, 2022 PM09:33:12
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -2095,7 +2095,8 @@ real(RP) :: s(size(x))
 
 #if __USE_POWELL_ALGEBRA__ == 1
 real(RP) :: w(size(pq)), t
-integer(IK) :: i, ih, j
+integer(IK) :: i
+integer(IK) :: j
 #endif
 
 #if __DEBUGGING__ == 1
@@ -2117,11 +2118,9 @@ call verisize(pq, npt)
 s = x + d
 ! First order term and explicit second order term
 qred = ZERO
-ih = 0_IK
 do j = 1, int(size(d), kind(j))
     qred = qred - d(j) * gq(j)
     do i = 1, j
-        ih = int(ih + 1, kind(ih))
         t = d(i) * s(j) + d(j) * x(i)
         if (i == j) then
             t = HALF * t

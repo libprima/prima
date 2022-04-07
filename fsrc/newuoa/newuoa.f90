@@ -22,7 +22,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:44:59
+! Last Modified: Thursday, April 07, 2022 PM12:13:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -177,8 +177,7 @@ use, non_intrinsic :: newuob_mod, only : newuob
 implicit none
 
 ! Arguments
-procedure(OBJ) :: calfun
-! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute
+procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)
 real(RP), intent(out) :: f
 integer(IK), intent(out), optional :: nf

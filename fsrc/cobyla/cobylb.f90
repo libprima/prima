@@ -18,7 +18,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, April 03, 2022 PM05:15:53
+! Last Modified: Thursday, April 07, 2022 PM12:14:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -62,7 +62,7 @@ use, non_intrinsic :: update_mod, only : updatexfc, updatepole, findpole
 implicit none
 
 ! Inputs
-procedure(OBJCON) :: calcfc
+procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfilt
 integer(IK), intent(in) :: maxfun
@@ -323,7 +323,7 @@ do tr = 1, maxtr
                 ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
                 if (subinfo == DAMAGING_ROUNDING) then
                     info = subinfo
-                    exit  ! Better action to take? Geometry step?
+                    exit  ! Better action to take? Geometry step, or simply continue?
                 end if
                 cycle  ! Zaikun 20211111: Can this lead to infinite cycling?
             end if
@@ -375,14 +375,14 @@ do tr = 1, maxtr
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
-            exit  ! Better action to take? Geometry step?
+            exit  ! Better action to take? Geometry step, or simply continue?
         end if
 
         ! Check whether to exit.
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
         if (subinfo /= INFO_DFT) then
             info = subinfo
-            exit  ! Better action to take? Geometry step?
+            exit  
         end if
     end if  ! End of IF (SHORTD). The normal trust-region calculation ends here.
 
@@ -469,7 +469,7 @@ do tr = 1, maxtr
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
-            exit  ! Better action to take? Geometry step?
+            exit  ! Better action to take? Geometry step, or simply continue?
         end if
 
         ! Check whether to exit.
@@ -496,7 +496,7 @@ do tr = 1, maxtr
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
-            exit  ! Better action to take? Geometry step?
+            exit  ! Better action to take? Geometry step, or simply continue?
         end if
     end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
 

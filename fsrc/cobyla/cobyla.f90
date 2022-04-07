@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, April 02, 2022 PM09:30:30
+! Last Modified: Thursday, April 07, 2022 PM12:14:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -234,7 +234,7 @@ use, non_intrinsic :: cobylb_mod, only : cobylb
 implicit none
 
 ! Compulsory arguments
-procedure(OBJCON) :: calcfc
+procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)     ! X(N)
 real(RP), intent(out) :: f
 integer(IK), intent(in) :: m
