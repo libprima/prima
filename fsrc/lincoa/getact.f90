@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 02, 2022 PM06:51:53
+! Last Modified: Thursday, April 07, 2022 PM03:39:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -365,7 +365,8 @@ subroutine add_act(l, c, iact, nact, qfac, resact, resnew, rfac, vlam)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : qradd, istriu, isorth
+use, non_intrinsic :: linalg_mod, only : istriu, isorth
+use, non_intrinsic :: powalg_mod, only : qradd
 implicit none
 
 ! Inputs
@@ -457,7 +458,8 @@ subroutine del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : qrexc, isorth, istriu
+use, non_intrinsic :: linalg_mod, only : isorth, istriu
+use, non_intrinsic :: powalg_mod, only : qrexc
 implicit none
 
 ! Inputs

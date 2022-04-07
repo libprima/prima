@@ -54,7 +54,8 @@ use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, DEBUGGI
 use, non_intrinsic :: circle_mod, only : circle_min
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, project, hess_mul
+use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, project
+use, non_intrinsic :: powalg_mod, only: hess_mul
 
 implicit none
 

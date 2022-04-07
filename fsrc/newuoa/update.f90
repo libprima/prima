@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 03, 2022 PM05:14:52
+! Last Modified: Thursday, April 07, 2022 PM03:37:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,8 +28,8 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 ! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
 ! ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
 ! ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
-! except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th are not saved as
-! they are unnecessary for the calculation.
+! except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th column of H are not
+! stored as they are unnecessary for the calculation.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: GROT(2, 2), V1(N), V2(N), VLAG(NPT+N), W(NPT+N)
@@ -139,16 +139,14 @@ do j = 2, int(npt - n - 1, kind(j))
         zmat(knew, j) = ZERO
     end if
 end do
-! The value of JL after the loop is important below. Its value is determined by the current (i.e.,
-! unupdated) value of IDZ. IDZ is an integer in {1, ..., NPT-N} such that S_J = -1 for J < IDZ while
-! S_J = 1 for J >= IDZ in the factorization of OMEGA. See (3.17) and (4.16) of the NEWUOA paper.
+! The value of JL after the loop is important in the sequel. Its value is determined by the current
+! (i.e., unupdated) value of IDZ. IDZ is an integer in {1, ..., NPT-N} such that S_J = -1 for J < IDZ
+! while S_J = 1 for J >= IDZ in the factorization of OMEGA. See (3.17) and (4.16) of the NEWUOA paper.
 ! The value of JL has two possibilities:
 ! 1. JL = 1 iff IDZ = 1 or IDZ = NPT - N.
-! 1.1. IDZ = 1 means that
-! OMEGA = sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
-! 1.2. IDZ = NPT - N means that
-! OMEGA = - sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
-! 2. JL = IDZ > 1 iff 2 <= IDZ <= NPT - N - 1.
+! 1.1. IDZ = 1 means that OMEGA = sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)', which is the normal case;
+! 1.2. IDZ = NPT - N means that OMEGA = -sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)', which is rare.
+! 2. JL = IDZ >= 2 iff 2 <= IDZ <= NPT - N - 1.
 
 ! Put the first NPT components of the KNEW-th column of HLAG into W, and calculate the parameters of
 ! the updating formula.
@@ -198,9 +196,9 @@ if (jl == 1) then
     ! According to (4.18) of the NEWUOA paper, "SQRTDN < ZERO" and "SQRTDN >= ZERO" below should be
     ! both revised to "DENOM < ZERO". See also the corresponding part of the LINCOA code. Note that
     ! the NEWUOA paper uses SIGMA to denote DENOM. Check also Lemma 4 and (5.13) of Powell's paper
-    ! "On updating the inverse of a KKT matrix". It seems that the BOBYQA code does not have this
-    ! part --- it does not have IDZ at all (why?). Anyway, these lines are not invoked very often in
-    ! practice, because IDZ should always be 1 in precise arithmetic.
+    ! "On updating the inverse of a KKT matrix". Note that the BOBYQA code does not have this part,
+    ! as it does not have IDZ at all. Anyway, these lines are not invoked very often in practice,
+    ! because IDZ should always be 1 in precise arithmetic.
     !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
     !if (idz == 1 .and. sqrtdn < ZERO) then
     !    idz = 2
@@ -209,17 +207,14 @@ if (jl == 1) then
     !    reduce_idz = .true.
     !end if
     !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-    ! This is the corrected version. It duplicates` the
-    ! corresponding part of the LINCOA code.
+    ! This is the corrected version. It duplicates the corresponding part of the LINCOA code.
     if (denom < ZERO) then
         if (idz == 1) then
-            ! This is the first place (out of two) where IDZ is
-            ! increased. Note that IDZ = 2 <= NPT-N after the update.
+            ! This is the 1st place (out of 2) where IDZ is increased. IDZ = 2 <= NPT-N afterwards.
             idz = 2_IK
         else
-            ! This is the first place (out of two) where IDZ is
-            ! decreased (by 1). Since IDZ >= 2 in this case, we have
-            ! IDZ >= 1 after the update.
+            ! This is the 1st place (out of 2) where IDZ is decreased (by 1). Since IDZ >= 2 in this
+            ! case, we have IDZ >= 1 after the update.
             reduce_idz = .true.
         end if
     end if
@@ -244,13 +239,13 @@ else
     ! See (4.19)--(4.20) of the NEWUOA paper.
     if (denom <= ZERO) then
         if (beta < ZERO) then
-            ! This is the second place (out of two) where IDZ is increased. Since
-            ! JL = IDZ <= NPT-N-1 in this case, we have IDZ <= NPT-N after the update.
+            ! This is the 2nd place (out of 2) where IDZ is increased. Since JL = IDZ <= NPT-N-1 in
+            ! this case, we have IDZ <= NPT-N after the update.
             idz = int(idz + 1, kind(idz))
         end if
         if (beta >= ZERO) then
-            ! This is the second place (out of two) where IDZ is decreased (by 1). Since IDZ >= 2
-            ! in this case, we have IDZ >= 1 after the update.
+            ! This is the 2nd place (out of two) where IDZ is decreased (by 1). Since IDZ >= 2 in
+            ! this case, we have IDZ >= 1 after the update.
             reduce_idz = .true.
         end if
     end if
@@ -308,7 +303,8 @@ subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
-use, non_intrinsic :: linalg_mod, only : r1update, issymmetric, calquad, omega_col
+use, non_intrinsic :: linalg_mod, only : r1update, issymmetric
+use, non_intrinsic :: powalg_mod, only : calquad, omega_col
 
 implicit none
 
@@ -521,7 +517,8 @@ subroutine tryqalt(idz, fval, ratio, bmat, zmat, itest, gq, hq, pq)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, omega_mul
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
+use, non_intrinsic :: powalg_mod, only : omega_mul
 
 implicit none
 

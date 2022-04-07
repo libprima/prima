@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, April 03, 2022 PM12:33:46
+! Last Modified: Thursday, April 07, 2022 PM03:47:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -142,7 +142,8 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrexc, norm, linspace
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, norm, linspace
+use, non_intrinsic :: powalg_mod, only : qradd, qrexc
 implicit none
 
 ! Inputs
