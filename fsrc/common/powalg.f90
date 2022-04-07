@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM05:53:41
+! Last Modified: Thursday, April 07, 2022 PM06:15:01
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -146,6 +146,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : inprod
 implicit none
 
 ! Inputs
@@ -185,29 +186,34 @@ end if
 ! Calculation starts !
 !====================!
 
-! First-order term and explicit second-order term
-qred = ZERO
-do j = 1, n
-    qred = qred - d(j) * gopt(j)
-    do i = 1, j
-        t = d(i) * d(j)
-        if (i == j) then
-            t = HALF * t
-        end if
-        qred = qred - t * hq(i, j)
-    end do
-end do
+!! First-order term and explicit second-order term
+!qred = ZERO
+!do j = 1, n
+!    qred = qred - d(j) * gopt(j)
+!    do i = 1, j
+!        t = d(i) * d(j)
+!        if (i == j) then
+!            t = HALF * t
+!        end if
+!        qred = qred - t * hq(i, j)
+!    end do
+!end do
 
-! Implicit second-order term
-w = matprod(d, xpt)
-do i = 1, npt
-    qred = qred - HALF * pq(i) * w(i)**2
-end do
+!! Implicit second-order term
+!w = matprod(d, xpt)
+!do i = 1, npt
+!    qred = qred - HALF * pq(i) * w(i)**2
+!end do
+
+!write (16, *) abs(qred + (inprod(d, gopt + HALF * matprod(hq, d)) + HALF * inprod(pq, matprod(d, xpt)**2))), abs(qred)
+!close (16)
+!call assert(abs(qred + (inprod(d, gopt + HALF * matprod(hq, d)) + HALF * inprod(pq, matprod(d, xpt)**2))) &
+!    & < sqrt(max(1.0E-20_RP, epsilon(qred))) * max(1.0_RP, abs(qred)), 'QRED is correct', srname)
 
 !--------------------------------------------------------------------------------------------------!
 ! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
 !--------------------------------------------------------------------------------------------------!
-!qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(pq, matprod(d, xpt)**2)
+qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(pq, matprod(d, xpt)**2)
 !!MATLAB: qred = -d'*(gopt + 0.5*hq*d) - 0.5*((d'*xpt).^2)*pq
 !--------------------------------------------------------------------------------------------------!
 
