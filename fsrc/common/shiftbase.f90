@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 06, 2022 PM10:32:57
+! Last Modified: Thursday, April 07, 2022 PM01:53:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -37,10 +37,10 @@ subroutine shiftbase(xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, QUART, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, QUART, DEBUGGING, EPS
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric, hess_mul
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric, hess_mul, errh
 
 implicit none
 
@@ -65,6 +65,7 @@ integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: by(size(xopt), size(xopt))
+real(RP) :: htol
 real(RP) :: qxoptq
 real(RP) :: sxpt(size(xpt, 2))
 real(RP) :: v(size(xopt))
@@ -97,6 +98,9 @@ if (DEBUGGING) then
     if (present(gq)) then
         call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     end if
+    ! The following test cannot be passed.
+    !htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for error in H
+    !call assert(errh(idz, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
 !====================!
@@ -124,29 +128,20 @@ bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + (by + transpose(by))
 ! Then the revisions of BMAT that depend on ZMAT are calculated.
 yzmat = matprod(ymat, zmat)
 yzmat_c = yzmat
-yzmat_c(:, 1:idz - 1) = -yzmat(:, 1:idz - 1)  ! IDZ is usually small, if not 1.
+yzmat_c(:, 1:idz - 1) = -yzmat(:, 1:idz - 1)  ! IDZ is usually small. So this assignment is cheap.
 bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + matprod(yzmat, transpose(yzmat_c))
-!call symmetrize(bmat(:, npt + 1:npt + n))  ! Do this if the update above does not ensure symmetry
+!call symmetrize(bmat(:, npt + 1:npt + n))  ! Do this if the update above does not ensure symmetry.
 bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
 
 ! Update the quadratic model. Only GQ and HQ need revision. For HQ, see (7.14) of the NEWUOA paper.
 if (present(gq)) then
-    gq = hess_mul(hq, pq, xpt, xopt) + gq
+    gq = hess_mul(hq, pq, xpt, xopt) + gq  ! HQ is not updated yet. 
 end if
 !v = matprod(xptxav, pq)  ! Vector V in (7.14) of the NEWUOA paper
 v = matprod(xpt, pq) - HALF * sum(pq) * xopt ! This one seems to work better numerically.
 vxopt = outprod(v, xopt)  !!MATLAB: vxopt = v * xopt';  % v and xopt should be both columns
-
-write (*, *) 1, (vxopt + transpose(vxopt) == transpose(vxopt + transpose(vxopt)))
-write (*, *) 2, (hq == transpose(hq))
-write (*, *) vxopt
-write (*, *) vxopt + transpose(vxopt)
-write (*, *) hq
-
 hq = hq + (vxopt + transpose(vxopt))
-
-write (*, *) 3, hq - transpose(hq)
-!call symmetrize(hq)  ! Do this if the update above does not ensure symmetry
+!call symmetrize(hq)  ! Do this if the update above does not ensure symmetry.
 
 ! The following instructions complete the shift of XBASE.
 xpt = xpt - spread(xopt, dim=2, ncopies=npt)
@@ -172,6 +167,8 @@ if (DEBUGGING) then
     if (present(gq)) then
         call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     end if
+    ! The following test cannot be passed.
+    !call assert(errh(idz, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
 end subroutine shiftbase

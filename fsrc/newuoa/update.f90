@@ -101,7 +101,7 @@ if (DEBUGGING) then
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     ! The following test cannot be passed.
-    !htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for H
+    !htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for error in H
     !call assert(errh(idz, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 

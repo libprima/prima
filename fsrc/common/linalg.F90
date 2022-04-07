@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 06, 2022 PM09:33:12
+! Last Modified: Thursday, April 07, 2022 PM01:49:13
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -2287,7 +2287,7 @@ function errh(idz, bmat, zmat, xpt) result(err)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates the error in H as the inverse of W. See (3.12) of the NEWUOA paper.
 ! N.B.: The (NPT+1)th column (row) of H is not contained in [BMAT, ZMAT]. It is [r; t(1); s] below.
-! In the complete form, the W and H in (3.12) of the NEWUOA paper are as follows.
+! In the complete form, using MATLAB-style notation, the W and H in the NEWUOA paper are as follows.
 ! W = [A, ONES(NPT, 1), XPT^T; ONES(1, NPT), ZERO, ZEROS(1, N); XPT, ZEROS(N, 1), ZEROS(N, N)]
 ! H = [Omega, r, BMAT(:, 1:NPT)^T; r^T, t(1), s^T, BMAT(:, 1:NPT), s, BMAT(:, NPT+1:NPT+N)]
 !--------------------------------------------------------------------------------------------------!
