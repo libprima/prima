@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM06:15:01
+! Last Modified: Thursday, April 07, 2022 PM07:35:21
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -213,7 +213,9 @@ end if
 !--------------------------------------------------------------------------------------------------!
 ! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
 !--------------------------------------------------------------------------------------------------!
-qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(pq, matprod(d, xpt)**2)
+!qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(pq, matprod(d, xpt)**2)
+!qred = -inprod(d, gopt) - HALF * (matprod(hq, d) + inprod(pq, matprod(d, xpt)**2))
+qred = -inprod(d, gopt) - HALF * matprod(hq, d) - HALF * inprod(pq, matprod(d, xpt)**2)
 !!MATLAB: qred = -d'*(gopt + 0.5*hq*d) - 0.5*((d'*xpt).^2)*pq
 !--------------------------------------------------------------------------------------------------!
 
