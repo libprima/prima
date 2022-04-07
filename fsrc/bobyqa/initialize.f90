@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM10:40:46
+! Last Modified: Thursday, April 07, 2022 PM12:17:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,7 +33,7 @@ use, non_intrinsic :: pintrf_mod, only : OBJ
 implicit none
 
 ! Inputs
-procedure(OBJ) :: calfun
+procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg

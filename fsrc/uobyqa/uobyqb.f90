@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 06, 2022 PM12:18:08
+! Last Modified: Thursday, April 07, 2022 PM12:17:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 implicit none
 
 ! Inputs
-procedure(OBJ) :: calfun
+procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: eta1
@@ -345,7 +345,7 @@ end if
 
 
 100 continue
-xnew = xopt + d
+xnew = xopt + d(1:n)  ! For the moment, SIZE(D) = N+1; to be fixed
 x = xbase + xnew
 
 120 continue

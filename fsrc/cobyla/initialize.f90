@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, March 22, 2022 PM04:17:03
+! Last Modified: Thursday, April 07, 2022 PM12:14:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,7 @@ use, non_intrinsic :: update_mod, only : updatepole
 implicit none
 
 ! Inputs
-procedure(OBJCON) :: calcfc
+procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: constr0(:)  ! CONSTR0(M)

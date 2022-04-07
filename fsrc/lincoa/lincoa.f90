@@ -27,7 +27,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 04, 2022 PM09:35:06
+! Last Modified: Thursday, April 07, 2022 PM12:16:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -126,7 +126,7 @@ use, non_intrinsic :: lincob_mod, only : lincob
 implicit none
 
 ! Compulsory arguments
-procedure(OBJ) :: calfun
+procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)  ! X(N)
 real(RP), intent(out) :: f
 

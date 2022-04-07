@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Tuesday, March 22, 2022 PM04:57:11
+! Last Modified: Thursday, April 07, 2022 PM12:15:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -107,7 +107,7 @@ use, non_intrinsic :: pintrf_mod, only : OBJ
 implicit none
 
 ! Inputs
-procedure(OBJ) :: calfun
+procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(in) :: x(:)
 
 ! Output
@@ -169,7 +169,7 @@ use, non_intrinsic :: pintrf_mod, only : OBJCON
 implicit none
 
 ! Inputs
-procedure(OBJCON) :: calcfc
+procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(in) :: x(:)
 
 ! Outputs

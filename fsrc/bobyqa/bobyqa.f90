@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 06, 2022 PM12:09:28
+! Last Modified: Thursday, April 07, 2022 PM12:17:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -115,7 +115,7 @@ use, non_intrinsic :: bobyqb_mod, only : bobyqb
 implicit none
 
 ! Compulsory arguments
-procedure(OBJ) :: calfun
+procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)  ! X(N)
 real(RP), intent(out) :: f
 
@@ -317,14 +317,14 @@ end if
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
     & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! !!! Revise X (see below) and RHOBEG, RHOEND 
+! !!! Revise X (see below) and RHOBEG, RHOEND
 ! Shouldn't this be included into PREPROC?
 ! Zaikun, 2020-05-05
 ! When the data is passed from the interfaces to the Fortran code, RHOBEG,
 ! XU and XL may change a bit (due to rounding ???). It was oberved in
 ! a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 ! If we set RHOBEG = MIN(XU-XL)/2 in the interfaces, then it may happen
-! that RHOBEG > MIN(XU-XL)/2. That is why we do the following. 
+! that RHOBEG > MIN(XU-XL)/2. That is why we do the following.
 rhobeg_loc = minval([rhobeg_loc, HALF * (xu_loc - xl_loc)])
 if (rhobeg_loc < EPS) then
     if (present(info)) then

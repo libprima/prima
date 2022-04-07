@@ -73,8 +73,7 @@ use, non_intrinsic :: update_mod, only : updateh, updateq, updatexf, tryqalt
 implicit none
 
 ! Inputs
-procedure(OBJ) :: calfun
-! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute
+procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: npt
@@ -202,7 +201,7 @@ call inith(ij, xpt, idz, bmat, zmat, subinfo)
 ! After initializing GQ, HQ, PQ, BMAT, ZMAT, one can also choose to return if subinfo = NAN_MODEL
 ! (NaN occurs in the model). We do not do it here. If such a model is harmful, then it will probably
 ! lead to other returns (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the
-! code will continue to run and possibly get rid of the NaN in the model.
+! code will continue to run and possibly recovers by geometry steps.
 
 ! Set some more initial values and parameters.
 rho = rhobeg

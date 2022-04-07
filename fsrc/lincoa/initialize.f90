@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 PM08:13:12
+! Last Modified: Thursday, April 07, 2022 PM12:16:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -44,7 +44,7 @@ use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 implicit none
 
 ! Inputs
-procedure(OBJ) :: calfun
+procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 real(RP), intent(in) :: A_orig(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
