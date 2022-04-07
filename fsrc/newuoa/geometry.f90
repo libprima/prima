@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 03, 2022 PM05:13:18
+! Last Modified: Thursday, April 07, 2022 PM04:09:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -171,7 +171,8 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : issymmetric, norm, omega_col
+use, non_intrinsic :: linalg_mod, only : issymmetric, norm
+use, non_intrinsic :: powalg_mod, only : omega_col
 
 ! Solver-specific modules
 use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
@@ -228,9 +229,8 @@ xopt = xpt(:, kopt)  ! Read XOPT.
 
 d = biglag(idz, knew, bmat, delbar, xopt, xpt, zmat)
 
-! ALPHA is the KNEW-th diagonal entry of H.
-hcol = omega_col(idz, zmat, knew)
-alpha = hcol(knew)
+hcol = omega_col(idz, zmat, knew)  ! HCOL is the KNEW-th column of Omega.
+alpha = hcol(knew)  ! ALPHA is the KNEW-th diagonal entry of H, i.e., that of Omega.
 
 ! Calculate VLAG and BETA for D. Indeed, VLAG(NPT + 1 : NPT + N) will not be used.
 vlag = calvlag(idz, kopt, bmat, d, xpt, zmat)
@@ -281,7 +281,8 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TE
 use, non_intrinsic :: circle_mod, only : circle_maxabs
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm, project, omega_col
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm, project!, Ax_plus_y
+use, non_intrinsic :: powalg_mod, only : omega_col
 
 implicit none
 
@@ -345,21 +346,19 @@ end if
 ! Calculation starts !
 !====================!
 
-! Set HCOL to the leading NPT elements of the KNEW-th column of H.
+! Set HCOL to the leading NPT elements of the KNEW-th column of H, i.e., the KNEW-th column of Omega.
 hcol = omega_col(idz, zmat, knew)
 
-! Set the unscaled initial direction D. Form the gradient of LFUNC at X, and multiply D by the
-! Hessian of LFUNC.
+! Set the unscaled initial D. Form the gradient of LFUNC at X, and multiply D by the Hessian of LFUNC.
 d = xpt(:, knew) - x
 dd = inprod(d, d)
-
 gd = matprod(xpt, hcol * matprod(d, xpt))
 
-!-----------------------------------------------------------------------!
-!-----!gc = bmat(:, knew) + matprod(xpt, hcol*matprod(x, xpt)) !--------!
-! The following line works numerically better than the last line (why?).
-gc = Ax_plus_y(xpt, hcol * matprod(x, xpt), bmat(:, knew))
-!-----------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+gc = bmat(:, knew) + matprod(xpt, hcol * matprod(x, xpt))
+! The following is mathematically equivalent to the last but seems to work numerically better (why?)
+!gc = Ax_plus_y(xpt, hcol * matprod(x, xpt), bmat(:, knew))
+!--------------------------------------------------------------------------------------------------!
 
 ! Scale D and GD, with a sign change if needed. Set S to another vector in the initial 2-D subspace.
 gg = inprod(gc, gc)
@@ -502,7 +501,8 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, QU
 use, non_intrinsic :: circle_mod, only : circle_maxabs
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm, project, omega_col, omega_mul
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm, project
+use, non_intrinsic :: powalg_mod, only : omega_col, omega_mul
 
 implicit none
 
@@ -585,9 +585,9 @@ end if
 
 x = xpt(:, kopt) ! For simplicity, we use X to denote XOPT.
 
-! Store the first NPT elements of the KNEW-th column of H in HCOL.
+! Set HCOL to the leading NPT elements of the KNEW-th column of H, i.e., the KNEW-th column of Omega.
 hcol = omega_col(idz, zmat, knew)
-alpha = hcol(knew)
+alpha = hcol(knew)  ! ALPHA is the KNEW-th diagonal entry of H, i.e., that of Omega.
 
 ! The initial search direction D is taken from the last call of BIGLAG, and the initial S is set
 ! below, usually to the direction from X to X_KNEW, but a different direction to an interpolation

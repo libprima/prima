@@ -10,7 +10,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 22, 2022 PM01:44:00
+! Last Modified: Thursday, April 07, 2022 PM03:37:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,7 +34,8 @@ function calvlag(idz, kopt, bmat, d, xpt, zmat) result(vlag)
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, omega_mul, issymmetric
+use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
+use, non_intrinsic :: powalg_mod, only : omega_mul
 
 implicit none
 
@@ -116,7 +117,8 @@ function calbeta(idz, kopt, bmat, d, xpt, zmat) result(beta)
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, omega_inprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
+use, non_intrinsic :: powalg_mod, only : omega_inprod
 
 implicit none
 

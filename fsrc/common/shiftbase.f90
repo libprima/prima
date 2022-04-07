@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM01:53:51
+! Last Modified: Thursday, April 07, 2022 PM03:49:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -37,10 +37,11 @@ subroutine shiftbase(xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, QUART, DEBUGGING, EPS
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric, hess_mul, errh
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric
+use, non_intrinsic :: powalg_mod, only : hess_mul!, errh
 
 implicit none
 
@@ -65,7 +66,7 @@ integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: by(size(xopt), size(xopt))
-real(RP) :: htol
+!real(RP) :: htol
 real(RP) :: qxoptq
 real(RP) :: sxpt(size(xpt, 2))
 real(RP) :: v(size(xopt))
@@ -135,7 +136,7 @@ bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
 
 ! Update the quadratic model. Only GQ and HQ need revision. For HQ, see (7.14) of the NEWUOA paper.
 if (present(gq)) then
-    gq = hess_mul(hq, pq, xpt, xopt) + gq  ! HQ is not updated yet. 
+    gq = hess_mul(hq, pq, xpt, xopt) + gq  ! HQ is not updated yet.
 end if
 !v = matprod(xptxav, pq)  ! Vector V in (7.14) of the NEWUOA paper
 v = matprod(xpt, pq) - HALF * sum(pq) * xopt ! This one seems to work better numerically.
