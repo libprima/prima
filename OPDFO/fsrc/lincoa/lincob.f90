@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 06, 2022 AM11:09:46
+! Last Modified: Thursday, April 07, 2022 PM05:24:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -544,7 +544,9 @@ do k = 1, npt
         temp = temp + xpt(j, k) * step(j)
         rsp(npt + k) = temp
     end do
-    vquad = vquad + HALF * pq(k) * temp * temp
+    ! Zaikun 20220407
+    !vquad = vquad + HALF * pq(k) * temp * temp
+    vquad = vquad + HALF * pq(k) * temp**2
 end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019

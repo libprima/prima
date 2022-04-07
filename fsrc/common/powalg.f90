@@ -9,16 +9,20 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM04:11:48
+! Last Modified: Thursday, April 07, 2022 PM05:53:41
 !--------------------------------------------------------------------------------------------------
 
 implicit none
 private
 public :: calquad, errquad
 public :: hess_mul
+public :: errh
 public :: omega_col, omega_mul, omega_inprod
 public :: qradd, qrexc
-public :: errh
+
+interface calquad
+    module procedure calquad_gq, calquad_gopt
+end interface calquad
 
 interface qradd
     module procedure qradd_Rdiag, qradd_Rfull
@@ -30,6 +34,538 @@ end interface
 
 
 contains
+
+
+function calquad_gq(d, gq, hq, pq, x, xpt) result(qred)
+!--------------------------------------------------------------------------------------------------!
+! This function evaluates QRED = Q(XBASE + X) - Q(XBSE + X + D) with Q being the quadratic function
+! defined via (GQ, HQ, PQ) by
+! Q(XBASE + S) = <S, GQ> + 0.5*<S, HESSIAN*S>,
+! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
+! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
+! N.B.: GQ is the gradient of Q at XBASE; the value of XBASE is irrelevant in the calculation.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
+implicit none
+
+! Inputs
+real(RP), intent(in) :: d(:)      ! D(N)
+real(RP), intent(in) :: gq(:)     ! GQ(N)
+real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
+real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+real(RP), intent(in) :: x(:)      ! X(N)
+real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+
+! Output
+real(RP) :: qred
+
+! Local variable
+character(len=*), parameter :: srname = 'CALQUAD_GQ'
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: s(size(x))
+real(RP) :: t
+real(RP) :: w(size(pq))
+
+! Sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+s = x + d
+
+! First-order term and explicit second order term
+qred = ZERO
+do j = 1, n
+    qred = qred - d(j) * gq(j)
+    do i = 1, j
+        t = d(i) * s(j) + d(j) * x(i)
+        if (i == j) then
+            t = HALF * t
+        end if
+        qred = qred - t * hq(i, j)
+    end do
+end do
+
+! Implicit second-order term
+w = matprod(d, xpt)
+w = w * (HALF * w + matprod(x, xpt))
+do i = 1, npt
+    qred = qred - pq(i) * w(i)
+end do
+
+!--------------------------------------------------------------------------------------------------!
+! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
+!--------------------------------------------------------------------------------------------------!
+!! The order of calculation seems quite important. The following order seems to work well.
+!! First-order term
+!qred = -inprod(d, gq)
+!s = HALF * d + x  ! Different from the above version.
+!! Implicit second-order term
+!qred = qred - sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
+!! Explicit second-order term
+!qred = qred - inprod(s, matprod(hq, d))
+!! In Fortran, the following implementations do not work as well as the above line.
+!!qred = qred - inprod(d, matprod(hq, s))
+!!qred = qred - HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
+!--------------------------------------------------------------------------------------------------!
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function calquad_gq
+
+
+function calquad_gopt(d, gopt, hq, pq, xpt) result(qred)
+!--------------------------------------------------------------------------------------------------!
+! This function evaluates QRED = Q(XOPT) - Q(XOPT+D) = -<D, GOPT> - 0.5*<D, HESSIAN*D>,
+! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
+! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
+implicit none
+
+! Inputs
+real(RP), intent(in) :: d(:)      ! D(N)
+real(RP), intent(in) :: gopt(:)   ! GOPT(N)
+real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
+real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+
+! Output
+real(RP) :: qred
+
+! Local variable
+character(len=*), parameter :: srname = 'CALQUAD_GOPT'
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: t
+real(RP) :: w(size(pq))
+
+! Sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! First-order term and explicit second-order term
+qred = ZERO
+do j = 1, n
+    qred = qred - d(j) * gopt(j)
+    do i = 1, j
+        t = d(i) * d(j)
+        if (i == j) then
+            t = HALF * t
+        end if
+        qred = qred - t * hq(i, j)
+    end do
+end do
+
+! Implicit second-order term
+w = matprod(d, xpt)
+do i = 1, npt
+    qred = qred - HALF * pq(i) * w(i)**2
+end do
+
+!--------------------------------------------------------------------------------------------------!
+! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
+!--------------------------------------------------------------------------------------------------!
+!qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(pq, matprod(d, xpt)**2)
+!!MATLAB: qred = -d'*(gopt + 0.5*hq*d) - 0.5*((d'*xpt).^2)*pq
+!--------------------------------------------------------------------------------------------------!
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function calquad_gopt
+
+
+function errquad(gq, hq, pq, xpt, fval) result(err)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates the maximal relative error of Q in interpolating FVAL on XPT.
+! Here, Q is the quadratic function defined via (GQ, HQ, PQ) by
+! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
+! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
+! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
+use, non_intrinsic :: linalg_mod, only : issymmetric
+implicit none
+
+! Inputs
+real(RP), intent(in) :: gq(:)     ! GQ(N)
+real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
+real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+real(RP), intent(in) :: fval(:)   ! FVAL(NPT)
+
+! Outputs
+real(RP) :: err
+
+! Local variables
+character(len=*), parameter :: srname = 'ERRQUAD'
+integer(IK) :: k
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: fmq(size(xpt, 2))
+real(RP) :: qval(size(xpt, 2))
+real(RP) :: zeros(size(xpt, 1))
+
+! Sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
+    call assert(.not. any(is_nan(fval) .or. is_posinf(fval)), 'FVAL is not NaN/+Inf', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+zeros = ZERO
+qval = [(-calquad(xpt(:, k), gq, hq, pq, zeros, xpt), k=1, npt)]
+!!MATLAB: qval = cellfun(@(x) -calquad(x, gq, hq, pq, zeros, xpt), num2cell(xpt, 1));  % Row vector
+if (.not. all(is_finite(qval))) then
+    err = HUGENUM
+else
+    fmq = fval - qval
+    err = (maxval(fmq) - minval(fmq)) !/ max(ONE, maxval(abs(fval)))
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+!
+end function errquad
+
+
+function hess_mul(hq, pq, xpt, x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates HESSIAN*X, where HESSIAN consists of an explicit part HQ and an
+! implicit part PQ in Powell's way: HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
+implicit none
+
+! Inputs
+real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
+real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+real(RP), intent(in) :: x(:)      ! X(N)
+real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+
+! Outputs
+real(RP) :: y(size(hq, 1))
+
+! Local variables
+character(len=*), parameter :: srname = 'HESS_MUL'
+integer(IK) :: j
+integer(IK) :: n
+integer(IK) :: npt
+
+! Sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(x) == n, 'SIZE(Y) == N', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+!--------------------------------------------------------------------------------!
+!----------! y = matprod(hq, x) + matprod(xpt, pq * matprod(x, xpt)) !-----------!
+! The following loop works numerically better than the last line (but why?).
+!--------------------------------------------------------------------------------!
+y = matprod(xpt, pq * matprod(x, xpt))
+do j = 1, n
+    y = y + hq(:, j) * x(j)
+end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function hess_mul
+
+
+function errh(idz, bmat, zmat, xpt) result(err)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates the error in H as the inverse of W. See (3.12) of the NEWUOA paper.
+! N.B.: The (NPT+1)th column (row) of H is not contained in [BMAT, ZMAT]. It is [r; t(1); s] below.
+! In the complete form, using MATLAB-style notation, the W and H in the NEWUOA paper are as follows.
+! W = [A, ONES(NPT, 1), XPT^T; ONES(1, NPT), ZERO, ZEROS(1, N); XPT, ZEROS(N, 1), ZEROS(N, N)]
+! H = [Omega, r, BMAT(:, 1:NPT)^T; r^T, t(1), s^T, BMAT(:, 1:NPT), s, BMAT(:, NPT+1:NPT+N)]
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, eye, issymmetric
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+real(RP), intent(in) :: bmat(:, :)
+real(RP), intent(in) :: zmat(:, :)
+real(RP), intent(in) :: xpt(:, :)
+
+! Outputs
+real(RP) :: err
+
+! Local variables
+character(len=*), parameter :: srname = 'ERRH'
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: A(size(xpt, 2), size(xpt, 2))
+real(RP) :: e(3, 3)
+real(RP) :: maxabs
+real(RP) :: Omega(size(xpt, 2), size(xpt, 2))
+real(RP) :: U(size(xpt, 2), size(xpt, 2))
+real(RP) :: V(size(xpt, 1), size(xpt, 2))
+real(RP) :: r(size(xpt, 2))
+real(RP) :: s(size(xpt, 1))
+real(RP) :: t(size(xpt, 2))
+
+! Sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
+        & 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+A = HALF * matprod(transpose(xpt), xpt)**2
+Omega = -matprod(zmat(:, 1:idz - 1), transpose(zmat(:, 1:idz - 1))) + &
+    & matprod(zmat(:, idz:npt - n - 1), transpose(zmat(:, idz:npt - n - 1)))
+maxabs = maxval([ONE, maxval(abs(A)), maxval(abs(Omega)), maxval(abs(bmat))])
+U = eye(npt) - matprod(A, Omega) - matprod(transpose(xpt), bmat(:, 1:npt))
+V = -matprod(bmat(:, 1:npt), A) - matprod(bmat(:, npt + 1:npt + n), xpt)
+r = sum(U, dim=1) / real(npt, RP)
+s = sum(V, dim=2) / real(npt, RP)
+t = -matprod(A, r) - matprod(s, xpt)
+e(1, 1) = maxval(maxval(U, dim=1) - minval(U, dim=1))
+e(1, 2) = maxval(t) - minval(t)
+e(1, 3) = maxval(maxval(V, dim=2) - minval(V, dim=2))
+e(2, 1) = maxval(abs(sum(Omega, dim=1)))
+e(2, 2) = abs(sum(r) - ONE)
+e(2, 3) = maxval(abs(sum(bmat(:, 1:npt), dim=2)))
+e(3, 1) = maxval(abs(matprod(xpt, Omega)))
+e(3, 2) = maxval(abs(matprod(xpt, r)))
+e(3, 3) = maxval(abs(matprod(xpt, transpose(bmat(:, 1:npt))) - eye(n)))
+err = maxval(e) / (maxabs * real(n + npt, RP))
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function errh
+
+
+function omega_col(idz, zmat, k) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates Y = column K of OMEGA, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
+! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
+! OMEGA is the leading NPT-by-NPT block of the matrix H in (3.12) of the NEWUOA paper.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : matprod
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+integer(IK), intent(in) :: k
+real(RP), intent(in) :: zmat(:, :)
+
+! Outputs
+real(RP) :: y(size(zmat, 1))
+
+! Local variables
+character(len=*), parameter :: srname = 'OMEGA_COL'
+real(RP) :: zk(size(zmat, 2))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(k >= 1 .and. idz <= size(zmat, 1), '1 <= K <= SIZE(ZMAT, 1)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+zk = zmat(k, :)
+zk(1:idz - 1) = -zk(1:idz - 1)
+y = matprod(zmat, zk)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function omega_col
+
+
+function omega_mul(idz, zmat, x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates Y = OMEGA*X, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
+! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
+! OMEGA is the leading NPT-by-NPT block of the matrix H in (3.12) of the NEWUOA paper.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : matprod
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+real(RP), intent(in) :: zmat(:, :)
+real(RP), intent(in) :: x(:)
+
+! Outputs
+real(RP) :: y(size(zmat, 1))
+
+! Local variables
+character(len=*), parameter :: srname = 'OMEGA_MUL'
+real(RP) :: xz(size(zmat, 2))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(size(x) == size(zmat, 1), 'SIZE(X) == SIZE(ZMAT, 1)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+xz = matprod(x, zmat)
+xz(1:idz - 1) = -xz(1:idz - 1)
+y = matprod(zmat, xz)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function omega_mul
+
+
+function omega_inprod(idz, zmat, x, y) result(p)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates P = X^T*OMEGA*Y, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
+! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
+! OMEGA is the leading NPT-by-NPT block of the matrix H in (3.12) of the NEWUOA paper.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : matprod, inprod
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+real(RP), intent(in) :: zmat(:, :)
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: y(:)
+
+! Outputs
+real(RP) :: p
+
+! Local variables
+character(len=*), parameter :: srname = 'OMEGA_INPROD'
+real(RP) :: xz(size(zmat, 2))
+real(RP) :: yz(size(zmat, 2))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(size(x) == size(zmat, 1), 'SIZE(X) == SIZE(ZMAT, 1)', srname)
+    call assert(size(y) == size(zmat, 1), 'SIZE(Y) == SIZE(ZMAT, 1)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+xz = matprod(x, zmat)
+xz(1:idz - 1) = -xz(1:idz - 1)
+yz = matprod(y, zmat)
+p = inprod(xz, yz)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function omega_inprod
 
 
 subroutine qradd_Rdiag(c, Q, Rdiag, n)  ! Used in COBYLA
@@ -519,455 +1055,6 @@ if (DEBUGGING) then
 end if
 
 end subroutine qrexc_Rfull
-
-
-function calquad(d, gq, hq, pq, x, xpt) result(qred)
-!--------------------------------------------------------------------------------------------------!
-! This function evaluates QRED = Q(X) - Q(X + D) with Q being the quadratic function defined via
-! (GQ, HQ, PQ) by
-! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
-! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
-! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
-implicit none
-
-! Inputs
-real(RP), intent(in) :: d(:)      ! D(N)
-real(RP), intent(in) :: gq(:)     ! GQ(N)
-real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(in) :: pq(:)     ! PQ(NPT)
-real(RP), intent(in) :: x(:)      ! X(N)
-real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
-
-! Output
-real(RP) :: qred
-
-! Local variable
-character(len=*), parameter :: srname = 'CALQUAD'
-integer(IK) :: i
-integer(IK) :: j
-integer(IK) :: n
-integer(IK) :: npt
-real(RP) :: s(size(x))
-real(RP) :: t
-real(RP) :: w(size(pq))
-
-! Sizes
-n = int(size(xpt, 1), kind(n))
-npt = int(size(xpt, 2), kind(npt))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
-    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
-    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-s = x + d
-
-! First order term and explicit second order term
-qred = ZERO
-do j = 1, int(size(d), kind(j))
-    qred = qred - d(j) * gq(j)
-    do i = 1, j
-        t = d(i) * s(j) + d(j) * x(i)
-        if (i == j) then
-            t = HALF * t
-        end if
-        qred = qred - t * hq(i, j)
-    end do
-end do
-
-! Implicit second order term
-w = matprod(d, xpt)
-w = w * (HALF * w + matprod(x, xpt))
-do i = 1, int(size(pq), kind(i))
-    qred = qred - pq(i) * w(i)
-end do
-
-!--------------------------------------------------------------------------------------------------!
-! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
-!--------------------------------------------------------------------------------------------------!
-!! The order of calculation seems quite important. The following order seems to work well.
-!! 1st order term
-!qred = -inprod(d, gq)
-!s = HALF * d + x  ! Different from the above version.
-!! implicit 2nd-order term
-!qred = qred - sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
-!! explicit 2nd-order term
-!qred = qred - inprod(s, matprod(hq, d))
-!! In Fortran, the following implementations do not work as well as the above line.
-!!qred = qred - inprod(d, matprod(hq, s))
-!!qred = qred - HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
-!--------------------------------------------------------------------------------------------------!
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-end function calquad
-
-
-function errquad(gq, hq, pq, xpt, fval) result(err)
-!--------------------------------------------------------------------------------------------------!
-! This function calculates the maximal relative error of Q in interpolating FVAL on XPT.
-! Here, Q is the quadratic function defined via (GQ, HQ, PQ) by
-! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
-! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
-! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : issymmetric
-implicit none
-
-! Inputs
-real(RP), intent(in) :: gq(:)     ! GQ(N)
-real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(in) :: pq(:)     ! PQ(NPT)
-real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
-real(RP), intent(in) :: fval(:)   ! FVAL(NPT)
-
-! Outputs
-real(RP) :: err
-
-! Local variables
-character(len=*), parameter :: srname = 'ERRQUAD'
-integer(IK) :: k
-integer(IK) :: n
-integer(IK) :: npt
-real(RP) :: fmq(size(xpt, 2))
-real(RP) :: qval(size(xpt, 2))
-real(RP) :: zeros(size(xpt, 1))
-
-! Sizes
-n = int(size(xpt, 1), kind(n))
-npt = int(size(xpt, 2), kind(npt))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
-    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
-    call assert(.not. any(is_nan(fval) .or. is_posinf(fval)), 'FVAL is not NaN/+Inf', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-zeros = ZERO
-qval = [(-calquad(xpt(:, k), gq, hq, pq, zeros, xpt), k=1, npt)]
-!!MATLAB: qval = cellfun(@(x) -calquad(x, gq, hq, pq, zeros, xpt), num2cell(xpt, 1));  % Row vector
-if (.not. all(is_finite(qval))) then
-    err = HUGENUM
-else
-    fmq = fval - qval
-    err = (maxval(fmq) - minval(fmq)) !/ max(ONE, maxval(abs(fval)))
-end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-!
-end function errquad
-
-
-function hess_mul(hq, pq, xpt, x) result(y)
-!--------------------------------------------------------------------------------------------------!
-! This function calculates HESSIAN*X, where HESSIAN consists of an explicit part HQ and an
-! implicit part PQ in Powell's way: HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
-implicit none
-
-! Inputs
-real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(in) :: pq(:)     ! PQ(NPT)
-real(RP), intent(in) :: x(:)      ! X(N)
-real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
-
-! Outputs
-real(RP) :: y(size(hq, 1))
-
-! Local variables
-character(len=*), parameter :: srname = 'HESSMUL'
-integer(IK) :: j
-integer(IK) :: n
-integer(IK) :: npt
-
-! Sizes
-n = int(size(xpt, 1), kind(n))
-npt = int(size(xpt, 2), kind(npt))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
-    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(x) == n, 'SIZE(Y) == N', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-!--------------------------------------------------------------------------------!
-!----------! y = matprod(hq, x) + matprod(xpt, pq * matprod(x, xpt)) !-----------!
-! The following loop works numerically better than the last line (but why?).
-!--------------------------------------------------------------------------------!
-y = matprod(xpt, pq * matprod(x, xpt))
-do j = 1, n
-    y = y + hq(:, j) * x(j)
-end do
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-end function hess_mul
-
-
-function errh(idz, bmat, zmat, xpt) result(err)
-!--------------------------------------------------------------------------------------------------!
-! This function calculates the error in H as the inverse of W. See (3.12) of the NEWUOA paper.
-! N.B.: The (NPT+1)th column (row) of H is not contained in [BMAT, ZMAT]. It is [r; t(1); s] below.
-! In the complete form, using MATLAB-style notation, the W and H in the NEWUOA paper are as follows.
-! W = [A, ONES(NPT, 1), XPT^T; ONES(1, NPT), ZERO, ZEROS(1, N); XPT, ZEROS(N, 1), ZEROS(N, N)]
-! H = [Omega, r, BMAT(:, 1:NPT)^T; r^T, t(1), s^T, BMAT(:, 1:NPT), s, BMAT(:, NPT+1:NPT+N)]
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, eye, issymmetric
-implicit none
-
-! Inputs
-integer(IK), intent(in) :: idz
-real(RP), intent(in) :: bmat(:, :)
-real(RP), intent(in) :: zmat(:, :)
-real(RP), intent(in) :: xpt(:, :)
-
-! Outputs
-real(RP) :: err
-
-! Local variables
-character(len=*), parameter :: srname = 'ERRH'
-integer(IK) :: n
-integer(IK) :: npt
-real(RP) :: A(size(xpt, 2), size(xpt, 2))
-real(RP) :: e(3, 3)
-real(RP) :: maxabs
-real(RP) :: Omega(size(xpt, 2), size(xpt, 2))
-real(RP) :: U(size(xpt, 2), size(xpt, 2))
-real(RP) :: V(size(xpt, 1), size(xpt, 2))
-real(RP) :: r(size(xpt, 2))
-real(RP) :: s(size(xpt, 1))
-real(RP) :: t(size(xpt, 2))
-
-! Sizes
-n = int(size(xpt, 1), kind(n))
-npt = int(size(xpt, 2), kind(npt))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
-    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
-    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
-        & 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
-    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-A = HALF * matprod(transpose(xpt), xpt)**2
-Omega = -matprod(zmat(:, 1:idz - 1), transpose(zmat(:, 1:idz - 1))) + &
-    & matprod(zmat(:, idz:npt - n - 1), transpose(zmat(:, idz:npt - n - 1)))
-maxabs = maxval([ONE, maxval(abs(A)), maxval(abs(Omega)), maxval(abs(bmat))])
-U = eye(npt) - matprod(A, Omega) - matprod(transpose(xpt), bmat(:, 1:npt))
-V = -matprod(bmat(:, 1:npt), A) - matprod(bmat(:, npt + 1:npt + n), xpt)
-r = sum(U, dim=1) / real(npt, RP)
-s = sum(V, dim=2) / real(npt, RP)
-t = -matprod(A, r) - matprod(s, xpt)
-e(1, 1) = maxval(maxval(U, dim=1) - minval(U, dim=1))
-e(1, 2) = maxval(t) - minval(t)
-e(1, 3) = maxval(maxval(V, dim=2) - minval(V, dim=2))
-e(2, 1) = maxval(abs(sum(Omega, dim=1)))
-e(2, 2) = abs(sum(r) - ONE)
-e(2, 3) = maxval(abs(sum(bmat(:, 1:npt), dim=2)))
-e(3, 1) = maxval(abs(matprod(xpt, Omega)))
-e(3, 2) = maxval(abs(matprod(xpt, r)))
-e(3, 3) = maxval(abs(matprod(xpt, transpose(bmat(:, 1:npt))) - eye(n)))
-err = maxval(e) / (maxabs * real(n + npt, RP))
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-end function errh
-
-
-function omega_col(idz, zmat, k) result(y)
-!--------------------------------------------------------------------------------------------------!
-! This function calculates Y = column K of OMEGA, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
-! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
-! OMEGA is the leading NPT-by-NPT block of the matrix H in (3.12) of the NEWUOA paper.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : matprod
-implicit none
-
-! Inputs
-integer(IK), intent(in) :: idz
-integer(IK), intent(in) :: k
-real(RP), intent(in) :: zmat(:, :)
-
-! Outputs
-real(RP) :: y(size(zmat, 1))
-
-! Local variables
-character(len=*), parameter :: srname = 'OMEGA_COL'
-real(RP) :: zk(size(zmat, 2))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
-    call assert(k >= 1 .and. idz <= size(zmat, 1), '1 <= K <= SIZE(ZMAT, 1)', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-zk = zmat(k, :)
-zk(1:idz - 1) = -zk(1:idz - 1)
-y = matprod(zmat, zk)
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-end function omega_col
-
-
-function omega_mul(idz, zmat, x) result(y)
-!--------------------------------------------------------------------------------------------------!
-! This function calculates Y = OMEGA*X, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
-! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
-! OMEGA is the leading NPT-by-NPT block of the matrix H in (3.12) of the NEWUOA paper.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : matprod
-implicit none
-
-! Inputs
-integer(IK), intent(in) :: idz
-real(RP), intent(in) :: zmat(:, :)
-real(RP), intent(in) :: x(:)
-
-! Outputs
-real(RP) :: y(size(zmat, 1))
-
-! Local variables
-character(len=*), parameter :: srname = 'OMEGA_MUL'
-real(RP) :: xz(size(zmat, 2))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
-    call assert(size(x) == size(zmat, 1), 'SIZE(X) == SIZE(ZMAT, 1)', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-xz = matprod(x, zmat)
-xz(1:idz - 1) = -xz(1:idz - 1)
-y = matprod(zmat, xz)
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-end function omega_mul
-
-
-function omega_inprod(idz, zmat, x, y) result(p)
-!--------------------------------------------------------------------------------------------------!
-! This function calculates P = X^T*OMEGA*Y, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
-! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
-! OMEGA is the leading NPT-by-NPT block of the matrix H in (3.12) of the NEWUOA paper.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : matprod, inprod
-implicit none
-
-! Inputs
-integer(IK), intent(in) :: idz
-real(RP), intent(in) :: zmat(:, :)
-real(RP), intent(in) :: x(:)
-real(RP), intent(in) :: y(:)
-
-! Outputs
-real(RP) :: p
-
-! Local variables
-character(len=*), parameter :: srname = 'OMEGA_INPROD'
-real(RP) :: xz(size(zmat, 2))
-real(RP) :: yz(size(zmat, 2))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
-    call assert(size(x) == size(zmat, 1), 'SIZE(X) == SIZE(ZMAT, 1)', srname)
-    call assert(size(y) == size(zmat, 1), 'SIZE(Y) == SIZE(ZMAT, 1)', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-xz = matprod(x, zmat)
-xz(1:idz - 1) = -xz(1:idz - 1)
-yz = matprod(y, zmat)
-p = inprod(xz, yz)
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-end function omega_inprod
 
 
 end module powalg_mod

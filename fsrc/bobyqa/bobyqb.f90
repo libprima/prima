@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM12:17:21
+! Last Modified: Thursday, April 07, 2022 PM05:54:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,8 +30,9 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
-!use, non_intrinsic :: linalg_mod, only : matprod, r1update, r2update!, norm
+use, non_intrinsic :: linalg_mod, only : matprod!, inprod, r1update, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: powalg_mod, only : calquad
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize
@@ -99,7 +100,7 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        dist, distsq, dnorm, dsq, dx, errbig, fopt,        &
 &        frhosq, gisq, gqsq, hdiag,      &
 &        pqold, ratio, rho, scaden, summ, summa, summb, &
-&        temp, vquad, xoptsq
+&        temp, qred, xoptsq
 integer(IK) :: i, itest, j, jj, jp, k, kbase, knew, &
 &           kopt, ksav, nfsav, np, nptm, nresc, ntrits
 
@@ -436,19 +437,29 @@ end do
 !     product of D with XPT(K,.) is going to be held in W(NPT+K) for
 !     use when VQUAD is calculated.
 !
-230 do k = 1, npt
-    summa = ZERO
-    summb = ZERO
-    summ = ZERO
-    do j = 1, n
-        summa = summa + xpt(j, k) * d(j)
-        summb = summb + xpt(j, k) * xopt(j)
-        summ = summ + bmat(j, k) * d(j)
-    end do
-    w(k) = summa * (HALF * summa + summb)
-    vlag(k) = summ
-    w(npt + k) = summa
-end do
+230 continue
+
+!do k = 1, npt
+!    !summa = ZERO
+!    !summb = ZERO
+!    !summ = ZERO
+!    !do j = 1, n
+!    !    summa = summa + xpt(j, k) * d(j)
+!    !    summb = summb + xpt(j, k) * xopt(j)
+!    !    summ = summ + bmat(j, k) * d(j)
+!    !end do
+!    summa = inprod(d, xpt(:, k))
+!    summb = inprod(xopt, xpt(:, k))
+!    !summ = inprod(d, bmat(:, k))
+!    w(k) = summa * (HALF * summa + summb)
+!    !vlag(k) = summ
+!    !w(npt + k) = summa
+!end do
+
+w(npt + 1:2 * npt) = matprod(d, xpt)
+w(1:npt) = w(npt + 1:2 * npt) * (HALF * w(npt + 1:2 * npt) + matprod(xopt, xpt))
+vlag(1:npt) = matprod(d, bmat(:, 1:npt))
+
 beta = ZERO
 do jj = 1, nptm
     summ = ZERO
@@ -602,19 +613,9 @@ end if
 !       and set DIFF to the error of this prediction.
 !
 fopt = fval(kopt)
-vquad = ZERO
-do j = 1, n
-    vquad = vquad + d(j) * gopt(j)
-    do i = 1, j
-        temp = d(i) * d(j)
-        if (i == j) temp = HALF * temp
-        vquad = vquad + hq(i, j) * temp
-    end do
-end do
-do k = 1, npt
-    vquad = vquad + HALF * pq(k) * w(npt + k)**2
-end do
-diff = f - fopt - vquad
+qred = calquad(d, gopt, hq, pq, xpt)
+
+diff = f - fopt + qred
 diffc = diffb
 diffb = diffa
 diffa = abs(diff)
@@ -624,15 +625,14 @@ if (dnorm > rho) nfsav = nf
 !
 if (ntrits > 0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!          IF (VQUAD .GE. ZERO) THEN
-    if (.not. (vquad < ZERO)) then
+    if (.not. (qred > ZERO)) then
         !------------------------------------------------------------------------------------------!
         ! Zaikun 20220405: LINCOA improves the model in this case. BOBYQA should do the same.
         !------------------------------------------------------------------------------------------!
         info = TRSUBP_FAILED
         goto 720
     end if
-    ratio = (f - fopt) / vquad
+    ratio = (fopt - f) / qred
     if (ratio <= TENTH) then
         delta = min(HALF * delta, dnorm)
     else if (ratio <= 0.7_RP) then
@@ -812,7 +812,7 @@ end if
 !     when the new interpolation point was reached by an alternative step.
 !
 if (ntrits == 0) goto 60
-if (f <= fopt + TENTH * vquad) goto 60
+if (f <= fopt - TENTH * qred) goto 60
 !
 !     Alternatively, find out if the interpolation points are close enough
 !       to the best point so far.
