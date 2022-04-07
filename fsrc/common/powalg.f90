@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM08:04:17
+! Last Modified: Thursday, April 07, 2022 PM08:05:18
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -215,7 +215,8 @@ end if
 !--------------------------------------------------------------------------------------------------!
 w = matprod(d, xpt)
 !qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(w, pq * w)
-qred = -inprod(d, gopt) - HALF * inprod(d, matprod(hq, d)) - HALF * inprod(w, pq * w)
+!qred = -inprod(d, gopt) - HALF * inprod(d, matprod(hq, d)) - HALF * inprod(w, pq * w)
+qred = -inprod(d, gopt) - HALF * (inprod(d, matprod(hq, d)) + inprod(w, pq * w))
 !qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(pq, matprod(d, xpt)**2)
 !qred = -inprod(d, gopt) - HALF * inprod(d, matprod(hq, d)) - HALF * inprod(pq, matprod(d, xpt)**2)
 !qred = -inprod(d, gopt) - HALF * (inprod(d, matprod(hq, d)) + inprod(pq, matprod(d, xpt)**2))
