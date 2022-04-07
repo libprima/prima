@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 02, 2022 PM08:26:54
+! Last Modified: Thursday, April 07, 2022 PM10:06:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,15 +133,12 @@ call validate(n >= 0, 'N >= 0', srname)
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
 ! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
-! Allocate memory for X
-allocate (x(1:n), stat=alloc_status)
-call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
-call validate(allocated(x), 'X is allocated', srname)
-
-! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
-x = -huge(x)
+! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
+allocate (x(1:n), stat=alloc_status, source=-huge(x))
 
 ! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_rvector_sp
 
@@ -168,15 +165,12 @@ character(len=*), parameter :: srname = 'ALLOC_RMATRIX_SP'
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X
-allocate (x(1:m, 1:n), stat=alloc_status)
-call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
-call validate(allocated(x), 'X is allocated', srname)
-
-! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
-x = -huge(x)
+! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
+allocate (x(1:m, 1:n), stat=alloc_status, source=-huge(x))
 
 ! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_rmatrix_sp
 
@@ -206,15 +200,12 @@ call validate(n >= 0, 'N >= 0', srname)
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
 ! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
-! Allocate memory for X
-allocate (x(1:n), stat=alloc_status)
-call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
-call validate(allocated(x), 'X is allocated', srname)
-
-! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
-x = -huge(x)
+! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
+allocate (x(1:n), stat=alloc_status, source=-huge(x))
 
 ! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_rvector_dp
 
@@ -241,15 +232,12 @@ character(len=*), parameter :: srname = 'ALLOC_RMATRIX_DP'
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X
-allocate (x(1:m, 1:n), stat=alloc_status)
-call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
-call validate(allocated(x), 'X is allocated', srname)
-
-! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
-x = -huge(x)
+! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
+allocate (x(1:m, 1:n), stat=alloc_status, source=-huge(x))
 
 ! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_rmatrix_dp
 
@@ -281,15 +269,12 @@ call validate(n >= 0, 'N >= 0', srname)
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
 ! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
-! Allocate memory for X
-allocate (x(1:n), stat=alloc_status)
-call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
-call validate(allocated(x), 'X is allocated', srname)
-
-! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
-x = -huge(x)
+! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
+allocate (x(1:n), stat=alloc_status, source=-huge(x))
 
 ! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_rvector_qp
 
@@ -316,15 +301,12 @@ character(len=*), parameter :: srname = 'ALLOC_RMATRIX_QP'
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X
-allocate (x(1:m, 1:n), stat=alloc_status)
-call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
-call validate(allocated(x), 'X is allocated', srname)
-
-! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
-x = -huge(x)
+! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
+allocate (x(1:m, 1:n), stat=alloc_status, source=-huge(x))
 
 ! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_rmatrix_qp
 
@@ -353,15 +335,12 @@ character(len=*), parameter :: srname = 'ALLOC_LVECTOR'
 call validate(n >= 0, 'N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X
-allocate (x(1:n), stat=alloc_status)
-call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
-call validate(allocated(x), 'X is allocated', srname)
-
-! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
-x = .false.
+! Allocate memory for X. Initialize X to a compiler-independent value, which can be costly.
+allocate (x(1:n), stat=alloc_status, source=.false.)
 
 ! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_lvector
 
@@ -388,15 +367,12 @@ character(len=*), parameter :: srname = 'ALLOC_IVECTOR'
 call validate(n >= 0, 'N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X
-allocate (x(1:n), stat=alloc_status)
-call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
-call validate(allocated(x), 'X is allocated', srname)
-
-! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
-x = -huge(x)
+! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
+allocate (x(1:n), stat=alloc_status, source=-huge(x))
 
 ! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_ivector
 
@@ -423,15 +399,12 @@ character(len=*), parameter :: srname = 'ALLOC_IMATRIX'
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X
-allocate (x(1:m, 1:n), stat=alloc_status)
-call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
-call validate(allocated(x), 'X is allocated', srname)
-
-! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
-x = -huge(x)
+! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
+allocate (x(1:m, 1:n), stat=alloc_status, source=-huge(x))
 
 ! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_imatrix
 
