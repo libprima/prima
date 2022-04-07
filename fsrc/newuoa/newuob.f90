@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM03:33:55
+! Last Modified: Thursday, April 07, 2022 PM04:50:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -281,7 +281,7 @@ do tr = 1, maxtr
 
         ! Calculate the reduction ratio.
         !------------------------------------------------------------------------------------------!
-        ! Zaikun 20220405: REDRAT sets returns a large negative value when QRED nonnegative or NaN.
+        ! Zaikun 20220405: REDRAT sets returns a large negative value if QRED is nonpositive or NaN.
         ! This ratio will lead to a contraction of DELTA and make IMPROVE_GEO or REDUCE_RHO true.
         ! Is there a better strategy? LINCOA does something to improve the model. Applicable here?
         !------------------------------------------------------------------------------------------!

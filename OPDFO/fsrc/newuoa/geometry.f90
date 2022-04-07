@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:44:54
+! Last Modified: Thursday, April 07, 2022 PM05:19:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -342,9 +342,9 @@ dd = inprod(d, d)
 gd = matprod(xpt, hcol * matprod(d, xpt))
 
 !-----------------------------------------------------------------------!
-!-----!gc = bmat(:, knew) + matprod(xpt, hcol*matprod(x, xpt)) !--------!
+gc = bmat(:, knew) + matprod(xpt, hcol * matprod(x, xpt)) !--------!
 ! The following line works numerically better than the last line (why?).
-gc = Ax_plus_y(xpt, hcol * matprod(x, xpt), bmat(:, knew))
+!gc = Ax_plus_y(xpt, hcol * matprod(x, xpt), bmat(:, knew))
 !-----------------------------------------------------------------------!
 
 ! Scale D and GD, with a sign change if needed. Set S to another vector in the initial 2-D subspace.

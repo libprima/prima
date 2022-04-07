@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM12:16:28
+! Last Modified: Thursday, April 07, 2022 PM05:54:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,6 +40,7 @@ use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_
     & MAXFUN_REACHED, DAMAGING_ROUNDING!, SMALL_TR_RADIUS, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye
 use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: powalg_mod, only : calquad
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
@@ -111,7 +112,7 @@ real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: del, delsav, delta, dffalt, diff, &
 &        distsq, fopt, fsave, ratio,     &
 &        rho, snorm, ssq, summ, temp, vqalt,   &
-&        vquad, xdiff
+&        qred, xdiff
 integer(IK) :: i, idz, ifeas, imprv, itest, j, k,    &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
@@ -352,23 +353,9 @@ end if
 ! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should do the same.
 !-------------------------------------------------------------------------------------------!
 !
-vquad = ZERO
-do j = 1, n
-    vquad = vquad + step(j) * gopt(j)
-    do i = 1, j
-        temp = step(i) * step(j)
-        if (i == j) temp = HALF * temp
-        vquad = vquad + temp * hq(i, j)
-    end do
-end do
-do k = 1, npt
-    temp = ZERO
-    do j = 1, n
-        temp = temp + xpt(j, k) * step(j)
-        rsp(npt + k) = temp
-    end do
-    vquad = vquad + HALF * pq(k) * temp * temp
-end do
+rsp(npt + 1:2 * npt) = matprod(step, xpt)
+qred = calquad(step, gopt, hq, pq, xpt)
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
 ! Although very rarely, with the original code, an infinite loop can occur
@@ -401,7 +388,7 @@ end do
 ! region step, we should not goto 530 but goto 560, where IMPRV will be
 ! set to 0 and DELTA will be reduced. Otherwise, an infinite loop would happen.
 !      IF (KSAVE .EQ. 0 .AND. VQUAD .GE. ZERO) GOTO 530
-if (ksave == 0 .and. .not. (vquad < ZERO)) then
+if (ksave == 0 .and. .not. (qred > ZERO)) then
     if (imprv == 1) then
         goto 560
     else
@@ -471,7 +458,7 @@ if (ksave == -1) then
     goto 600
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-diff = f - fopt - vquad
+diff = f - fopt + qred
 !
 !     If X is feasible, then set DFFALT to the difference between the new
 !       value of F and the value predicted by the alternative model.
@@ -510,7 +497,7 @@ end if
 !     Pick the next value of DELTA after a trust region step.
 !
 if (ksave == 0) then
-    ratio = (f - fopt) / vquad
+    ratio = (fopt - f) / qred
     if (ratio <= TENTH) then
         delta = HALF * delta
     else if (ratio <= 0.7_RP) then
