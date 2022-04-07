@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM07:36:26
+! Last Modified: Thursday, April 07, 2022 PM07:42:35
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -215,7 +215,7 @@ end if
 !--------------------------------------------------------------------------------------------------!
 !qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(pq, matprod(d, xpt)**2)
 !qred = -inprod(d, gopt) - HALF * matprod(hq, d) - HALF * inprod(pq, matprod(d, xpt)**2)
-qred = -inprod(d, gopt) - HALF * (matprod(hq, d) + inprod(pq, matprod(d, xpt)**2))
+qred = -inprod(d, gopt) - HALF * (inprod(d, matprod(hq, d)) + inprod(pq, matprod(d, xpt)**2))
 !!MATLAB: qred = -d'*(gopt + 0.5*hq*d) - 0.5*((d'*xpt).^2)*pq
 !--------------------------------------------------------------------------------------------------!
 
