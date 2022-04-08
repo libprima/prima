@@ -51,10 +51,10 @@
 
 /******************************************************************************/
 /* Is this a released version? Should be 1 except for the developers. */
-#if defined RELEASED__
-#undef RELEASED__
+#if defined __RELEASED__
+#undef __RELEASED__
 #endif
-#define RELEASED__ 0
+#define __RELEASED__ 0
 /******************************************************************************/
 
 
