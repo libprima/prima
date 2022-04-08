@@ -10,7 +10,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM03:37:58
+! Last Modified: Friday, April 08, 2022 AM01:12:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -182,7 +182,11 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
 bw = matprod(bmat(:, 1:npt), wcheck)
 bd = matprod(bmat(:, npt + 1:npt + n), d)
-bsum = sum(bd * d + bw * d + bw * d)
+bsum = sum(bd * d + bw * d + bw * d)  ! VERSION 1
+
+!bsum = inprod(bd + TWO * bw, d)  ! VERSION 2
+
+!bw = matprod(bmat, [TWO*wcheck, d]) ; bsum = inprod(bw, d)  ! VERSION 3
 
 beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) - omega_inprod(idz, zmat, wcheck, wcheck) - bsum
 
