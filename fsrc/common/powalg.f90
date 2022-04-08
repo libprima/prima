@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, April 08, 2022 AM08:54:59
+! Last Modified: Friday, April 08, 2022 AM09:35:48
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -142,11 +142,10 @@ function calquad_gopt(d, gopt, hq, pq, xpt) result(qred)
 ! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
-use, non_intrinsic :: linalg_mod, only : inprod
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, issymmetric
 implicit none
 
 ! Inputs

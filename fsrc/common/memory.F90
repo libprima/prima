@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, April 08, 2022 AM12:19:28
+! Last Modified: Friday, April 08, 2022 AM09:35:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -134,8 +134,11 @@ call validate(n >= 0, 'N >= 0', srname)
 ! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 ! Allocate memory for X. Initialize X to a compiler-independent strange value.
-allocate (x(1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+allocate (x(1:n), stat=alloc_status)
 x = -huge(x)  ! Costly if X is of a large size.
+! N.B.: Do not write ALLOCATE (X(1:N), STAT=ALLOC_STATUS, SOURCE=-HUGE(X)), because
+! 1. It is invalid to put X in the SOURCE specifier when it is being allocated;
+! 2. Absoft does not support the SOURCE keyword as of 2022.
 
 ! Postconditions (checked even not debugging)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
