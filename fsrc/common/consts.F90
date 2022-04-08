@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, April 08, 2022 AM10:58:00
+! Last Modified: Friday, April 08, 2022 AM11:13:48
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -181,7 +181,7 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 ! the commutativity for REAL128. Indeed, Fortran standards do not enforce IEEE 754, so compilers are
 ! not guaranteed to respect it. Hence we set SYMTOL_DFT to a nonzero number when __RELEASED__ is 1,
 ! although we do not intend to test symmetry in production.
-#if __RELEASED__ == 1 || (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64)
+#if __RELEASED__ == 1 || ((defined __NAG_COMPILER_RELEASE || defined __ABSOFT__) && __REAL_PRECISION__ > 64)
 real(RP), parameter :: SYMTOL_DFT = max(EPS, 1.0E-10_RP)
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO
