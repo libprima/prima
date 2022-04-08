@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM10:06:45
+! Last Modified: Friday, April 08, 2022 AM12:19:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,8 +133,9 @@ call validate(n >= 0, 'N >= 0', srname)
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
 ! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
-! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
-allocate (x(1:n), stat=alloc_status, source=-huge(x))
+! Allocate memory for X. Initialize X to a compiler-independent strange value.
+allocate (x(1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = -huge(x)  ! Costly if X is of a large size.
 
 ! Postconditions (checked even not debugging)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
@@ -165,8 +166,9 @@ character(len=*), parameter :: srname = 'ALLOC_RMATRIX_SP'
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
-allocate (x(1:m, 1:n), stat=alloc_status, source=-huge(x))
+! Allocate memory for X. Initialize X to a compiler-independent strange value.
+allocate (x(1:m, 1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = -huge(x)  ! Costly if X is of a large size.
 
 ! Postconditions (checked even not debugging)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
@@ -200,8 +202,9 @@ call validate(n >= 0, 'N >= 0', srname)
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
 ! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
-! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
-allocate (x(1:n), stat=alloc_status, source=-huge(x))
+! Allocate memory for X. Initialize X to a compiler-independent strange value.
+allocate (x(1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = -huge(x)  ! Costly if X is of a large size.
 
 ! Postconditions (checked even not debugging)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
@@ -232,8 +235,9 @@ character(len=*), parameter :: srname = 'ALLOC_RMATRIX_DP'
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
-allocate (x(1:m, 1:n), stat=alloc_status, source=-huge(x))
+! Allocate memory for X. Initialize X to a compiler-independent strange value.
+allocate (x(1:m, 1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = -huge(x)  ! Costly if X is of a large size.
 
 ! Postconditions (checked even not debugging)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
@@ -269,8 +273,9 @@ call validate(n >= 0, 'N >= 0', srname)
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
 ! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
-! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
-allocate (x(1:n), stat=alloc_status, source=-huge(x))
+! Allocate memory for X. Initialize X to a compiler-independent strange value.
+allocate (x(1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = -huge(x)  ! Costly if X is of a large size.
 
 ! Postconditions (checked even not debugging)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
@@ -301,8 +306,9 @@ character(len=*), parameter :: srname = 'ALLOC_RMATRIX_QP'
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
-allocate (x(1:m, 1:n), stat=alloc_status, source=-huge(x))
+! Allocate memory for X. Initialize X to a compiler-independent strange value.
+allocate (x(1:m, 1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = -huge(x)  ! Costly if X is of a large size.
 
 ! Postconditions (checked even not debugging)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
@@ -335,8 +341,9 @@ character(len=*), parameter :: srname = 'ALLOC_LVECTOR'
 call validate(n >= 0, 'N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X. Initialize X to a compiler-independent value, which can be costly.
-allocate (x(1:n), stat=alloc_status, source=.false.)
+! Allocate memory for X. Initialize X to a compiler-independent value.
+allocate (x(1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = .false.  ! Costly if X is of a large size.
 
 ! Postconditions (checked even not debugging)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
@@ -367,8 +374,9 @@ character(len=*), parameter :: srname = 'ALLOC_IVECTOR'
 call validate(n >= 0, 'N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
-allocate (x(1:n), stat=alloc_status, source=-huge(x))
+! Allocate memory for X. Initialize X to a compiler-independent strange value.
+allocate (x(1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = -huge(x)  ! Costly if X is of a large size.
 
 ! Postconditions (checked even not debugging)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
@@ -399,8 +407,9 @@ character(len=*), parameter :: srname = 'ALLOC_IMATRIX'
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
-! Allocate memory for X. Initialize X to a compiler-independent strange value, which can be costly.
-allocate (x(1:m, 1:n), stat=alloc_status, source=-huge(x))
+! Allocate memory for X. Initialize X to a compiler-independent strange value.
+allocate (x(1:m, 1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = -huge(x)  ! Costly if X is of a large size.
 
 ! Postconditions (checked even not debugging)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)

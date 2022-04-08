@@ -99,7 +99,7 @@ end if
 !
 !     Calculate VLAG and BETA for the current choice of STEP. The first NPT
 !       elements of VLAG are set to the values of the Lagrange functions at
-!       XPT(KOPT,.)+STEP(.). The first NPT compONEnts of W_check are held
+!       XPT(KOPT,.)+STEP(.). The first NPT components of W_check are held
 !       in W, where W_check is defined in a paper on the updating method.
 !
 do k = 1, npt

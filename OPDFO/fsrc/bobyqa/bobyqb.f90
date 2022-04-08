@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 06, 2022 AM11:32:32
+! Last Modified: Friday, April 08, 2022 AM09:21:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -768,17 +768,29 @@ fopt = fval(kopt)
 vquad = ZERO
 ih = 0
 do j = 1, n
-    vquad = vquad + d(j) * gopt(j)
-    do i = 1, j
-        ih = ih + 1
-        temp = d(i) * d(j)
-        if (i == j) temp = HALF * temp
-        vquad = vquad + hq(ih) * temp
+    temp = ZERO
+    do i = 1, n
+        if (i <= j) then
+            temp = temp + hq(j * (j - 1) / 2 + i) * d(i)
+        else
+            temp = temp + hq(i * (i - 1) / 2 + j) * d(i)
+        end if
     end do
+    vquad = vquad + d(j) * (gopt(j) + HALF * temp)
+
+    !vquad = vquad + d(j) * gopt(j)
+    !do i = 1, j
+    !    ih = ih + 1
+    !    temp = d(i) * d(j)
+    !    if (i == j) temp = HALF * temp
+    !    vquad = vquad + hq(ih) * temp
+    !end do
 end do
-do k = 1, npt
-    vquad = vquad + HALF * pq(k) * w(npt + k)**2
-end do
+!do k = 1, npt
+!    vquad = vquad + HALF * pq(k) * w(npt + k)**2
+!end do
+vquad = vquad + HALF*inprod(w(npt+1:2*npt), pq(1:npt)*w(npt+1:2*npt))
+
 diff = f - fopt - vquad
 diffc = diffb
 diffb = diffa

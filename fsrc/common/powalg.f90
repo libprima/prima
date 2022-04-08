@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM10:43:45
+! Last Modified: Friday, April 08, 2022 AM08:54:59
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -161,11 +161,8 @@ real(RP) :: qred
 
 ! Local variable
 character(len=*), parameter :: srname = 'CALQUAD_GOPT'
-integer(IK) :: i
-integer(IK) :: j
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: t
 real(RP) :: w(size(pq))
 
 ! Sizes
@@ -186,41 +183,35 @@ end if
 ! Calculation starts !
 !====================!
 
-! First-order term and explicit second-order term
-qred = ZERO
-do j = 1, n
-    qred = qred - d(j) * gopt(j)
-    do i = 1, j
-        t = d(i) * d(j)
-        if (i == j) then
-            t = HALF * t
-        end if
-        qred = qred - t * hq(i, j)
-    end do
-end do
+!!--------------------------------------------------------------------------------------------------!
+!! The following is Powell's scheme in LINCOA.
+!! First-order term and explicit second-order term
+!qred = ZERO
+!do j = 1, n
+!    qred = qred - d(j) * gopt(j)
+!    do i = 1, j
+!        t = d(i) * d(j)
+!        if (i == j) then
+!            t = HALF * t
+!        end if
+!        qred = qred - t * hq(i, j)
+!    end do
+!end do
 
-! Implicit second-order term
-w = matprod(d, xpt)
-do i = 1, npt
-    qred = qred - HALF * pq(i) * w(i) * w(i)
-end do
-
-!write (16, *) abs(qred + (inprod(d, gopt + HALF * matprod(hq, d)) + HALF * inprod(pq, matprod(d, xpt)**2))), abs(qred)
-!close (16)
-!call assert(abs(qred + (inprod(d, gopt + HALF * matprod(hq, d)) + HALF * inprod(pq, matprod(d, xpt)**2))) &
-!    & < sqrt(max(1.0E-20_RP, epsilon(qred))) * max(1.0_RP, abs(qred)), 'QRED is correct', srname)
+!! Implicit second-order term
+!w = matprod(d, xpt)
+!do i = 1, npt
+!    qred = qred - HALF * pq(i) * w(i) * w(i)  ! In BOBYQA, it is QRED - HALF * PQ(I) * W(I)**2.
+!end do
+!--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
 ! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
 !--------------------------------------------------------------------------------------------------!
-!w = matprod(d, xpt)
-!qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(w, pq * w)
-!qred = -inprod(d, gopt) - HALF * inprod(d, matprod(hq, d)) - HALF * inprod(w, pq * w)
-!qred = -inprod(d, gopt) - HALF * (inprod(d, matprod(hq, d)) + inprod(w, pq * w))
-!qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(pq, matprod(d, xpt)**2)
-!qred = -inprod(d, gopt) - HALF * inprod(d, matprod(hq, d)) - HALF * inprod(pq, matprod(d, xpt)**2)
-!qred = -inprod(d, gopt) - HALF * (inprod(d, matprod(hq, d)) + inprod(pq, matprod(d, xpt)**2))
-!!MATLAB: qred = -d'*(gopt + 0.5*hq*d) - 0.5*((d'*xpt).^2)*pq
+w = matprod(d, xpt)
+qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(w, pq * w)
+! N.B.: INPROD(W, PQ*W) is mathematically equal to INPROD(PQ, W**2). However, the latter may be a
+! bad formulation for computation, because the entires of W are in the tiny order of O(DELTA^2).
 !--------------------------------------------------------------------------------------------------!
 
 !====================!

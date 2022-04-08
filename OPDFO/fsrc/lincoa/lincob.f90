@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM05:24:34
+! Last Modified: Friday, April 08, 2022 AM09:18:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -530,13 +530,24 @@ end if
 vquad = ZERO
 ih = 0
 do j = 1, n
-    vquad = vquad + step(j) * gopt(j)
-    do i = 1, j
-        ih = ih + 1
-        temp = step(i) * step(j)
-        if (i == j) temp = HALF * temp
-        vquad = vquad + temp * hq(ih)
+    ! Zaikun 20220408
+    temp = ZERO
+    do i = 1, n
+        if (i <= j) then
+            temp = temp + hq(j * (j - 1) / 2 + i) * step(i)
+        else
+            temp = temp + hq(i * (i - 1) / 2 + j) * step(i)
+        end if
     end do
+    vquad = vquad + step(j) * (gopt(j) + HALF * temp)
+
+    !vquad = vquad + step(j) * gopt(j)
+    !do i = 1, j
+    !    ih = ih + 1
+    !    temp = step(i) * step(j)
+    !    if (i == j) temp = HALF * temp
+    !    vquad = vquad + temp * hq(ih)
+    !end do
 end do
 do k = 1, npt
     temp = ZERO
@@ -544,10 +555,11 @@ do k = 1, npt
         temp = temp + xpt(j, k) * step(j)
         rsp(npt + k) = temp
     end do
-    ! Zaikun 20220407
+    ! Zaikun 20220408
     !vquad = vquad + HALF * pq(k) * temp * temp
-    vquad = vquad + HALF * pq(k) * temp**2
 end do
+vquad = vquad + HALF * inprod(rsp(npt + 1:npt + npt), pq(1:npt) * rsp(npt + 1:npt + npt))
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
 ! Although very rarely, with the original code, an infinite loop can occur
