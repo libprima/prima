@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 08, 2022 AM09:21:21
+! Last Modified: Saturday, April 09, 2022 AM03:21:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -93,7 +93,7 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        summw, summz, temp, vquad, xoptsq
 integer(IK) :: i, ih, ip, itest, j, jj, jp, k, kbase, knew, &
 &           kopt, ksav, nfsav, nh, np, nptm, nresc, ntrits
-real(RP) :: bup1(n, npt), bup2(n, n)
+real(RP) :: bup1(n, npt), bup2(n, n), vtmp(npt)
 
 !     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
 !       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
@@ -602,6 +602,11 @@ end do
     vlag(k) = summ
     w(npt + k) = summa
 end do
+
+!-----------------------------------------!
+vtmp = vlag(1:npt)
+vlag(1:npt) = ZERO
+!-----------------------------------------!
 beta = ZERO
 do jj = 1, nptm
     summ = ZERO
@@ -613,6 +618,10 @@ do jj = 1, nptm
         vlag(k) = vlag(k) + summ * zmat(k, jj)
     end do
 end do
+!-----------------------------------------!
+vlag(1:npt) = vtmp + vlag(1:npt)
+!-----------------------------------------!
+
 dsq = ZERO
 bsumm = ZERO
 dx = ZERO
@@ -631,8 +640,13 @@ do j = 1, n
     bsumm = bsumm + summ * d(j)
     dx = dx + d(j) * xopt(j)
 end do
-beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bsumm
 vlag(kopt) = vlag(kopt) + ONE
+!beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bsumm
+
+bsumm = sum(matprod(bmat(:, npt + 1:npt + n), d) * d(1:n) &
+     & + matprod(bmat(:, 1:npt), w(1:npt)) * d(1:n) &
+     & + matprod(bmat(:, 1:npt), w(1:npt)) * d(1:n))
+beta = dx**2 + dsq * (xoptsq + 2.0_RP * dx + HALF * dsq) + beta - bsumm
 !
 !     If NTRITS is ZERO, the denominator may be increased by replacing
 !     the step D of ALTMOV by a Cauchy step. Then RESCUE may be called if
@@ -789,7 +803,7 @@ end do
 !do k = 1, npt
 !    vquad = vquad + HALF * pq(k) * w(npt + k)**2
 !end do
-vquad = vquad + HALF*inprod(w(npt+1:2*npt), pq(1:npt)*w(npt+1:2*npt))
+vquad = vquad + HALF * inprod(w(npt + 1:2 * npt), pq(1:npt) * w(npt + 1:2 * npt))
 
 diff = f - fopt - vquad
 diffc = diffb

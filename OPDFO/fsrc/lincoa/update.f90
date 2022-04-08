@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 18, 2022 PM11:46:23
+! Last Modified: Saturday, April 09, 2022 AM03:03:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,6 +26,7 @@ subroutine update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kopt, knew, vla
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF
+use, non_intrinsic :: linalg_mod, only : matprod, inprod
 
 implicit none
 
@@ -52,7 +53,7 @@ real(RP) :: alpha, beta, bsumm, denabs, denmax, denom, distsq,  &
 &        summ, tau, tausq, temp, tempa, tempb
 integer(IK) :: i, iflag, j, ja, jb, jl, jp, k, nptm
 real(RP) :: xopt(n)
-real(RP) :: xdist(npt)
+real(RP) :: xdist(npt), vtmp(npt), xxpt(npt), sxpt(npt)!, wz(npt - n - 1), wzc(size(wz))
 
 !
 !     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
@@ -81,15 +82,25 @@ nptm = npt - n - 1
 !       XPT(KOPT,.)+STEP(.). The first NPT compONEnts of W_check are held
 !       in W, where W_check is defined in a paper on the updating method.
 !
+
+xxpt = matprod(xpt(:, kopt), xpt)
+sxpt = matprod(step, xpt)
 do k = 1, npt
-    w(k) = rsp(npt + k) * (HALF * rsp(npt + k) + rsp(k))
+    !w(k) = rsp(npt + k) * (HALF * rsp(npt + k) + rsp(k))
+    w(k) = sxpt(k) * (HALF * sxpt(k) + xxpt(k))
     summ = ZERO
     do j = 1, n
         summ = summ + bmat(j, k) * step(j)
     end do
-    vlag(k) = summ
+    !-----------------------------------------!
+    !vlag(k) = summ
+    vtmp(k) = summ
+    !-----------------------------------------!
 end do
 beta = ZERO
+!--------------------------------!
+vlag(1:npt) = ZERO
+!--------------------------------!
 do k = 1, nptm
     summ = ZERO
     do i = 1, npt
@@ -105,6 +116,9 @@ do k = 1, nptm
         vlag(i) = vlag(i) + summ * zmat(i, k)
     end do
 end do
+!------------------------------------------!
+vlag(1:npt) = vlag(1:npt) + vtmp(1:npt)
+!------------------------------------------!
 bsumm = ZERO
 dx = ZERO
 ssq = ZERO
@@ -121,10 +135,18 @@ do j = 1, n
     vlag(jp) = summ
     bsumm = bsumm + summ * step(j)
     dx = dx + step(j) * xpt(j, kopt)
-    ssq = ssq + step(j)**2
+    !ssq = ssq + step(j)**2
+    ssq = ssq + step(j) * step(j)
 end do
-beta = dx * dx + ssq * (rsp(kopt) + dx + dx + HALF * ssq) + beta - bsumm
 vlag(kopt) = vlag(kopt) + ONE
+
+!!beta = dx * dx + ssq * (xxpt(kopt) + dx + dx + HALF * ssq) + beta - bsumm
+!wz = matprod(w(1:npt), zmat); wzc = wz; wzc(1:idz - 1) = -wzc(1:idz - 1); beta = -inprod(wz, wzc)
+bsumm = sum(matprod(bmat(:, npt + 1:npt + n), step) * step(1:n) &
+     & + matprod(bmat(:, 1:npt), w(1:npt)) * step(1:n) &
+     & + matprod(bmat(:, 1:npt), w(1:npt)) * step(1:n))
+beta = dx**2 + ssq * (xxpt(kopt) + 2.0_RP * dx + HALF * ssq) + beta - bsumm
+
 !
 !     If KNEW is ZERO initially, then pick the index of the interpolation
 !       point to be deleted, by maximizing the absolute value of the
@@ -300,6 +322,53 @@ do j = 1, n
 end do
 180 return
 end subroutine update
+
+function omega_inprod(idz, zmat, x, y) result(p)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates P = X^T*OMEGA*Y, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
+! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
+! OMEGA is the leading NPT-by-NPT block of the matrix H in (3.12) of the NEWUOA paper.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : matprod, inprod
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+real(RP), intent(in) :: zmat(:, :)
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: y(:)
+
+! Outputs
+real(RP) :: p
+
+! Local variables
+character(len=*), parameter :: srname = 'OMEGA_INPROD'
+real(RP) :: xz(size(zmat, 2))
+real(RP) :: yz(size(zmat, 2))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(size(x) == size(zmat, 1), 'SIZE(X) == SIZE(ZMAT, 1)', srname)
+    call assert(size(y) == size(zmat, 1), 'SIZE(Y) == SIZE(ZMAT, 1)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+xz = matprod(x, zmat)
+xz(1:idz - 1) = -xz(1:idz - 1)
+yz = matprod(y, zmat)
+p = inprod(xz, yz)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function omega_inprod
 
 
 end module update_mod

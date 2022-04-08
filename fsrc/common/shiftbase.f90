@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM03:49:35
+! Last Modified: Saturday, April 09, 2022 AM03:42:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ public :: shiftbase
 contains
 
 
-subroutine shiftbase(xbase, xopt, xpt, idz, zmat, bmat, pq, hq, gq)
+subroutine shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
 !--------------------------------------------------------------------------------------------------!
 ! SHIFTBASE shifts the base point from XBASE to XBASE + XOPT and updates BMAT, HQ, and GQ
 ! accordingly. PQ and ZMAT remain the same after the shifting. See Section 7 of the NEWUOA paper.
@@ -46,9 +46,9 @@ use, non_intrinsic :: powalg_mod, only : hess_mul!, errh
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: idz  ! In BOBYQA, IDZ is always 1.
 real(RP), intent(in) :: pq(:)   ! PQ(NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+integer(IK), intent(in), optional :: idz  ! Absent in BOBYQA, being equivalent to IDZ = 1
 
 ! In-outputs
 real(RP), intent(inout) :: bmat(:, :)   ! BMAT(N, NPT + N)
@@ -62,6 +62,7 @@ real(RP), intent(inout), optional :: gq(:)    ! GQ(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'SHIFTBASE'
+integer(IK) :: idz_loc
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
@@ -81,6 +82,12 @@ real(RP) :: yzmat_c(size(xopt), size(zmat, 2))
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
+! Read IDZ, which is absent from BOBYQA, being equivalent to IDZ = 1.
+idz_loc = 1_IK
+if (present(idz)) then
+    idz_loc = idz
+end if
+
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
@@ -89,7 +96,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     !call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     !call assert(all(abs(xpt(:, kopt) - xopt) <= 0), 'XPT(:, KOPT) == XOPT', srname)
-    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(idz_loc >= 1 .and. idz_loc <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
@@ -101,7 +108,7 @@ if (DEBUGGING) then
     end if
     ! The following test cannot be passed.
     !htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for error in H
-    !call assert(errh(idz, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
+    !call assert(errh(idz_loc, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
 !====================!
@@ -129,7 +136,7 @@ bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + (by + transpose(by))
 ! Then the revisions of BMAT that depend on ZMAT are calculated.
 yzmat = matprod(ymat, zmat)
 yzmat_c = yzmat
-yzmat_c(:, 1:idz - 1) = -yzmat(:, 1:idz - 1)  ! IDZ is usually small. So this assignment is cheap.
+yzmat_c(:, 1:idz_loc - 1) = -yzmat(:, 1:idz_loc - 1)  ! IDZ_LOC is usually small. So this assignment is cheap.
 bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + matprod(yzmat, transpose(yzmat_c))
 !call symmetrize(bmat(:, npt + 1:npt + n))  ! Do this if the update above does not ensure symmetry.
 bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
@@ -169,7 +176,7 @@ if (DEBUGGING) then
         call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     end if
     ! The following test cannot be passed.
-    !call assert(errh(idz, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
+    !call assert(errh(idz_loc, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
 end subroutine shiftbase
