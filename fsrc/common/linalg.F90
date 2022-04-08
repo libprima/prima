@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM03:54:30
+! Last Modified: Friday, April 08, 2022 AM10:50:59
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1605,9 +1605,12 @@ end if
 is_minor = [(isminor0(x(i), ref(i)), i=1, int(size(x), IK))]
 end function isminor1
 
-pure function issymmetric(A, tol) result(is_symmetric)
+function issymmetric(A, tol) result(is_symmetric)
+!--------------------------------------------------------------------------------------------------!
 ! This function tests whether A is symmetric up to TOL.
-use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, ONE, SYMTOL_DFT, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
@@ -1618,20 +1621,39 @@ real(RP), intent(in), optional :: tol
 ! Outputs
 logical :: is_symmetric
 
+! Local variables
+character(len=*), parameter :: srname = 'ISSYMMETRIC'
+real(RP) :: tol_loc
+
+! Preconditions
+if (DEBUGGING) then
+    if (present(tol)) then
+        call assert(tol >= 0, 'TOL >= 0', srname)
+    end if
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+tol_loc = SYMTOL_DFT
+if (present(tol)) then
+    tol_loc = tol
+end if
+
 is_symmetric = .true.
 if (size(A, 1) /= size(A, 2)) then
     is_symmetric = .false.
 elseif (.not. all(is_nan(A) .eqv. is_nan(transpose(A)))) then
     is_symmetric = .false.
-elseif (.not. present(tol) .and. any(abs(A - transpose(A)) > ZERO)) then
+elseif (any(abs(A - transpose(A)) > tol_loc * max(maxval(abs(A)), ONE))) then
     is_symmetric = .false.
-elseif (present(tol)) then
-    ! Do not merge the next line with the last, as Fortran may not evaluate the logical expression
-    ! in the short-circuit way.
-    if (any(abs(A - transpose(A)) > abs(tol) * max(maxval(abs(A)), ONE))) then
-        is_symmetric = .false.
-    end if
 end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
 end function issymmetric
 
 

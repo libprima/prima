@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 03, 2022 PM05:17:42
+! Last Modified: Friday, April 08, 2022 AM10:58:00
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -81,6 +81,7 @@ public :: IK, IK_DFT
 public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: REALMIN, EPS, TINYCV, HUGENUM, HUGEFUN, HUGECON, HUGEBOUND
+public :: SYMTOL_DFT
 public :: MSGLEN, FNAMELEN
 public :: OUTUNIT, STDIN, STDOUT, STDERR
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, CWEIGHT_DFT
@@ -173,6 +174,18 @@ real(RP), parameter :: HUGEFUN = real(radix(ZERO), RP)**min(100, MAXE / 2)  ! No
 real(RP), parameter :: HUGECON = HUGEFUN
 ! Any bound with an absolute value at least HUGEBOUND is considered as no bound.
 real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
+
+! SYMTOL_DFT is the default tolerance for testing symmetry of matrices. It can be set to 0 if the
+! IEEE Standard for Floating-Point Arithmetic (IEEE 754) is respected, particularly if addition and
+! multiplication are commutative. However, as of 20220408, NAG nagfor and Absoft af95 do not ensure
+! the commutativity for REAL128. Indeed, Fortran standards do not enforce IEEE 754, so compilers are
+! not guaranteed to respect it. Hence we set SYMTOL_DFT to a nonzero number when __RELEASED__ is 1,
+! although we do not intend to test symmetry in production.
+#if __RELEASED__ == 1 || (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64)
+real(RP), parameter :: SYMTOL_DFT = max(EPS, 1.0E-10_RP)
+#else
+real(RP), parameter :: SYMTOL_DFT = ZERO
+#endif
 
 ! The maximal length of messages; used in output.f90 and fmexapi.F90
 integer, parameter :: MSGLEN = 1000
