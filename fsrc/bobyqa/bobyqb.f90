@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM05:54:55
+! Last Modified: Saturday, April 09, 2022 AM03:48:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,9 +30,10 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : matprod!, inprod, r1update, r2update!, norm
+!use, non_intrinsic :: linalg_mod, only : matprod!, inprod, r1update, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : calquad
+use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize
@@ -95,13 +96,13 @@ real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
 real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
-&        biglsq, bsumm, cauchy, crvmin, curv, delsq, delta,  &
+&        biglsq, cauchy, crvmin, curv, delsq, delta,  &
 &        den, denom, densav, diff, diffa, diffb, diffc,     &
-&        dist, distsq, dnorm, dsq, dx, errbig, fopt,        &
+&        dist, distsq, dnorm, dsq, errbig, fopt,        &
 &        frhosq, gisq, gqsq, hdiag,      &
 &        pqold, ratio, rho, scaden, summ, summa, summb, &
 &        temp, qred, xoptsq
-integer(IK) :: i, itest, j, jj, jp, k, kbase, knew, &
+integer(IK) :: i, itest, j, jj, k, kbase, knew, &
 &           kopt, ksav, nfsav, np, nptm, nresc, ntrits
 
 
@@ -312,7 +313,7 @@ if (sum(xopt**2) >= 1.0E3_RP * dsq) then
     xnew = xnew - xopt  ! Needed?
     sl = sl - xopt
     su = su - xopt
-    call shiftbase(xbase, xopt, xpt, 1_IK, zmat, bmat, pq, hq)
+    call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
     xoptsq = ZERO  ! Needed?
 end if
 
@@ -456,41 +457,47 @@ end do
 !    !w(npt + k) = summa
 !end do
 
-w(npt + 1:2 * npt) = matprod(d, xpt)
-w(1:npt) = w(npt + 1:2 * npt) * (HALF * w(npt + 1:2 * npt) + matprod(xopt, xpt))
-vlag(1:npt) = matprod(d, bmat(:, 1:npt))
+!w(npt + 1:2 * npt) = matprod(d, xpt)
+!w(1:npt) = w(npt + 1:2 * npt) * (HALF * w(npt + 1:2 * npt) + matprod(xopt, xpt))
+!vlag(1:npt) = matprod(d, bmat(:, 1:npt))
 
-beta = ZERO
-do jj = 1, nptm
-    summ = ZERO
-    do k = 1, npt
-        summ = summ + zmat(k, jj) * w(k)
-    end do
-    beta = beta - summ * summ
-    do k = 1, npt
-        vlag(k) = vlag(k) + summ * zmat(k, jj)
-    end do
-end do
-dsq = ZERO
-bsumm = ZERO
-dx = ZERO
-do j = 1, n
-    dsq = dsq + d(j)**2
-    summ = ZERO
-    do k = 1, npt
-        summ = summ + w(k) * bmat(j, k)
-    end do
-    bsumm = bsumm + summ * d(j)
-    jp = npt + j
-    do i = 1, n
-        summ = summ + bmat(i, jp) * d(i)
-    end do
-    vlag(jp) = summ
-    bsumm = bsumm + summ * d(j)
-    dx = dx + d(j) * xopt(j)
-end do
-beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bsumm
-vlag(kopt) = vlag(kopt) + ONE
+!beta = ZERO
+!do jj = 1, nptm
+!    summ = ZERO
+!    do k = 1, npt
+!        summ = summ + zmat(k, jj) * w(k)
+!    end do
+!    beta = beta - summ * summ
+!    do k = 1, npt
+!        vlag(k) = vlag(k) + summ * zmat(k, jj)
+!    end do
+!end do
+!dsq = ZERO
+!bsumm = ZERO
+!dx = ZERO
+!do j = 1, n
+!    dsq = dsq + d(j)**2
+!    summ = ZERO
+!    do k = 1, npt
+!        summ = summ + w(k) * bmat(j, k)
+!    end do
+!    bsumm = bsumm + summ * d(j)
+!    jp = npt + j
+!    do i = 1, n
+!        summ = summ + bmat(i, jp) * d(i)
+!    end do
+!    vlag(jp) = summ
+!    bsumm = bsumm + summ * d(j)
+!    dx = dx + d(j) * xopt(j)
+!end do
+!beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bsumm
+!vlag(kopt) = vlag(kopt) + ONE
+
+
+vlag = calvlag(kopt, bmat, d, xpt, zmat)
+beta = calbeta(kopt, bmat, d, xpt, zmat)
+
+
 !
 !     If NTRITS is ZERO, the denominator may be increased by replacing
 !     the step D of ALTMOV by a Cauchy step. Then RESCUE may be called if

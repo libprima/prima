@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM04:09:24
+! Last Modified: Saturday, April 09, 2022 AM03:45:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -97,8 +97,8 @@ end if
 !====================!
 
 ! Calculate VLAG and BETA for D.
-vlag = calvlag(idz, kopt, bmat, d, xpt, zmat)
-beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
+vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
+beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
 ! Calculate the distance between the interpolation points and the optimal point up to now.
 if (tr_success) then
@@ -233,8 +233,8 @@ hcol = omega_col(idz, zmat, knew)  ! HCOL is the KNEW-th column of Omega.
 alpha = hcol(knew)  ! ALPHA is the KNEW-th diagonal entry of H, i.e., that of Omega.
 
 ! Calculate VLAG and BETA for D. Indeed, VLAG(NPT + 1 : NPT + N) will not be used.
-vlag = calvlag(idz, kopt, bmat, d, xpt, zmat)
-beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
+vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
+beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
 if (vlag(knew)**2 <= ZERO) then

@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, March 30, 2022 PM08:53:29
+! Last Modified: Saturday, April 09, 2022 AM03:47:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,17 +22,18 @@ public :: update
 contains
 
 
-subroutine update(kopt, rsp, step, xpt, idz, knew, bmat, zmat, vlag)
+subroutine update(kopt, step, xpt, idz, knew, bmat, zmat, vlag)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
+!use, non_intrinsic :: linalg_mod, only : matprod
+use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: kopt
-real(RP), intent(in) :: rsp(:)  ! RSP(2*NPT)
 real(RP), intent(in) :: step(:)  ! STEP(N)
 real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
@@ -48,14 +49,14 @@ real(RP), intent(out) :: vlag(:)  ! VLAG(NPT + N)
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATE'
 real(RP) :: w(size(vlag))
-real(RP) :: alpha, beta, bsum, denabs, denmax, denom, distsq,  &
-&        dx, hdiag, scala, scalb, sqrtdn, ssq,  &
-&        summ, tau, tausq, temp, tempa, tempb
+real(RP) :: alpha, beta, denabs, denmax, denom, distsq,  &
+&         hdiag, scala, scalb, sqrtdn,  &
+&        tau, tausq, temp, tempa, tempb
 integer(IK) :: i, iflag, j, ja, jb, jl, jp, k
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: xopt(size(xpt, 1))
-real(RP) :: xdist(size(xpt, 2))
+real(RP) :: xdist(size(xpt, 2))!, xxpt(size(xpt, 2))!, sxpt(size(xpt, 2)), vtmp(size(xpt, 2))
 
 
 ! Sizes.
@@ -69,7 +70,6 @@ if (DEBUGGING) then
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
-    call assert(size(rsp) == 2_IK * npt, 'SIZE(RSP) == 2*NPT', srname)
     call assert(size(step) == n, 'SIZE(STEP) == N', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
@@ -102,50 +102,12 @@ end if
 !       XPT(KOPT,.)+STEP(.). The first NPT components of W_check are held
 !       in W, where W_check is defined in a paper on the updating method.
 !
-do k = 1, npt
-    w(k) = rsp(npt + k) * (HALF * rsp(npt + k) + rsp(k))
-    summ = ZERO
-    do j = 1, n
-        summ = summ + bmat(j, k) * step(j)
-    end do
-    vlag(k) = summ
-end do
-beta = ZERO
-do k = 1, npt - n - 1_IK
-    summ = ZERO
-    do i = 1, npt
-        summ = summ + zmat(i, k) * w(i)
-    end do
-    if (k < idz) then
-        beta = beta + summ * summ
-        summ = -summ
-    else
-        beta = beta - summ * summ
-    end if
-    do i = 1, npt
-        vlag(i) = vlag(i) + summ * zmat(i, k)
-    end do
-end do
-bsum = ZERO
-dx = ZERO
-ssq = ZERO
-do j = 1, n
-    summ = ZERO
-    do i = 1, npt
-        summ = summ + w(i) * bmat(j, i)
-    end do
-    bsum = bsum + summ * step(j)
-    jp = npt + j
-    do k = 1, n
-        summ = summ + bmat(k, jp) * step(k)
-    end do
-    vlag(jp) = summ
-    bsum = bsum + summ * step(j)
-    dx = dx + step(j) * xpt(j, kopt)
-    ssq = ssq + step(j)**2
-end do
-beta = dx * dx + ssq * (rsp(kopt) + dx + dx + HALF * ssq) + beta - bsum
-vlag(kopt) = vlag(kopt) + ONE
+
+
+vlag = calvlag(kopt, bmat, step, xpt, zmat, idz)
+beta = calbeta(kopt, bmat, step, xpt, zmat, idz)
+
+
 !
 !     If KNEW is ZERO initially, then pick the index of the interpolation
 !       point to be deleted, by maximizing the absolute value of the

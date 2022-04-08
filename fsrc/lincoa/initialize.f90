@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM12:16:16
+! Last Modified: Saturday, April 09, 2022 AM03:51:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ contains
 
 
 subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x0, b, &
-    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, rsp, &
+    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, xsxpt, &
     & step, vlag, xbase, xhist, xopt, xpt, xsav, zmat)
 
 ! Generic modules
@@ -70,7 +70,7 @@ real(RP), intent(out) :: gopt(:)  ! GOPT(N)
 real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
 real(RP), intent(out) :: rescon(:)  ! RESCON(M)
-real(RP), intent(out) :: rsp(:)  ! RSP(2*NPT)
+real(RP), intent(out) :: xsxpt(:)  ! RSP(2*NPT)
 real(RP), intent(out) :: step(:)  ! STEP(N)
 real(RP), intent(out) :: vlag(:)  ! VLAG(NPT+N) The size is NPT + N instead of NPT
 real(RP), intent(out) :: xbase(:)  ! XBASE(N)
@@ -118,7 +118,7 @@ if (DEBUGGING) then
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
-    call assert(size(rsp) == 2_IK * npt, 'SIZE(RSP) == 2*NPT', srname)
+    call assert(size(xsxpt) == 2_IK * npt, 'SIZE(RSP) == 2*NPT', srname)
     call assert(size(step) == n, 'SIZE(STEP) == N', srname)
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT+N', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
@@ -185,7 +185,7 @@ do j = 1, n
     end do
 end do
 do k = 1, npt
-    rsp(k) = ZERO
+    xsxpt(k) = ZERO
     do j = 1, npt - n - 1
         zmat(k, j) = ZERO
     end do
@@ -273,14 +273,14 @@ do nf = 1, npt
             step(i) = xpt(i, nf) + (test - bigv) * amat(i, jsav)
         end do
         do k = 1, npt
-            rsp(npt + k) = ZERO
+            xsxpt(npt + k) = ZERO
             do j = 1, n
-                rsp(npt + k) = rsp(npt + k) + xpt(j, k) * step(j)
+                xsxpt(npt + k) = xsxpt(npt + k) + xpt(j, k) * step(j)
             end do
         end do
         knew = nf
 
-        call update(kbase, rsp, step, xpt, idz, knew, bmat, zmat, vlag)
+        call update(kbase, step, xpt, idz, knew, bmat, zmat, vlag)
 
         do i = 1, n
             xpt(i, nf) = step(i)
@@ -345,11 +345,11 @@ do j = 1, n
     gopt(j) = ZERO
 end do
 do k = 1, npt
-    rsp(k) = ZERO
+    xsxpt(k) = ZERO
     do j = 1, n
-        rsp(k) = rsp(k) + xpt(j, k) * xopt(j)
+        xsxpt(k) = xsxpt(k) + xpt(j, k) * xopt(j)
     end do
-    temp = pq(k) * rsp(k)
+    temp = pq(k) * xsxpt(k)
     do j = 1, n
         gopt(j) = gopt(j) + fval(k) * bmat(j, k) + temp * xpt(j, k)
     end do

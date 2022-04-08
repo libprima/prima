@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM12:17:53
+! Last Modified: Friday, April 08, 2022 PM09:50:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -483,6 +483,9 @@ if (f >= fsave) then
     ktemp = kopt
     detrat = ONE
 end if
+!----------------------------------------------------------!
+ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
+!----------------------------------------------------------!
 do k = 1, npt
     summ = ZERO
     do i = 1, n
@@ -501,6 +504,7 @@ if (knew == 0) goto 290
 !     Replace the interpolation point that has index KNEW by the point XNEW,
 !     and also update the Lagrange functions and the quadratic model.
 !
+
 240 do i = 1, n
     xpt(i, knew) = xnew(i)
 end do

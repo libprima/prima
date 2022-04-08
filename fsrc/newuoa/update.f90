@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM03:37:38
+! Last Modified: Saturday, April 09, 2022 AM03:36:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -119,8 +119,8 @@ end if
 ! and BETA holds the value of the parameter that has this name.
 ! N.B.: Powell's original comments mention that VLAG is "the vector THETA*WCHECK + e_b of the
 ! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
-vlag = calvlag(idz, kopt, bmat, d, xpt, zmat)
-beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
+vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
+beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
 ! Apply rotations to put zeros in the KNEW-th row of ZMAT. A 2x2 rotation will be multiplied to ZMAT
 ! from the right so that ZMAT(KNEW, [JL, J]) becomes [SQRT(ZMAT(KNEW, JL)^2 + ZMAT(KNEW, J)^2), 0].

@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM05:54:34
+! Last Modified: Saturday, April 09, 2022 AM03:48:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,7 +100,7 @@ real(RP) :: pqw(npt + size(x))  ! Note that the size is npt + N instead of npt; 
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: rescon(size(bvec))
 real(RP) :: rfac(size(x), size(x))
-real(RP) :: rsp(2 * npt)
+real(RP) :: xsxpt(2 * npt)
 real(RP) :: step(size(x))
 real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
@@ -223,7 +223,7 @@ imprv = 0
 !       is set so that XPT(KOPT,.) is the initial trust region centre.
 !
 call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
-    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, rsp, &
+    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, xsxpt, &
     & step, pqw, xbase, xhist, xopt, xpt, xsav, zmat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -260,9 +260,9 @@ fsave = fopt
 
 ! Shift XBASE if XOPT may be too far from XBASE.
 if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
-    rsp(1:npt) = ZERO
+    xsxpt(1:npt) = ZERO
     b = b - matprod(xopt, amat)
-    call shiftbase(xbase, xopt, xpt, idz, zmat, bmat, pq, hq)
+    call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
 end if
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -353,7 +353,7 @@ end if
 ! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should do the same.
 !-------------------------------------------------------------------------------------------!
 !
-rsp(npt + 1:2 * npt) = matprod(step, xpt)
+xsxpt(npt + 1:2 * npt) = matprod(step, xpt)
 qred = calquad(step, gopt, hq, pq, xpt)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -485,7 +485,7 @@ if (ifeas == 1 .and. itest < 3) then
             summ = summ + bmat(j, k) * step(j)
         end do
         vqalt = vqalt + summ * w(k)
-        vqalt = vqalt + pqw(k) * rsp(npt + k) * (HALF * rsp(npt + k) + rsp(k))
+        vqalt = vqalt + pqw(k) * xsxpt(npt + k) * (HALF * xsxpt(npt + k) + xsxpt(k))
     end do
     dffalt = f - fopt - vqalt
 end if
@@ -514,7 +514,7 @@ end if
 !       can be moved. If STEP is a trust region step, then KNEW is ZERO at
 !       present, but a positive value is picked by subroutine UPDATE.
 !
-call update(kopt, rsp, step, xpt, idz, knew, bmat, zmat, pqw)
+call update(kopt, step, xpt, idz, knew, bmat, zmat, pqw)
 if (knew == 0) then
     info = DAMAGING_ROUNDING
     goto 600
@@ -575,16 +575,21 @@ end if
 !       the old XOPT if ITEST is less than 3.
 !
 fval(knew) = f
-rsp(knew) = rsp(kopt) + rsp(npt + kopt)
+xsxpt(knew) = xsxpt(kopt) + xsxpt(npt + kopt)
+! XOPT'*XPT(:, KOPT) + STEP'*XPT(:, KOPT) = (XOPT+STEP)'*XPT(:, KOPT) = XNEW'*XPT(:, KOPT) = XNEW'*XOPT
+!!xsxpt(knew) = inprod(xopt, xnew)
+
 ssq = ZERO
 do i = 1, n
     xpt(i, knew) = xnew(i)
     ssq = ssq + step(i)**2
 end do
-rsp(npt + knew) = rsp(npt + kopt) + ssq
+xsxpt(npt + knew) = xsxpt(npt + kopt) + ssq
+! STEP'*XPT(:, KNEW) + STEP'*STEP = STEP'*[XPT(:, KOPT) + STEP] = STEP'*XNEW
+!!xsxpt(npt + knew) = inprod(step, xnew)
 if (itest < 3) then
     do k = 1, npt
-        temp = pqw(k) * rsp(k)
+        temp = pqw(k) * xsxpt(k)
         do i = 1, n
             w(i) = w(i) + temp * xpt(i, k)
         end do
@@ -630,9 +635,11 @@ if (f < fopt .and. ifeas == 1) then
         end where
     end where
 
-    do k = 1, npt
-        rsp(k) = rsp(k) + rsp(npt + k)
-    end do
+    !do k = 1, npt
+    !    xsxpt(k) = xsxpt(k) + xsxpt(npt + k)
+    !end do
+    xsxpt(1:npt) = xsxpt(1:npt) + xsxpt(npt + 1:2 * npt)
+    !!xsxpt(1:npt) = matprod(xopt, xpt)
 !
 !     Also revise GOPT when symmetric Broyden updating is applied.
 !
@@ -644,7 +651,7 @@ if (f < fopt .and. ifeas == 1) then
             end do
         end do
         do k = 1, npt
-            temp = pq(k) * rsp(npt + k)
+            temp = pq(k) * xsxpt(npt + k)
             do i = 1, n
                 gopt(i) = gopt(i) + temp * xpt(i, k)
             end do
@@ -678,7 +685,7 @@ if (itest == 3) then
         end do
     end do
     do k = 1, npt
-        temp = pq(k) * rsp(k)
+        temp = pq(k) * xsxpt(k)
         do i = 1, n
             gopt(i) = gopt(i) + temp * xpt(i, k)
         end do
