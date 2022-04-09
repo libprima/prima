@@ -10,7 +10,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 PM01:20:00
+! Last Modified: Saturday, April 09, 2022 PM03:59:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -92,7 +92,7 @@ xopt = xpt(:, kopt)  ! Read XOPT.
 ! M. J. D. Powell, Least Frobenius norm updating of quadratic models that satisfy interpolation
 ! conditions. Math. Program., 100:183--215, 2004
 wcheck = matprod(d, xpt)
-wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
+wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))  ! WCHECK is of order DELTA^4, which is tiny!
 
 !vlag(1:npt) = matprod(d, bmat(:, 1:npt))
 !vlag(1:npt) = vlag(1:npt) + omega_mul(idz_loc, zmat, wcheck)
@@ -156,12 +156,12 @@ real(RP) :: bw(size(bmat, 1))
 real(RP) :: bd(size(bmat, 1))
 real(RP) :: bsum
 real(RP) :: dsq
-real(RP) :: dx
+real(RP) :: dxopt
 real(RP) :: wcheck(size(zmat, 1))
 real(RP) :: xopt(size(xpt, 1))
 real(RP) :: xoptsq
 real(RP) :: x(size(xpt, 1))
-real(RP) :: wv(size(xpt, 1) + size(xpt, 2)), Hwv(size(xpt, 1) + size(xpt, 2)), wvHwv
+real(RP) :: wv(size(xpt, 1) + size(xpt, 2)), Hwv(size(xpt, 1) + size(xpt, 2)), wvHwv, beta1
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -192,7 +192,7 @@ end if
 
 xopt = xpt(:, kopt)  ! Read XOPT.
 
-dx = inprod(d, xopt)
+dxopt = inprod(d, xopt)
 dsq = inprod(d, d)
 xoptsq = inprod(xopt, xopt)
 
@@ -205,24 +205,24 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
 !bw = matprod(bmat(:, 1:npt), wcheck)
 !bd = matprod(bmat(:, npt + 1:npt + n), d)
-!!bsum = sum(bd * d + bw * d + bw * d)  ! VERSION 1
+!bsum = sum(bd * d + bw * d + bw * d)  ! VERSION 1
 
-!!bsum = inprod(bd + TWO * bw, d)  ! VERSION 2
-!!bsum = inprod(bd + bw + bw, d)  ! VERSION 5
+!bsum = inprod(bd + TWO * bw, d)  ! VERSION 2
+!bsum = inprod(bd + bw + bw, d)  ! VERSION 5
 !bsum = inprod(bw + bw + bd, d)  ! VERSION 5
 
-!!bw = matprod(bmat, [TWO * wcheck, d]); bsum = inprod(bw, d)  ! VERSION 3
+!bw = matprod(bmat, [TWO * wcheck, d]); bsum = inprod(bw, d)  ! VERSION 3
 
-!!beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSIONa
-!beta = dx**2 + dsq * (xoptsq + dx + dx + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSIONb
+!beta = dxopt**2 + dsq * (xoptsq + TWO * dxopt + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSIONa
+!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSIONb
 
 
 !beta = inprod(wcheck, omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))) + inprod(d, matprod(bmat, [wcheck, d]))
 !beta = inprod(wcheck, omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))) + inprod(d, matprod(bmat, [wcheck, d]))
 
-wv = [wcheck, d]
 
 !----------------------------------------------------------------------------------------!
+!wv = [wcheck, d]
 !Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), matprod(bmat, wv)]
 !wvHwv = inprod(wv, Hwv)
 !----------------------------------------------------------------------------------------!
@@ -231,8 +231,12 @@ Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), &
     & matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)]
 wvHwv = inprod(wcheck, Hwv(1:npt)) + inprod(d, Hwv(npt + 1:npt + n))
 
-x = xopt + d
-beta = HALF * (inprod(x, x)**2 + inprod(xopt, xopt)**2) - inprod(x, xopt)**2 - wvHwv
+!x = xopt + d
+!beta = HALF * (inprod(x, x)**2 + inprod(xopt, xopt)**2) - inprod(x, xopt)**2 - wvHwv
+
+beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - wvHwv
+
+!write (*, *) abs(beta1 - beta) / max(1.0_RP, abs(beta))
 
 !====================!
 !  Calculation ends  !

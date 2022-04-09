@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 08, 2022 PM09:50:57
+! Last Modified: Saturday, April 09, 2022 PM02:53:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -456,56 +456,61 @@ if (f < fopt) then
     end do
 end if
 ksave = knew
-if (knew > 0) goto 240
+
+!if (knew > 0) goto 240
+if (knew <= 0) then
 !
 !     Pick the next value of DELTA after a trust region step.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (.not. (vquad < ZERO)) then
-    info = TRSUBP_FAILED
-    goto 420
-end if
-ratio = (f - fsave) / vquad
-if (ratio <= TENTH) then
-    delta = HALF * dnorm
-else if (ratio <= 0.7_RP) then
-    delta = max(HALF * delta, dnorm)
-else
-    delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
-end if
-if (delta <= 1.5_RP * rho) delta = rho
+    if (.not. (vquad < ZERO)) then
+        info = TRSUBP_FAILED
+        goto 420
+    end if
+    ratio = (f - fsave) / vquad
+    if (ratio <= TENTH) then
+        delta = HALF * dnorm
+    else if (ratio <= 0.7_RP) then
+        delta = max(HALF * delta, dnorm)
+    else
+        delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
+    end if
+    if (delta <= 1.5_RP * rho) delta = rho
 !
 !     Set KNEW to the index of the next interpolation point to be deleted.
 !
-ktemp = 0
-detrat = ZERO
-if (f >= fsave) then
-    ktemp = kopt
-    detrat = ONE
-end if
-!----------------------------------------------------------!
-ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
-!----------------------------------------------------------!
-do k = 1, npt
-    summ = ZERO
-    do i = 1, n
-        summ = summ + (xpt(i, k) - xopt(i))**2
-    end do
-    temp = abs(vlag(k))
-    if (summ > rhosq) temp = temp * (summ / rhosq)**1.5_RP
-    if (temp > detrat .and. k /= ktemp) then
-        detrat = temp
-        ddknew = summ
-        knew = k
+    ktemp = 0
+    detrat = ZERO
+    if (f >= fsave) then
+        ktemp = kopt
+        detrat = ONE
     end if
-end do
-if (knew == 0) goto 290
+!----------------------------------------------------------!
+    ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
+!----------------------------------------------------------!
+    do k = 1, npt
+        summ = ZERO
+        do i = 1, n
+            summ = summ + (xpt(i, k) - xopt(i))**2
+        end do
+        temp = abs(vlag(k))
+        if (summ > rhosq) temp = temp * (summ / rhosq)**1.5_RP
+        if (temp > detrat .and. k /= ktemp) then
+            detrat = temp
+            ddknew = summ
+            knew = k
+        end if
+    end do
+    if (knew == 0) goto 290
+end if
 !
 !     Replace the interpolation point that has index KNEW by the point XNEW,
 !     and also update the Lagrange functions and the quadratic model.
 !
 
-240 do i = 1, n
+!240 continue
+
+do i = 1, n
     xpt(i, knew) = xnew(i)
 end do
 temp = ONE / vlag(knew)
@@ -530,6 +535,13 @@ if (f < fsave) then
     kopt = knew
 end if
 
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220409:
+! The following line is only for the moment, to avoid comparing with NaN, which is a floating-point
+! violation. DDKNEW can be NaN due to NaN in XPT and XOPT, which should not happen in the modernized
+! version.
+if (is_nan(ddknew)) ddknew = -ONE
+!--------------------------------------------------------------------------------------------------!
 if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > tworsq) goto 70
 
 !
