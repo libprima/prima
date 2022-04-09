@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 09, 2022 AM03:48:44
+! Last Modified: Saturday, April 09, 2022 PM10:43:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -439,59 +439,6 @@ end do
 !     use when VQUAD is calculated.
 !
 230 continue
-
-!do k = 1, npt
-!    !summa = ZERO
-!    !summb = ZERO
-!    !summ = ZERO
-!    !do j = 1, n
-!    !    summa = summa + xpt(j, k) * d(j)
-!    !    summb = summb + xpt(j, k) * xopt(j)
-!    !    summ = summ + bmat(j, k) * d(j)
-!    !end do
-!    summa = inprod(d, xpt(:, k))
-!    summb = inprod(xopt, xpt(:, k))
-!    !summ = inprod(d, bmat(:, k))
-!    w(k) = summa * (HALF * summa + summb)
-!    !vlag(k) = summ
-!    !w(npt + k) = summa
-!end do
-
-!w(npt + 1:2 * npt) = matprod(d, xpt)
-!w(1:npt) = w(npt + 1:2 * npt) * (HALF * w(npt + 1:2 * npt) + matprod(xopt, xpt))
-!vlag(1:npt) = matprod(d, bmat(:, 1:npt))
-
-!beta = ZERO
-!do jj = 1, nptm
-!    summ = ZERO
-!    do k = 1, npt
-!        summ = summ + zmat(k, jj) * w(k)
-!    end do
-!    beta = beta - summ * summ
-!    do k = 1, npt
-!        vlag(k) = vlag(k) + summ * zmat(k, jj)
-!    end do
-!end do
-!dsq = ZERO
-!bsumm = ZERO
-!dx = ZERO
-!do j = 1, n
-!    dsq = dsq + d(j)**2
-!    summ = ZERO
-!    do k = 1, npt
-!        summ = summ + w(k) * bmat(j, k)
-!    end do
-!    bsumm = bsumm + summ * d(j)
-!    jp = npt + j
-!    do i = 1, n
-!        summ = summ + bmat(i, jp) * d(i)
-!    end do
-!    vlag(jp) = summ
-!    bsumm = bsumm + summ * d(j)
-!    dx = dx + d(j) * xopt(j)
-!end do
-!beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bsumm
-!vlag(kopt) = vlag(kopt) + ONE
 
 
 vlag = calvlag(kopt, bmat, d, xpt, zmat)
