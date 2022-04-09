@@ -10,7 +10,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 AM09:39:53
+! Last Modified: Saturday, April 09, 2022 AM10:01:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -96,8 +96,9 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
 vlag(1:npt) = matprod(d, bmat(:, 1:npt))
 vlag(1:npt) = vlag(1:npt) + omega_mul(idz_loc, zmat, wcheck)
-vlag(kopt) = vlag(kopt) + ONE  ! The calculation of VLAG(1:NPT) finishes.
-vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d]) ! The calculation of VLAG finishes.
+!vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
+vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(npt + 1:npt + n), d)
+vlag(kopt) = vlag(kopt) + ONE
 
 !====================!
 !  Calculation ends  !
@@ -196,14 +197,15 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
 bw = matprod(bmat(:, 1:npt), wcheck)
 bd = matprod(bmat(:, npt + 1:npt + n), d)
-bsum = sum(bd * d + bw * d + bw * d)  ! VERSION 1
+!bsum = sum(bd * d + bw * d + bw * d)  ! VERSION 1
 
 !bsum = inprod(bd + TWO * bw, d)  ! VERSION 2
+bsum = inprod(bd + bw + bw, d)  ! VERSION 5
 
 !bw = matprod(bmat, [TWO * wcheck, d]); bsum = inprod(bw, d)  ! VERSION 3
 
-!beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSION123
-beta = dx**2 + dsq * (xoptsq + dx + dx + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSION 4
+!beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSIONa
+beta = dx**2 + dsq * (xoptsq + dx + dx + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSIONb
 
 !====================!
 !  Calculation ends  !
