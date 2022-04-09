@@ -10,7 +10,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 PM01:15:45
+! Last Modified: Saturday, April 09, 2022 PM01:20:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,9 +100,11 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 vlag(1:npt) = omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))
 vlag(kopt) = vlag(kopt) + ONE
 
-vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
+!------------------------------------------------------!
+!vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
+!------------------------------------------------------!
 
-!vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
+vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 
 !====================!
 !  Calculation ends  !
@@ -220,12 +222,14 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
 wv = [wcheck, d]
 
-Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), matprod(bmat, wv)]
-wvHwv = inprod(wv, Hwv)
+!----------------------------------------------------------------------------------------!
+!Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), matprod(bmat, wv)]
+!wvHwv = inprod(wv, Hwv)
+!----------------------------------------------------------------------------------------!
 
-!Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), &
-!    & matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)]
-!wvHwv = inprod(wcheck, Hwv(1:npt)) + inprod(d, Hwv(npt + 1:npt + n))
+Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), &
+    & matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)]
+wvHwv = inprod(wcheck, Hwv(1:npt)) + inprod(d, Hwv(npt + 1:npt + n))
 
 x = xopt + d
 beta = HALF * (inprod(x, x)**2 + inprod(xopt, xopt)**2) - inprod(x, xopt)**2 - wvHwv
