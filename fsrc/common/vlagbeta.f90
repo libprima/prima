@@ -10,7 +10,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 AM10:25:56
+! Last Modified: Saturday, April 09, 2022 PM01:15:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ contains
 
 function calvlag(kopt, bmat, d, xpt, zmat, idz) result(vlag)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates VLAG = Hw for a given step D. See (4.11) of the NEWUOA paper.
+! This function calculates VLAG = Hw for a given step D. See (4.25) of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: VLAG(NPT+N), WCHECK(NPT), XOPT(N)
@@ -94,11 +94,15 @@ xopt = xpt(:, kopt)  ! Read XOPT.
 wcheck = matprod(d, xpt)
 wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
-vlag(1:npt) = matprod(d, bmat(:, 1:npt))
-vlag(1:npt) = vlag(1:npt) + omega_mul(idz_loc, zmat, wcheck)
-!vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
-vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
+!vlag(1:npt) = matprod(d, bmat(:, 1:npt))
+!vlag(1:npt) = vlag(1:npt) + omega_mul(idz_loc, zmat, wcheck)
+
+vlag(1:npt) = omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))
 vlag(kopt) = vlag(kopt) + ONE
+
+vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
+
+!vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 
 !====================!
 !  Calculation ends  !
@@ -114,7 +118,7 @@ end function calvlag
 
 function calbeta(kopt, bmat, d, xpt, zmat, idz) result(beta)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates BETA for a given step D. See (4.12) of the NEWUOA paper.
+! This function calculates BETA for a given step D. See (4.12) and (4.26) of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: BW(N), BD(N), WCHECK(NPT), XOPT(N)
@@ -126,7 +130,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
-use, non_intrinsic :: powalg_mod, only : omega_inprod
+use, non_intrinsic :: powalg_mod, only : omega_inprod, omega_mul
 
 implicit none
 
@@ -154,6 +158,8 @@ real(RP) :: dx
 real(RP) :: wcheck(size(zmat, 1))
 real(RP) :: xopt(size(xpt, 1))
 real(RP) :: xoptsq
+real(RP) :: x(size(xpt, 1))
+real(RP) :: wv(size(xpt, 1) + size(xpt, 2)), Hwv(size(xpt, 1) + size(xpt, 2)), wvHwv
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -195,18 +201,34 @@ xoptsq = inprod(xopt, xopt)
 wcheck = matprod(d, xpt)
 wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
-bw = matprod(bmat(:, 1:npt), wcheck)
-bd = matprod(bmat(:, npt + 1:npt + n), d)
-!bsum = sum(bd * d + bw * d + bw * d)  ! VERSION 1
+!bw = matprod(bmat(:, 1:npt), wcheck)
+!bd = matprod(bmat(:, npt + 1:npt + n), d)
+!!bsum = sum(bd * d + bw * d + bw * d)  ! VERSION 1
 
-!bsum = inprod(bd + TWO * bw, d)  ! VERSION 2
-!bsum = inprod(bd + bw + bw, d)  ! VERSION 5
-bsum = inprod(bw + bw + bd, d)  ! VERSION 5
+!!bsum = inprod(bd + TWO * bw, d)  ! VERSION 2
+!!bsum = inprod(bd + bw + bw, d)  ! VERSION 5
+!bsum = inprod(bw + bw + bd, d)  ! VERSION 5
 
-!bw = matprod(bmat, [TWO * wcheck, d]); bsum = inprod(bw, d)  ! VERSION 3
+!!bw = matprod(bmat, [TWO * wcheck, d]); bsum = inprod(bw, d)  ! VERSION 3
 
-!beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSIONa
-beta = dx**2 + dsq * (xoptsq + dx + dx + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSIONb
+!!beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSIONa
+!beta = dx**2 + dsq * (xoptsq + dx + dx + HALF * dsq) - omega_inprod(idz_loc, zmat, wcheck, wcheck) - bsum  ! VERSIONb
+
+
+!beta = inprod(wcheck, omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))) + inprod(d, matprod(bmat, [wcheck, d]))
+!beta = inprod(wcheck, omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))) + inprod(d, matprod(bmat, [wcheck, d]))
+
+wv = [wcheck, d]
+
+Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), matprod(bmat, wv)]
+wvHwv = inprod(wv, Hwv)
+
+!Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), &
+!    & matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)]
+!wvHwv = inprod(wcheck, Hwv(1:npt)) + inprod(d, Hwv(npt + 1:npt + n))
+
+x = xopt + d
+beta = HALF * (inprod(x, x)**2 + inprod(xopt, xopt)**2) - inprod(x, xopt)**2 - wvHwv
 
 !====================!
 !  Calculation ends  !
