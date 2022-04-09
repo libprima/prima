@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 09, 2022 PM10:38:12
+! Last Modified: Saturday, April 09, 2022 PM10:42:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -642,10 +642,10 @@ do j = 1, n
 end do
 !beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bsumm
 
-bsumm = sum(matprod(bmat(:, npt + 1:npt + n), d) * d(1:n) &
-     & + matprod(bmat(:, 1:npt), w(1:npt)) * d(1:n) &
-     & + matprod(bmat(:, 1:npt), w(1:npt)) * d(1:n))
-beta = dx**2 + dsq * (xoptsq + 2.0_RP * dx + HALF * dsq) + beta - bsumm
+!bsumm = sum(matprod(bmat(:, npt + 1:npt + n), d) * d(1:n) &
+!     & + matprod(bmat(:, 1:npt), w(1:npt)) * d(1:n) &
+!     & + matprod(bmat(:, 1:npt), w(1:npt)) * d(1:n))
+!beta = dx**2 + dsq * (xoptsq + 2.0_RP * dx + HALF * dsq) + beta - bsumm
 
 beta = inprod(vlag(1:npt + n), [w(1:npt), d])
 beta = HALF * (inprod(xopt + d, xopt + d)**2 + inprod(xopt, xopt)**2) - inprod(xopt + d, xopt)**2 - beta
