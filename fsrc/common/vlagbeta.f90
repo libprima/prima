@@ -19,7 +19,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 PM09:06:30
+! Last Modified: Saturday, April 09, 2022 PM09:57:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -122,8 +122,8 @@ vlag(kopt) = vlag(kopt) + ONE
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT + N', srname)
-    tol = max(1.0E-10_RP, min(1.0E-2_RP, 1.0E6_RP * EPS * real(npt + n, RP)))
-    call assert(abs(sum(vlag(1:npt)) - ONE) <= tol, 'SUM(VLAG(1:NPT)) == 1', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(npt + n, RP)))
+    call assert(abs(sum(vlag(1:npt)) - ONE) <= tol .or. RP == kind(0.0), 'SUM(VLAG(1:NPT)) == 1', srname)
 end if
 
 end function calvlag
@@ -236,4 +236,4 @@ beta = HALF * (inprod(x, x)**2 + inprod(xopt, xopt)**2) - inprod(x, xopt)**2 - i
 end function calbeta
 
 
-end vlagbeta_mod
+end module vlagbeta_mod
