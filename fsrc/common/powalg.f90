@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, April 08, 2022 AM11:07:41
+! Last Modified: Saturday, April 09, 2022 PM05:23:34
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -211,7 +211,7 @@ w = matprod(d, xpt)
 qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(w, pq * w)
 !!MATLAB: qred = -d'*(gopt + 0.5*hq*d) - 0.5*w'*(pq*w);
 ! N.B.: INPROD(W, PQ*W) is mathematically equal to INPROD(PQ, W**2). However, the latter may be a
-! bad formulation for computation, because the entires of W are in the tiny order of O(DELTA^2).
+! bad formulation for computation, because the entires of W are in the tiny order of O(DELTA*|XOPT|).
 !--------------------------------------------------------------------------------------------------!
 
 !====================!
