@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, March 23, 2022 AM08:08:25
+! Last Modified: Sunday, April 10, 2022 AM01:31:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -70,7 +70,7 @@ if (present(probs)) then
     probs_loc(1:nprobs) = probs
 else
     nprobs = 5_IK
-    probs_loc(1:nprobs) = ['chrosen  ', 'chebyquad', 'trigsabs ', 'trigssqs ', 'vardim   ']
+    probs_loc(1:nprobs) = ['chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
 end if
 
 if (present(mindim)) then

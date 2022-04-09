@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 09, 2022 AM03:47:52
+! Last Modified: Sunday, April 10, 2022 AM01:40:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,7 +77,7 @@ if (DEBUGGING) then
 end if
 
 !
-!     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
+!     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM, XSXPT and STEP are
 !       identical to the corresponding arguments in SUBROUTINE LINCOB.
 !     KOPT is such that XPT(KOPT,.) is the current trust region centre.
 !     KNEW on exit is usually positive, and then it is the index of an
@@ -156,24 +156,22 @@ call validate(1 <= knew .and. knew <= npt, '1 <= KNEW <= NPT', srname)
 !     Apply the rotations that put ZEROs in the KNEW-th row of ZMAT.
 !
 jl = 1
-if (npt - n >= 3) then
-    do j = 2, npt - n - 1_IK
-        if (j == idz) then
-            jl = idz
-        else if (zmat(knew, j) /= ZERO) then
-            temp = sqrt(zmat(knew, jl)**2 + zmat(knew, j)**2)
-            ! Zaikun 20220304: TEMP can be 0 in single precision. Detected by Absoft and nvfortran. Should call GROT.
-            tempa = zmat(knew, jl) / temp
-            tempb = zmat(knew, j) / temp
-            do i = 1, npt
-                temp = tempa * zmat(i, jl) + tempb * zmat(i, j)
-                zmat(i, j) = tempa * zmat(i, j) - tempb * zmat(i, jl)
-                zmat(i, jl) = temp
-            end do
-            zmat(knew, j) = ZERO
-        end if
-    end do
-end if
+do j = 2, npt - n - 1_IK
+    if (j == idz) then
+        jl = idz
+    else if (zmat(knew, j) /= ZERO) then
+        temp = sqrt(zmat(knew, jl)**2 + zmat(knew, j)**2)
+        ! Zaikun 20220304: TEMP can be 0 in single precision. Detected by Absoft and nvfortran. Should call GROT.
+        tempa = zmat(knew, jl) / temp
+        tempb = zmat(knew, j) / temp
+        do i = 1, npt
+            temp = tempa * zmat(i, jl) + tempb * zmat(i, j)
+            zmat(i, j) = tempa * zmat(i, j) - tempb * zmat(i, jl)
+            zmat(i, jl) = temp
+        end do
+        zmat(knew, j) = ZERO
+    end if
+end do
 !
 !     Put the first NPT compONEnts of the KNEW-th column of the Z Z^T matrix
 !       into W, and calculate the parameters of the updating formula.

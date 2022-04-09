@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 09, 2022 PM02:53:27
+! Last Modified: Sunday, April 10, 2022 AM12:48:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -535,13 +535,6 @@ if (f < fsave) then
     kopt = knew
 end if
 
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20220409:
-! The following line is only for the moment, to avoid comparing with NaN, which is a floating-point
-! violation. DDKNEW can be NaN due to NaN in XPT and XOPT, which should not happen in the modernized
-! version.
-if (is_nan(ddknew)) ddknew = -ONE
-!--------------------------------------------------------------------------------------------------!
 if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > tworsq) goto 70
 
 !
