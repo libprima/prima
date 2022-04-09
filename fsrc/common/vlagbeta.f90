@@ -10,7 +10,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 AM10:01:53
+! Last Modified: Saturday, April 09, 2022 AM10:18:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -97,7 +97,7 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 vlag(1:npt) = matprod(d, bmat(:, 1:npt))
 vlag(1:npt) = vlag(1:npt) + omega_mul(idz_loc, zmat, wcheck)
 !vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
-vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(npt + 1:npt + n), d)
+vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 vlag(kopt) = vlag(kopt) + ONE
 
 !====================!
