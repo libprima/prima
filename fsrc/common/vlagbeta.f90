@@ -2,7 +2,16 @@ module vlagbeta_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains a subroutine that calculates VLAG and BETA for a given step D. Both VLAG and
 ! BETA are critical for the updating procedure of H, which is detailed formula (4.11) of the NEWUOA
-! paper. See (4.12) for the definition of BETA, and VLAG is indeed Hw.
+! paper. See (4.12) for the definition of BETA, and VLAG is indeed Hw; (4.25)--(4.26) formulate the
+! actual calculating scheme of VLAG and BETA.
+!
+! N.B.:
+! 1. In languages like MATLAB/Python/Julia/R, CALVLAG and CALBETA should be implemented into one
+! single function, as they share most of the calculation. We separate them in Fortran because
+! Fortran functions can only have one output.
+! 2. Given any D and t in {1, ..., NPT}, VLAG(t) = e_t^T Hw = L_t(XBASE + XOPT + D), where L_t is
+! the t-th Lagrange basis function corresponding to the interpolation set that defines H. See
+! (6.3)--(6.4) of the NEWUOA paper for details. As a consequence, SUM(VLAG(1:NPT)) = 1 in theory.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
@@ -10,7 +19,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 PM03:59:57
+! Last Modified: Saturday, April 09, 2022 PM05:24:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -31,7 +40,7 @@ function calvlag(kopt, bmat, d, xpt, zmat, idz) result(vlag)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
@@ -57,6 +66,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: wcheck(size(zmat, 1))
 real(RP) :: xopt(size(xpt, 1))
+real(RP) :: tol  ! For debugging only
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -92,27 +102,33 @@ xopt = xpt(:, kopt)  ! Read XOPT.
 ! M. J. D. Powell, Least Frobenius norm updating of quadratic models that satisfy interpolation
 ! conditions. Math. Program., 100:183--215, 2004
 wcheck = matprod(d, xpt)
-wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))  ! WCHECK is of order DELTA^4, which is tiny!
+wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
+! Assume that the |D| ~ DELTA, |XPT| ~ |XOPT|, and DELTA < |XOPT|. Then WCHECK is in the order of
+! DELTA*|XOPT|^3, which is can quickly become tiny.
 
 !vlag(1:npt) = matprod(d, bmat(:, 1:npt))
 !vlag(1:npt) = vlag(1:npt) + omega_mul(idz_loc, zmat, wcheck)
 
 vlag(1:npt) = omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))
+
+!------------------------------------------------------!
+vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
+!vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
+!------------------------------------------------------!
+
 vlag(kopt) = vlag(kopt) + ONE
-
-!------------------------------------------------------!
-!vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
-!------------------------------------------------------!
-
-vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 
 !====================!
 !  Calculation ends  !
 !====================!
 
+write (16, *) abs(sum(vlag(1:npt)) - 1.0_RP)
+
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT + N', srname)
+    tol = max(1.0E-10_RP, min(1.0E-2_RP, 1.0E6_RP * EPS * real(npt + n, RP)))
+    call assert(abs(sum(vlag(1:npt)) - ONE) <= tol, 'SUM(VLAG(1:NPT)) == 1', srname)
 end if
 
 end function calvlag
@@ -222,14 +238,14 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
 
 !----------------------------------------------------------------------------------------!
-!wv = [wcheck, d]
-!Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), matprod(bmat, wv)]
-!wvHwv = inprod(wv, Hwv)
+wv = [wcheck, d]
+Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), matprod(bmat, wv)]
+wvHwv = inprod(wv, Hwv)
 !----------------------------------------------------------------------------------------!
 
-Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), &
-    & matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)]
-wvHwv = inprod(wcheck, Hwv(1:npt)) + inprod(d, Hwv(npt + 1:npt + n))
+!Hwv = [omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), &
+!    & matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)]
+!wvHwv = inprod(wcheck, Hwv(1:npt)) + inprod(d, Hwv(npt + 1:npt + n))
 
 !x = xopt + d
 !beta = HALF * (inprod(x, x)**2 + inprod(xopt, xopt)**2) - inprod(x, xopt)**2 - wvHwv

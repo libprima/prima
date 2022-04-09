@@ -320,7 +320,7 @@ real(RP) :: sp
 real(RP) :: ss
 real(RP) :: sth
 real(RP) :: t
-real(RP) :: tau
+real(RP) :: tau  ! LFUNC(X) 
 real(RP) :: tol
 real(RP) :: w(size(x))
 
