@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 AM03:45:57
+! Last Modified: Saturday, April 09, 2022 PM06:32:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -96,7 +96,7 @@ end if
 ! Calculation starts !
 !====================!
 
-! Calculate VLAG and BETA for D.
+! Calculate VLAG and BETA for D. Indeed, only VLAG(1:NPT) is needed.
 vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
 beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
@@ -232,7 +232,7 @@ d = biglag(idz, knew, bmat, delbar, xopt, xpt, zmat)
 hcol = omega_col(idz, zmat, knew)  ! HCOL is the KNEW-th column of Omega.
 alpha = hcol(knew)  ! ALPHA is the KNEW-th diagonal entry of H, i.e., that of Omega.
 
-! Calculate VLAG and BETA for D. Indeed, VLAG(NPT + 1 : NPT + N) will not be used.
+! Calculate VLAG and BETA for D. Indeed, only VLAG(KNEW) is needed.
 vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
 beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
@@ -320,7 +320,7 @@ real(RP) :: sp
 real(RP) :: ss
 real(RP) :: sth
 real(RP) :: t
-real(RP) :: tau  ! LFUNC(X) 
+real(RP) :: tau  ! LFUNC(X)
 real(RP) :: tol
 real(RP) :: w(size(x))
 
