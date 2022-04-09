@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 09, 2022 AM03:51:26
+! Last Modified: Sunday, April 10, 2022 AM01:35:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -70,7 +70,7 @@ real(RP), intent(out) :: gopt(:)  ! GOPT(N)
 real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
 real(RP), intent(out) :: rescon(:)  ! RESCON(M)
-real(RP), intent(out) :: xsxpt(:)  ! RSP(2*NPT)
+real(RP), intent(out) :: xsxpt(:)  ! RXSXPT(2*NPT)
 real(RP), intent(out) :: step(:)  ! STEP(N)
 real(RP), intent(out) :: vlag(:)  ! VLAG(NPT+N) The size is NPT + N instead of NPT
 real(RP), intent(out) :: xbase(:)  ! XBASE(N)
@@ -118,7 +118,7 @@ if (DEBUGGING) then
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
-    call assert(size(xsxpt) == 2_IK * npt, 'SIZE(RSP) == 2*NPT', srname)
+    call assert(size(xsxpt) == 2_IK * npt, 'SIZE(RXSXPT) == 2*NPT', srname)
     call assert(size(step) == n, 'SIZE(STEP) == N', srname)
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT+N', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
@@ -135,10 +135,10 @@ end if
 
 
 !*++
-!*++ End of declarations rewritten by SPAG
+!*++ End of declarations rewritten by XSXPTAG
 !
 !     The arguments N, NPT, M, AMAT, B, X, RHOBEG, IPRINT, XBASE, XPT, FVAL,
-!       XSAV, XOPT, GOPT, HQ, PQ, BMAT, ZMAT, NDIM, SP and RESCON are the
+!       XSAV, XOPT, GOPT, HQ, PQ, BMAT, ZMAT, NDIM, XSXPT and RESCON are the
 !       same as the corresponding arguments in SUBROUTINE LINCOB.
 !     KOPT is set to the integer such that XPT(KOPT,.) is the initial trust
 !       region centre.
@@ -152,7 +152,7 @@ end if
 !       for the first iteration, an important feature being that, if any of
 !       of the columns of XPT is an infeasible point, then the largest of
 !       the constraint violations there is at least 0.2*RHOBEG. It also sets
-!       the initial elements of FVAL, XOPT, GOPT, HQ, PQ, SP and RESCON.
+!       the initial elements of FVAL, XOPT, GOPT, HQ, PQ, XSXPT and RESCON.
 !
 !     Set some constants.
 !
@@ -169,7 +169,7 @@ idz = 1
 kbase = 1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-!     Set the initial elements of XPT, BMAT, SP and ZMAT to ZERO.
+!     Set the initial elements of XPT, BMAT, XSXPT and ZMAT to ZERO.
 !
 do j = 1, n
     xbase(j) = x0(j)
@@ -337,7 +337,7 @@ do k = 1, npt
     end do
 end do
 !
-!     Set XOPT, SP, GOPT and HQ for the first quadratic model.
+!     Set XOPT, XSXPT, GOPT and HQ for the first quadratic model.
 !
 do j = 1, n
     xopt(j) = xpt(j, kopt)

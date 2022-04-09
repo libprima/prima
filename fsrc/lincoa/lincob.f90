@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 09, 2022 AM03:48:13
+! Last Modified: Sunday, April 10, 2022 AM01:35:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -179,7 +179,7 @@ rfac = ZERO
 !     NDIM is the second dimension of BMAT and has the value NPT+N.
 !     STEP is employed for trial steps from XOPT. It is also used for working
 !       space when XBASE is shifted and in PRELIM.
-!     SP is reserved for the scalar products XOPT^T XPT(K,.), K=1,2,...,NPT,
+!     XSXPT is reserved for the scalar products XOPT^T XPT(K,.), K=1,2,...,NPT,
 !       followed by STEP^T XPT(K,.), K=1,2,...,NPT.
 !     XNEW is the displacement from XBASE of the vector of variables for
 !       the current calculation of F, except that SUBROUTINE TRSTEP uses it
@@ -216,7 +216,7 @@ imprv = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Set the elements of XBASE, XPT, FVAL, XSAV, XOPT, GOPT, HQ, PQ, BMAT,
-!       ZMAT and SP for the first iteration. An important feature is that,
+!       ZMAT and XSXPT for the first iteration. An important feature is that,
 !       if the interpolation point XPT(K,.) is not feasible, where K is any
 !       integer from [1,NPT], then a change is made to XPT(K,.) if necessary
 !       so that the constraint violation is at least 0.2*RHOBEG. Also KOPT
@@ -571,7 +571,7 @@ if (itest < 3) then
 end if
 !
 !     Include the new interpolation point with the corresponding updates of
-!       SP. Also make the changes of the symmetric Broyden method to GOPT at
+!       XSXPT. Also make the changes of the symmetric Broyden method to GOPT at
 !       the old XOPT if ITEST is less than 3.
 !
 fval(knew) = f
@@ -599,7 +599,7 @@ if (itest < 3) then
     end do
 end if
 !
-!     Update FOPT, XSAV, XOPT, KOPT, RESCON and SP if the new F is the
+!     Update FOPT, XSAV, XOPT, KOPT, RESCON and XSXPT if the new F is the
 !       least calculated value so far with a feasible vector of variables.
 !
 if (f < fopt .and. ifeas == 1) then
