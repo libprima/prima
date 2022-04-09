@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 09, 2022 AM03:03:38
+! Last Modified: Saturday, April 09, 2022 PM10:26:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -138,14 +138,17 @@ do j = 1, n
     !ssq = ssq + step(j)**2
     ssq = ssq + step(j) * step(j)
 end do
-vlag(kopt) = vlag(kopt) + ONE
 
 !!beta = dx * dx + ssq * (xxpt(kopt) + dx + dx + HALF * ssq) + beta - bsumm
 !wz = matprod(w(1:npt), zmat); wzc = wz; wzc(1:idz - 1) = -wzc(1:idz - 1); beta = -inprod(wz, wzc)
-bsumm = sum(matprod(bmat(:, npt + 1:npt + n), step) * step(1:n) &
-     & + matprod(bmat(:, 1:npt), w(1:npt)) * step(1:n) &
-     & + matprod(bmat(:, 1:npt), w(1:npt)) * step(1:n))
-beta = dx**2 + ssq * (xxpt(kopt) + 2.0_RP * dx + HALF * ssq) + beta - bsumm
+!bsumm = sum(matprod(bmat(:, npt + 1:npt + n), step) * step(1:n) &
+!     & + matprod(bmat(:, 1:npt), w(1:npt)) * step(1:n) &
+!     & + matprod(bmat(:, 1:npt), w(1:npt)) * step(1:n))
+!beta = dx**2 + ssq * (xxpt(kopt) + 2.0_RP * dx + HALF * ssq) + beta - bsumm
+beta = inprod(vlag(1:npt + n), [w(1:npt), step])
+xopt = xpt(:, kopt)
+beta = HALF * (inprod(xopt + step, xopt + step)**2 + inprod(xopt, xopt)**2) - inprod(xopt + step, xopt)**2 - beta
+vlag(kopt) = vlag(kopt) + ONE
 
 !
 !     If KNEW is ZERO initially, then pick the index of the interpolation
