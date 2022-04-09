@@ -10,7 +10,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:46:25
+! Last Modified: Saturday, April 09, 2022 PM09:32:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -108,7 +108,7 @@ function calbeta(idz, kopt, bmat, d, xpt, zmat) result(beta)
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, omega_inprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, omega_mul, omega_inprod, issymmetric
 
 implicit none
 
@@ -174,7 +174,9 @@ bw = matprod(bmat(:, 1:npt), wcheck)
 bd = matprod(bmat(:, npt + 1:npt + n), d)
 bsum = sum(bd * d + bw * d + bw * d)
 
-beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) - omega_inprod(idz, zmat, wcheck, wcheck) - bsum
+!beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) - omega_inprod(idz, zmat, wcheck, wcheck) - bsum
+beta = inprod([omega_mul(idz, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), matprod(bmat, [wcheck, d])], [wcheck, d])
+beta = HALF * (inprod(d + xopt, d + xopt)**2 + inprod(xopt, xopt)**2) - inprod(d + xopt, xopt)**2 - beta
 
 !====================!
 !  Calculation ends  !
