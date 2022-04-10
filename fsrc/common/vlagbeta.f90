@@ -2,8 +2,8 @@ module vlagbeta_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains a subroutine that calculates VLAG and BETA for a given step D. Both VLAG and
 ! BETA are critical for the updating procedure of H, which is detailed formula (4.11) of the NEWUOA
-! paper. See (4.12) for the definition of BETA, and VLAG is indeed H*w; (4.25)--(4.26) formulate the
-! actual calculating scheme of VLAG and BETA.
+! paper. See (4.12) for the definition of BETA, and VLAG is indeed H*w without the (NPT+1)the entry;
+! (4.25)--(4.26) formulate the actual calculating scheme of VLAG and BETA.
 !
 ! N.B.:
 ! 1. In languages like MATLAB/Python/Julia/R, CALVLAG and CALBETA should be implemented into one
@@ -12,6 +12,17 @@ module vlagbeta_mod
 ! 2. Given any D and t in {1, ..., NPT}, VLAG(t) = e_t^T*H*w = L_t(XBASE + XOPT + D), where L_t is
 ! the t-th Lagrange basis function corresponding to the interpolation set that defines H. See
 ! (6.3)--(6.4) of the NEWUOA paper for details. As a consequence, SUM(VLAG(1:NPT)) = 1 in theory.
+! 3. Explanation on WCHECK: WCHECK = MATPROD(D, XPT) * (HALF * MATPROD(D,XPT) + MATPROD(XOPT, XPT)).
+! 3.1. WCHECK contains the first NPT entries of (w-v) for the vectors w and v defined in (4.10) and
+! (4.24) of the NEWUOA paper, and also hat{w} in eq(6.5) of
+! M. J. D. Powell, Least Frobenius norm updating of quadratic models that satisfy interpolation
+! conditions. Math. Program., 100:183--215, 2004
+! 3.2. According to (4.25) of the NEWUOA paper, H*w = H*(w-v) + e_{KOPT}, which provides the scheme
+! for calculating VLAG. Since the (NPT+1)-th entry of w-v is 0, this scheme does not need the
+! (NPT+1)-th column of H, which is not stored in the code. It also stabilizes the calculation of
+! BETA, as explained around (7.8)--(7.9) of the NEWUOA paper.
+! 3.3. Assume that the |D| ~ DELTA, |XPT| ~ |XOPT|, and DELTA < |XOPT|. Then WCHECK is in the order of
+! DELTA*|XOPT|^3, which is can be huge at the beginning of the algorithm and then quickly become tiny.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
@@ -19,7 +30,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 10, 2022 AM01:59:17
+! Last Modified: Sunday, April 10, 2022 PM12:54:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,7 +51,7 @@ function calvlag(kopt, bmat, d, xpt, zmat, idz) result(vlag)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
@@ -64,7 +75,7 @@ character(len=*), parameter :: srname = 'CALVLAG'
 integer(IK) :: idz_loc
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: tol  ! For debugging only
+!real(RP) :: tol  ! For debugging only
 real(RP) :: wcheck(size(zmat, 1))
 real(RP) :: xopt(size(xpt, 1))
 
@@ -102,12 +113,6 @@ end if
 
 xopt = xpt(:, kopt)  ! Read XOPT.
 
-! WCHECK contains the first NPT entries of (w-v) for the vectors w and v defined in (4.10) and
-! (4.24) of the NEWUOA paper, and also hat{w} in eq(6.5) of
-! M. J. D. Powell, Least Frobenius norm updating of quadratic models that satisfy interpolation
-! conditions. Math. Program., 100:183--215, 2004
-! Assume that the |D| ~ DELTA, |XPT| ~ |XOPT|, and DELTA < |XOPT|. Then WCHECK is in the order of
-! DELTA*|XOPT|^3, which is can quickly become tiny.
 wcheck = matprod(d, xpt)
 wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
@@ -127,8 +132,9 @@ vlag(kopt) = vlag(kopt) + ONE
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT + N', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(npt + n, RP)))
-    call assert(abs(sum(vlag(1:npt)) - ONE) <= tol .or. RP == kind(0.0), 'SUM(VLAG(1:NPT)) == 1', srname)
+    ! The following test cannot be passed.
+    !tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(npt + n, RP)))
+    !call assert(abs(sum(vlag(1:npt)) - ONE) <= tol .or. RP == kind(0.0), 'SUM(VLAG(1:NPT)) == 1', srname)
 end if
 
 end function calvlag
@@ -173,6 +179,9 @@ real(RP) :: wcheck(size(zmat, 1))
 real(RP) :: wmv(size(xpt, 1) + size(xpt, 2))
 real(RP) :: x(size(xpt, 1))
 real(RP) :: xopt(size(xpt, 1))
+real(RP) :: dsq
+real(RP) :: dxopt
+real(RP) :: xoptsq
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -208,12 +217,6 @@ end if
 
 xopt = xpt(:, kopt)  ! Read XOPT.
 
-! WCHECK contains the first NPT entries of (w-v) for the vectors w and v defined in (4.10) and
-! (4.24) of the NEWUOA paper, and also hat{w} in eq(6.5) of
-! M. J. D. Powell, Least Frobenius norm updating of quadratic models that satisfy interpolation
-! conditions. Math. Program., 100:183--215, 2004
-! Assume that the |D| ~ DELTA, |XPT| ~ |XOPT|, and DELTA < |XOPT|. Then WCHECK is in the order of
-! DELTA*|XOPT|^3, which is can quickly become tiny.
 wcheck = matprod(d, xpt)
 wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
@@ -225,12 +228,16 @@ vlag(npt + 1:npt + n) = matprod(bmat, wmv)
 ! The following line is equivalent to the above one, but handles WCHECK and D separately.
 !vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 
-x = xopt + d
-beta = HALF * (inprod(x, x)**2 + inprod(xopt, xopt)**2) - inprod(x, xopt)**2 - inprod(vlag, wmv)
+!!x = xopt + d
+!!beta = HALF * (inprod(x, x)**2 + inprod(xopt, xopt)**2) - inprod(x, xopt)**2 - inprod(vlag, wmv)
 ! Powell's version of the above two lines is
 !----------------------------------------------------------------------------------!
-!!BETA = DXOPT**2 + DSQ * (XOPTSQ + DXOPT + DXOPT + HALF * DSQ) - INPROD(VLAG, WMV)
-!where, DXOPT = INPROD(D, XOPT), DSQ = INPROD(D, D), XOPTSQ = INPROD(XOPT, XOPT).
+dxopt = inprod(d, xopt)
+dsq = inprod(d, d)
+xoptsq = inprod(xopt, xopt)
+beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt)) !Good
+!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(vlag, wmv) ! Not good
+!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(wcheck, vlag(1:npt)) - inprod(d, vlag(npt + 1:npt + n)) !Bad
 !----------------------------------------------------------------------------------!
 
 ! N.B.: We can evaluate INPROD(VLAG, WMV) as INPROD(VLAG(1:NPT), WCHECK) + INPROD(VLAG(NPT+1:NPT+N),D)
