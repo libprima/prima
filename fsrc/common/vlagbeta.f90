@@ -1,5 +1,7 @@
 module vlagbeta_mod
 !--------------------------------------------------------------------------------------------------!
+! TODO: CALVLAG and CALBETA may be better moved to POWALG_MOD.
+!
 ! This module contains a subroutine that calculates VLAG and BETA for a given step D. Both VLAG and
 ! BETA are critical for the updating procedure of H, which is detailed formula (4.11) of the NEWUOA
 ! paper. See (4.12) for the definition of BETA, and VLAG is indeed H*w without the (NPT+1)the entry;
@@ -30,7 +32,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 10, 2022 PM07:57:46
+! Last Modified: Sunday, April 10, 2022 PM11:52:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -235,9 +237,9 @@ vlag(npt + 1:npt + n) = matprod(bmat, wmv)
 dxopt = inprod(d, xopt)
 dsq = inprod(d, d)
 xoptsq = inprod(xopt, xopt)
-!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
+beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
 !beta = dxopt**2 + dsq * (half * dsq + dxopt + dxopt + xoptsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
-beta = dxopt**2 + dsq * (dxopt + dxopt + half * dsq + xoptsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
+!beta = dxopt**2 + dsq * (dxopt + dxopt + half * dsq + xoptsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
 !beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(vlag, wmv) ! Not good
 !beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(wcheck, vlag(1:npt)) - inprod(d, vlag(npt + 1:npt + n)) !Bad
 !----------------------------------------------------------------------------------!

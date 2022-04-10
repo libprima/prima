@@ -5,7 +5,6 @@ debug.F90
 memory.F90
 string.f90
 linalg.F90
-powalg.f90
 circle.f90
 rand.f90
 ratio.f90
@@ -17,6 +16,6 @@ output.f90
 preproc.f90
 pintrf.f90
 evaluate.f90
+powalg.f90
 shiftbase.f90
-vlagbeta.f90
 ieee_4dev.f90

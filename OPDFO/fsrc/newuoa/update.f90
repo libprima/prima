@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:46:14
+! Last Modified: Sunday, April 10, 2022 PM11:34:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -238,13 +238,12 @@ else
     zmat(:, jb) = scalb * (zmat(:, jb) - tempa * w(1:npt) - tempb * vlag(1:npt))
     ! If and only if DENOM <= 0, IDZ will be revised according to the sign of BETA.
     ! See (4.19)--(4.20) of the NEWUOA paper.
-    if (denom <= ZERO) then
+    if (denom < ZERO) then
         if (beta < ZERO) then
             ! This is the second place (out of two) where IDZ is increased. Since
             ! JL = IDZ <= NPT-N-1 in this case, we have IDZ <= NPT-N after the update.
             idz = int(idz + 1, kind(idz))
-        end if
-        if (beta >= ZERO) then
+        else
             ! This is the second place (out of two) where IDZ is decreased (by 1). Since IDZ >= 2
             ! in this case, we have IDZ >= 1 after the update.
             reduce_idz = .true.

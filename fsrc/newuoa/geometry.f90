@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 PM06:32:24
+! Last Modified: Monday, April 11, 2022 AM12:31:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,10 +45,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric
-
-! Solver-specific modules
-use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
-
+use, non_intrinsic :: powalg_mod, only : calvlag, calbeta
 implicit none
 
 ! Inputs
@@ -172,11 +169,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric, norm
-use, non_intrinsic :: powalg_mod, only : omega_col
-
-! Solver-specific modules
-use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
-
+use, non_intrinsic :: powalg_mod, only : omega_col, calvlag, calbeta
 implicit none
 
 ! Inputs

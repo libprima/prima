@@ -9,285 +9,15 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 AM03:36:57
+! Last Modified: Sunday, April 10, 2022 PM11:48:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: updateh, updateq, updatexf, tryqalt
+public :: updateq, updatexf, tryqalt
 
 
 contains
-
-
-subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine updates arrays BMAT and ZMAT together with IDZ, in order to replace the
-! interpolation point XPT(:, KNEW) by XNEW = XOPT + D. See Section 4 of the NEWUOA paper.
-! [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12), which is the inverse of
-! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
-! ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
-! ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
-! except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th column of H are not
-! stored as they are unnecessary for the calculation.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: GROT(2, 2), V1(N), V2(N), VLAG(NPT+N), W(NPT+N)
-! Size of local arrays: REAL(RP)*(4+4*N+2*NPT)
-!--------------------------------------------------------------------------------------------------!
-
-! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, planerot, r2update, symmetrize, issymmetric
-
-! Solver-specific modules
-use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
-
-implicit none
-
-! Inputs
-integer(IK), intent(in) :: knew
-integer(IK), intent(in) :: kopt
-real(RP), intent(in) :: d(:)  ! D(N)
-real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
-
-! In-outputs
-integer(IK), intent(inout) :: idz
-real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
-real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-
-! Local variables
-character(len=*), parameter :: srname = 'UPDATEH'
-integer(IK) :: j
-integer(IK) :: ja
-integer(IK) :: jb
-integer(IK) :: jl
-integer(IK) :: n
-integer(IK) :: npt
-logical :: reduce_idz
-real(RP) :: alpha
-real(RP) :: beta
-real(RP) :: denom
-real(RP) :: grot(2, 2)
-real(RP) :: scala
-real(RP) :: scalb
-real(RP) :: sqrtdn
-real(RP) :: tau
-real(RP) :: tausq
-real(RP) :: temp
-real(RP) :: tempa
-real(RP) :: tempb
-real(RP) :: v1(size(bmat, 1))
-real(RP) :: v2(size(bmat, 1))
-real(RP) :: vlag(size(bmat, 2))
-real(RP) :: w(size(bmat, 2))
-
-! Sizes
-n = int(size(xpt, 1), kind(n))
-npt = int(size(xpt, 2), kind(npt))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
-    call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
-    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
-    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
-        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    ! The following test cannot be passed.
-    !htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for error in H
-    !call assert(errh(idz, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-! Do nothing when KNEW is 0. This can only happen after a trust-region step.
-if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
-    return
-end if
-
-! Calculate VLAG and BETA according to D.
-! VLAG contains the components of the vector Hw of the updating formula (4.11) in the NEWUOA paper,
-! and BETA holds the value of the parameter that has this name.
-! N.B.: Powell's original comments mention that VLAG is "the vector THETA*WCHECK + e_b of the
-! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
-vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
-beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
-
-! Apply rotations to put zeros in the KNEW-th row of ZMAT. A 2x2 rotation will be multiplied to ZMAT
-! from the right so that ZMAT(KNEW, [JL, J]) becomes [SQRT(ZMAT(KNEW, JL)^2 + ZMAT(KNEW, J)^2), 0].
-! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
-
-! In the loop, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT - N - 1, then JL = IDZ.
-jl = 1_IK
-do j = 2, int(npt - n - 1, kind(j))
-    if (j == idz) then
-        jl = idz
-        cycle
-    end if
-    if (abs(zmat(knew, j)) > ZERO) then
-        grot = planerot(zmat(knew, [jl, j]))  !!MATLAB: grot = planerot(zmat(knew, [jl, j])')
-        zmat(:, [jl, j]) = matprod(zmat(:, [jl, j]), transpose(grot))
-        zmat(knew, j) = ZERO
-    end if
-end do
-! The value of JL after the loop is important in the sequel. Its value is determined by the current
-! (i.e., unupdated) value of IDZ. IDZ is an integer in {1, ..., NPT-N} such that S_J = -1 for J < IDZ
-! while S_J = 1 for J >= IDZ in the factorization of OMEGA. See (3.17) and (4.16) of the NEWUOA paper.
-! The value of JL has two possibilities:
-! 1. JL = 1 iff IDZ = 1 or IDZ = NPT - N.
-! 1.1. IDZ = 1 means that OMEGA = sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)', which is the normal case;
-! 1.2. IDZ = NPT - N means that OMEGA = -sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)', which is rare.
-! 2. JL = IDZ >= 2 iff 2 <= IDZ <= NPT - N - 1.
-
-! Put the first NPT components of the KNEW-th column of HLAG into W, and calculate the parameters of
-! the updating formula.
-tempa = zmat(knew, 1)
-if (idz >= 2) then
-    tempa = -tempa
-end if
-
-w(1:npt) = tempa * zmat(:, 1)
-if (jl > 1) then
-    tempb = zmat(knew, jl)
-    w(1:npt) = w(1:npt) + tempb * zmat(:, jl)
-end if
-
-alpha = w(knew)
-tau = vlag(knew)
-tausq = tau * tau
-denom = alpha * beta + tausq
-! After the following line, VLAG = Hw - e_t in the NEWUOA paper.
-vlag(knew) = vlag(knew) - ONE
-sqrtdn = sqrt(abs(denom))
-
-reduce_idz = .false.
-if (jl == 1) then
-    ! Complete the updating of ZMAT when there is only one nonzero element in ZMAT(KNEW, :) after
-    ! the rotation. This is the normal case, because IDZ is 1 in precise arithmetic.
-    !---------------------------------------------------------------------------------------------!
-    ! Up to now, TEMPA = ZMAT(KNEW, 1) if IDZ = 1 and TEMPA = -ZMAT(KNEW, 1) if IDZ >= 2. However,
-    ! according to (4.18) of the NEWUOA paper, TEMPB should always be ZMAT(KNEW, 1)/sqrtdn
-    ! regardless of IDZ. Therefore, the following definition of TEMPB is inconsistent with (4.18).
-    ! This is probably a BUG. See also Lemma 4 and (5.13) of Powell's paper "On updating the inverse
-    ! of a KKT matrix". However, the inconsistency is hardly observable in practice, because JL = 1
-    ! implies IDZ = 1 in precise arithmetic.
-    !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-    !tempb = tempa/sqrtdn
-    !tempa = tau/sqrtdn
-    !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-    ! Here is the corrected version (only TEMPB is changed).
-    tempa = tau / sqrtdn
-    tempb = zmat(knew, 1) / sqrtdn
-    !---------------------------------------------------------------------------------------------!
-
-    zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
-
-    !---------------------------------------------------------------------------------------------!
-    ! The following six lines by Powell are obviously problematic --- SQRTDN is always nonnegative.
-    ! According to (4.18) of the NEWUOA paper, "SQRTDN < ZERO" and "SQRTDN >= ZERO" below should be
-    ! both revised to "DENOM < ZERO". See also the corresponding part of the LINCOA code. Note that
-    ! the NEWUOA paper uses SIGMA to denote DENOM. Check also Lemma 4 and (5.13) of Powell's paper
-    ! "On updating the inverse of a KKT matrix". Note that the BOBYQA code does not have this part,
-    ! as it does not have IDZ at all. Anyway, these lines are not invoked very often in practice,
-    ! because IDZ should always be 1 in precise arithmetic.
-    !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-    !if (idz == 1 .and. sqrtdn < ZERO) then
-    !    idz = 2
-    !end if
-    !if (idz >= 2 .and. sqrtdn >= ZERO) then
-    !    reduce_idz = .true.
-    !end if
-    !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-    ! This is the corrected version. It duplicates the corresponding part of the LINCOA code.
-    if (denom < ZERO) then
-        if (idz == 1) then
-            ! This is the 1st place (out of 2) where IDZ is increased. IDZ = 2 <= NPT-N afterwards.
-            idz = 2_IK
-        else
-            ! This is the 1st place (out of 2) where IDZ is decreased (by 1). Since IDZ >= 2 in this
-            ! case, we have IDZ >= 1 after the update.
-            reduce_idz = .true.
-        end if
-    end if
-    !---------------------------------------------------------------------------------------------!
-else
-    ! Complete the updating of ZMAT in the alternative case. ZMAT(KNEW, :) has two nonzeros after
-    ! the rotations.
-    ja = 1_IK
-    if (beta >= ZERO) then
-        ja = jl
-    end if
-    jb = int(jl + 1 - ja, kind(jb))
-    temp = zmat(knew, jb) / denom
-    tempa = temp * beta
-    tempb = temp * tau
-    temp = zmat(knew, ja)
-    scala = ONE / sqrt(abs(beta) * temp**2 + tausq)
-    scalb = scala * sqrtdn
-    zmat(:, ja) = scala * (tau * zmat(:, ja) - temp * vlag(1:npt))
-    zmat(:, jb) = scalb * (zmat(:, jb) - tempa * w(1:npt) - tempb * vlag(1:npt))
-    ! If and only if DENOM <= 0, IDZ will be revised according to the sign of BETA.
-    ! See (4.19)--(4.20) of the NEWUOA paper.
-    if (denom <= ZERO) then
-        if (beta < ZERO) then
-            ! This is the 2nd place (out of 2) where IDZ is increased. Since JL = IDZ <= NPT-N-1 in
-            ! this case, we have IDZ <= NPT-N after the update.
-            idz = int(idz + 1, kind(idz))
-        end if
-        if (beta >= ZERO) then
-            ! This is the 2nd place (out of two) where IDZ is decreased (by 1). Since IDZ >= 2 in
-            ! this case, we have IDZ >= 1 after the update.
-            reduce_idz = .true.
-        end if
-    end if
-end if
-
-! IDZ is reduced in the following case. Then exchange ZMAT(:, 1) and ZMAT(:, IDZ).
-if (reduce_idz) then
-    idz = int(idz - 1, kind(idz))
-    if (idz > 1) then
-        ! If a vector subscript has two or more elements with the same value, an array section with
-        ! that vector subscript is not definable and shall not be defined or become undefined.
-        zmat(:, [1_IK, idz]) = zmat(:, [idz, 1_IK])
-    end if
-end if
-
-! Finally, update the matrix BMAT. It implements the last N rows of (4.11) in the NEWUOA paper.
-w(npt + 1:npt + n) = bmat(:, knew)
-v1 = (alpha * vlag(npt + 1:npt + n) - tau * w(npt + 1:npt + n)) / denom
-v2 = (-beta * w(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
-call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
-! In floating-point arithmetic, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be
-! symmetric. Symmetrization needed.
-call symmetrize(bmat(:, npt + 1:npt + n))
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
-    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
-    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
-        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    !xpt_test = xpt
-    !xpt_test(:, knew) = xpt(:, kopt) + d
-    ! The following test cannot be passed.
-    !call assert(errh(idz, bmat, zmat, xpt_test) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
-end if
-
-end subroutine updateh
 
 
 subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
@@ -411,7 +141,7 @@ subroutine updatexf(knew, d, f, kopt, fval, xpt, fopt, xopt)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : norm
@@ -491,10 +221,10 @@ fopt = fval(kopt)
 ! Postconditions
 if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(abs(f - fval(knew)) <= ZERO, 'F == FVAL(KNEW)', srname)
-    call assert(abs(fopt - fval(kopt)) <= ZERO, 'FOPT == FVAL(KOPT)', srname)
+    call assert(abs(f - fval(knew)) <= 0, 'F == FVAL(KNEW)', srname)
+    call assert(abs(fopt - fval(kopt)) <= 0, 'FOPT == FVAL(KOPT)', srname)
     call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
-    call assert(norm(xopt - xpt(:, kopt)) <= ZERO, 'XOPT == XPT(:, KOPT)', srname)
+    call assert(norm(xopt - xpt(:, kopt)) <= 0, 'XOPT == XPT(:, KOPT)', srname)
     call assert(.not. any(fval < fopt), '.NOT. ANY(FVAL < FOPT)', srname)
 end if
 

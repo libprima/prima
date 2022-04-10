@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 09, 2022 PM10:43:26
+! Last Modified: Monday, April 11, 2022 AM12:31:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,8 +32,7 @@ use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 !use, non_intrinsic :: linalg_mod, only : matprod!, inprod, r1update, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : calquad
-use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
+use, non_intrinsic :: powalg_mod, only : calquad, calvlag, calbeta
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize
