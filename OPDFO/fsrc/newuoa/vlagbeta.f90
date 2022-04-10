@@ -10,7 +10,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 PM09:32:43
+! Last Modified: Sunday, April 10, 2022 PM07:38:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -135,6 +135,7 @@ real(RP) :: dx
 real(RP) :: wcheck(size(zmat, 1))
 real(RP) :: xopt(size(xpt, 1))
 real(RP) :: xoptsq
+real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -175,8 +176,11 @@ bd = matprod(bmat(:, npt + 1:npt + n), d)
 bsum = sum(bd * d + bw * d + bw * d)
 
 !beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) - omega_inprod(idz, zmat, wcheck, wcheck) - bsum
-beta = inprod([omega_mul(idz, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), matprod(bmat, [wcheck, d])], [wcheck, d])
-beta = HALF * (inprod(d + xopt, d + xopt)**2 + inprod(xopt, xopt)**2) - inprod(d + xopt, xopt)**2 - beta
+!beta = inprod([omega_mul(idz, zmat, wcheck) + matprod(d, bmat(:, 1:npt)), matprod(bmat, [wcheck, d])], [wcheck, d])
+!beta = HALF * (inprod(d + xopt, d + xopt)**2 + inprod(xopt, xopt)**2) - inprod(d + xopt, xopt)**2 - beta
+vlag(1:npt) = omega_mul(idz, zmat, wcheck) + matprod(d, bmat(:, 1:npt))
+vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
+beta = dx**2 + dsq * (xoptsq + dx + dx + half * dsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))
 
 !====================!
 !  Calculation ends  !

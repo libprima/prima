@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 09, 2022 PM10:26:54
+! Last Modified: Sunday, April 10, 2022 PM07:55:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -147,7 +147,9 @@ end do
 !beta = dx**2 + ssq * (xxpt(kopt) + 2.0_RP * dx + HALF * ssq) + beta - bsumm
 beta = inprod(vlag(1:npt + n), [w(1:npt), step])
 xopt = xpt(:, kopt)
-beta = HALF * (inprod(xopt + step, xopt + step)**2 + inprod(xopt, xopt)**2) - inprod(xopt + step, xopt)**2 - beta
+!beta = HALF * (inprod(xopt + step, xopt + step)**2 + inprod(xopt, xopt)**2) - inprod(xopt + step, xopt)**2 - beta
+beta = dx**2 + ssq * (inprod(xopt, xopt) + dx + dx + half * ssq) &
+    & - inprod(step, vlag(npt + 1:npt + n)) - inprod(w(1:npt), vlag(1:npt))
 vlag(kopt) = vlag(kopt) + ONE
 
 !
