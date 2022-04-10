@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 AM03:43:25
+! Last Modified: Sunday, April 10, 2022 PM11:52:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,7 +60,7 @@ use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
 use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : calquad
+use, non_intrinsic :: powalg_mod, only : calquad, updateh
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
 
@@ -69,7 +69,7 @@ use, non_intrinsic :: geometry_mod, only : setdrop_tr, geostep
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trsapp, trrad
-use, non_intrinsic :: update_mod, only : updateh, updateq, updatexf, tryqalt
+use, non_intrinsic :: update_mod, only : updateq, updatexf, tryqalt
 
 implicit none
 

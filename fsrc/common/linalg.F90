@@ -465,7 +465,9 @@ end do
 end function inprod
 
 function outprod(x, y) result(z)
-! OUTPROD calculates the outer product of X and Y, i.e., Z = X*Y^T, regarding both X and Y as columns
+!--------------------------------------------------------------------------------------------------!
+! OUTPROD calculates the outer product of X and Y, i.e., Z = X*Y^T, regarding X and Y as columns.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK
 implicit none
 ! Input

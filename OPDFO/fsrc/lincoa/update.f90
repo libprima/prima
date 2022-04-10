@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 10, 2022 PM07:55:41
+! Last Modified: Sunday, April 10, 2022 PM11:31:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,7 +26,7 @@ subroutine update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kopt, knew, vla
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF
-use, non_intrinsic :: linalg_mod, only : matprod, inprod
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, planerot
 
 implicit none
 
@@ -54,6 +54,7 @@ real(RP) :: alpha, beta, bsumm, denabs, denmax, denom, distsq,  &
 integer(IK) :: i, iflag, j, ja, jb, jl, jp, k, nptm
 real(RP) :: xopt(n)
 real(RP) :: xdist(npt), vtmp(npt), xxpt(npt), sxpt(npt)!, wz(npt - n - 1), wzc(size(wz))
+real(RP) :: grot(2, 2)
 
 !
 !     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
@@ -200,10 +201,16 @@ if (nptm >= 2) then
     do j = 2, nptm
         if (j == idz) then
             jl = idz
-        else if (zmat(knew, j) /= ZERO) then
-            temp = sqrt(zmat(knew, jl)**2 + zmat(knew, j)**2)
-            tempa = zmat(knew, jl) / temp
-            tempb = zmat(knew, j) / temp
+            !-----------------------------------------------------------------------------------------!
+            ! Zaikun 20220410
+            !else if (zmat(knew, j) /= ZERO) then
+            !temp = sqrt(zmat(knew, jl)**2 + zmat(knew, j)**2)
+            !tempa = zmat(knew, jl) / temp
+            !tempb = zmat(knew, j) / temp
+        else if (abs(zmat(knew, j)) > ZERO) then
+            grot = planerot(zmat(knew, [jl, j]))  !!MATLAB: grot = planerot(zmat(knew, [jl, j])')
+            tempa = grot(1, 1); tempb = grot(1, 2)
+            !-----------------------------------------------------------------------------------------!
             do i = 1, npt
                 temp = tempa * zmat(i, jl) + tempb * zmat(i, j)
                 zmat(i, j) = tempa * zmat(i, j) - tempb * zmat(i, jl)
@@ -229,10 +236,14 @@ tau = vlag(knew)
 tausq = tau * tau
 denom = alpha * beta + tausq
 vlag(knew) = vlag(knew) - ONE
-if (denom == ZERO) then
-    knew = 0
-    goto 180
-end if
+!--------------------------------------------------!
+! Zaikun 20220410
+! ?????????????????????????????
+!if (denom == ZERO) then
+!    knew = 0
+!    goto 180
+!end if
+!--------------------------------------------------!
 sqrtdn = sqrt(abs(denom))
 !
 !     Complete the updating of ZMAT when there is only ONE nonZERO element
@@ -264,13 +275,18 @@ else
     tempa = temp * beta
     tempb = temp * tau
     temp = zmat(knew, ja)
-    scala = ONE / sqrt(abs(beta) * temp * temp + tausq)
+    !scala = ONE / sqrt(abs(beta) * temp * temp + tausq)
+    scala = ONE / sqrt(abs(beta) * temp**2 + tausq)
     scalb = scala * sqrtdn
     do i = 1, npt
         zmat(i, ja) = scala * (tau * zmat(i, ja) - temp * vlag(i))
         zmat(i, jb) = scalb * (zmat(i, jb) - tempa * w(i) - tempb * vlag(i))
     end do
-    if (denom <= 0) then
+    !----------------------------!
+    !Zaikun 20220410
+    !if (denom <= 0) then
+    if (denom < 0) then
+        !----------------------------!
         if (beta < 0) then
             idz = idz + 1
         else

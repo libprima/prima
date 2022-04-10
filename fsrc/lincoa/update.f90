@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 10, 2022 AM01:40:19
+! Last Modified: Monday, April 11, 2022 AM12:43:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ subroutine update(kopt, step, xpt, idz, knew, bmat, zmat, vlag)
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
 !use, non_intrinsic :: linalg_mod, only : matprod
-use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
+use, non_intrinsic :: powalg_mod, only : updateh, calvlag, calbeta
 
 implicit none
 
@@ -48,11 +48,8 @@ real(RP), intent(out) :: vlag(:)  ! VLAG(NPT + N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATE'
-real(RP) :: w(size(vlag))
-real(RP) :: alpha, beta, denabs, denmax, denom, distsq,  &
-&         hdiag, scala, scalb, sqrtdn,  &
-&        tau, tausq, temp, tempa, tempb
-integer(IK) :: i, iflag, j, ja, jb, jl, jp, k
+real(RP) :: beta, denabs, denmax, distsq, hdiag, temp
+integer(IK) :: j, k
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: xopt(size(xpt, 1))
@@ -152,139 +149,7 @@ call validate(1 <= knew .and. knew <= npt, '1 <= KNEW <= NPT', srname)
 !---------------------------------------------------------------------!
 !---------------------------------------------------------------------!
 
-!
-!     Apply the rotations that put ZEROs in the KNEW-th row of ZMAT.
-!
-jl = 1
-do j = 2, npt - n - 1_IK
-    if (j == idz) then
-        jl = idz
-    else if (zmat(knew, j) /= ZERO) then
-        temp = sqrt(zmat(knew, jl)**2 + zmat(knew, j)**2)
-        ! Zaikun 20220304: TEMP can be 0 in single precision. Detected by Absoft and nvfortran. Should call GROT.
-        tempa = zmat(knew, jl) / temp
-        tempb = zmat(knew, j) / temp
-        do i = 1, npt
-            temp = tempa * zmat(i, jl) + tempb * zmat(i, j)
-            zmat(i, j) = tempa * zmat(i, j) - tempb * zmat(i, jl)
-            zmat(i, jl) = temp
-        end do
-        zmat(knew, j) = ZERO
-    end if
-end do
-!
-!     Put the first NPT compONEnts of the KNEW-th column of the Z Z^T matrix
-!       into W, and calculate the parameters of the updating formula.
-!
-tempa = zmat(knew, 1)
-if (idz >= 2) tempa = -tempa
-if (jl > 1) tempb = zmat(knew, jl)
-do i = 1, npt
-    w(i) = tempa * zmat(i, 1)
-    if (jl > 1) w(i) = w(i) + tempb * zmat(i, jl)
-end do
-alpha = w(knew)
-tau = vlag(knew)
-tausq = tau * tau
-denom = alpha * beta + tausq
-vlag(knew) = vlag(knew) - ONE
-if (denom == ZERO) then
-    knew = 0
-    goto 180
-end if
-sqrtdn = sqrt(abs(denom))
-!
-!     Complete the updating of ZMAT when there is only ONE nonZERO element
-!       in the KNEW-th row of the new matrix ZMAT. IFLAG is set to ONE when
-!       the value of IDZ is going to be reduced.
-!
-iflag = 0
-if (jl == 1) then
-    tempa = tau / sqrtdn
-    tempb = zmat(knew, 1) / sqrtdn
-    do i = 1, npt
-        zmat(i, 1) = tempa * zmat(i, 1) - tempb * vlag(i)
-    end do
-    if (denom < 0) then
-        if (idz == 1) then
-            idz = 2
-        else
-            iflag = 1
-        end if
-    end if
-else
-!
-!     Complete the updating of ZMAT in the alternative case.
-!
-    ja = 1
-    if (beta >= 0) ja = jl
-    jb = jl + 1 - ja
-    temp = zmat(knew, jb) / denom
-    tempa = temp * beta
-    tempb = temp * tau
-    temp = zmat(knew, ja)
-    scala = ONE / sqrt(abs(beta) * temp * temp + tausq)
-    scalb = scala * sqrtdn
-    do i = 1, npt
-        zmat(i, ja) = scala * (tau * zmat(i, ja) - temp * vlag(i))
-        zmat(i, jb) = scalb * (zmat(i, jb) - tempa * w(i) - tempb * vlag(i))
-    end do
-    if (denom <= 0) then
-        if (beta < 0) then
-            idz = idz + 1
-        else
-            iflag = 1
-        end if
-    end if
-end if
-!
-!     Reduce IDZ when the diagonal part of the ZMAT times Diag(DZ) times
-!       ZMAT^T factorization gains another positive element. Then exchange
-!       the first and IDZ-th columns of ZMAT.
-!
-if (iflag == 1) then
-! Zaikun 2020-06-28: I came here when reading the corresponding part of
-! the NEWUOA code, which seems to have a bug. In NEWUOA, IDZ is redued
-! only if IDZ >= 2, which is reasonable. Here there seems no such
-! restriction. Why? Did Powell use a different definition for IDZ? In
-! NEWUOA, IDZ is an intger used to represent the leading NPT sub-matrix
-! of H, which is called OMEGA in the paper and represented in the code
-! as
-!
-! OMEGA = sum_{K = 1}^{NPT-N-1} S_K*ZMAT(:, K)*ZMAT(:, K)',
-! where S(1:IDZ-1) = -1 and S(IDZ:NPT-N-1) = 1.
-!
-! Indeed, theoretically, OMEGA is positive semidefinite, and S should be
-! all positive. The negative entries of S result the rounding errors
-! that cause OMEGA to lose the postive semidefiniteness. Therefore, in
-! most cases, IDZ is small (e.g., IDZ=1, meaning that OMEGA has not lost
-! the positive semidefiniteness), but it cannot be nonpositive in the
-! NEWUOA code. Is it different in the LINCOA code??? To be studied.
-! Unfortunately, Powell did not write a LINCOA paper!!!
-!
-! The BOBYQA code does not have this part --- it does not use IDZ at
-! all. Why?
-    idz = idz - 1
-    do i = 1, npt
-        temp = zmat(i, 1)
-        zmat(i, 1) = zmat(i, idz)
-        zmat(i, idz) = temp
-    end do
-end if
-!
-!     Finally, update the matrix BMAT.
-!
-do j = 1, n
-    jp = npt + j
-    w(jp) = bmat(j, knew)
-    tempa = (alpha * vlag(jp) - tau * w(jp)) / denom
-    tempb = (-beta * w(jp) - tau * vlag(jp)) / denom
-    do i = 1, jp
-        bmat(j, i) = bmat(j, i) + tempa * vlag(i) + tempb * w(i)
-        if (i > npt) bmat(i - npt, jp) = bmat(j, i)
-    end do
-end do
-180 return
+call updateh(knew, kopt, idz, step, xpt, bmat, zmat)
 end subroutine update
 
 
