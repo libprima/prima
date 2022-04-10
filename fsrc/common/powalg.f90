@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 11, 2022 AM01:19:15
+! Last Modified: Monday, April 11, 2022 AM02:57:57
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1101,7 +1101,7 @@ integer(IK) :: jb
 integer(IK) :: jl
 integer(IK) :: n
 integer(IK) :: npt
-logical :: reduce_idz
+!logical :: reduce_idz
 real(RP) :: alpha
 real(RP) :: beta
 real(RP) :: denom
@@ -1136,8 +1136,8 @@ if (DEBUGGING) then
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     ! The following test cannot be passed.
-    !htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for error in H
-    !call assert(errh(idz, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
+    !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for error in H
+    !call assert(errh(idz, bmat, zmat, xpt) <= tol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
 !====================!
@@ -1157,33 +1157,35 @@ end if
 vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
 beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
-! Apply rotations to put zeros in the KNEW-th row of ZMAT. A 2x2 rotation will be multiplied to ZMAT
-! from the right so that ZMAT(KNEW, [JL, J]) becomes [SQRT(ZMAT(KNEW, JL)^2 + ZMAT(KNEW, J)^2), 0].
-! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
+! Apply rotations to put zeros in the KNEW-th row of ZMAT and set JL. After the rotations,
+! ZMAT(KNEW, :) contains at most two nonzero entries ZMAT(KNEW, 1) and ZMAT(KNEW, JL), one
+! corresponding to all the columns of ZMAT that has a coefficient -1 in the factorization of
+! OMEGA (if any), and the other corresponding to all the columns with +1. In specific,
+! 1. If IDZ = 1 or NPT - N, then JL = 1, and ZMAT(KNEW, 1) = L2 norm of ZMAT(KNEW, :);
+! 2. If 2 <= IDZ <= NPT - N -1, then JL = IDZ, and ZMAT(KNEW, 1) = L2 norm of ZMAT(KNEW,1:IDZ-1),
+! while ZMAT(KNEW, JL) = L2 norm of ZMAT(KNEW,IDZ:NPT-N-1).
+! See (4.15)--(4.17) of the NEWUOA paper and the elaboration around them.
 
-! In the loop, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT - N - 1, then JL = IDZ.
-jl = 1_IK
+jl = 1_IK  ! In the loop below, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT-N-1, then JL = IDZ.
 do j = 2, int(npt - n - 1, kind(j))
     if (j == idz) then
         jl = idz
         cycle
     end if
     if (abs(zmat(knew, j)) > 0) then
+        ! A 2x2 rotation will be multiplied to ZMAT from the right so that ZMAT(KNEW, [JL, J])
+        ! becomes [SQRT(ZMAT(KNEW, JL)^2 + ZMAT(KNEW, J)^2), 0].
         grot = planerot(zmat(knew, [jl, j]))  !!MATLAB: grot = planerot(zmat(knew, [jl, j])')
         zmat(:, [jl, j]) = matprod(zmat(:, [jl, j]), transpose(grot))
         zmat(knew, j) = ZERO
     end if
 end do
-! The value of JL after the loop is important in the sequel. Its value is determined by the current
-! (i.e., unupdated) value of IDZ. IDZ is an integer in {1, ..., NPT-N} such that S_J = -1 for J < IDZ
-! while S_J = 1 for J >= IDZ in the factorization of OMEGA. See (3.17) and (4.16) of the NEWUOA paper.
-! The value of JL has two possibilities:
-! 1. JL = 1 iff IDZ = 1 or IDZ = NPT - N.
-! 1.1. IDZ = 1 means that OMEGA = sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)', which is the normal case;
-! 1.2. IDZ = NPT - N means that OMEGA = -sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)', which is rare.
-! 2. JL = IDZ >= 2 iff 2 <= IDZ <= NPT - N - 1.
 
-! Put the first NPT components of the KNEW-th column of HLAG into W(1:NPT).
+! Put the first NPT components of the KNEW-th column of H into W(1:NPT).
+! Zaikun 20220411: Here, Powell's code calculates this column by the ZMAT obtained from the rotation
+! above. Would it be better to use the original ZMAT? Mathematically, the two are equal, but wouldn't
+! the original one contain less rounding error? BOBYQA does not have this complication since it does
+! not contain IDZ.
 if (idz <= 1) then  ! IDZ <= 0 is impossible unless there is a bug.
     !tempa = zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
     w(1:npt) = zmat(knew, 1) * zmat(:, 1)
@@ -1204,7 +1206,6 @@ denom = alpha * beta + tausq
 vlag(knew) = vlag(knew) - ONE
 sqrtdn = sqrt(abs(denom))
 
-reduce_idz = .false.
 if (jl == 1) then
     ! Complete the updating of ZMAT when there is only one nonzero element in ZMAT(KNEW, :) after
     ! the rotation. This is the normal case, because IDZ is 1 in precise arithmetic.
@@ -1241,58 +1242,71 @@ if (jl == 1) then
     !!    reduce_idz = .true.
     !!end if
     !--------------------------------------------!
-    ! This is the corrected version, copied from LINCOA.
-    if (denom < 0) then
-        if (idz == 1) then
-            ! This is the 1st place (out of 2) where IDZ is increased. IDZ = 2 <= NPT-N afterwards.
-            idz = 2_IK
-        else
-            ! This is the 1st place (out of 2) where IDZ is decreased (by 1). Since IDZ >= 2 in this
-            ! case, we have IDZ >= 1 after the update.
-            reduce_idz = .true.
-        end if
-    end if
+    !! This is the corrected version, copied from LINCOA.
+    !if (denom < 0) then
+    !    if (idz == 1) then
+    !        ! This is the 1st place (out of 2) where IDZ is increased. IDZ = 2 <= NPT-N afterwards.
+    !        idz = 2_IK
+    !    else
+    !        ! This is the 1st place (out of 2) where IDZ is decreased (by 1). Since IDZ >= 2 in this
+    !        ! case, we have IDZ >= 1 after the update.
+    !        reduce_idz = .true.
+    !    end if
+    !end if
     !---------------------------------------------------------------------------------------------!
 else
-    ! Complete the updating of ZMAT in the alternative case. ZMAT(KNEW, :) has two nonzeros after
-    ! the rotations.
-    ja = 1_IK
+    ! Complete the updating of ZMAT in the alternative case: ZMAT(KNEW, :) has two nonzeros.
+    ! Set JA and JB so that S_JA = S_JA, S_JB = S_JB * sign(DENOM) by (4.19)--(4.20) of NEWUOA paper.
     if (beta >= 0) then
-        ja = jl
+        ja = jl  ! Corresponding to S_1 and Z_1 in (4.19) of NEWUOA paper
+        jb = 1_IK  ! Corresponding to S_2 and Z_2 in (4.19) of NEWUOA paper
+    else
+        ja = 1_IK   ! Corresponding to S_2 and Z_2 in (4.20) of NEWUOA paper
+        jb = jl  ! Corresponding to S_1 and Z_1 in (4.20) of NEWUOA paper
     end if
-    jb = int(jl + 1 - ja, kind(jb))
     temp = zmat(knew, jb) / denom
     tempa = temp * beta
     tempb = temp * tau
     temp = zmat(knew, ja)
-    scala = ONE / sqrt(abs(beta) * temp**2 + tausq)
+    scala = ONE / sqrt(abs(beta) * temp**2 + tausq)  ! 1/SQRT(ZETA) in (4.19)-(4.20) of NEWUOA paper
     scalb = scala * sqrtdn
     zmat(:, ja) = scala * (tau * zmat(:, ja) - temp * vlag(1:npt))
     zmat(:, jb) = scalb * (zmat(:, jb) - tempa * w(1:npt) - tempb * vlag(1:npt))
-    ! If and only if DENOM < 0, IDZ will be revised according to the sign of BETA.
-    ! See (4.19)--(4.20) of the NEWUOA paper.
-    if (denom < 0) then
-        if (beta < 0) then
-            ! This is the 2nd place (out of 2) where IDZ is increased. Since JL = IDZ <= NPT-N-1 in
-            ! this case, we have IDZ <= NPT-N after the update.
-            idz = int(idz + 1, kind(idz))
-        else
-            ! This is the 2nd place (out of two) where IDZ is decreased (by 1). Since IDZ >= 2 in
-            ! this case, we have IDZ >= 1 after the update.
-            reduce_idz = .true.
+    !! If and only if DENOM < 0, IDZ will be revised according to the sign of BETA.
+    !! See (4.19)--(4.20) of the NEWUOA paper.
+    !if (denom < 0) then
+    !    if (beta < 0) then
+    !        ! This is the 2nd place (out of 2) where IDZ is increased. Since JL = IDZ <= NPT-N-1 in
+    !        ! this case, we have IDZ <= NPT-N after the update.
+    !        idz = int(idz + 1, kind(idz))
+    !    else
+    !        ! This is the 2nd place (out of two) where IDZ is decreased (by 1). Since IDZ >= 2 in
+    !        ! this case, we have IDZ >= 1 after the update.
+    !        reduce_idz = .true.
+    !    end if
+    !end if
+end if
+
+if (denom < 0) then
+    if (idz == 1 .or. (idz < npt - n .and. beta < 0)) then
+        idz = idz + 1_IK
+    elseif (idz == npt - n .or. (idz > 1 .and. beta >= 0)) then
+        idz = idz - 1_IK
+        if (idz > 1) then
+            zmat(:, [1_IK, idz]) = zmat(:, [idz, 1_IK])  ! Why?
         end if
     end if
 end if
 
-! IDZ is reduced in the following case. Then exchange ZMAT(:, 1) and ZMAT(:, IDZ).
-if (reduce_idz) then
-    idz = int(idz - 1, kind(idz))
-    if (idz > 1) then
-        ! If a vector subscript has two or more elements with the same value, an array section with
-        ! that vector subscript is not definable and shall not be defined or become undefined.
-        zmat(:, [1_IK, idz]) = zmat(:, [idz, 1_IK])
-    end if
-end if
+!! IDZ is reduced in the following case. Then exchange ZMAT(:, 1) and ZMAT(:, IDZ).
+!if (reduce_idz) then
+!    idz = int(idz - 1, kind(idz))
+!    if (idz > 1) then
+!        ! If a vector subscript has two or more elements with the same value, an array section with
+!        ! that vector subscript is not definable and shall not be defined or become undefined.
+!        zmat(:, [1_IK, idz]) = zmat(:, [idz, 1_IK])
+!    end if
+!end if
 
 ! Finally, update the matrix BMAT. It implements the last N rows of (4.11) in the NEWUOA paper.
 w(npt + 1:npt + n) = bmat(:, knew)
@@ -1317,7 +1331,7 @@ if (DEBUGGING) then
     !xpt_test = xpt
     !xpt_test(:, knew) = xpt(:, kopt) + d
     ! The following test cannot be passed.
-    !call assert(errh(idz, bmat, zmat, xpt_test) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
+    !call assert(errh(idz, bmat, zmat, xpt_test) <= tol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 end subroutine updateh
 
@@ -1533,7 +1547,7 @@ vlag(npt + 1:npt + n) = matprod(bmat, wmv)
 !!vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 
 ! BETA = HALF*|XOPT + D|^4 - (W-V)'*H*(W-V) - [XOPT'*(X+XOPT)]^2 + HALF*|XOPT|^4. See equitions
-! (4.12) and (4.26) of the NEWUOA paper. 
+! (4.12) and (4.26) of the NEWUOA paper.
 dxopt = inprod(d, xopt)
 dsq = inprod(d, d)
 xoptsq = inprod(xopt, xopt)
