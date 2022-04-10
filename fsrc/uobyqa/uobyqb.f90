@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 10, 2022 AM12:48:30
+! Last Modified: Sunday, April 10, 2022 PM06:27:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -457,6 +457,9 @@ if (f < fopt) then
 end if
 ksave = knew
 
+!----------------------------------------------------------!
+ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
+!----------------------------------------------------------!
 !if (knew > 0) goto 240
 if (knew <= 0) then
 !
@@ -485,9 +488,6 @@ if (knew <= 0) then
         ktemp = kopt
         detrat = ONE
     end if
-!----------------------------------------------------------!
-    ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
-!----------------------------------------------------------!
     do k = 1, npt
         summ = ZERO
         do i = 1, n

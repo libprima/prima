@@ -30,7 +30,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 10, 2022 PM01:26:16
+! Last Modified: Sunday, April 10, 2022 PM05:33:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -118,9 +118,9 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
 ! The following two lines set VLAG to H*(w-v).
 vlag(1:npt) = omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))
-!vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
+vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
 ! The following line is equivalent to the above one, but handles WCHECK and D separately.
-vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
+!!vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 
 ! The following line sets VLAG(KOPT) to the correct value.
 vlag(kopt) = vlag(kopt) + ONE
@@ -224,9 +224,9 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 wmv = [wcheck, d]
 ! The following two lines set VLAG to H*(w-v).
 vlag(1:npt) = omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))
-!vlag(npt + 1:npt + n) = matprod(bmat, wmv)
+vlag(npt + 1:npt + n) = matprod(bmat, wmv)
 ! The following line is equivalent to the above one, but handles WCHECK and D separately.
-vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
+!!vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 
 !!x = xopt + d
 !!beta = HALF * (inprod(x, x)**2 + inprod(xopt, xopt)**2) - inprod(x, xopt)**2 - inprod(vlag, wmv)
@@ -235,8 +235,11 @@ vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 
 dxopt = inprod(d, xopt)
 dsq = inprod(d, d)
 xoptsq = inprod(xopt, xopt)
-beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt)) !Good
+!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
+beta = dxopt**2 + dsq * (half * dsq + dxopt + dxopt + xoptsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
+!beta = dxopt**2 + dsq * (dxopt + dxopt + half * dsq + xoptsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
 !beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(vlag, wmv) ! Not good
+
 !beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(wcheck, vlag(1:npt)) - inprod(d, vlag(npt + 1:npt + n)) !Bad
 !----------------------------------------------------------------------------------!
 
