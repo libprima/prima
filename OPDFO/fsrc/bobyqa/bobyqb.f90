@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 09, 2022 PM10:42:08
+! Last Modified: Sunday, April 10, 2022 PM07:46:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -647,8 +647,9 @@ end do
 !     & + matprod(bmat(:, 1:npt), w(1:npt)) * d(1:n))
 !beta = dx**2 + dsq * (xoptsq + 2.0_RP * dx + HALF * dsq) + beta - bsumm
 
-beta = inprod(vlag(1:npt + n), [w(1:npt), d])
-beta = HALF * (inprod(xopt + d, xopt + d)**2 + inprod(xopt, xopt)**2) - inprod(xopt + d, xopt)**2 - beta
+!beta = inprod(vlag(1:npt + n), [w(1:npt), d])
+!beta = HALF * (inprod(xopt + d, xopt + d)**2 + inprod(xopt, xopt)**2) - inprod(xopt + d, xopt)**2 - beta
+beta = dx**2 + dsq * (xoptsq + dx + dx + half * dsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(w(1:npt), vlag(1:npt))
 vlag(kopt) = vlag(kopt) + ONE
 !
 !     If NTRITS is ZERO, the denominator may be increased by replacing

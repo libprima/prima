@@ -30,7 +30,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 10, 2022 PM05:33:57
+! Last Modified: Sunday, April 10, 2022 PM07:57:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -236,10 +236,9 @@ dxopt = inprod(d, xopt)
 dsq = inprod(d, d)
 xoptsq = inprod(xopt, xopt)
 !beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
-beta = dxopt**2 + dsq * (half * dsq + dxopt + dxopt + xoptsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
-!beta = dxopt**2 + dsq * (dxopt + dxopt + half * dsq + xoptsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
+!beta = dxopt**2 + dsq * (half * dsq + dxopt + dxopt + xoptsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
+beta = dxopt**2 + dsq * (dxopt + dxopt + half * dsq + xoptsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
 !beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(vlag, wmv) ! Not good
-
 !beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + half * dsq) - inprod(wcheck, vlag(1:npt)) - inprod(d, vlag(npt + 1:npt + n)) !Bad
 !----------------------------------------------------------------------------------!
 
