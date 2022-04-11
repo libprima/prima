@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 11, 2022 PM09:42:05
+! Last Modified: Monday, April 11, 2022 PM09:38:51
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1159,10 +1159,8 @@ end if
 ! and BETA holds the value of the parameter that has this name.
 ! N.B.: Powell's original comments mention that VLAG is "the vector THETA*WCHECK + e_b of the
 ! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
-!vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
-!beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
-vlag = calvlag(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
-beta = calbeta(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
+vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
+beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT and set JL. After this,
 ! ZMAT(KNEW, :) contains at most two nonzero entries ZMAT(KNEW, 1) and ZMAT(KNEW, JL), one

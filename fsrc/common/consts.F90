@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, April 08, 2022 AM11:13:48
+! Last Modified: Monday, April 11, 2022 PM09:14:16
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -117,7 +117,7 @@ integer, parameter :: SP = REAL32  ! Kind for single precision
 integer, parameter :: DP = REAL64  ! Kind for double precision
 integer, parameter :: QP = REAL128  ! Kind for quadruple precision
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!----------------------------------------------------------------------!
 ! Define the integer kind to be used in the Fortran code.
 #if __INTEGER_KIND__  == 0
 integer, parameter :: IK = IK_DFT
@@ -142,7 +142,7 @@ integer, parameter :: RP = REAL128
 #else
 integer, parameter :: RP = REAL64  ! double precision
 #endif
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!----------------------------------------------------------------------!
 
 real(RP), parameter :: ZERO = 0.0_RP
 real(RP), parameter :: ONE = 1.0_RP
@@ -188,10 +188,10 @@ real(RP), parameter :: SYMTOL_DFT = ZERO
 #endif
 
 ! The maximal length of messages; used in output.f90 and fmexapi.F90
-integer, parameter :: MSGLEN = 1000
+integer, parameter :: MSGLEN = 8192
 
 ! The maximal length of output file names; used in output.f90
-integer, parameter :: FNAMELEN = 1000
+integer, parameter :: FNAMELEN = 128
 ! Output unit, can be any integer between 9 and 99; used in output.f90
 integer, parameter :: OUTUNIT = 42
 ! Standard IO units
