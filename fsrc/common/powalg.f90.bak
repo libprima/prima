@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 11, 2022 PM03:42:09
+! Last Modified: Monday, April 11, 2022 PM03:39:28
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1156,8 +1156,6 @@ end if
 vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
 beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
-w(1:npt) = omega_col(idz, zmat, knew)  ! The first NPT entries of the KNEW-th column of W.
-
 ! Apply rotations to put zeros in the KNEW-th row of ZMAT and set JL. After the rotations,
 ! ZMAT(KNEW, :) contains at most two nonzero entries ZMAT(KNEW, 1) and ZMAT(KNEW, JL), one
 ! corresponding to all the columns of ZMAT that has a coefficient -1 in the factorization of
@@ -1181,22 +1179,22 @@ do j = 2, int(npt - n - 1, kind(j))
     end if
 end do
 
-!! Put the first NPT components of the KNEW-th column of H into W(1:NPT).
-!! Zaikun 20220411: Here, Powell's code calculates this column by the ZMAT obtained from the rotation
-!! above. Would it be better to use the original ZMAT? Mathematically, the two are equal, but wouldn't
-!! the original one contain less rounding error? BOBYQA does not have this complication since it does
-!! not contain IDZ. Note that VLAG is calculated using the ZMAT before the rotations. Wouldn't be
-!! better if W and VLAG are calculated using the same ZMAT?
-!if (idz <= 1) then  ! IDZ <= 0 is impossible unless there is a bug.
-!    !tempa = zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
-!    w(1:npt) = zmat(knew, 1) * zmat(:, 1)
-!else
-!    !tempa = -zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
-!    w(1:npt) = -zmat(knew, 1) * zmat(:, 1)
-!end if
-!if (jl > 1) then  ! In this case, JL == IDZ.
-!    w(1:npt) = w(1:npt) + zmat(knew, jl) * zmat(:, jl)
-!end if
+! Put the first NPT components of the KNEW-th column of H into W(1:NPT).
+! Zaikun 20220411: Here, Powell's code calculates this column by the ZMAT obtained from the rotation
+! above. Would it be better to use the original ZMAT? Mathematically, the two are equal, but wouldn't
+! the original one contain less rounding error? BOBYQA does not have this complication since it does
+! not contain IDZ. Note that VLAG is calculated using the ZMAT before the rotations. Wouldn't be
+! better if W and VLAG are calculated using the same ZMAT?
+if (idz <= 1) then  ! IDZ <= 0 is impossible unless there is a bug.
+    !tempa = zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
+    w(1:npt) = zmat(knew, 1) * zmat(:, 1)
+else
+    !tempa = -zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
+    w(1:npt) = -zmat(knew, 1) * zmat(:, 1)
+end if
+if (jl > 1) then  ! In this case, JL == IDZ.
+    w(1:npt) = w(1:npt) + zmat(knew, jl) * zmat(:, jl)
+end if
 
 ! Calculate the parameters of the updating formula.
 alpha = w(knew)
