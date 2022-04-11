@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 11, 2022 PM09:42:05
+! Last Modified: Monday, April 11, 2022 PM09:43:58
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1161,8 +1161,6 @@ end if
 ! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
 !vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
 !beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
-vlag = calvlag(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
-beta = calbeta(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
 
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT and set JL. After this,
 ! ZMAT(KNEW, :) contains at most two nonzero entries ZMAT(KNEW, 1) and ZMAT(KNEW, JL), one
@@ -1186,6 +1184,9 @@ do j = 2, int(npt - n - 1, kind(j))
         zmat(knew, j) = ZERO
     end if
 end do
+
+vlag = calvlag(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
+beta = calbeta(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
 
 ! Set W(1:NPT) to the first NPT components of the KNEW-th column of H.
 ! Here, Powell's code calculates this column by the ZMAT that has been updated by the rotation as
