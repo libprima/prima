@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 11, 2022 PM03:44:59
+! Last Modified: Monday, April 11, 2022 PM08:00:03
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1065,10 +1065,10 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 ! interpolation point XPT(:, KNEW) by XNEW = XOPT + D. See Section 4 of the NEWUOA paper.
 ! [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12), which is the inverse of
 ! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
-! ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
-! ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
-! except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th column of H are not
-! stored as they are unnecessary for the calculation.
+! ZMAT holds a factorization of the leading NPT*NPT submatrix OMEGA of H, the factorization being
+! OMEGA = ZMAT*Diag(S)*ZMAT^T with S(1:IDZ-1)= -1 and S(IDZ : NPT-N-1) = +1. BMAT holds the last N
+! ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th column of
+! H are not stored as they are unnecessary for the calculation.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: GROT(2, 2), V1(N), V2(N), VLAG(NPT+N), W(NPT+N)
@@ -1143,28 +1143,28 @@ end if
 ! Calculation starts !
 !====================!
 
-! Do nothing when KNEW is 0. This can only happen after a trust-region step.
+! Do nothing when KNEW is 0. This can only happen sometimes after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
 
-!! Calculate VLAG and BETA according to D.
-!! VLAG contains the components of the vector Hw of the updating formula (4.11) in the NEWUOA paper,
-!! and BETA holds the value of the parameter that has this name.
-!! N.B.: Powell's original comments mention that VLAG is "the vector THETA*WCHECK + e_b of the
-!! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
-!vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
-!beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
+! Calculate VLAG and BETA according to D.
+! VLAG contains the components of the vector H*w of the updating formula (4.11) in the NEWUOA paper,
+! and BETA holds the value of the parameter that has this name.
+! N.B.: Powell's original comments mention that VLAG is "the vector THETA*WCHECK + e_b of the
+! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
+vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
+beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
-! Apply rotations to put zeros in the KNEW-th row of ZMAT and set JL. After the rotations,
+! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT and set JL. After this,
 ! ZMAT(KNEW, :) contains at most two nonzero entries ZMAT(KNEW, 1) and ZMAT(KNEW, JL), one
 ! corresponding to all the columns of ZMAT that has a coefficient -1 in the factorization of
 ! OMEGA (if any), and the other corresponding to all the columns with +1. In specific,
-! 1. If IDZ = 1 or NPT - N, then JL = 1, and ZMAT(KNEW, 1) = L2 norm of ZMAT(KNEW, :);
-! 2. If 2 <= IDZ <= NPT - N -1, then JL = IDZ, and ZMAT(KNEW, 1) = L2 norm of ZMAT(KNEW,1:IDZ-1),
-! while ZMAT(KNEW, JL) = L2 norm of ZMAT(KNEW,IDZ:NPT-N-1).
+! 1. If IDZ = 1 (all coefficients are +1 for the columns of ZMAT in the factorization of OMEGA ) or
+! NPT - N (all the coefficients are -1), then JL = 1, and ZMAT(KNEW, 1) is L2-norm of ZMAT(KNEW, :);
+! 2. If 2 <= IDZ <= NPT - N -1, then JL = IDZ, and ZMAT(KNEW, 1) is L2-norm of ZMAT(KNEW, 1 : IDZ-1),
+! while ZMAT(KNEW, JL) is L2 norm of ZMAT(KNEW, IDZ : NPT-N-1).
 ! See (4.15)--(4.17) of the NEWUOA paper and the elaboration around them.
-
 jl = 1_IK  ! In the loop below, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT-N-1, then JL = IDZ.
 do j = 2, int(npt - n - 1, kind(j))
     if (j == idz) then
@@ -1179,12 +1179,12 @@ do j = 2, int(npt - n - 1, kind(j))
     end if
 end do
 
-! Put the first NPT components of the KNEW-th column of H into W(1:NPT).
-! Zaikun 20220411: Here, Powell's code calculates this column by the ZMAT obtained from the rotation
-! above. Would it be better to use the original ZMAT? Mathematically, the two are equal, but wouldn't
-! the original one contain less rounding error? BOBYQA does not have this complication since it does
-! not contain IDZ. Note that VLAG is calculated using the ZMAT before the rotations. Wouldn't be
-! better if W and VLAG are calculated using the same ZMAT?
+! Set W(1:NPT) to the first NPT components of the KNEW-th column of H.
+! Here, Powell's code calculates this column by the ZMAT that has been updated by the rotation as
+! above. Theoretically, W(1:NPT) can also be calculated before the rotation by calling OMEGA_COL,
+! which is tempting to do because the rotation may introduce some rounding errors to ZMAT. However,
+! according to a test on 20220411, this alternative does not improve the performance.  We can also
+! calculate VLAG and BETA using the updated ZMAT here, which does not lead to improvements either.
 if (idz <= 1) then  ! IDZ <= 0 is impossible unless there is a bug.
     !tempa = zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
     w(1:npt) = zmat(knew, 1) * zmat(:, 1)
@@ -1195,8 +1195,6 @@ end if
 if (jl > 1) then  ! In this case, JL == IDZ.
     w(1:npt) = w(1:npt) + zmat(knew, jl) * zmat(:, jl)
 end if
-vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
-beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
 ! Calculate the parameters of the updating formula.
 alpha = w(knew)
@@ -1208,8 +1206,14 @@ vlag(knew) = vlag(knew) - ONE
 sqrtdn = sqrt(abs(denom))
 
 if (jl == 1) then
-    ! Complete the updating of ZMAT when there is only one nonzero element in ZMAT(KNEW, :) after
-    ! the rotation. This is the normal case, because IDZ is 1 in precise arithmetic.
+    ! Complete the updating of ZMAT when there is only 1 nonzero in ZMAT(KNEW, :) after the rotation.
+    ! This is the normal case, as IDZ = 1 in precise arithmetic; it also covers the rare case that
+    ! IDZ = NPT-N, meaning that OMEGA = -ZMAT*ZMAT^T. See (4.18) of the NEWUOA paper for details.
+    ! Note that (4.18) updates Z_{NPT-N-1}, but the code here updates ZMAT(:, 1). Correspondingly,
+    ! we implicitly update S_1 to SIGN(DENOM)*S_1 according to (4.18). If IDZ = NPT-N before the
+    ! update, then IDZ is reduced by 1, and we need to switch ZMAT(:, 1) and ZMAT(:, IDZ) to maintain
+    ! that S_J = -1 iff 1 <= J < IDZ, which is done after the END IF together with another case.
+
     !---------------------------------------------------------------------------------------------!
     ! Up to now, TEMPA = ZMAT(KNEW, 1) if IDZ = 1 and TEMPA = -ZMAT(KNEW, 1) if IDZ >= 2. However,
     ! according to (4.18) of the NEWUOA paper, TEMPB should always be ZMAT(KNEW, 1)/SQRTDN
@@ -1229,6 +1233,8 @@ if (jl == 1) then
     zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
 
     !---------------------------------------------------------------------------------------------!
+    ! Zaikun 20220411: The update of IDZ is decoupled from the update of ZMAT, located after END IF.
+    !---------------------------------------------------------------------------------------------!
     ! The following six lines from Powell's NEWUOA code are obviously problematic --- SQRTDN is
     ! always nonnegative. According to (4.18) of the NEWUOA paper, "SQRTDN < 0" and "SQRTDN >= 0"
     ! below should be both revised to "DENOM < 0". See also the corresponding part of the LINCOA
@@ -1246,25 +1252,27 @@ if (jl == 1) then
     !! This is the corrected version, copied from LINCOA.
     !if (denom < 0) then
     !    if (idz == 1) then
-    !        ! This is the 1st place (out of 2) where IDZ is increased. IDZ = 2 <= NPT-N afterwards.
     !        idz = 2_IK
     !    else
-    !        ! This is the 1st place (out of 2) where IDZ is decreased (by 1). Since IDZ >= 2 in this
-    !        ! case, we have IDZ >= 1 after the update.
     !        reduce_idz = .true.
     !    end if
     !end if
     !---------------------------------------------------------------------------------------------!
 else
-    ! Complete the updating of ZMAT in the alternative case: ZMAT(KNEW, :) has two nonzeros.
-    ! Set JA and JB so that S_JA = S_JA, S_JB = S_JB * sign(DENOM) in (4.19)--(4.20) of NEWUOA paper.
-    if (beta >= 0) then
-        ja = jl  ! Corresponding to S_1 and Z_1 in (4.19) of NEWUOA paper
-        jb = 1_IK  ! Corresponding to S_2 and Z_2 in (4.19) of NEWUOA paper
-    else
-        ja = 1_IK   ! Corresponding to S_2 and Z_2 in (4.20) of NEWUOA paper
-        jb = jl  ! Corresponding to S_1 and Z_1 in (4.20) of NEWUOA paper
+    ! Complete the updating of ZMAT in the alternative case: ZMAT(KNEW, :) has 2 nonzeros. See (4.19)
+    ! and (4.20) of the NEWUOA paper.
+    ! First, set JA and JB so that ZMAT(: [JA, JB]) corresponds to [Z_1, Z_2] in (4.19) when BETA>=0,
+    ! and corresponds to [Z2, Z1] in (4.20) when BETA<0. In this way, the update of ZMAT(:, [JA, JB])
+    ! has the same scheme regardless of BETA. Indeed, since S_1 = +1 and S_2 = -1 in (4.19)--(4.20)
+    ! as elaborated above the equations, ZMAT(:, [1, JL]) always correspond to [Z_2, Z_1].
+    if (beta >= 0) then  ! ZMAT(:, [JA, JB]) corresponds to [Z_1, Z_2] in (4.19)
+        ja = jl
+        jb = 1_IK
+    else  ! ZMAT(:, [JA, JB]) corresponds to [Z_2, Z_1] in (4.20)
+        ja = 1_IK
+        jb = jl
     end if
+    ! Now update ZMAT(:, [ja, jb]) according to (4.19)--(4.20) of the NEWUOA paper.
     temp = zmat(knew, jb) / denom
     tempa = temp * beta
     tempb = temp * tau
@@ -1273,41 +1281,53 @@ else
     scalb = scala * sqrtdn
     zmat(:, ja) = scala * (tau * zmat(:, ja) - temp * vlag(1:npt))
     zmat(:, jb) = scalb * (zmat(:, jb) - tempa * w(1:npt) - tempb * vlag(1:npt))
+
+    !----------------------------------------------------------------------------------------------!
+    ! Zaikun 20220411: The update of IDZ is decoupled from the update of ZMAT, located after END IF.
+    !----------------------------------------------------------------------------------------------!
     !! If and only if DENOM < 0, IDZ will be revised according to the sign of BETA.
     !! See (4.19)--(4.20) of the NEWUOA paper.
     !if (denom < 0) then
     !    if (beta < 0) then
-    !        ! This is the 2nd place (out of 2) where IDZ is increased. Since JL = IDZ <= NPT-N-1 in
-    !        ! this case, we have IDZ <= NPT-N after the update.
     !        idz = int(idz + 1, kind(idz))
     !    else
-    !        ! This is the 2nd place (out of two) where IDZ is decreased (by 1). Since IDZ >= 2 in
-    !        ! this case, we have IDZ >= 1 after the update.
     !        reduce_idz = .true.
     !    end if
     !end if
+    !----------------------------------------------------------------------------------------------!
 end if
 
-if (denom < 0) then
-    if (idz == 1 .or. (idz < npt - n .and. beta < 0)) then
-        idz = idz + 1_IK
-    elseif (idz == npt - n .or. (idz > 1 .and. beta >= 0)) then
-        idz = idz - 1_IK
-        if (idz > 1) then
-            zmat(:, [1_IK, idz]) = zmat(:, [idz, 1_IK])  ! Why?
-        end if
-    end if
-end if
-
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220411: The update of IDZ is decoupled from the update of ZMAT, located right below.
+!--------------------------------------------------------------------------------------------------!
 !! IDZ is reduced in the following case. Then exchange ZMAT(:, 1) and ZMAT(:, IDZ).
 !if (reduce_idz) then
 !    idz = int(idz - 1, kind(idz))
 !    if (idz > 1) then
-!        ! If a vector subscript has two or more elements with the same value, an array section with
-!        ! that vector subscript is not definable and shall not be defined or become undefined.
 !        zmat(:, [1_IK, idz]) = zmat(:, [idz, 1_IK])
 !    end if
 !end if
+!--------------------------------------------------------------------------------------------------!
+
+! According to (4.18) and (4.19)--(4.20) of the NEWUOA paper, the coefficients {S_J} need update iff
+! DENOM < 0, in which case one of the S_J will flip the sign when multiplied by SIGN(DENOM), leading
+! to an increase of IDZ (if S_J flipped from 1 to -1) or a decrease (if S_J flipped from -1 to 1).
+if (denom < 0) then
+    if (idz == 1 .or. (idz < npt - n .and. beta < 0)) then  ! (4.18), (4.20) of the NEWUOA paper
+        idz = idz + 1_IK
+    elseif (idz == npt - n .or. (idz > 1 .and. beta >= 0)) then  ! (4.18), (4.19) of the NEWUOA paper
+        idz = idz - 1_IK
+        ! Exchange ZMAT(:, 1) and ZMAT(:. IDZ) if IDZ > 1. Why? No matter the update is given by
+        ! (4.18) (IDZ = NPT-N) or (4.19) (1 < IDZ < NPT-N and BETA >= 0), we have S_1 = +1 and
+        ! S_{IDZ} = -1 at this moment (unless IDZ = 1). Thus we need to exchange ZMAT(:, 1) with
+        ! ZMAT(:, IDZ) and implicitly S_1 with S_IDZ to maintain that S_J = -1 iff 1 <= J < IDZ.
+        ! Note that, in the case of (4.18), ZMAT(:, 1) (and implicitly S_1) rather than
+        ! ZMAT(:, NPT-N-1) was updated by the code above.
+        if (idz > 1) then
+            zmat(:, [1_IK, idz]) = zmat(:, [idz, 1_IK])
+        end if
+    end if
+end if
 
 ! Finally, update the matrix BMAT. It implements the last N rows of (4.11) in the NEWUOA paper.
 w(npt + 1:npt + n) = bmat(:, knew)
@@ -1357,14 +1377,15 @@ end subroutine updateh
 ! 3.2. According to (4.25) of the NEWUOA paper, H*w = H*(w-v) + e_{KOPT}, which provides the scheme
 ! for calculating VLAG. Since the (NPT+1)-th entry of w-v is 0, this scheme does not need the
 ! (NPT+1)-th column of H, which is not stored in the code. It also stabilizes the calculation of
-! BETA, as explained around (7.8)--(7.9) of the NEWUOA paper. The idea of H*w = H*(w-v) + e_{KOPT}
-! is simple: For any X and Y in R^N, LFUNC(X) = [LFUNC(X) - LFUNC(Y)] + LFUNC(Y); since
-! LFUNC(X) = H*w(X) with the w(X) defined in (6.3) of the NEWUOA paper, we then have
-! LFUNC(X) = H*[w(X) - w(Y)] + H*w(Y). Setting Y to X_K with any K in {1, ..., NPT}, and noting that
-! LFUNC(X_K) = e_K, we have that LFUNC(X) = H*[w(X) - w(X_K)] + e_K.
-! 3.3. VLAG and BETA are independent of KOPT in theory. In specific, given any X in R^N, s
+! BETA, as explained around (7.8)--(7.9) of the NEWUOA paper.
+! The idea behind H*w = H*(w-v) + e_{KOPT} (the first NPT entries):
+! For any X and Y in R^N, LFUNC(X) = [LFUNC(X) - LFUNC(Y)] + LFUNC(Y); since LFUNC(X) = H*w(X) with
+! the w(X) defined in (6.3) of the NEWUOA paper, we then have LFUNC(X) = H*[w(X) - w(Y)] + H*w(Y).
+! Setting Y to X_K with any K in {1, ..., NPT}, and noting that LFUNC(X_K) = e_K, we have that
+! LFUNC(X) = H*[w(X) - w(X_K)] + e_K.
+! 3.3. VLAG and BETA are independent of KOPT in theory. In specific, given any X in R^N,
 ! CALVLAG(K, BMAT, X - XPT(:, K), ZMAT, IDZ) and CALBETA(K, BMAT, X - XPT(:, K), ZMAT, IDZ)
-! are invariant with respect to K in {1, ..., NPT}.
+! are invariant with respect to K in {1, ..., NPT}. Powell's code uses always K = KOPT.
 ! 3.4. Assume that the |D| ~ DELTA, |XPT| ~ |XOPT|, and DELTA < |XOPT|. Then WCHECK is of the order
 ! DELTA*|XOPT|^3, which is can be huge at the beginning of the algorithm and quickly become tiny.
 !--------------------------------------------------------------------------------------------------!
@@ -1566,7 +1587,7 @@ dvlag = inprod(d, vlag(npt + 1:npt + n))
 wvlag = inprod(wcheck, vlag(1:npt))
 beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - dvlag - wvlag
 !---------------------------------------------------------------------------------------------------!
-! The last line is equivalent to the following lines, but perform better numerically.
+! The last line is equivalent to either of the following lines, but performs better numerically.
 !!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - inprod(vlag, wmv) ! Not good
 !!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - wvlag - dvlag  ! Bad
 !---------------------------------------------------------------------------------------------------!
