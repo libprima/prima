@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 11, 2022 AM02:57:57
+! Last Modified: Monday, April 11, 2022 PM02:11:05
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1185,7 +1185,8 @@ end do
 ! Zaikun 20220411: Here, Powell's code calculates this column by the ZMAT obtained from the rotation
 ! above. Would it be better to use the original ZMAT? Mathematically, the two are equal, but wouldn't
 ! the original one contain less rounding error? BOBYQA does not have this complication since it does
-! not contain IDZ.
+! not contain IDZ. Note that VLAG is calculated using the ZMAT before the rotations. Wouldn't be
+! better if W and VLAG are calculated using the same ZMAT?
 if (idz <= 1) then  ! IDZ <= 0 is impossible unless there is a bug.
     !tempa = zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
     w(1:npt) = zmat(knew, 1) * zmat(:, 1)
@@ -1256,7 +1257,7 @@ if (jl == 1) then
     !---------------------------------------------------------------------------------------------!
 else
     ! Complete the updating of ZMAT in the alternative case: ZMAT(KNEW, :) has two nonzeros.
-    ! Set JA and JB so that S_JA = S_JA, S_JB = S_JB * sign(DENOM) by (4.19)--(4.20) of NEWUOA paper.
+    ! Set JA and JB so that S_JA = S_JA, S_JB = S_JB * sign(DENOM) in (4.19)--(4.20) of NEWUOA paper.
     if (beta >= 0) then
         ja = jl  ! Corresponding to S_1 and Z_1 in (4.19) of NEWUOA paper
         jb = 1_IK  ! Corresponding to S_2 and Z_2 in (4.19) of NEWUOA paper
@@ -1312,8 +1313,7 @@ end if
 w(npt + 1:npt + n) = bmat(:, knew)
 v1 = (alpha * vlag(npt + 1:npt + n) - tau * w(npt + 1:npt + n)) / denom
 v2 = (-beta * w(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
-!call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
-bmat = bmat + outprod(v1, vlag) + outprod(v2, w)
+bmat = bmat + outprod(v1, vlag) + outprod(v2, w) !!call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
 ! Numerically, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be symmetric.
 call symmetrize(bmat(:, npt + 1:npt + n))
 
@@ -1358,8 +1358,13 @@ end subroutine updateh
 ! for calculating VLAG. Since the (NPT+1)-th entry of w-v is 0, this scheme does not need the
 ! (NPT+1)-th column of H, which is not stored in the code. It also stabilizes the calculation of
 ! BETA, as explained around (7.8)--(7.9) of the NEWUOA paper.
-! 3.3. Assume that the |D| ~ DELTA, |XPT| ~ |XOPT|, and DELTA < |XOPT|. Then WCHECK is in the order of
-! DELTA*|XOPT|^3, which is can be huge at the beginning of the algorithm and then quickly become tiny.
+! 3.3. Assume that the |D| ~ DELTA, |XPT| ~ |XOPT|, and DELTA < |XOPT|. Then WCHECK is of the order
+! DELTA*|XOPT|^3, which is can be huge at the beginning of the algorithm and quickly become tiny.
+!
+! Question (Zaikun 20220411): Shouldn't VLAG and BETA be independent of KOPT and XOPT in theory?
+! In specific, given any X in R^N, shouldn't
+! CALVLAG(K, BMAT, X - XPT(:, K), ZMAT, IDZ) and CALBETA(K, BMAT, X - XPT(:, K), ZMAT, IDZ)
+! be invariant with respect to K in {1, ..., NPT}?
 !--------------------------------------------------------------------------------------------------!
 
 function calvlag(kopt, bmat, d, xpt, zmat, idz) result(vlag)
@@ -1433,6 +1438,7 @@ end if
 
 xopt = xpt(:, kopt)  ! Read XOPT.
 
+! Set WCHECK to the first NPT entries of (w-v) for w and v in (4.10) and (4.24) of the NEWUOA paper.
 wcheck = matprod(d, xpt)
 wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
@@ -1493,12 +1499,14 @@ character(len=*), parameter :: srname = 'CALBETA'
 integer(IK) :: idz_loc
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: dsq
+real(RP) :: dvlag
+real(RP) :: dxopt
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: wcheck(size(zmat, 1))
 real(RP) :: wmv(size(xpt, 1) + size(xpt, 2))
+real(RP) :: wvlag
 real(RP) :: xopt(size(xpt, 1))
-real(RP) :: dsq
-real(RP) :: dxopt
 real(RP) :: xoptsq
 
 ! Sizes
@@ -1535,10 +1543,11 @@ end if
 
 xopt = xpt(:, kopt)  ! Read XOPT.
 
+! Set WCHECK to the first NPT entries of (w-v) for w and v in (4.10) and (4.24) of the NEWUOA paper.
 wcheck = matprod(d, xpt)
 wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
-! WMV is the vector (w-v) for the w and v defined in (4.10) and (4.24) of the NEWUOA paper.
+! WMV is the vector (w-v) for w and v in (4.10) and (4.24) of the NEWUOA paper.
 wmv = [wcheck, d]
 ! The following two lines set VLAG to H*(w-v).
 vlag(1:npt) = omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))
@@ -1546,17 +1555,20 @@ vlag(npt + 1:npt + n) = matprod(bmat, wmv)
 ! The following line is equivalent to the above one, but handles WCHECK and D separately.
 !!vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 
-! BETA = HALF*|XOPT + D|^4 - (W-V)'*H*(W-V) - [XOPT'*(X+XOPT)]^2 + HALF*|XOPT|^4. See equitions
+! BETA = HALF*|XOPT + D|^4 - (W-V)'*H*(W-V) - [XOPT'*(X+XOPT)]^2 + HALF*|XOPT|^4. See equations
 ! (4.12) and (4.26) of the NEWUOA paper.
 dxopt = inprod(d, xopt)
 dsq = inprod(d, d)
 xoptsq = inprod(xopt, xopt)
-beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
-!beta = dxopt**2 + dsq * (HALF * dsq + dxopt + dxopt + xoptsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
-!beta = dxopt**2 + dsq * (dxopt + dxopt + HALF * dsq + xoptsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(wcheck, vlag(1:npt))!Good
-!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - inprod(vlag, wmv) ! Not good
-!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - inprod(wcheck, vlag(1:npt)) - inprod(d, vlag(npt + 1:npt + n)) !Bad
-!----------------------------------------------------------------------------------!
+dvlag = inprod(d, vlag(npt + 1:npt + n))
+wvlag = inprod(wcheck, vlag(1:npt))
+beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - dvlag - wvlag
+!---------------------------------------------------------------------------------------------------!
+! The last line is equivalent to the following lines, but perform better numerically.
+!!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - inprod(vlag, wmv) ! Not good
+!!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - wvlag - dvlag  ! Bad
+!---------------------------------------------------------------------------------------------------!
+
 ! N.B.:
 ! 1. Mathematically, the following two quantities are equal:
 ! DXOPT**2 + DSQ * (XOPTSQ + DXOPT + DXOPT + HALF * DSQ) ,

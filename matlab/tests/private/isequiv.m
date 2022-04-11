@@ -107,7 +107,7 @@ else
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
     switch lower(solvers{1})
     case {'uobyqa', 'uobyqan'}
-        blacklist = [blacklist, {'VARDIM'}];  % too large for UOBYQA
+        blacklist = [blacklist, {'VARDIM', 'HATFLDFL'}];  % too large for UOBYQA
     case {'newuoa', 'newuoan'}
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.
         %blacklist = [blacklist, {'PENALTY2'}]; % More than 5 minutes to solve.
@@ -118,6 +118,7 @@ else
         blacklist = [blacklist, {'LSNNODOC', 'HS55'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
+        blacklist = [blacklist, {' QPNBOEI2'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'MINMAXRB'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
