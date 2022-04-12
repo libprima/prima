@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 11, 2022 PM09:43:58
+! Last Modified: Tuesday, April 12, 2022 PM02:17:03
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1069,12 +1069,14 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 ! OMEGA = ZMAT*Diag(S)*ZMAT^T with S(1:IDZ-1)= -1 and S(IDZ : NPT-N-1) = +1. BMAT holds the last N
 ! ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th column of
 ! H are not stored as they are unnecessary for the calculation.
+!
 ! N.B.: The most natural (not necessarily the best numerically) version of UPDATEH should work based
-! on [KNEW, XNEW - XPT(:, KNWW)] instead of [KNEW, KOPT, D]. To implement such a version, we only
-! need to change the calls of CALVLAG and CALBETA to
+! on [KNEW, XNEW - XPT(:, KNEW)] instead of [KNEW, KOPT, D], because the update is independent of
+! KOPT in theory. Such a version can be implemented by changing the calls of CALVLAG and CALBETA to
 !!VLAG = CALVLAG(KNEW, BMAT, XNEW - XPT(:, KNEW), XPT, ZMAT, IDZ)
 !!BETA = CALBETA(KNEW, BMAT, XNEW - XPT(:, KNEW), XPT, ZMAT, IDZ)
 ! Theoretically (but not numerically), they should return the same VLAG and BETA as the calls below.
+! However, as observed on 20220412, such an implementation can lead to significant errors in H!
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: GROT(2, 2), V1(N), V2(N), VLAG(NPT+N), W(NPT+N)
@@ -1083,9 +1085,10 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, symmetrize, issymmetric, outprod!, r2update
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Inputs
@@ -1124,6 +1127,12 @@ real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(bmat, 2))
 real(RP) :: w(size(bmat, 2))
 
+! Debugging variables
+real(RP) :: beta_test
+real(RP) :: tol
+real(RP), allocatable :: vlag_test(:)
+real(RP), allocatable :: xpt_test(:, :)
+
 ! Sizes
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
@@ -1140,9 +1149,9 @@ if (DEBUGGING) then
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    ! The following test cannot be passed.
-    !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for error in H
-    !call assert(errh(idz, bmat, zmat, xpt) <= tol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
+    tol = 1.0E-2_RP ! TOL is also used by VLAG/BETA below.
+    call wassert(errh(idz, bmat, zmat, xpt) <= tol .or. RP == kind(0.0), &
+        & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
 !====================!
@@ -1159,8 +1168,20 @@ end if
 ! and BETA holds the value of the parameter that has this name.
 ! N.B.: Powell's original comments mention that VLAG is "the vector THETA*WCHECK + e_b of the
 ! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
-!vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
-!beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
+vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
+beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
+
+! Theoretically, CALVLAG and CALBETA should be independent of the reference point XPT(:, KOPT).
+if (DEBUGGING) then
+    call safealloc(vlag_test, npt + n)
+    vlag_test = calvlag(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
+    call wassert(maxval(abs(vlag - vlag_test)) <= tol * maxval([ONE, abs(vlag)]) .or. RP == kind(0.0), &
+        & 'VLAG == VLAG_TEST', srname)
+    deallocate (vlag_test)
+    beta_test = calbeta(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
+    call wassert(abs(beta - beta_test) <= tol * max(ONE, abs(beta)) .or. RP == kind(0.0), &
+        & 'BETA == BETA_TEST', srname)
+end if
 
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT and set JL. After this,
 ! ZMAT(KNEW, :) contains at most two nonzero entries ZMAT(KNEW, 1) and ZMAT(KNEW, JL), one
@@ -1174,19 +1195,14 @@ end if
 jl = 1_IK  ! In the loop below, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT-N-1, then JL = IDZ.
 do j = 2, int(npt - n - 1, kind(j))
     if (j == idz) then
-        jl = idz
-        cycle
-    end if
-    if (abs(zmat(knew, j)) > 0) then
+        jl = idz  ! Do nothing but changing JL from 1 to IDZ. It happens at most once along the loop.
+    elseif (abs(zmat(knew, j)) > 0) then
         ! Multiply a Givens rotation to ZMAT from the right so that ZMAT(KNEW, [JL,J]) becomes [*,0].
         grot = planerot(zmat(knew, [jl, j]))  !!MATLAB: grot = planerot(zmat(knew, [jl, j])')
         zmat(:, [jl, j]) = matprod(zmat(:, [jl, j]), transpose(grot))
         zmat(knew, j) = ZERO
     end if
 end do
-
-vlag = calvlag(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
-beta = calbeta(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
 
 ! Set W(1:NPT) to the first NPT components of the KNEW-th column of H.
 ! Here, Powell's code calculates this column by the ZMAT that has been updated by the rotation as
@@ -1357,10 +1373,12 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    !xpt_test = xpt
-    !xpt_test(:, knew) = xpt(:, kopt) + d
-    ! The following test cannot be passed.
-    !call assert(errh(idz, bmat, zmat, xpt_test) <= tol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
+    call safealloc(xpt_test, n, npt)
+    xpt_test = xpt
+    xpt_test(:, knew) = xpt(:, kopt) + d
+    call wassert(errh(idz, bmat, zmat, xpt_test) <= tol .or. RP == kind(0.0), &
+        & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
+    deallocate (xpt_test)
 end if
 end subroutine updateh
 
@@ -1370,32 +1388,44 @@ end subroutine updateh
 ! BETA are critical for the updating procedure of H, which is detailed formula (4.11) of the NEWUOA
 ! paper. See (4.12) for the definition of BETA, and VLAG is indeed H*w without the (NPT+1)the entry;
 ! (4.25)--(4.26) formulate the actual calculating scheme of VLAG and BETA.
-!
-! N.B.:
-! 1. In languages like MATLAB/Python/Julia/R, CALVLAG and CALBETA should be implemented into one
+! In languages like MATLAB/Python/Julia/R, CALVLAG and CALBETA should be implemented into one
 ! single function, as they share most of the calculation. We separate them in Fortran (at the
 ! expense of repeating some calculation) because Fortran functions can only have one output.
-! 2. Given any D and t in {1, ..., NPT}, VLAG(t) = e_t^T*H*w = L_t(XBASE + XOPT + D), where L_t is
-! the t-th Lagrange basis function corresponding to the interpolation set that defines H. See
-! (6.3)--(6.4) of the NEWUOA paper for details. As a consequence, SUM(VLAG(1:NPT)) = 1 in theory.
-! 3. Explanation on WCHECK: WCHECK = MATPROD(D, XPT) * (HALF * MATPROD(D,XPT) + MATPROD(XOPT, XPT)).
-! 3.1. WCHECK contains the first NPT entries of (w-v) for the vectors w and v defined in (4.10) and
-! (4.24) of the NEWUOA paper, and also hat{w} in (6.5) of
-! M. J. D. Powell, Least Frobenius norm updating of quadratic models that satisfy interpolation
-! conditions. Math. Program., 100:183--215, 2004
-! 3.2. According to (4.25) of the NEWUOA paper, H*w = H*(w-v) + e_{KOPT}, which provides the scheme
-! for calculating VLAG. Since the (NPT+1)-th entry of w-v is 0, this scheme does not need the
-! (NPT+1)-th column of H, which is not stored in the code. It also stabilizes the calculation of
-! BETA, as explained around (7.8)--(7.9) of the NEWUOA paper.
-! The idea behind H*w = H*(w-v) + e_{KOPT} (the first NPT entries):
-! For any X and Y in R^N, LFUNC(X) = [LFUNC(X) - LFUNC(Y)] + LFUNC(Y); since LFUNC(X) = H*w(X) with
-! the w(X) defined in (6.3) of the NEWUOA paper, we then have LFUNC(X) = H*[w(X) - w(Y)] + H*w(Y).
-! Setting Y to X_K with any K in {1, ..., NPT}, and noting that LFUNC(X_K) = e_K, we have that
-! LFUNC(X) = H*[w(X) - w(X_K)] + e_K.
-! 3.3. VLAG and BETA are independent of KOPT in theory. In specific, given any X in R^N,
+!
+! Explanation on the matrix H in (3.12) and w(X) in (6.3) of the NEWUOA paper and WCHECK in the code:
+! 0. As defined in (6.3) of the paper w(X)(K) = 0.5*[(X-X_0)^T*(X_K-X_0)]^2 for K = 1, ..., NPT,
+! w(X)(NPT+1) = 1, and w(X)(NPT+2:NPT+N+1) = X - X_0. As in (3.12) of the paper, w(X_K) is the K-th
+! column in the coefficient matrix W of the KKT system for the interpolation problem
+! Minimize ||nabla^2 Q||_F s.t. Q(X_K) = Y_K, K = 1, ..., NPT.
+! This is why w(X) is ubiquitous in the code.
+! 1. By (3.9) of the paper, the solution to the above interpolation problem is Q(X) = Y^T*H*w(X),
+! where H = W^{-1}, and Y is the vector [Y_1; ...; Y_NPT; 0; ...; 0] with N trailing zeros. In
+! particular, the K-th Lagrange function of this interpolation problem is e_K^T*H*w(X), namely the
+! K-th entry of the vector H*w(X). This is why H*w(X) appears as the vector VLAG in the code.
+! As a consequence, SUM(VLAG(1:NPT)) = 1 in theory.
+! 2. As above, H can provide us interpolants and the Lagrange functions. Thus the code maintains H.
+! 3. Since the matrix H is W^{-1} as defined in (3.12) of the paper, we have H*w(X_K) = e_K for
+! any K in {1, ..., NPT}.
+! 4. When the interpolation set is updated by replacing X_K with X, W is correspondingly updated by
+! changing the K-th column from w(X_t) to w(X). This is why the update of H = W^{-1} must involve
+! H*[w(X) - w(X_t)] = H*w(X) - e_t.
+! 5. As explained above, the vector H*w(X) is essential to the algorithm. The quantity w(X)^T*H*w(X)
+! is also needed in the update of H (particularly by BETA). However, they can be tricky to calculate,
+! because much cancellation can happen when X_0 is far away from the interpolation set, as explained
+! in (7.8)--(7.10) of the paper and the discussions around. To overcome the difficulty, note that
+! H*w(X) = H*[w(X) - w(X_K)] + H*w(X_K) = H*[w(X) - w(X_K)] + e_K, and
+! w(x)^T*H*w(X) = [w(X) - w(X_K)]^T*H*[w(X) - w(X_K)] + 2*w(X)(K) - w(X_K)(K).
+! The dependence of w(X)-w(X_K) on X_0 is weaker, which reduces (but does not resolve) the difficulty.
+! In theory, these formulas are invariant with respect to K. In the code, this means that
 ! CALVLAG(K, BMAT, X - XPT(:, K), ZMAT, IDZ) and CALBETA(K, BMAT, X - XPT(:, K), ZMAT, IDZ)
 ! are invariant with respect to K in {1, ..., NPT}. Powell's code uses always K = KOPT.
-! 3.4. Assume that the |D| ~ DELTA, |XPT| ~ |XOPT|, and DELTA < |XOPT|. Then WCHECK is of the order
+! 6. Since the (NPT+1)-th entry of w(X) - w(X_K) is 0, the above formulas do not require the
+! (NPT+1)-th column of H, which is not stored in the code.
+! 7. WCHECK contains the first NPT entries of w-v for the vectors w and v defined in (4.10) and
+! (4.24) of the NEWUOA paper, with w = w(X) and v = w(X_KOPT); it is also hat{w} in (6.5) of
+! M. J. D. Powell, Least Frobenius norm updating of quadratic models that satisfy interpolation
+! conditions. Math. Program., 100:183--215, 2004
+! 8. Assume that the |D| ~ DELTA, |XPT| ~ |XOPT|, and DELTA < |XOPT|. Then WCHECK is of the order
 ! DELTA*|XOPT|^3, which is can be huge at the beginning of the algorithm and quickly become tiny.
 !--------------------------------------------------------------------------------------------------!
 
@@ -1409,8 +1439,8 @@ function calvlag(kopt, bmat, d, xpt, zmat, idz) result(vlag)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
 
@@ -1432,7 +1462,7 @@ character(len=*), parameter :: srname = 'CALVLAG'
 integer(IK) :: idz_loc
 integer(IK) :: n
 integer(IK) :: npt
-!real(RP) :: tol  ! For debugging only
+real(RP) :: tol  ! For debugging only
 real(RP) :: wcheck(size(zmat, 1))
 real(RP) :: xopt(size(xpt, 1))
 
@@ -1458,7 +1488,7 @@ if (DEBUGGING) then
 
     !--------------------------------------------------------------------------------------!
     ! Disable the test for the moment, as it cannot pass in BOBYQA.!!!!!!!!!!!!!!!!!!!!!!!!!
-    !call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call wassert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     !--------------------------------------------------------------------------------------!
 
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
@@ -1490,9 +1520,9 @@ vlag(kopt) = vlag(kopt) + ONE
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT + N', srname)
-    ! The following test cannot be passed.
-    !tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(npt + n, RP)))
-    !call assert(abs(sum(vlag(1:npt)) - ONE) <= tol .or. RP == kind(0.0), 'SUM(VLAG(1:NPT)) == 1', srname)
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(npt + n, RP)))
+    call wassert(abs(sum(vlag(1:npt)) - ONE) / real(npt, RP) <= tol .or. RP == kind(0.0), &
+        & 'SUM(VLAG(1:NPT)) == 1', srname)
 end if
 
 end function calvlag
@@ -1509,7 +1539,7 @@ function calbeta(kopt, bmat, d, xpt, zmat, idz) result(beta)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
 
@@ -1563,7 +1593,7 @@ if (DEBUGGING) then
 
     !--------------------------------------------------------------------------------------!
     ! Disable the test for the moment, as it cannot pass in BOBYQA.!!!!!!!!!!!!!!!!!!!!!!!!!
-    !call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call wassert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     !--------------------------------------------------------------------------------------!
 
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
