@@ -17,7 +17,7 @@ module debug_mod
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, April 12, 2022 PM03:21:12
+! Last Modified: Tuesday, April 12, 2022 PM11:48:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -122,7 +122,7 @@ subroutine errstop(srname, msg)
 ! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'!', then stop.
 ! It also calls BACKTR to print the backtrace.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : MSGLEN, DEBUGGING
+use, non_intrinsic :: consts_mod, only : MSGLEN
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg

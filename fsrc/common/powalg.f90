@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 12, 2022 PM04:30:10
+! Last Modified: Wednesday, April 13, 2022 AM01:34:47
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1066,13 +1066,13 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat, info)
 ! [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12), which is the inverse of
 ! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
 ! ZMAT holds a factorization of the leading NPT*NPT submatrix OMEGA of H, the factorization being
-! OMEGA = ZMAT*Diag(S)*ZMAT^T with S(1:IDZ-1)= -1 and S(IDZ : NPT-N-1) = +1. BMAT holds the last N
+! OMEGA = ZMAT*Diag(S)*ZMAT^T with S(1:IDZ-1)= -1 and S(IDZ : NPT-N-1) = +1; BMAT holds the last N
 ! ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th column of
 ! H are not stored as they are unnecessary for the calculation.
 !
 ! N.B.: The most natural (not necessarily the best numerically) version of UPDATEH should work based
-! on [KNEW, XNEW - XPT(:, KNEW)] instead of [KNEW, KOPT, D], because the update is independent of
-! KOPT in theory. Such a version can be implemented by changing the calls of CALVLAG and CALBETA to
+! on [KNEW, XNEW - XPT(:,KNEW)] instead of [KNEW, KOPT, D], because the update is independent of KOPT
+! in theory. UPDATEH needs KOPT only for calculating VLAG and BETA, which can also be found by
 !!VLAG = CALVLAG(KNEW, BMAT, XNEW - XPT(:, KNEW), XPT, ZMAT, IDZ)
 !!BETA = CALBETA(KNEW, BMAT, XNEW - XPT(:, KNEW), XPT, ZMAT, IDZ)
 ! Theoretically (but not numerically), they should return the same VLAG and BETA as the calls below.
@@ -1122,7 +1122,6 @@ real(RP) :: scala
 real(RP) :: scalb
 real(RP) :: sqrtdn
 real(RP) :: tau
-real(RP) :: tausq
 real(RP) :: temp
 real(RP) :: tempa
 real(RP) :: tempb
@@ -1130,12 +1129,13 @@ real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(bmat, 2))
 real(RP) :: w(size(bmat, 2))
+real(RP) :: ztest
 
 ! Debugging variables
 real(RP) :: beta_test
 real(RP) :: tol
 real(RP), allocatable :: vlag_test(:)
-real(RP), allocatable :: xpt_test(:, :)
+!real(RP), allocatable :: xpt_test(:, :)
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -1153,9 +1153,25 @@ if (DEBUGGING) then
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    tol = 1.0E-2_RP ! TOL is also used by VLAG/BETA below.
-    call wassert(errh(idz, bmat, zmat, xpt) <= tol .or. RP == kind(0.0), &
-        & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
+
+    ! Theoretically, CALVLAG and CALBETA should be independent of the reference point XPT(:, KOPT).
+    ! So we test the following. By the implementation of CALVLAG and CALBETA, we are indeed testing
+    ! H*[w(X_KOPT) - w(X_KNEW)] = e_KOPT - e_KNEW. Thus H = W^{-1} is also tested to some extend.
+    if (knew >= 1) then
+        tol = 1.0E-2_RP  ! W and H are quite ill-conditioned, so we do not test a high precision.
+        call safealloc(vlag_test, npt + n)
+        vlag_test = calvlag(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
+        call wassert(maxval(abs(vlag_test - calvlag(kopt, bmat, d, xpt, zmat, idz))) <= &
+            & tol * maxval([ONE, abs(vlag_test)]) .or. RP == kind(0.0), 'VLAG_TEST == VLAG', srname)
+        deallocate (vlag_test)
+        beta_test = calbeta(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
+        call wassert(abs(beta_test - calbeta(kopt, bmat, d, xpt, zmat, idz)) <= &
+            & tol * max(ONE, abs(beta_test)) .or. RP == kind(0.0), 'BETA_TEST == BETA', srname)
+    end if
+
+    ! The following is too expensive to check.
+    !call wassert(errh(idz, bmat, zmat, xpt) <= tol .or. RP == kind(0.0), &
+    !    & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
 !====================!
@@ -1166,7 +1182,7 @@ if (present(info)) then
     info = INFO_DFT
 end if
 
-! Do nothing when KNEW is 0. This can only happen sometimes after a trust-region step.
+! We must not do anything if KNEW is 0. This can only happen sometimes after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
@@ -1179,18 +1195,6 @@ end if
 vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
 beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
-! Theoretically, CALVLAG and CALBETA should be independent of the reference point XPT(:, KOPT).
-if (DEBUGGING) then
-    call safealloc(vlag_test, npt + n)
-    vlag_test = calvlag(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
-    call wassert(maxval(abs(vlag - vlag_test)) <= tol * maxval([ONE, abs(vlag)]) .or. RP == kind(0.0), &
-        & 'VLAG == VLAG_TEST', srname)
-    deallocate (vlag_test)
-    beta_test = calbeta(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
-    call wassert(abs(beta - beta_test) <= tol * max(ONE, abs(beta)) .or. RP == kind(0.0), &
-        & 'BETA == BETA_TEST', srname)
-end if
-
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT and set JL. After this,
 ! ZMAT(KNEW, :) contains at most two nonzero entries ZMAT(KNEW, 1) and ZMAT(KNEW, JL), one
 ! corresponding to all the columns of ZMAT that has a coefficient -1 in the factorization of
@@ -1200,16 +1204,21 @@ end if
 ! 2. If 2 <= IDZ <= NPT - N -1, then JL = IDZ, and ZMAT(KNEW, 1) is L2-norm of ZMAT(KNEW, 1 : IDZ-1),
 ! while ZMAT(KNEW, JL) is L2 norm of ZMAT(KNEW, IDZ : NPT-N-1).
 ! See (4.15)--(4.17) of the NEWUOA paper and the elaboration around them.
+ztest = 1.0E-20_RP * maxval(abs(zmat))  ! Taken from BOBYQA.
 jl = 1_IK  ! In the loop below, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT-N-1, then JL = IDZ.
 do j = 2, int(npt - n - 1, kind(j))
     if (j == idz) then
-        jl = idz  ! Do nothing but changing JL from 1 to IDZ. It happens at most once along the loop.
-    elseif (abs(zmat(knew, j)) > 0) then
+        jl = idz  ! Do nothing but changing JL from 1 to IDZ. It occurs at most once along the loop.
+        cycle
+    end if
+
+    !if (abs(zmat(knew, j)) > 1.0E-20_RP * abs(zmat(knew, jl))) then
+    if (abs(zmat(knew, j)) > ztest) then
         ! Multiply a Givens rotation to ZMAT from the right so that ZMAT(KNEW, [JL,J]) becomes [*,0].
         grot = planerot(zmat(knew, [jl, j]))  !!MATLAB: grot = planerot(zmat(knew, [jl, j])')
         zmat(:, [jl, j]) = matprod(zmat(:, [jl, j]), transpose(grot))
-        zmat(knew, j) = ZERO
     end if
+    zmat(knew, j) = ZERO
 end do
 
 ! Set W(1:NPT) to the first NPT components of the KNEW-th column of H.
@@ -1232,22 +1241,21 @@ end if
 ! Calculate the parameters of the updating formula.
 alpha = w(knew)
 tau = vlag(knew)
-tausq = tau * tau
-denom = alpha * beta + tausq
+denom = alpha * beta + tau**2
 if (abs(denom) > 0) then
     sqrtdn = sqrt(abs(denom))
 else
+    ! 1. Up to here, only ZMAT is rotated, which does not change H in precise arithmetic, so it is
+    ! fine if we do not revert ZMAT to the un-updated version.
+    ! 2. After UPDATEH returns, ideally, the algorithm should do something to rectify the damaging
+    ! rounding. However, nothing is done in the current (20220412) version of NEWUOA/LINCOA, while
+    ! Powell's version of LINCOA terminates immediately. Note that H is not updated at all here.
     if (present(info)) then
-        ! 1. Up to here, only ZMAT is rotated, which does not change H in precise arithmetic, so
-        ! there is not need to revert to the un-updated data.
-        ! 2. After UPDATEH returns, the algorithm should do something to rectify the damaging
-        ! rounding. However, nothing is done in the current (20220412) version of NEWUOA/LINCOA for
-        ! the moment (Powell's version of LINCOA terminates). Note that H is not updated at all here.
         info = DAMAGING_ROUNDING
     end if
     return
 end if
-! After the following line, VLAG = Hw - e_t in the NEWUOA paper.
+! After the following line, VLAG = H*w - e_t in the NEWUOA paper.
 vlag(knew) = vlag(knew) - ONE
 
 if (jl == 1) then
@@ -1275,7 +1283,9 @@ if (jl == 1) then
     tempb = zmat(knew, 1) / sqrtdn
     !---------------------------------------------------------------------------------------------!
 
+    ! The following line updates ZMAT(:, 1) according to (4.18) of the NEWUOA paper.
     zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
+    !zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrtdn
 
     !---------------------------------------------------------------------------------------------!
     ! Zaikun 20220411: The update of IDZ is decoupled from the update of ZMAT, located after END IF.
@@ -1322,7 +1332,7 @@ else
     tempa = temp * beta
     tempb = temp * tau
     temp = zmat(knew, ja)
-    scala = ONE / sqrt(abs(beta) * temp**2 + tausq)  ! 1/SQRT(ZETA) in (4.19)-(4.20) of NEWUOA paper
+    scala = ONE / sqrt(abs(beta) * temp**2 + tau**2)  ! 1/SQRT(ZETA) in (4.19)-(4.20) of NEWUOA paper
     scalb = scala * sqrtdn
     zmat(:, ja) = scala * (tau * zmat(:, ja) - temp * vlag(1:npt))
     zmat(:, jb) = scalb * (zmat(:, jb) - tempa * w(1:npt) - tempb * vlag(1:npt))
@@ -1391,14 +1401,14 @@ if (DEBUGGING) then
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
-        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    call safealloc(xpt_test, n, npt)
-    xpt_test = xpt
-    xpt_test(:, knew) = xpt(:, kopt) + d
-    call wassert(errh(idz, bmat, zmat, xpt_test) <= tol .or. RP == kind(0.0), &
-        & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
-    deallocate (xpt_test)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    ! The following is too expensive to check.
+    !call safealloc(xpt_test, n, npt)
+    !xpt_test = xpt
+    !xpt_test(:, knew) = xpt(:, kopt) + d
+    !call wassert(errh(idz, bmat, zmat, xpt_test) <= tol .or. RP == kind(0.0), &
+    !    & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
+    !deallocate (xpt_test)
 end if
 end subroutine updateh
 
