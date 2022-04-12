@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 12, 2022 PM08:56:13
+! Last Modified: Wednesday, April 13, 2022 AM02:02:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,7 +54,7 @@ real(RP) :: alpha, beta, bsumm, denabs, denmax, denom, distsq,  &
 integer(IK) :: i, iflag, j, ja, jb, jl, jp, k, nptm
 real(RP) :: xopt(n)
 real(RP) :: xdist(npt), vtmp(npt), xxpt(npt), sxpt(npt)!, wz(npt - n - 1), wzc(size(wz))
-real(RP) :: grot(2, 2), ztest
+real(RP) :: grot(2, 2), ztest, zmatk1
 
 !
 !     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
@@ -196,7 +196,7 @@ end if
 !
 !     Apply the rotations that put ZEROs in the KNEW-th row of ZMAT.
 !
-ztest = 1.0E-20_RP*maxval(abs(zmat))
+ztest = 1.0E-20_RP * maxval(abs(zmat))
 jl = 1
 if (nptm >= 2) then
     do j = 2, nptm
@@ -208,11 +208,11 @@ if (nptm >= 2) then
             !temp = sqrt(zmat(knew, jl)**2 + zmat(knew, j)**2)
             !tempa = zmat(knew, jl) / temp
             !tempb = zmat(knew, j) / temp
-        !-------------------------------------------!
-        ! Zaikun 20220412
-        !else if (abs(zmat(knew, j)) > ZERO) then
+            !-------------------------------------------!
+            ! Zaikun 20220412
+            !else if (abs(zmat(knew, j)) > ZERO) then
         else if (abs(zmat(knew, j)) > ztest) then
-        !-------------------------------------------!
+            !-------------------------------------------!
             grot = planerot(zmat(knew, [jl, j]))  !!MATLAB: grot = planerot(zmat(knew, [jl, j])')
             tempa = grot(1, 1); tempb = grot(1, 2)
             !-----------------------------------------------------------------------------------------!
@@ -222,11 +222,11 @@ if (nptm >= 2) then
                 zmat(i, jl) = temp
             end do
             zmat(knew, j) = ZERO
-        !----------------------------------!
-        !Zaikun 20220412
+            !----------------------------------!
+            !Zaikun 20220412
         else
             zmat(knew, j) = ZERO
-        !----------------------------------!
+            !----------------------------------!
         end if
     end do
 end if
@@ -264,8 +264,10 @@ iflag = 0
 if (jl == 1) then
     tempa = tau / sqrtdn
     tempb = zmat(knew, 1) / sqrtdn
+    zmatk1 = zmat(knew, 1)
     do i = 1, npt
-        zmat(i, 1) = tempa * zmat(i, 1) - tempb * vlag(i)
+        !zmat(i, 1) = tempa * zmat(i, 1) - tempb * vlag(i)
+        zmat(i, 1) = (tau * zmat(i, 1) - zmatk1 * vlag(i)) / sqrtdn
     end do
     if (denom < 0) then
         if (idz == 1) then
