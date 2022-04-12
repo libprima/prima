@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 05, 2022 PM04:51:13
+! Last Modified: Wednesday, April 13, 2022 AM01:55:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,11 +20,20 @@ contains
 
 
 subroutine update(knew, beta, denom, bmat, vlag, zmat)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine updates arrays BMAT and ZMAT in order to replace the interpolation point
+! XPT(:, KNEW) by XNEW = XPT(:, KOPT) + D. See Section 4 of the BOBYQA paper. [BMAT, ZMAT] describes
+! the matrix H in the BOBYQA paper (eq. 2.7), which is the inverse of the coefficient matrix of the
+! KKT system for the least-Frobenius norm interpolation problem: ZMAT holds a factorization of the
+! leading NPT*NPT submatrix OMEGA of H, the factorization being OMEGA = ZMAT*ZMAT^T; BMAT holds the
+! last N ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th
+! column of H are not stored as they are unnecessary for the calculation.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-
+use, non_intrinsic :: linalg_mod, only : planerot, matprod, outprod, symmetrize, issymmetric
 implicit none
 
 ! Inputs
@@ -39,11 +48,16 @@ real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATE'
+integer(IK) :: j
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: ztest
+real(RP) :: alpha
+real(RP) :: grot(2, 2)
+real(RP) :: tau
+real(RP) :: v1(size(bmat, 1))
+real(RP) :: v2(size(bmat, 1))
 real(RP) :: w(size(vlag))
-real(RP) :: alpha, tau, temp, tempa, tempb, ztest
-integer(IK) :: i, j, jp, k
 
 ! Sizes.
 n = int(size(bmat, 1), kind(n))
@@ -56,81 +70,72 @@ if (DEBUGGING) then
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT + N', srname)
+
+    ! The following is too expensive to check.
+    !tol = 1.0E-2_RP
+    !call wassert(errh(bmat, zmat, xpt) <= tol .or. RP == kind(0.0), &
+    !    & 'H = W^{-1} in (2.7) of the BOBYQA paper', srname)
 end if
 
+!====================!
+! Calculation starts !
+!====================!
 
+!----- The following are copied from NEWUOA. Needed here? --------------------------------------!
+! We must not do anything if KNEW is 0. This can only happen sometimes after a trust-region step.
+if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
+    return
+end if
 
-!     The arrays BMAT and ZMAT are updated, as required by the new position
-!     of the interpolation point that has the index KNEW. The vector VLAG has
-!     N+NPT components, set on entry to the first NPT and last N components
-!     of the product Hw in equation (4.11) of the Powell (2006) paper on
-!     NEWUOA. Further, BETA is set on entry to the value of the parameter
-!     with that name, and DENOM is set to the denominator of the updating
-!     formula. Elements of ZMAT may be treated as zero if their moduli are
-!     at most ZTEST. The first NDIM elements of W are used for working space.
-!
-!     Set some constants.
-!
-ztest = ZERO
-do k = 1, npt
-    do j = 1, npt - n - 1_IK
-        ztest = max(ztest, abs(zmat(k, j)))
-    end do
-end do
-ztest = 1.0E-20_RP * ztest
-!
-!     Apply the rotations that put zeros in the KNEW-th row of ZMAT.
-!
-! Zaikun 2019-08-15: JL is never used
-!      JL=1
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT. After this, ZMAT(:, KNEW) contains
+! only one nonzero entry ZMAT(KNEW, 1).
+! Elements of ZMAT are treated as zero if the moduli are at most ZTEST.
+ztest = 1.0E-20_RP * maxval(abs(zmat))
 do j = 2, npt - n - 1_IK
     if (abs(zmat(knew, j)) > ztest) then
-        temp = sqrt(zmat(knew, 1)**2 + zmat(knew, j)**2)
-        tempa = zmat(knew, 1) / temp
-        tempb = zmat(knew, j) / temp
-        do i = 1, npt
-            temp = tempa * zmat(i, 1) + tempb * zmat(i, j)
-            zmat(i, j) = tempa * zmat(i, j) - tempb * zmat(i, 1)
-            zmat(i, 1) = temp
-        end do
+        grot = planerot(zmat(knew, [1_IK, j]))
+        zmat(:, [1_IK, j]) = matprod(zmat(:, [1_IK, j]), transpose(grot))
     end if
     zmat(knew, j) = ZERO
 end do
-!
-!     Put the first NPT components of the KNEW-th column of HLAG into W,
-!     and calculate the parameters of the updating formula.
-!
-do i = 1, npt
-    w(i) = zmat(knew, 1) * zmat(i, 1)
-end do
+
+! Put the first NPT components of the KNEW-th column of H into W(1:NPT). Calculate the parameters of
+! the updating formula (4.9) and (4.14).
+w(1:npt) = zmat(knew, 1) * zmat(:, 1)
 alpha = w(knew)
 tau = vlag(knew)
 vlag(knew) = vlag(knew) - ONE
-!
-!     Complete the updating of ZMAT.
-!
-temp = sqrt(denom)
-tempb = zmat(knew, 1) / temp
-tempa = tau / temp
-do i = 1, npt
-    zmat(i, 1) = tempa * zmat(i, 1) - tempb * vlag(i)
-end do
-!
-!     Finally, update the matrix BMAT.
-!
-do j = 1, n
-    jp = npt + j
-    w(jp) = bmat(j, knew)
-    tempa = (alpha * vlag(jp) - tau * w(jp)) / denom
-    tempb = (-beta * w(jp) - tau * vlag(jp)) / denom
-    do i = 1, jp
-        bmat(j, i) = bmat(j, i) + tempa * vlag(i) + tempb * w(i)
-        if (i > npt) bmat(i - npt, jp) = bmat(j, i)
-    end do
-end do
-return
 
+! Complete the updating of ZMAT. See (4.14) of the BOBYQA paper.
+zmat(:, 1) = (tau / sqrt(denom)) * zmat(:, 1) - (zmat(knew, 1) / sqrt(denom)) * vlag(1:npt)
+!zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrt(denom)
+
+! Finally, update the matrix BMAT. It implements the last N rows of (4.9) in the NEWUOA paper.
+w(npt + 1:npt + n) = bmat(:, knew)
+v1 = (alpha * vlag(npt + 1:npt + n) - tau * w(npt + 1:npt + n)) / denom
+v2 = (-beta * w(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
+bmat = bmat + outprod(v1, vlag) + outprod(v2, w) !!call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
+! Numerically, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be symmetric.
+call symmetrize(bmat(:, npt + 1:npt + n))
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+
+    ! The following is too expensive to check.
+    !call safealloc(xpt_test, n, npt)
+    !xpt_test = xpt
+    !xpt_test(:, knew) = xpt(:, kopt) + d
+    !call wassert(errh(bmat, zmat, xpt_test) <= tol .or. RP == kind(0.0), &
+    !    & 'H = W^{-1} in (2.7) of the BOBYQA paper', srname)
+    !deallocate (xpt_test)
+end if
 end subroutine update
 
 

@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 10, 2022 PM11:34:43
+! Last Modified: Wednesday, April 13, 2022 AM01:43:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,6 +79,7 @@ real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(bmat, 2))
 real(RP) :: w(size(bmat, 2))
+real(RP) :: ztest
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -123,17 +124,19 @@ beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
 
 ! In the loop, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT - N - 1, then JL = IDZ.
+ztest = 1.0E-20_RP * maxval(abs(zmat))
 jl = 1_IK
 do j = 2, int(npt - n - 1, kind(j))
     if (j == idz) then
         jl = idz
         cycle
     end if
-    if (abs(zmat(knew, j)) > ZERO) then
+    !if (abs(zmat(knew, j)) > ZERO) then
+    if (abs(zmat(knew, j)) > ztest) then
         grot = planerot(zmat(knew, [jl, j]))  ! MATLAB code: GROT = PLANEROT(ZMAT(KNEW, [JL, J])')
         zmat(:, [jl, j]) = matprod(zmat(:, [jl, j]), transpose(grot))
-        zmat(knew, j) = ZERO
     end if
+    zmat(knew, j) = ZERO
 end do
 ! The value of JL after the loop is important below. Its value is determined by the current (i.e.,
 ! unupdated) value of IDZ. IDZ is an integer in {1, ..., NPT-N} such that S_J = -1 for J < IDZ while
@@ -161,7 +164,7 @@ end if
 
 alpha = w(knew)
 tau = vlag(knew)
-tausq = tau * tau
+tausq = tau**2
 denom = alpha * beta + tausq
 ! After the following line, VLAG = Hw - e_t in the NEWUOA paper.
 vlag(knew) = vlag(knew) - ONE

@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 05, 2022 PM04:53:42
+! Last Modified: Wednesday, April 13, 2022 AM01:56:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,7 @@ subroutine update(n, npt, bmat, zmat, ndim, vlag, beta, denom, knew, w)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO
+use, non_intrinsic :: linalg_mod, only : planerot
 
 implicit none
 
@@ -38,7 +39,7 @@ real(RP), intent(inout) :: w(npt + n)
 real(RP), intent(inout) :: zmat(npt, npt - n - 1_IK)
 
 ! local variables
-real(RP) :: alpha, tau, temp, tempa, tempb, ztest
+real(RP) :: alpha, tau, temp, tempa, tempb, ztest, grot(2, 2), zmatk1
 integer(IK) :: i, j, jp, k, nptm
 
 
@@ -69,9 +70,12 @@ ztest = 1.0E-20_RP * ztest
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do j = 2, nptm
     if (abs(zmat(knew, j)) > ztest) then
-        temp = sqrt(zmat(knew, 1)**2 + zmat(knew, j)**2)
-        tempa = zmat(knew, 1) / temp
-        tempb = zmat(knew, j) / temp
+        !temp = sqrt(zmat(knew, 1)**2 + zmat(knew, j)**2)
+        !tempa = zmat(knew, 1) / temp
+        !tempb = zmat(knew, j) / temp
+        grot = planerot(zmat(knew, [1, j]))
+        tempa = grot(1, 1)
+        tempb = grot(1, 2)
         do i = 1, npt
             temp = tempa * zmat(i, 1) + tempb * zmat(i, j)
             zmat(i, j) = tempa * zmat(i, j) - tempb * zmat(i, 1)
@@ -96,8 +100,10 @@ vlag(knew) = vlag(knew) - ONE
 temp = sqrt(denom)
 tempb = zmat(knew, 1) / temp
 tempa = tau / temp
+zmatk1 = zmat(knew, 1)
 do i = 1, npt
     zmat(i, 1) = tempa * zmat(i, 1) - tempb * vlag(i)
+    !zmat(i, 1) = (tau * zmat(i, 1) - zmatk1 * vlag(i)) / temp
 end do
 !
 !     Finally, update the matrix BMAT.
