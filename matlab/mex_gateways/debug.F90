@@ -17,7 +17,7 @@ module debug_mod
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, April 12, 2022 AM11:04:44
+! Last Modified: Tuesday, April 12, 2022 PM03:21:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -119,8 +119,8 @@ end subroutine wassert
 
 subroutine errstop(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'!', then stop. In the
-! debug mode, it also calls BACKTR to print the backtrace.
+! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'!', then stop.
+! It also calls BACKTR to print the backtrace.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : MSGLEN, DEBUGGING
 implicit none
@@ -130,9 +130,7 @@ character(len=*), intent(in) :: msg
 character(len=MSGLEN) :: eid
 character(len=MSGLEN) :: emsg
 
-if (DEBUGGING) then
-    call backtr()
-end if
+call backtr()
 eid = 'FMXAPI:'//trim(srname)
 emsg = trim(srname)//': '//trim(msg)//'!'
 call mexErrMsgIdAndTxt(trim(eid), trim(emsg))
@@ -150,6 +148,8 @@ subroutine backtr
 ! the option -std=f2003) while __DEBUGGING__ is set to 1, then the compilation may FAIL when linking,
 ! complaining that a subroutine cannot be found (e.g., backtrace for gfortran). In that case, we
 ! must set __DEBUGGING__ to 0 in ppf.h.
+!
+! Zaikun 20220412: MEX does not print the line numbers in the backtrace even with the '-g' option.
 !--------------------------------------------------------------------------------------------------!
 #if __DEBUGGING__ == 1
 

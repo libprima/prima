@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 12, 2022 PM02:17:03
+! Last Modified: Tuesday, April 12, 2022 PM04:30:10
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1059,7 +1059,7 @@ err = maxval(e) / (maxabs * real(n + npt, RP))
 end function errh
 
 
-subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
+subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays BMAT and ZMAT together with IDZ, in order to replace the
 ! interpolation point XPT(:, KNEW) by XNEW = XPT(:, KOPT) + D. See Section 4 of the NEWUOA paper.
@@ -1087,6 +1087,7 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: info_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, symmetrize, issymmetric, outprod!, r2update
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
@@ -1101,6 +1102,9 @@ real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 integer(IK), intent(inout) :: idz
 real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+
+! Outputs
+integer(IK), intent(out), optional :: info
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATEH'
@@ -1157,6 +1161,10 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
+
+if (present(info)) then
+    info = INFO_DFT
+end if
 
 ! Do nothing when KNEW is 0. This can only happen sometimes after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
@@ -1226,9 +1234,21 @@ alpha = w(knew)
 tau = vlag(knew)
 tausq = tau * tau
 denom = alpha * beta + tausq
+if (abs(denom) > 0) then
+    sqrtdn = sqrt(abs(denom))
+else
+    if (present(info)) then
+        ! 1. Up to here, only ZMAT is rotated, which does not change H in precise arithmetic, so
+        ! there is not need to revert to the un-updated data.
+        ! 2. After UPDATEH returns, the algorithm should do something to rectify the damaging
+        ! rounding. However, nothing is done in the current (20220412) version of NEWUOA/LINCOA for
+        ! the moment (Powell's version of LINCOA terminates). Note that H is not updated at all here.
+        info = DAMAGING_ROUNDING
+    end if
+    return
+end if
 ! After the following line, VLAG = Hw - e_t in the NEWUOA paper.
 vlag(knew) = vlag(knew) - ONE
-sqrtdn = sqrt(abs(denom))
 
 if (jl == 1) then
     ! Complete the updating of ZMAT when there is only 1 nonzero in ZMAT(KNEW, :) after the rotation.
