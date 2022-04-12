@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 13, 2022 AM01:43:20
+! Last Modified: Wednesday, April 13, 2022 AM01:59:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -190,7 +190,8 @@ if (jl == 1) then
     tempb = zmat(knew, 1) / sqrtdn
     !---------------------------------------------------------------------------------------------!
 
-    zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
+    !zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
+    zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrtdn
 
     !---------------------------------------------------------------------------------------------!
     ! The following six lines by Powell are obviously problematic --- SQRTDN is always nonnegative.

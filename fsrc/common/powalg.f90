@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 13, 2022 AM01:34:47
+! Last Modified: Wednesday, April 13, 2022 AM02:00:47
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1284,8 +1284,8 @@ if (jl == 1) then
     !---------------------------------------------------------------------------------------------!
 
     ! The following line updates ZMAT(:, 1) according to (4.18) of the NEWUOA paper.
-    zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
-    !zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrtdn
+    !zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
+    zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrtdn
 
     !---------------------------------------------------------------------------------------------!
     ! Zaikun 20220411: The update of IDZ is decoupled from the update of ZMAT, located after END IF.

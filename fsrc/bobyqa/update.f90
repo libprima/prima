@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 13, 2022 AM01:55:53
+! Last Modified: Wednesday, April 13, 2022 AM01:59:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -107,8 +107,8 @@ tau = vlag(knew)
 vlag(knew) = vlag(knew) - ONE
 
 ! Complete the updating of ZMAT. See (4.14) of the BOBYQA paper.
-zmat(:, 1) = (tau / sqrt(denom)) * zmat(:, 1) - (zmat(knew, 1) / sqrt(denom)) * vlag(1:npt)
-!zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrt(denom)
+!zmat(:, 1) = (tau / sqrt(denom)) * zmat(:, 1) - (zmat(knew, 1) / sqrt(denom)) * vlag(1:npt)
+zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrt(denom)
 
 ! Finally, update the matrix BMAT. It implements the last N rows of (4.9) in the NEWUOA paper.
 w(npt + 1:npt + n) = bmat(:, knew)
