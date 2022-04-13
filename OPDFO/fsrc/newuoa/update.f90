@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 13, 2022 AM01:59:52
+! Last Modified: Wednesday, April 13, 2022 PM09:14:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -166,9 +166,10 @@ alpha = w(knew)
 tau = vlag(knew)
 tausq = tau**2
 denom = alpha * beta + tausq
+if (.not. abs(denom) > 0) return
+sqrtdn = sqrt(abs(denom))
 ! After the following line, VLAG = Hw - e_t in the NEWUOA paper.
 vlag(knew) = vlag(knew) - ONE
-sqrtdn = sqrt(abs(denom))
 
 reduce_idz = .false.
 if (jl == 1) then
@@ -190,8 +191,8 @@ if (jl == 1) then
     tempb = zmat(knew, 1) / sqrtdn
     !---------------------------------------------------------------------------------------------!
 
-    !zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
-    zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrtdn
+    zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
+    !zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrtdn
 
     !---------------------------------------------------------------------------------------------!
     ! The following six lines by Powell are obviously problematic --- SQRTDN is always nonnegative.

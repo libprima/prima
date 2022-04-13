@@ -112,8 +112,9 @@ if isempty(requirements.list)
     case {'lincoa', 'lincoan'}
         blacklist = [blacklist, {'LSNNODOC', 'HS55', 'AVGASA', 'AVGASB'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
-        blacklist = [blacklist, {' QPNBOEI2'}]; % Too long to solve
+        blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
+        blacklist = [blacklist, {'DEGENLPB'}];  % Takes long to solve
         blacklist = [blacklist, {'MINMAXRB'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that

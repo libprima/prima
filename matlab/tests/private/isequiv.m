@@ -118,13 +118,14 @@ else
         blacklist = [blacklist, {'LSNNODOC', 'HS55'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
-        blacklist = [blacklist, {' QPNBOEI2'}]; % Too long to solve
+        blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'MINMAXRB'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
         end
+        blacklist = [blacklist, {'DEGENLPB'}]; % Takes long to solve
         blacklist=[blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Takes more than 5 min to solve
         blacklist = [blacklist, {'KISSING2', 'LUKSAN16', 'QPCBLEND', 'VANDERM4'}]; % Takes more than 20 sec to solve
         %blacklist = [blacklist, {'DUAL2', 'FEEDLOC', 'GROUPING', 'HYDCAR20', 'LINSPANH', 'LUKSAN11', ...
@@ -165,7 +166,11 @@ else
 end
 
 single_test = (length(plist) <= 1);
-sequential = (isfield(options, 'sequential') && options.sequential) || single_test;
+if isfield(options, 'sequential')
+    sequential = options.sequential;
+else
+    sequential = single_test;
+end
 
 if sequential
     for ip = minip : length(plist)
@@ -189,6 +194,7 @@ if sequential
     end
 else
     parfor ip = minip : length(plist)
+
         orig_warning_state = warnoff(solvers);
 
         pname = upper(plist{ip});
@@ -198,7 +204,7 @@ else
         prob = macup(pname);
 
         for ir = minir : maxir
-            fprintf('\n%s Run No. %3d:\n', pname, ir);
+            %fprintf('\n%s Run No. %3d:\n', pname, ir);
             % The following line compares the solvers on `prob`; ir is needed for the random seed, and
             % `prec` is the precision of the comparison (should be 0). The function will raise an error
             % if the solvers behave differently.
@@ -601,7 +607,7 @@ if ~equiv
         chist2 = output2.chist(end-nhist+1:end);
         chist1 == chist2
     end
-    if single_test
+    if single_test && options.sequential
         fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
         cd(options.olddir);
         keyboard

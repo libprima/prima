@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 13, 2022 AM02:00:47
+! Last Modified: Thursday, April 14, 2022 AM12:45:02
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1086,7 +1086,7 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat, info)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: info_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, symmetrize, issymmetric, outprod!, r2update
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -1234,7 +1234,7 @@ else
     !tempa = -zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
     w(1:npt) = -zmat(knew, 1) * zmat(:, 1)
 end if
-if (jl > 1) then  ! In this case, JL == IDZ.
+if (jl > 1) then  ! In this case, 1 < JL == IDZ < NPT - N.
     w(1:npt) = w(1:npt) + zmat(knew, jl) * zmat(:, jl)
 end if
 
@@ -1242,9 +1242,7 @@ end if
 alpha = w(knew)
 tau = vlag(knew)
 denom = alpha * beta + tau**2
-if (abs(denom) > 0) then
-    sqrtdn = sqrt(abs(denom))
-else
+if (abs(denom) <= 0 .or. is_nan(denom)) then
     ! 1. Up to here, only ZMAT is rotated, which does not change H in precise arithmetic, so it is
     ! fine if we do not revert ZMAT to the un-updated version.
     ! 2. After UPDATEH returns, ideally, the algorithm should do something to rectify the damaging
@@ -1255,6 +1253,7 @@ else
     end if
     return
 end if
+sqrtdn = sqrt(abs(denom))
 ! After the following line, VLAG = H*w - e_t in the NEWUOA paper.
 vlag(knew) = vlag(knew) - ONE
 
@@ -1284,8 +1283,7 @@ if (jl == 1) then
     !---------------------------------------------------------------------------------------------!
 
     ! The following line updates ZMAT(:, 1) according to (4.18) of the NEWUOA paper.
-    !zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
-    zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrtdn
+    zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
 
     !---------------------------------------------------------------------------------------------!
     ! Zaikun 20220411: The update of IDZ is decoupled from the update of ZMAT, located after END IF.
