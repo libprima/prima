@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 11, 2022 AM12:43:18
+! Last Modified: Thursday, April 14, 2022 AM01:28:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -112,7 +112,6 @@ beta = calbeta(kopt, bmat, step, xpt, zmat, idz)
 !
 !
 if (knew == 0) then
-    knew = 1  ! Without this, SIGSEV may occur due to uninitialized KNEW.
     denmax = ZERO
     do k = 1, npt
         hdiag = ZERO

@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 13, 2022 AM01:59:05
+! Last Modified: Wednesday, April 13, 2022 PM08:57:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,7 +54,10 @@ integer(IK) :: npt
 real(RP) :: ztest
 real(RP) :: alpha
 real(RP) :: grot(2, 2)
+real(RP) :: sqrtdn
 real(RP) :: tau
+real(RP) :: tempa
+real(RP) :: tempb
 real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: w(size(vlag))
@@ -107,8 +110,10 @@ tau = vlag(knew)
 vlag(knew) = vlag(knew) - ONE
 
 ! Complete the updating of ZMAT. See (4.14) of the BOBYQA paper.
-!zmat(:, 1) = (tau / sqrt(denom)) * zmat(:, 1) - (zmat(knew, 1) / sqrt(denom)) * vlag(1:npt)
-zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrt(denom)
+sqrtdn = sqrt(denom)
+tempa = tau / sqrtdn
+tempb = zmat(knew, 1) / sqrtdn
+zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
 
 ! Finally, update the matrix BMAT. It implements the last N rows of (4.9) in the NEWUOA paper.
 w(npt + 1:npt + n) = bmat(:, knew)

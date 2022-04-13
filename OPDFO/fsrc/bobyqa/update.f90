@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 13, 2022 AM01:59:12
+! Last Modified: Wednesday, April 13, 2022 PM08:54:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -102,8 +102,8 @@ tempb = zmat(knew, 1) / temp
 tempa = tau / temp
 zmatk1 = zmat(knew, 1)
 do i = 1, npt
-    !zmat(i, 1) = tempa * zmat(i, 1) - tempb * vlag(i)
-    zmat(i, 1) = (tau * zmat(i, 1) - zmatk1 * vlag(i)) / temp
+    zmat(i, 1) = tempa * zmat(i, 1) - tempb * vlag(i)
+    !zmat(i, 1) = (tau * zmat(i, 1) - zmatk1 * vlag(i)) / temp
 end do
 !
 !     Finally, update the matrix BMAT.

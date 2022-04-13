@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 13, 2022 AM02:02:12
+! Last Modified: Thursday, April 14, 2022 AM01:28:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -245,7 +245,6 @@ alpha = w(knew)
 tau = vlag(knew)
 tausq = tau**2
 denom = alpha * beta + tausq
-vlag(knew) = vlag(knew) - ONE
 !--------------------------------------------------!
 ! Zaikun 20220410
 ! ?????????????????????????????
@@ -253,8 +252,10 @@ vlag(knew) = vlag(knew) - ONE
 !    knew = 0
 !    goto 180
 !end if
+if (.not. abs(denom) > 0) return
 !--------------------------------------------------!
 sqrtdn = sqrt(abs(denom))
+vlag(knew) = vlag(knew) - ONE
 !
 !     Complete the updating of ZMAT when there is only ONE nonZERO element
 !       in the KNEW-th row of the new matrix ZMAT. IFLAG is set to ONE when
@@ -266,8 +267,8 @@ if (jl == 1) then
     tempb = zmat(knew, 1) / sqrtdn
     zmatk1 = zmat(knew, 1)
     do i = 1, npt
-        !zmat(i, 1) = tempa * zmat(i, 1) - tempb * vlag(i)
-        zmat(i, 1) = (tau * zmat(i, 1) - zmatk1 * vlag(i)) / sqrtdn
+        zmat(i, 1) = tempa * zmat(i, 1) - tempb * vlag(i)
+        !zmat(i, 1) = (tau * zmat(i, 1) - zmatk1 * vlag(i)) / sqrtdn
     end do
     if (denom < 0) then
         if (idz == 1) then
