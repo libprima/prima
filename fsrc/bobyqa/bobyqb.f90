@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM04:00:16
+! Last Modified: Thursday, April 14, 2022 PM06:59:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,7 +39,7 @@ use, non_intrinsic :: initialize_mod, only : initialize
 use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox
-use, non_intrinsic :: update_mod, only : update
+use, non_intrinsic :: update_mod, only : updateh
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 implicit none
@@ -102,7 +102,7 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        pqold, ratio, rho, scaden, summ, summa, summb, &
 &        temp, qred, xoptsq
 integer(IK) :: i, itest, j, jj, k, kbase, knew, &
-&           kopt, ksav, nfsav, np, nptm, nresc, ntrits
+&           kopt, ksav, nfsav, np, nresc, ntrits
 
 
 ! Sizes.
@@ -167,7 +167,6 @@ su = su_in
 !     Set some constants.
 !
 np = n + 1
-nptm = npt - np
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     The call of PRELIM sets the elements of XBASE, XPT, FVAL, GOPT, HQ, PQ,
@@ -482,7 +481,7 @@ else
     do k = 1, npt
         if (k == kopt) cycle
         hdiag = ZERO
-        do jj = 1, nptm
+        do jj = 1, npt - np
             hdiag = hdiag + zmat(k, jj)**2
         end do
         den = beta * hdiag + vlag(k)**2
@@ -606,7 +605,7 @@ if (ntrits > 0) then
         knew = 0
         do k = 1, npt
             hdiag = ZERO
-            do jj = 1, nptm
+            do jj = 1, npt - np
                 hdiag = hdiag + zmat(k, jj)**2
             end do
             den = beta * hdiag + vlag(k)**2
@@ -638,7 +637,7 @@ call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG 
 call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
 call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
 !--------------------------------------------------------------------------------------------------!
-call update(knew, beta, vlag, bmat, zmat)
+call updateh(knew, beta, vlag, bmat, zmat)
 
 
 pqold = pq(knew)
@@ -650,7 +649,7 @@ do i = 1, n
         hq(j, i) = hq(i, j)
     end do
 end do
-do jj = 1, nptm
+do jj = 1, npt - np
     temp = diff * zmat(knew, jj)
     do k = 1, npt
         pq(k) = pq(k) + temp * zmat(k, jj)
@@ -667,7 +666,7 @@ do i = 1, n
 end do
 do k = 1, npt
     summa = ZERO
-    do jj = 1, nptm
+    do jj = 1, npt - np
         summa = summa + zmat(knew, jj) * zmat(k, jj)
     end do
     summb = ZERO
@@ -717,7 +716,7 @@ if (ntrits > 0) then
         vlag(k) = fval(k) - fval(kopt)
         w(k) = ZERO
     end do
-    do j = 1, nptm
+    do j = 1, npt - np
         summ = ZERO
         do k = 1, npt
             summ = summ + zmat(k, j) * vlag(k)

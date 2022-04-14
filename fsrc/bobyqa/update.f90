@@ -8,18 +8,18 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM04:16:40
+! Last Modified: Thursday, April 14, 2022 PM06:33:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: update
+public :: updateh
 
 
 contains
 
 
-subroutine update(knew, beta, vlag_in, bmat, zmat)
+subroutine updateh(knew, beta, vlag_in, bmat, zmat)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays BMAT and ZMAT in order to replace the interpolation point
 ! XPT(:, KNEW) by XNEW = XPT(:, KOPT) + D. See Section 4 of the BOBYQA paper. [BMAT, ZMAT] describes
@@ -46,11 +46,10 @@ real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
-character(len=*), parameter :: srname = 'UPDATE'
+character(len=*), parameter :: srname = 'UPDATEH'
 integer(IK) :: j
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: ztest
 real(RP) :: alpha
 real(RP) :: denom
 real(RP) :: grot(2, 2)
@@ -62,6 +61,7 @@ real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(vlag_in))
 real(RP) :: w(size(vlag))
+real(RP) :: ztest
 
 ! Sizes.
 n = int(size(bmat, 1), kind(n))
@@ -85,22 +85,24 @@ end if
 ! Calculation starts !
 !====================!
 
-!----- The following are copied from NEWUOA. Needed here? --------------------------------------!
+!-------- The following are copied from NEWUOA. Needed here? --------------------------------------!
 ! We must not do anything if KNEW is 0. This can only happen sometimes after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
+!--------------------------------------------------------------------------------------------------!
 
+! Read VLAG, and calculate parameters for the updating formula (4.9) and (4.14).
 vlag = vlag_in
 tau = vlag(knew)
-! In theory, DENOM can also be calculated after ZMAT is rotated below. It will make BOBYQA behave
-! differently from Powell's version due to rounding errors.
+! In theory, DENOM can also be calculated after ZMAT is rotated below. However, this worsened the
+! performance of BOBYQA in a test on 20220413.
 denom = sum(zmat(knew, :)**2) * beta + tau**2
+call assert(denom > 0, 'DENOM > 0', srname)  ! BOBYQA ensures DENOM to be positive.
 vlag(knew) = vlag(knew) - ONE
 
-! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT. After this, ZMAT(:, KNEW) contains
-! only one nonzero entry ZMAT(KNEW, 1).
-! Elements of ZMAT are treated as zero if the moduli are at most ZTEST.
+! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT. After this, ZMAT(KNEW, :) contains
+! only one nonzero at ZMAT(KNEW, 1). Entries of ZMAT are treated as 0 if the moduli are at most ZTEST.
 ztest = 1.0E-20_RP * maxval(abs(zmat))
 do j = 2, npt - n - 1_IK
     if (abs(zmat(knew, j)) > ztest) then
@@ -110,8 +112,7 @@ do j = 2, npt - n - 1_IK
     zmat(knew, j) = ZERO
 end do
 
-! Put the first NPT components of the KNEW-th column of H into W(1:NPT). Calculate the parameters of
-! the updating formula (4.9) and (4.14).
+! Put the first NPT components of the KNEW-th column of H into W(1:NPT).
 w(1:npt) = zmat(knew, 1) * zmat(:, 1)
 alpha = w(knew)
 
@@ -147,7 +148,7 @@ if (DEBUGGING) then
     !    & 'H = W^{-1} in (2.7) of the BOBYQA paper', srname)
     !deallocate (xpt_test)
 end if
-end subroutine update
+end subroutine updateh
 
 
 end module update_mod

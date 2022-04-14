@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM04:22:55
+! Last Modified: Thursday, April 14, 2022 PM05:53:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ use, non_intrinsic :: linalg_mod, only : issymmetric, inprod!, matprod!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specif modules
-use, non_intrinsic :: update_mod, only : update
+use, non_intrinsic :: update_mod, only : updateh
 
 implicit none
 
@@ -302,7 +302,7 @@ if (knew /= kopt) then
     !----------------------------------------------------------------------------------------------!
     call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
     !----------------------------------------------------------------------------------------------!
-    call update(knew, beta, vlag, bmat, zmat)
+    call updateh(knew, beta, vlag, bmat, zmat)
     if (nrem == 0) goto 350
     do k = 1, npt
         w(npt + n + k) = abs(w(npt + n + k))
