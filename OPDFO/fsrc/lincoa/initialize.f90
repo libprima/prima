@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 PM03:12:59
+! Last Modified: Friday, April 15, 2022 AM12:33:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -204,10 +204,14 @@ do nf = 1, npt
     j = 0
 80  j = j + 1
     if (j <= m .and. nf >= 2) then
-        resid = -b(j)
+        !--------------------------------------------!
+        !resid = -b(j)
+        resid = ZERO
         do i = 1, n
             resid = resid + xpt(i, nf) * amat(i, j)
         end do
+        resid = -b(j) + resid
+        !--------------------------------------------!
         if (resid <= bigv) goto 80
         bigv = resid
         jsav = j
