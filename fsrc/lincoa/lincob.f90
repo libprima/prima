@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM08:13:59
+! Last Modified: Friday, April 15, 2022 AM12:27:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -109,7 +109,7 @@ real(RP) :: xpt(size(x), npt)
 real(RP) :: xsav(size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: del, delsav, delta, dffalt, diff, &
-&        distsq, fopt, fsave, ratio,     &
+&        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, snorm, ssq, summ, temp, vqalt,   &
 &        qred, xdiff
 integer(IK) :: i, idz, ifeas, imprv, itest, j, k,    &
@@ -407,21 +407,13 @@ if (nf > maxfun) then
     info = MAXFUN_REACHED
     goto 600
 end if
-xdiff = ZERO
-do i = 1, n
-    xnew(i) = xopt(i) + step(i)
-    x(i) = xbase(i) + xnew(i)
-    xdiff = xdiff + (x(i) - xsav(i))**2
-end do
-xdiff = sqrt(xdiff)
+xnew = xopt + step
+x = xbase + xnew
+xdiff = sqrt(sum((x - xsav)**2))
 if (ksave == -1) xdiff = rho
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IF (XDIFF .LE. TENTH*RHO .OR. XDIFF .GE. DELTA+DELTA) THEN
 if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ifeas = 0
     info = DAMAGING_ROUNDING
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     goto 600
 end if
 if (ksave <= 0) ifeas = 1
@@ -544,11 +536,8 @@ xsxpt(knew) = xsxpt(kopt) + xsxpt(npt + kopt)
 ! XOPT'*XPT(:, KOPT) + STEP'*XPT(:, KOPT) = (XOPT+STEP)'*XPT(:, KOPT) = XNEW'*XPT(:, KOPT) = XNEW'*XOPT
 !!xsxpt(knew) = inprod(xopt, xnew)
 
-ssq = ZERO
-do i = 1, n
-    xpt(i, knew) = xnew(i)
-    ssq = ssq + step(i)**2
-end do
+xpt(:, knew) = xnew
+ssq = sum(step**2)
 xsxpt(npt + knew) = xsxpt(npt + kopt) + ssq
 ! STEP'*XPT(:, KNEW) + STEP'*STEP = STEP'*[XPT(:, KOPT) + STEP] = STEP'*XNEW
 !!xsxpt(npt + knew) = inprod(step, xnew)
@@ -595,9 +584,6 @@ if (f < fopt .and. ifeas == 1) then
         end where
     end where
 
-    !do k = 1, npt
-    !    xsxpt(k) = xsxpt(k) + xsxpt(npt + k)
-    !end do
     xsxpt(1:npt) = xsxpt(1:npt) + xsxpt(npt + 1:2 * npt)
     !!xsxpt(1:npt) = matprod(xopt, xpt)
 !
@@ -639,28 +625,19 @@ end if
 knew = 0
 if (ksave > 0) goto 20
 if (ratio >= TENTH) goto 20
-!
-!     Alternatively, find out if the interpolation points are close enough
-!       to the best point so far.
-!
-530 distsq = max(delta * delta, 4.0_RP * rho * rho)
-do k = 1, npt
-    summ = ZERO
-    do j = 1, n
-        summ = summ + (xpt(j, k) - xopt(j))**2
-    end do
-    if (summ > distsq) then
-        knew = k
-        distsq = summ
-    end if
-end do
-!
-!     If KNEW is positive, then branch back for the next iteration, which
-!       will generate a "model step". Otherwise, if the current iteration
-!       has reduced F, or if DELTA was above its lower bound when the last
-!       trust region step was calculated, then try a "trust region" step
-!       instead.
-!
+
+530 continue
+
+! Alternatively, find out if the interpolation points are close enough to the best point so far.
+distsq = max(delta * delta, 4.0_RP * rho * rho)
+xopt = xpt(:, kopt)
+xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+! MATLAB: xdsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
+knew = maxloc([distsq, xdsq], dim=1) - 1_IK
+
+! If KNEW is positive, then branch back for the next iteration, which will generate a "model step".
+! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound when the
+! last trust region step was calculated, then try a "trust region" step instead.
 if (knew > 0) goto 20
 knew = 0
 if (fopt < fsave) goto 20

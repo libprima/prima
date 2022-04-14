@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM09:29:05
+! Last Modified: Friday, April 15, 2022 AM01:34:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -91,7 +91,7 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: x(size(x0))
-real(RP) :: bigv, feas, recip, reciq, resid, rhosq, test
+real(RP) :: bigv, feas, recip, reciq, resid(size(b)), rhosq, test
 integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, knew
 
 
@@ -142,7 +142,7 @@ end if
 !     IDZ is going to be set to ONE, so that every element of Diag(DZ) is
 !       ONE in the product ZMAT times Diag(DZ) times ZMAT^T, which is the
 !       factorization of the leading NPT by NPT submatrix of H.
-!     STEP and W are used for working space, the array STEP 
+!     STEP and W are used for working space, the array STEP
 !       being taken from LINCOB. The length of W must be at least N+NPT.
 !
 !     This subroutine provides the elements of XBASE, XPT, BMAT and ZMAT
@@ -218,29 +218,21 @@ b = b - matprod(xbase, amat)
 ! Go through the initial points, shifting every infeasible point if necessary so that its constraint
 ! violation is at least 0.2*RHOBEG.
 !--------------------------------------------------------------------------------------------------!
-jsav = 1_IK  ! Temporary fix for attention: jsav may be used uninitialized in this function from g95
+!jsav = 1_IK  ! Temporary fix for attention: jsav may be used uninitialized in this function from g95
 !--------------------------------------------------------------------------------------------------!
 do nf = 1, npt
     feas = ONE
     bigv = ZERO
     j = 0
     if (nf >= 2) then
-        do j = 1, m
-            resid = -b(j)
-            do i = 1, n
-                resid = resid + xpt(i, nf) * amat(i, j)
-            end do
-            if (resid <= bigv) then
-                cycle
-            end if
-            bigv = resid
-            jsav = j
-            if (resid <= test) then
-                feas = -ONE
-                cycle
-            end if
+        resid = -b + matprod(xpt(:, nf), amat)
+        bigv = maxval([ZERO, resid])
+        jsav = int(maxloc(resid, dim=1), IK)
+        if (bigv > test) then
             feas = ZERO
-        end do
+        elseif (bigv > 0) then
+            feas = -ONE
+        end if
     end if
     if (feas < ZERO) then
         step = xpt(:, nf) + (test - bigv) * amat(:, jsav)
