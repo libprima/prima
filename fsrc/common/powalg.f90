@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 14, 2022 AM10:10:47
+! Last Modified: Thursday, April 14, 2022 PM05:14:38
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1226,7 +1226,7 @@ end do
 ! Here, Powell's code calculates this column by the ZMAT that has been updated by the rotation as
 ! above. Theoretically, W(1:NPT) can also be calculated before the rotation by calling OMEGA_COL,
 ! which is tempting to do because the rotation may introduce some rounding errors to ZMAT. However,
-! according to a test on 20220411, this alternative does not improve the performance.  We can also
+! according to a test on 20220411, this alternative does not improve the performance. We can also
 ! calculate VLAG and BETA using the updated ZMAT here, which does not lead to improvements either.
 if (idz <= 1) then  ! IDZ <= 0 is impossible unless there is a bug.
     !tempa = zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
@@ -1239,7 +1239,7 @@ if (jl > 1) then  ! In this case, 1 < JL == IDZ < NPT - N.
     w(1:npt) = w(1:npt) + zmat(knew, jl) * zmat(:, jl)
 end if
 
-! Calculate the parameters of the updating formula.
+! Calculate the parameters of the updating formula (4.18)--(4.20) in the NEWUOA paper.
 alpha = w(knew)
 tau = vlag(knew)
 denom = alpha * beta + tau**2

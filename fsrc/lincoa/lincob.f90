@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 10, 2022 AM01:35:01
+! Last Modified: Thursday, April 14, 2022 PM08:13:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -38,9 +38,9 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING!, SMALL_TR_RADIUS, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, maximum, eye, r1update
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : calquad
+use, non_intrinsic :: powalg_mod, only : calquad, omega_col, omega_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
@@ -107,7 +107,6 @@ real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: xsav(size(x))
-real(RP) :: zknew(npt - size(x) - 1)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: del, delsav, delta, dffalt, diff, &
 &        distsq, fopt, fsave, ratio,     &
@@ -333,9 +332,7 @@ else
         goto 600
     end if
 
-    zknew = zmat(knew, :)
-    zknew(1:idz - 1) = -zknew(1:idz - 1)
-    pqw(1:npt) = matprod(zmat, zknew)
+    pqw(1:npt) = omega_col(idz, zmat, knew)
     if (is_nan(sum(abs(pqw(1:npt))))) then
         info = NAN_MODEL
         goto 600
@@ -464,29 +461,16 @@ diff = f - fopt + qred
 !       value of F and the value predicted by the alternative model.
 !
 if (ifeas == 1 .and. itest < 3) then
-    do k = 1, npt
-        pqw(k) = ZERO
-        w(k) = fval(k) - fval(kopt)
-    end do
-    do j = 1, npt - n - 1_IK
-        summ = ZERO
-        do i = 1, npt
-            summ = summ + w(i) * zmat(i, j)
-        end do
-        if (j < idz) summ = -summ
-        do k = 1, npt
-            pqw(k) = pqw(k) + summ * zmat(k, j)
-        end do
-    end do
+    w(1:npt) = fval - fval(kopt)
+    pqw(1:npt) = omega_mul(idz, zmat, w(1:npt))
+    !-----------------------------------------------------------------------------------------!
+    ! The following evaluates Q_alt(XOPT+STEP) - Q_alt(XOPT), which should be done by CALQUAD.
     vqalt = ZERO
     do k = 1, npt
-        summ = ZERO
-        do j = 1, n
-            summ = summ + bmat(j, k) * step(j)
-        end do
-        vqalt = vqalt + summ * w(k)
+        vqalt = vqalt + inprod(step, bmat(:, k)) * w(k)
         vqalt = vqalt + pqw(k) * xsxpt(npt + k) * (HALF * xsxpt(npt + k) + xsxpt(k))
     end do
+    !-----------------------------------------------------------------------------------------!
     dffalt = f - fopt - vqalt
 end if
 if (itest == 3) then
@@ -544,30 +528,11 @@ end if
 !       later for the gradient of the new KNEW-th Lagrange function.
 !
 if (itest < 3) then
-    do k = 1, npt
-        pqw(k) = ZERO
-    end do
-    do j = 1, npt - n - 1_IK
-        temp = zmat(knew, j)
-        if (temp /= ZERO) then
-            if (j < idz) temp = -temp
-            do k = 1, npt
-                pqw(k) = pqw(k) + temp * zmat(k, j)
-            end do
-        end if
-    end do
-    do i = 1, n
-        w(i) = bmat(i, knew)
-        temp = pq(knew) * xpt(i, knew)
-        do j = 1, i
-            hq(i, j) = hq(i, j) + temp * xpt(j, knew)  ! Outer product
-            hq(j, i) = hq(i, j)
-        end do
-    end do
+    call r1update(hq, pq(knew), xpt(:, knew))
     pq(knew) = ZERO
-    do k = 1, npt
-        pq(k) = pq(k) + diff * pqw(k)
-    end do
+    pqw(1:npt) = omega_col(idz, zmat, knew)
+    pq = pq + diff * pqw(1:npt)
+    w(1:n) = bmat(:, knew)
 end if
 !
 !     Include the new interpolation point with the corresponding updates of
@@ -589,14 +554,9 @@ xsxpt(npt + knew) = xsxpt(npt + kopt) + ssq
 !!xsxpt(npt + knew) = inprod(step, xnew)
 if (itest < 3) then
     do k = 1, npt
-        temp = pqw(k) * xsxpt(k)
-        do i = 1, n
-            w(i) = w(i) + temp * xpt(i, k)
-        end do
+        w(1:n) = w(1:n) + pqw(k) * xsxpt(k) * xpt(:, k)
     end do
-    do i = 1, n
-        gopt(i) = gopt(i) + diff * w(i)
-    end do
+    gopt = gopt + diff * w(1:n)
 end if
 !
 !     Update FOPT, XSAV, XOPT, KOPT, RESCON and XSXPT if the new F is the
@@ -650,11 +610,9 @@ if (f < fopt .and. ifeas == 1) then
                 gopt(i) = gopt(i) + hq(i, j) * step(j)
             end do
         end do
+        !gopt = gopt + matprod(hq, step)
         do k = 1, npt
-            temp = pq(k) * xsxpt(npt + k)
-            do i = 1, n
-                gopt(i) = gopt(i) + temp * xpt(i, k)
-            end do
+            gopt = gopt + pq(k) * xsxpt(npt + k) * xpt(:, k)
         end do
     end if
 end if
@@ -664,31 +622,11 @@ end if
 !       of values of F at feasible points.
 !
 if (itest == 3) then
+    w(1:npt) = fval - fval(kopt)
+    pq = omega_mul(idz, zmat, w(1:npt))
+    gopt = matprod(bmat(:, 1:npt), w(1:npt))
     do k = 1, npt
-        pq(k) = ZERO
-        w(k) = fval(k) - fval(kopt)
-    end do
-    do j = 1, npt - n - 1_IK
-        summ = ZERO
-        do i = 1, npt
-            summ = summ + w(i) * zmat(i, j)
-        end do
-        if (j < idz) summ = -summ
-        do k = 1, npt
-            pq(k) = pq(k) + summ * zmat(k, j)
-        end do
-    end do
-    do j = 1, n
-        gopt(j) = ZERO
-        do i = 1, npt
-            gopt(j) = gopt(j) + w(i) * bmat(j, i)
-        end do
-    end do
-    do k = 1, npt
-        temp = pq(k) * xsxpt(k)
-        do i = 1, n
-            gopt(i) = gopt(i) + temp * xpt(i, k)
-        end do
+        gopt = gopt + pq(k) * xsxpt(k) * xpt(:, k)
     end do
     hq = ZERO
 end if

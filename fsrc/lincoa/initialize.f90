@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 10, 2022 AM01:35:36
+! Last Modified: Thursday, April 14, 2022 PM08:24:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,6 +34,7 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : matprod, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: powalg_mod, only : omega_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: update_mod, only : update
@@ -320,39 +321,19 @@ end do
 !----------------------------------------------------------!
 nf = min(nf, npt)  ! At exit of the loop, nf = npt + 1
 !----------------------------------------------------------!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     Set PQ for the first quadratic model.
-!
-do j = 1, npt - n - 1
-    w(j) = ZERO
-    do k = 1, npt
-        w(j) = w(j) + zmat(k, j) * fval(k)
-    end do
-end do
+
+! Set PQ for the first quadratic model.
+
+pq = omega_mul(idz, zmat, fval)
+
+! Set XOPT, XSXPT, GOPT and HQ for the first quadratic model.
+xopt = xpt(:, kopt)
+xsav = xbase + xopt
+gopt = ZERO
+
+xsxpt(1:npt) = matprod(xopt, xpt)
 do k = 1, npt
-    pq(k) = ZERO
-    do j = 1, npt - n - 1
-        pq(k) = pq(k) + zmat(k, j) * w(j)
-    end do
-end do
-!
-!     Set XOPT, XSXPT, GOPT and HQ for the first quadratic model.
-!
-do j = 1, n
-    xopt(j) = xpt(j, kopt)
-    xsav(j) = xbase(j) + xopt(j)
-    gopt(j) = ZERO
-end do
-do k = 1, npt
-    xsxpt(k) = ZERO
-    do j = 1, n
-        xsxpt(k) = xsxpt(k) + xpt(j, k) * xopt(j)
-    end do
-    temp = pq(k) * xsxpt(k)
-    do j = 1, n
-        gopt(j) = gopt(j) + fval(k) * bmat(j, k) + temp * xpt(j, k)
-    end do
+    gopt = gopt + fval(k) * bmat(:, k) + pq(k) * xsxpt(k) * xpt(:, k)
 end do
 
 hq = ZERO
