@@ -110,7 +110,7 @@ real(RP) :: xsav(size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: del, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
-&        rho, snorm, ssq, summ, temp, vqalt,   &
+&        rho, snorm, ssq, temp, vqalt,   &
 &        qred, xdiff
 integer(IK) :: i, idz, ifeas, imprv, itest, j, k,    &
 &           knew, kopt, ksave, nact,      &
