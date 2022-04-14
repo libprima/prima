@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 13, 2022 AM01:56:44
+! Last Modified: Thursday, April 14, 2022 PM04:00:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -632,7 +632,14 @@ end if
 !     Update BMAT and ZMAT, so that the KNEW-th interpolation point can be
 !     moved. Also update the second derivative terms of the model.
 !
-call update(knew, beta, denom, bmat, vlag, zmat)
+
+!--------------------------------------------------------------------------------------------------!
+call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
+call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
+call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
+!--------------------------------------------------------------------------------------------------!
+call update(knew, beta, vlag, bmat, zmat)
+
 
 pqold = pq(knew)
 pq(knew) = ZERO

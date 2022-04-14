@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM04:22:55
+! Last Modified: Thursday, April 14, 2022 PM12:24:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : issymmetric, inprod!, matprod!, norm
+use, non_intrinsic :: linalg_mod, only : issymmetric, inprod!, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specif modules
@@ -298,11 +298,8 @@ if (knew /= kopt) then
 !     interpolation point can be changed from provisional to original. The
 !     branch to label 350 occurs if all the original points are reinstated.
 !     The nonnegative values of W(NDIM+K) are required in the search below.
-
-    !----------------------------------------------------------------------------------------------!
-    call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
-    !----------------------------------------------------------------------------------------------!
-    call update(knew, beta, vlag, bmat, zmat)
+!
+    call update(knew, beta, denom, bmat, vlag, zmat)  ! Is it possible to unify this with UPDATEH?
     if (nrem == 0) goto 350
     do k = 1, npt
         w(npt + n + k) = abs(w(npt + n + k))
@@ -323,37 +320,53 @@ do k = 1, npt
     end if
 end do
 if (dsqmin == ZERO) goto 260
+!
+!     Form the W-vector of the chosen original interpolation point.
+!
 
-! Form the W-vector of the chosen original interpolation point.
-! W(1:NPT) contains HALF*MATPROD(XPT(:, KNEW), XPT_TEST)**2 with the following XPT_TEST:
-! 1. If PTSID(K) == 0, then XPT_TEST(:, K) = XPT(:, K) ;
-! 2. If PTSID(K) > 0, then XPT_TEST(:, K) has nonzeros only at IP (if IP>0), IQ (if IQ>0) positions;
-! IP and IQ are the P(J) and Q(J) defined in and below (2.4) of the BOBYQA paper.
-! 3. XPT_TEST(:, KOPT) = 0.
-! See (5.4)--(5.5) of the BOBYQA paper for details.
+!do j = 1, n
+!    w(npt + j) = xpt(j, knew)
+!end do
+w(npt + 1:npt + n) = xpt(:, knew)
 do k = 1, npt
     if (k == kopt) then
-        w(k) = ZERO
-    else if (ptsid(k) <= 0) then  ! Indeed, PTSID >= 0. So PTSID(K) <= 0 means PTSID(K) = 0.
-        w(k) = inprod(xpt(:, knew), xpt(:, k))
+        summ = ZERO
+    else if (ptsid(k) == ZERO) then
+        summ = ZERO
+        do j = 1, n
+            summ = summ + w(npt + j) * xpt(j, k)
+        end do
+        !summ = inprod(xpt(:, knew), xpt(:, k))
     else
-        ip = int(ptsid(k))  ! IP = 0 if 0 < PTSID(K) < 1. INT(X) = [X], i.e., it rounds X towards 0.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!          IP=PTSID(K)
+        ip = int(ptsid(k))
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if (ip > 0) summ = w(npt + ip) * ptsaux(1, ip)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!          IQ=DFLOAT(NP)*PTSID(K)-DFLOAT(IP*NP)
         iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
-        call assert(ip >= 0 .and. ip <= npt .and. iq >= 0 .and. iq <= npt, '0 <= IP, IQ <= NPT', srname)
-        if (ip > 0 .and. iq > 0) then
-            w(k) = xpt(ip, knew) * ptsaux(1, ip) + xpt(iq, knew) * ptsaux(1, iq)
-        elseif (ip > 0) then
-            w(k) = xpt(ip, knew) * ptsaux(1, ip)
-        elseif (iq > 0) then
-            w(k) = xpt(iq, knew) * ptsaux(2, iq)
-        else
-            w(k) = ZERO
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if (iq > 0) then
+            iw = 1
+            if (ip == 0) iw = 2
+            summ = summ + w(npt + iq) * ptsaux(iw, iq)
         end if
-    end if
-    w(k) = HALF * w(k) * w(k)
-end do
-w(npt + 1:npt + n) = xpt(:, knew)
 
+        !ip = int(ptsid(k))
+        !iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
+        !if (iq == 0) then
+        !    summ = ZERO
+        !else
+        !    if (ip == 0) then
+        !        summ = xpt(iq, knew) * ptsaux(2, iq)
+        !    else
+        !        summ = xpt(ip, knew) * ptsaux(1, ip) + xpt(iq, knew) * ptsaux(1, iq)
+        !    end if
+        !end if
+    end if
+    w(k) = HALF * summ * summ
+end do
 !
 !     Calculate VLAG and BETA for the required updating of the H matrix if
 !     XPT(KNEW,.) is reinstated in the set of interpolation points.

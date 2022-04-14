@@ -165,7 +165,11 @@ else
 end
 
 single_test = (length(plist) <= 1);
-sequential = (isfield(options, 'sequential') && options.sequential) || single_test;
+if isfield(options, 'sequential')
+    sequential = options.sequential;
+else
+    sequential = single_test;
+end
 
 if sequential
     for ip = minip : length(plist)

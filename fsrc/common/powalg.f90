@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 14, 2022 AM12:45:02
+! Last Modified: Thursday, April 14, 2022 AM10:10:47
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1204,15 +1204,16 @@ beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 ! 2. If 2 <= IDZ <= NPT - N -1, then JL = IDZ, and ZMAT(KNEW, 1) is L2-norm of ZMAT(KNEW, 1 : IDZ-1),
 ! while ZMAT(KNEW, JL) is L2 norm of ZMAT(KNEW, IDZ : NPT-N-1).
 ! See (4.15)--(4.17) of the NEWUOA paper and the elaboration around them.
-ztest = 1.0E-20_RP * maxval(abs(zmat))  ! Taken from BOBYQA.
+ztest = 1.0E-20_RP * maxval(abs(zmat))  ! Taken from BOBYQA. It is implicitly zero in NEWUOA/LINCOA.
 jl = 1_IK  ! In the loop below, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT-N-1, then JL = IDZ.
-do j = 2, int(npt - n - 1, kind(j))
+do j = 2_IK, npt - n - 1_IK
     if (j == idz) then
         jl = idz  ! Do nothing but changing JL from 1 to IDZ. It occurs at most once along the loop.
         cycle
     end if
 
-    !if (abs(zmat(knew, j)) > 1.0E-20_RP * abs(zmat(knew, jl))) then
+    ! Powell's condition in NEWUOA/LINCOA for the IF ... THEN below: IF (ZMAT(KNEW, J) /= 0) THEN
+    ! A possible alternative: IF (ABS(ZMAT(KNEW, J)) > 1.0E-20_RP * ABS(ZMAT(KNEW, JL))) THEN
     if (abs(zmat(knew, j)) > ztest) then
         ! Multiply a Givens rotation to ZMAT from the right so that ZMAT(KNEW, [JL,J]) becomes [*,0].
         grot = planerot(zmat(knew, [jl, j]))  !!MATLAB: grot = planerot(zmat(knew, [jl, j])')
