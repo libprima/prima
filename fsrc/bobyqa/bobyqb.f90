@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM06:59:18
+! Last Modified: Thursday, April 14, 2022 PM10:20:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,7 +30,7 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
-!use, non_intrinsic :: linalg_mod, only : matprod!, inprod, r1update, r2update!, norm
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : calquad, calvlag, calbeta
 
@@ -227,14 +227,7 @@ nfsav = nf
     end do
     if (nf > npt) then
         do k = 1, npt
-            temp = ZERO
-            do j = 1, n
-                temp = temp + xpt(j, k) * xopt(j)
-            end do
-            temp = pq(k) * temp
-            do i = 1, n
-                gopt(i) = gopt(i) + temp * xpt(i, k)
-            end do
+            gopt = gopt + pq(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
         end do
     end if
 end if
@@ -640,30 +633,16 @@ call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 
 call updateh(knew, beta, vlag, bmat, zmat)
 
 
-pqold = pq(knew)
+call r1update(hq, pq(knew), xpt(:, knew))
 pq(knew) = ZERO
-do i = 1, n
-    temp = pqold * xpt(i, knew)
-    do j = 1, i
-        hq(i, j) = hq(i, j) + temp * xpt(j, knew)
-        hq(j, i) = hq(i, j)
-    end do
-end do
-do jj = 1, npt - np
-    temp = diff * zmat(knew, jj)
-    do k = 1, npt
-        pq(k) = pq(k) + temp * zmat(k, jj)
-    end do
-end do
-!
-!     Include the new interpolation point, and make the changes to GOPT at
-!     the old XOPT that are caused by the updating of the quadratic model.
-!
+pq = pq + matprod(zmat, diff * zmat(knew, :))
+!pq = pq  + diff * matprod(zmat,  zmat(knew, :))
+
+! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are caused
+! by the updating of the quadratic model.
 fval(knew) = f
-do i = 1, n
-    xpt(i, knew) = xnew(i)
-    w(i) = bmat(i, knew)
-end do
+xpt(:, knew) = xnew
+w(1:n) = bmat(:, knew)
 do k = 1, npt
     summa = ZERO
     do jj = 1, npt - np
@@ -678,9 +657,8 @@ do k = 1, npt
         w(i) = w(i) + temp * xpt(i, k)
     end do
 end do
-do i = 1, n
-    gopt(i) = gopt(i) + diff * w(i)
-end do
+
+gopt = gopt + diff * w(1:n)
 !
 !     Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
 !
@@ -696,14 +674,7 @@ if (f < fopt) then
         end do
     end do
     do k = 1, npt
-        temp = ZERO
-        do j = 1, n
-            temp = temp + xpt(j, k) * d(j)
-        end do
-        temp = pq(k) * temp
-        do i = 1, n
-            gopt(i) = gopt(i) + temp * xpt(i, k)
-        end do
+        gopt = gopt + pq(k) * inprod(d, xpt(:, k)) * xpt(:, k)
     end do
 end if
 !
