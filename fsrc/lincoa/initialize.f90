@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM08:24:57
+! Last Modified: Thursday, April 14, 2022 PM09:29:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : matprod, maximum
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : omega_mul
 
@@ -90,9 +90,8 @@ integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: w(size(zmat, 2))
 real(RP) :: x(size(x0))
-real(RP) :: bigv, feas, recip, reciq, resid, rhosq, temp, test
+real(RP) :: bigv, feas, recip, reciq, resid, rhosq, test
 integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, knew
 
 
@@ -135,9 +134,6 @@ if (DEBUGGING) then
 end if
 
 
-!*++
-!*++ End of declarations rewritten by XSXPTAG
-!
 !     The arguments N, NPT, M, AMAT, B, X, RHOBEG, IPRINT, XBASE, XPT, FVAL,
 !       XSAV, XOPT, GOPT, HQ, PQ, BMAT, ZMAT, NDIM, XSXPT and RESCON are the
 !       same as the corresponding arguments in SUBROUTINE LINCOB.
@@ -146,20 +142,20 @@ end if
 !     IDZ is going to be set to ONE, so that every element of Diag(DZ) is
 !       ONE in the product ZMAT times Diag(DZ) times ZMAT^T, which is the
 !       factorization of the leading NPT by NPT submatrix of H.
-!     STEP, PQW and W are used for working space, the arrays STEP and PQW
+!     STEP and W are used for working space, the array STEP 
 !       being taken from LINCOB. The length of W must be at least N+NPT.
 !
-!     SUBROUTINE PRELIM provides the elements of XBASE, XPT, BMAT and ZMAT
+!     This subroutine provides the elements of XBASE, XPT, BMAT and ZMAT
 !       for the first iteration, an important feature being that, if any of
 !       of the columns of XPT is an infeasible point, then the largest of
 !       the constraint violations there is at least 0.2*RHOBEG. It also sets
 !       the initial elements of FVAL, XOPT, GOPT, HQ, PQ, XSXPT and RESCON.
 !
 !     Set some constants.
-!
+
 !--------------------------------------------------------------------------------------------------!
 ! Temporary fix for uninitialized variables when initialization terminates because of f < ftarget etc
-bmat = ieeenan(); zmat = ieeenan(); fval = ieeenan()
+fval = ieeenan()
 !--------------------------------------------------------------------------------------------------!
 
 rhosq = rhobeg * rhobeg
@@ -168,40 +164,25 @@ reciq = sqrt(HALF) / rhosq
 test = 0.2_RP * rhobeg
 idz = 1
 kbase = 1
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     Set the initial elements of XPT, BMAT, XSXPT and ZMAT to ZERO.
-!
+
+! Set the initial elements of XPT, BMAT, XSXPT and ZMAT to ZERO.
+xbase = x0
+xopt = ZERO
+xsav = xbase
+xsxpt(1:npt) = ZERO
+
+! Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT], !       but they may be altered
+! later to make a constraint violation sufficiently large.
+xpt(:, 1) = ZERO
+xpt(:, 2:n + 1) = rhobeg * eye(n)
+xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZERO if it is nonempty.
+
+! Set the initial elements of BMAT and of the first min[N,NPT-N-1] columns of ZMAT.
+bmat = ZERO
+zmat = ZERO
 do j = 1, n
-    xbase(j) = x0(j)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    xopt(j) = ZERO
-    xsav(j) = xbase(j)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do k = 1, npt
-        xpt(j, k) = ZERO
-    end do
-    do i = 1, npt + n
-        bmat(j, i) = ZERO
-    end do
-end do
-do k = 1, npt
-    xsxpt(k) = ZERO
-    do j = 1, npt - n - 1
-        zmat(k, j) = ZERO
-    end do
-end do
-!
-!     Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT],
-!       but they may be altered later to make a constraint violation
-!       sufficiently large. The initial nonzero elements of BMAT and of
-!       the first min[N,NPT-N-1] columns of ZMAT are set also.
-!
-do j = 1, n
-    xpt(j, j + 1) = rhobeg
     if (j < npt - n) then
         jp = n + j + 1
-        xpt(j, jp) = -rhobeg
         bmat(j, j + 1) = HALF / rhobeg
         bmat(j, jp) = -HALF / rhobeg
         zmat(1, j) = -reciq - reciq
@@ -213,10 +194,9 @@ do j = 1, n
         bmat(j, npt + j) = -HALF * rhosq
     end if
 end do
-!
-!     Set the remaining initial nonZERO elements of XPT and ZMAT when the
-!       number of interpolation points exceeds 2*N+1.
-!
+
+! Set the remaining initial nonZERO elements of XPT and ZMAT when the number of interpolation
+! points exceeds 2*N+1.
 if (npt > 2 * n + 1) then
     do k = n + 1, npt - n - 1
         itemp = (k - 1) / n
@@ -231,69 +211,48 @@ if (npt > 2 * n + 1) then
         zmat(n + k + 1, k) = recip
     end do
 end if
-!
-!     Update the constraint right hand sides to allow for the shift XBASE.
-!
-if (m > 0) then
-    do j = 1, m
-        temp = ZERO
-        do i = 1, n
-            temp = temp + amat(i, j) * xbase(i)
-        end do
-        b(j) = b(j) - temp
-    end do
-end if
-!
-!     Go through the initial points, shifting every infeasible point if
-!       necessary so that its constraint violation is at least 0.2*RHOBEG.
-!
+
+! Update the constraint right hand sides to allow for the shift XBASE.
+b = b - matprod(xbase, amat)
+
+! Go through the initial points, shifting every infeasible point if necessary so that its constraint
+! violation is at least 0.2*RHOBEG.
 !--------------------------------------------------------------------------------------------------!
-jsav = 1_IK  ! Temporary fix for attention: «jsav» may be used uninitialized in this function from g95
+jsav = 1_IK  ! Temporary fix for attention: jsav may be used uninitialized in this function from g95
 !--------------------------------------------------------------------------------------------------!
 do nf = 1, npt
     feas = ONE
     bigv = ZERO
     j = 0
-80  j = j + 1
-    if (j <= m .and. nf >= 2) then
-        resid = -b(j)
-        do i = 1, n
-            resid = resid + xpt(i, nf) * amat(i, j)
+    if (nf >= 2) then
+        do j = 1, m
+            resid = -b(j)
+            do i = 1, n
+                resid = resid + xpt(i, nf) * amat(i, j)
+            end do
+            if (resid <= bigv) then
+                cycle
+            end if
+            bigv = resid
+            jsav = j
+            if (resid <= test) then
+                feas = -ONE
+                cycle
+            end if
+            feas = ZERO
         end do
-        if (resid <= bigv) goto 80
-        bigv = resid
-        jsav = j
-        if (resid <= test) then
-            feas = -ONE
-            goto 80
-        end if
-        feas = ZERO
     end if
     if (feas < ZERO) then
-        do i = 1, n
-            step(i) = xpt(i, nf) + (test - bigv) * amat(i, jsav)
-        end do
-        do k = 1, npt
-            xsxpt(npt + k) = ZERO
-            do j = 1, n
-                xsxpt(npt + k) = xsxpt(npt + k) + xpt(j, k) * step(j)
-            end do
-        end do
+        step = xpt(:, nf) + (test - bigv) * amat(:, jsav)
+        xsxpt(npt + 1:npt + n) = matprod(step, xpt)
         knew = nf
-
         call update(kbase, step, xpt, idz, knew, bmat, zmat, vlag)
-
-        do i = 1, n
-            xpt(i, nf) = step(i)
-        end do
+        xpt(:, nf) = step
     end if
-!
-!     Calculate the objective function at the current interpolation point,
-!       and set KOPT to the index of the first trust region centre.
-!
-    do j = 1, n
-        x(j) = xbase(j) + xpt(j, nf)
-    end do
+
+    ! Calculate the objective function at the current interpolation point, and set KOPT to the index
+    ! of the first trust region centre.
+    x = xbase + xpt(:, nf)
     f = feas
     !---------------------------------------------------!
     call evaluate(calfun, x, f)  ! What if X contains NaN?
@@ -305,15 +264,8 @@ do nf = 1, npt
     else if (f < fval(kopt) .and. feas > ZERO) then
         kopt = nf
     end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!  150 FVAL(NF)=F
     fval(nf) = f
-!     By Tom/Zaikun (on 03-06-2019/07-06-2019):
-!     If the objective function reached a NaN or infinite value, or if
-!     the value is under the target value, the algorithm go back to
-!     LINCOB with updated KOPT and XSAV.
-!     Note that we should NOT compare F and FTARGET, because X may not
-!     be feasible.
+    ! Note that we should NOT compare F and FTARGET, because X may not be feasible.
     if (is_nan(f) .or. is_posinf(f) .or. fval(kopt) <= ftarget) then
         exit
     end if
@@ -322,45 +274,25 @@ end do
 nf = min(nf, npt)  ! At exit of the loop, nf = npt + 1
 !----------------------------------------------------------!
 
-! Set PQ for the first quadratic model.
-
-pq = omega_mul(idz, zmat, fval)
-
-! Set XOPT, XSXPT, GOPT and HQ for the first quadratic model.
+! Set XOPT and XSXPT.
 xopt = xpt(:, kopt)
 xsav = xbase + xopt
-gopt = ZERO
-
 xsxpt(1:npt) = matprod(xopt, xpt)
+
+! Set HQ, PQ, and GOPT for the first quadratic model.
+hq = ZERO
+pq = omega_mul(idz, zmat, fval)
+gopt = ZERO
 do k = 1, npt
     gopt = gopt + fval(k) * bmat(:, k) + pq(k) * xsxpt(k) * xpt(:, k)
 end do
 
-hq = ZERO
-
-!!
-!!     Set the initial elements of RESCON.
-!!
-!do j = 1, m
-!    temp = b(j)
-!    do i = 1, n
-!        temp = temp - xopt(i) * amat(i, j)
-!    end do
-!    temp = max(temp, ZERO)
-!    if (temp >= rhobeg) temp = -temp
-!    rescon(j) = temp
-!end do
-
-!
-!     Set the initial elements of RESCON.
-!
-!     RESCON holds useful information about the constraint residuals. Every
-!       nonnegative RESCON(J) is the residual of the J-th constraint at the
-!       current trust region centre. Otherwise, if RESCON(J) is negative, the
-!       J-th constraint holds as a strict inequality at the trust region
-!       centre, its residual being at least |RESCON(J)|; further, the value
-!       of |RESCON(J)| is at least the current trust region radius DELTA.
-!
+! Set the initial elements of RESCON.
+! RESCON holds useful information about the constraint residuals. Every nonnegative RESCON(J) is the
+! residual of the J-th constraint at the current trust region centre. Otherwise, if RESCON(J) is
+! negative, the J-th constraint holds as a strict inequality at the trust region centre, its
+! residual being at least |RESCON(J)|; further, the value of |RESCON(J)| is at least the current
+! trust region radius DELTA.
 ! 1. Normally, RESCON = B - AMAT^T*XOPT (theoretically, B - AMAT^T*XOPT >= 0 since XOPT is feasible)
 ! 2. If RESCON(J) >= DELTA (current trust-region radius), its sign is flipped: RESCON(J) = -RESCON(J).
 rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
