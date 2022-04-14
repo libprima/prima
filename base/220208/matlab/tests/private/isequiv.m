@@ -166,7 +166,7 @@ end
 single_test = (length(plist) <= 1);
 
 if isfield(options, 'sequential')
-    sequential = options.sequential || single_test;
+    sequential = options.sequential;
 else
     sequential = single_test;
 end

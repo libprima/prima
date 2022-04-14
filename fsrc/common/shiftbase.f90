@@ -141,7 +141,7 @@ bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + matprod(yzmat, transpose(y
 !call symmetrize(bmat(:, npt + 1:npt + n))  ! Do this if the update above does not ensure symmetry.
 bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
 
-! Update the quadratic model. Only GQ and HQ need revision. For HQ, see (7.14) of the NEWUOA paper.
+! Update the quadratic model. Note that PQ remains unchanged. For HQ, see (7.14) of the NEWUOA paper.
 if (present(gq)) then
     gq = hess_mul(hq, pq, xpt, xopt) + gq  ! HQ is not updated yet.
 end if
