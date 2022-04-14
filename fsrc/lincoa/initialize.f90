@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 AM01:34:26
+! Last Modified: Friday, April 15, 2022 AM01:55:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -92,7 +92,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: x(size(x0))
 real(RP) :: bigv, feas, recip, reciq, resid(size(b)), rhosq, test
-integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, knew
+integer(IK) :: ipt, itemp, j, jp, jpt, jsav, k, kbase, knew
 
 
 ! Sizes.
@@ -218,7 +218,7 @@ b = b - matprod(xbase, amat)
 ! Go through the initial points, shifting every infeasible point if necessary so that its constraint
 ! violation is at least 0.2*RHOBEG.
 !--------------------------------------------------------------------------------------------------!
-!jsav = 1_IK  ! Temporary fix for attention: jsav may be used uninitialized in this function from g95
+jsav = 0_IK  ! Temporary fix for attention: jsav may be used uninitialized in this function from g95
 !--------------------------------------------------------------------------------------------------!
 do nf = 1, npt
     feas = ONE
@@ -236,7 +236,7 @@ do nf = 1, npt
     end if
     if (feas < ZERO) then
         step = xpt(:, nf) + (test - bigv) * amat(:, jsav)
-        xsxpt(npt + 1:npt + n) = matprod(step, xpt)
+        xsxpt(npt + 1:2 * npt) = matprod(step, xpt)
         knew = nf
         call update(kbase, step, xpt, idz, knew, bmat, zmat, vlag)
         xpt(:, nf) = step
