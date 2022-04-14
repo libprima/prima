@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM12:17:30
+! Last Modified: Thursday, April 14, 2022 PM10:40:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -121,33 +121,19 @@ ipt = 1; jpt = 1  ! Temporary fix for G95 warning about these variables used uni
 rhosq = rhobeg * rhobeg
 recip = ONE / rhosq
 np = n + 1
-!
-!     Set XBASE to the initial vector of variables, and set the initial
-!     elements of XPT, BMAT, HQ, PQ and ZMAT to ZERO.
-!
-do j = 1, n
-    xbase(j) = x0(j)
-    do k = 1, npt
-        xpt(j, k) = ZERO
-    end do
-    do i = 1, npt + n
-        bmat(j, i) = ZERO
-    end do
-end do
 
+! Set XBASE to the initial vector of variables, and set the initial elements of XPT, BMAT, HQ, PQ
+! and ZMAT to ZERO.
+xbase = x0
+xpt = ZERO
 hq = ZERO
+pq = ZERO
+bmat = ZERO
+zmat = ZERO
 
-do k = 1, npt
-    pq(k) = ZERO
-    do j = 1, npt - np
-        zmat(k, j) = ZERO
-    end do
-end do
-!
-!     Begin the initialization procedure. NF becomes ONE more than the number
-!     of function values so far. The coordinates of the displacement of the
-!     next initial interpolation point from XBASE are set in XPT(NF+1,.).
-!
+! Begin the initialization procedure. NF becomes one more than the number of function values so far.
+! The coordinates of the displacement of the next initial interpolation point from XBASE are set in
+! XPT(NF+1,.).
 nf = 0
 50 nfm = nf
 nfx = nf - n
@@ -176,10 +162,8 @@ else
     xpt(ipt, nf) = xpt(ipt, ipt + 1)
     xpt(jpt, nf) = xpt(jpt, jpt + 1)
 end if
-!
-!     Calculate the next value of F. The least function value so far and
-!     its index are required.
-!
+
+! Calculate the next value of F. The least function value so far and its index are required.
 do j = 1, n
     x(j) = min(max(xl(j), xbase(j) + xpt(j, nf)), xu(j))
     if (xpt(j, nf) == sl(j)) x(j) = xl(j)
@@ -201,13 +185,11 @@ if (nf == 1) then
 else if (f < fval(kopt)) then
     kopt = nf
 end if
-!
-!     Set the nonzero initial elements of BMAT and the quadratic model in the
-!     cases when NF is at most 2*N+1. If NF exceeds N+1, then the positions
-!     of the NF-th and (NF-N)-th interpolation points may be switched, in
-!     order that the function value at the first of them contributes to the
-!     off-diagonal second derivative terms of the initial quadratic model.
-!
+
+! Set the nonzero initial elements of BMAT and the quadratic model in the cases when NF is at most
+! 2*N+1. If NF exceeds N+1, then the positions of the NF-th and (NF-N)-th interpolation points may
+! be switched, in order that the function value at the first of them contributes to the off-diagonal
+! second derivative terms of the initial quadratic model.
 if (nf <= 2 * n + 1) then
     if (nf >= 2 .and. nf <= n + 1) then
         gopt(nfm) = (f - fbeg) / stepa
@@ -237,10 +219,7 @@ if (nf <= 2 * n + 1) then
         zmat(nf, nfx) = sqrt(HALF) / rhosq
         zmat(nf - n, nfx) = -zmat(1, nfx) - zmat(nf, nfx)
     end if
-!
-!     Set the off-diagonal second derivatives of the Lagrange functions and
-!     the initial quadratic model.
-!
+! Set the off-diagonal second derivatives of the Lagrange functions and the initial quadratic model.
 else
     zmat(1, nfx) = recip
     zmat(nf, nfx) = recip
@@ -250,18 +229,9 @@ else
     hq(ipt, jpt) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
     hq(jpt, ipt) = hq(ipt, jpt)
 end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     By Tom (on 04-06-2019):
-!     If the evaluation returns an NaN or an infinity value, this
-!     subroutine is stopped.
-if (is_nan(f) .or. is_posinf(f)) goto 80
-!     By Tom (on 04-06-2019):
-!     If the target value is reached, stop the algorithm.
-if (f <= ftarget) goto 80
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+if (f <= ftarget .or. is_nan(f) .or. is_posinf(f)) goto 80
 if (nf < npt) goto 50
-80 nf = min(nf, npt)  ! nf = npt + 1 at exit of the loop
+80 nf = min(nf, npt)  ! NF may be NPT+1 at exit of the loop.
 
 end subroutine initialize
 

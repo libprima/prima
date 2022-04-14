@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM05:53:01
+! Last Modified: Thursday, April 14, 2022 PM11:58:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : issymmetric, inprod!, matprod!, norm
+use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, r1update, r2update!, matprod!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specif modules
@@ -88,6 +88,7 @@ real(RP) :: beta, bsum, den, denom, diff,      &
 &        summ, sumpq, temp, vlmxsq, vquad, winc, xp, xq
 integer(IK) :: i, ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nptm, nrem
+real(RP) :: xpq(size(xopt))
 
 n = int(size(xopt), kind(n))
 npt = int(size(fval), kind(npt))
@@ -185,20 +186,18 @@ do k = 1, npt
         zmat(k, j) = ZERO
     end do
 end do
-!
-!     Update HQ so that HQ and PQ define the second derivatives of the model
-!     after XBASE has been shifted to the trust region centre.
-!
-do j = 1, n
-    w(j) = HALF * sumpq * xopt(j)
-    do k = 1, npt
-        w(j) = w(j) + pq(k) * xpt(j, k)
-    end do
-    do i = 1, j
-        hq(i, j) = hq(i, j) + w(i) * xopt(j) + w(j) * xopt(i)
-        hq(j, i) = hq(i, j)
-    end do
+
+! Update HQ so that HQ and PQ define the second derivatives of the model after XBASE has been
+! shifted to the trust region centre.
+
+xpq = HALF * sumpq * xopt
+do k = 1, npt
+    xpq = xpq + pq(k) * xpt(:, k)
 end do
+!xpq = matprod(xpt + HALF * spread(xopt, dim=2, ncopies=npt), pq)
+!xpq = matprod(xpt, pq) + HALF * sum(pq) * xopt
+call r2update(hq, ONE, xopt, xpq)
+
 !
 !     Shift XBASE, SL, SU and XOPT. Set the elements of BMAT to ZERO, and
 !     also set the elements of PTSAUX.
@@ -426,7 +425,7 @@ goto 80
 !     points have been chosen although any changes have not been included yet
 !     in XPT. Also the final BMAT and ZMAT matrices are complete, but, apart
 !     from the shift of XBASE, the updating of the quadratic model remains to
-!     be dONE. The following cycle through the new interpolation points begins
+!     be done. The following cycle through the new interpolation points begins
 !     by putting the new point in XPT(KPT,.) and by setting PQ(KPT) to ZERO,
 !     except that a RETURN occurs if MAXFUN prohibits another value of F.
 !
@@ -436,22 +435,14 @@ goto 80
         nf = -1
         goto 350
     end if
-    do j = 1, n
-        w(j) = xpt(j, kpt)
-        xpt(j, kpt) = ZERO
-        temp = pq(kpt) * w(j)
-        do i = 1, j
-            hq(i, j) = hq(i, j) + temp * w(i)
-            hq(j, i) = hq(i, j)
-        end do
-    end do
+
+    call r1update(hq, pq(kpt), xpt(:, kpt))
     pq(kpt) = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IP=PTSID(KPT)
-!      IQ=DFLOAT(NP)*PTSID(KPT)-DFLOAT(IP*NP)
+    xpt(:, kpt) = ZERO
+
     ip = int(ptsid(kpt))
     iq = int(real(np, RP) * ptsid(kpt) - real(ip * np, RP))
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     if (ip > 0) then
         xp = ptsaux(1, ip)
         xpt(ip, kpt) = xp
@@ -506,9 +497,7 @@ goto 80
 !     Update the quadratic model. The RETURN from the subroutine occurs when
 !     all the new interpolation points are included in the model.
 !
-    do i = 1, n
-        gopt(i) = gopt(i) + diff * bmat(i, kpt)
-    end do
+    gopt = gopt + diff * bmat(:, kpt)
     do k = 1, npt
         summ = ZERO
         do j = 1, nptm
@@ -518,12 +507,8 @@ goto 80
         if (ptsid(k) == ZERO) then
             pq(k) = pq(k) + temp
         else
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!          IP=PTSID(K)
-!          IQ=DFLOAT(NP)*PTSID(K)-DFLOAT(IP*NP)
             ip = int(ptsid(k))
             iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if (ip == 0) then
                 hq(iq, iq) = hq(iq, iq) + temp * ptsaux(2, iq)**2
             else
