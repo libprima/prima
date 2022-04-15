@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 05, 2022 PM04:53:07
+! Last Modified: Friday, April 15, 2022 AM10:16:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -370,7 +370,8 @@ do k = 1, npt
         do j = 1, nptm
             hdiag = hdiag + zmat(k, j)**2
         end do
-        den = beta * hdiag + vlag(k)**2
+        !den = beta * hdiag + vlag(k)**2
+        den = hdiag * beta + vlag(k)**2
         if (den > denom) then
             kold = k
             denom = den

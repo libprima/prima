@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM10:49:26
+! Last Modified: Friday, April 15, 2022 AM10:12:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -99,7 +99,7 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        den, denom, densav, diff, diffa, diffb, diffc,     &
 &        dist, distsq, dnorm, dsq, errbig, fopt,        &
 &        frhosq, gisq, gqsq, hdiag,      &
-&        pqold, ratio, rho, scaden, summ, summa, summb, &
+&        ratio, rho, scaden, summ, summa, summb, &
 &        temp, qred, xoptsq
 integer(IK) :: i, itest, j, jj, k, kbase, knew, &
 &           kopt, ksav, nfsav, np, nresc, ntrits
@@ -442,7 +442,9 @@ beta = calbeta(kopt, bmat, d, xpt, zmat)
 !     rounding errors have damaged the chosen denominator.
 !
 if (ntrits == 0) then
-    denom = vlag(knew)**2 + alpha * beta
+    !denom = vlag(knew)**2 + alpha * beta
+    denom = alpha * beta + vlag(knew)**2
+    write (*, *) '>>', vlag(knew)**2, alpha * beta, denom, vlag(knew)**2 + alpha * beta, alpha * beta + vlag(knew)**2
     if (denom < cauchy .and. cauchy > ZERO) then
         do i = 1, n
             xnew(i) = xalt(i)
@@ -477,7 +479,8 @@ else
         do jj = 1, npt - np
             hdiag = hdiag + zmat(k, jj)**2
         end do
-        den = beta * hdiag + vlag(k)**2
+        !den = beta * hdiag + vlag(k)**2
+        den = hdiag * beta + vlag(k)**2
         distsq = ZERO
         do j = 1, n
             distsq = distsq + (xpt(j, k) - xopt(j))**2
@@ -601,7 +604,8 @@ if (ntrits > 0) then
             do jj = 1, npt - np
                 hdiag = hdiag + zmat(k, jj)**2
             end do
-            den = beta * hdiag + vlag(k)**2
+            !den = beta * hdiag + vlag(k)**2
+            den = hdiag * beta + vlag(k)**2
             distsq = ZERO
             do j = 1, n
                 distsq = distsq + (xpt(j, k) - xnew(j))**2
@@ -628,6 +632,7 @@ end if
 !--------------------------------------------------------------------------------------------------!
 call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
 call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
+!write (*, *) 1, denom, (sum(zmat(knew, :)**2)) * beta + vlag(knew)**2, denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)
 call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
 !--------------------------------------------------------------------------------------------------!
 call updateh(knew, beta, vlag, bmat, zmat)

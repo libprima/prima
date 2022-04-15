@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM10:40:02
+! Last Modified: Friday, April 15, 2022 AM09:23:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -67,7 +67,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: x(size(x0))
 real(RP) :: diff, fbeg, recip, rhosq, stepa, stepb, temp
-integer(IK) :: i, ipt, itemp, j, jpt, k, nfm, nfx, np
+integer(IK) :: ipt, itemp, j, jpt, nfm, nfx, np
 
 ! Sizes.
 n = int(size(x), kind(n))
