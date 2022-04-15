@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 20, 2022 PM07:46:51
+! Last Modified: Friday, April 15, 2022 PM02:57:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,6 +27,7 @@ subroutine geostep(n, npt, m, amat, xpt, xopt, nact, iact, &
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
+use, non_intrinsic :: infnan_mod, only : is_nan
 
 implicit none
 
@@ -122,20 +123,39 @@ end if
 ! Zaikun 2019-08-15: IFLAG is never used
 !      IFLAG=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-vbig = ZERO
+
+!-----------------------------------------------------------!
+! Zaikun 20220415
+!vbig = ZERO
+ss = ZERO
+sp = ZERO
+do i = 1, n
+    temp = xpt(i, knew) - xopt(i)
+    !ss = ss + temp * temp
+    ss = ss + temp**2
+    sp = sp + gl(i) * temp
+end do
+stp = -del / sqrt(ss)
+if (sp * (sp - ONE) < ZERO) stp = -stp
+vlag = abs(stp * sp) + stp**2 * abs(sp - ONE)
+vbig = vlag
+ksav = knew
+stpsav = stp
+!-----------------------------------------------------------!
 do k = 1, npt
     if (k == kopt) cycle
     ss = ZERO
     sp = ZERO
     do i = 1, n
         temp = xpt(i, k) - xopt(i)
-        ss = ss + temp * temp
+        !ss = ss + temp * temp
+        ss = ss + temp**2
         sp = sp + gl(i) * temp
     end do
     stp = -del / sqrt(ss)
     if (k == knew) then
         if (sp * (sp - ONE) < ZERO) stp = -stp
-        vlag = abs(stp * sp) + stp * stp * abs(sp - ONE)
+        vlag = abs(stp * sp) + stp**2 * abs(sp - ONE)
     else
         vlag = abs(stp * (ONE - stp) * sp)
     end if
@@ -144,8 +164,10 @@ do k = 1, npt
 ! NaN, KSAV will not get a value. This may cause Segmentation Fault
 ! because XPT(KSAV, :) will later be accessed.
 !      IF (VLAG .GT. VBIG) THEN
-    if (.not. (vlag <= vbig)) then
+!    if (.not. (vlag <= vbig)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!    if (vlag > vbig .and. vlag > 0) then
+    if (vlag > vbig) then
         ksav = k
         stpsav = stp
         vbig = vlag
@@ -174,7 +196,11 @@ do k = 1, npt
     ghg = ghg + pqw(k) * temp * temp
 end do
 vnew = vgrad + abs(HALF * del * del * ghg / gg)
-if (vnew > vbig) then
+!if (vnew > vbig) then
+!--------------------------------------------------------------------!
+! Zaikun 20220415
+if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
+!--------------------------------------------------------------------!
     vbig = vnew
     stp = del / sqrt(gg)
     if (ghg < ZERO) stp = -stp

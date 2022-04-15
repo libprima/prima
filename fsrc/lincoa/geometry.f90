@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 01, 2022 AM11:46:45
+! Last Modified: Friday, April 15, 2022 PM02:56:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,6 +27,7 @@ subroutine geostep(iact, knew, kopt, nact, amat, del, gl_in, pqw, qfac, rescon, 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : inprod, isorth
 
 implicit none
@@ -58,8 +59,7 @@ real(RP) :: rstat(size(amat, 2))
 real(RP) :: w(size(xopt))
 real(RP) :: gl(size(gl_in))
 real(RP) :: bigv, ctol, gg, ghg, resmax, sp, ss, tol, &
-&        stp, stpsav, summ, temp, mincv, vbig, vgrad, &
-&        vlag, vnew, ww
+&        stp, stplen(size(pqw)), stpsav, summ, temp, mincv, vbig, vgrad, vlag(size(pqw)), vnew, ww
 integer(IK) :: i, j, jsav, k, ksav
 
 ! Sizes.
@@ -122,33 +122,24 @@ gl = gl_in
 !
 !     Set some constants.
 !
-mincv = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
-!
-!     Replace GL by the gradient of LFUNC at the trust region centre, and
-!       set the elements of RSTAT.
-!
 !--------------------------------------------------------------------------------------------------!
 ksav = 1_IK; jsav = 1_IK  ! Temporary fix for ksav/jsav may be uninitialized from G95
 !--------------------------------------------------------------------------------------------------!
+
+mincv = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
+
+! Replace GL by the gradient of LFUNC at the trust region centre, and set the elements of RSTAT.
 do k = 1, npt
-    temp = ZERO
-    do j = 1, n
-        temp = temp + xpt(j, k) * xopt(j)
-    end do
-    temp = pqw(k) * temp
-    do i = 1, n
-        gl(i) = gl(i) + temp * xpt(i, k)
-    end do
+    !temp = ZERO
+    !do j = 1, n
+    !    temp = temp + xpt(j, k) * xopt(j)
+    !end do
+    !temp = pqw(k) * temp
+    !do i = 1, n
+    !    gl(i) = gl(i) + temp * xpt(i, k)
+    !end do
+    gl = gl + pqw(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
 end do
-!if (m > 0) then
-!    do j = 1, m
-!        rstat(j) = ONE
-!        if (abs(rescon(j)) >= del) rstat(j) = -ONE
-!    end do
-!    do k = 1, nact
-!        rstat(iact(k)) = ZERO
-!    end do
-!end if
 
 rstat = ONE
 where (abs(rescon) >= del)
@@ -157,43 +148,34 @@ end where
 !!MATLAB: rstat(abs(rescon) >= del) = -1;
 rstat(iact(1:nact)) = ZERO
 
-!
-!     Find the greatest modulus of LFUNC on a line through XOPT and
-!       another interpolation point within the trust region.
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-15: IFLAG is never used
-!      IFLAG=0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-vbig = ZERO
+! Maximize |LFUNC| within the trust region on the lines through XOPT and other interpolation points.
+vlag = ZERO
 do k = 1, npt
-    if (k == kopt) cycle
-    ss = ZERO
-    sp = ZERO
-    do i = 1, n
-        temp = xpt(i, k) - xopt(i)
-        ss = ss + temp * temp
-        sp = sp + gl(i) * temp
-    end do
-    stp = -del / sqrt(ss)
-    if (k == knew) then
-        if (sp * (sp - ONE) < ZERO) stp = -stp
-        vlag = abs(stp * sp) + stp * stp * abs(sp - ONE)
-    else
-        vlag = abs(stp * (ONE - stp) * sp)
+    if (k == kopt) then
+        cycle
     end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: With the original code, if either VLAG or VBIG is
-! NaN, KSAV will not get a value. This may cause Segmentation Fault
-! because XPT(KSAV, :) will later be accessed.
-!      IF (VLAG .GT. VBIG) THEN
-    if (.not. (vlag <= vbig)) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ksav = k
-        stpsav = stp
-        vbig = vlag
+    ss = sum((xpt(:, k) - xopt)**2)
+    sp = inprod(gl, xpt(:, k) - xopt)
+    stplen(k) = -del / sqrt(ss)
+    if (k == knew) then
+        if (sp * (sp - ONE) < ZERO) stplen(k) = -stplen(k)
+        vlag(k) = abs(stplen(k) * sp) + stplen(k)**2 * abs(sp - ONE)
+    else
+        vlag(k) = abs(stplen(k) * (ONE - stplen(k)) * sp)
     end if
 end do
+
+! N.B.: We define KSAV slightly differently from Powell's code, which sets KSAV = MAXLOC(VLAG,DIM=1)
+! by comparing the entries of VLAG one by one.
+! 1. If VLAG contains only NaN, which can happen, Powell's code leaves KSAV uninitialized.
+! 2. If VLAG(KNEW) = MINVAL(VLAG) = VLAG(K) with K < KNEW, Powell's code does not set KSAV = KNEW.
+ksav = knew
+if (maxval(vlag) > vlag(knew)) then
+    ksav = maxloc(vlag, dim=1)
+end if
+vbig = vlag(ksav)
+stpsav = stplen(ksav)
+
 !
 !     Set STEP to the move that gives the greatest modulus calculated above.
 !       This move may be replaced by a steepest ascent step from XOPT.
@@ -217,7 +199,7 @@ do k = 1, npt
     ghg = ghg + pqw(k) * temp * temp
 end do
 vnew = vgrad + abs(HALF * del * del * ghg / gg)
-if (vnew > vbig) then
+if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     vbig = vnew
     stp = del / sqrt(gg)
     if (ghg < ZERO) stp = -stp
