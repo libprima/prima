@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 09, 2022 AM03:42:02
+! Last Modified: Saturday, April 16, 2022 AM01:23:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -143,7 +143,7 @@ bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
 
 ! Update the quadratic model. Note that PQ remains unchanged. For HQ, see (7.14) of the NEWUOA paper.
 if (present(gq)) then
-    gq = hess_mul(hq, pq, xpt, xopt) + gq  ! HQ is not updated yet.
+    gq = gq + hess_mul(xopt, xpt, pq, hq)  ! HQ is not updated yet.
 end if
 !v = matprod(xptxav, pq)  ! Vector V in (7.14) of the NEWUOA paper
 v = matprod(xpt, pq) - HALF * sum(pq) * xopt ! This one seems to work better numerically.

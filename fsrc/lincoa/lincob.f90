@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 PM08:18:48
+! Last Modified: Saturday, April 16, 2022 AM01:35:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,7 +40,7 @@ use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_
     & MAXFUN_REACHED, DAMAGING_ROUNDING!, SMALL_TR_RADIUS, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, maximum, eye, r1update
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : calquad, omega_col, omega_mul
+use, non_intrinsic :: powalg_mod, only : calquad, omega_col, omega_mul, hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
@@ -113,7 +113,7 @@ real(RP) :: del, delsav, delta, dffalt, diff, &
 &        rho, snorm, ssq, temp, vqalt,   &
 &        qred, xdiff
 logical :: ifeas
-integer(IK) :: i, idz, imprv, itest, j, k,    &
+integer(IK) :: idz, imprv, itest, k,    &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
 real(RP) :: w(max(int(size(bvec), IK) + 3_IK * int(size(x), IK), 2_IK * int(size(bvec), IK) + int(size(x), IK), 2_IK * npt))
@@ -543,9 +543,11 @@ xsxpt(npt + knew) = xsxpt(npt + kopt) + ssq
 ! STEP'*XPT(:, KNEW) + STEP'*STEP = STEP'*[XPT(:, KOPT) + STEP] = STEP'*XNEW
 !!xsxpt(npt + knew) = inprod(step, xnew)
 if (itest < 3) then
-    do k = 1, npt
-        w(1:n) = w(1:n) + pqw(k) * xsxpt(k) * xpt(:, k)
-    end do
+    !do k = 1, npt
+    !    w(1:n) = w(1:n) + pqw(k) * xsxpt(k) * xpt(:, k)
+    !end do
+    !w(1:n) = w(1:n) + matprod(xpt, pqw(1:npt) * matprod(xopt, xpt))
+    w(1:n) = w(1:n) + hess_mul(xopt, xpt, pqw(1:npt))
     gopt = gopt + diff * w(1:n)
 end if
 !
@@ -591,16 +593,17 @@ if (f < fopt .and. ifeas) then
 !     Also revise GOPT when symmetric Broyden updating is applied.
 !
     if (itest < 3) then
-        do j = 1, n
-            do i = 1, j
-                if (i < j) gopt(j) = gopt(j) + hq(i, j) * step(i)
-                gopt(i) = gopt(i) + hq(i, j) * step(j)
-            end do
-        end do
-        !gopt = gopt + matprod(hq, step)
-        do k = 1, npt
-            gopt = gopt + pq(k) * xsxpt(npt + k) * xpt(:, k)
-        end do
+        !do j = 1, n
+        !    do i = 1, j
+        !        if (i < j) gopt(j) = gopt(j) + hq(i, j) * step(i)
+        !        gopt(i) = gopt(i) + hq(i, j) * step(j)
+        !    end do
+        !end do
+        !!gopt = gopt + matprod(hq, step)
+        !do k = 1, npt
+        !    gopt = gopt + pq(k) * xsxpt(npt + k) * xpt(:, k)
+        !end do
+        gopt = gopt + hess_mul(step, xpt, pq, hq)
     end if
 end if
 !
@@ -611,11 +614,13 @@ end if
 if (itest == 3) then
     w(1:npt) = fval - fval(kopt)
     pq = omega_mul(idz, zmat, w(1:npt))
-    gopt = matprod(bmat(:, 1:npt), w(1:npt))
-    do k = 1, npt
-        gopt = gopt + pq(k) * xsxpt(k) * xpt(:, k)
-    end do
     hq = ZERO
+    gopt = matprod(bmat(:, 1:npt), w(1:npt))
+    !do k = 1, npt
+    !    gopt = gopt + pq(k) * xsxpt(k) * xpt(:, k)
+    !end do
+    !gopt = gopt + matprod(xpt, pq * matprod(xopt, xpt))
+    gopt = gopt + hess_mul(xopt, xpt, pq)
 end if
 !
 !     If a trust region step has provided a sufficient decrease in F, then
