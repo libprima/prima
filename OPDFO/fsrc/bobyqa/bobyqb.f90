@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 10, 2022 PM07:46:02
+! Last Modified: Friday, April 15, 2022 AM10:16:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -657,7 +657,8 @@ vlag(kopt) = vlag(kopt) + ONE
 !     rounding errors have damaged the chosen denominator.
 !
 if (ntrits == 0) then
-    denom = vlag(knew)**2 + alpha * beta
+    !denom = vlag(knew)**2 + alpha * beta
+    denom = alpha * beta + vlag(knew)**2
     if (denom < cauchy .and. cauchy > ZERO) then
         do i = 1, n
             xnew(i) = xalt(i)
@@ -693,7 +694,8 @@ else
         do jj = 1, nptm
             hdiag = hdiag + zmat(k, jj)**2
         end do
-        den = beta * hdiag + vlag(k)**2
+        !den = beta * hdiag + vlag(k)**2
+        den = hdiag * beta + vlag(k)**2
         distsq = ZERO
         do j = 1, n
             distsq = distsq + (xpt(j, k) - xopt(j))**2
@@ -848,7 +850,8 @@ if (ntrits > 0) then
             do jj = 1, nptm
                 hdiag = hdiag + zmat(k, jj)**2
             end do
-            den = beta * hdiag + vlag(k)**2
+            !den = beta * hdiag + vlag(k)**2
+            den = hdiag * beta + vlag(k)**2
             distsq = ZERO
             do j = 1, n
                 distsq = distsq + (xpt(j, k) - xnew(j))**2

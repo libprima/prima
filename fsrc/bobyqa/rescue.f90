@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 PM11:58:08
+! Last Modified: Friday, April 15, 2022 AM10:17:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -299,6 +299,7 @@ if (knew /= kopt) then
 !     The nonnegative values of W(NDIM+K) are required in the search below.
 
     !----------------------------------------------------------------------------------------------!
+    !write (*, *) 2, denom, sum(zmat(knew, :)**2) * beta + vlag(knew)**2, denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)
     call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
     !----------------------------------------------------------------------------------------------!
     call updateh(knew, beta, vlag, bmat, zmat)
@@ -407,7 +408,8 @@ do k = 1, npt
         do j = 1, nptm
             hdiag = hdiag + zmat(k, j)**2
         end do
-        den = beta * hdiag + vlag(k)**2
+        !den = beta * hdiag + vlag(k)**2
+        den = hdiag * beta + vlag(k)**2
         if (den > denom) then
             kold = k
             denom = den
