@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 AM12:27:12
+! Last Modified: Friday, April 15, 2022 PM08:18:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -112,7 +112,8 @@ real(RP) :: del, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, snorm, ssq, temp, vqalt,   &
 &        qred, xdiff
-integer(IK) :: i, idz, ifeas, imprv, itest, j, k,    &
+logical :: ifeas
+integer(IK) :: i, idz, imprv, itest, j, k,    &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
 real(RP) :: w(max(int(size(bvec), IK) + 3_IK * int(size(x), IK), 2_IK * int(size(bvec), IK) + int(size(x), IK), 2_IK * npt))
@@ -246,7 +247,7 @@ nf = npt
 fopt = fval(kopt)
 rho = rhobeg
 delta = rho
-ifeas = 0
+ifeas = .false.
 nact = 0
 itest = 3
 10 knew = 0
@@ -412,12 +413,12 @@ x = xbase + xnew
 xdiff = sqrt(sum((x - xsav)**2))
 if (ksave == -1) xdiff = rho
 if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
-    ifeas = 0
+    ifeas = .false.  ! Consistent with the meaning of IFEAS???
     info = DAMAGING_ROUNDING
     goto 600
 end if
-if (ksave <= 0) ifeas = 1
-f = real(ifeas, RP)
+ifeas = (ifeas .or. ksave <= 0) ! Consistent with the meaning of IFEAS???
+f = merge(tsource=ONE, fsource=ZERO, mask=ifeas)  ! Zaikun 20220415 What does this mean???
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (is_nan(sum(abs(x)))) then
     f = sum(x)  ! Set F to NaN
@@ -452,7 +453,7 @@ diff = f - fopt + qred
 !     If X is feasible, then set DFFALT to the difference between the new
 !       value of F and the value predicted by the alternative model.
 !
-if (ifeas == 1 .and. itest < 3) then
+if (ifeas .and. itest < 3) then
     w(1:npt) = fval - fval(kopt)
     pqw(1:npt) = omega_mul(idz, zmat, w(1:npt))
     !-----------------------------------------------------------------------------------------!
@@ -508,7 +509,7 @@ end if
 !       interpolation conditions. Otherwise the new model is constructed
 !       by the symmetric Broyden method in the usual way.
 !
-if (ifeas == 1) then
+if (ifeas) then
     itest = itest + 1
     if (abs(dffalt) >= TENTH * abs(diff)) itest = 0
 end if
@@ -551,7 +552,7 @@ end if
 !     Update FOPT, XSAV, XOPT, KOPT, RESCON and XSXPT if the new F is the
 !       least calculated value so far with a feasible vector of variables.
 !
-if (f < fopt .and. ifeas == 1) then
+if (f < fopt .and. ifeas) then
     fopt = f
     xsav = x
     xopt = xnew
@@ -675,7 +676,7 @@ if (ksave == -1) goto 220
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !  600 IF (FOPT .LE. F .OR. IFEAS .EQ. 0) THEN
 600 continue
-if (fopt <= f .or. ifeas == 0 .or. is_nan(f)) then
+if (fopt <= f .or. is_nan(f) .or. .not. ifeas) then
     x = xsav
     f = fopt
 end if
