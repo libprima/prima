@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 AM10:12:35
+! Last Modified: Friday, April 15, 2022 AM10:22:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -444,7 +444,6 @@ beta = calbeta(kopt, bmat, d, xpt, zmat)
 if (ntrits == 0) then
     !denom = vlag(knew)**2 + alpha * beta
     denom = alpha * beta + vlag(knew)**2
-    write (*, *) '>>', vlag(knew)**2, alpha * beta, denom, vlag(knew)**2 + alpha * beta, alpha * beta + vlag(knew)**2
     if (denom < cauchy .and. cauchy > ZERO) then
         do i = 1, n
             xnew(i) = xalt(i)
