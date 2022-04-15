@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 PM07:41:55
+! Last Modified: Friday, April 15, 2022 PM08:12:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,7 @@ real(RP), intent(in) :: xopt(:)  ! XOPT(N)
 real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! Outputs
-integer(IK), intent(out) :: ifeas
+logical, intent(out) :: ifeas
 real(RP), intent(out) :: step(:)  ! STEP(N)
 
 ! Local variables
@@ -60,8 +60,8 @@ real(RP) :: w(size(xopt))
 real(RP) :: gl(size(gl_in))
 real(RP) :: residual(size(amat, 2))
 real(RP) :: bigv, cvtol, gg, gxpt(size(pqw)), ghg, sp, ss, tol, &
-&        stp, stplen(size(pqw)), stpsav, summ, temp, mincv, vbig, vgrad, vlag(size(pqw)), vnew, ww
-integer(IK) :: i, j, jsav, k, ksav
+&        stp, stplen(size(pqw)), stpsav, temp, mincv, vbig, vgrad, vlag(size(pqw)), vnew, ww
+integer(IK) :: i, jsav, k, ksav
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -90,7 +90,7 @@ if (DEBUGGING) then
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
 end if
 
-ifeas = 0_IK !??? Added by Zaikun 20220227
+ifeas = .false. !??? Added by Zaikun 20220227
 gl = gl_in
 
 !
@@ -106,7 +106,7 @@ gl = gl_in
 !     PQW provides the second derivative parameters of LFUNC.
 !     RSTAT and W are used for working space. Their lengths must be at least
 !       M and N, respectively.
-!     IFEAS will be set to 0 or 1 if XOPT+STEP is infeasible or feasible.
+!     IFEAS will be set to TRUE or FALSE if XOPT+STEP is feasible or infeasible.
 !
 !     STEP is chosen to provide a relatively large value of the modulus of
 !       LFUNC(XOPT+STEP), subject to ||STEP|| .LE. DEL. A projected STEP is
@@ -209,12 +209,7 @@ ww = sum(w**2)
 ! from computer rounding errors.
 if (vnew / vbig >= 0.2_RP) then
     bigv = maximum(matprod(w, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-    if (bigv < mincv) then
-        ifeas = 1
-    else
-        ifeas = 0
-    end if
-
+    ifeas = (bigv < mincv)
     cvtol = ZERO
     temp = 0.01_RP * sqrt(ww)
     if (bigv > ZERO .and. bigv < temp) then
@@ -230,32 +225,29 @@ end if
 
 ! Calculate the greatest constraint violation at XOPT+STEP with STEP at its original value. Modify
 ! STEP if this violation is unacceptable.
-ifeas = 1
-
 !--------------------------------------------------------------------------------------------------!
 !!! To be de-looped. In addition, we should use RSTAT to choose which constraints to evaluate!!!
+! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
 residual = -rescon
 do i = 1, n
     residual = residual + step(i) * amat(i, :)
 end do
 !--------------------------------------------------------------------------------------------------!
-
-! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
-if (.not. all(rstat == -1 .or. residual <= 0)) then
-    ifeas = 0
+ifeas = all(rstat == -1 .or. residual <= 0)
+if (.not. ifeas) then
     if (all(rstat == -1 .or. residual < mincv)) then
         bigv = maxval(residual, mask=(rstat >= 0))
         jsav = maxloc(residual, mask=(rstat >= 0), dim=1)
         if (bigv > 0) then
-            ifeas = -1
+            step = step + (mincv - bigv) * amat(:, jsav)
         end if
     end if
 end if
 
-if (ifeas == -1) then
-    step = step + (mincv - bigv) * amat(:, jsav)
-    ifeas = 0
-end if
+!if (ifeas == -1) then
+!            step = step + (mincv - bigv) * amat(:, jsav)
+!    ifeas = 0
+!end if
 !
 !     Return the calculated STEP and the value of IFEAS.
 !
