@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 PM02:56:14
+! Last Modified: Friday, April 15, 2022 PM07:41:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ subroutine geostep(iact, knew, kopt, nact, amat, del, gl_in, pqw, qfac, rescon, 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: linalg_mod, only : inprod, isorth
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc
 
 implicit none
 
@@ -55,10 +55,11 @@ character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: rstat(size(amat, 2))
+integer(IK) :: rstat(size(amat, 2))
 real(RP) :: w(size(xopt))
 real(RP) :: gl(size(gl_in))
-real(RP) :: bigv, ctol, gg, ghg, resmax, sp, ss, tol, &
+real(RP) :: residual(size(amat, 2))
+real(RP) :: bigv, cvtol, gg, gxpt(size(pqw)), ghg, sp, ss, tol, &
 &        stp, stplen(size(pqw)), stpsav, summ, temp, mincv, vbig, vgrad, vlag(size(pqw)), vnew, ww
 integer(IK) :: i, j, jsav, k, ksav
 
@@ -104,9 +105,7 @@ gl = gl_in
 !       gradients of LFUNC.
 !     PQW provides the second derivative parameters of LFUNC.
 !     RSTAT and W are used for working space. Their lengths must be at least
-!       M and N, respectively. RSTAT(J) is set to -1.0, 0.0, or 1.0 if the
-!       J-th constraint is irrelevant, active, or both inactive and relevant,
-!       respectively.
+!       M and N, respectively.
 !     IFEAS will be set to 0 or 1 if XOPT+STEP is infeasible or feasible.
 !
 !     STEP is chosen to provide a relatively large value of the modulus of
@@ -130,23 +129,14 @@ mincv = 0.2_RP * del  ! Is this really better than 0? According to an experiment
 
 ! Replace GL by the gradient of LFUNC at the trust region centre, and set the elements of RSTAT.
 do k = 1, npt
-    !temp = ZERO
-    !do j = 1, n
-    !    temp = temp + xpt(j, k) * xopt(j)
-    !end do
-    !temp = pqw(k) * temp
-    !do i = 1, n
-    !    gl(i) = gl(i) + temp * xpt(i, k)
-    !end do
     gl = gl + pqw(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
 end do
 
-rstat = ONE
-where (abs(rescon) >= del)
-    rstat = -ONE
-end where
-!!MATLAB: rstat(abs(rescon) >= del) = -1;
-rstat(iact(1:nact)) = ZERO
+! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
+! RSTAT never changes after being set below.
+rstat = 1_IK
+rstat(trueloc(abs(rescon) >= del)) = -1_IK
+rstat(iact(1:nact)) = 0_IK
 
 ! Maximize |LFUNC| within the trust region on the lines through XOPT and other interpolation points.
 vlag = ZERO
@@ -176,171 +166,94 @@ end if
 vbig = vlag(ksav)
 stpsav = stplen(ksav)
 
-!
-!     Set STEP to the move that gives the greatest modulus calculated above.
-!       This move may be replaced by a steepest ascent step from XOPT.
-!
-gg = ZERO
-do i = 1, n
-    gg = gg + gl(i)**2
-    step(i) = stpsav * (xpt(i, ksav) - xopt(i))
-end do
+! Set STEP to the move that gives the greatest modulus calculated above. This move may be replaced
+! by a steepest ascent step from XOPT.
+step = stpsav * (xpt(:, ksav) - xopt)
+gg = sum(gl**2)
 vgrad = del * sqrt(gg)
 if (vgrad <= TENTH * vbig) goto 220
-!
-!     Make the replacement if it provides a larger value of VBIG.
-!
-ghg = ZERO
-do k = 1, npt
-    temp = ZERO
-    do j = 1, n
-        temp = temp + xpt(j, k) * gl(j)
-    end do
-    ghg = ghg + pqw(k) * temp * temp
-end do
+
+! Make the replacement if it provides a larger value of VBIG.
+gxpt = matprod(gl, xpt)
+ghg = sum(pqw * gxpt * gxpt)
 vnew = vgrad + abs(HALF * del * del * ghg / gg)
 if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     vbig = vnew
     stp = del / sqrt(gg)
     if (ghg < ZERO) stp = -stp
-    do i = 1, n
-        step(i) = stp * gl(i)
-    end do
+    step = stp * gl
 end if
 if (nact == 0 .or. nact == n) goto 220
-!
-!     Overwrite GL by its projection. Then set VNEW to the greatest
-!       value of |LFUNC| on the projected gradient from XOPT subject to
-!       the trust region bound. If VNEW is sufficiently large, then STEP
-!       may be changed to a move along the projected gradient.
-!
-do k = nact + 1, n
-    w(k) = ZERO
-    do i = 1, n
-        w(k) = w(k) + gl(i) * qfac(i, k)
-    end do
-end do
-gg = ZERO
-do i = 1, n
-    gl(i) = ZERO
-    do k = nact + 1, n
-        gl(i) = gl(i) + qfac(i, k) * w(k)
-    end do
-    gg = gg + gl(i)**2
-end do
+
+! Overwrite GL by its projection to the column space of QFAC(:, NACT+1:N). Then set VNEW to the
+! greatest value of |LFUNC| on the projected gradient from XOPT subject to the trust region bound.
+! If VNEW is sufficiently large, then STEP may be changed to a move along the projected gradient.
+gl = matprod(qfac(:, nact + 1:n), matprod(gl, qfac(:, nact + 1:n)))
+!!MATLAB: gl = (gl' * qfac(:, nact+1:n) * qfac(:, nact+1:n)')'
+gg = sum(gl**2)
 vgrad = del * sqrt(gg)
 if (vgrad <= TENTH * vbig) goto 220
-ghg = ZERO
-do k = 1, npt
-    temp = ZERO
-    do j = 1, n
-        temp = temp + xpt(j, k) * gl(j)
-    end do
-    ghg = ghg + pqw(k) * temp * temp
-end do
+gxpt = matprod(gl, xpt)
+ghg = sum(pqw * gxpt * gxpt)
 vnew = vgrad + abs(HALF * del * del * ghg / gg)
-!
-!     Set W to the possible move along the projected gradient.
-!
+
+! Set W to the possible move along the projected gradient.
 stp = del / sqrt(gg)
 if (ghg < ZERO) stp = -stp
-ww = ZERO
-do i = 1, n
-    w(i) = stp * gl(i)
-    ww = ww + w(i)**2
-end do
-!
-!     Set STEP to W if W gives a sufficiently large value of the modulus
-!       of the Lagrange function, and if W either preserves feasibility
-!       or gives a constraint violation of at least MINCV. The purpose
-!       of CTOL below is to provide a check on feasibility that includes
-!       a tolerance for contributions from computer rounding errors.
-!
+w = stp * gl
+ww = sum(w**2)
+
+! Set STEP to W if W gives a sufficiently large value of the modulus of the Lagrange function, and
+! if W either preserves feasibility or gives a constraint violation of at least MINCV. The purpose
+! of CVTOL below is to provide a check on feasibility that includes a tolerance for contributions
+! from computer rounding errors.
 if (vnew / vbig >= 0.2_RP) then
-    ifeas = 1
-    bigv = ZERO
-    !j = 0
-!170 j = j + 1
-    !if (j <= m) then
-    !    if (rstat(j) == ONE) then
-    !        temp = -rescon(j)
-    !        do i = 1, n
-    !            temp = temp + w(i) * amat(i, j)
-    !        end do
-    !        bigv = max(bigv, temp)
-    !    end if
-    !    if (bigv < mincv) goto 170
-    !    ifeas = 0
-    !end if
-    do j = 1, m
-        if (rstat(j) == ONE) then
-            !temp = -rescon(j)
-            !do i = 1, n
-            !    temp = temp + w(i) * amat(i, j)
-            !end do
-            !bigv = max(bigv, temp)
+    bigv = maximum(matprod(w, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
+    if (bigv < mincv) then
+        ifeas = 1
+    else
+        ifeas = 0
+    end if
 
-            bigv = max(bigv, inprod(amat(:, j), w) - rescon(j))  ! Calculation changed
-        end if
-        if (.not. bigv < mincv) then
-            ifeas = 0
-            exit
-        end if
-    end do
-
-    !bigv = max(ZERO, cummax(matrod(w, amat) - rescon, mask=(rstat == ONE)))
-
-    ctol = ZERO
+    cvtol = ZERO
     temp = 0.01_RP * sqrt(ww)
     if (bigv > ZERO .and. bigv < temp) then
-        do k = 1, nact
-            j = iact(k)
-            summ = ZERO
-            do i = 1, n
-                summ = summ + w(i) * amat(i, j)
-            end do
-            ctol = max(ctol, abs(summ))
-        end do
+        cvtol = maxval([ZERO, abs(matprod(w, amat(:, iact(1:nact))))])
     end if
-    if (bigv <= TEN * ctol .or. bigv >= mincv) then
-        do i = 1, n
-            step(i) = w(i)
-        end do
+    if (bigv <= TEN * cvtol .or. bigv >= mincv) then
+        step = w
         goto 260
     end if
 end if
-!
-!     Calculate the greatest constraint violation at XOPT+STEP with STEP at
-!       its original value. Modify STEP if this violation is unacceptable.
-!
-220 ifeas = 1
-bigv = ZERO
-resmax = ZERO
-j = 0
-230 j = j + 1
-if (j <= m) then
-    if (rstat(j) < 0) goto 230
-    temp = -rescon(j)
-    do i = 1, n
-        temp = temp + step(i) * amat(i, j)
-    end do
-    resmax = max(resmax, temp)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!          IF (TEMP .LT. TEST) THEN
-    if (.not. (temp >= mincv)) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        if (temp <= bigv) goto 230
-        bigv = temp
-        jsav = j
-        ifeas = -1
-        goto 230
-    end if
+
+220 continue
+
+! Calculate the greatest constraint violation at XOPT+STEP with STEP at its original value. Modify
+! STEP if this violation is unacceptable.
+ifeas = 1
+
+!--------------------------------------------------------------------------------------------------!
+!!! To be de-looped. In addition, we should use RSTAT to choose which constraints to evaluate!!!
+residual = -rescon
+do i = 1, n
+    residual = residual + step(i) * amat(i, :)
+end do
+!--------------------------------------------------------------------------------------------------!
+
+! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
+if (.not. all(rstat == -1 .or. residual <= 0)) then
     ifeas = 0
+    if (all(rstat == -1 .or. residual < mincv)) then
+        bigv = maxval(residual, mask=(rstat >= 0))
+        jsav = maxloc(residual, mask=(rstat >= 0), dim=1)
+        if (bigv > 0) then
+            ifeas = -1
+        end if
+    end if
 end if
+
 if (ifeas == -1) then
-    do i = 1, n
-        step(i) = step(i) + (mincv - bigv) * amat(i, jsav)
-    end do
+    step = step + (mincv - bigv) * amat(:, jsav)
     ifeas = 0
 end if
 !
