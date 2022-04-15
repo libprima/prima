@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 PM02:57:39
+! Last Modified: Friday, April 15, 2022 PM06:59:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,6 +27,7 @@ subroutine geostep(n, npt, m, amat, xpt, xopt, nact, iact, &
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
+use, non_intrinsic :: linalg_mod, only : maximum
 use, non_intrinsic :: infnan_mod, only : is_nan
 
 implicit none
@@ -273,7 +274,11 @@ if (vnew / vbig >= 0.2_RP) then
                 temp = temp + w(i) * amat(i, j)
             end do
             temp = temp - rescon(j)
-            bigv = max(bigv, temp)
+            !-------------------------------------!
+            ! Zaikun 20220415
+            !bigv = max(bigv, temp)
+            bigv = maximum([bigv, temp])
+            !-------------------------------------!
         end if
         if (bigv < test) goto 170
         ifeas = 0
@@ -307,6 +312,7 @@ resmax = ZERO
 j = 0
 230 j = j + 1
 if (j <= m) then
+    write (17, *) j, jsav, ifeas, bigv, resmax
     if (rstat(j) < 0) goto 230
     temp = -rescon(j)
     do i = 1, n
@@ -314,8 +320,8 @@ if (j <= m) then
     end do
     resmax = max(resmax, temp)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!          IF (TEMP .LT. TEST) THEN
-    if (.not. (temp >= test)) then
+    if (temp < test) then
+!    if (.not. (temp >= test)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (temp <= bigv) goto 230
         bigv = temp
