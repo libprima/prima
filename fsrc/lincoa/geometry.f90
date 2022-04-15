@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 PM09:58:18
+! Last Modified: Saturday, April 16, 2022 AM01:29:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,6 +29,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, EP
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc
+use, non_intrinsic :: powalg_mod, only : hess_mul
 
 implicit none
 
@@ -61,7 +62,7 @@ real(RP) :: gl(size(gl_in))
 real(RP) :: residual(size(amat, 2))
 real(RP) :: bigcv, cvtol, gg, gxpt(size(pqw)), ghg, sp, ss, tol, &
 &        stp, stplen(size(pqw)), stpsav, mincv, vbig, vgrad, vlag(size(pqw)), vnew, sstmp
-integer(IK) :: i, jsav, k, ksav
+integer(IK) :: i, k, ksav
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -120,15 +121,17 @@ gl = gl_in
 !     Set some constants.
 !
 !--------------------------------------------------------------------------------------------------!
-ksav = 1_IK; jsav = 1_IK  ! Temporary fix for ksav/jsav may be uninitialized from G95
+ksav = 1_IK ! Temporary fix for ksav may be uninitialized from G95
 !--------------------------------------------------------------------------------------------------!
 
 mincv = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
 
 ! Replace GL by the gradient of LFUNC at the trust region centre, and set the elements of RSTAT.
-do k = 1, npt
-    gl = gl + pqw(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
-end do
+!do k = 1, npt
+!    gl = gl + pqw(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
+!end do
+!gl = gl + matprod(xpt, pqw * matprod(xopt, xpt))
+gl = gl + hess_mul(xopt, xpt, pqw)
 
 ! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
 ! RSTAT never changes after being set below.
@@ -146,15 +149,17 @@ do k = 1, npt
     sp = inprod(gl, xpt(:, k) - xopt)
     stplen(k) = -del / sqrt(ss)
     if (k == knew) then
-        if (sp * (sp - ONE) < ZERO) stplen(k) = -stplen(k)
+        if (sp * (sp - ONE) < ZERO) then
+            stplen(k) = -stplen(k)
+        end if
         vlag(k) = abs(stplen(k) * sp) + stplen(k)**2 * abs(sp - ONE)
     else
         vlag(k) = abs(stplen(k) * (ONE - stplen(k)) * sp)
     end if
 end do
 
-! N.B.: We define KSAV slightly differently from Powell's code, which sets KSAV = MAXLOC(VLAG,DIM=1)
-! by comparing the entries of VLAG one by one.
+! N.B.: 0. We define KSAV in a way slightly different from Powell's code, which sets KSAV to
+! MAXLOC(VLAG,DIM=1) by comparing the entries of VLAG sequentially.
 ! 1. If VLAG contains only NaN, which can happen, Powell's code leaves KSAV uninitialized.
 ! 2. If VLAG(KNEW) = MINVAL(VLAG) = VLAG(K) with K < KNEW, Powell's code does not set KSAV = KNEW.
 ksav = knew
@@ -178,9 +183,12 @@ vnew = vgrad + abs(HALF * del * del * ghg / gg)
 if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     vbig = vnew
     stp = del / sqrt(gg)
-    if (ghg < ZERO) stp = -stp
+    if (ghg < ZERO) then
+        stp = -stp
+    end if
     step = stp * gl
 end if
+
 if (nact == 0 .or. nact == n) goto 220
 
 ! Overwrite GL by its projection to the column space of QFAC(:, NACT+1:N). Then set VNEW to the
@@ -197,7 +205,9 @@ vnew = vgrad + abs(HALF * del * del * ghg / gg)
 
 ! Set STMP to the possible move along the projected gradient.
 stp = del / sqrt(gg)
-if (ghg < ZERO) stp = -stp
+if (ghg < ZERO) then
+    stp = -stp
+end if
 stmp = stp * gl
 sstmp = sum(stmp**2)
 
@@ -225,18 +235,11 @@ end if
 ! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
 residual = ZERO
 residual(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
-!--------------------------------------------------------------------------------------------------!
-!!! To be de-looped !!!
-!residual(trueloc(rstat >= 0)) = -rescon(trueloc(rstat >= 0))
-!do i = 1, n
-!    residual(trueloc(rstat >= 0)) = residual(trueloc(rstat >= 0)) + step(i) * amat(i, trueloc(rstat >= 0))
-!end do
-!--------------------------------------------------------------------------------------------------!
 ifeas = all(residual <= 0)
 if (all(residual < mincv) .and. any(residual > 0)) then
     bigcv = maxval(residual)
-    jsav = maxloc(residual, dim=1)
-    step = step + (mincv - bigcv) * amat(:, jsav)
+    i = int(maxloc(residual, dim=1), kind(i))
+    step = step + (mincv - bigcv) * amat(:, i)
 end if
 
 end subroutine geostep

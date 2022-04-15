@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 14, 2022 PM05:14:38
+! Last Modified: Saturday, April 16, 2022 AM01:31:50
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -779,10 +779,10 @@ end if
 end function errquad
 
 
-function hess_mul(hq, pq, xpt, x) result(y)
+function hess_mul(x, xpt, pq, hq) result(y)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates HESSIAN*X, where HESSIAN consists of an explicit part HQ and an
-! implicit part PQ in Powell's way: HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
+! This function calculates HESSIAN*X, where HESSIAN consists of an explicit part HQ (0 if absent)
+! and an implicit part PQ in Powell's way: HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -791,13 +791,13 @@ use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(in) :: pq(:)     ! PQ(NPT)
 real(RP), intent(in) :: x(:)      ! X(N)
 real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 
 ! Outputs
-real(RP) :: y(size(hq, 1))
+real(RP) :: y(size(x))
 
 ! Local variables
 character(len=*), parameter :: srname = 'HESS_MUL'
@@ -813,10 +813,12 @@ npt = int(size(xpt, 2), kind(npt))
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
-    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(x) == n, 'SIZE(Y) == N', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    if (present(hq)) then
+        call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    end if
 end if
 
 !====================!
@@ -828,9 +830,11 @@ end if
 ! The following loop works numerically better than the last line (but why?).
 !--------------------------------------------------------------------------------!
 y = matprod(xpt, pq * matprod(x, xpt))
-do j = 1, n
-    y = y + hq(:, j) * x(j)
-end do
+if (present(hq)) then
+    do j = 1, n
+        y = y + hq(:, j) * x(j)
+    end do
+end if
 
 !====================!
 !  Calculation ends  !

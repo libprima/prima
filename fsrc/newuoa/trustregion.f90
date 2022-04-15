@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 29, 2022 AM11:21:48
+! Last Modified: Saturday, April 16, 2022 AM01:22:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -55,7 +55,7 @@ use, non_intrinsic :: circle_mod, only : circle_min
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, project
-use, non_intrinsic :: powalg_mod, only: hess_mul
+use, non_intrinsic :: powalg_mod, only : hess_mul
 
 implicit none
 
@@ -134,7 +134,7 @@ qred = ZERO
 info_loc = 2_IK  ! Default exit flag is 2, i.e., ITERMAX is attained
 
 ! Prepare for the first line search.
-hx = hess_mul(hq, pq, xpt, x)
+hx = hess_mul(x, xpt, pq, hq)
 !--------------------------------------------------------------------------------------------------!
 ! N.B.: During the iterations, G is NOT updated, and it equals always GQ+HX, which is the gradient
 ! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
@@ -186,7 +186,7 @@ do iter = 1, itermax
             bstep = (delsq - ss) / (ds + hypt)
         end if
     end if
-    hd = hess_mul(hq, pq, xpt, d)
+    hd = hess_mul(d, xpt, pq, hq)
     dhd = inprod(d, hd)
 
     ! Set the step-length ALPHA and update CRVMIN.
@@ -317,7 +317,7 @@ do iter = 1, itermax
         exit
     end if
 
-    hd = hess_mul(hq, pq, xpt, d)
+    hd = hess_mul(d, xpt, pq, hq)
 
     ! Seek the value of the angle that minimizes Q.
     ! First, calculate the coefficients of the objective function on the circle.
