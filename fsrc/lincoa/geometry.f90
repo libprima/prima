@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 PM08:12:08
+! Last Modified: Friday, April 15, 2022 PM09:51:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -56,11 +56,11 @@ integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: rstat(size(amat, 2))
-real(RP) :: w(size(xopt))
+real(RP) :: stmp(size(xopt))
 real(RP) :: gl(size(gl_in))
 real(RP) :: residual(size(amat, 2))
-real(RP) :: bigv, cvtol, gg, gxpt(size(pqw)), ghg, sp, ss, tol, &
-&        stp, stplen(size(pqw)), stpsav, temp, mincv, vbig, vgrad, vlag(size(pqw)), vnew, ww
+real(RP) :: bigcv, cvtol, gg, gxpt(size(pqw)), ghg, sp, ss, tol, &
+&        stp, stplen(size(pqw)), stpsav, mincv, vbig, vgrad, vlag(size(pqw)), vnew, sstmp
 integer(IK) :: i, jsav, k, ksav
 
 ! Sizes.
@@ -104,8 +104,6 @@ gl = gl_in
 !       is the KNEW-th Lagrange function. It is used also for some other
 !       gradients of LFUNC.
 !     PQW provides the second derivative parameters of LFUNC.
-!     RSTAT and W are used for working space. Their lengths must be at least
-!       M and N, respectively.
 !     IFEAS will be set to TRUE or FALSE if XOPT+STEP is feasible or infeasible.
 !
 !     STEP is chosen to provide a relatively large value of the modulus of
@@ -197,27 +195,26 @@ gxpt = matprod(gl, xpt)
 ghg = sum(pqw * gxpt * gxpt)
 vnew = vgrad + abs(HALF * del * del * ghg / gg)
 
-! Set W to the possible move along the projected gradient.
+! Set STMP to the possible move along the projected gradient.
 stp = del / sqrt(gg)
 if (ghg < ZERO) stp = -stp
-w = stp * gl
-ww = sum(w**2)
+stmp = stp * gl
+sstmp = sum(stmp**2)
 
-! Set STEP to W if W gives a sufficiently large value of the modulus of the Lagrange function, and
-! if W either preserves feasibility or gives a constraint violation of at least MINCV. The purpose
-! of CVTOL below is to provide a check on feasibility that includes a tolerance for contributions
-! from computer rounding errors.
+! Set STEP to STMP if STMP gives a sufficiently large value of the modulus of the Lagrange function,
+! andif STMP either preserves feasibility or gives a constraint violation of at least MINCV. The
+! purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
+! contributions from computer rounding errors.
 if (vnew / vbig >= 0.2_RP) then
-    bigv = maximum(matprod(w, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-    ifeas = (bigv < mincv)
+    bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
+    ifeas = (bigcv < mincv)
     cvtol = ZERO
-    temp = 0.01_RP * sqrt(ww)
-    if (bigv > ZERO .and. bigv < temp) then
-        cvtol = maxval([ZERO, abs(matprod(w, amat(:, iact(1:nact))))])
+    if (bigcv > ZERO .and. bigcv < 0.01_RP * sqrt(sstmp)) then
+        cvtol = maxval([ZERO, abs(matprod(stmp, amat(:, iact(1:nact))))])
     end if
-    if (bigv <= TEN * cvtol .or. bigv >= mincv) then
-        step = w
-        goto 260
+    if (bigcv <= TEN * cvtol .or. bigcv >= mincv) then
+        step = stmp
+        return
     end if
 end if
 
@@ -225,33 +222,23 @@ end if
 
 ! Calculate the greatest constraint violation at XOPT+STEP with STEP at its original value. Modify
 ! STEP if this violation is unacceptable.
-!--------------------------------------------------------------------------------------------------!
-!!! To be de-looped. In addition, we should use RSTAT to choose which constraints to evaluate!!!
 ! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
-residual = -rescon
+residual = ZERO
+!residual(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
+!--------------------------------------------------------------------------------------------------!
+!!! To be de-looped !!!
+residual(trueloc(rstat >= 0)) = -rescon(trueloc(rstat >= 0))
 do i = 1, n
-    residual = residual + step(i) * amat(i, :)
+    residual(trueloc(rstat >= 0)) = residual(trueloc(rstat >= 0)) + step(i) * amat(i, trueloc(rstat >= 0))
 end do
 !--------------------------------------------------------------------------------------------------!
-ifeas = all(rstat == -1 .or. residual <= 0)
-if (.not. ifeas) then
-    if (all(rstat == -1 .or. residual < mincv)) then
-        bigv = maxval(residual, mask=(rstat >= 0))
-        jsav = maxloc(residual, mask=(rstat >= 0), dim=1)
-        if (bigv > 0) then
-            step = step + (mincv - bigv) * amat(:, jsav)
-        end if
-    end if
+ifeas = all(residual <= 0)
+if (all(residual < mincv) .and. any(residual > 0)) then
+    bigcv = maxval(residual)
+    jsav = maxloc(residual, dim=1)
+    step = step + (mincv - bigcv) * amat(:, jsav)
 end if
 
-!if (ifeas == -1) then
-!            step = step + (mincv - bigv) * amat(:, jsav)
-!    ifeas = 0
-!end if
-!
-!     Return the calculated STEP and the value of IFEAS.
-!
-260 return
 end subroutine geostep
 
 
