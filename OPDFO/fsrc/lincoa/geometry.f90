@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 PM06:59:53
+! Last Modified: Friday, April 15, 2022 PM10:01:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -314,10 +314,14 @@ j = 0
 if (j <= m) then
     write (17, *) j, jsav, ifeas, bigv, resmax
     if (rstat(j) < 0) goto 230
-    temp = -rescon(j)
+
+    !temp = -rescon(j)
+    temp = ZERO
     do i = 1, n
         temp = temp + step(i) * amat(i, j)
     end do
+    temp = temp - rescon(j)
+
     resmax = max(resmax, temp)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if (temp < test) then

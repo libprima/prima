@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 PM09:51:39
+! Last Modified: Friday, April 15, 2022 PM09:58:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -224,13 +224,13 @@ end if
 ! STEP if this violation is unacceptable.
 ! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
 residual = ZERO
-!residual(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
+residual(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
 !--------------------------------------------------------------------------------------------------!
 !!! To be de-looped !!!
-residual(trueloc(rstat >= 0)) = -rescon(trueloc(rstat >= 0))
-do i = 1, n
-    residual(trueloc(rstat >= 0)) = residual(trueloc(rstat >= 0)) + step(i) * amat(i, trueloc(rstat >= 0))
-end do
+!residual(trueloc(rstat >= 0)) = -rescon(trueloc(rstat >= 0))
+!do i = 1, n
+!    residual(trueloc(rstat >= 0)) = residual(trueloc(rstat >= 0)) + step(i) * amat(i, trueloc(rstat >= 0))
+!end do
 !--------------------------------------------------------------------------------------------------!
 ifeas = all(residual <= 0)
 if (all(residual < mincv) .and. any(residual > 0)) then
