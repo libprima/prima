@@ -469,6 +469,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
 	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
 	| grep -v "NAG Fortran Compiler Release [0-9]*.* Build [0-9]*" \
+	| grep -v "Questionable: ./lincoa/geometry.f90, line [0-9]*: Variable RSTAT set but never referenced" \
 	| grep -v "Expression in IF construct is constant" \
 	| grep -v "NAG Fortran Compiler normal termination" \
 	| grep -v "NAG Fortran Compiler normal termination, [0-9]* info message" \
@@ -553,6 +554,10 @@ source_%: $(SRC_DIRS)
 	@if echo $@ | grep -q "stest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../sunsrc ./ ; \
+	fi
+	@if echo $@ | grep -q "ntest"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../nagsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "atest\|9test"; then \
 		printf "\nPreparing the source code for $@.\n" ; \

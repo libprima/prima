@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 PM03:13:15
+! Last Modified: Saturday, April 16, 2022 PM09:45:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,7 +133,7 @@ mincv = 0.2_RP * del  ! Is this really better than 0? According to an experiment
 !gl = gl + matprod(xpt, pqw * matprod(xopt, xpt))
 gl = gl + hess_mul(xopt, xpt, pqw)
 
-! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
+! RSTAT(J) = -1, 0, or 1 respectively means constraint J is irrelevant, active, or inactive&relevant.
 ! RSTAT never changes after being set below.
 rstat = 1_IK
 rstat(trueloc(abs(rescon) >= del)) = -1_IK

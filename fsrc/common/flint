@@ -93,6 +93,7 @@ ROOT_DIR=../..
 TIME=$(date +%s)
 RANDNUM="$((RANDOM*RANDOM))"
 TEST_DIR=/tmp/"$(basename -- "$0")"_"$TIME"_"$RANDNUM"
+printf  "Test directory:\n\n%s\n" "$TEST_DIR"
 # We export TEST_DIR, which will be referred to by the Makefiles.
 export TEST_DIR
 TEST_ROOT="$TEST_DIR"/neupdfo
