@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 PM05:30:23
+! Last Modified: Saturday, April 16, 2022 PM11:53:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, EPS, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : inprod, isorth, istriu, issymmetric
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, solve, isorth, istriu, issymmetric
 use, non_intrinsic :: powalg_mod, only : hess_mul
 
 ! Solver-specific modules
@@ -136,30 +136,12 @@ ctest = 0.01_RP
 snorm = delta
 !--------------------------------------------------------------------------------------------------!
 snsq = snorm * snorm
-!
+
 ! Set the initial elements of RESNEW, RESACT and STEP.
-!
 ! 1. RESNEW(J) < 0 indicates that the J-th constraint does not restrict the CG steps of the current
 ! trust region calculation. In other words, RESCON >= DELTA.
 ! 2. RESNEW(J) = 0 indicates that the J-th constraint is active, namely B(J) = AMAT(:, J)^T*(XOPT+D).
 ! 3. RESNEW(J) > 0 means that RESNEW(J) = max(B(J) - AMAT(:, J)^T*(XOPT+D), TINYCV).
-!if (m > 0) then
-!do j = 1, m
-!    resnew(j) = rescon(j)
-!    if (rescon(j) >= snorm) then
-!        resnew(j) = -ONE
-!    else if (rescon(j) >= ZERO) then
-!        resnew(j) = max(resnew(j), TINYCV)
-!    end if
-!end do
-!if (nact > 0) then
-!    do k = 1, nact
-!        resact(k) = rescon(iact(k))
-!        resnew(iact(k)) = ZERO
-!    end do
-!end if
-!end if
-
 where (rescon >= snorm)
     resnew = -ONE
 elsewhere(rescon >= 0)
@@ -175,63 +157,72 @@ step = ZERO
 ss = ZERO
 reduct = ZERO
 ngetact = 0
-!
-!     GETACT picks the active set for the current STEP. It also sets DW to
-!       the vector closest to -G that is orthogonal to the normals of the
-!       active constraints. DW is scaled to have length 0.2*SNORM, as then
-!       a move of DW from STEP is allowed by the linear constraints.
-!
+
+! GETACT picks the active set for the current STEP. It also sets DW to the vector closest to -G that
+! is orthogonal to the normals of the active constraints. DW is scaled to have length 0.2*SNORM, as
+! then a move of DW from STEP is allowed by the linear constraints.
 40 ngetact = ngetact + 1
 call getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dw)
 dd = inprod(dw, dw)
-if (dd == ZERO) goto 320
-scaling = 0.2_RP * snorm / sqrt(dd)
-do i = 1, n
-    dw(i) = scaling * dw(i)
-end do
-!
-!     If the modulus of the residual of an active constraint is substantial,
-!       then set D to the shortest move from STEP to the boundaries of the
-!       active constraints.
-!
-resmax = ZERO
-if (nact > 0) then
-    do k = 1, nact
-        resmax = max(resmax, resact(k))
-    end do
+if (dd == ZERO) then
+    goto 320
 end if
+scaling = 0.2_RP * snorm / sqrt(dd)
+dw = scaling * dw
+!do i = 1, n
+!    dw(i) = scaling * dw(i)
+!end do
+
+
+! If the modulus of the residual of an active constraint is substantial, then set D to the shortest
+! move from STEP to the boundaries of the active constraints.
+resmax = ZERO
+resmax = maxval([ZERO, resact(1:nact)])
+!if (nact > 0) then
+!    do k = 1, nact
+!        resmax = max(resmax, resact(k))
+!    end do
+!end if
+
 bstep = ZERO
 if (resmax > 1.0D-4 * snorm) then
-    do k = 1, nact
-        temp = resact(k)
-        if (k >= 2) then
-            do i = 1, k - 1
-                temp = temp - rfac(i, k) * vlam(i)
-            end do
-        end if
-        vlam(k) = temp / rfac(k, k)
-    end do
-    do i = 1, n
-        d(i) = ZERO
-        do k = 1, nact
-            d(i) = d(i) + vlam(k) * qfac(i, k)
-        end do
-    end do
+    !do k = 1, nact
+    !    temp = resact(k)
+    !    do i = 1, k - 1
+    !        temp = temp - rfac(i, k) * vlam(i)
+    !    end do
+    !    vlam(k) = temp / rfac(k, k)
+    !end do
+    ! Calculation changed
+    vlam(1:nact) = solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact))
+
+    !do i = 1, n
+    !    d(i) = ZERO
+    !    do k = 1, nact
+    !        d(i) = d(i) + vlam(k) * qfac(i, k)
+    !    end do
+    !end do
+    d = matprod(qfac(:, 1:nact), vlam(1:nact))
 !
 !     The vector D that has just been calculated is also the shortest move
 !       from STEP+DW to the boundaries of the active constraints. Set BSTEP
 !       to the greatest steplength of this move that satisfies the trust
 !       region bound.
 !
-    rhs = snsq
-    ds = ZERO
-    dd = ZERO
-    do i = 1, n
-        summ = step(i) + dw(i)
-        rhs = rhs - summ * summ
-        ds = ds + d(i) * summ
-        dd = dd + d(i)**2
-    end do
+    !rhs = snsq
+    !ds = ZERO
+    !dd = ZERO
+    !do i = 1, n
+    !    summ = step(i) + dw(i)
+    !    rhs = rhs - summ * summ
+    !    ds = ds + d(i) * summ
+    !    dd = dd + d(i)**2
+    !end do
+
+    ds = inprod(d, step + dw)
+    dd = sum(d**2)
+    rhs = snsq - sum((step + dw)**2)  ! Calculation changed
+
     if (rhs > ZERO) then
         temp = sqrt(ds * ds + dd * rhs)
         if (ds <= ZERO) then
@@ -267,12 +258,15 @@ if (resmax > 1.0D-4 * snorm) then
     do j = 1, m
         if (.not. bstep > 0) exit
         if (resnew(j) > ZERO) then
-            ad = ZERO
-            adw = ZERO
-            do i = 1, n
-                ad = ad + amat(i, j) * d(i)
-                adw = adw + amat(i, j) * dw(i)
-            end do
+            !ad = ZERO
+            !adw = ZERO
+            !do i = 1, n
+            !    ad = ad + amat(i, j) * d(i)
+            !    adw = adw + amat(i, j) * dw(i)
+            !end do
+            ad = inprod(d, amat(:, j))
+            adw = inprod(dw, amat(:, j))
+
             if (ad > ZERO) then
                 temp = max((resnew(j) - adw) / ad, ZERO)
                 bstep = min(bstep, temp)
@@ -287,14 +281,16 @@ end if
 !       subject to the trust region bound and the linear constraints.
 !
 if (bstep <= ZERO) then
-    do i = 1, n
-        d(i) = dw(i)
-    end do
+    !do i = 1, n
+    !    d(i) = dw(i)
+    !end do
+    d = dw
     icount = nact
 else
-    do i = 1, n
-        d(i) = dw(i) + bstep * d(i)
-    end do
+    !do i = 1, n
+    !    d(i) = dw(i) + bstep * d(i)
+    !end do
+    d = dw + bstep * d
     icount = nact - 1
 end if
 alpbd = ONE
@@ -306,14 +302,17 @@ alpbd = ONE
 150 icount = icount + 1
 rhs = snsq - ss
 if (rhs <= ZERO) goto 320
-dg = ZERO
-ds = ZERO
-dd = ZERO
-do i = 1, n
-    dg = dg + d(i) * g(i)
-    ds = ds + d(i) * step(i)
-    dd = dd + d(i)**2
-end do
+!dg = ZERO
+!ds = ZERO
+!dd = ZERO
+!do i = 1, n
+!    dg = dg + d(i) * g(i)
+!    ds = ds + d(i) * step(i)
+!    dd = dd + d(i)**2
+!end do
+dg = inprod(d, g)
+ds = inprod(d, step)
+dd = inprod(d, d)
 if (dg >= ZERO) goto 320
 temp = sqrt(rhs * dd + ds * ds)
 if (ds <= ZERO) then
@@ -352,10 +351,11 @@ dw = hess_mul(d, xpt, pq, hq)
 !     Set DGD to the curvature of the model along D. Then reduce ALPHA if
 !       necessary to the value that minimizes the model.
 !
-dgd = ZERO
-do i = 1, n
-    dgd = dgd + d(i) * dw(i)
-end do
+dgd = inprod(d, dw)
+!dgd = ZERO
+!do i = 1, n
+!    dgd = dgd + d(i) * dw(i)
+!end do
 alpht = alpha
 if (dg + alpha * dgd > ZERO) then
     alpha = -dg / dgd
@@ -366,13 +366,14 @@ end if
 !
 alphm = alpha
 jsav = 0
-!if (m > 0) then
+
 do j = 1, m
     ad = ZERO
     if (resnew(j) > ZERO) then
-        do i = 1, n
-            ad = ad + amat(i, j) * d(i)
-        end do
+        !do i = 1, n
+        !    ad = ad + amat(i, j) * d(i)
+        !end do
+        ad = inprod(d, amat(:, j))
         if (alpha * ad > resnew(j)) then
             alpha = resnew(j) / ad
             jsav = j
@@ -380,19 +381,23 @@ do j = 1, m
     end if
     w(j) = ad
 end do
-!end if
+
+
+
 alpha = max(alpha, alpbd)
 alpha = min(alpha, alphm)
 if (icount == nact) alpha = min(alpha, ONE)
 !
 !     Update STEP, G, RESNEW, RESACT and REDUCT.
 !
-ss = ZERO
-do i = 1, n
-    step(i) = step(i) + alpha * d(i)
-    ss = ss + step(i)**2
-    g(i) = g(i) + alpha * dw(i)
-end do
+step = step + alpha * d
+ss = sum(step**2)
+g = g + alpha * dw
+!do i = 1, n
+!    step(i) = step(i) + alpha * d(i)
+!    ss = ss + step(i)**2
+!    g(i) = g(i) + alpha * dw(i)
+!end do
 
 where (resnew > 0)
     resnew = max(resnew - alpha * w(1:m), TINYCV)
@@ -407,9 +412,10 @@ end where
 !end do
 !end if
 if (icount == nact .and. nact > 0) then
-    do k = 1, nact
-        resact(k) = (ONE - bstep) * resact(k)
-    end do
+    !do k = 1, nact
+    !    resact(k) = (ONE - bstep) * resact(k)
+    !end do
+    resact(1:nact) = (ONE - bstep) * resact(1:nact)
 end if
 reduct = reduct - alpha * (dg + HALF * alpha * dgd)
 !
@@ -440,36 +446,40 @@ if (icount == n) goto 320
 !       previous ONE except in the case ICOUNT=NACT.
 !
 if (nact > 0) then
-    do j = nact + 1, n
-        w(j) = ZERO
-        do i = 1, n
-            w(j) = w(j) + g(i) * qfac(i, j)
-        end do
-    end do
-    do i = 1, n
-        temp = ZERO
-        do j = nact + 1, n
-            temp = temp + qfac(i, j) * w(j)
-        end do
-        w(n + i) = temp
-    end do
+    !do j = nact + 1, n
+    !    w(j) = ZERO
+    !    do i = 1, n
+    !        w(j) = w(j) + g(i) * qfac(i, j)
+    !    end do
+    !end do
+    !do i = 1, n
+    !    temp = ZERO
+    !    do j = nact + 1, n
+    !        temp = temp + qfac(i, j) * w(j)
+    !    end do
+    !    w(n + i) = temp
+    !end do
+    w(n + 1:2 * n) = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
 else
-    do i = 1, n
-        w(n + i) = g(i)
-    end do
+    !do i = 1, n
+    !    w(n + i) = g(i)
+    !end do
+    w(n + 1:2 * n) = g
 end if
 if (icount == nact) then
     beta = ZERO
 else
-    wgd = ZERO
-    do i = 1, n
-        wgd = wgd + w(n + i) * dw(i)
-    end do
+    wgd = inprod(w(n + 1:2 * n), dw)
+    !wgd = ZERO
+    !do i = 1, n
+    !   wgd = wgd + w(n + i) * dw(i)
+    !end do
     beta = wgd / dgd
 end if
-do i = 1, n
-    d(i) = -w(n + i) + beta * d(i)
-end do
+d = -w(n + 1:2 * n) + beta * d
+!do i = 1, n
+!    d(i) = -w(n + i) + beta * d(i)
+!end do
 alpbd = ZERO
 goto 150
 !

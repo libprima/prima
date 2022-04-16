@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 PM05:34:13
+! Last Modified: Saturday, April 16, 2022 PM11:29:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -154,10 +154,12 @@ if (resmax > 1.0D-4 * snorm) then
     do k = 1, nact
         temp = resact(k)
         if (k >= 2) then
+            temp = ZERO
             do i = 1, k - 1
                 ir = ir + 1
-                temp = temp - rfac(ir) * w(i)
+                temp = temp + rfac(ir) * w(i)
             end do
+            temp = resact(k) - temp
         end if
         ir = ir + 1
         w(k) = temp / rfac(ir)
@@ -174,15 +176,17 @@ if (resmax > 1.0D-4 * snorm) then
 !       to the greatest steplength of this move that satisfies the trust
 !       region bound.
 !
-    rhs = snsq
+    !rhs = snsq
+    rhs = ZERO
     ds = ZERO
     dd = ZERO
     do i = 1, n
         summ = step(i) + dw(i)
-        rhs = rhs - summ * summ
+        rhs = rhs + summ * summ
         ds = ds + d(i) * summ
         dd = dd + d(i)**2
     end do
+    rhs = snsq - rhs
     if (rhs > ZERO) then
         temp = sqrt(ds * ds + dd * rhs)
         if (ds <= ZERO) then
