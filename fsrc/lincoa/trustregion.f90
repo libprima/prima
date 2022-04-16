@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 AM09:31:01
+! Last Modified: Saturday, April 16, 2022 AM10:18:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -345,7 +345,7 @@ if (-alpha * dg <= ctest * reduct) goto 320
 !    end do
 !end do
 
-dw = hess_mul(d, xpt, pq)
+dw = hess_mul(d, xpt, pq, hq)
 !----------------------------------------------------!
 
 !
