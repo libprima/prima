@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 PM10:01:07
+! Last Modified: Saturday, April 16, 2022 PM05:04:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -59,6 +59,7 @@ real(RP), intent(inout) :: w(n)
 real(RP) :: bigv, ctol, gg, ghg, resmax, sp, ss,  &
 &        stp, stpsav, summ, temp, test, vbig, vgrad, &
 &        vlag, vnew, ww
+real(RP) :: tmpv(n)
 integer(IK) :: i, j, jsav, k, ksav
 
 
@@ -97,16 +98,22 @@ test = 0.2_RP * del  ! Is this really better than 0? According to an experiment 
 !     Replace GL by the gradient of LFUNC at the trust region centre, and
 !       set the elements of RSTAT.
 !
+tmpv = ZERO
 do k = 1, npt
     temp = ZERO
     do j = 1, n
         temp = temp + xpt(j, k) * xopt(j)
     end do
     temp = pqw(k) * temp
+    !do i = 1, n
+    !    gl(i) = gl(i) + temp * xpt(i, k)
+    !end do
     do i = 1, n
-        gl(i) = gl(i) + temp * xpt(i, k)
+        tmpv(i) = tmpv(i) + temp * xpt(i, k)
     end do
 end do
+gl = gl + tmpv
+
 if (m > 0) then
     do j = 1, m
         rstat(j) = ONE
@@ -258,7 +265,11 @@ end do
 !       of CTOL below is to provide a check on feasibility that includes
 !       a tolerance for contributions from computer rounding errors.
 !
-if (vnew / vbig >= 0.2_RP) then
+!--------------------------------------------------------------------------!
+! Zaikun 20220416
+!if (vnew / vbig >= 0.2_RP) then
+if (vnew >= 0.2_RP * vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
+!--------------------------------------------------------------------------!
     ifeas = 1
     bigv = ZERO
     j = 0

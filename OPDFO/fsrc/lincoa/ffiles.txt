@@ -1,3 +1,4 @@
+vm.f90
 update.f90
 initialize.f90
 getact.f90

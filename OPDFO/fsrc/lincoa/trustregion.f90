@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 25, 2022 PM01:15:35
+! Last Modified: Saturday, April 16, 2022 PM05:34:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,6 +27,7 @@ subroutine trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, TINYCV
+use, non_intrinsic :: vm_mod, only : v2m
 
 ! Solver-specific modules
 use, non_intrinsic :: getact_mod, only : getact
@@ -60,6 +61,7 @@ real(RP), intent(inout) :: w(max(m, 2_IK * n))
 ! Local variables
 real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, wgd
+real(RP) :: hqm(n, n)
 integer(IK) :: i, icount, ih, ir, j, jsav, k, ncall
 
 !
@@ -257,15 +259,28 @@ if (-alpha * dg <= ctest * reduct) goto 320
 !
 !     Set DW to the change in gradient along D.
 !
-ih = 0
-do j = 1, n
-    dw(j) = ZERO
-    do i = 1, j
-        ih = ih + 1
-        if (i < j) dw(j) = dw(j) + hq(ih) * d(i)
-        dw(i) = dw(i) + hq(ih) * d(j)
-    end do
-end do
+!--------------------------------------------------------------------!
+! Zaikun 20220416
+!ih = 0
+!do j = 1, n
+!    dw(j) = ZERO
+!    do i = 1, j
+!        ih = ih + 1
+!        if (i < j) dw(j) = dw(j) + hq(ih) * d(i)
+!        dw(i) = dw(i) + hq(ih) * d(j)
+!    end do
+!end do
+!do k = 1, npt
+!    temp = ZERO
+!    do j = 1, n
+!        temp = temp + xpt(j, k) * d(j)
+!    end do
+!    temp = pq(k) * temp
+!    do i = 1, n
+!        dw(i) = dw(i) + temp * xpt(i, k)
+!    end do
+!end do
+dw = ZERO
 do k = 1, npt
     temp = ZERO
     do j = 1, n
@@ -276,6 +291,11 @@ do k = 1, npt
         dw(i) = dw(i) + temp * xpt(i, k)
     end do
 end do
+hqm = v2m(hq)
+do j = 1, n
+    dw = dw + d(j) * hqm(:, j)
+end do
+!--------------------------------------------------------------------!
 !
 !     Set DGD to the curvature of the model along D. Then reduce ALPHA if
 !       necessary to the value that minimizes the model.

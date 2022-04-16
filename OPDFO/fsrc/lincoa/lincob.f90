@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 08, 2022 AM09:18:59
+! Last Modified: Saturday, April 16, 2022 PM05:56:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,6 +41,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: vm_mod, only : v2m
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
@@ -110,7 +111,7 @@ integer(IK) :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
 &           knew, kopt, ksave, nact, nh, np, nptm,     &
 &           nvala, nvalb
 real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
-real(RP) :: xptsav(n, npt), bup1(n, npt), bup2(n, n)
+real(RP) :: xptsav(n, npt), bup1(n, npt), bup2(n, n), tmpv(n), hqm(n, n)
 
 !
 !     The arguments N, NPT, M, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
@@ -807,12 +808,23 @@ do i = 1, n
 end do
 rsp(npt + knew) = rsp(npt + kopt) + ssq
 if (itest < 3) then
+    !---------------------------------------------------!
+    ! Zaikun 20220416
+    tmpv = ZERO
     do k = 1, npt
-        temp = pqw(k) * rsp(k)
+        !temp = pqw(k) * rsp(k)
+        !do i = 1, n
+        !    w(i) = w(i) + temp * xpt(i, k)
+        !end do
+        temp = pqw(k) * inprod(xopt, xpt(:, k))
         do i = 1, n
-            w(i) = w(i) + temp * xpt(i, k)
+            tmpv(i) = tmpv(i) + temp * xpt(i, k)
         end do
     end do
+    do i = 1, n
+        w(i) = w(i) + tmpv(i)
+    end do
+    !---------------------------------------------------!
     do i = 1, n
         gopt(i) = gopt(i) + diff * w(i)
     end do
@@ -888,20 +900,35 @@ if (f < fopt .and. ifeas == 1) then
 !     Also revise GOPT when symmetric Broyden updating is applied.
 !
     if (itest < 3) then
-        ih = 0
-        do j = 1, n
-            do i = 1, j
-                ih = ih + 1
-                if (i < j) gopt(j) = gopt(j) + hq(ih) * step(i)
-                gopt(i) = gopt(i) + hq(ih) * step(j)
-            end do
-        end do
+        !---------------------------------------------------!
+        ! Zaikun 20220416
+        !ih = 0
+        !do j = 1, n
+        !    do i = 1, j
+        !        ih = ih + 1
+        !        if (i < j) gopt(j) = gopt(j) + hq(ih) * step(i)
+        !        gopt(i) = gopt(i) + hq(ih) * step(j)
+        !    end do
+        !end do
+        !do k = 1, npt
+        !    temp = pq(k) * rsp(npt + k)
+        !    do i = 1, n
+        !        gopt(i) = gopt(i) + temp * xpt(i, k)
+        !    end do
+        !end do
+        tmpv = ZERO
         do k = 1, npt
-            temp = pq(k) * rsp(npt + k)
+            temp = pq(k) * inprod(step, xpt(:, k))
             do i = 1, n
-                gopt(i) = gopt(i) + temp * xpt(i, k)
+                tmpv(i) = tmpv(i) + temp * xpt(i, k)
             end do
         end do
+        hqm = v2m(hq)
+        do j = 1, n
+            tmpv = tmpv + step(j) * hqm(:, j)
+        end do
+        gopt = gopt + tmpv
+        !---------------------------------------------------!
     end if
 end if
 !
@@ -924,18 +951,31 @@ if (itest == 3) then
             pq(k) = pq(k) + summ * zmat(k, j)
         end do
     end do
+
     do j = 1, n
         gopt(j) = ZERO
         do i = 1, npt
             gopt(j) = gopt(j) + w(i) * bmat(j, i)
         end do
     end do
+    !------------------------------------------------------!
+    ! Zaikun 20220416
+    !do k = 1, npt
+    !    temp = pq(k) * rsp(k)
+    !    do i = 1, n
+    !        gopt(i) = gopt(i) + temp * xpt(i, k)
+    !    end do
+    !end do
+    tmpv = ZERO
     do k = 1, npt
-        temp = pq(k) * rsp(k)
+        temp = pq(k) * inprod(xopt, xpt(:, k))
         do i = 1, n
-            gopt(i) = gopt(i) + temp * xpt(i, k)
+            tmpv(i) = tmpv(i) + temp * xpt(i, k)
         end do
     end do
+    gopt = gopt + tmpv
+    !------------------------------------------------------!
+
     do ih = 1, nh
         hq(ih) = ZERO
     end do
