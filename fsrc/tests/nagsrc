@@ -1,0 +1,17 @@
+#!/bin/bash
+# This script pre-processes the Fortran source code for nagfor, which encounters an error when
+# dealing with vector subscripts defined by `trueloc`.
+
+DIR="$(realpath "$1")"
+LINGEO="$DIR/lincoa/geometry.f90"
+
+if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
+    printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
+    exit 1
+fi
+
+#sed -i "s/\(use, non_intrinsic .*\), trueloc/\1/" "$LINGEO"
+sed -i "s/trueloc(rstat == 1)/:/g" "$LINGEO"
+sed -i "s/trueloc(rstat >= 0)/:/g" "$LINGEO"
+
+exit 0
