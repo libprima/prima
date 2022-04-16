@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 AM01:03:41
+! Last Modified: Sunday, April 17, 2022 AM01:35:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -65,9 +65,10 @@ real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
 real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
-real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), adw, alpbd, alpha, alphm, alpht, beta, ctest, &
+real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), adw(size(amat, 2)), alpbd, alpha, alphm, alpht, &
+& beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, temp, wgd
-integer(IK) :: icount, j, jsav
+integer(IK) :: icount, jsav
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
@@ -197,30 +198,43 @@ if (resmax > 1.0D-4 * snorm) then
     end if
 
     ! Reduce BSTEP if necessary so that the move along D also satisfies the linear constraints.
-    do j = 1, m
-        if (.not. bstep > 0) exit
-        if (resnew(j) > 0) then
-            ad(j) = inprod(d, amat(:, j))
-            adw = inprod(dw, amat(:, j))
-            if (ad(j) > 0) then
-                temp = max((resnew(j) - adw) / ad(j), ZERO)
-                bstep = min(bstep, temp)
-            end if
-        end if
-    end do
 
-    bstep = min(bstep, ONE)
+    !do j = 1, m
+    !    if (.not. bstep > 0) exit
+    !    if (resnew(j) > 0) then
+    !        ad(j) = inprod(d, amat(:, j))
+    !        adw(j) = inprod(dw, amat(:, j))
+    !        if (ad(j) > 0) then
+    !            temp = max((resnew(j) - adw(j)) / ad(j), ZERO)
+    !            bstep = min(bstep, temp)
+    !        end if
+    !    end if
+    !end do
+
+    ad = -ONE
+    adw = HUGENUM
+    ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
+    adw(trueloc(resnew > 0)) = matprod(dw, amat(:, trueloc(resnew > 0)))
+    frac = (resnew - adw) / ad
+    bstep = minval([bstep, ONE, frac(trueloc(ad > 0))])
 end if
 
 ! Set the next direction for seeking a reduction in the model function subject to the trust region
 ! bound and the linear constraints.
-if (bstep <= 0) then
-    d = dw
-    icount = nact
-else
+if (bstep > 0) then
     d = dw + bstep * d
     icount = nact - 1
+else
+    d = dw
+    icount = nact
 end if
+!if (bstep <= 0) then
+!    d = dw
+!    icount = nact
+!else
+!    d = dw + bstep * d
+!    icount = nact - 1
+!end if
 alpbd = ONE
 
 ! Set ALPHA to the steplength from STEP along D to the trust region boundary. Return if the first
@@ -282,8 +296,6 @@ alpha = minval([alpha, frac])
 !    jsav = minloc(resnew / ad, mask=(ad > 0), dim=1)
 !end if
 !-----------------------------------------------------------------------!
-
-
 
 alpha = min(max(alpha, alpbd), alphm)
 if (icount == nact) alpha = min(alpha, ONE)

@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 AM12:21:02
+! Last Modified: Sunday, April 17, 2022 AM01:24:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -203,7 +203,8 @@ if (resmax > 1.0D-4 * snorm) then
 !       also satisfies the linear constraints.
 !
     j = 0
-110 if (bstep > ZERO) then
+110 continue
+    if (bstep > ZERO) then
         j = j + 1
         if (resnew(j) > ZERO) then
             ad = ZERO
@@ -225,17 +226,28 @@ end if
 !     Set the next direction for seeking a reduction in the model function
 !       subject to the trust region bound and the linear constraints.
 !
-if (bstep <= ZERO) then
-    do i = 1, n
-        d(i) = dw(i)
-    end do
-    icount = nact
-else
+if (bstep > ZERO) then
     do i = 1, n
         d(i) = dw(i) + bstep * d(i)
     end do
     icount = nact - 1
+else
+    do i = 1, n
+        d(i) = dw(i)
+    end do
+    icount = nact
 end if
+!if (bstep <= ZERO) then
+!    do i = 1, n
+!        d(i) = dw(i)
+!    end do
+!    icount = nact
+!else
+!    do i = 1, n
+!        d(i) = dw(i) + bstep * d(i)
+!    end do
+!    icount = nact - 1
+!end if
 alpbd = ONE
 !
 !     Set ALPHA to the steplength from STEP along D to the trust region

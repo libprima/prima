@@ -4,7 +4,7 @@
 
 DIR="$(realpath "$1")"
 LINGEO="$DIR/lincoa/geometry.f90"
-LINTR="$DIR/lincoa/trustregion.f90"
+#LINTR="$DIR/lincoa/trustregion.f90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
