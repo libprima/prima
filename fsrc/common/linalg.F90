@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 12, 2022 PM03:58:55
+! Last Modified: Saturday, April 16, 2022 PM11:26:00
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -571,6 +571,9 @@ end if
 
 if (istril(A)) then
     x(1) = b(1) / A(1, 1)  ! Ensure N >= 1!
+    ! Indeed, the last line should be merged to the following loop, but some compilers (particularly
+    ! Flang 7.0.1) are buggy concerning the array sections here when I == 1.
+    ! See https://github.com/flang-compiler/flang/issues/1238
     do i = 2, n
         x(i) = (b(i) - inprod(A(i, 1:i - 1), x(1:i - 1))) / A(i, i)
     end do
