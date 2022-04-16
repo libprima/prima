@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 AM01:55:27
+! Last Modified: Saturday, April 16, 2022 AM09:31:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,7 +34,7 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : omega_mul
+use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: update_mod, only : update
@@ -275,9 +275,10 @@ xsxpt(1:npt) = matprod(xopt, xpt)
 hq = ZERO
 pq = omega_mul(idz, zmat, fval)
 gopt = ZERO
-do k = 1, npt
-    gopt = gopt + fval(k) * bmat(:, k) + pq(k) * xsxpt(k) * xpt(:, k)
-end do
+!do k = 1, npt
+!    gopt = gopt + fval(k) * bmat(:, k) + pq(k) * xsxpt(k) * xpt(:, k)
+!end do
+gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
 
 ! Set the initial elements of RESCON.
 ! RESCON holds useful information about the constraint residuals. Every nonnegative RESCON(J) is the

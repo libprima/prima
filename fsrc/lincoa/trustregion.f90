@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 01, 2022 AM11:44:35
+! Last Modified: Saturday, April 16, 2022 AM09:31:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,6 +28,7 @@ subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, 
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, EPS, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : inprod, isorth, istriu, issymmetric
+use, non_intrinsic :: powalg_mod, only : hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: getact_mod, only : getact
@@ -166,7 +167,7 @@ elsewhere(rescon >= 0)
 elsewhere
     resnew = rescon
 end where
-!!MATLAB: resnew = rescon; resnew(rescon >= 0) = max(rescon, TINYCV); resnew(rescon >= snorm) = -1; 
+!!MATLAB: resnew = rescon; resnew(rescon >= 0) = max(rescon, TINYCV); resnew(rescon >= snorm) = -1;
 resnew(iact(1:nact)) = ZERO
 resact(1:nact) = rescon(iact(1:nact))
 
@@ -324,23 +325,29 @@ if (-alpha * dg <= ctest * reduct) goto 320
 !
 !     Set DW to the change in gradient along D.
 !
-do j = 1, n
-    dw(j) = ZERO
-    do i = 1, j
-        if (i < j) dw(j) = dw(j) + hq(i, j) * d(i)
-        dw(i) = dw(i) + hq(i, j) * d(j)
-    end do
-end do
-do k = 1, npt
-    temp = ZERO
-    do j = 1, n
-        temp = temp + xpt(j, k) * d(j)
-    end do
-    temp = pq(k) * temp
-    do i = 1, n
-        dw(i) = dw(i) + temp * xpt(i, k)
-    end do
-end do
+
+!----------------------------------------------------!
+!do j = 1, n
+!    dw(j) = ZERO
+!    do i = 1, j
+!        if (i < j) dw(j) = dw(j) + hq(i, j) * d(i)
+!        dw(i) = dw(i) + hq(i, j) * d(j)
+!    end do
+!end do
+!do k = 1, npt
+!    temp = ZERO
+!    do j = 1, n
+!        temp = temp + xpt(j, k) * d(j)
+!    end do
+!    temp = pq(k) * temp
+!    do i = 1, n
+!        dw(i) = dw(i) + temp * xpt(i, k)
+!    end do
+!end do
+
+dw = hess_mul(d, xpt, pq)
+!----------------------------------------------------!
+
 !
 !     Set DGD to the curvature of the model along D. Then reduce ALPHA if
 !       necessary to the value that minimizes the model.
