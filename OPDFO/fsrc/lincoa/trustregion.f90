@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 PM11:29:42
+! Last Modified: Sunday, April 17, 2022 AM12:21:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,7 +132,8 @@ ncall = 0
 !      CALL GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,RESNEW,
 call getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, &
 & resact, g, dw, w, w(n + 1))
-if (w(n + 1) == ZERO) goto 320
+if (.not. w(n + 1) > ZERO) goto 320
+!if (w(n + 1) == ZERO) goto 320
 scaling = 0.2_RP * snorm / sqrt(w(n + 1))
 do i = 1, n
     dw(i) = scaling * dw(i)
@@ -325,7 +326,8 @@ if (m > 0) then
             do i = 1, n
                 ad = ad + amat(i, j) * d(i)
             end do
-            if (alpha * ad > resnew(j)) then
+            !if (alpha * ad > resnew(j)) then
+            if (ad > 0 .and. alpha > resnew(j) / ad) then
                 alpha = resnew(j) / ad
                 jsav = j
             end if

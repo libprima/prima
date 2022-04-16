@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 PM11:53:59
+! Last Modified: Sunday, April 17, 2022 AM12:21:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -66,8 +66,8 @@ real(RP) :: tol
 real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
 real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, wgd
-integer(IK) :: i, icount, j, jsav, k
+&        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, temp, wgd
+integer(IK) :: icount, j, jsav
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
@@ -107,19 +107,17 @@ g = gq
 !       radius, so that the J-th constraint can be ignored.
 !     SNORM is set to the trust region radius DELTA initially. On the
 !       return, however, it is the length of the calculated STEP, which is
-!       set to ZERO if the constraints do not allow a long enough step.
+!       set to zero if the constraints prohibit a long enough step.
 !     STEP is the total calculated step so far from the trust region centre,
 !       its final value being given by the sequence of CG iterations, which
 !       terminate if the trust region boundary is reached.
 !     G must be set on entry to the gradient of the quadratic model at the
 !       trust region centre. It is used as working space, however, and is
-!       always the gradient of the model at the current STEP, except that
-!       on return the value of G(1) is set to ONE instead of to ZERO if
-!       and only if GETACT is called more than once.
+!       always the gradient of the model at the current STEP.
 !     RESNEW, RESACT, D, DW and W are used for working space. A negative
 !       value of RESNEW(J) indicates that the J-th constraint does not
 !       restrict the CG steps of the current trust region calculation, a
-!       ZERO value of RESNEW(J) indicates that the J-th constraint is active,
+!       zero value of RESNEW(J) indicates that the J-th constraint is active,
 !       and otherwise RESNEW(J) is set to the greater of TINY and the actual
 !       residual of the J-th constraint for the current STEP. RESACT holds
 !       the residuals of the active constraints, which may be positive.
@@ -164,68 +162,32 @@ ngetact = 0
 40 ngetact = ngetact + 1
 call getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dw)
 dd = inprod(dw, dw)
-if (dd == ZERO) then
+if (.not. dd > 0) then
     goto 320
 end if
 scaling = 0.2_RP * snorm / sqrt(dd)
 dw = scaling * dw
-!do i = 1, n
-!    dw(i) = scaling * dw(i)
-!end do
-
 
 ! If the modulus of the residual of an active constraint is substantial, then set D to the shortest
 ! move from STEP to the boundaries of the active constraints.
 resmax = ZERO
 resmax = maxval([ZERO, resact(1:nact)])
-!if (nact > 0) then
-!    do k = 1, nact
-!        resmax = max(resmax, resact(k))
-!    end do
-!end if
 
 bstep = ZERO
 if (resmax > 1.0D-4 * snorm) then
-    !do k = 1, nact
-    !    temp = resact(k)
-    !    do i = 1, k - 1
-    !        temp = temp - rfac(i, k) * vlam(i)
-    !    end do
-    !    vlam(k) = temp / rfac(k, k)
-    !end do
-    ! Calculation changed
     vlam(1:nact) = solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact))
-
-    !do i = 1, n
-    !    d(i) = ZERO
-    !    do k = 1, nact
-    !        d(i) = d(i) + vlam(k) * qfac(i, k)
-    !    end do
-    !end do
     d = matprod(qfac(:, 1:nact), vlam(1:nact))
-!
-!     The vector D that has just been calculated is also the shortest move
-!       from STEP+DW to the boundaries of the active constraints. Set BSTEP
-!       to the greatest steplength of this move that satisfies the trust
-!       region bound.
-!
-    !rhs = snsq
-    !ds = ZERO
-    !dd = ZERO
-    !do i = 1, n
-    !    summ = step(i) + dw(i)
-    !    rhs = rhs - summ * summ
-    !    ds = ds + d(i) * summ
-    !    dd = dd + d(i)**2
-    !end do
 
+    ! The vector D that has just been calculated is also the shortest move from STEP+DW to the
+    ! boundaries of the active constraints. Set BSTEP to the greatest steplength of this move that
+    ! satisfies the trust region bound.
     ds = inprod(d, step + dw)
     dd = sum(d**2)
     rhs = snsq - sum((step + dw)**2)  ! Calculation changed
 
-    if (rhs > ZERO) then
+    if (rhs > 0) then
         temp = sqrt(ds * ds + dd * rhs)
-        if (ds <= ZERO) then
+        if (ds <= 0) then
             ! Zaikun 20210925
             ! What if we are at the first iteration? BLEN = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
             bstep = (temp - ds) / dd
@@ -233,41 +195,14 @@ if (resmax > 1.0D-4 * snorm) then
             bstep = rhs / (temp + ds)
         end if
     end if
-!
-!     Reduce the steplength BSTEP if necessary so that the move along D
-!       also satisfies the linear constraints.
-!
-    !j = 0
-!110 if (bstep > ZERO) then
-    !    j = j + 1
-    !    if (resnew(j) > ZERO) then
-    !        ad = ZERO
-    !        adw = ZERO
-    !        do i = 1, n
-    !            ad = ad + amat(i, j) * d(i)
-    !            adw = adw + amat(i, j) * dw(i)
-    !        end do
-    !        if (ad > ZERO) then
-    !            temp = max((resnew(j) - adw) / ad, ZERO)
-    !            bstep = min(bstep, temp)
-    !        end if
-    !    end if
-    !    if (j < m) goto 110
-    !end if
 
+    ! Reduce BSTEP if necessary so that the move along D also satisfies the linear constraints.
     do j = 1, m
         if (.not. bstep > 0) exit
-        if (resnew(j) > ZERO) then
-            !ad = ZERO
-            !adw = ZERO
-            !do i = 1, n
-            !    ad = ad + amat(i, j) * d(i)
-            !    adw = adw + amat(i, j) * dw(i)
-            !end do
+        if (resnew(j) > 0) then
             ad = inprod(d, amat(:, j))
             adw = inprod(dw, amat(:, j))
-
-            if (ad > ZERO) then
+            if (ad > 0) then
                 temp = max((resnew(j) - adw) / ad, ZERO)
                 bstep = min(bstep, temp)
             end if
@@ -276,155 +211,89 @@ if (resmax > 1.0D-4 * snorm) then
 
     bstep = min(bstep, ONE)
 end if
-!
-!     Set the next direction for seeking a reduction in the model function
-!       subject to the trust region bound and the linear constraints.
-!
-if (bstep <= ZERO) then
-    !do i = 1, n
-    !    d(i) = dw(i)
-    !end do
+
+! Set the next direction for seeking a reduction in the model function subject to the trust region
+! bound and the linear constraints.
+if (bstep <= 0) then
     d = dw
     icount = nact
 else
-    !do i = 1, n
-    !    d(i) = dw(i) + bstep * d(i)
-    !end do
     d = dw + bstep * d
     icount = nact - 1
 end if
 alpbd = ONE
-!
-!     Set ALPHA to the steplength from STEP along D to the trust region
-!       boundary. Return if the first derivative term of this step is
-!       sufficiently small or if no further progress is possible.
-!
+
+! Set ALPHA to the steplength from STEP along D to the trust region boundary. Return if the first
+! derivative term of this step is sufficiently small or if no further progress is possible.
 150 icount = icount + 1
 rhs = snsq - ss
-if (rhs <= ZERO) goto 320
-!dg = ZERO
-!ds = ZERO
-!dd = ZERO
-!do i = 1, n
-!    dg = dg + d(i) * g(i)
-!    ds = ds + d(i) * step(i)
-!    dd = dd + d(i)**2
-!end do
+if (rhs <= 0) goto 320
 dg = inprod(d, g)
 ds = inprod(d, step)
 dd = inprod(d, d)
-if (dg >= ZERO) goto 320
+if (dg >= 0) goto 320
 temp = sqrt(rhs * dd + ds * ds)
-if (ds <= ZERO) then
+if (ds <= 0) then
     alpha = (temp - ds) / dd
 else
     alpha = rhs / (temp + ds)
 end if
 if (-alpha * dg <= ctest * reduct) goto 320
-!
-!     Set DW to the change in gradient along D.
-!
-
-!----------------------------------------------------!
-!do j = 1, n
-!    dw(j) = ZERO
-!    do i = 1, j
-!        if (i < j) dw(j) = dw(j) + hq(i, j) * d(i)
-!        dw(i) = dw(i) + hq(i, j) * d(j)
-!    end do
-!end do
-!do k = 1, npt
-!    temp = ZERO
-!    do j = 1, n
-!        temp = temp + xpt(j, k) * d(j)
-!    end do
-!    temp = pq(k) * temp
-!    do i = 1, n
-!        dw(i) = dw(i) + temp * xpt(i, k)
-!    end do
-!end do
 
 dw = hess_mul(d, xpt, pq, hq)
-!----------------------------------------------------!
 
-!
-!     Set DGD to the curvature of the model along D. Then reduce ALPHA if
-!       necessary to the value that minimizes the model.
-!
+! Set DGD to the curvature of the model along D. Then reduce ALPHA if necessary to the value that
+! minimizes the model.
 dgd = inprod(d, dw)
-!dgd = ZERO
-!do i = 1, n
-!    dgd = dgd + d(i) * dw(i)
-!end do
 alpht = alpha
-if (dg + alpha * dgd > ZERO) then
+if (dg + alpha * dgd > 0) then
     alpha = -dg / dgd
 end if
-!
-!     Make a further reduction in ALPHA if necessary to preserve feasibility,
-!       and put some scalar products of D with constraint gradients in W.
-!
+
+! Make a further reduction in ALPHA if necessary to preserve feasibility, and put some scalar
+! products of D with constraint gradients in W.
 alphm = alpha
 jsav = 0
 
 do j = 1, m
     ad = ZERO
-    if (resnew(j) > ZERO) then
-        !do i = 1, n
-        !    ad = ad + amat(i, j) * d(i)
-        !end do
+    if (resnew(j) > 0) then
         ad = inprod(d, amat(:, j))
-        if (alpha * ad > resnew(j)) then
-            alpha = resnew(j) / ad
-            jsav = j
+        if (ad > 0) then
+            if (alpha > resnew(j) / ad) then
+                alpha = resnew(j) / ad
+                jsav = j
+            end if
         end if
     end if
     w(j) = ad
 end do
 
 
-
 alpha = max(alpha, alpbd)
 alpha = min(alpha, alphm)
 if (icount == nact) alpha = min(alpha, ONE)
-!
-!     Update STEP, G, RESNEW, RESACT and REDUCT.
-!
+
+! Update STEP, G, RESNEW, RESACT and REDUCT.
 step = step + alpha * d
 ss = sum(step**2)
 g = g + alpha * dw
-!do i = 1, n
-!    step(i) = step(i) + alpha * d(i)
-!    ss = ss + step(i)**2
-!    g(i) = g(i) + alpha * dw(i)
-!end do
 
 where (resnew > 0)
     resnew = max(resnew - alpha * w(1:m), TINYCV)
 end where
 !!MATLAB: mask = (resnew > 0); resnew(mask) = max(resnew(mask) - alpha * w(mask), TINYCV);
 
-!if (m > 0) then
-!do j = 1, m
-!    if (resnew(j) > ZERO) then
-!        resnew(j) = max(resnew(j) - alpha * w(j), TINYCV)
-!    end if
-!end do
-!end if
 if (icount == nact .and. nact > 0) then
-    !do k = 1, nact
-    !    resact(k) = (ONE - bstep) * resact(k)
-    !end do
     resact(1:nact) = (ONE - bstep) * resact(1:nact)
 end if
 reduct = reduct - alpha * (dg + HALF * alpha * dgd)
-!
-!     Test for termination. Branch to label 40 if there is a new active
-!       constraint and if the distance from STEP to the trust region
-!       boundary is at least 0.2*SNORM.
-!
-! Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN
-! values. Exit when NGETACT is large or NaN detected.
+
+! Test for termination. Branch to label 40 if there is a new active constraint and if the distance
+! from STEP to the trust region boundary is at least 0.2*SNORM.
+
+! Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN values. Exit when NGETACT is
+! large or NaN detected.
 ! Caution: 1. MIN accepts only data with the same KIND; 2. Integer overflow.
 if (ngetact > min(10000, 100 * int(m + 1) * int(n)) .or.  &
 & alpha /= alpha .or. alpht /= alpht .or. &
@@ -432,7 +301,6 @@ if (ngetact > min(10000, 100 * int(m + 1) * int(n)) .or.  &
 & ss /= ss .or. snsq /= snsq .or. reduct /= reduct) then
     goto 320
 end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (alpha == alpht) goto 320
 temp = -alphm * (dg + HALF * alphm * dgd)
 if (temp <= ctest * reduct) goto 320
@@ -441,52 +309,26 @@ if (jsav > 0) then
     goto 320
 end if
 if (icount == n) goto 320
-!
-!     Calculate the next search direction, which is conjugate to the
-!       previous ONE except in the case ICOUNT=NACT.
-!
+
+! Calculate the next search direction, which is conjugate to the previous one unless ICOUNT == NACT.
 if (nact > 0) then
-    !do j = nact + 1, n
-    !    w(j) = ZERO
-    !    do i = 1, n
-    !        w(j) = w(j) + g(i) * qfac(i, j)
-    !    end do
-    !end do
-    !do i = 1, n
-    !    temp = ZERO
-    !    do j = nact + 1, n
-    !        temp = temp + qfac(i, j) * w(j)
-    !    end do
-    !    w(n + i) = temp
-    !end do
     w(n + 1:2 * n) = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
 else
-    !do i = 1, n
-    !    w(n + i) = g(i)
-    !end do
     w(n + 1:2 * n) = g
 end if
 if (icount == nact) then
     beta = ZERO
 else
     wgd = inprod(w(n + 1:2 * n), dw)
-    !wgd = ZERO
-    !do i = 1, n
-    !   wgd = wgd + w(n + i) * dw(i)
-    !end do
     beta = wgd / dgd
 end if
 d = -w(n + 1:2 * n) + beta * d
-!do i = 1, n
-!    d(i) = -w(n + i) + beta * d(i)
-!end do
 alpbd = ZERO
 goto 150
-!
-!     Return from the subroutine.
-!
+
+! Return from the subroutine.
 320 snorm = ZERO
-if (reduct > ZERO) snorm = sqrt(ss)
+if (reduct > 0) snorm = sqrt(ss)
 
 if (DEBUGGING) then
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
