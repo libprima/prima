@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 AM10:18:51
+! Last Modified: Saturday, April 16, 2022 PM05:30:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

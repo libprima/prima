@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 11, 2022 PM09:14:16
+! Last Modified: Saturday, April 16, 2022 AM11:55:09
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -177,11 +177,11 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 
 ! SYMTOL_DFT is the default tolerance for testing symmetry of matrices. It can be set to 0 if the
 ! IEEE Standard for Floating-Point Arithmetic (IEEE 754) is respected, particularly if addition and
-! multiplication are commutative. However, as of 20220408, NAG nagfor and Absoft af95 do not ensure
-! the commutativity for REAL128. Indeed, Fortran standards do not enforce IEEE 754, so compilers are
-! not guaranteed to respect it. Hence we set SYMTOL_DFT to a nonzero number when __RELEASED__ is 1,
-! although we do not intend to test symmetry in production.
-#if __RELEASED__ == 1 || ((defined __NAG_COMPILER_RELEASE || defined __ABSOFT__) && __REAL_PRECISION__ > 64)
+! multiplication are commutative. However, as of 20220408, NAG nagfor do not ensure commutativity 
+! for REAL128. Indeed, Fortran standards do not enforce IEEE 754, so compilers are not guaranteed to
+! respect it. Hence we set SYMTOL_DFT to a nonzero number when __RELEASED__ is 1, although we do not
+! intend to test symmetry in production.
+#if __RELEASED__ == 1 || (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64)
 real(RP), parameter :: SYMTOL_DFT = max(EPS, 1.0E-10_RP)
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO

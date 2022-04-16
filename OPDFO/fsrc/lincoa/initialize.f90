@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 AM12:33:41
+! Last Modified: Saturday, April 16, 2022 PM05:45:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -87,7 +87,7 @@ real(RP), intent(out) :: xhist(n, maxxhist)
 real(RP), intent(out) :: xsav(n)
 
 ! Local variables
-real(RP) :: bigv, feas, recip, reciq, resid, rhosq, temp, test
+real(RP) :: bigv, feas, recip, reciq, resid, rhosq, temp, test, g1(n), g2(n)
 integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, knew, nptm
 
 !*++
@@ -307,6 +307,25 @@ do k = 1, npt
         gopt(j) = gopt(j) + fval(k) * bmat(j, k) + temp * xpt(j, k)
     end do
 end do
+
+!------------------------------------------------------!
+!Zaikun 20220416
+g1 = ZERO
+do k = 1, npt
+    do j = 1, n
+        g1(j) = g1(j) + fval(k) * bmat(j, k)
+    end do
+end do
+g2 = ZERO
+do k = 1, npt
+    temp = pq(k) * rsp(k)
+    do j = 1, n
+        g2(j) = g2(j) + temp * xpt(j, k)
+    end do
+end do
+gopt = g1 + g2
+!------------------------------------------------------!
+
 do i = 1, (n * n + n) / 2
     hq(i) = ZERO
 end do

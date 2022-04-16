@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 AM01:29:20
+! Last Modified: Saturday, April 16, 2022 PM03:13:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -59,7 +59,7 @@ integer(IK) :: npt
 integer(IK) :: rstat(size(amat, 2))
 real(RP) :: stmp(size(xopt))
 real(RP) :: gl(size(gl_in))
-real(RP) :: residual(size(amat, 2))
+real(RP) :: constr(size(amat, 2))
 real(RP) :: bigcv, cvtol, gg, gxpt(size(pqw)), ghg, sp, ss, tol, &
 &        stp, stplen(size(pqw)), stpsav, mincv, vbig, vgrad, vlag(size(pqw)), vnew, sstmp
 integer(IK) :: i, k, ksav
@@ -111,8 +111,8 @@ gl = gl_in
 !       LFUNC(XOPT+STEP), subject to ||STEP|| .LE. DEL. A projected STEP is
 !       calculated too, within the trust region, that does not alter the
 !       residuals of the active constraints. The projected step is preferred
-!       if its value of |LFUNC(XOPT+STEP)| is at least ONE fifth of the
-!       original ONE, but the greatest violation of a linear constraint must
+!       if its value of |LFUNC(XOPT+STEP)| is at least one fifth of the
+!       original one but the greatest violation of a linear constraint must
 !       be at least MINCV = 0.2*DEL, in order to keep the interpolation points apart.
 !       The remedy when the maximum constraint violation is too small is to
 !       restore the original step, which is perturbed if necessary so that
@@ -215,7 +215,10 @@ sstmp = sum(stmp**2)
 ! andif STMP either preserves feasibility or gives a constraint violation of at least MINCV. The
 ! purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
 ! contributions from computer rounding errors.
-if (vnew / vbig >= 0.2_RP) then
+! As commented by Powell, "the projected step is preferred if its value of |LFUNC(XOPT+STEP)| is at
+! least one fifth of the original one but the greatest violation of a linear constraint must be at
+! least MINCV = 0.2*DEL, in order to keep the interpolation points apart." WHY THE PREFERENCE?
+if (vnew >= 0.2_RP * vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
     ifeas = (bigcv < mincv)
     cvtol = ZERO
@@ -233,12 +236,12 @@ end if
 ! Calculate the greatest constraint violation at XOPT+STEP with STEP at its original value. Modify
 ! STEP if this violation is unacceptable.
 ! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
-residual = ZERO
-residual(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
-ifeas = all(residual <= 0)
-if (all(residual < mincv) .and. any(residual > 0)) then
-    bigcv = maxval(residual)
-    i = int(maxloc(residual, dim=1), kind(i))
+constr = ZERO
+constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
+ifeas = all(constr <= 0)
+if (all(constr < mincv) .and. any(constr > 0)) then
+    bigcv = maxval(constr)
+    i = int(maxloc(constr, dim=1), kind(i))
     step = step + (mincv - bigcv) * amat(:, i)
 end if
 
