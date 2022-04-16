@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 AM12:21:36
+! Last Modified: Sunday, April 17, 2022 AM01:03:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,9 +25,9 @@ contains
 subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, EPS, TINYCV, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, EPS, HUGENUM, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, solve, isorth, istriu, issymmetric
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, solve, isorth, istriu, issymmetric, trueloc
 use, non_intrinsic :: powalg_mod, only : hess_mul
 
 ! Solver-specific modules
@@ -65,7 +65,7 @@ real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
 real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
-real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
+real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), adw, alpbd, alpha, alphm, alpht, beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, temp, wgd
 integer(IK) :: icount, j, jsav
 integer(IK) :: m
@@ -200,10 +200,10 @@ if (resmax > 1.0D-4 * snorm) then
     do j = 1, m
         if (.not. bstep > 0) exit
         if (resnew(j) > 0) then
-            ad = inprod(d, amat(:, j))
+            ad(j) = inprod(d, amat(:, j))
             adw = inprod(dw, amat(:, j))
-            if (ad > 0) then
-                temp = max((resnew(j) - adw) / ad, ZERO)
+            if (ad(j) > 0) then
+                temp = max((resnew(j) - adw) / ad(j), ZERO)
                 bstep = min(bstep, temp)
             end if
         end if
@@ -255,23 +255,37 @@ end if
 alphm = alpha
 jsav = 0
 
-do j = 1, m
-    ad = ZERO
-    if (resnew(j) > 0) then
-        ad = inprod(d, amat(:, j))
-        if (ad > 0) then
-            if (alpha > resnew(j) / ad) then
-                alpha = resnew(j) / ad
-                jsav = j
-            end if
-        end if
-    end if
-    w(j) = ad
-end do
+!do j = 1, m
+!    ad = ZERO
+!    if (resnew(j) > 0) then
+!        ad = inprod(d, amat(:, j))
+!        if (ad > 0) then
+!            if (alpha > resnew(j) / ad) then
+!                alpha = resnew(j) / ad
+!                jsav = j
+!            end if
+!        end if
+!    end if
+!    w(j) = ad
+!end do
+
+ad = ZERO
+ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
+frac = HUGENUM
+frac(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) / ad(trueloc(ad > 0))
+jsav = int(minloc([alpha, frac], dim=1), IK) - 1_IK  ! N.B.: This line must be before the next one.
+alpha = minval([alpha, frac])
+!-----------------------------------------------------------------------!
+! Alternative implementation:
+!if (any(ad > 0 .and. resnew / ad < alpha)) then
+!    alpha = minval(resnew / ad, mask=(ad > 0))
+!    jsav = minloc(resnew / ad, mask=(ad > 0), dim=1)
+!end if
+!-----------------------------------------------------------------------!
 
 
-alpha = max(alpha, alpbd)
-alpha = min(alpha, alphm)
+
+alpha = min(max(alpha, alpbd), alphm)
 if (icount == nact) alpha = min(alpha, ONE)
 
 ! Update STEP, G, RESNEW, RESACT and REDUCT.
@@ -279,10 +293,8 @@ step = step + alpha * d
 ss = sum(step**2)
 g = g + alpha * dw
 
-where (resnew > 0)
-    resnew = max(resnew - alpha * w(1:m), TINYCV)
-end where
-!!MATLAB: mask = (resnew > 0); resnew(mask) = max(resnew(mask) - alpha * w(mask), TINYCV);
+resnew(trueloc(resnew > 0)) = max(TINYCV, resnew(trueloc(resnew > 0)) - alpha * ad(trueloc(resnew > 0)))
+!!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
 
 if (icount == nact .and. nact > 0) then
     resact(1:nact) = (ONE - bstep) * resact(1:nact)
