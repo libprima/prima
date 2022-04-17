@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Thursday, April 07, 2022 PM12:15:43
+! Last Modified: Sunday, April 17, 2022 PM03:40:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,29 +24,27 @@ end interface evaluate
 contains
 
 
-pure elemental function moderatex(x) result(y)
+function moderatex(x) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function moderates a decision variable. It replaces NaN by 0 and Inf/-Inf by HUGENUM/-HUGENUM.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ZERO, HUGENUM
 use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: linalg_mod, only : trueloc
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: x
+real(RP), intent(in) :: x(:)
 ! Outputs
-real(RP) :: y
+real(RP) :: y(size(x))
 
-if (is_nan(x)) then
-    y = ZERO
-else
-    y = x
-end if
+y = x
+y(trueloc(is_nan(x))) = ZERO
 y = max(-HUGENUM, min(HUGENUM, y))
 end function moderatex
 
 
-pure elemental function moderatef(x) result(y)
+pure elemental function moderatef(f) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function moderates the function value of a minimization problem. It replaces NaN and any
 ! value above HUGEFUN by HUGEFUN.
@@ -56,14 +54,13 @@ use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: x
+real(RP), intent(in) :: f
 ! Outputs
 real(RP) :: y
 
-if (is_nan(x)) then
+y = f
+if (is_nan(f)) then
     y = HUGEFUN
-else
-    y = x
 end if
 y = min(HUGEFUN, y)
 !! We may moderate huge negative function values, but we decide not to.
@@ -71,25 +68,23 @@ y = min(HUGEFUN, y)
 end function moderatef
 
 
-pure elemental function moderatec(x) result(y)
+function moderatec(c) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function moderates the constraint value, the constraint demanding this value to be nonnegative.
 ! It replaces NaN and any value below -HUGECON by -HUGECON, and any value above HUGECON by HUGECON.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, HUGECON
 use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: linalg_mod, only : trueloc
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: x
+real(RP), intent(in) :: c(:)
 ! Outputs
-real(RP) :: y
+real(RP) :: y(size(c))
 
-if (is_nan(x)) then
-    y = -HUGECON
-else
-    y = x
-end if
+y = c
+y(trueloc(is_nan(c))) = -HUGECON
 y = max(-HUGECON, min(HUGECON, y))
 end function moderatec
 

@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM12:58:19
+! Last Modified: Sunday, April 17, 2022 PM02:52:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul
 
@@ -286,10 +286,8 @@ gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
 ! 1. Normally, RESCON = B - AMAT^T*XOPT (theoretically, B - AMAT^T*XOPT >= 0 since XOPT is feasible)
 ! 2. If RESCON(J) >= DELTA (current trust-region radius), its sign is flipped: RESCON(J) = -RESCON(J).
 rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-where (rescon >= rhobeg)
-    rescon = -rescon
-end where
-!!MATLAB: rescon(rescon >= rhobeg) = -rescon
+rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
+!!MATLAB: rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
 
 end subroutine initialize
