@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM06:48:15
+! Last Modified: Monday, April 18, 2022 AM12:25:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -308,19 +308,27 @@ end if
 if (icount == n) goto 320
 
 ! Calculate the next search direction, which is conjugate to the previous one unless ICOUNT == NACT.
-
-!--------------------------------------------------------------------------------------------------!
-!if (nact <= 0) then  ! 1. NACT >= 0 unless GETACT is buggy. 2. The two cases can be merged in theory.
-!    gw = g
-!else
-!    gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
-!end if
-
-if (2 * nact <= n) then
-    gw = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
+! N.B.: NACT < 0 is impossible unless GETACT is buggy; NACT = 0 can happen, particularly if there is
+! no constraint. In theory, the code for the second case below covers the first case as well.
+if (nact <= 0) then
+    gw = g
 else
     gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+    !!MATLAB: gw = qfac(:, nact+1:n) * (qfac(:, nact+1:n)' * g);
 end if
+!--------------------------------------------------------------------------------------------------!
+! Zaikun: The schemes below work evidently worse than the one above in a test on 20220417. Why?
+!-----------------------------------------------------------------------!
+! VERSION 1:
+!!gw = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
+!-----------------------------------------------------------------------!
+! VERSION 2:
+!!if (2 * nact < n) then
+!!    gw = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
+!!else
+!!    gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+!!end if
+!-----------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
 if (icount == nact) then

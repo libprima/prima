@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM06:48:22
+! Last Modified: Monday, April 18, 2022 AM12:25:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,7 +58,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 ! indices such that the columns of AMAT(:, IACT(1:NACT)) constitute a basis of the active constraint
 ! gradients, ans QFAC*RFAC(:, 1:NACT) is the QR factorization of AMAT(:, IACT(1:NACT)) such that
 !
-! SIZE(QFAC) = [M, M], SIZE(RFAC, 1) = M, diag(RFAC(:, 1:NACT)) > 0.
+! SIZE(QFAC) = [N, N], SIZE(RFAC, 1) = N, diag(RFAC(:, 1:NACT)) > 0.
 !
 ! NACT, IACT, QFAC and RFAC are maintained up to date across invocations of GETACT for warm starts.
 !
@@ -205,16 +205,22 @@ do iter = 1_IK, maxiter
     end if
 
     ! Set PSD to the projection of -G to range(QFAC(:,NACT+1:N))
-
+    psd = -matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+    !!MATLAB: psd = - qfac(:, nact + 1:n) * (qfac(:, nact + 1:n)' * g);
+    !----------------------------------------------------------------------------------------------!
+    ! Zaikun: The schemes below work evidently worse than the one above in a test on 20220417. Why?
     !-------------------------------------------------------------------------!
-    !psd = -matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
-
-    if (2 * nact <= n) then
-        psd = matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact))) - g
-    else
-        psd = -matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
-    end if
+    ! VERSION 1:
+    !!psd = matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact))) - g
     !-------------------------------------------------------------------------!
+    ! VERSION 2:
+    !!if (2 * nact < n) then
+    !!    psd = matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact))) - g
+    !!else
+    !!    psd = -matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+    !!end if
+    !-------------------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
 
     dd = inprod(psd, psd)
     dnorm = sqrt(dd)
