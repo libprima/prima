@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 PM09:45:52
+! Last Modified: Sunday, April 17, 2022 PM12:07:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -62,7 +62,7 @@ real(RP) :: gl(size(gl_in))
 real(RP) :: constr(size(amat, 2))
 real(RP) :: bigcv, cvtol, gg, gxpt(size(pqw)), ghg, sp, ss, tol, &
 &        stp, stplen(size(pqw)), stpsav, mincv, vbig, vgrad, vlag(size(pqw)), vnew, sstmp
-integer(IK) :: i, k, ksav
+integer(IK) :: jsav, k, ksav
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -120,9 +120,6 @@ gl = gl_in
 !
 !     Set some constants.
 !
-!--------------------------------------------------------------------------------------------------!
-ksav = 1_IK ! Temporary fix for ksav may be uninitialized from G95
-!--------------------------------------------------------------------------------------------------!
 
 mincv = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
 
@@ -241,8 +238,8 @@ constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - resc
 ifeas = all(constr <= 0)
 if (all(constr < mincv) .and. any(constr > 0)) then
     bigcv = maxval(constr)
-    i = int(maxloc(constr, dim=1), kind(i))
-    step = step + (mincv - bigcv) * amat(:, i)
+    jsav = int(maxloc(constr, dim=1), IK)
+    step = step + (mincv - bigcv) * amat(:, jsav)
 end if
 
 end subroutine geostep
