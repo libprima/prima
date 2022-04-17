@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 16, 2022 AM01:31:50
+! Last Modified: Sunday, April 17, 2022 PM03:14:21
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -61,7 +61,7 @@ subroutine qradd_Rdiag(c, Q, Rdiag, n)  ! Used in COBYLA
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, planerot, hypotenuse, isorth, isminor
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, planerot, hypotenuse, isorth, isminor, trueloc
 implicit none
 
 ! Inputs
@@ -107,13 +107,11 @@ end if
 
 nsave = n  ! Needed for debugging (only).
 
-! As in Powell's COBYLA, CQ is set to 0 at the positions where CQ is negligible according to ISMINOR.
-! It may not be the best choice when the subroutine is used elsewhere, e.g., LINCOA. Tests needed.
+! As in Powell's COBYLA, CQ is set to 0 at the positions with CQ being negligible as per ISMINOR.
+! This may not be the best choice if the subroutine is used in other contexts, e.g., LINCOA.
 cq = matprod(c, Q)
 cqa = matprod(abs(c), abs(Q))
-where (isminor(cq, cqa))  ! Code in MATLAB: CQ(ISMINOR(CQ, CQA)) = ZERO
-    cq = ZERO
-end where
+cq(trueloc(isminor(cq, cqa))) = ZERO  !!MATLAB: cq(isminor(cq, cqa)) = zero
 
 ! Update Q so that the columns of Q(:, N+2:M) are orthogonal to C. This is done by applying a 2D
 ! Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out for K = N+1, ..., M-1.
@@ -177,7 +175,7 @@ subroutine qradd_Rfull(c, Q, R, n)  ! Used in LINCOA
 ! full column rank after the update; QRADD_RFULL always append C to A, and always increase N by 1,
 ! but QRADD_RDIAG does so only if C is not in the column space of A.
 ! 1. At entry, Q is a MxM orthonormal matrix, and R is a MxL upper triangular matrix with N < L <= M.
-! 2. The subroutine changes only Q(:, N+1:M) and R(:, N+1), where N takes the original value.
+! 2. The subroutine changes only Q(:, N+1:M) and R(:, N+1) with N taking the original value.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -531,7 +529,7 @@ function calquad_gq(d, gq, hq, pq, x, xpt) result(qred)
 ! This function evaluates QRED = Q(XBASE + X) - Q(XBSE + X + D) with Q being the quadratic function
 ! defined via (GQ, HQ, PQ) by
 ! Q(XBASE + S) = <S, GQ> + 0.5*<S, HESSIAN*S>,
-! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
+! with HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 ! N.B.: GQ is the gradient of Q at XBASE; the value of XBASE is irrelevant in the calculation.
 !--------------------------------------------------------------------------------------------------!
@@ -629,7 +627,7 @@ end function calquad_gq
 function calquad_gopt(d, gopt, hq, pq, xpt) result(qred)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates QRED = Q(XOPT) - Q(XOPT+D) = -<D, GOPT> - 0.5*<D, HESSIAN*D>,
-! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
+! with HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
@@ -714,7 +712,7 @@ function errquad(gq, hq, pq, xpt, fval) result(err)
 ! This function calculates the maximal relative error of Q in interpolating FVAL on XPT.
 ! Here, Q is the quadratic function defined via (GQ, HQ, PQ) by
 ! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
-! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
+! with HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
@@ -781,7 +779,7 @@ end function errquad
 
 function hess_mul(x, xpt, pq, hq) result(y)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates HESSIAN*X, where HESSIAN consists of an explicit part HQ (0 if absent)
+! This function calculates HESSIAN*X, with HESSIAN consisting of an explicit part HQ (0 if absent)
 ! and an implicit part PQ in Powell's way: HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
@@ -845,7 +843,7 @@ end function hess_mul
 
 function omega_col(idz, zmat, k) result(y)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates Y = column K of OMEGA, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
+! This function calculates Y = column K of OMEGA. As Powell did in NEWUOA, BOBYQA, and LINCOA,
 ! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
 ! OMEGA is the leading NPT-by-NPT block of the matrix H in (3.12) of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
@@ -889,7 +887,7 @@ end function omega_col
 
 function omega_mul(idz, zmat, x) result(y)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates Y = OMEGA*X, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
+! This function calculates Y = OMEGA*X. As Powell did in NEWUOA, BOBYQA, and LINCOA,
 ! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
 ! OMEGA is the leading NPT-by-NPT block of the matrix H in (3.12) of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
@@ -933,7 +931,7 @@ end function omega_mul
 
 function omega_inprod(idz, zmat, x, y) result(p)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates P = X^T*OMEGA*Y, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
+! This function calculates P = X^T*OMEGA*Y. As Powell did in NEWUOA, BOBYQA, and LINCOA,
 ! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
 ! OMEGA is the leading NPT-by-NPT block of the matrix H in (3.12) of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
@@ -1432,7 +1430,7 @@ end subroutine updateh
 ! Minimize ||nabla^2 Q||_F s.t. Q(X_K) = Y_K, K = 1, ..., NPT.
 ! This is why w(X) is ubiquitous in the code.
 ! 1. By (3.9) of the paper, the solution to the above interpolation problem is Q(X) = Y^T*H*w(X),
-! where H = W^{-1}, and Y is the vector [Y_1; ...; Y_NPT; 0; ...; 0] with N trailing zeros. In
+! with H = W^{-1}, and Y being the vector [Y_1; ...; Y_NPT; 0; ...; 0] with N trailing zeros. In
 ! particular, the K-th Lagrange function of this interpolation problem is e_K^T*H*w(X), namely the
 ! K-th entry of the vector H*w(X). This is why H*w(X) appears as the vector VLAG in the code.
 ! As a consequence, SUM(VLAG(1:NPT)) = 1 in theory.

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, April 07, 2022 PM03:47:53
+! Last Modified: Sunday, April 17, 2022 PM03:28:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -127,7 +127,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 ! Major differences between stage 1 and stage 2:
 ! 1. Initialization. Stage 2 inherits the values of some variables from stage 1, so they are
 ! initialized in stage 1 but not in stage 2.
-! 2. CVIOL. CVIOL is updated after at iteration in stage 1, whereas it remains a constant in stage 2.
+! 2. CVIOL. CVIOL is updated after at iteration in stage 1, while it remains a constant in stage 2.
 ! 3. SDIRN. See the definition of SDIRN in the code for details.
 ! 4. OPTNEW. The two stages have different objectives, so OPTNEW is updated differently.
 ! 5. STEP. STEP <= CVIOL in stage 1.
@@ -142,7 +142,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, norm, linspace
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, norm, linspace, trueloc
 use, non_intrinsic :: powalg_mod, only : qradd, qrexc
 implicit none
 
@@ -343,7 +343,7 @@ do iter = 1, maxiter
                 fracmult = vmultc / vmultd
             end where
             !!MATLAB: mask = (vmultd > 0 & iact <= m); fracmult(mask) = vmultc(mask) / vmultd(mask);
-            ! Only the places where VMULTD > 0 and IACT <= M is relevant blow, if any.
+            ! Only the places with VMULTD > 0 and IACT <= M is relevant blow, if any.
             frac = minval(fracmult(1:nact))  ! FRACMULT(NACT+1:MCON) may contain garbage.
             vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac * vmultd(1:nact))
 
@@ -504,9 +504,7 @@ do iter = 1, maxiter
     ! Complete VMULTD by finding the new constraint residuals. (Powell wrote "Complete VMULTC ...")
     cvshift = matprod(dnew, A(:, iact)) - b(iact) + cviol  ! Only CVSHIFT(nact+1:mcon) is needed.
     cvsabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cviol
-    where (isminor(cvshift, cvsabs))
-        cvshift = ZERO
-    end where
+    cvshift(trueloc(isminor(cvshift, cvsabs))) = ZERO
     !!MATLAB: cvshift(isminor(cvshift, cvsabs)) = 0;
     vmultd(nact + 1:mcon) = cvshift(nact + 1:mcon)
 
@@ -516,7 +514,7 @@ do iter = 1, maxiter
         fracmult = vmultc / (vmultc - vmultd)
     end where
     !!MATLAB: mask = (vmultd < 0); fracmult(mask) = vmultc(mask) / (vmultc(mask) - vmultd(mask));
-    ! Only the places where VMULTD < 0 is relevant below, if any.
+    ! Only the places with VMULTD < 0 is relevant below, if any.
     frac = minval([ONE, fracmult])
     icon = int(minloc([ONE, fracmult], dim=1), IK) - 1_IK
     !!MATLAB: [frac, icon] = min([1, fracmult]); icon = icon - 1

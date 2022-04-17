@@ -11,8 +11,10 @@ if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     exit 1
 fi
 
-#sed -i "s/\(use, non_intrinsic .*\), trueloc/\1/" "$LINGEO"
-sed -i "s/trueloc(rstat == 1)/:/g" "$LINGEO"
-sed -i "s/trueloc(rstat >= 0)/:/g" "$LINGEO"
+if [[ -f "$LINGEO" ]] ; then
+    #sed -i "s/\(use, non_intrinsic .*\), trueloc/\1/" "$LINGEO"
+    sed -i "s/trueloc(rstat == 1)/:/g" "$LINGEO"
+    sed -i "s/trueloc(rstat >= 0)/:/g" "$LINGEO"
+fi
 
 exit 0

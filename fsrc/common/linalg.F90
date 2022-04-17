@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 16, 2022 PM11:26:00
+! Last Modified: Sunday, April 17, 2022 PM03:16:48
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1197,11 +1197,13 @@ if (all(abs(x) <= ZERO) .or. all(abs(v) <= ZERO)) then
 elseif (any(is_nan(x)) .or. any(is_nan(v))) then
     y = sum(x) + sum(v)  ! Set Y to NaN
 elseif (any(is_inf(v))) then
-    where (is_inf(v))
-        u = sign(ONE, v)
-    elsewhere
-        u = ZERO
-    end where
+    u = ZERO
+    u(trueloc(is_inf(v))) = sign(ONE, v)
+    !where (is_inf(v))
+    !    u = sign(ONE, v)
+    !elsewhere
+    !    u = ZERO
+    !end where
     u = u / norm(u)
 !    y = inprod(x, u) * u
     scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
@@ -1269,10 +1271,10 @@ elseif (all(abs(x) <= ZERO) .or. all(abs(V) <= ZERO)) then
 elseif (any(is_nan(x)) .or. any(is_nan(V))) then
     y = sum(x) + sum(V)  ! Set Y to NaN
 elseif (any(is_inf(V))) then
-    where (.not. is_inf(V))
-        V_loc = ZERO
-    elsewhere
+    where (is_inf(V))
         V_loc = sign(ONE, V)
+    elsewhere
+        V_loc = ZERO
     end where
     call qr(V_loc, Q=U)
     y = matprod(U, matprod(x, U))

@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM12:57:43
+! Last Modified: Sunday, April 17, 2022 PM02:48:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -65,7 +65,7 @@ real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
 real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
-real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), resdw(size(amat, 2)), alpbd, alpha, alphm, alpht, &
+real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, temp, wgd
 integer(IK) :: icount, jsav
@@ -141,14 +141,12 @@ snsq = snorm * snorm
 ! trust region calculation. In other words, RESCON >= DELTA.
 ! 2. RESNEW(J) = 0 indicates that the J-th constraint is active, namely B(J) = AMAT(:, J)^T*(XOPT+D).
 ! 3. RESNEW(J) > 0 means that RESNEW(J) = max(B(J) - AMAT(:, J)^T*(XOPT+D), TINYCV).
-where (rescon >= snorm)
-    resnew = -ONE
-elsewhere(rescon >= 0)
-    resnew = max(rescon, TINYCV)
-elsewhere
-    resnew = rescon
-end where
-!!MATLAB: resnew = rescon; resnew(rescon >= 0) = max(rescon, TINYCV); resnew(rescon >= snorm) = -1;
+! N.B.: The order of the following lines is important, as the later ones override the earlier.
+resnew = rescon
+resnew(trueloc(rescon >= 0)) = max(TINYCV, rescon(trueloc(rescon >= 0)))
+resnew(trueloc(rescon >= snorm)) = -ONE
+!!MATLAB:
+!!resnew = rescon; resnew(rescon >= 0) = max(TINYCV, rescon(rescon >= 0)); resnew(rescon >= snorm) = -1;
 resnew(iact(1:nact)) = ZERO
 resact(1:nact) = rescon(iact(1:nact))
 
@@ -208,8 +206,8 @@ if (resmax > 1.0D-4 * snorm) then
     ad = -ONE
     frac = HUGENUM
     ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
-    resdw(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))
-    frac(trueloc(ad > 0)) = resdw(trueloc(ad > 0)) / ad(trueloc(ad > 0))
+    restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))
+    frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))
     bstep = minval([bstep, ONE, frac])  ! Indeed, BSTEP = MINVAL([BSTEP, ONE, FRAC(TRUELOC(AD>0))])
 end if
 
@@ -276,10 +274,9 @@ if (icount == nact) alpha = min(alpha, ONE)
 step = step + alpha * d
 ss = sum(step**2)
 g = g + alpha * dw
-
-resnew(trueloc(resnew > 0)) = max(TINYCV, resnew(trueloc(resnew > 0)) - alpha * ad(trueloc(resnew > 0)))
+restmp = resnew - alpha * ad  ! Only RESTMP(TRUELOC(RESNEW > 0)) is needed.
+resnew(trueloc(resnew > 0)) = max(TINYCV, restmp(trueloc(resnew > 0)))
 !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
-
 if (icount == nact) then
     resact(1:nact) = (ONE - bstep) * resact(1:nact)
 end if

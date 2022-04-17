@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM12:17:05
+! Last Modified: Sunday, April 17, 2022 PM03:23:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -105,6 +105,7 @@ use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
+use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
@@ -197,18 +198,14 @@ if (present(xl)) then
 else
     xl_loc = -HUGEBOUND
 end if
-where (is_nan(xl_loc) .or. xl_loc < -HUGEBOUND)
-    xl_loc = -HUGEBOUND
-end where
+xl_loc(trueloc(is_nan(xl_loc) .or. xl_loc < -HUGEBOUND)) = -HUGEBOUND
 
 if (present(xu)) then
     xu_loc = xu
 else
     xu_loc = HUGEBOUND
 end if
-where (is_nan(xu_loc) .or. xu_loc > HUGEBOUND)
-    xu_loc = HUGEBOUND
-end where
+xu_loc(trueloc(is_nan(xu_loc) .or. xu_loc > HUGEBOUND)) = HUGEBOUND
 
 x = max(xl_loc, min(xu_loc, moderatex(x)))
 

@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM12:59:46
+! Last Modified: Sunday, April 17, 2022 PM03:03:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -38,7 +38,7 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING!, SMALL_TR_RADIUS, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, maximum, eye, r1update
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, maximum, eye, trueloc, r1update
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : calquad, omega_col, omega_mul, hess_mul
 
@@ -566,22 +566,17 @@ if (f < fopt .and. ifeas) then
     ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
     ! 2. Otherwise, RESCON(J) is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA.
     ! RESCON can be updated without evaluating the constraints that are far from being active:
-    !
-    !!RESCON = MAX(RESCON - SNORM, DELTA)
-    !!WHERE (.NOT. RESCON >= DELTA + SNORM)
-    !!    RESCON = MAX(B - MATPROD(XOPT, AMAT), ZERO)
-    !!END WHERE
-    !!!MATLAB: mask = ~(rescon >= delta+snorm); rescon(mask) = max(b(mask) - (xopt'*amat(:, mask))', 0);
     ! Powell set RESCON to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
-
     where (abs(rescon) >= snorm + delta)
         rescon = min(-abs(rescon) + snorm, -delta)
     elsewhere
         rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-        where (rescon >= delta)
-            rescon = -rescon
-        end where
     end where
+    !!MATLAB:
+    !!mask = (rescon >= delta+snorm);
+    !!rescon(mask) = max(rescon(mask) - snorm, delta);
+    !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
+    rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
 
     xsxpt(1:npt) = xsxpt(1:npt) + xsxpt(npt + 1:2 * npt)
     !!xsxpt(1:npt) = matprod(xopt, xpt)
