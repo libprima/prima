@@ -684,7 +684,7 @@ end if
 !        qred = qred - t * hq(i, j)
 !    end do
 !end do
-
+!
 !! Implicit second-order term
 !w = matprod(d, xpt)
 !do i = 1, npt
