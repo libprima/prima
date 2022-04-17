@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM05:19:47
+! Last Modified: Sunday, April 17, 2022 PM05:37:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -181,7 +181,11 @@ dw = scaling * dw
 ! If the modulus of the residual of an active constraint is substantial, then set D to the shortest
 ! move from STEP to the boundaries of the active constraints.
 bstep = ZERO
-if (any(resact(1:nact) > 1.0D-4 * snorm)) then
+if (any(resact(1:nact) > 1.0E-4_RP * snorm)) then
+    ! N.B.: Between `ANY(X > Y)` and `MAXVAL(X) > Y`, we prefer the former, because MAXVAL(X) is
+    ! unspecified in the standard when X contains NaN, and its counterparts in MATLAB/Python/R/Julia
+    ! behave differently in this respect. In addition, MATLAB defines max(X) = [] if X == [], which
+    ! differs from mathematics and other languages.
     vlam(1:nact) = solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact))
     d = matprod(qfac(:, 1:nact), vlam(1:nact))
 

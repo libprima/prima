@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM12:58:51
+! Last Modified: Sunday, April 17, 2022 PM06:21:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -156,8 +156,8 @@ end do
 ! 1. If VLAG contains only NaN, which can happen, Powell's code leaves KSAV uninitialized.
 ! 2. If VLAG(KNEW) = MINVAL(VLAG) = VLAG(K) with K < KNEW, Powell's code does not set KSAV = KNEW.
 ksav = knew
-if (maxval(vlag) > vlag(knew)) then
-    ksav = maxloc(vlag, dim=1)
+if (any(vlag > vlag(knew))) then
+    ksav = maxloc(vlag, mask=(vlag > vlag(knew)), dim=1)  !!MATLAB: [~, ksav] = max(vlag);
 end if
 vbig = vlag(ksav)
 stpsav = stplen(ksav)

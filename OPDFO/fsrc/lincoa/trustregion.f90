@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 AM01:24:32
+! Last Modified: Sunday, April 17, 2022 PM05:35:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -150,7 +150,11 @@ if (nact > 0) then
     end do
 end if
 bstep = ZERO
-if (resmax > 1.0D-4 * snorm) then
+!---------------------------------------------------!
+! Zaikun 20220416
+!if (resmax > 1.0E-4_RP * snorm) then
+if (any(resact(1:nact) > 1.0E-4_RP * snorm)) then
+!---------------------------------------------------!
     ir = 0
     do k = 1, nact
         temp = resact(k)

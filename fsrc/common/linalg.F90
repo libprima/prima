@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 17, 2022 PM04:05:26
+! Last Modified: Sunday, April 17, 2022 PM06:01:47
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1432,7 +1432,7 @@ else
     ! reliably and efficiently. ACM Transactions on Mathematical Software (TOMS), 28(2), 206-238.
     ! N.B.: 1. Modern compilers compute SQRT(REALMIN) and SQRT(HUGENUM/2.1) at compilation time.
     ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
-    if (minval(abs(x)) > sqrt(REALMIN) .and. maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
+    if (all(abs(x) > sqrt(REALMIN) .and. abs(x) < sqrt(HUGENUM / 2.1_RP))) then
         ! Do NOT use HYPOTENUSE here; the best implementation for one may be suboptimal for the other
         r = sqrt(sum(x**2))
         c = x(1) / r
@@ -1464,7 +1464,7 @@ if (DEBUGGING) then
         & 'G(1,1) == G(2,2), G(1,2) = -G(2,1)', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
-    if (all(is_finite(x)) .and. maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
+    if (all(is_finite(x) .and. abs(x) < sqrt(HUGENUM / 2.1_RP))) then
         r = sqrt(sum(x**2))
         call assert(norm(matprod(G, x) - [r, ZERO]) <= max(tol, tol * r), 'G*x = [|x|, 0]', srname)
     end if
@@ -1645,6 +1645,14 @@ if (present(tol)) then
     tol_loc = tol
 end if
 
+! In Fortran, the following instructions cannot be written as the following Boolean expression:
+!!IS_SYMMETRIC = (SIZE(A, 1)==SIZE(A, 2) .AND. &
+!!    & ALL(IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A))) .AND. &
+!!    & .NOT. ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC * MAX(MAXVAL(ABS(A)), ONE)))
+! This is because Fortran may not perform short-circuit evaluation of this expression. If A is not
+! square, then IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A)) and A - TRANSPOSE(A) are invalid.
+! In addition, since Inf - Inf is NaN, we cannot replace ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC ...)
+! with .NOT. ALL(ABS(A - TRANSPOSE(A)) <= TOL_LOC ...).
 is_symmetric = .true.
 if (size(A, 1) /= size(A, 2)) then
     is_symmetric = .false.
