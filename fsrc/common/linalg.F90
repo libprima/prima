@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 17, 2022 PM03:16:48
+! Last Modified: Sunday, April 17, 2022 PM04:05:26
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1199,18 +1199,14 @@ elseif (any(is_nan(x)) .or. any(is_nan(v))) then
 elseif (any(is_inf(v))) then
     u = ZERO
     u(trueloc(is_inf(v))) = sign(ONE, v)
-    !where (is_inf(v))
-    !    u = sign(ONE, v)
-    !elsewhere
-    !    u = ZERO
-    !end where
+    !!MATLAB: u = 0; u(isinf(v)) = sign(v)
     u = u / norm(u)
-!    y = inprod(x, u) * u
+    !y = inprod(x, u) * u
     scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
     y = scaling * inprod(x / scaling, u) * u
 else
     u = v / norm(v)
-!    y = inprod(x, u) * u
+    !y = inprod(x, u) * u
     scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
     y = scaling * inprod(x / scaling, u) * u
 end if
@@ -1276,6 +1272,7 @@ elseif (any(is_inf(V))) then
     elsewhere
         V_loc = ZERO
     end where
+    !!MATLAB: V_loc = 0; V_loc(isinf(V)) = sign(V);
     call qr(V_loc, Q=U)
     y = matprod(U, matprod(x, U))
 else
@@ -1916,15 +1913,22 @@ function trueloc(x) result(loc)
 !--------------------------------------------------------------------------------------------------!
 ! Similar to the `find` function in MATLAB, TRUELOC returns the indices where X is true.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 logical, intent(in) :: x(:)
 integer(IK), allocatable :: loc(:)  ! INTEGER(IK) :: LOC(COUNT(X)) does not work with Absoft 22.0
+character(len=*), parameter :: srname = 'TRUELOC'
 integer(IK) :: n
 call safealloc(loc, int(count(x), IK))  ! Removable in F03.
 n = int(size(x), IK)
 loc = pack(linspace(1_IK, n, n), mask=x)
+if (DEBUGGING) then
+    call assert(all(loc >= 1 .and. loc <= n), '1 <= LOC <= N', srname)
+    call assert(size(loc) == count(x), 'SIZE(LOC) == COUNT(X)', srname)
+    call assert(all(x(loc)), 'X(LOC) is all TRUE', srname)
+end if
 end function trueloc
 
 
@@ -1932,13 +1936,20 @@ function falseloc(x) result(loc)
 !--------------------------------------------------------------------------------------------------!
 ! FALSELOC = TRUELOC(.NOT. X)
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 logical, intent(in) :: x(:)
 integer(IK), allocatable :: loc(:)  ! INTEGER(IK) :: LOC(COUNT(.NOT.X)) does not work with Absoft 22.0
+character(len=*), parameter :: srname = 'FALSELOC'
 call safealloc(loc, int(count(.not. x), IK))  ! Removable in F03.
 loc = trueloc(.not. x)
+if (DEBUGGING) then
+    call assert(all(loc >= 1 .and. loc <= size(x)), '1 <= LOC <= N', srname)
+    call assert(size(loc) == size(x) - count(x), 'SIZE(LOC) == SIZE(X) - COUNT(X)', srname)
+    call assert(all(.not. x(loc)), 'X(LOC) is all FALSE', srname)
+end if
 end function falseloc
 
 
