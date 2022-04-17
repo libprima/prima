@@ -18,7 +18,7 @@ module fmxapi_mod
 !
 ! Started in March 2020
 !
-! Last Modified: Wednesday, February 16, 2022 PM10:19:30
+! Last Modified: Sunday, April 17, 2022 PM06:23:25
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -433,6 +433,7 @@ subroutine read_rvector(px, x)
 ! READ_RVECTOR reads the double vector associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP) allocatable vector and should have size mxGetM(PX)*mxGetN(PX) at return.
 use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE, MSGLEN
+use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
@@ -464,7 +465,7 @@ call safealloc(x, n) ! Removable in F2003
 x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
-    if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
+    if (any(abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) .or. .not. all(is_nan(x) .eqv. is_nan(x_dp))) then
         wid = 'FMXAPI:LargeConversionError'
         msg = 'READ_RVECTOR: Large error occurs when converting REAL(DP) to REAL(RP) (maybe due to overflow).'
         call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
@@ -480,6 +481,7 @@ subroutine read_rmatrix(px, x)
 ! READ_RMATRIX reads the double matrix associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP) allocatable matrix and should have size [mxGetM(PX), mxGetN(PX)] at return.
 use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE, MSGLEN
+use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
@@ -512,7 +514,7 @@ call safealloc(x, m, n) ! Removable in F2003
 x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
-    if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
+    if (any(abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) .or. .not. all(is_nan(x) .eqv. is_nan(x_dp))) then
         wid = 'FMXAPI:LargeConversionError'
         msg = 'READ_RMATRIX: Large error occurs when converting REAL(DP) to REAL(RP) (maybe due to overflow).'
         call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
@@ -651,6 +653,7 @@ subroutine write_rvector(x, px, shape_type)
 ! MATLAB either as an output of mexFunction or an input of mexCallMATLAB. If ROWCOL = 'row', then
 ! the vector is passed as a row vector, otherwise, it will be a column vector.
 use, non_intrinsic :: consts_mod, only : DP, RP, IK, ONE, MSGLEN
+use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: string_mod, only : lower
 implicit none
 
@@ -676,7 +679,7 @@ n = int(n_mw, kind(n))
 x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
-    if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
+    if (any(abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) .or. .not. all(is_nan(x) .eqv. is_nan(x_dp))) then
         wid = 'FMXAPI:LargeConversionError'
         msg = 'WRITE_RVECTOR: Large error occurs when converting REAL(RP) to REAL(DP) (maybe due to overflow).'
         call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
@@ -702,6 +705,7 @@ subroutine write_rmatrix(x, px)
 ! WRITE_RMATRIX associates a REAL(RP) matrix X with an mwPointer PX, after which PX can be passed to
 ! MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
 use, non_intrinsic :: consts_mod, only : DP, RP, IK, ONE, MSGLEN
+use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
 ! Input
@@ -726,7 +730,7 @@ n_mw = int(n, kind(n_mw))
 x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
-    if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
+    if (any(abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) .or. .not. all(is_nan(x) .eqv. is_nan(x_dp))) then
         wid = 'FMXAPI:LargeConversionError'
         msg = 'WRITE_RMATRIX: Large error occurs when converting REAL(RP) to REAL(DP) (maybe due to overflow).'
         call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
