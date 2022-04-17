@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM03:03:55
+! Last Modified: Monday, April 18, 2022 AM01:25:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,7 +116,8 @@ logical :: ifeas
 integer(IK) :: idz, imprv, itest, k,    &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
-real(RP) :: w(max(int(size(bvec), IK) + 3_IK * int(size(x), IK), 2_IK * int(size(bvec), IK) + int(size(x), IK), 2_IK * npt))
+real(RP) :: fshift(npt)
+real(RP) :: pqalt(npt), galt(size(x))
 
 
 
@@ -454,15 +455,18 @@ diff = f - fopt + qred
 !       value of F and the value predicted by the alternative model.
 !
 if (ifeas .and. itest < 3) then
-    w(1:npt) = fval - fval(kopt)
-    pqw(1:npt) = omega_mul(idz, zmat, w(1:npt))
+    fshift = fval - fval(kopt)
+    pqalt = omega_mul(idz, zmat, fshift)
     !-----------------------------------------------------------------------------------------!
     ! The following evaluates Q_alt(XOPT+STEP) - Q_alt(XOPT), which should be done by CALQUAD.
     vqalt = ZERO
     do k = 1, npt
-        vqalt = vqalt + inprod(step, bmat(:, k)) * w(k)
-        vqalt = vqalt + pqw(k) * xsxpt(npt + k) * (HALF * xsxpt(npt + k) + xsxpt(k))
+        vqalt = vqalt + inprod(step, bmat(:, k)) * fshift(k)
+        vqalt = vqalt + pqalt(k) * xsxpt(npt + k) * (HALF * xsxpt(npt + k) + xsxpt(k))
     end do
+
+    !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+    !vqalt = calquad(step, xpt, galt, pqalt)
     !-----------------------------------------------------------------------------------------!
     dffalt = f - fopt - vqalt
 end if
@@ -521,11 +525,10 @@ end if
 !       later for the gradient of the new KNEW-th Lagrange function.
 !
 if (itest < 3) then
-    call r1update(hq, pq(knew), xpt(:, knew))
+    call r1update(hq, pq(knew), xpt(:, knew))  ! Needs the un-updated XPT(:, KNEW).
     pq(knew) = ZERO
     pqw(1:npt) = omega_col(idz, zmat, knew)
     pq = pq + diff * pqw(1:npt)
-    w(1:n) = bmat(:, knew)
 end if
 !
 !     Include the new interpolation point with the corresponding updates of
@@ -543,8 +546,7 @@ xsxpt(npt + knew) = xsxpt(npt + kopt) + ssq
 ! STEP'*XPT(:, KNEW) + STEP'*STEP = STEP'*[XPT(:, KOPT) + STEP] = STEP'*XNEW
 !!xsxpt(npt + knew) = inprod(step, xnew)
 if (itest < 3) then
-    w(1:n) = w(1:n) + hess_mul(xopt, xpt, pqw(1:npt))
-    gopt = gopt + diff * w(1:n)
+    gopt = gopt + diff * (bmat(:, knew) + hess_mul(xopt, xpt, pqw(1:npt)))  ! Needs the updated XPT.
 end if
 !
 !     Update FOPT, XSAV, XOPT, KOPT, RESCON and XSXPT if the new F is the
@@ -593,11 +595,12 @@ end if
 !       of values of F at feasible points.
 !
 if (itest == 3) then
-    w(1:npt) = fval - fval(kopt)
-    pq = omega_mul(idz, zmat, w(1:npt))
+    fshift = fval - fval(kopt)
+    pq = omega_mul(idz, zmat, fshift)
     hq = ZERO
-    gopt = matprod(bmat(:, 1:npt), w(1:npt))
-    gopt = gopt + hess_mul(xopt, xpt, pq)
+    !gopt = matprod(bmat(:, 1:npt), w(1:npt))
+    !gopt = gopt + hess_mul(xopt, xpt, pq)
+    gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
 end if
 !
 !     If a trust region step has provided a sufficient decrease in F, then
@@ -664,8 +667,6 @@ if (fopt <= f .or. is_nan(f) .or. .not. ifeas) then
 end if
 616 continue
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
-!w(1) = f
-!w(2) = real(nf, RP) + HALF
 
 
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
