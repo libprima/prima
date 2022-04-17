@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 AM10:22:15
+! Last Modified: Monday, April 18, 2022 AM01:34:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -560,7 +560,7 @@ end if
 !       and set DIFF to the error of this prediction.
 !
 fopt = fval(kopt)
-qred = calquad(d, gopt, hq, pq, xpt)
+qred = calquad(d, xpt, gopt, pq, hq)
 
 diff = f - fopt + qred
 diffc = diffb

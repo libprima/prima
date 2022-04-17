@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 10, 2022 PM11:52:02
+! Last Modified: Monday, April 18, 2022 AM02:03:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -274,7 +274,7 @@ do tr = 1, maxtr
             exit
         end if
 
-        qred = calquad(d, gq, hq, pq, xopt, xpt)  ! QRED = Q(XOPT) - Q(XOPT + D)
+        qred = calquad(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
@@ -464,7 +464,7 @@ do tr = 1, maxtr
             exit
         end if
 
-        qred = calquad(d, gq, hq, pq, xopt, xpt)  ! QRED = Q(XOPT) - Q(XOPT + D)
+        qred = calquad(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
