@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 AM01:35:53
+! Last Modified: Sunday, April 17, 2022 PM12:59:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -348,7 +348,7 @@ end if
 !       negative. If it is nonnegative due to rounding errors in this case,
 !       there is a branch to label 530 to try to improve the model.
 !-------------------------------------------------------------------------------------------!
-! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should do the same.
+! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should try the same.
 !-------------------------------------------------------------------------------------------!
 !
 xsxpt(npt + 1:2 * npt) = matprod(step, xpt)
@@ -543,10 +543,6 @@ xsxpt(npt + knew) = xsxpt(npt + kopt) + ssq
 ! STEP'*XPT(:, KNEW) + STEP'*STEP = STEP'*[XPT(:, KOPT) + STEP] = STEP'*XNEW
 !!xsxpt(npt + knew) = inprod(step, xnew)
 if (itest < 3) then
-    !do k = 1, npt
-    !    w(1:n) = w(1:n) + pqw(k) * xsxpt(k) * xpt(:, k)
-    !end do
-    !w(1:n) = w(1:n) + matprod(xpt, pqw(1:npt) * matprod(xopt, xpt))
     w(1:n) = w(1:n) + hess_mul(xopt, xpt, pqw(1:npt))
     gopt = gopt + diff * w(1:n)
 end if
@@ -593,16 +589,6 @@ if (f < fopt .and. ifeas) then
 !     Also revise GOPT when symmetric Broyden updating is applied.
 !
     if (itest < 3) then
-        !do j = 1, n
-        !    do i = 1, j
-        !        if (i < j) gopt(j) = gopt(j) + hq(i, j) * step(i)
-        !        gopt(i) = gopt(i) + hq(i, j) * step(j)
-        !    end do
-        !end do
-        !!gopt = gopt + matprod(hq, step)
-        !do k = 1, npt
-        !    gopt = gopt + pq(k) * xsxpt(npt + k) * xpt(:, k)
-        !end do
         gopt = gopt + hess_mul(step, xpt, pq, hq)
     end if
 end if
@@ -616,10 +602,6 @@ if (itest == 3) then
     pq = omega_mul(idz, zmat, w(1:npt))
     hq = ZERO
     gopt = matprod(bmat(:, 1:npt), w(1:npt))
-    !do k = 1, npt
-    !    gopt = gopt + pq(k) * xsxpt(k) * xpt(:, k)
-    !end do
-    !gopt = gopt + matprod(xpt, pq * matprod(xopt, xpt))
     gopt = gopt + hess_mul(xopt, xpt, pq)
 end if
 !

@@ -34,8 +34,8 @@ function trstlp(A, b, delta) result(d)
 !
 ! It is possible but rare that a degeneracy may prevent D from attaining the target length DELTA.
 !
-! CSTRV is the largest constraint violation of the current D: MAXVAL([B(1:M)-A(:,1:M)^T*D), ZERO]).
-! ICON is the index of a most violated constraint if CSTRV is positive.
+! CVIOL is the largest constraint violation of the current D: MAXVAL([B(1:M)-A(:,1:M)^T*D), ZERO]).
+! ICON is the index of a most violated constraint if CVIOL is positive.
 !
 ! NACT is the number of constraints in the active set and IACT(1), ...,IACT(NACT) are their indices,
 ! while the remainder of IACT contains a permutation of the remaining constraint indices.
@@ -52,7 +52,7 @@ function trstlp(A, b, delta) result(d)
 ! held at the beginning of VMULTC. The remainder of this vector holds the residuals of the inactive
 ! constraints at d, the ordering of the components of VMULTC being in agreement with the permutation
 ! of the indices of the constraints that is in IACT. All these residuals are nonnegative, which is
-! achieved by the shift CSTRV that makes the least residual zero.
+! achieved by the shift CVIOL that makes the least residual zero.
 !
 ! N.B.:
 ! 1. The algorithm was NOT documented in the COBYLA paper. A note should be written to introduce it!
@@ -127,10 +127,10 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 ! Major differences between stage 1 and stage 2:
 ! 1. Initialization. Stage 2 inherits the values of some variables from stage 1, so they are
 ! initialized in stage 1 but not in stage 2.
-! 2. CSTRV. CSTRV is updated after at iteration in stage 1, whereas it remains a constant in stage 2.
+! 2. CVIOL. CVIOL is updated after at iteration in stage 1, whereas it remains a constant in stage 2.
 ! 3. SDIRN. See the definition of SDIRN in the code for details.
 ! 4. OPTNEW. The two stages have different objectives, so OPTNEW is updated differently.
-! 5. STEP. STEP <= CSTRV in stage 1.
+! 5. STEP. STEP <= CVIOL in stage 1.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: D(N), CVSABA(MCON), CVSHIFT(MCON), DNEW(N), DOLD(N), FRACMULT(MCON), SDIRN(N), &
@@ -171,7 +171,7 @@ integer(IK) :: n
 integer(IK) :: nactold
 integer(IK) :: nactsav
 integer(IK) :: nfail
-real(RP) :: cstrv
+real(RP) :: cviol
 !real(RP) :: cvold
 real(RP) :: cvsabs(size(b))
 real(RP) :: cvshift(size(b))
@@ -227,10 +227,10 @@ if (stage == 1) then
     ! 2. In MATLAB, linspace(1, mcon, mcon) can also be written as (1:mcon).
     nact = 0_IK
     d = ZERO
-    cstrv = maxval([b, ZERO])
-    vmultc = cstrv - b
+    cviol = maxval([b, ZERO])
+    vmultc = cviol - b
     z = eye(n)
-    if (mcon == 0 .or. cstrv <= ZERO) then
+    if (mcon == 0 .or. cviol <= ZERO) then
         ! Check whether a quick return is possible. Make sure the In-outputs have been initialized.
         return
     end if
@@ -253,9 +253,9 @@ else
     m = mcon - 1_IK
     icon = mcon
 
-    ! In Powell's code, stage 2 uses the ZDOTA and CSTRV calculated by stage 1. Here we re-calculate
+    ! In Powell's code, stage 2 uses the ZDOTA and CVIOL calculated by stage 1. Here we re-calculate
     ! them so that they need not be passed from stage 1 to 2, and hence the coupling is reduced.
-    cstrv = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+    cviol = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
 end if
 zdota(1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=1, nact)]
 !!MATLAB: zdota(1:nact) = sum(z(:, 1:nact) .* A(:, iact(1:nact)), 1);  % Row vector
@@ -280,7 +280,7 @@ do iter = 1, maxiter
         call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)
     end if
     if (stage == 1) then
-        optnew = cstrv
+        optnew = cviol
     else
         optnew = -inprod(d, A(:, mcon))
     end if
@@ -435,7 +435,7 @@ do iter = 1, maxiter
         end if
     end if
 
-    ! Calculate the step to the trust region boundary or take the step that reduces CSTRV to 0.
+    ! Calculate the step to the trust region boundary or take the step that reduces CVIOL to 0.
     !----------------------------------------------------------------------------------------------!
     ! The following calculation of STEP is simpler than Powell's approach and seems to improve the
     ! performance of COBYLA. In our test, SQRT(SS * DD + SD**2) + SD can become 0 due to a tiny SS
@@ -475,19 +475,19 @@ do iter = 1, maxiter
     !----------------------------------------------------------------------------------------------!
 
     if (stage == 1) then
-        if (isminor(cstrv, step)) then
+        if (isminor(cviol, step)) then
             exit
         end if
-        step = min(step, cstrv)
+        step = min(step, cviol)
     end if
 
-    ! Set DNEW to the new variables if STEP is the steplength, and reduce CSTRV to the corresponding
+    ! Set DNEW to the new variables if STEP is the steplength, and reduce CVIOL to the corresponding
     ! maximum residual if stage 1 is being done.
     dnew = d + step * sdirn
     if (stage == 1) then
-        !cvold = cstrv
-        cstrv = maxval([b(iact(1:nact)) - matprod(dnew, A(:, iact(1:nact))), ZERO])
-        ! N.B.: CSTRV will be used when calculating VMULTD(NACT+1 : MCON).
+        !cvold = cviol
+        cviol = maxval([b(iact(1:nact)) - matprod(dnew, A(:, iact(1:nact))), ZERO])
+        ! N.B.: CVIOL will be used when calculating VMULTD(NACT+1 : MCON).
     end if
 
     ! Zaikun 20211011:
@@ -502,8 +502,8 @@ do iter = 1, maxiter
         vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems never activated.
     end if
     ! Complete VMULTD by finding the new constraint residuals. (Powell wrote "Complete VMULTC ...")
-    cvshift = matprod(dnew, A(:, iact)) - b(iact) + cstrv  ! Only CVSHIFT(nact+1:mcon) is needed.
-    cvsabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cstrv
+    cvshift = matprod(dnew, A(:, iact)) - b(iact) + cviol  ! Only CVSHIFT(nact+1:mcon) is needed.
+    cvsabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cviol
     where (isminor(cvshift, cvsabs))
         cvshift = ZERO
     end where
@@ -521,7 +521,7 @@ do iter = 1, maxiter
     icon = int(minloc([ONE, fracmult], dim=1), IK) - 1_IK
     !!MATLAB: [frac, icon] = min([1, fracmult]); icon = icon - 1
 
-    ! Update D, VMULTC and CSTRV.
+    ! Update D, VMULTC and CVIOL.
     dold = d
     d = (ONE - frac) * d + frac * dnew
     ! Exit in case of Inf/NaN in D.
@@ -532,10 +532,10 @@ do iter = 1, maxiter
 
     vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
     if (stage == 1) then
-        !cstrv = (ONE - frac) * cvold + frac * cstrv  ! Powell's version
-        ! In theory, CSTRV = MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]), yet the CSTRV updated
+        !cviol = (ONE - frac) * cvold + frac * cviol  ! Powell's version
+        ! In theory, CVIOL = MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]), yet the CVIOL updated
         ! as above can be quite different from this value if A has huge entries (e.g., > 1E20).
-        cstrv = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+        cviol = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     end if
 
     if (icon < 1 .or. icon > mcon) then

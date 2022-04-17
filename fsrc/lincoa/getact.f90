@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM03:39:57
+! Last Modified: Sunday, April 17, 2022 PM01:01:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -162,7 +162,7 @@ if (nact == 0) then
 end if
 
 ! Remove any constraints from the initial active set whose residuals exceed TDEL.
-! Compilers may complain if we do not set VLAM. The value does not matter, as it will be overwritten.
+! Compilers may complain if VLAM is not set. The value does not matter, as it will be overwritten.
 vlam = ZERO
 do ic = nact, 1, -1
     if (resact(ic) > tdel) then
@@ -198,7 +198,7 @@ ddsav = TWO * gg  ! By Powell. This value is used at iteration 1 to test whether
 maxiter = 2_IK * (m + n)
 do iter = 1_IK, maxiter
     ! When NACT == N, exit with PSD = 0. Indeed, with a correctly implemented matrix product, the
-    ! lines below this IF should render DD = 0 and trigger an exit. We do it explicitly for clarity.
+    ! lines below this IF should render DD = 0 and trigger an exit. We make it explicit for clarity.
     if (nact >= n) then  ! Indeed, NACT > N should never happen.
         psd = ZERO
         exit

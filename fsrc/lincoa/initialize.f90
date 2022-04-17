@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 AM09:31:14
+! Last Modified: Sunday, April 17, 2022 PM12:58:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -275,9 +275,6 @@ xsxpt(1:npt) = matprod(xopt, xpt)
 hq = ZERO
 pq = omega_mul(idz, zmat, fval)
 gopt = ZERO
-!do k = 1, npt
-!    gopt = gopt + fval(k) * bmat(:, k) + pq(k) * xsxpt(k) * xpt(:, k)
-!end do
 gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
 
 ! Set the initial elements of RESCON.
