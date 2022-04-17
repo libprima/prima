@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 17, 2022 PM03:14:21
+! Last Modified: Monday, April 18, 2022 AM02:19:44
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -524,14 +524,15 @@ end if
 end subroutine qrexc_Rfull
 
 
-function calquad_gq(d, gq, hq, pq, x, xpt) result(qred)
+function calquad_gq(d, x, xpt, gq, pq, hq) result(qred)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates QRED = Q(XBASE + X) - Q(XBSE + X + D) with Q being the quadratic function
 ! defined via (GQ, HQ, PQ) by
 ! Q(XBASE + S) = <S, GQ> + 0.5*<S, HESSIAN*S>,
 ! with HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
-! N.B.: GQ is the gradient of Q at XBASE; the value of XBASE is irrelevant in the calculation.
+! N.B.: 1. GQ is the gradient of Q at XBASE; the value of XBASE is irrelevant in the calculation.
+! 2. CALQUAD_GQ(D, ZEROS(SIZE(D)), XPT, G, PQ, HQ) = CALQUAD_GOPT(D, XPT, G, PQ, HQ)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -541,11 +542,11 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: d(:)      ! D(N)
-real(RP), intent(in) :: gq(:)     ! GQ(N)
-real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(in) :: pq(:)     ! PQ(NPT)
 real(RP), intent(in) :: x(:)      ! X(N)
 real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+real(RP), intent(in) :: gq(:)     ! GQ(N)
+real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 
 ! Output
 real(RP) :: qred
@@ -571,8 +572,10 @@ if (DEBUGGING) then
     call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    if (present(hq)) then
+        call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    end if
 end if
 
 !====================!
@@ -590,7 +593,9 @@ do j = 1, n
         if (i == j) then
             t = HALF * t
         end if
-        qred = qred - t * hq(i, j)
+        if (present(hq)) then
+            qred = qred - t * hq(i, j)
+        end if
     end do
 end do
 
@@ -611,8 +616,10 @@ end do
 !! Implicit second-order term
 !qred = qred - sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
 !! Explicit second-order term
-!qred = qred - inprod(s, matprod(hq, d))
-!! In Fortran, the following implementations do not work as well as the above line.
+!if (present(hq)) then
+!   qred = qred - inprod(s, matprod(hq, d))
+!end if
+!! In Fortran, the following implementations concerning HQ do not work as well as the above one.
 !!qred = qred - inprod(d, matprod(hq, s))
 !!qred = qred - HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
 !--------------------------------------------------------------------------------------------------!
@@ -624,11 +631,12 @@ end do
 end function calquad_gq
 
 
-function calquad_gopt(d, gopt, hq, pq, xpt) result(qred)
+function calquad_gopt(d, xpt, gopt, pq, hq) result(qred)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates QRED = Q(XOPT) - Q(XOPT+D) = -<D, GOPT> - 0.5*<D, HESSIAN*D>,
 ! with HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
+! N.B.: CALQUAD_GOPT(D, XPT, G, PQ, HQ) = CALQUAD_GQ(D, ZEROS(SIZE(D)), XPT, G, PQ, HQ)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -638,10 +646,10 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: d(:)      ! D(N)
-real(RP), intent(in) :: gopt(:)   ! GOPT(N)
-real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(in) :: pq(:)     ! PQ(NPT)
 real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+real(RP), intent(in) :: gopt(:)   ! GOPT(N)
+real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 
 ! Output
 real(RP) :: qred
@@ -662,8 +670,10 @@ if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    if (present(hq)) then
+        call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    end if
 end if
 
 !====================!
@@ -681,7 +691,9 @@ end if
 !        if (i == j) then
 !            t = HALF * t
 !        end if
-!        qred = qred - t * hq(i, j)
+!        if (present(hq)) then
+!            qred = qred - t * hq(i, j)
+!        end if
 !    end do
 !end do
 !
@@ -696,8 +708,17 @@ end if
 ! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
 !--------------------------------------------------------------------------------------------------!
 w = matprod(d, xpt)
-qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(w, pq * w)
-!!MATLAB: qred = -d'*(gopt + 0.5*hq*d) - 0.5*w'*(pq*w);
+if (present(hq)) then
+    qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(w, pq * w)
+else
+    qred = -inprod(d, gopt) - HALF * inprod(w, pq * w)
+end if
+!!MATLAB:
+!!if nargin >= 5
+!!    qred = -d'*(gopt + 0.5*hq*d) - 0.5*w'*(pq*w);
+!!else
+!!    qred = -d'*gopt - 0.5*w'*(pq*w);
+!!end
 !--------------------------------------------------------------------------------------------------!
 
 !====================!
@@ -707,7 +728,7 @@ qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(w, pq * w)
 end function calquad_gopt
 
 
-function errquad(gq, hq, pq, xpt, fval) result(err)
+function errquad(fval, xpt, gq, pq, hq) result(err)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates the maximal relative error of Q in interpolating FVAL on XPT.
 ! Here, Q is the quadratic function defined via (GQ, HQ, PQ) by
@@ -715,18 +736,18 @@ function errquad(gq, hq, pq, xpt, fval) result(err)
 ! with HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : issymmetric
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: gq(:)     ! GQ(N)
-real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(in) :: pq(:)     ! PQ(NPT)
-real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
 real(RP), intent(in) :: fval(:)   ! FVAL(NPT)
+real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+real(RP), intent(in) :: gq(:)     ! GQ(N)
+real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 
 ! Outputs
 real(RP) :: err
@@ -748,12 +769,14 @@ npt = int(size(xpt, 2), kind(npt))
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
-    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
     call assert(.not. any(is_nan(fval) .or. is_posinf(fval)), 'FVAL is not NaN/+Inf', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    if (present(hq)) then
+        call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    end if
 end if
 
 !====================!
@@ -761,13 +784,22 @@ end if
 !====================!
 
 zeros = ZERO
-qval = [(-calquad(xpt(:, k), gq, hq, pq, zeros, xpt), k=1, npt)]
-!!MATLAB: qval = cellfun(@(x) -calquad(x, gq, hq, pq, zeros, xpt), num2cell(xpt, 1));  % Row vector
+if (present(hq)) then
+    qval = [(-calquad(xpt(:, k), zeros, xpt, gq, pq, hq), k=1, npt)]
+else
+    qval = [(-calquad(xpt(:, k), zeros, xpt, gq, pq), k=1, npt)]
+end if
+!!MATLAB:
+!!if nargin >= 5
+!!    qval = cellfun(@(x) -calquad(x, zeros(size(x)), xpt, gq, pq, hq), num2cell(xpt, 1));  % Row vector
+!!else
+!!    qval = cellfun(@(x) -calquad(x, zeros(size(x)), xpt, gq, pq), num2cell(xpt, 1));  % Row vector
+!!end
 if (.not. all(is_finite(qval))) then
     err = HUGENUM
 else
     fmq = fval - qval
-    err = (maxval(fmq) - minval(fmq)) !/ max(ONE, maxval(abs(fval)))
+    err = (maxval(fmq) - minval(fmq)) / maxval([ONE, abs(fval)])
 end if
 
 !====================!

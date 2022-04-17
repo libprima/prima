@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 AM01:25:26
+! Last Modified: Monday, April 18, 2022 AM01:45:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,10 +110,10 @@ real(RP) :: xsav(size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: del, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
-&        rho, snorm, ssq, temp, vqalt,   &
+&        rho, snorm, ssq, temp, qralt,   &
 &        qred, xdiff
 logical :: ifeas
-integer(IK) :: idz, imprv, itest, k,    &
+integer(IK) :: idz, imprv, itest,  &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
 real(RP) :: fshift(npt)
@@ -353,7 +353,7 @@ end if
 !-------------------------------------------------------------------------------------------!
 !
 xsxpt(npt + 1:2 * npt) = matprod(step, xpt)
-qred = calquad(step, gopt, hq, pq, xpt)
+qred = calquad(step, xpt, gopt, pq, hq)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
@@ -459,16 +459,17 @@ if (ifeas .and. itest < 3) then
     pqalt = omega_mul(idz, zmat, fshift)
     !-----------------------------------------------------------------------------------------!
     ! The following evaluates Q_alt(XOPT+STEP) - Q_alt(XOPT), which should be done by CALQUAD.
-    vqalt = ZERO
-    do k = 1, npt
-        vqalt = vqalt + inprod(step, bmat(:, k)) * fshift(k)
-        vqalt = vqalt + pqalt(k) * xsxpt(npt + k) * (HALF * xsxpt(npt + k) + xsxpt(k))
-    end do
+    !vqalt = ZERO
+    !do k = 1, npt
+    !    vqalt = vqalt + inprod(step, bmat(:, k)) * fshift(k)
+    !    vqalt = vqalt + pqalt(k) * xsxpt(npt + k) * (HALF * xsxpt(npt + k) + xsxpt(k))
+    !end do
 
-    !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-    !vqalt = calquad(step, xpt, galt, pqalt)
+    galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+    qralt = calquad(step, xpt, galt, pqalt)
     !-----------------------------------------------------------------------------------------!
-    dffalt = f - fopt - vqalt
+    !dffalt = f - fopt - vqalt
+    dffalt = f - fopt + qralt
 end if
 if (itest == 3) then
     dffalt = diff
