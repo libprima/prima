@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 AM12:25:20
+! Last Modified: Monday, April 18, 2022 AM12:33:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -314,7 +314,7 @@ if (nact <= 0) then
     gw = g
 else
     gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
-    !!MATLAB: gw = qfac(:, nact+1:n) * (qfac(:, nact+1:n)' * g);
+    !!MATLAB: gw = qfac(:, nact+1:n) * (g' * qfac(:, nact+1:n))';
 end if
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun: The schemes below work evidently worse than the one above in a test on 20220417. Why?

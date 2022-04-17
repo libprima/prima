@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 AM12:25:01
+! Last Modified: Monday, April 18, 2022 AM12:33:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -206,7 +206,7 @@ do iter = 1_IK, maxiter
 
     ! Set PSD to the projection of -G to range(QFAC(:,NACT+1:N))
     psd = -matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
-    !!MATLAB: psd = - qfac(:, nact + 1:n) * (qfac(:, nact + 1:n)' * g);
+    !!MATLAB: psd = -qfac(:, nact + 1:n) * (g' * qfac(:, nact + 1:n))';
     !----------------------------------------------------------------------------------------------!
     ! Zaikun: The schemes below work evidently worse than the one above in a test on 20220417. Why?
     !-------------------------------------------------------------------------!
