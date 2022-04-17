@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM02:48:22
+! Last Modified: Sunday, April 17, 2022 PM05:19:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -59,7 +59,7 @@ real(RP), intent(out) :: step(:)  ! STEP(N)
 character(len=*), parameter :: srname = 'TRSTEP'
 real(RP) :: d(size(gq))
 real(RP) :: dw(size(gq))
-real(RP) :: w(max(size(amat, 2), 2 * size(gq)))
+real(RP) :: gw(size(gq))
 real(RP) :: resact(size(amat, 2))
 real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
@@ -67,7 +67,7 @@ real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, temp, wgd
+&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, snsq, ss, temp
 integer(IK) :: icount, jsav
 integer(IK) :: m
 integer(IK) :: n
@@ -115,7 +115,7 @@ g = gq
 !     G must be set on entry to the gradient of the quadratic model at the
 !       trust region centre. It is used as working space, however, and is
 !       always the gradient of the model at the current STEP.
-!     RESNEW, RESACT, D, DW and W are used for working space. A negative
+!     RESNEW, RESACT, D, DW and GW are used for working space. A negative
 !       value of RESNEW(J) indicates that the J-th constraint does not
 !       restrict the CG steps of the current trust region calculation, a
 !       zero value of RESNEW(J) indicates that the J-th constraint is active,
@@ -123,8 +123,7 @@ g = gq
 !       residual of the J-th constraint for the current STEP. RESACT holds
 !       the residuals of the active constraints, which may be positive.
 !       D is the search direction of each line search. DW is either another
-!       search direction or the change in gradient along D. The length of W
-!       must be at least MAX[M,2*N].
+!       search direction or the change in gradient along D.
 !
 !     Set some numbers for the conjugate gradient iterations.
 !
@@ -167,10 +166,9 @@ end if
 scaling = 0.2_RP * snorm / sqrt(dd)
 dw = scaling * dw
 
-! If the modulus of the residual of an active constraint is substantial, then set D to the shortest
-! move from STEP to the boundaries of the active constraints.
-resmax = ZERO
-resmax = maxval([ZERO, resact(1:nact)])
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220416: RESMAX is not needed anymore.
+!resmax = maxval([ZERO, resact(1:nact)])
 ! N.B.: Powell's COBYLA code also contains a variable named RESMAX. However, the meanings of RESMAX
 ! here and in COBYLA are different --- indeed, almost opposite to each other. In COBYLA, RESMAX(X)
 ! is the L-infinity constraint violation of a given point X. In the context of LINCOA, where the
@@ -178,9 +176,12 @@ resmax = maxval([ZERO, resact(1:nact)])
 ! contrast, the RESMAX here corresponds to MAXVAL([ZERO, B_act - A_act^T * X]) with A_act and B_act
 ! being the slices of A and B indexed by IACT(1:NACT). Regarding this difference, the modernized
 ! code of COBYLA has renamed RESMAX to CSTRV, signifying ConSTRaint Violation.
+!--------------------------------------------------------------------------------------------------!
 
+! If the modulus of the residual of an active constraint is substantial, then set D to the shortest
+! move from STEP to the boundaries of the active constraints.
 bstep = ZERO
-if (resmax > 1.0D-4 * snorm) then
+if (any(resact(1:nact) > 1.0D-4 * snorm)) then
     vlam(1:nact) = solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact))
     d = matprod(qfac(:, 1:nact), vlam(1:nact))
 
@@ -305,17 +306,16 @@ if (icount == n) goto 320
 
 ! Calculate the next search direction, which is conjugate to the previous one unless ICOUNT == NACT.
 if (nact <= 0) then  ! 1. NACT >= 0 unless GETACT is buggy. 2. The two cases can be merged in theory.
-    w(n + 1:2 * n) = g
+    gw = g
 else
-    w(n + 1:2 * n) = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+    gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
 end if
 if (icount == nact) then
     beta = ZERO
 else
-    wgd = inprod(w(n + 1:2 * n), dw)
-    beta = wgd / dgd
+    beta = inprod(gw, dw) / dgd
 end if
-d = -w(n + 1:2 * n) + beta * d
+d = -gw + beta * d
 alpbd = ZERO
 goto 150
 

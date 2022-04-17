@@ -46,7 +46,7 @@ end function moderatex
 
 pure elemental function moderatef(f) result(y)
 !--------------------------------------------------------------------------------------------------!
-! This function moderates the function value of a minimization problem. It replaces NaN and any
+! This function moderates the function value of a MINIMIZATION problem. It replaces NaN and any
 ! value above HUGEFUN by HUGEFUN.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, HUGEFUN
@@ -70,7 +70,7 @@ end function moderatef
 
 function moderatec(c) result(y)
 !--------------------------------------------------------------------------------------------------!
-! This function moderates the constraint value, the constraint demanding this value to be nonnegative.
+! This function moderates the constraint value, the constraint demanding this value to be NONNEGATIVE.
 ! It replaces NaN and any value below -HUGECON by -HUGECON, and any value above HUGECON by HUGECON.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, HUGECON

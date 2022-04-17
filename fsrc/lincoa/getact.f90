@@ -204,8 +204,8 @@ do iter = 1_IK, maxiter
         exit
     end if
 
-    psd(nact + 1:n) = matprod(g, qfac(:, nact + 1:n))
-    psd = -matprod(qfac(:, nact + 1:n), psd(nact + 1:n)) ! Projection of -G to range(QFAC(:,NACT+1:N))
+    ! Set PSD to the projection of -G to range(QFAC(:,NACT+1:N))
+    psd = -matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n))) 
     dd = inprod(psd, psd)
     dnorm = sqrt(dd)
 
