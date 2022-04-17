@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM12:07:23
+! Last Modified: Sunday, April 17, 2022 PM12:58:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -124,10 +124,6 @@ gl = gl_in
 mincv = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
 
 ! Replace GL by the gradient of LFUNC at the trust region centre, and set the elements of RSTAT.
-!do k = 1, npt
-!    gl = gl + pqw(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
-!end do
-!gl = gl + matprod(xpt, pqw * matprod(xopt, xpt))
 gl = gl + hess_mul(xopt, xpt, pqw)
 
 ! RSTAT(J) = -1, 0, or 1 respectively means constraint J is irrelevant, active, or inactive&relevant.

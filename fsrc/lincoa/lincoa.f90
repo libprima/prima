@@ -27,7 +27,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM12:16:50
+! Last Modified: Sunday, April 17, 2022 PM01:11:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -63,7 +63,7 @@ subroutine lincoa(calfun, x, f, &
 !       most B(J). The initial vector X(.) is made feasible by increasing
 !       the value of B(J) if necessary.
 !     X is the vector of variables. Initial values of X(1),X(2),...,X(N)
-!       must be supplied. If they do not satisfy the constraints, then B
+!       must be supplied. If X does not satisfy the constraints, then B
 !       is increased as mentioned above. X contains on return the variables
 !       that have given the least calculated F subject to the constraints.
 !     RHOBEG and RHOEND must be set to the initial and final values of a
@@ -115,6 +115,7 @@ use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
+use, non_intrinsic :: linalg_mod, only : inprod
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 !use, non_intrinsic :: selectx_mod, only : isbetter
@@ -161,7 +162,6 @@ character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of di
 character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'LINCOA'
 character(len=MSGLEN) :: wmsg
-integer(IK) :: i
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: j
@@ -363,12 +363,8 @@ call safealloc(A_normalized, n, m)
 call safealloc(b_normalized, m)
 if (m > 0) then
     do j = 1, m
-        summ = ZERO
-        temp = ZERO
-        do i = 1, n
-            summ = summ + A_loc(i, j) * x(i)
-            temp = temp + A_loc(i, j)**2
-        end do
+        summ = inprod(x, A_loc(:, j))
+        temp = sum(A_loc(:, j)**2)
         if (temp <= 0) then
             if (present(info)) then
                 info = 12
@@ -378,9 +374,7 @@ if (m > 0) then
         temp = sqrt(temp)
         constr_modified = constr_modified .or. (summ - b_loc(j) > smallx * temp)
         b_normalized(j) = max(b_loc(j), summ) / temp
-        do i = 1, n
-            A_normalized(i, j) = A_loc(i, j) / temp
-        end do
+        A_normalized(:, j) = A_loc(:, j) / temp
     end do
 end if
 
