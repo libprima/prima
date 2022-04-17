@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM01:01:18
+! Last Modified: Sunday, April 17, 2022 PM06:48:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -205,7 +205,17 @@ do iter = 1_IK, maxiter
     end if
 
     ! Set PSD to the projection of -G to range(QFAC(:,NACT+1:N))
-    psd = -matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n))) 
+
+    !-------------------------------------------------------------------------!
+    !psd = -matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+
+    if (2 * nact <= n) then
+        psd = matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact))) - g
+    else
+        psd = -matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+    end if
+    !-------------------------------------------------------------------------!
+
     dd = inprod(psd, psd)
     dnorm = sqrt(dd)
 
