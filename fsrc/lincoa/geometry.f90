@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM06:21:25
+! Last Modified: Sunday, April 17, 2022 PM06:48:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -187,8 +187,18 @@ if (nact == 0 .or. nact == n) goto 220
 ! Overwrite GL by its projection to the column space of QFAC(:, NACT+1:N). Then set VNEW to the
 ! greatest value of |LFUNC| on the projected gradient from XOPT subject to the trust region bound.
 ! If VNEW is sufficiently large, then STEP may be changed to a move along the projected gradient.
-gl = matprod(qfac(:, nact + 1:n), matprod(gl, qfac(:, nact + 1:n)))
-!!MATLAB: gl = (gl' * qfac(:, nact+1:n) * qfac(:, nact+1:n)')'
+
+!------------------------------------------------------------------------!
+!gl = matprod(qfac(:, nact + 1:n), matprod(gl, qfac(:, nact + 1:n)))
+!!!MATLAB: gl = (gl' * qfac(:, nact+1:n) * qfac(:, nact+1:n)')'
+
+if (2 * nact <= n) then
+    gl = gl - matprod(qfac(:, 1:nact), matprod(gl, qfac(:, 1:nact)))
+else
+    gl = matprod(qfac(:, nact + 1:n), matprod(gl, qfac(:, nact + 1:n)))
+end if
+!------------------------------------------------------------------------!
+
 gg = sum(gl**2)
 vgrad = del * sqrt(gg)
 if (vgrad <= TENTH * vbig) goto 220

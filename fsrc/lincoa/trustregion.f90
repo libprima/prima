@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM05:37:52
+! Last Modified: Sunday, April 17, 2022 PM06:48:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -182,10 +182,9 @@ dw = scaling * dw
 ! move from STEP to the boundaries of the active constraints.
 bstep = ZERO
 if (any(resact(1:nact) > 1.0E-4_RP * snorm)) then
-    ! N.B.: Between `ANY(X > Y)` and `MAXVAL(X) > Y`, we prefer the former, because MAXVAL(X) is
-    ! unspecified in the standard when X contains NaN, and its counterparts in MATLAB/Python/R/Julia
-    ! behave differently in this respect. In addition, MATLAB defines max(X) = [] if X == [], which
-    ! differs from mathematics and other languages.
+    ! N.B.: We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify MAXVAL(X)
+    ! when X contains NaN, and MATLAB/Python/R/Julia behave differently in this respect. Moreover,
+    ! MATLAB defines max(X) = [] if X == [], which differs from mathematics and other languages.
     vlam(1:nact) = solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact))
     d = matprod(qfac(:, 1:nact), vlam(1:nact))
 
@@ -309,11 +308,21 @@ end if
 if (icount == n) goto 320
 
 ! Calculate the next search direction, which is conjugate to the previous one unless ICOUNT == NACT.
-if (nact <= 0) then  ! 1. NACT >= 0 unless GETACT is buggy. 2. The two cases can be merged in theory.
-    gw = g
+
+!--------------------------------------------------------------------------------------------------!
+!if (nact <= 0) then  ! 1. NACT >= 0 unless GETACT is buggy. 2. The two cases can be merged in theory.
+!    gw = g
+!else
+!    gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+!end if
+
+if (2 * nact <= n) then
+    gw = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
 else
     gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
 end if
+!--------------------------------------------------------------------------------------------------!
+
 if (icount == nact) then
     beta = ZERO
 else
