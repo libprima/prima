@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 AM01:35:49
+! Last Modified: Sunday, April 17, 2022 PM12:15:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -65,7 +65,7 @@ real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
 real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
-real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), adw(size(amat, 2)), alpbd, alpha, alphm, alpht, &
+real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), resdw(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, temp, wgd
 integer(IK) :: icount, jsav
@@ -198,25 +198,12 @@ if (resmax > 1.0D-4 * snorm) then
     end if
 
     ! Reduce BSTEP if necessary so that the move along D also satisfies the linear constraints.
-
-    !do j = 1, m
-    !    if (.not. bstep > 0) exit
-    !    if (resnew(j) > 0) then
-    !        ad(j) = inprod(d, amat(:, j))
-    !        adw(j) = inprod(dw, amat(:, j))
-    !        if (ad(j) > 0) then
-    !            temp = max((resnew(j) - adw(j)) / ad(j), ZERO)
-    !            bstep = min(bstep, temp)
-    !        end if
-    !    end if
-    !end do
-
     ad = -ONE
-    adw = HUGENUM
+    frac = HUGENUM
     ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
-    adw(trueloc(resnew > 0)) = matprod(dw, amat(:, trueloc(resnew > 0)))
-    frac = (resnew - adw) / ad
-    bstep = minval([bstep, ONE, frac(trueloc(ad > 0))])
+    resdw(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))
+    frac(trueloc(ad > 0)) = resdw(trueloc(ad > 0)) / ad(trueloc(ad > 0))
+    bstep = minval([bstep, ONE, frac])  ! Indeed, BSTEP = MINVAL([BSTEP, ONE, FRAC(TRUELOC(AD>0))])
 end if
 
 ! Set the next direction for seeking a reduction in the model function subject to the trust region
@@ -228,13 +215,6 @@ else
     d = dw
     icount = nact
 end if
-!if (bstep <= 0) then
-!    d = dw
-!    icount = nact
-!else
-!    d = dw + bstep * d
-!    icount = nact - 1
-!end if
 alpbd = ONE
 
 ! Set ALPHA to the steplength from STEP along D to the trust region boundary. Return if the first
@@ -267,28 +247,13 @@ end if
 ! Make a further reduction in ALPHA if necessary to preserve feasibility, and put some scalar
 ! products of D with constraint gradients in W.
 alphm = alpha
-jsav = 0
-
-!do j = 1, m
-!    ad = ZERO
-!    if (resnew(j) > 0) then
-!        ad = inprod(d, amat(:, j))
-!        if (ad > 0) then
-!            if (alpha > resnew(j) / ad) then
-!                alpha = resnew(j) / ad
-!                jsav = j
-!            end if
-!        end if
-!    end if
-!    w(j) = ad
-!end do
-
-ad = ZERO
-ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
+ad = -ONE
 frac = HUGENUM
+ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
 frac(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) / ad(trueloc(ad > 0))
-jsav = int(minloc([alpha, frac], dim=1), IK) - 1_IK  ! N.B.: This line must be before the next one.
-alpha = minval([alpha, frac])
+jsav = int(minloc([alpha, frac], dim=1), IK) - 1_IK  ! This line cannot be exchanged with the next.
+alpha = minval([alpha, frac])  ! This line cannot be exchanged with the last.
+!!MATLAB: [alpha, jsav] = min([alpha, frac]); jsav = jsav - 1;
 !-----------------------------------------------------------------------!
 ! Alternative implementation:
 !if (any(ad > 0 .and. resnew / ad < alpha)) then
@@ -308,7 +273,7 @@ g = g + alpha * dw
 resnew(trueloc(resnew > 0)) = max(TINYCV, resnew(trueloc(resnew > 0)) - alpha * ad(trueloc(resnew > 0)))
 !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
 
-if (icount == nact .and. nact > 0) then
+if (icount == nact) then
     resact(1:nact) = (ONE - bstep) * resact(1:nact)
 end if
 reduct = reduct - alpha * (dg + HALF * alpha * dgd)
@@ -317,7 +282,7 @@ reduct = reduct - alpha * (dg + HALF * alpha * dgd)
 ! from STEP to the trust region boundary is at least 0.2*SNORM.
 
 ! Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN values. Exit when NGETACT is
-! large or NaN detected.
+! large or NaN is detected.
 ! Caution: 1. MIN accepts only data with the same KIND; 2. Integer overflow.
 if (ngetact > min(10000, 100 * int(m + 1) * int(n)) .or.  &
 & alpha /= alpha .or. alpht /= alpht .or. &
@@ -335,10 +300,10 @@ end if
 if (icount == n) goto 320
 
 ! Calculate the next search direction, which is conjugate to the previous one unless ICOUNT == NACT.
-if (nact > 0) then
-    w(n + 1:2 * n) = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
-else
+if (nact <= 0) then  ! 1. NACT >= 0 unless GETACT is buggy. 2. The two cases can be merged in theory.
     w(n + 1:2 * n) = g
+else
+    w(n + 1:2 * n) = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
 end if
 if (icount == nact) then
     beta = ZERO
@@ -355,6 +320,7 @@ goto 150
 if (reduct > 0) snorm = sqrt(ss)
 
 if (DEBUGGING) then
+    call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
