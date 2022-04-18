@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 AM01:45:53
+! Last Modified: Monday, April 18, 2022 PM12:18:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,7 +100,6 @@ real(RP) :: pqw(npt + size(x))  ! Note that the size is npt + N instead of npt; 
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: rescon(size(bvec))
 real(RP) :: rfac(size(x), size(x))
-real(RP) :: xsxpt(2 * npt)
 real(RP) :: step(size(x))
 real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
@@ -180,8 +179,6 @@ rfac = ZERO
 !     NDIM is the second dimension of BMAT and has the value NPT+N.
 !     STEP is employed for trial steps from XOPT. It is also used for working
 !       space when XBASE is shifted and in PRELIM.
-!     XSXPT is reserved for the scalar products XOPT^T XPT(K,.), K=1,2,...,NPT,
-!       followed by STEP^T XPT(K,.), K=1,2,...,NPT.
 !     XNEW is the displacement from XBASE of the vector of variables for
 !       the current calculation of F, except that SUBROUTINE TRSTEP uses it
 !       for working space.
@@ -217,14 +214,14 @@ imprv = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Set the elements of XBASE, XPT, FVAL, XSAV, XOPT, GOPT, HQ, PQ, BMAT,
-!       ZMAT and XSXPT for the first iteration. An important feature is that,
+!       and ZMAT or the first iteration. An important feature is that,
 !       if the interpolation point XPT(K,.) is not feasible, where K is any
 !       integer from [1,NPT], then a change is made to XPT(K,.) if necessary
 !       so that the constraint violation is at least 0.2*RHOBEG. Also KOPT
 !       is set so that XPT(KOPT,.) is the initial trust region centre.
 !
 call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
-    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, xsxpt, &
+    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, &
     & step, pqw, xbase, xhist, xopt, xpt, xsav, zmat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -261,7 +258,6 @@ fsave = fopt
 
 ! Shift XBASE if XOPT may be too far from XBASE.
 if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
-    xsxpt(1:npt) = ZERO
     b = b - matprod(xopt, amat)
     call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
 end if
@@ -352,7 +348,6 @@ end if
 ! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should try the same.
 !-------------------------------------------------------------------------------------------!
 !
-xsxpt(npt + 1:2 * npt) = matprod(step, xpt)
 qred = calquad(step, xpt, gopt, pq, hq)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -456,19 +451,10 @@ diff = f - fopt + qred
 !
 if (ifeas .and. itest < 3) then
     fshift = fval - fval(kopt)
+    ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
     pqalt = omega_mul(idz, zmat, fshift)
-    !-----------------------------------------------------------------------------------------!
-    ! The following evaluates Q_alt(XOPT+STEP) - Q_alt(XOPT), which should be done by CALQUAD.
-    !vqalt = ZERO
-    !do k = 1, npt
-    !    vqalt = vqalt + inprod(step, bmat(:, k)) * fshift(k)
-    !    vqalt = vqalt + pqalt(k) * xsxpt(npt + k) * (HALF * xsxpt(npt + k) + xsxpt(k))
-    !end do
-
     galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
     qralt = calquad(step, xpt, galt, pqalt)
-    !-----------------------------------------------------------------------------------------!
-    !dffalt = f - fopt - vqalt
     dffalt = f - fopt + qralt
 end if
 if (itest == 3) then
@@ -531,26 +517,16 @@ if (itest < 3) then
     pqw(1:npt) = omega_col(idz, zmat, knew)
     pq = pq + diff * pqw(1:npt)
 end if
-!
-!     Include the new interpolation point with the corresponding updates of
-!       XSXPT. Also make the changes of the symmetric Broyden method to GOPT at
-!       the old XOPT if ITEST is less than 3.
-!
-fval(knew) = f
-xsxpt(knew) = xsxpt(kopt) + xsxpt(npt + kopt)
-! XOPT'*XPT(:, KOPT) + STEP'*XPT(:, KOPT) = (XOPT+STEP)'*XPT(:, KOPT) = XNEW'*XPT(:, KOPT) = XNEW'*XOPT
-!!xsxpt(knew) = inprod(xopt, xnew)
 
+! Make the changes of the symmetric Broyden method to GOPT at the old XOPT if ITEST is less than 3.
+fval(knew) = f
 xpt(:, knew) = xnew
 ssq = sum(step**2)
-xsxpt(npt + knew) = xsxpt(npt + kopt) + ssq
-! STEP'*XPT(:, KNEW) + STEP'*STEP = STEP'*[XPT(:, KOPT) + STEP] = STEP'*XNEW
-!!xsxpt(npt + knew) = inprod(step, xnew)
 if (itest < 3) then
     gopt = gopt + diff * (bmat(:, knew) + hess_mul(xopt, xpt, pqw(1:npt)))  ! Needs the updated XPT.
 end if
 !
-!     Update FOPT, XSAV, XOPT, KOPT, RESCON and XSXPT if the new F is the
+!     Update FOPT, XSAV, XOPT, KOPT, and RESCON if the new F is the
 !       least calculated value so far with a feasible vector of variables.
 !
 if (f < fopt .and. ifeas) then
@@ -581,9 +557,6 @@ if (f < fopt .and. ifeas) then
     !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
     rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
 
-    xsxpt(1:npt) = xsxpt(1:npt) + xsxpt(npt + 1:2 * npt)
-    !!xsxpt(1:npt) = matprod(xopt, xpt)
-!
 !     Also revise GOPT when symmetric Broyden updating is applied.
 !
     if (itest < 3) then

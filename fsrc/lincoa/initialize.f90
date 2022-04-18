@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM02:52:50
+! Last Modified: Monday, April 18, 2022 PM12:17:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ contains
 
 
 subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x0, b, &
-    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, xsxpt, &
+    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, &
     & step, vlag, xbase, xhist, xopt, xpt, xsav, zmat)
 
 ! Generic modules
@@ -71,7 +71,6 @@ real(RP), intent(out) :: gopt(:)  ! GOPT(N)
 real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
 real(RP), intent(out) :: rescon(:)  ! RESCON(M)
-real(RP), intent(out) :: xsxpt(:)  ! RXSXPT(2*NPT)
 real(RP), intent(out) :: step(:)  ! STEP(N)
 real(RP), intent(out) :: vlag(:)  ! VLAG(NPT+N) The size is NPT + N instead of NPT
 real(RP), intent(out) :: xbase(:)  ! XBASE(N)
@@ -118,7 +117,6 @@ if (DEBUGGING) then
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
-    call assert(size(xsxpt) == 2_IK * npt, 'SIZE(RXSXPT) == 2*NPT', srname)
     call assert(size(step) == n, 'SIZE(STEP) == N', srname)
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT+N', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
@@ -135,7 +133,7 @@ end if
 
 
 !     The arguments N, NPT, M, AMAT, B, X, RHOBEG, IPRINT, XBASE, XPT, FVAL,
-!       XSAV, XOPT, GOPT, HQ, PQ, BMAT, ZMAT, NDIM, XSXPT and RESCON are the
+!       XSAV, XOPT, GOPT, HQ, PQ, BMAT, ZMAT, NDIM, and RESCON are the
 !       same as the corresponding arguments in SUBROUTINE LINCOB.
 !     KOPT is set to the integer such that XPT(KOPT,.) is the initial trust
 !       region centre.
@@ -149,7 +147,7 @@ end if
 !       for the first iteration, an important feature being that, if any of
 !       of the columns of XPT is an infeasible point, then the largest of
 !       the constraint violations there is at least 0.2*RHOBEG. It also sets
-!       the initial elements of FVAL, XOPT, GOPT, HQ, PQ, XSXPT and RESCON.
+!       the initial elements of FVAL, XOPT, GOPT, HQ, PQ, and RESCON.
 !
 !     Set some constants.
 
@@ -165,11 +163,10 @@ test = 0.2_RP * rhobeg
 idz = 1
 kbase = 1
 
-! Set the initial elements of XPT, BMAT, XSXPT and ZMAT to ZERO.
+! Set the initial elements of XPT, BMAT, and ZMAT to ZERO.
 xbase = x0
 xopt = ZERO
 xsav = xbase
-xsxpt(1:npt) = ZERO
 
 ! Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT], !       but they may be altered
 ! later to make a constraint violation sufficiently large.
@@ -236,7 +233,6 @@ do nf = 1, npt
     end if
     if (feas < ZERO) then
         step = xpt(:, nf) + (test - bigv) * amat(:, jsav)
-        xsxpt(npt + 1:2 * npt) = matprod(step, xpt)
         knew = nf
         call update(kbase, step, xpt, idz, knew, bmat, zmat, vlag)
         xpt(:, nf) = step
@@ -266,10 +262,9 @@ end do
 nf = min(nf, npt)  ! At exit of the loop, nf = npt + 1
 !----------------------------------------------------------!
 
-! Set XOPT and XSXPT.
+! Set XOPT.
 xopt = xpt(:, kopt)
 xsav = xbase + xopt
-xsxpt(1:npt) = matprod(xopt, xpt)
 
 ! Set HQ, PQ, and GOPT for the first quadratic model.
 hq = ZERO

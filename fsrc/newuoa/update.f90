@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 18, 2022 AM02:38:57
+! Last Modified: Monday, April 18, 2022 AM11:44:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,11 +30,11 @@ subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, wassert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
 use, non_intrinsic :: linalg_mod, only : r1update, issymmetric
-use, non_intrinsic :: powalg_mod, only : calquad, omega_col, errquad
+use, non_intrinsic :: powalg_mod, only : calquad, omega_col
 
 implicit none
 
@@ -61,7 +61,7 @@ integer(IK) :: npt
 real(RP) :: moderr
 
 ! Debugging variables
-real(RP) :: intp_tol
+!real(RP) :: intp_tol
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -88,9 +88,9 @@ if (DEBUGGING) then
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! [GQ, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
-    intp_tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * real(size(pq), RP) * EPS))
-    call wassert(errquad(fval, xpt, gq, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
+    ! The following test fails if FVAL contains extremely large values. Expensive to check.
+    !intp_tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * real(size(pq), RP) * EPS))
+    !call wassert(errquad(fval, xpt, gq, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 !====================!
@@ -129,8 +129,8 @@ if (DEBUGGING) then
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! [GQ, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
-    call wassert(errquad(fval, xpt, gq, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
+    ! The following test fails if FVAL contains extremely large values. Expensive to check.
+    !call wassert(errquad(fval, xpt, gq, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 end subroutine updateq
@@ -251,7 +251,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
-use, non_intrinsic :: powalg_mod, only : omega_mul!, errquad
+use, non_intrinsic :: powalg_mod, only : omega_mul
 
 implicit none
 
