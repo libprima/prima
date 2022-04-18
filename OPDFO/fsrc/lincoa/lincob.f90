@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 PM12:08:52
+! Last Modified: Monday, April 18, 2022 PM06:27:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -509,10 +509,10 @@ else
 !  180     PQW(K)=PQW(K)+TEMP*ZMAT(K,J)
         do k = 1, npt
             pqw(k) = pqw(k) + temp * zmat(k, j)
-            if (pqw(k) /= pqw(k)) then
-                info = -3
-                goto 600
-            end if
+            !if (pqw(k) /= pqw(k)) then
+            !    info = -3
+            !    goto 600
+            !end if
         end do
     end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
