@@ -226,7 +226,7 @@ if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(abs(f - fval(knew)) <= 0, 'F == FVAL(KNEW)', srname)
     call assert(abs(fopt - fval(kopt)) <= 0, 'FOPT == FVAL(KOPT)', srname)
-    call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
+    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
     call assert(norm(xopt - xpt(:, kopt)) <= 0, 'XOPT == XPT(:, KOPT)', srname)
     call assert(.not. any(fval < fopt), '.NOT. ANY(FVAL < FOPT)', srname)
 end if

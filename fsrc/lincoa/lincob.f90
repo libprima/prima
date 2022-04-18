@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 PM08:15:48
+! Last Modified: Tuesday, April 19, 2022 AM01:24:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -38,7 +38,7 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING!, SMALL_TR_RADIUS, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, maximum, eye, trueloc, r1update
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, r1update
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : calquad, omega_col, omega_mul, hess_mul
 
