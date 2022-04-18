@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Thursday, April 07, 2022 PM12:13:41
+! Last Modified: Monday, April 18, 2022 PM10:26:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -219,8 +219,9 @@ if (info == INFO_DFT) then
 end if
 
 ! Set NF, KOPT
-nf = int(count(evaluated), kind(nf))
-kopt = int(minloc(fval, dim=1, mask=evaluated), kind(kopt))
+nf = int(count(evaluated), kind(nf))  !!MATLAB: nf = sum(evaluated);
+kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
+!!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first')
 
 !====================!
 !  Calculation ends  !

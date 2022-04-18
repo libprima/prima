@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 AM12:33:20
+! Last Modified: Monday, April 18, 2022 PM11:20:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -260,7 +260,8 @@ do iter = 1_IK, maxiter
     violmx = maxval(apsd, mask=mask)  ! F2003 standard: MAXVAL() = -HUGE(APSD) if MASK is all FALSE.
     l = int(maxloc(apsd, mask=mask, dim=1), IK) ! F2003 standard: MAXLOC() = 0 if MASK is all FALSE.
     !!MATLAB: apsd(mask) = -Inf; [violmx , l] = max(apsd);
-    !(the value of L will differ from the Fortran version if MASK is all FALSE)
+    ! N.B.: the value of L will differ from the Fortran version if MASK is all FALSE, but this is OK
+    ! because VIOLMX will be -Inf, which will trigger the `exit` below. This is tricky. Be cautious!
 
     ! Terminate if VIOLMX <= 0 (when MASK contains only FALSE) or a positive value of VIOLMX may be
     ! due to computer rounding errors.

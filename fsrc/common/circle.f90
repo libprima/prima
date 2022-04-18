@@ -7,7 +7,7 @@ module circle_mod
 !
 ! Started: January 2021
 !
-! Last Modified: Sunday, April 03, 2022 PM12:30:01
+! Last Modified: Monday, April 18, 2022 PM11:00:04
 !
 ! N.B.: Both CIRCLE_MIN and CIRCLE_MAXABS require an input GRID_SIZE, the size of the grid used in
 ! the search. Powell chose GRID_SIZE = 50 in NEWUOA. MAGICALLY, this number works the best for
@@ -87,6 +87,7 @@ end if
 
 iopt = int(minloc(fval, mask=(.not. is_nan(fval)), dim=1) - 1, IK)
 fopt = fval(iopt + 1)
+!!MATLAB: [fopt, iopt] = min(fval, [], 'omitnan'); iopt = iopt - 1;
 fa = fval(modulo(iopt - 1_IK, grid_size) + 1)
 fb = fval(modulo(iopt + 1_IK, grid_size) + 1)
 if (abs(fa - fb) > 0) then
@@ -166,6 +167,7 @@ if (all(is_nan(fval))) then
 end if
 
 iopt = int(maxloc(abs(fval), mask=(.not. is_nan(fval)), dim=1) - 1, IK)
+!!MATLAB: [~, iopt] = max(abs(fval), [], 'omitnan'); iopt = iopt - 1;
 fopt = fval(iopt + 1)
 fa = fval(modulo(iopt - 1_IK, grid_size) + 1)
 fb = fval(modulo(iopt + 1_IK, grid_size) + 1)

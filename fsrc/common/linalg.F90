@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 17, 2022 PM06:01:47
+! Last Modified: Monday, April 18, 2022 PM11:50:10
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -690,7 +690,7 @@ if (DEBUGGING) then
     call assert(size(B, 1) == n .and. size(B, 2) == n, 'SIZE(B) == [N, N]', srname)
     call assert(istril(B) .or. .not. istril(A), 'If A is lower triangular, then so is B', srname)
     call assert(istriu(B) .or. .not. istriu(A), 'If A is upper triangular, then so is B', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n + 1_IK, RP)))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(n + 1_IK, RP)))
     call assert(isinv(A, B, tol), 'B = A^{-1}', srname)
 end if
 
@@ -1920,6 +1920,12 @@ end function logical_to_int
 function trueloc(x) result(loc)
 !--------------------------------------------------------------------------------------------------!
 ! Similar to the `find` function in MATLAB, TRUELOC returns the indices where X is true.
+! The motivation for this function is the fact that Fortran does not support logical indexing. See,
+! for example, https://fortran-lang.discourse.group/t/indexing-arrays-by-an-array-of-logicals
+! 1. MATLAB, Python, Julia, and R support logical indexing, so that the Fortran code Y(TRUELOC(X))
+! can simply be translated to Y(X).
+! 2. If the return of TRUELOC is NOT used for indexing, its analogs in other languages are:
+! MATLAB -- find, Python -- numpy.argwhere, Julia -- findall, R -- which.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
