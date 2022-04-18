@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 16, 2022 PM05:56:39
+! Last Modified: Monday, April 18, 2022 PM12:08:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -686,15 +686,21 @@ if (ifeas == 1 .and. itest < 3) then
             pqw(k) = pqw(k) + summ * zmat(k, j)
         end do
     end do
-    vqalt = ZERO
-    do k = 1, npt
-        summ = ZERO
-        do j = 1, n
-            summ = summ + bmat(j, k) * step(j)
-        end do
-        vqalt = vqalt + summ * w(k)
-        vqalt = vqalt + pqw(k) * rsp(npt + k) * (HALF * rsp(npt + k) + rsp(k))
-    end do
+    !----------------------------------------------------------------------------------------------!
+    ! Zaikun 20220418
+    !vqalt = ZERO
+    !do k = 1, npt
+    !    summ = ZERO
+    !    do j = 1, n
+    !        summ = summ + bmat(j, k) * step(j)
+    !    end do
+    !    vqalt = vqalt + summ * w(k)
+    !    vqalt = vqalt + pqw(k) * rsp(npt + k) * (HALF * rsp(npt + k) + rsp(k))
+    !end do
+    vqalt = inprod(step, matprod(bmat(:, 1:npt), w(1:npt)) + matprod(xpt, pqw(1:npt) * matprod(xopt, xpt)))
+    w(1:npt) = matprod(step, xpt)
+    vqalt = vqalt + HALF * inprod(pqw(1:npt) * w(1:npt), w(1:npt))
+    !----------------------------------------------------------------------------------------------!
     dffalt = f - fopt - vqalt
 end if
 if (itest == 3) then
