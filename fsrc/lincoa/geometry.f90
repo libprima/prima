@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 AM12:32:53
+! Last Modified: Monday, April 18, 2022 PM06:48:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,30 +22,31 @@ public :: geostep
 contains
 
 
-subroutine geostep(iact, knew, kopt, nact, amat, del, gl_in, pqw, qfac, rescon, xopt, xpt, ifeas, step)
+subroutine geostep(iact, idz, knew, kopt, nact, amat, del, gl_in, qfac, rescon, xopt, xpt, zmat, ifeas, step)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc
-use, non_intrinsic :: powalg_mod, only : hess_mul
+use, non_intrinsic :: powalg_mod, only : hess_mul, omega_col
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: iact(:)  ! IACT(M)
+integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
 integer(IK), intent(in) :: kopt
 integer(IK), intent(in) :: nact
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: del
 real(RP), intent(in) :: gl_in(:)  ! GL_IN(N)
-real(RP), intent(in) :: pqw(:)  ! PQW(NPT)  ; better name?
 real(RP), intent(in) :: qfac(:, :)  ! QFAC(N, N)
 real(RP), intent(in) :: rescon(:)  ! RESCON(M)
 real(RP), intent(in) :: xopt(:)  ! XOPT(N)
 real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Outputs
 logical, intent(out) :: ifeas
@@ -60,14 +61,15 @@ integer(IK) :: rstat(size(amat, 2))
 real(RP) :: stmp(size(xopt))
 real(RP) :: gl(size(gl_in))
 real(RP) :: constr(size(amat, 2))
-real(RP) :: bigcv, cvtol, gg, gxpt(size(pqw)), ghg, sp, ss, tol, &
-&        stp, stplen(size(pqw)), stpsav, mincv, vbig, vgrad, vlag(size(pqw)), vnew, sstmp
+real(RP) :: bigcv, cvtol, gg, gxpt(size(xpt, 2)), ghg, sp, ss, tol, &
+&        stp, stplen(size(xpt, 2)), stpsav, mincv, vbig, vgrad, vlag(size(xpt, 2)), vnew, sstmp
+real(RP) :: pqw(size(xpt, 2))  ! PQW(NPT)  ; better name?
 integer(IK) :: jsav, k, ksav
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
-n = int(size(xopt), kind(n))
-npt = int(size(pqw), kind(npt))
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -77,6 +79,7 @@ if (DEBUGGING) then
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
+    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(knew /= kopt, 'KNEW /= KOPT', srname)
@@ -88,7 +91,10 @@ if (DEBUGGING) then
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
-    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N and XOPT is finite', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(all(abs(xopt - xpt(:, kopt)) <= 0), 'XOPT = XPT(:, KOPT)', srname) ! If this is true, XOPT should not be passed.
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT- N-1]', srname)
 end if
 
 ifeas = .false. !??? Added by Zaikun 20220227
@@ -124,6 +130,7 @@ gl = gl_in
 mincv = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
 
 ! Replace GL by the gradient of LFUNC at the trust region centre, and set the elements of RSTAT.
+pqw = omega_col(idz, zmat, knew)
 gl = gl + hess_mul(xopt, xpt, pqw)
 
 ! RSTAT(J) = -1, 0, or 1 respectively means constraint J is irrelevant, active, or inactive&relevant.

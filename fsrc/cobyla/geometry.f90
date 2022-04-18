@@ -356,8 +356,8 @@ end if
 vsigj = ONE / sqrt(sum(simi(jdrop, :)**2))
 
 ! Set D to the vector in the above-mentioned direction and with length FACTOR_GAMMA * DELTA. Since
-! FACTOR_ALPHA < FACTOR_GAMMA < FACTOR_BETA, D improves the geometry of the simplex as per GOODGEO.
-! This also explains why this subroutine does not replace DELTA with
+! FACTOR_ALPHA < FACTOR_GAMMA < FACTOR_BETA, D improves the geometry of the simplex as per GOODGEO
+! and (14) of the COBYLA paper. This also explains why this subroutine does not replace DELTA with
 ! DELBAR = MAX(MIN(TENTH * SQRT(MAXVAL(DISTSQ)), HALF * DELTA), RHO) as in NEWUOA.
 d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 

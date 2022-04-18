@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 PM12:18:59
+! Last Modified: Monday, April 18, 2022 PM08:15:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -96,7 +96,7 @@ real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
-real(RP) :: pqw(npt + size(x))  ! Note that the size is npt + N instead of npt; Isn't it VLAG in NEWUOA??? Better name?
+real(RP) :: pqw(npt)  ! Note that the size is npt + N instead of npt; Isn't it VLAG in NEWUOA??? Better name?
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: rescon(size(bvec))
 real(RP) :: rfac(size(x), size(x))
@@ -222,7 +222,7 @@ imprv = 0
 !
 call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
     & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, &
-    & step, pqw, xbase, xhist, xopt, xpt, xsav, zmat)
+    & step, xbase, xhist, xopt, xpt, xsav, zmat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 if (is_nan(f) .or. is_posinf(f)) then
@@ -330,13 +330,7 @@ else
         goto 600
     end if
 
-    pqw(1:npt) = omega_col(idz, zmat, knew)
-    if (is_nan(sum(abs(pqw(1:npt))))) then
-        info = NAN_MODEL
-        goto 600
-    end if
-
-    call geostep(iact, knew, kopt, nact, amat, del, bmat(:, knew), pqw(1:npt), qfac, rescon, xopt, xpt, ifeas, step)
+    call geostep(iact, idz, knew, kopt, nact, amat, del, bmat(:, knew), qfac, rescon, xopt, xpt, zmat, ifeas, step)
 end if
 
 !
@@ -514,8 +508,8 @@ end if
 if (itest < 3) then
     call r1update(hq, pq(knew), xpt(:, knew))  ! Needs the un-updated XPT(:, KNEW).
     pq(knew) = ZERO
-    pqw(1:npt) = omega_col(idz, zmat, knew)
-    pq = pq + diff * pqw(1:npt)
+    pqw = omega_col(idz, zmat, knew)
+    pq = pq + diff * pqw
 end if
 
 ! Make the changes of the symmetric Broyden method to GOPT at the old XOPT if ITEST is less than 3.
@@ -523,7 +517,7 @@ fval(knew) = f
 xpt(:, knew) = xnew
 ssq = sum(step**2)
 if (itest < 3) then
-    gopt = gopt + diff * (bmat(:, knew) + hess_mul(xopt, xpt, pqw(1:npt)))  ! Needs the updated XPT.
+    gopt = gopt + diff * (bmat(:, knew) + hess_mul(xopt, xpt, pqw))  ! Needs the updated XPT.
 end if
 !
 !     Update FOPT, XSAV, XOPT, KOPT, and RESCON if the new F is the

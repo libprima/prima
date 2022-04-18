@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 PM12:17:37
+! Last Modified: Monday, April 18, 2022 PM06:10:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,7 +24,7 @@ contains
 
 subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x0, b, &
     & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, &
-    & step, vlag, xbase, xhist, xopt, xpt, xsav, zmat)
+    & step, xbase, xhist, xopt, xpt, xsav, zmat)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
@@ -72,7 +72,6 @@ real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
 real(RP), intent(out) :: rescon(:)  ! RESCON(M)
 real(RP), intent(out) :: step(:)  ! STEP(N)
-real(RP), intent(out) :: vlag(:)  ! VLAG(NPT+N) The size is NPT + N instead of NPT
 real(RP), intent(out) :: xbase(:)  ! XBASE(N)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(out) :: xopt(:)  ! XOPT(N)
@@ -118,7 +117,6 @@ if (DEBUGGING) then
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
     call assert(size(step) == n, 'SIZE(STEP) == N', srname)
-    call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT+N', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
     call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
     call assert(size(xsav) == n, 'SIZE(XSAV) == N', srname)
@@ -234,7 +232,7 @@ do nf = 1, npt
     if (feas < ZERO) then
         step = xpt(:, nf) + (test - bigv) * amat(:, jsav)
         knew = nf
-        call update(kbase, step, xpt, idz, knew, bmat, zmat, vlag)
+        call update(kbase, step, xpt, idz, knew, bmat, zmat)
         xpt(:, nf) = step
     end if
 

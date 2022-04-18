@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 AM01:28:50
+! Last Modified: Monday, April 18, 2022 PM07:38:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -168,6 +168,7 @@ if (knew == 0) then
             if (j < idz) temp = -ONE
             hdiag = hdiag + temp * zmat(k, j)**2
         end do
+        hdiag = -sum(zmat(k, 1:idz - 1)**2) + sum(zmat(k, idz:size(zmat, 2))**2)
         denabs = abs(beta * hdiag + vlag(k)**2)
         distsq = ZERO
         do j = 1, n

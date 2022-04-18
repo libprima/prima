@@ -14,11 +14,18 @@ module cobylb_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
 !
+! N.B. (Zaikun 20220131): Powell's implementation of COBYLA uses RHO rather than DELTA as the
+! trust-region radius, and RHO is never increased. DELTA does not exist in Powell's COBYLA code.
+! Following the idea in Powell's other solvers (UOBYQA, ..., LINCOA), our code uses DELTA as the
+! trust-region radius, while RHO works a lower bound of DELTA and indicates the current resolution
+! of the algorithm. DELTA is updated in a classical way, whereas RHO is updated as in Powell's
+! COBYLA code and is never increased. The new implementation improves the performance of COBYLA.
+!
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, April 18, 2022 PM05:01:00
+! Last Modified: Monday, April 18, 2022 PM05:48:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -454,9 +461,9 @@ do tr = 1, maxtr
 
         ! Calculate the geometry step D.
         ! In NEWUOA, GEOSTEP takes DELBAR = MAX(MIN(TENTH * SQRT(MAXVAL(DISTSQ)), HALF * DELTA), RHO)
-        ! rather than DELTA. This should not be done here, because we intend to find a D to improve
-        ! the geometry of the simplex by replacing SIM(:, JDROP) with D; the quality of the geometry
-        ! is defined by DELTA instead of DELBAR. See GEOSTEP for more detail.
+        ! rather than DELTA. This should not be done here, because D should improve the geometry of
+        ! the simplex when SIM(:, JDROP) is replaced with D; the quality of the geometry is defined
+        ! by DELTA instead of DELBAR as in (14) of the COBYLA paper. See GEOSTEP for more detail.
         d = geostep(jdrop_geo, cpen, conmat, cval, delta, fval, factor_gamma, simi)
 
         x = sim(:, n + 1) + d
