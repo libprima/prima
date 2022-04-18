@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, April 03, 2022 PM05:16:10
+! Last Modified: Monday, April 18, 2022 PM04:56:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -357,6 +357,8 @@ vsigj = ONE / sqrt(sum(simi(jdrop, :)**2))
 
 ! Set D to the vector in the above-mentioned direction and with length FACTOR_GAMMA * DELTA. Since
 ! FACTOR_ALPHA < FACTOR_GAMMA < FACTOR_BETA, D improves the geometry of the simplex as per GOODGEO.
+! This also explains why this subroutine does not replace DELTA with
+! DELBAR = MAX(MIN(TENTH * SQRT(MAXVAL(DISTSQ)), HALF * DELTA), RHO) as in NEWUOA.
 d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 
 ! Calculate the coefficients of the linear approximations to the objective and constraint functions,

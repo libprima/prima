@@ -482,7 +482,7 @@ end if
 !       can be moved. If STEP is a trust region step, then KNEW is ZERO at
 !       present, but a positive value is picked by subroutine UPDATE.
 !
-call update(kopt, step, xpt, idz, knew, bmat, zmat, pqw)
+call update(kopt, step, xpt, idz, knew, bmat, zmat)
 if (knew == 0) then
     info = DAMAGING_ROUNDING
     goto 600

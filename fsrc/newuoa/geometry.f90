@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 11, 2022 AM12:31:13
+! Last Modified: Monday, April 18, 2022 PM03:26:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,7 +36,7 @@ function setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat) resul
 ! landscape of the function sufficiently.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: HDIAG(NPT), SIGMA(NPT), VLAG(N+NPT), XDIST(NPT)
+! REAL(RP) :: HDIAG(NPT), DENABS(NPT), SCORE(NPT) VLAG(N+NPT), XDIST(NPT)
 ! Size of local arrays: REAL(RP)*(4*NPT+N)
 !--------------------------------------------------------------------------------------------------!
 
@@ -44,7 +44,7 @@ function setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat) resul
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : issymmetric
+use, non_intrinsic :: linalg_mod, only : issymmetric, trueloc
 use, non_intrinsic :: powalg_mod, only : calvlag, calbeta
 implicit none
 
@@ -67,10 +67,11 @@ character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: beta
+real(RP) :: denabs(size(xpt, 2))
+real(RP) :: distsq(size(xpt, 2))
 real(RP) :: hdiag(size(xpt, 2))
-real(RP) :: sigma(size(xpt, 2))
+real(RP) :: score(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
-real(RP) :: xdist(size(xpt, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(npt))
@@ -97,36 +98,33 @@ end if
 vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
 beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
 
-! Calculate the distance between the interpolation points and the optimal point up to now.
+! Calculate the distance squares between the interpolation points and the optimal point up to now.
 if (tr_success) then
-    xdist = sqrt(sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1))
-    !!MATLAB: xdist = sqrt(sum((xpt - (xpt(:, kopt) + d)).^2))  % d should be a column!! Implicit expansion
+    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
 else
-    xdist = sqrt(sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1))
-    !!MATLAB: xdist = sqrt(sum((xpt - xpt(:, kopt)).^2))  % Implicit expansion
+    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
 end if
 
 hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
-sigma = abs(beta * hdiag + vlag(1:npt)**2)
-sigma = sigma * max(ONE, xdist / max(TENTH * delta, rho))**6
+denabs = abs(beta * hdiag + vlag(1:npt)**2)
+score = denabs * max(distsq / max(TENTH * delta, rho)**2, ONE)**3
+! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
 if (.not. tr_success) then
-    ! If the new F is not better than FVAL(KOPT), we set SIGMA(KOPT) = -1 to avoid KNEW = KOPT.
-    sigma(kopt) = -ONE
+    score(kopt) = -ONE
 end if
+score(trueloc(is_nan(score))) = -ONE
 
-! KNEW = 0 by default. It cannot be removed, as KNEW may not be set below in some cases, e.g., when
-! TR_SUCCESS = FALSE and MAXVAL(SIGMA) <= 1.
-knew = 0_IK
-
-! See (7.5) of the NEWUOA paper for the following definition of KNEW.
-if (any(sigma > ONE) .or. (tr_success .and. any(.not. is_nan(sigma)))) then
-    knew = int(maxloc(sigma, mask=(.not. is_nan(sigma)), dim=1), kind(knew))
-end if
-
-! Powell's code does not include the following instructions. With Powell's code, if SIGMA consists
-! of only NaN, then KNEW can be 0 even when RATIO > 0.
-if (tr_success .and. knew <= 0) then
-    knew = int(maxloc(xdist, mask=(.not. is_nan(xdist)), dim=1), kind(knew))
+if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
+    ! See (7.5) of the NEWUOA paper for the definition of KNEW in this case.
+    knew = int(maxloc(score, dim=1), kind(knew))
+elseif (tr_success) then
+    ! Powell's code does not include the following instructions. With Powell's code, if DENABS
+    ! consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
+    knew = int(maxloc(distsq, dim=1), kind(knew))
+else
+    knew = 0_IK  ! We arrive here when TR_SUCCESS = FALSE and no entry of SCORE exceeds one.
 end if
 
 !====================!
@@ -136,8 +134,8 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    call assert(knew >= 1 .or. .not. tr_success, 'KNEW >= 1 unless TR_SUCCESS = FALSE', srname)
     call assert(knew /= kopt .or. tr_success, 'KNEW /= KOPT unless TR_SUCCESS = TRUE', srname)
+    call assert(knew >= 1 .or. .not. tr_success, 'KNEW >= 1 unless TR_SUCCESS = FALSE', srname)
     ! KNEW >= 1 when TR_SUCCESS = TRUE unless NaN occurs in XDIST, which should not happen if the
     ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.
 end if

@@ -187,7 +187,7 @@ end if
 ! Zaikun 20220318: KNEW can be 0 due to NaN
 if (knew == 0) then
     xopt = xpt(:, kopt)
-    xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
+    xdist = (sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
     knew = maxloc(xdist, dim=1)
 end if
 !---------------------------------------------------------------------!

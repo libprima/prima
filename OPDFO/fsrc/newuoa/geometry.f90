@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM05:19:54
+! Last Modified: Monday, April 18, 2022 PM05:04:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -98,14 +98,14 @@ beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
 
 ! Calculate the distance between the interpolation points and the optimal point up to now.
 if (tr_success) then
-    xdist = sqrt(sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1))
+    xdist = (sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1))
 else
-    xdist = sqrt(sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1))
+    xdist = (sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1))
 end if
 
 hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
 sigma = abs(beta * hdiag + vlag(1:npt)**2)
-sigma = sigma * max(ONE, xdist / max(TENTH * delta, rho))**6
+sigma = sigma * max(ONE, xdist / max(TENTH * delta, rho)**2)**3
 if (.not. tr_success) then
     ! If the new F is not better than FVAL(KOPT), we set SIGMA(KOPT) = -1 to avoid KNEW = KOPT.
     sigma(kopt) = -ONE

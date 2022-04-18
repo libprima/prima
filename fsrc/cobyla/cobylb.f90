@@ -18,7 +18,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, April 07, 2022 PM12:14:24
+! Last Modified: Monday, April 18, 2022 PM05:01:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -382,7 +382,7 @@ do tr = 1, maxtr
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
         if (subinfo /= INFO_DFT) then
             info = subinfo
-            exit  
+            exit
         end if
     end if  ! End of IF (SHORTD). The normal trust-region calculation ends here.
 
@@ -453,6 +453,10 @@ do tr = 1, maxtr
         end if
 
         ! Calculate the geometry step D.
+        ! In NEWUOA, GEOSTEP takes DELBAR = MAX(MIN(TENTH * SQRT(MAXVAL(DISTSQ)), HALF * DELTA), RHO)
+        ! rather than DELTA. This should not be done here, because we intend to find a D to improve
+        ! the geometry of the simplex by replacing SIM(:, JDROP) with D; the quality of the geometry
+        ! is defined by DELTA instead of DELBAR. See GEOSTEP for more detail.
         d = geostep(jdrop_geo, cpen, conmat, cval, delta, fval, factor_gamma, simi)
 
         x = sim(:, n + 1) + d
