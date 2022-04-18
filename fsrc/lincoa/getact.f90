@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 PM11:20:12
+! Last Modified: Tuesday, April 19, 2022 AM12:12:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -108,7 +108,7 @@ real(RP) :: dd
 real(RP) :: ddsav
 real(RP) :: dnorm
 real(RP) :: gg
-real(RP) :: fracmult(size(g))
+real(RP) :: frac(size(g))
 real(RP) :: psdsav(size(psd))
 real(RP) :: tdel
 real(RP) :: tol
@@ -177,7 +177,8 @@ end do
 do while (nact > 0)
     vlam(1:nact) = lsqr(g, qfac(:, 1:nact), rfac(1:nact, 1:nact))
     if (any(vlam(1:nact) >= 0)) then
-        ic = maxval(trueloc(vlam(1:nact) >= 0))  !!MATLAB: ic = max(find(vlam(1:nact) >= 0))
+        ic = maxval(trueloc(vlam(1:nact) >= 0))
+        !!MATLAB: ic = max(find(vlam(1:nact) >= 0)); % OR: ic = find(vlam(1:nact) >= 0, 1, 'last')
         call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
     else
         exit
@@ -292,14 +293,14 @@ do iter = 1_IK, maxiter
         ! Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
         ! N.B.: 1. VLAM(1:NACT-1) < 0 and VLAM(NACT) <= 0 by the updates of VLAM. 2. VMU(NACT) > 0.
         ! 3. Only the places where VMU(1:NACT) < 0 is relevant below, if any.
-        fracmult = HUGENUM
+        frac = HUGENUM
         where (vmu(1:nact) < 0 .and. vlam(1:nact) < 0)
-            fracmult(1:nact) = vlam(1:nact) / vmu(1:nact)
+            frac(1:nact) = vlam(1:nact) / vmu(1:nact)
         end where
-        !!MATLAB: fracmult = vlam / vmu; fracmult(vmu >= 0 | vlam >= 0) = Inf;
-        vmult = minval([violmx, fracmult(1:nact)])
-        ic = maxval([0_IK, trueloc(fracmult(1:nact) <= vmult)])
-        !!MATLAB: vmult = min([violmx; fracmult(1:nact)]); ic = max([0; find(fracmult(1:nact) <= vmult)])
+        !!MATLAB: frac = vlam / vmu; frac(vmu >= 0 | vlam >= 0) = Inf;
+        vmult = minval([violmx, frac(1:nact)])
+        ic = maxval([0_IK, trueloc(frac(1:nact) <= vmult)])
+        !!MATLAB: ic = max([0; find(frac(1:nact) <= vmult)]); % find(frac(1:nact)<=vmult) can be empty
 
         ! N.B.: 0. The definition of IC given above is mathematically equivalent to the following.
         !!IC = MAXVAL(TRUELOC([VIOLMX, FRACMULT(1:NACT)] <= VMULT)) - 1_IK, OR

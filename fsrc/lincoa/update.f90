@@ -26,8 +26,8 @@ subroutine update(kopt, step, xpt, idz, knew, bmat, zmat)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: debug_mod, only : assert, wassert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: powalg_mod, only : updateh, calvlag, calbeta
 
@@ -66,7 +66,8 @@ if (DEBUGGING) then
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
-    call assert(size(step) == n, 'SIZE(STEP) == N', srname)
+    call wassert(size(step) == n .and. all(is_finite(step)), 'SIZE(STEP) == N, STEP is finite', srname)
+    call wassert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT+N', srname)

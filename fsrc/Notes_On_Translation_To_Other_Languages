@@ -130,6 +130,7 @@ Here are points to note when translating the Fortran code to other languages.
 
        xmin = min(x(mask)); xminloc = find(mask & ~(x > xmin), 1, 'first')  % MATLAB
 
+   find(mask & ~(x > xmin), 1) will also work because 'first' is the default.
    Note that we use `~(x > xmin)` instead of `x <= xmin` because xmin will be NaN if x is a vector
    of NaN. Note that min([]) = [] and find([]) = [] in MATLAB. Thus the code works only if
    length(x) > 1 and sum(mask) > 1.

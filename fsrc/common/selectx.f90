@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, April 18, 2022 PM10:55:40
+! Last Modified: Tuesday, April 19, 2022 AM12:22:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -142,7 +142,7 @@ if (count(keep) == maxfilt) then  ! In this case, NFILT = SIZE(KEEP) = COUNT(KEE
     cref = maxval(cfilt_shifted, mask=(phi >= phimax))
     fref = maxval(ffilt, mask=(cfilt_shifted >= cref))
     kworst = int(maxloc(cfilt, mask=(ffilt >= fref), dim=1), kind(kworst))
-    !!MATLAB: cmax = max(cfilt(ffilt >= fref)); kopt = find(ffilt >= fref & ~(cfilt < cmin), 1,'first');
+    !!MATLAB: cmax = max(cfilt(ffilt >= fref)); kworst = find(ffilt >= fref & ~(cfilt < cmax), 1,'first');
     if (kworst < 1 .or. kworst > size(keep)) then  ! For security. Should not happen.
         kworst = 1_IK
     end if
