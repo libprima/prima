@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 16, 2022 AM01:22:15
+! Last Modified: Tuesday, April 19, 2022 AM12:44:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -120,6 +120,7 @@ if (DEBUGGING) then
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(x) == n .and. all(is_finite(x)), 'SIZE(X) == N, X is finite', srname)
     call assert(size(s) == n, 'SIZE(S) == N', srname)
 end if

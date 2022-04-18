@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 AM12:33:45
+! Last Modified: Tuesday, April 19, 2022 AM12:58:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,7 +26,8 @@ subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, 
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, EPS, HUGENUM, TINYCV, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, wassert
+use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, solve, isorth, istriu, issymmetric, trueloc
 use, non_intrinsic :: powalg_mod, only : hess_mul
 
@@ -88,6 +89,7 @@ if (DEBUGGING) then
 
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call wassert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
