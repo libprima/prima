@@ -8,6 +8,7 @@ HISTORY="$DIR/common/$HISTORYF90"
 LINALG90="linalg.F90"
 LINALG="$DIR/common/$LINALG90"
 LINGEO="$DIR/lincoa/geometry.f90"
+LINTR="$DIR/lincoa/trustregion.f90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -23,6 +24,14 @@ if [[ -f "$LINGEO" ]] ; then
     #sed -i "s/\(use, non_intrinsic .*\), trueloc/\1/" "$LINGEO"
     sed -i "s/trueloc(rstat == 1)/:/g" "$LINGEO"
     sed -i "s/trueloc(rstat >= 0)/:/g" "$LINGEO"
+fi
+
+if [[ -f "$LINTR" ]] ; then
+    sed -i "s|! Local variables|! Local variables\ninteger(IK), allocatable :: ind(:)|" "$LINTR"
+    sed -i "s|ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))|ind = trueloc(resnew > 0)\nad(ind) = matprod(d, amat(:, ind))|" "$LINTR"
+    sed -i "s|restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))|ind = trueloc(ad > 0)\nrestmp(ind) = resnew(ind) - matprod(dw, amat(:, ind))|"  "$LINTR"
+    sed -i "s|frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))|frac(ind) = restmp(ind) / ad(ind)|"  "$LINTR"
+    sed -i "s|ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))|ind = trueloc(resnew > 0)\nad(ind) = matprod(d, amat(:, ind))|"  "$LINTR"
 fi
 
 exit 0
