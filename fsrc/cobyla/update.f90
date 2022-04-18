@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, April 03, 2022 PM05:16:27
+! Last Modified: Monday, April 18, 2022 PM10:50:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -252,7 +252,7 @@ if (jopt >= 1 .and. jopt <= n) then
     sim_jopt = sim(:, jopt)
     sim(:, jopt) = ZERO
     sim(:, 1:n) = sim(:, 1:n) - spread(sim_jopt, dim=2, ncopies=n)
-    !!MATLAB: sim(:, 1:n) = sim(:, 1:n) - sim_jopt % sim_jopt should be a column!! Implicit expansion
+    !!MATLAB: sim(:, 1:n) = sim(:, 1:n) - sim_jopt; % sim_jopt should be a column!! Implicit expansion
     ! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
     ! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
     ! identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,
@@ -368,6 +368,7 @@ if (cpen <= ZERO .and. any(cval < cval(jopt) .and. phi <= phimin)) then
     ! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN).
     ! We code in this way to avoid equality comparison of real numbers.
     jopt = int(minloc(cval, mask=(phi <= phimin), dim=1), kind(jopt))
+    !!MATLAB: cmin = min(cval(phi <= phimin)); jopt = find(phi <= phimin & ~(cval > cmin), 1, 'first');
 end if
 
 !====================!

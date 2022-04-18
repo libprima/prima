@@ -116,17 +116,43 @@ Here are points to note when translating the Fortran code to other languages.
 
    maxloc/minloc:
 
-   In Fortran, minloc(A, mask=MASK) returns the location of the minimum of A subject to the MASK.
+   In Fortran, minloc(A, dim=1, mask=MASK) returns the location of the minimum of A subject to the MASK.
    MASK is a boolean array of the same shape as A, and only the elements of A corresponding to
    MASK = .TRUE. are considered. By default, the first location will be returned if there are
    multiple.
 
-   In MATLAB, for a 1D array A, the same thing can be done by
-   minimum = min(A(MASK));
-   minloc = min(find(A<=minimum));
-   Note that A<=minimum is equivalent to A==minimum. We use <= instead of == to avoid equality
-   comparison of real numbers.
    The min function in MATLAB can return the location of the minimum, but it does NOT support mask.
+   In MATLAB, for a nonempty 1D array x and a mask that is not all false, the same thing as
+
+       XMINLOC = MINLOC(X, MASK = MASK)  ! Fortran
+
+   can be done by
+
+       xmin = min(x(mask)); xminloc = find(mask & ~(x > xmin), 1, 'first')  % MATLAB
+
+   Note that we use `~(x > xmin)` instead of `x <= xmin` because xmin will be NaN if x is a vector
+   of NaN. Note that min([]) = [] and find([]) = [] in MATLAB. Thus the code works only if
+   length(x) > 1 and sum(mask) > 1.
+
+   One may propose to handle the mask is by modifying the value of x, e.g., to translate
+
+       XMINLOC = MINLOC(X, MASK = MASK)  ! Fortran
+
+   to
+
+       x(~mask) = Inf; [~, xminloc] = min(x)  % MATLAB
+
+   However, this is NOT recommended. The disadvantage is obvious:
+   1. x is changed in this process;
+   2. if mask is all false of contains only Inf, then the MATLAB version will return 1, but the
+   Fortran version will return FINDLOC(MASK, .TRUE.), which is either 0 (if MASK is all FALSE) or
+   the smallest K such that MASK(K) is .TRUE.
+
+   A special case of maxloc/minloc with mask:
+       K = MINLOC(X, MASK = (.NOT. IS_NAN(X)))
+   In MATLAB, if x is a nonempty vector that is not all NaN, then the same thing can be coded as
+       [~, k] = min(x, [], 'omitnan')
+   or, simply [~, k] = min(x), because MATLAB min and max omit NaN by default (see below).
 
    MIN/MAX involving NaN
    The Fortran standard does not specify what the result of the MAX and MIN intrinsics are if one of
@@ -208,3 +234,19 @@ Here are points to note when translating the Fortran code to other languages.
 
     X(B) = Y(B)
     X(~B) = Z(~B)
+
+13. COUNT
+    In Fortan, COUNT(X) returns the number of TRUE in a logical array X. The MATLAB counterpart is
+
+          sum(X, 'all')
+
+    If X is a vector, then sum(X) will work.
+
+14. Logical indexing and the function TRUELOC implemented in linalg.F90.
+    Similar to the `find` function in MATLAB, TRUELOC returns the indices where X is true.
+    The motivation for this function is the fact that Fortran does not support logical indexing. See,
+    for example, https://fortran-lang.discourse.group/t/indexing-arrays-by-an-array-of-logicals
+    1. MATLAB, Python, Julia, and R support logical indexing, so that the Fortran code Y(TRUELOC(X))
+    can simply be translated to Y(X).
+    2. If the return of TRUELOC is NOT used for indexing, its analogs in other languages are:
+    MATLAB -- find, Python -- numpy.argwhere, Julia -- findall, R -- which.

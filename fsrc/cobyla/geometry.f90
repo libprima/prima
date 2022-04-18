@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, April 18, 2022 PM04:56:39
+! Last Modified: Monday, April 18, 2022 PM11:23:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -127,6 +127,7 @@ integer(IK) :: jdrop
 ! Local variables
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
+logical :: mask(size(sim, 1))
 real(RP) :: edgmax
 real(RP) :: parsig
 real(RP) :: sigbar(size(sim, 1))
@@ -160,11 +161,12 @@ jdrop = 0_IK
 simid = matprod(simi, d)
 if (any(abs(simid) > ONE) .or. (tr_success .and. any(.not. is_nan(simid)))) then
     jdrop = int(maxloc(abs(simid), mask=(.not. is_nan(simid)), dim=1), kind(jdrop))
+    !!MATLAB: [~, jdrop] = max(simid, [], 'omitnan');
 end if
 
 if (tr_success) then
     veta = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
-    !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2))  % d should be a column!! Implicit expansion
+    !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2));  % d should be a column!! Implicit expansion
 else
     veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
@@ -173,9 +175,10 @@ parsig = factor_alpha * delta
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 sigbar = abs(simid) * vsig
 ! The following JDROP will overwrite the previous one if its premise holds.
-if (any(veta > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig))) then
-    jdrop = int(maxloc(veta, mask=(veta > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig)), &
-        & dim=1), kind(jdrop))
+mask = (veta > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig))
+if (any(mask)) then
+    jdrop = int(maxloc(veta, mask=mask, dim=1), kind(jdrop))
+    !!MATLAB: etamax = max(veta(mask)); jdrop = find(mask & ~(veta < etamax), 1, 'first');
 end if
 
 ! Powell's code does not include the following instructions. With Powell's code, if SIMID consists
@@ -185,6 +188,7 @@ end if
 ! and we exit once encountering an iterate containing Inf (due to overflow).
 if (tr_success .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP == 0 for robustness.
     jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
+    !!MATLAB: [~, jdrop] = max(veta, [], 'omitnan');
 end if
 
 !====================!
@@ -267,8 +271,10 @@ veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 ! acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
 if (any(veta > pareta)) then
     jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
+    !!MATLAB: [~, jdrop] = max(veta, [], 'omitnan');
 elseif (any(vsig < parsig)) then
     jdrop = int(minloc(vsig, mask=(.not. is_nan(vsig)), dim=1), kind(jdrop))
+    !!MATLAB: [~, jdrop] = min(vsig, [], 'omitnan');
 else
     ! We arrive here if VSIG and VETA are all NaN, which can happen due to NaN in SIM and SIMI,
     ! which should not happen unless there is a bug.
@@ -367,7 +373,7 @@ d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 ! Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
 ! finite-precision arithmetic.
 A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
-!!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
+!!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))'; % Implicit expansion for subtraction
 A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
 cvmaxp = maxval([ZERO, -matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
 cvmaxn = maxval([ZERO, matprod(d, A(:, 1:m)) - conmat(:, n + 1)])

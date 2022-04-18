@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, April 17, 2022 PM03:28:17
+! Last Modified: Monday, April 18, 2022 PM10:36:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -239,6 +239,7 @@ if (stage == 1) then
         return
     else
         icon = int(maxloc(b, mask=(.not. is_nan(b)), dim=1), kind(icon))
+        !!MATLAB: [~, icon] = max(b, [], 'omitnan');
     end if
     m = mcon
     sdirn = ZERO

@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 PM06:48:28
+! Last Modified: Monday, April 18, 2022 PM10:53:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -164,7 +164,8 @@ end do
 ! 2. If VLAG(KNEW) = MINVAL(VLAG) = VLAG(K) with K < KNEW, Powell's code does not set KSAV = KNEW.
 ksav = knew
 if (any(vlag > vlag(knew))) then
-    ksav = maxloc(vlag, mask=(vlag > vlag(knew)), dim=1)  !!MATLAB: [~, ksav] = max(vlag);
+    ksav = maxloc(vlag, mask=(vlag > vlag(knew)), dim=1)
+    !!MATLAB: [~, ksav] = max(vlag, [], 'omitnan');
 end if
 vbig = vlag(ksav)
 stpsav = stplen(ksav)
