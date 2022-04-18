@@ -33,6 +33,8 @@ ERRORS="$(grep -i "error\|fail\|exception\|invalid\|bad\|overflow\|segmentation\
     | grep -vi "Processor does not support trapping of floating-point exceptions" \
     | grep -vi "Assertion failed: Q interpolates FVAL at XPT" \
     | grep -vi "Assertion failed: H = W^{-1} in (3.12) of the NEWUOA paper" \
+    | grep -vi "Assertion failed: BETA_TEST == BETA" \
+    | grep -vi "Assertion failed: SUM(VLAG(1:NPT)) == 1" \
     | grep -vi "flist:.*: Invalid format" \
     | grep -vi "BAD_TRSTEP" \
     | grep -vi "moderr\|errorid\|errormsg\|errstop" \

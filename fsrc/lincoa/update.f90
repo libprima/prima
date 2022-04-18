@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 14, 2022 AM01:28:54
+! Last Modified: Monday, April 18, 2022 PM05:27:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,12 +22,13 @@ public :: update
 contains
 
 
-subroutine update(kopt, step, xpt, idz, knew, bmat, zmat, vlag)
+subroutine update(kopt, step, xpt, idz, knew, bmat, zmat)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, validate
-!use, non_intrinsic :: linalg_mod, only : matprod
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: powalg_mod, only : updateh, calvlag, calbeta
 
 implicit none
@@ -43,17 +44,15 @@ integer(IK), intent(inout) :: knew
 real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
-! Outputs
-real(RP), intent(out) :: vlag(:)  ! VLAG(NPT + N)
-
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATE'
-real(RP) :: beta, denabs, denmax, distsq, hdiag, temp
-integer(IK) :: j, k
+real(RP) :: beta, denabs(size(xpt, 2)), distsq(size(xpt, 2)), hdiag(size(xpt, 2)), score(size(xpt, 2))
+real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
+!integer(IK) :: j, k
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: xopt(size(xpt, 1))
-real(RP) :: xdist(size(xpt, 2))!, xxpt(size(xpt, 2))!, sxpt(size(xpt, 2)), vtmp(size(xpt, 2))
+!real(RP) :: xopt(size(xpt, 1))
+!real(RP) :: xdist(size(xpt, 2))!, xxpt(size(xpt, 2))!, sxpt(size(xpt, 2)), vtmp(size(xpt, 2))
 
 
 ! Sizes.
@@ -104,49 +103,25 @@ end if
 vlag = calvlag(kopt, bmat, step, xpt, zmat, idz)
 beta = calbeta(kopt, bmat, step, xpt, zmat, idz)
 
-
-!
-!     If KNEW is ZERO initially, then pick the index of the interpolation
-!       point to be deleted, by maximizing the absolute value of the
-!       denominator of the updating formula times a weighting factor.
-!
-!
+! If KNEW is ZERO initially, then pick the index of the interpolation point to be deleted, by
+! maximizing the absolute value of the denominator of the updating formula times a weighting factor.
 if (knew == 0) then
-    denmax = ZERO
-    do k = 1, npt
-        hdiag = ZERO
-        do j = 1, npt - n - 1_IK
-            temp = ONE
-            if (j < idz) temp = -ONE
-            hdiag = hdiag + temp * zmat(k, j)**2
-        end do
-        denabs = abs(beta * hdiag + vlag(k)**2)
-        distsq = ZERO
-        do j = 1, n
-            distsq = distsq + (xpt(j, k) - xpt(j, kopt))**2
-        end do
-        temp = denabs * distsq * distsq
-        if (temp > denmax) then
-            denmax = temp
-            knew = k
-        end if
-    end do
-end if
+    hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
+    denabs = abs(beta * hdiag + vlag(1:npt)**2)
+    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    score = denabs * distsq * distsq
 
-!---------------------------------------------------------------------!
-!---------------------------------------------------------------------!
-!---------------------------------------------------------------------!
-! Zaikun 20220318: KNEW can be 0 due to NaN
-if (knew == 0) then
-    xopt = xpt(:, kopt)
-    xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
-    ! MATLAB: xdist = sqrt(sum((xpt - xopt).^2))  % xopt should be a column!! Implicit expansion
-    knew = maxloc(xdist, dim=1)
+    ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
+    score(trueloc(is_nan(score))) = -ONE
+
+    if (any(score > 0)) then
+        knew = int(maxloc(score, dim=1), kind(knew))
+    else
+        ! Powell's code does not handle this case, leaving KNEW = 0 and leading to a segfault.
+        knew = int(maxloc(distsq, dim=1), kind(knew))
+    end if
 end if
-call validate(1 <= knew .and. knew <= npt, '1 <= KNEW <= NPT', srname)
-!---------------------------------------------------------------------!
-!---------------------------------------------------------------------!
-!---------------------------------------------------------------------!
+call assert(1 <= knew .and. knew <= npt, '1 <= KNEW <= NPT', srname)
 
 call updateh(knew, kopt, idz, step, xpt, bmat, zmat)
 end subroutine update

@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 18, 2022 AM02:19:44
+! Last Modified: Monday, April 18, 2022 PM04:25:39
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1195,8 +1195,8 @@ if (DEBUGGING) then
         tol = 1.0E-2_RP  ! W and H are quite ill-conditioned, so we do not test a high precision.
         call safealloc(vlag_test, npt + n)
         vlag_test = calvlag(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
-        call wassert(maxval(abs(vlag_test - calvlag(kopt, bmat, d, xpt, zmat, idz))) <= &
-            & tol * maxval([ONE, abs(vlag_test)]) .or. RP == kind(0.0), 'VLAG_TEST == VLAG', srname)
+        call wassert(all(abs(vlag_test - calvlag(kopt, bmat, d, xpt, zmat, idz)) <= &
+            & tol * maxval([ONE, abs(vlag_test)])) .or. RP == kind(0.0), 'VLAG_TEST == VLAG', srname)
         deallocate (vlag_test)
         beta_test = calbeta(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
         call wassert(abs(beta_test - calbeta(kopt, bmat, d, xpt, zmat, idz)) <= &

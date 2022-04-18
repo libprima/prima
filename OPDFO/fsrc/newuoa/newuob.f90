@@ -240,8 +240,8 @@ do tr = 1, maxtr
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
     shortd = (dnorm < HALF * rho)
     ! REDUCE_RHO_1 corresponds to Box 14 of the NEWUOA paper.
-    reduce_rho_1 = shortd .and. (maxval(abs(moderrsav)) <= 0.125_RP * crvmin * rho**2) .and. &
-        & (maxval(dnormsav) <= rho)
+    reduce_rho_1 = shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. &
+        & all(dnormsav <= rho)
     if (shortd .and. (.not. reduce_rho_1)) then
         ! Reduce DELTA. After this, DELTA < DNORM may happen.
         delta = TENTH * delta
@@ -376,11 +376,11 @@ do tr = 1, maxtr
     ! 7. If SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
 
-    xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
+    xdist = (sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
     ! KNEW_TR == 0 implies RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definition
     ! of BAD_TRSTEP. Nevertheless, we keep it for robustness.
     bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
-    improve_geo = ((.not. reduce_rho_1) .and. maxval(xdist) > TWO * delta .and. bad_trstep)
+    improve_geo = ((.not. reduce_rho_1) .and. any(xdist > 4.0_RP * delta**2) .and. bad_trstep)
 
     ! If all the interpolation points are close to XOPT and the trust-region is small, but the
     ! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
@@ -395,7 +395,7 @@ do tr = 1, maxtr
     ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
     ! 3. DELTA < DNORM may hold due to the update of DELTA.
     bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO_2
-    reduce_rho_2 = (maxval(xdist) <= TWO * delta .and. max(delta, dnorm) <= rho .and. bad_trstep)
+    reduce_rho_2 = (all(xdist <= 4.0_RP * delta**2) .and. max(delta, dnorm) <= rho .and. bad_trstep)
 
     ! Comments on BAD_TRSTEP:
     ! 1. Powell used different thresholds (<= 0 and < 0.1) for RATIO in the definitions of BAD_TRSTEP
@@ -425,7 +425,7 @@ do tr = 1, maxtr
         ! scheme GEOSTEP. We also need it to decide whether to shift XBASE or not.
         ! Note that DELTA has been updated before arriving here. See the comments above the
         ! definition of IMPROVE_GEO.
-        delbar = max(min(TENTH * maxval(xdist), HALF * delta), rho)
+        delbar = max(min(TENTH * sqrt(maxval(xdist)), HALF * delta), rho)
 
         ! Shift XBASE if XOPT may be too far from XBASE.
         !if (delbar**2 <= 1.0E-3_RP * inprod(xopt, xopt)) then

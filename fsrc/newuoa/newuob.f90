@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 18, 2022 AM02:03:28
+! Last Modified: Monday, April 18, 2022 PM04:37:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -123,6 +123,7 @@ real(RP) :: crvmin
 real(RP) :: d(size(x))
 real(RP) :: delbar
 real(RP) :: delta
+real(RP) :: distsq(npt)
 real(RP) :: dnorm
 real(RP) :: dnormsav(3)
 real(RP) :: fopt
@@ -135,7 +136,6 @@ real(RP) :: qred
 real(RP) :: ratio
 real(RP) :: rho
 real(RP) :: xbase(size(x))
-real(RP) :: xdist(npt)
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
@@ -240,8 +240,7 @@ do tr = 1, maxtr
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
     shortd = (dnorm < HALF * rho)
     ! REDUCE_RHO_1 corresponds to Box 14 of the NEWUOA paper.
-    reduce_rho_1 = shortd .and. (maxval(abs(moderrsav)) <= 0.125_RP * crvmin * rho**2) .and. &
-        & (maxval(dnormsav) <= rho)
+    reduce_rho_1 = shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
     if (shortd .and. (.not. reduce_rho_1)) then
         ! Reduce DELTA. After this, DELTA < DNORM may happen.
         delta = TENTH * delta
@@ -380,12 +379,12 @@ do tr = 1, maxtr
     ! 7. If SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
 
-    xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
-    !!MATLAB: xdist = sqrt(sum((xpt - xopt).^2))  % xopt should be a column!! Implicit expansion
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
     ! KNEW_TR == 0 implies RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definition
     ! of BAD_TRSTEP. Nevertheless, we keep it for robustness.
     bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
-    improve_geo = ((.not. reduce_rho_1) .and. maxval(xdist) > TWO * delta .and. bad_trstep)
+    improve_geo = ((.not. reduce_rho_1) .and. any(distsq > 4.0_RP * delta**2) .and. bad_trstep)
 
     ! If all the interpolation points are close to XOPT and the trust-region is small, but the
     ! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
@@ -400,7 +399,7 @@ do tr = 1, maxtr
     ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
     ! 3. DELTA < DNORM may hold due to the update of DELTA.
     bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO_2
-    reduce_rho_2 = (maxval(xdist) <= TWO * delta .and. max(delta, dnorm) <= rho .and. bad_trstep)
+    reduce_rho_2 = (all(distsq <= 4.0_RP * delta**2) .and. max(delta, dnorm) <= rho .and. bad_trstep)
 
     ! Comments on BAD_TRSTEP:
     ! 1. Powell used different thresholds (<= 0 and < 0.1) for RATIO in the definitions of BAD_TRSTEP
@@ -424,13 +423,13 @@ do tr = 1, maxtr
     if (improve_geo) then
         ! XPT(:, KNEW_GEO) will be dropped (replaced by XOPT + D below).
         ! KNEW_GEO should never be KOPT. Otherwise, it is a bug.
-        knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
+        knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
 
         ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
         ! scheme GEOSTEP. We also need it to decide whether to shift XBASE or not.
         ! Note that DELTA has been updated before arriving here. See the comments above the
         ! definition of IMPROVE_GEO.
-        delbar = max(min(TENTH * maxval(xdist), HALF * delta), rho)
+        delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
 
         ! Shift XBASE if XOPT may be too far from XBASE.
         if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
