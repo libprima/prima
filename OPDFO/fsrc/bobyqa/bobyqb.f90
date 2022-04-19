@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 19, 2022 PM02:15:28
+! Last Modified: Wed 20 Apr 2022 01:45:26 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -714,9 +714,21 @@ else
             knew = k
             denom = den
         end if
-        biglsq = max(biglsq, temp * vlag(k)**2)
+        ! -----------------------------------------------------------------------------------------!
+        ! Zaikun 20220419
+        ! Surprisingly, MEX in MATLAB R2020a with gfortran 9.4.0 behave randomly when evaluating
+        ! max(0.0, NaN): sometimes it returns 0.0, sometimes NaN, even if the compilation option is
+        ! the same. This makes the output of the next line unpredictable and leads to disagreement
+        ! between Powell's code and the modernized version.
+        !biglsq = max(biglsq, temp * vlag(k)**2)
+        if (temp * vlag(k)**2 > biglsq) biglsq = temp * vlag(k)**2
+        ! -----------------------------------------------------------------------------------------!
     end do
-    if (scaden <= HALF * biglsq) then
+    ! -----------------------------------------------------------------------------------------!
+    ! Zaikun 20220419
+    !if (scaden <= HALF * biglsq) then
+    if (.not. scaden > HALF * biglsq) then
+        ! -----------------------------------------------------------------------------------------!
         if (nf > nresc) goto 190
         !info = 4
         info = DAMAGING_ROUNDING
@@ -870,9 +882,21 @@ if (ntrits > 0) then
                 knew = k
                 denom = den
             end if
-            biglsq = max(biglsq, temp * vlag(k)**2)
+            ! -----------------------------------------------------------------------------------------!
+            ! Zaikun 20220419
+            ! Surprisingly, MEX in MATLAB R2020a with gfortran 9.4.0 behave randomly when evaluating
+            ! max(0.0, NaN): sometimes it returns 0.0, sometimes NaN, even if the compilation option is
+            ! the same. This makes the output of the next line unpredictable and leads to disagreement
+            ! between Powell's code and the modernized version.
+            !biglsq = max(biglsq, temp * vlag(k)**2)
+            if (temp * vlag(k)**2 > biglsq) biglsq = temp * vlag(k)**2
+            !------------------------------------------------------------------------------------------!
         end do
-        if (scaden <= HALF * biglsq) then
+        ! -----------------------------------------------------------------------------------------!
+        ! Zaikun 20220419
+        !if (scaden <= HALF * biglsq) then
+        if (.not. scaden > HALF * biglsq) then
+            ! -----------------------------------------------------------------------------------------!
             knew = ksav
             denom = densav
         end if
@@ -1102,6 +1126,7 @@ end if
 
 736 call rangehist(nf, xhist, fhist)
 
+close (17)
 end subroutine bobyqb
 
 

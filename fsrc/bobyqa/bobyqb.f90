@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 19, 2022 PM09:40:10
+! Last Modified: Wednesday, April 20, 2022 AM02:13:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : calquad, calvlag, calbeta, hess_mul
+use, non_intrinsic :: powalg_mod, only : calquad, calvlag, calbeta!, hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize
@@ -96,12 +96,12 @@ real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
 real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 &        biglsq, cauchy, crvmin, curv(size(x)), delsq, delta,  &
-&        den, denom, densav, diff, diffa, diffb, diffc,     &
-&        dist, dsquare, distsq, dnorm, dsq, errbig, fopt,        &
-&        frhosq, gisq, gqsq, hdiag,      &
+&        den(npt), denom, densav, diff, diffa, diffb, diffc,     &
+&        dist, dsquare, distsq(npt), dnorm, dsq, errbig, fopt,        &
+&        frhosq, gisq, gqsq, hdiag(npt),      &
 &        ratio, rho, scaden, summ, summa, summb, &
 &        temp, qred, xoptsq, &
-& dens(npt), distsqs(npt), hdiags(npt), weight(npt)
+&        weight(npt)
 integer(IK) :: i, itest, j, jj, k, kbase, knew, &
 &           kopt, ksav, nfsav, np, nresc, ntrits
 
@@ -498,41 +498,21 @@ else
     scaden = ZERO
     biglsq = ZERO
 
-    hdiags = sum(zmat**2, dim=2)
-    dens = hdiags * beta + vlag**2
-    !distsqs = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    do k = 1, npt
-        distsqs(k) = ZERO
-        do j = 1, n
-            distsqs(k) = distsqs(k) + (xpt(j, k) - xopt(j))**2
-        end do
-    end do
-    weight = max(ONE, (distsqs / delsq)**2)
+    hdiag = sum(zmat**2, dim=2)
+    den = hdiag * beta + vlag(1:npt)**2
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    weight = max(ONE, (distsq / delsq)**2)
 
     do k = 1, npt
         if (k == kopt) cycle
-        !hdiag = ZERO
-        !do jj = 1, npt - np
-        !    hdiag = hdiag + zmat(k, jj)**2
-        !end do
-        !den = beta * hdiag + vlag(k)**2
-        !den = hdiag * beta + vlag(k)**2
-        distsq = ZERO
-        do j = 1, n
-            distsq = distsq + (xpt(j, k) - xopt(j))**2
-        end do
-        temp = max(ONE, (distsq / delsq)**2)
-        !if (weight(k) * dens(k) > scaden) then
-        if (temp * dens(k) > scaden) then
-            !scaden = weight(k) * dens(k)
-            scaden = temp * dens(k)
+        if (weight(k) * den(k) > scaden) then
+            scaden = weight(k) * den(k)
             knew = k
-            denom = dens(k)
+            denom = den(k)
         end if
-        !biglsq = max(biglsq, weight(k) * vlag(k)**2)
-        biglsq = max(biglsq, temp * vlag(k)**2)
+        if (weight(k) * vlag(k)**2 > biglsq) biglsq = weight(k) * vlag(k)**2
     end do
-    if (scaden <= HALF * biglsq) then
+    if (.not. scaden > HALF * biglsq) then
         if (nf > nresc) goto 190
         info = DAMAGING_ROUNDING
         goto 720
@@ -546,7 +526,8 @@ end if
 !     Calculate the value of the objective function at XBASE+XNEW, unless
 !       the limit on the number of calculations of F has been reached.
 !
-360 do i = 1, n
+360 continue
+do i = 1, n
     x(i) = min(max(xl(i), xbase(i) + xnew(i)), xu(i))
     if (xnew(i) == sl(i)) x(i) = xl(i)
     if (xnew(i) == su(i)) x(i) = xu(i)
@@ -634,30 +615,47 @@ if (ntrits > 0) then
     if (f < fopt) then
         ksav = knew
         densav = denom
+
         delsq = delta * delta
+        knew = 0
         scaden = ZERO
         biglsq = ZERO
-        knew = 0
+
+        !do k = 1, npt
+        !    hdiag = ZERO
+        !    do jj = 1, npt - np
+        !        hdiag = hdiag + zmat(k, jj)**2
+        !    end do
+        !    !den = beta * hdiag + vlag(k)**2
+        !    den = hdiag * beta + vlag(k)**2
+        !    distsq = ZERO
+        !    do j = 1, n
+        !        distsq = distsq + (xpt(j, k) - xnew(j))**2
+        !    end do
+        !    temp = max(ONE, (distsq / delsq)**2)
+        !    if (temp * den > scaden) then
+        !        scaden = temp * den
+        !        knew = k
+        !        denom = den
+        !    end if
+        !    if (temp * vlag(k)**2 > biglsq) biglsq = temp * vlag(k)**2
+        !end do
+
+        hdiag = sum(zmat**2, dim=2)
+        den = hdiag * beta + vlag(1:npt)**2
+        distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
+        weight = max(ONE, (distsq / delsq)**2)
+
         do k = 1, npt
-            hdiag = ZERO
-            do jj = 1, npt - np
-                hdiag = hdiag + zmat(k, jj)**2
-            end do
-            !den = beta * hdiag + vlag(k)**2
-            den = hdiag * beta + vlag(k)**2
-            distsq = ZERO
-            do j = 1, n
-                distsq = distsq + (xpt(j, k) - xnew(j))**2
-            end do
-            temp = max(ONE, (distsq / delsq)**2)
-            if (temp * den > scaden) then
-                scaden = temp * den
+            if (weight(k) * den(k) > scaden) then
+                scaden = weight(k) * den(k)
                 knew = k
-                denom = den
+                denom = den(k)
             end if
-            biglsq = max(biglsq, temp * vlag(k)**2)
+            if (weight(k) * vlag(k)**2 > biglsq) biglsq = weight(k) * vlag(k)**2
         end do
-        if (scaden <= HALF * biglsq) then
+
+        if (.not. scaden > HALF * biglsq) then
             knew = ksav
             denom = densav
         end if
@@ -868,6 +866,8 @@ if (ntrits == -1) goto 360
 end if
 
 736 call rangehist(nf, xhist, fhist)
+
+close (16)
 
 end subroutine bobyqb
 
