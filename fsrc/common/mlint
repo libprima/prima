@@ -13,8 +13,12 @@ CLEAN="N"
 
 # af95 does not support internal subroutine as an actual argument. So it is not included
 # sunf95 is case sensitive. Put it as the first.
-COMPILER_LIST=(sunf95 gfortran nagfor g95 ifort nvfortran flang aflang ifx)
-CLIST=(s g n 9 i v f d x)
+# ifx encounters internal errors when compiling BOBYQA. Disable xtest for now. 
+#COMPILER_LIST=(sunf95 gfortran nagfor g95 af95 ifort nvfortran flang aflang ifx)
+#COMPILER_LIST=(sunf95 gfortran nagfor g95 ifort nvfortran flang aflang ifx)
+#CLIST=(s g n 9 i v f d x)
+COMPILER_LIST=(sunf95 gfortran nagfor g95 ifort nvfortran flang aflang)
+CLIST=(s g n 9 i v f d)
 COMP_LIST=""
 for i in "${!COMPILER_LIST[@]}"; do
    if  type "${COMPILER_LIST[$i]}" &> /dev/null ; then

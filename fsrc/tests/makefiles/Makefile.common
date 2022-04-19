@@ -300,7 +300,7 @@ ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d
 # In the debug mode, our code includes the BACKTRACE function if the compiler is gfortran. This
 # makes the code not standard-conforming. So -std=f$(FSTD) cannot be imposed without -fall-intrinsics.
 # As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
-GFORT := gfortran
+GFORT := gfortran -pg
 GFORT := $(GFORT) -Werror -pedantic-errors
 # `-fautomatic` (the default) tell `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.

@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 19, 2022 PM02:15:28
+! Last Modified: Tuesday, April 19, 2022 PM04:02:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,81 +19,119 @@ public :: bobyqb
 contains
 
 
-subroutine bobyqb(calfun, n, npt, x, xl, xu, rhobeg, rhoend, iprint, &
-    & maxfun, xbase, xpt, fval, xopt, gopt, hq, pq, bmat, zmat, ndim, &
-    & sl, su, xnew, xalt, d, vlag, w, f, info, ftarget, &
-    & nf, xhist, maxxhist, fhist, maxfhist)
+subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, &
+    & sl_in, su_in, xl, xu, x, nf, f, fhist, xhist, info)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING, SMALL_TR_RADIUS
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
+    & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: powalg_mod, only : calquad, calvlag, calbeta, hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize
 use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox
-use, non_intrinsic :: update_mod, only : update
+use, non_intrinsic :: update_mod, only : updateh
+use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 implicit none
 
 ! Inputs
-procedure(OBJ) :: calfun
+procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
-integer(IK), intent(in) :: maxfhist
 integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: maxxhist
-integer(IK), intent(in) :: n
-integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
+real(RP), intent(in) :: eta1
+real(RP), intent(in) :: eta2
 real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: gamma1
+real(RP), intent(in) :: gamma2
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
-real(RP), intent(in) :: xl(n)
-real(RP), intent(in) :: xu(n)
+real(RP), intent(in) :: sl_in(:)  ! SL_IN(N)
+real(RP), intent(in) :: su_in(:)  ! SU_IN(N)
+real(RP), intent(in) :: xl(:)  ! XL(N)
+real(RP), intent(in) :: xu(:)  ! XU(N)
 
 ! In-outputs
-real(RP), intent(inout) :: sl(n)
-real(RP), intent(inout) :: su(n)
-real(RP), intent(inout) :: x(n)
+real(RP), intent(inout) :: x(:)  ! X(N)
 
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: bmat(n, npt + n)
-real(RP), intent(out) :: d(n)
 real(RP), intent(out) :: f
-real(RP), intent(out) :: fhist(maxfhist)
-real(RP), intent(out) :: fval(npt)
-real(RP), intent(out) :: gopt(n)
-real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
-real(RP), intent(out) :: pq(npt)
-real(RP), intent(out) :: vlag(npt + n)
-real(RP), intent(out) :: w(3_IK * (npt + n))
-real(RP), intent(out) :: xalt(n)
-real(RP), intent(out) :: xbase(n)
-real(RP), intent(out) :: xhist(n, maxxhist)
-real(RP), intent(out) :: xnew(n)
-real(RP), intent(out) :: xopt(n)
-real(RP), intent(out) :: xpt(n, npt)
-real(RP), intent(out) :: zmat(npt, npt - n - 1_IK)
+real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
+real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
-real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
-&        biglsq, bsumm, cauchy, crvmin, curv, delsq, delta,  &
-&        den, denom, densav, diff, diffa, diffb, diffc,     &
-&        dist, distsq, dnorm, dsq, dx, errbig, fopt,        &
-&        fracsq, frhosq, gisq, gqsq, hdiag,      &
-&        pqold, ratio, rho, scaden, summ, summa, summb, summpq,&
-&        summw, summz, temp, vquad, xoptsq
-integer(IK) :: i, ih, ip, itest, j, jj, jp, k, kbase, knew, &
-&           kopt, ksav, nfsav, nh, np, nptm, nresc, ntrits
-real(RP) :: bup1(n, npt), bup2(n, n), vtmp(npt)
+character(len=*), parameter :: srname = 'BOBYQB'
+integer(IK) :: maxfhist
+integer(IK) :: maxhist
+integer(IK) :: maxxhist
+integer(IK) :: n
+real(RP) :: bmat(size(x), npt + size(x))
+real(RP) :: d(size(x))
+real(RP) :: fval(npt)
+real(RP) :: gopt(size(x))
+real(RP) :: hq(size(x), size(x))
+real(RP) :: pq(npt)
+real(RP) :: vlag(npt + size(x))
+real(RP) :: w(3 * (npt + size(x)))
+real(RP) :: sl(size(x))
+real(RP) :: su(size(x))
+real(RP) :: xalt(size(x))
+real(RP) :: xbase(size(x))
+real(RP) :: xnew(size(x))
+real(RP) :: xopt(size(x))
+real(RP) :: xpt(size(x), npt)
+real(RP) :: zmat(npt, npt - size(x) - 1)
+real(RP) :: gnew(size(x))
+real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
+&        biglsq, cauchy, crvmin, curv(size(x)), delsq, delta,  &
+&        den(npt), denom, densav, diff, diffa, diffb, diffc,     &
+&        dist, dsquare, distsq(npt), dnorm, dsq, errbig, fopt,        &
+&        frhosq, gisq, gqsq, hdiag(npt),      &
+&        ratio, rho, scaden, summ, summa, summb, &
+&        temp, qred, xoptsq
+integer(IK) :: i, itest, j, jj, k, kbase, knew, &
+&           kopt, ksav, nfsav, np, nresc, ntrits
+real(RP) :: weight(npt)
+
+
+! Sizes.
+n = int(size(x), kind(n))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(maxfun >= npt + 1, 'MAXFUN >= NPT+1', srname)
+    call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
+    call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
+    call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
+    call assert(size(sl_in) == n .and. size(su_in) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
+    call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
+    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+end if
+
+
+sl = sl_in
+su = su_in
 
 !     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
 !       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
@@ -130,8 +168,6 @@ real(RP) :: bup1(n, npt), bup2(n, n), vtmp(npt)
 !     Set some constants.
 !
 np = n + 1
-nptm = npt - np
-nh = (n * np) / 2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     The call of PRELIM sets the elements of XBASE, XPT, FVAL, GOPT, HQ, PQ,
@@ -141,40 +177,32 @@ nh = (n * np) / 2
 !     initial XOPT is set too. The branch to label 720 occurs if MAXFUN is
 !     less than NPT. GOPT will be updated if KOPT is different from KBASE.
 !
-call initialize(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, xpt, &
-& fval, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, kopt, f, ftarget, &
-& xhist, maxxhist, fhist, maxfhist)
+call initialize(calfun, iprint, ftarget, rhobeg, sl, su, x, xl, xu, kopt, nf, bmat, f, fhist, fval, &
+    & gopt, hq, pq, xbase, xhist, xpt, zmat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt  ! Set X.
 f = fopt  ! Set F.
 
-xoptsq = ZERO
-do i = 1, n
-    xopt(i) = xpt(i, kopt)
-    xoptsq = xoptsq + xopt(i)**2
-end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: FSAVE is not needed any more. See line number 720.
-!      FSAVE=FVAL(1)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     By Tom/Zaikun (on 04-06-2019/07-06-2019):
+xopt = xpt(:, kopt)
+xoptsq = sum(xopt**2)
+!xoptsq = ZERO
+!do i = 1, n
+!    xopt(i) = xpt(i, kopt)
+!    xoptsq = xoptsq + xopt(i)**2
+!end do
+
 if (is_nan(f) .or. is_posinf(f)) then
-    info = -2
+    info = NAN_INF_F
     goto 720
 end if
-!     By Tom (on 04-06-2019):
-!     If F reached the target function, PRELIM will stop and BOBYQB
-!     should stop here.
 if (f <= ftarget) then
-    info = 1
+    info = FTARGET_ACHIEVED
     goto 736
 end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (nf < npt) then
-    info = 3
+    info = MAXFUN_REACHED  ! Zaikun 20220406: Should not happen here.
     goto 720
 end if
 kbase = 1
@@ -194,26 +222,18 @@ nfsav = nf
 !     call of RESCUE that makes a call of CALFUN.
 !
 20 if (kopt /= kbase) then
-    ih = 0
     do j = 1, n
         do i = 1, j
-            ih = ih + 1
-            if (i < j) gopt(j) = gopt(j) + hq(ih) * xopt(i)
-            gopt(i) = gopt(i) + hq(ih) * xopt(j)
+            if (i < j) gopt(j) = gopt(j) + hq(i, j) * xopt(i)
+            gopt(i) = gopt(i) + hq(i, j) * xopt(j)
         end do
     end do
     if (nf > npt) then
         do k = 1, npt
-            temp = ZERO
-            do j = 1, n
-                temp = temp + xpt(j, k) * xopt(j)
-            end do
-            temp = pq(k) * temp
-            do i = 1, n
-                gopt(i) = gopt(i) + temp * xpt(i, k)
-            end do
+            gopt = gopt + pq(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
         end do
     end if
+    !!gopt = gopt + hess_mul(xopt, xpt, pq, hq)
 end if
 !
 !     Generate the next point in the trust region that provides a small value
@@ -224,7 +244,7 @@ end if
 !     label 650 or 680 with NTRITS=-1, instead of calculating F at XNEW.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: For ill-conditiONEd problems, NaN may occur in the
+! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
 ! models. In such a case, we terminate the code. Otherwise, the behavior
 ! of TRBOX, ALTMOV, or RESCUE is not predictable, and Segmentation Fault or
 ! infinite cycling may happen. This is because any equality/inequality
@@ -232,30 +252,21 @@ end if
 ! behavior of the code, including uninitialized indices.
 !
 !   60 CALL TRSBOX (N,NPT,XPT,XOPT,GOPT,HQ,PQ,SL,SU,DELTA,XNEW,D,
-60 do i = 1, n
-    if (gopt(i) /= gopt(i)) then
-        info = -3
-        goto 720
-    end if
-end do
-do i = 1, nh
-    if (hq(i) /= hq(i)) then
-        info = -3
-        goto 720
-    end if
-end do
-do i = 1, npt
-    if (pq(i) /= pq(i)) then
-        info = -3
-        goto 720
-    end if
-end do
-call trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, xnew, d, &
-& w, w(np), w(np + n), w(np + 2 * n), w(np + 3 * n), dsq, crvmin)
+60 continue
+
+if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
+    info = NAN_MODEL
+    goto 720
+end if
+
+
+
+call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
+
 dnorm = min(delta, sqrt(dsq))
 if (dnorm < HALF * rho) then
     ntrits = -1
-    distsq = (TEN * rho)**2
+    dsquare = (TEN * rho)**2
     if (nf <= nfsav + 2) goto 650
 !
 !     The following choice between labels 650 and 680 depends on whether or
@@ -268,28 +279,36 @@ if (dnorm < HALF * rho) then
     frhosq = 0.125_RP * rho * rho
     if (crvmin > ZERO .and. errbig > frhosq * crvmin) goto 650
     bdtol = errbig / rho
-    do j = 1, n
-        bdtest = bdtol
-        if (xnew(j) == sl(j)) bdtest = w(j)
-        if (xnew(j) == su(j)) bdtest = -w(j)
-        if (bdtest < bdtol) then
-            !---------------------------------!
-            ! Zaikun 20220419
-            !curv = hq((j + j * j) / 2)
-            curv = ZERO
-            !---------------------------------!
-            do k = 1, npt
-                curv = curv + pq(k) * xpt(j, k)**2
-            end do
-            !---------------------------------!
-            ! Zaikun 20220419
-            curv = hq((j + j * j) / 2) + curv
-            !---------------------------------!
-            bdtest = bdtest + HALF * curv * rho
-            if (bdtest < bdtol) goto 650
-        end if
-    end do
-    goto 680
+
+    bdtest = bdtol
+    bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
+    bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
+    hqdiag = diag(hq)
+    curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
+    where (bdtest < bdtol)
+        curv = hqdiag + matprod(xpt**2, pq)
+    end where
+    !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
+    if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
+        goto 650
+    else
+        goto 680
+    end if
+
+    !do j = 1, n
+    !    bdtest = bdtol
+    !    if (xnew(j) == sl(j)) bdtest = gnew(j)
+    !    if (xnew(j) == su(j)) bdtest = -gnew(j)
+    !    if (bdtest < bdtol) then
+    !        curv = hq(j, j)
+    !        do k = 1, npt
+    !            curv = curv + pq(k) * xpt(j, k)**2
+    !        end do
+    !        bdtest = bdtest + HALF * curv * rho
+    !        if (bdtest < bdtol) goto 650
+    !    end if
+    !end do
+    !goto 680
 end if
 ntrits = ntrits + 1
 !
@@ -299,146 +318,17 @@ ntrits = ntrits + 1
 !     derivatives of the current model, beginning with the changes to BMAT
 !     that do not depend on ZMAT. VLAG is used temporarily for working space.
 !
-!90 if (dsq <= 1.0E-3_RP * xoptsq) then
 90 continue
 
-if (xoptsq >= 1.0E3_RP * dsq) then
-    fracsq = 0.25_RP * xoptsq
-    summpq = ZERO
-
-    bup2 = ZERO
-    do k = 1, npt
-        summpq = summpq + pq(k)
-        !-----------------------------------------!
-        ! Zaikun 20220403
-        !summ = -HALF * xoptsq
-        summ = ZERO
-        do i = 1, n
-            summ = summ + xpt(i, k) * xopt(i)
-        end do
-        !summ = -HALF * xoptsq + summ
-        summ = summ - HALF * xoptsq
-        !-----------------------------------------!
-        w(npt + k) = summ
-        temp = fracsq - HALF * summ
-
-        do i = 1, n
-            w(i) = bmat(i, k)
-            !vlag(i) = summ * xpt(i, k) + temp * xopt(i)
-            vlag(i) = summ * (xpt(i, k) - HALF * xopt(i)) + fracsq * xopt(i)
-
-            !ip = npt + i
-            do j = 1, i
-                !bmat(j, ip) = bmat(j, ip) + w(i) * vlag(j) + vlag(i) * w(j)
-                bup2(i, j) = bup2(i, j) + w(i) * vlag(j)
-                if (j < i) bup2(j, i) = bup2(j, i) + vlag(i) * w(j)
-            end do
-        end do
-    end do
-
-    !----------------------------------------------------------------!
-    ! Zaikun 20220405
-    do i = 1, n
-        ip = npt + i
-        do j = 1, i
-            bmat(j, ip) = bmat(j, ip) + (bup2(i, j) + bup2(j, i))
-        end do
-    end do
-    !----------------------------------------------------------------!
-!
-!
-!     Then the revisions of BMAT that depend on ZMAT are calculated.
-!
-    bup1 = ZERO; bup2 = ZERO
-    do jj = 1, nptm
-        summz = ZERO
-        summw = ZERO
-        do k = 1, npt
-            summz = summz + zmat(k, jj)
-            vlag(k) = w(npt + k) * zmat(k, jj)
-            summw = summw + vlag(k)
-        end do
-
-        do j = 1, n
-            !--------------------------------------------------------------!
-            ! Zaikun 20220403
-            !summ = (fracsq * summz - HALF * summw) * xopt(j)
-            summ = ZERO
-
-            !do k = 1, npt
-            !    summ = summ + vlag(k) * xpt(j, k)
-            !end do
-            !summ = (fracsq * summz - HALF * summw) * xopt(j) + summ
-            !--------------------------------------------------------------!
-            !--------------------------------------------------------------!
-            ! Zaikun 20220405
-            do k = 1, npt
-                summ = summ + (w(npt + k) * (xpt(j, k) - HALF * xopt(j)) + fracsq * xopt(j)) * zmat(k, jj)
-            end do
-            !--------------------------------------------------------------!
-            w(j) = summ
-            do k = 1, npt
-                !bmat(j, k) = bmat(j, k) + summ * zmat(k, jj)
-                bup1(j, k) = bup1(j, k) + summ * zmat(k, jj)
-            end do
-        end do
-        do i = 1, n
-            !ip = i + npt
-            temp = w(i)
-            do j = 1, i
-                !bmat(j, ip) = bmat(j, ip) + temp * w(j)
-                bup2(j, i) = bup2(j, i) + temp * w(j)
-            end do
-        end do
-    end do
-
-    !----------------------------------------------------------------!
-    ! Zaikun 20220405
-    do i = 1, n
-        do j = 1, npt
-            bmat(i, j) = bmat(i, j) + bup1(i, j)
-        end do
-    end do
-
-    do i = 1, n
-        ip = npt + i
-        do j = 1, i
-            bmat(j, ip) = bmat(j, ip) + bup2(j, i)
-        end do
-    end do
-    !----------------------------------------------------------------!
-!
-!     The following instructions complete the shift, including the changes
-!     to the second derivative parameters of the quadratic model.
-!
-    ih = 0
-    do j = 1, n
-        !--------------------------------------------------!
-        ! Zaikun 20220403
-        !w(j) = -HALF * summpq * xopt(j)
-        w(j) = ZERO
-        do k = 1, npt
-            w(j) = w(j) + pq(k) * xpt(j, k)
-            xpt(j, k) = xpt(j, k) - xopt(j)
-        end do
-        w(j) = -HALF * summpq * xopt(j) + w(j)
-        !--------------------------------------------------!
-        do i = 1, j
-            ih = ih + 1
-            !hq(ih) = hq(ih) + w(i) * xopt(j) + xopt(i) * w(j)
-            hq(ih) = hq(ih) + (w(i) * xopt(j) + xopt(i) * w(j))
-            bmat(j, npt + i) = bmat(i, npt + j)
-        end do
-    end do
-    do i = 1, n
-        xbase(i) = xbase(i) + xopt(i)
-        xnew(i) = xnew(i) - xopt(i)
-        sl(i) = sl(i) - xopt(i)
-        su(i) = su(i) - xopt(i)
-        xopt(i) = ZERO
-    end do
-    xoptsq = ZERO
+if (sum(xopt**2) >= 1.0E3_RP * dsq) then
+    xnew = xnew - xopt  ! Needed?
+    sl = sl - xopt
+    su = su - xopt
+    call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
+    xoptsq = ZERO  ! Needed?
 end if
+
+
 if (ntrits == 0) goto 210
 goto 230
 !
@@ -456,47 +346,21 @@ kbase = kopt
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29
 ! See the comments above line number 60.
-do i = 1, n
-    if (gopt(i) /= gopt(i)) then
-        info = -3
-        goto 720
-    end if
-end do
-do i = 1, nh
-    if (hq(i) /= hq(i)) then
-        info = -3
-        goto 720
-    end if
-end do
-do i = 1, npt
-    if (pq(i) /= pq(i)) then
-        info = -3
-        goto 720
-    end if
-end do
-do j = 1, n
-    do i = 1, ndim
-        if (bmat(j, i) /= bmat(j, i)) then
-            info = -3
-            goto 720
-        end if
-    end do
-end do
-do j = 1, nptm
-    do i = 1, npt
-        if (zmat(i, j) /= zmat(i, j)) then
-            info = -3
-            goto 720
-        end if
-    end do
-end do
+
+if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
+    info = NAN_MODEL
+    goto 720
+end if
+if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+    info = NAN_MODEL
+    goto 720
+end if
+
 
 !------------------------------------------------------------------------------------------------!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-call rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, fval, &
-& xopt, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, delta, kopt, &
-& vlag, w, w(n + np), w(ndim + np), f, ftarget, &
-& xhist, maxxhist, fhist, maxfhist)
+call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fval, &
+    & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !------------------------------------------------------------------------------------------------!
 
@@ -507,29 +371,28 @@ call rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, fval, &
 !
 xoptsq = ZERO
 if (kopt /= kbase) then
-    do i = 1, n
-        xopt(i) = xpt(i, kopt)
-        xoptsq = xoptsq + xopt(i)**2
-    end do
+    xopt = xpt(:, kopt)
+    xoptsq = sum(xopt**2)
+    !do i = 1, n
+    !    xopt(i) = xpt(i, kopt)
+    !    xoptsq = xoptsq + xopt(i)**2
+    !end do
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     By Tom/Zaikun (on 04-06-2019/07-06-2019):
+
 if (is_nan(f) .or. is_posinf(f)) then
-    info = -2
+    info = NAN_INF_F
     goto 720
 end if
-!     By Tom (on 04-06-2019):
-!     If F reached the target function, RESCUE will stop and BOBYQB
-!     should stop here.
 if (f <= ftarget) then
-    info = 1
+    info = FTARGET_ACHIEVED
     goto 736
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 if (nf < 0) then
     nf = maxfun
-    info = 3
+    info = MAXFUN_REACHED
     goto 720
 end if
 nresc = nf
@@ -539,7 +402,7 @@ if (nfsav < nf) then
 end if
 if (ntrits > 0) goto 60
 !
-!     Pick TWO alternative vectors of variables, relative to XBASE, that
+!     Pick two alternative vectors of variables, relative to XBASE, that
 !     are suitable as new positions of the KNEW-th interpolation point.
 !     Firstly, XNEW is set to the point on a line through XOPT and another
 !     interpolation point that minimizes the predicted value of the next
@@ -570,95 +433,32 @@ if (ntrits > 0) goto 60
 !  below, which led to abnormal values in BMAT (indeed, BETA defined in
 !  lines 366--389 took NaN/infinite values).
 !
-210 do j = 1, n
-    do i = 1, ndim
-        if (bmat(j, i) /= bmat(j, i)) then
-            info = -3
-            goto 720
-        end if
-    end do
-end do
-do j = 1, nptm
-    do i = 1, npt
-        if (zmat(i, j) /= zmat(i, j)) then
-            info = -3
-            goto 720
-        end if
-    end do
-end do
-call geostep(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, &
-& knew, adelt, xnew, xalt, alpha, cauchy, w, w(np), w(ndim + 1))
+210 continue
+
+if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+    info = NAN_MODEL
+    goto 720
+end if
+
+
+call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, alpha, cauchy, xalt, xnew)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do i = 1, n
-    d(i) = xnew(i) - xopt(i)
-end do
+d = xnew - xopt
+!do i = 1, n
+!    d(i) = xnew(i) - xopt(i)
+!end do
 !
 !     Calculate VLAG and BETA for the current choice of D. The scalar
 !     product of D with XPT(K,.) is going to be held in W(NPT+K) for
 !     use when VQUAD is calculated.
 !
-230 do k = 1, npt
-    summa = ZERO
-    summb = ZERO
-    summ = ZERO
-    do j = 1, n
-        summa = summa + xpt(j, k) * d(j)
-        summb = summb + xpt(j, k) * xopt(j)
-        summ = summ + bmat(j, k) * d(j)
-    end do
-    w(k) = summa * (HALF * summa + summb)
-    vlag(k) = summ
-    w(npt + k) = summa
-end do
+230 continue
 
-!-----------------------------------------!
-vtmp = vlag(1:npt)
-vlag(1:npt) = ZERO
-!-----------------------------------------!
-beta = ZERO
-do jj = 1, nptm
-    summ = ZERO
-    do k = 1, npt
-        summ = summ + zmat(k, jj) * w(k)
-    end do
-    beta = beta - summ * summ
-    do k = 1, npt
-        vlag(k) = vlag(k) + summ * zmat(k, jj)
-    end do
-end do
-!-----------------------------------------!
-vlag(1:npt) = vtmp + vlag(1:npt)
-!-----------------------------------------!
 
-dsq = ZERO
-bsumm = ZERO
-dx = ZERO
-do j = 1, n
-    dsq = dsq + d(j)**2
-    summ = ZERO
-    do k = 1, npt
-        summ = summ + w(k) * bmat(j, k)
-    end do
-    bsumm = bsumm + summ * d(j)
-    jp = npt + j
-    do i = 1, n
-        summ = summ + bmat(i, jp) * d(i)
-    end do
-    vlag(jp) = summ
-    bsumm = bsumm + summ * d(j)
-    dx = dx + d(j) * xopt(j)
-end do
-!beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bsumm
+vlag = calvlag(kopt, bmat, d, xpt, zmat)
+beta = calbeta(kopt, bmat, d, xpt, zmat)
 
-!bsumm = sum(matprod(bmat(:, npt + 1:npt + n), d) * d(1:n) &
-!     & + matprod(bmat(:, 1:npt), w(1:npt)) * d(1:n) &
-!     & + matprod(bmat(:, 1:npt), w(1:npt)) * d(1:n))
-!beta = dx**2 + dsq * (xoptsq + 2.0_RP * dx + HALF * dsq) + beta - bsumm
 
-!beta = inprod(vlag(1:npt + n), [w(1:npt), d])
-!beta = HALF * (inprod(xopt + d, xopt + d)**2 + inprod(xopt, xopt)**2) - inprod(xopt + d, xopt)**2 - beta
-beta = dx**2 + dsq * (xoptsq + dx + dx + half * dsq) - inprod(d, vlag(npt + 1:npt + n)) - inprod(w(1:npt), vlag(1:npt))
-vlag(kopt) = vlag(kopt) + ONE
 !
 !     If NTRITS is ZERO, the denominator may be increased by replacing
 !     the step D of ALTMOV by a Cauchy step. Then RESCUE may be called if
@@ -668,10 +468,12 @@ if (ntrits == 0) then
     !denom = vlag(knew)**2 + alpha * beta
     denom = alpha * beta + vlag(knew)**2
     if (denom < cauchy .and. cauchy > ZERO) then
-        do i = 1, n
-            xnew(i) = xalt(i)
-            d(i) = xnew(i) - xopt(i)
-        end do
+        xnew = xalt
+        d = xnew - xopt
+        !do i = 1, n
+        !    xnew(i) = xalt(i)
+        !    d(i) = xnew(i) - xopt(i)
+        !end do
         cauchy = ZERO
         go to 230
     end if
@@ -680,7 +482,6 @@ if (ntrits == 0) then
     if (.not. (denom > HALF * vlag(knew)**2)) then
 !111111111111111111111!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (nf > nresc) goto 190
-        !info = 4
         info = DAMAGING_ROUNDING
         goto 720
     end if
@@ -693,32 +494,53 @@ if (ntrits == 0) then
 !
 else
     delsq = delta * delta
+    knew = 0
     scaden = ZERO
     biglsq = ZERO
-    knew = 0
+
+    hdiag = sum(zmat**2, dim=2)
+    den = hdiag * beta + vlag**2
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    weight = max(ONE, (distsq / delsq)**2)
+
+    !weight(kopt) = -ONE  ! Skip KOPT in MAXLOC and MAXVAL???????????????????????????
+    !knew = maxloc(weight * den, mask=(.not. is_nan(den)), dim = 1)
+    !scaden = weight(knew) * den(knew)
+    !denom = den(knew)
+    !biglsq = maxval(weight * vlag**2, mask=(.not. is_nan(vlag)))
+
     do k = 1, npt
         if (k == kopt) cycle
-        hdiag = ZERO
-        do jj = 1, nptm
-            hdiag = hdiag + zmat(k, jj)**2
-        end do
-        !den = beta * hdiag + vlag(k)**2
-        den = hdiag * beta + vlag(k)**2
-        distsq = ZERO
-        do j = 1, n
-            distsq = distsq + (xpt(j, k) - xopt(j))**2
-        end do
-        temp = max(ONE, (distsq / delsq)**2)
-        if (temp * den > scaden) then
-            scaden = temp * den
+        if (weight(k) * den(k) > scaden) then
+            scaden = weight(k) * den(k)
             knew = k
-            denom = den
+            denom = den(k)
         end if
-        biglsq = max(biglsq, temp * vlag(k)**2)
+        biglsq = max(biglsq, weight(k) * vlag(k)**2)
     end do
+
+    !do k = 1, npt
+    !    if (k == kopt) cycle
+    !    hdiag = ZERO
+    !    do jj = 1, npt - np
+    !        hdiag = hdiag + zmat(k, jj)**2
+    !    end do
+    !    den = hdiag * beta + vlag(k)**2
+    !    distsq = ZERO
+    !    do j = 1, n
+    !        distsq = distsq + (xpt(j, k) - xopt(j))**2
+    !    end do
+    !    temp = max(ONE, (distsq / delsq)**2)
+    !    if (temp * den > scaden) then
+    !        scaden = temp * den
+    !        knew = k
+    !        denom = den
+    !    end if
+    !    biglsq = max(biglsq, temp * vlag(k)**2)
+    !end do
+
     if (scaden <= HALF * biglsq) then
         if (nf > nresc) goto 190
-        !info = 4
         info = DAMAGING_ROUNDING
         goto 720
     end if
@@ -737,22 +559,20 @@ end if
     if (xnew(i) == su(i)) x(i) = xu(i)
 end do
 if (nf >= maxfun) then
-    info = 3
+    info = MAXFUN_REACHED
     goto 720
 end if
 nf = nf + 1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do i = 1, n
-    if (x(i) /= x(i)) then
-        f = x(i) ! set f to nan
-        if (nf == 1) then
-            fopt = f
-            xopt(1:n) = ZERO
-        end if
-        info = -1
-        goto 720
+if (is_nan(abs(sum(x)))) then
+    f = sum(x)  ! Set F to NaN
+    if (nf == 1) then
+        fopt = f
+        xopt = ZERO
     end if
-end do
+    info = NAN_INF_X
+    goto 720
+end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !------------------------------------------------------------------------!
@@ -765,27 +585,21 @@ call savehist(nf, x, xhist, f, fhist)
 if (is_nan(f) .or. is_posinf(f)) then
     if (nf == 1) then
         fopt = f
-        xopt(1:n) = ZERO
+        xopt = ZERO
     end if
-    info = -2
+    info = NAN_INF_F
     goto 720
 end if
 !     By Tom (on 04-06-2019):
 !     If F achieves the function value, the algorithm exits.
 if (f <= ftarget) then
-    info = 1
+    info = FTARGET_ACHIEVED
     goto 736
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 if (ntrits == -1) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: FSAVE is not needed any more. See line number 720.
-!          FSAVE=F
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    info = 0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    info = INFO_DFT  !!??
     goto 720
 end if
 !
@@ -793,33 +607,9 @@ end if
 !       and set DIFF to the error of this prediction.
 !
 fopt = fval(kopt)
-vquad = ZERO
-ih = 0
-do j = 1, n
-    temp = ZERO
-    do i = 1, n
-        if (i <= j) then
-            temp = temp + hq(j * (j - 1) / 2 + i) * d(i)
-        else
-            temp = temp + hq(i * (i - 1) / 2 + j) * d(i)
-        end if
-    end do
-    vquad = vquad + d(j) * (gopt(j) + HALF * temp)
+qred = calquad(d, xpt, gopt, pq, hq)
 
-    !vquad = vquad + d(j) * gopt(j)
-    !do i = 1, j
-    !    ih = ih + 1
-    !    temp = d(i) * d(j)
-    !    if (i == j) temp = HALF * temp
-    !    vquad = vquad + hq(ih) * temp
-    !end do
-end do
-!do k = 1, npt
-!    vquad = vquad + HALF * pq(k) * w(npt + k)**2
-!end do
-vquad = vquad + HALF * inprod(w(npt + 1:2 * npt), pq(1:npt) * w(npt + 1:2 * npt))
-
-diff = f - fopt - vquad
+diff = f - fopt + qred
 diffc = diffb
 diffb = diffa
 diffa = abs(diff)
@@ -829,12 +619,14 @@ if (dnorm > rho) nfsav = nf
 !
 if (ntrits > 0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!          IF (VQUAD .GE. ZERO) THEN
-    if (.not. (vquad < ZERO)) then
-        info = 2
+    if (.not. (qred > ZERO)) then
+        !------------------------------------------------------------------------------------------!
+        ! Zaikun 20220405: LINCOA improves the model in this case. BOBYQA should do the same.
+        !------------------------------------------------------------------------------------------!
+        info = TRSUBP_FAILED
         goto 720
     end if
-    ratio = (f - fopt) / vquad
+    ratio = (fopt - f) / qred
     if (ratio <= TENTH) then
         delta = min(HALF * delta, dnorm)
     else if (ratio <= 0.7_RP) then
@@ -854,21 +646,21 @@ if (ntrits > 0) then
         biglsq = ZERO
         knew = 0
         do k = 1, npt
-            hdiag = ZERO
-            do jj = 1, nptm
-                hdiag = hdiag + zmat(k, jj)**2
+            hdiag(k) = ZERO
+            do jj = 1, npt - np
+                hdiag(k) = hdiag(k) + zmat(k, jj)**2
             end do
             !den = beta * hdiag + vlag(k)**2
-            den = hdiag * beta + vlag(k)**2
-            distsq = ZERO
+            den(k) = hdiag(k) * beta + vlag(k)**2
+            distsq(k) = ZERO
             do j = 1, n
-                distsq = distsq + (xpt(j, k) - xnew(j))**2
+                distsq(k) = distsq(k) + (xpt(j, k) - xnew(j))**2
             end do
-            temp = max(ONE, (distsq / delsq)**2)
-            if (temp * den > scaden) then
-                scaden = temp * den
+            temp = max(ONE, (distsq(k) / delsq)**2)
+            if (temp * den(k) > scaden) then
+                scaden = temp * den(k)
                 knew = k
-                denom = den
+                denom = den(k)
             end if
             biglsq = max(biglsq, temp * vlag(k)**2)
         end do
@@ -882,35 +674,29 @@ end if
 !     Update BMAT and ZMAT, so that the KNEW-th interpolation point can be
 !     moved. Also update the second derivative terms of the model.
 !
-call update(n, npt, bmat, zmat, ndim, vlag, beta, denom, knew, w)
-ih = 0
-pqold = pq(knew)
+
+!--------------------------------------------------------------------------------------------------!
+call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
+call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
+!write (*, *) 1, denom, (sum(zmat(knew, :)**2)) * beta + vlag(knew)**2, denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)
+call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
+!--------------------------------------------------------------------------------------------------!
+call updateh(knew, beta, vlag, bmat, zmat)
+
+
+call r1update(hq, pq(knew), xpt(:, knew))
 pq(knew) = ZERO
-do i = 1, n
-    temp = pqold * xpt(i, knew)
-    do j = 1, i
-        ih = ih + 1
-        hq(ih) = hq(ih) + temp * xpt(j, knew)
-    end do
-end do
-do jj = 1, nptm
-    temp = diff * zmat(knew, jj)
-    do k = 1, npt
-        pq(k) = pq(k) + temp * zmat(k, jj)
-    end do
-end do
-!
-!     Include the new interpolation point, and make the changes to GOPT at
-!     the old XOPT that are caused by the updating of the quadratic model.
-!
+pq = pq + matprod(zmat, diff * zmat(knew, :))
+!pq = pq  + diff * matprod(zmat,  zmat(knew, :))
+
+! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are caused
+! by the updating of the quadratic model.
 fval(knew) = f
-do i = 1, n
-    xpt(i, knew) = xnew(i)
-    w(i) = bmat(i, knew)
-end do
+xpt(:, knew) = xnew
+w(1:n) = bmat(:, knew)
 do k = 1, npt
     summa = ZERO
-    do jj = 1, nptm
+    do jj = 1, npt - np
         summa = summa + zmat(knew, jj) * zmat(k, jj)
     end do
     summb = ZERO
@@ -922,34 +708,24 @@ do k = 1, npt
         w(i) = w(i) + temp * xpt(i, k)
     end do
 end do
-do i = 1, n
-    gopt(i) = gopt(i) + diff * w(i)
-end do
+
+gopt = gopt + diff * w(1:n)
 !
 !     Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
 !
 if (f < fopt) then
     kopt = knew
     xoptsq = ZERO
-    ih = 0
     do j = 1, n
         xopt(j) = xnew(j)
         xoptsq = xoptsq + xopt(j)**2
         do i = 1, j
-            ih = ih + 1
-            if (i < j) gopt(j) = gopt(j) + hq(ih) * d(i)
-            gopt(i) = gopt(i) + hq(ih) * d(j)
+            if (i < j) gopt(j) = gopt(j) + hq(i, j) * d(i)
+            gopt(i) = gopt(i) + hq(i, j) * d(j)
         end do
     end do
     do k = 1, npt
-        temp = ZERO
-        do j = 1, n
-            temp = temp + xpt(j, k) * d(j)
-        end do
-        temp = pq(k) * temp
-        do i = 1, n
-            gopt(i) = gopt(i) + temp * xpt(i, k)
-        end do
+        gopt = gopt + pq(k) * inprod(d, xpt(:, k)) * xpt(:, k)
     end do
 end if
 !
@@ -962,7 +738,7 @@ if (ntrits > 0) then
         vlag(k) = fval(k) - fval(kopt)
         w(k) = ZERO
     end do
-    do j = 1, nptm
+    do j = 1, npt - np
         summ = ZERO
         do k = 1, npt
             summ = summ + zmat(k, j) * vlag(k)
@@ -1005,12 +781,10 @@ if (ntrits > 0) then
     itest = itest + 1
     if (gqsq < TEN * gisq) itest = 0
     if (itest >= 3) then
-        do i = 1, max0(npt, nh)
-            if (i <= n) gopt(i) = vlag(npt + i)
-            if (i <= npt) pq(i) = w(npt + i)
-            if (i <= nh) hq(i) = ZERO
-            itest = 0
-        end do
+        gopt = vlag(npt + 1:npt + n)
+        pq = w(npt + 1:2 * npt)
+        hq = ZERO
+        itest = 0
     end if
 end if
 !
@@ -1019,21 +793,21 @@ end if
 !     when the new interpolation point was reached by an alternative step.
 !
 if (ntrits == 0) goto 60
-if (f <= fopt + TENTH * vquad) goto 60
+if (f <= fopt - TENTH * qred) goto 60
 !
 !     Alternatively, find out if the interpolation points are close enough
 !       to the best point so far.
 !
-distsq = max((TWO * delta)**2, (TEN * rho)**2)
+dsquare = max((TWO * delta)**2, (TEN * rho)**2)
 650 knew = 0
 do k = 1, npt
     summ = ZERO
     do j = 1, n
         summ = summ + (xpt(j, k) - xopt(j))**2
     end do
-    if (summ > distsq) then
+    if (summ > dsquare) then
         knew = k
-        distsq = summ
+        dsquare = summ
     end if
 end do
 !
@@ -1044,7 +818,7 @@ end do
 !     current RHO are complete.
 !
 if (knew > 0) then
-    dist = sqrt(distsq)
+    dist = sqrt(dsquare)
     if (ntrits == -1) then
         delta = min(TENTH * delta, HALF * dist)
         if (delta <= 1.5_RP * rho) delta = rho
@@ -1090,7 +864,7 @@ if (ntrits == -1) goto 360
 !  Why update X only when FVAL(KOPT) .LE. FSAVE? This seems INCORRECT,
 !  because it may lead to a return with F and X that are not the best
 !  available.
-720 if (fval(kopt) <= f .or. f /= f) then
+720 if (fval(kopt) <= f .or. is_nan(f)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do i = 1, n
         x(i) = min(max(xl(i), xbase(i) + xopt(i)), xu(i))
