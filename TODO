@@ -1,1 +1,9 @@
-1. Check and complete the pre/post conditions.
+1. Check and complete the pre/post conditions, particularly the finiteness of XPT, XOPT, STEP, X,
+   etc.
+
+2. Profile the Fortran code to find which subroutine costs the most time.
+   We can use gprof and gprof2dot to to this:
+   https://www.thegeekstuff.com/2012/08/gprof-tutorial/
+   https://github.com/jrfonseca/gprof2dot
+   $ gcc -pg main.f90
+   $ gprof a.out gmon.out | gprof2dot | dot -Tpng -o output.png

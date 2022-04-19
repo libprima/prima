@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 AM01:34:56
+! Last Modified: Tuesday, April 19, 2022 PM09:40:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,9 +30,9 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, r1update!, r2update!, norm
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : calquad, calvlag, calbeta
+use, non_intrinsic :: powalg_mod, only : calquad, calvlag, calbeta, hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize
@@ -94,13 +94,14 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
-real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
-&        biglsq, cauchy, crvmin, curv, delsq, delta,  &
+real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
+&        biglsq, cauchy, crvmin, curv(size(x)), delsq, delta,  &
 &        den, denom, densav, diff, diffa, diffb, diffc,     &
-&        dist, distsq, dnorm, dsq, errbig, fopt,        &
+&        dist, dsquare, distsq, dnorm, dsq, errbig, fopt,        &
 &        frhosq, gisq, gqsq, hdiag,      &
 &        ratio, rho, scaden, summ, summa, summb, &
-&        temp, qred, xoptsq
+&        temp, qred, xoptsq, &
+& dens(npt), distsqs(npt), hdiags(npt), weight(npt)
 integer(IK) :: i, itest, j, jj, k, kbase, knew, &
 &           kopt, ksav, nfsav, np, nresc, ntrits
 
@@ -184,11 +185,13 @@ fopt = fval(kopt)
 x = xbase + xopt  ! Set X.
 f = fopt  ! Set F.
 
-xoptsq = ZERO
-do i = 1, n
-    xopt(i) = xpt(i, kopt)
-    xoptsq = xoptsq + xopt(i)**2
-end do
+xopt = xpt(:, kopt)
+xoptsq = sum(xopt**2)
+!xoptsq = ZERO
+!do i = 1, n
+!    xopt(i) = xpt(i, kopt)
+!    xoptsq = xoptsq + xopt(i)**2
+!end do
 
 if (is_nan(f) .or. is_posinf(f)) then
     info = NAN_INF_F
@@ -230,6 +233,7 @@ nfsav = nf
             gopt = gopt + pq(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
         end do
     end if
+    !!gopt = gopt + hess_mul(xopt, xpt, pq, hq)
 end if
 !
 !     Generate the next point in the trust region that provides a small value
@@ -262,7 +266,7 @@ call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 dnorm = min(delta, sqrt(dsq))
 if (dnorm < HALF * rho) then
     ntrits = -1
-    distsq = (TEN * rho)**2
+    dsquare = (TEN * rho)**2
     if (nf <= nfsav + 2) goto 650
 !
 !     The following choice between labels 650 and 680 depends on whether or
@@ -275,20 +279,36 @@ if (dnorm < HALF * rho) then
     frhosq = 0.125_RP * rho * rho
     if (crvmin > ZERO .and. errbig > frhosq * crvmin) goto 650
     bdtol = errbig / rho
-    do j = 1, n
-        bdtest = bdtol
-        if (xnew(j) == sl(j)) bdtest = gnew(j)
-        if (xnew(j) == su(j)) bdtest = -gnew(j)
-        if (bdtest < bdtol) then
-            curv = hq(j, j)
-            do k = 1, npt
-                curv = curv + pq(k) * xpt(j, k)**2
-            end do
-            bdtest = bdtest + HALF * curv * rho
-            if (bdtest < bdtol) goto 650
-        end if
-    end do
-    goto 680
+
+    bdtest = bdtol
+    bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
+    bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
+    hqdiag = diag(hq)
+    curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
+    where (bdtest < bdtol)
+        curv = hqdiag + matprod(xpt**2, pq)
+    end where
+    !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
+    if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
+        goto 650
+    else
+        goto 680
+    end if
+
+    !do j = 1, n
+    !    bdtest = bdtol
+    !    if (xnew(j) == sl(j)) bdtest = gnew(j)
+    !    if (xnew(j) == su(j)) bdtest = -gnew(j)
+    !    if (bdtest < bdtol) then
+    !        curv = hq(j, j)
+    !        do k = 1, npt
+    !            curv = curv + pq(k) * xpt(j, k)**2
+    !        end do
+    !        bdtest = bdtest + HALF * curv * rho
+    !        if (bdtest < bdtol) goto 650
+    !    end if
+    !end do
+    !goto 680
 end if
 ntrits = ntrits + 1
 !
@@ -351,10 +371,12 @@ call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhis
 !
 xoptsq = ZERO
 if (kopt /= kbase) then
-    do i = 1, n
-        xopt(i) = xpt(i, kopt)
-        xoptsq = xoptsq + xopt(i)**2
-    end do
+    xopt = xpt(:, kopt)
+    xoptsq = sum(xopt**2)
+    !do i = 1, n
+    !    xopt(i) = xpt(i, kopt)
+    !    xoptsq = xoptsq + xopt(i)**2
+    !end do
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -421,9 +443,10 @@ end if
 
 call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, alpha, cauchy, xalt, xnew)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do i = 1, n
-    d(i) = xnew(i) - xopt(i)
-end do
+d = xnew - xopt
+!do i = 1, n
+!    d(i) = xnew(i) - xopt(i)
+!end do
 !
 !     Calculate VLAG and BETA for the current choice of D. The scalar
 !     product of D with XPT(K,.) is going to be held in W(NPT+K) for
@@ -445,10 +468,12 @@ if (ntrits == 0) then
     !denom = vlag(knew)**2 + alpha * beta
     denom = alpha * beta + vlag(knew)**2
     if (denom < cauchy .and. cauchy > ZERO) then
-        do i = 1, n
-            xnew(i) = xalt(i)
-            d(i) = xnew(i) - xopt(i)
-        end do
+        xnew = xalt
+        d = xnew - xopt
+        !do i = 1, n
+        !    xnew(i) = xalt(i)
+        !    d(i) = xnew(i) - xopt(i)
+        !end do
         cauchy = ZERO
         go to 230
     end if
@@ -469,27 +494,42 @@ if (ntrits == 0) then
 !
 else
     delsq = delta * delta
+    knew = 0
     scaden = ZERO
     biglsq = ZERO
-    knew = 0
+
+    hdiags = sum(zmat**2, dim=2)
+    dens = hdiags * beta + vlag**2
+    !distsqs = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    do k = 1, npt
+        distsqs(k) = ZERO
+        do j = 1, n
+            distsqs(k) = distsqs(k) + (xpt(j, k) - xopt(j))**2
+        end do
+    end do
+    weight = max(ONE, (distsqs / delsq)**2)
+
     do k = 1, npt
         if (k == kopt) cycle
-        hdiag = ZERO
-        do jj = 1, npt - np
-            hdiag = hdiag + zmat(k, jj)**2
-        end do
+        !hdiag = ZERO
+        !do jj = 1, npt - np
+        !    hdiag = hdiag + zmat(k, jj)**2
+        !end do
         !den = beta * hdiag + vlag(k)**2
-        den = hdiag * beta + vlag(k)**2
+        !den = hdiag * beta + vlag(k)**2
         distsq = ZERO
         do j = 1, n
             distsq = distsq + (xpt(j, k) - xopt(j))**2
         end do
         temp = max(ONE, (distsq / delsq)**2)
-        if (temp * den > scaden) then
-            scaden = temp * den
+        !if (weight(k) * dens(k) > scaden) then
+        if (temp * dens(k) > scaden) then
+            !scaden = weight(k) * dens(k)
+            scaden = temp * dens(k)
             knew = k
-            denom = den
+            denom = dens(k)
         end if
+        !biglsq = max(biglsq, weight(k) * vlag(k)**2)
         biglsq = max(biglsq, temp * vlag(k)**2)
     end do
     if (scaden <= HALF * biglsq) then
@@ -751,16 +791,16 @@ if (f <= fopt - TENTH * qred) goto 60
 !     Alternatively, find out if the interpolation points are close enough
 !       to the best point so far.
 !
-distsq = max((TWO * delta)**2, (TEN * rho)**2)
+dsquare = max((TWO * delta)**2, (TEN * rho)**2)
 650 knew = 0
 do k = 1, npt
     summ = ZERO
     do j = 1, n
         summ = summ + (xpt(j, k) - xopt(j))**2
     end do
-    if (summ > distsq) then
+    if (summ > dsquare) then
         knew = k
-        distsq = summ
+        dsquare = summ
     end if
 end do
 !
@@ -771,7 +811,7 @@ end do
 !     current RHO are complete.
 !
 if (knew > 0) then
-    dist = sqrt(distsq)
+    dist = sqrt(dsquare)
     if (ntrits == -1) then
         delta = min(TENTH * delta, HALF * dist)
         if (delta <= 1.5_RP * rho) delta = rho
