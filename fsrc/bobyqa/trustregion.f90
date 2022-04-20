@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 01, 2022 PM01:46:23
+! Last Modified: Wednesday, April 20, 2022 PM10:10:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, 
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
-use, non_intrinsic :: linalg_mod, only : issymmetric
+use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, trueloc
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: debug_mod, only : assert
 
@@ -135,66 +135,93 @@ nact = 0
 !--------------------------------------------------------------------------------------------------!
 iact = 0; itcsav = 0; itermax = n  ! Without this, G95 complains that they are used uninitialized.
 !--------------------------------------------------------------------------------------------------!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-15: SQSTP is never used
-!      SQSTP=ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do i = 1, n
-    xbdi(i) = ZERO
-    if (xopt(i) <= sl(i)) then
-        if (gopt(i) >= ZERO) xbdi(i) = -ONE
-    else if (xopt(i) >= su(i)) then
-        if (gopt(i) <= ZERO) xbdi(i) = ONE
-    end if
-    if (xbdi(i) /= ZERO) nact = nact + 1
-    d(i) = ZERO
-    gnew(i) = gopt(i)
-end do
+
+!do i = 1, n
+!    xbdi(i) = ZERO
+!    if (xopt(i) <= sl(i)) then
+!        if (gopt(i) >= ZERO) xbdi(i) = -ONE
+!    else if (xopt(i) >= su(i)) then
+!        if (gopt(i) <= ZERO) xbdi(i) = ONE
+!    end if
+!    if (xbdi(i) /= ZERO) nact = nact + 1
+!    d(i) = ZERO
+!    gnew(i) = gopt(i)
+!end do
+
+xbdi = ZERO
+xbdi(trueloc(xopt >= su .and. gopt <= 0)) = ONE
+xbdi(trueloc(xopt <= sl .and. gopt >= 0)) = -ONE
+nact = nact + count(xbdi /= 0)
+d = ZERO
+gnew = gopt
+
 delsq = delta * delta
 qred = ZERO
 crvmin = -ONE
-!
-!     Set the next search direction of the conjugate gradient method. It is
-!     the steepest descent direction initially and when the iterations are
-!     restarted because a variable has just been fixed by a bound, and of
-!     course the components of the fixed variables are ZERO. ITERMAX is an
-!     upper bound on the indices of the conjugate gradient iterations.
-!
-20 beta = ZERO
-30 stepsq = ZERO
-do i = 1, n
-    if (xbdi(i) /= ZERO) then
-        s(i) = ZERO
-    else if (beta == ZERO) then
-        s(i) = -gnew(i)
-    else
-        s(i) = beta * s(i) - gnew(i)
-    end if
-    stepsq = stepsq + s(i)**2
-end do
-if (stepsq == ZERO) goto 190
+
+! Set the next search direction of the conjugate gradient method. It is the steepest descent
+! direction initially and when the iterations are restarted because a variable has just been fixed
+! by a bound, and of course the components of the fixed variables are ZERO. ITERMAX is an upper
+! bound on the indices of the conjugate gradient iterations.
+
+20 continue
+
+beta = ZERO
+
+30 continue
+
+!stepsq = ZERO
+!do i = 1, n
+!    if (xbdi(i) /= ZERO) then
+!        s(i) = ZERO
+!    else if (beta == ZERO) then
+!        s(i) = -gnew(i)
+!    else
+!        s(i) = beta * s(i) - gnew(i)
+!    end if
+!    !stepsq = stepsq + s(i)**2
+!end do
+
+if (beta == 0) then
+    s = -gnew  ! If we are sure that S contain only finite values, we may merge this case into the next.
+else
+    s = beta * s - gnew
+end if
+s(trueloc(xbdi /= 0)) = ZERO
+stepsq = sum(s**2)
+if (stepsq <= ZERO) goto 190
+
 if (beta == ZERO) then
     gredsq = stepsq
     itermax = iterc + n - nact
 end if
 if (gredsq * delsq <= 1.0E-4_RP * qred * qred) go to 190
-!
-!     Multiply the search direction by the second derivative matrix of Q and
-!     calculate some scalars for the choice of steplength. Then set BSTEP to
-!     the length of the the step to the trust region boundary and STPLEN to
-!     the steplength, ignoring the simple bounds.
-!
+
+
+! Multiply the search direction by the second derivative matrix of Q and calculate some scalars for
+! the choice of steplength. Then set BSTEP to the length of the the step to the trust region
+! boundary and STPLEN to the steplength, ignoring the simple bounds.
+
 goto 210
-50 resid = delsq
+
+50 continue
+
+resid = delsq
 ds = ZERO
 shs = ZERO
-do i = 1, n
-    if (xbdi(i) == ZERO) then
-        resid = resid - d(i)**2
-        ds = ds + s(i) * d(i)
-        shs = shs + s(i) * hs(i)
-    end if
-end do
+
+!do i = 1, n
+!    if (xbdi(i) == ZERO) then
+!        resid = resid - d(i)**2
+!        ds = ds + s(i) * d(i)
+!        shs = shs + s(i) * hs(i)
+!    end if
+!end do
+
+resid = resid - sum(d(trueloc(xbdi == 0))**2)
+ds = inprod(d(trueloc(xbdi == 0)), s(trueloc(xbdi == 0)))
+shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
+
 if (resid <= ZERO) goto 90
 temp = sqrt(stepsq * resid + ds * ds)
 if (ds < ZERO) then
@@ -333,7 +360,7 @@ do i = 1, n
 end do
 ! Zaikun 20210926:
 !!! Should we calculate S as in TRSAPP of NEWUOA in order to
-! make sure that |S| = |D|??? Namely, do the following:
+! make sure that |S| = |D|??? Namely the following:
 ! S = something, then S = (S/norm(S))*norm(D).
 ! Also, should exit if the orthogonality of S and D is damaged, or
 ! S is  not finite.
