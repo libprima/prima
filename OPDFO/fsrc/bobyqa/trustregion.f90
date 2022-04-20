@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 20, 2022 PM09:58:15
+! Last Modified: Thursday, April 21, 2022 AM01:34:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -56,7 +56,7 @@ real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, rdnext, rdprev, redmax, rednew,       &
 &        redsav, resid, sdec, shs, sredg, ssq, stepsq, sth,&
-&        stplen, temp, tempa, tempb, xsav, xsum
+&        stplen, stplensav, temp, tempa, tempb, xsav, xsum
 integer(IK) :: i, iact, ih, isav, itcsav, iterc, itermax, iu, &
 &           j, k, nact
 
@@ -200,13 +200,16 @@ end if
 !     letting IACT be the index of the new constrained variable.
 !
 iact = 0
+stplensav = stplen
 do i = 1, n
     if (s(i) /= ZERO) then
         xsum = xopt(i) + d(i)
         if (s(i) > ZERO) then
-            temp = (su(i) - xsum) / s(i)
+            !temp = (su(i) - xsum) / s(i)
+            temp = min(stplensav * s(i), su(i) - xsum) / s(i)
         else
-            temp = (sl(i) - xsum) / s(i)
+            !temp = (sl(i) - xsum) / s(i)
+            temp = max(stplensav * s(i), sl(i) - xsum) / s(i)
         end if
         if (temp < stplen) then
             stplen = temp

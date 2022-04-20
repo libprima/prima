@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 20, 2022 PM10:10:46
+! Last Modified: Thursday, April 21, 2022 AM01:36:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,7 +58,7 @@ real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, rdnext, rdprev, redmax, rednew,       &
 &        redsav, resid, sdec, shs, sredg, ssq, stepsq, sth,&
-&        stplen, temp, tempa, tempb, xsav, xsum
+&        stplen, sbound(size(gopt)), temp, tempa, tempb, xsav, xsum(size(xopt))
 integer(IK) :: i, iact, isav, itcsav, iterc, itermax, iu, &
 &           j, k, nact
 
@@ -229,7 +229,7 @@ if (ds < ZERO) then
 ! differently from the following line. Are they different even in precise arithmetic?
 ! When DS = 0, what should be the simplest (and potentially the stablest) formulation?
 ! What if we are at the first iteration? BSTEP = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
-!if (ds <= ZERO) then  ! zaikun 20210925
+!if (ds <= ZERO) then  ! Zaikun 20210925
     bstep = (temp - ds) / stepsq
 else
     bstep = resid / (temp + ds)
@@ -239,40 +239,67 @@ if (shs > ZERO) then
     stplen = min(bstep, gredsq / shs)
 end if
 
-!
-!     Reduce STPLEN if necessary in order to preserve the simple bounds,
-!     letting IACT be the index of the new constrained variable.
-!
+! Reduce STPLEN if necessary in order to preserve the simple bounds, letting IACT be the index of
+! the new constrained variable.
 iact = 0
-do i = 1, n
-    if (s(i) /= ZERO) then
-        xsum = xopt(i) + d(i)
+xsum = xopt + d
+sbound = stplen
+! Mathematically, the WHERE constructs below can simplify MIN(STPLEN * S, SU - XSUM) to SU - XSUM
+! and MAX(STPLEN * S, SL - XSUM) to SL - XSUM, which is equivalent to Powell's original code.
+! However, overflow will occur due to huge values in SU or SL that indicate the absence of bounds,
+! and Fortran compilers will complain. It is not an issue in MATLAB/Python/Julia/R.
+where (s > 0)
+    sbound = min(stplen * s, su - xsum) / s
+end where
+where (s < 0)
+    sbound = max(stplen * s, sl - xsum) / s
+end where
+!sbound(trueloc(is_nan(sbound))) = stplen  ! Needed? No if we are sure that D and S are finite.
+iact = int(minloc([stplen, sbound], dim=1), IK) - 1_IK
+stplen = minval([stplen, sbound])
+!!MATLAB:
+!!sbound = Inf
+!!sbound(s > 0) = (su(s > 0) - xsum(s < 0)) / s(s > 0);
+!!sbound(s < 0) = (sl(s < 0) - xsum(s < 0)) / s(s < 0);
+!![stplen, iact] = min([stplen, sbound]);
+!!iact = iact - 1;
 
-        !------------------------------------------------------------------------------------------!
-        ! Powell's code as follows encounters overflow due to huge values in SU or SL.
-        !if (s(i) > ZERO) then
-        !    temp = (su(i) - xsum) / s(i)
-        !else
-        !    temp = (sl(i) - xsum) / s(i)
-        !end if
-        !if (temp < stplen) then
-        !    stplen = temp
-        !    iact = i
-        !end if
-        !------------------------------------------------------------------------------------------!
 
-        if (s(i) > 0 .and. su(i) - xsum < stplen * s(i)) then
-            stplen = (su(i) - xsum) / s(i)
-            iact = i
-        else if (s(i) < 0 .and. sl(i) - xsum > stplen * s(i)) then
-            stplen = (sl(i) - xsum) / s(i)
-            iact = i
-        end if
-    end if
-end do
-!
-!     Update CRVMIN, GNEW and D. Set SDEC to the decrease that occurs in Q.
-!
+
+!do i = 1, n
+!    if (s(i) /= ZERO) then
+
+!        !------------------------------------------------------------------------------------------!
+!        ! Powell's code as follows encounters overflow due to huge values in SU or SL.
+!        !if (s(i) > ZERO) then
+!        !    temp = (su(i) - xsum) / s(i)
+!        !else
+!        !    temp = (sl(i) - xsum) / s(i)
+!        !end if
+!        !if (temp < stplen) then
+!        !    stplen = temp
+!        !    iact = i
+!        !end if
+!        !------------------------------------------------------------------------------------------!
+
+!        if (s(i) > 0) then! .and. su(i) - xsum(i) < stplen * s(i)) then
+!            !stplen = (su(i) - xsum(i)) / s(i)
+!            temp = min(stplen * s(i), su(i) - xsum(i)) / s(i)
+!            !iact = i
+!        else if (s(i) < 0) then! .and. sl(i) - xsum(i) > stplen * s(i)) then
+!            !stplen = (sl(i) - xsum(i)) / s(i)
+!            temp = max(stplen * s(i), sl(i) - xsum(i)) / s(i)
+!            !iact = i
+!        end if
+!        if (temp < stplen) then
+!            stplen = temp
+!            iact = i
+!        end if
+!    end if
+!end do
+
+
+! Update CRVMIN, GNEW and D. Set SDEC to the decrease that occurs in Q.
 sdec = ZERO
 if (stplen > ZERO) then
     iterc = iterc + 1
