@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 20, 2022 PM07:50:29
+! Last Modified: Wednesday, April 20, 2022 PM08:05:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -99,12 +99,10 @@ real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 &        den(npt), denom, densav, diff, diffa, diffb, diffc,     &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbig, fopt,        &
 &        frhosq, gisq, gqsq, hdiag(npt),      &
-&        ratio, rho, scaden, summ, summa, summb, &
-&        temp, qred, xoptsq, &
-&        weight(npt)
+&        ratio, rho, scaden, qred, weight(npt)
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
-integer(IK) :: i, itest, j, jj, k, kbase, knew, &
-&           kopt, ksav, nfsav, np, nresc, ntrits
+integer(IK) :: i, itest, j, k, kbase, knew, &
+&           kopt, ksav, nfsav, nresc, ntrits
 
 
 ! Sizes.
@@ -168,7 +166,6 @@ su = su_in
 !
 !     Set some constants.
 !
-np = n + 1
 
 ! Initialize XBASE, XPT, FVAL, GOPT, HQ, PQ, BMAT and ZMAT together with the corresponding values of
 ! of NF and KOPT, which are the number of calls of CALFUN so far and the index of the interpolation
@@ -181,7 +178,6 @@ fopt = fval(kopt)
 x = xbase + xopt
 f = fopt
 xopt = xpt(:, kopt)
-xoptsq = sum(xopt**2)
 
 if (is_nan(f) .or. is_posinf(f)) then
     info = NAN_INF_F
@@ -293,7 +289,6 @@ if (sum(xopt**2) >= 1.0E3_RP * dsq) then
     sl = sl - xopt
     su = su - xopt
     call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
-    xoptsq = ZERO  ! Needed? Will this value be used again later? Couldn't we evaluate on site?
 end if
 
 if (ntrits == 0) goto 210
@@ -331,10 +326,8 @@ call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhis
 ! XOPT is updated now in case the branch below to label 720 is taken. Any updating of GOPT occurs
 ! after the branch below to label 20, which leads to a trust region iteration as does the branch to
 ! label 60.
-xoptsq = ZERO
 if (kopt /= kbase) then
     xopt = xpt(:, kopt)
-    xoptsq = sum(xopt**2)
 end if
 
 if (is_nan(f) .or. is_posinf(f)) then
@@ -567,9 +560,7 @@ fval(knew) = f
 xpt(:, knew) = xnew
 w(1:n) = bmat(:, knew)
 do k = 1, npt
-    summa = inprod(zmat(knew, :), zmat(k, :))
-    summb = inprod(xopt, xpt(:, k))
-    w = w + summa * summb * xpt(:, k)
+    w = w + inprod(zmat(knew, :), zmat(k, :)) * inprod(xopt, xpt(:, k)) * xpt(:, k)
 end do
 !!w = bmat(:, knew) + hess_mul(xopt, xpt, matprod(zmat, zmat(knew, :)))
 
@@ -578,9 +569,7 @@ gopt = gopt + diff * w(1:n)
 ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
 if (f < fopt) then
     kopt = knew
-    xoptsq = ZERO
     xopt = xnew
-    xoptsq = sum(xopt**2)
     do j = 1, n
         do i = 1, j
             if (i < j) gopt(j) = gopt(j) + hq(i, j) * d(i)
@@ -612,8 +601,8 @@ if (ntrits > 0) then
     gqsq = sum(pgopt**2)
 
     pgalt = galt
-    pgalt(trueloc(xopt >= su)) = max(zero, galt(trueloc(xopt >= su)))
-    pgalt(trueloc(xopt <= sl)) = min(zero, galt(trueloc(xopt <= sl)))
+    pgalt(trueloc(xopt >= su)) = max(ZERO, galt(trueloc(xopt >= su)))
+    pgalt(trueloc(xopt <= sl)) = min(ZERO, galt(trueloc(xopt <= sl)))
     gisq = sum(pgalt**2)
 
     ! Test whether to replace the new quadratic model by the least Frobenius norm interpolant,
