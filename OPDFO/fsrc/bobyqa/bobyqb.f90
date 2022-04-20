@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wed 20 Apr 2022 01:45:26 AM CST
+! Last Modified: Wednesday, April 20, 2022 AM02:15:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1003,6 +1003,7 @@ if (ntrits > 0) then
         w(k + npt) = w(k)
         w(k) = summ * w(k)
     end do
+
     gqsq = ZERO
     gisq = ZERO
     do i = 1, n
@@ -1126,7 +1127,7 @@ end if
 
 736 call rangehist(nf, xhist, fhist)
 
-close (17)
+!close (17)
 end subroutine bobyqb
 
 

@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 20, 2022 AM02:13:11
+! Last Modified: Wednesday, April 20, 2022 PM05:08:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -102,6 +102,7 @@ real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 &        ratio, rho, scaden, summ, summa, summb, &
 &        temp, qred, xoptsq, &
 &        weight(npt)
+real(RP) :: pqalt(npt), galt(size(x)), fshift(npt)
 integer(IK) :: i, itest, j, jj, k, kbase, knew, &
 &           kopt, ksav, nfsav, np, nresc, ntrits
 
@@ -527,11 +528,17 @@ end if
 !       the limit on the number of calculations of F has been reached.
 !
 360 continue
-do i = 1, n
-    x(i) = min(max(xl(i), xbase(i) + xnew(i)), xu(i))
-    if (xnew(i) == sl(i)) x(i) = xl(i)
-    if (xnew(i) == su(i)) x(i) = xu(i)
-end do
+
+x = min(max(xl, xbase + xnew), xu)
+x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
+x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
+
+!do i = 1, n
+!    x(i) = min(max(xl(i), xbase(i) + xnew(i)), xu(i))
+!    if (xnew(i) == sl(i)) x(i) = xl(i)
+!    if (xnew(i) == su(i)) x(i) = xu(i)
+!end do
+
 if (nf >= maxfun) then
     info = MAXFUN_REACHED
     goto 720
@@ -685,20 +692,30 @@ pq = pq + matprod(zmat, diff * zmat(knew, :))
 fval(knew) = f
 xpt(:, knew) = xnew
 w(1:n) = bmat(:, knew)
+
 do k = 1, npt
-    summa = ZERO
-    do jj = 1, npt - np
-        summa = summa + zmat(knew, jj) * zmat(k, jj)
-    end do
-    summb = ZERO
-    do j = 1, n
-        summb = summb + xpt(j, k) * xopt(j)
-    end do
-    temp = summa * summb
-    do i = 1, n
-        w(i) = w(i) + temp * xpt(i, k)
-    end do
+    !summa = ZERO
+    !do jj = 1, npt - np
+    !    summa = summa + zmat(knew, jj) * zmat(k, jj)
+    !end do
+
+    summa = inprod(zmat(knew, :), zmat(k, :))
+
+    !summb = ZERO
+    !do j = 1, n
+    !    summb = summb + xpt(j, k) * xopt(j)
+    !end do
+
+    summb = inprod(xopt, xpt(:, k))
+
+    !temp = summa * summb
+    !do i = 1, n
+    !    w(i) = w(i) + temp * xpt(i, k)
+    !end do
+
+    w = w + summa * summb * xpt(:, k)
 end do
+!!w = bmat(:, knew) + hess_mul(xopt, xpt, matprod(zmat, zmat(knew, :)))
 
 gopt = gopt + diff * w(1:n)
 !
@@ -707,9 +724,11 @@ gopt = gopt + diff * w(1:n)
 if (f < fopt) then
     kopt = knew
     xoptsq = ZERO
+    xopt = xnew
+    xoptsq = sum(xopt**2)
     do j = 1, n
-        xopt(j) = xnew(j)
-        xoptsq = xoptsq + xopt(j)**2
+        !xopt(j) = xnew(j)
+        !xoptsq = xoptsq + xopt(j)**2
         do i = 1, j
             if (i < j) gopt(j) = gopt(j) + hq(i, j) * d(i)
             gopt(i) = gopt(i) + hq(i, j) * d(j)
@@ -718,6 +737,7 @@ if (f < fopt) then
     do k = 1, npt
         gopt = gopt + pq(k) * inprod(d, xpt(:, k)) * xpt(:, k)
     end do
+    !!gopt = gopt + hess_mul(d, xpt, pq, hq)
 end if
 !
 !     Calculate the parameters of the least Frobenius norm interpolant to
@@ -725,46 +745,62 @@ end if
 !     into VLAG(NPT+I), I=1,2,...,N.
 !
 if (ntrits > 0) then
+    fshift = fval - fval(kopt)
+    pqalt = matprod(zmat, matprod(fshift, zmat))
+    !!galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+
+    !do k = 1, npt
+    !    vlag(k) = fval(k) - fval(kopt)
+    !    w(k) = ZERO
+    !end do
+
+    !do j = 1, npt - np
+    !    summ = ZERO
+    !    do k = 1, npt
+    !        summ = summ + zmat(k, j) * vlag(k)
+    !    end do
+    !    do k = 1, npt
+    !        w(k) = w(k) + summ * zmat(k, j)
+    !    end do
+    !end do
+
+    !do k = 1, npt
+    !    summ = ZERO
+    !    do j = 1, n
+    !        summ = summ + xpt(j, k) * xopt(j)
+    !    end do
+    !    !w(k + npt) = w(k)
+    !    pqalt(k) = w(k)
+    !    w(k) = summ * w(k)
+    !end do
+
+    w(1:npt) = pqalt * matprod(xopt, xpt)
+
+
+    !do i = 1, n
+    !summ = ZERO
+    galt = ZERO
     do k = 1, npt
-        vlag(k) = fval(k) - fval(kopt)
-        w(k) = ZERO
+        galt = galt + bmat(:, k) * fshift(k) + xpt(:, k) * w(k)
     end do
-    do j = 1, npt - np
-        summ = ZERO
-        do k = 1, npt
-            summ = summ + zmat(k, j) * vlag(k)
-        end do
-        do k = 1, npt
-            w(k) = w(k) + summ * zmat(k, j)
-        end do
-    end do
-    do k = 1, npt
-        summ = ZERO
-        do j = 1, n
-            summ = summ + xpt(j, k) * xopt(j)
-        end do
-        w(k + npt) = w(k)
-        w(k) = summ * w(k)
-    end do
+    !end do
+
     gqsq = ZERO
     gisq = ZERO
     do i = 1, n
-        summ = ZERO
-        do k = 1, npt
-            summ = summ + bmat(i, k) * vlag(k) + xpt(i, k) * w(k)
-        end do
         if (xopt(i) == sl(i)) then
             gqsq = gqsq + min(ZERO, gopt(i))**2
-            gisq = gisq + min(ZERO, summ)**2
+            gisq = gisq + min(ZERO, galt(i))**2
         else if (xopt(i) == su(i)) then
             gqsq = gqsq + max(ZERO, gopt(i))**2
-            gisq = gisq + max(ZERO, summ)**2
+            gisq = gisq + max(ZERO, galt(i))**2
         else
             gqsq = gqsq + gopt(i)**2
-            gisq = gisq + summ * summ
+            gisq = gisq + galt(i) * galt(i)
         end if
-        vlag(npt + i) = summ
+        !vlag(npt + i) = summ
     end do
+
 !
 !     Test whether to replace the new quadratic model by the least Frobenius
 !     norm interpolant, making the replacement if the test is satisfied.
@@ -772,8 +808,10 @@ if (ntrits > 0) then
     itest = itest + 1
     if (gqsq < TEN * gisq) itest = 0
     if (itest >= 3) then
-        gopt = vlag(npt + 1:npt + n)
-        pq = w(npt + 1:2 * npt)
+        !gopt = vlag(npt + 1:npt + n)
+        !pq = w(npt + 1:2 * npt)
+        gopt = galt
+        pq = pqalt
         hq = ZERO
         itest = 0
     end if
@@ -867,7 +905,7 @@ end if
 
 736 call rangehist(nf, xhist, fhist)
 
-close (16)
+!close (16)
 
 end subroutine bobyqb
 
