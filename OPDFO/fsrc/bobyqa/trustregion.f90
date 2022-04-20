@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 01, 2022 PM01:51:07
+! Last Modified: Wednesday, April 20, 2022 PM09:58:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -164,13 +164,20 @@ goto 210
 50 resid = delsq
 ds = ZERO
 shs = ZERO
+temp = ZERO
 do i = 1, n
     if (xbdi(i) == ZERO) then
-        resid = resid - d(i)**2
+        !----------------------------------!
+        ! Zaikun 20220420
+        temp = temp + d(i)**2
+        !resid = resid - d(i)**2
+        !----------------------------------!
         ds = ds + s(i) * d(i)
         shs = shs + s(i) * hs(i)
     end if
 end do
+resid = resid - temp
+
 if (resid <= ZERO) goto 90
 temp = sqrt(stepsq * resid + ds * ds)
 if (ds < ZERO) then

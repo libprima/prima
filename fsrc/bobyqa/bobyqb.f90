@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 20, 2022 PM08:05:20
+! Last Modified: Wednesday, April 20, 2022 PM09:17:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -542,6 +542,7 @@ end if
 ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update the second
 ! derivative terms of the model.
 !--------------------------------------------------------------------------------------------------!
+call assert(knew >= 1, 'KNEW >= 1', srname)
 call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
 call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
 !write (*, *) 1, denom, (sum(zmat(knew, :)**2)) * beta + vlag(knew)**2, denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)
@@ -560,7 +561,7 @@ fval(knew) = f
 xpt(:, knew) = xnew
 w(1:n) = bmat(:, knew)
 do k = 1, npt
-    w = w + inprod(zmat(knew, :), zmat(k, :)) * inprod(xopt, xpt(:, k)) * xpt(:, k)
+    w(1:n) = w(1:n) + inprod(zmat(knew, :), zmat(k, :)) * inprod(xopt, xpt(:, k)) * xpt(:, k)
 end do
 !!w = bmat(:, knew) + hess_mul(xopt, xpt, matprod(zmat, zmat(knew, :)))
 
