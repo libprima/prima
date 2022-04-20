@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 20, 2022 AM02:15:45
+! Last Modified: Wednesday, April 20, 2022 PM05:35:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1019,7 +1019,7 @@ if (ntrits > 0) then
             gisq = gisq + max(ZERO, summ)**2
         else
             gqsq = gqsq + gopt(i)**2
-            gisq = gisq + summ * summ
+            gisq = gisq + summ**2
         end if
         vlag(npt + i) = summ
     end do

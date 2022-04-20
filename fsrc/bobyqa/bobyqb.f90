@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 20, 2022 PM05:08:07
+! Last Modified: Wednesday, April 20, 2022 PM07:10:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -102,7 +102,7 @@ real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 &        ratio, rho, scaden, summ, summa, summb, &
 &        temp, qred, xoptsq, &
 &        weight(npt)
-real(RP) :: pqalt(npt), galt(size(x)), fshift(npt)
+real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 integer(IK) :: i, itest, j, jj, k, kbase, knew, &
 &           kopt, ksav, nfsav, np, nresc, ntrits
 
@@ -785,21 +785,32 @@ if (ntrits > 0) then
     end do
     !end do
 
-    gqsq = ZERO
-    gisq = ZERO
-    do i = 1, n
-        if (xopt(i) == sl(i)) then
-            gqsq = gqsq + min(ZERO, gopt(i))**2
-            gisq = gisq + min(ZERO, galt(i))**2
-        else if (xopt(i) == su(i)) then
-            gqsq = gqsq + max(ZERO, gopt(i))**2
-            gisq = gisq + max(ZERO, galt(i))**2
-        else
-            gqsq = gqsq + gopt(i)**2
-            gisq = gisq + galt(i) * galt(i)
-        end if
-        !vlag(npt + i) = summ
-    end do
+    !gqsq = ZERO
+    !gisq = ZERO
+    !do i = 1, n
+    !    if (xopt(i) == sl(i)) then
+    !        gqsq = gqsq + min(ZERO, gopt(i))**2
+    !        gisq = gisq + min(ZERO, galt(i))**2
+    !    else if (xopt(i) == su(i)) then
+    !        gqsq = gqsq + max(ZERO, gopt(i))**2
+    !        gisq = gisq + max(ZERO, galt(i))**2
+    !    else
+    !        gqsq = gqsq + gopt(i)**2
+    !        gisq = gisq + galt(i)**2
+    !    end if
+    !    !vlag(npt + i) = summ
+    !end do
+
+    pgopt = gopt
+    pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))
+    pgopt(trueloc(xopt <= sl)) = min(ZERO, gopt(trueloc(xopt <= sl)))
+    gqsq = sum(pgopt**2)
+
+    pgalt = galt
+    pgalt(trueloc(xopt >= su)) = max(zero, galt(trueloc(xopt >= su)))
+    pgalt(trueloc(xopt <= sl)) = min(zero, galt(trueloc(xopt <= sl)))
+    gisq = sum(pgalt**2)
+
 
 !
 !     Test whether to replace the new quadratic model by the least Frobenius
@@ -828,17 +839,25 @@ if (f <= fopt - TENTH * qred) goto 60
 !       to the best point so far.
 !
 dsquare = max((TWO * delta)**2, (TEN * rho)**2)
-650 knew = 0
-do k = 1, npt
-    summ = ZERO
-    do j = 1, n
-        summ = summ + (xpt(j, k) - xopt(j))**2
-    end do
-    if (summ > dsquare) then
-        knew = k
-        dsquare = summ
-    end if
-end do
+
+650 continue
+
+!knew = 0
+!do k = 1, npt
+!    summ = ZERO
+!    do j = 1, n
+!        summ = summ + (xpt(j, k) - xopt(j))**2
+!    end do
+!    if (summ > dsquare) then
+!        knew = k
+!        dsquare = summ
+!    end if
+!end do
+
+distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK  ! This line cannot be exchanged with the next.
+dsquare = maxval([dsquare, distsq])  ! This line cannot be exchanged with the last.
+
 !
 !     If KNEW is positive, then ALTMOV finds alternative new positions for
 !     the KNEW-th interpolation point within distance ADELT of XOPT. It is
@@ -895,11 +914,14 @@ if (ntrits == -1) goto 360
 !  available.
 720 if (fval(kopt) <= f .or. is_nan(f)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do i = 1, n
-        x(i) = min(max(xl(i), xbase(i) + xopt(i)), xu(i))
-        if (xopt(i) == sl(i)) x(i) = xl(i)
-        if (xopt(i) == su(i)) x(i) = xu(i)
-    end do
+    x = min(max(xl, xbase + xopt), xu)
+    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
+    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
+    !do i = 1, n
+    !    x(i) = min(max(xl(i), xbase(i) + xopt(i)), xu(i))
+    !    if (xopt(i) == sl(i)) x(i) = xl(i)
+    !    if (xopt(i) == su(i)) x(i) = xu(i)
+    !end do
     f = fval(kopt)
 end if
 
