@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Monday, April 18, 2022 PM10:36:35
+! Last Modified: Thursday, April 21, 2022 PM05:14:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -516,8 +516,8 @@ do iter = 1, maxiter
     end where
     !!MATLAB: mask = (vmultd < 0); fracmult(mask) = vmultc(mask) / (vmultc(mask) - vmultd(mask));
     ! Only the places with VMULTD < 0 is relevant below, if any.
-    frac = minval([ONE, fracmult])
     icon = int(minloc([ONE, fracmult], dim=1), IK) - 1_IK
+    frac = minval([ONE, fracmult])
     !!MATLAB: [frac, icon] = min([1, fracmult]); icon = icon - 1
 
     ! Update D, VMULTC and CVIOL.

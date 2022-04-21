@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 PM12:17:01
+! Last Modified: Thursday, April 21, 2022 PM02:29:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -299,7 +299,7 @@ if (knew /= kopt) then
 !     The nonnegative values of W(NDIM+K) are required in the search below.
 
     !----------------------------------------------------------------------------------------------!
-    write (*, *) sum(zmat(knew, :)**2) * beta + vlag(knew)**2
+    write (99, *) sum(zmat(knew, :)**2) * beta + vlag(knew)**2
     ! Without the writing, the following assertion may fail with NVFORTRAN.
     call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
     !----------------------------------------------------------------------------------------------!

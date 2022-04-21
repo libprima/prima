@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 AM08:48:30
+! Last Modified: Thursday, April 21, 2022 PM05:40:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,7 +58,7 @@ real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, rdnext, rdprev, redmax, rednew,       &
 &        redsav, resid, sdec, shs, sredg, ssq, stepsq, sth,&
-&        stplen, sbound(size(gopt)), temp, tempa, tempb, xsav, xsum(size(xopt))
+&        stplen, sbound(size(gopt)), temp, tempa, tempb, xsav, xsum(size(xopt)), xtest(size(xopt))
 integer(IK) :: i, iact, isav, itcsav, iterc, itermax, iu, &
 &           j, k, nact
 
@@ -136,18 +136,6 @@ nact = 0
 iact = 0; itcsav = 0; itermax = n  ! Without this, G95 complains that they are used uninitialized.
 !--------------------------------------------------------------------------------------------------!
 
-!do i = 1, n
-!    xbdi(i) = ZERO
-!    if (xopt(i) <= sl(i)) then
-!        if (gopt(i) >= ZERO) xbdi(i) = -ONE
-!    else if (xopt(i) >= su(i)) then
-!        if (gopt(i) <= ZERO) xbdi(i) = ONE
-!    end if
-!    if (xbdi(i) /= ZERO) nact = nact + 1
-!    d(i) = ZERO
-!    gnew(i) = gopt(i)
-!end do
-
 xbdi = ZERO
 xbdi(trueloc(xopt >= su .and. gopt <= 0)) = ONE
 xbdi(trueloc(xopt <= sl .and. gopt >= 0)) = -ONE
@@ -165,23 +153,8 @@ crvmin = -ONE
 ! bound on the indices of the conjugate gradient iterations.
 
 20 continue
-
 beta = ZERO
-
 30 continue
-
-!stepsq = ZERO
-!do i = 1, n
-!    if (xbdi(i) /= ZERO) then
-!        s(i) = ZERO
-!    else if (beta == ZERO) then
-!        s(i) = -gnew(i)
-!    else
-!        s(i) = beta * s(i) - gnew(i)
-!    end if
-!    !stepsq = stepsq + s(i)**2
-!end do
-
 if (beta == 0) then
     s = -gnew  ! If we are sure that S contain only finite values, we may merge this case into the next.
 else
@@ -197,7 +170,6 @@ if (beta == ZERO) then
 end if
 if (gredsq * delsq <= 1.0E-4_RP * qred * qred) go to 190
 
-
 ! Multiply the search direction by the second derivative matrix of Q and calculate some scalars for
 ! the choice of steplength. Then set BSTEP to the length of the the step to the trust region
 ! boundary and STPLEN to the steplength, ignoring the simple bounds.
@@ -205,20 +177,7 @@ if (gredsq * delsq <= 1.0E-4_RP * qred * qred) go to 190
 goto 210
 
 50 continue
-
-resid = delsq
-ds = ZERO
-shs = ZERO
-
-!do i = 1, n
-!    if (xbdi(i) == ZERO) then
-!        resid = resid - d(i)**2
-!        ds = ds + s(i) * d(i)
-!        shs = shs + s(i) * hs(i)
-!    end if
-!end do
-
-resid = resid - sum(d(trueloc(xbdi == 0))**2)
+resid = delsq - sum(d(trueloc(xbdi == 0))**2)
 ds = inprod(d(trueloc(xbdi == 0)), s(trueloc(xbdi == 0)))
 shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
 
@@ -243,68 +202,60 @@ end if
 ! the new constrained variable.
 iact = 0
 xsum = xopt + d
+xtest = xsum + stplen * s
 sbound = stplen
-! Mathematically, the WHERE constructs below can simplify MIN(STPLEN * S, SU - XSUM) to SU - XSUM
-! and MAX(STPLEN * S, SL - XSUM) to SL - XSUM, which is equivalent to Powell's original code.
-! However, overflow will occur due to huge values in SU or SL that indicate the absence of bounds,
-! and Fortran compilers will complain. It is not an issue in MATLAB/Python/Julia/R.
-where (s > 0 .and. xsum + stplen * s > su)
+
+! Zaikun 20220422: Theory and computation differ considerably in the calculation of STPLEN and IACT.
+! 1. Theoretically, the WHERE constructs can simplify (S > 0 .and. XTEST > SU) to (S > 0)
+! and (S < 0, XTEST < SL) to (S < 0), which will be equivalent to Powell's original code. However,
+! overflow will occur due to huge values in SU or SL that indicate the absence of bounds, and
+! Fortran compilers will complain. It is not an issue in MATLAB/Python/Julia/R.
+! 2. Theoretically, we can also simplify (S > 0 .and. XTEST > SU) to (XTEST > SU). This is because
+! the algorithm intends to ensure that SL <= XSUM <= SU, under which the inequality XTEST(I) > SU(I)
+! implies S(I) > 0. Numerically, however, XSUM may violate the bounds (slightly) due to rounding
+! errors. If we replace (S > 0 .and. XTEST > SU) with (XTEST > SU), then SBOUND(I) will be -Inf when
+! SU(I) - XSUM(I) is negative (although tiny) and S(I) is +0 (positively signed zero), which will
+! lead to STPLEN = -Inf and IACT = I > 0. This will trigger a restart of the conjugate gradient
+! method with DELSQ updated to DELSQ - D(IACT)**2; if D(IACT)**2 << DELSQ, then DELSQ can remain
+! unchanged due to rounding, leading to an infinite cycling.
+! 3. Theoretically, the WHERE construct corresponding to S > 0 can calculate SBOUND by
+! MIN(STPLEN * S, SU - XSUM) / S instead of (SU - XSUM) / S, since this quotient matters only if it
+! is less than STPLEN. The motivation is to avoid overflow even without checking XTEST > XU. However,
+! such an implementation will worsen the performance of BOBYQA significantly. Why? Note that the
+! conjugate gradient method restarts when IACT > 0. Due to rounding, MIN(STPLEN * S, SU - XSUM) / S
+! can frequently contain entries less than STPLEN, leading to a positive IACT and hence a restart.
+! This turns out harmful to the performance of the algorithm (WHY?). It can be rectified in two ways:
+! use MIN(STPLEN, (SU - XSUM) / S) instead of MIN(STPLEN*S, SU - XSUM) / S, or set IACT to a positive
+! value only if the minimum of SBOUND is surely less STPLEN, e.g. ANY(SBOUND < (ONE - EPS) * STPLEN).
+! Note that the first method does not avoid overflow and hence makes little sense.
+where (s > 0 .and. xtest > su)
     sbound = (su - xsum) / s
 end where
-where (s < 0 .and. xsum + stplen * s < sl)
+where (s < 0 .and. xtest < sl)
     sbound = (sl - xsum) / s
 end where
+!--------------------------------------------------------------------------------------------------!
+! The code below is mathematically equivalent to the above but numerically inferior as explained.
 !where (s > 0)
 !    sbound = min(stplen * s, su - xsum) / s
 !end where
 !where (s < 0)
 !    sbound = max(stplen * s, sl - xsum) / s
 !end where
-
-!sbound(trueloc(is_nan(sbound))) = stplen  ! Needed? No if we are sure that D and S are finite.
-iact = int(minloc([stplen, sbound], dim=1), IK) - 1_IK
-stplen = minval([stplen, sbound])
+!--------------------------------------------------------------------------------------------------!
+sbound(trueloc(is_nan(sbound))) = stplen  ! Needed? No if we are sure that D and S are finite.
+if (any(sbound < stplen)) then
+    iact = int(minloc(sbound, dim=1), IK)
+    stplen = minval(sbound)
+end if
 !!MATLAB:
 !!sbound = Inf
 !!sbound(s > 0) = (su(s > 0) - xsum(s < 0)) / s(s > 0);
 !!sbound(s < 0) = (sl(s < 0) - xsum(s < 0)) / s(s < 0);
-!![stplen, iact] = min([stplen, sbound]);
-!!iact = iact - 1;
-
-
-
-!do i = 1, n
-!    if (s(i) /= ZERO) then
-
-!        !------------------------------------------------------------------------------------------!
-!        ! Powell's code as follows encounters overflow due to huge values in SU or SL.
-!        !if (s(i) > ZERO) then
-!        !    temp = (su(i) - xsum) / s(i)
-!        !else
-!        !    temp = (sl(i) - xsum) / s(i)
-!        !end if
-!        !if (temp < stplen) then
-!        !    stplen = temp
-!        !    iact = i
-!        !end if
-!        !------------------------------------------------------------------------------------------!
-
-!        if (s(i) > 0) then! .and. su(i) - xsum(i) < stplen * s(i)) then
-!            !stplen = (su(i) - xsum(i)) / s(i)
-!            temp = min(stplen * s(i), su(i) - xsum(i)) / s(i)
-!            !iact = i
-!        else if (s(i) < 0) then! .and. sl(i) - xsum(i) > stplen * s(i)) then
-!            !stplen = (sl(i) - xsum(i)) / s(i)
-!            temp = max(stplen * s(i), sl(i) - xsum(i)) / s(i)
-!            !iact = i
-!        end if
-!        if (temp < stplen) then
-!            stplen = temp
-!            iact = i
-!        end if
-!    end if
-!end do
-
+!!sbound(isnan(sbound)) = stplen;
+!!if any(sbound < stplen)
+!!    [stplen, iact] = min(sbound);
+!!end
 
 ! Update CRVMIN, GNEW and D. Set SDEC to the decrease that occurs in Q.
 sdec = ZERO
@@ -333,11 +284,13 @@ end if
 !
 if (iact > 0) then
     nact = nact + 1
-    xbdi(iact) = ONE
-    if (s(iact) < ZERO) xbdi(iact) = -ONE
+    call assert(abs(s(iact)) > 0, 'S(IACT) /= 0', srname)
+    xbdi(iact) = sign(ONE, s(iact))  !!MATLAB: xbdi(iact) = sign(s(iact))
+    !xbdi(iact) = ONE
+    !if (s(iact) < ZERO) xbdi(iact) = -ONE
     delsq = delsq - d(iact)**2
     if (delsq <= ZERO) goto 90
-    goto 20
+    goto 20  ! Zaikun 20220421 Caution: infinite cycling may occur. Fix it!!!
 end if
 !
 !     If STPLEN is less than BSTEP, then either apply another conjugate
@@ -351,9 +304,12 @@ if (stplen < bstep) then
     if (sdec <= 0.01_RP * qred .or. is_nan(sdec) .or. is_nan(qred)) goto 190  ! Zaikun 20220401
     !----------------------------------------------------------------------------------------------!
     beta = gredsq / ggsav
-    goto 30
+    goto 30  ! Zaikun 20220421 Caution: infinite cycling may occur. Fix it!!!
 end if
-90 crvmin = ZERO
+
+90 continue
+
+crvmin = ZERO
 !
 !     Prepare for the alternative iteration by calculating some scalars and
 !     by multiplying the reduced D by the second derivative matrix of Q.
