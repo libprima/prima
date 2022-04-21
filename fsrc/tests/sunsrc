@@ -41,6 +41,14 @@ if [[ -f "$BOBTR" ]] ; then
     TRUELOC="trueloc(xbdi == 0)"
     sed -i "s|ds = inprod(d($TRUELOC), s($TRUELOC))|ind = $TRUELOC\nds = inprod(d(ind), s(ind))|" "$BOBTR"
     sed -i "s|shs = inprod(s($TRUELOC), hs($TRUELOC))|shs = inprod(s(ind), hs(ind))|"  "$BOBTR"
+
+    sed -i "s|d($TRUELOC) = cth * d($TRUELOC) + sth * s($TRUELOC)|ind = $TRUELOC\nd(ind) = cth*d(ind)+ sth*s(ind)|" "$BOBTR"
+    sed -i "s|dredg = inprod(d($TRUELOC), gnew($TRUELOC))|dredg = inprod(d(ind), gnew(ind))|" "$BOBTR"
+
+    sed -i "s|shs = inprod(s($TRUELOC), hs($TRUELOC))|ind = $TRUELOC\nshs = inprod(s(ind), hs(ind))|" "$BOBTR"
+    sed -i "s|dhs = inprod(d($TRUELOC), hs($TRUELOC))|hs = inprod(d(ind), hs(ind))|" "$BOBTR"
+    sed -i "s|dhd = inprod(d($TRUELOC), hred($TRUELOC))|hs = inprod(d(ind), hred(ind))|" "$BOBTR"
+
 fi
 
 exit 0
