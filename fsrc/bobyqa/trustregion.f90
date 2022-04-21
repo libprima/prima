@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM06:34:38
+! Last Modified: Thursday, April 21, 2022 PM06:53:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HALF, DEBUGGING
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, trueloc
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: debug_mod, only : assert
@@ -243,7 +243,7 @@ end where
 !--------------------------------------------------------------------------------------------------!
 sbound(trueloc(is_nan(sbound))) = stplen  ! Needed? No if we are sure that D and S are finite.
 iact = 0
-if (any(sbound < stplen)) then
+if (any(sbound < (ONE - EPS) * stplen)) then
     iact = int(minloc(sbound, dim=1), IK)
     stplen = minval(sbound)
 end if
