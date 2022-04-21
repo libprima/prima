@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 19, 2022 AM12:58:39
+! Last Modified: Thursday, April 21, 2022 PM05:33:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -267,9 +267,9 @@ alpha = minval([alpha, frac])  ! This line cannot be exchanged with the last.
 !!MATLAB: [alpha, jsav] = min([alpha, frac]); jsav = jsav - 1;
 !-----------------------------------------------------------------------!
 ! Alternative implementation:
-!if (any(ad > 0 .and. resnew / ad < alpha)) then
-!    alpha = minval(resnew / ad, mask=(ad > 0))
-!    jsav = minloc(resnew / ad, mask=(ad > 0), dim=1)
+!if (any(ad > 0 .and. frac < alpha)) then
+!    alpha = minval(frac,)
+!    jsav = int(minloc(frac, dim=1), IK)
 !end if
 !-----------------------------------------------------------------------!
 
@@ -304,7 +304,7 @@ if (alpha == alpht) goto 320
 temp = -alphm * (dg + HALF * alphm * dgd)
 if (temp <= ctest * reduct) goto 320
 if (jsav > 0) then
-    if (ss <= 0.64_RP * snsq) goto 40
+    if (ss <= 0.64_RP * snsq) goto 40  ! Caution: infinite cycling possible?
     goto 320
 end if
 if (icount == n) goto 320
