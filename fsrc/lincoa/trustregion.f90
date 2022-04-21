@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM06:04:08
+! Last Modified: Thursday, April 21, 2022 PM06:32:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -210,8 +210,8 @@ if (any(resact(1:nact) > 1.0E-4_RP * snorm)) then
 
     ! Reduce BSTEP if necessary so that the move along D also satisfies the linear constraints.
     ad = -ONE
-    frac = HUGENUM
     ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
+    frac = ONE
     restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))
     frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))
     bstep = minval([bstep, ONE, frac])  ! Indeed, BSTEP = MINVAL([BSTEP, ONE, FRAC(TRUELOC(AD>0))])
@@ -259,22 +259,24 @@ end if
 ! products of D with constraint gradients in W.
 alphm = alpha
 ad = -ONE
-!frac = HUGENUM
-frac = alpha
 ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
+frac = alpha
 frac(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) / ad(trueloc(ad > 0))
 frac(trueloc(is_nan(frac))) = alpha
-!jsav = int(minloc([alpha, frac], dim=1), IK) - 1_IK  ! This line cannot be exchanged with the next.
-!alpha = minval([alpha, frac])  ! This line cannot be exchanged with the last.
-!!MATLAB: [alpha, jsav] = min([alpha, frac]); jsav = jsav - 1;
-!-----------------------------------------------------------------------!
-! Alternative implementation:
 jsav = 0_IK
 if (any(frac < alpha)) then
     alpha = minval(frac)
     jsav = int(minloc(frac, dim=1), IK)
 end if
-!-----------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+! Alternatively, JSAV and ALPHA can be calculated as below. We prefer the implementation above:
+! 1. The above code is more explicit; in addition, it is more flexible: we can change the condition
+! ANY(FRAC < ALPHA) to ANY(FRAC < (1 - EPS) * ALPHA) or ANY(FRAC < (1 + EPS) * ALPHA),
+! depending on whether we believe a false positive or a false negative of JSAV > 0 is more harmful.
+! 2. The above version is still valid even if we exchange the two lines of JSAV and ALPHA.
+!jsav = int(minloc([alpha, frac], dim=1), IK) - 1_IK  ! This line cannot be exchanged with the next.
+!alpha = minval([alpha, frac])  ! This line cannot be exchanged with the last.
+!--------------------------------------------------------------------------------------------------!
 
 alpha = min(max(alpha, alpbd), alphm)
 if (icount == nact) alpha = min(alpha, ONE)
