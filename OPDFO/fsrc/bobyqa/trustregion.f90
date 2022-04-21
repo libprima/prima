@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 AM01:34:14
+! Last Modified: Thursday, April 21, 2022 AM09:19:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -56,7 +56,7 @@ real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, rdnext, rdprev, redmax, rednew,       &
 &        redsav, resid, sdec, shs, sredg, ssq, stepsq, sth,&
-&        stplen, stplensav, temp, tempa, tempb, xsav, xsum
+&        stplen, stplensav, temp, tempa, tempb, xsav, xsum(n), sbound(n)
 integer(IK) :: i, iact, ih, isav, itcsav, iterc, itermax, iu, &
 &           j, k, nact
 
@@ -201,19 +201,28 @@ end if
 !
 iact = 0
 stplensav = stplen
+!sbound = stplen
+xsum = xopt + d
 do i = 1, n
     if (s(i) /= ZERO) then
-        xsum = xopt(i) + d(i)
-        if (s(i) > ZERO) then
-            !temp = (su(i) - xsum) / s(i)
-            temp = min(stplensav * s(i), su(i) - xsum) / s(i)
-        else
-            !temp = (sl(i) - xsum) / s(i)
-            temp = max(stplensav * s(i), sl(i) - xsum) / s(i)
-        end if
-        if (temp < stplen) then
-            stplen = temp
-            iact = i
+        !if (s(i) > ZERO) then
+        if (s(i) > ZERO .and. xsum(i) + stplensav * s(i) > su(i)) then
+            !temp = min(stplensav * s(i), su(i) - xsum(i)) / s(i)
+            temp = (su(i) - xsum(i)) / s(i)
+            !sbound(i) = temp
+            if (temp < stplen) then
+                stplen = temp
+                iact = i
+            end if
+            !else
+        else if (s(i) < ZERO .and. xsum(i) + stplensav * s(i) < sl(i)) then
+            !temp = max(stplensav * s(i), sl(i) - xsum) / s(i)
+            temp = (sl(i) - xsum(i)) / s(i)
+            !sbound(i) = temp
+            if (temp < stplen) then
+                stplen = temp
+                iact = i
+            end if
         end if
     end if
 end do
