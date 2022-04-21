@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM10:29:39
+! Last Modified: Thursday, April 21, 2022 PM11:17:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -63,8 +63,7 @@ real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        xsav, xsum(size(xopt)), xtest(size(xopt)), &
 &        tempa, tempb
 !&        tempa(size(gopt)), tempb(size(gopt)),
-integer(IK) :: i, iact, isav, itcsav, iterc, itermax, iu, &
-&           j, k, nact
+integer(IK) :: i, iact, isav, itcsav, iterc, itermax, iu, nact
 
 ! Sizes
 n = int(size(gopt), kind(n))
@@ -96,20 +95,20 @@ end if
 !       subject to the SL and SU constraints on the variables. It satisfies
 !       as equations the bounds that become active during the calculation.
 !     D is the calculated trial step from XOPT, generated iteratively from an
-!       initial value of ZERO. Thus XNEW is XOPT+D after the final iteration.
+!       initial value of zero. Thus XNEW is XOPT+D after the final iteration.
 !     GNEW holds the gradient of the quadratic model at XOPT+D. It is updated
 !       when D is updated.
 !     XBDI is a working space vector. For I=1,2,...,N, the element XBDI(I) is
-!       set to -1.0, 0.0, or 1.0, the value being nonZERO if and only if the
+!       set to -1.0, 0.0, or 1.0, the value being nonzero if and only if the
 !       I-th variable has become fixed at a bound, the bound being SL(I) or
 !       SU(I) in the case XBDI(I)=-1.0 or XBDI(I)=1.0, respectively. This
 !       information is accumulated during the construction of XNEW.
 !     The arrays S, HS and HRED are also used for working space. They hold the
 !       current search direction, and the changes in the gradient of Q along S
 !       and the reduced D, respectively, where the reduced D is the same as D,
-!       except that the components of the fixed variables are ZERO.
+!       except that the components of the fixed variables are zero.
 !     DSQ will be set to the square of the length of XNEW-XOPT.
-!     CRVMIN is set to ZERO if D reaches the trust region boundary. Otherwise
+!     CRVMIN is set to zero if D reaches the trust region boundary. Otherwise
 !       it is set to the least curvature of H that occurs in the conjugate
 !       gradient searches that are not restricted by any constraints. The
 !       value CRVMIN=-ONE is set, however, if all of these searches are
@@ -153,7 +152,7 @@ crvmin = -ONE
 
 ! Set the next search direction of the conjugate gradient method. It is the steepest descent
 ! direction initially and when the iterations are restarted because a variable has just been fixed
-! by a bound, and of course the components of the fixed variables are ZERO. ITERMAX is an upper
+! by a bound, and of course the components of the fixed variables are zero. ITERMAX is an upper
 ! bound on the indices of the conjugate gradient iterations.
 
 20 continue
@@ -166,9 +165,9 @@ else
 end if
 s(trueloc(xbdi /= 0)) = ZERO
 stepsq = sum(s**2)
-if (stepsq <= ZERO) goto 190
+if (stepsq <= 0) goto 190
 
-if (beta == ZERO) then
+if (beta == 0) then
     gredsq = stepsq
     itermax = iterc + n - nact
 end if
@@ -185,20 +184,22 @@ resid = delsq - sum(d(trueloc(xbdi == 0))**2)
 ds = inprod(d(trueloc(xbdi == 0)), s(trueloc(xbdi == 0)))
 shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
 
-if (resid <= ZERO) goto 90
+if (resid <= 0) goto 90
 temp = sqrt(stepsq * resid + ds * ds)
-if (ds < ZERO) then
-! Zaikun 20220210: the above line is the original code of Powell. Surprisingly, it works quite
-! differently from the following line. Are they different even in precise arithmetic?
-! When DS = 0, what should be the simplest (and potentially the stablest) formulation?
-! What if we are at the first iteration? BSTEP = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
-!if (ds <= ZERO) then  ! Zaikun 20210925
+
+! Zaikun 20220210: For the IF ... ELSE ... END IF below, Powell's condition for the IF is DS < 0.
+! Mathematically, switching the condition to DS <= 0 changes nothing; indeed, the two formulations
+! of BSTEP are equivalent. However, surprisingly, DS <= 0 clearly worsens the performance of BOBYQA
+! in a test on 20220210. Why? When DS = 0, what should be the simplest (and potentially the stablest)
+! formulation? What if we are at the first iteration? BSTEP = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
+!if (ds <= 0) then  ! Zaikun 20210925
+if (ds < 0) then
     bstep = (temp - ds) / stepsq
 else
     bstep = resid / (temp + ds)
 end if
 stplen = bstep
-if (shs > ZERO) then
+if (shs > 0) then
     stplen = min(bstep, gredsq / shs)
 end if
 
@@ -274,10 +275,10 @@ end if
 
 ! Update CRVMIN, GNEW and D. Set SDEC to the decrease that occurs in Q.
 sdec = ZERO
-if (stplen > ZERO) then
+if (stplen > 0) then
     iterc = iterc + 1
     temp = shs / stepsq
-    if (iact == 0 .and. temp > ZERO) then
+    if (iact == 0 .and. temp > 0) then
         crvmin = min(crvmin, temp)
         if (crvmin == -ONE) crvmin = temp
     end if
@@ -285,34 +286,26 @@ if (stplen > ZERO) then
     gnew = gnew + stplen * hs
     gredsq = sum(gnew(trueloc(xbdi == 0))**2)
     d = d + stplen * s
-    !do i = 1, n
-    !    gnew(i) = gnew(i) + stplen * hs(i)
-    !    if (xbdi(i) == ZERO) gredsq = gredsq + gnew(i)**2
-    !    d(i) = d(i) + stplen * s(i)
-    !end do
     sdec = max(stplen * (ggsav - HALF * stplen * shs), ZERO)
     qred = qred + sdec
 end if
 !----------------------------------------------------------------------!
 !if (is_nan(stplen) .or. iterc > 100 * itermax) goto 190 ! Zaikun 20220401
 !----------------------------------------------------------------------!
-!
-!     Restart the conjugate gradient method if it has hit a new bound.
-!
+
+! Restart the conjugate gradient method if it has hit a new bound.
 if (iact > 0) then
     nact = nact + 1
     call assert(abs(s(iact)) > 0, 'S(IACT) /= 0', srname)
     xbdi(iact) = sign(ONE, s(iact))  !!MATLAB: xbdi(iact) = sign(s(iact))
     !xbdi(iact) = ONE
-    !if (s(iact) < ZERO) xbdi(iact) = -ONE
+    !if (s(iact) < 0) xbdi(iact) = -ONE
     delsq = delsq - d(iact)**2
-    if (delsq <= ZERO) goto 90
+    if (delsq <= 0) goto 90
     goto 20  ! Zaikun 20220421 Caution: infinite cycling may occur. Fix it!!!
 end if
-!
-!     If STPLEN is less than BSTEP, then either apply another conjugate
-!     gradient iteration or RETURN.
-!
+
+! If STPLEN is less than BSTEP, then either apply another conjugate gradient iteration or RETURN.
 if (stplen < bstep) then
     if (iterc == itermax) goto 190
     !if (iterc >= itermax) goto 190 ??? Zaikun 20220401
@@ -327,28 +320,14 @@ end if
 90 continue
 
 crvmin = ZERO
-!
-!     Prepare for the alternative iteration by calculating some scalars and
-!     by multiplying the reduced D by the second derivative matrix of Q.
-!
+
+
+! Prepare for the alternative iteration by calculating some scalars and by multiplying the reduced D
+! by the second derivative matrix of Q.
 
 100 continue
 
 if (nact >= n - 1) goto 190
-
-!dredsq = ZERO
-!dredg = ZERO
-!gredsq = ZERO
-!do i = 1, n
-!    if (xbdi(i) == ZERO) then
-!        dredsq = dredsq + d(i)**2
-!        dredg = dredg + d(i) * gnew(i)
-!        gredsq = gredsq + gnew(i)**2
-!        s(i) = d(i)
-!    else
-!        s(i) = ZERO
-!    end if
-!end do
 
 dredsq = sum(d(trueloc(xbdi == 0))**2)
 gredsq = sum(gnew(trueloc(xbdi == 0))**2)
@@ -359,10 +338,9 @@ s(trueloc(xbdi /= 0)) = ZERO
 itcsav = iterc
 
 goto 210
-!
-!     Let the search direction S be a linear combination of the reduced D
-!     and the reduced G that is orthogonal to the reduced D.
-!
+
+! Let the search direction S be a linear combination of the reduced D and the reduced G that is
+! orthogonal to the reduced D.
 120 continue
 
 iterc = iterc + 1
@@ -376,11 +354,9 @@ temp = sqrt(temp)
 s = (dredg * d - dredsq * gnew) / temp
 s(trueloc(xbdi /= 0)) = ZERO
 ! Zaikun 20210926:
-!!! Should we calculate S as in TRSAPP of NEWUOA in order to
-! make sure that |S| = |D|??? Namely the following:
+!!! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that |S| = |D|??? Namely:
 ! S = something, then S = (S/norm(S))*norm(D).
-! Also, should exit if the orthogonality of S and D is damaged, or
-! S is  not finite.
+! Also, should exit if the orthogonality of S and D is damaged, or S is  not finite.
 ! See the corresponding part of TRSAPP.
 sredg = -temp
 
@@ -403,26 +379,22 @@ iact = 0
 !end if
 
 do i = 1, n
-    if (xbdi(i) == ZERO) then
+    if (xbdi(i) == 0) then
         tempa = xopt(i) + d(i) - sl(i)
         tempb = su(i) - xopt(i) - d(i)
-        if (tempa <= ZERO) then
+        if (tempa <= 0) then
             nact = nact + 1
             xbdi(i) = -ONE
             goto 100
-        else if (tempb <= ZERO) then
+        else if (tempb <= 0) then
             nact = nact + 1
             xbdi(i) = ONE
             goto 100
         end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-15: RATIO is never used
-!          RATIO=ONE
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ssq = d(i)**2 + s(i)**2
         !------------------------------------------------------------------------------------------!
         !temp = ssq - (xopt(i) - sl(i))**2  ! Overflow can occur due to huge values in SL
-        !if (temp > ZERO) then
+        !if (temp > 0) then
         !------------------------------------------------------------------------------------------!
         if (xopt(i) - sl(i) < sqrt(ssq)) then
             temp = ssq - (xopt(i) - sl(i))**2
@@ -435,7 +407,7 @@ do i = 1, n
         end if
         !------------------------------------------------------------------------------------------!
         !temp = ssq - (su(i) - xopt(i))**2  ! Overflow can occur due to huge values in SU
-        !if (temp > ZERO) then
+        !if (temp > 0) then
         !------------------------------------------------------------------------------------------!
         if (su(i) - xopt(i) < sqrt(ssq)) then
             temp = ssq - (su(i) - xopt(i))**2
@@ -448,9 +420,8 @@ do i = 1, n
         end if
     end if
 end do
-!
-!     Calculate HHD and some curvatures for the alternative iteration.
-!
+
+! Calculate HHD and some curvatures for the alternative iteration.
 goto 210
 
 150 continue
@@ -459,29 +430,12 @@ shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
 dhs = inprod(d(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
 dhd = inprod(d(trueloc(xbdi == 0)), hred(trueloc(xbdi == 0)))
 
-!shs = ZERO
-!dhs = ZERO
-!dhd = ZERO
-
-!do i = 1, n
-!    if (xbdi(i) == ZERO) then
-!        shs = shs + s(i) * hs(i)
-!        dhs = dhs + d(i) * hs(i)
-!        dhd = dhd + d(i) * hred(i)
-!    end if
-!end do
-!
-!     Seek the greatest reduction in Q for a range of equally spaced values
-!     of ANGT in [0,ANGBD], where ANGT is the tangent of HALF the angle of
-!     the alternative iteration.
-!
+! Seek the greatest reduction in Q for a range of equally spaced values of ANGT in [0,ANGBD], where
+! ANGT is the tangent of HALF the angle of the alternative iteration.
 redmax = ZERO
 isav = 0
 redsav = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IU=17.0_RP*ANGBD+3.1_RP
 iu = int(17.0_RP * angbd + 3.1_RP)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do i = 1, iu
     angt = angbd * real(i, RP) / real(iu, RP)
     sth = (angt + angt) / (ONE + angt * angt)
@@ -496,10 +450,9 @@ do i = 1, iu
     end if
     redsav = rednew
 end do
-!
-!     Return if the reduction is ZERO. Otherwise, set the sine and cosine
-!     of the angle of the alternative iteration, and calculate SDEC.
-!
+
+! Return if the reduction is zero. Otherwise, set the sine and cosine of the angle of the
+! alternative iteration, and calculate SDEC.
 if (isav == 0) goto 190
 if (isav < iu) then
     temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
@@ -509,26 +462,14 @@ cth = (ONE - angt * angt) / (ONE + angt * angt)
 sth = (angt + angt) / (ONE + angt * angt)
 temp = shs + angt * (angt * dhd - dhs - dhs)
 sdec = sth * (angt * dredg - sredg - HALF * sth * temp)
-if (sdec <= ZERO) goto 190
-!
-!     Update GNEW, D and HRED. If the angle of the alternative iteration
-!     is restricted by a bound on a free variable, that variable is fixed
-!     at the bound.
-!
-!do i = 1, n
-!    !gnew(i) = gnew(i) + (cth - ONE) * hred(i) + sth * hs(i)
-!    if (xbdi(i) == ZERO) then
-!        d(i) = cth * d(i) + sth * s(i)
-!        dredg = dredg + d(i) * gnew(i)
-!        gredsq = gredsq + gnew(i)**2
-!    end if
-!    !hred(i) = cth * hred(i) + sth * hs(i)
-!end do
+if (sdec <= 0) goto 190
 
+! Update GNEW, D and HRED. If the angle of the alternative iteration is restricted by a bound on a
+! free variable, that variable is fixed at the bound.
 gnew = gnew + (cth - ONE) * hred + sth * hs
-d(trueloc(xbdi == ZERO)) = cth * d(trueloc(xbdi == ZERO)) + sth * s(trueloc(xbdi == ZERO))
-dredg = inprod(d(trueloc(xbdi == ZERO)), gnew(trueloc(xbdi == ZERO)))
-gredsq = sum(gnew(trueloc(xbdi == ZERO))**2)
+d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
+dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
+gredsq = sum(gnew(trueloc(xbdi == 0))**2)
 hred = cth * hred + sth * hs
 qred = qred + sdec
 if (iact > 0 .and. isav == iu) then
@@ -536,10 +477,9 @@ if (iact > 0 .and. isav == iu) then
     xbdi(iact) = xsav
     goto 100
 end if
-!
-!     If SDEC is sufficiently small, then RETURN after setting XNEW to
-!     XOPT+D, giving careful attention to the bounds.
-!
+
+! If SDEC is sufficiently small, then RETURN after setting XNEW to XOPT+D, giving careful attention
+! to the bounds.
 if (sdec > 0.01_RP * qred) goto 120
 
 190 continue
@@ -550,51 +490,16 @@ xnew(trueloc(xbdi == ONE)) = su(trueloc(xbdi == ONE))
 d = xnew - xopt
 dsq = sum(d**2)
 
-!dsq = ZERO
-!do i = 1, n
-!    xnew(i) = max(min(xopt(i) + d(i), su(i)), sl(i))
-!    if (xbdi(i) == -ONE) xnew(i) = sl(i)
-!    if (xbdi(i) == ONE) xnew(i) = su(i)
-!    d(i) = xnew(i) - xopt(i)
-!    dsq = dsq + d(i)**2
-!end do
-
 return
 
-!     The following instructions multiply the current S-vector by the second
-!     derivative matrix of the quadratic model, putting the product in HS.
-!     They are reached from three different parts of the software above and
-!     they can be regarded as an external subroutine.
-!
 210 continue
 
-!do j = 1, n
-!    hs(j) = ZERO
-!    do i = 1, j
-!        if (i < j) hs(j) = hs(j) + hq(i, j) * s(i)
-!        hs(i) = hs(i) + hq(i, j) * s(j)
-!    end do
-!end do
-!do k = 1, npt
-!    if (pq(k) /= ZERO) then
-!        temp = ZERO
-!        do j = 1, n
-!            temp = temp + xpt(j, k) * s(j)
-!        end do
-!        temp = temp * pq(k)
-!        do i = 1, n
-!            hs(i) = hs(i) + temp * xpt(i, k)
-!        end do
-!    end if
-!end do
-
+! The following instructions multiply the current S-vector by the second derivative matrix of the
+! quadratic model, putting the product in HS. They are reached from three different parts of the
+! software above and they can be regarded as an external subroutine.
 hs = hess_mul(s, xpt, pq, hq)
-
-if (crvmin /= ZERO) goto 50
+if (crvmin /= 0) goto 50
 if (iterc > itcsav) goto 150
-!do i = 1, n
-!    hred(i) = hs(i)
-!end do
 hred = hs
 goto 120
 
