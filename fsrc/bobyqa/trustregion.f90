@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM06:04:39
+! Last Modified: Thursday, April 21, 2022 PM06:34:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -200,10 +200,6 @@ end if
 
 ! Reduce STPLEN if necessary in order to preserve the simple bounds, letting IACT be the index of
 ! the new constrained variable.
-xsum = xopt + d
-xtest = xsum + stplen * s
-sbound = stplen
-
 ! Zaikun 20220422: Theory and computation differ considerably in the calculation of STPLEN and IACT.
 ! 1. Theoretically, the WHERE constructs can simplify (S > 0 .and. XTEST > SU) to (S > 0)
 ! and (S < 0, XTEST < SL) to (S < 0), which will be equivalent to Powell's original code. However,
@@ -220,13 +216,16 @@ sbound = stplen
 ! 3. Theoretically, the WHERE construct corresponding to S > 0 can calculate SBOUND by
 ! MIN(STPLEN * S, SU - XSUM) / S instead of (SU - XSUM) / S, since this quotient matters only if it
 ! is less than STPLEN. The motivation is to avoid overflow even without checking XTEST > XU. However,
-! such an implementation will worsen the performance of BOBYQA significantly. Why? Note that the
-! conjugate gradient method restarts when IACT > 0. Due to rounding, MIN(STPLEN * S, SU - XSUM) / S
-! can frequently contain entries less than STPLEN, leading to a positive IACT and hence a restart.
-! This turns out harmful to the performance of the algorithm (WHY?). It can be rectified in two ways:
-! use MIN(STPLEN, (SU - XSUM) / S) instead of MIN(STPLEN*S, SU - XSUM) / S, or set IACT to a positive
-! value only if the minimum of SBOUND is surely less STPLEN, e.g. ANY(SBOUND < (ONE - EPS) * STPLEN).
-! Note that the first method does not avoid overflow and hence makes little sense.
+! such an implementation worsens the performance of BOBYQA significantly in our test on 20220422.
+! Why? Note that the conjugate gradient method restarts when IACT > 0. Due to rounding errors,
+! MIN(STPLEN * S, SU - XSUM) / S can frequently contain entries less than STPLEN, leading to a
+! positive IACT and hence a restart. This turns out harmful to the performance of the algorithm (WHY?).
+! It can be rectified in two ways: use MIN(STPLEN, (SU-XSUM) / S) instead of MIN(STPLEN*S, SU-XSUM)/S,
+! or set IACT to a positive value only if the minimum of SBOUND is surely less STPLEN, e.g.
+! ANY(SBOUND < (ONE-EPS) * STPLEN). The first method does not avoid overflow and makes little sense.
+xsum = xopt + d
+xtest = xsum + stplen * s
+sbound = stplen
 where (s > 0 .and. xtest > su)
     sbound = (su - xsum) / s
 end where
@@ -248,8 +247,20 @@ if (any(sbound < stplen)) then
     iact = int(minloc(sbound, dim=1), IK)
     stplen = minval(sbound)
 end if
-!!MATLAB:
-!!sbound = Inf
+!--------------------------------------------------------------------------------------------------!
+! Alternatively, IACT and STPLEN can be calculated as below. We prefer the implementation above:
+! 1. The above code is more explicit; in addition, it is more flexible: we can change the condition
+! ANY(SBOUND < STPLEN) to ANY(SBOUND < (1 - EPS) * STPLEN) or ANY(SBOUND < (1 + EPS) * STPLEN),
+! depending on whether we believe a false positive or a false negative of IACT > 0 is more harmful
+! --- according to our test on 20220422, it is the former, as mentioned above.
+! 2. The above version is still valid even if we exchange the two lines of IACT and STPLEN.
+!iact = int(minloc([stplen, sbound], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
+!stplen = minval([stplen, sbound]) ! This line cannot be exchanged with the last
+!--------------------------------------------------------------------------------------------------!
+
+!!MATLAB code for calculating IACT and ALPHA:
+!!xsum = xopt + d;
+!!sbound = stplen;
 !!sbound(s > 0) = (su(s > 0) - xsum(s < 0)) / s(s > 0);
 !!sbound(s < 0) = (sl(s < 0) - xsum(s < 0)) / s(s < 0);
 !!sbound(isnan(sbound)) = stplen;
