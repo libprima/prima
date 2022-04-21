@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM05:33:19
+! Last Modified: Thursday, April 21, 2022 PM06:04:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, EPS, HUGENUM, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, solve, isorth, istriu, issymmetric, trueloc
 use, non_intrinsic :: powalg_mod, only : hess_mul
 
@@ -259,18 +259,21 @@ end if
 ! products of D with constraint gradients in W.
 alphm = alpha
 ad = -ONE
-frac = HUGENUM
+!frac = HUGENUM
+frac = alpha
 ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
 frac(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) / ad(trueloc(ad > 0))
-jsav = int(minloc([alpha, frac], dim=1), IK) - 1_IK  ! This line cannot be exchanged with the next.
-alpha = minval([alpha, frac])  ! This line cannot be exchanged with the last.
+frac(trueloc(is_nan(frac))) = alpha
+!jsav = int(minloc([alpha, frac], dim=1), IK) - 1_IK  ! This line cannot be exchanged with the next.
+!alpha = minval([alpha, frac])  ! This line cannot be exchanged with the last.
 !!MATLAB: [alpha, jsav] = min([alpha, frac]); jsav = jsav - 1;
 !-----------------------------------------------------------------------!
 ! Alternative implementation:
-!if (any(ad > 0 .and. frac < alpha)) then
-!    alpha = minval(frac,)
-!    jsav = int(minloc(frac, dim=1), IK)
-!end if
+jsav = 0_IK
+if (any(frac < alpha)) then
+    alpha = minval(frac)
+    jsav = int(minloc(frac, dim=1), IK)
+end if
 !-----------------------------------------------------------------------!
 
 alpha = min(max(alpha, alpbd), alphm)

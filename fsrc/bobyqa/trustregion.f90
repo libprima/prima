@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM05:40:09
+! Last Modified: Thursday, April 21, 2022 PM06:04:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -200,7 +200,6 @@ end if
 
 ! Reduce STPLEN if necessary in order to preserve the simple bounds, letting IACT be the index of
 ! the new constrained variable.
-iact = 0
 xsum = xopt + d
 xtest = xsum + stplen * s
 sbound = stplen
@@ -244,6 +243,7 @@ end where
 !end where
 !--------------------------------------------------------------------------------------------------!
 sbound(trueloc(is_nan(sbound))) = stplen  ! Needed? No if we are sure that D and S are finite.
+iact = 0
 if (any(sbound < stplen)) then
     iact = int(minloc(sbound, dim=1), IK)
     stplen = minval(sbound)
