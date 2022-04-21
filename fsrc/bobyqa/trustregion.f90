@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 AM01:36:34
+! Last Modified: Thursday, April 21, 2022 AM08:48:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -248,12 +248,19 @@ sbound = stplen
 ! and MAX(STPLEN * S, SL - XSUM) to SL - XSUM, which is equivalent to Powell's original code.
 ! However, overflow will occur due to huge values in SU or SL that indicate the absence of bounds,
 ! and Fortran compilers will complain. It is not an issue in MATLAB/Python/Julia/R.
-where (s > 0)
-    sbound = min(stplen * s, su - xsum) / s
+where (s > 0 .and. xsum + stplen * s > su)
+    sbound = (su - xsum) / s
 end where
-where (s < 0)
-    sbound = max(stplen * s, sl - xsum) / s
+where (s < 0 .and. xsum + stplen * s < sl)
+    sbound = (sl - xsum) / s
 end where
+!where (s > 0)
+!    sbound = min(stplen * s, su - xsum) / s
+!end where
+!where (s < 0)
+!    sbound = max(stplen * s, sl - xsum) / s
+!end where
+
 !sbound(trueloc(is_nan(sbound))) = stplen  ! Needed? No if we are sure that D and S are finite.
 iact = int(minloc([stplen, sbound], dim=1), IK) - 1_IK
 stplen = minval([stplen, sbound])
