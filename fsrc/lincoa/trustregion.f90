@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM06:52:17
+! Last Modified: Thursday, April 21, 2022 PM07:55:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -264,7 +264,7 @@ frac = alpha
 frac(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) / ad(trueloc(ad > 0))
 frac(trueloc(is_nan(frac))) = alpha
 jsav = 0_IK
-if (any(frac < (ONE - EPS) * alpha)) then
+if (any(frac < alpha)) then
     alpha = minval(frac)
     jsav = int(minloc(frac, dim=1), IK)
 end if
