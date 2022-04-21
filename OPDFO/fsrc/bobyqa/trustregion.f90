@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM10:15:47
+! Last Modified: Friday, April 22, 2022 AM02:21:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -393,7 +393,8 @@ redsav = ZERO
 iu = int(17.0_RP * angbd + 3.1_RP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do i = 1, iu
-    angt = angbd * real(i, RP) / real(iu, RP)
+    !angt = angbd * real(i, RP) / real(iu, RP)
+    angt = ZERO + (angbd - ZERO) * real(i, RP) / real(iu, RP)
     sth = (angt + angt) / (ONE + angt * angt)
     temp = shs + angt * (angt * dhd - dhs - dhs)
     rednew = sth * (angt * dredg - sredg - HALF * sth * temp)
@@ -413,7 +414,8 @@ end do
 if (isav == 0) goto 190
 if (isav < iu) then
     temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
-    angt = angbd * (real(isav, RP) + HALF * temp) / real(iu, RP)
+    !angt = angbd * (real(isav, RP) + HALF * temp) / real(iu, RP)
+    angt = ZERO + (angbd - ZERO) * (real(isav, RP) + HALF * temp) / real(iu, RP)
 end if
 cth = (ONE - angt * angt) / (ONE + angt * angt)
 sth = (angt + angt) / (ONE + angt * angt)
@@ -438,6 +440,7 @@ do i = 1, n
 end do
 qred = qred + sdec
 if (iact > 0 .and. isav == iu) then
+!if (iact > 0 .and. angt >= angbd) then  ! ??? Changed
     nact = nact + 1
     xbdi(iact) = xsav
     goto 100
