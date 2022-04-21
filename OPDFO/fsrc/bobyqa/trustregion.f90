@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM01:04:36
+! Last Modified: Thursday, April 21, 2022 PM10:15:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,6 +25,7 @@ subroutine trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, &
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
 use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: vm_mod, only : v2m
 
 implicit none
 
@@ -56,7 +57,7 @@ real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, rdnext, rdprev, redmax, rednew,       &
 &        redsav, resid, sdec, shs, sredg, ssq, stepsq, sth,&
-&        stplen, stplensav, temp, tempa, tempb, xsav, xsum(n), sbound(n)
+&        stplen, stplensav, temp, tempa, tempb, xsav, xsum(n), sbound(n), hqm(n, n)
 integer(IK) :: i, iact, ih, isav, itcsav, iterc, itermax, iu, &
 &           j, k, nact
 
@@ -461,27 +462,38 @@ return
 !     They are reached from three different parts of the software above and
 !     they can be regarded as an external subroutine.
 !
-210 ih = 0
-do j = 1, n
-    hs(j) = ZERO
-    do i = 1, j
-        ih = ih + 1
-        if (i < j) hs(j) = hs(j) + hq(ih) * s(i)
-        hs(i) = hs(i) + hq(ih) * s(j)
-    end do
-end do
+210 continue
+!--------------------------------------------------------!
+! Zaikun 20220422
+!ih = 0
+!do j = 1, n
+!    hs(j) = ZERO
+!    do i = 1, j
+!        ih = ih + 1
+!        if (i < j) hs(j) = hs(j) + hq(ih) * s(i)
+!        hs(i) = hs(i) + hq(ih) * s(j)
+!    end do
+!end do
+hs = ZERO
+!--------------------------------------------------------!
 do k = 1, npt
-    if (pq(k) /= ZERO) then
-        temp = ZERO
-        do j = 1, n
-            temp = temp + xpt(j, k) * s(j)
-        end do
-        temp = temp * pq(k)
-        do i = 1, n
-            hs(i) = hs(i) + temp * xpt(i, k)
-        end do
-    end if
+    !if (pq(k) /= ZERO) then
+    temp = ZERO
+    do j = 1, n
+        temp = temp + xpt(j, k) * s(j)
+    end do
+    temp = temp * pq(k)
+    do i = 1, n
+        hs(i) = hs(i) + temp * xpt(i, k)
+    end do
+    !end if
 end do
+
+hqm = v2m(hq)
+do i = 1, n
+    hs = hs + s(i) * hqm(:, i)
+end do
+
 if (crvmin /= ZERO) goto 50
 if (iterc > itcsav) goto 150
 do i = 1, n

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM06:53:00
+! Last Modified: Thursday, April 21, 2022 PM10:29:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,10 +22,11 @@ contains
 subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HALF, DEBUGGING
-use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, trueloc
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, trueloc
+use, non_intrinsic :: powalg_mod, only : hess_mul
 
 implicit none
 
@@ -58,7 +59,10 @@ real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, rdnext, rdprev, redmax, rednew,       &
 &        redsav, resid, sdec, shs, sredg, ssq, stepsq, sth,&
-&        stplen, sbound(size(gopt)), temp, tempa, tempb, xsav, xsum(size(xopt)), xtest(size(xopt))
+&        stplen, sbound(size(gopt)), temp, &
+&        xsav, xsum(size(xopt)), xtest(size(xopt)), &
+&        tempa, tempb
+!&        tempa(size(gopt)), tempb(size(gopt)),
 integer(IK) :: i, iact, isav, itcsav, iterc, itermax, iu, &
 &           j, k, nact
 
@@ -243,7 +247,7 @@ end where
 !--------------------------------------------------------------------------------------------------!
 sbound(trueloc(is_nan(sbound))) = stplen  ! Needed? No if we are sure that D and S are finite.
 iact = 0
-if (any(sbound < (ONE - EPS) * stplen)) then
+if (any(sbound < stplen)) then
     iact = int(minloc(sbound, dim=1), IK)
     stplen = minval(sbound)
 end if
@@ -278,12 +282,14 @@ if (stplen > ZERO) then
         if (crvmin == -ONE) crvmin = temp
     end if
     ggsav = gredsq
-    gredsq = ZERO
-    do i = 1, n
-        gnew(i) = gnew(i) + stplen * hs(i)
-        if (xbdi(i) == ZERO) gredsq = gredsq + gnew(i)**2
-        d(i) = d(i) + stplen * s(i)
-    end do
+    gnew = gnew + stplen * hs
+    gredsq = sum(gnew(trueloc(xbdi == 0))**2)
+    d = d + stplen * s
+    !do i = 1, n
+    !    gnew(i) = gnew(i) + stplen * hs(i)
+    !    if (xbdi(i) == ZERO) gredsq = gredsq + gnew(i)**2
+    !    d(i) = d(i) + stplen * s(i)
+    !end do
     sdec = max(stplen * (ggsav - HALF * stplen * shs), ZERO)
     qred = qred + sdec
 end if
@@ -325,40 +331,50 @@ crvmin = ZERO
 !     Prepare for the alternative iteration by calculating some scalars and
 !     by multiplying the reduced D by the second derivative matrix of Q.
 !
-100 if (nact >= n - 1) goto 190
-dredsq = ZERO
-dredg = ZERO
-gredsq = ZERO
-do i = 1, n
-    if (xbdi(i) == ZERO) then
-        dredsq = dredsq + d(i)**2
-        dredg = dredg + d(i) * gnew(i)
-        gredsq = gredsq + gnew(i)**2
-        s(i) = d(i)
-    else
-        s(i) = ZERO
-    end if
-end do
+
+100 continue
+
+if (nact >= n - 1) goto 190
+
+!dredsq = ZERO
+!dredg = ZERO
+!gredsq = ZERO
+!do i = 1, n
+!    if (xbdi(i) == ZERO) then
+!        dredsq = dredsq + d(i)**2
+!        dredg = dredg + d(i) * gnew(i)
+!        gredsq = gredsq + gnew(i)**2
+!        s(i) = d(i)
+!    else
+!        s(i) = ZERO
+!    end if
+!end do
+
+dredsq = sum(d(trueloc(xbdi == 0))**2)
+gredsq = sum(gnew(trueloc(xbdi == 0))**2)
+dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
+s = d
+s(trueloc(xbdi /= 0)) = ZERO
+
 itcsav = iterc
+
 goto 210
 !
 !     Let the search direction S be a linear combination of the reduced D
 !     and the reduced G that is orthogonal to the reduced D.
 !
-120 iterc = iterc + 1
+120 continue
+
+iterc = iterc + 1
+
 !-------------------------------------------------------!
 !if (iterc > 100 * itermax) goto 190 ! Zaikun 20220401
 !-------------------------------------------------------!
 temp = gredsq * dredsq - dredg * dredg
 if (temp <= 1.0E-4_RP * qred * qred) goto 190
 temp = sqrt(temp)
-do i = 1, n
-    if (xbdi(i) == ZERO) then
-        s(i) = (dredg * d(i) - dredsq * gnew(i)) / temp
-    else
-        s(i) = ZERO
-    end if
-end do
+s = (dredg * d - dredsq * gnew) / temp
+s(trueloc(xbdi /= 0)) = ZERO
 ! Zaikun 20210926:
 !!! Should we calculate S as in TRSAPP of NEWUOA in order to
 ! make sure that |S| = |D|??? Namely the following:
@@ -367,14 +383,25 @@ end do
 ! S is  not finite.
 ! See the corresponding part of TRSAPP.
 sredg = -temp
-!
-!     By considering the simple bounds on the variables, calculate an upper
-!     bound on the tangent of HALF the angle of the alternative iteration,
-!     namely ANGBD, except that, if already a free variable has reached a
-!     bound, there is a branch back to label 100 after fixing that variable.
-!
+
+! By considering the simple bounds on the variables, calculate an upper bound on the tangent of half
+! the angle of the alternative iteration, namely ANGBD, except that, if already a free variable has
+! reached a bound, there is a branch back to label 100 after fixing that variable.
 angbd = ONE
 iact = 0
+
+!tempa = xopt + d - sl
+!tempb = su - xopt - d
+!if (any(xbdi == 0 .and. tempa <= 0)) then
+!    xbdi(minval(trueloc(tempa <= 0))) = -ONE
+!    nact = nact + 1_IK
+!    goto 100
+!else if (any(xbdi == 0 .and. tempb <= 0)) then
+!    xbdi(minval(trueloc(tempb <= 0))) = ONE
+!    nact = nact + 1_IK
+!    goto 100
+!end if
+
 do i = 1, n
     if (xbdi(i) == ZERO) then
         tempa = xopt(i) + d(i) - sl(i)
@@ -425,16 +452,24 @@ end do
 !     Calculate HHD and some curvatures for the alternative iteration.
 !
 goto 210
-150 shs = ZERO
-dhs = ZERO
-dhd = ZERO
-do i = 1, n
-    if (xbdi(i) == ZERO) then
-        shs = shs + s(i) * hs(i)
-        dhs = dhs + d(i) * hs(i)
-        dhd = dhd + d(i) * hred(i)
-    end if
-end do
+
+150 continue
+
+shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
+dhs = inprod(d(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
+dhd = inprod(d(trueloc(xbdi == 0)), hred(trueloc(xbdi == 0)))
+
+!shs = ZERO
+!dhs = ZERO
+!dhd = ZERO
+
+!do i = 1, n
+!    if (xbdi(i) == ZERO) then
+!        shs = shs + s(i) * hs(i)
+!        dhs = dhs + d(i) * hs(i)
+!        dhd = dhd + d(i) * hred(i)
+!    end if
+!end do
 !
 !     Seek the greatest reduction in Q for a range of equally spaced values
 !     of ANGT in [0,ANGBD], where ANGT is the tangent of HALF the angle of
@@ -480,17 +515,21 @@ if (sdec <= ZERO) goto 190
 !     is restricted by a bound on a free variable, that variable is fixed
 !     at the bound.
 !
-dredg = ZERO
-gredsq = ZERO
-do i = 1, n
-    gnew(i) = gnew(i) + (cth - ONE) * hred(i) + sth * hs(i)
-    if (xbdi(i) == ZERO) then
-        d(i) = cth * d(i) + sth * s(i)
-        dredg = dredg + d(i) * gnew(i)
-        gredsq = gredsq + gnew(i)**2
-    end if
-    hred(i) = cth * hred(i) + sth * hs(i)
-end do
+!do i = 1, n
+!    !gnew(i) = gnew(i) + (cth - ONE) * hred(i) + sth * hs(i)
+!    if (xbdi(i) == ZERO) then
+!        d(i) = cth * d(i) + sth * s(i)
+!        dredg = dredg + d(i) * gnew(i)
+!        gredsq = gredsq + gnew(i)**2
+!    end if
+!    !hred(i) = cth * hred(i) + sth * hs(i)
+!end do
+
+gnew = gnew + (cth - ONE) * hred + sth * hs
+d(trueloc(xbdi == ZERO)) = cth * d(trueloc(xbdi == ZERO)) + sth * s(trueloc(xbdi == ZERO))
+dredg = inprod(d(trueloc(xbdi == ZERO)), gnew(trueloc(xbdi == ZERO)))
+gredsq = sum(gnew(trueloc(xbdi == ZERO))**2)
+hred = cth * hred + sth * hs
 qred = qred + sdec
 if (iact > 0 .and. isav == iu) then
     nact = nact + 1
@@ -502,14 +541,24 @@ end if
 !     XOPT+D, giving careful attention to the bounds.
 !
 if (sdec > 0.01_RP * qred) goto 120
-190 dsq = ZERO
-do i = 1, n
-    xnew(i) = max(min(xopt(i) + d(i), su(i)), sl(i))
-    if (xbdi(i) == -ONE) xnew(i) = sl(i)
-    if (xbdi(i) == ONE) xnew(i) = su(i)
-    d(i) = xnew(i) - xopt(i)
-    dsq = dsq + d(i)**2
-end do
+
+190 continue
+
+xnew = max(min(xopt + d, su), sl)
+xnew(trueloc(xbdi == -ONE)) = sl(trueloc(xbdi == -ONE))
+xnew(trueloc(xbdi == ONE)) = su(trueloc(xbdi == ONE))
+d = xnew - xopt
+dsq = sum(d**2)
+
+!dsq = ZERO
+!do i = 1, n
+!    xnew(i) = max(min(xopt(i) + d(i), su(i)), sl(i))
+!    if (xbdi(i) == -ONE) xnew(i) = sl(i)
+!    if (xbdi(i) == ONE) xnew(i) = su(i)
+!    d(i) = xnew(i) - xopt(i)
+!    dsq = dsq + d(i)**2
+!end do
+
 return
 
 !     The following instructions multiply the current S-vector by the second
@@ -518,30 +567,35 @@ return
 !     they can be regarded as an external subroutine.
 !
 210 continue
-do j = 1, n
-    hs(j) = ZERO
-    do i = 1, j
-        if (i < j) hs(j) = hs(j) + hq(i, j) * s(i)
-        hs(i) = hs(i) + hq(i, j) * s(j)
-    end do
-end do
-do k = 1, npt
-    if (pq(k) /= ZERO) then
-        temp = ZERO
-        do j = 1, n
-            temp = temp + xpt(j, k) * s(j)
-        end do
-        temp = temp * pq(k)
-        do i = 1, n
-            hs(i) = hs(i) + temp * xpt(i, k)
-        end do
-    end if
-end do
+
+!do j = 1, n
+!    hs(j) = ZERO
+!    do i = 1, j
+!        if (i < j) hs(j) = hs(j) + hq(i, j) * s(i)
+!        hs(i) = hs(i) + hq(i, j) * s(j)
+!    end do
+!end do
+!do k = 1, npt
+!    if (pq(k) /= ZERO) then
+!        temp = ZERO
+!        do j = 1, n
+!            temp = temp + xpt(j, k) * s(j)
+!        end do
+!        temp = temp * pq(k)
+!        do i = 1, n
+!            hs(i) = hs(i) + temp * xpt(i, k)
+!        end do
+!    end if
+!end do
+
+hs = hess_mul(s, xpt, pq, hq)
+
 if (crvmin /= ZERO) goto 50
 if (iterc > itcsav) goto 150
-do i = 1, n
-    hred(i) = hs(i)
-end do
+!do i = 1, n
+!    hred(i) = hs(i)
+!end do
+hred = hs
 goto 120
 
 end subroutine trsbox
