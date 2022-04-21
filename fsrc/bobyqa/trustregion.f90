@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM11:17:38
+! Last Modified: Friday, April 22, 2022 AM02:17:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,6 +22,7 @@ contains
 subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 
 ! Generic modules
+use, non_intrinsic :: circle_mod, only : angle_max
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
@@ -55,15 +56,14 @@ real(RP) :: hred(size(gopt))
 real(RP) :: hs(size(gopt))
 real(RP) :: s(size(gopt))
 real(RP) :: xbdi(size(gopt))
-real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
+real(RP) :: args(5), angbd, angle, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
-&        qred, rdnext, rdprev, redmax, rednew,       &
-&        redsav, resid, sdec, shs, sredg, ssq, stepsq, sth,&
+&        qred, resid, sdec, shs, sredg, ssq, stepsq, sth,&
 &        stplen, sbound(size(gopt)), temp, &
 &        xsav, xsum(size(xopt)), xtest(size(xopt)), &
 &        tempa, tempb
 !&        tempa(size(gopt)), tempb(size(gopt)),
-integer(IK) :: i, iact, isav, itcsav, iterc, itermax, iu, nact
+integer(IK) :: i, iact, itcsav, iterc, itermax, iu, nact
 
 ! Sizes
 n = int(size(gopt), kind(n))
@@ -156,8 +156,11 @@ crvmin = -ONE
 ! bound on the indices of the conjugate gradient iterations.
 
 20 continue
+
 beta = ZERO
+
 30 continue
+
 if (beta == 0) then
     s = -gnew  ! If we are sure that S contain only finite values, we may merge this case into the next.
 else
@@ -180,6 +183,7 @@ if (gredsq * delsq <= 1.0E-4_RP * qred * qred) go to 190
 goto 210
 
 50 continue
+
 resid = delsq - sum(d(trueloc(xbdi == 0))**2)
 ds = inprod(d(trueloc(xbdi == 0)), s(trueloc(xbdi == 0)))
 shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
@@ -339,12 +343,11 @@ itcsav = iterc
 
 goto 210
 
-! Let the search direction S be a linear combination of the reduced D and the reduced G that is
-! orthogonal to the reduced D.
 120 continue
 
+! Let the search direction S be a linear combination of the reduced D and the reduced G that is
+! orthogonal to the reduced D.
 iterc = iterc + 1
-
 !-------------------------------------------------------!
 !if (iterc > 100 * itermax) goto 190 ! Zaikun 20220401
 !-------------------------------------------------------!
@@ -432,47 +435,25 @@ dhd = inprod(d(trueloc(xbdi == 0)), hred(trueloc(xbdi == 0)))
 
 ! Seek the greatest reduction in Q for a range of equally spaced values of ANGT in [0,ANGBD], where
 ! ANGT is the tangent of HALF the angle of the alternative iteration.
-redmax = ZERO
-isav = 0
-redsav = ZERO
+args = [shs, dhd, dhs, dredg, sredg]
 iu = int(17.0_RP * angbd + 3.1_RP)
-do i = 1, iu
-    angt = angbd * real(i, RP) / real(iu, RP)
-    sth = (angt + angt) / (ONE + angt * angt)
-    temp = shs + angt * (angt * dhd - dhs - dhs)
-    rednew = sth * (angt * dredg - sredg - HALF * sth * temp)
-    if (rednew > redmax) then
-        redmax = rednew
-        isav = i
-        rdprev = redsav
-    else if (i == isav + 1) then
-        rdnext = rednew
-    end if
-    redsav = rednew
-end do
-
-! Return if the reduction is zero. Otherwise, set the sine and cosine of the angle of the
-! alternative iteration, and calculate SDEC.
-if (isav == 0) goto 190
-if (isav < iu) then
-    temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
-    angt = angbd * (real(isav, RP) + HALF * temp) / real(iu, RP)
-end if
-cth = (ONE - angt * angt) / (ONE + angt * angt)
-sth = (angt + angt) / (ONE + angt * angt)
-temp = shs + angt * (angt * dhd - dhs - dhs)
-sdec = sth * (angt * dredg - sredg - HALF * sth * temp)
+angle = angle_max(angle_fun_trsbox, ZERO, angbd, args, iu)  ! What about GEOSTEP?
+sdec = angle_fun_trsbox(angle, args)
 if (sdec <= 0) goto 190
 
 ! Update GNEW, D and HRED. If the angle of the alternative iteration is restricted by a bound on a
 ! free variable, that variable is fixed at the bound.
+cth = (ONE - angle * angle) / (ONE + angle * angle)
+sth = (angle + angle) / (ONE + angle * angle)
+!cth = cos(angle)
+!sth = sin(angle)
 gnew = gnew + (cth - ONE) * hred + sth * hs
 d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
 dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
 gredsq = sum(gnew(trueloc(xbdi == 0))**2)
 hred = cth * hred + sth * hs
 qred = qred + sdec
-if (iact > 0 .and. isav == iu) then
+if (iact > 0 .and. angle >= angbd) then
     nact = nact + 1
     xbdi(iact) = xsav
     goto 100
@@ -504,6 +485,55 @@ hred = hs
 goto 120
 
 end subroutine trsbox
+
+
+function angle_fun_trsbox(theta, args) result(f)
+!--------------------------------------------------------------------------------------------------!
+! This function defines the objective function of the search on the interval of an angle in TRSBOX.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+real(RP), intent(in) :: theta
+real(RP), intent(in) :: args(:)
+
+! Outputs
+real(RP) :: f
+
+! Local variables
+character(len=*), parameter :: srname = 'ANGLE_FUN_TRSBOX'
+real(RP) :: sth
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(args) == 5, 'SIZE(ARGS) == 5', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Quick return if THETA is zero.
+if (abs(theta) <= 0) then
+    f = ZERO
+    return
+end if
+
+!sth = sin(theta)
+sth = (theta + theta) / (ONE + theta * theta)
+
+! ARGS = [SHS, DHD, DHS, DREDG, SREDG]
+f = args(1) + theta * (theta * args(2) - args(3) - args(3))
+f = sth * (theta * args(4) - args(5) - HALF * sth * f)
+
+!====================!
+!  Calculation ends  !
+!====================!
+end function angle_fun_trsbox
 
 
 end module trustregion_mod

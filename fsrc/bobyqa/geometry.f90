@@ -98,7 +98,7 @@ ksav = 1_IK; ibdsav = 1_IK
 !       function subject to the constraints that have been mentiONEd, its main
 !       difference from XNEW being that XALT-XOPT is a constrained version of
 !       the Cauchy step within the trust region. An exception is that XALT is
-!       not calculated if all compONEnts of GLAG (see below) are ZERO.
+!       not calculated if all components of GLAG (see below) are ZERO.
 !     ALPHA will be set to the KNEW-th diagonal element of the H matrix.
 !     CAUCHY will be set to the square of the KNEW-th Lagrange function at
 !       the step XALT-XOPT from XOPT for the vector XALT that is returned,
@@ -111,7 +111,7 @@ ksav = 1_IK; ibdsav = 1_IK
 !       constrained Cauchy step from XOPT of the Lagrange function, followed
 !       by the downhill version of XALT when the uphill step is calculated.
 !
-!     Set the first NPT compONEnts of W to the leading elements of the
+!     Set the first NPT components of W to the leading elements of the
 !     KNEW-th column of the H matrix.
 !
 
@@ -267,8 +267,8 @@ if (ibdsav < 0) xnew(-ibdsav) = sl(-ibdsav)
 if (ibdsav > 0) xnew(ibdsav) = su(ibdsav)
 !
 !     Prepare for the iterative method that assembles the constrained Cauchy
-!     step in W. The sum of squares of the fixed compONEnts of W is formed in
-!     WFIXSQ, and the free compONEnts of W are set to BIGSTP.
+!     step in W. The sum of squares of the fixed components of W is formed in
+!     WFIXSQ, and the free components of W are set to BIGSTP.
 !
 bigstp = adelt + adelt
 iflag = 0
@@ -288,7 +288,7 @@ if (ggfree == ZERO) then
     return
 end if
 !
-!     Investigate whether more compONEnts of W can be fixed.
+!     Investigate whether more components of W can be fixed.
 !
 120 temp = adelt * adelt - wfixsq
 if (temp > ZERO) then
@@ -312,7 +312,7 @@ if (temp > ZERO) then
     if (wfixsq > wsqsav .and. ggfree > ZERO) goto 120
 end if
 !
-!     Set the remaining free compONEnts of W and all compONEnts of XALT,
+!     Set the remaining free components of W and all components of XALT,
 !     except that W may be scaled later.
 !
 gw = ZERO
