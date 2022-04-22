@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 22, 2022 PM10:24:23
+! Last Modified: Saturday, April 23, 2022 AM12:06:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -181,9 +181,6 @@ if (gredsq * delsq <= 1.0E-4_RP * qred * qred) go to 190
 ! boundary and STPLEN to the steplength, ignoring the simple bounds.
 
 hs = hess_mul(s, xpt, pq, hq)
-
-50 continue
-
 resid = delsq - sum(d(trueloc(xbdi == 0))**2)
 ds = inprod(d(trueloc(xbdi == 0)), s(trueloc(xbdi == 0)))
 shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
@@ -332,6 +329,13 @@ crvmin = ZERO
 nactsav = nact - 1
 do while (nact < n - 1)  ! Infinite cycling?
     iterc = iterc + 1
+
+    xsum = xopt + d
+    xbdi(trueloc(xbdi == 0 .and. (xsum >= su))) = ONE
+    xbdi(trueloc(xbdi == 0 .and. (xsum <= sl))) = -ONE
+    nact = nact + count(xbdi == 0 .and. (xsum <= sl .or. xsum >= su))
+    !nact = count(xbdi /= 0) !?
+
     if (nact > nactsav) then
         dredsq = sum(d(trueloc(xbdi == 0))**2)
         gredsq = sum(gnew(trueloc(xbdi == 0))**2)
@@ -364,29 +368,20 @@ do while (nact < n - 1)  ! Infinite cycling?
 
 !tempa = xopt + d - sl
 !tempb = su - xopt - d
-!if (any(xbdi == 0 .and. tempa <= 0)) then
-!    xbdi(minval(trueloc(tempa <= 0))) = -ONE
-!    nact = nact + 1_IK
-!    cycle
-!else if (any(xbdi == 0 .and. tempb <= 0)) then
-!    xbdi(minval(trueloc(tempb <= 0))) = ONE
-!    nact = nact + 1_IK
-!    cycle
-!end if
 
     do i = 1, n
         if (xbdi(i) == 0) then
             tempa = xopt(i) + d(i) - sl(i)
             tempb = su(i) - xopt(i) - d(i)
-            if (tempa <= 0) then
-                nact = nact + 1
-                xbdi(i) = -ONE
-                exit
-            else if (tempb <= 0) then
-                nact = nact + 1
-                xbdi(i) = ONE
-                exit
-            end if
+            !if (tempa <= 0) then
+            !    nact = nact + 1
+            !    xbdi(i) = -ONE
+            !    exit
+            !else if (tempb <= 0) then
+            !    nact = nact + 1
+            !    xbdi(i) = ONE
+            !    exit
+            !end if
             ssq = d(i)**2 + s(i)**2
             !------------------------------------------------------------------------------------------!
             !temp = ssq - (xopt(i) - sl(i))**2  ! Overflow can occur due to huge values in SL

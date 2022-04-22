@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 22, 2022 PM08:01:41
+! Last Modified: Saturday, April 23, 2022 AM12:07:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -328,11 +328,13 @@ do i = 1, n
     if (xbdi(i) == ZERO) then
         tempa = xopt(i) + d(i) - sl(i)
         tempb = su(i) - xopt(i) - d(i)
-        if (tempa <= ZERO) then
+        !if (tempa <= ZERO) then
+        if (xopt(i) + d(i) <= sl(i)) then
             nact = nact + 1
             xbdi(i) = -ONE
             goto 100
-        else if (tempb <= ZERO) then
+            !else if (tempb <= ZERO) then
+        else if (xopt(i) + d(i) >= su(i)) then
             nact = nact + 1
             xbdi(i) = ONE
             goto 100
