@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 22, 2022 PM01:37:22
+! Last Modified: Friday, April 22, 2022 PM10:24:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -63,7 +63,7 @@ real(RP) :: args(5), angbd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        xsav, xsum(size(xopt)), xtest(size(xopt)), &
 &        tempa, tempb
 !&        tempa(size(gopt)), tempb(size(gopt)),
-integer(IK) :: i, iact, itcsav, iterc, itermax, iu, nact
+integer(IK) :: i, iact, iterc, itermax, iu, nact, nactsav
 
 ! Sizes
 n = int(size(gopt), kind(n))
@@ -136,7 +136,7 @@ end if
 iterc = 0
 nact = 0
 !--------------------------------------------------------------------------------------------------!
-iact = 0; itcsav = 0; itermax = n  ! Without this, G95 complains that they are used uninitialized.
+iact = 0; itermax = n  ! Without this, G95 complains that they are used uninitialized.
 !--------------------------------------------------------------------------------------------------!
 
 xbdi = ZERO
@@ -180,7 +180,7 @@ if (gredsq * delsq <= 1.0E-4_RP * qred * qred) go to 190
 ! the choice of steplength. Then set BSTEP to the length of the the step to the trust region
 ! boundary and STPLEN to the steplength, ignoring the simple bounds.
 
-goto 210
+hs = hess_mul(s, xpt, pq, hq)
 
 50 continue
 
@@ -329,139 +329,130 @@ crvmin = ZERO
 ! Prepare for the alternative iteration by calculating some scalars and by multiplying the reduced D
 ! by the second derivative matrix of Q.
 
-100 continue
+nactsav = nact - 1
+do while (nact < n - 1)  ! Infinite cycling?
+    iterc = iterc + 1
+    if (nact > nactsav) then
+        dredsq = sum(d(trueloc(xbdi == 0))**2)
+        gredsq = sum(gnew(trueloc(xbdi == 0))**2)
+        dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
+        s = d
+        s(trueloc(xbdi /= 0)) = ZERO
+        hred = hess_mul(s, xpt, pq, hq)
+        nactsav = nact
+    end if
 
-if (nact >= n - 1) goto 190
-
-dredsq = sum(d(trueloc(xbdi == 0))**2)
-gredsq = sum(gnew(trueloc(xbdi == 0))**2)
-dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
-s = d
-s(trueloc(xbdi /= 0)) = ZERO
-
-itcsav = iterc
-
-goto 210
-
-120 continue
-
-! Let the search direction S be a linear combination of the reduced D and the reduced G that is
-! orthogonal to the reduced D.
-iterc = iterc + 1
-!-------------------------------------------------------!
-!if (iterc > 100 * itermax) goto 190 ! Zaikun 20220401
-!-------------------------------------------------------!
-temp = gredsq * dredsq - dredg * dredg
-if (temp <= 1.0E-4_RP * qred * qred) goto 190
-temp = sqrt(temp)
-s = (dredg * d - dredsq * gnew) / temp
-s(trueloc(xbdi /= 0)) = ZERO
-! Zaikun 20210926:
-!!! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that |S| = |D|??? Namely:
-! S = something, then S = (S/norm(S))*norm(D).
-! Also, should exit if the orthogonality of S and D is damaged, or S is  not finite.
-! See the corresponding part of TRSAPP.
-sredg = -temp
+    ! Let the search direction S be a linear combination of the reduced D and the reduced G that is
+    ! orthogonal to the reduced D.
+    temp = gredsq * dredsq - dredg * dredg
+    if (temp <= 1.0E-4_RP * qred * qred) exit
+    temp = sqrt(temp)
+    s = (dredg * d - dredsq * gnew) / temp
+    s(trueloc(xbdi /= 0)) = ZERO
+    ! Zaikun 20210926:
+    !!! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that |S| = |D|??? Namely:
+    ! S = something, then S = (S/norm(S))*norm(D).
+    ! Also, should exit if the orthogonality of S and D is damaged, or S is  not finite.
+    ! See the corresponding part of TRSAPP.
+    sredg = -temp
 
 ! By considering the simple bounds on the variables, calculate an upper bound on the TANGENT of HALF
 ! the angle of the alternative iteration, namely ANGBD, except that, if already a free variable has
 ! reached a bound, there is a branch back to label 100 after fixing that variable.
-angbd = ONE
-iact = 0
+    angbd = ONE
+    iact = 0
 
 !tempa = xopt + d - sl
 !tempb = su - xopt - d
 !if (any(xbdi == 0 .and. tempa <= 0)) then
 !    xbdi(minval(trueloc(tempa <= 0))) = -ONE
 !    nact = nact + 1_IK
-!    goto 100
+!    cycle
 !else if (any(xbdi == 0 .and. tempb <= 0)) then
 !    xbdi(minval(trueloc(tempb <= 0))) = ONE
 !    nact = nact + 1_IK
-!    goto 100
+!    cycle
 !end if
 
-do i = 1, n
-    if (xbdi(i) == 0) then
-        tempa = xopt(i) + d(i) - sl(i)
-        tempb = su(i) - xopt(i) - d(i)
-        if (tempa <= 0) then
-            nact = nact + 1
-            xbdi(i) = -ONE
-            goto 100
-        else if (tempb <= 0) then
-            nact = nact + 1
-            xbdi(i) = ONE
-            goto 100
-        end if
-        ssq = d(i)**2 + s(i)**2
-        !------------------------------------------------------------------------------------------!
-        !temp = ssq - (xopt(i) - sl(i))**2  ! Overflow can occur due to huge values in SL
-        !if (temp > 0) then
-        !------------------------------------------------------------------------------------------!
-        if (xopt(i) - sl(i) < sqrt(ssq)) then
-            temp = ssq - (xopt(i) - sl(i))**2
-            temp = sqrt(temp) - s(i)
-            if (angbd * temp > tempa) then
-                angbd = tempa / temp
-                iact = i
-                xsav = -ONE
+    do i = 1, n
+        if (xbdi(i) == 0) then
+            tempa = xopt(i) + d(i) - sl(i)
+            tempb = su(i) - xopt(i) - d(i)
+            if (tempa <= 0) then
+                nact = nact + 1
+                xbdi(i) = -ONE
+                exit
+            else if (tempb <= 0) then
+                nact = nact + 1
+                xbdi(i) = ONE
+                exit
+            end if
+            ssq = d(i)**2 + s(i)**2
+            !------------------------------------------------------------------------------------------!
+            !temp = ssq - (xopt(i) - sl(i))**2  ! Overflow can occur due to huge values in SL
+            !if (temp > 0) then
+            !------------------------------------------------------------------------------------------!
+            if (xopt(i) - sl(i) < sqrt(ssq)) then
+                temp = ssq - (xopt(i) - sl(i))**2
+                temp = sqrt(temp) - s(i)
+                if (angbd * temp > tempa) then
+                    angbd = tempa / temp
+                    iact = i
+                    xsav = -ONE
+                end if
+            end if
+            !------------------------------------------------------------------------------------------!
+            !temp = ssq - (su(i) - xopt(i))**2  ! Overflow can occur due to huge values in SU
+            !if (temp > 0) then
+            !------------------------------------------------------------------------------------------!
+            if (su(i) - xopt(i) < sqrt(ssq)) then
+                temp = ssq - (su(i) - xopt(i))**2
+                temp = sqrt(temp) + s(i)
+                if (angbd * temp > tempb) then
+                    angbd = tempb / temp
+                    iact = i
+                    xsav = ONE
+                end if
             end if
         end if
-        !------------------------------------------------------------------------------------------!
-        !temp = ssq - (su(i) - xopt(i))**2  ! Overflow can occur due to huge values in SU
-        !if (temp > 0) then
-        !------------------------------------------------------------------------------------------!
-        if (su(i) - xopt(i) < sqrt(ssq)) then
-            temp = ssq - (su(i) - xopt(i))**2
-            temp = sqrt(temp) + s(i)
-            if (angbd * temp > tempb) then
-                angbd = tempb / temp
-                iact = i
-                xsav = ONE
-            end if
-        end if
-    end if
-end do
+    end do
+    if (nact > nactsav) cycle
 
 ! Calculate HHD and some curvatures for the alternative iteration.
-goto 210
-
-150 continue
-
-shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
-dhs = inprod(d(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
-dhd = inprod(d(trueloc(xbdi == 0)), hred(trueloc(xbdi == 0)))
+    hs = hess_mul(s, xpt, pq, hq)
+    shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
+    dhs = inprod(d(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
+    dhd = inprod(d(trueloc(xbdi == 0)), hred(trueloc(xbdi == 0)))
 
 ! Seek the greatest reduction in Q for a range of equally spaced values of HANGT in [0, ANGBD], with
 ! HANGT being the TANGENT of HALF the angle of the alternative iteration.
-args = [shs, dhd, dhs, dredg, sredg]
-iu = int(17.0_RP * angbd + 3.1_RP, IK)
-hangt = hangt_max(hangt_fun_trsbox, ZERO, angbd, args, iu)  ! What about GEOSTEP?
-sdec = hangt_fun_trsbox(hangt, args)
-write (16, *) iterc, angbd, hangt, sdec, sdec <= 0, hangt >= angbd
-if (sdec <= 0) goto 190
+    args = [shs, dhd, dhs, dredg, sredg]
+    iu = int(17.0_RP * angbd + 3.1_RP, IK)
+    hangt = hangt_max(hangt_fun_trsbox, ZERO, angbd, args, iu)  ! What about GEOSTEP?
+    sdec = hangt_fun_trsbox(hangt, args)
+    if (.not. sdec > 0) exit
 
 ! Update GNEW, D and HRED. If the angle of the alternative iteration is restricted by a bound on a
 ! free variable, that variable is fixed at the bound.
-cth = (ONE - hangt * hangt) / (ONE + hangt * hangt)
-sth = (hangt + hangt) / (ONE + hangt * hangt)
-gnew = gnew + (cth - ONE) * hred + sth * hs
-d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
-dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
-gredsq = sum(gnew(trueloc(xbdi == 0))**2)
-hred = cth * hred + sth * hs
-qred = qred + sdec
-if (iact > 0 .and. hangt >= angbd) then
-    nact = nact + 1
-    xbdi(iact) = xsav
-    goto 100
-end if
+    cth = (ONE - hangt * hangt) / (ONE + hangt * hangt)
+    sth = (hangt + hangt) / (ONE + hangt * hangt)
+    gnew = gnew + (cth - ONE) * hred + sth * hs
+    d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
+    dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
+    gredsq = sum(gnew(trueloc(xbdi == 0))**2)
+    hred = cth * hred + sth * hs
+    qred = qred + sdec
+    if (iact > 0 .and. hangt >= angbd) then
+        nact = nact + 1
+        xbdi(iact) = xsav
+    elseif (.not. sdec > 0.01_RP * qred) then
+        ! If SDEC is sufficiently small, then return after setting XNEW to XOPT+D, giving careful
+        ! attention to the bounds.
+        exit
+    end if
 
 
-! If SDEC is sufficiently small, then RETURN after setting XNEW to XOPT+D, giving careful attention
-! to the bounds.
-if (sdec > 0.01_RP * qred) goto 120
+end do
 
 190 continue
 
@@ -472,17 +463,6 @@ d = xnew - xopt
 dsq = sum(d**2)
 
 return
-
-210 continue
-
-! The following instructions multiply the current S-vector by the second derivative matrix of the
-! quadratic model, putting the product in HS. They are reached from three different parts of the
-! software above and they can be regarded as an external subroutine.
-hs = hess_mul(s, xpt, pq, hq)
-if (crvmin /= 0) goto 50
-if (iterc > itcsav) goto 150
-hred = hs
-goto 120
 
 end subroutine trsbox
 
@@ -518,17 +498,13 @@ end if
 ! Calculation starts !
 !====================!
 
-! Quick return if THETA is zero.
-if (abs(hangt) <= 0) then
-    f = ZERO
-    return
+f = ZERO
+if (abs(hangt) > 0) then
+    sth = (hangt + hangt) / (ONE + hangt * hangt)
+    f = args(1) + hangt * (hangt * args(2) - args(3) - args(3))
+    f = sth * (hangt * args(4) - args(5) - HALF * sth * f)
+    ! N.B.: ARGS = [SHS, DHD, DHS, DREDG, SREDG]
 end if
-
-sth = (hangt + hangt) / (ONE + hangt * hangt)
-
-! ARGS = [SHS, DHD, DHS, DREDG, SREDG]
-f = args(1) + hangt * (hangt * args(2) - args(3) - args(3))
-f = sth * (hangt * args(4) - args(5) - HALF * sth * f)
 
 !====================!
 !  Calculation ends  !

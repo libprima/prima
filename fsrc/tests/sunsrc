@@ -36,7 +36,7 @@ if [[ -f "$LINTR" ]] ; then
 fi
 
 if [[ -f "$BOBTR" ]] ; then
-    sed -i "s|! Local variables|! Local variables\ninteger(IK), allocatable :: ind(:)|" "$BOBTR"
+    sed -i "s|character(len=\*), parameter :: srname = 'TRSBOX'|integer(IK), allocatable :: ind(:)\ncharacter(len=\*), parameter :: srname = 'TRSBOX'|" "$BOBTR"
 
     TRUELOC="trueloc(xbdi == 0)"
     sed -i "s|ds = inprod(d($TRUELOC), s($TRUELOC))|ind = $TRUELOC\nds = inprod(d(ind), s(ind))|" "$BOBTR"
