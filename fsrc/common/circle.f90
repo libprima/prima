@@ -7,7 +7,7 @@ module circle_mod
 !
 ! Started: January 2021
 !
-! Last Modified: Friday, April 22, 2022 AM02:01:14
+! Last Modified: Friday, April 22, 2022 PM01:19:19
 !
 ! N.B.: Both CIRCLE_MIN and CIRCLE_MAXABS require an input GRID_SIZE, the size of the grid used in
 ! the search. Powell chose GRID_SIZE = 50 in NEWUOA. MAGICALLY, this number works the best for
@@ -17,7 +17,7 @@ module circle_mod
 
 implicit none
 private
-public :: circle_min, circle_maxabs, angle_max
+public :: circle_min, circle_maxabs, hangt_max
 
 abstract interface
     function FUNC_WITH_ARGS(x, args) result(f)
@@ -190,7 +190,7 @@ end if
 end function circle_maxabs
 
 
-function angle_max(fun, lb, ub, args, grid_size) result(angle)
+function hangt_max(fun, lb, ub, args, grid_size) result(hangt)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF
 implicit none
 
@@ -202,7 +202,7 @@ real(RP), intent(in) :: args(:)
 integer(IK), intent(in) :: grid_size
 
 ! Outputs
-real(RP) :: angle
+real(RP) :: hangt
 
 ! Local variables
 integer(IK) :: isav, i
@@ -216,8 +216,8 @@ redmax = ZERO
 isav = 0
 redsav = ZERO
 do i = 1, grid_size
-    angle = lb + (ub - lb) * real(i, RP) / real(grid_size, RP)
-    rednew = fun(angle, args)
+    hangt = lb + (ub - lb) * real(i, RP) / real(grid_size, RP)
+    rednew = fun(hangt, args)
     if (rednew > redmax) then
         redmax = rednew
         isav = i
@@ -229,19 +229,19 @@ do i = 1, grid_size
 end do
 
 if (isav == 0) then
-    angle = lb
+    hangt = lb
 elseif (isav == grid_size) then
-    angle = ub
+    hangt = ub
 else
     temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
-    angle = lb + (ub - lb) * (real(isav, RP) + HALF * temp) / real(grid_size, RP)  ! Is this ensured to be between LB and UB?
+    hangt = lb + (ub - lb) * (real(isav, RP) + HALF * temp) / real(grid_size, RP)  ! Is this ensured to be between LB and UB?
 end if
 
 !====================!
 !  Calculation ends  !
 !====================!
 
-end function angle_max
+end function hangt_max
 
 
 end module circle_mod

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 22, 2022 AM02:21:18
+! Last Modified: Friday, April 22, 2022 PM01:54:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -411,16 +411,31 @@ end do
 !     Return if the reduction is ZERO. Otherwise, set the sine and cosine
 !     of the angle of the alternative iteration, and calculate SDEC.
 !
-if (isav == 0) goto 190
-if (isav < iu) then
+!if (isav == 0) goto 190
+!if (isav < iu) then
+!    temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
+!    !angt = angbd * (real(isav, RP) + HALF * temp) / real(iu, RP)
+!    angt = ZERO + (angbd - ZERO) * (real(isav, RP) + HALF * temp) / real(iu, RP)
+!end if
+if (isav == 0) then
+    angt = ZERO
+else if (isav < iu) then
     temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
     !angt = angbd * (real(isav, RP) + HALF * temp) / real(iu, RP)
     angt = ZERO + (angbd - ZERO) * (real(isav, RP) + HALF * temp) / real(iu, RP)
+else
+    angt = angbd
 end if
-cth = (ONE - angt * angt) / (ONE + angt * angt)
-sth = (angt + angt) / (ONE + angt * angt)
-temp = shs + angt * (angt * dhd - dhs - dhs)
-sdec = sth * (angt * dredg - sredg - HALF * sth * temp)
+if (isav == 0) then
+    sdec = ZERO
+else
+    cth = (ONE - angt * angt) / (ONE + angt * angt)
+    sth = (angt + angt) / (ONE + angt * angt)
+    temp = shs + angt * (angt * dhd - dhs - dhs)
+    sdec = sth * (angt * dredg - sredg - HALF * sth * temp)
+end if
+write (17, *) sth, cth, temp, sdec
+write (17, *) iterc, angbd, angt, sdec, sdec <= 0, angt >= angbd, isav == iu
 if (sdec <= ZERO) goto 190
 !
 !     Update GNEW, D and HRED. If the angle of the alternative iteration
