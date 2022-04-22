@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 23, 2022 AM12:07:47
+! Last Modified: Saturday, April 23, 2022 AM02:19:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -326,8 +326,10 @@ angbd = ONE
 iact = 0
 do i = 1, n
     if (xbdi(i) == ZERO) then
+        !tempa = xopt(i) + d(i) - sl(i)
+        !tempb = su(i) - xopt(i) - d(i)
         tempa = xopt(i) + d(i) - sl(i)
-        tempb = su(i) - xopt(i) - d(i)
+        tempb = su(i) - (xopt(i) + d(i))
         !if (tempa <= ZERO) then
         if (xopt(i) + d(i) <= sl(i)) then
             nact = nact + 1
@@ -346,28 +348,42 @@ do i = 1, n
         ssq = d(i)**2 + s(i)**2
         temp = ssq - (xopt(i) - sl(i))**2
         !if (temp > ZERO) then
+        !if ((xopt(i) - sl(i))**2 < ssq) then
         if (xopt(i) - sl(i) < sqrt(ssq)) then
-            temp = ssq - (xopt(i) - sl(i))**2
+            !temp = ssq - (xopt(i) - sl(i))**2
+            temp = max(ZERO, ssq - (xopt(i) - sl(i))**2)
             temp = sqrt(temp) - s(i)
-            if (angbd * temp > tempa) then
+            !if (angbd * temp > tempa) then
+            if (angbd > tempa / temp) then
                 angbd = tempa / temp
                 iact = i
                 xsav = -ONE
+            else if (is_nan(tempa / temp)) then
+                angbd = ZERO
             end if
         end if
         !temp = ssq - (su(i) - xopt(i))**2
         !if (temp > ZERO) then
+        !if ((su(i) - xopt(i))**2 < ssq) then
         if (su(i) - xopt(i) < sqrt(ssq)) then
-            temp = ssq - (su(i) - xopt(i))**2
+            !temp = ssq - (su(i) - xopt(i))**2
+            temp = max(ZERO, ssq - (su(i) - xopt(i))**2)
             temp = sqrt(temp) + s(i)
-            if (angbd * temp > tempb) then
+            !if (angbd * temp > tempb) then
+            if (angbd > tempb / temp) then
                 angbd = tempb / temp
                 iact = i
                 xsav = ONE
+            elseif (is_nan(tempb / temp)) then
+                angbd = ZERO
             end if
         end if
     end if
 end do
+!-------------------------------!
+! Zaikun 20220422
+if (angbd <= 0) goto 190 
+!-------------------------------!
 !
 !     Calculate HHD and some curvatures for the alternative iteration.
 !

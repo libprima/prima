@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 23, 2022 AM12:06:42
+! Last Modified: Saturday, April 23, 2022 AM02:28:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,11 +58,12 @@ real(RP) :: s(size(gopt))
 real(RP) :: xbdi(size(gopt))
 real(RP) :: args(5), angbd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
-&        qred, resid, sdec, shs, sredg, ssq, stepsq, sth,&
+&        qred, resid, sdec, shs, sredg, stepsq, sth,&
 &        stplen, sbound(size(gopt)), temp, &
 &        xsav, xsum(size(xopt)), xtest(size(xopt)), &
 &        tempa, tempb
 !&        tempa(size(gopt)), tempb(size(gopt)),
+real(RP) :: ssq(size(gopt)), tang(size(gopt)), bdi(size(gopt))
 integer(IK) :: i, iact, iterc, itermax, iu, nact, nactsav
 
 ! Sizes
@@ -363,55 +364,70 @@ do while (nact < n - 1)  ! Infinite cycling?
 ! By considering the simple bounds on the variables, calculate an upper bound on the TANGENT of HALF
 ! the angle of the alternative iteration, namely ANGBD, except that, if already a free variable has
 ! reached a bound, there is a branch back to label 100 after fixing that variable.
-    angbd = ONE
-    iact = 0
-
 !tempa = xopt + d - sl
 !tempb = su - xopt - d
 
-    do i = 1, n
-        if (xbdi(i) == 0) then
-            tempa = xopt(i) + d(i) - sl(i)
-            tempb = su(i) - xopt(i) - d(i)
-            !if (tempa <= 0) then
-            !    nact = nact + 1
-            !    xbdi(i) = -ONE
-            !    exit
-            !else if (tempb <= 0) then
-            !    nact = nact + 1
-            !    xbdi(i) = ONE
-            !    exit
-            !end if
-            ssq = d(i)**2 + s(i)**2
-            !------------------------------------------------------------------------------------------!
-            !temp = ssq - (xopt(i) - sl(i))**2  ! Overflow can occur due to huge values in SL
-            !if (temp > 0) then
-            !------------------------------------------------------------------------------------------!
-            if (xopt(i) - sl(i) < sqrt(ssq)) then
-                temp = ssq - (xopt(i) - sl(i))**2
-                temp = sqrt(temp) - s(i)
-                if (angbd * temp > tempa) then
-                    angbd = tempa / temp
-                    iact = i
-                    xsav = -ONE
-                end if
-            end if
-            !------------------------------------------------------------------------------------------!
-            !temp = ssq - (su(i) - xopt(i))**2  ! Overflow can occur due to huge values in SU
-            !if (temp > 0) then
-            !------------------------------------------------------------------------------------------!
-            if (su(i) - xopt(i) < sqrt(ssq)) then
-                temp = ssq - (su(i) - xopt(i))**2
-                temp = sqrt(temp) + s(i)
-                if (angbd * temp > tempb) then
-                    angbd = tempb / temp
-                    iact = i
-                    xsav = ONE
-                end if
-            end if
-        end if
-    end do
-    if (nact > nactsav) cycle
+    ssq = d**2 + s**2
+    bdi = ZERO
+    !bdi(trueloc(xbdi == 0 .and. (xopt - sl)**2 < ssq)) = -ONE
+    !bdi(trueloc(xbdi == 0 .and. (su - xopt)**2 < ssq)) = ONE
+    bdi(trueloc(xbdi == 0 .and. xopt - sl < sqrt(ssq))) = -ONE
+    bdi(trueloc(xbdi == 0 .and. su - xopt < sqrt(ssq))) = ONE
+
+    tang = ONE
+    where (bdi < 0)
+        tang = (xsum - sl) / (sqrt(max(ZERO, ssq - (xopt - sl)**2)) - s)
+    end where
+    where (bdi > 0)
+        tang = (su - xsum) / (sqrt(max(ZERO, ssq - (su - xopt)**2)) + s)
+    end where
+    tang(trueloc(is_nan(tang))) = ZERO
+
+    iact = 0
+    angbd = ONE
+    if (any(tang < 1)) then
+        iact = int(minloc(tang, dim=1), IK)
+        angbd = minval(tang)
+    end if
+    if (angbd <= 0) exit
+
+
+    !iact = 0
+    !angbd = ONE
+    !do i = 1, n
+    !    if (xbdi(i) == 0) then
+    !        tempa = xopt(i) + d(i) - sl(i)
+    !        tempb = su(i) - xopt(i) - d(i)
+    !        ssq = d(i)**2 + s(i)**2
+    !        !------------------------------------------------------------------------------------------!
+    !        !temp = ssq - (xopt(i) - sl(i))**2  ! Overflow can occur due to huge values in SL
+    !        !if (temp > 0) then
+    !        !------------------------------------------------------------------------------------------!
+    !        if (xopt(i) - sl(i) < sqrt(ssq)) then
+    !            temp = ssq - (xopt(i) - sl(i))**2
+    !            temp = sqrt(temp) - s(i)
+    !            if (angbd * temp > tempa) then
+    !                angbd = tempa / temp
+    !                iact = i
+    !                xsav = -ONE
+    !            end if
+    !        end if
+    !        !------------------------------------------------------------------------------------------!
+    !        !temp = ssq - (su(i) - xopt(i))**2  ! Overflow can occur due to huge values in SU
+    !        !if (temp > 0) then
+    !        !------------------------------------------------------------------------------------------!
+    !        if (su(i) - xopt(i) < sqrt(ssq)) then
+    !            temp = ssq - (su(i) - xopt(i))**2
+    !            temp = sqrt(temp) + s(i)
+    !            if (angbd * temp > tempb) then
+    !                angbd = tempb / temp
+    !                iact = i
+    !                xsav = ONE
+    !            end if
+    !        end if
+    !    end if
+    !end do
+    !!if (nact > nactsav) cycle
 
 ! Calculate HHD and some curvatures for the alternative iteration.
     hs = hess_mul(s, xpt, pq, hq)
@@ -439,7 +455,8 @@ do while (nact < n - 1)  ! Infinite cycling?
     qred = qred + sdec
     if (iact > 0 .and. hangt >= angbd) then
         nact = nact + 1
-        xbdi(iact) = xsav
+        !xbdi(iact) = xsav
+        xbdi(iact) = bdi(iact)
     elseif (.not. sdec > 0.01_RP * qred) then
         ! If SDEC is sufficiently small, then return after setting XNEW to XOPT+D, giving careful
         ! attention to the bounds.

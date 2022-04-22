@@ -7,7 +7,7 @@ module circle_mod
 !
 ! Started: January 2021
 !
-! Last Modified: Friday, April 22, 2022 PM01:19:19
+! Last Modified: Saturday, April 23, 2022 AM01:47:08
 !
 ! N.B.: Both CIRCLE_MIN and CIRCLE_MAXABS require an input GRID_SIZE, the size of the grid used in
 ! the search. Powell chose GRID_SIZE = 50 in NEWUOA. MAGICALLY, this number works the best for
@@ -212,29 +212,33 @@ real(RP) :: redmax, redsav, rednew, rdnext, rdprev, temp
 ! Calculation starts !
 !====================!
 
-redmax = ZERO
-isav = 0
-redsav = ZERO
-do i = 1, grid_size
-    hangt = lb + (ub - lb) * real(i, RP) / real(grid_size, RP)
-    rednew = fun(hangt, args)
-    if (rednew > redmax) then
-        redmax = rednew
-        isav = i
-        rdprev = redsav
-    else if (i == isav + 1) then
-        rdnext = rednew
-    end if
-    redsav = rednew
-end do
+hangt = lb
 
-if (isav == 0) then
-    hangt = lb
-elseif (isav == grid_size) then
-    hangt = ub
-else
-    temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
-    hangt = lb + (ub - lb) * (real(isav, RP) + HALF * temp) / real(grid_size, RP)  ! Is this ensured to be between LB and UB?
+if (ub > lb) then
+    redmax = ZERO
+    isav = 0
+    redsav = ZERO
+    do i = 1, grid_size
+        hangt = lb + (ub - lb) * real(i, RP) / real(grid_size, RP)
+        rednew = fun(hangt, args)
+        if (rednew > redmax) then
+            redmax = rednew
+            isav = i
+            rdprev = redsav
+        else if (i == isav + 1) then
+            rdnext = rednew
+        end if
+        redsav = rednew
+    end do
+
+    if (isav == 0) then
+        hangt = lb
+    elseif (isav == grid_size) then
+        hangt = ub
+    else
+        temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
+        hangt = lb + (ub - lb) * (real(isav, RP) + HALF * temp) / real(grid_size, RP)  ! Is this ensured to be between LB and UB?
+    end if
 end if
 
 !====================!
