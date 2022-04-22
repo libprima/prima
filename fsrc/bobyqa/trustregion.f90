@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 22, 2022 AM02:17:12
+! Last Modified: Friday, April 22, 2022 PM01:37:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 
 ! Generic modules
-use, non_intrinsic :: circle_mod, only : angle_max
+use, non_intrinsic :: circle_mod, only : hangt_max
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
@@ -56,7 +56,7 @@ real(RP) :: hred(size(gopt))
 real(RP) :: hs(size(gopt))
 real(RP) :: s(size(gopt))
 real(RP) :: xbdi(size(gopt))
-real(RP) :: args(5), angbd, angle, beta, bstep, cth, delsq, dhd, dhs,    &
+real(RP) :: args(5), angbd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, resid, sdec, shs, sredg, ssq, stepsq, sth,&
 &        stplen, sbound(size(gopt)), temp, &
@@ -363,7 +363,7 @@ s(trueloc(xbdi /= 0)) = ZERO
 ! See the corresponding part of TRSAPP.
 sredg = -temp
 
-! By considering the simple bounds on the variables, calculate an upper bound on the tangent of half
+! By considering the simple bounds on the variables, calculate an upper bound on the TANGENT of HALF
 ! the angle of the alternative iteration, namely ANGBD, except that, if already a free variable has
 ! reached a bound, there is a branch back to label 100 after fixing that variable.
 angbd = ONE
@@ -433,31 +433,31 @@ shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
 dhs = inprod(d(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
 dhd = inprod(d(trueloc(xbdi == 0)), hred(trueloc(xbdi == 0)))
 
-! Seek the greatest reduction in Q for a range of equally spaced values of ANGT in [0,ANGBD], where
-! ANGT is the tangent of HALF the angle of the alternative iteration.
+! Seek the greatest reduction in Q for a range of equally spaced values of HANGT in [0, ANGBD], with
+! HANGT being the TANGENT of HALF the angle of the alternative iteration.
 args = [shs, dhd, dhs, dredg, sredg]
-iu = int(17.0_RP * angbd + 3.1_RP)
-angle = angle_max(angle_fun_trsbox, ZERO, angbd, args, iu)  ! What about GEOSTEP?
-sdec = angle_fun_trsbox(angle, args)
+iu = int(17.0_RP * angbd + 3.1_RP, IK)
+hangt = hangt_max(hangt_fun_trsbox, ZERO, angbd, args, iu)  ! What about GEOSTEP?
+sdec = hangt_fun_trsbox(hangt, args)
+write (16, *) iterc, angbd, hangt, sdec, sdec <= 0, hangt >= angbd
 if (sdec <= 0) goto 190
 
 ! Update GNEW, D and HRED. If the angle of the alternative iteration is restricted by a bound on a
 ! free variable, that variable is fixed at the bound.
-cth = (ONE - angle * angle) / (ONE + angle * angle)
-sth = (angle + angle) / (ONE + angle * angle)
-!cth = cos(angle)
-!sth = sin(angle)
+cth = (ONE - hangt * hangt) / (ONE + hangt * hangt)
+sth = (hangt + hangt) / (ONE + hangt * hangt)
 gnew = gnew + (cth - ONE) * hred + sth * hs
 d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
 dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
 gredsq = sum(gnew(trueloc(xbdi == 0))**2)
 hred = cth * hred + sth * hs
 qred = qred + sdec
-if (iact > 0 .and. angle >= angbd) then
+if (iact > 0 .and. hangt >= angbd) then
     nact = nact + 1
     xbdi(iact) = xsav
     goto 100
 end if
+
 
 ! If SDEC is sufficiently small, then RETURN after setting XNEW to XOPT+D, giving careful attention
 ! to the bounds.
@@ -487,9 +487,10 @@ goto 120
 end subroutine trsbox
 
 
-function angle_fun_trsbox(theta, args) result(f)
+function hangt_fun_trsbox(hangt, args) result(f)
 !--------------------------------------------------------------------------------------------------!
-! This function defines the objective function of the search on the interval of an angle in TRSBOX.
+! This function defines the objective function of the search for HANGT in TRSBOX, with HANGT being
+! the TANGENT of HALF the angle of the "alternative iteration".
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
@@ -498,7 +499,7 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: theta
+real(RP), intent(in) :: hangt
 real(RP), intent(in) :: args(:)
 
 ! Outputs
@@ -518,22 +519,21 @@ end if
 !====================!
 
 ! Quick return if THETA is zero.
-if (abs(theta) <= 0) then
+if (abs(hangt) <= 0) then
     f = ZERO
     return
 end if
 
-!sth = sin(theta)
-sth = (theta + theta) / (ONE + theta * theta)
+sth = (hangt + hangt) / (ONE + hangt * hangt)
 
 ! ARGS = [SHS, DHD, DHS, DREDG, SREDG]
-f = args(1) + theta * (theta * args(2) - args(3) - args(3))
-f = sth * (theta * args(4) - args(5) - HALF * sth * f)
+f = args(1) + hangt * (hangt * args(2) - args(3) - args(3))
+f = sth * (hangt * args(4) - args(5) - HALF * sth * f)
 
 !====================!
 !  Calculation ends  !
 !====================!
-end function angle_fun_trsbox
+end function hangt_fun_trsbox
 
 
 end module trustregion_mod
