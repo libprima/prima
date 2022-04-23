@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 23, 2022 PM10:56:30
+! Last Modified: Saturday, April 23, 2022 PM11:17:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,12 +22,12 @@ contains
 subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 
 ! Generic modules
-use, non_intrinsic :: circle_mod, only : hangt_max
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, trueloc
 use, non_intrinsic :: powalg_mod, only : hess_mul
+use, non_intrinsic :: univar_mod, only : hangt_max
 
 implicit none
 

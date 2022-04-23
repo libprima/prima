@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 18, 2022 PM07:45:33
+! Last Modified: Saturday, April 23, 2022 PM11:18:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -269,12 +269,12 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: circle_mod, only : circle_maxabs
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm, project!, Ax_plus_y
 use, non_intrinsic :: powalg_mod, only : omega_col
+use, non_intrinsic :: univar_mod, only : circle_maxabs
 
 implicit none
 
@@ -490,11 +490,11 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, QUART, EPS, DEBUGGING
-use, non_intrinsic :: circle_mod, only : circle_maxabs
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm, project
 use, non_intrinsic :: powalg_mod, only : omega_col, omega_mul
+use, non_intrinsic :: univar_mod, only : circle_maxabs
 
 implicit none
 
