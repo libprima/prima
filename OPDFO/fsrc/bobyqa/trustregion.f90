@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 23, 2022 PM01:30:15
+! Last Modified: Saturday, April 23, 2022 PM08:42:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -346,27 +346,20 @@ do i = 1, n
         end if
     end if
 end do
-!write (17, *) 'd', d
-!write (17, *) 's', s
-!write (17, *) 'xopt', xopt
-!write (17, *) 'tangl', (xopt + d - sl) / (sqrt(max(ZERO, (s**2 + d**2) - (xopt - sl)**2)) - s)
-!write (17, *) 'tangu', (su - (xopt + d)) / (sqrt(max(ZERO, (s**2 + d**2) - (su - xopt)**2)) + s)
 
 do i = 1, n
     if (xbdi(i) == ZERO) then
+        ssq = d(i)**2 + s(i)**2
+        !----------------------------------!
         !tempa = xopt(i) + d(i) - sl(i)
         !tempb = su(i) - xopt(i) - d(i)
         tempa = xopt(i) + d(i) - sl(i)
         tempb = su(i) - (xopt(i) + d(i))
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-15: RATIO is never used
-!          RATIO=ONE
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ssq = d(i)**2 + s(i)**2
-        temp = ssq - (xopt(i) - sl(i))**2
+        !----------------------------------!
+
+        !temp = ssq - (xopt(i) - sl(i))**2
         !if (temp > ZERO) then
         !if ((xopt(i) - sl(i))**2 < ssq) then
-        !write (17, *) '>', angbd, tang(i)
         if (xopt(i) - sl(i) < sqrt(ssq)) then
             !temp = ssq - (xopt(i) - sl(i))**2
             temp = max(ZERO, ssq - (xopt(i) - sl(i))**2)
@@ -374,12 +367,12 @@ do i = 1, n
             tang(i) = min(tang(i), tempa / temp)
             !if (angbd * temp > tempa) then
             if (angbd > tempa / temp) then
-                !write (17, *) '1', tempa, temp, tang(i)
                 angbd = tempa / temp
                 iact = i
                 xsav = -ONE
             end if
         end if
+
         !temp = ssq - (su(i) - xopt(i))**2
         !if (temp > ZERO) then
         !if ((su(i) - xopt(i))**2 < ssq) then
@@ -390,16 +383,13 @@ do i = 1, n
             tang(i) = min(tang(i), tempb / temp)
             !if (angbd * temp > tempb) then
             if (angbd > tempb / temp) then
-                !write (17, *) '2', i, tempb, temp, tang(i)
                 angbd = tempb / temp
                 iact = i
                 xsav = ONE
             end if
         end if
-        !write (17, *) '<', angbd, tang(i)
     end if
 end do
-write (17, *) 'tang', tang
 if (any(is_nan(tang))) goto 190
 !-------------------------------!
 ! Zaikun 20220422
@@ -427,10 +417,7 @@ end do
 redmax = ZERO
 isav = 0
 redsav = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IU=17.0_RP*ANGBD+3.1_RP
 iu = int(17.0_RP * angbd + 3.1_RP)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do i = 1, iu
     !angt = angbd * real(i, RP) / real(iu, RP)
     angt = ZERO + (angbd - ZERO) * real(i, RP) / real(iu, RP)
@@ -468,8 +455,6 @@ sth = (angt + angt) / (ONE + angt * angt)
 temp = shs + angt * (angt * dhd - dhs - dhs)
 sdec = sth * (angt * dredg - sredg - HALF * sth * temp)
 !if (sdec <= ZERO) goto 190
-write (17, *) 'tang', tang
-write (17, *) 'iterc', iterc, angbd, angt, sdec, sdec > ZERO
 if (.not. sdec > ZERO) goto 190
 !
 !     Update GNEW, D and HRED. If the angle of the alternative iteration
@@ -500,8 +485,6 @@ end if
 !
 if (sdec > 0.01_RP * qred) goto 120
 190 dsq = ZERO
-!write (17, *) 'xbdi', xbdi
-!write (17, *) 'xnew', xnew
 do i = 1, n
     xnew(i) = max(min(xopt(i) + d(i), su(i)), sl(i))
     if (xbdi(i) == -ONE) xnew(i) = sl(i)
@@ -509,8 +492,7 @@ do i = 1, n
     d(i) = xnew(i) - xopt(i)
     dsq = dsq + d(i)**2
 end do
-!write (17, *) 'xnew', xnew
-!write (17, *) 'd', d, dsq
+
 return
 
 !     The following instructions multiply the current S-vector by the second

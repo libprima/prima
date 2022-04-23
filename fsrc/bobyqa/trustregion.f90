@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 23, 2022 PM01:26:47
+! Last Modified: Saturday, April 23, 2022 PM08:52:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,11 +60,9 @@ real(RP) :: args(5), angbd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
 &        stplen, sbound(size(gopt)), temp, &
-&        xsav, xsum(size(xopt)), xtest(size(xopt)), &
-&        tempa, tempb
-!&        tempa(size(gopt)), tempb(size(gopt)),
-real(RP) :: ssq(size(gopt)), tang(size(gopt)), bdi(size(gopt))
-integer(IK) :: i, iact, iterc, itermax, iu, nact, nactsav
+&        xsum(size(xopt)), xtest(size(xopt))
+real(RP) :: ssq(size(gopt)), tang(size(gopt))!, bdi(size(gopt))
+integer(IK) :: iact, iterc, itermax, iu, nact, nactsav
 
 ! Sizes
 n = int(size(gopt), kind(n))
@@ -369,34 +367,17 @@ do while (nact < n - 1)  ! Infinite cycling?
 ! By considering the simple bounds on the variables, calculate an upper bound on the TANGENT of HALF
 ! the angle of the alternative iteration, namely ANGBD, except that, if already a free variable has
 ! reached a bound, there is a branch back to label 100 after fixing that variable.
-!tempa = xopt + d - sl
-!tempb = su - xopt - d
 
     ssq = d**2 + s**2
-    bdi = ZERO
-    !bdi(trueloc(xbdi == 0 .and. (xopt - sl)**2 < ssq)) = -ONE
-    !bdi(trueloc(xbdi == 0 .and. (su - xopt)**2 < ssq)) = ONE
     tang = ONE
-    !write (16, *) 'd', d
-    !write (16, *) 's', s
-    !write (16, *) 'xopt', xopt
-    !write (16, *) 'tangl', (xsum - sl) / (sqrt(max(ZERO, (s**2 + d**2) - (xopt - sl)**2)) - s)
-    !write (16, *) 'tangu', (su - xsum) / (sqrt(max(ZERO, (s**2 + d**2) - (su - xopt)**2)) + s)
-    bdi(trueloc(xbdi == 0 .and. xopt - sl < sqrt(ssq))) = -ONE
-    where (bdi < 0)
+    where (xbdi == 0 .and. xopt - sl < sqrt(ssq))
         tang = min(tang, (xsum - sl) / (sqrt(max(ZERO, ssq - (xopt - sl)**2)) - s))
     end where
-    bdi(trueloc(xbdi == 0 .and. su - xopt < sqrt(ssq))) = ONE
-    where (bdi > 0)
+
+    where (xbdi == 0 .and. su - xopt < sqrt(ssq))
         tang = min(tang, (su - xsum) / (sqrt(max(ZERO, ssq - (su - xopt)**2)) + s))
     end where
-    !do i = 1, n
-    !    if (bdi(i) > 0) then
-    !        write (16, *) i, su(i) - xsum(i), sqrt(max(ZERO, ssq(i) - (su(i) - xopt(i))**2)) + s(i), &
-    !           & (su(i) - xsum(i)) / (sqrt(max(ZERO, ssq(i) - (su(i) - xopt(i))**2)) + s(i))
-    !    end if
-    !end do
-    !write (16, *) 'tang', tang
+
     if (any(is_nan(tang))) exit
 
     iact = 0
@@ -406,44 +387,6 @@ do while (nact < n - 1)  ! Infinite cycling?
         angbd = minval(tang)
     end if
     !if (angbd <= 0) exit
-
-
-    !iact = 0
-    !angbd = ONE
-    !do i = 1, n
-    !    if (xbdi(i) == 0) then
-    !        tempa = xopt(i) + d(i) - sl(i)
-    !        tempb = su(i) - xopt(i) - d(i)
-    !        ssq = d(i)**2 + s(i)**2
-    !        !------------------------------------------------------------------------------------------!
-    !        !temp = ssq - (xopt(i) - sl(i))**2  ! Overflow can occur due to huge values in SL
-    !        !if (temp > 0) then
-    !        !------------------------------------------------------------------------------------------!
-    !        if (xopt(i) - sl(i) < sqrt(ssq)) then
-    !            temp = ssq - (xopt(i) - sl(i))**2
-    !            temp = sqrt(temp) - s(i)
-    !            if (angbd * temp > tempa) then
-    !                angbd = tempa / temp
-    !                iact = i
-    !                xsav = -ONE
-    !            end if
-    !        end if
-    !        !------------------------------------------------------------------------------------------!
-    !        !temp = ssq - (su(i) - xopt(i))**2  ! Overflow can occur due to huge values in SU
-    !        !if (temp > 0) then
-    !        !------------------------------------------------------------------------------------------!
-    !        if (su(i) - xopt(i) < sqrt(ssq)) then
-    !            temp = ssq - (su(i) - xopt(i))**2
-    !            temp = sqrt(temp) + s(i)
-    !            if (angbd * temp > tempb) then
-    !                angbd = tempb / temp
-    !                iact = i
-    !                xsav = ONE
-    !            end if
-    !        end if
-    !    end if
-    !end do
-    !!if (nact > nactsav) cycle
 
 ! Calculate HHD and some curvatures for the alternative iteration.
     hs = hess_mul(s, xpt, pq, hq)
@@ -457,8 +400,6 @@ do while (nact < n - 1)  ! Infinite cycling?
     iu = int(17.0_RP * angbd + 3.1_RP, IK)
     hangt = hangt_max(hangt_fun_trsbox, ZERO, angbd, args, iu)  ! What about GEOSTEP?
     sdec = hangt_fun_trsbox(hangt, args)
-    !write (16, *) 'tang', tang
-    !write (16, *) 'iterc', iterc, angbd, hangt, sdec, sdec > 0
     if (.not. sdec > 0) exit
 
 ! Update GNEW, D and HRED. If the angle of the alternative iteration is restricted by a bound on a
@@ -474,7 +415,6 @@ do while (nact < n - 1)  ! Infinite cycling?
     if (iact > 0 .and. hangt >= angbd) then
         nact = nact + 1
         !xbdi(iact) = xsav
-        !xbdi(iact) = bdi(iact)
         if (xopt(iact) + d(iact) - sl(iact) < su(iact) - (xopt(iact) + d(iact))) then
             xbdi(iact) = -ONE
         else
@@ -485,21 +425,15 @@ do while (nact < n - 1)  ! Infinite cycling?
         ! attention to the bounds.
         exit
     end if
-
-
 end do
 
 190 continue
 
 xnew = max(min(xopt + d, su), sl)
-!write (16, *) 'xbdi', xbdi
-!write (16, *) 'xnew', xnew
 xnew(trueloc(xbdi == -ONE)) = sl(trueloc(xbdi == -ONE))
 xnew(trueloc(xbdi == ONE)) = su(trueloc(xbdi == ONE))
 d = xnew - xopt
 dsq = sum(d**2)
-!write (16, *) 'xnew', xnew
-!write (16, *) 'd', d, dsq
 
 return
 
