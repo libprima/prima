@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 23, 2022 PM11:17:35
+! Last Modified: Sunday, April 24, 2022 AM12:41:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, trueloc
 use, non_intrinsic :: powalg_mod, only : hess_mul
-use, non_intrinsic :: univar_mod, only : hangt_max
+use, non_intrinsic :: univar_mod, only : interval_max
 
 implicit none
 
@@ -56,13 +56,13 @@ real(RP) :: hred(size(gopt))
 real(RP) :: hs(size(gopt))
 real(RP) :: s(size(gopt))
 real(RP) :: xbdi(size(gopt))
-real(RP) :: args(5), angbd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
+real(RP) :: args(5), hangt_ub, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
 &        stplen, sbound(size(gopt)), temp, &
 &        xtest(size(xopt))
 real(RP) :: ssq(size(gopt)), tang(size(gopt))!, bdi(size(gopt))
-integer(IK) :: iact, iterc, itermax, iu, nact, nactsav
+integer(IK) :: iact, iterc, itermax, grid_size, nact, nactsav
 
 ! Sizes
 n = int(size(gopt), kind(n))
@@ -334,10 +334,13 @@ do iterc = 1, itermax
     nact = count(xbdi /= 0)
     if (nact >= n - 1) then
         exit
-    else if (nact > nactsav) then
-        dredsq = sum(d(trueloc(xbdi == 0))**2)
-        gredsq = sum(gnew(trueloc(xbdi == 0))**2)
-        dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
+    end if
+
+    gredsq = sum(gnew(trueloc(xbdi == 0))**2)
+    dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
+
+    if (nact > nactsav) then
+        dredsq = sum(d(trueloc(xbdi == 0))**2) ! In theory, DREDSQ changes only when NACT increases.
         s = d
         s(trueloc(xbdi /= 0)) = ZERO
         hred = hess_mul(s, xpt, pq, hq)
@@ -370,15 +373,14 @@ do iterc = 1, itermax
     where (xbdi == 0 .and. su - xopt < sqrt(ssq))
         tang = min(tang, (su - xnew) / (sqrt(max(ZERO, ssq - (su - xopt)**2)) + s))
     end where
-
     tang(trueloc(is_nan(tang))) = ZERO
     iact = 0
-    angbd = ONE
+    hangt_ub = ONE
     if (any(tang < 1)) then
         iact = int(minloc(tang, dim=1), IK)
-        angbd = minval(tang)
+        hangt_ub = minval(tang)
     end if
-    if (angbd <= 0) then
+    if (hangt_ub <= 0) then
         exit
     end if
 
@@ -391,9 +393,9 @@ do iterc = 1, itermax
     ! Seek the greatest reduction in Q for a range of equally spaced values of HANGT in [0, ANGBD],
     ! with HANGT being the TANGENT of HALF the angle of the alternative iteration.
     args = [shs, dhd, dhs, dredg, sredg]
-    iu = int(17.0_RP * angbd + 3.1_RP, IK)
-    hangt = hangt_max(hangt_fun_trsbox, ZERO, angbd, args, iu)  ! What about GEOSTEP?
-    sdec = hangt_fun_trsbox(hangt, args)
+    grid_size = int(17.0_RP * hangt_ub + 3.1_RP, IK)
+    hangt = interval_max(interval_fun_trsbox, ZERO, hangt_ub, args, grid_size)  ! What about GEOSTEP?
+    sdec = interval_fun_trsbox(hangt, args)
     if (.not. sdec > 0) exit
 
     ! Update GNEW, D and HRED. If the angle of the alternative iteration is restricted by a bound on
@@ -402,11 +404,9 @@ do iterc = 1, itermax
     sth = (hangt + hangt) / (ONE + hangt * hangt)
     gnew = gnew + (cth - ONE) * hred + sth * hs
     d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
-    dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
-    gredsq = sum(gnew(trueloc(xbdi == 0))**2)
     hred = cth * hred + sth * hs
     qred = qred + sdec
-    if (iact > 0 .and. hangt >= angbd) then
+    if (iact > 0 .and. hangt >= hangt_ub) then  ! The IACT-th variable reaches its bound.
         if ((xopt(iact) + d(iact)) - sl(iact) < su(iact) - (xopt(iact) + d(iact))) then
             xbdi(iact) = -ONE
         else
@@ -431,7 +431,7 @@ return
 end subroutine trsbox
 
 
-function hangt_fun_trsbox(hangt, args) result(f)
+function interval_fun_trsbox(hangt, args) result(f)
 !--------------------------------------------------------------------------------------------------!
 ! This function defines the objective function of the search for HANGT in TRSBOX, with HANGT being
 ! the TANGENT of HALF the angle of the "alternative iteration".
@@ -473,7 +473,7 @@ end if
 !====================!
 !  Calculation ends  !
 !====================!
-end function hangt_fun_trsbox
+end function interval_fun_trsbox
 
 
 end module trustregion_mod

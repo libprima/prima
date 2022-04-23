@@ -1,13 +1,13 @@
 module univar_mod
 !--------------------------------------------------------------------------------------------------!
-! This module implements functions that approximately optimizes functions on circles (equivalently,
-! 2*PI-periodic functions). They are used in TRSAPP, BIGLAG, and BIGDEN of NEWUOA.
+! This module implements functions that approximately optimizes univariate functions. They are used
+! in NEWUOA (TRSAPP, BIGLAG, and BIGDEN) and BOBYQA (TRSBOX).
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code.
 !
 ! Started: January 2021
 !
-! Last Modified: Saturday, April 23, 2022 AM01:47:08
+! Last Modified: Saturday, April 23, 2022 PM11:46:52
 !
 ! N.B.: Both CIRCLE_MIN and CIRCLE_MAXABS require an input GRID_SIZE, the size of the grid used in
 ! the search. Powell chose GRID_SIZE = 50 in NEWUOA. MAGICALLY, this number works the best for
@@ -17,7 +17,7 @@ module univar_mod
 
 implicit none
 private
-public :: circle_min, circle_maxabs, hangt_max
+public :: circle_min, circle_maxabs, interval_max
 
 abstract interface
     function FUNC_WITH_ARGS(x, args) result(f)
@@ -40,6 +40,8 @@ function circle_min(fun, args, grid_size) result(angle)
 ! function at an evenly distributed "grid" on [0, 2*PI], GRID_SIZE being the number of grid points.
 ! Then it takes the grid point with the least value of FUN, and improves the point by a step that
 ! minimizes the quadratic that interpolates FUN on this point and its two nearest neighbours.
+! The objective function FUN can represent the parametrization of a function defined on the circle,
+! which explains the name of this function.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -120,7 +122,8 @@ function circle_maxabs(fun, args, grid_size) result(angle)
 ! It evaluates the function at an evenly distributed "grid" on [0, 2*PI], GRID_SIZE being the number
 ! of grid points. It takes the grid point with the largest value of |FUN|, and then improves the
 ! point by a step that maximizes the absolute value of the quadratic that interpolates FUN on this
-! point and its two nearest neighbours.
+! point and its two nearest neighbours. The objective function FUN can represent the parametrization
+! of a function defined on the circle, which explains the name of this function.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -190,7 +193,7 @@ end if
 end function circle_maxabs
 
 
-function hangt_max(fun, lb, ub, args, grid_size) result(hangt)
+function interval_max(fun, lb, ub, args, grid_size) result(hangt)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF
 implicit none
 
@@ -245,7 +248,7 @@ end if
 !  Calculation ends  !
 !====================!
 
-end function hangt_max
+end function interval_max
 
 
 end module univar_mod
