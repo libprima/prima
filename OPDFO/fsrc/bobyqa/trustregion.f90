@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 23, 2022 AM02:19:04
+! Last Modified: Saturday, April 23, 2022 PM01:30:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,6 +60,7 @@ real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        stplen, stplensav, temp, tempa, tempb, xsav, xsum(n), sbound(n), hqm(n, n)
 integer(IK) :: i, iact, ih, isav, itcsav, iterc, itermax, iu, &
 &           j, k, nact
+real(RP) :: tang(n)
 
 !
 !     The arguments N, NPT, XPT, XOPT, GOPT, HQ, PQ, SL and SU have the same
@@ -324,6 +325,8 @@ sredg = -temp
 !
 angbd = ONE
 iact = 0
+tang = ONE
+
 do i = 1, n
     if (xbdi(i) == ZERO) then
         !tempa = xopt(i) + d(i) - sl(i)
@@ -341,6 +344,20 @@ do i = 1, n
             xbdi(i) = ONE
             goto 100
         end if
+    end if
+end do
+!write (17, *) 'd', d
+!write (17, *) 's', s
+!write (17, *) 'xopt', xopt
+!write (17, *) 'tangl', (xopt + d - sl) / (sqrt(max(ZERO, (s**2 + d**2) - (xopt - sl)**2)) - s)
+!write (17, *) 'tangu', (su - (xopt + d)) / (sqrt(max(ZERO, (s**2 + d**2) - (su - xopt)**2)) + s)
+
+do i = 1, n
+    if (xbdi(i) == ZERO) then
+        !tempa = xopt(i) + d(i) - sl(i)
+        !tempb = su(i) - xopt(i) - d(i)
+        tempa = xopt(i) + d(i) - sl(i)
+        tempb = su(i) - (xopt(i) + d(i))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-15: RATIO is never used
 !          RATIO=ONE
@@ -349,17 +366,18 @@ do i = 1, n
         temp = ssq - (xopt(i) - sl(i))**2
         !if (temp > ZERO) then
         !if ((xopt(i) - sl(i))**2 < ssq) then
+        !write (17, *) '>', angbd, tang(i)
         if (xopt(i) - sl(i) < sqrt(ssq)) then
             !temp = ssq - (xopt(i) - sl(i))**2
             temp = max(ZERO, ssq - (xopt(i) - sl(i))**2)
             temp = sqrt(temp) - s(i)
+            tang(i) = min(tang(i), tempa / temp)
             !if (angbd * temp > tempa) then
             if (angbd > tempa / temp) then
+                !write (17, *) '1', tempa, temp, tang(i)
                 angbd = tempa / temp
                 iact = i
                 xsav = -ONE
-            else if (is_nan(tempa / temp)) then
-                angbd = ZERO
             end if
         end if
         !temp = ssq - (su(i) - xopt(i))**2
@@ -369,20 +387,23 @@ do i = 1, n
             !temp = ssq - (su(i) - xopt(i))**2
             temp = max(ZERO, ssq - (su(i) - xopt(i))**2)
             temp = sqrt(temp) + s(i)
+            tang(i) = min(tang(i), tempb / temp)
             !if (angbd * temp > tempb) then
             if (angbd > tempb / temp) then
+                !write (17, *) '2', i, tempb, temp, tang(i)
                 angbd = tempb / temp
                 iact = i
                 xsav = ONE
-            elseif (is_nan(tempb / temp)) then
-                angbd = ZERO
             end if
         end if
+        !write (17, *) '<', angbd, tang(i)
     end if
 end do
+write (17, *) 'tang', tang
+if (any(is_nan(tang))) goto 190
 !-------------------------------!
 ! Zaikun 20220422
-if (angbd <= 0) goto 190 
+!if (angbd <= 0) goto 190
 !-------------------------------!
 !
 !     Calculate HHD and some curvatures for the alternative iteration.
@@ -429,8 +450,10 @@ end do
 !     Return if the reduction is ZERO. Otherwise, set the sine and cosine
 !     of the angle of the alternative iteration, and calculate SDEC.
 !
-if (isav == 0) goto 190
-if (isav < iu) then
+!if (isav == 0) goto 190
+if (isav == 0) then
+    angt = ZERO
+elseif (isav < iu) then
     temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
     !angt = angbd * (real(isav, RP) + HALF * temp) / real(iu, RP)
     angt = ZERO + (angbd - ZERO) * (real(isav, RP) + HALF * temp) / real(iu, RP)
@@ -445,6 +468,8 @@ sth = (angt + angt) / (ONE + angt * angt)
 temp = shs + angt * (angt * dhd - dhs - dhs)
 sdec = sth * (angt * dredg - sredg - HALF * sth * temp)
 !if (sdec <= ZERO) goto 190
+write (17, *) 'tang', tang
+write (17, *) 'iterc', iterc, angbd, angt, sdec, sdec > ZERO
 if (.not. sdec > ZERO) goto 190
 !
 !     Update GNEW, D and HRED. If the angle of the alternative iteration
@@ -475,6 +500,8 @@ end if
 !
 if (sdec > 0.01_RP * qred) goto 120
 190 dsq = ZERO
+!write (17, *) 'xbdi', xbdi
+!write (17, *) 'xnew', xnew
 do i = 1, n
     xnew(i) = max(min(xopt(i) + d(i), su(i)), sl(i))
     if (xbdi(i) == -ONE) xnew(i) = sl(i)
@@ -482,6 +509,8 @@ do i = 1, n
     d(i) = xnew(i) - xopt(i)
     dsq = dsq + d(i)**2
 end do
+!write (17, *) 'xnew', xnew
+!write (17, *) 'd', d, dsq
 return
 
 !     The following instructions multiply the current S-vector by the second
