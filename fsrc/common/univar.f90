@@ -1,4 +1,4 @@
-module circle_mod
+module univar_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module implements functions that approximately optimizes functions on circles (equivalently,
 ! 2*PI-periodic functions). They are used in TRSAPP, BIGLAG, and BIGDEN of NEWUOA.
@@ -248,4 +248,4 @@ end if
 end function hangt_max
 
 
-end module circle_mod
+end module univar_mod
