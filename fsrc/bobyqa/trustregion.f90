@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 23, 2022 AM02:28:11
+! Last Modified: Saturday, April 23, 2022 PM01:26:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -332,10 +332,15 @@ do while (nact < n - 1)  ! Infinite cycling?
     iterc = iterc + 1
 
     xsum = xopt + d
+    !---------------------------------------------------------------!
+    ! Should be following be moved out of the loop?
+    ! If this stays in the loop, the update of nact may be removed.
     xbdi(trueloc(xbdi == 0 .and. (xsum >= su))) = ONE
     xbdi(trueloc(xbdi == 0 .and. (xsum <= sl))) = -ONE
     nact = nact + count(xbdi == 0 .and. (xsum <= sl .or. xsum >= su))
     !nact = count(xbdi /= 0) !?
+    if (nact >= n - 1) exit
+    !---------------------------------------------------------------!
 
     if (nact > nactsav) then
         dredsq = sum(d(trueloc(xbdi == 0))**2)
@@ -371,17 +376,28 @@ do while (nact < n - 1)  ! Infinite cycling?
     bdi = ZERO
     !bdi(trueloc(xbdi == 0 .and. (xopt - sl)**2 < ssq)) = -ONE
     !bdi(trueloc(xbdi == 0 .and. (su - xopt)**2 < ssq)) = ONE
-    bdi(trueloc(xbdi == 0 .and. xopt - sl < sqrt(ssq))) = -ONE
-    bdi(trueloc(xbdi == 0 .and. su - xopt < sqrt(ssq))) = ONE
-
     tang = ONE
+    !write (16, *) 'd', d
+    !write (16, *) 's', s
+    !write (16, *) 'xopt', xopt
+    !write (16, *) 'tangl', (xsum - sl) / (sqrt(max(ZERO, (s**2 + d**2) - (xopt - sl)**2)) - s)
+    !write (16, *) 'tangu', (su - xsum) / (sqrt(max(ZERO, (s**2 + d**2) - (su - xopt)**2)) + s)
+    bdi(trueloc(xbdi == 0 .and. xopt - sl < sqrt(ssq))) = -ONE
     where (bdi < 0)
-        tang = (xsum - sl) / (sqrt(max(ZERO, ssq - (xopt - sl)**2)) - s)
+        tang = min(tang, (xsum - sl) / (sqrt(max(ZERO, ssq - (xopt - sl)**2)) - s))
     end where
+    bdi(trueloc(xbdi == 0 .and. su - xopt < sqrt(ssq))) = ONE
     where (bdi > 0)
-        tang = (su - xsum) / (sqrt(max(ZERO, ssq - (su - xopt)**2)) + s)
+        tang = min(tang, (su - xsum) / (sqrt(max(ZERO, ssq - (su - xopt)**2)) + s))
     end where
-    tang(trueloc(is_nan(tang))) = ZERO
+    !do i = 1, n
+    !    if (bdi(i) > 0) then
+    !        write (16, *) i, su(i) - xsum(i), sqrt(max(ZERO, ssq(i) - (su(i) - xopt(i))**2)) + s(i), &
+    !           & (su(i) - xsum(i)) / (sqrt(max(ZERO, ssq(i) - (su(i) - xopt(i))**2)) + s(i))
+    !    end if
+    !end do
+    !write (16, *) 'tang', tang
+    if (any(is_nan(tang))) exit
 
     iact = 0
     angbd = ONE
@@ -389,7 +405,7 @@ do while (nact < n - 1)  ! Infinite cycling?
         iact = int(minloc(tang, dim=1), IK)
         angbd = minval(tang)
     end if
-    if (angbd <= 0) exit
+    !if (angbd <= 0) exit
 
 
     !iact = 0
@@ -441,6 +457,8 @@ do while (nact < n - 1)  ! Infinite cycling?
     iu = int(17.0_RP * angbd + 3.1_RP, IK)
     hangt = hangt_max(hangt_fun_trsbox, ZERO, angbd, args, iu)  ! What about GEOSTEP?
     sdec = hangt_fun_trsbox(hangt, args)
+    !write (16, *) 'tang', tang
+    !write (16, *) 'iterc', iterc, angbd, hangt, sdec, sdec > 0
     if (.not. sdec > 0) exit
 
 ! Update GNEW, D and HRED. If the angle of the alternative iteration is restricted by a bound on a
@@ -456,7 +474,12 @@ do while (nact < n - 1)  ! Infinite cycling?
     if (iact > 0 .and. hangt >= angbd) then
         nact = nact + 1
         !xbdi(iact) = xsav
-        xbdi(iact) = bdi(iact)
+        !xbdi(iact) = bdi(iact)
+        if (xopt(iact) + d(iact) - sl(iact) < su(iact) - (xopt(iact) + d(iact))) then
+            xbdi(iact) = -ONE
+        else
+            xbdi(iact) = ONE
+        end if
     elseif (.not. sdec > 0.01_RP * qred) then
         ! If SDEC is sufficiently small, then return after setting XNEW to XOPT+D, giving careful
         ! attention to the bounds.
@@ -469,10 +492,14 @@ end do
 190 continue
 
 xnew = max(min(xopt + d, su), sl)
+!write (16, *) 'xbdi', xbdi
+!write (16, *) 'xnew', xnew
 xnew(trueloc(xbdi == -ONE)) = sl(trueloc(xbdi == -ONE))
 xnew(trueloc(xbdi == ONE)) = su(trueloc(xbdi == ONE))
 d = xnew - xopt
 dsq = sum(d**2)
+!write (16, *) 'xnew', xnew
+!write (16, *) 'd', d, dsq
 
 return
 
