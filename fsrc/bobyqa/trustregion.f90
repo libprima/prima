@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 23, 2022 PM08:52:19
+! Last Modified: Saturday, April 23, 2022 PM10:56:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,7 +60,7 @@ real(RP) :: args(5), angbd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
 &        stplen, sbound(size(gopt)), temp, &
-&        xsum(size(xopt)), xtest(size(xopt))
+&        xtest(size(xopt))
 real(RP) :: ssq(size(gopt)), tang(size(gopt))!, bdi(size(gopt))
 integer(IK) :: iact, iterc, itermax, iu, nact, nactsav
 
@@ -133,7 +133,6 @@ end if
 !     squares of the free variables. QRED is the reduction in Q so far.
 !
 iterc = 0
-nact = 0
 !--------------------------------------------------------------------------------------------------!
 iact = 0; itermax = n  ! Without this, G95 complains that they are used uninitialized.
 !--------------------------------------------------------------------------------------------------!
@@ -141,7 +140,7 @@ iact = 0; itermax = n  ! Without this, G95 complains that they are used uninitia
 xbdi = ZERO
 xbdi(trueloc(xopt >= su .and. gopt <= 0)) = ONE
 xbdi(trueloc(xopt <= sl .and. gopt >= 0)) = -ONE
-nact = nact + count(xbdi /= 0)
+nact = count(xbdi /= 0)
 d = ZERO
 gnew = gopt
 
@@ -228,22 +227,22 @@ end if
 ! It can be rectified in two ways: use MIN(STPLEN, (SU-XSUM) / S) instead of MIN(STPLEN*S, SU-XSUM)/S,
 ! or set IACT to a positive value only if the minimum of SBOUND is surely less STPLEN, e.g.
 ! ANY(SBOUND < (ONE-EPS) * STPLEN). The first method does not avoid overflow and makes little sense.
-xsum = xopt + d
-xtest = xsum + stplen * s
+xnew = xopt + d
+xtest = xnew + stplen * s
 sbound = stplen
 where (s > 0 .and. xtest > su)
-    sbound = (su - xsum) / s
+    sbound = (su - xnew) / s
 end where
 where (s < 0 .and. xtest < sl)
-    sbound = (sl - xsum) / s
+    sbound = (sl - xnew) / s
 end where
 !--------------------------------------------------------------------------------------------------!
 ! The code below is mathematically equivalent to the above but numerically inferior as explained.
 !where (s > 0)
-!    sbound = min(stplen * s, su - xsum) / s
+!    sbound = min(stplen * s, su - xnew) / s
 !end where
 !where (s < 0)
-!    sbound = max(stplen * s, sl - xsum) / s
+!    sbound = max(stplen * s, sl - xnew) / s
 !end where
 !--------------------------------------------------------------------------------------------------!
 sbound(trueloc(is_nan(sbound))) = stplen  ! Needed? No if we are sure that D and S are finite.
@@ -264,10 +263,10 @@ end if
 !--------------------------------------------------------------------------------------------------!
 
 !!MATLAB code for calculating IACT and ALPHA:
-!!xsum = xopt + d;
+!!xnew = xopt + d;
 !!sbound = stplen;
-!!sbound(s > 0) = (su(s > 0) - xsum(s < 0)) / s(s > 0);
-!!sbound(s < 0) = (sl(s < 0) - xsum(s < 0)) / s(s < 0);
+!!sbound(s > 0) = (su(s > 0) - xnew(s < 0)) / s(s > 0);
+!!sbound(s < 0) = (sl(s < 0) - xnew(s < 0)) / s(s < 0);
 !!sbound(isnan(sbound)) = stplen;
 !!if any(sbound < stplen)
 !!    [stplen, iact] = min(sbound);
@@ -298,8 +297,6 @@ if (iact > 0) then
     nact = nact + 1
     call assert(abs(s(iact)) > 0, 'S(IACT) /= 0', srname)
     xbdi(iact) = sign(ONE, s(iact))  !!MATLAB: xbdi(iact) = sign(s(iact))
-    !xbdi(iact) = ONE
-    !if (s(iact) < 0) xbdi(iact) = -ONE
     delsq = delsq - d(iact)**2
     if (delsq <= 0) goto 90
     goto 20  ! Zaikun 20220421 Caution: infinite cycling may occur. Fix it!!!
@@ -326,21 +323,18 @@ crvmin = ZERO
 ! by the second derivative matrix of Q.
 
 nactsav = nact - 1
-do while (nact < n - 1)  ! Infinite cycling?
-    iterc = iterc + 1
-
-    xsum = xopt + d
-    !---------------------------------------------------------------!
-    ! Should be following be moved out of the loop?
-    ! If this stays in the loop, the update of nact may be removed.
-    xbdi(trueloc(xbdi == 0 .and. (xsum >= su))) = ONE
-    xbdi(trueloc(xbdi == 0 .and. (xsum <= sl))) = -ONE
-    nact = nact + count(xbdi == 0 .and. (xsum <= sl .or. xsum >= su))
-    !nact = count(xbdi /= 0) !?
-    if (nact >= n - 1) exit
-    !---------------------------------------------------------------!
-
-    if (nact > nactsav) then
+! In Powell's code, ITERMAX is essentially infinity; the loop will exit when NACT >= N - 1 or the
+! procedure cannot significantly reduce the quadratic model. We impose an explicit but large bound
+! on the number of iterations as a safeguard; in our tests, this bound is never reached.
+itermax = 10_IK * (n - nact)
+do iterc = 1, itermax
+    xnew = xopt + d
+    xbdi(trueloc(xbdi == 0 .and. (xnew >= su))) = ONE
+    xbdi(trueloc(xbdi == 0 .and. (xnew <= sl))) = -ONE
+    nact = count(xbdi /= 0)
+    if (nact >= n - 1) then
+        exit
+    else if (nact > nactsav) then
         dredsq = sum(d(trueloc(xbdi == 0))**2)
         gredsq = sum(gnew(trueloc(xbdi == 0))**2)
         dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
@@ -357,6 +351,7 @@ do while (nact < n - 1)  ! Infinite cycling?
     temp = sqrt(temp)
     s = (dredg * d - dredsq * gnew) / temp
     s(trueloc(xbdi /= 0)) = ZERO
+
     ! Zaikun 20210926:
     !!! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that |S| = |D|??? Namely:
     ! S = something, then S = (S/norm(S))*norm(D).
@@ -364,46 +359,45 @@ do while (nact < n - 1)  ! Infinite cycling?
     ! See the corresponding part of TRSAPP.
     sredg = -temp
 
-! By considering the simple bounds on the variables, calculate an upper bound on the TANGENT of HALF
-! the angle of the alternative iteration, namely ANGBD, except that, if already a free variable has
-! reached a bound, there is a branch back to label 100 after fixing that variable.
-
+    ! By considering the simple bounds on the variables, calculate an upper bound on the TANGENT of
+    ! HALF the angle of the alternative iteration, namely ANGBD, except that, if already a free
+    ! variable has reached a bound, there is a branch back to label after fixing that variable.
     ssq = d**2 + s**2
     tang = ONE
     where (xbdi == 0 .and. xopt - sl < sqrt(ssq))
-        tang = min(tang, (xsum - sl) / (sqrt(max(ZERO, ssq - (xopt - sl)**2)) - s))
+        tang = min(tang, (xnew - sl) / (sqrt(max(ZERO, ssq - (xopt - sl)**2)) - s))
     end where
-
     where (xbdi == 0 .and. su - xopt < sqrt(ssq))
-        tang = min(tang, (su - xsum) / (sqrt(max(ZERO, ssq - (su - xopt)**2)) + s))
+        tang = min(tang, (su - xnew) / (sqrt(max(ZERO, ssq - (su - xopt)**2)) + s))
     end where
 
-    if (any(is_nan(tang))) exit
-
+    tang(trueloc(is_nan(tang))) = ZERO
     iact = 0
     angbd = ONE
     if (any(tang < 1)) then
         iact = int(minloc(tang, dim=1), IK)
         angbd = minval(tang)
     end if
-    !if (angbd <= 0) exit
+    if (angbd <= 0) then
+        exit
+    end if
 
-! Calculate HHD and some curvatures for the alternative iteration.
+    ! Calculate HHD and some curvatures for the alternative iteration.
     hs = hess_mul(s, xpt, pq, hq)
     shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
     dhs = inprod(d(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
     dhd = inprod(d(trueloc(xbdi == 0)), hred(trueloc(xbdi == 0)))
 
-! Seek the greatest reduction in Q for a range of equally spaced values of HANGT in [0, ANGBD], with
-! HANGT being the TANGENT of HALF the angle of the alternative iteration.
+    ! Seek the greatest reduction in Q for a range of equally spaced values of HANGT in [0, ANGBD],
+    ! with HANGT being the TANGENT of HALF the angle of the alternative iteration.
     args = [shs, dhd, dhs, dredg, sredg]
     iu = int(17.0_RP * angbd + 3.1_RP, IK)
     hangt = hangt_max(hangt_fun_trsbox, ZERO, angbd, args, iu)  ! What about GEOSTEP?
     sdec = hangt_fun_trsbox(hangt, args)
     if (.not. sdec > 0) exit
 
-! Update GNEW, D and HRED. If the angle of the alternative iteration is restricted by a bound on a
-! free variable, that variable is fixed at the bound.
+    ! Update GNEW, D and HRED. If the angle of the alternative iteration is restricted by a bound on
+    ! a free variable, that variable is fixed at the bound.
     cth = (ONE - hangt * hangt) / (ONE + hangt * hangt)
     sth = (hangt + hangt) / (ONE + hangt * hangt)
     gnew = gnew + (cth - ONE) * hred + sth * hs
@@ -413,22 +407,19 @@ do while (nact < n - 1)  ! Infinite cycling?
     hred = cth * hred + sth * hs
     qred = qred + sdec
     if (iact > 0 .and. hangt >= angbd) then
-        nact = nact + 1
-        !xbdi(iact) = xsav
-        if (xopt(iact) + d(iact) - sl(iact) < su(iact) - (xopt(iact) + d(iact))) then
+        if ((xopt(iact) + d(iact)) - sl(iact) < su(iact) - (xopt(iact) + d(iact))) then
             xbdi(iact) = -ONE
         else
             xbdi(iact) = ONE
         end if
     elseif (.not. sdec > 0.01_RP * qred) then
-        ! If SDEC is sufficiently small, then return after setting XNEW to XOPT+D, giving careful
-        ! attention to the bounds.
         exit
     end if
 end do
 
 190 continue
 
+! Return after setting XNEW to XOPT+D, giving careful attention to the bounds.
 xnew = max(min(xopt + d, su), sl)
 xnew(trueloc(xbdi == -ONE)) = sl(trueloc(xbdi == -ONE))
 xnew(trueloc(xbdi == ONE)) = su(trueloc(xbdi == ONE))
