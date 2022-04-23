@@ -488,7 +488,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "Info: Licence received, continuing" \
 	| grep -v "Loading..." \
 	| grep -v "Linking:" \
-	| grep -v "circle\.f90(36): remark #7712: This variable has not been used\.\s*\[ANGLE\]" \
+	| grep -v "circle\.f90([0-9]*): remark #7712: This variable has not been used\.\s*\[ANGLE\]" \
 	| grep -v "f90comp: [0-9]* SOURCE LINES" \
 	| grep -v "f90comp: [0-9]* ERRORS, [0-9]* WARNINGS" \
 	| grep -v "ANSI: PROCEDURE is a Fortran 2003 feature" \
