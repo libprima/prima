@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 AM12:41:12
+! Last Modified: Sunday, April 24, 2022 AM01:04:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,7 +60,7 @@ real(RP) :: args(5), hangt_ub, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
 &        stplen, sbound(size(gopt)), temp, &
-&        xtest(size(xopt))
+&        xtest(size(xopt)), diact
 real(RP) :: ssq(size(gopt)), tang(size(gopt))!, bdi(size(gopt))
 integer(IK) :: iact, iterc, itermax, grid_size, nact, nactsav
 
@@ -403,15 +403,17 @@ do iterc = 1, itermax
     cth = (ONE - hangt * hangt) / (ONE + hangt * hangt)
     sth = (hangt + hangt) / (ONE + hangt * hangt)
     gnew = gnew + (cth - ONE) * hred + sth * hs
+    diact = d(iact)
     d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
     hred = cth * hred + sth * hs
     qred = qred + sdec
-    if (iact > 0 .and. hangt >= hangt_ub) then  ! The IACT-th variable reaches its bound.
-        if ((xopt(iact) + d(iact)) - sl(iact) < su(iact) - (xopt(iact) + d(iact))) then
-            xbdi(iact) = -ONE
-        else
-            xbdi(iact) = ONE
-        end if
+    if (iact > 0 .and. hangt >= hangt_ub) then  ! The D(IACT) reaches its lower or upper bound.
+        !if ((xopt(iact) + d(iact)) - sl(iact) < su(iact) - (xopt(iact) + d(iact))) then
+        !    xbdi(iact) = -ONE
+        !else
+        !    xbdi(iact) = ONE
+        !end if
+        xbdi(iact) = sign(ONE, d(iact) - diact)  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
     elseif (.not. sdec > 0.01_RP * qred) then
         exit
     end if
