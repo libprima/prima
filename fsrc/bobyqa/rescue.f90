@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM07:09:45
+! Last Modified: Sunday, April 24, 2022 PM08:06:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -88,7 +88,7 @@ real(RP) :: beta, bsum, den, denom, diff,      &
 &        summ, sumpq, temp, vlmxsq, vquad, winc, xp, xq
 integer(IK) :: ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nptm, nrem
-real(RP) :: xpq(size(xopt))
+real(RP) :: xpq(size(xopt)), pqw(size(fval))
 logical :: mask(size(xopt))
 
 n = int(size(xopt), kind(n))
@@ -429,26 +429,29 @@ do kpt = 1, npt
     ! Update the quadratic model. The RETURN from the subroutine occurs when all the new
     ! interpolation points are included in the model.
     gopt = gopt + diff * bmat(:, kpt)
+
+    pqw = diff * matprod(zmat, zmat(kpt, :))
+    pq(trueloc(ptsid == 0)) = pq(trueloc(ptsid == 0)) + pqw(trueloc(ptsid == 0))
     do k = 1, npt
-        temp = diff * inprod(zmat(k, :), zmat(kpt, :))
-        if (ptsid(k) == ZERO) then
-            pq(k) = pq(k) + temp
-        else
-            ip = int(ptsid(k))
-            iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
-            if (ip == 0) then
-                hq(iq, iq) = hq(iq, iq) + temp * ptsaux(2, iq)**2
-            else
-                hq(ip, ip) = hq(ip, ip) + temp * ptsaux(1, ip)**2
-                if (iq > 0) then
-                    hq(iq, iq) = hq(iq, iq) + temp * ptsaux(1, iq)**2
-                    hq(ip, iq) = hq(ip, iq) + temp * ptsaux(1, ip) * ptsaux(1, iq)
-                    hq(iq, ip) = hq(ip, iq)
-                end if
-            end if
+        if (ptsid(k) == 0) then
+            cycle
+        end if
+        ip = int(ptsid(k))
+        iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
+        call assert(ip >= 0 .and. ip <= npt .and. iq >= 0 .and. iq <= npt, '0 <= IP, IQ <= NPT', srname)
+        if (ip > 0 .and. iq > 0) then
+            hq(ip, ip) = hq(ip, ip) + pqw(k) * ptsaux(1, ip)**2
+            hq(iq, iq) = hq(iq, iq) + pqw(k) * ptsaux(1, iq)**2
+            hq(ip, iq) = hq(ip, iq) + pqw(k) * ptsaux(1, ip) * ptsaux(1, iq)
+            hq(iq, ip) = hq(ip, iq)
+        else if (ip > 0) then  ! IP > 0, IQ == 0
+            hq(ip, ip) = hq(ip, ip) + pqw(k) * ptsaux(1, ip)**2
+        else if (iq > 0) then  ! IP == 0, IP > 0
+            hq(iq, iq) = hq(iq, iq) + pqw(k) * ptsaux(2, iq)**2
         end if
     end do
     ptsid(kpt) = ZERO
+
     if (is_nan(f) .or. is_posinf(f)) then
         exit
     end if
