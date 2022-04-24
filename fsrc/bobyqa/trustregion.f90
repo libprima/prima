@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 AM10:29:02
+! Last Modified: Sunday, April 24, 2022 PM12:01:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -319,14 +319,14 @@ end if
 crvmin = ZERO
 
 
-! Prepare for the alternative iteration by calculating some scalars and by multiplying the reduced D
-! by the second derivative matrix of Q.
-
-nactsav = nact - 1
+! Improve D by a sequential 2D search on the boundary of the trust region for the variables that
+! have not reached a bound. See (3.6) of the BOBYQA paper and the elaborations nearby.
+! Shouldn't we try the same in GEOSTEP?
 ! In Powell's code, ITERMAX is essentially infinity; the loop will exit when NACT >= N - 1 or the
 ! procedure cannot significantly reduce the quadratic model. We impose an explicit but large bound
 ! on the number of iterations as a safeguard; in our tests, this bound is never reached.
 itermax = 10_IK * (n - nact)
+nactsav = nact - 1
 do iterc = 1, itermax
     xnew = xopt + d
     xbdi(trueloc(xbdi == 0 .and. (xnew >= su))) = ONE
@@ -394,7 +394,7 @@ do iterc = 1, itermax
     ! with HANGT being the TANGENT of HALF the angle of the alternative iteration.
     args = [shs, dhd, dhs, dredg, sredg]
     grid_size = int(17.0_RP * hangt_ub + 4.1_RP, IK)
-    hangt = interval_max(interval_fun_trsbox, ZERO, hangt_ub, args, grid_size)  ! What about GEOSTEP?
+    hangt = interval_max(interval_fun_trsbox, ZERO, hangt_ub, args, grid_size)
     sdec = interval_fun_trsbox(hangt, args)
     if (.not. sdec > 0) exit
 

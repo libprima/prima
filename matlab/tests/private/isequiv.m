@@ -117,6 +117,7 @@ else
     case {'lincoa', 'lincoan'}
         blacklist = [blacklist, {'LSNNODOC', 'HS55'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
+        blacklist = [blacklist, {'CHEBYQAD'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2'}]; % Too long to solve
     case {'cobyla', 'cobylan'}

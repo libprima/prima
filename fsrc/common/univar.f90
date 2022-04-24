@@ -7,9 +7,14 @@ module univar_mod
 !
 ! Started: January 2021
 !
-! Last Modified: Sunday, April 24, 2022 AM11:43:01
+! Last Modified: Sunday, April 24, 2022 PM01:11:03
 !
-! N.B.: Both CIRCLE_MIN and CIRCLE_MAXABS require an input GRID_SIZE, the size of the grid used in
+! N.B.:
+! 0. Here, the optimization is performed using only function values by sampling the objective
+! function on a grid. Indeed, in NEWUOA and BOBYQA, the objective function optimized here is either
+! a trigonometric function or a rational function. So derivatives can be used, but a simple grid
+! search suffices because highly precise solutions are not necessary.
+! 1. Both CIRCLE_MIN and CIRCLE_MAXABS require an input GRID_SIZE, the size of the grid used in
 ! the search. Powell chose GRID_SIZE = 50 in NEWUOA. MAGICALLY, this number works the best for
 ! NEWUOA in tests on CUTest problems. Larger (e.g., 60, 100) or smaller (e.g., 20, 40) values will
 ! worsen the performance of NEWUOA. Why?
@@ -45,7 +50,7 @@ function circle_min(fun, args, grid_size) result(angle)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : linspace
 implicit none
 
@@ -92,17 +97,21 @@ fopt = fgrid(kopt)
 !!MATLAB: [fopt, kopt] = min(fgrid, [], 'omitnan');
 fprev = fgrid(modulo(kopt - 2_IK, grid_size) + 1)  ! Corresponds to KOPT - 1
 fnext = fgrid(modulo(kopt, grid_size) + 1)  ! Corresponds to KOPT + 1
+
+step = ZERO
 if (abs(fprev - fnext) > 0) then
     fprev = fprev - fopt
     fnext = fnext - fopt
     step = HALF * (fprev - fnext) / (fprev + fnext)
+end if
+
+if (is_finite(step) .and. abs(step) > 0) then
     unit_angle = (TWO * PI) / real(grid_size, RP)
-    angle = (real(kopt - 1, RP) + step) * unit_angle  ! It may not be in [0, 2*PI].
+    angle = (real(kopt - 1, RP) + step) * unit_angle
+    ! 1. AGRID(KOPT) = (KOPT-1) * UNIT_ANGLE. 2. ANGLE may not be in [0, 2*PI].
 else
     angle = agrid(kopt)
 end if
-
-
 
 !====================!
 !  Calculation ends  !
@@ -110,7 +119,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(.not. is_nan(angle), 'ANGLE is not NaN', srname)
+    call assert(is_finite(angle), 'ANGLE is finite', srname)
 end if
 
 end function circle_min
@@ -128,7 +137,7 @@ function circle_maxabs(fun, args, grid_size) result(angle)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : linspace
 implicit none
 
@@ -175,19 +184,25 @@ kopt = int(maxloc(abs(fgrid), mask=(.not. is_nan(fgrid)), dim=1), IK)
 fopt = fgrid(kopt)
 fprev = fgrid(modulo(kopt - 2_IK, grid_size) + 1)  ! Corresponds to KOPT - 1
 fnext = fgrid(modulo(kopt, grid_size) + 1)  ! Corresponds to KOPT + 1
+
+step = ZERO
 if (abs(fprev - fnext) > 0) then
     fprev = fprev - fopt
     fnext = fnext - fopt
     step = HALF * (fprev - fnext) / (fprev + fnext)
+end if
+
+if (is_finite(step) .and. abs(step) > 0) then
     unit_angle = (TWO * PI) / real(grid_size, RP)
-    angle = (real(kopt - 1, RP) + step) * unit_angle  ! It may not be in [0, 2*PI].
+    angle = (real(kopt - 1, RP) + step) * unit_angle
+    ! 1. AGRID(KOPT) = (KOPT-1) * UNIT_ANGLE. 2. ANGLE may not be in [0, 2*PI].
 else
     angle = agrid(kopt)
 end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(.not. is_nan(angle), 'ANGLE is not NaN', srname)
+    call assert(is_finite(angle), 'ANGLE is finite', srname)
 end if
 
 end function circle_maxabs
@@ -201,9 +216,9 @@ function interval_max(fun, lb, ub, args, grid_size) result(x)
 ! value of FUN, and improves the point by a step that maximizes the quadratic that interpolates
 ! FUN on this point and its two nearest neighbours unless the point is LB or UB.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, HALF, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : linspace
 implicit none
 
@@ -231,7 +246,7 @@ real(RP) :: xgrid(grid_size)
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(is_finite(lb) .and. is_finite(ub) .and. lb <= ub, 'LB and UB are finite, LB <= UB', srname)
+    call assert(is_finite(lb) .and. is_finite(ub) .and. lb <= ub, 'LB <= UB and they are finite', srname)
     call assert(grid_size >= 3, 'GRID_SIZE >= 3', srname)
 end if
 
@@ -247,8 +262,15 @@ end if
 xgrid = linspace(lb, ub, grid_size)
 fgrid = [(fun(xgrid(k), args), k=1, grid_size)]
 !!MATLAB: fgrid = arrayfun(@(x) fun(x, args), xgrid(1:grid_size));  % Same shape as `xgrid`
-kopt = int(maxloc(fgrid, dim=1), IK)
+
+if (all(is_nan(fgrid))) then
+    x = lb
+    return
+end if
+
+kopt = int(maxloc(fgrid, mask=(.not. is_nan(fgrid)), dim=1), IK)
 fopt = fgrid(kopt)
+!!MATLAB: [fopt, kopt] = min(fgrid, [], 'omitnan');
 
 if (kopt == 1) then
     x = lb
@@ -257,11 +279,15 @@ elseif (kopt == grid_size) then
 else
     fprev = fgrid(kopt - 1)
     fnext = fgrid(kopt + 1)
+    step = ZERO
     if (abs(fprev - fnext) > 0) then
         step = HALF * ((fnext - fprev) / (fopt + fopt - fprev - fnext))
+    end if
+    if (is_finite(step) .and. abs(step) > 0) then
         unitx = (ub - lb) / real(grid_size - 1, RP)
         x = lb + (real(kopt - 1, RP) + step) * unitx
-        ! N.B.: 1. XGRID(KOPT) = LB + (KOPT - 1) * UNITX. 2. LB <= X <= UB?
+        ! N.B.: 1. XGRID(KOPT) = LB + (KOPT - 1) * UNITX.
+        ! 2. XGRID(KOPT-1) <= X <= XGRID(KOPT+1), as X maximizes the quadratic interpolant.
     else
         x = xgrid(kopt)
     end if
@@ -273,8 +299,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    !write (16, *) lb, ub, x, t, fprev, fnext, fopt
-    !call assert(lb <= x .and. x <= ub, 'LB <= X <= UB', srname)
+    call assert(lb <= x .and. x <= ub, 'LB <= X <= UB', srname)
 end if
 
 end function interval_max
