@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM11:15:20
+! Last Modified: Sunday, April 24, 2022 PM11:39:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -155,9 +155,14 @@ end do
 ih = 0
 do j = 1, n
     w(j) = HALF * sumpq * xopt(j)
-    do k = 1, npt
-        w(j) = w(j) + pq(k) * xpt(j, k)
-    end do
+!-------------------------------------------------------!
+!   Zaikun 20220424
+    !do k = 1, npt
+    !    w(j) = w(j) + pq(k) * xpt(j, k)
+    !end do
+    w(j) = w(j) + inprod(xpt(j, :), pq(1:npt))
+!-------------------------------------------------------!
+
     do i = 1, j
         ih = ih + 1
         hq(ih) = hq(ih) + w(i) * xopt(j) + w(j) * xopt(i)
