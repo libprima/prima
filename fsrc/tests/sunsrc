@@ -45,9 +45,10 @@ if [[ -f "$BOBTR" ]] ; then
     sed -i "s|d($TRUELOC) = cth * d($TRUELOC) + sth * s($TRUELOC)|ind = $TRUELOC\nd(ind) = cth*d(ind)+ sth*s(ind)|" "$BOBTR"
     sed -i "s|dredg = inprod(d($TRUELOC), gnew($TRUELOC))|dredg = inprod(d(ind), gnew(ind))|" "$BOBTR"
 
+    sed -i "s|gredsq = sum(gnew(trueloc(xbdi == 0))\*\*2)|ind = $TRUELOC\ngredsq = sum(gnew(ind)\*\*2)|" "$BOBTR"
     sed -i "s|shs = inprod(s($TRUELOC), hs($TRUELOC))|ind = $TRUELOC\nshs = inprod(s(ind), hs(ind))|" "$BOBTR"
     sed -i "s|dhs = inprod(d($TRUELOC), hs($TRUELOC))|hs = inprod(d(ind), hs(ind))|" "$BOBTR"
-    sed -i "s|dhd = inprod(d($TRUELOC), hred($TRUELOC))|hs = inprod(d(ind), hred(ind))|" "$BOBTR"
+    sed -i "s|dhd = inprod(d($TRUELOC), hdred($TRUELOC))|hs = inprod(d(ind), hdred(ind))|" "$BOBTR"
 
 fi
 

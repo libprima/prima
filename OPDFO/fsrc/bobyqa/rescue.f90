@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 AM10:16:55
+! Last Modified: Sunday, April 24, 2022 PM06:03:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -333,7 +333,8 @@ do j = 1, nptm
     do k = 1, npt
         summ = summ + zmat(k, j) * w(k)
     end do
-    beta = beta - summ * summ
+    !beta = beta - summ * summ
+    beta = beta - summ**2
     do k = 1, npt
         vlag(k) = vlag(k) + summ * zmat(k, j)
     end do
@@ -354,7 +355,8 @@ do j = 1, n
     vlag(jp) = summ
     distsq = distsq + xpt(j, knew)**2
 end do
-beta = HALF * distsq * distsq + beta - bsum
+!beta = HALF * distsq * distsq + beta - bsum
+beta = HALF * distsq**2 + beta - bsum
 vlag(kopt) = vlag(kopt) + ONE
 !
 !     KOLD is set to the index of the provisional interpolation point that is
