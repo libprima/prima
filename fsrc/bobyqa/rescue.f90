@@ -4,11 +4,15 @@ module rescue_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
 !
+! N.B.: According to a test on 20220425, the invocations of RESCUE is rare --- it is never invoked
+! on CUTEst unconstrained or bound constrained problems with at most 50 variables unless heavy noise
+! is imposed on the function evaluation.
+!
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM11:42:14
+! Last Modified: Monday, April 25, 2022 AM02:33:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -81,14 +85,15 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: ptsaux(2, size(xopt))
 real(RP) :: ptsid(size(fval))
-real(RP) :: w(2 * size(fval) + size(xopt))
+real(RP) :: w(2 * size(fval) + size(xopt)), wmv(size(fval) + size(xopt))
 real(RP) :: x(size(xopt))
-real(RP) :: beta, bsum, den, denom, moderr,      &
+real(RP) :: beta, den, denom, moderr,      &
 &        distsq(size(fval)), fbase, hdiag, sfrac,    &
-&        summ, temp, vlmxsq, vquad, winc, xp, xq
+&        temp, vlmxsq, vquad, winc, xp, xq
 integer(IK) :: ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nptm, nrem
 real(RP) :: xpq(size(xopt)), pqw(size(fval)), xxpt(size(fval))
+!real(RP) :: bsum, summ, vlag_test(size(xopt) + size(fval)), beta_test
 logical :: mask(size(xopt))
 
 n = int(size(xopt), kind(n))
@@ -284,7 +289,10 @@ else
     goto 260
 end if
 
-! Form the W-vector of the chosen original interpolation point.
+! Calculate VLAG and BETA for the required updating of the H matrix if XPT(:, KNEW) is reinstated
+! in the set of interpolation points.
+!
+! First, form the W-vector of the chosen original interpolation point.
 ! W(1:NPT) contains HALF*MATPROD(XPT(:, KNEW), XPT_TEST)**2 with the following XPT_TEST:
 ! 1. If PTSID(K) == 0, then XPT_TEST(:, K) = XPT(:, K) ;
 ! 2. If PTSID(K) > 0, then XPT_TEST(:, K) has nonzeros only at IP (if IP>0), IQ (if IQ>0) positions;
@@ -293,53 +301,71 @@ end if
 ! See (5.4)--(5.5) of the BOBYQA paper for details.
 do k = 1, npt
     if (k == kopt) then
-        w(k) = ZERO
+        wmv(k) = ZERO
     else if (ptsid(k) <= 0) then  ! Indeed, PTSID >= 0. So PTSID(K) <= 0 means PTSID(K) = 0.
-        w(k) = inprod(xpt(:, knew), xpt(:, k))
+        wmv(k) = inprod(xpt(:, knew), xpt(:, k))
     else
         ip = int(ptsid(k))  ! IP = 0 if 0 < PTSID(K) < 1. INT(X) = [X], i.e., it rounds X towards 0.
         iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
         call assert(ip >= 0 .and. ip <= npt .and. iq >= 0 .and. iq <= npt, '0 <= IP, IQ <= NPT', srname)
         if (ip > 0 .and. iq > 0) then
-            w(k) = xpt(ip, knew) * ptsaux(1, ip) + xpt(iq, knew) * ptsaux(1, iq)
+            wmv(k) = xpt(ip, knew) * ptsaux(1, ip) + xpt(iq, knew) * ptsaux(1, iq)
         elseif (ip > 0) then
-            w(k) = xpt(ip, knew) * ptsaux(1, ip)
+            wmv(k) = xpt(ip, knew) * ptsaux(1, ip)
         elseif (iq > 0) then
-            w(k) = xpt(iq, knew) * ptsaux(2, iq)
+            wmv(k) = xpt(iq, knew) * ptsaux(2, iq)
         else
-            w(k) = ZERO
+            wmv(k) = ZERO
         end if
     end if
-    w(k) = HALF * w(k) * w(k)
+    wmv(k) = HALF * wmv(k) * wmv(k)
 end do
-w(npt + 1:npt + n) = xpt(:, knew)
+wmv(npt + 1:npt + n) = xpt(:, knew)
 
+! Now, calculate VLAG = H*W(XOPT + D) according to (4.26) of the NEWUOA paper.
+vlag(1:npt) = matprod(zmat, matprod(wmv(1:npt), zmat)) + matprod(wmv(npt + 1:npt + n), bmat(:, 1:npt))
+vlag(npt + 1:npt + n) = matprod(bmat, wmv(1:npt + n))
 
-! Calculate VLAG and BETA for the required updating of the H matrix if  XPT(:, KNEW) is reinstated
-! in the set of interpolation points.
-! Zaikun 20220424: The following part should be done by calling VLAGBETA.
-vlag(1:npt) = matprod(w(npt + 1:npt + n), bmat(:, 1:npt))
-do j = 1, nptm
-    vlag(1:npt) = vlag(1:npt) + inprod(w(1:npt), zmat(:, j)) * zmat(:, j)
-end do
-!vlag(1:npt) = matprod(w(npt + 1:npt + n), bmat(:, 1:npt)) + matprod(zmat, matprod(w(1:npt), zmat))
-beta = -sum(matprod(w(1:npt), zmat)**2)
-
-bsum = ZERO
-do j = 1, n
-    summ = inprod(bmat(j, 1:npt), w(1:npt))
-    bsum = bsum + inprod(bmat(j, 1:npt), w(1:npt)) * w(j + npt)
-    do ip = npt + 1, npt + n
-        summ = summ + bmat(j, ip) * w(ip)
-    end do
-
-    !summ = inprod(bmat(j, 1:npt), w(1:npt)) + inprod(bmat(k, npt + 1 : npt + n), w(npt + 1, npt + n))
-
-    bsum = bsum + summ * w(j + npt)
-    vlag(j + npt) = summ
-end do
-beta = HALF * sum(xpt(:, knew)**2)**2 + beta - bsum
+! With D = XPT(:, KNEW), XOPT = XPT_TEST(:, KOPT), W = W(XOPT+D) as in (4.10) of the NEWUOA paper,
+! V = W(XOPT) as in (4.24) of the NEWUOA paper, we have, according to (4.12) and (4.26) of the
+! NEWUOA paper that
+! BETA = HALF*|XOPT + D|^4 - (W-V)'*H*(W-V) - [XOPT'*(X+XOPT)]^2 + HALF*|XOPT|^4.
+! Now, recall the definition of XPT_TEST mentioned above, which tells us that XOPT = ZERO!
+! Therefore, we have BETA = HALF*|D|^4 - (W-V)'*H*(W-V) = HALF*|XPT(:, KNEW)|^4  - WMV' * VLAG.
+beta = HALF * sum(xpt(:, knew)**2)**2 - inprod(wmv(1:npt + n), vlag)
 vlag(kopt) = vlag(kopt) + ONE
+!--------------------------------------------------------------------------------------------------!
+
+
+!!==================================================================================================!
+!vlag_test(1:npt) = matprod(w(npt + 1:npt + n), bmat(:, 1:npt))
+!do j = 1, nptm
+!    vlag_test(1:npt) = vlag_test(1:npt) + inprod(w(1:npt), zmat(:, j)) * zmat(:, j)
+!end do
+!!vlag_test(1:npt) = matprod(w(npt + 1:npt + n), bmat(:, 1:npt)) + matprod(zmat, matprod(w(1:npt), zmat))
+!beta_test = -sum(matprod(w(1:npt), zmat)**2)
+
+!bsum = ZERO
+!do j = 1, n
+!    summ = inprod(bmat(j, 1:npt), w(1:npt))
+!    bsum = bsum + inprod(bmat(j, 1:npt), w(1:npt)) * w(j + npt)
+!    do ip = npt + 1, npt + n
+!        summ = summ + bmat(j, ip) * w(ip)
+!    end do
+
+!    !summ = inprod(bmat(j, 1:npt), w(1:npt)) + inprod(bmat(k, npt + 1 : npt + n), w(npt + 1, npt + n))
+
+!    bsum = bsum + summ * w(j + npt)
+!    vlag_test(j + npt) = summ
+!end do
+!beta_test = HALF * sum(xpt(:, knew)**2)**2 + beta_test - bsum
+!vlag_test(kopt) = vlag_test(kopt) + ONE
+
+!write (16, *) maxval(abs((vlag - vlag_test))) / max(ONE, maxval(abs(vlag_test)))
+!write (17, *) (abs((beta - beta_test))) / max(ONE, (abs(beta_test)))
+!!call assert(.false., 'vlag', srname)
+!!==================================================================================================!
+
 
 ! KOLD is set to the index of the provisional interpolation point that is going to be deleted to
 ! make way for the KNEW-th original interpolation point. The choice of KOLD is governed by the
