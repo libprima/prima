@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM08:06:19
+! Last Modified: Sunday, April 24, 2022 PM08:47:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -369,7 +369,9 @@ goto 80
 ! value of F.
 260 continue
 do kpt = 1, npt
-    if (ptsid(kpt) == ZERO) cycle
+    if (ptsid(kpt) == ZERO) then
+        cycle
+    end if
     if (nf >= maxfun) then
         nf = -1
         goto 350
@@ -382,33 +384,80 @@ do kpt = 1, npt
     ip = int(ptsid(kpt))
     iq = int(real(np, RP) * ptsid(kpt) - real(ip * np, RP))
 
-    if (ip > 0) then
+    if (ip > 0 .and. iq > 0) then
         xp = ptsaux(1, ip)
         xpt(ip, kpt) = xp
-    end if
-    if (iq > 0) then
         xq = ptsaux(1, iq)
-        if (ip == 0) xq = ptsaux(2, iq)
+        xpt(iq, kpt) = xq
+    elseif (ip > 0) then  ! IP > 0, IQ == 0
+        xp = ptsaux(1, ip)
+        xpt(ip, kpt) = xp
+    elseif (iq > 0) then  ! IP == 0, IQ > 0
+        xq = ptsaux(2, iq)
         xpt(iq, kpt) = xq
     end if
 
+    !if (ip > 0) then
+    !    xp = ptsaux(1, ip)
+    !    xpt(ip, kpt) = xp
+    !end if
+    !if (iq > 0) then
+    !    if (ip == 0) then
+    !        xq = ptsaux(2, iq)
+    !    else
+    !        xq = ptsaux(1, iq)
+    !    end if
+    !    xpt(iq, kpt) = xq
+    !end if
+
     ! Set VQUAD to the value of the current model at the new point.
     vquad = fbase
-    if (ip > 0) then
+
+    !if (ip > 0) then
+    !    vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
+    !end if
+    !if (iq > 0) then
+    !    vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
+    !    if (ip > 0) then
+    !        vquad = vquad + xp * xq * hq(ip, iq)
+    !    end if
+    !end if
+
+    if (ip > 0 .and. iq > 0) then
         vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
-    end if
-    if (iq > 0) then
         vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
-        if (ip > 0) then
-            vquad = vquad + xp * xq * hq(ip, iq)
-        end if
+        vquad = vquad + xp * xq * hq(ip, iq)
+    elseif (ip > 0) then  ! IP > 0, IQ == 0
+        vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
+    elseif (iq > 0) then  ! IP == 0, IQ > 0
+        vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
     end if
-    do k = 1, npt
-        temp = ZERO
-        if (ip > 0) temp = temp + xp * xpt(ip, k)
-        if (iq > 0) temp = temp + xq * xpt(iq, k)
-        vquad = vquad + HALF * pq(k) * temp * temp
-    end do
+
+    !do k = 1, npt
+    !    temp = ZERO
+    !    if (ip > 0) temp = temp + xp * xpt(ip, k)
+    !    if (iq > 0) temp = temp + xq * xpt(iq, k)
+    !    vquad = vquad + HALF * pq(k) * temp * temp
+    !end do
+
+    if (ip > 0 .and. iq > 0) then
+        do k = 1, npt
+            !if (ip > 0) temp = temp + xp * xpt(ip, k)
+            !if (iq > 0) temp = temp + xq * xpt(iq, k)
+            temp = xp * xpt(ip, k) + xq * xpt(iq, k)
+            vquad = vquad + HALF * pq(k) * temp * temp
+        end do
+    else if (ip > 0) then
+        do k = 1, npt
+            temp = xp * xpt(ip, k)
+            vquad = vquad + HALF * pq(k) * temp * temp
+        end do
+    else if (iq > 0) then
+        do k = 1, npt
+            temp = xq * xpt(iq, k)
+            vquad = vquad + HALF * pq(k) * temp * temp
+        end do
+    end if
 
     ! Calculate F at the new interpolation point, and set DIFF to the factor that is going to
     ! multiply the KPT-th Lagrange function when the model is updated to provide interpolation to
@@ -423,7 +472,9 @@ do kpt = 1, npt
     call savehist(nf, x, xhist, f, fhist)
 
     fval(kpt) = f
-    if (f < fval(kopt)) kopt = kpt
+    if (f < fval(kopt)) then
+        kopt = kpt
+    end if
     diff = f - vquad
 
     ! Update the quadratic model. The RETURN from the subroutine occurs when all the new
@@ -444,9 +495,9 @@ do kpt = 1, npt
             hq(iq, iq) = hq(iq, iq) + pqw(k) * ptsaux(1, iq)**2
             hq(ip, iq) = hq(ip, iq) + pqw(k) * ptsaux(1, ip) * ptsaux(1, iq)
             hq(iq, ip) = hq(ip, iq)
-        else if (ip > 0) then  ! IP > 0, IQ == 0
+        elseif (ip > 0) then  ! IP > 0, IQ == 0
             hq(ip, ip) = hq(ip, ip) + pqw(k) * ptsaux(1, ip)**2
-        else if (iq > 0) then  ! IP == 0, IP > 0
+        elseif (iq > 0) then  ! IP == 0, IP > 0
             hq(iq, iq) = hq(iq, iq) + pqw(k) * ptsaux(2, iq)**2
         end if
     end do
