@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 25, 2022 AM02:33:30
+! Last Modified: Monday, April 25, 2022 AM07:42:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -91,7 +91,7 @@ real(RP) :: beta, den, denom, moderr,      &
 &        distsq(size(fval)), fbase, hdiag, sfrac,    &
 &        temp, vlmxsq, vquad, winc, xp, xq
 integer(IK) :: ip, iq, iw, j, jp, jpn, k, &
-&           knew, kold, kpt, np, nptm, nrem
+&           knew, kold, kpt, np, nrem
 real(RP) :: xpq(size(xopt)), pqw(size(fval)), xxpt(size(fval))
 !real(RP) :: bsum, summ, vlag_test(size(xopt) + size(fval)), beta_test
 logical :: mask(size(xopt))
@@ -171,7 +171,6 @@ end if
 
 np = n + 1
 sfrac = HALF / real(np, RP)
-nptm = npt - np
 
 ! Shift the interpolation points so that XOPT becomes the origin, and set the elements of ZMAT to
 ! ZERO. The value of SUMPQ is required in the updating of HQ below. The squares of the distances
@@ -291,6 +290,8 @@ end if
 
 ! Calculate VLAG and BETA for the required updating of the H matrix if XPT(:, KNEW) is reinstated
 ! in the set of interpolation points.
+! Question (20220425): Can this be merged into CALVLAG/BETA in POWALG_MOD, maybe by modifying the
+! signature of CALVLAG/BETA?
 !
 ! First, form the W-vector of the chosen original interpolation point.
 ! W(1:NPT) contains HALF*MATPROD(XPT(:, KNEW), XPT_TEST)**2 with the following XPT_TEST:
@@ -339,7 +340,7 @@ vlag(kopt) = vlag(kopt) + ONE
 
 !!==================================================================================================!
 !vlag_test(1:npt) = matprod(w(npt + 1:npt + n), bmat(:, 1:npt))
-!do j = 1, nptm
+!do j = 1, npt-n-1
 !    vlag_test(1:npt) = vlag_test(1:npt) + inprod(w(1:npt), zmat(:, j)) * zmat(:, j)
 !end do
 !!vlag_test(1:npt) = matprod(w(npt + 1:npt + n), bmat(:, 1:npt)) + matprod(zmat, matprod(w(1:npt), zmat))
