@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM03:43:27
+! Last Modified: Sunday, April 24, 2022 PM04:27:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,12 +52,12 @@ real(RP), intent(out) :: xnew(:)  ! XNEW(N)
 character(len=*), parameter :: srname = 'TRSBOX'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: red(size(gopt))
+real(RP) :: dred(size(gopt))
 real(RP) :: hdred(size(gopt))
 real(RP) :: hs(size(gopt))
 real(RP) :: s(size(gopt))
 real(RP) :: xbdi(size(gopt))
-real(RP) :: args(5), hangt_ub, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
+real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
 &        stplen, sbound(size(gopt)), temp, &
@@ -263,6 +263,7 @@ end if
 !stplen = minval([stplen, sbound]) ! This line cannot be exchanged with the last
 !--------------------------------------------------------------------------------------------------!
 
+!--------------------------------------------------------------------------------------------------!
 !!MATLAB code for calculating IACT and ALPHA:
 !!xnew = xopt + d;
 !!sbound = stplen;
@@ -272,6 +273,7 @@ end if
 !!if any(sbound < stplen)
 !!    [stplen, iact] = min(sbound);
 !!end
+!--------------------------------------------------------------------------------------------------!
 
 ! Update CRVMIN, GNEW and D. Set SDEC to the decrease that occurs in Q.
 sdec = ZERO
@@ -323,7 +325,7 @@ crvmin = ZERO
 ! Improve D by a sequential 2D search on the boundary of the trust region for the variables that
 ! have not reached a bound. See (3.6) of the BOBYQA paper and the elaborations nearby.
 ! 1. At each iteration, the current D is improved by a search conducted on the circular arch
-! {D(THETA): D(THETA) = (I-P)*D + [COS(THETA)*P*D + SIN(THETA)*S], 0<=THETA<=PI/2, LB<=XOPT+D(THETA)<=UB},
+! {D(THETA): D(THETA) = (I-P)*D + [COS(THETA)*P*D + SIN(THETA)*S], 0<=THETA<=PI/2, SL<=XOPT+D(THETA)<=SU},
 ! where P is the orthogonal projection onto the space of the variables that have not reached their
 ! bounds, and S is a linear combination of P*D and P*G(XOPT+D) with |S| = |P*D| and G(.) being the
 ! gradient of the quadratic model. The iteration is performed only if P*D and P*G(XOPT+D) are not
@@ -379,8 +381,16 @@ do iterc = 1, itermax
     sredg = -temp
 
     ! By considering the simple bounds on the free variables, calculate an upper bound on the
-    ! TANGENT of HALF the angle of the alternative iteration, namely ANGBD.
-    ssq = d**2 + s**2
+    ! TANGENT of HALF the angle of the alternative iteration, namely ANGBD. The bounds are
+    ! SL - XOPT <= COS(THETA)*D + SIN(THETA)*S <= SU - XOPT for the free variables.
+    ! Defining HANGT = TAN(THETA/2), and using the tangent half-angle formula, we have
+    ! (1+HANGT^2)*(SL - XOPT) <= (1-HANGT^2)*D + 2*HANGT*S <= (1+HANGT^2)*(SU - XOPT),
+    ! which is required for all free variables. The indices of the free variable are those with
+    ! XBDI == 0. Solving this inequality system for HANGT in [0, PI/4], we get bounds for HANGT,
+    ! namely TANBD; the final bound for HANGT is the minimum of TANBD, which is HANGT_BD.
+    ! When solving the system, note that SL < XOPT < SU and SL < XOPT + D < SU when XBDI = 0.
+    ssq = ZERO
+    ssq(trueloc(xbdi == 0)) = d(trueloc(xbdi == 0))**2 + s(trueloc(xbdi == 0))**2
     tanbd = ONE
     where (xbdi == 0 .and. xopt - sl < sqrt(ssq))
         ! N.B.: 1. Powell's code checks whether SSQ - (XOPT - SL)**2) > 0. However, overflow will
@@ -395,23 +405,29 @@ do iterc = 1, itermax
     end where
     tanbd(trueloc(is_nan(tanbd))) = ZERO
 
+    !----------------------------------------------------------------------------------------------!
     !!MATLAB code for defining TANBD:
+    !!xfree = (xbdi == 0);
+    !!ssq = NaN(n, 1);
+    !!ssq(xfree) = s(xfree).^2 + d(xfree).^2;
+    !!discmn = NaN(n, 1);
+    !!discmn(xfree) = ssq(xfree) - (xopt(xfree) - sl(xfree))**2;  % This is a discriminant.
     !!tanbd = 1;
-    !!discmn = ssq - (xopt - sl)**2;  % This is a discriminant.
-    !!mask = (xbdi == 0 & discmn > 0);
+    !!mask = (xfree & discmn > 0);
     !!tanbd(mask) = min(tanbd(mask), (xnew(mask) - sl(mask)) / (sqrt(discmn(mask)) - s(mask)));
-    !!discmn = ssq - (su - xopt)**2;  % This is a discriminant.
-    !!mask = (xbdi == 0 & discmn > 0);
+    !!discmn(xfree) = ssq(xfree) - (su(xfree) - xopt(xfree))**2;  % This is a discriminant.
+    !!mask = (xfree & discmn > 0);
     !!tanbd(mask) = min(tanbd(mask), (su(mask) - xnew(mask)) / (sqrt(discmn(mask)) + s(mask)));
     !!tanbd(isnan(tanbd)) = 0;
+    !----------------------------------------------------------------------------------------------!
 
     iact = 0
-    hangt_ub = ONE
+    hangt_bd = ONE
     if (any(tanbd < 1)) then
         iact = int(minloc(tanbd, dim=1), IK)
-        hangt_ub = minval(tanbd)
+        hangt_bd = minval(tanbd)
     end if
-    if (hangt_ub <= 0) then
+    if (hangt_bd <= 0) then
         exit
     end if
 
@@ -424,8 +440,8 @@ do iterc = 1, itermax
     ! Seek the greatest reduction in Q for a range of equally spaced values of HANGT in [0, ANGBD],
     ! with HANGT being the TANGENT of HALF the angle of the alternative iteration.
     args = [shs, dhd, dhs, dredg, sredg]
-    grid_size = int(17.0_RP * hangt_ub + 4.1_RP, IK)
-    hangt = interval_max(interval_fun_trsbox, ZERO, hangt_ub, args, grid_size)
+    grid_size = int(17.0_RP * hangt_bd + 4.1_RP, IK)
+    hangt = interval_max(interval_fun_trsbox, ZERO, hangt_bd, args, grid_size)
     sdec = interval_fun_trsbox(hangt, args)
     if (.not. sdec > 0) exit
 
@@ -440,7 +456,7 @@ do iterc = 1, itermax
     d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
     hdred = cth * hdred + sth * hs
     qred = qred + sdec
-    if (iact >= 1 .and. iact <= n .and. hangt >= hangt_ub) then  ! D(IACT) reaches lower/upper bound.
+    if (iact >= 1 .and. iact <= n .and. hangt >= hangt_bd) then  ! D(IACT) reaches lower/upper bound.
         xbdi(iact) = sign(ONE, d(iact) - diact)  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
     elseif (.not. sdec > 0.01_RP * qred) then
         exit
