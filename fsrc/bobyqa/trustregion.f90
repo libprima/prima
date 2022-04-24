@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 AM09:43:56
+! Last Modified: Sunday, April 24, 2022 AM10:29:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -403,11 +403,13 @@ do iterc = 1, itermax
     cth = (ONE - hangt * hangt) / (ONE + hangt * hangt)
     sth = (hangt + hangt) / (ONE + hangt * hangt)
     gnew = gnew + (cth - ONE) * hred + sth * hs
-    diact = d(iact)
+    if (iact >= 1 .and. iact <= n) then  ! IACT == 0 is possible, but IACT > N should never happen.
+        diact = d(iact)
+    end if
     d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
     hred = cth * hred + sth * hs
     qred = qred + sdec
-    if (iact > 0 .and. hangt >= hangt_ub) then  ! D(IACT) reaches its lower or upper bound.
+    if (iact >= 1 .and. iact <= n .and. hangt >= hangt_ub) then  ! D(IACT) reaches lower/upper bound.
         xbdi(iact) = sign(ONE, d(iact) - diact)  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
     elseif (.not. sdec > 0.01_RP * qred) then
         exit

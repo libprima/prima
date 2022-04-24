@@ -7,7 +7,7 @@ module univar_mod
 !
 ! Started: January 2021
 !
-! Last Modified: Sunday, April 24, 2022 AM10:16:12
+! Last Modified: Sunday, April 24, 2022 AM11:43:01
 !
 ! N.B.: Both CIRCLE_MIN and CIRCLE_MAXABS require an input GRID_SIZE, the size of the grid used in
 ! the search. Powell chose GRID_SIZE = 50 in NEWUOA. MAGICALLY, this number works the best for
@@ -62,8 +62,8 @@ character(len=*), parameter :: srname = 'CIRCLE_MIN'
 integer(IK) :: k
 integer(IK) :: kopt
 real(RP) :: agrid(grid_size + 1)
-real(RP) :: fa
-real(RP) :: fb
+real(RP) :: fprev
+real(RP) :: fnext
 real(RP) :: fopt
 real(RP) :: fgrid(grid_size)
 real(RP) :: step
@@ -87,21 +87,22 @@ if (all(is_nan(fgrid))) then
     return
 end if
 
-kopt = int(minloc(fgrid, mask=(.not. is_nan(fgrid)), dim=1) - 1, IK)
-fopt = fgrid(kopt + 1)
-!!MATLAB: [fopt, kopt] = min(fgrid, [], 'omitnan'); kopt = kopt - 1;
-fa = fgrid(modulo(kopt - 1_IK, grid_size) + 1)
-fb = fgrid(modulo(kopt + 1_IK, grid_size) + 1)
-if (abs(fa - fb) > 0) then
-    fa = fa - fopt
-    fb = fb - fopt
-    step = HALF * (fa - fb) / (fa + fb)
+kopt = int(minloc(fgrid, mask=(.not. is_nan(fgrid)), dim=1), IK)
+fopt = fgrid(kopt)
+!!MATLAB: [fopt, kopt] = min(fgrid, [], 'omitnan');
+fprev = fgrid(modulo(kopt - 2_IK, grid_size) + 1)  ! Corresponds to KOPT - 1
+fnext = fgrid(modulo(kopt, grid_size) + 1)  ! Corresponds to KOPT + 1
+if (abs(fprev - fnext) > 0) then
+    fprev = fprev - fopt
+    fnext = fnext - fopt
+    step = HALF * (fprev - fnext) / (fprev + fnext)
+    unit_angle = (TWO * PI) / real(grid_size, RP)
+    angle = (real(kopt - 1, RP) + step) * unit_angle  ! It may not be in [0, 2*PI].
 else
-    step = ZERO
+    angle = agrid(kopt)
 end if
 
-unit_angle = (TWO * PI) / real(grid_size, RP)
-angle = unit_angle * (real(kopt, RP) + step)  ! It may not be in [0, 2*PI].
+
 
 !====================!
 !  Calculation ends  !
@@ -120,7 +121,7 @@ function circle_maxabs(fun, args, grid_size) result(angle)
 ! This function seeks an approximate maximizer of the absolute value of a 2*PI-periodic function
 ! FUN(X, ARGS), where the scalar X is the decision variable, and ARGS is a given vector of parameters.
 ! It evaluates the function at an evenly distributed "grid" on [0, 2*PI], the number of grid points
-! being GRID_SIZE. It takes the grid point with the largest value of |FUN|, and then improves the
+! being GRID_SIZE. Then it takes the grid point with the largest value of |FUN|, and improves the
 ! point by a step that maximizes the absolute value of the quadratic that interpolates FUN on this
 ! point and its two nearest neighbours. The objective function FUN can represent the parametrization
 ! of a function defined on the circle, which explains the name of this function.
@@ -144,8 +145,8 @@ character(len=*), parameter :: srname = 'CIRCLE_MAXABS'
 integer(IK) :: k
 integer(IK) :: kopt
 real(RP) :: agrid(grid_size + 1)
-real(RP) :: fa
-real(RP) :: fb
+real(RP) :: fprev
+real(RP) :: fnext
 real(RP) :: fopt
 real(RP) :: fgrid(grid_size)
 real(RP) :: step
@@ -169,21 +170,20 @@ if (all(is_nan(fgrid))) then
     return
 end if
 
-kopt = int(maxloc(abs(fgrid), mask=(.not. is_nan(fgrid)), dim=1) - 1, IK)
-!!MATLAB: [~, kopt] = max(abs(fgrid), [], 'omitnan'); kopt = kopt - 1;
-fopt = fgrid(kopt + 1)
-fa = fgrid(modulo(kopt - 1_IK, grid_size) + 1)
-fb = fgrid(modulo(kopt + 1_IK, grid_size) + 1)
-if (abs(fa - fb) > 0) then
-    fa = fa - fopt
-    fb = fb - fopt
-    step = HALF * (fa - fb) / (fa + fb)
+kopt = int(maxloc(abs(fgrid), mask=(.not. is_nan(fgrid)), dim=1), IK)
+!!MATLAB: [~, kopt] = max(abs(fgrid), [], 'omitnan');
+fopt = fgrid(kopt)
+fprev = fgrid(modulo(kopt - 2_IK, grid_size) + 1)  ! Corresponds to KOPT - 1
+fnext = fgrid(modulo(kopt, grid_size) + 1)  ! Corresponds to KOPT + 1
+if (abs(fprev - fnext) > 0) then
+    fprev = fprev - fopt
+    fnext = fnext - fopt
+    step = HALF * (fprev - fnext) / (fprev + fnext)
+    unit_angle = (TWO * PI) / real(grid_size, RP)
+    angle = (real(kopt - 1, RP) + step) * unit_angle  ! It may not be in [0, 2*PI].
 else
-    step = ZERO
+    angle = agrid(kopt)
 end if
-
-unit_angle = (TWO * PI) / real(grid_size, RP)
-angle = unit_angle * (real(kopt, RP) + step)  ! It may not be in [0, 2*PI].
 
 ! Postconditions
 if (DEBUGGING) then
@@ -197,8 +197,8 @@ function interval_max(fun, lb, ub, args, grid_size) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! This function seeks an approximate maximizer of a function F(X, ARGS) for X in [LB, UB], where
 ! ARGS is a vector of parameters. It evaluates the function at an evenly distributed "grid" on
-! [LB, UB], the number of grid points being GRID_SIZE. It takes the grid point with the largest
-! value of FUN, and then improves the point by a step that maximizes the quadratic that interpolates
+! [LB, UB], the number of grid points being GRID_SIZE. Then it takes the grid point with the largest
+! value of FUN, and improves the point by a step that maximizes the quadratic that interpolates
 ! FUN on this point and its two nearest neighbours unless the point is LB or UB.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
@@ -225,7 +225,8 @@ real(RP) :: fgrid(grid_size)
 real(RP) :: fopt
 real(RP) :: fnext
 real(RP) :: fprev
-real(RP) :: t
+real(RP) :: step
+real(RP) :: unitx
 real(RP) :: xgrid(grid_size)
 
 ! Preconditions
@@ -245,8 +246,9 @@ end if
 
 xgrid = linspace(lb, ub, grid_size)
 fgrid = [(fun(xgrid(k), args), k=1, grid_size)]
+!!MATLAB: fgrid = arrayfun(@(x) fun(x, args), xgrid(1:grid_size));  % Same shape as `xgrid`
 kopt = int(maxloc(fgrid, dim=1), IK)
-fopt = maxval(fgrid)
+fopt = fgrid(kopt)
 
 if (kopt == 1) then
     x = lb
@@ -255,8 +257,14 @@ elseif (kopt == grid_size) then
 else
     fprev = fgrid(kopt - 1)
     fnext = fgrid(kopt + 1)
-    t = HALF * ((fnext - fprev) / (fopt + fopt - fprev - fnext))
-    x = lb + (ub - lb) * (real(kopt - 1, RP) + t) / real(grid_size - 1, RP)  ! LB <= X <= UB?
+    if (abs(fprev - fnext) > 0) then
+        step = HALF * ((fnext - fprev) / (fopt + fopt - fprev - fnext))
+        unitx = (ub - lb) / real(grid_size - 1, RP)
+        x = lb + (real(kopt - 1, RP) + step) * unitx
+        ! N.B.: 1. XGRID(KOPT) = LB + (KOPT - 1) * UNITX. 2. LB <= X <= UB?
+    else
+        x = xgrid(kopt)
+    end if
 end if
 
 !====================!
@@ -265,7 +273,8 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(lb <= x .and. x <= ub, 'LB <= X <= UB', srname)
+    !write (16, *) lb, ub, x, t, fprev, fnext, fopt
+    !call assert(lb <= x .and. x <= ub, 'LB <= X <= UB', srname)
 end if
 
 end function interval_max
