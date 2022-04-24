@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 AM01:04:55
+! Last Modified: Sunday, April 24, 2022 AM09:43:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -61,7 +61,7 @@ real(RP) :: args(5), hangt_ub, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
 &        stplen, sbound(size(gopt)), temp, &
 &        xtest(size(xopt)), diact
-real(RP) :: ssq(size(gopt)), tang(size(gopt))!, bdi(size(gopt))
+real(RP) :: ssq(size(gopt)), tanbd(size(gopt))!, bdi(size(gopt))
 integer(IK) :: iact, iterc, itermax, grid_size, nact, nactsav
 
 ! Sizes
@@ -366,25 +366,25 @@ do iterc = 1, itermax
     ! HALF the angle of the alternative iteration, namely ANGBD, except that, if already a free
     ! variable has reached a bound, there is a branch back to label after fixing that variable.
     ssq = d**2 + s**2
-    tang = ONE
+    tanbd = ONE
     where (xbdi == 0 .and. xopt - sl < sqrt(ssq))
-        tang = min(tang, (xnew - sl) / (sqrt(max(ZERO, ssq - (xopt - sl)**2)) - s))
+        tanbd = min(tanbd, (xnew - sl) / (sqrt(max(ZERO, ssq - (xopt - sl)**2)) - s))
     end where
     where (xbdi == 0 .and. su - xopt < sqrt(ssq))
-        tang = min(tang, (su - xnew) / (sqrt(max(ZERO, ssq - (su - xopt)**2)) + s))
+        tanbd = min(tanbd, (su - xnew) / (sqrt(max(ZERO, ssq - (su - xopt)**2)) + s))
     end where
-    tang(trueloc(is_nan(tang))) = ZERO
+    tanbd(trueloc(is_nan(tanbd))) = ZERO
     iact = 0
     hangt_ub = ONE
-    if (any(tang < 1)) then
-        iact = int(minloc(tang, dim=1), IK)
-        hangt_ub = minval(tang)
+    if (any(tanbd < 1)) then
+        iact = int(minloc(tanbd, dim=1), IK)
+        hangt_ub = minval(tanbd)
     end if
     if (hangt_ub <= 0) then
         exit
     end if
 
-    ! Calculate HHD and some curvatures for the alternative iteration.
+    ! Calculate HS and some curvatures for the alternative iteration.
     hs = hess_mul(s, xpt, pq, hq)
     shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
     dhs = inprod(d(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
@@ -393,7 +393,7 @@ do iterc = 1, itermax
     ! Seek the greatest reduction in Q for a range of equally spaced values of HANGT in [0, ANGBD],
     ! with HANGT being the TANGENT of HALF the angle of the alternative iteration.
     args = [shs, dhd, dhs, dredg, sredg]
-    grid_size = int(17.0_RP * hangt_ub + 3.1_RP, IK)
+    grid_size = int(17.0_RP * hangt_ub + 4.1_RP, IK)
     hangt = interval_max(interval_fun_trsbox, ZERO, hangt_ub, args, grid_size)  ! What about GEOSTEP?
     sdec = interval_fun_trsbox(hangt, args)
     if (.not. sdec > 0) exit
@@ -407,12 +407,7 @@ do iterc = 1, itermax
     d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
     hred = cth * hred + sth * hs
     qred = qred + sdec
-    if (iact > 0 .and. hangt >= hangt_ub) then  ! The D(IACT) reaches its lower or upper bound.
-        !if ((xopt(iact) + d(iact)) - sl(iact) < su(iact) - (xopt(iact) + d(iact))) then
-        !    xbdi(iact) = -ONE
-        !else
-        !    xbdi(iact) = ONE
-        !end if
+    if (iact > 0 .and. hangt >= hangt_ub) then  ! D(IACT) reaches its lower or upper bound.
         xbdi(iact) = sign(ONE, d(iact) - diact)  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
     elseif (.not. sdec > 0.01_RP * qred) then
         exit
