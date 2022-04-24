@@ -365,7 +365,7 @@ goto 80
 ! although any changes have not been included yet in XPT. Also the final BMAT and ZMAT matrices are
 ! complete, but, apart from the shift of XBASE, the updating of the quadratic model remains to be
 ! done. The following cycle through the new interpolation points begins by putting the new point in
-! XPT(KPT,.) and by setting PQ(KPT) to zero, except that a RETURN occurs if MAXFUN prohibits another
+! XPT(:, KPT) and by setting PQ(KPT) to zero, except that a RETURN occurs if MAXFUN prohibits another
 ! value of F.
 260 continue
 do kpt = 1, npt
@@ -381,78 +381,34 @@ do kpt = 1, npt
     pq(kpt) = ZERO
     xpt(:, kpt) = ZERO
 
+    ! Set VQUAD to the value of the current model at the new point.
+    vquad = fbase
     ip = int(ptsid(kpt))
     iq = int(real(np, RP) * ptsid(kpt) - real(ip * np, RP))
-
     if (ip > 0 .and. iq > 0) then
         xp = ptsaux(1, ip)
         xpt(ip, kpt) = xp
         xq = ptsaux(1, iq)
         xpt(iq, kpt) = xq
-    elseif (ip > 0) then  ! IP > 0, IQ == 0
-        xp = ptsaux(1, ip)
-        xpt(ip, kpt) = xp
-    elseif (iq > 0) then  ! IP == 0, IQ > 0
-        xq = ptsaux(2, iq)
-        xpt(iq, kpt) = xq
-    end if
-
-    !if (ip > 0) then
-    !    xp = ptsaux(1, ip)
-    !    xpt(ip, kpt) = xp
-    !end if
-    !if (iq > 0) then
-    !    if (ip == 0) then
-    !        xq = ptsaux(2, iq)
-    !    else
-    !        xq = ptsaux(1, iq)
-    !    end if
-    !    xpt(iq, kpt) = xq
-    !end if
-
-    ! Set VQUAD to the value of the current model at the new point.
-    vquad = fbase
-
-    !if (ip > 0) then
-    !    vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
-    !end if
-    !if (iq > 0) then
-    !    vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
-    !    if (ip > 0) then
-    !        vquad = vquad + xp * xq * hq(ip, iq)
-    !    end if
-    !end if
-
-    if (ip > 0 .and. iq > 0) then
         vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
         vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
         vquad = vquad + xp * xq * hq(ip, iq)
-    elseif (ip > 0) then  ! IP > 0, IQ == 0
-        vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
-    elseif (iq > 0) then  ! IP == 0, IQ > 0
-        vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
-    end if
-
-    !do k = 1, npt
-    !    temp = ZERO
-    !    if (ip > 0) temp = temp + xp * xpt(ip, k)
-    !    if (iq > 0) temp = temp + xq * xpt(iq, k)
-    !    vquad = vquad + HALF * pq(k) * temp * temp
-    !end do
-
-    if (ip > 0 .and. iq > 0) then
         do k = 1, npt
-            !if (ip > 0) temp = temp + xp * xpt(ip, k)
-            !if (iq > 0) temp = temp + xq * xpt(iq, k)
             temp = xp * xpt(ip, k) + xq * xpt(iq, k)
             vquad = vquad + HALF * pq(k) * temp * temp
         end do
-    else if (ip > 0) then
+    elseif (ip > 0) then  ! IP > 0, IQ == 0
+        xp = ptsaux(1, ip)
+        xpt(ip, kpt) = xp
+        vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
         do k = 1, npt
             temp = xp * xpt(ip, k)
             vquad = vquad + HALF * pq(k) * temp * temp
         end do
-    else if (iq > 0) then
+    elseif (iq > 0) then  ! IP == 0, IQ > 0
+        xq = ptsaux(2, iq)
+        xpt(iq, kpt) = xq
+        vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
         do k = 1, npt
             temp = xq * xpt(iq, k)
             vquad = vquad + HALF * pq(k) * temp * temp
@@ -472,7 +428,7 @@ do kpt = 1, npt
     call savehist(nf, x, xhist, f, fhist)
 
     fval(kpt) = f
-    if (f < fval(kopt)) then
+    if (f < fval(kopt)) then  ! Can be moved out of the loop
         kopt = kpt
     end if
     diff = f - vquad
