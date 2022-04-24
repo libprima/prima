@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 AM09:44:05
+! Last Modified: Sunday, April 24, 2022 AM10:45:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -444,9 +444,13 @@ end do
 if (isav == 0) then
     angt = ZERO
 elseif (isav < iu) then
-    temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
-    !angt = angbd * (real(isav, RP) + HALF * temp) / real(iu, RP)
-    angt = ZERO + (angbd - ZERO) * (real(isav, RP) + HALF * temp) / real(iu, RP)
+    if (abs(rdnext - rdprev) > 0) then
+        temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
+        !angt = angbd * (real(isav, RP) + HALF * temp) / real(iu, RP)
+        angt = ZERO + ((angbd - ZERO) / real(iu, RP)) * (real(isav, RP) + HALF * temp)
+    else
+        angt = ZERO + ((angbd - ZERO) / real(iu, RP)) * real(isav, RP)
+    end if
 else
 !-------------------------------!
 ! Zaikun 20220422
