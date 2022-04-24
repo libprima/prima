@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM11:29:17
+! Last Modified: Sunday, April 24, 2022 PM11:42:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,7 +85,7 @@ real(RP) :: w(2 * size(fval) + size(xopt))
 real(RP) :: x(size(xopt))
 real(RP) :: beta, bsum, den, denom, moderr,      &
 &        distsq(size(fval)), fbase, hdiag, sfrac,    &
-&        summ, sumpq, temp, vlmxsq, vquad, winc, xp, xq
+&        summ, temp, vlmxsq, vquad, winc, xp, xq
 integer(IK) :: ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nptm, nrem
 real(RP) :: xpq(size(xopt)), pqw(size(fval)), xxpt(size(fval))
@@ -175,21 +175,19 @@ nptm = npt - np
 ! become current.
 xpt = xpt - spread(xopt, dim=2, ncopies=npt)
 distsq = sum((xpt)**2, dim=1)
-sumpq = sum(pq)
 winc = maxval(distsq)
 w(npt + n + 1:2 * npt + n) = distsq
 zmat = ZERO
 
 ! Update HQ so that HQ and PQ define the second derivatives of the model after XBASE has been
 ! shifted to the trust region centre.
-xpq = HALF * sumpq * xopt
-do k = 1, npt
-    xpq = xpq + pq(k) * xpt(:, k)
-end do
+!xpq = HALF * sum(pq) * xopt
+!do k = 1, npt
+!    xpq = xpq + pq(k) * xpt(:, k)
+!end do
 !xpq = matprod(xpt + HALF * spread(xopt, dim=2, ncopies=npt), pq)
 ! OR:
-!xpq = matprod(xpt, pq) + HALF * sum(pq) * xopt
-
+xpq = matprod(xpt, pq) + HALF * sum(pq) * xopt
 call r2update(hq, ONE, xopt, xpq)
 
 
