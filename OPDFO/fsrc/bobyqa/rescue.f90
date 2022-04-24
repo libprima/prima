@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM06:03:30
+! Last Modified: Sunday, April 24, 2022 PM11:15:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,7 +79,7 @@ real(RP), intent(out) :: xhist(n, maxxhist)
 real(RP) :: x(n)
 real(RP) :: beta, bsum, den, denom, diff,      &
 &        distsq, dsqmin, fbase, hdiag, sfrac,    &
-&        summ, sumpq, temp, vlmxsq, vquad, winc, xp, xq
+&        summ, sumpq, temp, vlmxsq, vquad, vtemp, winc, xp, xq
 integer(IK) :: i, ih, ihp, ihq, ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nptm, nrem
 
@@ -443,12 +443,14 @@ goto 80
             vquad = vquad + xp * xq * hq(iw)
         end if
     end if
+    vtemp = ZERO
     do k = 1, npt
         temp = ZERO
         if (ip > 0) temp = temp + xp * xpt(ip, k)
         if (iq > 0) temp = temp + xq * xpt(iq, k)
-        vquad = vquad + HALF * pq(k) * temp * temp
+        vtemp = vtemp + pq(k) * temp * temp
     end do
+    vquad = vquad + HALF * vtemp
 !
 !     Calculate F at the new interpolation point, and set DIFF to the factor
 !     that is going to multiply the KPT-th Lagrange function when the model

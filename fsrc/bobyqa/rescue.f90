@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM08:47:24
+! Last Modified: Sunday, April 24, 2022 PM11:29:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -83,12 +83,12 @@ real(RP) :: ptsaux(2, size(xopt))
 real(RP) :: ptsid(size(fval))
 real(RP) :: w(2 * size(fval) + size(xopt))
 real(RP) :: x(size(xopt))
-real(RP) :: beta, bsum, den, denom, diff,      &
+real(RP) :: beta, bsum, den, denom, moderr,      &
 &        distsq(size(fval)), fbase, hdiag, sfrac,    &
 &        summ, sumpq, temp, vlmxsq, vquad, winc, xp, xq
 integer(IK) :: ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nptm, nrem
-real(RP) :: xpq(size(xopt)), pqw(size(fval))
+real(RP) :: xpq(size(xopt)), pqw(size(fval)), xxpt(size(fval))
 logical :: mask(size(xopt))
 
 n = int(size(xopt), kind(n))
@@ -159,6 +159,10 @@ end if
 !
 !     Set some constants.
 !
+
+if (nf >= maxfun) then
+    return
+end if
 
 np = n + 1
 sfrac = HALF / real(np, RP)
@@ -361,83 +365,86 @@ if (denom <= 1.0E-2_RP * vlmxsq) then
 end if
 goto 80
 
-! When label 260 is reached, all the final positions of the interpolation points have been chosen
-! although any changes have not been included yet in XPT. Also the final BMAT and ZMAT matrices are
-! complete, but, apart from the shift of XBASE, the updating of the quadratic model remains to be
-! done. The following cycle through the new interpolation points begins by putting the new point in
-! XPT(:, KPT) and by setting PQ(KPT) to zero, except that a RETURN occurs if MAXFUN prohibits another
-! value of F.
+! All the final positions of the interpolation points have been chosen although any changes have not
+! been included yet in XPT. Also the final BMAT and ZMAT matrices are complete, but, apart from the
+! shift of XBASE, the updating of the quadratic model remains to be done. The following cycle through
+! the new interpolation points begins by putting the new point in XPT(:, KPT) and by setting PQ(KPT)
+! to zero. A return occurs if MAXFUN prohibits another value of F or when all the new interpolation
+! points are included in the model.
 260 continue
 do kpt = 1, npt
     if (ptsid(kpt) == ZERO) then
         cycle
     end if
-    if (nf >= maxfun) then
-        nf = -1
-        goto 350
-    end if
 
+    ! Absorb PQ(KPT)*XPT(:, KPT)*XPT(:, KPT)^T into the explicit part of the Hessian of the
+    ! quadratic model. Implement R1UPDATE properly so that it ensures HQ is symmetric.
     call r1update(hq, pq(kpt), xpt(:, kpt))
     pq(kpt) = ZERO
-    xpt(:, kpt) = ZERO
 
-    ! Set VQUAD to the value of the current model at the new point.
-    vquad = fbase
     ip = int(ptsid(kpt))
     iq = int(real(np, RP) * ptsid(kpt) - real(ip * np, RP))
+
+    ! Update XPT(:, KPT) to the new point. It contains at most two nonzeros XP and XQ at the IP
+    ! and IQ entries.
+    xpt(:, kpt) = ZERO
     if (ip > 0 .and. iq > 0) then
         xp = ptsaux(1, ip)
         xpt(ip, kpt) = xp
         xq = ptsaux(1, iq)
         xpt(iq, kpt) = xq
-        vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
-        vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
-        vquad = vquad + xp * xq * hq(ip, iq)
-        do k = 1, npt
-            temp = xp * xpt(ip, k) + xq * xpt(iq, k)
-            vquad = vquad + HALF * pq(k) * temp * temp
-        end do
     elseif (ip > 0) then  ! IP > 0, IQ == 0
         xp = ptsaux(1, ip)
         xpt(ip, kpt) = xp
-        vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
-        do k = 1, npt
-            temp = xp * xpt(ip, k)
-            vquad = vquad + HALF * pq(k) * temp * temp
-        end do
     elseif (iq > 0) then  ! IP == 0, IQ > 0
         xq = ptsaux(2, iq)
         xpt(iq, kpt) = xq
-        vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
-        do k = 1, npt
-            temp = xq * xpt(iq, k)
-            vquad = vquad + HALF * pq(k) * temp * temp
-        end do
     end if
 
-    ! Calculate F at the new interpolation point, and set DIFF to the factor that is going to
+    ! Calculate F at the new interpolation point, and set MODERR to the factor that is going to
     ! multiply the KPT-th Lagrange function when the model is updated to provide interpolation to
     ! the new function value.
-    w(1:n) = min(max(xl, xbase + xpt(:, kpt)), xu)
-    w(trueloc(xpt(:, kpt) <= sl)) = xl(trueloc(xpt(:, kpt) <= sl))
-    w(trueloc(xpt(:, kpt) >= su)) = xu(trueloc(xpt(:, kpt) >= su))
-
+    x = min(max(xl, xbase + xpt(:, kpt)), xu)
+    x(trueloc(xpt(:, kpt) <= sl)) = xl(trueloc(xpt(:, kpt) <= sl))
+    x(trueloc(xpt(:, kpt) >= su)) = xu(trueloc(xpt(:, kpt) >= su))
     nf = nf + 1
-    x = w(1:n)
     call evaluate(calfun, x, f)
     call savehist(nf, x, xhist, f, fhist)
-
     fval(kpt) = f
-    if (f < fval(kopt)) then  ! Can be moved out of the loop
+    if (f < fval(kopt)) then
         kopt = kpt
     end if
-    diff = f - vquad
+    if (is_nan(f) .or. is_posinf(f)) then
+        exit
+    end if
+    if (f <= ftarget) then
+        exit
+    end if
+    if (nf >= maxfun) then
+        exit
+    end if
 
-    ! Update the quadratic model. The RETURN from the subroutine occurs when all the new
-    ! interpolation points are included in the model.
-    gopt = gopt + diff * bmat(:, kpt)
+    ! Set VQUAD to the value of the current model at the new XPT(:, KPT), which has at most two
+    ! nonzeros XP and XQ at the IP and IQ entries respectively.
+    vquad = fbase
+    if (ip > 0 .and. iq > 0) then
+        vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
+        vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
+        vquad = vquad + xp * xq * hq(ip, iq)
+        xxpt = xp * xpt(ip, :) + xq * xpt(iq, :)
+    elseif (ip > 0) then  ! IP > 0, IQ == 0
+        vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
+        xxpt = xp * xpt(ip, :)
+    elseif (iq > 0) then  ! IP == 0, IQ > 0
+        vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
+        xxpt = xq * xpt(iq, :)
+    end if
+    vquad = vquad + HALF * inprod(xxpt, pq * xxpt)
 
-    pqw = diff * matprod(zmat, zmat(kpt, :))
+    ! Update the quadratic model.
+    moderr = f - vquad
+    gopt = gopt + moderr * bmat(:, kpt)
+    pqw = moderr * matprod(zmat, zmat(kpt, :))
     pq(trueloc(ptsid == 0)) = pq(trueloc(ptsid == 0)) + pqw(trueloc(ptsid == 0))
     do k = 1, npt
         if (ptsid(k) == 0) then
@@ -459,12 +466,6 @@ do kpt = 1, npt
     end do
     ptsid(kpt) = ZERO
 
-    if (is_nan(f) .or. is_posinf(f)) then
-        exit
-    end if
-    if (f <= ftarget) then
-        exit
-    end if
 end do
 
 350 continue
