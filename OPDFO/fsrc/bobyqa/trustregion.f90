@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 AM10:45:13
+! Last Modified: Sunday, April 24, 2022 PM12:49:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,7 +24,7 @@ subroutine trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, &
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: vm_mod, only : v2m
 
 implicit none
@@ -446,8 +446,12 @@ if (isav == 0) then
 elseif (isav < iu) then
     if (abs(rdnext - rdprev) > 0) then
         temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
-        !angt = angbd * (real(isav, RP) + HALF * temp) / real(iu, RP)
-        angt = ZERO + ((angbd - ZERO) / real(iu, RP)) * (real(isav, RP) + HALF * temp)
+        if (is_finite(temp) .and. abs(temp) > 0) then
+            !angt = angbd * (real(isav, RP) + HALF * temp) / real(iu, RP)
+            angt = ZERO + ((angbd - ZERO) / real(iu, RP)) * (real(isav, RP) + HALF * temp)
+        else
+            angt = ZERO + ((angbd - ZERO) / real(iu, RP)) * real(isav, RP)
+        end if
     else
         angt = ZERO + ((angbd - ZERO) / real(iu, RP)) * real(isav, RP)
     end if
