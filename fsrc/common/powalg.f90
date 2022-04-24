@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 18, 2022 PM04:25:39
+! Last Modified: Sunday, April 24, 2022 PM11:22:46
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -557,6 +557,7 @@ integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: dxpt(size(pq))
 real(RP) :: s(size(x))
 real(RP) :: t
 real(RP) :: w(size(pq))
@@ -600,8 +601,8 @@ do j = 1, n
 end do
 
 ! Implicit second-order term
-w = matprod(d, xpt)
-w = w * (HALF * w + matprod(x, xpt))
+dxpt = matprod(d, xpt)
+w = dxpt * (HALF * dxpt + matprod(x, xpt))
 do i = 1, npt
     qred = qred - pq(i) * w(i)
 end do
@@ -658,7 +659,7 @@ real(RP) :: qred
 character(len=*), parameter :: srname = 'CALQUAD_GOPT'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: w(size(pq))
+real(RP) :: dxpt(size(pq))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -698,26 +699,26 @@ end if
 !end do
 !
 !! Implicit second-order term
-!w = matprod(d, xpt)
+!dxpt = matprod(d, xpt)
 !do i = 1, npt
-!    qred = qred - HALF * pq(i) * w(i) * w(i)  ! In BOBYQA, it is QRED - HALF * PQ(I) * W(I)**2.
+!    qred = qred - HALF * pq(i) * dxpt(i) * dxpt(i)  ! In BOBYQA, it is QRED - HALF * PQ(I) * DXPT(I)**2.
 !end do
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
 ! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
 !--------------------------------------------------------------------------------------------------!
-w = matprod(d, xpt)
+dxpt = matprod(d, xpt)
 if (present(hq)) then
-    qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(w, pq * w)
+    qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(dxpt, pq * dxpt)
 else
-    qred = -inprod(d, gopt) - HALF * inprod(w, pq * w)
+    qred = -inprod(d, gopt) - HALF * inprod(dxpt, pq * dxpt)
 end if
 !!MATLAB:
 !!if nargin >= 5
-!!    qred = -d'*(gopt + 0.5*hq*d) - 0.5*w'*(pq*w);
+!!    qred = -d'*(gopt + 0.5*hq*d) - 0.5*dxpt'*(pq*dxpt);
 !!else
-!!    qred = -d'*gopt - 0.5*w'*(pq*w);
+!!    qred = -d'*gopt - 0.5*w'*(pq*dxpt);
 !!end
 !--------------------------------------------------------------------------------------------------!
 
