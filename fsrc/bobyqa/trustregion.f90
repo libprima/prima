@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM12:01:43
+! Last Modified: Sunday, April 24, 2022 PM02:00:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,6 +52,7 @@ real(RP), intent(out) :: xnew(:)  ! XNEW(N)
 character(len=*), parameter :: srname = 'TRSBOX'
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: red(size(gopt))
 real(RP) :: hred(size(gopt))
 real(RP) :: hs(size(gopt))
 real(RP) :: s(size(gopt))
@@ -321,7 +322,21 @@ crvmin = ZERO
 
 ! Improve D by a sequential 2D search on the boundary of the trust region for the variables that
 ! have not reached a bound. See (3.6) of the BOBYQA paper and the elaborations nearby.
-! Shouldn't we try the same in GEOSTEP?
+! 1. At each iteration, the current D is improved by a search conducted on the circular arch
+! {D(THETA): D(THETA) = (I-P)*D + [COS(THETA)*P*D + SIN(THETA)*S], 0<=THETA<=PI/2, LB<=XOPT+D(THETA)<=UB},
+! where P is the orthogonal projection onto the space of the variables that have not reached their
+! bounds, and S is a linear combination of P*D and P*G(XOPT+D) with |S| = |P*D| and G(.) being the
+! gradient of the quadratic model. The iteration is performed only if P*D and P*G(XOPT+D) are not
+! nearly parallel. The arc lies in the hyperplane (I-P)*D + Span{P*D, P*G(XOPT+D)} and the trust
+! region boundary {D: |D| = DELTA}; it is part of the circle (I-P)*D + {[COS(THETA)*P*D + SIN(THETA)*S]}
+! with THETA being in [0, PI/2] and restricted by the bounds on X.
+! 2. In (3.6) of the BOBYQA paper, Powell wrote that 0 <= THETA <= PI/4, which seems a typo.
+! 3. The search on the arch is done by calling INTERVAL_MAX, which maximizes INTERVAL_FUN_TRSBOX.
+! INTERVAL_FUN_TRSBOX is essentially Q(XOPT + D) - Q(XOPT + D(THETA)), but its independent variable
+! is not THETA but TAN(THETA/2), namely "tangent of the half angle" as per Powell. This "half" may
+! be the reason for the apparent typo mentioned above.
+! Question (Zaikun 20220424): Shouldn't we try something similar in GEOSTEP?
+
 ! In Powell's code, ITERMAX is essentially infinity; the loop will exit when NACT >= N - 1 or the
 ! procedure cannot significantly reduce the quadratic model. We impose an explicit but large bound
 ! on the number of iterations as a safeguard; in our tests, this bound is never reached.
@@ -329,6 +344,8 @@ itermax = 10_IK * (n - nact)
 nactsav = nact - 1
 do iterc = 1, itermax
     xnew = xopt + d
+
+    ! Update XBDI. It indicates whether the lower (-1) or upper bound (+1) has been reached or not (0).
     xbdi(trueloc(xbdi == 0 .and. (xnew >= su))) = ONE
     xbdi(trueloc(xbdi == 0 .and. (xnew <= sl))) = -ONE
     nact = count(xbdi /= 0)
@@ -336,30 +353,29 @@ do iterc = 1, itermax
         exit
     end if
 
+    ! Update GREDSQ, DREDG, DREDSQ, and HRED.
     gredsq = sum(gnew(trueloc(xbdi == 0))**2)
     dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
-
     if (nact > nactsav) then
         dredsq = sum(d(trueloc(xbdi == 0))**2) ! In theory, DREDSQ changes only when NACT increases.
-        s = d
-        s(trueloc(xbdi /= 0)) = ZERO
-        hred = hess_mul(s, xpt, pq, hq)
+        red = d
+        red(trueloc(xbdi /= 0)) = ZERO
+        hred = hess_mul(red, xpt, pq, hq)
         nactsav = nact
     end if
 
     ! Let the search direction S be a linear combination of the reduced D and the reduced G that is
     ! orthogonal to the reduced D.
-    temp = gredsq * dredsq - dredg * dredg
-    if (temp <= 1.0E-4_RP * qred * qred) exit
-    temp = sqrt(temp)
-    s = (dredg * d - dredsq * gnew) / temp
-    s(trueloc(xbdi /= 0)) = ZERO
-
     ! Zaikun 20210926:
     !!! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that |S| = |D|??? Namely:
     ! S = something, then S = (S/norm(S))*norm(D).
     ! Also, should exit if the orthogonality of S and D is damaged, or S is  not finite.
     ! See the corresponding part of TRSAPP.
+    temp = gredsq * dredsq - dredg * dredg
+    if (temp <= 1.0E-4_RP * qred * qred) exit
+    temp = sqrt(temp)
+    s = (dredg * d - dredsq * gnew) / temp
+    s(trueloc(xbdi /= 0)) = ZERO
     sredg = -temp
 
     ! By considering the simple bounds on the variables, calculate an upper bound on the TANGENT of
