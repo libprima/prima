@@ -7,7 +7,7 @@ module univar_mod
 !
 ! Started: January 2021
 !
-! Last Modified: Sunday, April 24, 2022 PM01:11:03
+! Last Modified: Sunday, April 24, 2022 PM02:15:25
 !
 ! N.B.:
 ! 0. Here, the optimization is performed using only function values by sampling the objective
@@ -241,7 +241,6 @@ real(RP) :: fopt
 real(RP) :: fnext
 real(RP) :: fprev
 real(RP) :: step
-real(RP) :: unitx
 real(RP) :: xgrid(grid_size)
 
 ! Preconditions
@@ -284,9 +283,8 @@ else
         step = HALF * ((fnext - fprev) / (fopt + fopt - fprev - fnext))
     end if
     if (is_finite(step) .and. abs(step) > 0) then
-        unitx = (ub - lb) / real(grid_size - 1, RP)
-        x = lb + (real(kopt - 1, RP) + step) * unitx
-        ! N.B.: 1. XGRID(KOPT) = LB + (KOPT - 1) * UNITX.
+        x = lb + (ub - lb) * (real(kopt - 1, RP) + step) / real(grid_size - 1, RP)
+        ! N.B.: 1. XGRID(KOPT) = LB + (UB-LB)*(KOPT - 1)/(GRID_SIZE -1)
         ! 2. XGRID(KOPT-1) <= X <= XGRID(KOPT+1), as X maximizes the quadratic interpolant.
     else
         x = xgrid(kopt)

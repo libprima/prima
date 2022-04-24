@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM12:49:57
+! Last Modified: Sunday, April 24, 2022 PM02:16:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -447,8 +447,8 @@ elseif (isav < iu) then
     if (abs(rdnext - rdprev) > 0) then
         temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
         if (is_finite(temp) .and. abs(temp) > 0) then
-            !angt = angbd * (real(isav, RP) + HALF * temp) / real(iu, RP)
-            angt = ZERO + ((angbd - ZERO) / real(iu, RP)) * (real(isav, RP) + HALF * temp)
+            angt = ZERO + (angbd - ZERO) * (real(isav, RP) + HALF * temp) / real(iu, RP)
+            !angt = ZERO + ((angbd - ZERO) / real(iu, RP)) * (real(isav, RP) + HALF * temp)
         else
             angt = ZERO + ((angbd - ZERO) / real(iu, RP)) * real(isav, RP)
         end if
