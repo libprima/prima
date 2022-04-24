@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM02:00:10
+! Last Modified: Sunday, April 24, 2022 PM03:43:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,7 +53,7 @@ character(len=*), parameter :: srname = 'TRSBOX'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: red(size(gopt))
-real(RP) :: hred(size(gopt))
+real(RP) :: hdred(size(gopt))
 real(RP) :: hs(size(gopt))
 real(RP) :: s(size(gopt))
 real(RP) :: xbdi(size(gopt))
@@ -358,9 +358,9 @@ do iterc = 1, itermax
     dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
     if (nact > nactsav) then
         dredsq = sum(d(trueloc(xbdi == 0))**2) ! In theory, DREDSQ changes only when NACT increases.
-        red = d
-        red(trueloc(xbdi /= 0)) = ZERO
-        hred = hess_mul(red, xpt, pq, hq)
+        dred = d
+        dred(trueloc(xbdi /= 0)) = ZERO
+        hdred = hess_mul(dred, xpt, pq, hq)
         nactsav = nact
     end if
 
@@ -378,18 +378,33 @@ do iterc = 1, itermax
     s(trueloc(xbdi /= 0)) = ZERO
     sredg = -temp
 
-    ! By considering the simple bounds on the variables, calculate an upper bound on the TANGENT of
-    ! HALF the angle of the alternative iteration, namely ANGBD, except that, if already a free
-    ! variable has reached a bound, there is a branch back to label after fixing that variable.
+    ! By considering the simple bounds on the free variables, calculate an upper bound on the
+    ! TANGENT of HALF the angle of the alternative iteration, namely ANGBD.
     ssq = d**2 + s**2
     tanbd = ONE
     where (xbdi == 0 .and. xopt - sl < sqrt(ssq))
+        ! N.B.: 1. Powell's code checks whether SSQ - (XOPT - SL)**2) > 0. However, overflow will
+        ! occur if SL contains large values that indicate absence of bounds. It is not a problem in
+        ! MATLAB/Python/Julia/R.
+        ! 2. Even if XOPT - SL < SQRT(SSQ), rounding errors may render SSQ - (XOPT - SL)**2) < 0.
+        ! This is why we need the maximum with ZERO to prevent floating point exceptions.
         tanbd = min(tanbd, (xnew - sl) / (sqrt(max(ZERO, ssq - (xopt - sl)**2)) - s))
     end where
     where (xbdi == 0 .and. su - xopt < sqrt(ssq))
         tanbd = min(tanbd, (su - xnew) / (sqrt(max(ZERO, ssq - (su - xopt)**2)) + s))
     end where
     tanbd(trueloc(is_nan(tanbd))) = ZERO
+
+    !!MATLAB code for defining TANBD:
+    !!tanbd = 1;
+    !!discmn = ssq - (xopt - sl)**2;  % This is a discriminant.
+    !!mask = (xbdi == 0 & discmn > 0);
+    !!tanbd(mask) = min(tanbd(mask), (xnew(mask) - sl(mask)) / (sqrt(discmn(mask)) - s(mask)));
+    !!discmn = ssq - (su - xopt)**2;  % This is a discriminant.
+    !!mask = (xbdi == 0 & discmn > 0);
+    !!tanbd(mask) = min(tanbd(mask), (su(mask) - xnew(mask)) / (sqrt(discmn(mask)) + s(mask)));
+    !!tanbd(isnan(tanbd)) = 0;
+
     iact = 0
     hangt_ub = ONE
     if (any(tanbd < 1)) then
@@ -404,7 +419,7 @@ do iterc = 1, itermax
     hs = hess_mul(s, xpt, pq, hq)
     shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
     dhs = inprod(d(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
-    dhd = inprod(d(trueloc(xbdi == 0)), hred(trueloc(xbdi == 0)))
+    dhd = inprod(d(trueloc(xbdi == 0)), hdred(trueloc(xbdi == 0)))
 
     ! Seek the greatest reduction in Q for a range of equally spaced values of HANGT in [0, ANGBD],
     ! with HANGT being the TANGENT of HALF the angle of the alternative iteration.
@@ -418,12 +433,12 @@ do iterc = 1, itermax
     ! a free variable, that variable is fixed at the bound.
     cth = (ONE - hangt * hangt) / (ONE + hangt * hangt)
     sth = (hangt + hangt) / (ONE + hangt * hangt)
-    gnew = gnew + (cth - ONE) * hred + sth * hs
+    gnew = gnew + (cth - ONE) * hdred + sth * hs
     if (iact >= 1 .and. iact <= n) then  ! IACT == 0 is possible, but IACT > N should never happen.
         diact = d(iact)
     end if
     d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
-    hred = cth * hred + sth * hs
+    hdred = cth * hdred + sth * hs
     qred = qred + sdec
     if (iact >= 1 .and. iact <= n .and. hangt >= hangt_ub) then  ! D(IACT) reaches lower/upper bound.
         xbdi(iact) = sign(ONE, d(iact) - diact)  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
