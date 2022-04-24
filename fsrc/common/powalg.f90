@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 24, 2022 PM11:22:46
+! Last Modified: Monday, April 25, 2022 AM07:53:57
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1120,11 +1120,11 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat, info)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, wassert
+use, non_intrinsic :: debug_mod, only : assert!, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: info_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, symmetrize, issymmetric, outprod!, r2update
-use, non_intrinsic :: memory_mod, only : safealloc
+!use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Inputs
@@ -1167,9 +1167,9 @@ real(RP) :: w(size(bmat, 2))
 real(RP) :: ztest
 
 ! Debugging variables
-real(RP) :: beta_test
-real(RP) :: tol
-real(RP), allocatable :: vlag_test(:)
+!real(RP) :: beta_test
+!real(RP) :: tol
+!real(RP), allocatable :: vlag_test(:)
 !real(RP), allocatable :: xpt_test(:, :)
 
 ! Sizes
@@ -1192,17 +1192,18 @@ if (DEBUGGING) then
     ! Theoretically, CALVLAG and CALBETA should be independent of the reference point XPT(:, KOPT).
     ! So we test the following. By the implementation of CALVLAG and CALBETA, we are indeed testing
     ! H*[w(X_KOPT) - w(X_KNEW)] = e_KOPT - e_KNEW. Thus H = W^{-1} is also tested to some extend.
-    if (knew >= 1) then
-        tol = 1.0E-2_RP  ! W and H are quite ill-conditioned, so we do not test a high precision.
-        call safealloc(vlag_test, npt + n)
-        vlag_test = calvlag(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
-        call wassert(all(abs(vlag_test - calvlag(kopt, bmat, d, xpt, zmat, idz)) <= &
-            & tol * maxval([ONE, abs(vlag_test)])) .or. RP == kind(0.0), 'VLAG_TEST == VLAG', srname)
-        deallocate (vlag_test)
-        beta_test = calbeta(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
-        call wassert(abs(beta_test - calbeta(kopt, bmat, d, xpt, zmat, idz)) <= &
-            & tol * max(ONE, abs(beta_test)) .or. RP == kind(0.0), 'BETA_TEST == BETA', srname)
-    end if
+    ! However, this is expensive to check.
+    !if (knew >= 1) then
+    !    tol = 1.0E-2_RP  ! W and H are quite ill-conditioned, so we do not test a high precision.
+    !    call safealloc(vlag_test, npt + n)
+    !    vlag_test = calvlag(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
+    !    call wassert(all(abs(vlag_test - calvlag(kopt, bmat, d, xpt, zmat, idz)) <= &
+    !        & tol * maxval([ONE, abs(vlag_test)])) .or. RP == kind(0.0), 'VLAG_TEST == VLAG', srname)
+    !    deallocate (vlag_test)
+    !    beta_test = calbeta(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
+    !    call wassert(abs(beta_test - calbeta(kopt, bmat, d, xpt, zmat, idz)) <= &
+    !        & tol * max(ONE, abs(beta_test)) .or. RP == kind(0.0), 'BETA_TEST == BETA', srname)
+    !end if
 
     ! The following is too expensive to check.
     !call wassert(errh(idz, bmat, zmat, xpt) <= tol .or. RP == kind(0.0), &
@@ -1481,7 +1482,7 @@ end subroutine updateh
 ! w(x)^T*H*w(X) = [w(X) - w(X_K)]^T*H*[w(X) - w(X_K)] + 2*w(X)(K) - w(X_K)(K).
 ! The dependence of w(X)-w(X_K) on X_0 is weaker, which reduces (but does not resolve) the difficulty.
 ! In theory, these formulas are invariant with respect to K. In the code, this means that
-! CALVLAG(K, BMAT, X - XPT(:, K), ZMAT, IDZ) and CALBETA(K, BMAT, X - XPT(:, K), ZMAT, IDZ)
+! CALVLAG(K, BMAT, X - XPT(:, K), XPT, ZMAT, IDZ) and CALBETA(K, BMAT, X - XPT(:, K), XPT, ZMAT, IDZ)
 ! are invariant with respect to K in {1, ..., NPT}. Powell's code uses always K = KOPT.
 ! 6. Since the (NPT+1)-th entry of w(X) - w(X_K) is 0, the above formulas do not require the
 ! (NPT+1)-th column of H, which is not stored in the code.
