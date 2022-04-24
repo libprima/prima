@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM04:27:27
+! Last Modified: Sunday, April 24, 2022 PM04:37:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,11 +52,11 @@ real(RP), intent(out) :: xnew(:)  ! XNEW(N)
 character(len=*), parameter :: srname = 'TRSBOX'
 integer(IK) :: n
 integer(IK) :: npt
+integer(IK) :: xbdi(size(gopt))
 real(RP) :: dred(size(gopt))
 real(RP) :: hdred(size(gopt))
 real(RP) :: hs(size(gopt))
 real(RP) :: s(size(gopt))
-real(RP) :: xbdi(size(gopt))
 real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
@@ -138,9 +138,9 @@ iterc = 0
 iact = 0; itermax = n  ! Without this, G95 complains that they are used uninitialized.
 !--------------------------------------------------------------------------------------------------!
 
-xbdi = ZERO
-xbdi(trueloc(xopt >= su .and. gopt <= 0)) = ONE
-xbdi(trueloc(xopt <= sl .and. gopt >= 0)) = -ONE
+xbdi = 0
+xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1
+xbdi(trueloc(xopt <= sl .and. gopt >= 0)) = -1
 nact = count(xbdi /= 0)
 d = ZERO
 gnew = gopt
@@ -299,7 +299,7 @@ end if
 if (iact > 0) then
     nact = nact + 1
     call assert(abs(s(iact)) > 0, 'S(IACT) /= 0', srname)
-    xbdi(iact) = sign(ONE, s(iact))  !!MATLAB: xbdi(iact) = sign(s(iact))
+    xbdi(iact) = int(sign(ONE, s(iact)), IK)  !!MATLAB: xbdi(iact) = sign(s(iact))
     delsq = delsq - d(iact)**2
     if (delsq <= 0) goto 90
     goto 20  ! Zaikun 20220421 Caution: infinite cycling may occur. Fix it!!!
@@ -348,8 +348,8 @@ do iterc = 1, itermax
     xnew = xopt + d
 
     ! Update XBDI. It indicates whether the lower (-1) or upper bound (+1) has been reached or not (0).
-    xbdi(trueloc(xbdi == 0 .and. (xnew >= su))) = ONE
-    xbdi(trueloc(xbdi == 0 .and. (xnew <= sl))) = -ONE
+    xbdi(trueloc(xbdi == 0 .and. (xnew >= su))) = 1
+    xbdi(trueloc(xbdi == 0 .and. (xnew <= sl))) = -1
     nact = count(xbdi /= 0)
     if (nact >= n - 1) then
         exit
@@ -388,9 +388,8 @@ do iterc = 1, itermax
     ! which is required for all free variables. The indices of the free variable are those with
     ! XBDI == 0. Solving this inequality system for HANGT in [0, PI/4], we get bounds for HANGT,
     ! namely TANBD; the final bound for HANGT is the minimum of TANBD, which is HANGT_BD.
-    ! When solving the system, note that SL < XOPT < SU and SL < XOPT + D < SU when XBDI = 0.
-    ssq = ZERO
-    ssq(trueloc(xbdi == 0)) = d(trueloc(xbdi == 0))**2 + s(trueloc(xbdi == 0))**2
+    ! When solving the system, note that SL < XOPT < SU and SL < XOPT + D < SU if XBDI = 0.
+    ssq = d**2 + s**2  ! Indeed, only SSQ(TRUELOC(XBDI == 0)) is needed.
     tanbd = ONE
     where (xbdi == 0 .and. xopt - sl < sqrt(ssq))
         ! N.B.: 1. Powell's code checks whether SSQ - (XOPT - SL)**2) > 0. However, overflow will
@@ -457,7 +456,7 @@ do iterc = 1, itermax
     hdred = cth * hdred + sth * hs
     qred = qred + sdec
     if (iact >= 1 .and. iact <= n .and. hangt >= hangt_bd) then  ! D(IACT) reaches lower/upper bound.
-        xbdi(iact) = sign(ONE, d(iact) - diact)  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
+        xbdi(iact) = int(sign(ONE, d(iact) - diact), IK)  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
     elseif (.not. sdec > 0.01_RP * qred) then
         exit
     end if
@@ -467,8 +466,8 @@ end do
 
 ! Return after setting XNEW to XOPT+D, giving careful attention to the bounds.
 xnew = max(min(xopt + d, su), sl)
-xnew(trueloc(xbdi == -ONE)) = sl(trueloc(xbdi == -ONE))
-xnew(trueloc(xbdi == ONE)) = su(trueloc(xbdi == ONE))
+xnew(trueloc(xbdi == -1)) = sl(trueloc(xbdi == -1))
+xnew(trueloc(xbdi == 1)) = su(trueloc(xbdi == 1))
 d = xnew - xopt
 dsq = sum(d**2)
 

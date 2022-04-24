@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 PM02:29:51
+! Last Modified: Sunday, April 24, 2022 PM06:34:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, r1update, r2update!, matprod!, norm
+use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update, r2update, trueloc!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specif modules
@@ -84,11 +84,12 @@ real(RP) :: ptsid(size(fval))
 real(RP) :: w(2 * size(fval) + size(xopt))
 real(RP) :: x(size(xopt))
 real(RP) :: beta, bsum, den, denom, diff,      &
-&        distsq, dsqmin, fbase, hdiag, sfrac,    &
+&        distsq(size(fval)), dsqmin, fbase, hdiag, sfrac,    &
 &        summ, sumpq, temp, vlmxsq, vquad, winc, xp, xq
 integer(IK) :: i, ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nptm, nrem
 real(RP) :: xpq(size(xopt))
+logical :: mask(size(xopt))
 
 n = int(size(xopt), kind(n))
 npt = int(size(fval), kind(npt))
@@ -171,21 +172,26 @@ nptm = npt - np
 !     may be added later to these squares to balance the consideration of
 !     the choice of point that is going to become current.
 !
-sumpq = ZERO
-winc = ZERO
-do k = 1, npt
-    distsq = ZERO
-    do j = 1, n
-        xpt(j, k) = xpt(j, k) - xopt(j)
-        distsq = distsq + xpt(j, k)**2
-    end do
-    sumpq = sumpq + pq(k)
-    w(npt + n + k) = distsq
-    winc = max(winc, distsq)
-    do j = 1, nptm
-        zmat(k, j) = ZERO
-    end do
-end do
+!sumpq = ZERO
+xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+distsq = sum((xpt)**2, dim=1)
+sumpq = sum(pq)
+winc = maxval(distsq)
+w(npt + n + 1:2 * npt + n) = distsq
+zmat = ZERO
+!do k = 1, npt
+!    distsq = ZERO
+!    do j = 1, n
+!        xpt(j, k) = xpt(j, k) - xopt(j)
+!        distsq = distsq + xpt(j, k)**2
+!    end do
+!    sumpq = sumpq + pq(k)
+!    w(npt + n + k) = distsq
+!    winc = max(winc, distsq)
+!    do j = 1, nptm
+!        zmat(k, j) = ZERO
+!    end do
+!end do
 
 ! Update HQ so that HQ and PQ define the second derivatives of the model after XBASE has been
 ! shifted to the trust region centre.
@@ -195,33 +201,50 @@ do k = 1, npt
     xpq = xpq + pq(k) * xpt(:, k)
 end do
 !xpq = matprod(xpt + HALF * spread(xopt, dim=2, ncopies=npt), pq)
+! OR:
 !xpq = matprod(xpt, pq) + HALF * sum(pq) * xopt
+
 call r2update(hq, ONE, xopt, xpq)
 
 !
 !     Shift XBASE, SL, SU and XOPT. Set the elements of BMAT to ZERO, and
 !     also set the elements of PTSAUX.
 !
-do j = 1, n
-    xbase(j) = xbase(j) + xopt(j)
-    sl(j) = sl(j) - xopt(j)
-    su(j) = su(j) - xopt(j)
-    xopt(j) = ZERO
-    ptsaux(1, j) = min(delta, su(j))
-    ptsaux(2, j) = max(-delta, sl(j))
-    if (ptsaux(1, j) + ptsaux(2, j) < ZERO) then
-        temp = ptsaux(1, j)
-        ptsaux(1, j) = ptsaux(2, j)
-        ptsaux(2, j) = temp
-    end if
-    if (abs(ptsaux(2, j)) < HALF * abs(ptsaux(1, j))) then
-        ptsaux(2, j) = HALF * ptsaux(1, j)
-    end if
-    do i = 1, npt + n
-        bmat(j, i) = ZERO
-    end do
-end do
+xbase = xbase + xopt
+sl = sl - xopt
+su = su - xopt
+xopt = ZERO
+bmat = ZERO
+ptsaux(1, :) = min(delta, su)
+ptsaux(2, :) = max(-delta, sl)
+mask = (ptsaux(1, :) + ptsaux(2, :) < 0)
+ptsaux([1, 2], trueloc(mask)) = ptsaux([2, 1], trueloc(mask))
+mask = (abs(ptsaux(2, :)) < HALF * abs(ptsaux(1, :)))
+ptsaux(2, trueloc(mask)) = HALF * ptsaux(1, trueloc(mask))
+
+!do j = 1, n
+!    !xbase(j) = xbase(j) + xopt(j)
+!    !sl(j) = sl(j) - xopt(j)
+!    !su(j) = su(j) - xopt(j)
+!    !xopt(j) = ZERO
+!    !ptsaux(1, j) = min(delta, su(j))
+!    !ptsaux(2, j) = max(-delta, sl(j))
+!    if (ptsaux(1, j) + ptsaux(2, j) < ZERO) then
+!        !temp = ptsaux(1, j)
+!        !ptsaux(1, j) = ptsaux(2, j)
+!        !ptsaux(2, j) = temp
+!        ptsaux([1, 2], j) = ptsaux([2, 1], j)
+!    end if
+!    if (abs(ptsaux(2, j)) < HALF * abs(ptsaux(1, j))) then
+!        ptsaux(2, j) = HALF * ptsaux(1, j)
+!    end if
+!    !do i = 1, npt + n
+!    !    bmat(j, i) = ZERO
+!    !end do
+!end do
+
 fbase = fval(kopt)
+
 !
 !     Set the identifiers of the artificial interpolation points that are
 !     along a coordinate direction from XOPT, and set the corresponding
@@ -274,24 +297,33 @@ knew = kopt
 !     Reorder the provisional points in the way that exchanges PTSID(KOLD)
 !     with PTSID(KNEW).
 !
-80 do j = 1, n
-    temp = bmat(j, kold)
-    bmat(j, kold) = bmat(j, knew)
-    bmat(j, knew) = temp
-end do
-do j = 1, nptm
-    temp = zmat(kold, j)
-    zmat(kold, j) = zmat(knew, j)
-    zmat(knew, j) = temp
-end do
+
+80 continue
+
+bmat(:, [kold, knew]) = bmat(:, [knew, kold])
+zmat([kold, knew], :) = zmat([knew, kold], :)
+
+!do j = 1, n
+!    temp = bmat(j, kold)
+!    bmat(j, kold) = bmat(j, knew)
+!    bmat(j, knew) = temp
+!end do
+!do j = 1, nptm
+!    temp = zmat(kold, j)
+!    zmat(kold, j) = zmat(knew, j)
+!    zmat(knew, j) = temp
+!end do
 ptsid(kold) = ptsid(knew)
 ptsid(knew) = ZERO
 w(npt + n + knew) = ZERO
 nrem = nrem - 1
 if (knew /= kopt) then
-    temp = vlag(kold)
-    vlag(kold) = vlag(knew)
-    vlag(knew) = temp
+    !temp = vlag(kold)
+    !vlag(kold) = vlag(knew)
+    !vlag(knew) = temp
+    vlag([kold, knew]) = vlag([knew, kold])
+
+
 !
 !     Update the BMAT and ZMAT matrices so that the status of the KNEW-th
 !     interpolation point can be changed from provisional to original. The
@@ -305,25 +337,36 @@ if (knew /= kopt) then
     !----------------------------------------------------------------------------------------------!
     call updateh(knew, beta, vlag, bmat, zmat)
     if (nrem == 0) goto 350
-    do k = 1, npt
-        w(npt + n + k) = abs(w(npt + n + k))
-    end do
+
+    !do k = 1, npt
+    !    w(npt + n + k) = abs(w(npt + n + k))
+    !end do
+
+    w(npt + n + 1:2 * npt + n) = abs(w(npt + n + 1:2 * npt + n))
 end if
 !
 !     Pick the index KNEW of an original interpolation point that has not
 !     yet replaced ONE of the provisional interpolation points, giving
 !     attention to the closeness to XOPT and to previous tries with KNEW.
 !
-120 dsqmin = ZERO
-do k = 1, npt
-    if (w(npt + n + k) > ZERO) then
-        if (dsqmin == ZERO .or. w(npt + n + k) < dsqmin) then
-            knew = k
-            dsqmin = w(npt + n + k)
-        end if
-    end if
-end do
-if (dsqmin == ZERO) goto 260
+
+120 continue
+
+!dsqmin = ZERO
+!do k = 1, npt
+!    if (w(npt + n + k) > ZERO) then
+!        if (dsqmin == ZERO .or. w(npt + n + k) < dsqmin) then
+!            knew = k
+!            dsqmin = w(npt + n + k)
+!        end if
+!    end if
+!end do
+
+if (any(w(npt + n + 1:2 * npt + n) > 0)) then
+    knew = int(minloc(w(npt + n + 1:2 * npt + n), mask=(w(npt + n + 1:2 * npt + n) > 0), dim=1), IK)
+else
+    goto 260
+end if
 
 ! Form the W-vector of the chosen original interpolation point.
 ! W(1:NPT) contains HALF*MATPROD(XPT(:, KNEW), XPT_TEST)**2 with the following XPT_TEST:
@@ -359,41 +402,51 @@ w(npt + 1:npt + n) = xpt(:, knew)
 !     Calculate VLAG and BETA for the required updating of the H matrix if
 !     XPT(KNEW,.) is reinstated in the set of interpolation points.
 !
-do k = 1, npt
-    summ = ZERO
-    do j = 1, n
-        summ = summ + bmat(j, k) * w(npt + j)
-    end do
-    vlag(k) = summ
-end do
-beta = ZERO
+! Zaikun 20220424: The following part should be done by calling VLAGBETA.
+vlag(1:npt) = matprod(w(npt + 1:npt + n), bmat(:, 1:npt))
+
+!do k = 1, npt
+!    summ = ZERO
+!    do j = 1, n
+!        summ = summ + bmat(j, k) * w(npt + j)
+!    end do
+!    vlag(k) = summ
+!end do
+
+!beta = ZERO
 do j = 1, nptm
-    summ = ZERO
-    do k = 1, npt
-        summ = summ + zmat(k, j) * w(k)
-    end do
-    beta = beta - summ * summ
-    do k = 1, npt
-        vlag(k) = vlag(k) + summ * zmat(k, j)
-    end do
+    !summ = ZERO
+    !do k = 1, npt
+    !    summ = summ + zmat(k, j) * w(k)
+    !end do
+    !summ = inprod(w(1:npt), zmat(:, j))
+    !beta = beta - summ * summ
+    !do k = 1, npt
+    !    vlag(k) = vlag(k) + summ * zmat(k, j)
+    !end do
+    vlag(1:npt) = vlag(1:npt) + inprod(w(1:npt), zmat(:, j)) * zmat(:, j)
 end do
+!vlag(1:npt) = matprod(w(npt + 1:npt + n), bmat(:, 1:npt)) + matprod(zmat, matprod(w(1:npt), zmat))
+beta = -sum(matprod(w(1:npt), zmat)**2)
+
 bsum = ZERO
-distsq = ZERO
 do j = 1, n
-    summ = ZERO
-    do k = 1, npt
-        summ = summ + bmat(j, k) * w(k)
-    end do
-    jp = j + npt
-    bsum = bsum + summ * w(jp)
+    !summ = ZERO
+    !do k = 1, npt
+    !    summ = summ + bmat(j, k) * w(k)
+    !end do
+    summ = inprod(bmat(j, 1:npt), w(1:npt))
+    bsum = bsum + inprod(bmat(j, 1:npt), w(1:npt)) * w(j + npt)
     do ip = npt + 1, npt + n
         summ = summ + bmat(j, ip) * w(ip)
     end do
-    bsum = bsum + summ * w(jp)
-    vlag(jp) = summ
-    distsq = distsq + xpt(j, knew)**2
+
+    !summ = inprod(bmat(j, 1:npt), w(1:npt)) + inprod(bmat(k, npt + 1 : npt + n), w(npt + 1, npt + n))
+
+    bsum = bsum + summ * w(j + npt)
+    vlag(j + npt) = summ
 end do
-beta = HALF * distsq * distsq + beta - bsum
+beta = HALF * sum(xpt(:, knew)**2)**2 + beta - bsum
 vlag(kopt) = vlag(kopt) + ONE
 !
 !     KOLD is set to the index of the provisional interpolation point that is
@@ -405,10 +458,11 @@ denom = ZERO
 vlmxsq = ZERO
 do k = 1, npt
     if (ptsid(k) /= ZERO) then
-        hdiag = ZERO
-        do j = 1, nptm
-            hdiag = hdiag + zmat(k, j)**2
-        end do
+        hdiag = sum(zmat(k, :)**2)
+        !hdiag = ZERO
+        !do j = 1, nptm
+        !    hdiag = hdiag + zmat(k, j)**2
+        !end do
         !den = beta * hdiag + vlag(k)**2
         den = hdiag * beta + vlag(k)**2
         if (den > denom) then
@@ -432,7 +486,9 @@ goto 80
 !     by putting the new point in XPT(KPT,.) and by setting PQ(KPT) to ZERO,
 !     except that a RETURN occurs if MAXFUN prohibits another value of F.
 !
-260 do kpt = 1, npt
+260 continue
+
+do kpt = 1, npt
     if (ptsid(kpt) == ZERO) cycle
     if (nf >= maxfun) then
         nf = -1
@@ -479,11 +535,16 @@ goto 80
 !     that is going to multiply the KPT-th Lagrange function when the model
 !     is updated to provide interpolation to the new function value.
 !
-    do i = 1, n
-        w(i) = min(max(xl(i), xbase(i) + xpt(i, kpt)), xu(i))
-        if (xpt(i, kpt) == sl(i)) w(i) = xl(i)
-        if (xpt(i, kpt) == su(i)) w(i) = xu(i)
-    end do
+    !do i = 1, n
+    !    w(i) = min(max(xl(i), xbase(i) + xpt(i, kpt)), xu(i))
+    !    if (xpt(i, kpt) == sl(i)) w(i) = xl(i)
+    !    if (xpt(i, kpt) == su(i)) w(i) = xu(i)
+    !end do
+
+    w(1:n) = min(max(xl, xbase + xpt(:, kpt)), xu)
+    w(trueloc(xpt(:, kpt) <= sl)) = xl(trueloc(xpt(:, kpt) <= sl))
+    w(trueloc(xpt(:, kpt) >= su)) = xu(trueloc(xpt(:, kpt) >= su))
+
     nf = nf + 1
 
 !-------------------------------------------------------------------!
@@ -502,11 +563,11 @@ goto 80
 !
     gopt = gopt + diff * bmat(:, kpt)
     do k = 1, npt
-        summ = ZERO
-        do j = 1, nptm
-            summ = summ + zmat(k, j) * zmat(kpt, j)
-        end do
-        temp = diff * summ
+        !summ = ZERO
+        !do j = 1, nptm
+        !    summ = summ + zmat(k, j) * zmat(kpt, j)
+        !end do
+        temp = diff * inprod(zmat(k, :), zmat(kpt, :))
         if (ptsid(k) == ZERO) then
             pq(k) = pq(k) + temp
         else
@@ -525,25 +586,18 @@ goto 80
         end if
     end do
     ptsid(kpt) = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     By Tom (on 03-06-2019):
-!     If a NaN or an infinite value has been reached during the
-!     evaluation of the objective function, the loop exit after setting
-!     all the parameters, not to raise an exception. KOPT is set to KPT
-!     to check in BOBYQB weather FVAL(KOPT) is NaN or infinite value or
-!     not.
     if (is_nan(f) .or. is_posinf(f)) then
         exit
     end if
-!     By Tom (on 04-06-2019):
-!     If the target function value is reached, the loop exit and KOPT is
-!     set to KPT to check in BOBYQB weather FVAL(KOPT) .LE. FTARGET
     if (f <= ftarget) then
         exit
     end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end do
-350 return
+
+350 continue
+
+return
 end subroutine rescue
 
 
