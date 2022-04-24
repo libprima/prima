@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM11:39:21
+! Last Modified: Monday, April 25, 2022 AM02:18:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,7 +79,7 @@ real(RP), intent(out) :: xhist(n, maxxhist)
 real(RP) :: x(n)
 real(RP) :: beta, bsum, den, denom, diff,      &
 &        distsq, dsqmin, fbase, hdiag, sfrac,    &
-&        summ, sumpq, temp, vlmxsq, vquad, vtemp, winc, xp, xq
+&        summ, sumpq, temp, vlmxsq, vquad, vtemp, winc, xp, xq, v1(npt), v2(npt)
 integer(IK) :: i, ih, ihp, ihq, ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nptm, nrem
 
@@ -332,6 +332,12 @@ do k = 1, npt
     end do
     vlag(k) = summ
 end do
+
+!------------------------------------------!
+! Zaikun 20220425
+v1 = vlag(1:npt); vlag(1:npt) = ZERO
+!------------------------------------------!
+
 beta = ZERO
 do j = 1, nptm
     summ = ZERO
@@ -344,6 +350,12 @@ do j = 1, nptm
         vlag(k) = vlag(k) + summ * zmat(k, j)
     end do
 end do
+
+!-----------------------------------------------!
+! Zaikun 20220425
+v2 = vlag(1:npt); vlag(1:npt) = v1 + v2
+!-----------------------------------------------!
+
 bsum = ZERO
 distsq = ZERO
 do j = 1, n
@@ -351,17 +363,25 @@ do j = 1, n
     do k = 1, npt
         summ = summ + bmat(j, k) * w(k)
     end do
+
     jp = j + npt
     bsum = bsum + summ * w(jp)
     do ip = npt + 1, ndim
         summ = summ + bmat(j, ip) * w(ip)
     end do
+
     bsum = bsum + summ * w(jp)
     vlag(jp) = summ
     distsq = distsq + xpt(j, knew)**2
 end do
+
+!-------------------------------------------------!
+! Zaikun 20220425
 !beta = HALF * distsq * distsq + beta - bsum
-beta = HALF * distsq**2 + beta - bsum
+!beta = HALF * distsq**2 + beta - bsum
+beta = HALF * distsq**2 - inprod(vlag, w(1:npt + n))
+!-------------------------------------------------!
+
 vlag(kopt) = vlag(kopt) + ONE
 !
 !     KOLD is set to the index of the provisional interpolation point that is

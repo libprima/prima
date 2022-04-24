@@ -1682,7 +1682,7 @@ vlag(npt + 1:npt + n) = matprod(bmat, wmv)
 !!vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 
 ! BETA = HALF*|XOPT + D|^4 - (W-V)'*H*(W-V) - [XOPT'*(X+XOPT)]^2 + HALF*|XOPT|^4. See equations
-! (4.12) and (4.26) of the NEWUOA paper.
+! (4.10), (4.12), (4.24), and (4.26) of the NEWUOA paper.
 dxopt = inprod(d, xopt)
 dsq = inprod(d, d)
 xoptsq = inprod(xopt, xopt)
