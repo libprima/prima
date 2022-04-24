@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 23, 2022 PM08:42:01
+! Last Modified: Sunday, April 24, 2022 AM09:44:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,7 +60,7 @@ real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        stplen, stplensav, temp, tempa, tempb, xsav, xsum(n), sbound(n), hqm(n, n)
 integer(IK) :: i, iact, ih, isav, itcsav, iterc, itermax, iu, &
 &           j, k, nact
-real(RP) :: tang(n)
+real(RP) :: tang(n), fval(1000)
 
 !
 !     The arguments N, NPT, XPT, XOPT, GOPT, HQ, PQ, SL and SU have the same
@@ -420,10 +420,13 @@ redsav = ZERO
 iu = int(17.0_RP * angbd + 3.1_RP)
 do i = 1, iu
     !angt = angbd * real(i, RP) / real(iu, RP)
-    angt = ZERO + (angbd - ZERO) * real(i, RP) / real(iu, RP)
+    !angt = ZERO + (angbd - ZERO) * real(i, RP) / real(iu, RP)
+    angt = ZERO + ((angbd - ZERO) / real(iu, RP)) * real(i, RP)
+    if (i == iu) angt = angbd
     sth = (angt + angt) / (ONE + angt * angt)
     temp = shs + angt * (angt * dhd - dhs - dhs)
     rednew = sth * (angt * dredg - sredg - HALF * sth * temp)
+    fval(i) = rednew
     if (rednew > redmax) then
         redmax = rednew
         isav = i
