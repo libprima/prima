@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 25, 2022 AM02:18:03
+! Last Modified: Monday, April 25, 2022 AM09:42:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -377,9 +377,11 @@ end do
 
 !-------------------------------------------------!
 ! Zaikun 20220425
+bsum = inprod(w(1:n), matprod(bmat(:, 1:npt), w(1:npt)) + matprod(bmat, w(1:npt + n)))
 !beta = HALF * distsq * distsq + beta - bsum
-!beta = HALF * distsq**2 + beta - bsum
-beta = HALF * distsq**2 - inprod(vlag, w(1:npt + n))
+beta = HALF * distsq**2 + beta - bsum
+
+!beta = HALF * distsq**2 - inprod(vlag, w(1:npt + n))
 !-------------------------------------------------!
 
 vlag(kopt) = vlag(kopt) + ONE

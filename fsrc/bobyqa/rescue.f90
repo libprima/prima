@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 25, 2022 AM07:42:39
+! Last Modified: Monday, April 25, 2022 AM09:39:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -93,7 +93,7 @@ real(RP) :: beta, den, denom, moderr,      &
 integer(IK) :: ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nrem
 real(RP) :: xpq(size(xopt)), pqw(size(fval)), xxpt(size(fval))
-!real(RP) :: bsum, summ, vlag_test(size(xopt) + size(fval)), beta_test
+real(RP) :: bsum!, summ, vlag_test(size(xopt) + size(fval)), beta_test
 logical :: mask(size(xopt))
 
 n = int(size(xopt), kind(n))
@@ -333,7 +333,9 @@ vlag(npt + 1:npt + n) = matprod(bmat, wmv(1:npt + n))
 ! BETA = HALF*|XOPT + D|^4 - (W-V)'*H*(W-V) - [XOPT'*(X+XOPT)]^2 + HALF*|XOPT|^4.
 ! Now, recall the definition of XPT_TEST mentioned above, which tells us that XOPT = ZERO!
 ! Therefore, we have BETA = HALF*|D|^4 - (W-V)'*H*(W-V) = HALF*|XPT(:, KNEW)|^4  - WMV' * VLAG.
-beta = HALF * sum(xpt(:, knew)**2)**2 - inprod(wmv(1:npt + n), vlag)
+!beta = HALF * sum(xpt(:, knew)**2)**2 - inprod(wmv(1:npt + n), vlag)
+bsum = inprod(wmv(1:n), matprod(bmat(:, 1:npt), wmv(1:npt)) + matprod(bmat, wmv))
+beta = HALF * sum(xpt(:, knew)**2)**2 - sum(matprod(wmv(1:npt), zmat)**2) - bsum
 vlag(kopt) = vlag(kopt) + ONE
 !--------------------------------------------------------------------------------------------------!
 
