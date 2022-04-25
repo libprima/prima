@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM12:02:49
+! Last Modified: Tuesday, April 26, 2022 AM01:56:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -84,7 +84,6 @@ real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
 real(RP) :: vlag(npt + size(x))
-real(RP) :: w(3 * (npt + size(x)))
 real(RP) :: sl(size(x))
 real(RP) :: su(size(x))
 real(RP) :: xalt(size(x))
@@ -101,7 +100,7 @@ real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 &        frhosq, gisq, gqsq, hdiag(npt),      &
 &        ratio, rho, scaden, qred, weight(npt), pqinc(npt)
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
-integer(IK) :: i, itest, j, k, kbase, knew, &
+integer(IK) :: itest, k, kbase, knew, &
 &           kopt, ksav, nfsav, nresc, ntrits
 
 
@@ -209,7 +208,6 @@ nfsav = nf
 20 continue
 
 if (kopt /= kbase) then
-
     !-------------------------------------------------------!
     !do j = 1, n
     !    do i = 1, j
@@ -222,9 +220,12 @@ if (kopt /= kbase) then
     !        gopt = gopt + pq(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
     !    end do
     !end if
-    gopt = gopt + hess_mul(xopt, xpt, pq, hq)
     !-------------------------------------------------------!
-
+    if (nf > npt) then
+        gopt = gopt + hess_mul(xopt, xpt, pq, hq)
+    else
+        gopt = gopt + matprod(hq, xopt)  ! This should be moved into the initialization.
+    end if
 end if
 
 ! Generate the next point in the trust region that provides a small value of the quadratic model
@@ -556,7 +557,7 @@ call updateh(knew, beta, vlag, bmat, zmat)
 call r1update(hq, pq(knew), xpt(:, knew))
 pq(knew) = ZERO
 pqinc = matprod(zmat, diff * zmat(knew, :))
-pq = pq + pqinc 
+pq = pq + pqinc
 !pq = pq + matprod(zmat, diff * zmat(knew, :))
 !pq = pq + diff * matprod(zmat, zmat(knew, :))
 
@@ -573,15 +574,15 @@ xpt(:, knew) = xnew
 !!w = bmat(:, knew) + hess_mul(xopt, xpt, matprod(zmat, zmat(knew, :)))
 !gopt = gopt + diff * w(1:n)
 !
-!gopt = gopt + diff * (bmat(:, knew) + hess_mul(xopt, xpt, matprod(zmat, zmat(knew, :))))
+!-------------------------------------------------------!
+
 gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)
-!-----------------------------------------------------------!
 
 ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
 if (f < fopt) then
     kopt = knew
     xopt = xnew
-    !-------------------------------------------------------!
+    !------------------------------------------------------!
     !do j = 1, n
     !    do i = 1, j
     !        if (i < j) gopt(j) = gopt(j) + hq(i, j) * d(i)
@@ -591,8 +592,8 @@ if (f < fopt) then
     !do k = 1, npt
     !    gopt = gopt + pq(k) * inprod(d, xpt(:, k)) * xpt(:, k)
     !end do
+    !------------------------------------------------------!
     gopt = gopt + hess_mul(d, xpt, pq, hq)
-    !-------------------------------------------------------!
 end if
 
 ! Calculate the parameters of the least Frobenius norm interpolant to the current data, the gradient
@@ -600,9 +601,9 @@ end if
 if (ntrits > 0) then
     fshift = fval - fval(kopt)
     pqalt = matprod(zmat, matprod(fshift, zmat))
+    galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
 
     !-------------------------------------------------------!
-    galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
     !w(1:npt) = pqalt * matprod(xopt, xpt)
     !galt = ZERO
     !do k = 1, npt
