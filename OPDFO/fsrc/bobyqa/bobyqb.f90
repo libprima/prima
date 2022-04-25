@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 21, 2022 AM08:31:14
+! Last Modified: Monday, April 25, 2022 PM12:40:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -527,7 +527,8 @@ if (f <= ftarget) then
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-if (nf < 0) then
+!if (nf < 0) then
+if (nf >= maxfun) then
     nf = maxfun
     info = 3
     goto 720
