@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 25, 2022 AM09:39:05
+! Last Modified: Monday, April 25, 2022 PM10:05:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,14 +85,13 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: ptsaux(2, size(xopt))
 real(RP) :: ptsid(size(fval))
-real(RP) :: w(2 * size(fval) + size(xopt)), wmv(size(fval) + size(xopt))
 real(RP) :: x(size(xopt))
-real(RP) :: beta, den, denom, moderr,      &
-&        distsq(size(fval)), fbase, hdiag, sfrac,    &
-&        temp, vlmxsq, vquad, winc, xp, xq
+real(RP) :: beta, den(size(fval)), denom, moderr,      &
+&        distsq(size(fval)), fbase, hdiag(size(fval)), sfrac,    &
+&        temp, vlmxsq, vquad, dinc, xp, xq
 integer(IK) :: ip, iq, iw, j, jp, jpn, k, &
 &           knew, kold, kpt, np, nrem
-real(RP) :: xpq(size(xopt)), pqw(size(fval)), xxpt(size(fval))
+real(RP) :: xpq(size(xopt)), pqw(size(fval)), xxpt(size(fval)), wmv(size(xopt) + size(fval))
 real(RP) :: bsum!, summ, vlag_test(size(xopt) + size(fval)), beta_test
 logical :: mask(size(xopt))
 
@@ -174,13 +173,12 @@ sfrac = HALF / real(np, RP)
 
 ! Shift the interpolation points so that XOPT becomes the origin, and set the elements of ZMAT to
 ! ZERO. The value of SUMPQ is required in the updating of HQ below. The squares of the distances
-! from XOPT to the other interpolation points are set at the end of W. Increments of WINC may be
-! added later to these squares to balance the consideration of the choice of point that is going to
+! from XOPT to the other interpolation points are set at DISTSQ. Increments of DINC may be added
+! later to these squares to balance the consideration of the choice of point that is going to
 ! become current.
 xpt = xpt - spread(xopt, dim=2, ncopies=npt)
 distsq = sum((xpt)**2, dim=1)
-winc = maxval(distsq)
-w(npt + n + 1:2 * npt + n) = distsq
+dinc = maxval(distsq)
 zmat = ZERO
 
 ! Update HQ so that HQ and PQ define the second derivatives of the model after XBASE has been
@@ -259,7 +257,7 @@ bmat(:, [kold, knew]) = bmat(:, [knew, kold])
 zmat([kold, knew], :) = zmat([knew, kold], :)
 ptsid(kold) = ptsid(knew)
 ptsid(knew) = ZERO
-w(npt + n + knew) = ZERO
+distsq(knew) = ZERO
 nrem = nrem - 1
 if (knew /= kopt) then
     vlag([kold, knew]) = vlag([knew, kold])
@@ -274,7 +272,7 @@ if (knew /= kopt) then
     !----------------------------------------------------------------------------------------------!
     call updateh(knew, beta, vlag, bmat, zmat)
     if (nrem == 0) goto 350
-    w(npt + n + 1:2 * npt + n) = abs(w(npt + n + 1:2 * npt + n))
+    distsq(1:npt) = abs(distsq(1:npt))
 end if
 
 120 continue
@@ -282,24 +280,28 @@ end if
 ! Pick the index KNEW of an original interpolation point that has not yet replaced ONE of the
 ! provisional interpolation points, giving attention to the closeness to XOPT and to previous tries
 ! with KNEW.
-if (any(w(npt + n + 1:2 * npt + n) > 0)) then
-    knew = int(minloc(w(npt + n + 1:2 * npt + n), mask=(w(npt + n + 1:2 * npt + n) > 0), dim=1), IK)
+if (any(distsq(1:npt) > 0)) then
+    knew = int(minloc(distsq(1:npt), mask=(distsq(1:npt) > 0), dim=1), IK)
 else
     goto 260
 end if
 
 ! Calculate VLAG and BETA for the required updating of the H matrix if XPT(:, KNEW) is reinstated
 ! in the set of interpolation points.
+! First, form the (W - V) vector for XPT(:, KNEW) as if it is going to replace XPT_TEST(:, KNEW)
+! with the following XPT_TEST as defined in (5.4)--(5.5) of the BOBYQA paper for details.
+! 1. XPT_TEST(:, KOPT) = 0;
+! 2. For each K /= KOPT, if PTSID(K) == 0, then XPT_TEST(:, K) = XPT(:, K); if PTSID(K) > 0, then
+! XPT_TEST(:, K) has nonzeros only at IP (if IP>0), IQ (if IQ>0) positions, where IP and IQ are
+! the P(J) and Q(J) defined in and below (2.4) of the BOBYQA paper.
+!
+! In the code below, WMV = W - V = w(XNEW) - w(XOPT) without the (NPT+1)th entry, where
+! XNEW = XPT(:,KNEW), XOPT = XPT_TEST = 0, and w(.) being defined by (6.3) of the NEWUOA paper (also
+! well as (4.10) of the BOBYQA paper). Since XOPT = 0, we see from (6.3) that w(XOPT)(K) = 0 for all
+! K except that w(XOPT)(NPT+1) = 1. Thus WMV is the same at w(XNEW) without the (NPT+1)-th entry.
+! Therefore, WMV= [HALF*MATPROD(XNEW, XPT_TEST)**2, XNEW].
 ! Question (20220425): Can this be merged into CALVLAG/BETA in POWALG_MOD, maybe by modifying the
 ! signature of CALVLAG/BETA?
-!
-! First, form the W-vector of the chosen original interpolation point.
-! W(1:NPT) contains HALF*MATPROD(XPT(:, KNEW), XPT_TEST)**2 with the following XPT_TEST:
-! 1. If PTSID(K) == 0, then XPT_TEST(:, K) = XPT(:, K) ;
-! 2. If PTSID(K) > 0, then XPT_TEST(:, K) has nonzeros only at IP (if IP>0), IQ (if IQ>0) positions;
-! IP and IQ are the P(J) and Q(J) defined in and below (2.4) of the BOBYQA paper.
-! 3. XPT_TEST(:, KOPT) = 0.
-! See (5.4)--(5.5) of the BOBYQA paper for details.
 do k = 1, npt
     if (k == kopt) then
         wmv(k) = ZERO
@@ -322,75 +324,57 @@ do k = 1, npt
     wmv(k) = HALF * wmv(k) * wmv(k)
 end do
 wmv(npt + 1:npt + n) = xpt(:, knew)
-
-! Now, calculate VLAG = H*W(XOPT + D) according to (4.26) of the NEWUOA paper.
+! Now calculate VLAG = H*WMV + e_KOPT according to (4.26) of the NEWUOA paper, except for VLAG(KOPT).
 vlag(1:npt) = matprod(zmat, matprod(wmv(1:npt), zmat)) + matprod(wmv(npt + 1:npt + n), bmat(:, 1:npt))
 vlag(npt + 1:npt + n) = matprod(bmat, wmv(1:npt + n))
-
-! With D = XPT(:, KNEW), XOPT = XPT_TEST(:, KOPT), W = W(XOPT+D) as in (4.10) of the NEWUOA paper,
-! V = W(XOPT) as in (4.24) of the NEWUOA paper, we have, according to (4.12) and (4.26) of the
-! NEWUOA paper that
-! BETA = HALF*|XOPT + D|^4 - (W-V)'*H*(W-V) - [XOPT'*(X+XOPT)]^2 + HALF*|XOPT|^4.
-! Now, recall the definition of XPT_TEST mentioned above, which tells us that XOPT = ZERO!
-! Therefore, we have BETA = HALF*|D|^4 - (W-V)'*H*(W-V) = HALF*|XPT(:, KNEW)|^4  - WMV' * VLAG.
-!beta = HALF * sum(xpt(:, knew)**2)**2 - inprod(wmv(1:npt + n), vlag)
+! Now calculate BETA. According to (4.12) of the NEWUOA paper (as well as (4.10) of the BOBYQA paper),
+! BETA = HALF*|XNEW - XOPT|^4 - WMV'*H*WMV. To calculate WMX'*H*WMV, note that
+! WMV'*H*WMV = WMV' * [Z*Z', B2^T; B1, B2] * WMV with Z = ZMAT, B1 = BMAT(:, 1:NPT), and
+! B2 = BMAT(:, NPT+1:NPT+N). Denoting W1 = WMV(1:NPT) and W2 = WMV(NPT+1:NPT+N), we then have
+! WMV'*H*WMV = |W1*Z|^2 + 2*W1'*B1*W2 + W1'*B2*W2 = |W1*Z|^2 + W1'(B1*W2 + [B1, B2]*WMV).
 bsum = inprod(wmv(1:n), matprod(bmat(:, 1:npt), wmv(1:npt)) + matprod(bmat, wmv))
 beta = HALF * sum(xpt(:, knew)**2)**2 - sum(matprod(wmv(1:npt), zmat)**2) - bsum
+! Finally, set VLAG(KOPT) to the correct value.
 vlag(kopt) = vlag(kopt) + ONE
-!--------------------------------------------------------------------------------------------------!
-
-
-!!==================================================================================================!
-!vlag_test(1:npt) = matprod(w(npt + 1:npt + n), bmat(:, 1:npt))
-!do j = 1, npt-n-1
-!    vlag_test(1:npt) = vlag_test(1:npt) + inprod(w(1:npt), zmat(:, j)) * zmat(:, j)
-!end do
-!!vlag_test(1:npt) = matprod(w(npt + 1:npt + n), bmat(:, 1:npt)) + matprod(zmat, matprod(w(1:npt), zmat))
-!beta_test = -sum(matprod(w(1:npt), zmat)**2)
-
-!bsum = ZERO
-!do j = 1, n
-!    summ = inprod(bmat(j, 1:npt), w(1:npt))
-!    bsum = bsum + inprod(bmat(j, 1:npt), w(1:npt)) * w(j + npt)
-!    do ip = npt + 1, npt + n
-!        summ = summ + bmat(j, ip) * w(ip)
-!    end do
-
-!    !summ = inprod(bmat(j, 1:npt), w(1:npt)) + inprod(bmat(k, npt + 1 : npt + n), w(npt + 1, npt + n))
-
-!    bsum = bsum + summ * w(j + npt)
-!    vlag_test(j + npt) = summ
-!end do
-!beta_test = HALF * sum(xpt(:, knew)**2)**2 + beta_test - bsum
-!vlag_test(kopt) = vlag_test(kopt) + ONE
-
-!write (16, *) maxval(abs((vlag - vlag_test))) / max(ONE, maxval(abs(vlag_test)))
-!write (17, *) (abs((beta - beta_test))) / max(ONE, (abs(beta_test)))
-!!call assert(.false., 'vlag', srname)
-!!==================================================================================================!
-
 
 ! KOLD is set to the index of the provisional interpolation point that is going to be deleted to
 ! make way for the KNEW-th original interpolation point. The choice of KOLD is governed by the
 ! avoidance of a small value of the denominator in the updating calculation of UPDATE.
+hdiag = sum(zmat**2, dim=2)  ! Indeed, only HDIAG(PTSID /= 0) is needed.
+!!MATLAB: hdiag(ptsid ~= 0) = sum(zmat(ptsid ~= 0, :), 2);
+den = ZERO
+where (ptsid /= 0)
+    den = hdiag * beta + vlag(1:npt)**2
+end where
+!!MATLAB: den(ptsid ~= 0) = hdiag(ptsid ~= 0)*beta + vlag(ptsid ~= 0)
+kold = 0
 denom = ZERO
-vlmxsq = ZERO
-do k = 1, npt
-    if (ptsid(k) /= ZERO) then
-        hdiag = sum(zmat(k, :)**2)
-        den = hdiag * beta + vlag(k)**2
-        if (den > denom) then
-            kold = k
-            denom = den
-        end if
-    end if
-    vlmxsq = max(vlmxsq, vlag(k)**2)
-end do
-if (denom <= 1.0E-2_RP * vlmxsq) then
-    w(npt + n + knew) = -w(npt + n + knew) - winc
+if (any(den > 0)) then
+    kold = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
+    denom = maxval(den, mask=(.not. is_nan(den)))
+    !!MATLAB: [denom, kold] = max(den, [], 'omitnan');
+end if
+vlmxsq = maxval(vlag(1:npt)**2)
+
+!do k = 1, npt
+!    if (ptsid(k) /= ZERO) then
+!        hdiag = sum(zmat(k, :)**2)
+!        den = hdiag * beta + vlag(k)**2
+!        if (den > denom) then
+!            kold = k
+!            denom = den
+!        end if
+!    end if
+!    vlmxsq = max(vlmxsq, vlag(k)**2)
+!end do
+
+! If DENOM > 1.0E-2*VLMXSQ, then KOLD > 0, but we prefer to require KOLD > 0 explicitly.
+if (kold > 0 .and. denom > 1.0E-2_RP * vlmxsq) then
+    goto 80
+else
+    distsq(knew) = -distsq(knew) - dinc
     goto 120
 end if
-goto 80
 
 ! All the final positions of the interpolation points have been chosen although any changes have not
 ! been included yet in XPT. Also the final BMAT and ZMAT matrices are complete, but, apart from the
