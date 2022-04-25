@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM12:02:49
+! Last Modified: Monday, April 25, 2022 AM01:17:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : calquad, calvlag, calbeta, hess_mul
+use, non_intrinsic :: powalg_mod, only : calquad, calvlag, calbeta!, hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize
@@ -99,7 +99,7 @@ real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 &        den(npt), denom, densav, diff, diffa, diffb, diffc,     &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbig, fopt,        &
 &        frhosq, gisq, gqsq, hdiag(npt),      &
-&        ratio, rho, scaden, qred, weight(npt), pqinc(npt)
+&        ratio, rho, scaden, qred, weight(npt)
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 integer(IK) :: i, itest, j, k, kbase, knew, &
 &           kopt, ksav, nfsav, nresc, ntrits
@@ -209,22 +209,18 @@ nfsav = nf
 20 continue
 
 if (kopt /= kbase) then
-
-    !-------------------------------------------------------!
-    !do j = 1, n
-    !    do i = 1, j
-    !        if (i < j) gopt(j) = gopt(j) + hq(i, j) * xopt(i)
-    !        gopt(i) = gopt(i) + hq(i, j) * xopt(j)
-    !    end do
-    !end do
-    !if (nf > npt) then
-    !    do k = 1, npt
-    !        gopt = gopt + pq(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
-    !    end do
-    !end if
-    gopt = gopt + hess_mul(xopt, xpt, pq, hq)
-    !-------------------------------------------------------!
-
+    do j = 1, n
+        do i = 1, j
+            if (i < j) gopt(j) = gopt(j) + hq(i, j) * xopt(i)
+            gopt(i) = gopt(i) + hq(i, j) * xopt(j)
+        end do
+    end do
+    if (nf > npt) then
+        do k = 1, npt
+            gopt = gopt + pq(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
+        end do
+    end if
+    !!gopt = gopt + hess_mul(xopt, xpt, pq, hq)
 end if
 
 ! Generate the next point in the trust region that provides a small value of the quadratic model
@@ -555,9 +551,7 @@ call updateh(knew, beta, vlag, bmat, zmat)
 
 call r1update(hq, pq(knew), xpt(:, knew))
 pq(knew) = ZERO
-pqinc = matprod(zmat, diff * zmat(knew, :))
-pq = pq + pqinc 
-!pq = pq + matprod(zmat, diff * zmat(knew, :))
+pq = pq + matprod(zmat, diff * zmat(knew, :))
 !pq = pq + diff * matprod(zmat, zmat(knew, :))
 
 ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are caused
@@ -565,34 +559,28 @@ pq = pq + pqinc
 fval(knew) = f
 xpt(:, knew) = xnew
 
-!-----------------------------------------------------------!
-!w(1:n) = bmat(:, knew)
-!do k = 1, npt
-!    w(1:n) = w(1:n) + inprod(zmat(knew, :), zmat(k, :)) * inprod(xopt, xpt(:, k)) * xpt(:, k)
-!end do
+w(1:n) = bmat(:, knew)
+do k = 1, npt
+    w(1:n) = w(1:n) + inprod(zmat(knew, :), zmat(k, :)) * inprod(xopt, xpt(:, k)) * xpt(:, k)
+end do
 !!w = bmat(:, knew) + hess_mul(xopt, xpt, matprod(zmat, zmat(knew, :)))
-!gopt = gopt + diff * w(1:n)
-!
-!gopt = gopt + diff * (bmat(:, knew) + hess_mul(xopt, xpt, matprod(zmat, zmat(knew, :))))
-gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)
-!-----------------------------------------------------------!
+
+gopt = gopt + diff * w(1:n)
 
 ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
 if (f < fopt) then
     kopt = knew
     xopt = xnew
-    !-------------------------------------------------------!
-    !do j = 1, n
-    !    do i = 1, j
-    !        if (i < j) gopt(j) = gopt(j) + hq(i, j) * d(i)
-    !        gopt(i) = gopt(i) + hq(i, j) * d(j)
-    !    end do
-    !end do
-    !do k = 1, npt
-    !    gopt = gopt + pq(k) * inprod(d, xpt(:, k)) * xpt(:, k)
-    !end do
-    gopt = gopt + hess_mul(d, xpt, pq, hq)
-    !-------------------------------------------------------!
+    do j = 1, n
+        do i = 1, j
+            if (i < j) gopt(j) = gopt(j) + hq(i, j) * d(i)
+            gopt(i) = gopt(i) + hq(i, j) * d(j)
+        end do
+    end do
+    do k = 1, npt
+        gopt = gopt + pq(k) * inprod(d, xpt(:, k)) * xpt(:, k)
+    end do
+    !!gopt = gopt + hess_mul(d, xpt, pq, hq)
 end if
 
 ! Calculate the parameters of the least Frobenius norm interpolant to the current data, the gradient
@@ -600,15 +588,12 @@ end if
 if (ntrits > 0) then
     fshift = fval - fval(kopt)
     pqalt = matprod(zmat, matprod(fshift, zmat))
-
-    !-------------------------------------------------------!
-    galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-    !w(1:npt) = pqalt * matprod(xopt, xpt)
-    !galt = ZERO
-    !do k = 1, npt
-    !    galt = galt + bmat(:, k) * fshift(k) + xpt(:, k) * w(k)
-    !end do
-    !-------------------------------------------------------!
+    !!galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+    w(1:npt) = pqalt * matprod(xopt, xpt)
+    galt = ZERO
+    do k = 1, npt
+        galt = galt + bmat(:, k) * fshift(k) + xpt(:, k) * w(k)
+    end do
 
     pgopt = gopt
     pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))

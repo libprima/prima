@@ -183,15 +183,8 @@ zmat = ZERO
 
 ! Update HQ so that HQ and PQ define the second derivatives of the model after XBASE has been
 ! shifted to the trust region centre.
-!xpq = HALF * sum(pq) * xopt
-!do k = 1, npt
-!    xpq = xpq + pq(k) * xpt(:, k)
-!end do
-!xpq = matprod(xpt + HALF * spread(xopt, dim=2, ncopies=npt), pq)
-! OR:
 xpq = matprod(xpt, pq) + HALF * sum(pq) * xopt
 call r2update(hq, ONE, xopt, xpq)
-
 
 ! Shift XBASE, SL, SU and XOPT. Set the elements of BMAT to ZERO, and set the elements of PTSAUX.
 xbase = xbase + xopt
@@ -355,19 +348,6 @@ if (any(den > 0)) then
     !!MATLAB: [denom, kold] = max(den, [], 'omitnan');
 end if
 vlmxsq = maxval(vlag(1:npt)**2)
-
-!do k = 1, npt
-!    if (ptsid(k) /= ZERO) then
-!        hdiag = sum(zmat(k, :)**2)
-!        den = hdiag * beta + vlag(k)**2
-!        if (den > denom) then
-!            kold = k
-!            denom = den
-!        end if
-!    end if
-!    vlmxsq = max(vlmxsq, vlag(k)**2)
-!end do
-
 ! If DENOM > 1.0E-2*VLMXSQ, then KOLD > 0, but we prefer to require KOLD > 0 explicitly.
 if (kold > 0 .and. denom > 1.0E-2_RP * vlmxsq) then
     goto 80
