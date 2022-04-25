@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 25, 2022 PM12:40:11
+! Last Modified: Monday, April 25, 2022 PM10:02:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -406,13 +406,23 @@ do k = 1, npt
             denom = den
         end if
     end if
-    vlmxsq = max(vlmxsq, vlag(k)**2)
+    !vlmxsq = max(vlmxsq, vlag(k)**2)
 end do
-if (denom <= 1.0E-2_RP * vlmxsq) then
+vlmxsq = maxval(vlag(1:npt)**2)
+!------------------------------------------------!
+! Zaikun 20220425
+!if (denom <= 1.0E-2_RP * vlmxsq) then
+!    w(ndim + knew) = -w(ndim + knew) - winc
+!    goto 120
+!end if
+!goto 80
+if (denom > 1.0E-2_RP * vlmxsq) then
+    goto 80
+else
     w(ndim + knew) = -w(ndim + knew) - winc
     goto 120
 end if
-goto 80
+!------------------------------------------------!
 !
 !     When label 260 is reached, all the final positions of the interpolation
 !     points have been chosen although any changes have not been included yet
