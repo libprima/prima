@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 19, 2022 AM01:24:25
+! Last Modified: Tuesday, April 26, 2022 AM12:40:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -96,7 +96,7 @@ real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
-real(RP) :: pqw(npt)  ! Note that the size is npt + N instead of npt; Isn't it VLAG in NEWUOA??? Better name?
+real(RP) :: pqinc(npt)
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: rescon(size(bvec))
 real(RP) :: rfac(size(x), size(x))
@@ -508,8 +508,8 @@ end if
 if (itest < 3) then
     call r1update(hq, pq(knew), xpt(:, knew))  ! Needs the un-updated XPT(:, KNEW).
     pq(knew) = ZERO
-    pqw = omega_col(idz, zmat, knew)
-    pq = pq + diff * pqw
+    pqinc = diff * omega_col(idz, zmat, knew)
+    pq = pq + pqinc
 end if
 
 ! Make the changes of the symmetric Broyden method to GOPT at the old XOPT if ITEST is less than 3.
@@ -517,7 +517,7 @@ fval(knew) = f
 xpt(:, knew) = xnew
 ssq = sum(step**2)
 if (itest < 3) then
-    gopt = gopt + diff * (bmat(:, knew) + hess_mul(xopt, xpt, pqw))  ! Needs the updated XPT.
+    gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)  ! Needs the updated XPT.
 end if
 !
 !     Update FOPT, XSAV, XOPT, KOPT, and RESCON if the new F is the

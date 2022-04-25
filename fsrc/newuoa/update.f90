@@ -114,8 +114,6 @@ pq(knew) = ZERO
 
 ! Update the implicit part of the Hessian.
 pq = pq + moderr * omega_col(idz, zmat, knew)
-! Numerically, the last line works slightly better than Powell's code, which multiplies MODERR to
-! ZMAT(:, KNEW) and then calculates a matrix-vector product (by loops).
 
 ! Update the gradient.
 gq = gq + moderr * bmat(:, knew)
