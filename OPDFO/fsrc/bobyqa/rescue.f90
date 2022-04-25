@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 25, 2022 AM09:42:34
+! Last Modified: Monday, April 25, 2022 PM12:40:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -425,7 +425,7 @@ goto 80
 260 do kpt = 1, npt
     if (ptsid(kpt) == ZERO) cycle
     if (nf >= maxfun) then
-        nf = -1
+        !nf = -1
         goto 350
     end if
     ih = 0
