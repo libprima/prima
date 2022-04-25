@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 25, 2022 PM12:40:49
+! Last Modified: Tuesday, April 26, 2022 AM01:52:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,6 +32,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING, SMALL_TR_RADIUS
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: vm_mod, only : v2m
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize
@@ -89,11 +90,11 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        den, denom, densav, diff, diffa, diffb, diffc,     &
 &        dist, distsq, dnorm, dsq, dx, errbig, fopt,        &
 &        fracsq, frhosq, gisq, gqsq, hdiag,      &
-&        pqold, ratio, rho, scaden, summ, summa, summb, summpq,&
+&        pqold, ratio, rho, scaden, summ, summm, summa, summb, summpq,&
 &        summw, summz, temp, vquad, xoptsq
 integer(IK) :: i, ih, ip, itest, j, jj, jp, k, kbase, knew, &
 &           kopt, ksav, nfsav, nh, np, nptm, nresc, ntrits
-real(RP) :: bup1(n, npt), bup2(n, n), vtmp(npt)
+real(RP) :: bup1(n, npt), bup2(n, n), vtmp(npt), hqm(n, n), gtmp(n)
 
 !     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
 !       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
@@ -195,14 +196,18 @@ nfsav = nf
 !
 20 if (kopt /= kbase) then
     ih = 0
-    do j = 1, n
-        do i = 1, j
-            ih = ih + 1
-            if (i < j) gopt(j) = gopt(j) + hq(ih) * xopt(i)
-            gopt(i) = gopt(i) + hq(ih) * xopt(j)
-        end do
-    end do
+    !do j = 1, n
+    !    do i = 1, j
+    !        ih = ih + 1
+    !        if (i < j) gopt(j) = gopt(j) + hq(ih) * xopt(i)
+    !        gopt(i) = gopt(i) + hq(ih) * xopt(j)
+    !    end do
+    !end do
+    hqm = v2m(hq)
     if (nf > npt) then
+        !------------------!
+        gtmp = gopt; gopt = ZERO
+        !------------------!
         do k = 1, npt
             temp = ZERO
             do j = 1, n
@@ -213,6 +218,14 @@ nfsav = nf
                 gopt(i) = gopt(i) + temp * xpt(i, k)
             end do
         end do
+        do i = 1, n
+            gopt = gopt + xopt(i) * hqm(:, i)
+        end do
+        !------------------!
+        gopt = gtmp + gopt
+        !------------------!
+    else
+        gopt = gopt + matprod(hqm, xopt)
     end if
 end if
 !
@@ -931,12 +944,14 @@ end do
 fval(knew) = f
 do i = 1, n
     xpt(i, knew) = xnew(i)
-    w(i) = bmat(i, knew)
+    !w(i) = bmat(i, knew)
+    w(i) = ZERO
 end do
 do k = 1, npt
     summa = ZERO
     do jj = 1, nptm
-        summa = summa + zmat(knew, jj) * zmat(k, jj)
+        !summa = summa + zmat(knew, jj) * zmat(k, jj)
+        summa = summa + diff * zmat(knew, jj) * zmat(k, jj)
     end do
     summb = ZERO
     do j = 1, n
@@ -948,7 +963,8 @@ do k = 1, npt
     end do
 end do
 do i = 1, n
-    gopt(i) = gopt(i) + diff * w(i)
+    !gopt(i) = gopt(i) + diff * w(i)
+    gopt(i) = gopt(i) + diff * bmat(i, knew) + w(i)
 end do
 !
 !     Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
@@ -960,12 +976,13 @@ if (f < fopt) then
     do j = 1, n
         xopt(j) = xnew(j)
         xoptsq = xoptsq + xopt(j)**2
-        do i = 1, j
-            ih = ih + 1
-            if (i < j) gopt(j) = gopt(j) + hq(ih) * d(i)
-            gopt(i) = gopt(i) + hq(ih) * d(j)
-        end do
+        !do i = 1, j
+        !    ih = ih + 1
+        !    if (i < j) gopt(j) = gopt(j) + hq(ih) * d(i)
+        !    gopt(i) = gopt(i) + hq(ih) * d(j)
+        !end do
     end do
+    gtmp = gopt; gopt = ZERO
     do k = 1, npt
         temp = ZERO
         do j = 1, n
@@ -976,6 +993,11 @@ if (f < fopt) then
             gopt(i) = gopt(i) + temp * xpt(i, k)
         end do
     end do
+    hqm = v2m(hq)
+    do i = 1, n
+        gopt = gopt + d(i) * hqm(:, i)
+    end do
+    gopt = gtmp + gopt
 end if
 !
 !     Calculate the parameters of the least Frobenius norm interpolant to
@@ -1010,8 +1032,14 @@ if (ntrits > 0) then
     do i = 1, n
         summ = ZERO
         do k = 1, npt
-            summ = summ + bmat(i, k) * vlag(k) + xpt(i, k) * w(k)
+            summ = summ + bmat(i, k) * vlag(k)! + xpt(i, k) * w(k)
         end do
+
+        summm = ZERO
+        do k = 1, npt
+            summm = summm + xpt(i, k) * w(k)
+        end do
+        summ = summ + summm
         if (xopt(i) == sl(i)) then
             gqsq = gqsq + min(ZERO, gopt(i))**2
             gisq = gisq + min(ZERO, summ)**2

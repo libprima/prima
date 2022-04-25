@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 PM06:27:27
+! Last Modified: Tuesday, April 26, 2022 AM12:34:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -822,17 +822,19 @@ if (itest < 3) then
         !do i = 1, n
         !    w(i) = w(i) + temp * xpt(i, k)
         !end do
-        temp = pqw(k) * inprod(xopt, xpt(:, k))
+        !temp = pqw(k) * inprod(xopt, xpt(:, k))
+        temp = diff * pqw(k) * inprod(xopt, xpt(:, k))
         do i = 1, n
             tmpv(i) = tmpv(i) + temp * xpt(i, k)
         end do
     end do
-    do i = 1, n
-        w(i) = w(i) + tmpv(i)
-    end do
+    !do i = 1, n
+    !    w(i) = w(i) + tmpv(i)
+    !end do
     !---------------------------------------------------!
     do i = 1, n
-        gopt(i) = gopt(i) + diff * w(i)
+        !gopt(i) = gopt(i) + diff * w(i)
+        gopt(i) = gopt(i) + diff * w(i) + tmpv(i)
     end do
 end if
 !
