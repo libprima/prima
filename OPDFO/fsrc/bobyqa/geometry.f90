@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:49:05
+! Last Modified: Tuesday, April 26, 2022 PM10:34:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,7 +133,8 @@ do k = 1, npt
     do i = 1, n
         temp = xpt(i, k) - xopt(i)
         dderiv = dderiv + glag(i) * temp
-        distsq = distsq + temp * temp
+        !distsq = distsq + temp * temp
+        distsq = distsq + temp**2
     end do
     subd = adelt / sqrt(distsq)
     slbd = -subd
@@ -258,7 +259,7 @@ do i = 1, n
         ggfree = ggfree + glag(i)**2
     end if
 end do
-if (ggfree == ZERO) then
+if (ggfree <= ZERO) then
     cauchy = ZERO
     goto 200
 end if
@@ -268,6 +269,9 @@ end if
 120 temp = adelt * adelt - wfixsq
 if (temp > ZERO) then
     wsqsav = wfixsq
+    !--------------!
+    wfixsq = ZERO
+    !--------------!
     step = sqrt(temp / ggfree)
     ggfree = ZERO
     do i = 1, n
@@ -284,6 +288,7 @@ if (temp > ZERO) then
             end if
         end if
     end do
+    wfixsq = wsqsav + wfixsq
     if (wfixsq > wsqsav .and. ggfree > ZERO) goto 120
 end if
 !

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 27, 2022 AM01:01:08
+! Last Modified: Tuesday, April 26, 2022 PM11:33:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,23 +131,24 @@ hcol = matprod(zmat, zmat(knew, :))
 alpha = hcol(knew)
 ha = HALF * alpha
 
-!     Calculate the gradient of the KNEW-th Lagrange function at XOPT.
-!
+! Calculate the gradient of the KNEW-th Lagrange function at XOPT.
+
 !!glag = bmat(:, knew) + hess_mul(xopt, xpt, hcol)
+
+glag = bmat(:, knew)
 !do i = 1, n
 !    glag(i) = bmat(i, knew)
 !end do
-glag = bmat(:, knew)
 do k = 1, npt
-    glag = glag + hcol(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
-    !temp = ZERO
-    !do j = 1, n
-    !    temp = temp + xpt(j, k) * xopt(j)
-    !end do
-    !temp = hcol(k) * temp
-    !do i = 1, n
-    !    glag(i) = glag(i) + temp * xpt(i, k)
-    !end do
+    !glag = glag + hcol(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
+    temp = ZERO
+    do j = 1, n
+        temp = temp + xpt(j, k) * xopt(j)
+    end do
+    temp = hcol(k) * temp
+    do i = 1, n
+        glag(i) = glag(i) + temp * xpt(i, k)
+    end do
 end do
 !
 !     Search for a large denominator along the straight lines through XOPT
@@ -159,16 +160,15 @@ end do
 presav = ZERO
 do k = 1, npt
     if (k == kopt) cycle
-    dderiv = inprod(glag, xpt(:, k) - xopt)
-    distsq = sum((xpt(:, k) - xopt)**2)
-    !dderiv = ZERO
-    !distsq = ZERO
-    !do i = 1, n
-    !    temp = xpt(i, k) - xopt(i)
-    !    dderiv = dderiv + glag(i) * temp
-    !    !distsq = distsq + temp * temp
-    !    distsq = distsq + temp**2
-    !end do
+    !dderiv = inprod(glag, xpt(:, k) - xopt)
+    !distsq = sum((xpt(:, k) - xopt)**2)
+    dderiv = ZERO
+    distsq = ZERO
+    do i = 1, n
+        temp = xpt(i, k) - xopt(i)
+        dderiv = dderiv + glag(i) * temp
+        distsq = distsq + temp * temp
+    end do
     subd = adelt / sqrt(distsq)
     slbd = -subd
     ilbd = 0
@@ -268,13 +268,20 @@ end do
 !
 !     Construct XNEW in a way that satisfies the bound constraints exactly.
 !
-!do i = 1, n
-!    temp = xopt(i) + stpsav * (xpt(i, ksav) - xopt(i))
-!    xnew(i) = max(sl(i), min(su(i), temp))
-!end do
-xnew = max(sl, min(su, xopt + stpsav * (xpt(:, ksav) - xopt)))
-if (ibdsav < 0) xnew(-ibdsav) = sl(-ibdsav)
-if (ibdsav > 0) xnew(ibdsav) = su(ibdsav)
+do i = 1, n
+    temp = xopt(i) + stpsav * (xpt(i, ksav) - xopt(i))
+    xnew(i) = max(sl(i), min(su(i), temp))
+end do
+
+!xnew = max(sl, min(su, xopt + stpsav * (xpt(:, ksav) - xopt)))
+
+if (ibdsav < 0) then
+    xnew(-ibdsav) = sl(-ibdsav)
+end if
+if (ibdsav > 0) then
+    xnew(ibdsav) = su(ibdsav)
+end if
+
 !
 !     Prepare for the iterative method that assembles the constrained Cauchy
 !     step in W. The sum of squares of the fixed components of W is formed in
@@ -288,20 +295,21 @@ iflag = 0
 wfixsq = ZERO
 ggfree = ZERO
 
-w(1:n) = ZERO
-mask = (min(xopt - sl, glag) > 0 .or. max(xopt - su, glag) < 0)
-w(trueloc(mask)) = bigstp
-ggfree = sum(glag(trueloc(mask))**2)
+!w(1:n) = ZERO
+!mask = (min(xopt - sl, glag) > 0 .or. max(xopt - su, glag) < 0)
+!w(trueloc(mask)) = bigstp
+!ggfree = sum(glag(trueloc(mask))**2)
 
-!do i = 1, n
-!    w(i) = ZERO
-!    tempa = min(xopt(i) - sl(i), glag(i))
-!    tempb = max(xopt(i) - su(i), glag(i))
-!    if (tempa > ZERO .or. tempb < ZERO) then
-!        w(i) = bigstp
-!        ggfree = ggfree + glag(i)**2
-!    end if
-!end do
+do i = 1, n
+    w(i) = ZERO
+    tempa = min(xopt(i) - sl(i), glag(i))
+    tempb = max(xopt(i) - su(i), glag(i))
+    if (tempa > ZERO .or. tempb < ZERO) then
+        w(i) = bigstp
+        ggfree = ggfree + glag(i)**2
+    end if
+end do
+
 if (ggfree <= ZERO) then
     cauchy = ZERO
     return
@@ -314,35 +322,35 @@ end if
 temp = adelt * adelt - wfixsq
 if (temp > ZERO) then
     wsqsav = wfixsq
-    step = sqrt(temp / ggfree)
-    xtest = xopt - step * glag
-    lmask = (w(1:n) == bigstp .and. xtest <= sl)
-    umask = (w(1:n) == bigstp .and. xtest >= su)
-    fmask = (w(1:n) == bigstp .and. .not. (lmask .or. umask))
-    w(trueloc(lmask)) = sl(trueloc(lmask)) - xopt(trueloc(lmask))
-    w(trueloc(umask)) = su(trueloc(umask)) - xopt(trueloc(umask))
-    wfixsq = wfixsq + sum(w(trueloc(lmask .or. umask))**2)
-    ggfree = sum(glag(trueloc(fmask))**2)
+    wfixsq = ZERO
 
-    !--------------!
-    !wfixsq = ZERO
-    !--------------!
-    !ggfree = ZERO
-    !do i = 1, n
-    !    if (w(i) == bigstp) then
-    !        temp = xopt(i) - step * glag(i)
-    !        if (temp <= sl(i)) then
-    !            w(i) = sl(i) - xopt(i)
-    !            wfixsq = wfixsq + w(i)**2
-    !        else if (temp >= su(i)) then
-    !            w(i) = su(i) - xopt(i)
-    !            wfixsq = wfixsq + w(i)**2
-    !        else
-    !            ggfree = ggfree + glag(i)**2
-    !        end if
-    !    end if
-    !end do
-    !wfixsq = wsqsav + wfixsq
+    step = sqrt(temp / ggfree)
+
+    !xtest = xopt - step * glag
+    !lmask = (w(1:n) == bigstp .and. xtest <= sl)
+    !umask = (w(1:n) == bigstp .and. xtest >= su)
+    !fmask = (w(1:n) == bigstp .and. .not. (lmask .or. umask))
+    !w(trueloc(lmask)) = sl(trueloc(lmask)) - xopt(trueloc(lmask))
+    !w(trueloc(umask)) = su(trueloc(umask)) - xopt(trueloc(umask))
+    !wfixsq = wfixsq + sum(w(trueloc(lmask .or. umask))**2)
+    !ggfree = sum(glag(trueloc(fmask))**2)
+
+    do i = 1, n
+        if (w(i) == bigstp) then
+            temp = xopt(i) - step * glag(i)
+            if (temp <= sl(i)) then
+                w(i) = sl(i) - xopt(i)
+                wfixsq = wfixsq + w(i)**2
+            else if (temp >= su(i)) then
+                w(i) = su(i) - xopt(i)
+                wfixsq = wfixsq + w(i)**2
+            else
+                ggfree = ggfree + glag(i)**2
+            end if
+        end if
+    end do
+
+    wfixsq = wsqsav + wfixsq
 
     if (wfixsq > wsqsav .and. ggfree > ZERO) goto 120
 end if
