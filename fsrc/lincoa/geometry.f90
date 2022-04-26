@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 19, 2022 AM12:59:35
+! Last Modified: Tuesday, April 26, 2022 AM10:56:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -164,7 +164,7 @@ end do
 ! 2. If VLAG(KNEW) = MINVAL(VLAG) = VLAG(K) with K < KNEW, Powell's code does not set KSAV = KNEW.
 ksav = knew
 if (any(vlag > vlag(knew))) then
-    ksav = maxloc(vlag, mask=(vlag > vlag(knew)), dim=1)
+    ksav = maxloc(vlag, mask=(.not. is_nan(vlag)), dim=1)
     !!MATLAB: [~, ksav] = max(vlag, [], 'omitnan');
 end if
 vbig = vlag(ksav)
@@ -256,8 +256,9 @@ constr = ZERO
 constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
 ifeas = all(constr <= 0)
 if (all(constr < mincv) .and. any(constr > 0)) then
-    bigcv = maxval(constr)
-    jsav = int(maxloc(constr, dim=1), IK)
+    jsav = int(maxloc(constr, mask=(.not. is_nan(constr)), dim=1), IK)
+    bigcv = constr(jsav)
+    !!MATLAB: [bigcv, jsav] = max(constr, [], 'omitnan');
     step = step + (mincv - bigcv) * amat(:, jsav)
 end if
 

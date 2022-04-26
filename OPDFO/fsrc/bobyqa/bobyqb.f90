@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM01:52:52
+! Last Modified: Tuesday, April 26, 2022 AM11:05:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -706,7 +706,8 @@ if (ntrits == 0) then
 !     KNEW before calculating the next value of the objective function.
 !
 else
-    delsq = delta * delta
+    !delsq = delta * delta
+    delsq = delta**2
     scaden = ZERO
     biglsq = ZERO
     knew = 0
@@ -875,7 +876,8 @@ if (ntrits > 0) then
     if (f < fopt) then
         ksav = knew
         densav = denom
-        delsq = delta * delta
+        !delsq = delta * delta
+        delsq = delta**2
         scaden = ZERO
         biglsq = ZERO
         knew = 0

@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 23, 2022 AM12:30:04
+! Last Modified: Tuesday, April 26, 2022 AM10:47:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -265,17 +265,17 @@ frac(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) / ad(trueloc(ad > 0))
 frac(trueloc(is_nan(frac))) = alpha
 jsav = 0_IK
 if (any(frac < alpha)) then
-    alpha = minval(frac)
     jsav = int(minloc(frac, dim=1), IK)
+    alpha = frac(jsav)
 end if
 !--------------------------------------------------------------------------------------------------!
-! Alternatively, JSAV and ALPHA can be calculated as below. We prefer the implementation above:
-! 1. The above code is more explicit; in addition, it is more flexible: we can change the condition
-! ANY(FRAC < ALPHA) to ANY(FRAC < (1 - EPS) * ALPHA) or ANY(FRAC < (1 + EPS) * ALPHA),
-! depending on whether we believe a false positive or a false negative of JSAV > 0 is more harmful.
-! 2. The above version is still valid even if we exchange the two lines of JSAV and ALPHA.
-!jsav = int(minloc([alpha, frac], dim=1), IK) - 1_IK  ! This line cannot be exchanged with the next.
-!alpha = minval([alpha, frac])  ! This line cannot be exchanged with the last.
+! Alternatively, JSAV and ALPHA can be calculated as below.
+!JSAV = INT(MINLOC([ALPHA, FRAC], DIM=1), IK) - 1_IK  ! This line cannot be exchanged with the next.
+!ALPHA = MINVAL([ALPHA, FRAC])  ! This line cannot be exchanged with the last.
+! We prefer our implementation as the code is more explicit; in addition, it is more flexible: we
+! can change the condition ANY(FRAC < ALPHA) to ANY(FRAC < (1 - EPS) * ALPHA) or
+! ANY(FRAC < (1 + EPS) * ALPHA), depending on whether we believe a false positive or a false
+! negative of JSAV > 0 is more harmful.
 !--------------------------------------------------------------------------------------------------!
 
 alpha = min(max(alpha, alpbd), alphm)

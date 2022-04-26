@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM04:37:31
+! Last Modified: Tuesday, April 26, 2022 AM10:46:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -250,17 +250,18 @@ sbound(trueloc(is_nan(sbound))) = stplen  ! Needed? No if we are sure that D and
 iact = 0
 if (any(sbound < stplen)) then
     iact = int(minloc(sbound, dim=1), IK)
-    stplen = minval(sbound)
+    stplen = sbound(iact)
+    !!MATLAB: [stplen, iact] = min(sbound);
 end if
 !--------------------------------------------------------------------------------------------------!
-! Alternatively, IACT and STPLEN can be calculated as below. We prefer the implementation above:
-! 1. The above code is more explicit; in addition, it is more flexible: we can change the condition
-! ANY(SBOUND < STPLEN) to ANY(SBOUND < (1 - EPS) * STPLEN) or ANY(SBOUND < (1 + EPS) * STPLEN),
-! depending on whether we believe a false positive or a false negative of IACT > 0 is more harmful
-! --- according to our test on 20220422, it is the former, as mentioned above.
-! 2. The above version is still valid even if we exchange the two lines of IACT and STPLEN.
-!iact = int(minloc([stplen, sbound], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
-!stplen = minval([stplen, sbound]) ! This line cannot be exchanged with the last
+! Alternatively, IACT and STPLEN can be calculated as below.
+!IACT = INT(MINLOC([STPLEN, SBOUND], DIM=1), IK) - 1_IK ! This line cannot be exchanged with the next
+!STPLEN = MINVAL([STPLEN, SBOUND]) ! This line cannot be exchanged with the last
+! We prefer our implementation, as the code is more explicit; in addition, it is more flexible: we
+! can change the condition ANY(SBOUND < STPLEN) to ANY(SBOUND < (1 - EPS) * STPLEN) or
+! ANY(SBOUND < (1 + EPS) * STPLEN), depending on whether we believe a false positive or a false
+! negative of IACT > 0 is more harmful --- according to our test on 20220422, it is the former,
+! as mentioned above.
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -424,7 +425,8 @@ do iterc = 1, itermax
     hangt_bd = ONE
     if (any(tanbd < 1)) then
         iact = int(minloc(tanbd, dim=1), IK)
-        hangt_bd = minval(tanbd)
+        hangt_bd = tanbd(iact)
+        !!MATLAB: [hangt_bd, iact] = min(tanbd);
     end if
     if (hangt_bd <= 0) then
         exit
