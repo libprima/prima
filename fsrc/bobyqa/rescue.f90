@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM09:47:28
+! Last Modified: Tuesday, April 26, 2022 AM10:23:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -347,7 +347,7 @@ kold = 0
 denom = ZERO
 if (any(den > 0)) then
     kold = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
-    denom = maxval(den, mask=(.not. is_nan(den)))
+    denom = den(kold)
     !!MATLAB: [denom, kold] = max(den, [], 'omitnan');
 end if
 vlmxsq = maxval(vlag(1:npt)**2)

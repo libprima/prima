@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM10:12:56
+! Last Modified: Tuesday, April 26, 2022 AM11:04:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -94,15 +94,14 @@ real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
 real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
-&        biglsq, cauchy, crvmin, curv(size(x)), delsq, delta,  &
+&        biglsq, cauchy, crvmin, curv(size(x)), delta,  &
 &        den(npt), denom, densav, diff, diffa, diffb, diffc,     &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbig, fopt,        &
 &        frhosq, gisq, gqsq, hdiag(npt),      &
 &        ratio, rho, scaden, qred, weight(npt), pqinc(npt)
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
-integer(IK) :: itest, k, knew, &
-&           kopt, ksav, nfsav, nresc, ntrits
+integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
 
 
 ! Sizes.
@@ -385,8 +384,7 @@ else
     hdiag = sum(zmat**2, dim=2)
     den = hdiag * beta + vlag(1:npt)**2
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    delsq = delta * delta
-    weight = max(ONE, (distsq / delsq)**2)
+    weight = max(ONE, (distsq / delta**2)**2)
 
     score = weight * den
     score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE
@@ -499,8 +497,7 @@ if (ntrits > 0) then
         hdiag = sum(zmat**2, dim=2)
         den = hdiag * beta + vlag(1:npt)**2
         distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
-        delsq = delta * delta
-        weight = max(ONE, (distsq / delsq)**2)
+        weight = max(ONE, (distsq / delta**2)**2)
 
         score = weight * den
         knew = 0

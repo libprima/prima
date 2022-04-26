@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 19, 2022 AM12:12:05
+! Last Modified: Tuesday, April 26, 2022 AM10:39:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -258,11 +258,21 @@ do iter = 1_IK, maxiter
     ! Pick the next integer L or terminate; a positive L is the index of the most violated constraint.
     apsd = matprod(psd, amat)
     mask = (resnew > 0 .and. resnew <= tdel .and. apsd > (dnorm / snorm) * resnew)
-    violmx = maxval(apsd, mask=mask)  ! F2003 standard: MAXVAL() = -HUGE(APSD) if MASK is all FALSE.
-    l = int(maxloc(apsd, mask=mask, dim=1), IK) ! F2003 standard: MAXLOC() = 0 if MASK is all FALSE.
+    !----------------------------------------------------------------------------------------------!
+    ! N.B.: the definition of L and VIOLMX can be simplified as follows, but we prefer explicitness.
+    !L = INT(MAXLOC(APSD, MASK=MASK, DIM=1), IK) ! MAXLOC(...) = 0 if MASK is all FALSE.
+    !VIOLMX = MAXVAL(APSD, MASK=MASK)  ! MAXVAL(...) = -HUGE(APSD) if MASK is all FALSE.
+    if (any(mask)) then
+        l = int(maxloc(apsd, mask=mask, dim=1), IK)
+        violmx = apsd(l)
+    else
+        l = 0_IK
+        violmx = -HUGENUM
+    end if
     !!MATLAB: apsd(mask) = -Inf; [violmx , l] = max(apsd);
     ! N.B.: the value of L will differ from the Fortran version if MASK is all FALSE, but this is OK
     ! because VIOLMX will be -Inf, which will trigger the `exit` below. This is tricky. Be cautious!
+    !----------------------------------------------------------------------------------------------!
 
     ! Terminate if VIOLMX <= 0 (when MASK contains only FALSE) or a positive value of VIOLMX may be
     ! due to computer rounding errors.
@@ -272,7 +282,7 @@ do iter = 1_IK, maxiter
     ! 3. CAUTION: the Inf-norm of APSD(IACT(1:NACT)) is NOT always MAXVAL(ABS(APSD(IACT(1:NACT)))),
     ! as the latter returns -HUGE(APSD) instead of 0 when NACT = 0! In MATLAB, max([]) = []; in
     ! Python, R, and Julia, the maximum of an empty array raises errors/warnings (as of 20220318).
-    if (l <= 0 .or. violmx <= min(0.01_RP * dnorm, TEN * norm(apsd(iact(1:nact)), 'inf'))) then
+    if (all(.not. mask) .or. violmx <= min(0.01_RP * dnorm, TEN * norm(apsd(iact(1:nact)), 'inf'))) then
         exit
     end if
 
