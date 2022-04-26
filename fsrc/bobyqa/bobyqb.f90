@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM09:23:30
+! Last Modified: Tuesday, April 26, 2022 AM10:12:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,6 +100,7 @@ real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 &        frhosq, gisq, gqsq, hdiag(npt),      &
 &        ratio, rho, scaden, qred, weight(npt), pqinc(npt)
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
+real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, k, knew, &
 &           kopt, ksav, nfsav, nresc, ntrits
 
@@ -152,10 +153,10 @@ su = su_in
 !       All the compONEnts of every XOPT are going to satisfy the bounds
 !       SL(I) .LEQ. XOPT(I) .LEQ. SU(I), with appropriate equalities when
 !       XOPT is on a constraint boundary.
-!     XNEW is chosen by SUBROUTINE TRSBOX or ALTMOV. Usually XBASE+XNEW is the
+!     XNEW is chosen by SUBROUTINE TRSBOX or GEOSTEP. Usually XBASE+XNEW is the
 !       vector of variables for the next call of CALFUN. XNEW also satisfies
 !       the SL and SU constraints in the way that has just been mentiONEd.
-!     XALT is an alternative to XNEW, chosen by ALTMOV, that may replace XNEW
+!     XALT is an alternative to XNEW, chosen by GEOSTEP, that may replace XNEW
 !       in order to increase the denominator in the updating of UPDATE.
 !     D is reserved for a trial step from XOPT, which is usually XNEW-XOPT.
 !     VLAG contains the values of the Lagrange functions at a new point X.
@@ -207,7 +208,7 @@ nfsav = nf
 ! NTRITS=-1, instead of calculating F at XNEW.
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the models. In such a case, we
-! terminate the code. Otherwise, the behavior of TRBOX, ALTMOV, or RESCUE is not predictable, and
+! terminate the code. Otherwise, the behavior of TRBOX, GEOSTEP, or RESCUE is not predictable, and
 ! Segmentation Fault or infinite cycling may happen. This is because any equality/inequality
 ! comparison involving NaN returns FALSE, which can lead to unintended  behavior of the code,
 ! including uninitialized indices. STILL NECESSARY???
@@ -332,7 +333,7 @@ if (ntrits > 0) goto 60
 !--------------------------------------------------------------------------------------------------!
 !  Zaikun 23-07-2019: (STILL NECESSARY???)
 !  Although very rare, NaN can sometimes occur in BMAT or ZMAT. If it happens, we terminate the
-!  code. See the comments above line number 60. Indeed, if ALTMOV is called with such matrices, then
+!  code. See the comments above line number 60. Indeed, if GEOSTEP is called with such matrices, then
 !  geostep.f90 will encounter a memory error at lines 173--174. This is because the first value of
 !  PREDSQ in ALTOMOV (see line 159 of geostep.f90) will be NaN, line 164 will not be reached, and
 !  hence no value will be assigned to IBDSAV.
@@ -360,7 +361,7 @@ d = xnew - xopt
 vlag = calvlag(kopt, bmat, d, xpt, zmat)
 beta = calbeta(kopt, bmat, d, xpt, zmat)
 
-! If NTRITS is ZERO, the denominator may be increased by replacing the step D of ALTMOV by a Cauchy
+! If NTRITS is ZERO, the denominator may be increased by replacing the step D of GEOSTEP by a Cauchy
 ! step. Then RESCUE may be called if rounding errors have damaged the chosen denominator.
 if (ntrits == 0) then
     denom = alpha * beta + vlag(knew)**2
@@ -381,28 +382,40 @@ if (ntrits == 0) then
 ! have damaged the chosen denominator, which is the reason for attempting to select KNEW before
 ! calculating the next value of the objective function.
 else
-    delsq = delta * delta
-    knew = 0
-    scaden = ZERO
-    biglsq = ZERO
     hdiag = sum(zmat**2, dim=2)
     den = hdiag * beta + vlag(1:npt)**2
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    delsq = delta * delta
     weight = max(ONE, (distsq / delsq)**2)
 
-    do k = 1, npt
-        if (k == kopt) cycle
-        if (weight(k) * den(k) > scaden) then
-            scaden = weight(k) * den(k)
-            knew = k
-            denom = den(k)
+    score = weight * den
+    score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE
+    knew = 0
+    scaden = ZERO
+    if (any(score > 0)) then
+        knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+        scaden = score(knew)
+        !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
+        denom = den(knew)
+    end if
+
+    wlagsq = weight * vlag**2
+    wlagsq(kopt) = -ONE  ! Skip KOPT when taking the maximum of WLAGSQ
+    biglsq = ZERO
+    if (any(wlagsq > 0)) then
+        biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
+        !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
+    end if
+
+    ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet prefer to require
+    ! KNEW > 0 explicitly.
+    if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
+        if (nf > nresc) then
+            goto 190
+        else
+            info = DAMAGING_ROUNDING
+            goto 720
         end if
-        if (weight(k) * vlag(k)**2 > biglsq) biglsq = weight(k) * vlag(k)**2
-    end do
-    if (.not. scaden > HALF * biglsq) then
-        if (nf > nresc) goto 190
-        info = DAMAGING_ROUNDING
-        goto 720
     end if
 end if
 
@@ -479,31 +492,36 @@ if (ntrits > 0) then
     end if
     if (delta <= 1.5_RP * rho) delta = rho
 
-! Recalculate KNEW and DENOM if the new F is less than FOPT.
+    ! Recalculate KNEW and DENOM if the new F is less than FOPT.
     if (f < fopt) then
         ksav = knew
         densav = denom
-
-        delsq = delta * delta
-        knew = 0
-        scaden = ZERO
-        biglsq = ZERO
-
         hdiag = sum(zmat**2, dim=2)
         den = hdiag * beta + vlag(1:npt)**2
         distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
+        delsq = delta * delta
         weight = max(ONE, (distsq / delsq)**2)
 
-        do k = 1, npt
-            if (weight(k) * den(k) > scaden) then
-                scaden = weight(k) * den(k)
-                knew = k
-                denom = den(k)
-            end if
-            if (weight(k) * vlag(k)**2 > biglsq) biglsq = weight(k) * vlag(k)**2
-        end do
+        score = weight * den
+        knew = 0
+        scaden = ZERO
+        if (any(score > 0)) then
+            knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+            scaden = score(knew)
+            !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
+            denom = den(knew)
+        end if
 
-        if (.not. scaden > HALF * biglsq) then
+        wlagsq = weight * vlag**2
+        biglsq = ZERO
+        if (any(wlagsq > 0)) then
+            biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
+            !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
+        end if
+
+        ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet prefer to require
+        ! KNEW > 0 explicitly.
+        if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
             knew = ksav
             denom = densav
         end if
@@ -538,7 +556,6 @@ gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)
 if (f < fopt) then
     kopt = knew
     xopt = xnew
-    !------------------------------------------------------!
     gopt = gopt + hess_mul(d, xpt, pq, hq)
 end if
 
@@ -586,7 +603,7 @@ distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
 dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
 
-! If KNEW is positive, then ALTMOV finds alternative new positions for the KNEW-th interpolation
+! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th interpolation
 ! point within distance ADELT of XOPT. It is reached via label 90. Otherwise, there is a branch to
 ! label 60 for another trust region iteration, unless the calculations with the current RHO are
 ! complete.
