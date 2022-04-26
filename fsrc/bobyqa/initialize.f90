@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 15, 2022 AM09:23:24
+! Last Modified: Tuesday, April 26, 2022 AM09:19:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-!use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+use, non_intrinsic :: linalg_mod, only : matprod!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 implicit none
@@ -231,7 +231,14 @@ else
 end if
 if (f <= ftarget .or. is_nan(f) .or. is_posinf(f)) goto 80
 if (nf < npt) goto 50
-80 nf = min(nf, npt)  ! NF may be NPT+1 at exit of the loop.
+
+80 continue
+
+if (kopt /= 1) then
+    gopt = gopt + matprod(hq, xpt(:, kopt))
+end if
+
+nf = min(nf, npt)  ! NF may be NPT+1 at exit of the loop.
 
 end subroutine initialize
 
