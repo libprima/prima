@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 25, 2022 PM10:05:44
+! Last Modified: Tuesday, April 26, 2022 AM09:20:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,6 +34,7 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update, r2update, trueloc!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: powalg_mod, only : hess_mul
 
 ! Solver-specif modules
 use, non_intrinsic :: update_mod, only : updateh
@@ -90,7 +91,7 @@ real(RP) :: beta, den(size(fval)), denom, moderr,      &
 &        distsq(size(fval)), fbase, hdiag(size(fval)), sfrac,    &
 &        temp, vlmxsq, vquad, dinc, xp, xq
 integer(IK) :: ip, iq, iw, j, jp, jpn, k, &
-&           knew, kold, kpt, np, nrem
+&           kbase, knew, kold, kpt, np, nrem
 real(RP) :: xpq(size(xopt)), pqw(size(fval)), xxpt(size(fval)), wmv(size(xopt) + size(fval))
 real(RP) :: bsum!, summ, vlag_test(size(xopt) + size(fval)), beta_test
 logical :: mask(size(xopt))
@@ -167,6 +168,8 @@ end if
 if (nf >= maxfun) then
     return
 end if
+
+kbase = kopt
 
 np = n + 1
 sfrac = HALF / real(np, RP)
@@ -458,6 +461,11 @@ do kpt = 1, npt
     ptsid(kpt) = ZERO
 
 end do
+
+if (kopt /= kbase) then
+    xopt = xpt(:, kopt)
+    gopt = gopt + hess_mul(xopt, xpt, pq, hq)
+end if
 
 350 continue
 

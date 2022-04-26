@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM02:00:46
+! Last Modified: Tuesday, April 26, 2022 AM09:23:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,7 +30,7 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, diag, trueloc, r1update!, r2update!, norm
+use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : calquad, calvlag, calbeta, hess_mul
 
@@ -100,7 +100,7 @@ real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 &        frhosq, gisq, gqsq, hdiag(npt),      &
 &        ratio, rho, scaden, qred, weight(npt), pqinc(npt)
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
-integer(IK) :: itest, k, kbase, knew, &
+integer(IK) :: itest, k, knew, &
 &           kopt, ksav, nfsav, nresc, ntrits
 
 
@@ -176,7 +176,6 @@ xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt
 f = fopt
-xopt = xpt(:, kopt)
 
 if (is_nan(f) .or. is_posinf(f)) then
     info = NAN_INF_F
@@ -190,7 +189,6 @@ if (nf < npt) then
     info = MAXFUN_REACHED  ! Zaikun 20220406: Should not happen here.
     goto 720
 end if
-kbase = 1
 
 ! Complete the settings that are required for the iterative procedure.
 rho = rhobeg
@@ -201,32 +199,6 @@ diffa = ZERO
 diffb = ZERO
 itest = 0
 nfsav = nf
-
-! Update GOPT if necessary before the first iteration and after each call of RESCUE that makes
-! a call of CALFUN.
-
-20 continue
-
-if (kopt /= kbase) then
-    !-------------------------------------------------------!
-    !do j = 1, n
-    !    do i = 1, j
-    !        if (i < j) gopt(j) = gopt(j) + hq(i, j) * xopt(i)
-    !        gopt(i) = gopt(i) + hq(i, j) * xopt(j)
-    !    end do
-    !end do
-    !if (nf > npt) then
-    !    do k = 1, npt
-    !        gopt = gopt + pq(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
-    !    end do
-    !end if
-    !-------------------------------------------------------!
-    if (nf > npt) then
-        gopt = gopt + hess_mul(xopt, xpt, pq, hq)
-    else
-        gopt = gopt + matprod(hq, xopt)  ! This should be moved into the initialization.
-    end if
-end if
 
 ! Generate the next point in the trust region that provides a small value of the quadratic model
 ! subject to the constraints on the variables. The integer NTRITS is set to the number "trust
@@ -309,7 +281,6 @@ goto 230
 190 continue
 
 nfsav = nf
-kbase = kopt
 
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 2019-08-29: See the comments above line number 60. STILL NECESSARY?
@@ -331,10 +302,6 @@ call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhis
 ! XOPT is updated now in case the branch below to label 720 is taken. Any updating of GOPT occurs
 ! after the branch below to label 20, which leads to a trust region iteration as does the branch to
 ! label 60.
-if (kopt /= kbase) then
-    xopt = xpt(:, kopt)
-end if
-
 if (is_nan(f) .or. is_posinf(f)) then
     info = NAN_INF_F
     goto 720
@@ -351,7 +318,7 @@ end if
 nresc = nf
 if (nfsav < nf) then
     nfsav = nf
-    goto 20
+    goto 60
 end if
 if (ntrits > 0) goto 60
 
@@ -565,33 +532,12 @@ pq = pq + pqinc
 ! by the updating of the quadratic model.
 fval(knew) = f
 xpt(:, knew) = xnew
-
-!-----------------------------------------------------------!
-!w(1:n) = bmat(:, knew)
-!do k = 1, npt
-!    w(1:n) = w(1:n) + inprod(zmat(knew, :), zmat(k, :)) * inprod(xopt, xpt(:, k)) * xpt(:, k)
-!end do
-!!w = bmat(:, knew) + hess_mul(xopt, xpt, matprod(zmat, zmat(knew, :)))
-!gopt = gopt + diff * w(1:n)
-!
-!-------------------------------------------------------!
-
 gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)
 
 ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
 if (f < fopt) then
     kopt = knew
     xopt = xnew
-    !------------------------------------------------------!
-    !do j = 1, n
-    !    do i = 1, j
-    !        if (i < j) gopt(j) = gopt(j) + hq(i, j) * d(i)
-    !        gopt(i) = gopt(i) + hq(i, j) * d(j)
-    !    end do
-    !end do
-    !do k = 1, npt
-    !    gopt = gopt + pq(k) * inprod(d, xpt(:, k)) * xpt(:, k)
-    !end do
     !------------------------------------------------------!
     gopt = gopt + hess_mul(d, xpt, pq, hq)
 end if
@@ -602,14 +548,6 @@ if (ntrits > 0) then
     fshift = fval - fval(kopt)
     pqalt = matprod(zmat, matprod(fshift, zmat))
     galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-
-    !-------------------------------------------------------!
-    !w(1:npt) = pqalt * matprod(xopt, xpt)
-    !galt = ZERO
-    !do k = 1, npt
-    !    galt = galt + bmat(:, k) * fshift(k) + xpt(:, k) * w(k)
-    !end do
-    !-------------------------------------------------------!
 
     pgopt = gopt
     pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))
