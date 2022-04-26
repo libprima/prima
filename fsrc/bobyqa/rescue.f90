@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM09:20:38
+! Last Modified: Tuesday, April 26, 2022 AM09:47:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -351,7 +351,8 @@ if (any(den > 0)) then
     !!MATLAB: [denom, kold] = max(den, [], 'omitnan');
 end if
 vlmxsq = maxval(vlag(1:npt)**2)
-! If DENOM > 1.0E-2*VLMXSQ, then KOLD > 0, but we prefer to require KOLD > 0 explicitly.
+! KOLD > 0 is implied by DENOM > 1.0E-2*VLMXSQ (but NOT DENOM >= ...), yet we prefer to require
+! KOLD > 0 explicitly.
 if (kold > 0 .and. denom > 1.0E-2_RP * vlmxsq) then
     goto 80
 else
