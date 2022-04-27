@@ -52,7 +52,7 @@ integer(IK) :: npt
 real(RP) :: glag(size(xpt, 1))
 real(RP) :: hcol(size(xpt, 2))
 real(RP) :: w(2 * size(xpt, 1))
-real(RP) :: bigstp, const, csave, curv, dderiv, diff, distsq,  &
+real(RP) :: bigstp, csave, curv, dderiv, diff, distsq,  &
 &        ggfree, gw, ha, predsq, presav, scaling, &
 &        slbd, step, stpsav, subd, sumin, temp, tempa,      &
 &        tempb, tempd, vlag, wfixsq, wsqsav, xtest(size(xpt, 1))

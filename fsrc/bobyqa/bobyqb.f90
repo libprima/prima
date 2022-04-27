@@ -397,7 +397,7 @@ else
         denom = den(knew)
     end if
 
-    wlagsq = weight * vlag**2
+    wlagsq = weight * vlag(1:npt)**2
     wlagsq(kopt) = -ONE  ! Skip KOPT when taking the maximum of WLAGSQ
     biglsq = ZERO
     if (any(wlagsq > 0)) then

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM09:19:36
+! Last Modified: Wednesday, April 27, 2022 AM08:09:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,6 +68,7 @@ integer(IK) :: npt
 real(RP) :: x(size(x0))
 real(RP) :: diff, fbeg, recip, rhosq, stepa, stepb, temp
 integer(IK) :: ipt, itemp, j, jpt, nfm, nfx, np
+logical :: evaluated(size(fval))
 
 ! Sizes.
 n = int(size(x), kind(n))
@@ -118,6 +119,7 @@ ipt = 1; jpt = 1  ! Temporary fix for G95 warning about these variables used uni
 !
 !     Set some constants.
 !
+evaluated = .false.
 rhosq = rhobeg * rhobeg
 recip = ONE / rhosq
 np = n + 1
@@ -178,6 +180,7 @@ call savehist(nf, x, xhist, f, fhist)
 !-------------------------------------------------------------------!
 
 
+evaluated(nf) = .true.
 fval(nf) = f
 if (nf == 1) then
     fbeg = f
@@ -234,11 +237,12 @@ if (nf < npt) goto 50
 
 80 continue
 
-if (kopt /= 1) then
+if (kopt /= 1 .and. all(evaluated)) then
     gopt = gopt + matprod(hq, xpt(:, kopt))
 end if
 
-nf = min(nf, npt)  ! NF may be NPT+1 at exit of the loop.
+!nf = min(nf, npt)  ! NF may be NPT+1 at exit of the loop.
+nf = count(evaluated)
 
 end subroutine initialize
 
