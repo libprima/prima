@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 PM10:34:39
+! Last Modified: Wednesday, April 27, 2022 PM09:30:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -266,7 +266,7 @@ end if
 !
 !     Investigate whether more compONEnts of W can be fixed.
 !
-120 temp = adelt * adelt - wfixsq
+120 temp = adelt**2 - wfixsq
 if (temp > ZERO) then
     wsqsav = wfixsq
     !--------------!
