@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 27, 2022 PM09:30:07
+! Last Modified: Thursday, April 28, 2022 AM01:19:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,7 @@ subroutine geostep(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, knew, adel
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
+use, non_intrinsic :: infnan_mod, only : is_nan
 
 implicit none
 
@@ -118,6 +119,17 @@ do k = 1, npt
         glag(i) = glag(i) + temp * xpt(i, k)
     end do
 end do
+
+!------------------------!
+!Zaikun 20220427
+if (any(is_nan(glag))) then
+    alpha = ZERO
+    cauchy = ZERO
+    xnew = xopt
+    xalt = xopt
+    return
+end if
+!------------------------!
 !
 !     Search for a large denominator along the straight lines through XOPT
 !     and another interpolation point. SLBD and SUBD will be lower and upper
@@ -267,7 +279,8 @@ end if
 !     Investigate whether more compONEnts of W can be fixed.
 !
 120 temp = adelt**2 - wfixsq
-if (temp > ZERO) then
+!if (temp > ZERO) then
+if (.not. temp <= 0) then
     wsqsav = wfixsq
     !--------------!
     wfixsq = ZERO
