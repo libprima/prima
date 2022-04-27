@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 27, 2022 AM01:01:08
+! Last Modified: Wednesday, April 27, 2022 PM09:30:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -56,7 +56,7 @@ real(RP) :: bigstp, csave, curv, dderiv, diff, distsq,  &
 &        ggfree, gw, ha, predsq, presav, scaling, &
 &        slbd, step, stpsav, subd, sumin, temp, tempa,      &
 &        tempb, tempd, vlag, wfixsq, wsqsav, xtest(size(xpt, 1))
-logical :: mask(size(xpt, 1)), lmask(size(xpt, 1)), umask(size(xpt, 1)), fmask(size(xpt, 1))
+logical :: mask_fixl(size(xpt, 1)), mask_fixu(size(xpt, 1)), mask_free(size(xpt, 1))
 integer(IK) :: i, ibdsav, iflag, ilbd, isbd, iubd, j, k, ksav
 
 
@@ -117,16 +117,6 @@ ksav = 1_IK; ibdsav = 1_IK
 !     KNEW-th column of the H matrix.
 !
 
-!do k = 1, npt
-!    hcol(k) = ZERO
-!end do
-!do j = 1, npt - n - 1
-!    temp = zmat(knew, j)
-!    do k = 1, npt
-!        hcol(k) = hcol(k) + temp * zmat(k, j)
-!    end do
-!end do
-
 hcol = matprod(zmat, zmat(knew, :))
 alpha = hcol(knew)
 ha = HALF * alpha
@@ -134,20 +124,9 @@ ha = HALF * alpha
 !     Calculate the gradient of the KNEW-th Lagrange function at XOPT.
 !
 !!glag = bmat(:, knew) + hess_mul(xopt, xpt, hcol)
-!do i = 1, n
-!    glag(i) = bmat(i, knew)
-!end do
 glag = bmat(:, knew)
 do k = 1, npt
     glag = glag + hcol(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
-    !temp = ZERO
-    !do j = 1, n
-    !    temp = temp + xpt(j, k) * xopt(j)
-    !end do
-    !temp = hcol(k) * temp
-    !do i = 1, n
-    !    glag(i) = glag(i) + temp * xpt(i, k)
-    !end do
 end do
 !
 !     Search for a large denominator along the straight lines through XOPT
@@ -161,14 +140,6 @@ do k = 1, npt
     if (k == kopt) cycle
     dderiv = inprod(glag, xpt(:, k) - xopt)
     distsq = sum((xpt(:, k) - xopt)**2)
-    !dderiv = ZERO
-    !distsq = ZERO
-    !do i = 1, n
-    !    temp = xpt(i, k) - xopt(i)
-    !    dderiv = dderiv + glag(i) * temp
-    !    !distsq = distsq + temp * temp
-    !    distsq = distsq + temp**2
-    !end do
     subd = adelt / sqrt(distsq)
     slbd = -subd
     ilbd = 0
@@ -268,10 +239,6 @@ end do
 !
 !     Construct XNEW in a way that satisfies the bound constraints exactly.
 !
-!do i = 1, n
-!    temp = xopt(i) + stpsav * (xpt(i, ksav) - xopt(i))
-!    xnew(i) = max(sl(i), min(su(i), temp))
-!end do
 xnew = max(sl, min(su, xopt + stpsav * (xpt(:, ksav) - xopt)))
 if (ibdsav < 0) xnew(-ibdsav) = sl(-ibdsav)
 if (ibdsav > 0) xnew(ibdsav) = su(ibdsav)
@@ -285,23 +252,11 @@ iflag = 0
 
 100 continue
 
-wfixsq = ZERO
-ggfree = ZERO
-
 w(1:n) = ZERO
-mask = (min(xopt - sl, glag) > 0 .or. max(xopt - su, glag) < 0)
-w(trueloc(mask)) = bigstp
-ggfree = sum(glag(trueloc(mask))**2)
+mask_free = (min(xopt - sl, glag) > 0 .or. max(xopt - su, glag) < 0)
+w(trueloc(mask_free)) = bigstp
+ggfree = sum(glag(trueloc(mask_free))**2)
 
-!do i = 1, n
-!    w(i) = ZERO
-!    tempa = min(xopt(i) - sl(i), glag(i))
-!    tempb = max(xopt(i) - su(i), glag(i))
-!    if (tempa > ZERO .or. tempb < ZERO) then
-!        w(i) = bigstp
-!        ggfree = ggfree + glag(i)**2
-!    end if
-!end do
 if (ggfree <= ZERO) then
     cauchy = ZERO
     return
@@ -309,61 +264,41 @@ end if
 !
 !     Investigate whether more components of W can be fixed.
 !
-120 continue
-
-temp = adelt * adelt - wfixsq
-if (temp > ZERO) then
+wfixsq = ZERO
+do k = 1, n
+    temp = adelt**2 - wfixsq
+    if (.not. temp > 0) exit
     wsqsav = wfixsq
     step = sqrt(temp / ggfree)
     xtest = xopt - step * glag
-    lmask = (w(1:n) == bigstp .and. xtest <= sl)
-    umask = (w(1:n) == bigstp .and. xtest >= su)
-    fmask = (w(1:n) == bigstp .and. .not. (lmask .or. umask))
-    w(trueloc(lmask)) = sl(trueloc(lmask)) - xopt(trueloc(lmask))
-    w(trueloc(umask)) = su(trueloc(umask)) - xopt(trueloc(umask))
-    wfixsq = wfixsq + sum(w(trueloc(lmask .or. umask))**2)
-    ggfree = sum(glag(trueloc(fmask))**2)
-
-    !--------------!
-    !wfixsq = ZERO
-    !--------------!
-    !ggfree = ZERO
-    !do i = 1, n
-    !    if (w(i) == bigstp) then
-    !        temp = xopt(i) - step * glag(i)
-    !        if (temp <= sl(i)) then
-    !            w(i) = sl(i) - xopt(i)
-    !            wfixsq = wfixsq + w(i)**2
-    !        else if (temp >= su(i)) then
-    !            w(i) = su(i) - xopt(i)
-    !            wfixsq = wfixsq + w(i)**2
-    !        else
-    !            ggfree = ggfree + glag(i)**2
-    !        end if
-    !    end if
-    !end do
-    !wfixsq = wsqsav + wfixsq
-
-    if (wfixsq > wsqsav .and. ggfree > ZERO) goto 120
-end if
+    mask_fixl = (w(1:n) == bigstp .and. xtest <= sl)
+    mask_fixu = (w(1:n) == bigstp .and. xtest >= su)
+    mask_free = (w(1:n) == bigstp .and. .not. (mask_fixl .or. mask_fixu))
+    w(trueloc(mask_fixl)) = sl(trueloc(mask_fixl)) - xopt(trueloc(mask_fixl))
+    w(trueloc(mask_fixu)) = su(trueloc(mask_fixu)) - xopt(trueloc(mask_fixu))
+    wfixsq = wfixsq + sum(w(trueloc(mask_fixl .or. mask_fixu))**2)
+    ggfree = sum(glag(trueloc(mask_free))**2)
+    if (.not. (wfixsq > wsqsav .and. ggfree > ZERO)) exit
+end do
 !
 !     Set the remaining free components of W and all components of XALT,
 !     except that W may be scaled later.
 !
-gw = ZERO
-do i = 1, n
-    if (w(i) == bigstp) then
-        w(i) = -step * glag(i)
-        xalt(i) = max(sl(i), min(su(i), xopt(i) + w(i)))
-    else if (w(i) == ZERO) then
-        xalt(i) = xopt(i)
-    else if (glag(i) > ZERO) then
-        xalt(i) = sl(i)
-    else
-        xalt(i) = su(i)
-    end if
-    gw = gw + glag(i) * w(i)
-end do
+where (w == bigstp)
+    w = -step * glag
+    xalt = max(sl, min(su, xopt + w))
+elsewhere(w == ZERO)
+    xalt = xopt
+elsewhere(glag > ZERO)
+    xalt = sl
+elsewhere
+    xalt = su
+end where
+
+gw = inprod(glag, w(1:n))
+
+
+
 !
 !     Set CURV to the curvature of the KNEW-th Lagrange function along W.
 !     Scale W by a factor less than ONE if that can reduce the modulus of
@@ -390,9 +325,9 @@ else
     cauchy = (gw + HALF * curv)**2
 end if
 !
-!     If IFLAG is ZERO, then XALT is calculated as before after reversing
-!     the sign of GLAG. Thus two XALT vectors become available. The ONE that
-!     is chosen is the ONE that gives the larger value of CAUCHY.
+!     If IFLAG is 0, then XALT is calculated as before after reversing
+!     the sign of GLAG. Thus two XALT vectors become available. The one that
+!     is chosen is the one that gives the larger value of CAUCHY.
 !
 if (iflag == 0) then
     do i = 1, n
