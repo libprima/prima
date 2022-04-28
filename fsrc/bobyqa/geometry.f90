@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 PM02:33:41
+! Last Modified: Thursday, April 28, 2022 PM05:50:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: geostep
 contains
 
 
-subroutine geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, alpha, cauchy, xalt, xnew)
+subroutine geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, cauchy, xalt, xnew)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, DEBUGGING
@@ -41,7 +41,6 @@ real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Outputs
-real(RP), intent(out) :: alpha
 real(RP), intent(out) :: cauchy
 real(RP), intent(out) :: xalt(:)  ! XALT(N)
 real(RP), intent(out) :: xnew(:)  ! XNEW(N)
@@ -55,11 +54,12 @@ real(RP) :: hcol(size(xpt, 2))
 real(RP) :: s(size(xpt, 1)), xsav(size(xpt, 1))
 real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), diff, distsq(size(xpt, 2)),  &
 &        ggfree, gs, predsq, presav, scaling, &
-&        resis, slbd, stplen, stpsav, subd, sumin, temp, tempa,      &
-&        tempb, tempd, vlag, sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2)),  &
+&        resis, slbd, stplen, stpsav, subd, sumin, temp,  &
+&         vlag, sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2)),  &
 &        subd_test(size(xpt, 1)), slbd_test(size(xpt, 1)), &
 &        ufrac(size(xpt, 1)), lfrac(size(xpt, 1)), xdiff(size(xpt, 1)), &
 &        vlags(3), stplens(3), vlagl, vlagu, vlagm, stpm
+real(RP) :: alpha
 logical :: mask_fixl(size(xpt, 1)), mask_fixu(size(xpt, 1)), mask_free(size(xpt, 1))
 integer(IK) :: ibdsav, uphill, ilbd, isbd, iubd, k, ksav, isbds(3), ilag
 
@@ -83,11 +83,6 @@ if (DEBUGGING) then
     call assert(size(xalt) == n, 'SIZE(XALT) == N', srname)
     call assert(size(xnew) == n, 'SIZE(XNEW) == N', srname)
 end if
-
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20220305: Temporary fix for G95 warning: ‘ksav’/'ibdsav' may be used uninitialized in this function
-ksav = 1_IK; ibdsav = 1_IK
-!--------------------------------------------------------------------------------------------------!
 
 !
 !     The arguments N, NPT, XPT, XOPT, BMAT, ZMAT, NDIM, SL and SU all have
@@ -125,11 +120,10 @@ do k = 1, npt
     glag = glag + hcol(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
 end do
 
+cauchy = ZERO
+xnew = xopt
+xalt = xopt
 if (any(is_nan(glag))) then
-    alpha = ZERO
-    cauchy = ZERO
-    xnew = xopt
-    xalt = xopt
     return
 end if
 
@@ -138,12 +132,16 @@ end if
 ! point. SLBD and SUBD will be lower and upper bounds on the step along each of these lines in turn.
 ! PREDSQ will be set to the square of the predicted denominator for each line. PRESAV will be set to
 ! the largest admissible value of PREDSQ that occurs.
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220428: Without this, KSAV/IBDSAV may be undefined if DDERIV contains only zeros or NaNs,
+! and SEGFAULT will occur.
+ksav = 1_IK; ibdsav = 1_IK
+!--------------------------------------------------------------------------------------------------!
 presav = ZERO
 dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))
 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 do k = 1, npt
-    if (k == kopt) cycle
-    if (is_nan(dderiv(k))) cycle
+    if (k == kopt .or. .not. abs(dderiv(k)) > 0) cycle
 
     subd = adelt / sqrt(distsq(k))
     slbd = -subd
@@ -183,31 +181,20 @@ do k = 1, npt
         !!iubd = iubd * sign(xdiff(iubd));
     end if
 
+    !slbds(k) = slbd
+    !ilbds(k) = ilbd
+    !subds(k) = subd
+    !iubds(k) = iubd
+!end do
+!
+!do k = 1, npt
+    !if (k == kopt .or. .not. abs(dderiv(k)) > 0) cycle
     if (k == knew) then
         ! Seek a large modulus of the KNEW-th Lagrange function when the index of the other
         ! interpolation point on the line through XOPT is KNEW.
         diff = dderiv(k) - ONE
         vlagl = slbd * (dderiv(k) - slbd * diff)
         vlagu = subd * (dderiv(k) - subd * diff)
-
-        !!temp = subd * (dderiv(k) - subd * diff)
-        !!if (abs(temp) > abs(vlag)) then
-        !!    stplen = subd
-        !!    vlag = temp
-        !!    isbd = iubd
-        !!end if
-        !tempd = HALF * dderiv(k)
-        !!tempa = tempd - diff * slbd
-        !!tempb = tempd - diff * subd
-        !if ((tempd - diff * slbd) * (tempd - diff * subd) < ZERO) then
-        !    temp = tempd * tempd / diff
-        !    if (abs(temp) > abs(vlag)) then
-        !        stplen = tempd / diff
-        !        vlag = temp
-        !        isbd = 0
-        !    end if
-        !end if
-
         vlagm = ZERO
         stpm = slbd
         if (diff /= 0) then
@@ -216,36 +203,8 @@ do k = 1, npt
         if (stpm > slbd .and. stpm < subd) then
             vlagm = (HALF * dderiv(k)) * (HALF * dderiv(k)) / diff
         end if
-
-        vlags = [vlagl, vlagu, vlagm]
-        stplens = [slbd, subd, stpm]
-        isbds = [ilbd, iubd, 0_IK]
-        ilag = int(maxloc(abs(vlags), dim=1), IK)
-        vlag = vlags(ilag)
-        stplen = stplens(ilag)
-        isbd = isbds(ilag)
-
     else
         ! Search along each of the other lines through XOPT and another point.
-        !stplen = slbd
-        !vlag = slbd * (ONE - slbd)
-        !isbd = ilbd
-        !temp = subd * (ONE - subd)
-        !if (abs(temp) > abs(vlag)) then
-        !    stplen = subd
-        !    vlag = temp
-        !    isbd = iubd
-        !end if
-        !if (subd > HALF) then
-        !    if (abs(vlag) < QUART) then
-        !        stplen = HALF
-        !        vlag = QUART
-        !        isbd = 0
-        !    end if
-        !end if
-        !vlag = vlag * dderiv(k)
-
-
         vlagl = slbd * (ONE - slbd) * dderiv(k)
         vlagu = subd * (ONE - subd) * dderiv(k)
         vlagm = ZERO
@@ -253,7 +212,6 @@ do k = 1, npt
         if (stpm > slbd .and. stpm < subd) then
             vlagm = QUART * dderiv(k)
         end if
-
     end if
 
     vlags = [vlagl, vlagu, vlagm]
@@ -280,7 +238,6 @@ do k = 1, npt
         ibdsav = isbd
     end if
 end do
-
 
 ! Construct XNEW in a way that satisfies the bound constraints exactly.
 xnew = max(sl, min(su, xopt + stpsav * (xpt(:, ksav) - xopt)))

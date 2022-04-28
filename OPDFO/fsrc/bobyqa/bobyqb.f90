@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM11:05:02
+! Last Modified: Thursday, April 28, 2022 PM05:50:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -601,8 +601,9 @@ do j = 1, nptm
     end do
 end do
 call geostep(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, &
-& knew, adelt, xnew, xalt, alpha, cauchy, w, w(np), w(ndim + 1))
+& knew, adelt, xnew, xalt, cauchy, w, w(np), w(ndim + 1))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+alpha = sum(zmat(knew, :)**2)
 do i = 1, n
     d(i) = xnew(i) - xopt(i)
 end do

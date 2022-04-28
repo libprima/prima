@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 AM11:00:28
+! Last Modified: Thursday, April 28, 2022 PM05:45:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -350,8 +350,11 @@ if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
     goto 720
 end if
 
-call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, alpha, cauchy, xalt, xnew)
+call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, cauchy, xalt, xnew)
 d = xnew - xopt
+alpha = sum(zmat(knew, :)**2)
+
+write (16, *) nf, alpha, cauchy, xnew, xalt
 
 230 continue
 
@@ -531,7 +534,8 @@ end if
 call assert(knew >= 1, 'KNEW >= 1', srname)
 call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
 call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
-!write (*, *) 1, denom, (sum(zmat(knew, :)**2)) * beta + vlag(knew)**2, denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)
+!write (99, *) 1, denom, (sum(zmat(knew, :)**2)) * beta + vlag(knew)**2, denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)
+!close(99)
 call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
 !--------------------------------------------------------------------------------------------------!
 call updateh(knew, beta, vlag, bmat, zmat)
