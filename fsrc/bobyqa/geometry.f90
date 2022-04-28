@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 PM12:45:32
+! Last Modified: Thursday, April 28, 2022 PM02:33:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,9 +58,10 @@ real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), diff, distsq(size(xpt, 2)
 &        resis, slbd, stplen, stpsav, subd, sumin, temp, tempa,      &
 &        tempb, tempd, vlag, sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2)),  &
 &        subd_test(size(xpt, 1)), slbd_test(size(xpt, 1)), &
-&        ufrac(size(xpt, 1)), lfrac(size(xpt, 1)), xdiff(size(xpt, 1))
+&        ufrac(size(xpt, 1)), lfrac(size(xpt, 1)), xdiff(size(xpt, 1)), &
+&        vlags(3), stplens(3), vlagl, vlagu, vlagm, stpm
 logical :: mask_fixl(size(xpt, 1)), mask_fixu(size(xpt, 1)), mask_free(size(xpt, 1))
-integer(IK) :: ibdsav, uphill, ilbd, isbd, iubd, k, ksav
+integer(IK) :: ibdsav, uphill, ilbd, isbd, iubd, k, ksav, isbds(3), ilag
 
 
 ! Sizes.
@@ -142,6 +143,8 @@ dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))
 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 do k = 1, npt
     if (k == kopt) cycle
+    if (is_nan(dderiv(k))) cycle
+
     subd = adelt / sqrt(distsq(k))
     slbd = -subd
     ilbd = 0
@@ -184,46 +187,82 @@ do k = 1, npt
         ! Seek a large modulus of the KNEW-th Lagrange function when the index of the other
         ! interpolation point on the line through XOPT is KNEW.
         diff = dderiv(k) - ONE
-        stplen = slbd
-        vlag = slbd * (dderiv(k) - slbd * diff)
-        isbd = ilbd
-        temp = subd * (dderiv(k) - subd * diff)
-        if (abs(temp) > abs(vlag)) then
-            stplen = subd
-            vlag = temp
-            isbd = iubd
+        vlagl = slbd * (dderiv(k) - slbd * diff)
+        vlagu = subd * (dderiv(k) - subd * diff)
+
+        !!temp = subd * (dderiv(k) - subd * diff)
+        !!if (abs(temp) > abs(vlag)) then
+        !!    stplen = subd
+        !!    vlag = temp
+        !!    isbd = iubd
+        !!end if
+        !tempd = HALF * dderiv(k)
+        !!tempa = tempd - diff * slbd
+        !!tempb = tempd - diff * subd
+        !if ((tempd - diff * slbd) * (tempd - diff * subd) < ZERO) then
+        !    temp = tempd * tempd / diff
+        !    if (abs(temp) > abs(vlag)) then
+        !        stplen = tempd / diff
+        !        vlag = temp
+        !        isbd = 0
+        !    end if
+        !end if
+
+        vlagm = ZERO
+        stpm = slbd
+        if (diff /= 0) then
+            stpm = HALF * dderiv(k) / diff
         end if
-        tempd = HALF * dderiv(k)
-        tempa = tempd - diff * slbd
-        tempb = tempd - diff * subd
-        if (tempa * tempb < ZERO) then
-            temp = tempd * tempd / diff
-            if (abs(temp) > abs(vlag)) then
-                stplen = tempd / diff
-                vlag = temp
-                isbd = 0
-            end if
+        if (stpm > slbd .and. stpm < subd) then
+            vlagm = (HALF * dderiv(k)) * (HALF * dderiv(k)) / diff
         end if
+
+        vlags = [vlagl, vlagu, vlagm]
+        stplens = [slbd, subd, stpm]
+        isbds = [ilbd, iubd, 0_IK]
+        ilag = int(maxloc(abs(vlags), dim=1), IK)
+        vlag = vlags(ilag)
+        stplen = stplens(ilag)
+        isbd = isbds(ilag)
+
     else
         ! Search along each of the other lines through XOPT and another point.
-        stplen = slbd
-        vlag = slbd * (ONE - slbd)
-        isbd = ilbd
-        temp = subd * (ONE - subd)
-        if (abs(temp) > abs(vlag)) then
-            stplen = subd
-            vlag = temp
-            isbd = iubd
+        !stplen = slbd
+        !vlag = slbd * (ONE - slbd)
+        !isbd = ilbd
+        !temp = subd * (ONE - subd)
+        !if (abs(temp) > abs(vlag)) then
+        !    stplen = subd
+        !    vlag = temp
+        !    isbd = iubd
+        !end if
+        !if (subd > HALF) then
+        !    if (abs(vlag) < QUART) then
+        !        stplen = HALF
+        !        vlag = QUART
+        !        isbd = 0
+        !    end if
+        !end if
+        !vlag = vlag * dderiv(k)
+
+
+        vlagl = slbd * (ONE - slbd) * dderiv(k)
+        vlagu = subd * (ONE - subd) * dderiv(k)
+        vlagm = ZERO
+        stpm = HALF
+        if (stpm > slbd .and. stpm < subd) then
+            vlagm = QUART * dderiv(k)
         end if
-        if (subd > HALF) then
-            if (abs(vlag) < QUART) then
-                stplen = HALF
-                vlag = QUART
-                isbd = 0
-            end if
-        end if
-        vlag = vlag * dderiv(k)
+
     end if
+
+    vlags = [vlagl, vlagu, vlagm]
+    stplens = [slbd, subd, stpm]
+    isbds = [ilbd, iubd, 0_IK]
+    ilag = int(maxloc(abs(vlags), dim=1), IK)
+    vlag = vlags(ilag)
+    stplen = stplens(ilag)
+    isbd = isbds(ilag)
 
     ! Calculate PREDSQ for the current line search and maintain PRESAV.
     temp = stplen * (ONE - stplen) * distsq(k)
