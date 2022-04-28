@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 PM05:50:23
+! Last Modified: Thursday, April 28, 2022 PM07:25:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,15 +53,15 @@ real(RP) :: glag(size(xpt, 1))
 real(RP) :: hcol(size(xpt, 2))
 real(RP) :: s(size(xpt, 1)), xsav(size(xpt, 1))
 real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), diff, distsq(size(xpt, 2)),  &
-&        ggfree, gs, predsq, presav, scaling, &
-&        resis, slbd, stplen, stpsav, subd, sumin, temp,  &
+&        ggfree, gs, predsq(size(xpt, 2)), scaling, &
+&        resis, slbd, stplen(size(xpt, 2)), grdstp, subd, sumin, distprod,  &
 &         vlag, sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2)),  &
 &        subd_test(size(xpt, 1)), slbd_test(size(xpt, 1)), &
 &        ufrac(size(xpt, 1)), lfrac(size(xpt, 1)), xdiff(size(xpt, 1)), &
 &        vlags(3), stplens(3), vlagl, vlagu, vlagm, stpm
 real(RP) :: alpha
 logical :: mask_fixl(size(xpt, 1)), mask_fixu(size(xpt, 1)), mask_free(size(xpt, 1))
-integer(IK) :: ibdsav, uphill, ilbd, isbd, iubd, k, ksav, isbds(3), ilag
+integer(IK) :: ibd, uphill, ilbd, isbd(size(xpt, 2)), iubd, k, kden, isbds(3), ilag
 
 
 ! Sizes.
@@ -130,18 +130,16 @@ end if
 
 ! Search for a large denominator along the straight lines through XOPT and another interpolation
 ! point. SLBD and SUBD will be lower and upper bounds on the step along each of these lines in turn.
-! PREDSQ will be set to the square of the predicted denominator for each line. PRESAV will be set to
-! the largest admissible value of PREDSQ that occurs.
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20220428: Without this, KSAV/IBDSAV may be undefined if DDERIV contains only zeros or NaNs,
-! and SEGFAULT will occur.
-ksav = 1_IK; ibdsav = 1_IK
-!--------------------------------------------------------------------------------------------------!
-presav = ZERO
+! PREDSQ will be set to the square of the predicted denominator for each line. 
 dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))
 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 do k = 1, npt
-    if (k == kopt .or. .not. abs(dderiv(k)) > 0) cycle
+    if (k == kopt .or. is_nan(dderiv(k))) then
+        predsq(k) = ZERO
+        stplen(k) = ZERO
+        isbd(k) = 0_IK
+        cycle
+    end if
 
     subd = adelt / sqrt(distsq(k))
     slbd = -subd
@@ -219,33 +217,27 @@ do k = 1, npt
     isbds = [ilbd, iubd, 0_IK]
     ilag = int(maxloc(abs(vlags), dim=1), IK)
     vlag = vlags(ilag)
-    stplen = stplens(ilag)
-    isbd = isbds(ilag)
+    stplen(k) = stplens(ilag)
+    isbd(k) = isbds(ilag)
 
-    ! Calculate PREDSQ for the current line search and maintain PRESAV.
-    temp = stplen * (ONE - stplen) * distsq(k)
-    predsq = vlag * vlag * (vlag * vlag + HALF * alpha * temp * temp)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: With the original code, if either PREDSQ or PRESAV
-! is NaN, KSAV/STPSAV/IBDSAV will not get a value. This may cause
-! Segmentation Fault.
-!      IF (PREDSQ .GT. PRESAV) THEN
-    if (.not. (predsq <= presav)) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        presav = predsq
-        ksav = k
-        stpsav = stplen
-        ibdsav = isbd
-    end if
+    ! Calculate PREDSQ for the current line search.
+    distprod = stplen(k) * (ONE - stplen(k)) * distsq(k)
+    predsq(k) = vlag * vlag * (vlag * vlag + HALF * alpha * distprod * distprod)
 end do
 
-! Construct XNEW in a way that satisfies the bound constraints exactly.
-xnew = max(sl, min(su, xopt + stpsav * (xpt(:, ksav) - xopt)))
-if (ibdsav < 0) then
-    xnew(-ibdsav) = sl(-ibdsav)
+kden = kopt
+if (any(predsq > 0)) then
+    kden = maxloc(predsq, mask=(.not. is_nan(predsq)), dim=1)
 end if
-if (ibdsav > 0) then
-    xnew(ibdsav) = su(ibdsav)
+
+! Construct XNEW in a way that satisfies the bound constraints exactly.
+xnew = max(sl, min(su, xopt + stplen(kden) * (xpt(:, kden) - xopt)))
+ibd = isbd(kden)
+if (ibd < 0) then
+    xnew(-ibd) = sl(-ibd)
+end if
+if (ibd > 0) then
+    xnew(ibd) = su(ibd)
 end if
 
 ! Prepare for the method that assembles the constrained Cauchy step in S. The sum of squares of the
@@ -273,8 +265,8 @@ do uphill = 0, 1
         resis = adelt**2 - sfixsq
         if (resis <= 0) exit
         ssqsav = sfixsq
-        stplen = sqrt(resis / ggfree)
-        xtemp = xopt - stplen * glag
+        grdstp = sqrt(resis / ggfree)
+        xtemp = xopt - grdstp * glag
         mask_fixl = (s == bigstp .and. xtemp <= sl)
         mask_fixu = (s == bigstp .and. xtemp >= su)
         mask_free = (s == bigstp .and. .not. (mask_fixl .or. mask_fixu))
@@ -290,9 +282,9 @@ do uphill = 0, 1
     xalt(trueloc(glag > 0)) = sl(trueloc(glag > 0))
     xalt(trueloc(glag <= 0)) = su(trueloc(glag <= 0))
     xalt(trueloc(s == 0)) = xopt(trueloc(s == 0))
-    xtemp = max(sl, min(su, xopt - stplen * glag))
+    xtemp = max(sl, min(su, xopt - grdstp * glag))
     xalt(trueloc(s == bigstp)) = xtemp(trueloc(s == bigstp))
-    s(trueloc(s == bigstp)) = -stplen * glag(trueloc(s == bigstp))
+    s(trueloc(s == bigstp)) = -grdstp * glag(trueloc(s == bigstp))
     gs = inprod(glag, s)
 
     ! Set CURV to the curvature of the KNEW-th Lagrange function along S. Scale S by a factor less

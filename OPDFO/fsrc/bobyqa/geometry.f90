@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 PM05:51:31
+! Last Modified: Thursday, April 28, 2022 PM06:17:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -137,7 +137,7 @@ end if
 !
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20220428: Without this, KSAV/IBDSAV may be undefined due to NaN, and SEGFAULT will occur.
-ksav = 1_IK; ibdsav = 1_IK
+ksav = kopt; ibdsav = 0_IK; stpsav = ZERO; presav = ZERO
 !--------------------------------------------------------------------------------------------------!
 presav = ZERO
 do k = 1, npt
@@ -151,8 +151,7 @@ do k = 1, npt
         distsq = distsq + temp**2
     end do
 
-    !if (is_nan(dderiv)) cycle
-    if (.not. abs(dderiv) > 0) cycle
+    if (is_nan(dderiv)) cycle
 
     subd = adelt / sqrt(distsq)
     slbd = -subd
