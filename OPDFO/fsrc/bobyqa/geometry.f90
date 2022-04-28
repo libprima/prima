@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 PM12:02:27
+! Last Modified: Thursday, April 28, 2022 PM02:09:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -148,6 +148,9 @@ do k = 1, npt
         !distsq = distsq + temp * temp
         distsq = distsq + temp**2
     end do
+
+    if (is_nan(dderiv)) cycle
+
     subd = adelt / sqrt(distsq)
     slbd = -subd
     ilbd = 0
@@ -208,7 +211,8 @@ do k = 1, npt
         tempd = HALF * dderiv
         tempa = tempd - diff * slbd
         tempb = tempd - diff * subd
-        if (tempa * tempb < ZERO) then
+        !if (tempa * tempb < ZERO) then
+        if (diff /= 0 .and. (tempd / diff - slbd) * (tempd / diff - subd) < ZERO) then
             temp = tempd * tempd / diff
             if (abs(temp) > abs(vlag)) then
                 step = tempd / diff
