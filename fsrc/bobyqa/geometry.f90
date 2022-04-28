@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 AM01:31:42
+! Last Modified: Thursday, April 28, 2022 AM10:24:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,7 +53,7 @@ integer(IK) :: npt
 real(RP) :: glag(size(xpt, 1))
 real(RP) :: hcol(size(xpt, 2))
 real(RP) :: s(size(xpt, 1)), xsav(size(xpt, 1))
-real(RP) :: bigstp, csave, curv, dderiv, diff, distsq,  &
+real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), diff, distsq(size(xpt, 2)),  &
 &        ggfree, gs, predsq, presav, scaling, &
 &        resis, slbd, stplen, stpsav, subd, sumin, temp, tempa,      &
 &        tempb, tempd, vlag, sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2))
@@ -138,11 +138,11 @@ end if
 !     will be set to the largest admissible value of PREDSQ that occurs.
 !
 presav = ZERO
+dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))
+distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 do k = 1, npt
     if (k == kopt) cycle
-    dderiv = inprod(glag, xpt(:, k) - xopt)
-    distsq = sum((xpt(:, k) - xopt)**2)
-    subd = adelt / sqrt(distsq)
+    subd = adelt / sqrt(distsq(k))
     slbd = -subd
     ilbd = 0
     iubd = 0
@@ -153,20 +153,20 @@ do k = 1, npt
     do i = 1, n
         temp = xpt(i, k) - xopt(i)
         if (temp > ZERO) then
-            if (slbd * temp < sl(i) - xopt(i)) then
+            if (slbd < (sl(i) - xopt(i)) / temp) then
                 slbd = (sl(i) - xopt(i)) / temp
                 ilbd = -i
             end if
-            if (subd * temp > su(i) - xopt(i)) then
+            if (subd > (su(i) - xopt(i)) / temp) then
                 subd = max(sumin, (su(i) - xopt(i)) / temp)
                 iubd = i
             end if
         else if (temp < ZERO) then
-            if (slbd * temp > su(i) - xopt(i)) then
+            if (slbd < (su(i) - xopt(i)) / temp) then
                 slbd = (su(i) - xopt(i)) / temp
                 ilbd = i
             end if
-            if (subd * temp < sl(i) - xopt(i)) then
+            if (subd > (sl(i) - xopt(i)) / temp) then
                 subd = max(sumin, (sl(i) - xopt(i)) / temp)
                 iubd = -i
             end if
@@ -177,17 +177,17 @@ do k = 1, npt
 !     of the other interpolation point on the line through XOPT is KNEW.
 !
     if (k == knew) then
-        diff = dderiv - ONE
+        diff = dderiv(k) - ONE
         stplen = slbd
-        vlag = slbd * (dderiv - slbd * diff)
+        vlag = slbd * (dderiv(k) - slbd * diff)
         isbd = ilbd
-        temp = subd * (dderiv - subd * diff)
+        temp = subd * (dderiv(k) - subd * diff)
         if (abs(temp) > abs(vlag)) then
             stplen = subd
             vlag = temp
             isbd = iubd
         end if
-        tempd = HALF * dderiv
+        tempd = HALF * dderiv(k)
         tempa = tempd - diff * slbd
         tempb = tempd - diff * subd
         if (tempa * tempb < ZERO) then
@@ -218,12 +218,12 @@ do k = 1, npt
                 isbd = 0
             end if
         end if
-        vlag = vlag * dderiv
+        vlag = vlag * dderiv(k)
     end if
 !
 !     Calculate PREDSQ for the current line search and maintain PRESAV.
 !
-    temp = stplen * (ONE - stplen) * distsq
+    temp = stplen * (ONE - stplen) * distsq(k)
     predsq = vlag * vlag * (vlag * vlag + HALF * alpha * temp * temp)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: With the original code, if either PREDSQ or PRESAV
@@ -238,9 +238,9 @@ do k = 1, npt
         ibdsav = isbd
     end if
 end do
-!
-!     Construct XNEW in a way that satisfies the bound constraints exactly.
-!
+
+
+! Construct XNEW in a way that satisfies the bound constraints exactly.
 xnew = max(sl, min(su, xopt + stpsav * (xpt(:, ksav) - xopt)))
 if (ibdsav < 0) then
     xnew(-ibdsav) = sl(-ibdsav)
@@ -248,7 +248,6 @@ end if
 if (ibdsav > 0) then
     xnew(ibdsav) = su(ibdsav)
 end if
-
 
 ! Prepare for the method that assembles the constrained Cauchy step in S. The sum of squares of the
 ! fixed components of S is formed in SFIXSQ, and the free components of S are set to BIGSTP.
@@ -295,18 +294,6 @@ do iflag = 0, 1
     xtemp = max(sl, min(su, xopt - stplen * glag))
     xalt(trueloc(s == bigstp)) = xtemp(trueloc(s == bigstp))
     s(trueloc(s == bigstp)) = -stplen * glag(trueloc(s == bigstp))
-
-    !where (s == bigstp)
-    !    s = -stplen * glag
-    !    xalt = max(sl, min(su, xopt + s))
-    !elsewhere(s == ZERO)
-    !    xalt = xopt
-    !elsewhere(glag > ZERO)
-    !    xalt = sl
-    !elsewhere
-    !    xalt = su
-    !end where
-
     gs = inprod(glag, s)
 
     ! Set CURV to the curvature of the KNEW-th Lagrange function along S. Scale S by a factor less
