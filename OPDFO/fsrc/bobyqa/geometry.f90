@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 AM01:19:16
+! Last Modified: Thursday, April 28, 2022 AM10:30:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -159,20 +159,24 @@ do k = 1, npt
     do i = 1, n
         temp = xpt(i, k) - xopt(i)
         if (temp > ZERO) then
-            if (slbd * temp < sl(i) - xopt(i)) then
+            !if (slbd * temp < sl(i) - xopt(i)) then
+            if (slbd < (sl(i) - xopt(i)) / temp) then
                 slbd = (sl(i) - xopt(i)) / temp
                 ilbd = -i
             end if
-            if (subd * temp > su(i) - xopt(i)) then
+            !if (subd * temp > su(i) - xopt(i)) then
+            if (subd > (su(i) - xopt(i)) / temp) then
                 subd = max(sumin, (su(i) - xopt(i)) / temp)
                 iubd = i
             end if
         else if (temp < ZERO) then
-            if (slbd * temp > su(i) - xopt(i)) then
+            !if (slbd * temp > su(i) - xopt(i)) then
+            if (slbd < (su(i) - xopt(i)) / temp) then
                 slbd = (su(i) - xopt(i)) / temp
                 ilbd = i
             end if
-            if (subd * temp < sl(i) - xopt(i)) then
+            !if (subd * temp < sl(i) - xopt(i)) then
+            if (subd > (sl(i) - xopt(i)) / temp) then
                 subd = max(sumin, (sl(i) - xopt(i)) / temp)
                 iubd = -i
             end if
