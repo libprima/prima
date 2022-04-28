@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 AM10:30:36
+! Last Modified: Thursday, April 28, 2022 PM12:02:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -56,7 +56,7 @@ real(RP), intent(out) :: xnew(n)
 real(RP) :: bigstp, const, csave, curv, dderiv, diff, distsq,  &
 &        ggfree, gw, ha, predsq, presav, scaling, &
 &        slbd, step, stpsav, subd, sumin, temp, tempa,      &
-&        tempb, tempd, vlag, wfixsq, wsqsav
+&        tempb, tempd, vlag, wfixsq, wsqsav, frac
 integer(IK) :: i, ibdsav, iflag, ilbd, isbd, iubd, j, k, ksav
 
 !
@@ -156,6 +156,8 @@ do k = 1, npt
 !
 !     Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
 !
+    frac = subd
+
     do i = 1, n
         temp = xpt(i, k) - xopt(i)
         if (temp > ZERO) then
@@ -167,7 +169,10 @@ do k = 1, npt
             !if (subd * temp > su(i) - xopt(i)) then
             if (subd > (su(i) - xopt(i)) / temp) then
                 subd = max(sumin, (su(i) - xopt(i)) / temp)
-                iubd = i
+                !iubd = i
+
+                if (frac > (su(i) - xopt(i)) / temp) iubd = i
+
             end if
         else if (temp < ZERO) then
             !if (slbd * temp > su(i) - xopt(i)) then
@@ -178,7 +183,10 @@ do k = 1, npt
             !if (subd * temp < sl(i) - xopt(i)) then
             if (subd > (sl(i) - xopt(i)) / temp) then
                 subd = max(sumin, (sl(i) - xopt(i)) / temp)
-                iubd = -i
+                !iubd = -i
+
+                if (frac > (su(i) - xopt(i)) / temp) iubd = -i
+
             end if
         end if
     end do
