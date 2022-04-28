@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 29, 2022 AM01:55:20
+! Last Modified: Friday, April 29, 2022 AM12:38:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, cauchy, xalt, xnew)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, trueloc
@@ -52,15 +52,16 @@ integer(IK) :: npt
 real(RP) :: glag(size(xpt, 1))
 real(RP) :: hcol(size(xpt, 2))
 real(RP) :: s(size(xpt, 1)), xsav(size(xpt, 1))
-real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), distsq(size(xpt, 2)),  &
-&        ggfree, gs, predsq(3, size(xpt, 2)), scaling, &
-&        resis, slbd, stplen(3, size(xpt, 2)), grdstp, subd, sumin, betabd(3, size(xpt, 2)), &
+real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), diff, distsq(size(xpt, 2)),  &
+&        ggfree, gs, predsq(3, size(xpt, 2)), predsql, predsqu, predsqm, predsqs(3), scaling, &
+&        resis, slbd, stplen(3, size(xpt, 2)), grdstp, subd, sumin, betabd(3, size(xpt, 2)), distprodl, distprodu, distprodm, &
 &         vlag(3, size(xpt, 2)), sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2)),  &
 &        subd_test(size(xpt, 1)), slbd_test(size(xpt, 1)), &
-&        ufrac(size(xpt, 1)), lfrac(size(xpt, 1)), xdiff(size(xpt, 1)), stpm
+&        ufrac(size(xpt, 1)), lfrac(size(xpt, 1)), xdiff(size(xpt, 1)), &
+&        vlags(3), stplens(3), vlagl, vlagu, vlagm, stpm
 real(RP) :: alpha, stpsiz
 logical :: mask_fixl(size(xpt, 1)), mask_fixu(size(xpt, 1)), mask_free(size(xpt, 1))
-integer(IK) :: ibd, uphill, ilbd, isbd(3, size(xpt, 2)), iubd, k, ksqs(3), ksq, isq
+integer(IK) :: ibd, uphill, ilbd, isbd(3, size(xpt, 2)), iubd, k, kden, isbds(3), ilag, ksqs(3), ksq, isq, isqs(size(xpt, 2))
 
 
 ! Sizes.
@@ -255,9 +256,7 @@ end if
 
 ! Search for a large denominator along the straight lines through XOPT and another interpolation
 ! point. SLBD and SUBD will be lower and upper bounds on the step along each of these lines in turn.
-! On each line, we will evaluate the value of the KNEW-th Lagrange function at 3 trial points, and
-! estimate the denominator accordingly. The three points take the form (1-t)*XOPT + t*XPT(:, K)
-! with t = SLBD, SUBD, and STPM. In total, 3*(NPT-1) trial points will be considered.
+! PREDSQ will be set to the square of the predicted denominator for each line.
 dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))
 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 do k = 1, npt
@@ -307,10 +306,10 @@ do k = 1, npt
         !!iubd = iubd * sign(xdiff(iubd));
     end if
 
-    ! Now, define the step length STPM between SLBD and SUBD by finding the critical point of the
-    ! quadratic function PHI_K(t) = LFUN((1-t)*XOPT + t*XPT(:,K)), where LFUN is the KNEW-th
-    ! Lagrange function. For K /= KNEW, the critical point is 0.5, as PHI_K(0) = 1 = PHI_K(1); when
-    ! K = KNEW, it is -0.5*PHI_K'(0) / (1 - PHI_K'(0)), as PHI_K(0) = 0 and PHI_K(1) = 1.
+    ! Define the step length between SLBD and SUBD by finding the critical point of the quadratic
+    ! function PHI_K(t) = LFUN((1-t)*XOPT + t*XPT(:,K)), where LFUN is the KNEW-th Lagrange function.
+    ! For K /= KNEW, the critical point is 0.5, as PHI_K(0) = 1 = PHI_K(1). When K = KNEW, the
+    ! critical point is -0.5*PHI_K'(0) / (1 - PHI_K'(0)), as PHI_K(0) = 0 and PHI_K(1) = 1.
     stpm = HALF
     if (k == knew) then
         stpm = slbd
@@ -324,7 +323,7 @@ do k = 1, npt
     isbd(:, k) = [ilbd, iubd, 0_IK]
 end do
 
-! The following lines calculate PREDSQ for all the 3*(NPT-1) trial points.
+! The following lines calculate PREDSQ for all the 3*NPT trial points.
 ! First, compute VLAG = PHI(STPLEN). Using the fact that PHI_K(0) = 0, PHI_K(1) = delta_{K, KNEW}
 ! (Kroneker delta), and recalling the PHI_K is quadratic, we can find that
 ! PHI_K(t) = t*(1-t)*PHI_K'(0) for K /= KNEW, and PHI_KNEW = t*[t*(1-PHI_K'(0)) + PHI_K'(0)].
@@ -354,8 +353,8 @@ if (ibd > 0) then
 end if
 
 ! Prepare for the method that assembles the constrained Cauchy step in S. The sum of squares of the
-! fixed components of S is formed in SFIXSQ, and the free components of S are set to BIGSTP. When
-! UPHILL = 0, the method calculates the downhill version of XALT, which intends to minimize the
+! fixed components of S is formed in SFIXSQ, and the free components of S are set to BIGSTP.
+! When UPHILL = 0, the method calculates the downhill version of XALT, which intends to minimize the
 ! KNEW-th Lagrange function; when UPHILL = 1, it calculates the uphill version that intends to
 ! maximize the Lagrange function.
 bigstp = adelt + adelt
