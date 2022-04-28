@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 AM10:24:57
+! Last Modified: Thursday, April 28, 2022 PM12:18:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -56,7 +56,9 @@ real(RP) :: s(size(xpt, 1)), xsav(size(xpt, 1))
 real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), diff, distsq(size(xpt, 2)),  &
 &        ggfree, gs, predsq, presav, scaling, &
 &        resis, slbd, stplen, stpsav, subd, sumin, temp, tempa,      &
-&        tempb, tempd, vlag, sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2))
+&        tempb, tempd, vlag, sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2)),  &
+&        subd_test(size(xpt, 1)), slbd_test(size(xpt, 1)), &
+&        ubd_test(size(xpt, 1)), lbd_test(size(xpt, 1)), xdiff(size(xpt, 1))
 logical :: mask_fixl(size(xpt, 1)), mask_fixu(size(xpt, 1)), mask_free(size(xpt, 1))
 integer(IK) :: i, ibdsav, iflag, ilbd, isbd, iubd, k, ksav
 
@@ -150,28 +152,52 @@ do k = 1, npt
 !
 !     Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
 !
-    do i = 1, n
-        temp = xpt(i, k) - xopt(i)
-        if (temp > ZERO) then
-            if (slbd < (sl(i) - xopt(i)) / temp) then
-                slbd = (sl(i) - xopt(i)) / temp
-                ilbd = -i
-            end if
-            if (subd > (su(i) - xopt(i)) / temp) then
-                subd = max(sumin, (su(i) - xopt(i)) / temp)
-                iubd = i
-            end if
-        else if (temp < ZERO) then
-            if (slbd < (su(i) - xopt(i)) / temp) then
-                slbd = (su(i) - xopt(i)) / temp
-                ilbd = i
-            end if
-            if (subd > (sl(i) - xopt(i)) / temp) then
-                subd = max(sumin, (sl(i) - xopt(i)) / temp)
-                iubd = -i
-            end if
-        end if
-    end do
+    !do i = 1, n
+    !    temp = xpt(i, k) - xopt(i)
+    !    if (temp > ZERO) then
+    !        if (slbd < (sl(i) - xopt(i)) / temp) then
+    !            slbd = (sl(i) - xopt(i)) / temp
+    !            ilbd = -i
+    !        end if
+    !        if (subd > (su(i) - xopt(i)) / temp) then
+    !            subd = max(sumin, (su(i) - xopt(i)) / temp)
+    !            iubd = i
+    !        end if
+    !    else if (temp < ZERO) then
+    !        if (slbd < (su(i) - xopt(i)) / temp) then
+    !            slbd = (su(i) - xopt(i)) / temp
+    !            ilbd = i
+    !        end if
+    !        if (subd > (sl(i) - xopt(i)) / temp) then
+    !            subd = max(sumin, (sl(i) - xopt(i)) / temp)
+    !            iubd = -i
+    !        end if
+    !    end if
+    !end do
+
+    xdiff = xpt(:, k) - xopt
+    where (xdiff /= 0)
+        lbd_test = (sl - xopt) / xdiff
+        ubd_test = (su - xopt) / xdiff
+    end where
+
+    slbd_test = slbd
+    slbd_test(trueloc(xdiff > 0)) = lbd_test(trueloc(xdiff > 0))
+    slbd_test(trueloc(xdiff < 0)) = ubd_test(trueloc(xdiff < 0))
+    if (any(slbd_test > slbd)) then
+        ilbd = maxloc(slbd_test, mask=(.not. is_nan(slbd_test)), dim=1)
+        slbd = slbd_test(ilbd)
+        ilbd = -ilbd * int(sign(ONE, xdiff(ilbd)), IK)
+    end if
+
+    subd_test = subd
+    subd_test(trueloc(xdiff > 0)) = ubd_test(trueloc(xdiff > 0))
+    subd_test(trueloc(xdiff < 0)) = lbd_test(trueloc(xdiff < 0))
+    if (any(subd_test < subd)) then
+        iubd = minloc(subd_test, mask=(.not. is_nan(subd_test)), dim=1)
+        subd = max(sumin, subd_test(iubd))
+        iubd = iubd * int(sign(ONE, xdiff(iubd)), IK)
+    end if
 !
 !     Seek a large modulus of the KNEW-th Lagrange function when the index
 !     of the other interpolation point on the line through XOPT is KNEW.

@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM11:04:19
+! Last Modified: Thursday, April 28, 2022 AM11:00:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -509,7 +509,7 @@ if (ntrits > 0) then
             denom = den(knew)
         end if
 
-        wlagsq = weight * vlag**2
+        wlagsq = weight * vlag(1:npt)**2
         biglsq = ZERO
         if (any(wlagsq > 0)) then
             biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
