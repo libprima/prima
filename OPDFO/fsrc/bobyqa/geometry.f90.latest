@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 PM05:51:31
+! Last Modified: Thursday, April 28, 2022 PM02:09:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: geostep
 contains
 
 
-subroutine geostep(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, knew, adelt, xnew, xalt, cauchy, glag, hcol, w)
+subroutine geostep(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, knew, adelt, xnew, xalt, alpha, cauchy, glag, hcol, w)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
@@ -42,6 +42,7 @@ real(RP), intent(in) :: xpt(n, npt)
 real(RP), intent(in) :: zmat(npt, npt - n - 1_IK)
 
 ! In-outputs
+real(RP), intent(inout) :: alpha
 real(RP), intent(inout) :: cauchy
 real(RP), intent(inout) :: glag(n)
 real(RP), intent(inout) :: hcol(npt)
@@ -55,7 +56,7 @@ real(RP), intent(out) :: xnew(n)
 real(RP) :: bigstp, const, csave, curv, dderiv, diff, distsq,  &
 &        ggfree, gw, ha, predsq, presav, scaling, &
 &        slbd, step, stpsav, subd, sumin, temp, tempa,      &
-&        tempb, tempd, vlag, wfixsq, wsqsav, frac, alpha
+&        tempb, tempd, vlag, wfixsq, wsqsav, frac
 integer(IK) :: i, ibdsav, iflag, ilbd, isbd, iubd, j, k, ksav
 
 !
@@ -121,10 +122,11 @@ end do
 
 !------------------------!
 !Zaikun 20220427
-cauchy = ZERO
-xnew = xopt
-xalt = xopt
 if (any(is_nan(glag))) then
+    alpha = ZERO
+    cauchy = ZERO
+    xnew = xopt
+    xalt = xopt
     return
 end if
 !------------------------!
@@ -135,10 +137,6 @@ end if
 !     set to the square of the predicted denominator for each line. PRESAV
 !     will be set to the largest admissible value of PREDSQ that occurs.
 !
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20220428: Without this, KSAV/IBDSAV may be undefined due to NaN, and SEGFAULT will occur.
-ksav = 1_IK; ibdsav = 1_IK
-!--------------------------------------------------------------------------------------------------!
 presav = ZERO
 do k = 1, npt
     if (k == kopt) cycle
@@ -151,8 +149,7 @@ do k = 1, npt
         distsq = distsq + temp**2
     end do
 
-    !if (is_nan(dderiv)) cycle
-    if (.not. abs(dderiv) > 0) cycle
+    if (is_nan(dderiv)) cycle
 
     subd = adelt / sqrt(distsq)
     slbd = -subd
@@ -263,7 +260,7 @@ do k = 1, npt
         ibdsav = isbd
     end if
 end do
-
+!
 !     Construct XNEW in a way that satisfies the bound constraints exactly.
 !
 do i = 1, n

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 PM11:33:33
+! Last Modified: Thursday, April 28, 2022 PM02:33:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,6 +24,7 @@ subroutine geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, alpha, cauc
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, trueloc
 
 implicit none
@@ -51,13 +52,16 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: glag(size(xpt, 1))
 real(RP) :: hcol(size(xpt, 2))
-real(RP) :: w(2 * size(xpt, 1))
-real(RP) :: bigstp, const, csave, curv, dderiv, diff, distsq,  &
-&        ggfree, gw, ha, predsq, presav, scaling, &
-&        slbd, step, stpsav, subd, sumin, temp, tempa,      &
-&        tempb, tempd, vlag, wfixsq, wsqsav, xtest(size(xpt, 1))
-logical :: mask(size(xpt, 1)), lmask(size(xpt, 1)), umask(size(xpt, 1)), fmask(size(xpt, 1))
-integer(IK) :: i, ibdsav, iflag, ilbd, isbd, iubd, j, k, ksav
+real(RP) :: s(size(xpt, 1)), xsav(size(xpt, 1))
+real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), diff, distsq(size(xpt, 2)),  &
+&        ggfree, gs, predsq, presav, scaling, &
+&        resis, slbd, stplen, stpsav, subd, sumin, temp, tempa,      &
+&        tempb, tempd, vlag, sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2)),  &
+&        subd_test(size(xpt, 1)), slbd_test(size(xpt, 1)), &
+&        ufrac(size(xpt, 1)), lfrac(size(xpt, 1)), xdiff(size(xpt, 1)), &
+&        vlags(3), stplens(3), vlagl, vlagu, vlagm, stpm
+logical :: mask_fixl(size(xpt, 1)), mask_fixu(size(xpt, 1)), mask_free(size(xpt, 1))
+integer(IK) :: ibdsav, uphill, ilbd, isbd, iubd, k, ksav, isbds(3), ilag
 
 
 ! Sizes.
@@ -109,149 +113,160 @@ ksav = 1_IK; ibdsav = 1_IK
 !       KNEW-th Lagrange function at XOPT.
 !     HCOL is a working space vector of length NPT for the second derivative
 !       coefficients of the KNEW-th Lagrange function.
-!     W is a working space vector of length 2N that is going to hold the
-!       constrained Cauchy step from XOPT of the Lagrange function, followed
-!       by the downhill version of XALT when the uphill step is calculated.
-!
-!     Set the first NPT components of W to the leading elements of the
-!     KNEW-th column of the H matrix.
-!
-
-!do k = 1, npt
-!    hcol(k) = ZERO
-!end do
-!do j = 1, npt - n - 1
-!    temp = zmat(knew, j)
-!    do k = 1, npt
-!        hcol(k) = hcol(k) + temp * zmat(k, j)
-!    end do
-!end do
 
 hcol = matprod(zmat, zmat(knew, :))
 alpha = hcol(knew)
-ha = HALF * alpha
 
-! Calculate the gradient of the KNEW-th Lagrange function at XOPT.
-
+!     Calculate the gradient of the KNEW-th Lagrange function at XOPT.
+!
 !!glag = bmat(:, knew) + hess_mul(xopt, xpt, hcol)
-
 glag = bmat(:, knew)
-!do i = 1, n
-!    glag(i) = bmat(i, knew)
-!end do
 do k = 1, npt
-    !glag = glag + hcol(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
-    temp = ZERO
-    do j = 1, n
-        temp = temp + xpt(j, k) * xopt(j)
-    end do
-    temp = hcol(k) * temp
-    do i = 1, n
-        glag(i) = glag(i) + temp * xpt(i, k)
-    end do
+    glag = glag + hcol(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
 end do
-!
-!     Search for a large denominator along the straight lines through XOPT
-!     and another interpolation point. SLBD and SUBD will be lower and upper
-!     bounds on the step along each of these lines in turn. PREDSQ will be
-!     set to the square of the predicted denominator for each line. PRESAV
-!     will be set to the largest admissible value of PREDSQ that occurs.
-!
+
+if (any(is_nan(glag))) then
+    alpha = ZERO
+    cauchy = ZERO
+    xnew = xopt
+    xalt = xopt
+    return
+end if
+
+
+! Search for a large denominator along the straight lines through XOPT and another interpolation
+! point. SLBD and SUBD will be lower and upper bounds on the step along each of these lines in turn.
+! PREDSQ will be set to the square of the predicted denominator for each line. PRESAV will be set to
+! the largest admissible value of PREDSQ that occurs.
 presav = ZERO
+dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))
+distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 do k = 1, npt
     if (k == kopt) cycle
-    !dderiv = inprod(glag, xpt(:, k) - xopt)
-    !distsq = sum((xpt(:, k) - xopt)**2)
-    dderiv = ZERO
-    distsq = ZERO
-    do i = 1, n
-        temp = xpt(i, k) - xopt(i)
-        dderiv = dderiv + glag(i) * temp
-        distsq = distsq + temp * temp
-    end do
-    subd = adelt / sqrt(distsq)
+    if (is_nan(dderiv(k))) cycle
+
+    subd = adelt / sqrt(distsq(k))
     slbd = -subd
     ilbd = 0
     iubd = 0
     sumin = min(ONE, subd)
-!
-!     Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
-!
-    do i = 1, n
-        temp = xpt(i, k) - xopt(i)
-        if (temp > ZERO) then
-            if (slbd * temp < sl(i) - xopt(i)) then
-                slbd = (sl(i) - xopt(i)) / temp
-                ilbd = -i
-            end if
-            if (subd * temp > su(i) - xopt(i)) then
-                subd = max(sumin, (su(i) - xopt(i)) / temp)
-                iubd = i
-            end if
-        else if (temp < ZERO) then
-            if (slbd * temp > su(i) - xopt(i)) then
-                slbd = (su(i) - xopt(i)) / temp
-                ilbd = i
-            end if
-            if (subd * temp < sl(i) - xopt(i)) then
-                subd = max(sumin, (sl(i) - xopt(i)) / temp)
-                iubd = -i
-            end if
-        end if
-    end do
-!
-!     Seek a large modulus of the KNEW-th Lagrange function when the index
-!     of the other interpolation point on the line through XOPT is KNEW.
-!
-    if (k == knew) then
-        diff = dderiv - ONE
-        step = slbd
-        vlag = slbd * (dderiv - slbd * diff)
-        isbd = ilbd
-        temp = subd * (dderiv - subd * diff)
-        if (abs(temp) > abs(vlag)) then
-            step = subd
-            vlag = temp
-            isbd = iubd
-        end if
-        tempd = HALF * dderiv
-        tempa = tempd - diff * slbd
-        tempb = tempd - diff * subd
-        if (tempa * tempb < ZERO) then
-            temp = tempd * tempd / diff
-            if (abs(temp) > abs(vlag)) then
-                step = tempd / diff
-                vlag = temp
-                isbd = 0
-            end if
-        end if
-!
-!     Search along each of the other lines through XOPT and another point.
-!
-    else
-        step = slbd
-        vlag = slbd * (ONE - slbd)
-        isbd = ilbd
-        temp = subd * (ONE - subd)
-        if (abs(temp) > abs(vlag)) then
-            step = subd
-            vlag = temp
-            isbd = iubd
-        end if
-        if (subd > HALF) then
-            if (abs(vlag) < QUART) then
-                step = HALF
-                vlag = QUART
-                isbd = 0
-            end if
-        end if
-        vlag = vlag * dderiv
+
+    ! Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
+    xdiff = xpt(:, k) - xopt
+    where (xdiff /= 0)
+        lfrac = (sl - xopt) / xdiff
+        ufrac = (su - xopt) / xdiff
+    end where
+
+    slbd_test = slbd
+    slbd_test(trueloc(xdiff > 0)) = lfrac(trueloc(xdiff > 0))
+    slbd_test(trueloc(xdiff < 0)) = ufrac(trueloc(xdiff < 0))
+    if (any(slbd_test > slbd)) then
+        ilbd = maxloc(slbd_test, mask=(.not. is_nan(slbd_test)), dim=1)
+        slbd = slbd_test(ilbd)
+        ilbd = -ilbd * int(sign(ONE, xdiff(ilbd)), IK)
+        !!MATLAB:
+        !![slbd, ilbd] = max(slbd_test, [], 'omitnan');
+        !!ilbd = -ilbd * sign(xdiff(ilbd));
     end if
-!
-!     Calculate PREDSQ for the current line search and maintain PRESAV.
-!
-    temp = step * (ONE - step) * distsq
-    predsq = vlag * vlag * (vlag * vlag + ha * temp * temp)
+
+    subd_test = subd
+    subd_test(trueloc(xdiff > 0)) = ufrac(trueloc(xdiff > 0))
+    subd_test(trueloc(xdiff < 0)) = lfrac(trueloc(xdiff < 0))
+    if (any(subd_test < subd)) then
+        iubd = minloc(subd_test, mask=(.not. is_nan(subd_test)), dim=1)
+        subd = max(sumin, subd_test(iubd))
+        iubd = iubd * int(sign(ONE, xdiff(iubd)), IK)
+        !!MATLAB:
+        !![subd, iubd] = min(subd_test, [], 'omitnan');
+        !!subd = max(sumin, subd);
+        !!iubd = iubd * sign(xdiff(iubd));
+    end if
+
+    if (k == knew) then
+        ! Seek a large modulus of the KNEW-th Lagrange function when the index of the other
+        ! interpolation point on the line through XOPT is KNEW.
+        diff = dderiv(k) - ONE
+        vlagl = slbd * (dderiv(k) - slbd * diff)
+        vlagu = subd * (dderiv(k) - subd * diff)
+
+        !!temp = subd * (dderiv(k) - subd * diff)
+        !!if (abs(temp) > abs(vlag)) then
+        !!    stplen = subd
+        !!    vlag = temp
+        !!    isbd = iubd
+        !!end if
+        !tempd = HALF * dderiv(k)
+        !!tempa = tempd - diff * slbd
+        !!tempb = tempd - diff * subd
+        !if ((tempd - diff * slbd) * (tempd - diff * subd) < ZERO) then
+        !    temp = tempd * tempd / diff
+        !    if (abs(temp) > abs(vlag)) then
+        !        stplen = tempd / diff
+        !        vlag = temp
+        !        isbd = 0
+        !    end if
+        !end if
+
+        vlagm = ZERO
+        stpm = slbd
+        if (diff /= 0) then
+            stpm = HALF * dderiv(k) / diff
+        end if
+        if (stpm > slbd .and. stpm < subd) then
+            vlagm = (HALF * dderiv(k)) * (HALF * dderiv(k)) / diff
+        end if
+
+        vlags = [vlagl, vlagu, vlagm]
+        stplens = [slbd, subd, stpm]
+        isbds = [ilbd, iubd, 0_IK]
+        ilag = int(maxloc(abs(vlags), dim=1), IK)
+        vlag = vlags(ilag)
+        stplen = stplens(ilag)
+        isbd = isbds(ilag)
+
+    else
+        ! Search along each of the other lines through XOPT and another point.
+        !stplen = slbd
+        !vlag = slbd * (ONE - slbd)
+        !isbd = ilbd
+        !temp = subd * (ONE - subd)
+        !if (abs(temp) > abs(vlag)) then
+        !    stplen = subd
+        !    vlag = temp
+        !    isbd = iubd
+        !end if
+        !if (subd > HALF) then
+        !    if (abs(vlag) < QUART) then
+        !        stplen = HALF
+        !        vlag = QUART
+        !        isbd = 0
+        !    end if
+        !end if
+        !vlag = vlag * dderiv(k)
+
+
+        vlagl = slbd * (ONE - slbd) * dderiv(k)
+        vlagu = subd * (ONE - subd) * dderiv(k)
+        vlagm = ZERO
+        stpm = HALF
+        if (stpm > slbd .and. stpm < subd) then
+            vlagm = QUART * dderiv(k)
+        end if
+
+    end if
+
+    vlags = [vlagl, vlagu, vlagm]
+    stplens = [slbd, subd, stpm]
+    isbds = [ilbd, iubd, 0_IK]
+    ilag = int(maxloc(abs(vlags), dim=1), IK)
+    vlag = vlags(ilag)
+    stplen = stplens(ilag)
+    isbd = isbds(ilag)
+
+    ! Calculate PREDSQ for the current line search and maintain PRESAV.
+    temp = stplen * (ONE - stplen) * distsq(k)
+    predsq = vlag * vlag * (vlag * vlag + HALF * alpha * temp * temp)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: With the original code, if either PREDSQ or PRESAV
 ! is NaN, KSAV/STPSAV/IBDSAV will not get a value. This may cause
@@ -261,20 +276,14 @@ do k = 1, npt
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         presav = predsq
         ksav = k
-        stpsav = step
+        stpsav = stplen
         ibdsav = isbd
     end if
 end do
-!
-!     Construct XNEW in a way that satisfies the bound constraints exactly.
-!
-do i = 1, n
-    temp = xopt(i) + stpsav * (xpt(i, ksav) - xopt(i))
-    xnew(i) = max(sl(i), min(su(i), temp))
-end do
 
-!xnew = max(sl, min(su, xopt + stpsav * (xpt(:, ksav) - xopt)))
 
+! Construct XNEW in a way that satisfies the bound constraints exactly.
+xnew = max(sl, min(su, xopt + stpsav * (xpt(:, ksav) - xopt)))
 if (ibdsav < 0) then
     xnew(-ibdsav) = sl(-ibdsav)
 end if
@@ -282,142 +291,83 @@ if (ibdsav > 0) then
     xnew(ibdsav) = su(ibdsav)
 end if
 
-!
-!     Prepare for the iterative method that assembles the constrained Cauchy
-!     step in W. The sum of squares of the fixed components of W is formed in
-!     WFIXSQ, and the free components of W are set to BIGSTP.
-!
+! Prepare for the method that assembles the constrained Cauchy step in S. The sum of squares of the
+! fixed components of S is formed in SFIXSQ, and the free components of S are set to BIGSTP.
+! When UPHILL = 0, the method calculates the downhill version of XALT, which intends to minimize the
+! KNEW-th Lagrange function; when UPHILL = 1, it calculates the uphill version that intends to
+! maximize the Lagrange function.
 bigstp = adelt + adelt
-iflag = 0
-
-100 continue
-
-wfixsq = ZERO
-ggfree = ZERO
-
-!w(1:n) = ZERO
-!mask = (min(xopt - sl, glag) > 0 .or. max(xopt - su, glag) < 0)
-!w(trueloc(mask)) = bigstp
-!ggfree = sum(glag(trueloc(mask))**2)
-
-do i = 1, n
-    w(i) = ZERO
-    tempa = min(xopt(i) - sl(i), glag(i))
-    tempb = max(xopt(i) - su(i), glag(i))
-    if (tempa > ZERO .or. tempb < ZERO) then
-        w(i) = bigstp
-        ggfree = ggfree + glag(i)**2
+do uphill = 0, 1
+    s = ZERO
+    mask_free = (min(xopt - sl, glag) > 0 .or. max(xopt - su, glag) < 0)
+    s(trueloc(mask_free)) = bigstp
+    ggfree = sum(glag(trueloc(mask_free))**2)
+    if (ggfree <= ZERO) then
+        cauchy = ZERO
+        return
     end if
-end do
 
-if (ggfree <= ZERO) then
-    cauchy = ZERO
-    return
-end if
-!
-!     Investigate whether more components of W can be fixed.
-!
-120 continue
-
-temp = adelt * adelt - wfixsq
-if (temp > ZERO) then
-    wsqsav = wfixsq
-    wfixsq = ZERO
-
-    step = sqrt(temp / ggfree)
-
-    !xtest = xopt - step * glag
-    !lmask = (w(1:n) == bigstp .and. xtest <= sl)
-    !umask = (w(1:n) == bigstp .and. xtest >= su)
-    !fmask = (w(1:n) == bigstp .and. .not. (lmask .or. umask))
-    !w(trueloc(lmask)) = sl(trueloc(lmask)) - xopt(trueloc(lmask))
-    !w(trueloc(umask)) = su(trueloc(umask)) - xopt(trueloc(umask))
-    !wfixsq = wfixsq + sum(w(trueloc(lmask .or. umask))**2)
-    !ggfree = sum(glag(trueloc(fmask))**2)
-
-    do i = 1, n
-        if (w(i) == bigstp) then
-            temp = xopt(i) - step * glag(i)
-            if (temp <= sl(i)) then
-                w(i) = sl(i) - xopt(i)
-                wfixsq = wfixsq + w(i)**2
-            else if (temp >= su(i)) then
-                w(i) = su(i) - xopt(i)
-                wfixsq = wfixsq + w(i)**2
-            else
-                ggfree = ggfree + glag(i)**2
-            end if
-        end if
+    ! Investigate whether more components of S can be fixed. Note that the loop counter K does not
+    ! appear in the loop body. The purpose of K is only to impose an explicit bound on the number of
+    ! loops. Powell's code does not have such a bound. The bound is not a true restriction, because
+    ! we can check that (SFIXSQ > SSQSAV .AND. GGFREE > ZERO) must fail within N loops.
+    sfixsq = ZERO
+    do k = 1, n
+        resis = adelt**2 - sfixsq
+        if (resis <= 0) exit
+        ssqsav = sfixsq
+        stplen = sqrt(resis / ggfree)
+        xtemp = xopt - stplen * glag
+        mask_fixl = (s == bigstp .and. xtemp <= sl)
+        mask_fixu = (s == bigstp .and. xtemp >= su)
+        mask_free = (s == bigstp .and. .not. (mask_fixl .or. mask_fixu))
+        s(trueloc(mask_fixl)) = sl(trueloc(mask_fixl)) - xopt(trueloc(mask_fixl))
+        s(trueloc(mask_fixu)) = su(trueloc(mask_fixu)) - xopt(trueloc(mask_fixu))
+        sfixsq = sfixsq + sum(s(trueloc(mask_fixl .or. mask_fixu))**2)
+        ggfree = sum(glag(trueloc(mask_free))**2)
+        if (.not. (sfixsq > ssqsav .and. ggfree > ZERO)) exit
     end do
 
-    wfixsq = wsqsav + wfixsq
+    ! Set the remaining free components of S and all components of XALT, except that S may be
+    ! scaled later.
+    xalt(trueloc(glag > 0)) = sl(trueloc(glag > 0))
+    xalt(trueloc(glag <= 0)) = su(trueloc(glag <= 0))
+    xalt(trueloc(s == 0)) = xopt(trueloc(s == 0))
+    xtemp = max(sl, min(su, xopt - stplen * glag))
+    xalt(trueloc(s == bigstp)) = xtemp(trueloc(s == bigstp))
+    s(trueloc(s == bigstp)) = -stplen * glag(trueloc(s == bigstp))
+    gs = inprod(glag, s)
 
-    if (wfixsq > wsqsav .and. ggfree > ZERO) goto 120
-end if
-!
-!     Set the remaining free components of W and all components of XALT,
-!     except that W may be scaled later.
-!
-gw = ZERO
-do i = 1, n
-    if (w(i) == bigstp) then
-        w(i) = -step * glag(i)
-        xalt(i) = max(sl(i), min(su(i), xopt(i) + w(i)))
-    else if (w(i) == ZERO) then
-        xalt(i) = xopt(i)
-    else if (glag(i) > ZERO) then
-        xalt(i) = sl(i)
+    ! Set CURV to the curvature of the KNEW-th Lagrange function along S. Scale S by a factor less
+    ! than ONE if that can reduce the modulus of the Lagrange function at XOPT+S. Set CAUCHY to the
+    ! final value of the square of this function.
+    sxpt = matprod(s, xpt)
+    curv = inprod(sxpt, hcol * sxpt)
+    if (uphill == 1) then
+        curv = -curv
+    end if
+    if (curv > -gs .and. curv < -(ONE + sqrt(TWO)) * gs) then
+        scaling = -gs / curv
+        xalt = max(sl, min(su, xopt + scaling * s))
+        cauchy = (HALF * gs * scaling)**2
     else
-        xalt(i) = su(i)
+        cauchy = (gs + HALF * curv)**2
     end if
-    gw = gw + glag(i) * w(i)
+
+    ! If UPHILL is 0, then XALT is calculated as before after reversing the sign of GLAG. Thus two
+    ! XALT vectors become available. The one that is chosen is the one that gives the larger value
+    ! of CAUCHY.
+    if (uphill == 0) then
+        glag = -glag
+        xsav = xalt
+        csave = cauchy
+    end if
 end do
-!
-!     Set CURV to the curvature of the KNEW-th Lagrange function along W.
-!     Scale W by a factor less than ONE if that can reduce the modulus of
-!     the Lagrange function at XOPT+W. Set CAUCHY to the final value of
-!     the square of this function.
-!
-curv = ZERO
-do k = 1, npt
-    temp = ZERO
-    do j = 1, n
-        temp = temp + xpt(j, k) * w(j)
-    end do
-    curv = curv + hcol(k) * temp * temp
-end do
-if (iflag == 1) curv = -curv
-if (curv > -gw .and. curv < -(ONE + sqrt(TWO)) * gw) then
-    scaling = -gw / curv
-    do i = 1, n
-        temp = xopt(i) + scaling * w(i)
-        xalt(i) = max(sl(i), min(su(i), temp))
-    end do
-    cauchy = (HALF * gw * scaling)**2
-else
-    cauchy = (gw + HALF * curv)**2
-end if
-!
-!     If IFLAG is ZERO, then XALT is calculated as before after reversing
-!     the sign of GLAG. Thus two XALT vectors become available. The ONE that
-!     is chosen is the ONE that gives the larger value of CAUCHY.
-!
-if (iflag == 0) then
-    do i = 1, n
-        glag(i) = -glag(i)
-        w(n + i) = xalt(i)
-    end do
-    csave = cauchy
-    iflag = 1
-    goto 100
-end if
+
 if (csave > cauchy) then
-    do i = 1, n
-        xalt(i) = w(n + i)
-    end do
+    xalt = xsav
     cauchy = csave
 end if
-return
 end subroutine geostep
 
 
