@@ -4,11 +4,13 @@ module bobyqb_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
 !
+! TODO: verify that the iterates/steps respect bounds in the pre/postconditions.
+!
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 PM05:45:58
+! Last Modified: Saturday, April 30, 2022 AM02:52:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -242,9 +244,7 @@ if (dnorm < HALF * rho) then
     bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
     hqdiag = diag(hq)
     curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
-    where (bdtest < bdtol)
-        curv = hqdiag + matprod(xpt**2, pq)
-    end where
+    where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
     !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
     if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
         goto 650

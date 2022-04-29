@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 29, 2022 PM10:28:03
+! Last Modified: Saturday, April 30, 2022 AM01:52:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -364,9 +364,10 @@ do i = 1, n
             !temp = ssq - (xopt(i) - sl(i))**2
             temp = max(ZERO, ssq - (xopt(i) - sl(i))**2)
             temp = sqrt(temp) - s(i)
-            tang(i) = min(tang(i), tempa / temp)
             !if (angbd * temp > tempa) then
-            if (angbd > tempa / temp) then
+            !if (angbd > tempa / temp) then
+            if (angbd > tempa / temp .and. temp > 0) then
+                tang(i) = min(tang(i), tempa / temp)
                 angbd = tempa / temp
                 iact = i
                 xsav = -ONE
@@ -380,9 +381,10 @@ do i = 1, n
             !temp = ssq - (su(i) - xopt(i))**2
             temp = max(ZERO, ssq - (su(i) - xopt(i))**2)
             temp = sqrt(temp) + s(i)
-            tang(i) = min(tang(i), tempb / temp)
             !if (angbd * temp > tempb) then
-            if (angbd > tempb / temp) then
+            !if (angbd > tempb / temp) then
+            if (angbd > tempb / temp .and. temp > 0) then
+                tang(i) = min(tang(i), tempb / temp)
                 angbd = tempb / temp
                 iact = i
                 xsav = ONE

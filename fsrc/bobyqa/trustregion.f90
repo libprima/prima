@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 29, 2022 AM10:26:37
+! Last Modified: Saturday, April 30, 2022 AM02:51:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, trueloc
@@ -62,7 +62,7 @@ real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
 &        stplen, sbound(size(gopt)), temp, &
 &        xtest(size(xopt)), diact
-real(RP) :: ssq(size(gopt)), tanbd(size(gopt))!, bdi(size(gopt))
+real(RP) :: ssq(size(gopt)), tanbd(size(gopt)), sqrtd(size(gopt))
 integer(IK) :: iact, iterc, itermax, grid_size, nact, nactsav
 
 ! Sizes
@@ -231,20 +231,15 @@ end if
 xnew = xopt + d
 xtest = xnew + stplen * s
 sbound = stplen
-where (s > 0 .and. xtest > su)
-    sbound = (su - xnew) / s
-end where
-where (s < 0 .and. xtest < sl)
-    sbound = (sl - xnew) / s
-end where
+where (s > 0 .and. xtest > su) sbound = (su - xnew) / s
+where (s < 0 .and. xtest < sl) sbound = (sl - xnew) / s
+!!MATLAB:
+!!sbound(s > 0) = (su(s > 0) - xnew(s < 0)) / s(s > 0);
+!!sbound(s < 0) = (sl(s < 0) - xnew(s < 0)) / s(s < 0);
 !--------------------------------------------------------------------------------------------------!
 ! The code below is mathematically equivalent to the above but numerically inferior as explained.
-!where (s > 0)
-!    sbound = min(stplen * s, su - xnew) / s
-!end where
-!where (s < 0)
-!    sbound = max(stplen * s, sl - xnew) / s
-!end where
+!where (s > 0) sbound = min(stplen * s, su - xnew) / s
+!where (s < 0) sbound = max(stplen * s, sl - xnew) / s
 !--------------------------------------------------------------------------------------------------!
 sbound(trueloc(is_nan(sbound))) = stplen  ! Needed? No if we are sure that D and S are finite.
 iact = 0
@@ -262,18 +257,6 @@ end if
 ! ANY(SBOUND < (1 + EPS) * STPLEN), depending on whether we believe a false positive or a false
 ! negative of IACT > 0 is more harmful --- according to our test on 20220422, it is the former,
 ! as mentioned above.
-!--------------------------------------------------------------------------------------------------!
-
-!--------------------------------------------------------------------------------------------------!
-!!MATLAB code for calculating IACT and ALPHA:
-!!xnew = xopt + d;
-!!sbound = stplen;
-!!sbound(s > 0) = (su(s > 0) - xnew(s < 0)) / s(s > 0);
-!!sbound(s < 0) = (sl(s < 0) - xnew(s < 0)) / s(s < 0);
-!!sbound(isnan(sbound)) = stplen;
-!!if any(sbound < stplen)
-!!    [stplen, iact] = min(sbound);
-!!end
 !--------------------------------------------------------------------------------------------------!
 
 ! Update CRVMIN, GNEW and D. Set SDEC to the decrease that occurs in Q.
@@ -390,21 +373,22 @@ do iterc = 1, itermax
     ! XBDI == 0. Solving this inequality system for HANGT in [0, PI/4], we get bounds for HANGT,
     ! namely TANBD; the final bound for HANGT is the minimum of TANBD, which is HANGT_BD.
     ! When solving the system, note that SL < XOPT < SU and SL < XOPT + D < SU if XBDI = 0.
+    !
+    ! Note the following for the calculation of the first SQRTD below (the second is similar).
+    ! 0. SQRTD means "square root of discriminant".
+    ! 1. When calculating the first SQRTD, Powell's code checks whether SSQ - (XOPT - SL)**2)
+    ! is positive. However, overflow will occur if SL contains large values that indicate absence of
+    ! bounds. It is not a problem in MATLAB/Python/Julia/R.
+    ! 2. Even if XOPT - SL < SQRT(SSQ), rounding errors may render SSQ - (XOPT - SL)**2) < 0.
     ssq = d**2 + s**2  ! Indeed, only SSQ(TRUELOC(XBDI == 0)) is needed.
     tanbd = ONE
-    where (xbdi == 0 .and. xopt - sl < sqrt(ssq))
-        ! N.B.: 1. Powell's code checks whether SSQ - (XOPT - SL)**2) > 0. However, overflow will
-        ! occur if SL contains large values that indicate absence of bounds. It is not a problem in
-        ! MATLAB/Python/Julia/R.
-        ! 2. Even if XOPT - SL < SQRT(SSQ), rounding errors may render SSQ - (XOPT - SL)**2) < 0.
-        ! This is why we need the maximum with ZERO to prevent floating point exceptions.
-        tanbd = min(tanbd, (xnew - sl) / (sqrt(max(ZERO, ssq - (xopt - sl)**2)) - s))
-    end where
-    where (xbdi == 0 .and. su - xopt < sqrt(ssq))
-        tanbd = min(tanbd, (su - xnew) / (sqrt(max(ZERO, ssq - (su - xopt)**2)) + s))
-    end where
+    sqrtd = -HUGENUM
+    where (xbdi == 0 .and. xopt - sl < sqrt(ssq)) sqrtd = sqrt(max(ZERO, ssq - (xopt - sl)**2))
+    where (sqrtd - s > 0) tanbd = min(tanbd, (xnew - sl) / (sqrtd - s))
+    sqrtd = -HUGENUM
+    where (xbdi == 0 .and. su - xopt < sqrt(ssq)) sqrtd = sqrt(max(ZERO, ssq - (su - xopt)**2))
+    where (sqrtd + s > 0) tanbd = min(tanbd, (su - xnew) / (sqrtd + s))
     tanbd(trueloc(is_nan(tanbd))) = ZERO
-
     !----------------------------------------------------------------------------------------------!
     !!MATLAB code for defining TANBD:
     !!xfree = (xbdi == 0);
@@ -413,10 +397,10 @@ do iterc = 1, itermax
     !!discmn = NaN(n, 1);
     !!discmn(xfree) = ssq(xfree) - (xopt(xfree) - sl(xfree))**2;  % This is a discriminant.
     !!tanbd = 1;
-    !!mask = (xfree & discmn > 0);
+    !!mask = (xfree & discmn > 0 & sqrt(discmn) - s > 0);
     !!tanbd(mask) = min(tanbd(mask), (xnew(mask) - sl(mask)) / (sqrt(discmn(mask)) - s(mask)));
     !!discmn(xfree) = ssq(xfree) - (su(xfree) - xopt(xfree))**2;  % This is a discriminant.
-    !!mask = (xfree & discmn > 0);
+    !!mask = (xfree & discmn > 0 & sqrt(discmn) + s > 0);
     !!tanbd(mask) = min(tanbd(mask), (su(mask) - xnew(mask)) / (sqrt(discmn(mask)) + s(mask)));
     !!tanbd(isnan(tanbd)) = 0;
     !----------------------------------------------------------------------------------------------!

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 29, 2022 PM10:20:18
+! Last Modified: Saturday, April 30, 2022 AM01:19:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -128,7 +128,6 @@ end do
 !--------------------------!
 glag = glag + gtmp
 !--------------------------!
-write(17,*) glag
 
 !------------------------!
 !Zaikun 20220427
@@ -180,12 +179,14 @@ do k = 1, npt
         temp = xpt(i, k) - xopt(i)
         if (temp > ZERO) then
             !if (slbd * temp < sl(i) - xopt(i)) then
-            if (slbd < (sl(i) - xopt(i)) / temp) then
+            !if (slbd < (sl(i) - xopt(i)) / temp) then
+            if (slbd * temp < sl(i) - xopt(i) .and. slbd < (sl(i) - xopt(i)) / temp) then
                 slbd = (sl(i) - xopt(i)) / temp
                 ilbd = -i
             end if
             !if (subd * temp > su(i) - xopt(i)) then
-            if (subd > (su(i) - xopt(i)) / temp) then
+            !if (subd > (su(i) - xopt(i)) / temp) then
+            if (subd * temp > su(i) - xopt(i) .and. subd > (su(i) - xopt(i)) / temp) then
                 subd = max(sumin, (su(i) - xopt(i)) / temp)
                 !iubd = i
 
@@ -194,12 +195,14 @@ do k = 1, npt
             end if
         else if (temp < ZERO) then
             !if (slbd * temp > su(i) - xopt(i)) then
-            if (slbd < (su(i) - xopt(i)) / temp) then
+            !if (slbd < (su(i) - xopt(i)) / temp) then
+            if (slbd * temp > su(i) - xopt(i) .and. slbd < (su(i) - xopt(i)) / temp) then
                 slbd = (su(i) - xopt(i)) / temp
                 ilbd = i
             end if
             !if (subd * temp < sl(i) - xopt(i)) then
-            if (subd > (sl(i) - xopt(i)) / temp) then
+            !if (subd > (sl(i) - xopt(i)) / temp) then
+            if (subd * temp < sl(i) - xopt(i) .and. subd > (sl(i) - xopt(i)) / temp) then
                 subd = max(sumin, (sl(i) - xopt(i)) / temp)
                 !iubd = -i
 
@@ -326,7 +329,6 @@ if (predsqmsav > presav) then
     presav = predsqmsav; ksav = kmsav; ibdsav = 0; stpsav = stpmsav
 end if
 
-write (17, *) ksav, ibdsav, stpsav
 
 !     Construct XNEW in a way that satisfies the bound constraints exactly.
 !
