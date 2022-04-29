@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 29, 2022 AM01:55:20
+! Last Modified: Friday, April 29, 2022 AM08:09:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -257,10 +257,22 @@ end if
 ! point. SLBD and SUBD will be lower and upper bounds on the step along each of these lines in turn.
 ! On each line, we will evaluate the value of the KNEW-th Lagrange function at 3 trial points, and
 ! estimate the denominator accordingly. The three points take the form (1-t)*XOPT + t*XPT(:, K)
-! with t = SLBD, SUBD, and STPM. In total, 3*(NPT-1) trial points will be considered.
-dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))
+! with step lengths t = SLBD, SUBD, and STPM. In total, 3*(NPT-1) trial points will be considered.
+! On the K-th line, we intend to maximize the modulus of PHI_K(t) = LFUN((1-t)*XOPT + t*XPT(:,K)),
+! where LFUN is the KNEW-th Lagrange function; overall, we attempt to find a trial point that
+! renders a large value of the quantity PREDSQ defined in (3.11) of the BOBYQA paper.
+!
+! We start with the following DO loop, the purpose of which is to define two 3-by-NPT arrays STPLEN
+! and ISBD. For each K, STPLEN(1:3, K) and ISBD(1:3, K) corresponds to the straight line through
+! XOPT and XPT(:, K). STPLEN(1:3, K) contains SLBD. SUBD, and STPM in this order, which are the step
+! lengths for the three trial points on the K-th line. The three entries of SBDI(1:3, K) indicate
+! whether the corresponding trial points lie on bounds; SBDI(I, K) = J > 0 means that the I-th trail
+! point on the K-th line attainins the J-th upper bound, SBDI(I, K) = -J indicates reaching the J-th
+! lower bound, and SBDI(I, K) = 0 means not touching any bound.
+dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))  ! It contains derivatives PHI_K'(0).
 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 do k = 1, npt
+
     if (k == kopt .or. is_nan(dderiv(k))) then
         stplen(:, k) = ZERO
         isbd(:, k) = 0_IK
@@ -308,9 +320,10 @@ do k = 1, npt
     end if
 
     ! Now, define the step length STPM between SLBD and SUBD by finding the critical point of the
-    ! quadratic function PHI_K(t) = LFUN((1-t)*XOPT + t*XPT(:,K)), where LFUN is the KNEW-th
-    ! Lagrange function. For K /= KNEW, the critical point is 0.5, as PHI_K(0) = 1 = PHI_K(1); when
-    ! K = KNEW, it is -0.5*PHI_K'(0) / (1 - PHI_K'(0)), as PHI_K(0) = 0 and PHI_K(1) = 1.
+    ! function PHI_K(t) = LFUN((1-t)*XOPT + t*XPT(:,K)) mentioned above. It is a quadratic since
+    ! LFUN is the KNEW-th Lagrange function. For K /= KNEW, the critical point is 0.5, as
+    ! PHI_K(0) = 1 = PHI_K(1); when K = KNEW, it is -0.5*PHI_K'(0) / (1 - PHI_K'(0)), because
+    ! PHI_K(0) = 0 and PHI_K(1) = 1.
     stpm = HALF
     if (k == knew) then
         stpm = slbd
@@ -338,6 +351,10 @@ predsq(:, kopt) = ZERO
 
 ! Locate the trial point the renders the maximum of PREDSQ. It is the ISQ-th trial point on the
 ! straight line through XOPT and XPT(:, KSQ).
+! N.B.: The strategy is a bit different from Powell's original code. In Powell's code and the BOBYQA
+! paper, we first select the trial point that gives the largest value of ABS(VLAG) on each straight,
+! line, and then maximize PREDSQ among the (NPT-1) selected points. Here we maximize PREDSQ among
+! all the trial points. It works slightly better than Powell's version in a test on 20220428.
 ksqs = int(maxloc(predsq, mask=(.not. is_nan(predsq)), dim=2), IK)
 isq = int(maxloc([predsq(1, ksqs(1)), predsq(2, ksqs(2)), predsq(3, ksqs(3))], dim=1), IK)
 ksq = ksqs(isq)
