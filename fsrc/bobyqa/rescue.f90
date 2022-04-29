@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM10:23:17
+! Last Modified: Saturday, April 30, 2022 AM02:46:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -339,9 +339,7 @@ vlag(kopt) = vlag(kopt) + ONE
 hdiag = sum(zmat**2, dim=2)  ! Indeed, only HDIAG(PTSID /= 0) is needed.
 !!MATLAB: hdiag(ptsid ~= 0) = sum(zmat(ptsid ~= 0, :), 2);
 den = ZERO
-where (ptsid /= 0)
-    den = hdiag * beta + vlag(1:npt)**2
-end where
+where (ptsid /= 0) den = hdiag * beta + vlag(1:npt)**2
 !!MATLAB: den(ptsid ~= 0) = hdiag(ptsid ~= 0)*beta + vlag(ptsid ~= 0)
 kold = 0
 denom = ZERO

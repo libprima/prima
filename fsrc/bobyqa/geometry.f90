@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 29, 2022 PM10:26:11
+! Last Modified: Saturday, April 30, 2022 AM02:00:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -113,14 +113,7 @@ hcol = matprod(zmat, zmat(knew, :))
 alpha = hcol(knew)
 
 ! Calculate the gradient of the KNEW-th Lagrange function at XOPT.
-!glag = bmat(:, knew)
-!do k = 1, npt
-!    glag = glag + hcol(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
-!end do
-
-! Calculate the gradient of the KNEW-th Lagrange function at XOPT.
 glag = bmat(:, knew) + hess_mul(xopt, xpt, hcol)
-write (16, *) glag
 
 cauchy = ZERO
 xnew = xopt
@@ -128,133 +121,6 @@ xalt = xopt
 if (any(is_nan(glag)) .or. is_nan(adelt)) then  ! ADELT is not NaN if the input is correct.
     return
 end if
-
-
-! Search for a large denominator along the straight lines through XOPT and another interpolation
-! point. SLBD and SUBD will be lower and upper bounds on the step along each of these lines in turn.
-! PREDSQ will be set to the square of the predicted denominator for each line.
-!dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))
-!distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-
-!do k = 1, npt
-!    if (k == kopt .or. is_nan(dderiv(k))) then
-!        predsq(k) = ZERO
-!        stplen(k) = ZERO
-!        isbd(k) = 0_IK
-!        cycle
-!    end if
-
-!    subd = adelt / sqrt(distsq(k))
-!    slbd = -subd
-!    ilbd = 0
-!    iubd = 0
-!    sumin = min(ONE, subd)
-
-!    ! Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
-!    xdiff = xpt(:, k) - xopt
-!    where (xdiff /= 0)
-!        lfrac = (sl - xopt) / xdiff
-!        ufrac = (su - xopt) / xdiff
-!    end where
-
-!    slbd_test = slbd
-!    slbd_test(trueloc(xdiff > 0)) = lfrac(trueloc(xdiff > 0))
-!    slbd_test(trueloc(xdiff < 0)) = ufrac(trueloc(xdiff < 0))
-!    if (any(slbd_test > slbd)) then
-!        ilbd = maxloc(slbd_test, mask=(.not. is_nan(slbd_test)), dim=1)
-!        slbd = slbd_test(ilbd)
-!        ilbd = -ilbd * int(sign(ONE, xdiff(ilbd)), IK)
-!        !!MATLAB:
-!        !![slbd, ilbd] = max(slbd_test, [], 'omitnan');
-!        !!ilbd = -ilbd * sign(xdiff(ilbd));
-!    end if
-
-!    subd_test = subd
-!    subd_test(trueloc(xdiff > 0)) = ufrac(trueloc(xdiff > 0))
-!    subd_test(trueloc(xdiff < 0)) = lfrac(trueloc(xdiff < 0))
-!    if (any(subd_test < subd)) then
-!        iubd = minloc(subd_test, mask=(.not. is_nan(subd_test)), dim=1)
-!        subd = max(sumin, subd_test(iubd))
-!        iubd = iubd * int(sign(ONE, xdiff(iubd)), IK)
-!        !!MATLAB:
-!        !![subd, iubd] = min(subd_test, [], 'omitnan');
-!        !!subd = max(sumin, subd);
-!        !!iubd = iubd * sign(xdiff(iubd));
-!    end if
-
-!    !slbds(k) = slbd
-!    !ilbds(k) = ilbd
-!    !subds(k) = subd
-!    !iubds(k) = iubd
-!!end do
-!!
-!!do k = 1, npt
-!    !if (k == kopt .or. .not. abs(dderiv(k)) > 0) cycle
-!    if (k == knew) then
-!        ! Seek a large modulus of the KNEW-th Lagrange function when the index of the other
-!        ! interpolation point on the line through XOPT is KNEW.
-!        diff = dderiv(k) - ONE
-!        vlagl = slbd * (dderiv(k) - slbd * diff)
-!        vlagu = subd * (dderiv(k) - subd * diff)
-!        !vlagm = stpm * (dderiv(k) - stpm * diff)
-!        vlagm = ZERO
-!        stpm = slbd
-!        if (diff /= 0) then
-!            stpm = HALF * dderiv(k) / diff
-!        end if
-!        if (stpm > slbd .and. stpm < subd) then
-!            vlagm = (HALF * dderiv(k)) * (HALF * dderiv(k)) / diff
-!        end if
-!    else
-!        ! Search along each of the other lines through XOPT and another point.
-!        vlagl = slbd * (ONE - slbd) * dderiv(k)
-!        vlagu = subd * (ONE - subd) * dderiv(k)
-!        vlagm = ZERO
-!        stpm = HALF
-!        if (stpm > slbd .and. stpm < subd) then
-!            vlagm = QUART * dderiv(k)
-!        end if
-!    end if
-
-!    vlags = [vlagl, vlagu, vlagm]
-!    stplens = [slbd, subd, stpm]
-!    isbds = [ilbd, iubd, 0_IK]
-!    !ilag = int(maxloc(abs(vlags), dim=1), IK)
-!    !vlag = vlags(ilag)
-!    !stplen(k) = stplens(ilag)
-!    !isbd(k) = isbds(ilag)
-
-!    ! Calculate PREDSQ for the current line search.
-!    !distprod = stplen(k) * (ONE - stplen(k)) * distsq(k)
-!    !predsq(k) = vlag * vlag * (vlag * vlag + HALF * alpha * distprod * distprod)
-
-!    distprodl = stplens(1) * (ONE - stplens(1)) * distsq(k)
-!    distprodu = stplens(2) * (ONE - stplens(2)) * distsq(k)
-!    distprodm = stplens(3) * (ONE - stplens(3)) * distsq(k)
-!    predsql = vlagl * vlagl * (vlagl * vlagl + HALF * alpha * distprodl * distprodl)
-!    predsqu = vlagu * vlagu * (vlagu * vlagu + HALF * alpha * distprodu * distprodu)
-!    predsqm = vlagm * vlagm * (vlagm * vlagm + HALF * alpha * distprodm * distprodm)
-
-!    predsqs = [predsql, predsqu, predsqm]
-!    ilag = int(maxloc(predsqs, dim=1), IK)
-!    predsq(k) = predsqs(ilag)
-!    stplen(k) = stplens(ilag)
-!    isbd(k) = isbds(ilag)
-!end do
-!kden = kopt
-!if (any(predsq > 0)) then
-!    kden = maxloc(predsq, mask=(.not. is_nan(predsq)), dim=1)
-!end if
-
-!! Construct XNEW in a way that satisfies the bound constraints exactly.
-!xnew = max(sl, min(su, xopt + stplen(kden) * (xpt(:, kden) - xopt)))
-!ibd = isbd(kden)
-!if (ibd < 0) then
-!    xnew(-ibd) = sl(-ibd)
-!end if
-!if (ibd > 0) then
-!    xnew(ibd) = su(ibd)
-!end if
 
 ! Search for a large denominator along the straight lines through XOPT and another interpolation
 ! point. SLBD and SUBD will be lower and upper bounds on the step along each of these lines in turn.
@@ -293,12 +159,21 @@ do k = 1, npt
     iubd = 0
     sumin = min(ONE, subd)
 
-    ! Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
+    ! Revise SLBD and SUBD if necessary because of the bounds in SL and SU according to LFRAC, UFRAC.
+    ! N.B.: We calculate LFRAC only at the positions where SL - XOPT > -ABS(XDIFF) * SUBD, because
+    ! the values of LFRAC are relevant only at the positions where ABS(LFRAC) < SUBD. Powell's code
+    ! does not check this inequality before evaluating LFRAC, and overflow may occur due to large
+    ! entries of SL. Note that SL - XOPT > -ABS(XDIFF) * SUBD implies that DIFF /= 0, as long as
+    ! SL <= XOPT is ensured. Similar things can be said about UFRAC.
     xdiff = xpt(:, k) - xopt
-    where (xdiff /= 0)
-        lfrac = (sl - xopt) / xdiff
-        ufrac = (su - xopt) / xdiff
-    end where
+    lfrac = sign(subd, -xdiff)
+    where (sl - xopt > -abs(xdiff) * subd) lfrac = (sl - xopt) / xdiff
+    ufrac = sign(subd, xdiff)
+    where (su - xopt < abs(xdiff) * subd) ufrac = (su - xopt) / xdiff
+    !!MATLAB code for LFRAC and UFRAC (the code is simpler as we are not concerned about overflow):
+    !!xdiff = xpt(:, k) - xopt;
+    !!lfrac = (sl - xopt) / xdiff;
+    !!ufrac = (su - xopt) / xdiff;
 
     ! First, revise SLBD.
     slbd_test = slbd
@@ -352,8 +227,8 @@ end do
 vlag = stplen * (ONE - stplen) * spread(dderiv, dim=1, ncopies=3)
 !!MATLAB: vlag = stplen .* (1 - stplen) .* dderiv; % Implicit expansion; dderiv is a row!!
 vlag(:, knew) = stplen(:, knew) * (stplen(:, knew) * (ONE - dderiv(knew)) + dderiv(knew))
-! Set NaN values of VLAG to zero so that the behavior of MAXVAL(ABS(VLAG)) is predictable. VLAG does
-! not contain NaN unless XPT does, which will be a bug. MAXVAL(ABS(VLAG)) is taken in Powell's code.
+! Set NaNs in VLAG to 0 so that the behavior of MAXVAL(ABS(VLAG)) is predictable. VLAG does not have
+! NaN unless XPT does, which would be a bug. MAXVAL(ABS(VLAG)) appears in Powell's code, not here.
 where (is_nan(vlag)) vlag = ZERO  !!MATLAB: vlag(isnan(vlag)) = 0;
 !
 ! Second, BETABD is the upper bound of BETA given in (3.10) of the BOBYQA paper.
@@ -362,8 +237,8 @@ betabd = HALF * (stplen * (ONE - stplen) * spread(distsq, dim=1, ncopies=3))**2
 !
 ! Finally, PREDSQ is the quantity defined in (3.11) of the BOBYQA paper.
 predsq = vlag * vlag * (vlag * vlag + alpha * betabd)
-! Set NaN values of PREDSQ to zero so that the behavior of MAXLOC(PREDSQ) is predictable. PREDSQ
-! does not contain NaN unless XPT does, which will be a bug.
+! Set NaNs in PREDSQ to 0 so that the behavior of MAXLOC(PREDSQ) is predictable. PREDSQ does not
+! have NaN unless XPT does, which would be a bug.
 where (is_nan(predsq)) predsq = ZERO  !!MATLAB: predsq(isnan(predsq)) = 0
 
 ! Locate the trial point the renders the maximum of PREDSQ. It is the ISQ-th trial point on the
@@ -385,7 +260,6 @@ ksq = ksqs(isq)
 ! Construct XNEW in a way that satisfies the bound constraints exactly.
 stpsiz = stplen(isq, ksq)
 ibd = isbd(isq, ksq)
-write (16, *) ksq, ibd, stpsiz
 
 xnew = max(sl, min(su, xopt + stpsiz * (xpt(:, ksq) - xopt)))
 if (ibd < 0) then
