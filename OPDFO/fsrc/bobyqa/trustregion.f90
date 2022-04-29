@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 24, 2022 PM02:16:58
+! Last Modified: Friday, April 29, 2022 PM10:28:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -417,7 +417,11 @@ end do
 redmax = ZERO
 isav = 0
 redsav = ZERO
-iu = int(17.0_RP * angbd + 3.1_RP)
+!----------------------------------------------!
+! Zaikun 20220429
+!iu = int(17.0_RP * angbd + 3.1_RP)
+iu = 2_IK * int(17.0_RP * angbd + 3.1_RP) + 1_IK
+!----------------------------------------------!
 do i = 1, iu
     !angt = angbd * real(i, RP) / real(iu, RP)
     !angt = ZERO + (angbd - ZERO) * real(i, RP) / real(iu, RP)

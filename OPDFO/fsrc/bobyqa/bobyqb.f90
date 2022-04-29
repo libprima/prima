@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 PM05:50:42
+! Last Modified: Friday, April 29, 2022 PM08:42:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -735,7 +735,7 @@ else
         ! Surprisingly, MEX in MATLAB R2020a with gfortran 9.4.0 behave randomly when evaluating
         ! max(0.0, NaN): sometimes it returns 0.0, sometimes NaN, even if the compilation option is
         ! the same. This makes the output of the next line unpredictable and leads to disagreement
-        ! between Powell's code and the modernized version.
+        ! with the modernized version.
         !biglsq = max(biglsq, temp * vlag(k)**2)
         if (temp * vlag(k)**2 > biglsq) biglsq = temp * vlag(k)**2
         ! -----------------------------------------------------------------------------------------!
