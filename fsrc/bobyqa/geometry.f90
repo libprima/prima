@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 29, 2022 AM10:06:30
+! Last Modified: Friday, April 29, 2022 PM10:26:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -117,7 +117,10 @@ alpha = hcol(knew)
 !do k = 1, npt
 !    glag = glag + hcol(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
 !end do
+
+! Calculate the gradient of the KNEW-th Lagrange function at XOPT.
 glag = bmat(:, knew) + hess_mul(xopt, xpt, hcol)
+write (16, *) glag
 
 cauchy = ZERO
 xnew = xopt
@@ -273,8 +276,8 @@ end if
 dderiv = matprod(glag, xpt) - inprod(glag, xopt) ! The derivatives PHI_K'(0).
 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 do k = 1, npt
-    ! We do not consider "straight line through XOPT and XPT(:, KOPT)". Set DDERIV(KOPT) = 0,
-    ! STPLEN(:, KOPT) = 0, and ISBD(:, KOPT) = 0 so that VLAG(:, K) and PREDSQ(:, K) obtained after
+    ! It does not make sense to consider "straight line through XOPT and XPT(:, KOPT)". Hence set
+    ! STPLEN(:, KOPT) = 0 and ISBD(:, KOPT) = 0 so that VLAG(:, K) and PREDSQ(:, K) obtained after
     ! this loop will be both zero and the search will skip K = KOPT. To avoid undesired/unpredictable
     ! behavior due to possible NaN, set DDERIV(K) = 0 if K = KOPT or if DDERIV(K) is originally NaN.
     if (k == kopt .or. is_nan(dderiv(k))) then
@@ -352,9 +355,11 @@ vlag(:, knew) = stplen(:, knew) * (stplen(:, knew) * (ONE - dderiv(knew)) + dder
 ! Set NaN values of VLAG to zero so that the behavior of MAXVAL(ABS(VLAG)) is predictable. VLAG does
 ! not contain NaN unless XPT does, which will be a bug. MAXVAL(ABS(VLAG)) is taken in Powell's code.
 where (is_nan(vlag)) vlag = ZERO  !!MATLAB: vlag(isnan(vlag)) = 0;
+!
 ! Second, BETABD is the upper bound of BETA given in (3.10) of the BOBYQA paper.
 betabd = HALF * (stplen * (ONE - stplen) * spread(distsq, dim=1, ncopies=3))**2
 !!MATLAB: betabd = 0.5 * (stplen .* (1-stplen) .* distsq).^2 % Implicit expansion; distsq is a row!!
+!
 ! Finally, PREDSQ is the quantity defined in (3.11) of the BOBYQA paper.
 predsq = vlag * vlag * (vlag * vlag + alpha * betabd)
 ! Set NaN values of PREDSQ to zero so that the behavior of MAXLOC(PREDSQ) is predictable. PREDSQ
@@ -380,6 +385,8 @@ ksq = ksqs(isq)
 ! Construct XNEW in a way that satisfies the bound constraints exactly.
 stpsiz = stplen(isq, ksq)
 ibd = isbd(isq, ksq)
+write (16, *) ksq, ibd, stpsiz
+
 xnew = max(sl, min(su, xopt + stpsiz * (xpt(:, ksq) - xopt)))
 if (ibd < 0) then
     xnew(-ibd) = sl(-ibd)

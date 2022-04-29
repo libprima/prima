@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 25, 2022 AM07:53:57
+! Last Modified: Friday, April 29, 2022 AM10:38:39
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -858,7 +858,6 @@ end if
 
 !--------------------------------------------------------------------------------!
 !----------! y = matprod(hq, x) + matprod(xpt, pq * matprod(x, xpt)) !-----------!
-! The following loop works numerically better than the last line (but why?).
 !--------------------------------------------------------------------------------!
 y = matprod(xpt, pq * matprod(x, xpt))
 if (present(hq)) then

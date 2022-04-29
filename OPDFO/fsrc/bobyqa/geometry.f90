@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 28, 2022 PM06:17:02
+! Last Modified: Friday, April 29, 2022 PM10:20:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,6 +24,7 @@ subroutine geostep(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, knew, adel
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
 use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: linalg_mod, only : inprod
 
 implicit none
 
@@ -55,7 +56,10 @@ real(RP), intent(out) :: xnew(n)
 real(RP) :: bigstp, const, csave, curv, dderiv, diff, distsq,  &
 &        ggfree, gw, ha, predsq, presav, scaling, &
 &        slbd, step, stpsav, subd, sumin, temp, tempa,      &
-&        tempb, tempd, vlag, wfixsq, wsqsav, frac, alpha
+&        tempb, tempd, vlag, wfixsq, wsqsav, frac, alpha, gtmp(n), &
+& predsqlsav, predsqusav, predsqmsav, stpm, predsql, predsqu, predsqm, vlagl, vlagu, vlagm, &
+& slbdsav, subdsav, stpmsav
+integer(IK) :: klsav, kusav, kmsav, ilbdsav, iubdsav
 integer(IK) :: i, ibdsav, iflag, ilbd, isbd, iubd, j, k, ksav
 
 !
@@ -108,6 +112,9 @@ ha = HALF * alpha
 do i = 1, n
     glag(i) = bmat(i, knew)
 end do
+!--------------------------!
+gtmp = glag; glag = ZERO
+!--------------------------!
 do k = 1, npt
     temp = ZERO
     do j = 1, n
@@ -118,13 +125,17 @@ do k = 1, npt
         glag(i) = glag(i) + temp * xpt(i, k)
     end do
 end do
+!--------------------------!
+glag = glag + gtmp
+!--------------------------!
+write(17,*) glag
 
 !------------------------!
 !Zaikun 20220427
 cauchy = ZERO
 xnew = xopt
 xalt = xopt
-if (any(is_nan(glag))) then
+if (any(is_nan(glag)) .or. is_nan(adelt)) then
     return
 end if
 !------------------------!
@@ -140,16 +151,18 @@ end if
 ksav = kopt; ibdsav = 0_IK; stpsav = ZERO; presav = ZERO
 !--------------------------------------------------------------------------------------------------!
 presav = ZERO
+predsqlsav = ZERO; predsqusav = ZERO; predsqmsav = ZERO; klsav = kopt; kusav = kopt; kmsav = kopt; ilbdsav = 0; iubdsav = 0; 
 do k = 1, npt
     if (k == kopt) cycle
     dderiv = ZERO
     distsq = ZERO
     do i = 1, n
         temp = xpt(i, k) - xopt(i)
-        dderiv = dderiv + glag(i) * temp
+        !dderiv = dderiv + glag(i) * temp
         !distsq = distsq + temp * temp
         distsq = distsq + temp**2
     end do
+    dderiv = inprod(glag, xpt(:, k)) - inprod(glag, xopt)
 
     if (is_nan(dderiv)) cycle
 
@@ -222,6 +235,15 @@ do k = 1, npt
                 isbd = 0
             end if
         end if
+        if (ONE - dderiv /= 0) then
+            stpm = -HALF * dderiv / (ONE - dderiv)
+            stpm = min(subd, max(stpm, slbd))
+        else
+            stpm = slbd
+        end if
+        vlagl = slbd * (slbd * (ONE - dderiv) + dderiv)
+        vlagu = subd * (subd * (ONE - dderiv) + dderiv)
+        vlagm = stpm * (stpm * (ONE - dderiv) + dderiv)
 !
 !     Search along each of the other lines through XOPT and another point.
 !
@@ -243,25 +265,68 @@ do k = 1, npt
             end if
         end if
         vlag = vlag * dderiv
+
+        stpm = min(subd, max(HALF, slbd))
+        vlagl = slbd * (ONE - slbd) * dderiv
+        vlagu = subd * (ONE - subd) * dderiv
+        vlagm = stpm * (ONE - stpm) * dderiv
     end if
 !
 !     Calculate PREDSQ for the current line search and maintain PRESAV.
 !
-    temp = step * (ONE - step) * distsq
-    predsq = vlag * vlag * (vlag * vlag + ha * temp * temp)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: With the original code, if either PREDSQ or PRESAV
-! is NaN, KSAV/STPSAV/IBDSAV will not get a value. This may cause
-! Segmentation Fault.
-!      IF (PREDSQ .GT. PRESAV) THEN
-    if (.not. (predsq <= presav)) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        presav = predsq
-        ksav = k
-        stpsav = step
-        ibdsav = isbd
+    !temp = step * (ONE - step) * distsq
+    !predsq = vlag * vlag * (vlag * vlag + ha * temp * temp)
+
+    temp = HALF * (slbd * (ONE - slbd) * distsq)**2
+    predsql = vlagl * vlagl * (vlagl * vlagl + alpha * temp)
+    temp = HALF * (subd * (ONE - subd) * distsq)**2
+    predsqu = vlagu * vlagu * (vlagu * vlagu + alpha * temp)
+    temp = HALF * (stpm * (ONE - stpm) * distsq)**2
+    predsqm = vlagm * vlagm * (vlagm * vlagm + alpha * temp)
+    if (is_nan(predsql)) predsql = ZERO
+    if (is_nan(predsqu)) predsqu = ZERO
+    if (is_nan(predsqm)) predsqm = ZERO
+
+    if (predsql > predsqlsav) then
+        predsqlsav = predsql
+        klsav = k
+        ilbdsav = ilbd
+        slbdsav = slbd
     end if
+    if (predsqu > predsqusav) then
+        predsqusav = predsqu
+        kusav = k
+        iubdsav = iubd
+        subdsav = subd
+    end if
+    if (predsqm > predsqmsav) then
+        predsqmsav = predsqm
+        kmsav = k
+        stpmsav = stpm
+    end if
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! Zaikun 2019-08-29: With the original code, if either PREDSQ or PRESAV
+!! is NaN, KSAV/STPSAV/IBDSAV will not get a value. This may cause
+!! Segmentation Fault.
+!!      IF (PREDSQ .GT. PRESAV) THEN
+!    if (.not. (predsq <= presav)) then
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!        presav = predsq
+!        ksav = k
+!        stpsav = step
+!        ibdsav = isbd
+!    end if
 end do
+
+presav = predsqlsav; ksav = klsav; ibdsav = ilbdsav; stpsav = slbdsav
+if (predsqusav > presav) then
+    presav = predsqusav; ksav = kusav; ibdsav = iubdsav; stpsav = subdsav
+end if
+if (predsqmsav > presav) then
+    presav = predsqmsav; ksav = kmsav; ibdsav = 0; stpsav = stpmsav
+end if
+
+write (17, *) ksav, ibdsav, stpsav
 
 !     Construct XNEW in a way that satisfies the bound constraints exactly.
 !
