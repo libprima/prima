@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 29, 2022 AM08:09:25
+! Last Modified: Friday, April 29, 2022 AM10:06:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,6 +26,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, trueloc
+use, non_intrinsic :: powalg_mod, only : hess_mul
 
 implicit none
 
@@ -111,18 +112,17 @@ end if
 hcol = matprod(zmat, zmat(knew, :))
 alpha = hcol(knew)
 
-!     Calculate the gradient of the KNEW-th Lagrange function at XOPT.
-!
-!!glag = bmat(:, knew) + hess_mul(xopt, xpt, hcol)
-glag = bmat(:, knew)
-do k = 1, npt
-    glag = glag + hcol(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
-end do
+! Calculate the gradient of the KNEW-th Lagrange function at XOPT.
+!glag = bmat(:, knew)
+!do k = 1, npt
+!    glag = glag + hcol(k) * inprod(xopt, xpt(:, k)) * xpt(:, k)
+!end do
+glag = bmat(:, knew) + hess_mul(xopt, xpt, hcol)
 
 cauchy = ZERO
 xnew = xopt
 xalt = xopt
-if (any(is_nan(glag))) then
+if (any(is_nan(glag)) .or. is_nan(adelt)) then  ! ADELT is not NaN if the input is correct.
     return
 end if
 
@@ -264,22 +264,27 @@ end if
 !
 ! We start with the following DO loop, the purpose of which is to define two 3-by-NPT arrays STPLEN
 ! and ISBD. For each K, STPLEN(1:3, K) and ISBD(1:3, K) corresponds to the straight line through
-! XOPT and XPT(:, K). STPLEN(1:3, K) contains SLBD. SUBD, and STPM in this order, which are the step
-! lengths for the three trial points on the K-th line. The three entries of SBDI(1:3, K) indicate
+! XOPT and XPT(:, K). STPLEN(1:3, K) contains SLBD, SUBD, and STPM in this order, which are the step
+! lengths for the three trial points on this line. The three entries of SBDI(1:3, K) indicate
 ! whether the corresponding trial points lie on bounds; SBDI(I, K) = J > 0 means that the I-th trail
-! point on the K-th line attainins the J-th upper bound, SBDI(I, K) = -J indicates reaching the J-th
-! lower bound, and SBDI(I, K) = 0 means not touching any bound.
-dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))  ! It contains derivatives PHI_K'(0).
+! point on the K-th line attains the J-th upper bound, SBDI(I, K) = -J < 0 indicates reaching the
+! J-th lower bound, and SBDI(I, K) = 0 means not touching any bound.
+!dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))  ! The derivatives PHI_K'(0).
+dderiv = matprod(glag, xpt) - inprod(glag, xopt) ! The derivatives PHI_K'(0).
 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 do k = 1, npt
-
+    ! We do not consider "straight line through XOPT and XPT(:, KOPT)". Set DDERIV(KOPT) = 0,
+    ! STPLEN(:, KOPT) = 0, and ISBD(:, KOPT) = 0 so that VLAG(:, K) and PREDSQ(:, K) obtained after
+    ! this loop will be both zero and the search will skip K = KOPT. To avoid undesired/unpredictable
+    ! behavior due to possible NaN, set DDERIV(K) = 0 if K = KOPT or if DDERIV(K) is originally NaN.
     if (k == kopt .or. is_nan(dderiv(k))) then
+        dderiv(k) = ZERO
         stplen(:, k) = ZERO
         isbd(:, k) = 0_IK
         cycle
     end if
 
-    subd = adelt / sqrt(distsq(k))
+    subd = adelt / sqrt(distsq(k))  ! DISTSQ(K) > 0 unless K == KOPT as long as the input is correct.
     slbd = -subd
     ilbd = 0
     iubd = 0
@@ -342,22 +347,35 @@ end do
 ! (Kroneker delta), and recalling the PHI_K is quadratic, we can find that
 ! PHI_K(t) = t*(1-t)*PHI_K'(0) for K /= KNEW, and PHI_KNEW = t*[t*(1-PHI_K'(0)) + PHI_K'(0)].
 vlag = stplen * (ONE - stplen) * spread(dderiv, dim=1, ncopies=3)
+!!MATLAB: vlag = stplen .* (1 - stplen) .* dderiv; % Implicit expansion; dderiv is a row!!
 vlag(:, knew) = stplen(:, knew) * (stplen(:, knew) * (ONE - dderiv(knew)) + dderiv(knew))
+! Set NaN values of VLAG to zero so that the behavior of MAXVAL(ABS(VLAG)) is predictable. VLAG does
+! not contain NaN unless XPT does, which will be a bug. MAXVAL(ABS(VLAG)) is taken in Powell's code.
+where (is_nan(vlag)) vlag = ZERO  !!MATLAB: vlag(isnan(vlag)) = 0;
 ! Second, BETABD is the upper bound of BETA given in (3.10) of the BOBYQA paper.
 betabd = HALF * (stplen * (ONE - stplen) * spread(distsq, dim=1, ncopies=3))**2
+!!MATLAB: betabd = 0.5 * (stplen .* (1-stplen) .* distsq).^2 % Implicit expansion; distsq is a row!!
 ! Finally, PREDSQ is the quantity defined in (3.11) of the BOBYQA paper.
 predsq = vlag * vlag * (vlag * vlag + alpha * betabd)
-predsq(:, kopt) = ZERO
+! Set NaN values of PREDSQ to zero so that the behavior of MAXLOC(PREDSQ) is predictable. PREDSQ
+! does not contain NaN unless XPT does, which will be a bug.
+where (is_nan(predsq)) predsq = ZERO  !!MATLAB: predsq(isnan(predsq)) = 0
 
 ! Locate the trial point the renders the maximum of PREDSQ. It is the ISQ-th trial point on the
 ! straight line through XOPT and XPT(:, KSQ).
-! N.B.: The strategy is a bit different from Powell's original code. In Powell's code and the BOBYQA
-! paper, we first select the trial point that gives the largest value of ABS(VLAG) on each straight,
-! line, and then maximize PREDSQ among the (NPT-1) selected points. Here we maximize PREDSQ among
-! all the trial points. It works slightly better than Powell's version in a test on 20220428.
-ksqs = int(maxloc(predsq, mask=(.not. is_nan(predsq)), dim=2), IK)
+! N.B.: 1. The strategy is a bit different from Powell's original code. In Powell's code and the
+! BOBYQA paper, we first select the trial point that gives the largest value of ABS(VLAG) on each
+! straight line, and then maximize PREDSQ among the (NPT-1) selected points. Here we maximize PREDSQ
+! among all the trial points. It works slightly better than Powell's version in a test on 20220428.
+! 2. Recall that we have set the NaN entries of PREDSQ to zero, if there is any. Thus the KSQS below
+! is a well defined integer array, all the three entries lying between 1 and NPT.
+ksqs = int(maxloc(predsq, dim=2), IK)
 isq = int(maxloc([predsq(1, ksqs(1)), predsq(2, ksqs(2)), predsq(3, ksqs(3))], dim=1), IK)
 ksq = ksqs(isq)
+!!MATLAB:
+!![~, ksqs] = max(predsq, [], 'omitnan');
+!![~, isq] = max([predsq(1, ksqs(1)), predsq(2, ksqs(2)), predsq(3, ksqs(3))]);
+!!ksq = ksqs(isq);
 
 ! Construct XNEW in a way that satisfies the bound constraints exactly.
 stpsiz = stplen(isq, ksq)
