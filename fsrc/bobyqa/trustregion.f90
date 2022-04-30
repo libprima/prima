@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 30, 2022 AM08:29:59
+! Last Modified: Saturday, April 30, 2022 AM08:56:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -234,7 +234,7 @@ sbound = stplen
 where (s > 0 .and. xtest > su) sbound = (su - xnew) / s
 where (s < 0 .and. xtest < sl) sbound = (sl - xnew) / s
 !!MATLAB:
-!!sbound(s > 0) = (su(s > 0) - xnew(s < 0)) / s(s > 0);
+!!sbound(s > 0) = (su(s > 0) - xnew(s > 0)) / s(s > 0);
 !!sbound(s < 0) = (sl(s < 0) - xnew(s < 0)) / s(s < 0);
 !--------------------------------------------------------------------------------------------------!
 ! The code below is mathematically equivalent to the above but numerically inferior as explained.
@@ -383,8 +383,8 @@ do iterc = 1, itermax
     ssq = d**2 + s**2  ! Indeed, only SSQ(TRUELOC(XBDI == 0)) is needed.
     tanbd = ONE
     sqrtd = -HUGENUM
-    where (xbdi == 0 .and. xopt - sl < sqrt(ssq)) sqrtd = sqrt(max(ZERO, ssq - (xopt - sl)**2))
-    where (sqrtd - s > 0) tanbd = min(tanbd, (xnew - sl) / (sqrtd - s))
+    where (xbdi == 0 .and. xopt - sl < sqrt(ssq)) sqrtd = sqrt(max(ZERO, ssq - (xopt - sl)**2))  
+    where (sqrtd - s > 0) tanbd = min(tanbd, (xnew - sl) / (sqrtd - s))  
     sqrtd = -HUGENUM
     where (xbdi == 0 .and. su - xopt < sqrt(ssq)) sqrtd = sqrt(max(ZERO, ssq - (su - xopt)**2))
     where (sqrtd + s > 0) tanbd = min(tanbd, (su - xnew) / (sqrtd + s))

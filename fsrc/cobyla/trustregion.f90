@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, April 21, 2022 PM05:14:59
+! Last Modified: Saturday, April 30, 2022 PM11:08:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -340,9 +340,7 @@ do iter = 1, maxiter
 
             ! Revise the Lagrange multipliers. The revision is not applicable to VMULTC(NACT + 1:M).
             fracmult = HUGENUM
-            where (vmultd > 0 .and. iact <= m)
-                fracmult = vmultc / vmultd
-            end where
+            where (vmultd > 0 .and. iact <= m) fracmult = vmultc / vmultd
             !!MATLAB: mask = (vmultd > 0 & iact <= m); fracmult(mask) = vmultc(mask) / vmultd(mask);
             ! Only the places with VMULTD > 0 and IACT <= M is relevant blow, if any.
             frac = minval(fracmult(1:nact))  ! FRACMULT(NACT+1:MCON) may contain garbage.
@@ -511,9 +509,7 @@ do iter = 1, maxiter
 
     ! Calculate the fraction of the step from D to DNEW that will be taken.
     fracmult = HUGENUM
-    where (vmultd < 0)
-        fracmult = vmultc / (vmultc - vmultd)
-    end where
+    where (vmultd < 0) fracmult = vmultc / (vmultc - vmultd)
     !!MATLAB: mask = (vmultd < 0); fracmult(mask) = vmultc(mask) / (vmultc(mask) - vmultd(mask));
     ! Only the places with VMULTD < 0 is relevant below, if any.
     icon = int(minloc([ONE, fracmult], dim=1), IK) - 1_IK

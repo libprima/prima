@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM10:39:33
+! Last Modified: Saturday, April 30, 2022 PM11:11:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -304,9 +304,7 @@ do iter = 1_IK, maxiter
         ! N.B.: 1. VLAM(1:NACT-1) < 0 and VLAM(NACT) <= 0 by the updates of VLAM. 2. VMU(NACT) > 0.
         ! 3. Only the places where VMU(1:NACT) < 0 is relevant below, if any.
         frac = HUGENUM
-        where (vmu(1:nact) < 0 .and. vlam(1:nact) < 0)
-            frac(1:nact) = vlam(1:nact) / vmu(1:nact)
-        end where
+        where (vmu(1:nact) < 0 .and. vlam(1:nact) < 0) frac(1:nact) = vlam(1:nact) / vmu(1:nact)
         !!MATLAB: frac = vlam / vmu; frac(vmu >= 0 | vlam >= 0) = Inf;
         vmult = minval([violmx, frac(1:nact)])
         ic = maxval([0_IK, trueloc(frac(1:nact) <= vmult)])

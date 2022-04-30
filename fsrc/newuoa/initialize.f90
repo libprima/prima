@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Monday, April 18, 2022 PM10:26:51
+! Last Modified: Saturday, April 30, 2022 PM11:10:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -189,12 +189,8 @@ ij = ij + 1_IK
 ! can be beneficial if the function evaluations are expensive, which is likely the case.
 ! 4. MATLAB can index a vector using a 2D array of indices (not in Fortran), thus the MATLAB code is
 !!MATLAB: ij(fval(ij + n) < fval(ij)) = ij + n;
-where (fval(ij(:, 1) + n) < fval(ij(:, 1)))
-    ij(:, 1) = ij(:, 1) + n
-end where
-where (fval(ij(:, 2) + n) < fval(ij(:, 2)))
-    ij(:, 2) = ij(:, 2) + n
-end where
+where (fval(ij(:, 1) + n) < fval(ij(:, 1))) ij(:, 1) = ij(:, 1) + n
+where (fval(ij(:, 2) + n) < fval(ij(:, 2))) ij(:, 2) = ij(:, 2) + n
 
 ! Set XPT(:, 2*N + 2 : NPT). It depends on IJ and hence on FVAL(2 : 2*N + 1).
 xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1)) + xpt(:, ij(:, 2))
