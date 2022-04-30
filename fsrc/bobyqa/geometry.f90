@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 30, 2022 AM08:50:15
+! Last Modified: Saturday, April 30, 2022 PM04:21:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -61,7 +61,7 @@ real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), distsq(size(xpt, 2)),  &
 &        ufrac(size(xpt, 1)), lfrac(size(xpt, 1)), xdiff(size(xpt, 1)), stpm
 real(RP) :: alpha, stpsiz
 logical :: mask_fixl(size(xpt, 1)), mask_fixu(size(xpt, 1)), mask_free(size(xpt, 1))
-integer(IK) :: ibd, uphill, ilbd, isbd(3, size(xpt, 2)), iubd, k, ksqs(3), ksq, isq, isqs(size(xpt, 2))
+integer(IK) :: ibd, uphill, ilbd, isbd(3, size(xpt, 2)), iubd, k, ksqs(3), ksq, isq
 
 
 ! Sizes.
