@@ -13,7 +13,7 @@ CLEAN="N"
 
 # af95 does not support internal subroutine as an actual argument. So it is not included
 # sunf95 is case sensitive. Put it as the first.
-# ifx encounters internal errors when compiling BOBYQA. Disable xtest for now. 
+# ifx encounters internal errors when compiling BOBYQA. Disable xtest for now.
 #COMPILER_LIST=(sunf95 gfortran nagfor g95 af95 ifort nvfortran flang aflang ifx)
 #COMPILER_LIST=(sunf95 gfortran nagfor g95 ifort nvfortran flang aflang ifx)
 #CLIST=(s g n 9 i v f d x)
@@ -122,7 +122,9 @@ for COMP in $COMP_LIST; do
         make  "$COMP"test."$SOLVER"
     else
 #        TESTS="i4_r8_d1"
-        if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' ]] ; then
+        # NAG Fortran Compiler Release 7.0(Yurakucho) Build 7066 is buggy with REAL128
+       #if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' ]] ; then
+       if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' || $COMP == 'n' ]] ; then
             TESTS="i2_r4_d1 i8_r4_d0"
         else
             TESTS="i2_r16_d1 i8_r4_d0"
