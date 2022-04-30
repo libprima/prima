@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 30, 2022 AM02:00:55
+! Last Modified: Saturday, April 30, 2022 AM08:50:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -61,7 +61,7 @@ real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), distsq(size(xpt, 2)),  &
 &        ufrac(size(xpt, 1)), lfrac(size(xpt, 1)), xdiff(size(xpt, 1)), stpm
 real(RP) :: alpha, stpsiz
 logical :: mask_fixl(size(xpt, 1)), mask_fixu(size(xpt, 1)), mask_free(size(xpt, 1))
-integer(IK) :: ibd, uphill, ilbd, isbd(3, size(xpt, 2)), iubd, k, ksqs(3), ksq, isq
+integer(IK) :: ibd, uphill, ilbd, isbd(3, size(xpt, 2)), iubd, k, ksqs(3), ksq, isq, isqs(size(xpt, 2))
 
 
 ! Sizes.
@@ -247,6 +247,12 @@ where (is_nan(predsq)) predsq = ZERO  !!MATLAB: predsq(isnan(predsq)) = 0
 ! BOBYQA paper, we first select the trial point that gives the largest value of ABS(VLAG) on each
 ! straight line, and then maximize PREDSQ among the (NPT-1) selected points. Here we maximize PREDSQ
 ! among all the trial points. It works slightly better than Powell's version in a test on 20220428.
+! Powell's version is as follows.
+!--------------------------------------------------------------!
+!isqs = int(maxloc(abs(vlag), dim=1), IK)  ! SIZE(ISQS) = NPT
+!ksq = int(maxloc([(predsq(isqs(k), k), k=1, npt)], dim=1), IK)
+!isq = isqs(ksq)
+!--------------------------------------------------------------!
 ! 2. Recall that we have set the NaN entries of PREDSQ to zero, if there is any. Thus the KSQS below
 ! is a well defined integer array, all the three entries lying between 1 and NPT.
 ksqs = int(maxloc(predsq, dim=2), IK)
