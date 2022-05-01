@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 17, 2022 PM03:23:28
+! Last Modified: Monday, May 02, 2022 AM12:29:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -155,6 +155,7 @@ integer(IK) :: n
 integer(IK) :: nf_loc
 integer(IK) :: nhist
 integer(IK) :: npt_loc
+logical :: has_rhobeg
 logical :: honour_x0_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
@@ -163,19 +164,13 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
+real(RP) :: sl(size(x))
+real(RP) :: su(size(x))
+real(RP) :: uldiff(size(x))
 real(RP) :: xl_loc(size(x))
 real(RP) :: xu_loc(size(x))
 real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
-real(RP), allocatable :: sl(:)  ! SL(N)
-real(RP), allocatable :: su(:)  ! SU(N)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
-
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Working variables (to be removed)
-real(RP) :: temp
-integer(IK) :: j
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Sizes
 n = int(size(x), kind(n))
@@ -298,41 +293,24 @@ else
     maxhist_loc = maxval([maxfun_loc, n + 3_IK, MAXFUN_DIM_DFT * n])
 end if
 
+has_rhobeg = present(rhobeg)
 if (present(honour_x0)) then
     honour_x0_loc = honour_x0
 else
-    honour_x0_loc = .false.
+    honour_x0_loc = (.not. has_rhobeg)
 end if
 
-!--------------------------------------------------------------------------------------------------!
-if (honour_x0_loc) then
-    ! Do nothing. Temporary fix for 'HONOUR_X0_LOC is set but unused'
-end if
-!--------------------------------------------------------------------------------------------------!
+
+write (16, *) xl_loc
+write (16, *) xu_loc
+write (16, *) rhobeg
+write (16, *) x
+write (16, *) '---'
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! !!! Revise X (see below) and RHOBEG, RHOEND
-! Shouldn't this be included into PREPROC?
-! Zaikun, 2020-05-05
-! When the data is passed from the interfaces to the Fortran code, RHOBEG,
-! XU and XL may change a bit (due to rounding ???). It was oberved in
-! a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
-! If we set RHOBEG = MIN(XU-XL)/2 in the interfaces, then it may happen
-! that RHOBEG > MIN(XU-XL)/2. That is why we do the following.
-rhobeg_loc = minval([rhobeg_loc, HALF * (xu_loc - xl_loc)])
-if (rhobeg_loc < EPS) then
-    if (present(info)) then
-        info = 6
-    end if
-    ! Print a message here.
-    return
-end if
-! For the same reason, we ensure RHOEND <= RHOBEG by the following.
-rhoend_loc = min(rhobeg_loc, rhoend_loc)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc, &
+    & has_rhobeg=has_rhobeg, honour_x0=honour_x0_loc, xl=xl_loc, xu=xu_loc, x0=x)
 
 ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
@@ -340,68 +318,34 @@ rhoend_loc = min(rhobeg_loc, rhoend_loc)
 ! if they are requested; replace MAXFUN with 0 for the history that is not requested.
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc)
 
+! The lower and upper bounds on moves from the updated X are set now, in the ISL and ISU partitions
+! of W, in order to provide useful and exact information about components of X that become within
+! distance RHOBEG from their bounds.
+sl = xl_loc - x
+su = xu_loc - x
+! After PREPROC, the nonzero entries of SL should be less than -RHOBEG_LOC, while those of SU should
+! be larger than RHOBEG_LOC. However, this may not be true due to rounding. The following lines
+! revise SL and SU to ensure it.
+sl(trueloc(sl < 0)) = min(sl(trueloc(sl < 0)), -rhobeg_loc)
+su(trueloc(su > 0)) = max(su(trueloc(su > 0)), rhobeg_loc)
+uldiff = xu_loc - xl_loc
+x(trueloc(sl >= 0)) = xl_loc(trueloc(sl >= 0))
+sl(trueloc(sl >= 0)) = ZERO
+su(trueloc(sl >= 0)) = uldiff(trueloc(sl >= 0))
+x(trueloc(su <= 0)) = xu_loc(trueloc(su <= 0))
+sl(trueloc(su <= 0)) = -uldiff(trueloc(su <= 0))
+su(trueloc(su <= 0)) = ZERO
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     Partition the working space array, so that different parts of it can
-!     be treated separately during the calculation of BOBYQB. The partition
-!     requires the first (NPT+2)*(NPT+N)+3*N*(N+5)/2 elements of W plus the
-!     space that is taken by the last array in the argument list of BOBYQB.
-!
-!
-!     Return if there is insufficient space between the bounds. Modify the
-!     initial X if necessary in order to avoid conflicts between the bounds
-!     and the construction of the first quadratic model. The lower and upper
-!     bounds on moves from the updated X are set now, in the ISL and ISU
-!     partitions of W, in order to provide useful and exact information about
-!     components of X that become within distance RHOBEG from their bounds.
-!
-call safealloc(sl, n)
-call safealloc(su, n)
-do j = 1, n
-    temp = xu_loc(j) - xl_loc(j)
-    !if (temp < rhobeg_loc + rhobeg_loc) then
-    !    if (present(info)) then
-    !        info = 6
-    !    end if
-    !    return
-    !end if
-    sl(j) = xl_loc(j) - x(j)
-    su(j) = xu_loc(j) - x(j)
-    if (sl(j) >= -rhobeg_loc) then
-        if (sl(j) >= ZERO) then
-            x(j) = xl_loc(j)
-            sl(j) = ZERO
-            su(j) = temp
-        else
-            x(j) = xl_loc(j) + rhobeg_loc
-            sl(j) = -rhobeg_loc
-            su(j) = max(xu_loc(j) - x(j), rhobeg_loc)
-        end if
-    else if (su(j) <= rhobeg_loc) then
-        if (su(j) <= ZERO) then
-            x(j) = xu_loc(j)
-            sl(j) = -temp
-            su(j) = ZERO
-        else
-            x(j) = xu_loc(j) - rhobeg_loc
-            sl(j) = min(xl_loc(j) - x(j), -rhobeg_loc)
-            su(j) = rhobeg_loc
-        end if
-    end if
-end do
-
+write (16, *) rhobeg
+write (16, *) x
+write (16, *) sl
+write (16, *) su
 
 !-------------------- Call BOBYQB, which performs the real calculations. --------------------------!
 call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
     & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, sl, su, xl_loc, xu_loc, x, nf_loc, f, &
     & fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
-
-! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
-deallocate (sl)
-deallocate (su)
-
 
 ! Write the outputs.
 
