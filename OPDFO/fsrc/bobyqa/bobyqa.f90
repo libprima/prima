@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 06, 2022 PM12:11:28
+! Last Modified: Monday, May 02, 2022 AM07:16:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -155,7 +155,7 @@ integer(IK) :: n
 integer(IK) :: nf_loc
 integer(IK) :: npt_loc
 integer(IK) :: nhist
-logical :: honour_x0_loc
+logical :: honour_x0_loc, has_rhobeg
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 real(RP) :: ftarget_loc
@@ -301,12 +301,18 @@ else
     maxhist_loc = maxval([maxfun_loc, n + 3_IK, MAXFUN_DIM_DFT * n])
 end if
 
+has_rhobeg = present(rhobeg)
 if (present(honour_x0)) then
     honour_x0_loc = honour_x0
 else
-    honour_x0_loc = .false.
+    honour_x0_loc = (.not. has_rhobeg)
 end if
 
+write (17, *) xl_loc
+write (17, *) xu_loc
+write (17, *) rhobeg
+write (17, *) x
+write (17, *) '---'
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
     & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
@@ -381,11 +387,14 @@ do j = 1, n
     !    end if
     !    return
     !end if
+    write (17, *) '>', j, x(j)
     jsl = isl + j - 1
     jsu = jsl + n
     w(jsl) = xl_loc(j) - x(j)
     w(jsu) = xu_loc(j) - x(j)
-    if (w(jsl) >= -rhobeg_loc) then
+    write (17, *) 'wjslu', w(jsl), w(jsu)
+    !if (w(jsl) >= -rhobeg_loc) then
+    if (x(j) < xl(j) + rhobeg_loc) then
         if (w(jsl) >= ZERO) then
             x(j) = xl_loc(j)
             w(jsl) = ZERO
@@ -395,7 +404,8 @@ do j = 1, n
             w(jsl) = -rhobeg_loc
             w(jsu) = max(xu_loc(j) - x(j), rhobeg_loc)
         end if
-    else if (w(jsu) <= rhobeg_loc) then
+        !else if (w(jsu) <= rhobeg_loc) then
+    else if (x(j) > xu(j) - rhobeg_loc) then
         if (w(jsu) <= ZERO) then
             x(j) = xu_loc(j)
             w(jsl) = -temp
@@ -406,8 +416,16 @@ do j = 1, n
             w(jsu) = rhobeg_loc
         end if
     end if
+    if (w(jsl) < 0) w(jsl) = min(w(jsl), -rhobeg)
+    if (w(jsu) > 0) w(jsu) = max(w(jsu), rhobeg)
+    write (17, *) '<', j, x(j)
 end do
-!
+
+write (17, *) rhobeg
+write (17, *) x
+write (17, *) w(isl:isl + n - 1)
+write (17, *) w(isu:isu + n - 1)
+
 !     Make the call of BOBYQB.
 !
 call bobyqb(calfun, n, npt_loc, x, xl_loc, xu_loc, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, &
