@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 30, 2022 AM02:52:38
+! Last Modified: Monday, May 02, 2022 AM12:20:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,7 +29,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
@@ -122,7 +122,13 @@ if (DEBUGGING) then
     call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
     call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
     call assert(size(sl_in) == n .and. size(su_in) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
+    call assert(all(sl_in <= 0 .and. (sl_in >= 0 .or. sl_in <= -rhobeg)), 'SL == 0 or SL <= -RHOBEG', srname)
+    call assert(all(su_in >= 0 .and. (su_in <= 0 .or. su_in >= rhobeg)), 'SU == 0 or SU >= RHOBEG', srname)
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
+    call assert(all(rhobeg <= (xu - xl) / TWO), 'RHOBEG <= MINVAL(XU-XL)/2', srname)
+    call assert(all(is_finite(x)), 'X is finite', srname)
+    call assert(all(x >= xl .and. (x <= xl .or. x >= xl + rhobeg)), 'X == XL or X >= XL + RHOBEG', srname)
+    call assert(all(x <= xu .and. (x >= xu .or. x <= xu - rhobeg)), 'X == XU or X >= XU - RHOBEG', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
@@ -334,7 +340,7 @@ if (ntrits > 0) goto 60
 !  Although very rare, NaN can sometimes occur in BMAT or ZMAT. If it happens, we terminate the
 !  code. See the comments above line number 60. Indeed, if GEOSTEP is called with such matrices, then
 !  geostep.f90 will encounter a memory error at lines 173--174. This is because the first value of
-!  PREDSQ in ALTOMOV (see line 159 of geostep.f90) will be NaN, line 164 will not be reached, and
+!  PREDSQ in GEOSTEP (see line 159 of geostep.f90) will be NaN, line 164 will not be reached, and
 !  hence no value will be assigned to IBDSAV.
 !  Such an error was observed when BOBYQA was (mistakenly) tested on CUTEst problem CONCON. CONCON
 !  is a nonlinearly constrained problem with bounds. By mistake, BOBYQA was called to solve this
@@ -353,8 +359,6 @@ end if
 call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, cauchy, xalt, xnew)
 d = xnew - xopt
 alpha = sum(zmat(knew, :)**2)
-
-write (16, *) nf, alpha, cauchy, xnew, xalt
 
 230 continue
 

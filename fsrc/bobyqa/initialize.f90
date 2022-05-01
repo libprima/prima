@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 27, 2022 AM08:09:25
+! Last Modified: Sunday, May 01, 2022 PM05:26:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : matprod!, norm
+use, non_intrinsic :: linalg_mod, only : matprod, trueloc!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 implicit none
@@ -67,7 +67,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: x(size(x0))
 real(RP) :: diff, fbeg, recip, rhosq, stepa, stepb, temp
-integer(IK) :: ipt, itemp, j, jpt, nfm, nfx, np
+integer(IK) :: ipt, itemp, jpt, nfm, nfx, np
 logical :: evaluated(size(fval))
 
 ! Sizes.
@@ -166,11 +166,9 @@ else
 end if
 
 ! Calculate the next value of F. The least function value so far and its index are required.
-do j = 1, n
-    x(j) = min(max(xl(j), xbase(j) + xpt(j, nf)), xu(j))
-    if (xpt(j, nf) == sl(j)) x(j) = xl(j)
-    if (xpt(j, nf) == su(j)) x(j) = xu(j)
-end do
+x = min(max(xl, xbase + xpt(:, nf)), xu)
+x(trueloc(xpt(:, nf) <= sl)) = xl(trueloc(xpt(:, nf) <= sl))
+x(trueloc(xpt(:, nf) >= su)) = xu(trueloc(xpt(:, nf) >= su))
 
 
 !-------------------------------------------------------------------!
