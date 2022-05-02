@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 02, 2022 AM12:29:26
+! Last Modified: Monday, May 02, 2022 AM07:56:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -166,7 +166,6 @@ real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP) :: sl(size(x))
 real(RP) :: su(size(x))
-real(RP) :: uldiff(size(x))
 real(RP) :: xl_loc(size(x))
 real(RP) :: xu_loc(size(x))
 real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
@@ -303,8 +302,8 @@ end if
 
 write (16, *) xl_loc
 write (16, *) xu_loc
-write (16, *) rhobeg
 write (16, *) x
+write (16, *) rhobeg
 write (16, *) '---'
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
@@ -326,15 +325,30 @@ su = xu_loc - x
 ! After PREPROC, the nonzero entries of SL should be less than -RHOBEG_LOC, while those of SU should
 ! be larger than RHOBEG_LOC. However, this may not be true due to rounding. The following lines
 ! revise SL and SU to ensure it.
-sl(trueloc(sl < 0)) = min(sl(trueloc(sl < 0)), -rhobeg_loc)
-su(trueloc(su > 0)) = max(su(trueloc(su > 0)), rhobeg_loc)
-uldiff = xu_loc - xl_loc
-x(trueloc(sl >= 0)) = xl_loc(trueloc(sl >= 0))
-sl(trueloc(sl >= 0)) = ZERO
-su(trueloc(sl >= 0)) = uldiff(trueloc(sl >= 0))
-x(trueloc(su <= 0)) = xu_loc(trueloc(su <= 0))
-sl(trueloc(su <= 0)) = -uldiff(trueloc(su <= 0))
-su(trueloc(su <= 0)) = ZERO
+where (sl < 0)
+    sl = min(sl, -rhobeg_loc)
+elsewhere
+    x = xl_loc
+    sl = ZERO
+    su = xu_loc - xl_loc
+end where
+where (su > 0)
+    su = max(su, rhobeg_loc)
+elsewhere
+    x = xu_loc
+    sl = xl_loc - xu_loc
+    su = ZERO
+end where
+!!MATLAB code for revising X, SL, and SU:
+!!sl(sl < 0) = min(sl(sl < 0), -rhobeg_loc);
+!!x(sl >= 0) = xl_loc(sl >= 0);
+!!sl(sl >= 0) = 0;
+!!su(sl >= 0) = xu_loc(sl >= 0) - xl_loc(sl >= 0);
+!!su(su > 0) = max(su(su > 0), rhobeg_loc);
+!!x(su <= 0) = xu_loc(su <= 0);
+!!sl(su <= 0) = xl_loc(su <= 0) - xu_loc(su <= 0);
+!!su(su <= 0) = 0;
+
 
 write (16, *) rhobeg
 write (16, *) x
