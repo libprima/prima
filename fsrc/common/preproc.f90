@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 02, 2022 PM11:19:26
+! Last Modified: Tuesday, May 03, 2022 AM12:19:20
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -321,7 +321,7 @@ end if
 if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
     ! Take RHOEND into account if it has a valid value. We do not do this if the solver is BOBYQA,
     ! which requires that RHOBEG <= (XU-XL)/2.
-    if (is_finite(rhoend) .and. rhoend > 0 .and. .not. lower(solver) == 'bobyqa') then
+    if (is_finite(rhoend) .and. rhoend > 0 .and. lower(solver) /= 'bobyqa') then
         rhobeg = max(TEN * rhoend, rhobeg_default)
     else
         rhobeg = rhobeg_default
