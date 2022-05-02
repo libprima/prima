@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 02, 2022 AM08:45:22
+! Last Modified: Monday, May 02, 2022 AM10:48:44
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -306,7 +306,14 @@ else
     rhoend_default = RHOEND_DFT
 end if
 
-if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
+if (lower(solver) == 'bobyqa') then
+    ! Do NOT merge the IF below into the ELSEIF above!! Otherwise, XU and XL may be accessed even if
+    ! the solver is not BOBYQA, because the logical evaluation is not short-circuit.
+    if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg) .or. rhobeg > minval(xu - xl) / TWO) then
+        rhobeg = minval(xu - xl) / 4.0_RP
+        call warning(solver, 'Invalid RHOBEG; '//solver//' requires RHOBEG <= MIN(XU-XL)/2; it is set to MIN(XU-XL)/4.')
+    end if
+elseif (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
     ! Take RHOEND into account if it has a valid value.
     if (is_finite(rhoend) .and. rhoend > 0) then
         rhobeg = max(TEN * rhoend, rhobeg_default)
@@ -315,13 +322,6 @@ if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
     end if
     write (wmsg, rfmt) rhobeg
     call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//trimstr(wmsg))
-elseif (lower(solver) == 'bobyqa') then
-    ! Do NOT merge the IF below into the ELSEIF above!! Otherwise, XU and XL may be accessed even if
-    ! the solver is not BOBYQA, because the logical evaluation is not short-circuit.
-    if (rhobeg > minval(xu - xl) / TWO) then
-        rhobeg = minval(xu - xl) / 4.0_RP
-        call warning(solver, 'Invalid RHOBEG; '//solver//' requires RHOBEG <= MIN(XU-XL)/2; it is set to MIN(XU-XL)/4.')
-    end if
 end if
 
 if (rhoend <= 0 .or. rhobeg < rhoend .or. is_nan(rhoend) .or. is_inf(rhoend)) then
