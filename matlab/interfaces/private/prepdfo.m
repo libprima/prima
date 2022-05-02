@@ -1104,7 +1104,9 @@ if isfield(options, 'rhobeg')
     end
 end
 if ~validated % options.rhobeg has not got a valid value yet
-    if isfield(options, 'rhoend') && isrealscalar(options.rhoend) && options.rhoend >= 0 && options.rhoend < inf
+    % Take into account `rhoend` if it has got a valid value. We do not do this for `bobyqan`, which
+    % requires that rhobeg <= min(xu-xl)/2.
+    if isfield(options, 'rhoend') && isrealscalar(options.rhoend) && options.rhoend >= 0 && options.rhoend < inf && ~strcmpi(solver, 'bobyqan')
         options.rhobeg = max(rhobeg, 10*options.rhoend);
     else
         options.rhobeg = rhobeg;
@@ -1881,6 +1883,8 @@ if isfield(options, 'honour_x0') && options.honour_x0  % In this case, we respec
             warning(wid, '%s', wmsg);
             warnings = [warnings, wmsg];
         end
+    else
+        options.rhoend = min(options.rhoend, options.rhobeg);  % This may update rhoend slightly
     end
 else
     % N.B.: The following code is valid only if lb <= x0 <= ub and rhobeg <= min(ub-lb)/2, which
@@ -1894,7 +1898,7 @@ else
     x0(lbx_plus) = lb(lbx_plus) + options.rhobeg;
     x0(ubx_minus) = ub(ubx_minus) - options.rhobeg;
     x0(ubx) = ub(ubx);
-    if norm(x0_old-x0) > eps*max(1, norm(x0_old))
+    if any(abs(x0_old-x0) > 0)
         wid = sprintf('%s:ReviseX0', invoker);
         wmsg = sprintf('%s: x0 is revised so that the distance between x0 and the inactive bounds is at least rhobeg; set options.honour_x0 to true if you prefer to keep x0.', invoker);
         warning(wid, '%s', wmsg);

@@ -12,5 +12,7 @@
    probinfo and use hugefun/hugecon in postpdfo.
 7. No need to check maxint in uobyqa, newuoa, and bobyqa; in lincoa, cobyla, and prepdfo, only check
    that the number of variables/constraints do not exceed maxint.
+8. Do not take the value of rhoend into consideration when correcting the incorrect (non-positive,
+   not finite, etc) value of rhobeg for BOBYQA.
 
-Check other changes by comparing the matlab interfaces
+Check other changes by comparing the matlab interfaces (vimdiff).

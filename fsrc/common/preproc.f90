@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 02, 2022 AM10:48:44
+! Last Modified: Monday, May 02, 2022 PM11:19:26
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -97,6 +97,7 @@ if (DEBUGGING) then
     end if
     if (lower(solver) == 'bobyqa') then
         call assert(present(xl) .and. present(xu), 'XL and XU are present if the solver is BOBYQA', srname)
+        call assert(all(xu - xl >= TWO * EPS), 'MINVAL(XU-XL) > 2*EPS', srname)
     end if
     if (present(honour_x0)) then
         call assert(lower(solver) == 'bobyqa' .and. present(has_rhobeg) .and. present(xl) .and. present(xu) &
@@ -309,13 +310,18 @@ end if
 if (lower(solver) == 'bobyqa') then
     ! Do NOT merge the IF below into the ELSEIF above!! Otherwise, XU and XL may be accessed even if
     ! the solver is not BOBYQA, because the logical evaluation is not short-circuit.
-    if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg) .or. rhobeg > minval(xu - xl) / TWO) then
-        rhobeg = minval(xu - xl) / 4.0_RP
-        call warning(solver, 'Invalid RHOBEG; '//solver//' requires RHOBEG <= MIN(XU-XL)/2; it is set to MIN(XU-XL)/4.')
+    if (rhobeg > minval(xu - xl) / TWO) then
+        ! Do NOT make this revision if RHOBEG not positive or not finite, because otherwise RHOBEG
+        ! will get a huge value when XU or XL contains huge values that indicate unbounded variables.
+        rhobeg = minval(xu - xl) / 4.0_RP  ! Here, we do not take RHOBEG_DEFAULT.
+        call warning(solver, 'Invalid RHOBEG; '//solver//' requires 0 < RHOBEG <= MINVAL(XU-XL)/2;' &
+            & //' it is set to MINVAL(XU-XL)/4.')
     end if
-elseif (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
-    ! Take RHOEND into account if it has a valid value.
-    if (is_finite(rhoend) .and. rhoend > 0) then
+end if
+if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
+    ! Take RHOEND into account if it has a valid value. We do not do this if the solver is BOBYQA,
+    ! which requires that RHOBEG <= (XU-XL)/2.
+    if (is_finite(rhoend) .and. rhoend > 0 .and. .not. lower(solver) == 'bobyqa') then
         rhobeg = max(TEN * rhoend, rhobeg_default)
     else
         rhobeg = rhobeg_default
@@ -342,12 +348,14 @@ if (present(honour_x0)) then
         x0(trueloc(ubx)) = xu(trueloc(ubx))
         rhobeg = max(EPS, minval([rhobeg, x0(falseloc(lbx)) - xl(falseloc(lbx)), xu(falseloc(ubx)) - x0(falseloc(ubx))]))
         if (rhobeg_old - rhobeg > EPS * max(ONE, rhobeg_old)) then
-            rhoend = max(EPS, min(TENTH * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is revised
-            if (has_rhobeg .and. (rhobeg_old - rhobeg) > EPS * max(ONE, abs(rhobeg_old))) then
+            rhoend = max(EPS, min(TENTH * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
+            if (has_rhobeg) then
                 write (wmsg, rfmt) rhobeg
                 call warning(solver, 'RHOBEG is reivised to '//trim(wmsg)//' and RHOEND to at most 0.1*RHOBEG'// &
                     & ' so that the distance between X0 and the inactive bounds is at least RHOBEG')
             end if
+        else
+            rhoend = min(rhoend, rhobeg)  ! This may update RHOEND slightly.
         end if
     else
         x0_old = x0  ! Recorded to see whether X0 is really revised.
@@ -374,7 +382,7 @@ if (present(honour_x0)) then
         !!x0(ubx) = xu(ubx);
         !!x0(ubx_minus) = xu(ubx_minus) - rhobeg;
 
-        if (maxval(abs(x0_old - x0)) > EPS * maxval([ONE, abs(x0)])) then
+        if (any(abs(x0_old - x0) > 0)) then
             call warning(solver, 'X0 is revised so that the distance between X0 and the inactive bounds is at least RHOBEG; '// &
                  & 'set HONOUR_X0 to .TRUE. if you prefer to keep X0 unchanged')
         end if

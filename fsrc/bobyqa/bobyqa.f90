@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 02, 2022 AM09:45:19
+! Last Modified: Monday, May 02, 2022 PM11:00:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -105,6 +105,7 @@ use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
+use, non_intrinsic :: info_mod, only : NO_SPACE_BETWEEN_BOUNDS
 use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -200,6 +201,19 @@ else
     xu_loc = HUGEBOUND
 end if
 xu_loc(trueloc(is_nan(xu_loc) .or. xu_loc > HUGEBOUND)) = HUGEBOUND
+
+! The solver requires that MINVAL(XU-XL) >= 2*RHOBEG, and we return if MINVAL(XU-XL) < 2*EPS.
+! It would be better to fix the variables at (XU+XL)/2 wherever XU and XL almost equal, as is done
+! in the MATLAB/Python interface of the solvers. In Fortran, this is doable using internal functions,
+! but we choose not to implement it in the current version.
+if (any(xu_loc - xl_loc < TWO * EPS)) then
+    if (present(info)) then
+        info = NO_SPACE_BETWEEN_BOUNDS
+    end if
+    write (wmsg, ifmt) minval(trueloc(xu_loc - xl_loc < TWO * EPS))
+    call warning(solver, 'There is no space between the lower and upper bounds of variable '//'. The solver cannot continue')
+    return
+end if
 
 x = max(xl_loc, min(xu_loc, moderatex(x)))
 
@@ -299,13 +313,6 @@ else
     honour_x0_loc = (.not. has_rhobeg)
 end if
 
-
-!write (16, *) xl_loc
-!write (16, *) xu_loc
-!write (16, *) x
-!write (16, *) rhobeg_loc
-!write (16, *) '---'
-
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
     & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc, &
@@ -349,11 +356,6 @@ end where
 !!sl(su <= 0) = xl_loc(su <= 0) - xu_loc(su <= 0);
 !!su(su <= 0) = 0;
 
-
-!write (16, *) rhobeg_loc
-!write (16, *) x
-!write (16, *) sl
-!write (16, *) su
 
 !-------------------- Call BOBYQB, which performs the real calculations. --------------------------!
 call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &

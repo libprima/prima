@@ -4,7 +4,7 @@
 !
 ! Started: July 2020.
 !
-! Last Modified: Sunday, September 26, 2021 AM08:29:06
+! Last Modified: Monday, May 02, 2022 PM10:17:39
 
 
 module info_mod
@@ -24,6 +24,7 @@ public :: NAN_INF_X
 public :: NAN_INF_F
 public :: NAN_MODEL
 public :: DAMAGING_ROUNDING
+public :: NO_SPACE_BETWEEN_BOUNDS
 
 
 integer(IK), parameter :: INFO_DFT = 0_IK
@@ -36,6 +37,7 @@ integer(IK), parameter :: MAXTR_REACHED = 20_IK
 integer(IK), parameter :: NAN_INF_X = -1_IK
 integer(IK), parameter :: NAN_INF_F = -2_IK
 integer(IK), parameter :: NAN_MODEL = -3_IK
+integer(IK), parameter :: NO_SPACE_BETWEEN_BOUNDS = 6_IK
 integer(IK), parameter :: DAMAGING_ROUNDING = 7_IK
 
 
