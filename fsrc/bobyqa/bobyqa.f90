@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 02, 2022 AM07:56:25
+! Last Modified: Monday, May 02, 2022 AM09:45:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -300,11 +300,11 @@ else
 end if
 
 
-write (16, *) xl_loc
-write (16, *) xu_loc
-write (16, *) x
-write (16, *) rhobeg
-write (16, *) '---'
+!write (16, *) xl_loc
+!write (16, *) xu_loc
+!write (16, *) x
+!write (16, *) rhobeg_loc
+!write (16, *) '---'
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
@@ -350,10 +350,10 @@ end where
 !!su(su <= 0) = 0;
 
 
-write (16, *) rhobeg
-write (16, *) x
-write (16, *) sl
-write (16, *) su
+!write (16, *) rhobeg_loc
+!write (16, *) x
+!write (16, *) sl
+!write (16, *) su
 
 !-------------------- Call BOBYQB, which performs the real calculations. --------------------------!
 call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
