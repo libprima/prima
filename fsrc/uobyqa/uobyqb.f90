@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 10, 2022 PM06:27:05
+! Last Modified: Tuesday, May 03, 2022 AM01:26:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,7 +33,8 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
-!use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+use, non_intrinsic :: linalg_mod, only : inprod, matprod!, norm
+use, non_intrinsic :: symmat_mod, only : vec2mat
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
@@ -74,7 +75,8 @@ integer(IK) :: npt
 integer(IK) :: maxhist
 integer(IK) :: maxfhist
 integer(IK) :: maxxhist
-real(RP) :: d(size(x) + 1)  ! D(N+1) is accessed when N = 1
+!real(RP) :: d(size(x) + 1)  ! D(N+1) is accessed when N = 1
+real(RP) :: d(size(x))
 real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x))
 real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2, (size(x) + 1) * (size(x) + 2) / 2 - 1)
@@ -84,8 +86,8 @@ real(RP) :: w(max(6_IK * size(x), (size(x)**2 + 3_IK * size(x) + 2_IK) / 2_IK))
 real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
-!real(RP) :: xpt(size(x), size(pl, 1))
-real(RP) :: xpt(size(x) + 1, size(pl, 1))  ! XPT(2, :) is accessed when N = 1
+real(RP) :: xpt(size(x), size(pl, 1))
+!real(RP) :: xpt(size(x) + 1, size(pl, 1))  ! XPT(2, :) is accessed when N = 1
 real(RP) :: ddknew, delta, detrat, diff,        &
 &        distest, dnorm, errtol, estim, evalue, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
@@ -154,35 +156,46 @@ nftest = maxfun
 rho = rhobeg
 rhosq = rho * rho
 nf = 0
-do i = 1, n
-    xbase(i) = x(i)
-    do k = 1, npt
-        xpt(i, k) = ZERO
-    end do
-end do
-do k = 1, npt
-    do j = 1, npt - 1_IK
-        pl(k, j) = ZERO
-    end do
-end do
+!do i = 1, n
+!    xbase(i) = x(i)
+!    do k = 1, npt
+!        xpt(i, k) = ZERO
+!    end do
+!end do
+
+xbase = x
+xpt = ZERO
+pl = ZERO
+
+!do k = 1, npt
+!    do j = 1, npt - 1_IK
+!        pl(k, j) = ZERO
+!    end do
+!end do
 !
 !     The branch to label 120 obtains a new value of the objective function
 !     and then there is a branch back to label 50, because the new function
 !     value is needed to form the initial quadratic model. The least function
 !     value so far and its index are noted below.
 !
-30 do i = 1, n
-    x(i) = xbase(i) + xpt(i, nf + 1)
-end do
+30 continue
+
+x = xbase + xpt(:, nf + 1)
+!do i = 1, n
+!    x(i) = xbase(i) + xpt(i, nf + 1)
+!end do
+
 goto 120
-50 if (nf == 1) then
+
+50 continue
+
+if (nf == 1) then
     fopt = f
     kopt = nf
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do i = 1, n
-        xopt(i) = xpt(i, 1)
-    end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    xopt = xpt(:, nf)
+    !do i = 1, n
+    !    xopt(i) = xpt(i, 1)
+    !end do
     fbase = f
     j = 0
     jswitch = -1
@@ -191,10 +204,11 @@ else
     if (f < fopt) then
         fopt = f
         kopt = nf
+        xopt = xpt(:, nf)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        do i = 1, n
-            xopt(i) = xpt(i, nf)
-        end do
+        !do i = 1, n
+        !    xopt(i) = xpt(i, nf)
+        !end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     end if
 end if
@@ -287,32 +301,26 @@ end if
 !
 sixthm = ZERO
 delta = rho
-60 tworsq = (TWO * rho)**2
+60 continue
+
+tworsq = (TWO * rho)**2
 rhosq = rho * rho
 !
 !     Form the gradient of the quadratic model at the trust region centre.
 !
-70 knew = 0
+70 continue
+
+knew = 0
+xopt = xpt(:, kopt)
+g = pq(1:n)
+h = vec2mat(pq(n + 1:size(pq)))
+
 ih = n
 do j = 1, n
-    xopt(j) = xpt(j, kopt)
-    g(j) = pq(j)
     do i = 1, j
         ih = ih + 1
         g(i) = g(i) + pq(ih) * xopt(j)
         if (i < j) g(j) = g(j) + pq(ih) * xopt(i)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
-! models. In such a case, we terminate the code. Otherwise, the behavior
-! of TRSTEP or LAGMAX is not predictable, and Segmentation Fault or
-! infinite cycling may happen. This is because any equality/inequality
-! comparison involving NaN returns FALSE, which can lead to unintended
-! behavior of the code, including uninitialized indices.
-!   80 H(I,J)=PQ(IH)
-        h(i, j) = pq(ih)
-        ! This must be done, otherwise, compilers will complain that H is not (completely) defined.
-        h(j, i) = h(i, j)
-
     end do
 end do
 
@@ -328,11 +336,12 @@ end if
 !     and also calculate a lower bound on the Hessian term of the model Q.
 call trstep(delta, g, h, tol, d(1:n), evalue)
 
-temp = ZERO
-do i = 1, n
-    temp = temp + d(i)**2
-end do
-dnorm = min(delta, sqrt(temp))
+!temp = sum(d**2)
+!temp = ZERO
+!do i = 1, n
+!    temp = temp + d(i)**2
+!end do
+dnorm = min(delta, sqrt(sum(d**2)))
 errtol = -ONE
 if (dnorm < HALF * rho) then
     knew = -1
@@ -418,13 +427,14 @@ do j = 1, n
         vquad = vquad + w(ih) * pq(ih)
     end do
 end do
-do k = 1, npt
-    temp = ZERO
-    do j = 1, npt - 1_IK
-        temp = temp + w(j) * pl(k, j)
-    end do
-    vlag(k) = temp
-end do
+!do k = 1, npt
+!    temp = ZERO
+!    do j = 1, npt - 1_IK
+!        temp = temp + w(j) * pl(k, j)
+!    end do
+!    vlag(k) = temp
+!end do
+vlag = matprod(pl, w(1:npt - 1))
 vlag(kopt) = vlag(kopt) + ONE
 !
 !     Update SIXTHM, which is a lower bound on one sixth of the greatest
@@ -541,13 +551,17 @@ if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > tworsq) goto 7
 !     Alternatively, find out if the interpolation points are close
 !     enough to the best point so far.
 !
-290 do k = 1, npt
+290 continue
+
+do k = 1, npt
     w(k) = ZERO
     do i = 1, n
         w(k) = w(k) + (xpt(i, k) - xopt(i))**2
     end do
 end do
-310 knew = -1
+310 continue
+
+knew = -1
 distest = tworsq
 do k = 1, npt
     if (w(k) > distest) then
@@ -578,8 +592,6 @@ if (knew > 0) then
 !  330     H(I,J)=TEMP
             h(i, j) = temp
             h(j, i) = h(i, j)
-
-
         end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         sumh = sumh + HALF * temp * temp
@@ -668,13 +680,17 @@ info = SMALL_TR_RADIUS !!??
 
 if (errtol >= ZERO) goto 100
 
-420 if (fopt <= f .or. is_nan(f)) then
+420 continue
+
+if (fopt <= f .or. is_nan(f)) then
     x = xbase + xopt
     f = fopt
 end if
 
 !---------------------------------------------!
-430 call rangehist(nf, xhist, fhist)
+430 continue
+
+call rangehist(nf, xhist, fhist)
 !---------------------------------------------!
 
 end subroutine uobyqb
