@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 02, 2022 AM08:23:48
+! Last Modified: Monday, May 02, 2022 AM08:45:22
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -298,7 +298,7 @@ if (abs(rhobeg - rhoend) < 1.0E2_RP * EPS * max(abs(rhobeg), ONE)) then
 end if
 
 ! Revise the default values for RHOBEG/RHOEND according to the solver.
-if (lower(solver) == 'bobyqan') then
+if (lower(solver) == 'bobyqa') then
     rhobeg_default = max(EPS, min(RHOBEG_DFT, minval(xu - xl) / 4.0_RP))
     rhoend_default = max(EPS, min(TENTH * rhobeg_default, RHOEND_DFT))
 else
@@ -315,9 +315,13 @@ if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
     end if
     write (wmsg, rfmt) rhobeg
     call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//trimstr(wmsg))
-elseif (lower(solver) == 'bobyqa' .and. rhobeg > minval(xu - xl) / TWO) then
-    rhobeg = minval(xu - xl) / 4.0_RP
-    call warning(solver, 'Invalid RHOBEG; '//solver//' requires RHOBEG <= MIN(XU-XL)/2; it is set to MIN(XU-XL)/4.')
+elseif (lower(solver) == 'bobyqa') then
+    ! Do NOT merge the IF below into the ELSEIF above!! Otherwise, XU and XL may be accessed even if
+    ! the solver is not BOBYQA, because the logical evaluation is not short-circuit.
+    if (rhobeg > minval(xu - xl) / TWO) then
+        rhobeg = minval(xu - xl) / 4.0_RP
+        call warning(solver, 'Invalid RHOBEG; '//solver//' requires RHOBEG <= MIN(XU-XL)/2; it is set to MIN(XU-XL)/4.')
+    end if
 end if
 
 if (rhoend <= 0 .or. rhobeg < rhoend .or. is_nan(rhoend) .or. is_inf(rhoend)) then
