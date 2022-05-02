@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 02, 2022 AM07:16:57
+! Last Modified: Monday, May 02, 2022 AM08:03:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -401,7 +401,8 @@ do j = 1, n
             w(jsu) = temp
         else
             x(j) = xl_loc(j) + rhobeg_loc
-            w(jsl) = -rhobeg_loc
+            !w(jsl) = -rhobeg_loc
+            w(jsl) = xl_loc(j) - x(j)
             w(jsu) = max(xu_loc(j) - x(j), rhobeg_loc)
         end if
         !else if (w(jsu) <= rhobeg_loc) then
@@ -413,7 +414,8 @@ do j = 1, n
         else
             x(j) = xu_loc(j) - rhobeg_loc
             w(jsl) = min(xl_loc(j) - x(j), -rhobeg_loc)
-            w(jsu) = rhobeg_loc
+            !w(jsu) = rhobeg_loc
+            w(jsu) = xu_loc(j) - x(j)
         end if
     end if
     if (w(jsl) < 0) w(jsl) = min(w(jsl), -rhobeg)

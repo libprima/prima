@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 02, 2022 AM12:15:57
+! Last Modified: Monday, May 02, 2022 AM08:23:48
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -77,9 +77,7 @@ integer(IK) :: min_maxfun
 integer(IK) :: unit_memo
 logical :: is_constrained_loc
 logical :: lbx(n)
-logical :: lbx_plus(n)
 logical :: ubx(n)
-logical :: ubx_minus(n)
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 real(RP) :: rhobeg_default
@@ -348,17 +346,30 @@ if (present(honour_x0)) then
             end if
         end if
     else
+        x0_old = x0  ! Recorded to see whether X0 is really revised.
         ! N.B.: The following revision is valid only if XL <= X0 <= XU and RHOBEG <= MINVAL(XU-XL)/2,
         ! which should hold at this point due to the revision of RHOBEG and moderation of X0.
-        x0_old = x0
-        lbx = (x0 <= xl + HALF * rhobeg)
-        lbx_plus = (x0 > xl + HALF * rhobeg .and. x0 < xl + rhobeg)
-        ubx = (x0 >= xu - HALF * rhobeg)
-        ubx_minus = (x0 < xu - HALF * rhobeg .and. x0 > xu - rhobeg)
-        x0(trueloc(lbx)) = xl(trueloc(lbx))
-        x0(trueloc(lbx_plus)) = xl(trueloc(lbx_plus)) + rhobeg
-        x0(trueloc(ubx)) = xu(trueloc(ubx))
-        x0(trueloc(ubx_minus)) = xu(trueloc(ubx_minus)) - rhobeg
+        ! The cases below are mutually exclusive in precise arithmetic as MINVAL(XU-XL) >= 2*RHOBEG.
+        where (x0 <= xl + HALF * rhobeg)
+            x0 = xl
+        elsewhere(x0 < xl + rhobeg)
+            x0 = xl + rhobeg
+        end where
+        where (x0 >= xu - HALF * rhobeg)
+            x0 = xu
+        elsewhere(x0 > xu - rhobeg)
+            x0 = xu - rhobeg
+        end where
+        !!MATLAB code:
+        !!lbx = (x0 <= xl + 0.5 * rhobeg);
+        !!lbx_plus = (x0 > xl + 0.5 * rhobeg .and. x0 < xl + rhobeg);
+        !!ubx = (x0 >= xu - 0.5 * rhobeg);
+        !!ubx_minus = (x0 < xu - 0.5 * rhobeg .and. x0 > xu - rhobeg);
+        !!x0(lbx) = xl(lbx);
+        !!x0(lbx_plus) = xl(lbx_plus) + rhobeg;
+        !!x0(ubx) = xu(ubx);
+        !!x0(ubx_minus) = xu(ubx_minus) - rhobeg;
+
         if (maxval(abs(x0_old - x0)) > EPS * maxval([ONE, abs(x0)])) then
             call warning(solver, 'X0 is revised so that the distance between X0 and the inactive bounds is at least RHOBEG; '// &
                  & 'set HONOUR_X0 to .TRUE. if you prefer to keep X0 unchanged')
