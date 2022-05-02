@@ -34,7 +34,7 @@ try
     toc
 
     %solvers = {'cobylan', 'uobyqan', 'newuoan', 'bobyqan', 'lincoan'};
-    %solvers = {'cobylan', 'newuoan', 'bobyqan', 'lincoan'};  % uobyqan cannot solve 1D problem as of 20220502
+    solvers = {'cobylan', 'newuoan', 'bobyqan', 'lincoan'};  % uobyqan cannot solve 1D problem as of 20220502
     precisions = {'double', 'single', 'quadruple'};
     debug_flags = {true, false};
     variants = {'modern', 'classical'};
