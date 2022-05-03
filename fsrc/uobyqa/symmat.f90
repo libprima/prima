@@ -9,7 +9,7 @@ module symmat_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 03, 2022 AM01:03:17
+! Last Modified: Wednesday, May 04, 2022 AM12:43:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,7 +25,7 @@ function vec2mat(vec) result(mat)
 ! This module transforms a vector to a symmetric matrix with the vector storing the upper triangular
 ! part of the matrix column by column.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : issymmetric
 implicit none
