@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 02, 2022 AM12:20:58
+! Last Modified: Tuesday, May 03, 2022 PM10:38:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -398,6 +398,7 @@ else
     knew = 0
     scaden = ZERO
     if (any(score > 0)) then
+        ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we exclude such K.
         knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
         scaden = score(knew)
         !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
@@ -505,11 +506,12 @@ if (ntrits > 0) then
         den = hdiag * beta + vlag(1:npt)**2
         distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
         weight = max(ONE, (distsq / delta**2)**2)
-
         score = weight * den
+
         knew = 0
         scaden = ZERO
         if (any(score > 0)) then
+            ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we exclude such K.
             knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
             scaden = score(knew)
             !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');

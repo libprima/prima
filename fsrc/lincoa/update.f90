@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 PM07:45:43
+! Last Modified: Tuesday, May 03, 2022 PM11:43:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,7 +25,7 @@ contains
 subroutine update(kopt, step, xpt, idz, knew, bmat, zmat)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : trueloc
@@ -47,6 +47,7 @@ real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATE'
 real(RP) :: beta, denabs(size(xpt, 2)), distsq(size(xpt, 2)), hdiag(size(xpt, 2)), score(size(xpt, 2))
+real(RP) :: weight(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 !integer(IK) :: j, k
 integer(IK) :: n
@@ -86,7 +87,7 @@ end if
 !       both of these vectors being required.
 !
 !     The arrays BMAT and ZMAT with IDZ are updated, the new matrices being
-!       the ONEs that are suitable after the shift of the KNEW-th point to
+!       the ones that are suitable after the shift of the KNEW-th point to
 !       the new position XPT(KOPT,.)+STEP(.). A return with KNEW set to ZERO
 !       occurs if the calculation fails due to a ZERO denominator in the
 !       updating formula, which should never happen.
@@ -110,16 +111,16 @@ if (knew == 0) then
     hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
     denabs = abs(beta * hdiag + vlag(1:npt)**2)
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-    score = denabs * distsq * distsq
-
-    ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
-    score(trueloc(is_nan(score))) = -ONE
+    weight = distsq**2
+    score = weight * denabs
 
     if (any(score > 0)) then
-        knew = int(maxloc(score, dim=1), kind(knew))
+        ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
+        knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+        !!MATLAB: [~, knew] = max(score, [], 'omitnan');
     else
         ! Powell's code does not handle this case, leaving KNEW = 0 and leading to a segfault.
-        knew = int(maxloc(distsq, dim=1), kind(knew))
+        knew = int(maxloc(distsq, dim=1), IK)
     end if
 end if
 call assert(1 <= knew .and. knew <= npt, '1 <= KNEW <= NPT', srname)

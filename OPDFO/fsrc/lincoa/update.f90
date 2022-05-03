@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 18, 2022 PM07:38:56
+! Last Modified: Tuesday, May 03, 2022 PM10:02:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -174,7 +174,8 @@ if (knew == 0) then
         do j = 1, n
             distsq = distsq + (xpt(j, k) - xpt(j, kopt))**2
         end do
-        temp = denabs * distsq * distsq
+        !temp = denabs * distsq * distsq
+        temp = distsq**2 * denabs
         if (temp > denmax) then
             denmax = temp
             knew = k

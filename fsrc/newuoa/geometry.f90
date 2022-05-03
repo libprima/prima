@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 23, 2022 PM11:18:15
+! Last Modified: Tuesday, May 03, 2022 PM10:36:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -44,7 +44,7 @@ function setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat) resul
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : issymmetric, trueloc
+use, non_intrinsic :: linalg_mod, only : issymmetric
 use, non_intrinsic :: powalg_mod, only : calvlag, calbeta
 implicit none
 
@@ -72,6 +72,7 @@ real(RP) :: distsq(size(xpt, 2))
 real(RP) :: hdiag(size(xpt, 2))
 real(RP) :: score(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
+real(RP) :: weight(size(xpt, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(npt))
@@ -110,20 +111,22 @@ end if
 
 hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
 denabs = abs(beta * hdiag + vlag(1:npt)**2)
-score = denabs * max(distsq / max(TENTH * delta, rho)**2, ONE)**3
+weight = max(distsq / max(TENTH * delta, rho)**2, ONE)**3
+score = weight * denabs
 ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
 if (.not. tr_success) then
     score(kopt) = -ONE
 end if
-score(trueloc(is_nan(score))) = -ONE
 
 if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
     ! See (7.5) of the NEWUOA paper for the definition of KNEW in this case.
-    knew = int(maxloc(score, dim=1), kind(knew))
+    ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
+    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+    !!MATLAB: [~, knew] = max(score, [], 'omitnan');
 elseif (tr_success) then
     ! Powell's code does not include the following instructions. With Powell's code, if DENABS
     ! consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
-    knew = int(maxloc(distsq, dim=1), kind(knew))
+    knew = int(maxloc(distsq, dim=1), IK)
 else
     knew = 0_IK  ! We arrive here when TR_SUCCESS = FALSE and no entry of SCORE exceeds one.
 end if

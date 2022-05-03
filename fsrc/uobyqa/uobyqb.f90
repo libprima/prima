@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 03, 2022 AM01:26:07
+! Last Modified: Wednesday, May 04, 2022 AM12:12:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,7 +33,7 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : inprod, matprod!, norm
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod!, norm
 use, non_intrinsic :: symmat_mod, only : vec2mat
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -88,13 +88,14 @@ real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 1))
 !real(RP) :: xpt(size(x) + 1, size(pl, 1))  ! XPT(2, :) is accessed when N = 1
-real(RP) :: ddknew, delta, detrat, diff,        &
+real(RP) :: ddknew, delta, detrat, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score(size(pl, 1)),    &
 &        distest, dnorm, errtol, estim, evalue, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
 &        sumg, sumh, temp, tempa, tol, tworsq, vmax,  &
-&        vquad, wmult
+&        vquad, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
 integer(IK) :: i, ih, ip, iq, iw, j, jswitch, k, knew, kopt,&
 &           ksave, ktemp, nftest, nnp
+logical :: tr_success
 
 ! Sizes.
 n = int(size(x), kind(n))
@@ -156,23 +157,11 @@ nftest = maxfun
 rho = rhobeg
 rhosq = rho * rho
 nf = 0
-!do i = 1, n
-!    xbase(i) = x(i)
-!    do k = 1, npt
-!        xpt(i, k) = ZERO
-!    end do
-!end do
 
 xbase = x
 xpt = ZERO
 pl = ZERO
 
-!do k = 1, npt
-!    do j = 1, npt - 1_IK
-!        pl(k, j) = ZERO
-!    end do
-!end do
-!
 !     The branch to label 120 obtains a new value of the objective function
 !     and then there is a branch back to label 50, because the new function
 !     value is needed to form the initial quadratic model. The least function
@@ -181,9 +170,6 @@ pl = ZERO
 30 continue
 
 x = xbase + xpt(:, nf + 1)
-!do i = 1, n
-!    x(i) = xbase(i) + xpt(i, nf + 1)
-!end do
 
 goto 120
 
@@ -193,9 +179,6 @@ if (nf == 1) then
     fopt = f
     kopt = nf
     xopt = xpt(:, nf)
-    !do i = 1, n
-    !    xopt(i) = xpt(i, 1)
-    !end do
     fbase = f
     j = 0
     jswitch = -1
@@ -205,11 +188,6 @@ else
         fopt = f
         kopt = nf
         xopt = xpt(:, nf)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        !do i = 1, n
-        !    xopt(i) = xpt(i, nf)
-        !end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     end if
 end if
 !
@@ -313,7 +291,7 @@ rhosq = rho * rho
 knew = 0
 xopt = xpt(:, kopt)
 g = pq(1:n)
-h = vec2mat(pq(n + 1:size(pq)))
+h = vec2mat(pq(n + 1:npt - 1))
 
 ih = n
 do j = 1, n
@@ -336,11 +314,6 @@ end if
 !     and also calculate a lower bound on the Hessian term of the model Q.
 call trstep(delta, g, h, tol, d(1:n), evalue)
 
-!temp = sum(d**2)
-!temp = ZERO
-!do i = 1, n
-!    temp = temp + d(i)**2
-!end do
 dnorm = min(delta, sqrt(sum(d**2)))
 errtol = -ONE
 if (dnorm < HALF * rho) then
@@ -427,29 +400,23 @@ do j = 1, n
         vquad = vquad + w(ih) * pq(ih)
     end do
 end do
-!do k = 1, npt
-!    temp = ZERO
-!    do j = 1, npt - 1_IK
-!        temp = temp + w(j) * pl(k, j)
-!    end do
-!    vlag(k) = temp
-!end do
 vlag = matprod(pl, w(1:npt - 1))
 vlag(kopt) = vlag(kopt) + ONE
-!
-!     Update SIXTHM, which is a lower bound on one sixth of the greatest
-!     third derivative of F.
-!
+
+! Update SIXTHM, which is a lower bound on one sixth of the greatest third derivative of F. The
+! lower bound is derived from (3.1) of the UOBYQA paper.
 diff = f - fopt - vquad
 summ = ZERO
-do k = 1, npt
-    temp = ZERO
-    do i = 1, n
-        temp = temp + (xpt(i, k) - xnew(i))**2
-    end do
-    temp = sqrt(temp)
-    summ = summ + abs(temp * temp * temp * vlag(k))
-end do
+!do k = 1, npt
+!    !temp = ZERO
+!    !do i = 1, n
+!    !    temp = temp + (xpt(i, k) - xnew(i))**2
+!    !end do
+!    temp = sqrt(sum((xpt(:, k) - xnew)**2))
+!    summ = summ + abs(temp * temp * temp * vlag(k))
+!end do
+distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
+summ = inprod(distsq, sqrt(distsq) * abs(vlag))
 ! SUMM may become 0 due to rounding, even in double precision. Detected by ifort.
 if (abs(diff) > 0 .and. summ > 0) then
     sixthm = max(sixthm, abs(diff) / summ)
@@ -461,9 +428,10 @@ end if
 fsave = fopt
 if (f < fopt) then
     fopt = f
-    do i = 1, n
-        xopt(i) = xnew(i)
-    end do
+    xopt = xnew
+    !do i = 1, n
+    !    xopt(i) = xnew(i)
+    !end do
 end if
 ksave = knew
 
@@ -492,25 +460,52 @@ if (knew <= 0) then
 !
 !     Set KNEW to the index of the next interpolation point to be deleted.
 !
-    ktemp = 0
-    detrat = ZERO
-    if (f >= fsave) then
-        ktemp = kopt
-        detrat = ONE
+    !ktemp = 0
+    !detrat = ZERO
+    !if (f >= fsave) then
+    !    ktemp = kopt
+    !    detrat = ONE
+    !end if
+    !do k = 1, npt
+    !    summ = ZERO
+    !    do i = 1, n
+    !        summ = summ + (xpt(i, k) - xopt(i))**2
+    !    end do
+    !    temp = abs(vlag(k))
+    !    !if (summ > rhosq)
+    !    temp = temp * max(ONE, summ / rhosq)**1.5_RP
+    !    if (temp > detrat .and. k /= ktemp) then
+    !        detrat = temp
+    !        ddknew = summ
+    !        knew = k
+    !    end if
+    !end do
+
+    !detrat = ZERO
+
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    weight = max(ONE, distsq / rhosq)**1.5_RP
+    score = weight * abs(vlag)
+
+    tr_success = (f < fsave)
+
+    if (.not. tr_success) then
+        ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
+        score(kopt) = -ONE
     end if
-    do k = 1, npt
-        summ = ZERO
-        do i = 1, n
-            summ = summ + (xpt(i, k) - xopt(i))**2
-        end do
-        temp = abs(vlag(k))
-        if (summ > rhosq) temp = temp * (summ / rhosq)**1.5_RP
-        if (temp > detrat .and. k /= ktemp) then
-            detrat = temp
-            ddknew = summ
-            knew = k
-        end if
-    end do
+
+    if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
+        ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we exclude such K.
+        knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+        !!MATLAB: [~, knew] = max(score, [], 'omitnan');
+        ddknew = distsq(knew)
+    elseif (tr_success) then
+        ! Powell's code does not include the following instructions. With Powell's code, if DENABS
+        ! consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
+        knew = int(maxloc(distsq, dim=1), IK)
+    else
+        knew = 0_IK
+    end if
     if (knew == 0) goto 290
 end if
 !
@@ -518,24 +513,30 @@ end if
 !     and also update the Lagrange functions and the quadratic model.
 !
 
-!240 continue
+xpt(:, knew) = xnew
+!do i = 1, n
+!    xpt(i, knew) = xnew(i)
+!end do
+!temp = ONE / vlag(knew)
+!pl(knew, :) = (ONE / vlag(knew)) * pl(knew, :)
+pl(knew, :) = pl(knew, :) / vlag(knew)
+plknew = pl(knew, :)
+pq = pq + diff * plknew
+!do j = 1, npt - 1_IK
+!    pl(knew, j) = temp * pl(knew, j)
+!    pq(j) = pq(j) + diff * pl(knew, j)
+!end do
+pl = pl - outprod(vlag, plknew)
+pl(knew, :) = plknew
 
-do i = 1, n
-    xpt(i, knew) = xnew(i)
-end do
-temp = ONE / vlag(knew)
-do j = 1, npt - 1_IK
-    pl(knew, j) = temp * pl(knew, j)
-    pq(j) = pq(j) + diff * pl(knew, j)
-end do
-do k = 1, npt
-    if (k /= knew) then
-        temp = vlag(k)
-        do j = 1, npt - 1_IK
-            pl(k, j) = pl(k, j) - temp * pl(knew, j)
-        end do
-    end if
-end do
+!do k = 1, npt
+!    if (k /= knew) then
+!        temp = vlag(k)
+!        do j = 1, npt - 1_IK
+!            pl(k, j) = pl(k, j) - temp * pl(knew, j)
+!        end do
+!    end if
+!end do
 !
 !     Update KOPT if F is the least calculated value of the objective
 !     function. Then branch for another trust region calculation. The
@@ -553,48 +554,73 @@ if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > tworsq) goto 7
 !
 290 continue
 
-do k = 1, npt
-    w(k) = ZERO
-    do i = 1, n
-        w(k) = w(k) + (xpt(i, k) - xopt(i))**2
-    end do
-end do
+!do k = 1, npt
+!    w(k) = ZERO
+!    do i = 1, n
+!        w(k) = w(k) + (xpt(i, k) - xopt(i))**2
+!    end do
+!end do
+
+distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+w(1:npt) = distsq
+
 310 continue
 
 knew = -1
 distest = tworsq
-do k = 1, npt
-    if (w(k) > distest) then
-        knew = k
-        distest = w(k)
-    end if
-end do
+!do k = 1, npt
+!    if (w(k) > distest) then
+!        knew = k
+!        distest = w(k)
+!    end if
+!end do
+if (any(w(1:npt) > distest)) then
+    knew = int(maxloc(w(1:npt), mask=(.not. is_nan(w(1:npt))), dim=1), IK)
+    distest = w(knew)
+    !!MATLAB: [distest, knew] = max(w(1:npt), [], 'omitnan');
+end if
 !
 !     If a point is sufficiently far away, then set the gradient and Hessian
 !     of its Lagrange function at the centre of the trust region, and find
-!     HALF the summ of squares of compONEnts of the Hessian.
+!     HALF the summ of squares of components of the Hessian.
 !
 if (knew > 0) then
+    g = pl(knew, 1:n)
+    h = vec2mat(pl(knew, n + 1:npt - 1))
+
     ih = n
     sumh = ZERO
     do j = 1, n
-        g(j) = pl(knew, j)
+        !g(j) = pl(knew, j)
         do i = 1, j
             ih = ih + 1
             temp = pl(knew, ih)
-            g(j) = g(j) + temp * xopt(i)
+            !g(j) = g(j) + temp * xopt(i)
             if (i < j) then
-                g(i) = g(i) + temp * xopt(j)
+                !g(i) = g(i) + temp * xopt(j)
                 sumh = sumh + temp * temp
             end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: See the comments below line number 70
 !  330     H(I,J)=TEMP
-            h(i, j) = temp
-            h(j, i) = h(i, j)
+!            h(i, j) = temp
+!            h(j, i) = h(i, j)
         end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         sumh = sumh + HALF * temp * temp
+    end do
+
+    !!sumh = HALF * sum(vec2mat(pl(knew, :))**2)
+
+    ih = n
+    do j = 1, n
+        do i = 1, j
+            ih = ih + 1
+            g(j) = g(j) + pl(knew, ih) * xopt(i)
+            if (i < j) then
+                g(i) = g(i) + pl(knew, ih) * xopt(j)
+            end if
+        end do
     end do
 
     if (is_nan(sum(abs(g)) + sum(abs(h)))) then
@@ -612,9 +638,10 @@ if (knew > 0) then
     if (errtol > ZERO) then
         w(knew) = ZERO
         sumg = ZERO
-        do i = 1, n
-            sumg = sumg + g(i)**2
-        end do
+        sumg = sum(g**2)
+        !do i = 1, n
+        !    sumg = sumg + g(i)**2
+        !end do
         estim = rho * (sqrt(sumg) + rho * sqrt(HALF * sumh))
         wmult = sixthm * distest**1.5_RP
         if (wmult * estim <= errtol) goto 310
@@ -638,23 +665,28 @@ if (dnorm > rho) goto 70
 !
 if (rho > rhoend) then
     ih = n
+
+    xbase = xbase + xopt
+    xpt = xpt - spread(xopt, dim=2, ncopies=npt)
     do j = 1, n
-        xbase(j) = xbase(j) + xopt(j)
-        do k = 1, npt
-            xpt(j, k) = xpt(j, k) - xopt(j)
-        end do
+        !xbase(j) = xbase(j) + xopt(j)
+        !do k = 1, npt
+        !    xpt(j, k) = xpt(j, k) - xopt(j)
+        !end do
         do i = 1, j
             ih = ih + 1
             pq(i) = pq(i) + pq(ih) * xopt(j)
             if (i < j) then
                 pq(j) = pq(j) + pq(ih) * xopt(i)
-                do k = 1, npt
-                    pl(k, j) = pl(k, j) + pl(k, ih) * xopt(i)
-                end do
+                !do k = 1, npt
+                !pl(k, j) = pl(k, j) + pl(k, ih) * xopt(i)
+                !end do
+                pl(:, j) = pl(:, j) + pl(:, ih) * xopt(i)
             end if
-            do k = 1, npt
-                pl(k, i) = pl(k, i) + pl(k, ih) * xopt(j)
-            end do
+            pl(:, i) = pl(:, i) + pl(:, ih) * xopt(j)
+            !do k = 1, npt
+            !    pl(k, i) = pl(k, i) + pl(k, ih) * xopt(j)
+            !end do
         end do
     end do
 !
