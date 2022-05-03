@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 06, 2022 PM01:50:20
+! Last Modified: Tuesday, May 03, 2022 PM11:22:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -82,7 +82,7 @@ real(RP) :: ddknew, delta, detrat, diff,        &
 &        distest, dnorm, errtol, estim, evalue, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
 &        sumg, sumh, temp, tempa, tol, tworsq, vmax,  &
-&        vquad, wmult
+&        vquad, wmult, distsq(size(pl, 1))
 integer(IK) :: i, ih, ip, iq, iw, j, jswitch, k, knew, kopt,&
 &           ksave, ktemp, nftest, nnp, nptm
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -412,8 +412,9 @@ do k = 1, npt
     do i = 1, n
         temp = temp + (xpt(i, k) - xnew(i))**2
     end do
-    temp = sqrt(temp)
-    summ = summ + abs(temp * temp * temp * vlag(k))
+    !temp = sqrt(temp)
+    !summ = summ + abs(temp * temp * temp * vlag(k))
+    summ = summ + abs(sqrt(temp) * vlag(k) * temp)
 end do
 !sixthm = max(sixthm, abs(diff) / summ)
 if (abs(diff) > 0 .and. summ > 0) then
@@ -465,13 +466,22 @@ do k = 1, npt
         summ = summ + (xpt(i, k) - xopt(i))**2
     end do
     temp = abs(vlag(k))
-    if (summ > rhosq) temp = temp * (summ / rhosq)**1.5_RP
+    !if (summ > rhosq) temp = temp * (summ / rhosq)**1.5_RP
+    temp = temp * max(ONE, summ / rhosq)**1.5_RP
     if (temp > detrat .and. k /= ktemp) then
         detrat = temp
         ddknew = summ
         knew = k
     end if
 end do
+
+!-----------------------------------------------------------------------------------------------!
+distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+if (knew == 0 .and. f < fsave) then
+    knew = int(maxloc(distsq, dim=1), IK)
+end if
+!-----------------------------------------------------------------------------------------------!
+
 if (knew == 0) goto 290
 !
 !     Replace the interpolation point that has index KNEW by the point XNEW,
@@ -482,7 +492,9 @@ if (knew == 0) goto 290
 end do
 temp = ONE / vlag(knew)
 do j = 1, nptm
-    pl(knew, j) = temp * pl(knew, j)
+    !pl(knew, j) = temp * pl(knew, j)
+    pl(knew, j) = pl(knew, j) / vlag(knew)
+
     pq(j) = pq(j) + diff * pl(knew, j)
 end do
 do k = 1, npt
