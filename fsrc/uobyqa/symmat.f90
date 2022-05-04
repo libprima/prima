@@ -9,7 +9,7 @@ module symmat_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM07:52:06
+! Last Modified: Wednesday, May 04, 2022 PM08:48:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -187,14 +187,8 @@ end if
 fnorm = ZERO
 ih = 0
 do j = 1, n
-    do i = 1, j
-        ih = ih + 1
-        temp = smatv(ih)
-        if (i < j) then
-            fnorm = fnorm + TWO * temp**2
-        end if
-    end do
-    fnorm = fnorm + temp**2
+    ih = (j - 1_IK) * j / 2_IK
+    fnorm = fnorm + TWO * sum(smatv(ih + 1:ih + j - 1)**2) + smatv(ih + j)**2
 end do
 
 fnorm = sqrt(fnorm)
