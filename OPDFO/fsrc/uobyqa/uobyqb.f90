@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM04:33:31
+! Last Modified: Wednesday, May 04, 2022 PM06:14:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -82,7 +82,7 @@ real(RP) :: ddknew, delta, detrat, diff,        &
 &        distest, dnorm, errtol, estim, evalue, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
 &        sumg, sumh, temp, tempa, tol, tworsq, vmax,  &
-&        vquad, wmult, distsq(size(pl, 1))
+&        vquad, wmult, distsq(size(pl, 1)), gtmp(n), pltmp(size(pl, 1), n)
 integer(IK) :: i, ih, ip, iq, iw, j, jswitch, k, knew, kopt,&
 &           ksave, ktemp, nftest, nnp, nptm
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -550,7 +550,8 @@ if (knew > 0) then
     ih = n
     sumh = ZERO
     do j = 1, n
-        g(j) = pl(knew, j)
+        !g(j) = pl(knew, j)
+        g(j) = ZERO
         do i = 1, j
             ih = ih + 1
             temp = pl(knew, ih)
@@ -571,6 +572,7 @@ if (knew > 0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         sumh = sumh + HALF * temp * temp
     end do
+    g = pl(knew, 1:n) + g
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: See the comments below line number 70
     do i = 1, n
@@ -619,6 +621,12 @@ if (rho > rhoend) then
         do k = 1, npt
             xpt(j, k) = xpt(j, k) - xopt(j)
         end do
+        !---------------------!
+        gtmp(j) = pq(j)
+        pq(j) = ZERO
+        pltmp(:, j) = pl(:, j)
+        pl(:, j) = ZERO
+        !---------------------!
         do i = 1, j
             ih = ih + 1
             pq(i) = pq(i) + pq(ih) * xopt(j)
@@ -628,11 +636,18 @@ if (rho > rhoend) then
                     pl(k, j) = pl(k, j) + pl(k, ih) * xopt(i)
                 end do
             end if
+
+            !---------------------------------------------!
             do k = 1, npt
                 pl(k, i) = pl(k, i) + pl(k, ih) * xopt(j)
             end do
+            !---------------------------------------------!
         end do
     end do
+    !---------------------!
+    pq(1:n) = pq(1:n) + gtmp
+    pl(:, 1:n) = pl(:, 1:n) + pltmp
+    !---------------------!
 !
 !     Pick the next values of RHO and DELTA.
 !
