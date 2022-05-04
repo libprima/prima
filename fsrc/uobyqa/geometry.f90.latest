@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM05:30:57
+! Last Modified: Wednesday, May 04, 2022 PM05:09:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,32 +19,45 @@ public :: geostep
 contains
 
 
-subroutine geostep(n, g, h, rho, d, v, vmax)
+subroutine geostep(g, h, rho, d, vmax)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : issymmetric
 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: n
-real(RP), intent(in) :: g(n)
-real(RP), intent(in) :: rho
-
-! In-outputs
-real(RP), intent(out) :: d(n)
-real(RP), intent(inout) :: h(n, n)
-real(RP), intent(out) :: v(n)
+real(RP), intent(in) :: g(:)  ! G(N)
+real(RP), intent(in) :: h(:, :)  ! H_IN(N, N)
+real(RP), intent(in) :: rho  ! NEWUOA etc uses DELBAR, which is NOT RHO; possible improvement?
 
 ! Outputs
+real(RP), intent(out) :: d(:)  ! D(N)
 real(RP), intent(out) :: vmax
 
 ! Local variables
+character(len=*), parameter :: srname = 'GEOSTEP'
+integer(IK) :: n
+real(RP) :: v(size(g))
 real(RP) :: dd, dhd, dlin, dsq, gd, gg, ghg, gnorm, &
 &        halfrt, hmax, ratio, scaling, summ, sumv, temp, &
 &        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhw, &
 &        vlin, vmu, vnorm, vsq, vv, wcos, whw, wsin, wsq
 integer(IK) :: i, j, k
+
+
+! Sizes.
+n = int(size(g), kind(n))
+
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(rho > 0, 'RHO > 0', srname)
+    call assert(size(h, 1) == n .and. issymmetric(h), 'H is n-by-n and symmetric', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
+end if
+
 !
 !     N is the number of variables of a quadratic objective function, q say.
 !     G is the gradient of Q at the origin.
@@ -77,7 +90,6 @@ hmax = ZERO
 do i = 1, n
     summ = ZERO
     do j = 1, n
-        h(j, i) = h(i, j)
         summ = summ + h(i, j)**2
     end do
     if (summ > hmax) then
@@ -149,25 +161,21 @@ do i = 1, n
     dhd = dhd + summ * d(i)
 end do
 
-!---------------------------------------!
-! Zaikun 20220504
-if (.not. (gg > 0 .and. dd > 0)) then
-    d = ZERO
-    vmax = ZERO
-    return
-end if
-!---------------------------------------!
+scaling = ONE  !! ???
+if (dd > 0) scaling = sign(rho / sqrt(dd), gd * dhd)
 
-temp = gd / gg
 vv = ZERO
-scaling = sign(rho / sqrt(dd), gd * dhd)
-do i = 1, n
-    v(i) = d(i) - temp * g(i)
-    vv = vv + v(i)**2
-    d(i) = scaling * d(i)
-end do
+if (gg > 0 .and. dd > 0) then  ! Zaikun 20220504: GG and DD may become 0 due to rounding, detected by IFORT.
+    temp = gd / gg
+    vv = ZERO
+    do i = 1, n
+        v(i) = d(i) - temp * g(i)
+        vv = vv + v(i)**2
+        d(i) = scaling * d(i)
+    end do
+end if
 gnorm = sqrt(gg)
-!if (gnorm * dd <= 0.5D-2 * rho * abs(dhd) .or. vv / dd <= 1.0D-4) then
+
 if (.not. (gnorm * dd > 0.5E-2_RP * rho * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
     vmax = abs(scaling * (gd + HALF * scaling * dhd))
     goto 170
@@ -222,7 +230,7 @@ dlin = wcos * gnorm / rho
 vlin = -wsin * gnorm / rho
 tempa = abs(dlin) + HALF * abs(vmu + vhv)
 tempb = abs(vlin) + HALF * abs(ghg - vmu)
-tempc = halfrt * (abs(dlin) + abs(vlin)) + 0.25_RP * abs(ghg + vhv)
+tempc = halfrt * (abs(dlin) + abs(vlin)) + QUART * abs(ghg + vhv)
 if (tempa >= tempb .and. tempa >= tempc) then
     tempd = sign(rho, dlin * (vmu + vhv))
     tempv = ZERO

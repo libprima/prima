@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 AM12:37:32
+! Last Modified: Wednesday, May 04, 2022 PM04:46:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,7 +34,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod!, norm
-use, non_intrinsic :: symmat_mod, only : vec2mat
+use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
@@ -290,17 +290,17 @@ rhosq = rho * rho
 
 knew = 0
 xopt = xpt(:, kopt)
-g = pq(1:n)
-h = vec2mat(pq(n + 1:npt - 1))
+g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
+h = vec2smat(pq(n + 1:npt - 1))
 
-ih = n
-do j = 1, n
-    do i = 1, j
-        ih = ih + 1
-        g(i) = g(i) + pq(ih) * xopt(j)
-        if (i < j) g(j) = g(j) + pq(ih) * xopt(i)
-    end do
-end do
+!ih = n
+!do j = 1, n
+!    do i = 1, j
+!        ih = ih + 1
+!        g(i) = g(i) + pq(ih) * xopt(j)
+!        if (i < j) g(j) = g(j) + pq(ih) * xopt(i)
+!    end do
+!end do
 
 if (is_nan(sum(abs(g)) + sum(abs(h)))) then
     info = NAN_MODEL
@@ -521,7 +521,7 @@ end if
 !
 if (knew > 0) then
     g = pl(knew, 1:n)
-    h = vec2mat(pl(knew, n + 1:npt - 1))
+    h = vec2smat(pl(knew, n + 1:npt - 1))
 
     ih = n
     sumh = ZERO
@@ -536,7 +536,7 @@ if (knew > 0) then
         sumh = sumh + HALF * temp * temp
     end do
 
-    !!sumh = HALF * sum(vec2mat(pl(knew, :))**2)
+    !!sumh = HALF * sum(vec2smat(pl(knew, :))**2)
 
     ih = n
     do j = 1, n

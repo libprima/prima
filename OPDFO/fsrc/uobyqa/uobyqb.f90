@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 03, 2022 PM11:22:02
+! Last Modified: Wednesday, May 04, 2022 PM04:33:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -259,11 +259,14 @@ rhosq = rho * rho
 ih = n
 do j = 1, n
     xopt(j) = xpt(j, kopt)
-    g(j) = pq(j)
+    !g(j) = pq(j)
+    g(j) = ZERO
     do i = 1, j
         ih = ih + 1
-        g(i) = g(i) + pq(ih) * xopt(j)
+        !g(i) = g(i) + pq(ih) * xopt(j)
+        !if (i < j) g(j) = g(j) + pq(ih) * xopt(i)
         if (i < j) g(j) = g(j) + pq(ih) * xopt(i)
+        g(i) = g(i) + pq(ih) * xopt(j)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: For ill-conditiONEd problems, NaN may occur in the
 ! models. In such a case, we terminate the code. Otherwise, the behavior
@@ -279,6 +282,9 @@ do j = 1, n
         end if
     end do
 end do
+!----------------!
+g = g + pq(1:n)
+!----------------!
 do i = 1, n
     if (g(i) /= g(i)) then
         info = -3

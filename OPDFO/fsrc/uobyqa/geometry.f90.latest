@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM05:30:57
+! Last Modified: Wednesday, May 04, 2022 PM05:07:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -148,26 +148,20 @@ do i = 1, n
     end do
     dhd = dhd + summ * d(i)
 end do
-
-!---------------------------------------!
-! Zaikun 20220504
-if (.not. (gg > 0 .and. dd > 0)) then
-    d = ZERO
-    vmax = ZERO
-    return
-end if
-!---------------------------------------!
-
 temp = gd / gg
 vv = ZERO
-scaling = sign(rho / sqrt(dd), gd * dhd)
+!----------------------------------------------------!
+!scaling = sign(rho / sqrt(dd), gd * dhd)
+scaling = ONE
+if (dd > 0) scaling = sign(rho / sqrt(dd), gd * dhd)
+!----------------------------------------------------!
 do i = 1, n
     v(i) = d(i) - temp * g(i)
     vv = vv + v(i)**2
     d(i) = scaling * d(i)
 end do
 gnorm = sqrt(gg)
-!if (gnorm * dd <= 0.5D-2 * rho * abs(dhd) .or. vv / dd <= 1.0D-4) then
+!if (gnorm * dd <= 0.5E-2_RP * rho * abs(dhd) .or. vv / dd <= 1.0E-4_RP) then
 if (.not. (gnorm * dd > 0.5E-2_RP * rho * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
     vmax = abs(scaling * (gd + HALF * scaling * dhd))
     goto 170

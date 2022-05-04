@@ -518,6 +518,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "warning #7893: Allocatable dummy arguments is an extension of Standard F95" \
 	| grep -v "warning #7894: Allocatable function results is an extension of Standard F95" \
 	| grep -v "warning #8192: A procedure declaration statement is not standard Fortran 95" \
+	| grep -v "symmat.f90([0-9]*): warning #7351: This intrinsic function in a specification expression is not standard Fortran 95.   \[SQRT\]" \
 	| grep -v "warning #7410: Fortran 95 does not allow this keyword" \
 	| grep -v "warning #5196: Fortran [0-9]* does not allow array constructors in square brackets" \
 	| grep -v "warning #6916: Fortran [0-9]* does not allow this length specification\.\s*\[[0-9]*\]" \

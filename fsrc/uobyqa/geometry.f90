@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM10:53:43
+! Last Modified: Wednesday, May 04, 2022 PM05:37:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -160,6 +160,15 @@ do i = 1, n
     end do
     dhd = dhd + summ * d(i)
 end do
+
+! Zaikun 20220504: GG and DD can become 0 at this point due to rounding. Detected by IFORT.
+if (.not. (gg > 0 .and. dd > 0)) then
+    d = ZERO
+    vmax = ZERO
+    return
+end if
+
+
 temp = gd / gg
 vv = ZERO
 scaling = sign(rho / sqrt(dd), gd * dhd)
@@ -169,7 +178,9 @@ do i = 1, n
     d(i) = scaling * d(i)
 end do
 gnorm = sqrt(gg)
-if (gnorm * dd <= 0.5E-2_RP * rho * abs(dhd) .or. vv / dd <= 1.0E-4_RP) then
+
+!if (gnorm * dd <= 0.5E-2_RP * rho * abs(dhd) .or. vv / dd <= 1.0E-4_RP) then
+if (.not. (gnorm * dd > 0.5E-2_RP * rho * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
     vmax = abs(scaling * (gd + HALF * scaling * dhd))
     goto 170
 end if
