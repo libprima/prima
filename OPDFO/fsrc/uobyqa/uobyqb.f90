@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM06:14:06
+! Last Modified: Wednesday, May 04, 2022 PM07:48:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -558,7 +558,8 @@ if (knew > 0) then
             g(j) = g(j) + temp * xopt(i)
             if (i < j) then
                 g(i) = g(i) + temp * xopt(j)
-                sumh = sumh + temp * temp
+                !sumh = sumh + temp * temp
+                sumh = sumh + TWO * temp**2
             end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: See the comments below line number 70
@@ -570,7 +571,8 @@ if (knew > 0) then
             end if
         end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        sumh = sumh + HALF * temp * temp
+        !sumh = sumh + HALF * temp * temp
+        sumh = sumh + temp**2
     end do
     g = pl(knew, 1:n) + g
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -593,7 +595,8 @@ if (knew > 0) then
         do i = 1, n
             sumg = sumg + g(i)**2
         end do
-        estim = rho * (sqrt(sumg) + rho * sqrt(HALF * sumh))
+        !estim = rho * (sqrt(sumg) + rho * sqrt(HALF * sumh))
+        estim = rho * (sqrt(sumg) + rho * HALF * sqrt(sumh))
         wmult = sixthm * distest**1.5_RP
         if (wmult * estim <= errtol) goto 310
     end if

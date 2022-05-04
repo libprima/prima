@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM06:15:52
+! Last Modified: Wednesday, May 04, 2022 PM08:35:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,7 +34,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod!, norm
-use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
+use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec, smat_fnorm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
@@ -303,7 +303,7 @@ end if
 !     Generate the next trust region step and test its length. Set KNEW
 !     to -1 if the purpose of the next F will be to improve conditioning,
 !     and also calculate a lower bound on the Hessian term of the model Q.
-call trstep(delta, g, h, tol, d(1:n), evalue)
+call trstep(delta, g, h, tol, d, evalue)
 
 dnorm = min(delta, sqrt(sum(d**2)))
 errtol = -ONE
@@ -318,7 +318,7 @@ end if
 
 
 100 continue
-xnew = xopt + d(1:n)  ! For the moment, SIZE(D) = N+1; to be fixed
+xnew = xopt + d
 x = xbase + xnew
 
 120 continue
@@ -349,7 +349,7 @@ call savehist(nf, x, xhist, f, fhist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Zaikun (commented on 02-06-2019; implemented in 2016):
 !     Exit if F has an NaN or almost infinite value.
-!     If this happends at the very first function evaluation (i.e.,
+!     If this happens at the very first function evaluation (i.e.,
 !     NF=1), then it is necessary to set FOPT and XOPT before going to
 !     530, because these two variables have not been set yet.
 if (is_nan(f) .or. is_posinf(f)) then
@@ -530,18 +530,6 @@ if (knew > 0) then
 
     !!sumh = HALF * sum(vec2smat(pl(knew, :))**2)
 
-
-    !ih = n
-    !do j = 1, n
-    !    do i = 1, j
-    !        ih = ih + 1
-    !        g(j) = g(j) + pl(knew, ih) * xopt(i)
-    !        if (i < j) then
-    !            g(i) = g(i) + pl(knew, ih) * xopt(j)
-    !        end if
-    !    end do
-    !end do
-
     if (is_nan(sum(abs(g)) + sum(abs(h)))) then
         info = NAN_MODEL
         goto 420
@@ -558,7 +546,8 @@ if (knew > 0) then
         w(knew) = ZERO
         sumg = ZERO
         sumg = sum(g**2)
-        estim = rho * (sqrt(sumg) + rho * sqrt(HALF * sumh))
+        !estim = rho * (sqrt(sumg) + rho * sqrt(HALF * sumh))
+        estim = rho * (sqrt(sumg) + rho * HALF * smat_fnorm(pl(knew, n + 1:npt - 1)))
         wmult = sixthm * distest**1.5_RP
         if (wmult * estim <= errtol) goto 310
     end if
@@ -567,7 +556,7 @@ if (knew > 0) then
 !     value of the modulus of its Lagrange function within the trust region.
 !     Here the vector XNEW is used as temporary working space.
 !
-    call geostep(g, h, rho, d(1:n), vmax)
+    call geostep(g, h, rho, d, vmax)
     if (errtol > ZERO) then
         if (wmult * vmax <= errtol) goto 310
     end if
@@ -588,27 +577,6 @@ if (rho > rhoend) then
         pl(k, 1:n) = pl(k, 1:n) + smat_mul_vec(pl(k, n + 1:npt - 1), xopt)
     end do
 
-    !ih = n
-    !do j = 1, n
-    !    do i = 1, j
-    !        ih = ih + 1
-    !        pq(i) = pq(i) + pq(ih) * xopt(j)
-    !        if (i < j) then
-    !            pq(j) = pq(j) + pq(ih) * xopt(i)
-    !        end if
-    !    end do
-    !end do
-
-    !ih = n
-    !do j = 1, n
-    !    do i = 1, j
-    !        ih = ih + 1
-    !        if (i < j) then
-    !            pl(:, j) = pl(:, j) + pl(:, ih) * xopt(i)
-    !        end if
-    !        pl(:, i) = pl(:, i) + pl(:, ih) * xopt(j)
-    !    end do
-    !end do
 !
 !     Pick the next values of RHO and DELTA.
 !
