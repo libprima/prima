@@ -1,12 +1,12 @@
 module test_solver_mod
 !--------------------------------------------------------------------------------------------------!
-! This module tests NEWUOA on a few simple problems.
+! This module tests UOBYQA on a few simple problems.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, May 04, 2022 AM12:43:06
+! Last Modified: Wednesday, May 04, 2022 AM08:51:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -70,7 +70,7 @@ if (present(probs)) then
     probs_loc(1:nprobs) = probs
 else
     nprobs = 5_IK
-    probs_loc(1:nprobs) = ['trigssqs ', 'chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
+    probs_loc(1:nprobs) = ['chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
 end if
 
 if (present(mindim)) then

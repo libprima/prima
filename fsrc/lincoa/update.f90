@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 03, 2022 PM11:43:52
+! Last Modified: Wednesday, May 04, 2022 PM03:07:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,6 @@ subroutine update(kopt, step, xpt, idz, knew, bmat, zmat)
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: powalg_mod, only : updateh, calvlag, calbeta
 
 implicit none
