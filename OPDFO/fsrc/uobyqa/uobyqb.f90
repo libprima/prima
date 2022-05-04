@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM07:48:20
+! Last Modified: Wednesday, May 04, 2022 PM08:58:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -81,7 +81,7 @@ real(RP) :: w(max(6_IK * n, (n**2 + 3_IK * n + 2_IK) / 2_IK) + 100_IK * (n + 1_I
 real(RP) :: ddknew, delta, detrat, diff,        &
 &        distest, dnorm, errtol, estim, evalue, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
-&        sumg, sumh, temp, tempa, tol, tworsq, vmax,  &
+&        sumg, sumh, stmp, temp, tempa, tol, tworsq, vmax,  &
 &        vquad, wmult, distsq(size(pl, 1)), gtmp(n), pltmp(size(pl, 1), n)
 integer(IK) :: i, ih, ip, iq, iw, j, jswitch, k, knew, kopt,&
 &           ksave, ktemp, nftest, nnp, nptm
@@ -391,14 +391,15 @@ vquad = ZERO
 ih = n
 do j = 1, n
     w(j) = d(j)
-    vquad = vquad + w(j) * pq(j)
+    !vquad = vquad + w(j) * pq(j)
     do i = 1, j
         ih = ih + 1
         w(ih) = d(i) * xnew(j) + d(j) * xopt(i)
         if (i == j) w(ih) = HALF * w(ih)
-        vquad = vquad + w(ih) * pq(ih)
+        !vquad = vquad + w(ih) * pq(ih)
     end do
 end do
+vquad = inprod(pq, w(1:npt - 1))
 do k = 1, npt
     temp = ZERO
     do j = 1, nptm
@@ -552,6 +553,7 @@ if (knew > 0) then
     do j = 1, n
         !g(j) = pl(knew, j)
         g(j) = ZERO
+        stmp = ZERO
         do i = 1, j
             ih = ih + 1
             temp = pl(knew, ih)
@@ -559,12 +561,14 @@ if (knew > 0) then
             if (i < j) then
                 g(i) = g(i) + temp * xopt(j)
                 !sumh = sumh + temp * temp
-                sumh = sumh + TWO * temp**2
+                !sumh = sumh + TWO * temp**2
+                stmp = stmp + temp**2
             end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: See the comments below line number 70
 !  330     H(I,J)=TEMP
             h(i, j) = temp
+            h(j, i) = h(i, j)
             if (h(i, j) /= h(i, j)) then
                 info = -3
                 goto 420
@@ -572,7 +576,8 @@ if (knew > 0) then
         end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !sumh = sumh + HALF * temp * temp
-        sumh = sumh + temp**2
+        !sumh = sumh + temp**2
+        sumh = sumh + TWO * stmp + temp**2
     end do
     g = pl(knew, 1:n) + g
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -596,7 +601,8 @@ if (knew > 0) then
             sumg = sumg + g(i)**2
         end do
         !estim = rho * (sqrt(sumg) + rho * sqrt(HALF * sumh))
-        estim = rho * (sqrt(sumg) + rho * HALF * sqrt(sumh))
+        !estim = rho * (sqrt(sumg) + rho * HALF * sqrt(sumh))
+        estim = rho * (sqrt(sumg) + rho * HALF * sqrt(sum(h**2)))
         wmult = sixthm * distest**1.5_RP
         if (wmult * estim <= errtol) goto 310
     end if

@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM08:35:32
+! Last Modified: Wednesday, May 04, 2022 PM09:06:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -380,17 +380,18 @@ end if
 !     and find the values of the Lagrange functions at the new point.
 !
 vquad = ZERO
-ih = n
+w(1:n) = d
 do j = 1, n
-    w(j) = d(j)
-    vquad = vquad + w(j) * pq(j)
-    do i = 1, j
-        ih = ih + 1
-        w(ih) = d(i) * xnew(j) + d(j) * xopt(i)
-        if (i == j) w(ih) = HALF * w(ih)
-        vquad = vquad + w(ih) * pq(ih)
-    end do
+    !do i = 1, j
+    !ih = ih + 1
+    !w(ih) = d(i) * xnew(j) + d(j) * xopt(i)
+    !if (i == j) w(ih) = HALF * w(ih)
+    !end do
+    ih = n + (j - 1_IK) * j / 2_IK
+    w(ih + 1:ih + j) = d(1:j) * xnew(j) + d(j) * xopt(1:j)
+    w(ih + j) = HALF * w(ih + j)
 end do
+vquad = inprod(pq, w(1:npt - 1))
 vlag = matprod(pl, w(1:npt - 1))
 vlag(kopt) = vlag(kopt) + ONE
 
@@ -514,22 +515,6 @@ if (knew > 0) then
     !g = pl(knew, 1:n)
     g = pl(knew, 1:n) + smat_mul_vec(pl(knew, n + 1:npt - 1), xopt)
     h = vec2smat(pl(knew, n + 1:npt - 1))
-
-    ih = n
-    sumh = ZERO
-    do j = 1, n
-        do i = 1, j
-            ih = ih + 1
-            temp = pl(knew, ih)
-            if (i < j) then
-                sumh = sumh + temp * temp
-            end if
-        end do
-        sumh = sumh + HALF * temp * temp
-    end do
-
-    !!sumh = HALF * sum(vec2smat(pl(knew, :))**2)
-
     if (is_nan(sum(abs(g)) + sum(abs(h)))) then
         info = NAN_MODEL
         goto 420
@@ -546,8 +531,7 @@ if (knew > 0) then
         w(knew) = ZERO
         sumg = ZERO
         sumg = sum(g**2)
-        !estim = rho * (sqrt(sumg) + rho * sqrt(HALF * sumh))
-        estim = rho * (sqrt(sumg) + rho * HALF * smat_fnorm(pl(knew, n + 1:npt - 1)))
+        estim = rho * (sqrt(sumg) + rho * HALF * sqrt(sum(h**2)))
         wmult = sixthm * distest**1.5_RP
         if (wmult * estim <= errtol) goto 310
     end if
