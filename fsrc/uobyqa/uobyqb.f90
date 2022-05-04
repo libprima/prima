@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM04:46:48
+! Last Modified: Wednesday, May 04, 2022 PM06:15:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -93,7 +93,7 @@ real(RP) :: ddknew, delta, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
 &        sumg, sumh, temp, tempa, tol, tworsq, vmax,  &
 &        vquad, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
-integer(IK) :: i, ih, ip, iq, iw, j, jswitch, knew, kopt,&
+integer(IK) :: i, ih, ip, iq, iw, j, jswitch, k, knew, kopt,&
 &           ksave, nftest, nnp
 logical :: tr_success
 
@@ -292,15 +292,6 @@ knew = 0
 xopt = xpt(:, kopt)
 g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
 h = vec2smat(pq(n + 1:npt - 1))
-
-!ih = n
-!do j = 1, n
-!    do i = 1, j
-!        ih = ih + 1
-!        g(i) = g(i) + pq(ih) * xopt(j)
-!        if (i < j) g(j) = g(j) + pq(ih) * xopt(i)
-!    end do
-!end do
 
 if (is_nan(sum(abs(g)) + sum(abs(h)))) then
     info = NAN_MODEL
@@ -520,7 +511,8 @@ end if
 !     HALF the summ of squares of components of the Hessian.
 !
 if (knew > 0) then
-    g = pl(knew, 1:n)
+    !g = pl(knew, 1:n)
+    g = pl(knew, 1:n) + smat_mul_vec(pl(knew, n + 1:npt - 1), xopt)
     h = vec2smat(pl(knew, n + 1:npt - 1))
 
     ih = n
@@ -538,16 +530,17 @@ if (knew > 0) then
 
     !!sumh = HALF * sum(vec2smat(pl(knew, :))**2)
 
-    ih = n
-    do j = 1, n
-        do i = 1, j
-            ih = ih + 1
-            g(j) = g(j) + pl(knew, ih) * xopt(i)
-            if (i < j) then
-                g(i) = g(i) + pl(knew, ih) * xopt(j)
-            end if
-        end do
-    end do
+
+    !ih = n
+    !do j = 1, n
+    !    do i = 1, j
+    !        ih = ih + 1
+    !        g(j) = g(j) + pl(knew, ih) * xopt(i)
+    !        if (i < j) then
+    !            g(i) = g(i) + pl(knew, ih) * xopt(j)
+    !        end if
+    !    end do
+    !end do
 
     if (is_nan(sum(abs(g)) + sum(abs(h)))) then
         info = NAN_MODEL
@@ -590,28 +583,32 @@ if (rho > rhoend) then
 
     xbase = xbase + xopt
     xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-
-    ih = n
-    do j = 1, n
-        do i = 1, j
-            ih = ih + 1
-            pq(i) = pq(i) + pq(ih) * xopt(j)
-            if (i < j) then
-                pq(j) = pq(j) + pq(ih) * xopt(i)
-            end if
-        end do
+    pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
+    do k = 1, npt
+        pl(k, 1:n) = pl(k, 1:n) + smat_mul_vec(pl(k, n + 1:npt - 1), xopt)
     end do
 
-    ih = n
-    do j = 1, n
-        do i = 1, j
-            ih = ih + 1
-            if (i < j) then
-                pl(:, j) = pl(:, j) + pl(:, ih) * xopt(i)
-            end if
-            pl(:, i) = pl(:, i) + pl(:, ih) * xopt(j)
-        end do
-    end do
+    !ih = n
+    !do j = 1, n
+    !    do i = 1, j
+    !        ih = ih + 1
+    !        pq(i) = pq(i) + pq(ih) * xopt(j)
+    !        if (i < j) then
+    !            pq(j) = pq(j) + pq(ih) * xopt(i)
+    !        end if
+    !    end do
+    !end do
+
+    !ih = n
+    !do j = 1, n
+    !    do i = 1, j
+    !        ih = ih + 1
+    !        if (i < j) then
+    !            pl(:, j) = pl(:, j) + pl(:, ih) * xopt(i)
+    !        end if
+    !        pl(:, i) = pl(:, i) + pl(:, ih) * xopt(j)
+    !    end do
+    !end do
 !
 !     Pick the next values of RHO and DELTA.
 !
