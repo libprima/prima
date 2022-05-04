@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM09:06:09
+! Last Modified: Thursday, May 05, 2022 AM01:15:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -86,15 +86,14 @@ real(RP) :: w(max(6_IK * size(x), (size(x)**2 + 3_IK * size(x) + 2_IK) / 2_IK))
 real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
-real(RP) :: xpt(size(x), size(pl, 1))
+real(RP) :: xpt(size(x), size(pl, 1)), fval(2 * size(x) + 1)
 !real(RP) :: xpt(size(x) + 1, size(pl, 1))  ! XPT(2, :) is accessed when N = 1
 real(RP) :: ddknew, delta, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score(size(pl, 1)),    &
 &        distest, dnorm, errtol, estim, evalue, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
-&        sumg, sumh, temp, tempa, tol, tworsq, vmax,  &
+&        sumg, temp, tempa, tol, tworsq, vmax,  &
 &        vquad, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
-integer(IK) :: i, ih, ip, iq, iw, j, jswitch, k, knew, kopt,&
-&           ksave, nftest, nnp
+integer(IK) :: ih, ip, iq, iw, j, k, knew, kopt, ksave
 logical :: tr_success
 
 ! Sizes.
@@ -120,7 +119,7 @@ end if
 
 !--------------------------------------------------------------------------------------------------!
 ! Temporary fix for the G95 warning that these variables are used uninitialized.
-knew = 1; iq = 1; ip = 1; ih = 1; j = 1; jswitch = 1; kopt = 1
+knew = 1; kopt = 1
 f = ieeenan()
 !--------------------------------------------------------------------------------------------------!
 
@@ -149,102 +148,153 @@ f = ieeenan()
 !     Set some constants.
 !
 tol = 0.01_RP
-nnp = n + n + 1
-nftest = maxfun
-!
-!     Initialization. NF is the number of function calculations so far.
-!
 rho = rhobeg
 rhosq = rho * rho
-nf = 0
 
+
+! Initialization. NF is the number of function calculations so far. The least function value so far,
+! the corresponding X and its index are noted in FOPT, XOPT, and KOPT respectively.
 xbase = x
 xpt = ZERO
 pl = ZERO
+j = 0
+ih = n
+do nf = 1, 2_IK * n + 1_IK
+    ! Pick the shift from XBASE to the next initial interpolation point that provides diagonal
+    ! second derivatives.
+    if (nf > 1) then
+        if (modulo(nf, 2_IK) == 1_IK) then
+            if (fval(nf - 1) < fbase) then
+                w(j) = rho
+                xpt(j, nf) = TWO * rho
+            else
+                w(j) = -rho
+                xpt(j, nf) = -rho
+            end if
+        elseif (j < n) then
+            j = j + 1
+            xpt(j, nf) = rho
+        end if
+    end if
+    x = xbase + xpt(:, nf)
 
-!     The branch to label 120 obtains a new value of the objective function
-!     and then there is a branch back to label 50, because the new function
-!     value is needed to form the initial quadratic model. The least function
-!     value so far and its index are noted below.
-!
-30 continue
+    if (is_nan(sum(abs(x)))) then
+        f = sum(x) ! Set F to NaN
+        if (nf == 1) then
+            fopt = f
+            xopt = ZERO
+        end if
+        info = NAN_INF_X
+        goto 420
+    end if
+    call evaluate(calfun, x, f)
+    call savehist(nf, x, xhist, f, fhist)
+    fval(nf) = f
+    if (is_nan(f) .or. is_posinf(f)) then
+        if (nf == 1) then
+            fopt = f
+            xopt = ZERO
+        end if
+        info = NAN_INF_F
+        goto 420
+    end if
 
-x = xbase + xpt(:, nf + 1)
+    if (f <= ftarget) then
+        info = FTARGET_ACHIEVED
+        goto 430  ! Should not goto 420. fopt may not be defined yet
+    end if
 
-goto 120
+    if (nf == 1) then
+        fopt = f
+        kopt = nf
+        xopt = xpt(:, nf)
+        fbase = f
+    elseif (f < fopt) then
+        fopt = f
+        kopt = nf
+        xopt = xpt(:, nf)
+    end if
 
-50 continue
+    if (nf >= maxfun) then
+        info = MAXFUN_REACHED
+        goto 420
+    end if
 
-if (nf == 1) then
-    fopt = f
-    kopt = nf
-    xopt = xpt(:, nf)
-    fbase = f
-    j = 0
-    jswitch = -1
-    ih = n
-else
+    if (modulo(nf, 2_IK) == 0_IK) then
+        cycle
+    end if
+    ! Form the gradient and diagonal second derivatives of the initial quadratic model and Lagrange
+    ! functions.
+    if (j >= 1) then
+        ih = ih + j
+        if (fval(nf - 1) < fbase) then  ! XPT(J, NF) = 2*RHO
+            pq(j) = (4.0_RP * fval(nf - 1) - 3.0_RP * fbase - f) / (TWO * rho)
+            d(j) = (fbase + f - TWO * fval(nf - 1)) / rhosq
+            pl(1, j) = -1.5_RP / rho
+            pl(1, ih) = ONE / rhosq
+            pl(nf - 1, j) = TWO / rho
+            pl(nf - 1, ih) = -TWO / rhosq
+        else  ! XPT(J, NF) = -RHO
+            d(j) = (fval(nf - 1) + f - TWO * fbase) / rhosq
+            pq(j) = (fval(nf - 1) - f) / (TWO * rho)
+            pl(1, ih) = -TWO / rhosq
+            pl(nf - 1, j) = HALF / rho
+            pl(nf - 1, ih) = ONE / rhosq
+        end if
+        pq(ih) = d(j)
+        pl(nf, j) = -HALF / rho
+        pl(nf, ih) = ONE / rhosq
+    end if
+end do
+
+ih = n + 1
+ip = 0
+iq = 2
+
+! Form the off-diagonal second derivatives of the initial quadratic model.
+do nf = 2_IK * n + 2_IK, npt
+    ! Pick the shift from XBASE to the next initial interpolation point that provides off-diagonal
+    ! second derivatives.
+    ip = ip + 1
+    if (ip == iq) then
+        ih = ih + 1
+        ip = 1
+        iq = iq + 1
+    end if
+    xpt(ip, nf) = w(ip)
+    ! N.B.: XPT(2, NF+1) is accessed by XPT(IQ, NF+1) even if N = 1.
+    xpt(iq, nf) = w(iq)
+    x = xbase + xpt(:, nf)
+
+    if (is_nan(sum(abs(x)))) then
+        f = sum(x) ! Set F to NaN
+        info = NAN_INF_X
+        goto 420
+    end if
+
+    call evaluate(calfun, x, f)
+    call savehist(nf, x, xhist, f, fhist)
+    if (is_nan(f) .or. is_posinf(f)) then
+        info = NAN_INF_F
+        goto 420
+    end if
+
+    if (f <= ftarget) then
+        info = FTARGET_ACHIEVED
+        goto 430  ! Should not goto 420. fopt may not be defined yet
+    end if
+
     if (f < fopt) then
         fopt = f
         kopt = nf
         xopt = xpt(:, nf)
     end if
-end if
-!
-!     Form the gradient and diagonal second derivatives of the initial
-!     quadratic model and Lagrange functions.
-!
-if (nf <= nnp) then
-    jswitch = -jswitch
-    if (jswitch > 0) then
-        if (j >= 1) then
-            ih = ih + j
-            if (w(j) < ZERO) then
-                d(j) = (fsave + f - TWO * fbase) / rhosq
-                pq(j) = (fsave - f) / (TWO * rho)
-                pl(1, ih) = -TWO / rhosq
-                pl(nf - 1, j) = HALF / rho
-                pl(nf - 1, ih) = ONE / rhosq
-            else
-                pq(j) = (4.0_RP * fsave - 3.0_RP * fbase - f) / (TWO * rho)
-                d(j) = (fbase + f - TWO * fsave) / rhosq
-                pl(1, j) = -1.5_RP / rho
-                pl(1, ih) = ONE / rhosq
-                pl(nf - 1, j) = TWO / rho
-                pl(nf - 1, ih) = -TWO / rhosq
-            end if
-            pq(ih) = d(j)
-            pl(nf, j) = -HALF / rho
-            pl(nf, ih) = ONE / rhosq
-        end if
-!
-!     Pick the shift from XBASE to the next initial interpolation point
-!     that provides diagonal second derivatives.
-!
-        if (j < n) then
-            j = j + 1
-            xpt(j, nf + 1) = rho
-        end if
-    else
-        fsave = f
-        if (f < fbase) then
-            w(j) = rho
-            xpt(j, nf + 1) = TWO * rho
-        else
-            w(j) = -rho
-            xpt(j, nf + 1) = -rho
-        end if
+    if (nf >= maxfun) then
+        info = MAXFUN_REACHED
+        goto 420
     end if
-    if (nf < nnp) goto 30
-!
-!     Form the off-diagonal second derivatives of the initial quadratic model.
-!
-    ih = n
-    ip = 1
-    iq = 2
-end if
-ih = ih + 1
-if (nf > nnp) then
+
+    ih = ih + 1
     temp = ONE / (w(ip) * w(iq))
     tempa = f - fbase - w(ip) * pq(ip) - w(iq) * pq(iq)
     ! N.B.: D(2) is accessed by D(IQ) even if N = 1.
@@ -257,23 +307,14 @@ if (nf > nnp) then
     if (w(iq) < ZERO) iw = iw + 1
     pl(iw, ih) = -temp
     pl(nf, ih) = temp
-!
-!     Pick the shift from XBASE to the next initial interpolation point
-!     that provides off-diagonal second derivatives.
-!
-    ip = ip + 1
-end if
-if (ip == iq) then
-    ih = ih + 1
-    ip = 1
-    iq = iq + 1
-end if
-if (nf < npt) then
-    xpt(ip, nf + 1) = w(ip)
-    ! N.B.: XPT(2, NF+1) is accessed by XPT(IQ, NF+1) even if N = 1.
-    xpt(iq, nf + 1) = w(iq)
-    goto 30
-end if
+end do
+!--------------------------------------------------------------------------------------------------!
+! When the loop exits, the value of NF is not specified by the standard. With gfortran, it will be
+! NPT+1, which is not proper for the subsequent use. !!!
+nf = min(nf, npt) !!!
+!--------------------------------------------------------------------------------------------------!
+
+
 !
 !     Set parameters to begin the iterations for the current RHO.
 !
@@ -321,8 +362,7 @@ end if
 xnew = xopt + d
 x = xbase + xnew
 
-120 continue
-if (nf >= nftest) then
+if (nf >= maxfun) then
     info = MAXFUN_REACHED
     goto 420
 end if
@@ -367,7 +407,6 @@ if (f <= ftarget) then
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-if (nf <= npt) goto 50
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IF (KNEW .EQ. -1) GOTO 420
 if (knew == -1) then
@@ -382,11 +421,6 @@ end if
 vquad = ZERO
 w(1:n) = d
 do j = 1, n
-    !do i = 1, j
-    !ih = ih + 1
-    !w(ih) = d(i) * xnew(j) + d(j) * xopt(i)
-    !if (i == j) w(ih) = HALF * w(ih)
-    !end do
     ih = n + (j - 1_IK) * j / 2_IK
     w(ih + 1:ih + j) = d(1:j) * xnew(j) + d(j) * xopt(1:j)
     w(ih + j) = HALF * w(ih + j)
@@ -592,6 +626,8 @@ if (fopt <= f .or. is_nan(f)) then
 end if
 
 430 continue
+
+!close (16)
 
 call rangehist(nf, xhist, fhist)
 
