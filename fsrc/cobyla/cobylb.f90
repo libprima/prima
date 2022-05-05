@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, April 18, 2022 PM05:48:37
+! Last Modified: Thursday, May 05, 2022 PM03:41:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -202,7 +202,7 @@ call initxfc(calcfc, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, ch
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
 call initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
-! Check whether to exit due to abnormal cases that may occur during the initialization.
+! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Return the best calculated values of the variables.

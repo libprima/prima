@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 18, 2022 PM04:37:28
+! Last Modified: Thursday, May 05, 2022 PM03:42:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -171,7 +171,7 @@ fopt = fval(kopt)
 x = xbase + xopt  ! Set X.
 f = fopt  ! Set F.
 
-! Check whether to return after initialization.
+! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Arrange FHIST and XHIST so that they are in the chronological order.
@@ -299,13 +299,13 @@ do tr = 1, maxtr
         ! In this case, the geometry of XPT likely needs improvement, which will be handled below.
         ! 2. If TR_SUCCESS = TRUE (i.e., RATIO > 0), then SETDROP_TR ensures KNEW_TR > 0 so that
         ! XNEW is included into XPT. Otherwise, SETDROP_TR is buggy; moreover, if TR_SUCCESS = TRUE
-        ! and KNEW_TR = 0, XOPT will differ from XPT(:, KOPT), because the former is set to XNEW but
+        ! but KNEW_TR = 0, XOPT will differ from XPT(:, KOPT), because the former is set to XNEW but
         ! XNEW is discarded. Such a difference can lead to unexpected behaviors; for example,
         ! KNEW_GEO may equal KOPT, with which GEOSTEP will not work.
         tr_success = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
 
-        ! Update BMAT, ZMAT, IDZ (corresponding to H is the NEWUOA paper), GQ, HQ, PQ (defining the
+        ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (defining the
         ! quadratic model), and FVAL, XPT, KOPT, FOPT, XOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
         ! If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
         ! decides not to include XNEW into XPT.
@@ -342,21 +342,21 @@ do tr = 1, maxtr
 
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
-    ! according to IMPROVE_GEO and REDUCE_RHO_1/2. Now we decide these indicators.
+    ! according to IMPROVE_GEO and REDUCE_RHO_1/_2. Now we decide these indicators.
     !----------------------------------------------------------------------------------------------!
 
     ! First define IMPROVE_GEO, which corresponds to Box 8 of the NEWUOA paper.
-    ! The geometry of XPT likely needs improvement if the trust-region step bad --- either too short
-    ! (SHORTD = TRUE) or the reduction ratio is small (RATIO < TENTH). However, if REDUCE_RHO_1 is
+    ! The geometry of XPT likely needs improvement if the trust-region step is bad --- either short
+    ! (SHORTD = TRUE) or with a small reduction ratio (RATIO < TENTH). However, if REDUCE_RHO_1 is
     ! TRUE, meaning that the step is short and the latest model errors have been small, then we do
     ! not need to improve the geometry; instead, RHO will be reduced.
     ! To improve the geometry of XPT, we will check whether the interpolation points are all close
     ! enough to the best point so far, i.e., all the points are within a ball centered at XOPT with
     ! a radius of 2*DELTA. If not, the farthest point will be replaced with a point selected by
     ! GEOSTEP, aiming to ameliorate the geometry of the interpolation set; if yes, then RHO will be
-    ! reduced if MAX(DELTA, DNORM) <= RHO (if MAX(DELTA, DNORM) > RHO, then, as Powell mentioned
-    ! under (2.3) of the NEWUOA paper, "RHO has not restricted the most recent choice of D", so it
-    ! is not reasonable to reduce RHO).
+    ! reduced provided that MAX(DELTA, DNORM) <= RHO (when MAX(DELTA, DNORM) > RHO, as Powell
+    ! mentioned under (2.3) of the NEWUOA paper, "RHO has not restricted the most recent choice of
+    ! D", so it is not reasonable to reduce RHO).
     ! N.B.:
     ! 1. RATIO must be set even if SHORTD = TRUE. Otherwise, compilers will raise a run-time error.
     ! 2. If SHORTD = FALSE and KNEW_TR = 0, then IMPROVE_GEO = TRUE. Therefore, IMPROVE_GEO = TRUE
@@ -468,7 +468,7 @@ do tr = 1, maxtr
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
 
-        ! Update BMAT, ZMAT, IDZ (corresponding to H is the NEWUOA paper), GQ, HQ, PQ (defining the
+        ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (defining the
         ! quadratic model), and FVAL, XPT, KOPT, FOPT, XOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
         ! Update BMAT, ZMAT and IDZ.
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)

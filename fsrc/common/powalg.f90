@@ -9,7 +9,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, April 29, 2022 AM10:38:39
+! Last Modified: Thursday, May 05, 2022 PM05:39:49
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -707,6 +707,7 @@ end if
 
 !--------------------------------------------------------------------------------------------------!
 ! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
+! N.B.: INPROD(DXPT, PQ * DXPT) = INPROD(D, HESS_MUL(D, XPT, PQ))
 !--------------------------------------------------------------------------------------------------!
 dxpt = matprod(d, xpt)
 if (present(hq)) then
@@ -1104,7 +1105,16 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat, info)
 ! ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th column of
 ! H are not stored as they are unnecessary for the calculation.
 !
-! N.B.: The most natural (not necessarily the best numerically) version of UPDATEH should work based
+! N.B.:
+! 1. What is H? As mentioned above, it is the inverse of the coefficient matrix of the KKT system
+! for the lest-Frobenius norm interpolation problem. Moreover, we should note that the K-th column
+! of H contain the coefficients of the K-th Lagrange function LFUNC_K for this interpolation problem,
+! where 1 <= K <= NPT. More specifically, the first NPT entries of H(:, K) provide the parameters
+! for the Hessian of LFUNC_K so that nabla^2 LFUNC_K = sum_{I=1}^NPT H(I, K) XPT(:, I)*XPT(:, I)^T;
+! the last N entries of H(:, K) constitute precisely the gradient of LFUNC_K at the base point XBASE.
+! Recalling that H is represented by OMEGA and BMAT in the block form elaborated above, we can see
+! OMEGA(:, K) contains the leading NPT entries of H(:, K), while BMAT(:, K) contains the last N.
+! 2. The most natural (not necessarily the best numerically) version of UPDATEH should work based
 ! on [KNEW, XNEW - XPT(:,KNEW)] instead of [KNEW, KOPT, D], because the update is independent of KOPT
 ! in theory. UPDATEH needs KOPT only for calculating VLAG and BETA, which can also be found by
 !!VLAG = CALVLAG(KNEW, BMAT, XNEW - XPT(:, KNEW), XPT, ZMAT, IDZ)

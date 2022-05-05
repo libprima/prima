@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM10:56:46
+! Last Modified: Thursday, May 05, 2022 PM05:19:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -63,7 +63,7 @@ real(RP) :: gl(size(gl_in))
 real(RP) :: constr(size(amat, 2))
 real(RP) :: bigcv, cvtol, gg, gxpt(size(xpt, 2)), ghg, sp, ss, tol, &
 &        stp, stplen(size(xpt, 2)), stpsav, mincv, vbig, vgrad, vlag(size(xpt, 2)), vnew, sstmp
-real(RP) :: pqw(size(xpt, 2))  ! PQW(NPT)  ; better name?
+real(RP) :: pqlag(size(xpt, 2))  ! PQLAG(NPT)
 integer(IK) :: jsav, k, ksav
 
 ! Sizes.
@@ -110,7 +110,6 @@ gl = gl_in
 !     GL must be set on entry to the gradient of LFUNC at XBASE, where LFUNC
 !       is the KNEW-th Lagrange function. It is used also for some other
 !       gradients of LFUNC.
-!     PQW provides the second derivative parameters of LFUNC.
 !     IFEAS will be set to TRUE or FALSE if XOPT+STEP is feasible or infeasible.
 !
 !     STEP is chosen to provide a relatively large value of the modulus of
@@ -130,8 +129,10 @@ gl = gl_in
 mincv = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
 
 ! Replace GL by the gradient of LFUNC at the trust region centre, and set the elements of RSTAT.
-pqw = omega_col(idz, zmat, knew)
-gl = gl + hess_mul(xopt, xpt, pqw)
+! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
+! derivative parameters of LFUNC.
+pqlag = omega_col(idz, zmat, knew)
+gl = gl + hess_mul(xopt, xpt, pqlag)
 
 ! RSTAT(J) = -1, 0, or 1 respectively means constraint J is irrelevant, active, or inactive&relevant.
 ! RSTAT never changes after being set below.
@@ -179,7 +180,7 @@ if (vgrad <= TENTH * vbig) goto 220
 
 ! Make the replacement if it provides a larger value of VBIG.
 gxpt = matprod(gl, xpt)
-ghg = sum(pqw * gxpt * gxpt)
+ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
 vnew = vgrad + abs(HALF * del * del * ghg / gg)
 if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     vbig = vnew
@@ -216,7 +217,7 @@ gg = sum(gl**2)
 vgrad = del * sqrt(gg)
 if (vgrad <= TENTH * vbig) goto 220
 gxpt = matprod(gl, xpt)
-ghg = sum(pqw * gxpt * gxpt)
+ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
 vnew = vgrad + abs(HALF * del * del * ghg / gg)
 
 ! Set STMP to the possible move along the projected gradient.

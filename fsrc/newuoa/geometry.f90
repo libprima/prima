@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, May 03, 2022 PM10:36:46
+! Last Modified: Thursday, May 05, 2022 PM05:21:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -162,7 +162,7 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 ! D will be set to the step from X to the new point.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: D(N), HCOL(NPT), VLAG(N+NPT), XOPT(N)
+! REAL(RP) :: D(N), PQLAG(NPT), VLAG(N+NPT), XOPT(N)
 ! Size of local arrays: REAL(RP)*(2*NPT+3*N)
 !--------------------------------------------------------------------------------------------------!
 
@@ -193,7 +193,7 @@ integer(IK) :: npt
 real(RP) :: alpha
 real(RP) :: absden
 real(RP) :: beta
-real(RP) :: hcol(size(xpt, 2))
+real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: xopt(size(xpt, 1))
 
@@ -224,8 +224,10 @@ xopt = xpt(:, kopt)  ! Read XOPT.
 
 d = biglag(idz, knew, bmat, delbar, xopt, xpt, zmat)
 
-hcol = omega_col(idz, zmat, knew)  ! HCOL is the KNEW-th column of Omega.
-alpha = hcol(knew)  ! ALPHA is the KNEW-th diagonal entry of H, i.e., that of Omega.
+! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
+! derivative parameters of LFUNC.
+pqlag = omega_col(idz, zmat, knew)
+alpha = pqlag(knew)  ! ALPHA is the KNEW-th diagonal entry of H, i.e., that of Omega.
 
 ! Calculate VLAG and BETA for D. Indeed, only VLAG(KNEW) is needed.
 vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
@@ -267,7 +269,7 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 ! where LFUNC is the KNEW-th Lagrange function. See Section 6 of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: D(N), CF(5), DOLD(N), GC(N), GD(N), HCOL(NPT), S(N), W(N)
+! REAL(RP) :: D(N), CF(5), DOLD(N), GC(N), GD(N), PQLAG(NPT), S(N), W(N)
 ! Size of local arrays: REAL(RP)*(5+6*N+NPT)
 !--------------------------------------------------------------------------------------------------!
 
@@ -275,8 +277,8 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm, project!, Ax_plus_y
-use, non_intrinsic :: powalg_mod, only : omega_col
+use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, project
+use, non_intrinsic :: powalg_mod, only : omega_col, hess_mul
 use, non_intrinsic :: univar_mod, only : circle_maxabs
 
 implicit none
@@ -308,7 +310,7 @@ real(RP) :: dold(size(x))
 real(RP) :: gc(size(x))
 real(RP) :: gd(size(x))
 real(RP) :: gg
-real(RP) :: hcol(size(xpt, 2))
+real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: s(size(x))
 real(RP) :: scaling
 real(RP) :: sp
@@ -341,18 +343,19 @@ end if
 ! Calculation starts !
 !====================!
 
-! Set HCOL to the leading NPT elements of the KNEW-th column of H, i.e., the KNEW-th column of Omega.
-hcol = omega_col(idz, zmat, knew)
+! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
+! derivative parameters of LFUNC.
+pqlag = omega_col(idz, zmat, knew)
 
 ! Set the unscaled initial D. Form the gradient of LFUNC at X, and multiply D by the Hessian of LFUNC.
 d = xpt(:, knew) - x
 dd = inprod(d, d)
-gd = matprod(xpt, hcol * matprod(d, xpt))
+gd = hess_mul(d, xpt, pqlag)  ! GD = MATPROD(XPT, PQLAG * MATPROD(D, XPT))
 
 !--------------------------------------------------------------------------------------------------!
-gc = bmat(:, knew) + matprod(xpt, hcol * matprod(x, xpt))
+gc = bmat(:, knew) + hess_mul(x, xpt, pqlag) ! GC = BMAT(:,KNEW) + MATPROD(XPT,PQLAG*MATPROD(X,XPT))
 ! The following is mathematically equivalent to the last but seems to work numerically better (why?)
-!gc = Ax_plus_y(xpt, hcol * matprod(x, xpt), bmat(:, knew))
+!gc = Ax_plus_y(xpt, pqlag * matprod(x, xpt), bmat(:, knew))
 !--------------------------------------------------------------------------------------------------!
 
 ! Scale D and GD, with a sign change if needed. Set S to another vector in the initial 2-D subspace.
@@ -421,7 +424,7 @@ do iter = 1, maxiter
         exit
     end if
 
-    w = matprod(xpt, hcol * matprod(s, xpt))
+    w = hess_mul(s, xpt, pqlag)  ! W = MATPROD(XPT, PQLAG * MATPROD(S, XPT))
 
     ! Seek the value of the angle that maximizes |TAU|.
     ! First, calculate the coefficients of the objective function on the circle.
@@ -486,7 +489,7 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 ! no difference mathematically, but the computed VLAG/BETA will change slightly due to rounding.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: D(N), DEN(9), DENEX(9), DOLD(N), DSTEMP(NPT), HCOL(NPT), PAR(5), PROD(NPT+N, 5), &
+! REAL(RP) :: D(N), DEN(9), DENEX(9), DOLD(N), DSTEMP(NPT), PQLAG(NPT), PAR(5), PROD(NPT+N, 5), &
 !     & S(N), SSTEMP(NPT), V(NPT), VLAG(NPT+N), W(NPT+N, 5), X(N), XNEW(N), XPTEMP(N, NPT)
 ! Size of local arrays: REAL(RP)*(23+12*N+11*NPT+N*NPT) (TO BE REDUCED by removing XPTEMP)
 !--------------------------------------------------------------------------------------------------!
@@ -533,7 +536,7 @@ real(RP) :: ds
 real(RP) :: dstemp(size(xpt, 2))
 real(RP) :: dtest
 real(RP) :: dxn
-real(RP) :: hcol(size(xpt, 2))
+real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: par(5)
 real(RP) :: prod(size(xpt, 1) + size(xpt, 2), 5)
 real(RP) :: s(size(xpt, 1))
@@ -580,9 +583,10 @@ end if
 
 x = xpt(:, kopt) ! For simplicity, we use X to denote XOPT.
 
-! Set HCOL to the leading NPT elements of the KNEW-th column of H, i.e., the KNEW-th column of Omega.
-hcol = omega_col(idz, zmat, knew)
-alpha = hcol(knew)  ! ALPHA is the KNEW-th diagonal entry of H, i.e., that of Omega.
+! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
+! derivative parameters of LFUNC.
+pqlag = omega_col(idz, zmat, knew)
+alpha = pqlag(knew)  ! ALPHA is the KNEW-th diagonal entry of H, i.e., that of Omega.
 
 ! The initial search direction D is taken from the last call of BIGLAG, and the initial S is set
 ! below, usually to the direction from X to X_KNEW, but a different direction to an interpolation
@@ -774,7 +778,7 @@ do iter = 1, n
     xnew = x + d
     dxn = inprod(d, xnew)
     xnsq = inprod(xnew, xnew)
-    v = (tau * hcol - alpha * vlag(1:npt)) * matprod(xnew, xpt)
+    v = (tau * pqlag - alpha * vlag(1:npt)) * matprod(xnew, xpt)
     s = tau * bmat(:, knew) + alpha * (dxn * x + xnsq * d - vlag(npt + 1:npt + n))
     s = s + matprod(xpt, v)
 end do

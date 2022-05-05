@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 30, 2022 AM02:46:33
+! Last Modified: Thursday, May 05, 2022 PM05:43:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -92,7 +92,7 @@ real(RP) :: beta, den(size(fval)), denom, moderr,      &
 &        temp, vlmxsq, vquad, dinc, xp, xq
 integer(IK) :: ip, iq, iw, j, jp, jpn, k, &
 &           kbase, knew, kold, kpt, np, nrem
-real(RP) :: xpq(size(xopt)), pqw(size(fval)), xxpt(size(fval)), wmv(size(xopt) + size(fval))
+real(RP) :: xpq(size(xopt)), pqinc(size(fval)), xxpt(size(fval)), wmv(size(xopt) + size(fval))
 real(RP) :: bsum!, summ, vlag_test(size(xopt) + size(fval)), beta_test
 logical :: mask(size(xopt))
 
@@ -433,12 +433,13 @@ do kpt = 1, npt
         xxpt = xq * xpt(iq, :)
     end if
     vquad = vquad + HALF * inprod(xxpt, pq * xxpt)
+    ! N.B.: INPROD(XXPT, PQ * XXPT) = INPROD(X, HESS_MUL(X, XPT, PQ))
 
     ! Update the quadratic model.
     moderr = f - vquad
     gopt = gopt + moderr * bmat(:, kpt)
-    pqw = moderr * matprod(zmat, zmat(kpt, :))
-    pq(trueloc(ptsid == 0)) = pq(trueloc(ptsid == 0)) + pqw(trueloc(ptsid == 0))
+    pqinc = moderr * matprod(zmat, zmat(kpt, :))
+    pq(trueloc(ptsid == 0)) = pq(trueloc(ptsid == 0)) + pqinc(trueloc(ptsid == 0))
     do k = 1, npt
         if (ptsid(k) == 0) then
             cycle
@@ -447,14 +448,14 @@ do kpt = 1, npt
         iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
         call assert(ip >= 0 .and. ip <= npt .and. iq >= 0 .and. iq <= npt, '0 <= IP, IQ <= NPT', srname)
         if (ip > 0 .and. iq > 0) then
-            hq(ip, ip) = hq(ip, ip) + pqw(k) * ptsaux(1, ip)**2
-            hq(iq, iq) = hq(iq, iq) + pqw(k) * ptsaux(1, iq)**2
-            hq(ip, iq) = hq(ip, iq) + pqw(k) * ptsaux(1, ip) * ptsaux(1, iq)
+            hq(ip, ip) = hq(ip, ip) + pqinc(k) * ptsaux(1, ip)**2
+            hq(iq, iq) = hq(iq, iq) + pqinc(k) * ptsaux(1, iq)**2
+            hq(ip, iq) = hq(ip, iq) + pqinc(k) * ptsaux(1, ip) * ptsaux(1, iq)
             hq(iq, ip) = hq(ip, iq)
         elseif (ip > 0) then  ! IP > 0, IQ == 0
-            hq(ip, ip) = hq(ip, ip) + pqw(k) * ptsaux(1, ip)**2
+            hq(ip, ip) = hq(ip, ip) + pqinc(k) * ptsaux(1, ip)**2
         elseif (iq > 0) then  ! IP == 0, IP > 0
-            hq(iq, iq) = hq(iq, iq) + pqw(k) * ptsaux(2, iq)**2
+            hq(iq, iq) = hq(iq, iq) + pqinc(k) * ptsaux(2, iq)**2
         end if
     end do
     ptsid(kpt) = ZERO
