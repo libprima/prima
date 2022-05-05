@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 30, 2022 PM04:21:39
+! Last Modified: Thursday, May 05, 2022 PM05:17:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: glag(size(xpt, 1))
-real(RP) :: hcol(size(xpt, 2))
+real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: s(size(xpt, 1)), xsav(size(xpt, 1))
 real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), distsq(size(xpt, 2)),  &
 &        ggfree, gs, predsq(3, size(xpt, 2)), scaling, &
@@ -106,14 +106,15 @@ end if
 !       except that CAUCHY is set to ZERO if XALT is not calculated.
 !     GLAG is a working space vector of length N for the gradient of the
 !       KNEW-th Lagrange function at XOPT.
-!     HCOL is a working space vector of length NPT for the second derivative
-!       coefficients of the KNEW-th Lagrange function.
 
-hcol = matprod(zmat, zmat(knew, :))
-alpha = hcol(knew)
+
+! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
+! derivative parameters of LFUNC, which is the KNEW-th Lagrange function.
+pqlag = matprod(zmat, zmat(knew, :))
+alpha = pqlag(knew)
 
 ! Calculate the gradient of the KNEW-th Lagrange function at XOPT.
-glag = bmat(:, knew) + hess_mul(xopt, xpt, hcol)
+glag = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
 
 cauchy = ZERO
 xnew = xopt
@@ -127,9 +128,9 @@ end if
 ! On each line, we will evaluate the value of the KNEW-th Lagrange function at 3 trial points, and
 ! estimate the denominator accordingly. The three points take the form (1-t)*XOPT + t*XPT(:, K)
 ! with step lengths t = SLBD, SUBD, and STPM. In total, 3*(NPT-1) trial points will be considered.
-! On the K-th line, we intend to maximize the modulus of PHI_K(t) = LFUN((1-t)*XOPT + t*XPT(:,K)),
-! where LFUN is the KNEW-th Lagrange function; overall, we attempt to find a trial point that
-! renders a large value of the quantity PREDSQ defined in (3.11) of the BOBYQA paper.
+! On the K-th line, we intend to maximize the modulus of PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:,K));
+! overall, we attempt to find a trial point that renders a large value of the quantity PREDSQ
+! defined in (3.11) of the BOBYQA paper.
 !
 ! We start with the following DO loop, the purpose of which is to define two 3-by-NPT arrays STPLEN
 ! and ISBD. For each K, STPLEN(1:3, K) and ISBD(1:3, K) corresponds to the straight line through
@@ -203,8 +204,8 @@ do k = 1, npt
     end if
 
     ! Now, define the step length STPM between SLBD and SUBD by finding the critical point of the
-    ! function PHI_K(t) = LFUN((1-t)*XOPT + t*XPT(:,K)) mentioned above. It is a quadratic since
-    ! LFUN is the KNEW-th Lagrange function. For K /= KNEW, the critical point is 0.5, as
+    ! function PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:,K)) mentioned above. It is a quadratic since
+    ! LFUNC is the KNEW-th Lagrange function. For K /= KNEW, the critical point is 0.5, as
     ! PHI_K(0) = 1 = PHI_K(1); when K = KNEW, it is -0.5*PHI_K'(0) / (1 - PHI_K'(0)), because
     ! PHI_K(0) = 0 and PHI_K(1) = 1.
     stpm = HALF
@@ -326,7 +327,7 @@ do uphill = 0, 1
     ! than ONE if that can reduce the modulus of the Lagrange function at XOPT+S. Set CAUCHY to the
     ! final value of the square of this function.
     sxpt = matprod(s, xpt)
-    curv = inprod(sxpt, hcol * sxpt)
+    curv = inprod(sxpt, pqlag * sxpt)  ! CURV = INPROD(S, HESS_MUL(S, XPT, PQLAG))
     if (uphill == 1) then
         curv = -curv
     end if

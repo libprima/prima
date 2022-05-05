@@ -3,7 +3,7 @@
 module linalg_mod
 !--------------------------------------------------------------------------------------------------
 ! This module provides some basic linear algebra procedures. To improve the performance of
-! these procedures, especially matprod, one can customize their implementations according to the
+! these procedures, especially MATPROD, one can customize their implementations according to the
 ! resources (hardware, e.g., cache, and libraries, e.g., BLAS) available and the sizes of the
 ! matrices/vectors.
 !
@@ -14,8 +14,8 @@ module linalg_mod
 ! 2. Most of the subroutines/functions here are better coded inline, because the code is short
 ! using matrix/vector operations, and because the overhead of subroutine/function calling can be
 ! high in these languages. Here we implement them as subroutines/functions in order to align with
-! Powell's original code, which cannot be translated directly to matrix/vector operations that
-! produce the same results in floating-point arithmetic.
+! Powell's original code, which cannot be translated directly to matrix/vector operations without 
+! changing the results in floating-point arithmetic.
 !
 ! TODO: To avoid stack overflows, functions that return a potentially large array (e.g., MATPROD)
 ! should declare the array as ALLOCATABLE rather than automatic.
@@ -50,7 +50,7 @@ public :: int
 
 interface matprod
 ! N.B.:
-! 1. When __USE_INTRINSIC_ALGEBRA__ = 0, matprod22(x, y) may differ from matmul(x, y) due to
+! 1. When __USE_INTRINSIC_ALGEBRA__ = 0, matprod22(x, y) may differ from matmul(x, y) in
 ! finite-precision arithmetic. This means that the implementation of matmul is not a naive triple
 ! loop. The difference has been observed on matprod22 and matprod12. The second case occurred on
 ! Oct. 11, 2021 in the trust-region subproblem solver of COBYLA, and it took enormous time to find
