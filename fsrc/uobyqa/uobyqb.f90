@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 PM09:21:04
+! Last Modified: Thursday, May 05, 2022 PM11:54:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,9 +33,10 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod!, norm
+use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
 use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
 use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: powalg_mod, only : quadinc, calvlag
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
@@ -92,7 +93,7 @@ real(RP) :: ddknew, delta, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score
 &        distest, dnorm, errtol, estim, evalue, fplus, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
 &        sumg, temp, tempa, tol, tworsq, vmax,  &
-&        vquad, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
+&        qred, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
 integer(IK) :: ih, ip, iq, iw, j, k, knew, kopt, ksave
 logical :: tr_success
 
@@ -417,24 +418,15 @@ if (knew == -1) then
     goto 420
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     Use the quadratic model to predict the change in F due to the step D,
-!     and find the values of the Lagrange functions at the new point.
-!
-vquad = ZERO
-w(1:n) = d
-do j = 1, n
-    ih = n + (j - 1_IK) * j / 2_IK
-    w(ih + 1:ih + j) = d(1:j) * xnew(j) + d(j) * xopt(1:j)
-    w(ih + j) = HALF * w(ih + j)
-end do
-vquad = inprod(pq, w(1:npt - 1))
-vlag = matprod(pl, w(1:npt - 1))
-vlag(kopt) = vlag(kopt) + ONE
+
+! Use the quadratic model to predict the change in F due to the step D, and find the values of the
+! Lagrange functions at the new point.
+qred = -quadinc(pq, d, xopt)
+vlag = calvlag(pl, d, xopt, kopt)
 
 ! Update SIXTHM, which is a lower bound on one sixth of the greatest third derivative of F. The
 ! lower bound is derived from (3.1) of the UOBYQA paper.
-diff = f - fopt - vquad
+diff = f - fopt + qred
 summ = ZERO
 distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
 summ = inprod(distsq, sqrt(distsq) * abs(vlag))
@@ -462,11 +454,11 @@ if (knew <= 0) then
 !     Pick the next value of DELTA after a trust region step.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if (.not. (vquad < ZERO)) then
+    if (.not. (qred > 0)) then
         info = TRSUBP_FAILED
         goto 420
     end if
-    ratio = (f - fsave) / vquad
+    ratio = (fsave - f) / qred
     if (ratio <= TENTH) then
         delta = HALF * dnorm
     else if (ratio <= 0.7_RP) then

@@ -9,7 +9,7 @@ module symmat_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 AM08:05:10
+! Last Modified: Thursday, May 05, 2022 PM09:28:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,7 +103,7 @@ do j = 1_IK, n
 end do
 
 !====================!
-! Calculation starts !
+! Calculation ends   !
 !====================!
 
 end function smat2vec
@@ -148,7 +148,7 @@ do j = 1, n
 end do
 
 !====================!
-! Calculation starts !
+! Calculation ends   !
 !====================!
 
 end function smat_mul_vec
