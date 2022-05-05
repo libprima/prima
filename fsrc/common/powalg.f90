@@ -9,13 +9,13 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 05, 2022 PM05:39:49
+! Last Modified: Thursday, May 05, 2022 PM06:53:54
 !--------------------------------------------------------------------------------------------------
 
 implicit none
 private
 public :: qradd, qrexc
-public :: calquad, errquad
+public :: quadinc, errquad
 public :: hess_mul
 public :: omega_col, omega_mul, omega_inprod
 public :: updateh, errh
@@ -29,9 +29,9 @@ interface qrexc
     module procedure qrexc_Rdiag, qrexc_Rfull
 end interface
 
-interface calquad
-    module procedure calquad_gq, calquad_gopt
-end interface calquad
+interface quadinc
+    module procedure quadinc_gq, quadinc_gopt
+end interface quadinc
 
 
 contains
@@ -524,15 +524,15 @@ end if
 end subroutine qrexc_Rfull
 
 
-function calquad_gq(d, x, xpt, gq, pq, hq) result(qred)
+function quadinc_gq(d, x, xpt, gq, pq, hq) result(qinc)
 !--------------------------------------------------------------------------------------------------!
-! This function evaluates QRED = Q(XBASE + X) - Q(XBSE + X + D) with Q being the quadratic function
+! This function evaluates QINC = Q(XBASE + X + D) - Q(XBASE + X) with Q being the quadratic function
 ! defined via (GQ, HQ, PQ) by
 ! Q(XBASE + S) = <S, GQ> + 0.5*<S, HESSIAN*S>,
-! with HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
+! where HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 ! N.B.: 1. GQ is the gradient of Q at XBASE; the value of XBASE is irrelevant in the calculation.
-! 2. CALQUAD_GQ(D, ZEROS(SIZE(D)), XPT, G, PQ, HQ) = CALQUAD_GOPT(D, XPT, G, PQ, HQ)
+! 2. QUADINC_GQ(D, ZEROS(SIZE(D)), XPT, G, PQ, HQ) = QUADINC_GOPT(D, XPT, G, PQ, HQ)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -549,10 +549,10 @@ real(RP), intent(in) :: pq(:)     ! PQ(NPT)
 real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 
 ! Output
-real(RP) :: qred
+real(RP) :: qinc
 
 ! Local variable
-character(len=*), parameter :: srname = 'CALQUAD_GQ'
+character(len=*), parameter :: srname = 'QUADINC_GQ'
 integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: n
@@ -586,16 +586,16 @@ end if
 s = x + d
 
 ! First-order term and explicit second order term
-qred = ZERO
+qinc = ZERO
 do j = 1, n
-    qred = qred - d(j) * gq(j)
+    qinc = qinc + d(j) * gq(j)
     do i = 1, j
         t = d(i) * s(j) + d(j) * x(i)
         if (i == j) then
             t = HALF * t
         end if
         if (present(hq)) then
-            qred = qred - t * hq(i, j)
+            qinc = qinc + t * hq(i, j)
         end if
     end do
 end do
@@ -604,7 +604,7 @@ end do
 dxpt = matprod(d, xpt)
 w = dxpt * (HALF * dxpt + matprod(x, xpt))
 do i = 1, npt
-    qred = qred - pq(i) * w(i)
+    qinc = qinc + pq(i) * w(i)
 end do
 
 !--------------------------------------------------------------------------------------------------!
@@ -612,32 +612,32 @@ end do
 !--------------------------------------------------------------------------------------------------!
 !! The order of calculation seems quite important. The following order seems to work well.
 !! First-order term
-!qred = -inprod(d, gq)
+!qinc = inprod(d, gq)
 !s = HALF * d + x  ! Different from the above version.
 !! Implicit second-order term
-!qred = qred - sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
+!qinc = qinc + sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
 !! Explicit second-order term
 !if (present(hq)) then
-!   qred = qred - inprod(s, matprod(hq, d))
+!   qinc = qinc + inprod(s, matprod(hq, d))
 !end if
 !! In Fortran, the following implementations concerning HQ do not work as well as the above one.
-!!qred = qred - inprod(d, matprod(hq, s))
-!!qred = qred - HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
+!!qinc = qinc + inprod(d, matprod(hq, s))
+!!qinc = qinc + HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
 !--------------------------------------------------------------------------------------------------!
 
 !====================!
 !  Calculation ends  !
 !====================!
 
-end function calquad_gq
+end function quadinc_gq
 
 
-function calquad_gopt(d, xpt, gopt, pq, hq) result(qred)
+function quadinc_gopt(d, xpt, gopt, pq, hq) result(qinc)
 !--------------------------------------------------------------------------------------------------!
-! This function evaluates QRED = Q(XOPT) - Q(XOPT+D) = -<D, GOPT> - 0.5*<D, HESSIAN*D>,
+! This function evaluates QINC = Q(XOPT + D) - Q(XOPT) = <D, GOPT> + 0.5*<D, HESSIAN*D>,
 ! with HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
-! N.B.: CALQUAD_GOPT(D, XPT, G, PQ, HQ) = CALQUAD_GQ(D, ZEROS(SIZE(D)), XPT, G, PQ, HQ)
+! N.B.: QUADINC_GOPT(D, XPT, G, PQ, HQ) = QUADINC_GQ(D, ZEROS(SIZE(D)), XPT, G, PQ, HQ)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -653,10 +653,10 @@ real(RP), intent(in) :: pq(:)     ! PQ(NPT)
 real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 
 ! Output
-real(RP) :: qred
+real(RP) :: qinc
 
 ! Local variable
-character(len=*), parameter :: srname = 'CALQUAD_GOPT'
+character(len=*), parameter :: srname = 'QUADINC_GOPT'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: dxpt(size(pq))
@@ -684,16 +684,16 @@ end if
 !!--------------------------------------------------------------------------------------------------!
 !! The following is Powell's scheme in LINCOA.
 !! First-order term and explicit second-order term
-!qred = ZERO
+!qinc = ZERO
 !do j = 1, n
-!    qred = qred - d(j) * gopt(j)
+!    qinc = qinc + d(j) * gopt(j)
 !    do i = 1, j
 !        t = d(i) * d(j)
 !        if (i == j) then
 !            t = HALF * t
 !        end if
 !        if (present(hq)) then
-!            qred = qred - t * hq(i, j)
+!            qinc = qinc + t * hq(i, j)
 !        end if
 !    end do
 !end do
@@ -701,7 +701,7 @@ end if
 !! Implicit second-order term
 !dxpt = matprod(d, xpt)
 !do i = 1, npt
-!    qred = qred - HALF * pq(i) * dxpt(i) * dxpt(i)  ! In BOBYQA, it is QRED - HALF * PQ(I) * DXPT(I)**2.
+!    qinc = qinc + HALF * pq(i) * dxpt(i) * dxpt(i)  ! In BOBYQA, it is QINC - HALF * PQ(I) * DXPT(I)**2.
 !end do
 !--------------------------------------------------------------------------------------------------!
 
@@ -711,15 +711,15 @@ end if
 !--------------------------------------------------------------------------------------------------!
 dxpt = matprod(d, xpt)
 if (present(hq)) then
-    qred = -inprod(d, gopt + HALF * matprod(hq, d)) - HALF * inprod(dxpt, pq * dxpt)
+    qinc = inprod(d, gopt + HALF * matprod(hq, d)) + HALF * inprod(dxpt, pq * dxpt)
 else
-    qred = -inprod(d, gopt) - HALF * inprod(dxpt, pq * dxpt)
+    qinc = inprod(d, gopt) + HALF * inprod(dxpt, pq * dxpt)
 end if
 !!MATLAB:
 !!if nargin >= 5
-!!    qred = -d'*(gopt + 0.5*hq*d) - 0.5*dxpt'*(pq*dxpt);
+!!    qinc = d'*(gopt + 0.5*hq*d) + 0.5*dxpt'*(pq*dxpt);
 !!else
-!!    qred = -d'*gopt - 0.5*w'*(pq*dxpt);
+!!    qinc = d'*gopt + 0.5*w'*(pq*dxpt);
 !!end
 !--------------------------------------------------------------------------------------------------!
 
@@ -727,7 +727,7 @@ end if
 !  Calculation ends  !
 !====================!
 
-end function calquad_gopt
+end function quadinc_gopt
 
 
 function errquad(fval, xpt, gq, pq, hq) result(err)
@@ -787,15 +787,15 @@ end if
 
 zeros = ZERO
 if (present(hq)) then
-    qval = [(-calquad(xpt(:, k), zeros, xpt, gq, pq, hq), k=1, npt)]
+    qval = [(quadinc(xpt(:, k), zeros, xpt, gq, pq, hq), k=1, npt)]
 else
-    qval = [(-calquad(xpt(:, k), zeros, xpt, gq, pq), k=1, npt)]
+    qval = [(quadinc(xpt(:, k), zeros, xpt, gq, pq), k=1, npt)]
 end if
 !!MATLAB:
 !!if nargin >= 5
-!!    qval = cellfun(@(x) -calquad(x, zeros(size(x)), xpt, gq, pq, hq), num2cell(xpt, 1));  % Row vector
+!!    qval = cellfun(@(x) quadinc(x, zeros(size(x)), xpt, gq, pq, hq), num2cell(xpt, 1));  % Row vector
 !!else
-!!    qval = cellfun(@(x) -calquad(x, zeros(size(x)), xpt, gq, pq), num2cell(xpt, 1));  % Row vector
+!!    qval = cellfun(@(x) quadinc(x, zeros(size(x)), xpt, gq, pq), num2cell(xpt, 1));  % Row vector
 !!end
 if (.not. all(is_finite(qval))) then
     err = HUGENUM
@@ -1478,6 +1478,18 @@ end subroutine updateh
 ! K-th entry of the vector H*w(X). This is why H*w(X) appears as the vector VLAG in the code.
 ! As a consequence, SUM(VLAG(1:NPT)) = 1 in theory.
 ! 2. As above, H can provide us interpolants and the Lagrange functions. Thus the code maintains H.
+! Indeed, the K-th column of H contain the coefficients of the K-th Lagrange function LFUNC_K,
+! where 1 <= K <= NPT. More specifically, the first NPT entries of H(:, K) provide the parameters
+! for the Hessian of LFUNC_K so that nabla^2 LFUNC_K = sum_{I=1}^NPT H(I, K) XPT(:, I)*XPT(:, I)^T;
+! the last N entries of H(:, K) constitute precisely the gradient of LFUNC_K at the base point X_0.
+! Recalling that H (except for the (NPT+1)the row and column) is represented by OMEGA and BMAT in
+! the block form [OMEGA, BMAT(:, 1:NPT)'; BMAT(:, 1:NPT), BMAT(:, NPT+1:NPT+N)], we can see
+! OMEGA(:, K) contains the leading NPT entries of H(:, K), while BMAT(:, K) contains the last N.
+! Hence, if X corresponds to XOPT + D, then for K /= KOPT, the K-th entry of VLAG = H*w(X) equals
+! LFUNC_K(X_0 + XOPT + D) - LFUNC_K(X_0 + XOPT) = QUADINC_GQ(D, X, XPT, BMAT(:, K), OMEGA(:, K)),
+! beause LFUNC_K(X_0 + XOPT) = 0; for K = KOPT, it equals
+! LFUNC_K(X_0 + XOPT + D)-LFUNC_K(X_0 + XOPT)+1 = QUADINC_GQ(D, X, XPT, BMAT(:, K), OMEGA(:, K)) + 1,
+! as LFUNC_K(X_0 + XOPT) = 1 in this case.
 ! 3. Since the matrix H is W^{-1} as defined in (3.12) of the paper, we have H*w(X_K) = e_K for
 ! any K in {1, ..., NPT}.
 ! 4. When the interpolation set is updated by replacing X_K with X, W is correspondingly updated by

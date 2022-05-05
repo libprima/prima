@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 19, 2022 AM12:55:16
+! Last Modified: Thursday, May 05, 2022 PM06:28:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,7 +34,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
 use, non_intrinsic :: linalg_mod, only : r1update, issymmetric
-use, non_intrinsic :: powalg_mod, only : calquad, omega_col
+use, non_intrinsic :: powalg_mod, only : quadinc, omega_col
 
 implicit none
 
@@ -104,8 +104,8 @@ end if
 
 ! The unupdated model corresponding to [GQ, HQ, PQ] interpolates F at all points in XPT except for
 ! XNEW, which will become XPT(:, KNEW). The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
-! In the following, CALQUAD = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT).
-moderr = f - fval(kopt) + calquad(d, xpt(:, kopt), xpt, gq, pq, hq)
+! In the following, QUADINC = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT).
+moderr = f - fval(kopt) - quadinc(d, xpt(:, kopt), xpt, gq, pq, hq)
 
 ! Absorb PQ(KNEW)*XPT(:, KNEW)*XPT(:, KNEW)^T into the explicit part of the Hessian.
 ! Implement R1UPDATE properly so that it ensures HQ is symmetric.

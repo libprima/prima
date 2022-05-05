@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 03, 2022 PM10:38:52
+! Last Modified: Thursday, May 05, 2022 PM06:32:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,7 +34,7 @@ use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : calquad, calvlag, calbeta, hess_mul
+use, non_intrinsic :: powalg_mod, only : quadinc, calvlag, calbeta, hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize
@@ -472,7 +472,7 @@ end if
 ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the error
 ! of this prediction.
 fopt = fval(kopt)
-qred = calquad(d, xpt, gopt, pq, hq)
+qred = -quadinc(d, xpt, gopt, pq, hq)
 diff = f - fopt + qred
 diffc = diffb
 diffb = diffa
