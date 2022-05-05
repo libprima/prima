@@ -1,25 +1,41 @@
 module powalg_mod
-!--------------------------------------------------------------------------------------------------
+!--------------------------------------------------------------------------------------------------!
 ! This module provides some Powell-style linear algebra procedures.
 !
-! TODO: To avoid stack overflows, functions that return a potentially large array should declare
+! TODO:
+! 1. To avoid stack overflows, functions that return a potentially large array should declare
 ! the array as ALLOCATABLE rather than automatic.
+! 2. Divide the module into three submodules:
+! - QR: procedures concerning QR factorization
+! - QUADRATIC: procedures concerning quadratic polynomials represented by [GQ, PQ, HQ] so that
+!   Q(X) = GQ'*(X-XBASE) + 0.5*(X-XBASE)'*HESSIAN*(X-XBASE), where XBASE is a base point, and
+!   HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
+!   HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
+! - LFLINT: procedures concerning Least-Frobenius norm Lagrange INTpolation.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 05, 2022 PM06:53:54
-!--------------------------------------------------------------------------------------------------
+! Last Modified: Thursday, May 05, 2022 PM08:25:27
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
+
+!--------------------------------------------------------------------------------------------------!
+! QR:
 public :: qradd, qrexc
+!--------------------------------------------------------------------------------------------------!
+! QUADRATIC:
 public :: quadinc, errquad
 public :: hess_mul
+!--------------------------------------------------------------------------------------------------!
+! LFLINT (Least-Frobenius norm Lagrange INTerpolation):
 public :: omega_col, omega_mul, omega_inprod
 public :: updateh, errh
 public :: calvlag, calbeta
+!--------------------------------------------------------------------------------------------------!
 
 interface qradd
     module procedure qradd_Rdiag, qradd_Rfull
@@ -529,7 +545,7 @@ function quadinc_gq(d, x, xpt, gq, pq, hq) result(qinc)
 ! This function evaluates QINC = Q(XBASE + X + D) - Q(XBASE + X) with Q being the quadratic function
 ! defined via (GQ, HQ, PQ) by
 ! Q(XBASE + S) = <S, GQ> + 0.5*<S, HESSIAN*S>,
-! where HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
+! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 ! N.B.: 1. GQ is the gradient of Q at XBASE; the value of XBASE is irrelevant in the calculation.
 ! 2. QUADINC_GQ(D, ZEROS(SIZE(D)), XPT, G, PQ, HQ) = QUADINC_GOPT(D, XPT, G, PQ, HQ)
@@ -1293,7 +1309,7 @@ if (abs(denom) <= 0 .or. is_nan(denom)) then
     ! fine if we do not revert ZMAT to the un-updated version.
     ! 2. After UPDATEH returns, ideally, the algorithm should do something to rectify the damaging
     ! rounding. However, nothing is done in the current (20220412) version of NEWUOA/LINCOA, while
-    ! Powell's version of LINCOA terminates immediately. Note that H is not updated at all here.
+    ! Powell's version of LINCOA terminates immediately. Note that H is not updated at all up to here.
     if (present(info)) then
         info = DAMAGING_ROUNDING
     end if
