@@ -8,7 +8,7 @@ module powalg_mod
 ! 2. Divide the module into three submodules:
 ! - QR: procedures concerning QR factorization
 ! - QUADRATIC: procedures concerning quadratic polynomials represented by [GQ, PQ, HQ] so that
-!   Q(X) = GQ'*(X-XBASE) + 0.5*(X-XBASE)'*HESSIAN*(X-XBASE), where XBASE is a base point, and
+!   Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
 !   HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 !   HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 ! - LFLINT: procedures concerning Least-Frobenius norm Lagrange INTpolation.
@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 05, 2022 PM08:25:27
+! Last Modified: Thursday, May 05, 2022 PM09:20:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ interface qrexc
 end interface
 
 interface quadinc
-    module procedure quadinc_gq, quadinc_gopt
+    module procedure quadinc_dx, quadinc_d0
 end interface quadinc
 
 
@@ -540,15 +540,14 @@ end if
 end subroutine qrexc_Rfull
 
 
-function quadinc_gq(d, x, xpt, gq, pq, hq) result(qinc)
+function quadinc_dx(d, x, xpt, gq, pq, hq) result(qinc)
 !--------------------------------------------------------------------------------------------------!
-! This function evaluates QINC = Q(XBASE + X + D) - Q(XBASE + X) with Q being the quadratic function
-! defined via (GQ, HQ, PQ) by
-! Q(XBASE + S) = <S, GQ> + 0.5*<S, HESSIAN*S>,
+! This function evaluates QINC = Q(X + D) - Q(X) with Q being the quadratic function defined
+! via [GQ, HQ, PQ] by
+! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
 ! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
-! N.B.: 1. GQ is the gradient of Q at XBASE; the value of XBASE is irrelevant in the calculation.
-! 2. QUADINC_GQ(D, ZEROS(SIZE(D)), XPT, G, PQ, HQ) = QUADINC_GOPT(D, XPT, G, PQ, HQ)
+! N.B.: QUADINC_DX(D, ZEROS(SIZE(D)), XPT, GQ, PQ, HQ) = QUADINCD0(D, XPT, GQ, PQ, HQ)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -568,7 +567,7 @@ real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 real(RP) :: qinc
 
 ! Local variable
-character(len=*), parameter :: srname = 'QUADINC_GQ'
+character(len=*), parameter :: srname = 'QUADINC_DX'
 integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: n
@@ -645,15 +644,17 @@ end do
 !  Calculation ends  !
 !====================!
 
-end function quadinc_gq
+end function quadinc_dx
 
 
-function quadinc_gopt(d, xpt, gopt, pq, hq) result(qinc)
+function quadinc_d0(d, xpt, gq, pq, hq) result(qinc)
 !--------------------------------------------------------------------------------------------------!
-! This function evaluates QINC = Q(XOPT + D) - Q(XOPT) = <D, GOPT> + 0.5*<D, HESSIAN*D>,
-! with HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
+! This function evaluates QINC = Q(D) - Q(0) with Q being the quadratic function defined
+! via [GQ, HQ, PQ] by
+! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
+! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
-! N.B.: QUADINC_GOPT(D, XPT, G, PQ, HQ) = QUADINC_GQ(D, ZEROS(SIZE(D)), XPT, G, PQ, HQ)
+! N.B.: QUADINC_D0(D, XPT, GQ, PQ, HQ) = QUADINC_DX(D, ZEROS(SIZE(D)), XPT, GQ, PQ, HQ)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -664,7 +665,7 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: d(:)      ! D(N)
 real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
-real(RP), intent(in) :: gopt(:)   ! GOPT(N)
+real(RP), intent(in) :: gq(:)   ! GOPT(N)
 real(RP), intent(in) :: pq(:)     ! PQ(NPT)
 real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 
@@ -672,7 +673,7 @@ real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 real(RP) :: qinc
 
 ! Local variable
-character(len=*), parameter :: srname = 'QUADINC_GOPT'
+character(len=*), parameter :: srname = 'QUADINCD0'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: dxpt(size(pq))
@@ -686,7 +687,7 @@ if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
+    call assert(size(gq) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
     if (present(hq)) then
         call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
@@ -702,7 +703,7 @@ end if
 !! First-order term and explicit second-order term
 !qinc = ZERO
 !do j = 1, n
-!    qinc = qinc + d(j) * gopt(j)
+!    qinc = qinc + d(j) * gq(j)
 !    do i = 1, j
 !        t = d(i) * d(j)
 !        if (i == j) then
@@ -727,15 +728,15 @@ end if
 !--------------------------------------------------------------------------------------------------!
 dxpt = matprod(d, xpt)
 if (present(hq)) then
-    qinc = inprod(d, gopt + HALF * matprod(hq, d)) + HALF * inprod(dxpt, pq * dxpt)
+    qinc = inprod(d, gq + HALF * matprod(hq, d)) + HALF * inprod(dxpt, pq * dxpt)
 else
-    qinc = inprod(d, gopt) + HALF * inprod(dxpt, pq * dxpt)
+    qinc = inprod(d, gq) + HALF * inprod(dxpt, pq * dxpt)
 end if
 !!MATLAB:
 !!if nargin >= 5
-!!    qinc = d'*(gopt + 0.5*hq*d) + 0.5*dxpt'*(pq*dxpt);
+!!    qinc = d'*(gq + 0.5*hq*d) + 0.5*dxpt'*(pq*dxpt);
 !!else
-!!    qinc = d'*gopt + 0.5*w'*(pq*dxpt);
+!!    qinc = d'*gq + 0.5*w'*(pq*dxpt);
 !!end
 !--------------------------------------------------------------------------------------------------!
 
@@ -743,7 +744,7 @@ end if
 !  Calculation ends  !
 !====================!
 
-end function quadinc_gopt
+end function quadinc_d0
 
 
 function errquad(fval, xpt, gq, pq, hq) result(err)
@@ -777,7 +778,6 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: fmq(size(xpt, 2))
 real(RP) :: qval(size(xpt, 2))
-real(RP) :: zeros(size(xpt, 1))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -801,17 +801,16 @@ end if
 ! Calculation starts !
 !====================!
 
-zeros = ZERO
 if (present(hq)) then
-    qval = [(quadinc(xpt(:, k), zeros, xpt, gq, pq, hq), k=1, npt)]
+    qval = [(quadinc(xpt(:, k), xpt, gq, pq, hq), k=1, npt)]
 else
-    qval = [(quadinc(xpt(:, k), zeros, xpt, gq, pq), k=1, npt)]
+    qval = [(quadinc(xpt(:, k), xpt, gq, pq), k=1, npt)]
 end if
 !!MATLAB:
 !!if nargin >= 5
-!!    qval = cellfun(@(x) quadinc(x, zeros(size(x)), xpt, gq, pq, hq), num2cell(xpt, 1));  % Row vector
+!!    qval = cellfun(@(x) quadinc(x, xpt, gq, pq, hq), num2cell(xpt, 1));  % Row vector
 !!else
-!!    qval = cellfun(@(x) quadinc(x, zeros(size(x)), xpt, gq, pq), num2cell(xpt, 1));  % Row vector
+!!    qval = cellfun(@(x) quadinc(x, xpt, gq, pq), num2cell(xpt, 1));  % Row vector
 !!end
 if (.not. all(is_finite(qval))) then
     err = HUGENUM
@@ -1502,9 +1501,9 @@ end subroutine updateh
 ! the block form [OMEGA, BMAT(:, 1:NPT)'; BMAT(:, 1:NPT), BMAT(:, NPT+1:NPT+N)], we can see
 ! OMEGA(:, K) contains the leading NPT entries of H(:, K), while BMAT(:, K) contains the last N.
 ! Hence, if X corresponds to XOPT + D, then for K /= KOPT, the K-th entry of VLAG = H*w(X) equals
-! LFUNC_K(X_0 + XOPT + D) - LFUNC_K(X_0 + XOPT) = QUADINC_GQ(D, X, XPT, BMAT(:, K), OMEGA(:, K)),
+! LFUNC_K(X_0 + XOPT + D) - LFUNC_K(X_0 + XOPT) = QUADINC_DX(D, X, XPT, BMAT(:, K), OMEGA(:, K)),
 ! beause LFUNC_K(X_0 + XOPT) = 0; for K = KOPT, it equals
-! LFUNC_K(X_0 + XOPT + D)-LFUNC_K(X_0 + XOPT)+1 = QUADINC_GQ(D, X, XPT, BMAT(:, K), OMEGA(:, K)) + 1,
+! LFUNC_K(X_0 + XOPT + D)-LFUNC_K(X_0 + XOPT)+1 = QUADINC_DX(D, X, XPT, BMAT(:, K), OMEGA(:, K)) + 1,
 ! as LFUNC_K(X_0 + XOPT) = 1 in this case.
 ! 3. Since the matrix H is W^{-1} as defined in (3.12) of the paper, we have H*w(X_K) = e_K for
 ! any K in {1, ..., NPT}.

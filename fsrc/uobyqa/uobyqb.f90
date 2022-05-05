@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 AM09:39:56
+! Last Modified: Thursday, May 05, 2022 PM09:21:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -160,7 +160,7 @@ pl = ZERO
 j = 0
 ih = n
 ! In the following loop, FPLUS is set to F(X + RHO*e_I) when NF = 2*I, and the value of FPLUS is
-! used subsequently when NF = 2*I +1.
+! used subsequently when NF = 2*I + 1.
 fplus = ZERO ! This initial value is not used but to entertain the Fortran compilers.
 do nf = 1, 2_IK * n + 1_IK
     ! Pick the shift from XBASE to the next initial interpolation point that provides diagonal
