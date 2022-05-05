@@ -11,13 +11,13 @@ module powalg_mod
 !   Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
 !   HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 !   HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
-! - LFLINT: procedures concerning Least-Frobenius norm Lagrange INTpolation.
+! - LAGINT: procedures concerning quadratic LAGrange INTpolation.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 05, 2022 PM09:20:25
+! Last Modified: Thursday, May 05, 2022 PM11:57:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -31,7 +31,7 @@ public :: qradd, qrexc
 public :: quadinc, errquad
 public :: hess_mul
 !--------------------------------------------------------------------------------------------------!
-! LFLINT (Least-Frobenius norm Lagrange INTerpolation):
+! LAGINT (quadratic LAGrange INTerpolation):
 public :: omega_col, omega_mul, omega_inprod
 public :: updateh, errh
 public :: calvlag, calbeta
@@ -46,8 +46,12 @@ interface qrexc
 end interface
 
 interface quadinc
-    module procedure quadinc_dx, quadinc_d0
+    module procedure quadinc_dx, quadinc_d0, quadinc_ghv
 end interface quadinc
+
+interface calvlag
+    module procedure calvlag_lfqint, calvlag_qint
+end interface calvlag
 
 
 contains
@@ -547,7 +551,7 @@ function quadinc_dx(d, x, xpt, gq, pq, hq) result(qinc)
 ! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
 ! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
-! N.B.: QUADINC_DX(D, ZEROS(SIZE(D)), XPT, GQ, PQ, HQ) = QUADINCD0(D, XPT, GQ, PQ, HQ)
+! N.B.: QUADINC_DX(D, ZEROS(SIZE(D)), XPT, GQ, PQ, HQ) = QUADINC_D0(D, XPT, GQ, PQ, HQ)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -673,7 +677,7 @@ real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 real(RP) :: qinc
 
 ! Local variable
-character(len=*), parameter :: srname = 'QUADINCD0'
+character(len=*), parameter :: srname = 'QUADINC_D0'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: dxpt(size(pq))
@@ -747,6 +751,62 @@ end if
 end function quadinc_d0
 
 
+function quadinc_ghv(ghv, d, x) result(qinc)
+!--------------------------------------------------------------------------------------------------!
+! This function evaluates QINC = Q(X+D) - Q(X) with Q being the quadratic function defined via GHV by
+! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
+! where GQ is GHV(1:N), and HESSIAN is the symmetric matrix whose upper triangular part is stored in
+! GHV(N+1:N*(N+3)/2) column by column.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : inprod
+implicit none
+! Inputs
+real(RP), intent(in) :: ghv(:)
+real(RP), intent(in) :: d(:)
+real(RP), intent(in) :: x(:)
+! Outputs
+real(RP) :: qinc
+! Local variables
+character(len=*), parameter :: srname = 'QUADINC_GHV'
+integer(IK) :: ih
+integer(IK) :: n
+integer(IK) :: j
+real(RP) :: s(size(x))
+real(RP) :: w(size(ghv))
+
+! Sizes
+n = int(size(x), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(d) == n, 'SIZE(D) = N', srname)
+    call assert(size(ghv) == n * (n + 3) / 2, 'SIZE(GHV) = N*(N+3)/2', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+s = x + d
+
+w(1:n) = d
+do j = 1, n
+    ih = n + (j - 1_IK) * j / 2_IK
+    w(ih + 1:ih + j) = d(1:j) * s(j) + d(j) * x(1:j)
+    w(ih + j) = HALF * w(ih + j)
+end do
+
+qinc = inprod(ghv, w)
+
+!====================!
+! Calculation ends   !
+!====================!
+
+end function quadinc_ghv
+
+
 function errquad(fval, xpt, gq, pq, hq) result(err)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates the maximal relative error of Q in interpolating FVAL on XPT.
@@ -755,7 +815,7 @@ function errquad(fval, xpt, gq, pq, hq) result(err)
 ! with HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : issymmetric
@@ -1530,7 +1590,7 @@ end subroutine updateh
 ! DELTA*|XOPT|^3, which is can be huge at the beginning of the algorithm and quickly become tiny.
 !--------------------------------------------------------------------------------------------------!
 
-function calvlag(kopt, bmat, d, xpt, zmat, idz) result(vlag)
+function calvlag_lfqint(kopt, bmat, d, xpt, zmat, idz) result(vlag)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates VLAG = H*w for a given step D. See (4.25) of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
@@ -1626,7 +1686,7 @@ if (DEBUGGING) then
         & 'SUM(VLAG(1:NPT)) == 1', srname)
 end if
 
-end function calvlag
+end function calvlag_lfqint
 
 
 function calbeta(kopt, bmat, d, xpt, zmat, idz) result(beta)
@@ -1752,6 +1812,74 @@ beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - dvlag - wvlag
 !====================!
 
 end function calbeta
+
+
+function calvlag_qint(pl, d, xopt, kopt) result(vlag)
+!--------------------------------------------------------------------------------------------------!
+! This function evaluates VLAG = [LFUNC_1(XOPT+D), ..., LFUNC_NPT(XOPT+D)] for a quadratic
+! interpolation problem, where LFUNC_K is the K-the Lagrange function, and XOPT is the KOPT-th
+! interpolation node. The coefficients of LFUNC_K are provided by PL(K, :) so that
+! LFUNC_K(Y) = <Y, G> + <HESSIAN*Y, Y>
+! where G is PL(K, 1:N), and HESSIAN is the symmetric matrix whose upper triangular part is stored in
+! PL(K, N+1:N*(N+3)/2) column by column. Note the following:
+! 1. For K /= KOPT, LFUNC_K(XOPT + D) = LFUNC_K(XOPT + D) - LFUNC_K(XOPT) as LFUNC_K(XOPT) = 0.
+! 2. When K = KOPT, LFUNC_K(XOPT + D) = LFUNC_K(XOPT + D) - LFUNC_K(XOPT) + 1 as LFUNC_K(XOPT) = 1.
+! Therefore, the function first calculates VLAG(K) = QUADINC_GHV(PL(K, :), D, XOPT) for each K, and
+! then increase VLAG(KOPT) by 1.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, HALF, ONE, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : matprod
+implicit none
+! Inputs
+real(RP), intent(in) :: pl(:, :)
+real(RP), intent(in) :: d(:)
+real(RP), intent(in) :: xopt(:)
+integer(IK), intent(in) :: kopt
+! Outputs
+real(RP) :: vlag(size(pl, 1))
+! Local variables
+character(len=*), parameter :: srname = 'CALVLAG_QINT'
+integer(IK) :: ih
+integer(IK) :: n
+integer(IK) :: j
+real(RP) :: s(size(xopt))
+real(RP) :: w(size(pl, 2))
+
+! Sizes
+n = int(size(xopt), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(d) == n, 'SIZE(D) = N', srname)
+    call assert(size(pl, 1) == (n + 1) * (n + 2) / 2 .and. size(pl, 2) == size(pl, 1) - 1, &
+        & 'SIZE(PL) = [(N+1)*(N+2)/2,  N*(N+3)/2]', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+s = xopt + d
+
+w(1:n) = d
+do j = 1, n
+    ih = n + (j - 1_IK) * j / 2_IK
+    w(ih + 1:ih + j) = d(1:j) * s(j) + d(j) * xopt(1:j)
+    w(ih + j) = HALF * w(ih + j)
+end do
+
+vlag = matprod(pl, w)  ! VLAG(K) = QUADINC_GHV(PL(K, :), D, XOPT)
+vlag(kopt) = vlag(kopt) + ONE
+
+!====================!
+! Calculation ends   !
+!====================!
+
+end function calvlag_qint
+
+!subroutine updatel
+!end subroutine updatel
 
 
 end module powalg_mod
