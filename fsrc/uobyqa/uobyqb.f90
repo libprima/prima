@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 AM01:15:53
+! Last Modified: Thursday, May 05, 2022 AM09:39:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,7 +34,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod!, norm
-use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec, smat_fnorm
+use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
@@ -86,10 +86,10 @@ real(RP) :: w(max(6_IK * size(x), (size(x)**2 + 3_IK * size(x) + 2_IK) / 2_IK))
 real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
-real(RP) :: xpt(size(x), size(pl, 1)), fval(2 * size(x) + 1)
+real(RP) :: xpt(size(x), size(pl, 1))
 !real(RP) :: xpt(size(x) + 1, size(pl, 1))  ! XPT(2, :) is accessed when N = 1
 real(RP) :: ddknew, delta, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score(size(pl, 1)),    &
-&        distest, dnorm, errtol, estim, evalue, fbase, fopt,&
+&        distest, dnorm, errtol, estim, evalue, fplus, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
 &        sumg, temp, tempa, tol, tworsq, vmax,  &
 &        vquad, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
@@ -159,12 +159,15 @@ xpt = ZERO
 pl = ZERO
 j = 0
 ih = n
+! In the following loop, FPLUS is set to F(X + RHO*e_I) when NF = 2*I, and the value of FPLUS is
+! used subsequently when NF = 2*I +1.
+fplus = ZERO ! This initial value is not used but to entertain the Fortran compilers.
 do nf = 1, 2_IK * n + 1_IK
     ! Pick the shift from XBASE to the next initial interpolation point that provides diagonal
     ! second derivatives.
     if (nf > 1) then
         if (modulo(nf, 2_IK) == 1_IK) then
-            if (fval(nf - 1) < fbase) then
+            if (fplus < fbase) then
                 w(j) = rho
                 xpt(j, nf) = TWO * rho
             else
@@ -189,7 +192,6 @@ do nf = 1, 2_IK * n + 1_IK
     end if
     call evaluate(calfun, x, f)
     call savehist(nf, x, xhist, f, fhist)
-    fval(nf) = f
     if (is_nan(f) .or. is_posinf(f)) then
         if (nf == 1) then
             fopt = f
@@ -221,25 +223,26 @@ do nf = 1, 2_IK * n + 1_IK
     end if
 
     if (modulo(nf, 2_IK) == 0_IK) then
+        fplus = f  ! FPLUS = F(X + RHO*e_I) with I = NF/2.
         cycle
     end if
-    ! Form the gradient and diagonal second derivatives of the initial quadratic model and Lagrange
-    ! functions.
-    if (j >= 1) then
+
+    ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
+    if (j >= 1 .and. nf >= 3) then  ! NF >= 3 is implied by J >= 1. We prefer to impose it explicitly.
         ih = ih + j
-        if (fval(nf - 1) < fbase) then  ! XPT(J, NF) = 2*RHO
-            pq(j) = (4.0_RP * fval(nf - 1) - 3.0_RP * fbase - f) / (TWO * rho)
-            d(j) = (fbase + f - TWO * fval(nf - 1)) / rhosq
+        if (xpt(j, nf) > 0) then  ! XPT(J, NF) = 2*RHO
+            pq(j) = (4.0_RP * fplus - 3.0_RP * fbase - f) / (TWO * rho)
+            d(j) = (fbase + f - TWO * fplus) / rhosq
             pl(1, j) = -1.5_RP / rho
             pl(1, ih) = ONE / rhosq
-            pl(nf - 1, j) = TWO / rho
-            pl(nf - 1, ih) = -TWO / rhosq
+            pl(nf - 1, j) = TWO / rho  ! Should be moved out of the loop
+            pl(nf - 1, ih) = -TWO / rhosq  ! Should be moved out of the loop
         else  ! XPT(J, NF) = -RHO
-            d(j) = (fval(nf - 1) + f - TWO * fbase) / rhosq
-            pq(j) = (fval(nf - 1) - f) / (TWO * rho)
+            d(j) = (fplus + f - TWO * fbase) / rhosq
+            pq(j) = (fplus - f) / (TWO * rho)
             pl(1, ih) = -TWO / rhosq
-            pl(nf - 1, j) = HALF / rho
-            pl(nf - 1, ih) = ONE / rhosq
+            pl(nf - 1, j) = HALF / rho  ! Should be moved out of the loop
+            pl(nf - 1, ih) = ONE / rhosq  ! Should be moved out of the loop
         end if
         pq(ih) = d(j)
         pl(nf, j) = -HALF / rho
