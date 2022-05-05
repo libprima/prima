@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 05, 2022 PM03:42:18
+! Last Modified: Thursday, May 05, 2022 PM06:26:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,7 +60,7 @@ use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
 use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : calquad, updateh
+use, non_intrinsic :: powalg_mod, only : quadinc, updateh
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
 
@@ -273,7 +273,7 @@ do tr = 1, maxtr
             exit
         end if
 
-        qred = calquad(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
+        qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
@@ -463,7 +463,7 @@ do tr = 1, maxtr
             exit
         end if
 
-        qred = calquad(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
+        qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]

@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM12:40:14
+! Last Modified: Thursday, May 05, 2022 PM06:32:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,7 +40,7 @@ use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_
     & MAXFUN_REACHED, DAMAGING_ROUNDING!, SMALL_TR_RADIUS, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, r1update
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : calquad, omega_col, omega_mul, hess_mul
+use, non_intrinsic :: powalg_mod, only : quadinc, omega_col, omega_mul, hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
@@ -109,7 +109,7 @@ real(RP) :: xsav(size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: del, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
-&        rho, snorm, ssq, temp, qralt,   &
+&        rho, snorm, ssq, temp, &
 &        qred, xdiff
 logical :: ifeas
 integer(IK) :: idz, imprv, itest,  &
@@ -342,7 +342,7 @@ end if
 ! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should try the same.
 !-------------------------------------------------------------------------------------------!
 !
-qred = calquad(step, xpt, gopt, pq, hq)
+qred = -quadinc(step, xpt, gopt, pq, hq)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
@@ -448,8 +448,7 @@ if (ifeas .and. itest < 3) then
     ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
     pqalt = omega_mul(idz, zmat, fshift)
     galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-    qralt = calquad(step, xpt, galt, pqalt)
-    dffalt = f - fopt + qralt
+    dffalt = f - fopt - quadinc(step, xpt, galt, pqalt)
 end if
 if (itest == 3) then
     dffalt = diff
