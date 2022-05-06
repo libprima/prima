@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 06, 2022 PM12:53:04
+! Last Modified: Friday, May 06, 2022 PM01:07:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -573,10 +573,6 @@ if (knew > 0) then
 !     Here the vector XNEW is used as temporary working space.
 !
     call geostep(g, h, rho, d, vmax)
-    !if (errtol > ZERO) then
-    !    if (wmult * vmax <= errtol) goto 310
-    !end if
-    !goto 100
     if (errtol > 0 .and. wmult * vmax <= errtol) then
         goto 310  ! Infinite cycling possible?
         !else
