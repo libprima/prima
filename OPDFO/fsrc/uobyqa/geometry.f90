@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM05:30:57
+! Last Modified: Friday, May 06, 2022 PM08:54:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,7 @@ subroutine geostep(n, g, h, rho, d, v, vmax)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
+use, non_intrinsic :: infnan_mod, only : is_nan
 
 implicit none
 
@@ -65,6 +66,12 @@ integer(IK) :: i, j, k
 !
 
 halfrt = sqrt(HALF)
+
+if (is_nan(sum(abs(h)) + sum(abs(g)))) then
+    d = ZERO
+    vmax = ZERO
+    return
+end if
 
 !
 !     Pick V such that ||HV|| / ||V|| is large.

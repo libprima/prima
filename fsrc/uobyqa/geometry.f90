@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM05:37:44
+! Last Modified: Friday, May 06, 2022 PM09:41:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,13 +24,14 @@ subroutine geostep(g, h, rho, d, vmax)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : issymmetric
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod
 
 implicit none
 
 ! Inputs
 real(RP), intent(in) :: g(:)  ! G(N)
-real(RP), intent(in) :: h(:, :)  ! H_IN(N, N)
+real(RP), intent(in) :: h(:, :)  ! H(N, N)
 real(RP), intent(in) :: rho  ! NEWUOA etc uses DELBAR, which is NOT RHO; possible improvement?
 
 ! Outputs
@@ -41,11 +42,11 @@ real(RP), intent(out) :: vmax
 character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
 real(RP) :: v(size(g))
-real(RP) :: dd, dhd, dlin, dsq, gd, gg, ghg, gnorm, &
-&        halfrt, hmax, ratio, scaling, summ, sumv, temp, &
-&        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhw, &
-&        vlin, vmu, vnorm, vsq, vv, wcos, whw, wsin, wsq
-integer(IK) :: i, j, k
+real(RP) :: dd, dhd, dlin, gd, gg, ghg, gnorm, &
+&        ratio, scaling, temp, &
+&        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhd, &
+&        vlin, vmu, vnorm, vv, wcos, wsin, hv(size(g))
+integer(IK) :: k
 
 
 ! Sizes.
@@ -59,7 +60,7 @@ if (DEBUGGING) then
 end if
 
 !
-!     N is the number of variables of a quadratic objective function, q say.
+!     N is the number of variables of a quadratic objective function, Q say.
 !     G is the gradient of Q at the origin.
 !     H is the symmetric Hessian matrix of Q. Only the upper triangular and
 !       diagonal parts need be set.
@@ -77,89 +78,41 @@ end if
 !     Preliminary calculations.
 !
 
-halfrt = sqrt(HALF)
 
-!
-!     Pick V such that ||HV|| / ||V|| is large.
-!
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20220303: The procedure below may leave K uninitialized due to NaN, leading to SEGFAULT.
-k = 1_IK
-!--------------------------------------------------------------------------------------------------!
-hmax = ZERO
-do i = 1, n
-    summ = ZERO
-    do j = 1, n
-        summ = summ + h(i, j)**2
-    end do
-    if (summ > hmax) then
-        hmax = summ
-        k = i
-    end if
-end do
-do j = 1, n
-    v(j) = h(k, j)
-end do
-!
-!     Set D to a vector in the subspace spanned by V and HV that maximizes
-!     |(D,HD)|/(D,D), except that we set D=HV if V and HV are nearly parallel.
-!     The vector that has the name D at label 60 used to be the vector W.
-!
-vsq = ZERO
-vhv = ZERO
-dsq = ZERO
-do i = 1, n
-    vsq = vsq + v(i)**2
-    d(i) = ZERO
-    do j = 1, n
-        d(i) = d(i) + h(i, j) * v(j)
-    end do
-    vhv = vhv + v(i) * d(i)
-    dsq = dsq + d(i)**2
-end do
-if (vhv * vhv <= 0.9999_RP * dsq * vsq) then
-    temp = vhv / vsq
-    wsq = ZERO
-    do i = 1, n
-        d(i) = d(i) - temp * v(i)
-        wsq = wsq + d(i)**2
-    end do
-    whw = ZERO
-    ratio = sqrt(wsq / vsq)
-    do i = 1, n
-        temp = ZERO
-        do j = 1, n
-            temp = temp + h(i, j) * d(j)
-        end do
-        whw = whw + temp * d(i)
-        v(i) = ratio * v(i)
-    end do
-    vhv = ratio * ratio * vhv
-    vhw = ratio * wsq
-    temp = HALF * (whw - vhv)
-    temp = temp + sign(sqrt(temp**2 + vhw**2), whw + vhv)
-    do i = 1, n
-        d(i) = vhw * v(i) + temp * d(i)
-    end do
+if (is_nan(sum(abs(h)) + sum(abs(g)))) then
+    d = ZERO
+    vmax = ZERO
+    return
 end if
-!
-!     We now turn our attention to the subspace spanned by G and D. A multiple
-!     of the current D is returned if that choice seems to be adequate.
-!
-gg = ZERO
-gd = ZERO
-dd = ZERO
-dhd = ZERO
-do i = 1, n
-    gg = gg + g(i)**2
-    gd = gd + g(i) * d(i)
-    dd = dd + d(i)**2
-    summ = ZERO
-    do j = 1, n
-        summ = summ + h(i, j) * d(j)
-    end do
-    dhd = dhd + summ * d(i)
-end do
+
+! Pick V such that ||HV|| / ||V|| is large.
+k = int(maxloc(sum(h**2, dim=1), dim=1), IK)
+v = h(:, k)
+
+! Set D to a vector in the subspace span{V, HV} that maximizes |(D, HD)|/(D, D), except that we set
+! D = HV if V and HV are nearly parallel.
+vv = sum(v**2)
+d = matprod(h, v)
+vhv = inprod(v, d)
+if (vhv * vhv <= 0.9999_RP * sum(d**2) * vv) then
+    d = d - (vhv / vv) * v
+    dd = sum(d**2)
+    ratio = sqrt(dd / vv)
+    dhd = inprod(d, matprod(h, d))
+    v = ratio * v
+    vhv = ratio * ratio * vhv
+    vhd = ratio * dd
+    temp = HALF * (dhd - vhv)
+    temp = temp + sign(sqrt(temp**2 + vhd**2), dhd + vhv)
+    d = vhd * v + temp * d
+end if
+
+! We now turn our attention to the subspace span{G, D}. A multiple of the current D is returned if
+! that choice seems to be adequate.
+gg = sum(g**2)
+gd = inprod(g, d)
+dd = sum(d**2)
+dhd = inprod(d, matprod(h, d))
 
 ! Zaikun 20220504: GG and DD can become 0 at this point due to rounding. Detected by IFORT.
 if (.not. (gg > 0 .and. dd > 0)) then
@@ -168,41 +121,23 @@ if (.not. (gg > 0 .and. dd > 0)) then
     return
 end if
 
-
-temp = gd / gg
-vv = ZERO
 scaling = sign(rho / sqrt(dd), gd * dhd)
-do i = 1, n
-    v(i) = d(i) - temp * g(i)
-    vv = vv + v(i)**2
-    d(i) = scaling * d(i)
-end do
+v = d - (gd / gg) * g
+vv = sum(v**2)
+d = scaling * d
 gnorm = sqrt(gg)
 
-!if (gnorm * dd <= 0.5E-2_RP * rho * abs(dhd) .or. vv / dd <= 1.0E-4_RP) then
 if (.not. (gnorm * dd > 0.5E-2_RP * rho * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
     vmax = abs(scaling * (gd + HALF * scaling * dhd))
-    goto 170
+    return
 end if
-!
-!     G and V are now orthogonal in the subspace spanned by G and D. Hence
-!     we generate an orthonormal basis of this subspace such that (D,HV) is
-!     negligible or ZERO, where D and V will be the basis vectors.
-!
-ghg = ZERO
-vhg = ZERO
-vhv = ZERO
-do i = 1, n
-    summ = ZERO
-    sumv = ZERO
-    do j = 1, n
-        summ = summ + h(i, j) * g(j)
-        sumv = sumv + h(i, j) * v(j)
-    end do
-    ghg = ghg + summ * g(i)
-    vhg = vhg + sumv * g(i)
-    vhv = vhv + sumv * v(i)
-end do
+
+! G and V are now orthogonal in the subspace span{G, D}. Hence we generate an orthonormal basis of
+! this subspace such that (D, HV) is negligible or 0, where D and V will be the basis vectors.
+ghg = inprod(g, matprod(h, g))
+hv = matprod(h, v)
+vhg = inprod(g, hv)
+vhv = inprod(v, hv)
 vnorm = sqrt(vv)
 ghg = ghg / gg
 vhg = vhg / (vnorm * gnorm)
@@ -222,19 +157,16 @@ tempa = wcos / gnorm
 tempb = wsin / vnorm
 tempc = wcos / vnorm
 tempd = wsin / gnorm
-do i = 1, n
-    d(i) = tempa * g(i) + tempb * v(i)
-    v(i) = tempc * v(i) - tempd * g(i)
-end do
-!
-!     The final D is a multiple of the current D, V, D+V or D-V. We make the
-!     choice from these possibilities that is optimal.
-!
+d = tempa * g + tempb * v
+v = tempc * v - tempd * g
+
+! The final D is a multiple of the current D, V, D + V or D - V. We make the choice from these
+! possibilities that is optimal.
 dlin = wcos * gnorm / rho
 vlin = -wsin * gnorm / rho
 tempa = abs(dlin) + HALF * abs(vmu + vhv)
 tempb = abs(vlin) + HALF * abs(ghg - vmu)
-tempc = halfrt * (abs(dlin) + abs(vlin)) + QUART * abs(ghg + vhv)
+tempc = sqrt(HALF) * (abs(dlin) + abs(vlin)) + QUART * abs(ghg + vhv)
 if (tempa >= tempb .and. tempa >= tempc) then
     tempd = sign(rho, dlin * (vmu + vhv))
     tempv = ZERO
@@ -242,14 +174,12 @@ else if (tempb >= tempc) then
     tempd = ZERO
     tempv = sign(rho, vlin * (ghg - vmu))
 else
-    tempd = sign(halfrt * rho, dlin * (ghg + vhv))
-    tempv = sign(halfrt * rho, vlin * (ghg + vhv))
+    tempd = sign(sqrt(HALF) * rho, dlin * (ghg + vhv))
+    tempv = sign(sqrt(HALF) * rho, vlin * (ghg + vhv))
 end if
-do i = 1, n
-    d(i) = tempd * d(i) + tempv * v(i)
-end do
+d = tempd * d + tempv * v
 vmax = rho * rho * max(tempa, tempb, tempc)
-170 return
+
 end subroutine geostep
 
 
