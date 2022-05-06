@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 AM12:19:12
+! Last Modified: Saturday, May 07, 2022 AM01:49:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -168,19 +168,20 @@ do k = 1, nm
 end do
 
 !---------------------------------------------------------------------------------------!
-!! Zaikun 20220506
-!tn(n) = ZERO
-!if (is_nan(sum(abs(h)) + sum(abs(td(1:n))) + sum(abs(tn(1:n - 1))) + sum(abs(gg)))) then
-!    d_out = ZERO
-!    evalue = ZERO
-!    return
-!end if
+! Zaikun 20220506
+tn(n) = ZERO
+if (.not. is_finite(sum(abs(td(1:n))) + sum(abs(tn(1:n - 1))) + sum(abs(gg)))) then
+    d_out = ZERO
+    evalue = ZERO
+    return
+end if
 !---------------------------------------------------------------------------------------!
 !
 !     Begin the trust region calculation with a tridiagonal matrix by
 !     calculating the norm of H. Then treat the case when H is ZERO.
 !
-hnorm = abs(td(1)) + abs(tn(1))
+!hnorm = abs(td(1)) + abs(tn(1))
+hnorm = abs(ZERO) + abs(td(1)) + abs(tn(1))
 tdmin = td(1)
 tn(n) = ZERO
 do i = 2, n
@@ -197,18 +198,18 @@ if (hnorm == ZERO) then
     goto 370
 end if
 
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20220303: Exit if H, G, TD, or TN are not finite. Otherwise, the behavior of this
-! subroutine is not predictable. For example, if HNORM = GNORM = Inf, it is observed that the
-! initial value of PARL defined below will change when we add code that should not affect PARL
-! (e.g., print it, or add TD = 0, TN = 0, PIV = 0 at the beginning of this subroutine).
-! This is probably because the behavior of MAX is undefined if it receives NaN (when GNORM = HNORM
-! = Inf, GNORM/DELTA - HNORM = NaN). This also motivates us to replace the intrinsic MAX by the
-! MAXIMUM defined in LINALG_MOD. MAXIMUM will return NaN if it receives NaN, making it easier for us
-! to notice that there is a problem and hence debug.
-if (.not. (is_finite(hnorm) .and. is_finite(gnorm) .and. all(is_finite(td(1:n))) .and. all(is_finite(tn(1:n))))) then
-    goto 400
-end if
+!!--------------------------------------------------------------------------------------------------!
+!! Zaikun 20220303: Exit if H, G, TD, or TN are not finite. Otherwise, the behavior of this
+!! subroutine is not predictable. For example, if HNORM = GNORM = Inf, it is observed that the
+!! initial value of PARL defined below will change when we add code that should not affect PARL
+!! (e.g., print it, or add TD = 0, TN = 0, PIV = 0 at the beginning of this subroutine).
+!! This is probably because the behavior of MAX is undefined if it receives NaN (when GNORM = HNORM
+!! = Inf, GNORM/DELTA - HNORM = NaN). This also motivates us to replace the intrinsic MAX by the
+!! MAXIMUM defined in LINALG_MOD. MAXIMUM will return NaN if it receives NaN, making it easier for us
+!! to notice that there is a problem and hence debug.
+!if (.not. (is_finite(hnorm) .and. is_finite(gnorm) .and. all(is_finite(td(1:n))) .and. all(is_finite(tn(1:n))))) then
+!    goto 400
+!end if
 !--------------------------------------------------------------------------------------------------!
 
 !     Set the initial values of PAR and its bounds.
