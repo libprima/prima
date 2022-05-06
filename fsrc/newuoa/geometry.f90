@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 05, 2022 PM05:21:52
+! Last Modified: Friday, May 06, 2022 PM06:45:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -407,9 +407,7 @@ do iter = 1, maxiter
     !----------------------------------------------------------------------------------------------!
 
     ss = inprod(s, s)
-    !!dunit = d / norm(d)  ! Normalization seems to stabilize the projection below.
-    !!s = s - inprod(s, dunit) * dunit
-    s = s - project(s, d)
+    s = s - project(s, d)  ! PROJECT(X, V) returns the projection of X to SPAN(V): X'*(V/|V|)*(V/|V|)
     ! N.B.:
     ! 1. The condition |S|<=TOL*SQRT(SS) below is equivalent to DS^2>=(1-TOL^2)*DD*SS in theory. As
     ! shown above, Powell's code triggers an exit if DS^2>=(1-1.0E-8)*DD*SS. So our condition is the
@@ -649,9 +647,7 @@ do iter = 1, n
     !----------------------------------------------------------------------------------------------!
 
     ss = inprod(s, s)
-    !!dunit = d / norm(d)  ! Normalization seems to stabilize the projection below.
-    !!s = s - inprod(s, dunit) * dunit
-    s = s - project(s, d)
+    s = s - project(s, d)  ! PROJECT(X, V) returns the projection of X to SPAN(V): X'*(V/|V|)*(V/|V|)
     ! N.B.:
     ! 1. The condition |S|<=TOL*SQRT(SS) below is equivalent to DS^2>=(1-TOL^2)*DD*SS in theory. As
     ! shown above, Powell's code triggers an exit if DS^2>=(1-1.0E-8)*DD*SS. So our condition is the

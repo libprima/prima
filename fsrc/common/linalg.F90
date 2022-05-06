@@ -14,7 +14,7 @@ module linalg_mod
 ! 2. Most of the subroutines/functions here are better coded inline, because the code is short
 ! using matrix/vector operations, and because the overhead of subroutine/function calling can be
 ! high in these languages. Here we implement them as subroutines/functions in order to align with
-! Powell's original code, which cannot be translated directly to matrix/vector operations without 
+! Powell's original code, which cannot be translated directly to matrix/vector operations without
 ! changing the results in floating-point arithmetic.
 !
 ! TODO: To avoid stack overflows, functions that return a potentially large array (e.g., MATPROD)
@@ -24,7 +24,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 18, 2022 PM11:50:10
+! Last Modified: Friday, May 06, 2022 PM06:41:41
 !--------------------------------------------------------------------------------------------------
 
 implicit none
