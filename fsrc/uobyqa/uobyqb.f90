@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 PM11:54:57
+! Last Modified: Friday, May 06, 2022 PM12:53:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,7 +26,7 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
     & x, nf, f, fhist, xhist, info)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -90,7 +90,7 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 1))
 !real(RP) :: xpt(size(x) + 1, size(pl, 1))  ! XPT(2, :) is accessed when N = 1
 real(RP) :: ddknew, delta, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score(size(pl, 1)),    &
-&        distest, dnorm, errtol, estim, evalue, fplus, fbase, fopt,&
+&        distest, dnorm, errtol, estim, crvmin, fplus, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
 &        sumg, temp, tempa, tol, tworsq, vmax,  &
 &        qred, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
@@ -348,13 +348,13 @@ end if
 !     Generate the next trust region step and test its length. Set KNEW
 !     to -1 if the purpose of the next F will be to improve conditioning,
 !     and also calculate a lower bound on the Hessian term of the model Q.
-call trstep(delta, g, h, tol, d, evalue)
+call trstep(delta, g, h, tol, d, crvmin)
 
 dnorm = min(delta, sqrt(sum(d**2)))
 errtol = -ONE
 if (dnorm < HALF * rho) then
     knew = -1
-    errtol = HALF * evalue * rho * rho
+    errtol = HALF * crvmin * rho * rho
     if (nf <= npt + 9) errtol = ZERO
     goto 290
 end if
@@ -450,6 +450,7 @@ ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
 !----------------------------------------------------------!
 !if (knew > 0) goto 240
 if (knew <= 0) then
+
 !
 !     Pick the next value of DELTA after a trust region step.
 !
@@ -501,6 +502,7 @@ end if
 !
 
 xpt(:, knew) = xnew
+! It can happen that VLAG(KNEW) = 0 due to rounding.
 pl(knew, :) = pl(knew, :) / vlag(knew)
 plknew = pl(knew, :)
 pq = pq + diff * plknew
@@ -556,13 +558,14 @@ if (knew > 0) then
 !     with index KNEW, using a bound on the maximum modulus of its Lagrange
 !     function in the trust region.
 !
+    wmult = HUGENUM  ! Needed for Fortran, or compiler may complain that it is not defined.
     if (errtol > ZERO) then
         w(knew) = ZERO
         sumg = ZERO
         sumg = sum(g**2)
         estim = rho * (sqrt(sumg) + rho * HALF * sqrt(sum(h**2)))
         wmult = sixthm * distest**1.5_RP
-        if (wmult * estim <= errtol) goto 310
+        if (wmult * estim <= errtol) goto 310   ! Infinite cycling possible?
     end if
 !
 !     If the KNEW-th point may be replaced, then pick a D that gives a large
@@ -570,10 +573,18 @@ if (knew > 0) then
 !     Here the vector XNEW is used as temporary working space.
 !
     call geostep(g, h, rho, d, vmax)
-    if (errtol > ZERO) then
-        if (wmult * vmax <= errtol) goto 310
+    !if (errtol > ZERO) then
+    !    if (wmult * vmax <= errtol) goto 310
+    !end if
+    !goto 100
+    if (errtol > 0 .and. wmult * vmax <= errtol) then
+        goto 310  ! Infinite cycling possible?
+        !else
+    elseif (vmax > 0) then
+        goto 100  ! GEOSTEP succeeds.
+    else
+        goto 600  ! GEOSTEP fails.
     end if
-    goto 100
 end if
 if (dnorm > rho) goto 70
 !
@@ -581,6 +592,7 @@ if (dnorm > rho) goto 70
 !     and make the corresponding changes to the gradients of the Lagrange
 !     functions and the quadratic model.
 !
+600 continue
 if (rho > rhoend) then
 
     xbase = xbase + xopt
@@ -611,7 +623,13 @@ info = SMALL_TR_RADIUS !!??
 !     Return from the calculation, after another Newton-Raphson step, if
 !     it is too short to have been tried before.
 
-if (errtol >= ZERO) goto 100
+!if (errtol >= ZERO) goto 100
+if (errtol >= ZERO) then
+    !----------------!
+    knew = -1  ! Zaikun 20220506: Tell the algorithm to come to 420 immediately after the function evaluation.
+    !----------------!
+    goto 100
+end if
 
 420 continue
 

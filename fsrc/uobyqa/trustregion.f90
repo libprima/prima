@@ -19,7 +19,7 @@ public :: trstep
 contains
 
 
-subroutine trstep(delta, g, h_in, tol, d_out, evalue)   !!!! Possible to use D instead of D_OUT?
+subroutine trstep(delta, g, h_in, tol, d_out, crvmin)   !!!! Possible to use D instead of D_OUT?
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -37,7 +37,7 @@ real(RP), intent(in) :: tol
 ! In-outputs
 !real(RP), intent(out) :: d(:)  ! D(N)
 real(RP), intent(out) :: d_out(:)  ! D(N)  !!!! Temporary; the code below accesses D(N+1)
-real(RP), intent(out) :: evalue
+real(RP), intent(out) :: crvmin
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTEP'
@@ -72,7 +72,7 @@ if (DEBUGGING) then
 end if
 
 
-evalue = ZERO
+crvmin = ZERO
 
 ! Zaikun 20220301, 20220305:
 ! Powell's original code requires that N >= 2.  When N = 1, the code does not work (sometimes even
@@ -83,7 +83,7 @@ if (n == 1) then
         dnewton = -g / h(1, 1)
         if (abs(dnewton(1)) <= delta) then
             d_out = dnewton
-            evalue = h(1, 1)
+            crvmin = h(1, 1)
         else
             d_out = sign(delta, dnewton)  ! MATLAB: D_OUT = DELTA * SIGN(DNEWTON)
         end if
@@ -104,8 +104,8 @@ end if
 !     TOL is the value of a tolerance from the open interval (0,1).
 !     D will be set to the calculated vector of variables.
 !     The arrays GG, TD, TN, W, PIV and Z will be used for working space.
-!     EVALUE will be set to the least eigenvalue of H if and only if D is a
-!     Newton-Raphson step. Then EVALUE will be positive, but otherwise it
+!     CRVMIN will be set to the least eigenvalue of H if and only if D is a
+!     Newton-Raphson step. Then CRVMIN will be positive, but otherwise it
 !     will be set to ZERO.
 !
 !     Let MAXRED be the maximum of Q(0)-Q(D) subject to ||D|| .LEQ. DELTA,
@@ -478,8 +478,8 @@ paru = par
 phiu = phi
 goto 220
 !
-!     Set EVALUE to the least eigenvalue of the second derivative matrix if
-!     D is a Newton-Raphson step. SHFMAX will be an upper bound on EVALUE.
+!     Set CRVMIN to the least eigenvalue of the second derivative matrix if
+!     D is a Newton-Raphson step. SHFMAX will be an upper bound on CRVMIN.
 !
 320 shfmin = ZERO
 pivot = td(1)
@@ -489,7 +489,7 @@ do k = 2, n
     shfmax = min(shfmax, pivot)
 end do
 !
-!     Find EVALUE by a bisection method, but occasionally SHFMAX may be
+!     Find CRVMIN by a bisection method, but occasionally SHFMAX may be
 !     adjusted by the rule of false position.
 !
 ksave = 0
@@ -522,7 +522,7 @@ else
     end if
 end if
 if (shfmin <= 0.99_RP * shfmax) goto 340
-360 evalue = shfmin
+360 crvmin = shfmin
 !
 !     Apply the inverse Householder transformations to D.
 !
