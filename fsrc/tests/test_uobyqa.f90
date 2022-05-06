@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, May 04, 2022 AM08:51:39
+! Last Modified: Friday, May 06, 2022 AM11:36:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,7 +104,8 @@ else
     randseed_loc = RANDSEED_DFT
 end if
 
-do iprob = 1, nprobs
+!do iprob = 1, nprobs
+do iprob = 5, nprobs
     probname = probs_loc(iprob)
     do n = mindim_loc, maxdim_loc, dimstride_loc
         call construct(prob, probname, n)  ! Construct the testing problem.

@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM08:58:35
+! Last Modified: Friday, May 06, 2022 PM12:52:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -615,7 +615,11 @@ if (knew > 0) then
     if (errtol > ZERO) then
         if (wmult * vmax <= errtol) goto 310
     end if
-    goto 100
+    if (vmax > 0) then
+        goto 100
+    else
+        goto 600
+    end if
 end if
 if (dnorm > rho) goto 70
 !
@@ -623,6 +627,8 @@ if (dnorm > rho) goto 70
 !     and make the corresponding changes to the gradients of the Lagrange
 !     functions and the quadratic model.
 !
+600 continue
+
 if (rho > rhoend) then
     ih = n
     do j = 1, n
@@ -679,7 +685,11 @@ end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 info = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (errtol >= ZERO) goto 100
+!if (errtol >= ZERO) goto 100
+if (errtol >= ZERO) then
+    knew = -1
+    goto 100
+end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !  420 IF (FOPT .LE. F) THEN
 420 if (fopt <= f .or. f /= f) then
