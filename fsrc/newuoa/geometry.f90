@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, May 06, 2022 PM06:45:20
+! Last Modified: Friday, May 06, 2022 PM08:23:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -162,14 +162,14 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 ! D will be set to the step from X to the new point.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: D(N), PQLAG(NPT), VLAG(N+NPT), XOPT(N)
-! Size of local arrays: REAL(RP)*(2*NPT+3*N)
+! REAL(RP) :: D(N), DDEN, PQLAG(NPT), VLAG(N+NPT), XOPT(N)
+! Size of local arrays: REAL(RP)*(2*NPT+4*N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : issymmetric, norm
 use, non_intrinsic :: powalg_mod, only : omega_col, calvlag, calbeta
 implicit none
@@ -191,8 +191,10 @@ character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: alpha
-real(RP) :: absden
 real(RP) :: beta
+real(RP) :: dden(size(xpt, 1))
+real(RP) :: denom
+real(RP) :: denrat
 real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: xopt(size(xpt, 1))
@@ -232,18 +234,27 @@ alpha = pqlag(knew)  ! ALPHA is the KNEW-th diagonal entry of H, i.e., that of O
 ! Calculate VLAG and BETA for D. Indeed, only VLAG(KNEW) is needed.
 vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
 beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
+denom = alpha * beta + vlag(knew)**2
 
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
-if (vlag(knew)**2 <= ZERO) then
-    ! Powell's code does not check VLAG(KNEW)**2. VLAG(KNEW)**2 > 0 in theory, but it can be 0 due
-    ! to rounding, which did happen in tests. If VLAG(KNEW) **2 = 0, then BIGLAG fails, because
-    ! BIGLAG should maximize |VLAG(KNEW)|. Upon this failure, it is reasonable to call BIGDEN.
-    absden = -ONE
-else
-    absden = abs(ONE + alpha * beta / vlag(knew)**2)
+! As in (6.17) of the NEWUOA paper, DENRAT = |ALPHA*BETA + TAU^2| / TAU^2 with TAU = VLAG(KNEW).
+! Powell's code does not check whether VLAG(KNEW)**2 > 0, which holds in theory. VLAG(KNEW) can
+! become 0 or NaN numerically, which did happen in tests, indicating a failure of BIGLAG, because
+! BIGLAG should maximize |VLAG(KNEW)|. Upon this failure, it is reasonable to call BIGDEN. For the
+! same reason, we check whether BETA is NaN. Why not check ALPHA? Because BIGDEN cannot improve ALPHA.
+! Powell's code takes DDEN once it is calculated. We take it only if it renders a bigger denominator.
+denrat = -ONE
+if (vlag(knew)**2 > 0 .and. .not. is_nan(beta)) then
+    denrat = abs(ONE + alpha * beta / vlag(knew)**2)
 end if
-if (absden <= 0.8_RP) then
-    d = bigden(idz, knew, kopt, bmat, d, xpt, zmat)
+! If DENRAT is NaN at this point, then ALPHA is NaN, and there is no need to call BIGDEN.
+if (denrat <= 0.8_RP) then
+    dden = bigden(idz, knew, kopt, bmat, d, xpt, zmat)
+    vlag = calvlag(kopt, bmat, dden, xpt, zmat, idz)
+    beta = calbeta(kopt, bmat, dden, xpt, zmat, idz)
+    if (abs(alpha * beta + vlag(knew)**2) >= abs(denom) .or. is_nan(denom)) then
+        d = dden
+    end if
 end if
 
 !====================!
