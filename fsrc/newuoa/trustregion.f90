@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 23, 2022 PM11:18:26
+! Last Modified: Friday, May 06, 2022 PM06:44:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -291,13 +291,12 @@ do iter = 1, itermax
     !!----------------------------------------------!
     ! The above is Powell's code. In precise arithmetic, INPROD(D, S) = 0 and |D| = |S|. However,
     ! when DELSQ*GG - SGK**2 is tiny, the error in D can be large and hence damage these
-    ! inequalities significantly. This did happen in tests, especially when using the single
+    ! equalities significantly. This did happen in tests, especially when using the single
     ! precision. We calculate D as below. It did improve the performance of NEWUOA in our test.
     !----------------------------------------------------------------------------------------------!
 
     ! Begin the 2D minimization by calculating D and HD and some scalar products.
-    !!sunit = s / norm(s)  ! Normalization seems to stabilize the projection below.
-    !!d = (g + hs) - inprod(g + hs, sunit) * sunit
+    ! PROJECT(X, V) returns the projection of X to SPAN(V): X'*(V/|V|)*(V/|V|).
     d = (g + hs) - project(g + hs, s)
     ! N.B.:
     ! 1. The condition |D|<=SQRT(TOL*GG) below is equivalent to |INPROD(G+HS,S)|<=SQRT((1-TOL)*GG*SS)
