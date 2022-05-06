@@ -1,5 +1,7 @@
-!4.SIZE of d in TRSTEP is N + 1 instead of N, maybe also other arrays and other places.
-!5.THE checks in rangehist cannot pass(xhist does not contain NaN)
+!TODO:
+!1. Take case of N = 1.
+!2. SIZE of d in TRSTEP is N + 1 instead of N, maybe also other arrays and other places.
+!3. THE checks in rangehist cannot pass(xhist does not contain NaN)
 
 module uobyqb_mod
 !--------------------------------------------------------------------------------------------------!
@@ -11,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 06, 2022 PM01:07:37
+! Last Modified: Friday, May 06, 2022 PM02:44:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -83,7 +85,7 @@ real(RP) :: h(size(x), size(x))
 real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2, (size(x) + 1) * (size(x) + 2) / 2 - 1)
 real(RP) :: pq(size(pl, 2))
 real(RP) :: vlag(size(pl, 1))
-real(RP) :: w(max(6_IK * size(x), (size(x)**2 + 3_IK * size(x) + 2_IK) / 2_IK))
+real(RP) :: xw(size(x))
 real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
@@ -169,10 +171,10 @@ do nf = 1, 2_IK * n + 1_IK
     if (nf > 1) then
         if (modulo(nf, 2_IK) == 1_IK) then
             if (fplus < fbase) then
-                w(j) = rho
+                xw(j) = rho
                 xpt(j, nf) = TWO * rho
             else
-                w(j) = -rho
+                xw(j) = -rho
                 xpt(j, nf) = -rho
             end if
         elseif (j < n) then
@@ -265,9 +267,9 @@ do nf = 2_IK * n + 2_IK, npt
         ip = 1
         iq = iq + 1
     end if
-    xpt(ip, nf) = w(ip)
+    xpt(ip, nf) = xw(ip)
     ! N.B.: XPT(2, NF+1) is accessed by XPT(IQ, NF+1) even if N = 1.
-    xpt(iq, nf) = w(iq)
+    xpt(iq, nf) = xw(iq)
     x = xbase + xpt(:, nf)
 
     if (is_nan(sum(abs(x)))) then
@@ -299,16 +301,16 @@ do nf = 2_IK * n + 2_IK, npt
     end if
 
     ih = ih + 1
-    temp = ONE / (w(ip) * w(iq))
-    tempa = f - fbase - w(ip) * pq(ip) - w(iq) * pq(iq)
+    temp = ONE / (xw(ip) * xw(iq))
+    tempa = f - fbase - xw(ip) * pq(ip) - xw(iq) * pq(iq)
     ! N.B.: D(2) is accessed by D(IQ) even if N = 1.
     pq(ih) = (tempa - HALF * rhosq * (d(ip) + d(iq))) * temp
     pl(1, ih) = temp
     iw = ip + ip
-    if (w(ip) < ZERO) iw = iw + 1
+    if (xw(ip) < ZERO) iw = iw + 1
     pl(iw, ih) = -temp
     iw = iq + iq
-    if (w(iq) < ZERO) iw = iw + 1
+    if (xw(iq) < ZERO) iw = iw + 1
     pl(iw, ih) = -temp
     pl(nf, ih) = temp
 end do
@@ -526,23 +528,21 @@ if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > tworsq) goto 7
 290 continue
 
 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-w(1:npt) = distsq
 
-310 continue
-
-knew = -1
-distest = tworsq
-if (any(w(1:npt) > distest)) then
-    knew = int(maxloc(w(1:npt), mask=(.not. is_nan(w(1:npt))), dim=1), IK)
-    distest = w(knew)
-    !!MATLAB: [distest, knew] = max(w(1:npt), [], 'omitnan');
-end if
+do k = 1, npt
+    knew = -1
+    distest = tworsq
+    if (all(distsq <= distest)) then
+        exit
+    end if
+    knew = int(maxloc(distsq, dim=1), IK)
+    distest = distsq(knew)
+    !!MATLAB: [distest, knew] = max(distsq(1:npt));
 !
 !     If a point is sufficiently far away, then set the gradient and Hessian
 !     of its Lagrange function at the centre of the trust region, and find
 !     HALF the summ of squares of components of the Hessian.
 !
-if (knew > 0) then
     !g = pl(knew, 1:n)
     g = pl(knew, 1:n) + smat_mul_vec(pl(knew, n + 1:npt - 1), xopt)
     h = vec2smat(pl(knew, n + 1:npt - 1))
@@ -560,12 +560,12 @@ if (knew > 0) then
 !
     wmult = HUGENUM  ! Needed for Fortran, or compiler may complain that it is not defined.
     if (errtol > ZERO) then
-        w(knew) = ZERO
+        distsq(knew) = ZERO
         sumg = ZERO
         sumg = sum(g**2)
         estim = rho * (sqrt(sumg) + rho * HALF * sqrt(sum(h**2)))
         wmult = sixthm * distest**1.5_RP
-        if (wmult * estim <= errtol) goto 310   ! Infinite cycling possible?
+        if (wmult * estim <= errtol) cycle
     end if
 !
 !     If the KNEW-th point may be replaced, then pick a D that gives a large
@@ -574,14 +574,14 @@ if (knew > 0) then
 !
     call geostep(g, h, rho, d, vmax)
     if (errtol > 0 .and. wmult * vmax <= errtol) then
-        goto 310  ! Infinite cycling possible?
-        !else
+        cycle
     elseif (vmax > 0) then
         goto 100  ! GEOSTEP succeeds.
     else
         goto 600  ! GEOSTEP fails.
     end if
-end if
+end do
+
 if (dnorm > rho) goto 70
 !
 !     Prepare to reduce RHO by shifting XBASE to the best point so far,
