@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 06, 2022 PM02:50:18
+! Last Modified: Friday, May 06, 2022 PM04:24:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
     & x, nf, f, fhist, xhist, info)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -92,9 +92,9 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 1))
 !real(RP) :: xpt(size(x) + 1, size(pl, 1))  ! XPT(2, :) is accessed when N = 1
 real(RP) :: ddknew, delta, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score(size(pl, 1)),    &
-&        distest, dnorm, errtol, estim, crvmin, fplus, fbase, fopt,&
+&        dnorm, errtol, estim, crvmin, fplus, fbase, fopt,&
 &        fsave, ratio, rho, rhosq, sixthm, summ, &
-&        sumg, temp, tempa, tol, tworsq, vmax,  &
+&        temp, tempa, tol, vmax,  &
 &        qred, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
 integer(IK) :: ih, ip, iq, iw, j, k, knew, kopt, ksave
 logical :: tr_success
@@ -152,7 +152,7 @@ f = ieeenan()
 !
 tol = 0.01_RP
 rho = rhobeg
-rhosq = rho * rho
+rhosq = rho**2
 
 
 ! Initialization. NF is the number of function calculations so far. The least function value so far,
@@ -328,9 +328,6 @@ sixthm = ZERO
 delta = rho
 60 continue
 
-tworsq = (TWO * rho)**2
-rhosq = rho * rho
-!
 !     Form the gradient of the quadratic model at the trust region centre.
 !
 70 continue
@@ -474,7 +471,7 @@ if (knew <= 0) then
 !     Set KNEW to the index of the next interpolation point to be deleted.
 !
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    weight = max(ONE, distsq / rhosq)**1.5_RP
+    weight = max(ONE, distsq / rho**2)**1.5_RP
     score = weight * abs(vlag)
 
     tr_success = (f < fsave)
@@ -496,8 +493,8 @@ if (knew <= 0) then
     else
         knew = 0_IK
     end if
-    if (knew == 0) goto 290
 end if
+if (knew <= 0) goto 290
 !
 !     Replace the interpolation point that has index KNEW by the point XNEW,
 !     and also update the Lagrange functions and the quadratic model.
@@ -519,7 +516,7 @@ if (f < fsave) then
     kopt = knew
 end if
 
-if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > tworsq) goto 70
+if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2) goto 70
 
 !
 !     Alternatively, find out if the interpolation points are close
@@ -527,24 +524,18 @@ if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > tworsq) goto 7
 !
 290 continue
 
-distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-
+distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! DISTSQ is updated during the loop. 
 ! The loop counter K does not appear in the loop body. Its purpose is only to impose an upper bound on the maximal number of loops.
 do k = 1, npt
-    knew = -1
-    distest = tworsq
-    if (all(distsq <= distest)) then
+    knew = -1  ! Still needed?
+    if (all(distsq <= 4.0_RP * rho**2)) then
         exit
     end if
+
+    ! If a point is sufficiently far away, then set the gradient and Hessian of its Lagrange
+    ! function at the centre of the trust region.
     knew = int(maxloc(distsq, dim=1), IK)
-    distest = distsq(knew)
-    !!MATLAB: [distest, knew] = max(distsq(1:npt));
-!
-!     If a point is sufficiently far away, then set the gradient and Hessian
-!     of its Lagrange function at the centre of the trust region, and find
-!     HALF the summ of squares of components of the Hessian.
-!
-    !g = pl(knew, 1:n)
+    !!MATLAB: [~, knew] = max(distsq(1:npt));
     g = pl(knew, 1:n) + smat_mul_vec(pl(knew, n + 1:npt - 1), xopt)
     h = vec2smat(pl(knew, n + 1:npt - 1))
     if (is_nan(sum(abs(g)) + sum(abs(h)))) then
@@ -552,27 +543,17 @@ do k = 1, npt
         goto 420
     end if
 
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     If ERRTOL is positive, test whether to replace the interpolation point
-!     with index KNEW, using a bound on the maximum modulus of its Lagrange
-!     function in the trust region.
-!
-    wmult = HUGENUM  ! Needed for Fortran, or compiler may complain that it is not defined.
-    if (errtol > ZERO) then
+    ! If ERRTOL is positive, test whether to replace the interpolation point with index KNEW, using
+    ! a bound on the maximum modulus of its Lagrange function in the trust region.
+    wmult = sixthm * distsq(knew)**1.5_RP
+    if (errtol > 0) then
         distsq(knew) = ZERO
-        sumg = ZERO
-        sumg = sum(g**2)
-        estim = rho * (sqrt(sumg) + rho * HALF * sqrt(sum(h**2)))
-        wmult = sixthm * distest**1.5_RP
+        estim = rho * (sqrt(sum(g**2)) + rho * HALF * sqrt(sum(h**2)))
         if (wmult * estim <= errtol) cycle
     end if
-!
-!     If the KNEW-th point may be replaced, then pick a D that gives a large
-!     value of the modulus of its Lagrange function within the trust region.
-!     Here the vector XNEW is used as temporary working space.
-!
+
+    ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the modulus of
+    ! its Lagrange function within the trust region.
     call geostep(g, h, rho, d, vmax)
     if (errtol > 0 .and. wmult * vmax <= errtol) then
         cycle
@@ -589,7 +570,9 @@ if (dnorm > rho) goto 70
 !     and make the corresponding changes to the gradients of the Lagrange
 !     functions and the quadratic model.
 !
+
 600 continue
+
 if (rho > rhoend) then
 
     xbase = xbase + xopt
