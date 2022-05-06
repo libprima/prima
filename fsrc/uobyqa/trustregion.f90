@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 15, 2022 PM10:56:41
+! Last Modified: Saturday, May 07, 2022 AM12:44:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,8 +23,8 @@ subroutine trstep(delta, g, h_in, tol, d_out, crvmin)   !!!! Possible to use D i
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : maximum, issymmetric
+use, non_intrinsic :: infnan_mod, only : is_finite!, is_nan
+use, non_intrinsic :: linalg_mod, only : maximum, issymmetric, inprod
 
 implicit none
 
@@ -55,9 +55,9 @@ real(RP) :: dnewton(size(g))  ! Newton-Raphson step; only calculated when N = 1.
 real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, pivksv, pivot, posdef,   &
-&        scaling, shfmax, shfmin, shift, slope, summ, sumd,    &
-&        tdmin, temp, tempa, tempb, wsq, wwsq, wz, zsq
-integer(IK) :: i, iterc, j, jp, k, kp, kpp, ksav, ksave, nm
+&        scaling, shfmax, shfmin, shift, slope, sumd,    &
+&        tdmin, temp, tempa, tempb, wsq, wwsq, zsq
+integer(IK) :: i, iterc, k, ksav, ksave
 
 h = h_in  ! To be removed
 
@@ -108,11 +108,11 @@ end if
 !     Newton-Raphson step. Then CRVMIN will be positive, but otherwise it
 !     will be set to ZERO.
 !
-!     Let MAXRED be the maximum of Q(0)-Q(D) subject to ||D|| .LEQ. DELTA,
+!     Let MAXRED be the maximum of Q(0)-Q(D) subject to ||D|| <= DELTA,
 !     and let ACTRED be the value of Q(0)-Q(D) that is actually calculated.
 !     We take the view that any D is acceptable if it has the properties
 !
-!             ||D|| .LEQ. DELTA  and  ACTRED .LEQ. (1-TOL)*MAXRED.
+!             ||D|| <= DELTA  and  ACTRED <= (1-TOL)*MAXRED.
 !
 !     The calculation of D is done by the method of Section 2 of the paper
 !     by MJDP in the 1997 Dundee Numerical Analysis Conference Proceedings,
@@ -122,91 +122,41 @@ end if
 !
 !
 delsq = delta * delta
-nm = n - 1
-do i = 1, n
-    d(i) = ZERO
-    td(i) = h(i, i)
-end do
-!
-!     Apply Householder transformations to obtain a tridiagonal matrix that
-!     is similar to H, and put the elements of the Householder vectors in
-!     the lower triangular part of H. Further, TD and TN will contain the
-!     diagonal and other nonzero elements of the tridiagonal matrix.
-!
-do k = 1, nm
-    kp = k + 1
-    summ = ZERO
-    if (kp < n) then
-        kpp = kp + 1
-        do i = kpp, n
-            summ = summ + h(i, k)**2
-        end do
-    end if
-    if (summ == ZERO) then
-        tn(k) = h(kp, k)
-        h(kp, k) = ZERO
-    else
-        temp = h(kp, k)
-        tn(k) = sign(sqrt(summ + temp * temp), temp)
-        h(kp, k) = -summ / (temp + tn(k))
-        temp = sqrt(TWO / (summ + h(kp, k)**2))
-        do i = kp, n
-            w(i) = temp * h(i, k)
-            h(i, k) = w(i)
-            z(i) = td(i) * w(i)
-        end do
-        wz = ZERO
-        do j = kp, nm
-            jp = j + 1
-            do i = jp, n
-                z(i) = z(i) + h(i, j) * w(j)
-                z(j) = z(j) + h(i, j) * w(i)
-            end do
-            wz = wz + w(j) * z(j)
-        end do
-        wz = wz + w(n) * z(n)
-        do j = kp, n
-            td(j) = td(j) + w(j) * (wz * w(j) - TWO * z(j))
-            if (j < n) then
-                jp = j + 1
-                do i = jp, n
-                    h(i, j) = h(i, j) - w(i) * z(j) - w(j) * (z(i) - wz * w(i))
-                end do
-            end if
-        end do
-    end if
-end do
-!
-!     Form GG by applying the similarity transformation to G.
-!
-gsq = ZERO
-do i = 1, n
-    gg(i) = g(i)
-    gsq = gsq + g(i)**2
-end do
+d = ZERO
+
+! Apply Householder transformations to obtain a tridiagonal matrix that is similar to H, and put the
+! elements of the Householder vectors in the lower triangular part of H. Further, TD and TN will
+! contain the diagonal and other nonzero elements of the tridiagonal matrix.
+call hessenberg(h, td, tn(1:n - 1))
+tn(n) = ZERO  ! This is necessary, as TN(N) will be accessed.
+
+! Form GG by applying the similarity transformation to G.
+gg = g
+gsq = sum(g**2)
 gnorm = sqrt(gsq)
-do k = 1, nm
-    kp = k + 1
-    summ = ZERO
-    do i = kp, n
-        summ = summ + gg(i) * h(i, k)
-    end do
-    do i = kp, n
-        gg(i) = gg(i) - summ * h(i, k)
-    end do
+do k = 1, n - 1
+    gg(k + 1:n) = gg(k + 1:n) - inprod(gg(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
 end do
-!
-!     Begin the trust region calculation with a tridiagonal matrix by
-!     calculating the norm of H. Then treat the case when H is ZERO.
-!
+
+!if (is_nan(sum(abs(h)) + sum(abs(td)) + sum(abs(tn)) + sum(abs(gg)))) then
+!    d_out = ZERO
+!    crvmin = ZERO
+!    return
+!end if
+
+! Begin the trust region calculation with a tridiagonal matrix by calculating the norm of H. Then
+! treat the case when H is zero.
 hnorm = abs(td(1)) + abs(tn(1))
 tdmin = td(1)
-tn(n) = ZERO  ! This is necessary, as TN(N) will be accessed.
 do i = 2, n
     temp = abs(tn(i - 1)) + abs(td(i)) + abs(tn(i))
     hnorm = max(hnorm, temp)
     tdmin = min(tdmin, td(i))
 end do
+
+!hnorm = maxval(abs([ZERO, tn(1:n - 1)]) + abs(td) + abs(tn))
+!tdmin = minval(td)
+
 if (hnorm == ZERO) then
     if (gnorm == ZERO) goto 400
     scaling = delta / gnorm
@@ -371,12 +321,13 @@ goto 140
 !
 !     Calculate D for the current PAR in the positive definite case.
 !
-230 w(1) = -gg(1) / piv(1)
+230 continue
+w(1) = -gg(1) / piv(1)
 do i = 2, n
     w(i) = (-gg(i) - tn(i - 1) * w(i - 1)) / piv(i)
 end do
 d(n) = w(n)
-do i = nm, 1, -1
+do i = n - 1, 1, -1
     d(i) = w(i) - tn(i) * d(i + 1) / piv(i)
 end do
 !
@@ -434,7 +385,7 @@ if (posdef == ZERO) then
         w(i) = (sign(ONE, temp) + temp) / piv(i)
     end do
     z(n) = w(n)
-    do i = nm, 1, -1
+    do i = n - 1, 1, -1
         z(i) = w(i) - tn(i) * z(i + 1) / piv(i)
     end do
     wwsq = ZERO
@@ -522,27 +473,108 @@ else
     end if
 end if
 if (shfmin <= 0.99_RP * shfmax) goto 340
-360 crvmin = shfmin
+
+360 continue
+
+crvmin = shfmin
 !
 !     Apply the inverse Householder transformations to D.
 !
-370 nm = n - 1
-do k = nm, 1, -1
-    kp = k + 1
-    summ = ZERO
-    do i = kp, n
-        summ = summ + d(i) * h(i, k)
+370 continue
+
+do k = n - 1, 1, -1
+    d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
+end do
+
+400 continue
+
+d_out(1:n) = d(1:n)  !!!! Temporary
+
+end subroutine trstep
+
+
+subroutine hessenberg(A, tdiag, tsubdiag)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine applies Householder transformations to obtain a tridiagonal matrix that is similar
+! the symmetric matrix A. The tridiagonal matrix is the Hessenberg form of A; its diagonal will be
+! stored in TDIAD, and the sub diagonal in TSUBDIAG. The Householder vectors will be stored in the
+! lower triangular part of A.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : issymmetric, diag, inprod
+implicit none
+
+! In-outputs
+real(RP), intent(inout) :: A(:, :)
+
+! Outputs
+real(RP), intent(out) :: tdiag(size(A, 1))
+real(RP), intent(out) :: tsubdiag(size(A, 1) - 1)
+
+! Local variables
+character(len=*), parameter :: srname = 'HESSENBERG'
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: k
+integer(IK) :: n
+real(RP) :: Asubd
+real(RP) :: colsq
+real(RP) :: w(size(A, 1))
+real(RP) :: wz
+real(RP) :: z(size(A, 1))
+
+! Sizes
+n = int(size(A, 1), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    ! Even though we only need the lower triangular part of A, we assume that something is wrong if
+    ! this subroutine is invoked with a non-symmetric matrix A.
+    call assert(issymmetric(A), 'A is symmetric', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+tdiag = diag(A)
+
+do k = 1, n - 1
+    colsq = sum(A(k + 2:n, k)**2)
+    if (colsq <= 0) then
+        tsubdiag(k) = A(k + 1, k)
+        A(k + 1, k) = ZERO
+        cycle
+    end if
+
+    Asubd = A(k + 1, k)
+    tsubdiag(k) = sign(sqrt(colsq + Asubd**2), Asubd)
+    A(k + 1, k) = -colsq / (Asubd + tsubdiag(k))
+    w(k + 1:n) = sqrt(TWO / (colsq + A(k + 1, k)**2)) * A(k + 1:n, k)
+    A(k + 1:n, k) = w(k + 1:n)
+    z(k + 1:n) = tdiag(k + 1:n) * w(k + 1:n)
+
+    do j = k + 1, n - 1
+        z(j + 1:n) = z(j + 1:n) + A(j + 1:n, j) * w(j)
+        do i = j + 1, n
+            z(j) = z(j) + A(i, j) * w(i)
+        end do
     end do
-    do i = kp, n
-        d(i) = d(i) - summ * h(i, k)
+
+    wz = inprod(w(k + 1:n), z(k + 1:n))
+
+    tdiag(k + 1:n) = tdiag(k + 1:n) + w(k + 1:n) * (wz * w(k + 1:n) - TWO * z(k + 1:n))
+    do j = k + 1, n
+        A(j + 1:n, j) = A(j + 1:n, j) - w(j + 1:n) * z(j) - w(j) * (z(j + 1:n) - wz * w(j + 1:n))
     end do
 end do
-!
-!     Return from the subroutine.
-!
-400 d_out(1:n) = d(1:n)  !!!! Temporary
-return
-end subroutine trstep
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end subroutine hessenberg
 
 
 end module trustregion_mod

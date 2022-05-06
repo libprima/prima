@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 03, 2022 PM05:52:09
+! Last Modified: Saturday, May 07, 2022 AM12:19:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine trstep(n, g, h, delta, tol, d_out, gg, td, tn, w, piv, z, evalue)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : maximum
 
 implicit none
@@ -117,7 +117,8 @@ do k = 1, nm
         h(kp, k) = ZERO
     else
         temp = h(kp, k)
-        tn(k) = sign(sqrt(summ + temp * temp), temp)
+        !tn(k) = sign(sqrt(summ + temp * temp), temp)
+        tn(k) = sign(sqrt(summ + temp**2), temp)
         h(kp, k) = -summ / (temp + tn(k))
         temp = sqrt(TWO / (summ + h(kp, k)**2))
         do i = kp, n
@@ -165,6 +166,16 @@ do k = 1, nm
         gg(i) = gg(i) - summ * h(i, k)
     end do
 end do
+
+!---------------------------------------------------------------------------------------!
+!! Zaikun 20220506
+!tn(n) = ZERO
+!if (is_nan(sum(abs(h)) + sum(abs(td(1:n))) + sum(abs(tn(1:n - 1))) + sum(abs(gg)))) then
+!    d_out = ZERO
+!    evalue = ZERO
+!    return
+!end if
+!---------------------------------------------------------------------------------------!
 !
 !     Begin the trust region calculation with a tridiagonal matrix by
 !     calculating the norm of H. Then treat the case when H is ZERO.
