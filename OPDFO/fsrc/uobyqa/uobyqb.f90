@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 06, 2022 PM12:52:42
+! Last Modified: Friday, May 06, 2022 PM04:23:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -117,7 +117,7 @@ nftest = maxfun
 !     Initialization. NF is the number of function calculations so far.
 !
 rho = rhobeg
-rhosq = rho * rho
+rhosq = rho**2
 nf = 0
 do i = 1, n
     xbase(i) = x(i)
@@ -250,8 +250,9 @@ end if
 !
 sixthm = ZERO
 delta = rho
-60 tworsq = (TWO * rho)**2
-rhosq = rho * rho
+!60 tworsq = (TWO * rho)**2
+60 tworsq = 4.0_RP * rho**2
+rhosq = rho**2
 !
 !     Form the gradient of the quadratic model at the trust region centre.
 !
