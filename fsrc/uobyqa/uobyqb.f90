@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 06, 2022 PM02:44:58
+! Last Modified: Friday, May 06, 2022 PM02:50:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -529,6 +529,7 @@ if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > tworsq) goto 7
 
 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 
+! The loop counter K does not appear in the loop body. Its purpose is only to impose an upper bound on the maximal number of loops.
 do k = 1, npt
     knew = -1
     distest = tworsq
