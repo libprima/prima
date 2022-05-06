@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 18, 2022 PM05:04:07
+! Last Modified: Friday, May 06, 2022 PM08:27:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -160,7 +160,7 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : issymmetric, norm, omega_col
 
 ! Solver-specific modules
@@ -190,6 +190,7 @@ real(RP) :: beta
 real(RP) :: hcol(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: xopt(size(xpt, 1))
+real(RP) :: dden(size(xpt, 1)), denom
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -225,9 +226,10 @@ alpha = hcol(knew)
 ! Calculate VLAG and BETA for D. Indeed, VLAG(NPT + 1 : NPT + N) will not be used.
 vlag = calvlag(idz, kopt, bmat, d, xpt, zmat)
 beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
+denom = alpha * beta + vlag(knew)**2
 
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
-if (vlag(knew)**2 <= ZERO) then
+if (is_nan(beta) .or. .not. vlag(knew)**2 > ZERO) then
     ! Powell's code does not check VLAG(KNEW)**2. VLAG(KNEW)**2 > 0 in theory, but it can be 0 due
     ! to rounding, which did happen in tests. If VLAG(KNEW) **2 = 0, then BIGLAG fails, because
     ! BIGLAG should maximize |VLAG(KNEW)|. Upon this failure, it is reasonable to call BIGDEN.
@@ -236,7 +238,12 @@ else
     absden = abs(ONE + alpha * beta / vlag(knew)**2)
 end if
 if (absden <= 0.8_RP) then
-    d = bigden(idz, knew, kopt, bmat, d, xpt, zmat)
+    dden = bigden(idz, knew, kopt, bmat, d, xpt, zmat)
+    vlag = calvlag(idz, kopt, bmat, dden, xpt, zmat)
+    beta = calbeta(idz, kopt, bmat, dden, xpt, zmat)
+    if (abs(alpha * beta + vlag(knew)**2) >= abs(denom) .or. is_nan(denom)) then
+        d = dden
+    end if
 end if
 
 !====================!
