@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM06:18:48
+! Last Modified: Saturday, May 07, 2022 PM08:33:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,9 +129,9 @@ d = ZERO
 ! elements of the Householder vectors in the lower triangular part of H. Further, TD and TN will
 ! contain the diagonal and other nonzero elements of the tridiagonal matrix.
 !-----------------------------------------------------------------------------!
-!call hessenberg(h, td, tn(1:n - 1))
+!call hessenberg(h, td(1:n), tn(1:n - 1))
 call hessenberg(h, hess, P)
-td = diag(hess)
+td(1:n) = diag(hess)
 tn(1:n - 1) = diag(hess, 1_IK)
 !-----------------------------------------------------------------------------!
 !!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1); tn(n) = 0;
