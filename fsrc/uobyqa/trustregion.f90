@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 AM08:47:32
+! Last Modified: Saturday, May 07, 2022 AM08:58:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -163,46 +163,17 @@ end if
 ! Begin the trust region calculation with a tridiagonal matrix by calculating the norm of H. Then
 ! treat the case when H is zero.
 
-hnorm = ZERO + abs(td(1)) + abs(tn(1))
-tdmin = td(1)
-do i = 2, n
-    temp = abs(tn(i - 1)) + abs(td(i)) + abs(tn(i))
-    hnorm = max(hnorm, temp)
-    tdmin = min(tdmin, td(i))
-end do
-
 hnorm = maxval(abs([ZERO, tn(1:n - 1)]) + abs(td(1:n)) + abs(tn))
 tdmin = minval(td(1:n))  ! This leads to a difference. Why?
-
 
 if (hnorm == ZERO) then
     if (gnorm == ZERO) goto 400
     scaling = delta / gnorm
-    do i = 1, n
-        d(i) = -scaling * gg(i)
-    end do
-    goto 370
+    d(1:n) = -scaling * g
+    goto 400
 end if
 
-!!--------------------------------------------------------------------------------------------------!
-!! Zaikun 20220303: Exit if H, G, TD, or TN are not finite. Otherwise, the behavior of this
-!! subroutine is not predictable. For example, if HNORM = GNORM = Inf, it is observed that the
-!! initial value of PARL defined below will change when we add code that should not affect PARL
-!! (e.g., print it, or add TD = 0, TN = 0, PIV = 0 at the beginning of this subroutine).
-!! This is probably because the behavior of MAX is undefined if it receives NaN (when GNORM = HNORM
-!! = Inf, GNORM/DELTA - HNORM = NaN). This also motivates us to replace the intrinsic MAX by the
-!! MAXIMUM defined in LINALG_MOD. MAXIMUM will return NaN if it receives NaN, making it easier for us
-!! to notice that there is a problem and hence debug.
-!if (.not. (is_finite(hnorm) .and. is_finite(gnorm) .and. all(is_finite(td(1:n))) .and. all(is_finite(tn)))) then
-!    ! If we declare TD as an N+1 dimensional vectors, then we have to specify its range
-!    ! in the condition above; also, TN(N) must be set to ZERO.
-!    goto 400
-!end if
-!--------------------------------------------------------------------------------------------------!
-
-!
-!     Set the initial values of PAR and its bounds.
-!
+! Set the initial values of PAR and its bounds.
 !parl = max(ZERO, -tdmin, gnorm / delta - hnorm)
 parl = maximum([ZERO, -tdmin, gnorm / delta - hnorm])
 parlest = parl
@@ -211,7 +182,7 @@ paru = ZERO
 paruest = ZERO
 posdef = ZERO
 iterc = 0
-!
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 26-06-2019: See the lines below line number 140
 do i = 1, n
