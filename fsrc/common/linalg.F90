@@ -33,7 +33,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, May 07, 2022 PM06:24:17
+! Last Modified: Sunday, May 08, 2022 AM12:50:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2290,11 +2290,12 @@ end function linspace_i
 subroutine hessenberg_hhd_trid(A, tdiag, tsubdiag)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine applies Householder transformations to obtain a tridiagonal matrix that is similar
-! a SYMMETRIC matrix A. The tridiagonal matrix is the Hessenberg form of A; its diagonal will be
-! stored in TDIAD, and the sub diagonal in TSUBDIAG. The Householder vectors will be stored in the
-! lower triangular part of A.
+! to a SYMMETRIC matrix A. The tridiagonal matrix is the Hessenberg form of A; its diagonal will be
+! stored in TDIAD, and the subdiagonal in TSUBDIAG. At the return, the matrix A will be DESTROYED
+! and its lower triangular part will store the Householder vectors. The code is retrieved from
+! Powell's trust region subproblem solver in UOBYQA.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -2316,6 +2317,9 @@ real(RP) :: colsq
 real(RP) :: w(size(A, 1))
 real(RP) :: wz
 real(RP) :: z(size(A, 1))
+
+! Debugging variables
+real(RP) :: tol
 
 ! Sizes
 n = int(size(A, 1), kind(n))
@@ -2349,18 +2353,18 @@ do k = 1, n - 1
 
     Asubd = A(k + 1, k)
     tsubdiag(k) = sign(sqrt(colsq + Asubd**2), Asubd)
+
     A(k + 1, k) = -colsq / (Asubd + tsubdiag(k))
     w(k + 1:n) = sqrt(TWO / (colsq + A(k + 1, k)**2)) * A(k + 1:n, k)
     A(k + 1:n, k) = w(k + 1:n)
-    z(k + 1:n) = tdiag(k + 1:n) * w(k + 1:n)
 
+    z(k + 1:n) = tdiag(k + 1:n) * w(k + 1:n)
     do j = k + 1, n - 1
         z(j + 1:n) = z(j + 1:n) + A(j + 1:n, j) * w(j)
         do i = j + 1, n
             z(j) = z(j) + A(i, j) * w(i)
         end do
     end do
-
     wz = inprod(w(k + 1:n), z(k + 1:n))
 
     tdiag(k + 1:n) = tdiag(k + 1:n) + w(k + 1:n) * (wz * w(k + 1:n) - TWO * z(k + 1:n))
@@ -2373,15 +2377,25 @@ end do
 !  Calculation ends  !
 !====================!
 
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(tdiag) == n, 'SIZE(TDIAG) == N', srname)
+    call assert(size(tsubdiag) == max(0_IK, n - 1_IK), 'SIZE(TDIAG) == MAX(0, N-1)', srname)
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(n, RP)))
+    do i = 1, n
+        call assert(abs(norm(A(i + 1:n, i)) - TWO) < tol, 'The Householder vectors have norm 2', srname)
+    end do
+end if
+
 end subroutine hessenberg_hhd_trid
+
 
 subroutine hessenberg_full(A, H, Q)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds a Hessenberg matrix H (all entries below the subdiagonal are 0) such that
 ! H = Q^T*A*Q, where Q is a orthogonal matrix that may also be returned. A will stay unchanged.
-! As of 20220507, we ONLY handle the case with a symmetric A by invoking HESSENBERG_HHD_TRID.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -2397,8 +2411,10 @@ character(len=*), parameter :: srname = 'HESSENBERG_FULL'
 integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: n
-real(RP) :: tdiag(size(A, 1))
-real(RP) :: tsubdiag(size(A, 1) - 1)
+real(RP) :: colsq
+real(RP) :: subd
+real(RP) :: v(size(A, 1))
+real(RP) :: w(size(A, 1))
 
 ! Debugging variables
 real(RP) :: tol
@@ -2424,25 +2440,44 @@ if (n <= 0) then  ! Quick return when N <= 0. Of course, N < 0 is impossible.
 end if
 
 H = A
-call hessenberg_hhd_trid(H, tdiag, tsubdiag)
 
 if (present(Q)) then
     Q = eye(n, n)
-    do j = n - 1, 1, -1
-        do i = 1, n
-            Q(j + 1:n, i) = Q(j + 1:n, i) - inprod(Q(j + 1:n, i), H(j + 1:n, j)) * H(j + 1:n, j)
-        end do
-    end do
 end if
 
-H = ZERO
-do j = 1, n
-    H(j, j) = tdiag(j)
-    if (j > 1) then
-        H(j - 1, j) = tsubdiag(j - 1)
+do j = 1, n - 1
+    colsq = sum(H(j + 2:n, j)**2)
+    if (colsq <= 0) then
+        cycle
     end if
-    if (j < n) then
-        H(j + 1, j) = tsubdiag(j)
+
+    v(j + 1:n) = H(j + 1:n, j)
+    subd = sign(sqrt(v(j + 1)**2 + colsq), v(j + 1))
+
+    !----------------------------------------------------------------------------------------------!
+    v(j + 1) = -colsq / (v(j + 1) + subd)
+    v(j + 1:n) = sqrt(TWO / (colsq + v(j + 1)**2)) * v(j + 1:n)
+    ! The two lines above are from Powell. They are equivalent to the following two lines.
+    !!V(J + 1) = V(J + 1) - SUBD
+    !!V(J + 1:N) = sqrt(TWO) * V(J + 1:N) / NORM(V(J + 1:N))
+    !----------------------------------------------------------------------------------------------!
+
+    do i = j + 1, n
+        H(j + 1:n, i) = H(j + 1:n, i) - inprod(H(j + 1:n, i), v(j + 1:n)) * v(j + 1:n)
+    end do
+    H(j + 1, j) = subd
+    H(j + 2:n, j) = ZERO
+
+    w = matprod(H(:, j + 1:n), v(j + 1:n))
+    do i = j + 1, n
+        H(:, i) = H(:, i) - w * v(i)
+    end do
+
+    if (present(Q)) then
+        w = matprod(Q(:, j + 1:n), v(j + 1:n))
+        do i = j + 1, n
+            Q(:, i) = Q(:, i) - w * v(i)
+        end do
     end if
 end do
 
@@ -2453,10 +2488,10 @@ end do
 if (DEBUGGING) then
     call assert(size(H, 1) == n .and. size(H, 2) == n, 'SIZE(H) == [N, N]', srname)
     call assert(isbanded(H, 1_IK, n - 1_IK), 'H is a Hessenberg matrix', srname)
-    call assert(issymmetric(H) .or. .not. issymmetric(A), 'H is symmetric if so is A', srname)
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(n, RP)))
+    call assert(issymmetric(H, tol) .or. .not. issymmetric(A), 'H is symmetric if so is A', srname)
     if (present(Q)) then
         call assert(size(Q, 1) == n .and. size(Q, 2) == n, 'SIZE(Q) == [N, N]', srname)
-        tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(n, RP)))
         call assert(isorth(Q, tol), 'Q is orthogonal', srname)
         call assert(all(abs(matprod(Q, H) - matprod(A, Q)) <= tol * maxval(abs(A))), 'Q*H = Q*Q', srname)
     end if
