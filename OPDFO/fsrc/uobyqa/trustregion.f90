@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 AM08:42:01
+! Last Modified: Saturday, May 07, 2022 AM08:54:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -194,9 +194,11 @@ if (hnorm == ZERO) then
     if (gnorm == ZERO) goto 400
     scaling = delta / gnorm
     do i = 1, n
-        d(i) = -scaling * gg(i)
+        !d(i) = -scaling * gg(i)
+        d(i) = -scaling * g(i)
     end do
-    goto 370
+    !goto 370
+    goto 400
 end if
 
 !!--------------------------------------------------------------------------------------------------!
