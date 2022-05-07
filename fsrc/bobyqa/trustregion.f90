@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 30, 2022 AM08:56:17
+! Last Modified: Saturday, May 07, 2022 PM01:30:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -63,7 +63,7 @@ real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        stplen, sbound(size(gopt)), temp, &
 &        xtest(size(xopt)), diact
 real(RP) :: ssq(size(gopt)), tanbd(size(gopt)), sqrtd(size(gopt))
-integer(IK) :: iact, iterc, itermax, grid_size, nact, nactsav
+integer(IK) :: iact, iter, maxiter, grid_size, nact, nactsav
 
 ! Sizes
 n = int(size(gopt), kind(n))
@@ -133,9 +133,9 @@ end if
 !     set for the first iteration. DELSQ is the upper bound on the sum of
 !     squares of the free variables. QRED is the reduction in Q so far.
 !
-iterc = 0
+iter = 0
 !--------------------------------------------------------------------------------------------------!
-iact = 0; itermax = n  ! Without this, G95 complains that they are used uninitialized.
+iact = 0; maxiter = n  ! Without this, G95 complains that they are used uninitialized.
 !--------------------------------------------------------------------------------------------------!
 
 xbdi = 0
@@ -151,7 +151,7 @@ crvmin = -ONE
 
 ! Set the next search direction of the conjugate gradient method. It is the steepest descent
 ! direction initially and when the iterations are restarted because a variable has just been fixed
-! by a bound, and of course the components of the fixed variables are zero. ITERMAX is an upper
+! by a bound, and of course the components of the fixed variables are zero. MAXITER is an upper
 ! bound on the indices of the conjugate gradient iterations.
 
 20 continue
@@ -171,7 +171,7 @@ if (stepsq <= 0) goto 190
 
 if (beta == 0) then
     gredsq = stepsq
-    itermax = iterc + n - nact
+    maxiter = iter + n - nact
 end if
 if (gredsq * delsq <= 1.0E-4_RP * qred * qred) go to 190
 
@@ -262,7 +262,7 @@ end if
 ! Update CRVMIN, GNEW and D. Set SDEC to the decrease that occurs in Q.
 sdec = ZERO
 if (stplen > 0) then
-    iterc = iterc + 1
+    iter = iter + 1
     temp = shs / stepsq
     if (iact == 0 .and. temp > 0) then
         crvmin = min(crvmin, temp)
@@ -276,7 +276,7 @@ if (stplen > 0) then
     qred = qred + sdec
 end if
 !----------------------------------------------------------------------!
-!if (is_nan(stplen) .or. iterc > 100 * itermax) goto 190 ! Zaikun 20220401
+!if (is_nan(stplen) .or. iter > 100 * maxiter) goto 190 ! Zaikun 20220401
 !----------------------------------------------------------------------!
 
 ! Restart the conjugate gradient method if it has hit a new bound.
@@ -291,8 +291,8 @@ end if
 
 ! If STPLEN is less than BSTEP, then either apply another conjugate gradient iteration or RETURN.
 if (stplen < bstep) then
-    if (iterc == itermax) goto 190
-    !if (iterc >= itermax) goto 190 ??? Zaikun 20220401
+    if (iter == maxiter) goto 190
+    !if (iter >= maxiter) goto 190 ??? Zaikun 20220401
     !----------------------------------------------------------------------------------------------!
     !if (sdec <= 0.01_RP * qred) goto 190  ! An infinite loop to 30 occurred because sdec became NaN
     if (sdec <= 0.01_RP * qred .or. is_nan(sdec) .or. is_nan(qred)) goto 190  ! Zaikun 20220401
@@ -323,12 +323,12 @@ crvmin = ZERO
 ! be the reason for the apparent typo mentioned above.
 ! Question (Zaikun 20220424): Shouldn't we try something similar in GEOSTEP?
 
-! In Powell's code, ITERMAX is essentially infinity; the loop will exit when NACT >= N - 1 or the
+! In Powell's code, MAXITER is essentially infinity; the loop will exit when NACT >= N - 1 or the
 ! procedure cannot significantly reduce the quadratic model. We impose an explicit but large bound
 ! on the number of iterations as a safeguard; in our tests, this bound is never reached.
-itermax = 10_IK * (n - nact)
+maxiter = 10_IK * (n - nact)
 nactsav = nact - 1
-do iterc = 1, itermax
+do iter = 1, maxiter
     xnew = xopt + d
 
     ! Update XBDI. It indicates whether the lower (-1) or upper bound (+1) has been reached or not (0).
@@ -383,8 +383,8 @@ do iterc = 1, itermax
     ssq = d**2 + s**2  ! Indeed, only SSQ(TRUELOC(XBDI == 0)) is needed.
     tanbd = ONE
     sqrtd = -HUGENUM
-    where (xbdi == 0 .and. xopt - sl < sqrt(ssq)) sqrtd = sqrt(max(ZERO, ssq - (xopt - sl)**2))  
-    where (sqrtd - s > 0) tanbd = min(tanbd, (xnew - sl) / (sqrtd - s))  
+    where (xbdi == 0 .and. xopt - sl < sqrt(ssq)) sqrtd = sqrt(max(ZERO, ssq - (xopt - sl)**2))
+    where (sqrtd - s > 0) tanbd = min(tanbd, (xnew - sl) / (sqrtd - s))
     sqrtd = -HUGENUM
     where (xbdi == 0 .and. su - xopt < sqrt(ssq)) sqrtd = sqrt(max(ZERO, ssq - (su - xopt)**2))
     where (sqrtd + s > 0) tanbd = min(tanbd, (su - xnew) / (sqrtd + s))

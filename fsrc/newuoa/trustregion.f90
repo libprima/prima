@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, May 06, 2022 PM06:44:54
+! Last Modified: Saturday, May 07, 2022 PM01:31:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,7 +77,7 @@ integer(IK), intent(out), optional :: info
 character(len=*), parameter :: srname = 'TRSAPP'
 integer(IK) :: info_loc
 integer(IK) :: iter
-integer(IK) :: itermax
+integer(IK) :: maxiter
 integer(IK) :: n
 integer(IK) :: npt
 logical :: twod_search
@@ -132,7 +132,7 @@ end if
 s = ZERO
 crvmin = ZERO
 qred = ZERO
-info_loc = 2_IK  ! Default exit flag is 2, i.e., ITERMAX is attained
+info_loc = 2_IK  ! Default exit flag is 2, i.e., MAXITER is attained
 
 ! Prepare for the first line search.
 hx = hess_mul(x, xpt, pq, hq)
@@ -150,7 +150,7 @@ ds = ZERO
 ss = ZERO
 hs = ZERO
 delsq = delta * delta
-itermax = n
+maxiter = n
 
 twod_search = .false.
 
@@ -166,7 +166,7 @@ twod_search = .false.
 !
 ! In the 4th case, twod_search will be set to true, meaning that S will be improved by a sequence of
 ! two-dimensional search, the two-dimensional subspace at each iteration being span(S, -G).
-do iter = 1, itermax
+do iter = 1, maxiter
     ! Exit if GG is small. This must be done first; otherwise, DD can be 0 and BSTEP is not well
     ! defined. The inequality below must be non-strict so that GG = 0 will trigger the exit.
     if (gg <= (tol**2) * gg0) then
@@ -261,16 +261,16 @@ end if
 
 if (twod_search) then
     ! At least 1 iteration of 2D minimization
-    itermax = max(int(1, kind(itermax)), itermax - iter)
+    maxiter = max(int(1, kind(maxiter)), maxiter - iter)
 else
-    itermax = 0_IK
+    maxiter = 0_IK
 end if
 
 ! The 2D minimization
 ! N.B.: During the iterations, G is NOT updated, and it equals always GQ+HX, which is the gradient
 ! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
 ! which is the norm square of the gradient at the current iterate.
-do iter = 1, itermax
+do iter = 1, maxiter
     ! Exit if GG is small. The inequality must be non-strict so that GG = 0 can trigger the exit.
     if (gg <= (tol**2) * gg0) then
         info_loc = 0_IK
