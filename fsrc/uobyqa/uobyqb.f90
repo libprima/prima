@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 06, 2022 PM04:24:16
+! Last Modified: Saturday, May 07, 2022 AM08:32:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -524,7 +524,7 @@ if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**
 !
 290 continue
 
-distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! DISTSQ is updated during the loop. 
+distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! DISTSQ is updated during the loop.
 ! The loop counter K does not appear in the loop body. Its purpose is only to impose an upper bound on the maximal number of loops.
 do k = 1, npt
     knew = -1  ! Still needed?
@@ -620,7 +620,7 @@ end if
 
 430 continue
 
-!close (16)
+close (16)
 
 call rangehist(nf, xhist, fhist)
 
