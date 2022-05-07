@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 06, 2022 PM04:23:35
+! Last Modified: Saturday, May 07, 2022 AM08:32:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -704,6 +704,7 @@ end if
 !---------------------------------------------!
 430 call rangehist(nf, xhist, fhist)
 !---------------------------------------------!
+close (17)
 
 end subroutine uobyqb
 

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 AM01:49:23
+! Last Modified: Saturday, May 07, 2022 AM08:42:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -170,7 +170,7 @@ end do
 !---------------------------------------------------------------------------------------!
 ! Zaikun 20220506
 tn(n) = ZERO
-if (.not. is_finite(sum(abs(td(1:n))) + sum(abs(tn(1:n - 1))) + sum(abs(gg)))) then
+if (.not. is_finite(sum(abs(h)) + sum(abs(td(1:n))) + sum(abs(tn(1:n - 1))) + sum(abs(gg)))) then
     d_out = ZERO
     evalue = ZERO
     return
@@ -189,6 +189,7 @@ do i = 2, n
     hnorm = max(hnorm, temp)
     tdmin = min(tdmin, td(i))
 end do
+
 if (hnorm == ZERO) then
     if (gnorm == ZERO) goto 400
     scaling = delta / gnorm

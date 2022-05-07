@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 AM01:51:22
+! Last Modified: Saturday, May 07, 2022 AM08:47:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,6 +131,10 @@ call hessenberg(h, td, tn(1:n - 1))
 !!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1); tn(n) = 0;
 tn(n) = ZERO  ! This is necessary, as TN(N) will be accessed.
 
+
+!!!!!!!!!!!! TODO: TD should have length N, and TN should have length N-1. !!!!!!!!!!!!
+
+
 ! Form GG by applying the similarity transformation to G.
 gg = g
 gsq = sum(g**2)
@@ -150,7 +154,7 @@ end do
 ! MAXIMUM defined in LINALG_MOD. MAXIMUM will return NaN if it receives NaN, making it easier for us
 ! to notice that there is a problem and hence debug.
 !--------------------------------------------------------------------------------------------------!
-if (.not. is_finite(sum(abs(td(1:n))) + sum(abs(tn)) + sum(abs(gg)))) then
+if (.not. is_finite(sum(abs(h)) + sum(abs(td(1:n))) + sum(abs(tn)) + sum(abs(gg)))) then
     d_out = ZERO
     crvmin = ZERO
     return
@@ -167,8 +171,9 @@ do i = 2, n
     tdmin = min(tdmin, td(i))
 end do
 
-!hnorm = maxval(abs([ZERO, tn(1:n - 1)]) + abs(td) + abs(tn))
-!tdmin = minval(td)  ! This leads to a difference. Why?
+hnorm = maxval(abs([ZERO, tn(1:n - 1)]) + abs(td(1:n)) + abs(tn))
+tdmin = minval(td(1:n))  ! This leads to a difference. Why?
+
 
 if (hnorm == ZERO) then
     if (gnorm == ZERO) goto 400
