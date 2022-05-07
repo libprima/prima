@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM01:32:29
+! Last Modified: Saturday, May 07, 2022 PM06:18:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,7 +24,7 @@ subroutine trstep(delta, g, h_in, tol, d_out, crvmin)   !!!! Possible to use D i
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : maximum, issymmetric, inprod
+use, non_intrinsic :: linalg_mod, only : maximum, issymmetric, inprod, hessenberg, diag, matprod
 
 implicit none
 
@@ -55,8 +55,9 @@ real(RP) :: dnewton(size(g))  ! Newton-Raphson step; only calculated when N = 1.
 real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, pivksv, pivot, posdef,   &
-&        scaling, shfmax, shfmin, shift, slope, sumd,    &
+&        scaling, shfmax, shfmin, shift, slope,   &
 &        tdmin, temp, tempa, tempb, wsq, wwsq, zsq
+real(RP) :: hess(size(g), size(g)), P(size(g), size(g))
 integer(IK) :: i, iter, k, ksav, ksave, maxiter
 
 h = h_in  ! To be removed
@@ -127,7 +128,12 @@ d = ZERO
 ! Apply Householder transformations to obtain a tridiagonal matrix that is similar to H, and put the
 ! elements of the Householder vectors in the lower triangular part of H. Further, TD and TN will
 ! contain the diagonal and other nonzero elements of the tridiagonal matrix.
-call hessenberg(h, td, tn(1:n - 1))
+!-----------------------------------------------------------------------------!
+!call hessenberg(h, td, tn(1:n - 1))
+call hessenberg(h, hess, P)
+td = diag(hess)
+tn(1:n - 1) = diag(hess, 1_IK)
+!-----------------------------------------------------------------------------!
 !!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1); tn(n) = 0;
 tn(n) = ZERO  ! This is necessary, as TN(N) will be accessed.
 
@@ -139,9 +145,12 @@ tn(n) = ZERO  ! This is necessary, as TN(N) will be accessed.
 gg = g
 gsq = sum(g**2)
 gnorm = sqrt(gsq)
-do k = 1, n - 1
-    gg(k + 1:n) = gg(k + 1:n) - inprod(gg(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
-end do
+!--------------------------------------------------------------------------------------!
+!do k = 1, n - 1
+!    gg(k + 1:n) = gg(k + 1:n) - inprod(gg(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
+!end do
+gg = matprod(g, P)
+!--------------------------------------------------------------------------------------!
 !!MATLAB: gg = (g'*P)';  % gg = P'*g;
 
 !--------------------------------------------------------------------------------------------------!
@@ -471,9 +480,12 @@ crvmin = shfmin
 !
 370 continue
 
-do k = n - 1, 1, -1
-    d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
-end do
+!--------------------------------------------------------------------------------!
+!do k = n - 1, 1, -1
+!    d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
+!end do
+d(1:n) = matprod(P, d(1:n))
+!--------------------------------------------------------------------------------!
 !!MATLAB: d = P*d;
 
 400 continue
@@ -481,90 +493,6 @@ end do
 d_out(1:n) = d(1:n)  !!!! Temporary
 
 end subroutine trstep
-
-
-subroutine hessenberg(A, tdiag, tsubdiag)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine applies Householder transformations to obtain a tridiagonal matrix that is similar
-! the symmetric matrix A. The tridiagonal matrix is the Hessenberg form of A; its diagonal will be
-! stored in TDIAD, and the sub diagonal in TSUBDIAG. The Householder vectors will be stored in the
-! lower triangular part of A.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : issymmetric, diag, inprod
-implicit none
-
-! In-outputs
-real(RP), intent(inout) :: A(:, :)
-
-! Outputs
-real(RP), intent(out) :: tdiag(size(A, 1))
-real(RP), intent(out) :: tsubdiag(size(A, 1) - 1)
-
-! Local variables
-character(len=*), parameter :: srname = 'HESSENBERG'
-integer(IK) :: i
-integer(IK) :: j
-integer(IK) :: k
-integer(IK) :: n
-real(RP) :: Asubd
-real(RP) :: colsq
-real(RP) :: w(size(A, 1))
-real(RP) :: wz
-real(RP) :: z(size(A, 1))
-
-! Sizes
-n = int(size(A, 1), kind(n))
-
-! Preconditions
-if (DEBUGGING) then
-    ! Even though we only need the lower triangular part of A, we assume that something is wrong if
-    ! this subroutine is invoked with a non-symmetric matrix A.
-    call assert(issymmetric(A), 'A is symmetric', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-tdiag = diag(A)
-
-do k = 1, n - 1
-    colsq = sum(A(k + 2:n, k)**2)
-    if (colsq <= 0) then
-        tsubdiag(k) = A(k + 1, k)
-        A(k + 1, k) = ZERO
-        cycle
-    end if
-
-    Asubd = A(k + 1, k)
-    tsubdiag(k) = sign(sqrt(colsq + Asubd**2), Asubd)
-    A(k + 1, k) = -colsq / (Asubd + tsubdiag(k))
-    w(k + 1:n) = sqrt(TWO / (colsq + A(k + 1, k)**2)) * A(k + 1:n, k)
-    A(k + 1:n, k) = w(k + 1:n)
-    z(k + 1:n) = tdiag(k + 1:n) * w(k + 1:n)
-
-    do j = k + 1, n - 1
-        z(j + 1:n) = z(j + 1:n) + A(j + 1:n, j) * w(j)
-        do i = j + 1, n
-            z(j) = z(j) + A(i, j) * w(i)
-        end do
-    end do
-
-    wz = inprod(w(k + 1:n), z(k + 1:n))
-
-    tdiag(k + 1:n) = tdiag(k + 1:n) + w(k + 1:n) * (wz * w(k + 1:n) - TWO * z(k + 1:n))
-    do j = k + 1, n
-        A(j + 1:n, j) = A(j + 1:n, j) - w(j + 1:n) * z(j) - w(j) * (z(j + 1:n) - wz * w(j + 1:n))
-    end do
-end do
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-end subroutine hessenberg
 
 
 end module trustregion_mod
