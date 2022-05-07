@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 AM08:32:54
+! Last Modified: Saturday, May 07, 2022 PM12:50:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -97,7 +97,7 @@ real(RP) :: ddknew, delta, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score
 &        temp, tempa, tol, vmax,  &
 &        qred, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
 integer(IK) :: ih, ip, iq, iw, j, k, knew, kopt, ksave
-logical :: tr_success
+logical :: tr_success, shortd
 
 ! Sizes.
 n = int(size(x), kind(n))
@@ -326,6 +326,7 @@ nf = min(nf, npt) !!!
 !
 sixthm = ZERO
 delta = rho
+shortd = .false.
 60 continue
 
 !     Form the gradient of the quadratic model at the trust region centre.
@@ -351,7 +352,8 @@ call trstep(delta, g, h, tol, d, crvmin)
 
 dnorm = min(delta, sqrt(sum(d**2)))
 errtol = -ONE
-if (dnorm < HALF * rho) then
+shortd = (dnorm < HALF * rho)
+if (shortd) then
     knew = -1
     errtol = HALF * crvmin * rho * rho
     if (nf <= npt + 9) errtol = ZERO

@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 PM06:32:37
+! Last Modified: Saturday, May 07, 2022 PM12:36:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,6 +104,7 @@ real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
+logical :: shortd
 
 
 ! Sizes.
@@ -207,6 +208,7 @@ diffa = ZERO
 diffb = ZERO
 itest = 0
 nfsav = nf
+shortd = .false.
 
 ! Generate the next point in the trust region that provides a small value of the quadratic model
 ! subject to the constraints on the variables. The integer NTRITS is set to the number "trust
@@ -231,7 +233,9 @@ end if
 call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 
 dnorm = min(delta, sqrt(dsq))
-if (dnorm < HALF * rho) then
+shortd = (dnorm < HALF * rho)
+
+if (shortd) then
     ntrits = -1
     dsquare = (TEN * rho)**2
     if (nf <= nfsav + 2) goto 650

@@ -176,7 +176,7 @@ dw = scaling * dw
 ! is the L-infinity constraint violation of a given point X. In the context of LINCOA, where the
 ! constraint is A^T * X <= B, the RESMAX in COBYLA corresponds to MAXVAL([ZERO, A^T * X - B]). In
 ! contrast, the RESMAX here corresponds to MAXVAL([ZERO, B_act - A_act^T * X]) with A_act and B_act
-! being the slices of A and B indexed by IACT(1:NACT). Regarding this difference, the modernized
+! being the slices of A and B indexed by IACT(1:NACT). Due to this difference, the modernized
 ! code of COBYLA has renamed RESMAX to CSTRV, signifying ConSTRaint Violation.
 !--------------------------------------------------------------------------------------------------!
 
