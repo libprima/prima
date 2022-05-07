@@ -169,8 +169,8 @@ scaling = 0.2_RP * snorm / sqrt(dd)
 dw = scaling * dw
 
 !--------------------------------------------------------------------------------------------------!
-! Zaikun 20220416: RESMAX is not needed anymore.
-!resmax = maxval([ZERO, resact(1:nact)])
+! Zaikun 20220416: The following RESMAX is not needed anymore.
+!!resmax = maxval([ZERO, resact(1:nact)])
 ! N.B.: Powell's COBYLA code also contains a variable named RESMAX. However, the meanings of RESMAX
 ! here and in COBYLA are different --- indeed, almost opposite to each other. In COBYLA, RESMAX(X)
 ! is the L-infinity constraint violation of a given point X. In the context of LINCOA, where the

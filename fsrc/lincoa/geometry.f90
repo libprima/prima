@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 PM05:19:48
+! Last Modified: Saturday, May 07, 2022 PM04:27:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -141,6 +141,9 @@ rstat(trueloc(abs(rescon) >= del)) = -1_IK
 rstat(iact(1:nact)) = 0_IK
 
 ! Maximize |LFUNC| within the trust region on the lines through XOPT and other interpolation points.
+! In the following loop, VLAG(K) is set to the maximum of PHI_K(t) with subject to the trust-region
+! constraint with PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:, K)). Note that PHI_K(t) is a quadratic
+! function with PHI_K(0) = 0, PHI_K(1) = 1, and PHI_K'(0) = SP = INPROD(GL, XPT(:, K) - XOPT).
 vlag = ZERO
 do k = 1, npt
     if (k == kopt) then

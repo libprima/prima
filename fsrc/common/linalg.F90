@@ -1,21 +1,30 @@
 #include "ppf.h"
 
 module linalg_mod
-!--------------------------------------------------------------------------------------------------
+!--------------------------------------------------------------------------------------------------!
 ! This module provides some basic linear algebra procedures. To improve the performance of
 ! these procedures, especially MATPROD, one can customize their implementations according to the
 ! resources (hardware, e.g., cache, and libraries, e.g., BLAS) available and the sizes of the
 ! matrices/vectors.
 !
-! N.B.
-! When implementing the code by MATLAB, Python, ..., note the following.
-! 1. We should follow the implementation with __USE_POWELL_ALGEBRA__ == 0, which uses matrix/vector
-! operations instead of loops.
-! 2. Most of the subroutines/functions here are better coded inline, because the code is short
-! using matrix/vector operations, and because the overhead of subroutine/function calling can be
-! high in these languages. Here we implement them as subroutines/functions in order to align with
-! Powell's original code, which cannot be translated directly to matrix/vector operations without
-! changing the results in floating-point arithmetic.
+! N.B.: When implementing the code by MATLAB, Python, ..., note the following.
+! 1. Most of the procedures here are intrinsic to the languages or available in standard libraries.
+! If available, they should not be implemented from scratch like we do here.
+! 2. For the procedures that are not available, it may be better to code them inline instead of as
+! external functions, because the code is usually short using matrix/vector operations, and because
+! the overhead of function calling can be high in these languages.
+! 3. In Fortran, we implement the procedures as subroutines/functions here for several reasons.
+! 3.1.) Most of the procedures are not available intrinsically in Fortran.
+! 3.2.) We want to start with an implementation that is verifiably faithful to Powell's original code.
+! To achieve such faithfulness, it is not always possible to use the matrix/vector operations that
+! are intrinsically available in Fortran, the most noticeable examples being DOT_PRODUCT (INPROD) and
+! MATMUL (MATPROD). Powell implemented all matrix/vector operations by loops, which may not be the
+! case for intrinsic procedures such as MATMUL and DOT_PRODUCT. Different implementations lead to
+! slightly different results due to rounding, and hence the verification of faithfulness will fail.
+! 3.3.) As of 20220507, with some compilers, the performance of Fortran's intrinsic matrix/vector
+! procedures may not be as performant as naive loops, let alone highly optimized libraries like
+! BLAS. Concentrating all the linear algebra procedures at one place like here, we can optimize them
+! in a relatively easy way when necessary.
 !
 ! TODO: To avoid stack overflows, functions that return a potentially large array (e.g., MATPROD)
 ! should declare the array as ALLOCATABLE rather than automatic.
@@ -24,8 +33,8 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, May 06, 2022 PM06:41:41
-!--------------------------------------------------------------------------------------------------
+! Last Modified: Saturday, May 07, 2022 PM06:24:17
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -46,6 +55,7 @@ public :: trueloc, falseloc
 public :: minimum, maximum
 public :: norm
 public :: linspace
+public :: hessenberg
 public :: int
 
 interface matprod
@@ -105,6 +115,10 @@ end interface norm
 interface linspace
     module procedure linspace_r, linspace_i
 end interface linspace
+
+interface hessenberg
+    module procedure hessenberg_hhd_trid, hessenberg_full
+end interface hessenberg
 
 interface int
     module procedure logical_to_int
@@ -1043,20 +1057,93 @@ end do
 end function lsqr_Rfull
 
 
-function diag(A) result(D)
+function diag(A, k) result(D)
 !--------------------------------------------------------------------------------------------------!
-! This function takes the main diagonal of the matrix A.
+! This function takes the K-th diagonal of the matrix A, K = 0 (default) corresponding to the main
+! diagonal, K > 0 above the main diagonal, and K < 0 below the main diagonal. When |K| exceeds the
+! number of rows or columns in A, then the function returns an empty rank-1 array.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 ! Inputs
 real(RP), intent(in) :: A(:, :)
+integer(IK), intent(in), optional :: k
 ! Outputs
-real(RP) :: D(min(size(A, 1), size(A, 2)))
+real(RP), allocatable :: D(:)
 ! Local variables
+integer(IK) :: dlen
 integer(IK) :: i
-D = [(A(i, i), i=1, int(size(D), IK))]
+integer(IK) :: k_loc
+
+if (present(k)) then
+    k_loc = k
+else
+    k_loc = 0_IK
+end if
+
+dlen = int(min(size(A, 1), size(A, 2)), IK)
+dlen = max(0_IK, dlen - abs(k_loc))  ! We allow |K| to exceed the number of rows/columns in A.
+call safealloc(D, dlen)
+if (k_loc >= 0) then
+    D = [(A(i, i + k_loc), i=1, dlen)]
+else
+    D = [(A(i - k_loc, i), i=1, dlen)]
+end if
 end function diag
+
+
+function isbanded(A, lwidth, uwidth, tol) result(is_banded)
+!--------------------------------------------------------------------------------------------------!
+! This function tests whether the matrix A banded within the bandwidth specified by LWIDTH and
+! UWIDTH up to the tolerance TOL.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
+implicit none
+! Inputs
+real(RP), intent(in) :: A(:, :)
+integer(IK), intent(in) :: lwidth
+integer(IK), intent(in) :: uwidth
+real(RP), intent(in), optional :: tol
+
+! Outputs
+logical :: is_banded
+
+! Local variables
+character(len=*), parameter :: srname = 'ISBANDED'
+integer(IK) :: i
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: tol_loc
+
+if (DEBUGGING) then
+    call assert(lwidth >= 0 .and. uwidth >= 0, 'LWIDTH >= 0 .and. UWIDTH >= 0', srname)
+    if (present(tol)) then
+        call assert(tol >= 0, 'TOL >= 0', srname)
+    end if
+end if
+
+tol_loc = ZERO
+if (present(tol)) then
+    tol_loc = max(tol, tol * maxval(abs(A)))
+end if
+if (is_nan(tol_loc)) then
+    tol_loc = ZERO
+end if
+
+m = int(size(A, 1), kind(m))
+n = int(size(A, 2), kind(n))
+
+is_banded = .true.
+do i = 1, n
+    is_banded = (all(abs(A(i + lwidth + 1:m, i)) <= tol_loc) .and. all(abs(A(1:i - uwidth - 1, i)) <= tol_loc))
+    if (.not. is_banded) then
+        exit
+    end if
+end do
+end function isbanded
 
 
 function istril(A, tol) result(is_tril)
@@ -1073,25 +1160,16 @@ real(RP), intent(in), optional :: tol
 logical :: is_tril
 
 ! Local variables
-integer(IK) :: i
-integer(IK) :: m
-integer(IK) :: n
+integer(IK) :: width
 real(RP) :: tol_loc
 
 if (present(tol)) then
-    tol_loc = max(tol, tol * maxval(abs(A)))
+    tol_loc = tol
 else
     tol_loc = ZERO
 end if
-m = int(size(A, 1), kind(m))
-n = int(size(A, 2), kind(n))
-is_tril = .true.
-do i = 1, min(m, n)
-    if (any(abs(A(1:i - 1, i)) > tol_loc)) then
-        is_tril = .false.
-        exit
-    end if
-end do
+width = int(max(0, size(A, 1) - 1), kind(width))
+is_tril = isbanded(A, width, 0_IK, tol_loc)
 end function istril
 
 
@@ -1109,25 +1187,16 @@ real(RP), intent(in), optional :: tol
 logical :: is_triu
 
 ! Local variables
-integer(IK) :: i
-integer(IK) :: m
-integer(IK) :: n
+integer(IK) :: width
 real(RP) :: tol_loc
 
 if (present(tol)) then
-    tol_loc = max(tol, tol * maxval(abs(A)))
+    tol_loc = tol
 else
     tol_loc = ZERO
 end if
-m = int(size(A, 1), kind(m))
-n = int(size(A, 2), kind(n))
-is_triu = .true.
-do i = 1, min(m, n)
-    if (any(abs(A(i + 1:m, i)) > tol_loc)) then
-        is_triu = .false.
-        exit
-    end if
-end do
+width = int(max(0, size(A, 2) - 1), kind(width))
+is_triu = isbanded(A, 0_IK, width, tol_loc)
 end function istriu
 
 
@@ -1136,6 +1205,7 @@ function isorth(A, tol) result(is_orth)
 ! This function tests whether the matrix A has orthonormal columns up to the tolerance TOL.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 ! Inputs
 real(RP), intent(in) :: A(:, :)
@@ -1150,6 +1220,8 @@ integer(IK) :: n
 n = int(size(A, 2), kind(n))
 
 if (n > size(A, 1)) then
+    is_orth = .false.
+else if (is_nan(sum(abs(A)))) then
     is_orth = .false.
 else
     if (present(tol)) then
@@ -2213,6 +2285,184 @@ if (DEBUGGING) then
     call assert(size(x) == max(n, 0_IK), 'SIZE(X) == MAX(N, 0)', srname)
 end if
 end function linspace_i
+
+
+subroutine hessenberg_hhd_trid(A, tdiag, tsubdiag)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine applies Householder transformations to obtain a tridiagonal matrix that is similar
+! a SYMMETRIC matrix A. The tridiagonal matrix is the Hessenberg form of A; its diagonal will be
+! stored in TDIAD, and the sub diagonal in TSUBDIAG. The Householder vectors will be stored in the
+! lower triangular part of A.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! In-outputs
+real(RP), intent(inout) :: A(:, :)
+
+! Outputs
+real(RP), intent(out) :: tdiag(:)
+real(RP), intent(out) :: tsubdiag(:)
+
+! Local variables
+character(len=*), parameter :: srname = 'HESSENBERG_HHD_TRID'
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: k
+integer(IK) :: n
+real(RP) :: Asubd
+real(RP) :: colsq
+real(RP) :: w(size(A, 1))
+real(RP) :: wz
+real(RP) :: z(size(A, 1))
+
+! Sizes
+n = int(size(A, 1), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    ! Even though we only need the lower triangular part of A, we assume that something is wrong if
+    ! this subroutine is invoked with a non-symmetric matrix A.
+    call assert(issymmetric(A), 'A is symmetric', srname)
+    call assert(size(tdiag) == n, 'SIZE(TDIAG) == N', srname)
+    call assert(size(tsubdiag) == max(0_IK, n - 1_IK), 'SIZE(TDIAG) == MAX(0, N-1)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (n <= 0) then  ! Quick return when N <= 0. Of course, N < 0 is impossible.
+    return
+end if
+
+tdiag = diag(A)
+
+do k = 1, n - 1
+    colsq = sum(A(k + 2:n, k)**2)
+    if (colsq <= 0) then
+        tsubdiag(k) = A(k + 1, k)
+        A(k + 1, k) = ZERO
+        cycle
+    end if
+
+    Asubd = A(k + 1, k)
+    tsubdiag(k) = sign(sqrt(colsq + Asubd**2), Asubd)
+    A(k + 1, k) = -colsq / (Asubd + tsubdiag(k))
+    w(k + 1:n) = sqrt(TWO / (colsq + A(k + 1, k)**2)) * A(k + 1:n, k)
+    A(k + 1:n, k) = w(k + 1:n)
+    z(k + 1:n) = tdiag(k + 1:n) * w(k + 1:n)
+
+    do j = k + 1, n - 1
+        z(j + 1:n) = z(j + 1:n) + A(j + 1:n, j) * w(j)
+        do i = j + 1, n
+            z(j) = z(j) + A(i, j) * w(i)
+        end do
+    end do
+
+    wz = inprod(w(k + 1:n), z(k + 1:n))
+
+    tdiag(k + 1:n) = tdiag(k + 1:n) + w(k + 1:n) * (wz * w(k + 1:n) - TWO * z(k + 1:n))
+    do j = k + 1, n
+        A(j + 1:n, j) = A(j + 1:n, j) - w(j + 1:n) * z(j) - w(j) * (z(j + 1:n) - wz * w(j + 1:n))
+    end do
+end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end subroutine hessenberg_hhd_trid
+
+subroutine hessenberg_full(A, H, Q)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine finds a Hessenberg matrix H (all entries below the subdiagonal are 0) such that
+! H = Q^T*A*Q, where Q is a orthogonal matrix that may also be returned. A will stay unchanged.
+! As of 20220507, we ONLY handle the case with a symmetric A by invoking HESSENBERG_HHD_TRID.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+real(RP), intent(in) :: A(:, :)
+
+! Outputs
+real(RP), intent(out) :: H(:, :)
+real(RP), intent(out), optional :: Q(:, :)
+
+! Local variables
+character(len=*), parameter :: srname = 'HESSENBERG_FULL'
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: n
+real(RP) :: tdiag(size(A, 1))
+real(RP) :: tsubdiag(size(A, 1) - 1)
+
+! Debugging variables
+real(RP) :: tol
+
+! Sizes
+n = int(size(A, 1), kind(n))
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(A, 1) == size(A, 2), 'A is square', srname)
+    call assert(size(H, 1) == n .and. size(H, 2) == n, 'SIZE(H) == [N, N]', srname)
+    if (present(Q)) then
+        call assert(size(Q, 1) == n .and. size(Q, 2) == n, 'SIZE(Q) == [N, N]', srname)
+    end if
+end if
+
+if (n <= 0) then  ! Quick return when N <= 0. Of course, N < 0 is impossible.
+    return
+end if
+
+H = A
+call hessenberg_hhd_trid(H, tdiag, tsubdiag)
+
+if (present(Q)) then
+    Q = eye(n, n)
+    do j = n - 1, 1, -1
+        do i = 1, n
+            Q(j + 1:n, i) = Q(j + 1:n, i) - inprod(Q(j + 1:n, i), H(j + 1:n, j)) * H(j + 1:n, j)
+        end do
+    end do
+end if
+
+H = ZERO
+do j = 1, n
+    H(j, j) = tdiag(j)
+    if (j > 1) then
+        H(j - 1, j) = tsubdiag(j - 1)
+    end if
+    if (j < n) then
+        H(j + 1, j) = tsubdiag(j)
+    end if
+end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+if (DEBUGGING) then
+    call assert(size(H, 1) == n .and. size(H, 2) == n, 'SIZE(H) == [N, N]', srname)
+    call assert(isbanded(H, 1_IK, n - 1_IK), 'H is a Hessenberg matrix', srname)
+    call assert(issymmetric(H) .or. .not. issymmetric(A), 'H is symmetric if so is A', srname)
+    if (present(Q)) then
+        call assert(size(Q, 1) == n .and. size(Q, 2) == n, 'SIZE(Q) == [N, N]', srname)
+        tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(n, RP)))
+        call assert(isorth(Q, tol), 'Q is orthogonal', srname)
+        call assert(all(abs(matprod(Q, H) - matprod(A, Q)) <= tol * maxval(abs(A))), 'Q*H = Q*Q', srname)
+    end if
+end if
+
+end subroutine hessenberg_full
 
 
 end module linalg_mod
