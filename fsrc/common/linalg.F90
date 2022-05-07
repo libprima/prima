@@ -33,7 +33,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 08, 2022 AM12:50:35
+! Last Modified: Sunday, May 08, 2022 AM01:02:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2295,7 +2295,7 @@ subroutine hessenberg_hhd_trid(A, tdiag, tsubdiag)
 ! and its lower triangular part will store the Householder vectors. The code is retrieved from
 ! Powell's trust region subproblem solver in UOBYQA.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -2317,9 +2317,6 @@ real(RP) :: colsq
 real(RP) :: w(size(A, 1))
 real(RP) :: wz
 real(RP) :: z(size(A, 1))
-
-! Debugging variables
-real(RP) :: tol
 
 ! Sizes
 n = int(size(A, 1), kind(n))
@@ -2381,10 +2378,6 @@ end do
 if (DEBUGGING) then
     call assert(size(tdiag) == n, 'SIZE(TDIAG) == N', srname)
     call assert(size(tsubdiag) == max(0_IK, n - 1_IK), 'SIZE(TDIAG) == MAX(0, N-1)', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(n, RP)))
-    do i = 1, n
-        call assert(abs(norm(A(i + 1:n, i)) - TWO) < tol, 'The Householder vectors have norm 2', srname)
-    end do
 end if
 
 end subroutine hessenberg_hhd_trid
