@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, May 05, 2022 PM03:41:48
+! Last Modified: Saturday, May 07, 2022 PM12:43:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -294,8 +294,10 @@ do tr = 1, maxtr
     dnorm = min(delta, norm(d))
 
     ! Is the trust-region trial step short? N.B.: we compare DNORM with RHO, not DELTA.
-    !!shortd = (dnorm < HALF * rho)  ! Powell's version
+    ! Powell's code especially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
     ! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.
+    ! Note that LINCOA has a slightly more sophisticated way of defining SHORTD, taking into account
+    ! whether D causes a change to the active set. Should we try the same here?
     shortd = (dnorm < TENTH * rho)
 
     if (shortd) then

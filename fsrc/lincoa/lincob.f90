@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 PM06:32:00
+! Last Modified: Saturday, May 07, 2022 PM12:43:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -111,7 +111,7 @@ real(RP) :: del, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, snorm, ssq, temp, &
 &        qred, xdiff
-logical :: ifeas
+logical :: ifeas, shortd
 integer(IK) :: idz, imprv, itest,  &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
@@ -246,6 +246,7 @@ fopt = fval(kopt)
 rho = rhobeg
 delta = rho
 ifeas = .false.
+shortd = .false.
 nact = 0
 itest = 3
 10 knew = 0
@@ -292,15 +293,13 @@ delsav = delta
 ksave = knew
 if (knew == 0) then
     call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
-!
-!     A trust region step is applied whenever its length, namely SNORM, is at
-!       least HALF*DELTA. It is also applied if its length is at least 0.1999
-!       times DELTA and if a line search of TRSTEP has caused a change to the
-!       active set. Otherwise there is a branch below to label 530 or 560.
-!
-    temp = HALF * delta
-    if (ngetact > 1) temp = 0.1999_RP * delta
-    if (snorm <= temp) then
+
+    ! A trust region step is applied whenever its length, namely SNORM, is at least 0.5*DELTA.
+    ! It is also applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has
+    ! caused a change to the active set, indicated by NGETACT > 1. Otherwise, the trust region
+    ! step is considered to short to try.
+    shortd = ((snorm <= HALF * delta .and. ngetact <= 1) .or. snorm <= 0.1999_RP * delta)
+    if (shortd) then
         delta = HALF * delta
         if (delta <= 1.4_RP * rho) delta = rho
         nvala = nvala + 1
