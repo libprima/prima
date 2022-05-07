@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 AM08:58:36
+! Last Modified: Saturday, May 07, 2022 PM01:32:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -50,14 +50,14 @@ real(RP) :: td(size(g) + 1) !!! TD(N+1) may be accessed
 real(RP) :: tn(size(g))
 real(RP) :: w(size(g))
 real(RP) :: z(size(g))
-real(RP) :: dsav(size(g) + 1) !!!
+real(RP) :: dold(size(g)) !!!
 real(RP) :: dnewton(size(g))  ! Newton-Raphson step; only calculated when N = 1.
 real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, pivksv, pivot, posdef,   &
 &        scaling, shfmax, shfmin, shift, slope, sumd,    &
 &        tdmin, temp, tempa, tempb, wsq, wwsq, zsq
-integer(IK) :: i, iterc, k, ksav, ksave
+integer(IK) :: i, iter, k, ksav, ksave, maxiter
 
 h = h_in  ! To be removed
 
@@ -181,18 +181,21 @@ par = parl
 paru = ZERO
 paruest = ZERO
 posdef = ZERO
-iterc = 0
+iter = 0
+maxiter = min(1000_IK, 100_IK * int(n, IK))  ! What is the theoretical bound of iterations?
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 26-06-2019: See the lines below line number 140
-do i = 1, n
-    dsav(i) = d(i)
-end do
+!do i = 1, n
+!    dold(i) = d(i)
+!end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Calculate the pivots of the Cholesky factorization of (H+PAR*I).
 !
-140 iterc = iterc + 1
+140 continue
+
+iter = iter + 1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 26-06-2019
 ! The original code can encounter infinite cycling, which did happen
@@ -200,21 +203,13 @@ end do
 ! Indeed, in all these cases, Inf and NaN appear in D due to extremely
 ! large values in H (up to 10^219).
 ! To avoid wasting energy, we do the following
-sumd = ZERO
-do i = 1, n
-    sumd = sumd + abs(d(i))
-end do
-if (sumd >= 1.0D100 .or. sumd /= sumd) then
-    do i = 1, n
-        d(i) = dsav(i)
-    end do
+if (.not. is_finite(sum(abs(d(1:n))))) then
+    d(1:n) = dold
     goto 370
 else
-    do i = 1, n
-        dsav(i) = d(i)
-    end do
+    dold = d(1:n)
 end if
-if (iterc > min(10000, 100 * int(n))) then
+if (iter > maxiter) then
     goto 370
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -347,7 +342,7 @@ if (temp >= ZERO) then
     end do
     goto 370
 end if
-if (iterc >= 2 .and. par <= parl) goto 370
+if (iter >= 2 .and. par <= parl) goto 370
 if (paru > ZERO .and. par >= paru) goto 370
 !
 !     Complete the iteration when PHI is negative.

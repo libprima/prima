@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 AM08:54:27
+! Last Modified: Saturday, May 07, 2022 PM01:12:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -246,7 +246,8 @@ sumd = ZERO
 do i = 1, n
     sumd = sumd + abs(d(i))
 end do
-if (sumd >= 1.0D100 .or. sumd /= sumd) then
+!if (sumd >= 1.0D100 .or. sumd /= sumd) then
+if (.not. is_finite(sum(abs(d(1:n))))) then
     do i = 1, n
         d(i) = dsav(i)
     end do
@@ -256,7 +257,8 @@ else
         dsav(i) = d(i)
     end do
 end if
-if (iterc > min(10000, 100 * n)) then
+!if (iterc > min(10000, 100 * n)) then
+if (iterc > min(1000, 100 * n)) then
     goto 370
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
