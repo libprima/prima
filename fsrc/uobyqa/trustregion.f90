@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM08:33:38
+! Last Modified: Sunday, May 08, 2022 AM01:03:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,7 +24,7 @@ subroutine trstep(delta, g, h_in, tol, d_out, crvmin)   !!!! Possible to use D i
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : maximum, issymmetric, inprod, hessenberg, diag, matprod
+use, non_intrinsic :: linalg_mod, only : maximum, issymmetric, inprod, hessenberg
 
 implicit none
 
@@ -57,7 +57,6 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        paruest, phi, phil, phiu, pivksv, pivot, posdef,   &
 &        scaling, shfmax, shfmin, shift, slope,   &
 &        tdmin, temp, tempa, tempb, wsq, wwsq, zsq
-real(RP) :: hess(size(g), size(g)), P(size(g), size(g))
 integer(IK) :: i, iter, k, ksav, ksave, maxiter
 
 h = h_in  ! To be removed
@@ -128,13 +127,8 @@ d = ZERO
 ! Apply Householder transformations to obtain a tridiagonal matrix that is similar to H, and put the
 ! elements of the Householder vectors in the lower triangular part of H. Further, TD and TN will
 ! contain the diagonal and other nonzero elements of the tridiagonal matrix.
-!-----------------------------------------------------------------------------!
-!call hessenberg(h, td(1:n), tn(1:n - 1))
-call hessenberg(h, hess, P)
-td(1:n) = diag(hess)
-tn(1:n - 1) = diag(hess, 1_IK)
-!-----------------------------------------------------------------------------!
-!!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1); tn(n) = 0;
+call hessenberg(h, td(1:n), tn(1:n - 1))
+!!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1)
 tn(n) = ZERO  ! This is necessary, as TN(N) will be accessed.
 
 
@@ -145,12 +139,9 @@ tn(n) = ZERO  ! This is necessary, as TN(N) will be accessed.
 gg = g
 gsq = sum(g**2)
 gnorm = sqrt(gsq)
-!--------------------------------------------------------------------------------------!
-!do k = 1, n - 1
-!    gg(k + 1:n) = gg(k + 1:n) - inprod(gg(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
-!end do
-gg = matprod(g, P)
-!--------------------------------------------------------------------------------------!
+do k = 1, n - 1
+    gg(k + 1:n) = gg(k + 1:n) - inprod(gg(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
+end do
 !!MATLAB: gg = (g'*P)';  % gg = P'*g;
 
 !--------------------------------------------------------------------------------------------------!
@@ -480,12 +471,9 @@ crvmin = shfmin
 !
 370 continue
 
-!--------------------------------------------------------------------------------!
-!do k = n - 1, 1, -1
-!    d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
-!end do
-d(1:n) = matprod(P, d(1:n))
-!--------------------------------------------------------------------------------!
+do k = n - 1, 1, -1
+    d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
+end do
 !!MATLAB: d = P*d;
 
 400 continue
