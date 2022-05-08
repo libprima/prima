@@ -2,16 +2,16 @@
 
 module linalg_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides some basic linear algebra procedures. 
+! This module provides some basic linear algebra procedures.
 !
 ! The procedures are not intended to be optimized but to be sufficient for my projects. These
-! projects are mainly the development and maintenance of derivative-free optimization software, 
-! where the major expense comes from the function evaluations, NOT the numerical linear algebraic 
-! computations. Therefore, the implementations here are mostly straightforward and naive. 
+! projects are mainly the development and maintenance of derivative-free optimization software,
+! where the major expense comes from the function evaluations, NOT the numerical linear algebraic
+! computations. Therefore, the implementations here are mostly straightforward and naive.
 !
 ! If it is needed to enhance the performance of these procedures, especially MATPROD, one can
 ! customize their implementations according to the resources (hardware, e.g., cache, and libraries,
-! e.g., BLAS) available and the sizes of the matrices/vectors. 
+! e.g., BLAS) available and the sizes of the matrices/vectors.
 !
 ! In case you need similar procedures in MATLAB/Python/Julia/R, note the following.
 ! 1. Most of the procedures here are intrinsic to the languages or available in standard libraries.
@@ -21,7 +21,7 @@ module linalg_mod
 ! the overhead of function calling can be high in these languages.
 ! 3. In Fortran, we implement the procedures as subroutines/functions here for several reasons.
 ! 3.1.) Most of the procedures are not available intrinsically in Fortran.
-! 3.2.) When using these procedures for the modernization of Powell's derivative-free software, we 
+! 3.2.) When using these procedures for the modernization of Powell's derivative-free software, we
 ! want to start with an implementation that is verifiably faithful to Powell's original code.
 ! To achieve such faithfulness, it is not always possible to use the matrix/vector operations that
 ! are intrinsically available in Fortran, the most noticeable examples being DOT_PRODUCT (INPROD) and
@@ -29,8 +29,8 @@ module linalg_mod
 ! case for intrinsic procedures such as MATMUL and DOT_PRODUCT. Different implementations lead to
 ! slightly different results due to rounding, and hence the verification of faithfulness will fail.
 ! 3.3.) As of 20220507, with some compilers, the performance of Fortran's intrinsic matrix/vector
-! procedures may not be as good as naive loops, let alone highly optimized libraries like BLAS. 
-! Concentrating all the linear algebra procedures at one place like here, we can optimize them in a 
+! procedures may not be as good as naive loops, let alone highly optimized libraries like BLAS.
+! Concentrating all the linear algebra procedures at one place like here, we can optimize them in a
 ! relatively easy way when necessary.
 !
 ! TODO: To avoid stack overflows, functions that return a potentially large array (e.g., MATPROD)
@@ -40,7 +40,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 08, 2022 AM01:02:25
+! Last Modified: Sunday, May 08, 2022 PM04:36:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -614,7 +614,7 @@ else
     do i = n - 1_IK, 1, -1
         x(i) = (x(i) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
     end do
-    x(P) = x  ! Handle the permutation. 
+    x(P) = x  ! Handle the permutation.
 end if
 
 !====================!
@@ -2321,9 +2321,11 @@ integer(IK) :: k
 integer(IK) :: n
 real(RP) :: Asubd
 real(RP) :: colsq
+real(RP) :: scaling
 real(RP) :: w(size(A, 1))
 real(RP) :: wz
 real(RP) :: z(size(A, 1))
+logical :: scaled
 
 ! Sizes
 n = int(size(A, 1), kind(n))
@@ -2345,12 +2347,25 @@ if (n <= 0) then  ! Quick return when N <= 0. Of course, N < 0 is impossible.
     return
 end if
 
+! According to a test on 20220508, scaling enhances the stability and slightly improves the
+! performance of UOBYQA. Indeed, when A contains huge values, NaN can occur if no scaling is applied.
+scaling = maxval(abs(A))
+scaled = .false.
+if (scaling <= 0) then
+    tdiag = ZERO
+    tsubdiag = ZERO
+    return
+elseif (scaling > 1.0E6 .or. scaling < 1.0E-6) then  ! 1.0E6 and 1.0E-6 are heuristic.
+    A = A / scaling
+    scaled = .true.
+end if
+
 tdiag = diag(A)
 
 do k = 1, n - 1
     colsq = sum(A(k + 2:n, k)**2)
     if (colsq <= 0) then
-        tsubdiag(k) = A(k + 1, k)
+        tsubdiag(k) = A(k + 1, k)  ! A(K+1, K) may have been updated in previous loops.
         A(k + 1, k) = ZERO
         cycle
     end if
@@ -2360,12 +2375,17 @@ do k = 1, n - 1
 
     A(k + 1, k) = -colsq / (Asubd + tsubdiag(k))
     w(k + 1:n) = sqrt(TWO / (colsq + A(k + 1, k)**2)) * A(k + 1:n, k)
+    !----------------------------------------------------------------------------------------------!
+    ! The two lines above are from Powell. They are equivalent to the following two lines.
+    !!A(K + 1, K) = A(K + 1, K) - ASUBD
+    !!W(K + 1:N) = sqrt(TWO) * A(K + 1:N, K) / NORM(A(K + 1:N, K))
+    !----------------------------------------------------------------------------------------------!
     A(k + 1:n, k) = w(k + 1:n)
 
     z(k + 1:n) = tdiag(k + 1:n) * w(k + 1:n)
     do j = k + 1, n - 1
         z(j + 1:n) = z(j + 1:n) + A(j + 1:n, j) * w(j)
-        do i = j + 1, n
+        do i = j + 1_IK, n
             z(j) = z(j) + A(i, j) * w(i)
         end do
     end do
@@ -2376,6 +2396,11 @@ do k = 1, n - 1
         A(j + 1:n, j) = A(j + 1:n, j) - w(j + 1:n) * z(j) - w(j) * (z(j + 1:n) - wz * w(j + 1:n))
     end do
 end do
+
+if (scaled) then
+    tdiag = tdiag * scaling
+    tsubdiag = tsubdiag * scaling
+end if
 
 !====================!
 !  Calculation ends  !
@@ -2415,6 +2440,8 @@ real(RP) :: colsq
 real(RP) :: subd
 real(RP) :: v(size(A, 1))
 real(RP) :: w(size(A, 1))
+real(RP) :: scaling
+logical :: scaled
 
 ! Debugging variables
 real(RP) :: tol
@@ -2440,9 +2467,19 @@ if (n <= 0) then  ! Quick return when N <= 0. Of course, N < 0 is impossible.
 end if
 
 H = A
-
 if (present(Q)) then
     Q = eye(n, n)
+end if
+
+! According to a test on 20220508, scaling enhances the stability and slightly improves the
+! performance of UOBYQA. Indeed, when A contains huge values, NaN can occur if no scaling is applied.
+scaling = maxval(abs(H))
+scaled = .false.
+if (scaling <= 0) then
+    return
+elseif (scaling > 1.0E6 .or. scaling < 1.0E-6) then  ! 1.0E6 and 1.0E-6 are heuristic.
+    H = H / scaling
+    scaled = .true.
 end if
 
 do j = 1, n - 1
@@ -2462,24 +2499,28 @@ do j = 1, n - 1
     !!V(J + 1:N) = sqrt(TWO) * V(J + 1:N) / NORM(V(J + 1:N))
     !----------------------------------------------------------------------------------------------!
 
-    do i = j + 1, n
+    do i = j + 1_IK, n
         H(j + 1:n, i) = H(j + 1:n, i) - inprod(H(j + 1:n, i), v(j + 1:n)) * v(j + 1:n)
     end do
     H(j + 1, j) = subd
     H(j + 2:n, j) = ZERO
 
     w = matprod(H(:, j + 1:n), v(j + 1:n))
-    do i = j + 1, n
+    do i = j + 1_IK, n
         H(:, i) = H(:, i) - w * v(i)
     end do
 
     if (present(Q)) then
         w = matprod(Q(:, j + 1:n), v(j + 1:n))
-        do i = j + 1, n
+        do i = j + 1_IK, n
             Q(:, i) = Q(:, i) - w * v(i)
         end do
     end if
 end do
+
+if (scaled) then
+    H = H * scaling
+end if
 
 !====================!
 !  Calculation ends  !
