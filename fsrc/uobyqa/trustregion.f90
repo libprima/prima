@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 08, 2022 PM04:13:59
+! Last Modified: Monday, May 09, 2022 AM01:22:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ subroutine trstep(delta, g, h_in, tol, d_out, crvmin)   !!!! Possible to use D i
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : maximum, issymmetric, inprod, hessenberg
 
 implicit none
@@ -184,25 +184,15 @@ posdef = ZERO
 iter = 0
 maxiter = min(1000_IK, 100_IK * int(n, IK))  ! What is the theoretical bound of iterations?
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 26-06-2019: See the lines below line number 140
-!do i = 1, n
-!    dold(i) = d(i)
-!end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     Calculate the pivots of the Cholesky factorization of (H+PAR*I).
-!
+! Calculate the pivots of the Cholesky factorization of (H+PAR*I).
 140 continue
 
 iter = iter + 1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 26-06-2019
-! The original code can encounter infinite cycling, which did happen
-! when testing the CUTEst problems GAUSS1LS, GAUSS2LS, and GAUSS3LS.
-! Indeed, in all these cases, Inf and NaN appear in D due to extremely
-! large values in H (up to 10^219).
-! To avoid wasting energy, we do the following
+! The original code can encounter infinite cycling, which did happen when testing the CUTEst
+! problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. Indeed, in all these cases, Inf and NaN appear in D due
+! to extremely large values in H (up to 10^219).
 if (.not. is_finite(sum(abs(d(1:n))))) then
     d(1:n) = dold
     goto 370
@@ -214,46 +204,53 @@ if (iter > maxiter) then
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ksav = 0
+piv = ZERO
 piv(1) = td(1) + par
 do k = 1, n - 1
     if (piv(k) > ZERO) then
         piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)
     else
-        if (piv(k) < ZERO .or. tn(k) /= ZERO) goto 160
+        if (piv(k) < ZERO .or. tn(k) /= ZERO) then
+            goto 160
+        end if
         ksav = k
         piv(k + 1) = td(k + 1) + par
     end if
 end do
+
+! Powell implemented the loop by a GOTO. When the loop exits, K = N.
+
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (piv(n) < ZERO) goto 160
-if (piv(n) == ZERO) ksav = n
-!
-!     Branch if all the pivots are positive, allowing for the case when
-!     G is ZERO.
-!
-if (ksav == 0 .and. gsq > ZERO) goto 230
-if (gsq == ZERO) then
-    if (par == ZERO) goto 370
-    paru = par
-    paruest = par
-    if (ksav == 0) goto 190
+if (piv(n) >= ZERO) then
+    if (piv(n) == ZERO) ksav = n
+    ! Branch if all the pivots are positive, allowing for the case when G is ZERO.
+    if (ksav == 0 .and. gsq > ZERO) goto 230
+    if (gsq == ZERO) then
+        if (par == ZERO) goto 370
+        paru = par
+        paruest = par
+        if (ksav == 0) goto 190
+    end if
+    k = ksav
 end if
-k = ksav
-!
-!     Set D to a direction of nonpositive curvature of the given tridiagonal
-!     matrix, and thus revise PARLEST.
-!
 
 160 continue
 
+! Zaikun 20220509
+if (any(is_nan(piv))) then
+    goto 370  ! Better action to take???
+end if
+
+! Set D to a direction of nonpositive curvature of the given tridiagonal matrix, and thus revise PARLEST.
 d(k) = ONE
-if (abs(tn(k)) <= abs(piv(k))) then
+if (abs(tn(k)) <= abs(piv(k))) then  ! K == N falls into this case unless PIV(N) is NaN.
     dsq = ONE
     dhd = piv(k)
 else
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 20220301: The code below accesses TD(N+1), D(N+1) when K = N!!!
 ! Zaikun 20220507: Is K=N possible?
+    call assert(k < n, 'K < N', srname)  ! K < N unless PIV(N) is NaN
     temp = td(k + 1) + par
     if (temp <= abs(piv(k))) then
         d(k + 1) = sign(ONE, -tn(k))
