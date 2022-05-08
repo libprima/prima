@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM01:12:37
+! Last Modified: Sunday, May 08, 2022 PM04:47:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,6 +58,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        tdmin, temp, tempa, tempb, wsq, wwsq, wz, zsq
 real(RP) :: dsav(n)
 integer(IK) :: i, iterc, j, jp, k, kp, kpp, ksav, ksave, nm
+logical :: scaled
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -92,7 +93,6 @@ evalue = ZERO
 nm = n - 1
 do i = 1, n
     d(i) = ZERO
-    td(i) = h(i, i)
     do j = 1, i
         h(i, j) = h(j, i)
     end do
@@ -103,50 +103,82 @@ end do
 !     the lower triangular part of H. Further, TD and TN will contain the
 !     diagonal and other nonzero elements of the tridiagonal matrix.
 !
-do k = 1, nm
-    kp = k + 1
-    summ = ZERO
-    if (kp < n) then
-        kpp = kp + 1
-        do i = kpp, n
-            summ = summ + h(i, k)**2
-        end do
-    end if
-    if (summ == ZERO) then
-        tn(k) = h(kp, k)
-        h(kp, k) = ZERO
-    else
-        temp = h(kp, k)
-        !tn(k) = sign(sqrt(summ + temp * temp), temp)
-        tn(k) = sign(sqrt(summ + temp**2), temp)
-        h(kp, k) = -summ / (temp + tn(k))
-        temp = sqrt(TWO / (summ + h(kp, k)**2))
-        do i = kp, n
-            w(i) = temp * h(i, k)
-            h(i, k) = w(i)
-            z(i) = td(i) * w(i)
-        end do
-        wz = ZERO
-        do j = kp, nm
-            jp = j + 1
-            do i = jp, n
-                z(i) = z(i) + h(i, j) * w(j)
-                z(j) = z(j) + h(i, j) * w(i)
+
+!-------------------------------------------------------------------------------------------------!
+! Zaikun 20220508
+scaling = maxval(abs(h))
+scaled = .false.
+if (scaling <= 0) then
+    td(1:n) = ZERO
+    tn(1:n - 1) = ZERO
+elseif (scaling > 1.0E6 .or. scaling < 1.0E-6) then  ! 1.0E6 and 1.0E-6 are heuristic.
+    h = h / scaling
+    scaled = .true.
+end if
+!-------------------------------------------------------------------------------------------------!
+
+do i = 1, n
+    td(i) = h(i, i)
+end do
+
+if (.not. scaling <= 0) then
+    do k = 1, nm
+        kp = k + 1
+        summ = ZERO
+        if (kp < n) then
+            kpp = kp + 1
+            do i = kpp, n
+                summ = summ + h(i, k)**2
             end do
-            wz = wz + w(j) * z(j)
-        end do
-        wz = wz + w(n) * z(n)
-        do j = kp, n
-            td(j) = td(j) + w(j) * (wz * w(j) - TWO * z(j))
-            if (j < n) then
+        end if
+        if (summ == ZERO) then
+            tn(k) = h(kp, k)
+            h(kp, k) = ZERO
+        else
+            temp = h(kp, k)
+            !tn(k) = sign(sqrt(summ + temp * temp), temp)
+            tn(k) = sign(sqrt(summ + temp**2), temp)
+            h(kp, k) = -summ / (temp + tn(k))
+            temp = sqrt(TWO / (summ + h(kp, k)**2))
+            do i = kp, n
+                w(i) = temp * h(i, k)
+                h(i, k) = w(i)
+                z(i) = td(i) * w(i)
+            end do
+            wz = ZERO
+            do j = kp, nm
                 jp = j + 1
                 do i = jp, n
-                    h(i, j) = h(i, j) - w(i) * z(j) - w(j) * (z(i) - wz * w(i))
+                    z(i) = z(i) + h(i, j) * w(j)
+                    z(j) = z(j) + h(i, j) * w(i)
                 end do
-            end if
-        end do
-    end if
-end do
+                wz = wz + w(j) * z(j)
+            end do
+            wz = wz + w(n) * z(n)
+            do j = kp, n
+                td(j) = td(j) + w(j) * (wz * w(j) - TWO * z(j))
+                if (j < n) then
+                    jp = j + 1
+                    do i = jp, n
+                        h(i, j) = h(i, j) - w(i) * z(j) - w(j) * (z(i) - wz * w(i))
+                    end do
+                end if
+            end do
+        end if
+    end do
+end if
+
+
+!-------------------------------------------------------------------------------------------------!
+! Zaikun 20220508
+if (scaled) then
+    td(1:n) = td(1:n) * scaling
+    tn(1:n - 1) = tn(1:n - 1) * scaling
+end if
+!-------------------------------------------------------------------------------------------------!
+
+
+
 !
 !     Form GG by applying the similarity transformation to G.
 !
