@@ -2,12 +2,18 @@
 
 module linalg_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides some basic linear algebra procedures. To improve the performance of
-! these procedures, especially MATPROD, one can customize their implementations according to the
-! resources (hardware, e.g., cache, and libraries, e.g., BLAS) available and the sizes of the
-! matrices/vectors.
+! This module provides some basic linear algebra procedures. 
 !
-! N.B.: When implementing the code by MATLAB, Python, ..., note the following.
+! The procedures are not intended to be optimized but to be sufficient for my projects. These
+! projects are mainly the development and maintenance of derivative-free optimization software, 
+! where the major expense comes from the function evaluations, NOT the numerical linear algebraic 
+! computations. Therefore, the implementations here are mostly straightforward and naive. 
+!
+! If it is needed to enhance the performance of these procedures, especially MATPROD, one can
+! customize their implementations according to the resources (hardware, e.g., cache, and libraries,
+! e.g., BLAS) available and the sizes of the matrices/vectors. 
+!
+! In case you need similar procedures in MATLAB/Python/Julia/R, note the following.
 ! 1. Most of the procedures here are intrinsic to the languages or available in standard libraries.
 ! If available, they should not be implemented from scratch like we do here.
 ! 2. For the procedures that are not available, it may be better to code them inline instead of as
@@ -15,16 +21,17 @@ module linalg_mod
 ! the overhead of function calling can be high in these languages.
 ! 3. In Fortran, we implement the procedures as subroutines/functions here for several reasons.
 ! 3.1.) Most of the procedures are not available intrinsically in Fortran.
-! 3.2.) We want to start with an implementation that is verifiably faithful to Powell's original code.
+! 3.2.) When using these procedures for the modernization of Powell's derivative-free software, we 
+! want to start with an implementation that is verifiably faithful to Powell's original code.
 ! To achieve such faithfulness, it is not always possible to use the matrix/vector operations that
 ! are intrinsically available in Fortran, the most noticeable examples being DOT_PRODUCT (INPROD) and
 ! MATMUL (MATPROD). Powell implemented all matrix/vector operations by loops, which may not be the
 ! case for intrinsic procedures such as MATMUL and DOT_PRODUCT. Different implementations lead to
 ! slightly different results due to rounding, and hence the verification of faithfulness will fail.
 ! 3.3.) As of 20220507, with some compilers, the performance of Fortran's intrinsic matrix/vector
-! procedures may not be as performant as naive loops, let alone highly optimized libraries like
-! BLAS. Concentrating all the linear algebra procedures at one place like here, we can optimize them
-! in a relatively easy way when necessary.
+! procedures may not be as good as naive loops, let alone highly optimized libraries like BLAS. 
+! Concentrating all the linear algebra procedures at one place like here, we can optimize them in a 
+! relatively easy way when necessary.
 !
 ! TODO: To avoid stack overflows, functions that return a potentially large array (e.g., MATPROD)
 ! should declare the array as ALLOCATABLE rather than automatic.
@@ -584,7 +591,7 @@ if (n <= 0) then  ! Of course, N < 0 should never happen.
 end if
 
 if (istril(A)) then
-    x(1) = b(1) / A(1, 1)  ! Ensure N >= 1!
+    x(1) = b(1) / A(1, 1)  ! Make sure that N >= 1!
     ! Indeed, the last line should be merged to the following loop, but some compilers (particularly
     ! Flang 7.0.1) are buggy concerning the array sections here when I == 1.
     ! See https://github.com/flang-compiler/flang/issues/1238
@@ -592,7 +599,7 @@ if (istril(A)) then
         x(i) = (b(i) - inprod(A(i, 1:i - 1), x(1:i - 1))) / A(i, i)
     end do
 elseif (istriu(A)) then  ! This case is invoked in LINCOA.
-    x(n) = b(n) / A(n, n)  ! Ensure N >= 1!
+    x(n) = b(n) / A(n, n)  ! Make sure that N >= 1!
     ! Indeed, the last line should be merged to the following loop, but some compilers (particularly
     ! Flang 7.0.1) are buggy concerning the array sections here when I == N.
     ! See https://github.com/flang-compiler/flang/issues/1238
@@ -600,14 +607,14 @@ elseif (istriu(A)) then  ! This case is invoked in LINCOA.
         x(i) = (b(i) - inprod(A(i, i + 1:n), x(i + 1:n))) / A(i, i)
     end do
 else
-    ! This is NOT the best algorithm for linear systems, but since the QR subroutine is available ...
+    ! This is NOT a good algorithm for linear systems, but since the QR subroutine is available ...
     call qr(A, Q, R, P)
     x = matprod(b, Q)
-    x(n) = x(n) / R(n, n)  ! Ensure N >= 1!
+    x(n) = x(n) / R(n, n)  ! Make sure that N >= 1!
     do i = n - 1_IK, 1, -1
         x(i) = (x(i) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
     end do
-    x(P) = x
+    x(P) = x  ! Handle the permutation. 
 end if
 
 !====================!
@@ -2486,7 +2493,7 @@ if (DEBUGGING) then
     if (present(Q)) then
         call assert(size(Q, 1) == n .and. size(Q, 2) == n, 'SIZE(Q) == [N, N]', srname)
         call assert(isorth(Q, tol), 'Q is orthogonal', srname)
-        call assert(all(abs(matprod(Q, H) - matprod(A, Q)) <= tol * maxval(abs(A))), 'Q*H = Q*Q', srname)
+        call assert(all(abs(matprod(Q, H) - matprod(A, Q)) <= tol * maxval(abs(A))), 'Q*H = A*Q', srname)
     end if
 end if
 
