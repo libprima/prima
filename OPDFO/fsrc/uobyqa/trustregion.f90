@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 08, 2022 PM04:47:42
+! Last Modified: Monday, May 09, 2022 AM01:23:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -295,6 +295,7 @@ if (iterc > min(1000, 100 * n)) then
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ksav = 0
+piv = ZERO
 piv(1) = td(1) + par
 k = 1
 150 if (piv(k) > ZERO) then
@@ -305,8 +306,13 @@ else
     piv(k + 1) = td(k + 1) + par
 end if
 k = k + 1
-if (k < n) goto 150
-if (piv(k) < ZERO) goto 160
+if (k < n) goto 150  ! When the loop exits, K = N.
+
+!---------------------------------------!
+! Zaikun 20220508
+!if (piv(k) < ZERO) goto 160
+if (.not. piv(k) >= ZERO) goto 160
+!---------------------------------------!
 if (piv(k) == ZERO) ksav = k
 !
 !     Branch if all the pivots are positive, allowing for the case when
@@ -324,7 +330,15 @@ k = ksav
 !     Set D to a direction of nonpositive curvature of the given tridiagonal
 !     matrix, and thus revise PARLEST.
 !
-160 d(k) = ONE
+160 continue
+
+!----------------------------!
+if (any(is_nan(piv))) then
+    goto 370
+end if
+!-----------------------------!
+
+d(k) = ONE
 if (abs(tn(k)) <= abs(piv(k))) then
     dsq = ONE
     dhd = piv(k)
