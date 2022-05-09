@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 AM01:23:27
+! Last Modified: Monday, May 09, 2022 AM10:52:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -88,6 +88,23 @@ logical :: scaled
 !     Initialization.
 !
 !
+
+!---------------------------------------------!
+! Zaikun 20220509
+d_out = ZERO
+evalue = ZERO
+
+gsq = sum(g**2)
+gnorm = sqrt(gsq)
+
+if (.not. any(abs(h) > 0)) then
+    if (gnorm > 0) then
+        d_out = -delta * (g / gnorm)
+    end if
+    return
+end if
+!---------------------------------------------!
+
 delsq = delta * delta
 evalue = ZERO
 nm = n - 1
@@ -222,16 +239,16 @@ do i = 2, n
     tdmin = min(tdmin, td(i))
 end do
 
-if (hnorm == ZERO) then
-    if (gnorm == ZERO) goto 400
-    scaling = delta / gnorm
-    do i = 1, n
-        !d(i) = -scaling * gg(i)
-        d(i) = -scaling * g(i)
-    end do
-    !goto 370
-    goto 400
-end if
+!if (hnorm == ZERO) then
+!    if (gnorm == ZERO) goto 400
+!    scaling = delta / gnorm
+!    do i = 1, n
+!        !d(i) = -scaling * gg(i)
+!        d(i) = -scaling * g(i)
+!    end do
+!    !goto 370
+!    goto 400
+!end if
 
 !!--------------------------------------------------------------------------------------------------!
 !! Zaikun 20220303: Exit if H, G, TD, or TN are not finite. Otherwise, the behavior of this
