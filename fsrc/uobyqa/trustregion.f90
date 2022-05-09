@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 AM11:42:11
+! Last Modified: Monday, May 09, 2022 PM12:03:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -135,10 +135,6 @@ hh = h
 call hessenberg(hh, td, tn)
 !!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1)
 
-
-!!!!!!!!!!!! TODO: TN should have length N-1. !!!!!!!!!!!!
-
-
 ! Form GG by applying the similarity transformation to G.
 gg = g
 do k = 1, n - 1
@@ -253,19 +249,17 @@ if (k < n) then
     end if
 end if
 
-170 continue
+ksav = k
 
-if (k > 1) then
-    k = k - 1
+do k = ksav - 1_IK, 1, -1
     if (tn(k) /= ZERO) then
         d(k) = -tn(k) * d(k + 1) / piv(k)
         dsq = dsq + d(k)**2
-        goto 170
+        cycle
     end if
-    do i = 1, k
-        d(i) = ZERO
-    end do
-end if
+    d(1:k) = ZERO
+end do
+
 parl = par
 parlest = par - dhd / dsq
 
