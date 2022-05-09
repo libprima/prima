@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 PM02:04:35
+! Last Modified: Monday, May 09, 2022 PM02:23:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -337,6 +337,7 @@ if (phi < ZERO) then
 end if
 
 ! If required, calculate Z for the alternative test for convergence.
+!
 if (posdef == ZERO) then
     w(1) = ONE / piv(1)
     do i = 2, n
@@ -347,23 +348,32 @@ if (posdef == ZERO) then
     do i = n - 1, 1, -1
         z(i) = w(i) - tn(i) * z(i + 1) / piv(i)
     end do
-    wwsq = inprod(piv, w**2)
-    zsq = sum(z**2)
-    dtz = inprod(d, z)
-
-    ! Apply the alternative test for convergence.
+    wwsq = ZERO
+    zsq = ZERO
+    dtz = ZERO
+    do i = 1, n
+        wwsq = wwsq + piv(i) * w(i)**2
+        zsq = zsq + z(i)**2
+        dtz = dtz + d(i) * z(i)
+    end do
+!
+!     Apply the alternative test for convergence.
+!
     tempa = abs(delsq - dsq)
     tempb = sqrt(dtz * dtz + tempa * zsq)
     gam = tempa / (sign(tempb, dtz) + dtz)
     temp = tol * (wsq + par * delsq) - gam * gam * wwsq
     if (temp >= ZERO) then
-        d = d + gam * z
+        do i = 1, n
+            d(i) = d(i) + gam * z(i)
+        end do
         goto 370
     end if
     parlest = max(parlest, par - wwsq / zsq)
 end if
-
-! Complete the iteration when PHI is positive.
+!
+!     Complete the iteration when PHI is positive.
+!
 slope = ONE / gnorm
 if (paru > ZERO) then
     if (phi >= phiu) goto 370
@@ -378,22 +388,24 @@ end if
 paru = par
 phiu = phi
 goto 220
+!
+!     Set CRVMIN to the least eigenvalue of the second derivative matrix if
+!     D is a Newton-Raphson step. SHFMAX will be an upper bound on CRVMIN.
+!
 
 320 continue
 
-! Set CRVMIN to the least eigenvalue of the second derivative matrix if D is a Newton-Raphson step.
-! SHFMAX will be an upper bound on CRVMIN.
 shfmin = ZERO
 pivot = td(1)
 shfmax = pivot
-
 do k = 2, n
     pivot = td(k) - tn(k - 1)**2 / pivot
     shfmax = min(shfmax, pivot)
 end do
-
-
-! Find CRVMIN by a bisection method, but occasionally adjust SHFMAX by the rule of false position.
+!
+!     Find CRVMIN by a bisection method, but occasionally SHFMAX may be
+!     adjusted by the rule of false position.
+!
 ksave = 0
 
 340 continue
@@ -434,10 +446,12 @@ if (shfmin <= 0.99_RP * shfmax) goto 340
 360 continue
 
 crvmin = shfmin
+!
+!     Apply the inverse Householder transformations to D.
+!
 
 370 continue
 
-! Apply the inverse Householder transformations to D.
 do k = n - 1, 1, -1
     d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
