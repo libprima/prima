@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 PM02:04:35
+! Last Modified: Monday, May 09, 2022 PM09:42:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,11 +22,15 @@ contains
 subroutine trstep(delta, g, h, tol, d, crvmin)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine solves the trust-region subproblem
+!
 !     minimize <G, D> + 0.5 * <D, H*D> subject to ||D|| <= DELTA.
-! The algorithm starts with tridiagonalizing H, as is documented in
+!
+! The algorithm first tridiagonalizes H and then applies the More-Sorensen method in
+! More, J. J., and Danny C. S., "Computing a trust region step", SIAM J. Sci. Stat. Comput. 4:
+! 553-572, 1983.
+! See Section 2 of the UOBYQA paper and
 ! Powell, M. J. D., "Trust region calculations revisited", Numerical Analysis 1997: Proceedings of
-! the 17th Dundee Biennial Numerical Analysis Conference, 1997, 193--211.
-! See also Sec. 2 of the UOBYQA paper and
+! the 17th Dundee Biennial Numerical Analysis Conference, 1997, 193--211,
 ! Powell, M. J. D., "The use of band matrices for second derivative approximations in trust region
 ! algorithms", Advances in Nonlinear Programming: Proceedings of the 96 International Conference on
 ! Nonlinear Programming, 1998, 3--28.
@@ -63,10 +67,11 @@ real(RP) :: dold(size(g)) !!!
 real(RP) :: dnewton(size(g))  ! Newton-Raphson step; only calculated when N = 1.
 real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
-&        paruest, phi, phil, phiu, pivksv, pivot, posdef,   &
+&        paruest, phi, phil, phiu, pivksv, pivot, &
 &        shfmax, shfmin, shift, slope,   &
 &        tdmin, temp, tempa, tempb, wsq, wwsq, zsq
 integer(IK) :: i, iter, k, ksav, ksave, maxiter
+logical :: posdef
 
 !     N is the number of variables of a quadratic objective function, Q say.
 !     G is the gradient of Q at the origin.
@@ -158,24 +163,25 @@ hnorm = maxval(abs([ZERO, tn]) + abs(td) + abs([tn, ZERO]))
 tdmin = minval(td)  ! This leads to a difference. Why?
 
 ! Set the initial values of PAR and its bounds.
-parl = maxval([ZERO, -tdmin, gnorm / delta - hnorm])
-parlest = parl
+! N.B.: PAR is the parameter LAMBDA in More-Sorensen 1983 and Powell 1997, as well as the THETA in
+! Section 2 of the UOBYQA paper. The algorithm looks for the optimal PAR characterized in Lemmas
+! 2.1--2.3 of More-Sorensen 1983.
+parl = maxval([ZERO, -tdmin, gnorm / delta - hnorm])  ! Lower bound for the optimal PAR
+parlest = parl  ! Estimation for PARL
 par = parl
-paru = ZERO
-paruest = ZERO
-posdef = ZERO
+paru = ZERO  ! Upper bound for the optimal PAR
+paruest = ZERO  ! Estimation for PARU
+posdef = .false.
 iter = 0
 maxiter = min(1000_IK, 100_IK * int(n, IK))  ! What is the theoretical bound of iterations?
 
-! Calculate the pivots of the Cholesky factorization of (H+PAR*I).
 140 continue
 
 iter = iter + 1
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 26-06-2019
-! The original code can encounter infinite cycling, which did happen when testing the CUTEst
-! problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. Indeed, in all these cases, Inf and NaN appear in D due
-! to extremely large values in H (up to 10^219).
+
+! Zaikun 26-06-2019: The original code can encounter infinite cycling, which did happen when testing
+! the CUTEst problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. Indeed, in all these cases, Inf and NaN
+! appear in D due to extremely large values in H (up to 10^219).
 if (.not. is_finite(sum(abs(d)))) then
     d = dold
     goto 370
@@ -185,15 +191,16 @@ end if
 if (iter > maxiter) then
     goto 370
 end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Calculate the pivots of the Cholesky factorization of (H+PAR*I).
 ksav = 0
 piv = ZERO
 piv(1) = td(1) + par
 do k = 1, n - 1
-    if (piv(k) > ZERO) then
+    if (piv(k) > 0) then
         piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)
     else
-        if (piv(k) < ZERO .or. tn(k) /= ZERO) then
+        if (piv(k) < 0 .or. tn(k) /= 0) then
             goto 160
         end if
         ksav = k
@@ -310,8 +317,7 @@ dnorm = sqrt(dsq)
 phi = ONE / dnorm - ONE / delta
 temp = tol * (ONE + par * dsq / wsq) - dsq * phi * phi
 if (temp >= ZERO) then
-    !scaling = delta / dnorm
-    d = delta * (d / dnorm)
+    d = (delta / dnorm) * d
     goto 370
 end if
 if (iter >= 2 .and. par <= parl) goto 370
@@ -320,7 +326,7 @@ if (paru > ZERO .and. par >= paru) goto 370
 ! Complete the iteration when PHI is negative.
 if (phi < ZERO) then
     parlest = par
-    if (posdef == ONE) then
+    if (posdef) then
         if (phi <= phil) goto 370
         slope = (phi - phil) / (par - parl)
         parlest = par - phi / slope
@@ -330,14 +336,14 @@ if (phi < ZERO) then
     temp = par - phi / slope
     if (paruest > ZERO) temp = min(temp, paruest)
     paruest = temp
-    posdef = ONE
+    posdef = .true.
     parl = par
     phil = phi
     goto 220
 end if
 
 ! If required, calculate Z for the alternative test for convergence.
-if (posdef == ZERO) then
+if (.not. posdef) then
     w(1) = ONE / piv(1)
     do i = 2, n
         temp = -tn(i - 1) * w(i - 1)
@@ -371,7 +377,7 @@ if (paru > ZERO) then
 end if
 parlest = max(parlest, par - phi / slope)
 paruest = par
-if (posdef == ONE) then
+if (posdef) then
     slope = (phi - phil) / (par - parl)
     paruest = par - phi / slope
 end if
