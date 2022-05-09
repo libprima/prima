@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 AM10:01:53
+! Last Modified: Monday, May 09, 2022 AM11:10:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,19 +19,19 @@ public :: trstep
 contains
 
 
-subroutine trstep(delta, g, h_in, tol, d, crvmin)   !!!! Possible to use D instead of D_OUT?
+subroutine trstep(delta, g, h, tol, d, crvmin)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
-use, non_intrinsic :: linalg_mod, only : maximum, issymmetric, inprod, hessenberg
+use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg
 
 implicit none
 
 ! Inputs
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: g(:)  ! G(N)
-real(RP), intent(in) :: h_in(:, :)  ! H_IN(N, N)
+real(RP), intent(in) :: h(:, :)  ! H(N, N)
 real(RP), intent(in) :: tol
 
 ! In-outputs
@@ -42,7 +42,7 @@ real(RP), intent(out) :: crvmin
 character(len=*), parameter :: srname = 'TRSTEP'
 integer(IK) :: n
 real(RP) :: gg(size(g))
-real(RP) :: h(size(g), size(g))
+real(RP) :: hh(size(g), size(g))
 real(RP) :: piv(size(g))
 real(RP) :: td(size(g))
 real(RP) :: tn(size(g))
@@ -57,42 +57,6 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        tdmin, temp, tempa, tempb, wsq, wwsq, zsq
 integer(IK) :: i, iter, k, ksav, ksave, maxiter
 
-h = h_in  ! To be removed
-
-! Sizes.
-n = int(size(g), kind(n))
-
-if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(delta > 0, 'DELTA > 0', srname)
-    call assert(size(h, 1) == n .and. issymmetric(h), 'H is n-by-n and symmetric', srname)
-    call assert(size(d) == n, 'SIZE(D) == N', srname)
-end if
-
-
-crvmin = ZERO
-
-! Zaikun 20220301, 20220305:
-! Powell's original code requires that N >= 2.  When N = 1, the code does not work (sometimes even
-! encounter memory errors). This is indeed why the original version of UOBYQA constantly terminates
-! with "a trust region step has failed to reduce the quadratic model" when solving univariate problems.
-if (n == 1) then
-    if (h(1, 1) > 0) then
-        dnewton = -g / h(1, 1)
-        if (abs(dnewton(1)) <= delta) then
-            d = dnewton
-            crvmin = h(1, 1)
-        else
-            d = sign(delta, dnewton)  ! MATLAB: D_OUT = DELTA * SIGN(DNEWTON)
-        end if
-    else
-        d = sign(delta, -g)  ! MATLAB: D_OUT = -DELTA * SIGN(G)
-    end if
-    return
-end if
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
 !     N is the number of variables of a quadratic objective function, Q say.
 !     G is the gradient of Q at the origin.
 !     H is the Hessian matrix of Q. Only the upper triangular and diagonal
@@ -115,65 +79,87 @@ end if
 !     The calculation of D is done by the method of Section 2 of the paper
 !     by MJDP in the 1997 Dundee Numerical Analysis Conference Proceedings,
 !     after transforming H to tridiagonal form.
-!
-!     Initialization.
-!
-!
-delsq = delta * delta
+
+! Sizes.
+n = int(size(g), kind(n))
+
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(delta > 0, 'DELTA > 0', srname)
+    call assert(size(h, 1) == n .and. issymmetric(h), 'H is n-by-n and symmetric', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
+end if
+
 d = ZERO
+crvmin = ZERO
+
+gsq = sum(g**2)
+gnorm = sqrt(gsq)
+
+if (.not. any(abs(h) > 0)) then
+    if (gnorm > 0) then
+        d = -delta * (g / gnorm)
+    end if
+    return
+end if
+
+! Zaikun 20220301, 20220305:
+! Powell's original code requires that N >= 2.  When N = 1, the code does not work (sometimes even
+! encounter memory errors). This is indeed why the original UOBYQA code constantly terminates with
+! "a trust region step has failed to reduce the quadratic model" when applied to univariate problems.
+if (n == 1) then
+    d = sign(delta, -g)  !!MATLAB: D_OUT = -DELTA * SIGN(G)
+    if (h(1, 1) > 0) then
+        dnewton = -g / h(1, 1)
+        if (abs(dnewton(1)) <= delta) then
+            d = dnewton
+            crvmin = h(1, 1)
+        end if
+    end if
+    return
+end if
+
+delsq = delta * delta
 
 ! Apply Householder transformations to obtain a tridiagonal matrix that is similar to H, and put the
-! elements of the Householder vectors in the lower triangular part of H. Further, TD and TN will
+! elements of the Householder vectors in the lower triangular part of HH. Further, TD and TN will
 ! contain the diagonal and other nonzero elements of the tridiagonal matrix.
-call hessenberg(h, td, tn(1:n - 1))
+hh = h
+call hessenberg(hh, td, tn(1:n - 1))
 !!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1)
 tn(n) = ZERO  ! This is necessary, as TN(N) will be accessed.
 
 
-!!!!!!!!!!!! TODO: TD should have length N, and TN should have length N-1. !!!!!!!!!!!!
+!!!!!!!!!!!! TODO: TN should have length N-1. !!!!!!!!!!!!
 
 
 ! Form GG by applying the similarity transformation to G.
 gg = g
-gsq = sum(g**2)
-gnorm = sqrt(gsq)
 do k = 1, n - 1
-    gg(k + 1:n) = gg(k + 1:n) - inprod(gg(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
+    gg(k + 1:n) = gg(k + 1:n) - inprod(gg(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
 !!MATLAB: gg = (g'*P)';  % gg = P'*g;
 
 !--------------------------------------------------------------------------------------------------!
-! Zaikun 20220303: Exit if H, G, TD, or TN are not finite. Otherwise, the behavior of this
+! Zaikun 20220303: Exit if GG, HH, TD, or TN are not finite. Otherwise, the behavior of this
 ! subroutine is not predictable. For example, if HNORM = GNORM = Inf, it is observed that the
 ! initial value of PARL defined below will change when we add code that should not affect PARL
 ! (e.g., print it, or add TD = 0, TN = 0, PIV = 0 at the beginning of this subroutine).
-! This is probably because the behavior of MAX is undefined if it receives NaN (when GNORM = HNORM
-! = Inf, GNORM/DELTA - HNORM = NaN). This also motivates us to replace the intrinsic MAX by the
-! MAXIMUM defined in LINALG_MOD. MAXIMUM will return NaN if it receives NaN, making it easier for us
-! to notice that there is a problem and hence debug.
+! This is probably because the behavior of MAX is undefined if it receives NaN (if GNORM and HNORM
+! are both Inf, then GNORM/DELTA - HNORM = NaN).
 !--------------------------------------------------------------------------------------------------!
-if (.not. is_finite(sum(abs(h)) + sum(abs(td)) + sum(abs(tn)) + sum(abs(gg)))) then
+if (.not. is_finite(sum(abs(gg)) + sum(abs(hh)) + sum(abs(td)) + sum(abs(tn)))) then
     d = ZERO
     crvmin = ZERO
     return
 end if
 
-! Begin the trust region calculation with a tridiagonal matrix by calculating the norm of H. Then
-! treat the case when H is zero.
-
+! Begin the trust region calculation with a tridiagonal matrix by calculating the norm of H.
 hnorm = maxval(abs([ZERO, tn(1:n - 1)]) + abs(td) + abs(tn))
 tdmin = minval(td)  ! This leads to a difference. Why?
 
-if (hnorm == ZERO) then
-    if (gnorm == ZERO) goto 400
-    scaling = delta / gnorm
-    d = -scaling * g
-    goto 400
-end if
-
 ! Set the initial values of PAR and its bounds.
-!parl = max(ZERO, -tdmin, gnorm / delta - hnorm)
-parl = maximum([ZERO, -tdmin, gnorm / delta - hnorm])
+parl = maxval([ZERO, -tdmin, gnorm / delta - hnorm])
 parlest = parl
 par = parl
 paru = ZERO
@@ -278,7 +264,10 @@ parlest = par - dhd / dsq
 !     Terminate with D set to a multiple of the current D if the following
 !     test suggests that it suitable to do so.
 !
-190 temp = paruest
+
+190 continue
+
+temp = paruest
 if (gsq == ZERO) temp = temp * (ONE - tol)
 if (paruest > ZERO .and. parlest >= temp) then
     dtg = ZERO
@@ -294,7 +283,10 @@ end if
 !
 !     Pick the value of PAR for the next iteration.
 !
-220 if (paru == ZERO) then
+
+220 continue
+
+if (paru == ZERO) then
     par = TWO * parlest + gnorm / delta
 else
     par = HALF * (parl + paru)
@@ -305,7 +297,9 @@ goto 140
 !
 !     Calculate D for the current PAR in the positive definite case.
 !
+
 230 continue
+
 w(1) = -gg(1) / piv(1)
 do i = 2, n
     w(i) = (-gg(i) - tn(i - 1) * w(i - 1)) / piv(i)
@@ -416,7 +410,10 @@ goto 220
 !     Set CRVMIN to the least eigenvalue of the second derivative matrix if
 !     D is a Newton-Raphson step. SHFMAX will be an upper bound on CRVMIN.
 !
-320 shfmin = ZERO
+
+320 continue
+
+shfmin = ZERO
 pivot = td(1)
 shfmax = pivot
 do k = 2, n
@@ -428,10 +425,16 @@ end do
 !     adjusted by the rule of false position.
 !
 ksave = 0
-340 shift = HALF * (shfmin + shfmax)
+
+340 continue
+
+shift = HALF * (shfmin + shfmax)
 k = 1
 temp = td(1) - shift
-350 if (temp > ZERO) then
+
+350 continue
+
+if (temp > ZERO) then
     piv(k) = temp
     if (k < n) then
         temp = td(k + 1) - shift - tn(k)**2 / temp
@@ -464,14 +467,13 @@ crvmin = shfmin
 !
 !     Apply the inverse Householder transformations to D.
 !
+
 370 continue
 
 do k = n - 1, 1, -1
-    d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), h(k + 1:n, k)) * h(k + 1:n, k)
+    d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
 !!MATLAB: d = P*d;
-
-400 return
 
 end subroutine trstep
 
