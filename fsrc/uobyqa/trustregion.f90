@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 AM11:10:35
+! Last Modified: Monday, May 09, 2022 AM11:39:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,6 +20,17 @@ contains
 
 
 subroutine trstep(delta, g, h, tol, d, crvmin)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine solves the trust-region subproblem
+!     minimize <G, D> + 0.5 * <D, H*D> subject to ||D|| <= DELTA.
+! The algorithm starts with tridiagonalizing H, as is documented in
+! Powell, M. J. D., "Trust region calculations revisited", Numerical Analysis 1997: Proceedings of
+! the 17th Dundee Biennial Numerical Analysis Conference, 1997, 193--211.
+! See also Sec. 2 of the UOBYQA paper and
+! Powell, M. J. D., "The use of band matrices for second derivative approximations in trust region
+! algorithms", Advances in Nonlinear Programming: Proceedings of the 96 International Conference on
+! Nonlinear Programming, 1998, 3--28.
+!--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -45,7 +56,7 @@ real(RP) :: gg(size(g))
 real(RP) :: hh(size(g), size(g))
 real(RP) :: piv(size(g))
 real(RP) :: td(size(g))
-real(RP) :: tn(size(g))
+real(RP) :: tn(size(g) - 1)
 real(RP) :: w(size(g))
 real(RP) :: z(size(g))
 real(RP) :: dold(size(g)) !!!
@@ -75,10 +86,6 @@ integer(IK) :: i, iter, k, ksav, ksave, maxiter
 !     We take the view that any D is acceptable if it has the properties
 !
 !             ||D|| <= DELTA  and  ACTRED <= (1-TOL)*MAXRED.
-!
-!     The calculation of D is done by the method of Section 2 of the paper
-!     by MJDP in the 1997 Dundee Numerical Analysis Conference Proceedings,
-!     after transforming H to tridiagonal form.
 
 ! Sizes.
 n = int(size(g), kind(n))
@@ -125,9 +132,8 @@ delsq = delta * delta
 ! elements of the Householder vectors in the lower triangular part of HH. Further, TD and TN will
 ! contain the diagonal and other nonzero elements of the tridiagonal matrix.
 hh = h
-call hessenberg(hh, td, tn(1:n - 1))
+call hessenberg(hh, td, tn)
 !!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1)
-tn(n) = ZERO  ! This is necessary, as TN(N) will be accessed.
 
 
 !!!!!!!!!!!! TODO: TN should have length N-1. !!!!!!!!!!!!
@@ -155,7 +161,7 @@ if (.not. is_finite(sum(abs(gg)) + sum(abs(hh)) + sum(abs(td)) + sum(abs(tn)))) 
 end if
 
 ! Begin the trust region calculation with a tridiagonal matrix by calculating the norm of H.
-hnorm = maxval(abs([ZERO, tn(1:n - 1)]) + abs(td) + abs(tn))
+hnorm = maxval(abs([ZERO, tn]) + abs(td) + abs([tn, ZERO]))
 tdmin = minval(td)  ! This leads to a difference. Why?
 
 ! Set the initial values of PAR and its bounds.
@@ -202,7 +208,7 @@ do k = 1, n - 1
     end if
 end do
 
-! Powell implemented the loop by a GOTO. When the loop exits, K = N.
+! Powell implemented the loop by a GOTO, and K = N when the loop exits.
 
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (piv(n) >= ZERO) then
@@ -225,25 +231,26 @@ if (any(is_nan(piv))) then
     goto 370  ! Better action to take???
 end if
 
-! Set D to a direction of nonpositive curvature of the given tridiagonal matrix, and thus revise PARLEST.
+! Set D to a direction of nonpositive curvature of the tridiagonal matrix, and thus revise PARLEST.
 d(k) = ONE
-if (abs(tn(k)) <= abs(piv(k))) then  ! K == N falls into this case unless PIV(N) is NaN.
-    dsq = ONE
-    dhd = piv(k)
-else
-! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 20220301: The code below accesses TD(N+1), D(N+1) when K = N!!!
-! Zaikun 20220507: Is K=N possible?
-    call assert(k < n, 'K < N', srname)  ! K < N unless PIV(N) is NaN
-    temp = td(k + 1) + par
-    if (temp <= abs(piv(k))) then
-        d(k + 1) = sign(ONE, -tn(k))
-        dhd = piv(k) + temp - TWO * abs(tn(k))
-    else
-        d(k + 1) = -tn(k) / temp
-        dhd = piv(k) + tn(k) * d(k + 1)
+dsq = ONE
+dhd = piv(k)
+! In Fortran, the following two IFs CANNOT be merged into IF(K < N .AND. ABS(TN(K)) > ABS(PIV(K))).
+! This is because Fortran may not perform a short-circuit evaluation of this logic expression, and
+! hence TN(K) may be accessed even if K >= N, leading to an out-of-boundary index since SIZE(TN) is
+! only N-1. This is not a problem in C, MATLAB, Python, Julia, or R.
+if (k < n) then
+    if (abs(tn(k)) > abs(piv(k))) then
+        temp = td(k + 1) + par
+        if (temp <= abs(piv(k))) then
+            d(k + 1) = sign(ONE, -tn(k))
+            dhd = piv(k) + temp - TWO * abs(tn(k))
+        else
+            d(k + 1) = -tn(k) / temp
+            dhd = piv(k) + tn(k) * d(k + 1)
+        end if
+        dsq = ONE + d(k + 1)**2
     end if
-    dsq = ONE + d(k + 1)**2
 end if
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 170 continue
