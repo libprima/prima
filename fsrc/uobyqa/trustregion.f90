@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 PM09:42:10
+! Last Modified: Monday, May 09, 2022 PM11:59:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,7 +69,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, pivksv, pivot, &
 &        shfmax, shfmin, shift, slope,   &
-&        tdmin, temp, tempa, tempb, wsq, wwsq, zsq
+&        temp, tempa, tempb, wsq, wwsq, zsq
 integer(IK) :: i, iter, k, ksav, ksave, maxiter
 logical :: posdef
 
@@ -133,9 +133,10 @@ end if
 
 delsq = delta * delta
 
-! Apply Householder transformations to obtain a tridiagonal matrix that is similar to H, and put the
-! elements of the Householder vectors in the lower triangular part of HH. Further, TD and TN will
-! contain the diagonal and other nonzero elements of the tridiagonal matrix.
+! Apply Householder transformations to get a tridiagonal matrix similar to H (i.e., the Hessenberg
+! form of H), and put the elements of the Householder vectors in the lower triangular part of HH.
+! Further, TD and TN will contain the diagonal and other nonzero elements of the tridiagonal matrix.
+! In the comments hereafter, H indeed means this tridiagonal matrix.
 hh = h
 call hessenberg(hh, td, tn)  !!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1)
 
@@ -147,7 +148,7 @@ end do
 !!MATLAB: gg = (g'*P)';  % gg = P'*g;
 
 !--------------------------------------------------------------------------------------------------!
-! Zaikun 20220303: Exit if GG, HH, TD, or TN are not finite. Otherwise, the behavior of this
+! Zaikun 20220303: Exit if GG, HH, TD, or TN is not finite. Otherwise, the behavior of this
 ! subroutine is not predictable. For example, if HNORM = GNORM = Inf, it is observed that the
 ! initial value of PARL defined below will change when we add code that should not affect PARL
 ! (e.g., print it, or add TD = 0, TN = 0, PIV = 0 at the beginning of this subroutine).
@@ -158,15 +159,15 @@ if (.not. is_finite(sum(abs(gg)) + sum(abs(hh)) + sum(abs(td)) + sum(abs(tn)))) 
     return
 end if
 
-! Begin the trust region calculation with a tridiagonal matrix by calculating the norm of H.
+! Begin the trust region calculation with a tridiagonal matrix by calculating the L_1-norm of the
+! Hessenberg form of H, which is an upper bound for the spectral norm of H.
 hnorm = maxval(abs([ZERO, tn]) + abs(td) + abs([tn, ZERO]))
-tdmin = minval(td)  ! This leads to a difference. Why?
 
 ! Set the initial values of PAR and its bounds.
 ! N.B.: PAR is the parameter LAMBDA in More-Sorensen 1983 and Powell 1997, as well as the THETA in
 ! Section 2 of the UOBYQA paper. The algorithm looks for the optimal PAR characterized in Lemmas
 ! 2.1--2.3 of More-Sorensen 1983.
-parl = maxval([ZERO, -tdmin, gnorm / delta - hnorm])  ! Lower bound for the optimal PAR
+parl = maxval([ZERO, -minval(td), gnorm / delta - hnorm])  ! Lower bound for the optimal PAR
 parlest = parl  ! Estimation for PARL
 par = parl
 paru = ZERO  ! Upper bound for the optimal PAR
@@ -181,7 +182,7 @@ iter = iter + 1
 
 ! Zaikun 26-06-2019: The original code can encounter infinite cycling, which did happen when testing
 ! the CUTEst problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. Indeed, in all these cases, Inf and NaN
-! appear in D due to extremely large values in H (up to 10^219).
+! appear in D due to extremely large values in the Hessian matrix (up to 10^219).
 if (.not. is_finite(sum(abs(d)))) then
     d = dold
     goto 370
@@ -192,19 +193,18 @@ if (iter > maxiter) then
     goto 370
 end if
 
-! Calculate the pivots of the Cholesky factorization of (H+PAR*I).
+! Calculate the pivots of the Cholesky factorization of (H + PAR*I).
 ksav = 0
 piv = ZERO
 piv(1) = td(1) + par
 do k = 1, n - 1
     if (piv(k) > 0) then
         piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)
-    else
-        if (piv(k) < 0 .or. tn(k) /= 0) then
-            goto 160
-        end if
-        ksav = k
+    elseif (abs(piv(k)) <= 0 .and. abs(tn(k)) <= 0) then  ! PIV(K) == 0 == TN(K)
         piv(k + 1) = td(k + 1) + par
+        ksav = k
+    else  ! PIV(K) < 0 .OR. (PIV(K) == 0 .AND. TN(K) /= 0)
+        goto 160
     end if
 end do
 
@@ -214,7 +214,7 @@ if (piv(n) >= ZERO) then
     if (piv(n) == ZERO) ksav = n
     ! Branch if all the pivots are positive, allowing for the case when G is ZERO.
     if (ksav == 0 .and. gsq > ZERO) goto 230
-    if (gsq == ZERO) then
+    if (gsq <= 0) then
         if (par == ZERO) goto 370
         paru = par
         paruest = par
@@ -271,7 +271,7 @@ parlest = par - dhd / dsq
 
 ! Terminate with D set to a multiple of the current D if the following test suggests so.
 temp = paruest
-if (gsq == ZERO) temp = temp * (ONE - tol)
+if (gsq <= 0) temp = temp * (ONE - tol)
 if (paruest > ZERO .and. parlest >= temp) then
     dtg = inprod(d, gg)
     d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
@@ -304,17 +304,13 @@ do i = n - 1, 1, -1
 end do
 
 ! Branch if a Newton-Raphson step is acceptable.
-dsq = ZERO
-wsq = ZERO
-do i = 1, n
-    dsq = dsq + d(i)**2
-    wsq = wsq + piv(i) * w(i)**2
-end do
+dsq = sum(d**2)
 if (par == ZERO .and. dsq <= delsq) goto 320
 
 ! Make the usual test for acceptability of a full trust region step.
 dnorm = sqrt(dsq)
 phi = ONE / dnorm - ONE / delta
+wsq = inprod(piv, w**2)
 temp = tol * (ONE + par * dsq / wsq) - dsq * phi * phi
 if (temp >= ZERO) then
     d = (delta / dnorm) * d
@@ -404,38 +400,46 @@ ksave = 0
 
 340 continue
 
-shift = HALF * (shfmin + shfmax)
-k = 1
-temp = td(1) - shift
+do while (shfmin <= 0.99_RP * shfmax)
+
+    shift = HALF * (shfmin + shfmax)
+    k = 1
+    temp = td(1) - shift
 
 350 continue
 
-if (temp > ZERO) then
-    piv(k) = temp
-    if (k < n) then
-        temp = td(k + 1) - shift - tn(k)**2 / temp
-        k = k + 1
-        goto 350
-    end if
-    shfmin = shift
-else
-    if (k < ksave) goto 360
-    if (k == ksave) then
-        if (pivksv == ZERO) goto 360
-        if (piv(k) - temp < temp - pivksv) then
+    if (temp > ZERO) then
+        piv(k) = temp
+        if (k < n) then
+            temp = td(k + 1) - shift - tn(k)**2 / temp
+            k = k + 1
+            goto 350
+        end if
+        shfmin = shift
+    else
+        if (k < ksave) then
+            exit
+        end if
+        if (k == ksave) then
+            if (pivksv == ZERO) then
+                exit
+            end if
+            if (piv(k) - temp < temp - pivksv) then
+                pivksv = temp
+                shfmax = shift
+            else
+                pivksv = ZERO
+                shfmax = (shift * piv(k) - shfmin * temp) / (piv(k) - temp)
+            end if
+        else
+            ksave = k
             pivksv = temp
             shfmax = shift
-        else
-            pivksv = ZERO
-            shfmax = (shift * piv(k) - shfmin * temp) / (piv(k) - temp)
         end if
-    else
-        ksave = k
-        pivksv = temp
-        shfmax = shift
     end if
-end if
-if (shfmin <= 0.99_RP * shfmax) goto 340
+end do
+!if (shfmin <= 0.99_RP * shfmax) goto 340
+
 
 360 continue
 
