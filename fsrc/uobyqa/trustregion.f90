@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 10, 2022 AM01:15:10
+! Last Modified: Tuesday, May 10, 2022 AM01:43:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -71,7 +71,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        shfmax, shfmin, shift, slope,   &
 &        temp, tempa, tempb, wsq, wwsq, zsq
 integer(IK) :: i, iter, k, ksav, ksave, maxiter
-logical :: posdef, flag
+logical :: posdef
 
 !     N is the number of variables of a quadratic objective function, Q say.
 !     G is the gradient of Q at the origin.
@@ -142,7 +142,7 @@ call hessenberg(hh, td, tn)  !!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag
 
 ! Form GG by applying the similarity transformation to G.
 gg = g
-do k = 1, n - 1
+do k = 1, n - 1_IK
     gg(k + 1:n) = gg(k + 1:n) - inprod(gg(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
 !!MATLAB: gg = (g'*P)';  % gg = P'*g;
@@ -178,7 +178,7 @@ maxiter = min(1000_IK, 100_IK * int(n, IK))  ! What is the theoretical bound of 
 
 140 continue
 
-iter = iter + 1
+iter = iter + 1_IK
 
 ! Zaikun 26-06-2019: The original code can encounter infinite cycling, which did happen when testing
 ! the CUTEst problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. Indeed, in all these cases, Inf and NaN
@@ -197,7 +197,7 @@ end if
 ksav = 0
 piv = ZERO
 piv(1) = td(1) + par
-do k = 1, n - 1
+do k = 1, n - 1_IK
     if (piv(k) > 0) then
         piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)
     elseif (abs(piv(k)) <= 0 .and. abs(tn(k)) <= 0) then  ! PIV(K) == 0 == TN(K)
@@ -210,10 +210,10 @@ end do
 
 ! Powell implemented the loop by a GOTO, and K = N when the loop exits.
 
-if (piv(n) >= ZERO) then
+if (piv(n) >= 0) then
     if (piv(n) == ZERO) ksav = n
     ! Branch if all the pivots are positive, allowing for the case when G is ZERO.
-    if (ksav == 0 .and. gsq > ZERO) goto 230
+    if (ksav == 0 .and. gsq > 0) goto 230
     if (gsq <= 0) then
         if (par == ZERO) goto 370
         paru = par
@@ -272,7 +272,7 @@ parlest = par - dhd / dsq
 ! Terminate with D set to a multiple of the current D if the following test suggests so.
 temp = paruest
 if (gsq <= 0) temp = temp * (ONE - tol)
-if (paruest > ZERO .and. parlest >= temp) then
+if (paruest > 0 .and. parlest >= temp) then
     dtg = inprod(d, gg)
     d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
     goto 370
@@ -287,19 +287,19 @@ else
     par = HALF * (parl + paru)
     par = max(par, parlest)
 end if
-if (paruest > ZERO) par = min(par, paruest)
+if (paruest > 0) par = min(par, paruest)
 goto 140
 
 230 continue
 
 ! Calculate D for the current PAR in the positive definite case.
 w(1) = -gg(1) / piv(1)
-do i = 2, n
-    w(i) = -(gg(i) + tn(i - 1) * w(i - 1)) / piv(i)
+do i = 1, n - 1_IK
+    w(i + 1) = -(gg(i + 1) + tn(i) * w(i)) / piv(i + 1)
 end do
 
 d(n) = w(n)
-do i = n - 1, 1, -1
+do i = n - 1_IK, 1, -1
     d(i) = w(i) - tn(i) * d(i + 1) / piv(i)
 end do
 
@@ -312,15 +312,15 @@ dnorm = sqrt(dsq)
 phi = ONE / dnorm - ONE / delta
 wsq = inprod(piv, w**2)
 temp = tol * (ONE + par * dsq / wsq) - dsq * phi * phi
-if (temp >= ZERO) then
+if (temp >= 0) then
     d = (delta / dnorm) * d
     goto 370
 end if
 if (iter >= 2 .and. par <= parl) goto 370
-if (paru > ZERO .and. par >= paru) goto 370
+if (paru > 0 .and. par >= paru) goto 370
 
 ! Complete the iteration when PHI is negative.
-if (phi < ZERO) then
+if (phi < 0) then
     parlest = par
     if (posdef) then
         if (phi <= phil) goto 370
@@ -328,9 +328,9 @@ if (phi < ZERO) then
         parlest = par - phi / slope
     end if
     slope = ONE / gnorm
-    if (paru > ZERO) slope = (phiu - phi) / (paru - par)
+    if (paru > 0) slope = (phiu - phi) / (paru - par)
     temp = par - phi / slope
-    if (paruest > ZERO) temp = min(temp, paruest)
+    if (paruest > 0) temp = min(temp, paruest)
     paruest = temp
     posdef = .true.
     parl = par
@@ -341,12 +341,12 @@ end if
 ! If required, calculate Z for the alternative test for convergence.
 if (.not. posdef) then
     w(1) = ONE / piv(1)
-    do i = 2, n
-        temp = -tn(i - 1) * w(i - 1)
-        w(i) = (sign(ONE, temp) + temp) / piv(i)
+    do i = 1, n - 1_IK
+        temp = -tn(i) * w(i)
+        w(i + 1) = (sign(ONE, temp) + temp) / piv(i + 1)
     end do
     z(n) = w(n)
-    do i = n - 1, 1, -1
+    do i = n - 1_IK, 1, -1
         z(i) = w(i) - tn(i) * z(i + 1) / piv(i)
     end do
     wwsq = inprod(piv, w**2)
@@ -358,7 +358,7 @@ if (.not. posdef) then
     tempb = sqrt(dtz * dtz + tempa * zsq)
     gam = tempa / (sign(tempb, dtz) + dtz)
     temp = tol * (wsq + par * delsq) - gam * gam * wwsq
-    if (temp >= ZERO) then
+    if (temp >= 0) then
         d = d + gam * z
         goto 370
     end if
@@ -367,7 +367,7 @@ end if
 
 ! Complete the iteration when PHI is positive.
 slope = ONE / gnorm
-if (paru > ZERO) then
+if (paru > 0) then
     if (phi >= phiu) goto 370
     slope = (phiu - phi) / (paru - par)
 end if
@@ -389,30 +389,31 @@ shfmin = ZERO
 pivot = td(1)
 shfmax = pivot
 
-do k = 2, n
-    pivot = td(k) - tn(k - 1)**2 / pivot
+do k = 1, n - 1_IK
+    pivot = td(k + 1) - tn(k)**2 / pivot
     shfmax = min(shfmax, pivot)
 end do
 
 
 ! Find CRVMIN by a bisection method, but occasionally adjust SHFMAX by the rule of false position.
+! The loop below can be isolated as a subroutine that finds the least eigenvalue of a symmetric
+! tridiagonal matrix by Cholesky factorization and bisection.
 ksave = 0
-
 do while (shfmin <= 0.99_RP * shfmax)
     shift = HALF * (shfmin + shfmax)
-    temp = td(1) - shift
-    flag = .true.
-    do k = 1, n - 1
-        if (.not. temp > 0) then
-            flag = .false.
+    pivot = td(1) - shift
+    posdef = .true.
+    do k = 1, n - 1_IK
+        if (.not. pivot > 0) then
+            posdef = .false.
             exit
         end if
-        piv(k) = temp
-        temp = td(k + 1) - shift - tn(k)**2 / temp
+        piv(k) = pivot
+        pivot = td(k + 1) - shift - tn(k)**2 / piv(k)
     end do
 
-    if (flag .and. temp > 0) then
-        piv(k) = temp
+    if (posdef .and. pivot > 0) then
+        piv(k) = pivot
         shfmin = shift
         cycle
     end if
@@ -423,16 +424,16 @@ do while (shfmin <= 0.99_RP * shfmax)
         if (pivksv == ZERO) then
             exit
         end if
-        if (piv(k) - temp < temp - pivksv) then
-            pivksv = temp
+        if (piv(k) - pivot < pivot - pivksv) then
+            pivksv = pivot
             shfmax = shift
         else
             pivksv = ZERO
-            shfmax = (shift * piv(k) - shfmin * temp) / (piv(k) - temp)
+            shfmax = (shift * piv(k) - shfmin * pivot) / (piv(k) - pivot)
         end if
     else
         ksave = k
-        pivksv = temp
+        pivksv = pivot
         shfmax = shift
     end if
 end do
@@ -442,7 +443,7 @@ crvmin = shfmin
 370 continue
 
 ! Apply the inverse Householder transformations to D.
-do k = n - 1, 1, -1
+do k = n - 1_IK, 1, -1
     d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
 !!MATLAB: d = P*d;
