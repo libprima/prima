@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 AM10:52:05
+! Last Modified: Monday, May 09, 2022 PM01:30:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -439,9 +439,10 @@ dnorm = sqrt(dsq)
 phi = ONE / dnorm - ONE / delta
 temp = tol * (ONE + par * dsq / wsq) - dsq * phi * phi
 if (temp >= ZERO) then
-    scaling = delta / dnorm
+    !scaling = delta / dnorm
     do i = 1, n
-        d(i) = scaling * d(i)
+        !d(i) = scaling * d(i)
+        d(i) = delta * (d(i) / dnorm)
     end do
     goto 370
 end if
