@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 AM11:39:14
+! Last Modified: Monday, May 09, 2022 AM11:42:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -210,7 +210,6 @@ end do
 
 ! Powell implemented the loop by a GOTO, and K = N when the loop exits.
 
-! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (piv(n) >= ZERO) then
     if (piv(n) == ZERO) ksav = n
     ! Branch if all the pivots are positive, allowing for the case when G is ZERO.
@@ -235,6 +234,7 @@ end if
 d(k) = ONE
 dsq = ONE
 dhd = piv(k)
+
 ! In Fortran, the following two IFs CANNOT be merged into IF(K < N .AND. ABS(TN(K)) > ABS(PIV(K))).
 ! This is because Fortran may not perform a short-circuit evaluation of this logic expression, and
 ! hence TN(K) may be accessed even if K >= N, leading to an out-of-boundary index since SIZE(TN) is
@@ -252,8 +252,9 @@ if (k < n) then
         dsq = ONE + d(k + 1)**2
     end if
 end if
-! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 170 continue
+
 if (k > 1) then
     k = k - 1
     if (tn(k) /= ZERO) then
@@ -267,13 +268,10 @@ if (k > 1) then
 end if
 parl = par
 parlest = par - dhd / dsq
-!
-!     Terminate with D set to a multiple of the current D if the following
-!     test suggests that it suitable to do so.
-!
 
 190 continue
 
+! Terminate with D set to a multiple of the current D if the following test suggests so.
 temp = paruest
 if (gsq == ZERO) temp = temp * (ONE - tol)
 if (paruest > ZERO .and. parlest >= temp) then

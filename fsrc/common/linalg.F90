@@ -40,7 +40,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 08, 2022 PM04:36:15
+! Last Modified: Monday, May 09, 2022 AM11:45:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2362,7 +2362,7 @@ end if
 
 tdiag = diag(A)
 
-do k = 1, n - 1
+do k = 1, n - 1_IK
     colsq = sum(A(k + 2:n, k)**2)
     if (colsq <= 0) then
         tsubdiag(k) = A(k + 1, k)  ! A(K+1, K) may have been updated in previous loops.
@@ -2383,7 +2383,7 @@ do k = 1, n - 1
     A(k + 1:n, k) = w(k + 1:n)
 
     z(k + 1:n) = tdiag(k + 1:n) * w(k + 1:n)
-    do j = k + 1, n - 1
+    do j = k + 1_IK, n - 1_IK
         z(j + 1:n) = z(j + 1:n) + A(j + 1:n, j) * w(j)
         do i = j + 1_IK, n
             z(j) = z(j) + A(i, j) * w(i)
@@ -2392,7 +2392,7 @@ do k = 1, n - 1
     wz = inprod(w(k + 1:n), z(k + 1:n))
 
     tdiag(k + 1:n) = tdiag(k + 1:n) + w(k + 1:n) * (wz * w(k + 1:n) - TWO * z(k + 1:n))
-    do j = k + 1, n
+    do j = k + 1_IK, n
         A(j + 1:n, j) = A(j + 1:n, j) - w(j + 1:n) * z(j) - w(j) * (z(j + 1:n) - wz * w(j + 1:n))
     end do
 end do
@@ -2482,7 +2482,7 @@ elseif (scaling > 1.0E6 .or. scaling < 1.0E-6) then  ! 1.0E6 and 1.0E-6 are heur
     scaled = .true.
 end if
 
-do j = 1, n - 1
+do j = 1, n - 1_IK
     colsq = sum(H(j + 2:n, j)**2)
     if (colsq <= 0) then
         cycle
