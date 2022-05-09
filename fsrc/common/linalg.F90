@@ -4,18 +4,19 @@ module linalg_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides some basic linear algebra procedures.
 !
-! The procedures are not intended to be optimized but to be sufficient for my projects. These
+! The procedures are NOT intended to be optimized but to be sufficient for my projects. These
 ! projects are mainly the development and maintenance of derivative-free optimization software,
 ! where the major expense comes from the function evaluations, NOT the numerical linear algebraic
-! computations. Therefore, the implementations here are mostly straightforward and naive.
+! computations, and the sizes of matrices/vectors involved are relatively SMALL, the order being at
+! most 10^3. Therefore, the implementations here are mostly STRAIGHTFORWARD and NAIVE.
 !
-! If it is needed to enhance the performance of these procedures, especially MATPROD, one can
-! customize their implementations according to the resources (hardware, e.g., cache, and libraries,
-! e.g., BLAS) available and the sizes of the matrices/vectors.
+! If it is needed to enhance the performance of these procedures, one can optimize their 
+! implementations according to the resources (hardware, e.g., C/GPU, cache, and libraries, e.g., 
+! BLAS, LAPACK) available and the sizes of the matrices/vectors concerned.
 !
 ! In case you need similar procedures in MATLAB/Python/Julia/R, note the following.
 ! 1. Most of the procedures here are intrinsic to the languages or available in standard libraries.
-! If available, they should not be implemented from scratch like we do here.
+! If available, they should NOT be implemented from scratch like we do here.
 ! 2. For the procedures that are not available, it may be better to code them inline instead of as
 ! external functions, because the code is usually short using matrix/vector operations, and because
 ! the overhead of function calling can be high in these languages.
@@ -40,7 +41,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 09, 2022 AM11:45:04
+! Last Modified: Monday, May 09, 2022 PM08:34:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

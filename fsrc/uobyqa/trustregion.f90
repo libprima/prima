@@ -267,7 +267,7 @@ temp = paruest
 if (gsq == ZERO) temp = temp * (ONE - tol)
 if (paruest > ZERO .and. parlest >= temp) then
     dtg = inprod(d, gg)
-    d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg)*(delta / sqrt(dsq)) * d
+    d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
     goto 370
 end if
 
