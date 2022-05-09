@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 AM01:22:11
+! Last Modified: Monday, May 09, 2022 AM10:01:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: trstep
 contains
 
 
-subroutine trstep(delta, g, h_in, tol, d_out, crvmin)   !!!! Possible to use D instead of D_OUT?
+subroutine trstep(delta, g, h_in, tol, d, crvmin)   !!!! Possible to use D instead of D_OUT?
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -35,18 +35,16 @@ real(RP), intent(in) :: h_in(:, :)  ! H_IN(N, N)
 real(RP), intent(in) :: tol
 
 ! In-outputs
-!real(RP), intent(out) :: d(:)  ! D(N)
-real(RP), intent(out) :: d_out(:)  ! D(N)  !!!! Temporary; the code below accesses D(N+1)
+real(RP), intent(out) :: d(:)  ! D(N)
 real(RP), intent(out) :: crvmin
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTEP'
 integer(IK) :: n
-real(RP) :: d(size(g) + 1) !!! D(N+1) may be accessed. !!! Possible to avoid this and spare D_OUT?
 real(RP) :: gg(size(g))
 real(RP) :: h(size(g), size(g))
 real(RP) :: piv(size(g))
-real(RP) :: td(size(g) + 1) !!! TD(N+1) may be accessed
+real(RP) :: td(size(g))
 real(RP) :: tn(size(g))
 real(RP) :: w(size(g))
 real(RP) :: z(size(g))
@@ -68,7 +66,7 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(delta > 0, 'DELTA > 0', srname)
     call assert(size(h, 1) == n .and. issymmetric(h), 'H is n-by-n and symmetric', srname)
-    call assert(size(d_out) == n, 'SIZE(D) == N', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
 end if
 
 
@@ -82,13 +80,13 @@ if (n == 1) then
     if (h(1, 1) > 0) then
         dnewton = -g / h(1, 1)
         if (abs(dnewton(1)) <= delta) then
-            d_out = dnewton
+            d = dnewton
             crvmin = h(1, 1)
         else
-            d_out = sign(delta, dnewton)  ! MATLAB: D_OUT = DELTA * SIGN(DNEWTON)
+            d = sign(delta, dnewton)  ! MATLAB: D_OUT = DELTA * SIGN(DNEWTON)
         end if
     else
-        d_out = sign(delta, -g)  ! MATLAB: D_OUT = -DELTA * SIGN(G)
+        d = sign(delta, -g)  ! MATLAB: D_OUT = -DELTA * SIGN(G)
     end if
     return
 end if
@@ -127,7 +125,7 @@ d = ZERO
 ! Apply Householder transformations to obtain a tridiagonal matrix that is similar to H, and put the
 ! elements of the Householder vectors in the lower triangular part of H. Further, TD and TN will
 ! contain the diagonal and other nonzero elements of the tridiagonal matrix.
-call hessenberg(h, td(1:n), tn(1:n - 1))
+call hessenberg(h, td, tn(1:n - 1))
 !!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1)
 tn(n) = ZERO  ! This is necessary, as TN(N) will be accessed.
 
@@ -154,8 +152,8 @@ end do
 ! MAXIMUM defined in LINALG_MOD. MAXIMUM will return NaN if it receives NaN, making it easier for us
 ! to notice that there is a problem and hence debug.
 !--------------------------------------------------------------------------------------------------!
-if (.not. is_finite(sum(abs(h)) + sum(abs(td(1:n))) + sum(abs(tn)) + sum(abs(gg)))) then
-    d_out = ZERO
+if (.not. is_finite(sum(abs(h)) + sum(abs(td)) + sum(abs(tn)) + sum(abs(gg)))) then
+    d = ZERO
     crvmin = ZERO
     return
 end if
@@ -163,13 +161,13 @@ end if
 ! Begin the trust region calculation with a tridiagonal matrix by calculating the norm of H. Then
 ! treat the case when H is zero.
 
-hnorm = maxval(abs([ZERO, tn(1:n - 1)]) + abs(td(1:n)) + abs(tn))
-tdmin = minval(td(1:n))  ! This leads to a difference. Why?
+hnorm = maxval(abs([ZERO, tn(1:n - 1)]) + abs(td) + abs(tn))
+tdmin = minval(td)  ! This leads to a difference. Why?
 
 if (hnorm == ZERO) then
     if (gnorm == ZERO) goto 400
     scaling = delta / gnorm
-    d(1:n) = -scaling * g
+    d = -scaling * g
     goto 400
 end if
 
@@ -193,11 +191,11 @@ iter = iter + 1
 ! The original code can encounter infinite cycling, which did happen when testing the CUTEst
 ! problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. Indeed, in all these cases, Inf and NaN appear in D due
 ! to extremely large values in H (up to 10^219).
-if (.not. is_finite(sum(abs(d(1:n))))) then
-    d(1:n) = dold
+if (.not. is_finite(sum(abs(d)))) then
+    d = dold
     goto 370
 else
-    dold = d(1:n)
+    dold = d
 end if
 if (iter > maxiter) then
     goto 370
@@ -473,9 +471,7 @@ do k = n - 1, 1, -1
 end do
 !!MATLAB: d = P*d;
 
-400 continue
-
-d_out(1:n) = d(1:n)  !!!! Temporary
+400 return
 
 end subroutine trstep
 
