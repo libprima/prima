@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 PM11:59:37
+! Last Modified: Tuesday, May 10, 2022 AM01:15:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -71,7 +71,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        shfmax, shfmin, shift, slope,   &
 &        temp, tempa, tempb, wsq, wwsq, zsq
 integer(IK) :: i, iter, k, ksav, ksave, maxiter
-logical :: posdef
+logical :: posdef, flag
 
 !     N is the number of variables of a quadratic objective function, Q say.
 !     G is the gradient of Q at the origin.
@@ -398,50 +398,44 @@ end do
 ! Find CRVMIN by a bisection method, but occasionally adjust SHFMAX by the rule of false position.
 ksave = 0
 
-340 continue
-
 do while (shfmin <= 0.99_RP * shfmax)
-
     shift = HALF * (shfmin + shfmax)
-    k = 1
     temp = td(1) - shift
-
-350 continue
-
-    if (temp > ZERO) then
-        piv(k) = temp
-        if (k < n) then
-            temp = td(k + 1) - shift - tn(k)**2 / temp
-            k = k + 1
-            goto 350
-        end if
-        shfmin = shift
-    else
-        if (k < ksave) then
+    flag = .true.
+    do k = 1, n - 1
+        if (.not. temp > 0) then
+            flag = .false.
             exit
         end if
-        if (k == ksave) then
-            if (pivksv == ZERO) then
-                exit
-            end if
-            if (piv(k) - temp < temp - pivksv) then
-                pivksv = temp
-                shfmax = shift
-            else
-                pivksv = ZERO
-                shfmax = (shift * piv(k) - shfmin * temp) / (piv(k) - temp)
-            end if
-        else
-            ksave = k
+        piv(k) = temp
+        temp = td(k + 1) - shift - tn(k)**2 / temp
+    end do
+
+    if (flag .and. temp > 0) then
+        piv(k) = temp
+        shfmin = shift
+        cycle
+    end if
+    if (k < ksave) then
+        exit
+    end if
+    if (k == ksave) then
+        if (pivksv == ZERO) then
+            exit
+        end if
+        if (piv(k) - temp < temp - pivksv) then
             pivksv = temp
             shfmax = shift
+        else
+            pivksv = ZERO
+            shfmax = (shift * piv(k) - shfmin * temp) / (piv(k) - temp)
         end if
+    else
+        ksave = k
+        pivksv = temp
+        shfmax = shift
     end if
 end do
-!if (shfmin <= 0.99_RP * shfmax) goto 340
-
-
-360 continue
 
 crvmin = shfmin
 
