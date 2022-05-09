@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 10, 2022 AM01:43:39
+! Last Modified: Tuesday, May 10, 2022 AM01:48:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -383,21 +383,21 @@ goto 220
 
 320 continue
 
+
+!--------------------------------------------------------------------------------------------------!
 ! Set CRVMIN to the least eigenvalue of the second derivative matrix if D is a Newton-Raphson step.
-! SHFMAX will be an upper bound on CRVMIN.
+! CRVMIN is found by a bisection method, in which process SHFMIN is a lower bound on CRVMIN while
+! SHFMAX an upper bound. SHFMAX is occasionally adjusted by the rule of false position.
+! The procedure can (should) be isolated as a subroutine that finds the least eigenvalue of a
+! symmetric tridiagonal matrix by Cholesky factorization and bisection.
 shfmin = ZERO
 pivot = td(1)
 shfmax = pivot
-
 do k = 1, n - 1_IK
     pivot = td(k + 1) - tn(k)**2 / pivot
     shfmax = min(shfmax, pivot)
 end do
 
-
-! Find CRVMIN by a bisection method, but occasionally adjust SHFMAX by the rule of false position.
-! The loop below can be isolated as a subroutine that finds the least eigenvalue of a symmetric
-! tridiagonal matrix by Cholesky factorization and bisection.
 ksave = 0
 do while (shfmin <= 0.99_RP * shfmax)
     shift = HALF * (shfmin + shfmax)
@@ -439,6 +439,8 @@ do while (shfmin <= 0.99_RP * shfmax)
 end do
 
 crvmin = shfmin
+!--------------------------------------------------------------------------------------------------!
+
 
 370 continue
 
