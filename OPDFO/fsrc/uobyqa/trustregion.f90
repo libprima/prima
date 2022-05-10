@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 09, 2022 PM09:42:26
+! Last Modified: Tuesday, May 10, 2022 PM09:18:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -565,7 +565,8 @@ else
         shfmax = shift
     end if
 end if
-if (shfmin <= 0.99_RP * shfmax) goto 340
+!if (shfmin <= 0.99_RP * shfmax) goto 340
+if (.not. shfmax - shfmin < 1.0E-2_RP * shfmax) goto 340
 360 evalue = shfmin
 !
 !     Apply the inverse Householder transformations to D.

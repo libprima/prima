@@ -306,7 +306,7 @@ dsq = sum(d**2)
 
 ! Return if the Newton-Raphson step is feasible, setting CRVMIN to the least eigenvalue of Hessian.
 if (par == ZERO .and. dsq <= delsq) then
-    crvmin = eigmin(td, tn)
+    crvmin = eigmin(td, tn, 1.0E-2_RP)
     !!MATLAB:
     !!% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
     !!tridh = spdiags([[tn; 0], td, [0; tn]], -1:1, n, n);
