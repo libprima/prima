@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 10, 2022 AM10:28:49
+! Last Modified: Tuesday, May 10, 2022 PM02:02:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,7 +39,8 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
-use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg
+use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, trueloc
+use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
 
@@ -58,7 +59,7 @@ character(len=*), parameter :: srname = 'TRSTEP'
 integer(IK) :: n
 real(RP) :: gg(size(g))
 real(RP) :: hh(size(g), size(g))
-real(RP) :: piv(size(g))
+real(RP) :: piv(size(g)), pivnew(size(g))
 real(RP) :: td(size(g))
 real(RP) :: tn(size(g) - 1)
 real(RP) :: w(size(g))
@@ -238,7 +239,7 @@ dhd = piv(k)
 ! In Fortran, the following two IFs CANNOT be merged into IF(K < N .AND. ABS(TN(K)) > ABS(PIV(K))).
 ! This is because Fortran may not perform a short-circuit evaluation of this logic expression, and
 ! hence TN(K) may be accessed even if K >= N, leading to an out-of-boundary index since SIZE(TN) is
-! only N-1. This is not a problem in C, MATLAB, Python, Julia, or R.
+! only N-1. This is not a problem in C, MATLAB, Python, Julia, or R, where short circuit is ensured.
 if (k < n) then
     if (abs(tn(k)) > abs(piv(k))) then
         temp = td(k + 1) + par
@@ -389,56 +390,53 @@ goto 220
 ! SHFMAX an upper bound. SHFMAX is occasionally adjusted by the rule of false position.
 ! The procedure can (should) be isolated as a subroutine that finds the least eigenvalue of a
 ! symmetric tridiagonal matrix by Cholesky factorization and bisection.
-shfmin = ZERO
-pivot = td(1)
-shfmax = pivot
+
+piv(1) = td(1)
 do k = 1, n - 1_IK
-    pivot = td(k + 1) - tn(k)**2 / pivot
-    shfmax = min(shfmax, pivot)
+    piv(k + 1) = td(k + 1) - tn(k)**2 / piv(k)
 end do
+shfmax = minval(piv)
+shfmin = ZERO
 
 ksave = 0
+! The initial value of PIVKSAV will not be used. PIVKSAV will be set to PIVNEW(K) when POSDEF is
+! FALSE for the first time.
+pivksv = -ONE
+piv = -huge(piv)!ieeenan()
 do while (shfmin <= 0.99_RP * shfmax)
     shift = HALF * (shfmin + shfmax)
-    pivot = td(1) - shift
-    posdef = .true.
-    do k = 1, n - 1_IK
-        if (.not. pivot > 0) then
-            posdef = .false.
-            exit
-        end if
-        piv(k) = pivot
-        pivot = td(k + 1) - shift - tn(k)**2 / piv(k)
-    end do
-    ! N.B.: Do not make assumptions about the value of the loop counter K after the loop if the loop 
-    ! terminates because the K reaches the upper limit. It can be N-1, N, or something else. 
 
-    if (pivot > 0 .and. posdef) then
-        piv(n) = pivot
+    pivnew(1) = td(1) - shift
+    do k = 1, n - 1_IK
+        pivnew(k + 1) = td(k + 1) - shift - tn(k)**2 / pivnew(k)
+    end do
+
+    posdef = all(pivnew > 0)
+    if (posdef) then
+        piv = pivnew
         shfmin = shift
         cycle
     end if
-    if (k < ksave) then
+
+    ! In the sequel, POSDEF is FALSE, and PIVNEW contains nonpositive entries.
+    k = minval(trueloc(.not. pivnew > 0))
+    piv(1:k - 1) = pivnew(1:k - 1)
+    if (k < ksave .or. (k == ksave .and. pivksv >= 0)) then  ! PIVKSAV >= 0 indeed means PIVKSAV == 0.
         exit
-    end if
-    if (k == ksave) then
-        if (pivksv == ZERO) then
-            exit
-        end if
-        if (piv(k) - pivot < pivot - pivksv) then
-            pivksv = pivot
+    elseif (k == ksave) then  ! N.B.: PIVKSAV < 0; otherwise, the loop has exited due to the last IF.
+        if (piv(k) - pivnew(k) < pivnew(k) - pivksv) then  ! Has PIV(K) been defined?
+            pivksv = pivnew(k)  ! PIVKSAV <= 0.
             shfmax = shift
         else
             pivksv = ZERO
-            shfmax = (shift * piv(k) - shfmin * pivot) / (piv(k) - pivot)
+            shfmax = (shift * piv(k) - shfmin * pivnew(k)) / (piv(k) - pivnew(k))
         end if
-    else
+    else  ! K > KSAV
         ksave = k
-        pivksv = pivot
+        pivksv = pivnew(k)  ! PIVKSAV <= 0.
         shfmax = shift
     end if
 end do
-
 crvmin = shfmin
 !--------------------------------------------------------------------------------------------------!
 
