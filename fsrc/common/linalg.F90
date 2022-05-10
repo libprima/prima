@@ -41,7 +41,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, May 10, 2022 PM04:58:19
+! Last Modified: Tuesday, May 10, 2022 PM10:37:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2547,40 +2547,61 @@ end if
 end subroutine hessenberg_full
 
 
-function eigmin_sym_trid(td, tn) result(eig_min)
+function eigmin_sym_trid(td, tn, tol) result(eig_min)
 !--------------------------------------------------------------------------------------------------!
 ! This function approximates the smallest eigenvalue EIG_MIN of a symmetric tridiagonal matrix by a
 ! bisection method, in which process EMINLB is a lower bound on EIG_MIN and EMINUB an upper bound.
-! EMINUB is occasionally adjusted by the rule of false position.
+! TD is the diagonal of the tridiagonal matrix, and TN is the subdiagonal and superdiagonal.
+! EMINUB is occasionally adjusted by the rule of false position. The code is retrieved from Powell's
+! trust region subproblem solver in UOBYQA.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP) :: td(:)
-real(RP) :: tn(:)
+real(RP), intent(in) :: td(:)
+real(RP), intent(in) :: tn(:)
+real(RP), intent(in), optional :: tol
 ! Outputs
 real(RP) :: eig_min
 ! Local variables
 character(len=*), parameter :: srname = 'EIGMIN'
+integer(IK) :: iter
 integer(IK) :: k
 integer(IK) :: ksav
+integer(IK) :: maxiter
 integer(IK) :: n
-logical :: posdef
 real(RP) :: eminlb
 real(RP) :: eminub
 real(RP) :: piv(size(td))
 real(RP) :: pivksv
 real(RP) :: pivnew(size(td))
+real(RP) :: tol_loc
 
 ! Sizes
 n = size(td)
 
+! Preconditions
 if (DEBUGGING) then
     call assert(size(tn) == n - 1, 'SIZE(TN) == N - 1', srname)
+    if (present(tol)) then
+        call assert(tol >= 0, 'TOL >= 0', srname)
+    end if
 end if
 
+!====================!
+! Calculation starts !
+!====================!
+
+maxiter = 50_IK
+tol_loc = 1.0E-6_RP
+if (present(tol)) then
+    tol_loc = tol
+end if
+
+! The following loop calculates the pivots of the Cholesky factorization of the matrix. All the
+! pivots are positive iff the matrix is positive definite.
 piv(1) = td(1)
 do k = 1, n - 1_IK
     piv(k + 1) = td(k + 1) - tn(k)**2 / piv(k)
@@ -2589,43 +2610,51 @@ eminub = minval(piv)
 eminlb = ZERO
 
 ksav = 0
-do while (eminlb <= 0.99_RP * eminub)
+do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
+    if (eminub - eminlb < tol_loc * max(abs(eminlb), abs(eminub))) then
+        exit
+    end if
     eig_min = HALF * (eminlb + eminub)
 
+    ! The following loop calculates the pivots of the Cholesky factorization of the matrix minus
+    ! EIG_MIN. All the pivots are positive iff EIG_MIN underestimates the smallest eigenvalue.
     pivnew(1) = td(1) - eig_min
     do k = 1, n - 1_IK
         pivnew(k + 1) = td(k + 1) - eig_min - tn(k)**2 / pivnew(k)
     end do
 
-    posdef = all(pivnew > 0)
-    if (posdef) then
+    if (all(pivnew > 0)) then
         piv = pivnew
         eminlb = eig_min
         cycle
     end if
 
-    ! We arrive here only if POSDEF is FALSE and PIVNEW contains nonpositive entries.
-    ! Since KSAV was initialized to 0, we have K > KSAV when arriving here for the first time.
+    ! We arrive here iff PIVNEW contains nonpositive entries and EIG_MIN is no less than the
+    ! smallest eigenvalue.
     k = minval(trueloc(.not. pivnew > 0))
     piv(1:k - 1) = pivnew(1:k - 1)
-    if (k > ksav) then
+    if (k > ksav) then ! KSAV was initialized to 0, so we have K > KSAV upon the first arrival here.
         ksav = k
         pivksv = pivnew(k)  ! PIVKSAV <= 0.
         eminub = eig_min
-    elseif (k == ksav .and. pivksv < 0) then  ! PIVKSV has got a value previously in the last case.
-        if (piv(k) - pivnew(k) < pivnew(k) - pivksv) then  ! PIV(K) has been defined?
+    elseif (k == ksav .and. pivksv < 0) then  ! PIVKSV has be initialized at previous iterations. 
+        if (piv(k) - pivnew(k) < pivnew(k) - pivksv) then
             pivksv = pivnew(k)  ! PIVKSAV <= 0.
             eminub = eig_min
         else
             pivksv = ZERO
             eminub = (eig_min * piv(k) - eminlb * pivnew(k)) / (piv(k) - pivnew(k))
         end if
-    else ! K < KSAVE .OR. (K == KSAVE .AND. PIVKSV >= 0) ; note that PIVKSV >= 0 indeed means PIVKSV == 0.
+    else ! K < KSAVE .OR. (K == KSAVE .AND. PIVKSV == 0); note that PIVKSV is always nonpositive.
         exit
     end if
 end do
 
 eig_min = eminlb
+
+!====================!
+! Calculation starts !
+!====================!
 
 end function eigmin_sym_trid
 
