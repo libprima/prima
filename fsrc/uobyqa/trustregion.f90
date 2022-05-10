@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 10, 2022 PM02:20:03
+! Last Modified: Tuesday, May 10, 2022 PM05:08:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,8 +39,7 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
-use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, trueloc
-use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
+use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin
 
 implicit none
 
@@ -59,7 +58,7 @@ character(len=*), parameter :: srname = 'TRSTEP'
 integer(IK) :: n
 real(RP) :: gg(size(g))
 real(RP) :: hh(size(g), size(g))
-real(RP) :: piv(size(g)), pivnew(size(g))
+real(RP) :: piv(size(g))
 real(RP) :: td(size(g))
 real(RP) :: tn(size(g) - 1)
 real(RP) :: w(size(g))
@@ -68,10 +67,10 @@ real(RP) :: dold(size(g)) !!!
 real(RP) :: dnewton(size(g))  ! Newton-Raphson step; only calculated when N = 1.
 real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
-&        paruest, phi, phil, phiu, pivksv, pivot, &
-&        shfmax, shfmin, shift, slope,   &
+&        paruest, phi, phil, phiu, &
+&        slope,   &
 &        temp, tempa, tempb, wsq, wwsq, zsq
-integer(IK) :: iter, k, ksav, ksave, maxiter
+integer(IK) :: iter, k, ksav, maxiter
 logical :: posdef
 
 !     N is the number of variables of a quadratic objective function, Q say.
@@ -303,9 +302,17 @@ do k = n - 1_IK, 1, -1
     d(k) = w(k) - tn(k) * d(k + 1) / piv(k)
 end do
 
-! Branch if a Newton-Raphson step is acceptable.
 dsq = sum(d**2)
-if (par == ZERO .and. dsq <= delsq) goto 320
+
+! Return if the Newton-Raphson step is feasible, setting CRVMIN to the least eigenvalue of Hessian.
+if (par == ZERO .and. dsq <= delsq) then
+    crvmin = eigmin(td, tn)
+    !!MATLAB:
+    !!% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
+    !!tridh = spdiags([[tn; 0], td, [0; tn]], -1:1, n, n);
+    !!crvmin = eigs(tridh, 1, 'smallestreal');
+    goto 370
+end if
 
 ! Make the usual test for acceptability of a full trust region step.
 dnorm = sqrt(dsq)
@@ -380,66 +387,6 @@ end if
 paru = par
 phiu = phi
 goto 220
-
-320 continue
-
-
-!--------------------------------------------------------------------------------------------------!
-! Set CRVMIN to the least eigenvalue of the second derivative matrix if D is a Newton-Raphson step.
-! CRVMIN is found by a bisection method, in which process SHFMIN is a lower bound on CRVMIN while
-! SHFMAX an upper bound. SHFMAX is occasionally adjusted by the rule of false position.
-! The procedure can (should) be isolated as a subroutine that finds the least eigenvalue of a
-! symmetric tridiagonal matrix by Cholesky factorization and bisection.
-
-piv(1) = td(1)
-do k = 1, n - 1_IK
-    piv(k + 1) = td(k + 1) - tn(k)**2 / piv(k)
-end do
-shfmax = minval(piv)
-shfmin = ZERO
-
-ksave = 0
-! The initial value of PIVKSAV will not be used. PIVKSAV will be set to PIVNEW(K) when POSDEF is
-! FALSE for the first time.
-pivksv = -ONE
-piv = -huge(piv)!ieeenan()
-do while (shfmin <= 0.99_RP * shfmax)
-    shift = HALF * (shfmin + shfmax)
-
-    pivnew(1) = td(1) - shift
-    do k = 1, n - 1_IK
-        pivnew(k + 1) = td(k + 1) - shift - tn(k)**2 / pivnew(k)
-    end do
-
-    posdef = all(pivnew > 0)
-    if (posdef) then
-        piv = pivnew
-        shfmin = shift
-        cycle
-    end if
-
-    ! In the sequel, POSDEF is FALSE, and PIVNEW contains nonpositive entries.
-    k = minval(trueloc(.not. pivnew > 0))
-    piv(1:k - 1) = pivnew(1:k - 1)
-    if (k > ksave) then  ! KSAV was initialized to 0. Hence K > KSAV when we arrive here for the first time.
-        ksave = k
-        pivksv = pivnew(k)  ! PIVKSAV <= 0.
-        shfmax = shift
-    elseif (k == ksave .and. pivksv < 0) then  ! PIVKSV has got a value previously in the last case.
-        if (piv(k) - pivnew(k) < pivnew(k) - pivksv) then  ! PIV(K) has been defined?
-            pivksv = pivnew(k)  ! PIVKSAV <= 0.
-            shfmax = shift
-        else
-            pivksv = ZERO
-            shfmax = (shift * piv(k) - shfmin * pivnew(k)) / (piv(k) - pivnew(k))
-        end if
-    else ! K < KSAVE .OR. (K == KSAVE .AND. PIVKSV >= 0) ; note that PIVKSV >= 0 indeed means PIVKSV == 0.
-        exit
-    end if
-end do
-crvmin = shfmin
-!--------------------------------------------------------------------------------------------------!
-
 
 370 continue
 
