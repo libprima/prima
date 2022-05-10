@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 10, 2022 PM02:02:30
+! Last Modified: Tuesday, May 10, 2022 PM02:20:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -421,20 +421,20 @@ do while (shfmin <= 0.99_RP * shfmax)
     ! In the sequel, POSDEF is FALSE, and PIVNEW contains nonpositive entries.
     k = minval(trueloc(.not. pivnew > 0))
     piv(1:k - 1) = pivnew(1:k - 1)
-    if (k < ksave .or. (k == ksave .and. pivksv >= 0)) then  ! PIVKSAV >= 0 indeed means PIVKSAV == 0.
-        exit
-    elseif (k == ksave) then  ! N.B.: PIVKSAV < 0; otherwise, the loop has exited due to the last IF.
-        if (piv(k) - pivnew(k) < pivnew(k) - pivksv) then  ! Has PIV(K) been defined?
+    if (k > ksave) then  ! KSAV was initialized to 0. Hence K > KSAV when we arrive here for the first time.
+        ksave = k
+        pivksv = pivnew(k)  ! PIVKSAV <= 0.
+        shfmax = shift
+    elseif (k == ksave .and. pivksv < 0) then  ! PIVKSV has got a value previously in the last case.
+        if (piv(k) - pivnew(k) < pivnew(k) - pivksv) then  ! PIV(K) has been defined?
             pivksv = pivnew(k)  ! PIVKSAV <= 0.
             shfmax = shift
         else
             pivksv = ZERO
             shfmax = (shift * piv(k) - shfmin * pivnew(k)) / (piv(k) - pivnew(k))
         end if
-    else  ! K > KSAV
-        ksave = k
-        pivksv = pivnew(k)  ! PIVKSAV <= 0.
-        shfmax = shift
+    else ! K < KSAVE .OR. (K == KSAVE .AND. PIVKSV >= 0) ; note that PIVKSV >= 0 indeed means PIVKSV == 0.
+        exit
     end if
 end do
 crvmin = shfmin
