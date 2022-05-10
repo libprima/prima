@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 10, 2022 AM01:48:17
+! Last Modified: Tuesday, May 10, 2022 AM10:28:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -70,7 +70,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        paruest, phi, phil, phiu, pivksv, pivot, &
 &        shfmax, shfmin, shift, slope,   &
 &        temp, tempa, tempb, wsq, wwsq, zsq
-integer(IK) :: i, iter, k, ksav, ksave, maxiter
+integer(IK) :: iter, k, ksav, ksave, maxiter
 logical :: posdef
 
 !     N is the number of variables of a quadratic objective function, Q say.
@@ -294,13 +294,12 @@ goto 140
 
 ! Calculate D for the current PAR in the positive definite case.
 w(1) = -gg(1) / piv(1)
-do i = 1, n - 1_IK
-    w(i + 1) = -(gg(i + 1) + tn(i) * w(i)) / piv(i + 1)
+do k = 1, n - 1_IK
+    w(k + 1) = -(gg(k + 1) + tn(k) * w(k)) / piv(k + 1)
 end do
-
 d(n) = w(n)
-do i = n - 1_IK, 1, -1
-    d(i) = w(i) - tn(i) * d(i + 1) / piv(i)
+do k = n - 1_IK, 1, -1
+    d(k) = w(k) - tn(k) * d(k + 1) / piv(k)
 end do
 
 ! Branch if a Newton-Raphson step is acceptable.
@@ -341,13 +340,13 @@ end if
 ! If required, calculate Z for the alternative test for convergence.
 if (.not. posdef) then
     w(1) = ONE / piv(1)
-    do i = 1, n - 1_IK
-        temp = -tn(i) * w(i)
-        w(i + 1) = (sign(ONE, temp) + temp) / piv(i + 1)
+    do k = 1, n - 1_IK
+        temp = -tn(k) * w(k)
+        w(k + 1) = (sign(ONE, temp) + temp) / piv(k + 1)
     end do
     z(n) = w(n)
-    do i = n - 1_IK, 1, -1
-        z(i) = w(i) - tn(i) * z(i + 1) / piv(i)
+    do k = n - 1_IK, 1, -1
+        z(k) = w(k) - tn(k) * z(k + 1) / piv(k)
     end do
     wwsq = inprod(piv, w**2)
     zsq = sum(z**2)
@@ -411,9 +410,11 @@ do while (shfmin <= 0.99_RP * shfmax)
         piv(k) = pivot
         pivot = td(k + 1) - shift - tn(k)**2 / piv(k)
     end do
+    ! N.B.: Do not make assumptions about the value of the loop counter K after the loop if the loop 
+    ! terminates because the K reaches the upper limit. It can be N-1, N, or something else. 
 
-    if (posdef .and. pivot > 0) then
-        piv(k) = pivot
+    if (pivot > 0 .and. posdef) then
+        piv(n) = pivot
         shfmin = shift
         cycle
     end if
