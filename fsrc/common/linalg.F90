@@ -10,8 +10,8 @@ module linalg_mod
 ! computations, and the sizes of matrices/vectors involved are relatively SMALL, the order being at
 ! most 10^3. Therefore, the implementations here are mostly STRAIGHTFORWARD and NAIVE.
 !
-! If it is needed to enhance the performance of these procedures, one can optimize their 
-! implementations according to the resources (hardware, e.g., C/GPU, cache, and libraries, e.g., 
+! If it is needed to enhance the performance of these procedures, one can optimize their
+! implementations according to the resources (hardware, e.g., C/GPU, cache, and libraries, e.g.,
 ! BLAS, LAPACK) available and the sizes of the matrices/vectors concerned.
 !
 ! In case you need similar procedures in MATLAB/Python/Julia/R, note the following.
@@ -41,7 +41,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 09, 2022 PM08:34:14
+! Last Modified: Tuesday, May 10, 2022 PM04:58:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -64,6 +64,7 @@ public :: minimum, maximum
 public :: norm
 public :: linspace
 public :: hessenberg
+public :: eigmin
 public :: int
 
 interface matprod
@@ -127,6 +128,10 @@ end interface linspace
 interface hessenberg
     module procedure hessenberg_hhd_trid, hessenberg_full
 end interface hessenberg
+
+interface eigmin
+    module procedure eigmin_sym_trid
+end interface
 
 interface int
     module procedure logical_to_int
@@ -2540,6 +2545,89 @@ if (DEBUGGING) then
 end if
 
 end subroutine hessenberg_full
+
+
+function eigmin_sym_trid(td, tn) result(eig_min)
+!--------------------------------------------------------------------------------------------------!
+! This function approximates the smallest eigenvalue EIG_MIN of a symmetric tridiagonal matrix by a
+! bisection method, in which process EMINLB is a lower bound on EIG_MIN and EMINUB an upper bound.
+! EMINUB is occasionally adjusted by the rule of false position.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+real(RP) :: td(:)
+real(RP) :: tn(:)
+! Outputs
+real(RP) :: eig_min
+! Local variables
+character(len=*), parameter :: srname = 'EIGMIN'
+integer(IK) :: k
+integer(IK) :: ksav
+integer(IK) :: n
+logical :: posdef
+real(RP) :: eminlb
+real(RP) :: eminub
+real(RP) :: piv(size(td))
+real(RP) :: pivksv
+real(RP) :: pivnew(size(td))
+
+! Sizes
+n = size(td)
+
+if (DEBUGGING) then
+    call assert(size(tn) == n - 1, 'SIZE(TN) == N - 1', srname)
+end if
+
+piv(1) = td(1)
+do k = 1, n - 1_IK
+    piv(k + 1) = td(k + 1) - tn(k)**2 / piv(k)
+end do
+eminub = minval(piv)
+eminlb = ZERO
+
+ksav = 0
+do while (eminlb <= 0.99_RP * eminub)
+    eig_min = HALF * (eminlb + eminub)
+
+    pivnew(1) = td(1) - eig_min
+    do k = 1, n - 1_IK
+        pivnew(k + 1) = td(k + 1) - eig_min - tn(k)**2 / pivnew(k)
+    end do
+
+    posdef = all(pivnew > 0)
+    if (posdef) then
+        piv = pivnew
+        eminlb = eig_min
+        cycle
+    end if
+
+    ! We arrive here only if POSDEF is FALSE and PIVNEW contains nonpositive entries.
+    ! Since KSAV was initialized to 0, we have K > KSAV when arriving here for the first time.
+    k = minval(trueloc(.not. pivnew > 0))
+    piv(1:k - 1) = pivnew(1:k - 1)
+    if (k > ksav) then
+        ksav = k
+        pivksv = pivnew(k)  ! PIVKSAV <= 0.
+        eminub = eig_min
+    elseif (k == ksav .and. pivksv < 0) then  ! PIVKSV has got a value previously in the last case.
+        if (piv(k) - pivnew(k) < pivnew(k) - pivksv) then  ! PIV(K) has been defined?
+            pivksv = pivnew(k)  ! PIVKSAV <= 0.
+            eminub = eig_min
+        else
+            pivksv = ZERO
+            eminub = (eig_min * piv(k) - eminlb * pivnew(k)) / (piv(k) - pivnew(k))
+        end if
+    else ! K < KSAVE .OR. (K == KSAVE .AND. PIVKSV >= 0) ; note that PIVKSV >= 0 indeed means PIVKSV == 0.
+        exit
+    end if
+end do
+
+eig_min = eminlb
+
+end function eigmin_sym_trid
 
 
 end module linalg_mod
