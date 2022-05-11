@@ -4,11 +4,14 @@ module linalg_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides some basic linear algebra procedures.
 !
-! The procedures are NOT intended to be optimized but to be sufficient for my projects. These
-! projects are mainly the development and maintenance of derivative-free optimization software,
-! where the major expense comes from the function evaluations, NOT the numerical linear algebraic
-! computations, and the sizes of matrices/vectors involved are relatively SMALL, the order being at
-! most 10^3. Therefore, the implementations here are mostly STRAIGHTFORWARD and NAIVE.
+! The procedures are NOT intended to be optimized but to be sufficient for my projects. The projects
+! are mainly the development and maintenance of derivative-free optimization software, where the
+! major expense comes from the function evaluations, NOT the numerical linear algebraic computations,
+! and the sizes of matrices/vectors involved are relatively SMALL, the order being at most 10^3.
+!
+! If your needs are of a different nature, you may still use these procedures to prototype your
+! ideas, but keep in mind that the implementations here are mostly STRAIGHTFORWARD and NAIVE, and
+! some algorithms selected here may be suboptimal for the your problems.
 !
 ! If it is needed to enhance the performance of these procedures, one can optimize their
 ! implementations according to the resources (hardware, e.g., C/GPU, cache, and libraries, e.g.,
@@ -41,7 +44,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, May 10, 2022 PM10:37:23
+! Last Modified: Wednesday, May 11, 2022 PM09:33:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2551,9 +2554,25 @@ function eigmin_sym_trid(td, tn, tol) result(eig_min)
 !--------------------------------------------------------------------------------------------------!
 ! This function approximates the smallest eigenvalue EIG_MIN of a symmetric tridiagonal matrix by a
 ! bisection method, in which process EMINLB is a lower bound on EIG_MIN and EMINUB an upper bound.
-! TD is the diagonal of the tridiagonal matrix, and TN is the subdiagonal and superdiagonal.
-! EMINUB is occasionally adjusted by the rule of false position. The code is retrieved from Powell's
-! trust region subproblem solver in UOBYQA.
+! TD is the diagonal of the tridiagonal matrix, and TN is the subdiagonal and superdiagonal. EMINUB
+! is occasionally adjusted by the rule of false position (https://en.wikipedia.org/wiki/Regula_falsi),
+! which attempts to accelerate the bisection by linear interpolation. The code is retrieved from
+! Powell's trust region subproblem solver in UOBYQA.
+!
+! The bisection algorithm for eigenvalues (not only the smallest) of symmetric tridiagonal matrices
+! can be found in
+! Barth, Martin, and Wilkinson, Calculation of the eigenvalues of a symmetric tridiagonal matrix by
+! the method of bisection, Numerische Mathematik 9, 386-- 393 (1967).
+! The algorithm is based on the sign changes of the Sturm sequence {P_i(LAMBDA)} defined in (1)--(2)
+! of the above mentioned paper (P_i(LAMBDA) is the determinant of the i-th principle submatrix of
+! the matrix minus LAMBDA*I), or the number of negative values of the Sturm-ratio sequence
+! {Q_i(LAMBDA) = P_i(LAMBDA)/P_{i-1}(LAMBDA)} in (3)--(5) of the paper. The theoretical basis is the
+! following fact: for any symmetric tridiagonal n-by-n matrix A, the number of negative eigenvalues
+! is equal to the number of sign changes in the Sturm sequence 1, det(A^(1)), det(A^(2)), ...,
+! det(A^(n)), where A^(i) is the i-th principle submatrix of A, where a "sign change" is a transition
+! from nonpositive to positive or from nonnegative to negative (see, e.g., pages 228--229 of
+! Trefethen-Bau 1997, Numerical Linear Algebra, or pages 300--301 of Wilkinson 1965, The Algebraic
+! Eigenvalue Problem).
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -2594,14 +2613,17 @@ end if
 ! Calculation starts !
 !====================!
 
-maxiter = 50_IK
+maxiter = 100_IK
 tol_loc = 1.0E-6_RP
 if (present(tol)) then
     tol_loc = tol
 end if
 
-! The following loop calculates the pivots of the Cholesky factorization of the matrix. All the
-! pivots are positive iff the matrix is positive definite.
+! The following loop calculates the Sturm ratios [Q_1(0), ..., Q_n(0)]. These ratios are all positive
+! iff all the eigenvalues of the matrix are positive definite. Note that these ratios are also the
+! pivots of the Cholesky factorization of the matrix (i.e., the square of the diagonal of L in LL^T,
+! or the diagonal of D in LDL^T). All the pivots are positive iff there exists a Cholesky
+! factorization with a positive diagonal, i.e., the matrix is positive definite.
 piv(1) = td(1)
 do k = 1, n - 1_IK
     piv(k + 1) = td(k + 1) - tn(k)**2 / piv(k)
@@ -2611,13 +2633,17 @@ eminlb = ZERO
 
 ksav = 0
 do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
-    if (eminub - eminlb < tol_loc * max(abs(eminlb), abs(eminub))) then
+    if (eminub - eminlb <= tol_loc * max(abs(eminlb), abs(eminub))) then
         exit
     end if
     eig_min = HALF * (eminlb + eminub)
 
-    ! The following loop calculates the pivots of the Cholesky factorization of the matrix minus
-    ! EIG_MIN. All the pivots are positive iff EIG_MIN underestimates the smallest eigenvalue.
+    ! The following loop calculates the Sturm ratios [Q_1(EIG_MIN), ..., Q_n(EIG_MIN)]. These ratios
+    ! are all positive iff all the eigenvalues of the matrix are larger than EIG_MIN, i.e., EIG_MIN
+    ! underestimates the smallest eigenvalue. Note that these ratios are also the pivots of the
+    ! Cholesky factorization of the matrix minus EIG_MIN*I (i.e., the square of the diagonal of L in
+    ! LL^T, or the diagonal of D in LDL^T). All the pivots are positive iff there exists a Cholesky
+    ! factorization with a positive diagonal, i.e., the matrix minus LAMBDA*I is positive definite.
     pivnew(1) = td(1) - eig_min
     do k = 1, n - 1_IK
         pivnew(k + 1) = td(k + 1) - eig_min - tn(k)**2 / pivnew(k)
@@ -2629,15 +2655,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         cycle
     end if
 
-    ! We arrive here iff PIVNEW contains nonpositive entries and EIG_MIN is no less than the
-    ! smallest eigenvalue.
+    ! We arrive here iff PIVNEW contains nonpositive entries and EIG_MIN is no less than the smallest
+    ! eigenvalue. We set EMINUB to EIG_MIN except a possible adjustment by the rule of false position.
     k = minval(trueloc(.not. pivnew > 0))
     piv(1:k - 1) = pivnew(1:k - 1)
-    if (k > ksav) then ! KSAV was initialized to 0, so we have K > KSAV upon the first arrival here.
-        ksav = k
-        pivksv = pivnew(k)  ! PIVKSAV <= 0.
-        eminub = eig_min
-    elseif (k == ksav .and. pivksv < 0) then  ! PIVKSV has be initialized at previous iterations. 
+    if (k == ksav .and. pivksv < 0) then  ! PIVKSV has be initialized at previous iterations.
         if (piv(k) - pivnew(k) < pivnew(k) - pivksv) then
             pivksv = pivnew(k)  ! PIVKSAV <= 0.
             eminub = eig_min
@@ -2645,9 +2667,15 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
             pivksv = ZERO
             eminub = (eig_min * piv(k) - eminlb * pivnew(k)) / (piv(k) - pivnew(k))
         end if
-    else ! K < KSAVE .OR. (K == KSAVE .AND. PIVKSV == 0); note that PIVKSV is always nonpositive.
-        exit
+    else ! K /= KSAV .OR. (K == KSAV .AND. PIVKSV == 0); note that PIVKSV is always nonpositive.
+        ksav = k
+        pivksv = pivnew(k)  ! PIVKSAV <= 0.
+        eminub = eig_min
     end if
+    !----------------------------------------------------------------------------------------------!
+    ! Powell's original code contains the following. Why?
+    if (K < KSAV .or. (K == KSAV .and. PIVKSV == 0)) exit
+    !----------------------------------------------------------------------------------------------!
 end do
 
 eig_min = eminlb
