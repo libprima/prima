@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 12, 2022 AM12:42:20
+! Last Modified: Thursday, May 12, 2022 AM01:13:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,6 +40,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc
+use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
 
@@ -195,9 +196,9 @@ end if
 
 ! Calculate the pivots of the Cholesky factorization of (H + PAR*I), i.e., the square of the diagonal
 ! of L in LL^T, or the diagonal of D in LDL^T).
-!ksav = 0
-negcrv = .false.
-piv = ZERO
+
+!piv = ZERO
+piv = ieeenan()
 piv(1) = td(1) + par
 ! Powell implemented the loop by a GOTO, and K = N when the loop exits. It may not be true here.
 do k = 1, n - 1_IK
@@ -210,14 +211,17 @@ do k = 1, n - 1_IK
     end if
 end do
 
+!negcrv = any(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0))
+negcrv = any(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0))
+
 ! Zaikun 20220509
-if (any(is_nan(piv))) then
+if (any(is_nan(piv)) .and. .not. negcrv) then
     goto 370  ! Better action to take???
 end if
 
-negcrv = any(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0))
 if (negcrv) then
-    ksav = minval(trueloc(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0)))
+    !ksav = minval(trueloc(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0)))
+    ksav = minval(trueloc(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0)))
     k = ksav
 else
     ksav = maxval([0_IK, trueloc(abs(piv) + abs([tn, 0.0_RP]) <= 0)])
