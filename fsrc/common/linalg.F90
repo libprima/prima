@@ -44,7 +44,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 11, 2022 PM10:02:15
+! Last Modified: Wednesday, May 11, 2022 PM10:12:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2605,7 +2605,7 @@ real(RP) :: pivnew(size(td))
 real(RP) :: tol_loc
 
 ! Sizes
-n = size(td)
+n = int(size(td), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
