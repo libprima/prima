@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 12, 2022 AM01:13:52
+! Last Modified: Thursday, May 12, 2022 AM01:22:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -220,10 +220,12 @@ if (any(is_nan(piv)) .and. .not. negcrv) then
 end if
 
 if (negcrv) then
+    ! Set KSAV to the first index corresponding to a negative curvature.
     !ksav = minval(trueloc(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0)))
     ksav = minval(trueloc(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0)))
     k = ksav
 else
+    ! Set KSAV to the last index corresponding to a zero curvature.
     ksav = maxval([0_IK, trueloc(abs(piv) + abs([tn, 0.0_RP]) <= 0)])
     k = n
 end if
