@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 10, 2022 PM05:08:02
+! Last Modified: Thursday, May 12, 2022 AM12:42:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,7 +39,7 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
-use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin
+use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc
 
 implicit none
 
@@ -71,7 +71,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        slope,   &
 &        temp, tempa, tempb, wsq, wwsq, zsq
 integer(IK) :: iter, k, ksav, maxiter
-logical :: posdef
+logical :: posdef, negcrv
 
 !     N is the number of variables of a quadratic objective function, Q say.
 !     G is the gradient of Q at the origin.
@@ -193,25 +193,38 @@ if (iter > maxiter) then
     goto 370
 end if
 
-! Calculate the pivots of the Cholesky factorization of (H + PAR*I).
-ksav = 0
+! Calculate the pivots of the Cholesky factorization of (H + PAR*I), i.e., the square of the diagonal
+! of L in LL^T, or the diagonal of D in LDL^T).
+!ksav = 0
+negcrv = .false.
 piv = ZERO
 piv(1) = td(1) + par
+! Powell implemented the loop by a GOTO, and K = N when the loop exits. It may not be true here.
 do k = 1, n - 1_IK
     if (piv(k) > 0) then
         piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)
-    elseif (abs(piv(k)) <= 0 .and. abs(tn(k)) <= 0) then  ! PIV(K) == 0 == TN(K)
+    elseif (abs(piv(k)) + abs(tn(k)) <= 0) then  ! PIV(K) == 0 == TN(K)
         piv(k + 1) = td(k + 1) + par
-        ksav = k
     else  ! PIV(K) < 0 .OR. (PIV(K) == 0 .AND. TN(K) /= 0)
-        goto 160
+        exit
     end if
 end do
 
-! Powell implemented the loop by a GOTO, and K = N when the loop exits.
+! Zaikun 20220509
+if (any(is_nan(piv))) then
+    goto 370  ! Better action to take???
+end if
 
-if (piv(n) >= 0) then
-    if (piv(n) == ZERO) ksav = n
+negcrv = any(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0))
+if (negcrv) then
+    ksav = minval(trueloc(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0)))
+    k = ksav
+else
+    ksav = maxval([0_IK, trueloc(abs(piv) + abs([tn, 0.0_RP]) <= 0)])
+    k = n
+end if
+
+if ((.not. negcrv) .and. piv(n) >= 0) then
     ! Branch if all the pivots are positive, allowing for the case when G is ZERO.
     if (ksav == 0 .and. gsq > 0) goto 230
     if (gsq <= 0) then
@@ -220,15 +233,12 @@ if (piv(n) >= 0) then
         paruest = par
         if (ksav == 0) goto 190
     end if
+end if
+
+if (negcrv .or. piv(n) > 0) then
     k = ksav
 end if
 
-160 continue
-
-! Zaikun 20220509
-if (any(is_nan(piv))) then
-    goto 370  ! Better action to take???
-end if
 
 ! Set D to a direction of nonpositive curvature of the tridiagonal matrix, and thus revise PARLEST.
 d(k) = ONE
