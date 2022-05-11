@@ -44,7 +44,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 11, 2022 PM09:33:16
+! Last Modified: Wednesday, May 11, 2022 PM10:02:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2573,6 +2573,12 @@ function eigmin_sym_trid(td, tn, tol) result(eig_min)
 ! from nonpositive to positive or from nonnegative to negative (see, e.g., pages 228--229 of
 ! Trefethen-Bau 1997, Numerical Linear Algebra, or pages 300--301 of Wilkinson 1965, The Algebraic
 ! Eigenvalue Problem).
+!
+! In MATLAB/Python/Julia/R, to get the smallest eigenvalue, we should use the eigenvalue computation
+! function built in the languages or standard libraries. For example, in MATLAB, we can do
+!!tridh = spdiags([[tn; 0], td, [0; tn]], -1:1, n, n);
+!!crvmin = eigs(tridh, 1, 'smallestreal');
+!!% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -2628,8 +2634,14 @@ piv(1) = td(1)
 do k = 1, n - 1_IK
     piv(k + 1) = td(k + 1) - tn(k)**2 / piv(k)
 end do
-eminub = minval(piv)
-eminlb = ZERO
+
+if (all(piv >= 0)) then  ! The matrix is positive semidefinite.
+    eminub = minval(piv)
+    eminlb = ZERO
+else
+    eminub = minval(td)
+    eminlb = -maxval(abs([ZERO, tn]) + abs(td) + abs([tn, ZERO]))
+end if
 
 ksav = 0
 do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
@@ -2659,22 +2671,21 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! eigenvalue. We set EMINUB to EIG_MIN except a possible adjustment by the rule of false position.
     k = minval(trueloc(.not. pivnew > 0))
     piv(1:k - 1) = pivnew(1:k - 1)
-    if (k == ksav .and. pivksv < 0) then  ! PIVKSV has be initialized at previous iterations.
-        if (piv(k) - pivnew(k) < pivnew(k) - pivksv) then
-            pivksv = pivnew(k)  ! PIVKSAV <= 0.
-            eminub = eig_min
-        else
-            pivksv = ZERO
-            eminub = (eig_min * piv(k) - eminlb * pivnew(k)) / (piv(k) - pivnew(k))
-        end if
-    else ! K /= KSAV .OR. (K == KSAV .AND. PIVKSV == 0); note that PIVKSV is always nonpositive.
+
+    ! KSAV was initialized to 0, triggering the ELSE when ALL(PIVNEW > 0) fails for the first time.
+    if (k == ksav .and. pivksv < 0 .and. piv(k) - pivnew(k) >= pivnew(k) - pivksv) then
+        pivksv = ZERO
+        eminub = (eig_min * piv(k) - eminlb * pivnew(k)) / (piv(k) - pivnew(k))
+    else
         ksav = k
         pivksv = pivnew(k)  ! PIVKSAV <= 0.
         eminub = eig_min
     end if
+
     !----------------------------------------------------------------------------------------------!
-    ! Powell's original code contains the following. Why?
-    if (K < KSAV .or. (K == KSAV .and. PIVKSV == 0)) exit
+    ! Powell's original code contains the following, why? It seems to cause wrong outputs sometimes.
+    ! Zaikun 20220511: Does this affect the adjustment by the rule of false position?
+    !!IF (K < KSAV .OR. (K == KSAV .AND. PIVKSV == 0)) EXIT
     !----------------------------------------------------------------------------------------------!
 end do
 
