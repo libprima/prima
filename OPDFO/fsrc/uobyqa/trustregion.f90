@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 10, 2022 PM09:18:03
+! Last Modified: Wednesday, May 11, 2022 PM09:32:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -549,7 +549,7 @@ temp = td(1) - shift
     end if
     shfmin = shift
 else
-    if (k < ksave) goto 360
+    if (k < ksave) goto 360  ! Zaikun 20220510: Why? This seems wrong!
     if (k == ksave) then
         if (pivksv == ZERO) goto 360
         if (piv(k) - temp < temp - pivksv) then
@@ -566,7 +566,7 @@ else
     end if
 end if
 !if (shfmin <= 0.99_RP * shfmax) goto 340
-if (.not. shfmax - shfmin < 1.0E-2_RP * shfmax) goto 340
+if (.not. shfmax - shfmin <= 1.0E-2_RP * shfmax) goto 340
 360 evalue = shfmin
 !
 !     Apply the inverse Householder transformations to D.
