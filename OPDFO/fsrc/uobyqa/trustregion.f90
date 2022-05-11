@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 11, 2022 PM09:32:16
+! Last Modified: Wednesday, May 11, 2022 PM09:43:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -549,9 +549,9 @@ temp = td(1) - shift
     end if
     shfmin = shift
 else
-    if (k < ksave) goto 360  ! Zaikun 20220510: Why? This seems wrong!
+    !if (k < ksave) goto 360  ! Zaikun 20220510: Why? This seems wrong!
     if (k == ksave) then
-        if (pivksv == ZERO) goto 360
+        !if (pivksv == ZERO) goto 360
         if (piv(k) - temp < temp - pivksv) then
             pivksv = temp
             shfmax = shift
