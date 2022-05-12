@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 12, 2022 PM11:46:34
+! Last Modified: Friday, May 13, 2022 AM12:39:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,7 +58,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        tdmin, temp, tempa, tempb, wsq, wwsq, wz, zsq
 real(RP) :: dsav(n)
 integer(IK) :: i, iterc, j, jp, k, kp, kpp, ksav, ksave, nm
-logical :: scaled
+logical :: scaled, kpo
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -370,11 +370,13 @@ end if
 !-----------------------------!
 
 d(k) = ONE
+kpo = .false.
 if (abs(tn(k)) <= abs(piv(k))) then
     dsq = ONE
     dhd = piv(k)
 else
     temp = td(k + 1) + par
+    kpo = .true.
     if (temp <= abs(piv(k))) then
         d(k + 1) = sign(ONE, -tn(k))
         dhd = piv(k) + temp - TWO * abs(tn(k))
@@ -403,7 +405,16 @@ ksav = k
 end if
 
 dsq = temp + dsq
-!dsq = sum(d(1:min(n, ksav + 1_IK))**2)
+
+!--------------------------------------!
+! Zaikun 20220512
+if (kpo) then
+    dsq = sum(d(1:ksav + 1_IK)**2)
+else
+    dsq = sum(d(1:ksav)**2)
+end if
+!--------------------------------------!
+write (17, *) ksav, dsq, d(1:n)
 
 parl = par
 parlest = par - dhd / dsq
