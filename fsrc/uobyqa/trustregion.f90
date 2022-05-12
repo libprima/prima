@@ -70,7 +70,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, &
 &        slope, partmp, &
-&        temp, tempa, tempb, wsq, wwsq, zsq
+&        tnz, temp, tempa, tempb, wsq, wwsq, zsq
 integer(IK) :: iter, k, ksav, maxiter
 logical :: posdef, negcrv, d_initialized
 
@@ -390,11 +390,17 @@ if (phi < 0) then
         slope = (phi - phil) / (par - parl)
         parlest = par - phi / slope
     end if
-    slope = ONE / gnorm
-    if (paru > 0) slope = (phiu - phi) / (paru - par)
-    temp = par - phi / slope
-    if (paruest > 0) temp = min(temp, paruest)
-    paruest = temp
+    if (paru > 0) then 
+        slope = (phiu - phi) / (paru - par)
+    else
+        slope = ONE / gnorm
+    end if
+    partmp = par - phi / slope
+    if (paruest > 0) then
+        paruest = min(partmp, paruest)
+    else
+        paruest = partmp
+    end if
     posdef = .true.
     parl = par
     phil = phi
@@ -408,8 +414,8 @@ end if
 if (.not. posdef) then
     z(1) = ONE / piv(1)
     do k = 1, n - 1_IK
-        temp = -tn(k) * z(k)
-        z(k + 1) = (sign(ONE, temp) + temp) / piv(k + 1)
+        tnz = tn(k) * z(k)
+        z(k + 1) = -(sign(ONE, tnz) + tnz) / piv(k + 1)
     end do
     wwsq = inprod(piv, z**2)  ! Needed in the convergence test.
     do k = n - 1_IK, 1, -1
