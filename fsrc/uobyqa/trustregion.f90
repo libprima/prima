@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 12, 2022 PM09:29:27
+! Last Modified: Thursday, May 12, 2022 PM11:42:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -260,7 +260,8 @@ call assert(k >= 1 .and. k <= n, '1 <= K <= N', srname)
 
 ! Handle the case where H + PAR*I has at least one nonpositive eigenvalue.
 ! Set D to a direction of nonpositive curvature of the tridiagonal matrix, and thus revise PARLEST.
-d(k) = ONE
+d = ZERO !????
+d(k) = ONE  ! Zaikun 20220512: D(K+1:N) = ?
 dsq = ONE
 dhd = piv(k)
 
@@ -272,7 +273,7 @@ if (k < n) then
     if (abs(tn(k)) > abs(piv(k))) then
         temp = td(k + 1) + par
         if (temp <= abs(piv(k))) then
-            d(k + 1) = sign(ONE, -tn(k))
+            d(k + 1) = sign(ONE, -tn(k))  !!MATLAB: d(k + 1) = -sing(tn(k))
             dhd = piv(k) + temp - TWO * abs(tn(k))
         else
             d(k + 1) = -tn(k) / temp
@@ -285,14 +286,20 @@ end if
 ksav = k
 
 do k = ksav - 1_IK, 1, -1
+    ! It may happen that TN(K) == 0 == PIV(K). Without checking TN(K), we will get D(K) = NaN.
     if (tn(k) /= ZERO) then
         d(k) = -tn(k) * d(k + 1) / piv(k)
-        dsq = dsq + d(k)**2
-        cycle
+    else
+        d(1:k) = ZERO
+        exit
     end if
-    d(1:k) = ZERO
 end do
+!dsq = sum(d**2)
 
+dsq = dsq + sum(d(ksav - 1:1:-1)**2)
+
+!dsq = ?
+!d = ?
 parl = par
 parlest = par - dhd / dsq
 

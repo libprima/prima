@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 12, 2022 PM09:28:00
+! Last Modified: Thursday, May 12, 2022 PM11:46:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -384,6 +384,12 @@ else
     end if
     dsq = ONE + d(k + 1)**2
 end if
+
+!-----------!
+temp = dsq
+dsq = ZERO
+!-----------!
+ksav = k
 170 if (k > 1) then
     k = k - 1
     if (tn(k) /= ZERO) then
@@ -395,6 +401,10 @@ end if
         d(i) = ZERO
     end do
 end if
+
+dsq = temp + dsq
+!dsq = sum(d(1:min(n, ksav + 1_IK))**2)
+
 parl = par
 parlest = par - dhd / dsq
 !
