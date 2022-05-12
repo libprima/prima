@@ -3,6 +3,7 @@ function testeig(n, k)
 err = 0;
 iter = 0;
 for i = 1 : k
+    i
 td = randn(n,1).*10.^randn(n, 1);
 tn = randn(n-1, 1).*10.^randn(n-1, 1);
 [it, l1] = eigmin(td, tn);
@@ -26,6 +27,9 @@ n = size(td, 1);
 
 maxiter = 50;
 tol = 1.0E-8;
+
+tridh = spdiags([[tn; 0], td, [0; tn]], -1:1, n, n);
+eigmin_true = eigs(tridh, 1, 'smallestreal');
 
 pivnew = NaN(n, 1);
 
@@ -75,6 +79,12 @@ for iter = 1 : maxiter
             1, iter
             pivksv = 0;
             eminub = (eig_min * piv(k) - eminlb * pivnew(k)) / (piv(k) - pivnew(k));
+            format long
+            eminub, eigmin_true
+            (eigmin_true - eminub)
+            (eigmin_true - eminub)/max(eps, abs(eigmin_true))
+            assert((eigmin_true - eminub)/max(eps, abs(eigmin_true)) < 1e-15)
+            %assert(eminub >= eigmin_true)
             %eminub = min(eig_min, (eig_min * piv(k) - eminlb * pivnew(k)) / (piv(k) - pivnew(k)));
     else % K < KSAVE .OR. (K == KSAVE .AND. PIVKSV == 0); note that PIVKSV is always nonpositive.
     %    1

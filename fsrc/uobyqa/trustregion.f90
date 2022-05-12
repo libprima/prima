@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 12, 2022 AM01:22:38
+! Last Modified: Thursday, May 12, 2022 AM10:11:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -211,6 +211,7 @@ do k = 1, n - 1_IK
     end if
 end do
 
+! NEGCRV is TRUE iff H + PAR*I has at least one negative eigenvalue.
 !negcrv = any(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0))
 negcrv = any(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0))
 
@@ -227,17 +228,24 @@ if (negcrv) then
 else
     ! Set KSAV to the last index corresponding to a zero curvature.
     ksav = maxval([0_IK, trueloc(abs(piv) + abs([tn, 0.0_RP]) <= 0)])
-    k = n
+    k = ksav
 end if
 
-if ((.not. negcrv) .and. piv(n) >= 0) then
+! Handle the case where H + PAR*I is positive semidefinite.
+if (.not. negcrv) then
     ! Branch if all the pivots are positive, allowing for the case when G is ZERO.
-    if (ksav == 0 .and. gsq > 0) goto 230
+    if (ksav == 0 .and. gsq > 0) then  ! H + PAR*I is positive definite.
+        goto 230
+    end if
     if (gsq <= 0) then
-        if (par == ZERO) goto 370
+        if (par == ZERO) then
+            goto 370
+        end if
         paru = par
         paruest = par
-        if (ksav == 0) goto 190
+        if (ksav == 0) then  ! H + PAR*I is positive definite.
+            goto 190
+        end if
     end if
 end if
 
