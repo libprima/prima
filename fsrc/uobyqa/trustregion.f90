@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 12, 2022 PM11:42:38
+! Last Modified: Friday, May 13, 2022 AM12:58:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,10 +69,10 @@ real(RP) :: dnewton(size(g))  ! Newton-Raphson step; only calculated when N = 1.
 real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, &
-&        slope,   &
+&        slope, partmp, &
 &        temp, tempa, tempb, wsq, wwsq, zsq
 integer(IK) :: iter, k, ksav, maxiter
-logical :: posdef, negcrv
+logical :: posdef, negcrv, d_initialized
 
 !     N is the number of variables of a quadratic objective function, Q say.
 !     G is the gradient of Q at the origin.
@@ -260,9 +260,17 @@ call assert(k >= 1 .and. k <= n, '1 <= K <= N', srname)
 
 ! Handle the case where H + PAR*I has at least one nonpositive eigenvalue.
 ! Set D to a direction of nonpositive curvature of the tridiagonal matrix, and thus revise PARLEST.
-d = ZERO !????
+d = ZERO  ! Zaikun 20220512: Powell's code does not include this initialization. Is it correct???
 d(k) = ONE  ! Zaikun 20220512: D(K+1:N) = ?
-dsq = ONE
+
+!---------------------------------------------------------------------!
+!---------------------------------------------------------------------!
+! The following Boolean variable serves to check that D is always initialized in Powell's code
+! whenever D is used.
+d_initialized = (k == n)  ! Zaikun 20220512, TO BE REMOVED
+!---------------------------------------------------------------------!
+!---------------------------------------------------------------------!
+
 dhd = piv(k)
 
 ! In Fortran, the following two IFs CANNOT be merged into IF(K < N .AND. ABS(TN(K)) > ABS(PIV(K))).
@@ -271,15 +279,15 @@ dhd = piv(k)
 ! only N-1. This is not a problem in C, MATLAB, Python, Julia, or R, where short circuit is ensured.
 if (k < n) then
     if (abs(tn(k)) > abs(piv(k))) then
-        temp = td(k + 1) + par
-        if (temp <= abs(piv(k))) then
+        ! PIV(K+1) was named as "TEMP" in Powell's code. Is PIV(K+1) consistent with the meaning of PIV?
+        piv(k + 1) = td(k + 1) + par
+        if (piv(k + 1) <= abs(piv(k))) then
             d(k + 1) = sign(ONE, -tn(k))  !!MATLAB: d(k + 1) = -sing(tn(k))
-            dhd = piv(k) + temp - TWO * abs(tn(k))
+            dhd = piv(k) + piv(k + 1) - TWO * abs(tn(k))
         else
-            d(k + 1) = -tn(k) / temp
+            d(k + 1) = -tn(k) / piv(k + 1)
             dhd = piv(k) + tn(k) * d(k + 1)
         end if
-        dsq = ONE + d(k + 1)**2
     end if
 end if
 
@@ -294,21 +302,27 @@ do k = ksav - 1_IK, 1, -1
         exit
     end if
 end do
-!dsq = sum(d**2)
 
-dsq = dsq + sum(d(ksav - 1:1:-1)**2)
-
-!dsq = ?
-!d = ?
+dsq = sum(d**2)
 parl = par
 parlest = par - dhd / dsq
 
 190 continue
 
 ! Terminate with D set to a multiple of the current D if the following test suggests so.
-temp = paruest
-if (gsq <= 0) temp = temp * (ONE - tol)
-if (paruest > 0 .and. parlest >= temp) then
+if (gsq <= 0) then
+    partmp = paruest * (ONE - tol)
+else
+    partmp = paruest
+end if
+if (paruest > 0 .and. parlest >= partmp) then
+
+!----------------------------------------------------------------!
+!----------------------------------------------------------------!
+    call assert(d_initialized, 'D is initialized', srname)  ! Zaikun 20220512, TO BE REMOVED
+!----------------------------------------------------------------!
+!----------------------------------------------------------------!
+
     dtg = inprod(d, gg)
     d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
     goto 370
@@ -337,6 +351,13 @@ d(n) = w(n)
 do k = n - 1_IK, 1, -1
     d(k) = w(k) - tn(k) * d(k + 1) / piv(k)
 end do
+
+!----------------------------------------------------------------!
+!----------------------------------------------------------------!
+d_initialized = .true.  ! Zaikun 20220512, TO BE REMOVED
+!----------------------------------------------------------------!
+!----------------------------------------------------------------!
+
 
 dsq = sum(d**2)
 
