@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 12, 2022 AM11:02:25
+! Last Modified: Thursday, May 12, 2022 PM09:29:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -197,8 +197,7 @@ end if
 ! Calculate the pivots of the Cholesky factorization of (H + PAR*I), i.e., the square of the diagonal
 ! of L in LL^T, or the diagonal of D in LDL^T).
 
-!piv = ZERO
-piv = ieeenan()
+piv = ZERO  ! PIV must be initialized, so that we know that any NaN in PIV is due to the loop below.
 piv(1) = td(1) + par
 ! Powell implemented the loop by a GOTO, and K = N when the loop exits. It may not be true here.
 do k = 1, n - 1_IK
@@ -211,13 +210,13 @@ do k = 1, n - 1_IK
     end if
 end do
 
-! NEGCRV is TRUE iff H + PAR*I has at least one negative eigenvalue.
-negcrv = any(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0))
-
 ! Zaikun 20220509
-if (any(is_nan(piv)) .and. .not. negcrv) then
+if (any(is_nan(piv))) then
     goto 370  ! Better action to take???
 end if
+
+! NEGCRV is TRUE iff H + PAR*I has at least one negative eigenvalue (CRV means curvature).
+negcrv = any(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0))
 
 if (negcrv) then
     ! Set K to the first index corresponding to a negative curvature.

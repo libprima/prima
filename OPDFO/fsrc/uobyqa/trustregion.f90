@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 11, 2022 PM09:43:51
+! Last Modified: Thursday, May 12, 2022 PM09:28:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -318,12 +318,26 @@ k = 1
 150 if (piv(k) > ZERO) then
     piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)
 else
-    if (piv(k) < ZERO .or. tn(k) /= ZERO) goto 160
-    ksav = k
-    piv(k + 1) = td(k + 1) + par
+    if (piv(k) >= ZERO .and. tn(k) == ZERO) then
+        ksav = k
+        piv(k + 1) = td(k + 1) + par
+    else
+        goto 160
+    end if
+    !if (piv(k) < ZERO .or. tn(k) /= ZERO) then
+    !    goto 160
+    !end if
+    !ksav = k
+    !piv(k + 1) = td(k + 1) + par
 end if
 k = k + 1
 if (k < n) goto 150  ! When the loop exits, K = N.
+
+!----------------------------!
+if (any(is_nan(piv))) then
+    goto 370
+end if
+!-----------------------------!
 
 !---------------------------------------!
 ! Zaikun 20220508
