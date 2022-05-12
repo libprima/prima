@@ -44,7 +44,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 12, 2022 AM11:10:49
+! Last Modified: Thursday, May 12, 2022 PM09:43:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2649,6 +2649,7 @@ else
 end if
 
 ksav = 0
+pivksv = ZERO  ! This initial value will not be used, but Fortran compilers may complain without it.
 do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
     if (eminub - eminlb <= tol_loc * max(abs(eminlb), abs(eminub))) then
         exit
