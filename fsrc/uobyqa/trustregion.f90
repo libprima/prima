@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 13, 2022 AM01:34:12
+! Last Modified: Friday, May 13, 2022 AM02:15:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,7 +40,6 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc
-use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
 
@@ -70,7 +69,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, &
 &        slope, partmp, &
-&        tnz, temp, tempa, tempb, wsq, wwsq, zsq
+&        tnz, tempa, tempb, wsq, wwsq, zsq
 integer(IK) :: iter, k, ksav, maxiter
 logical :: posdef, negcrv, d_initialized
 
@@ -195,7 +194,10 @@ if (iter > maxiter) then
 end if
 
 ! Calculate the pivots of the Cholesky factorization of (H + PAR*I), i.e., the square of the diagonal
-! of L in LL^T, or the diagonal of D in LDL^T).
+! of L in LL^T, or the diagonal of D in LDL^T). Note that the LDL factorization of H + PAR*I is
+! L*diag(PIV)*L^T, where diag(PIV) is the diagonal matrix with PIV being the diagonal, and L is
+! a lower triangular matrix with all the diagonal entries being 1, the subdiagonal being the vector
+! TN/PIV(1:N-1), and all the other entries being 0.
 
 piv = ZERO  ! PIV must be initialized, so that we know that any NaN in PIV is due to the loop below.
 piv(1) = td(1) + par
@@ -343,13 +345,13 @@ goto 140
 230 continue
 
 ! Calculate D = -(H + PAR*I)^{-1}*G for the current PAR in the positive definite case. The two loops
-! below find D using the Cholesky factorization LL^T of the (tridiagonalized) H + PAR*I.
+! below find D using the LDL factorization of the (tridiagonalized) H + PAR*I = L*diag(PIV)*L^T.
 d(1) = -gg(1) / piv(1)
-do k = 1, n - 1_IK  ! The loop sets D = -L^{-1}*GG
+do k = 1, n - 1_IK  ! The loop sets D = -PIV^{-1}L^{-1}*GG
     d(k + 1) = -(gg(k + 1) + tn(k) * d(k)) / piv(k + 1)
 end do
-wsq = inprod(piv, d**2)  ! Needed in the convergence test.
-do k = n - 1_IK, 1, -1  ! The loop sets D = L^{-T}*D = -L^{-T}*L^{-1}*GG = -(LL^T)^{-1}*GG.
+wsq = inprod(piv, d**2)  ! GG^T*(H+PAR*I)^{-1}*GG. Needed in the convergence test.
+do k = n - 1_IK, 1, -1  ! The loop sets D = L^{-T}*D = -L^{-T}*PIV^{-1}*L^{-1}*GG = -(H+PAR*I)^{-1}*GG.
     d(k) = d(k) - tn(k) * d(k + 1) / piv(k)
 end do
 
@@ -390,7 +392,7 @@ if (phi < 0) then
         slope = (phi - phil) / (par - parl)
         parlest = par - phi / slope
     end if
-    if (paru > 0) then 
+    if (paru > 0) then
         slope = (phiu - phi) / (paru - par)
     else
         slope = ONE / gnorm
@@ -410,7 +412,7 @@ end if
 ! If required, calculate Z for the alternative test for convergence.
 ! For information on Z, see the discussions below (16) in Section 2 of the UOBYQA paper (2002 version
 ! in Math. Program.; in the DAMTP 2000/NA14 report, it is below (2.8) in Section 2). The two loops
-! below find Z using the Cholesky factorization LL^T of the (tridiagonalized) H + PAR*I.
+! below find Z using the LDL factorization of the (tridiagonalized) H + PAR*I.
 if (.not. posdef) then
     z(1) = ONE / piv(1)
     do k = 1, n - 1_IK
