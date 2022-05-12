@@ -44,7 +44,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 11, 2022 PM10:12:52
+! Last Modified: Thursday, May 12, 2022 AM11:10:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2580,7 +2580,7 @@ function eigmin_sym_trid(td, tn, tol) result(eig_min)
 !!crvmin = eigs(tridh, 1, 'smallestreal');
 !!% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -2630,9 +2630,14 @@ end if
 ! pivots of the Cholesky factorization of the matrix (i.e., the square of the diagonal of L in LL^T,
 ! or the diagonal of D in LDL^T). All the pivots are positive iff there exists a Cholesky
 ! factorization with a positive diagonal, i.e., the matrix is positive definite.
+piv = -ONE
 piv(1) = td(1)
 do k = 1, n - 1_IK
-    piv(k + 1) = td(k + 1) - tn(k)**2 / piv(k)
+    if (piv(k) > 0) then
+        piv(k + 1) = td(k + 1) - tn(k)**2 / piv(k)
+    else
+        exit
+    end if
 end do
 
 if (all(piv >= 0)) then  ! The matrix is positive semidefinite.
@@ -2656,9 +2661,14 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! Cholesky factorization of the matrix minus EIG_MIN*I (i.e., the square of the diagonal of L in
     ! LL^T, or the diagonal of D in LDL^T). All the pivots are positive iff there exists a Cholesky
     ! factorization with a positive diagonal, i.e., the matrix minus LAMBDA*I is positive definite.
+    pivnew = -ONE
     pivnew(1) = td(1) - eig_min
     do k = 1, n - 1_IK
-        pivnew(k + 1) = td(k + 1) - eig_min - tn(k)**2 / pivnew(k)
+        if (pivnew(k) > 0) then
+            pivnew(k + 1) = td(k + 1) - eig_min - tn(k)**2 / pivnew(k)
+        else
+            exit
+        end if
     end do
 
     if (all(pivnew > 0)) then

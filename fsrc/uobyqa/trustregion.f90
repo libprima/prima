@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 12, 2022 AM10:58:24
+! Last Modified: Thursday, May 12, 2022 AM11:02:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -212,7 +212,6 @@ do k = 1, n - 1_IK
 end do
 
 ! NEGCRV is TRUE iff H + PAR*I has at least one negative eigenvalue.
-!negcrv = any(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0))
 negcrv = any(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0))
 
 ! Zaikun 20220509
@@ -222,7 +221,6 @@ end if
 
 if (negcrv) then
     ! Set K to the first index corresponding to a negative curvature.
-    !k = minval(trueloc(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0)))
     k = minval(trueloc(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0)))
 else
     ! Set K to the last index corresponding to a zero curvature; K = 0 if no such curvature exits.
@@ -256,7 +254,7 @@ end if
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 ! We arrive here only if 1 <= K <= N, when H + PAR*I has at least one nonpositive eigenvalue.
-call assert(k >= 1 .and. k <= N, '1 <= K <= N', srname)
+call assert(k >= 1 .and. k <= n, '1 <= K <= N', srname)
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
