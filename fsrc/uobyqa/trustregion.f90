@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 13, 2022 AM12:58:34
+! Last Modified: Friday, May 13, 2022 AM01:34:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -62,7 +62,7 @@ real(RP) :: hh(size(g), size(g))
 real(RP) :: piv(size(g))
 real(RP) :: td(size(g))
 real(RP) :: tn(size(g) - 1)
-real(RP) :: w(size(g))
+!real(RP) :: w(size(g))
 real(RP) :: z(size(g))
 real(RP) :: dold(size(g)) !!!
 real(RP) :: dnewton(size(g))  ! Newton-Raphson step; only calculated when N = 1.
@@ -342,14 +342,15 @@ goto 140
 
 230 continue
 
-! Calculate D for the current PAR in the positive definite case.
-w(1) = -gg(1) / piv(1)
-do k = 1, n - 1_IK
-    w(k + 1) = -(gg(k + 1) + tn(k) * w(k)) / piv(k + 1)
+! Calculate D = -(H + PAR*I)^{-1}*G for the current PAR in the positive definite case. The two loops
+! below find D using the Cholesky factorization LL^T of the (tridiagonalized) H + PAR*I.
+d(1) = -gg(1) / piv(1)
+do k = 1, n - 1_IK  ! The loop sets D = -L^{-1}*GG
+    d(k + 1) = -(gg(k + 1) + tn(k) * d(k)) / piv(k + 1)
 end do
-d(n) = w(n)
-do k = n - 1_IK, 1, -1
-    d(k) = w(k) - tn(k) * d(k + 1) / piv(k)
+wsq = inprod(piv, d**2)  ! Needed in the convergence test.
+do k = n - 1_IK, 1, -1  ! The loop sets D = L^{-T}*D = -L^{-T}*L^{-1}*GG = -(LL^T)^{-1}*GG.
+    d(k) = d(k) - tn(k) * d(k + 1) / piv(k)
 end do
 
 !----------------------------------------------------------------!
@@ -374,9 +375,7 @@ end if
 ! Make the usual test for acceptability of a full trust region step.
 dnorm = sqrt(dsq)
 phi = ONE / dnorm - ONE / delta
-wsq = inprod(piv, w**2)
-temp = tol * (ONE + par * dsq / wsq) - dsq * phi * phi
-if (temp >= 0) then
+if (tol * (ONE + par * dsq / wsq) - dsq * phi * phi >= 0) then
     d = (delta / dnorm) * d
     goto 370
 end if
@@ -403,17 +402,20 @@ if (phi < 0) then
 end if
 
 ! If required, calculate Z for the alternative test for convergence.
+! For information on Z, see the discussions below (16) in Section 2 of the UOBYQA paper (2002 version
+! in Math. Program.; in the DAMTP 2000/NA14 report, it is below (2.8) in Section 2). The two loops
+! below find Z using the Cholesky factorization LL^T of the (tridiagonalized) H + PAR*I.
 if (.not. posdef) then
-    w(1) = ONE / piv(1)
+    z(1) = ONE / piv(1)
     do k = 1, n - 1_IK
-        temp = -tn(k) * w(k)
-        w(k + 1) = (sign(ONE, temp) + temp) / piv(k + 1)
+        temp = -tn(k) * z(k)
+        z(k + 1) = (sign(ONE, temp) + temp) / piv(k + 1)
     end do
-    z(n) = w(n)
+    wwsq = inprod(piv, z**2)  ! Needed in the convergence test.
     do k = n - 1_IK, 1, -1
-        z(k) = w(k) - tn(k) * z(k + 1) / piv(k)
+        z(k) = z(k) - tn(k) * z(k + 1) / piv(k)
     end do
-    wwsq = inprod(piv, w**2)
+
     zsq = sum(z**2)
     dtz = inprod(d, z)
 
@@ -421,8 +423,7 @@ if (.not. posdef) then
     tempa = abs(delsq - dsq)
     tempb = sqrt(dtz * dtz + tempa * zsq)
     gam = tempa / (sign(tempb, dtz) + dtz)
-    temp = tol * (wsq + par * delsq) - gam * gam * wwsq
-    if (temp >= 0) then
+    if (tol * (wsq + par * delsq) - gam * gam * wwsq >= 0) then
         d = d + gam * z
         goto 370
     end if
