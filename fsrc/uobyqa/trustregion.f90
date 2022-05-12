@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 12, 2022 AM10:11:00
+! Last Modified: Thursday, May 12, 2022 AM10:58:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -221,39 +221,47 @@ if (any(is_nan(piv)) .and. .not. negcrv) then
 end if
 
 if (negcrv) then
-    ! Set KSAV to the first index corresponding to a negative curvature.
-    !ksav = minval(trueloc(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0)))
-    ksav = minval(trueloc(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0)))
-    k = ksav
+    ! Set K to the first index corresponding to a negative curvature.
+    !k = minval(trueloc(piv(1:n - 1) < 0 .or. (piv(1:n - 1) <= 0 .and. abs(tn(1:n - 1)) > 0)))
+    k = minval(trueloc(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0)))
 else
-    ! Set KSAV to the last index corresponding to a zero curvature.
-    ksav = maxval([0_IK, trueloc(abs(piv) + abs([tn, 0.0_RP]) <= 0)])
-    k = ksav
+    ! Set K to the last index corresponding to a zero curvature; K = 0 if no such curvature exits.
+    k = maxval([0_IK, trueloc(abs(piv) + abs([tn, 0.0_RP]) <= 0)])
 end if
+
+! At this point, K == 0 iff H + PAR*I is positive definite.
 
 ! Handle the case where H + PAR*I is positive semidefinite.
 if (.not. negcrv) then
-    ! Branch if all the pivots are positive, allowing for the case when G is ZERO.
-    if (ksav == 0 .and. gsq > 0) then  ! H + PAR*I is positive definite.
-        goto 230
-    end if
+    ! Handle the case where the gradient at the trust region center is zero.
     if (gsq <= 0) then
-        if (par == ZERO) then
-            goto 370
-        end if
         paru = par
         paruest = par
-        if (ksav == 0) then  ! H + PAR*I is positive definite.
+        if (par == ZERO) then  ! A rare case: the trust region center is optimal.
+            goto 370
+        end if
+        if (k == 0) then  ! H + PAR*I is positive definite.
             goto 190
         end if
     end if
+
+    ! Handle the case where the gradient at the trust region center is nonzero and H + PAR*I is
+    ! positive definite.
+    if (gsq > 0 .and. k == 0) then
+        goto 230
+    end if
 end if
 
-if (negcrv .or. piv(n) > 0) then
-    k = ksav
-end if
+
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+! We arrive here only if 1 <= K <= N, when H + PAR*I has at least one nonpositive eigenvalue.
+call assert(k >= 1 .and. k <= N, '1 <= K <= N', srname)
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
 
 
+! Handle the case where H + PAR*I has at least one nonpositive eigenvalue.
 ! Set D to a direction of nonpositive curvature of the tridiagonal matrix, and thus revise PARLEST.
 d(k) = ONE
 dsq = ONE
