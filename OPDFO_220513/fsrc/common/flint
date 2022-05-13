@@ -1,0 +1,151 @@
+#!/bin/bash
+# This script checks the Fortran code of the solver corresponding to this directory.
+# Usage: flint [-a|--all]
+
+# Parse inputs.
+if ! [[ $# -eq 0 || $# -eq 1 ]] ; then
+    printf "Usage: flint [-a|--all] or flint -c|--clean\n"
+    exit 2
+fi
+TEST_ALL="N"
+CLEAN="N"
+if [[ $# -eq 1 ]] ; then
+    if [[ $1 == "-a" || $1 == "--all" ]] ; then
+        TEST_ALL="Y"
+    elif [[ $1 == "-c" || $1 == "--clean" ]] ; then
+        CLEAN="Y"
+    fi
+fi
+
+# The directory where this script resides. It is the solver's directory.
+SOLVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# The solver's name.
+SOLVER=$(basename "$SOLVER_DIR")
+
+# The log directory in the solver's directory.
+SOLVER_LOG_DIR="$SOLVER_DIR"/flog
+
+# Root directory of this project.
+ROOT_DIR=../..
+
+# The testing directory.
+TIME=$(date +%s)
+RANDNUM="$((RANDOM*RANDOM))"
+TEST_DIR=/tmp/"$(basename -- "$0")"_"$TIME"_"$RANDNUM"
+# We export TEST_DIR, which will be referred to by the Makefiles.
+export TEST_DIR
+TEST_ROOT="$TEST_DIR"/neupdfo
+FTEST_DIR="$TEST_ROOT"/fsrc/tests
+FTEST_SOLVER_DIR="$FTEST_DIR"/test."$SOLVER"
+
+# The log directory in the testing directory.
+TEST_LOG_DIR="$FTEST_SOLVER_DIR"/log
+
+# The checktest script
+CHCKTST="$FTEST_DIR"/checktest
+
+# Remove the old logs.
+mkdir -p "$SOLVER_LOG_DIR"
+rm -f "$SOLVER_LOG_DIR"/*test*.log
+
+# Conduct the test.
+cd "$ROOT_DIR"/fsrc/tests || exit 1
+
+# Make clean (old logs in $SOLVER_LOG_DIR have been cleaned up in the above).
+printf "\nCleaning up ... "
+make cleanall."$SOLVER" > /dev/null
+printf "Done.\n\n"
+
+if [[ "$CLEAN" == "Y" ]] ; then
+    exit 0
+fi
+
+COMPILER_LIST=(gfortran nagfor g95 af95 sunf95 ifort nvfortran flang aflang ifx)
+CLIST=(g n 9 a s i v f d x)
+COMP_LIST=""
+for i in "${!COMPILER_LIST[@]}"; do
+   if  type "${COMPILER_LIST[$i]}" &> /dev/null ; then
+       COMP_LIST="$COMP_LIST ${CLIST[$i]}"
+   fi
+done
+
+if lf95 --version &> /dev/null; then  # `lf95` may not work even if `type lf95` succeeds, as a license is needed.
+    COMP_LIST="$COMP_LIST l"
+fi
+
+printf "Tests to make:%s\n\n" "$COMP_LIST"
+
+for COMP in $COMP_LIST; do
+    if [[ $TEST_ALL == 'Y' ]] ; then
+        make  "$COMP"test_c."$SOLVER"
+    else
+        if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' ]] ; then
+            TESTS="i2_r4_d1 i8_r4_d0"
+        else
+            TESTS="i2_r16_d1 i8_r4_d0"
+        fi
+        for TEST in $TESTS ; do
+            INFO="$(make "$COMP"test_"$TEST"_tst_c."$SOLVER" \
+                | grep -i "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve\|not\ defined\|not\ public\ entity" \
+                | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
+                | grep -vi "pedantic-errors\|Werror\|warn\ errors\|diag-error-limit\|colour=error" \
+                | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
+                )"
+            echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve\|not\ defined\|not\ public\ entity"
+            if echo "$INFO" | grep -iq "error\|abort\|invalid\|violation\|fault\|illegal\|fail\|Could\ not\ resolve\|not\ defined\|not\ public\ entity" ; then
+                if [[ -f "$TEST_LOG_DIR"/"$COMP"test_"$TEST"_tst_c.log ]] ; then
+                    LOGFILE="$COMP"test_"$TEST"_tst_c.log
+                else
+                    LOGFILE="$COMP"test_c.log
+                fi
+                mv "$TEST_LOG_DIR"/"$LOGFILE" "$SOLVER_LOG_DIR"
+                cat "$SOLVER_LOG_DIR"/"$LOGFILE"
+                exit 2
+            fi
+        done
+    fi
+    mv "$TEST_LOG_DIR"/"$COMP"test*.log "$SOLVER_LOG_DIR"
+done
+
+# Check the logfiles
+LOGFILES=("$SOLVER_LOG_DIR"/*test*.log)
+if [[ "$TEST_ALL" == "Y" ]] ; then
+    for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}}" ; do
+        printf "\nChecking %s ...\n" "$LOGFILE"
+        INFO="$(bash "$CHCKTST" --warnerror "$LOGFILE")"
+        printf "%s" "$INFO"
+        printf "\nDone!\n"
+        if [[ -n "$INFO" ]] ; then
+            printf "\nWarning or error found in log file.\n"
+            exit 1
+        fi
+    done
+else
+    for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}-1}" ; do
+        printf "\nChecking %s ...\n" "$LOGFILE"
+        bash "$CHCKTST" --error "$LOGFILE"  # Will lead to failure in case of error logged
+        INFO="$(bash "$CHCKTST" --warning "$LOGFILE")"
+        printf "%s" "$INFO"
+        printf "\nDone!\n"
+        if [[ -n "$INFO" ]] ; then
+            read -n1 -s -r -p $'Continue? [Y/n] ' KEY
+            printf "\n"
+            if ! [[ "$KEY" == 'Y' || "$KEY" == 'y' || "$KEY" == "" ]]; then
+                exit 0
+            fi
+        fi
+    done
+    # No pause needed for the last logfile.
+    LOGFILE="${LOGFILES[-1]}"  # The last logfile; it needs Bash 4.x.
+    printf "\nChecking %s ...\n" "$LOGFILE"
+    bash "$CHCKTST" --error "$LOGFILE"  # Will lead to failure in case of error logged
+    bash "$CHCKTST" --warning "$LOGFILE"
+    printf "%s" "$INFO"
+    printf "\nDone!\n\n"
+fi
+
+rm -rf "$TEST_DIR"
+export -n TEST_DIR && unset TEST_DIR  # De-export and unset TEST_DIR
+
+exit 0

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+sed -i 's/dabs/abs/g' *.f*
+sed -i 's/dsqrt/sqrt/g' *.f*
+sed -i 's/dsin/sin/g' *.f*
+sed -i 's/dcos/cos/g' *.f*
+sed -i 's/datan/atan/g' *.f*
+sed -i 's/dmin1/min/g' *.f*
+sed -i 's/dmax1/max/g' *.f*

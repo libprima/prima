@@ -12,7 +12,6 @@ mkdir -p "$BDIR"
 cp -r "$NEUPDFODIR"/fsrc "$BDIR"
 cp "$NEUPDFODIR"/setup.m "$BDIR"
 cp -r "$NEUPDFODIR"/OPDFO "$BDIR"
-cp -r "$NEUPDFODIR"/PDFO "$BDIR"
 cp -r "$NEUPDFODIR"/matlab "$BDIR"
 rm -r "$BDIR"/matlab/tests/testdata
 
