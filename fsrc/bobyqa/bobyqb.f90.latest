@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 AM12:32:16
+! Last Modified: Friday, May 13, 2022 PM09:58:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -278,6 +278,7 @@ if (sum(xopt**2) >= 1.0E3_RP * dsq) then
     call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
 end if
 
+
 ! Pick two alternative vectors of variables, relative to XBASE, that are suitable as new positions
 ! of the KNEW-th interpolation point. Firstly, XNEW is set to the point on a line through XOPT and
 ! another interpolation point that minimizes the predicted value of the next denominator, subject to
@@ -298,8 +299,6 @@ end if
 !  objective function turned to be unbounded from below, which led to abnormal values in BMAT
 !  (indeed, BETA defined in lines 366--389 took NaN/infinite values).
 !--------------------------------------------------------------------------------------------------!
-
-210 continue
 
 if (ntrits == 0) then
     if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
@@ -380,12 +379,6 @@ if (ntrits == 0) then
                 nfsav = nf
                 goto 60
             end if
-            !--------------------------------------------------------------------------------------!
-            ! After RESCUE, Powell's code takes immediately another GEOSTEP. If the geometry is then
-            ! acceptable (i.e., DENOM > HALF * VLAG(KNEW)**2), then the algorithm will continue.
-            ! Otherwise, it will exit with INFO set to DAMAGING_ROUNDING.
-            goto 210
-            !--------------------------------------------------------------------------------------!
         end if
     end if
 
