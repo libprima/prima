@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 13, 2022 AM02:15:22
+! Last Modified: Friday, May 13, 2022 PM01:59:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -326,7 +326,8 @@ if (paruest > 0 .and. parlest >= partmp) then
 !----------------------------------------------------------------!
 
     dtg = inprod(d, gg)
-    d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
+    !d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
+    d = -sign(delta, dtg) * (d / sqrt(dsq))
     goto 370
 end if
 
@@ -378,7 +379,8 @@ end if
 dnorm = sqrt(dsq)
 phi = ONE / dnorm - ONE / delta
 if (tol * (ONE + par * dsq / wsq) - dsq * phi * phi >= 0) then
-    d = (delta / dnorm) * d
+    !d = (delta / dnorm) * d
+    d = delta * (d / dnorm)
     goto 370
 end if
 if (iter >= 2 .and. par <= parl) goto 370
