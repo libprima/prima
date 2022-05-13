@@ -1,0 +1,32 @@
+# This Makefile intends to test the modern-Fortran version of Powell's solvers on as many compilers
+# as possible.
+#
+# The following compilers are tested:
+# a: Absoft af95
+# d: AOCC flang
+# f: LLVM flang
+# g: GNU gfortran
+# n: NAG nagfor
+# i: Intel ifort
+# s: Oracle sunf95
+# v: NVIDIA nvfortran
+# x: Intel ifx
+#
+# The following tests are available, where C = a, d, f, g, n, i, s, v, x, and N = 2, 4, 8:
+# Ctest: test with compiler C
+# Ctest_c: test with compiler C; compilation only (do not run the binary)
+# Ctest_iN: test with compiler C and integer kind INT(N*8)
+# Ctest_iN_c: test with compiler C and integer kind INT(N*8); compilation only
+#
+# Coded by Zaikun ZHANG (www.zhangzk.net).
+#
+# Started: September 2021
+#
+# Last Modified: October 4, 2021
+####################################################################################################
+
+.PHONY: all test clean
+
+SOLVER = bobyqa
+
+include Makefile.common

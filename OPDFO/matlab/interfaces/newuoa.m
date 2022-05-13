@@ -104,7 +104,7 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %       if it is set to true and iprint = 1, 2, or 3, the effect is the
 %       same as setting iprint to -1, -2, or -3, respectively; default: true
 %   *** maxhist: a nonnegative integer controlling how much history will
-%       be included in the output structure; default: maxfun;
+%       be included in the output structure; default: maxfun
 %       *******************************************************************
 %       IMPORTANT NOTICE:
 %       If maxhist is so large that recording the history takes too much memory,

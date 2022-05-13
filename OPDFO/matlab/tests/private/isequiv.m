@@ -97,21 +97,36 @@ else
     maxir = ir;
 end
 
-if isempty(requirements.list)
+if ~isempty(requirements.list)
+    plist = requirements.list; % Use the list provided by the user
+    if (ischstr(plist))  % In case plist is indeed the name of a problem
+        plist = {plist};
+    end
+else
     blacklist = {};
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
     switch lower(solvers{1})
     case {'uobyqa', 'uobyqa'}
+        blacklist = [blacklist, {'VARDIM', 'HATFLDFL'}];  % too large for UOBYQA
     case {'newuoa', 'newuoa'}
+        blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.
+        %blacklist = [blacklist, {'PENALTY2'}]; % More than 5 minutes to solve.
     case {'bobyqa', 'bobyqa'}
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
+        blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}];  % More than 10 minutes to solve.
     case {'lincoa', 'lincoa'}
         blacklist = [blacklist, {'LSNNODOC', 'HS55'}]; % possible reason for a segfault; should test it after the modernization.
+        blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
+        blacklist = [blacklist, {'CHEBYQAD'}]; % The classical lincoa encounters segfault
+        blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
+        blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2'}]; % Too long to solve
     case {'cobyla', 'cobyla'}
+        blacklist = [blacklist, {'MINMAXRB'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
         end
+        blacklist = [blacklist, {'PRODPL0', 'DEGENLPB'}]; % Takes long to solve
         blacklist=[blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Takes more than 5 min to solve
         blacklist = [blacklist, {'KISSING2', 'LUKSAN16', 'QPCBLEND', 'VANDERM4'}]; % Takes more than 20 sec to solve
         %blacklist = [blacklist, {'DUAL2', 'FEEDLOC', 'GROUPING', 'HYDCAR20', 'LINSPANH', 'LUKSAN11', ...
@@ -119,10 +134,20 @@ if isempty(requirements.list)
         %    'MANCINONE', 'QPNBLEND', 'SPANHYD', 'SWOPF', 'TAX13322', 'TAXR13322', 'TRO4X4', ...
         %    'VANDERM1', 'VANDERM2', 'VANDERM3'}];  % Takes more than 10 sec to solve
 
+        % 51-100 dimensional problems that take too long time to be used in the verification.
+        blacklist = [blacklist, {'HYDCAR20', 'LUKSAN13', 'CHEBYQADNE', 'HAIFAM', 'LUKSAN12', 'HIMMELBI', 'DUAL1', ...
+            'AIRPORT', 'CHEBYQAD', 'LUKSAN14LS', 'LUKSAN13LS', 'HYDC20LS', 'LUKSAN11LS', 'LUKSAN12LS', 'CORE1', ...
+            'LUKSAN14', 'DUAL2', 'LUKSAN15', 'ACOPP30', ...  % 6~10 min
+            'VANDERM3', 'CHANDHEQ', ... % > 5 min
+            'DECONVB', 'ACOPR30', ... % > 4 min
+            'DECONVC', 'LAKES', 'KISSING2', ... % > 3 min
+            'LUKSAN11', 'FEEDLOC', 'VANDERM2', 'MSS1', 'VANDERM1', 'GROUPING', 'LINSPANH', ...  % > 2 min
+            'DECONVU', 'DUAL4'}];  % > 1 min
+
         % blacklist when QRADD/QREXC calls ISORTH
-        blacklist = [blacklist, {'ACOPP30', 'ACOPR30', 'AIRPORT', 'BATCH', 'CHANDHEQ', 'CHEBYQAD', 'CHEBYQADNE', 'CHNRSBNE', 'CHNRSNBMNE', ...
-        'CORE1', 'CRESC132', 'DALLASS', 'DECONVB', 'DECONVBNE', 'DECONVU', 'DEGENQPC', 'DUAL1', 'DUAL2', 'ERRINRSM', ...
-        'ERRINRSMNE', 'FBRAIN3', 'FEEDLOC', 'GROUPING', 'HAIFAM', 'HIMMELBI', 'HYDC20LS', 'HYDCAR20', 'KISSING2', ...
+        blacklist = [blacklist, {'ACOPP30', 'ACOPR30', 'AIRPORT', 'BATCH', 'CHANDHEQ', 'CHEBYQAD', 'CHEBYQADNE', 'CHNRSBNE', ...
+        'CHNRSNBMNE', 'CORE1', 'CRESC132', 'DALLASS', 'DECONVB', 'DECONVBNE', 'DECONVU', 'DEGENQPC', 'DUAL1', 'DUAL2', ...
+        'ERRINRSM','ERRINRSMNE', 'FBRAIN3', 'FEEDLOC', 'GROUPING', 'HAIFAM', 'HIMMELBI', 'HYDC20LS', 'HYDCAR20', 'KISSING2', ...
         'LAKES', 'LUKSAN11', 'LUKSAN11LS', 'LUKSAN12', 'LUKSAN12LS', 'LUKSAN13', 'LUKSAN13LS', 'LUKSAN14', 'LUKSAN14LS', ...
         'LUKSAN15', 'LUKSAN16', 'LUKSAN17', 'LUKSAN17LS', 'LUKSAN21', 'LUKSAN21LS', 'LUKSAN22', 'LUKSAN22LS', ...
         'MANCINONE', 'MSS1', 'NET1', 'SPANHYD', 'SWOPF', 'TAX13322', 'TAXR13322', 'TRO4X4', 'TRO6X2', 'VANDERM1', ...
@@ -139,15 +164,14 @@ if isempty(requirements.list)
     end
     requirements.blacklist = blacklist;
     plist = secup(requirements);
-else
-    plist = requirements.list; % Use the list provided by the user
-    if (ischstr(plist))  % In case plist is indeed the name of a problem
-        plist = {plist};
-    end
 end
 
 single_test = (length(plist) <= 1);
-sequential = (isfield(options, 'sequential') && options.sequential) || single_test;
+if isfield(options, 'sequential')
+    sequential = options.sequential;
+else
+    sequential = single_test;
+end
 
 if sequential
     for ip = minip : length(plist)
@@ -171,6 +195,7 @@ if sequential
     end
 else
     parfor ip = minip : length(plist)
+
         orig_warning_state = warnoff(solvers);
 
         pname = upper(plist{ip});
@@ -180,7 +205,7 @@ else
         prob = macup(pname);
 
         for ir = minir : maxir
-            fprintf('\n%s Run No. %3d:\n', pname, ir);
+            %fprintf('\n%s Run No. %3d:\n', pname, ir);
             % The following line compares the solvers on `prob`; ir is needed for the random seed, and
             % `prec` is the precision of the comparison (should be 0). The function will raise an error
             % if the solvers behave differently.
@@ -312,22 +337,20 @@ n = length(x0);
 % Set seed using pname, n, and ir. We ALTER THE SEED weekly to test the solvers as much as possible.
 % N.B.: The weeknum function considers the week containing January 1 to be the first week of the
 % year, and increments the number every SUNDAY.
-timezone = 'Asia/Shanghai';  % Specify the timezone for reproducibility.
 if isfield(options, 'yw')
     yw = options.yw;
 elseif isfield(options, 'seed')
     yw = options.seed;
 else
-    dt = datetime('now', 'TimeZone', timezone);
-    yw = 100*mod(year(dt), 10) + week(dt);
+    tz = 'Asia/Shanghai';  % Specify the timezone for reproducibility.
+    dt = datetime('now', 'TimeZone', tz);
+    yw = 100*mod(year(dt), 100) + week(dt);
 end
 fprintf('\nYW = %d\n', yw);
 rseed = max(0, min(2^32, yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir)))))));
 rng(rseed);
 prob.x0 = x0 + 0.5*randn(size(x0));
 test_options = struct();
-test_options.debug = true;
-test_options.chkfunval = true;
 test_options.rhobeg = 1 + 0.5*(2*rand-1);
 test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
 test_options.npt = max(min(floor(6*rand*n), (n+2)*(n+1)/2), n+2);
@@ -349,21 +372,38 @@ if single_test
     test_options.output_nlchist = true;
 end
 test_options.maxfilt = ceil(randn*500);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ready_solvers = {'newuoa', 'cobyla', 'lincoa', 'bobyqa', 'uobyqa'};  % Solvers whose development is (almost) finished.
-test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-test_options.classical = (rand < 0.2) && test_ready_solvers;
 test_options.iprint = floor(3*rand);
-test_options.quiet = (rand < 0.8);
-%if rand < 0.5
-%    test_options.precision = 'double';
-%elseif rand < 0.5
-%    test_options.precision = 'single';
-%else
-%    test_options.precision = 'quadruple';
-%end
-test_options.precision = 'double';
+test_options.quiet = (rand < 0.9);
+% Test all precisions. For unavailable precisions, the double-precision version will be called.
+if rand < 0.6  % Prob = 0.6
+    test_options.precision = 'double';
+elseif rand < 0.8  % Prob = 0.32
+    test_options.precision = 'single';
+else  % Prob = 0.08
+    test_options.precision = 'quadruple';
+end
+
+%!------------------------------------------------------------------------------------------------!%
+% Test both debugging and non-debugging versions. They may behave differently.
+% On 20220302, it is observed that, when the Fortran code is compiled with the '-g' (debugging)
+% option, the INTENT(OUT) arguments will keep the values that they get before entering subroutines,
+% even though such values should be cleared on entry of the subroutines. This behavior makes it
+% impossible to detect the arguments that should be INTENT(INOUT) but mistakenly declared as
+% INTENT(OUT). The observation was made on the argument named SNORM in the subroutine TRSTEP of
+% LINCOA, and it took a whole day to debug.
+test_options.debug = (rand < 0.7);
+test_options.chkfunval = test_options.debug;
+%!------------------------------------------------------------------------------------------------!%
+
+% Test all variants. If the classical variant is unavailable,  the modernized variant will be called.
+test_options.classical = (rand < 0.1);
+% Test only double for the classical variant; debugging version is unavailable for the classical variant.
+if test_options.classical
+    test_options.precision = 'double';
+    test_options.debug = false;
+    test_options.chkfunval = false;
+end
+
 call_by_package = (rand < 0.5);  % Call by the package instead of the solver
 call_by_structure = (rand < 0.5);  % Pass the problem by a structure
 if mod(ir, 50) == 0 && ~isempty(dir('*_output.txt'))
@@ -418,17 +458,25 @@ prob.options = test_options;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% N.B.: In some tests, we may invoke this function with solvers{1} == solvers{2}. So do NOT assume
+% that one of the solvers is 'SOLVER' and the other is 'SOLVERn'.
+
 solver1 = str2func(solvers{1});  % Use function handle to avoid `feval`.
 solver2 = str2func(solvers{2});  % Use function handle to avoid `feval`.
-if length(solvers{1}) > length(solvers{2})
+
+if endsWith(solvers{1}, 'n')
     package1 = @pdfo;
-    package2 = @pdfo;
-    tested_solver_name = solvers{2};
 else
     package1 = @pdfo;
-    package2 = @pdfo;
-    tested_solver_name = solvers{1};
 end
+if endsWith(solvers{2}, 'n')
+    package2 = @pdfo;
+else
+    package2 = @pdfo;
+end
+
+tested_solver_name = regexprep(solvers{1}, 'n$', '');
+
 if call_by_package
     if call_by_structure
         prob.options.solver = solvers{1};
@@ -487,11 +535,11 @@ if output2.funcCount == test_options.maxfun && (exitflag2 == 0 || exitflag2 == 2
 end
 if fx1 <= test_options.ftarget
     exitflag1 = 1;
-    fprintf('exitflag1 changed to 1.\n')
+    %fprintf('exitflag1 changed to 1.\n')
 end
 if fx2 <= test_options.ftarget
     exitflag2 = 1;
-    fprintf('exitflag2 changed to 1.\n')
+    %fprintf('exitflag2 changed to 1.\n')
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Special Treatments%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -561,7 +609,7 @@ if ~equiv
         chist2 = output2.chist(end-nhist+1:end);
         chist1 == chist2
     end
-    if single_test
+    if single_test && options.sequential
         fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
         cd(options.olddir);
         keyboard

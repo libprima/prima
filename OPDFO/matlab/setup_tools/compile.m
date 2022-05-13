@@ -51,17 +51,12 @@ end
 precisions = all_precisions();
 variants = all_variants();
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%ready_solvers = {'cobyla', 'newuoa'};  % To be removed !!! %%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Name of the file that contains the list of Fortran files. There should be such a file in each
-% Fortran source code directory, and the list should indicate the dependence among the files.
-filelist = 'ffiles.txt';
+% `options.verbose` indicates whether to do the compilation in the verbose mode.
+if isfield(options, 'verbose') && islogicalscalar(options.verbose) && options.verbose
+    verbose_option = '-v';
+else
+    verbose_option = '-silent';
+end
 
 % Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1, and then set ad_option
 % accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1 according to the document of MATLAB R2019a.
@@ -73,6 +68,19 @@ if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31
 else
     ad_option = '-compatibleArrayDims'; % This works for both 32-bit and 64-bit MATLAB
 end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%ready_solvers = {'cobyla', 'newuoa'};  % To be removed !!! %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Name of the file that contains the list of Fortran files. There should be such a file in each
+% Fortran source code directory, and the list should indicate the dependence among the files.
+filelist = 'ffiles.txt';
 
 
 % Compile the common files. They are shared by all solvers. We compile them only once.
@@ -88,7 +96,7 @@ common_files = [list_files(common, filelist), fullfile(gateways, 'fmxapi.F'), fu
 
 fprintf('Compiling the common files ... ');
 for idbg = 1 : length(debug_flags)
-    mex_options = {ad_option, '-silent', ['-', dbgstr(debug_flags{idbg})]};
+    mex_options = {verbose_option, ad_option, ['-', dbgstr(debug_flags{idbg})]};
     for iprc = 1 : length(precisions)
         prepare_header(header_file, precisions{iprc}, debug_flags{idbg});
         work_dir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
@@ -129,7 +137,7 @@ for isol = 1 : length(solvers)
                 % The support for the classical variant is limited. No debugging version.
                 continue
             end
-            mex_options = {ad_option, '-silent', ['-', dbgstr(debug_flags{idbg})]};
+            mex_options = {verbose_option, ad_option, ['-', dbgstr(debug_flags{idbg})]};
             for iprc = 1 : length(precisions)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -54,10 +54,10 @@ status = 'Production';
 
 message = 'Dedicated to late Professor M. J. D. Powell FRS (29 July 1936--19 April 2015).';
 
-if year(datetime) == 2020
-    copyright = sprintf('Copyright %d, Tom M. Ragonneau and Zaikun Zhang', year(datetime));
+if year(datetime()) == 2020
+    copyright = sprintf('Copyright %d, Tom M. Ragonneau and Zaikun Zhang', year(datetime()));
 else
-    copyright = sprintf('Copyright 2020--%d, Tom M. Ragonneau and Zaikun Zhang', year(datetime));
+    copyright = sprintf('Copyright 2020--%d, Tom M. Ragonneau and Zaikun Zhang', year(datetime()));
 end
 
 switch lower(request)
