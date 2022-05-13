@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 13, 2022 PM01:14:24
+! Last Modified: Friday, May 13, 2022 PM01:50:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,7 +85,8 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        slope, partmp, &
 &        tnz, tempa, tempb, wsq, wwsq, zsq
 integer(IK) :: iter, k, ksav, maxiter
-logical :: posdef, negcrv, d_initialized
+logical :: posdef, negcrv
+logical :: d_initialized  ! TO BE REMOVED.
 
 !     N is the number of variables of a quadratic objective function, Q say.
 !     G is the gradient of Q at the origin.
@@ -308,7 +309,6 @@ if (k < n) then
 end if
 
 ksav = k
-
 do k = ksav - 1_IK, 1, -1
     ! It may happen that TN(K) == 0 == PIV(K). Without checking TN(K), we will get D(K) = NaN.
     ! Once we encounter a zero TN(K), D(K) is set to zero, and D(1:K-1) will consequently be zero as
@@ -342,7 +342,8 @@ if (paruest > 0 .and. parlest >= partmp) then
 !----------------------------------------------------------------!
 
     dtg = inprod(d, gg)
-    d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
+    !d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
+    d = -sign(delta, dtg) * (d / sqrt(dsq))  !!MATLAB: d = -sign(dtg) * delta * (d / sqrt(dsq))
     goto 370
 end if
 
@@ -394,7 +395,8 @@ end if
 dnorm = sqrt(dsq)
 phi = ONE / dnorm - ONE / delta
 if (tol * (ONE + par * dsq / wsq) - dsq * phi * phi >= 0) then
-    d = (delta / dnorm) * d
+    !d = (delta / dnorm) * d
+    d = delta * (d / dnorm)
     goto 370
 end if
 if (iter >= 2 .and. par <= parl) goto 370
@@ -426,9 +428,9 @@ if (phi < 0) then
 end if
 
 ! If required, calculate Z for the alternative test for convergence.
-! For information on Z, see the discussions below (16) in Section 2 of the UOBYQA paper (2002 version
-! in Math. Program.; in the DAMTP 2000/NA14 report, it is below (2.8) in Section 2). The two loops
-! below find Z using the LDL factorization of the (tridiagonalized) H + PAR*I.
+! For information on Z, see the discussions below (16) in Section 2 of the UOBYQA paper (the 2002
+! version in Math. Program.; in the DAMTP 2000/NA14 report, it is below (2.8) in Section 2). The two
+! loops below find Z using the LDL factorization of the (tridiagonalized) H + PAR*I.
 if (.not. posdef) then
     z(1) = ONE / piv(1)
     do k = 1, n - 1_IK
