@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM12:50:54
+! Last Modified: Friday, May 13, 2022 PM08:12:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -327,7 +327,6 @@ nf = min(nf, npt) !!!
 sixthm = ZERO
 delta = rho
 shortd = .false.
-60 continue
 
 !     Form the gradient of the quadratic model at the trust region centre.
 !
@@ -597,7 +596,7 @@ if (rho > rhoend) then
         rho = TENTH * rho
     end if
     delta = max(delta, rho)
-    goto 60
+    goto 70
 end if
 
 info = SMALL_TR_RADIUS !!??
