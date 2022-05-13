@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM12:36:28
+! Last Modified: Friday, May 13, 2022 PM09:39:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -278,8 +278,7 @@ if (sum(xopt**2) >= 1.0E3_RP * dsq) then
     call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
 end if
 
-if (ntrits == 0) goto 210
-goto 230
+goto 210
 
 ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more expensive than the
 ! previous shift, because new matrices BMAT and ZMAT are generated from scratch, which may include
@@ -355,36 +354,39 @@ if (ntrits > 0) goto 60
 
 210 continue
 
-if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-    info = NAN_MODEL
-    goto 720
-end if
-
-call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, cauchy, xalt, xnew)
-d = xnew - xopt
-alpha = sum(zmat(knew, :)**2)
-
-230 continue
-
-! Calculate VLAG and BETA for the current choice of D. The scalar product of D with XPT(K,.) is
-! going to be held in W(NPT+K) for use when VQUAD is calculated.
-vlag = calvlag(kopt, bmat, d, xpt, zmat)
-beta = calbeta(kopt, bmat, d, xpt, zmat)
-
-! If NTRITS is ZERO, the denominator may be increased by replacing the step D of GEOSTEP by a Cauchy
-! step. Then RESCUE may be called if rounding errors have damaged the chosen denominator.
 if (ntrits == 0) then
+    if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+        info = NAN_MODEL
+        goto 720
+    end if
+
+    call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, cauchy, xalt, xnew)
+    d = xnew - xopt
+    alpha = sum(zmat(knew, :)**2)
+
+    ! Calculate VLAG, BETA, and DENOM for the current choice of D.
+    vlag = calvlag(kopt, bmat, d, xpt, zmat)
+    beta = calbeta(kopt, bmat, d, xpt, zmat)
     denom = alpha * beta + vlag(knew)**2
+
+    ! If NTRITS is ZERO, the denominator may be increased by replacing the step D of GEOSTEP by a Cauchy
+    ! step. Then RESCUE may be called if rounding errors have damaged the chosen denominator.
     if (denom < cauchy .and. cauchy > ZERO) then
         xnew = xalt
         d = xnew - xopt
         cauchy = ZERO
-        go to 230
+
+        vlag = calvlag(kopt, bmat, d, xpt, zmat)
+        beta = calbeta(kopt, bmat, d, xpt, zmat)
+        denom = alpha * beta + vlag(knew)**2
     end if
     if (.not. (denom > HALF * vlag(knew)**2)) then
-        if (nf > nresc) goto 190
-        info = DAMAGING_ROUNDING
-        goto 720
+        if (nf > nresc) then
+            goto 190
+        else
+            info = DAMAGING_ROUNDING
+            goto 720
+        end if
     end if
 
 ! Alternatively, if NTRITS is positive, then set KNEW to the index of the next interpolation point
@@ -392,6 +394,9 @@ if (ntrits == 0) then
 ! have damaged the chosen denominator, which is the reason for attempting to select KNEW before
 ! calculating the next value of the objective function.
 else
+    ! Calculate VLAG and BETA for the current choice of D.
+    vlag = calvlag(kopt, bmat, d, xpt, zmat)
+    beta = calbeta(kopt, bmat, d, xpt, zmat)
     hdiag = sum(zmat**2, dim=2)
     den = hdiag * beta + vlag(1:npt)**2
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
