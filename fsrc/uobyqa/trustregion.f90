@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 13, 2022 AM02:15:22
+! Last Modified: Friday, May 13, 2022 PM12:21:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,6 +28,17 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 ! The algorithm first tridiagonalizes H and then applies the More-Sorensen method in
 ! More, J. J., and Danny C. S., "Computing a trust region step", SIAM J. Sci. Stat. Comput. 4:
 ! 553-572, 1983.
+!
+! The major calculations of the More-Sorensen method is the Cholesky factorization or LDL
+! factorization of H + PAR*I for the iteratively selected values of PAR (in More-Sorensen 1983, this
+! parameter is LAMBDA; in Powell's UOBYQA paper, it is THETA). Powell's method here simplifies the
+! calculations by first tridiagonalizing H with an orthogonal transformation. If a matrix T is
+! tridiagonal, its LDL factorization, if exits, can be obtained easily: T = L*diag(PIV)*L^T,
+! where diag(PIV) is the diagonal matrix with the diagonal entries being PIV(1:N), which Powell
+! called "pivots of the Cholesky factorization", and L is a lower triangular matrix with all
+! the diagonal entries being 1, the subdiagonal being the subdiagonal of T divided by PIV(1:N-1),
+! and all the other entries being 0. PIV can be obtained iteratively by simple calculations.
+!
 ! See Section 2 of the UOBYQA paper and
 ! Powell, M. J. D., "Trust region calculations revisited", Numerical Analysis 1997: Proceedings of
 ! the 17th Dundee Biennial Numerical Analysis Conference, 1997, 193--211,
@@ -193,11 +204,12 @@ if (iter > maxiter) then
     goto 370
 end if
 
-! Calculate the pivots of the Cholesky factorization of (H + PAR*I), i.e., the square of the diagonal
-! of L in LL^T, or the diagonal of D in LDL^T). Note that the LDL factorization of H + PAR*I is
-! L*diag(PIV)*L^T, where diag(PIV) is the diagonal matrix with PIV being the diagonal, and L is
-! a lower triangular matrix with all the diagonal entries being 1, the subdiagonal being the vector
-! TN/PIV(1:N-1), and all the other entries being 0.
+! Calculate the pivots of the Cholesky factorization of (H + PAR*I), which correspond to the square
+! of the diagonal of L in the Cholesky factorization LL^T, or the diagonal matrix in the LDL
+! factorization. After getting PIV, we can get the LDL factorization of H + PAR*I easily: the
+! factorization is L*diag(PIV)*L^T, where diag(PIV) is the diagonal matrix with PIV being the
+! diagonal, and L is a lower triangular matrix with all the diagonal entries being 1, the subdiagonal
+! being the vector TN/PIV(1:N-1), and all the other entries being 0.
 
 piv = ZERO  ! PIV must be initialized, so that we know that any NaN in PIV is due to the loop below.
 piv(1) = td(1) + par
@@ -297,6 +309,8 @@ ksav = k
 
 do k = ksav - 1_IK, 1, -1
     ! It may happen that TN(K) == 0 == PIV(K). Without checking TN(K), we will get D(K) = NaN.
+    ! Once we encounter a zero TN(K), D(K) is set to zero, and D(1:K-1) will consequently be zero as
+    ! well, because D(I) is a multiple of D(I+1) for each I.
     if (tn(k) /= ZERO) then
         d(k) = -tn(k) * d(k + 1) / piv(k)
     else
