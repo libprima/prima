@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 13, 2022 PM12:21:21
+! Last Modified: Friday, May 13, 2022 PM01:14:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,17 +29,20 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 ! More, J. J., and Danny C. S., "Computing a trust region step", SIAM J. Sci. Stat. Comput. 4:
 ! 553-572, 1983.
 !
-! The major calculations of the More-Sorensen method is the Cholesky factorization or LDL
-! factorization of H + PAR*I for the iteratively selected values of PAR (in More-Sorensen 1983, this
-! parameter is LAMBDA; in Powell's UOBYQA paper, it is THETA). Powell's method here simplifies the
-! calculations by first tridiagonalizing H with an orthogonal transformation. If a matrix T is
-! tridiagonal, its LDL factorization, if exits, can be obtained easily: T = L*diag(PIV)*L^T,
-! where diag(PIV) is the diagonal matrix with the diagonal entries being PIV(1:N), which Powell
-! called "pivots of the Cholesky factorization", and L is a lower triangular matrix with all
-! the diagonal entries being 1, the subdiagonal being the subdiagonal of T divided by PIV(1:N-1),
-! and all the other entries being 0. PIV can be obtained iteratively by simple calculations.
+! The major calculations of the More-Sorensen method lie in the Cholesky factorization or LDL
+! factorization of H + PAR*I with the iteratively selected values of PAR (in More-Sorensen 1983, the
+! parameter is named LAMBDA; in Powell's UOBYQA paper, it is THETA). Powell's method in this code
+! simplifies the calculations by first tridiagonalizing H with an orthogonal transformation. If a
+! matrix T is tridiagonal, its LDL factorization, if exits, can be obtained easily:
 !
-! See Section 2 of the UOBYQA paper and
+!       T = L*diag(PIV)*L^T,
+!
+! where diag(PIV) is the diagonal matrix with the diagonal entries being PIV(1:N), i.e., "the pivots
+! of the Cholesky factorization" in Powell's comments on his code, and L is the lower triangular
+! matrix with all the diagonal entries being 1, the subdiagonal being the subdiagonal of T divided
+! by PIV(1:N-1), and all the other entries being 0. PIV can be obtained by a simple recursion.
+!
+! For more information, see Section 2 of the UOBYQA paper and
 ! Powell, M. J. D., "Trust region calculations revisited", Numerical Analysis 1997: Proceedings of
 ! the 17th Dundee Biennial Numerical Analysis Conference, 1997, 193--211,
 ! Powell, M. J. D., "The use of band matrices for second derivative approximations in trust region
@@ -204,13 +207,12 @@ if (iter > maxiter) then
     goto 370
 end if
 
-! Calculate the pivots of the Cholesky factorization of (H + PAR*I), which correspond to the square
-! of the diagonal of L in the Cholesky factorization LL^T, or the diagonal matrix in the LDL
-! factorization. After getting PIV, we can get the LDL factorization of H + PAR*I easily: the
-! factorization is L*diag(PIV)*L^T, where diag(PIV) is the diagonal matrix with PIV being the
-! diagonal, and L is a lower triangular matrix with all the diagonal entries being 1, the subdiagonal
-! being the vector TN/PIV(1:N-1), and all the other entries being 0.
-
+! Calculate the pivots of the Cholesky factorization of (H + PAR*I), which correspond to the squares
+! of the diagonal entries of L in the Cholesky factorization LL^T, or the diagonal matrix in the LDL
+! factorization. After getting PIV, we can get the LDL factorization of H + PAR*I easily: it is
+! L*diag(PIV)*L^T, where diag(PIV) is the diagonal matrix with PIV being the diagonal, and L is the
+! lower triangular matrix with all the diagonal entries being 1, the subdiagonal being the vector
+! TN/PIV(1:N-1) (entrywise division), and all the other entries being 0.
 piv = ZERO  ! PIV must be initialized, so that we know that any NaN in PIV is due to the loop below.
 piv(1) = td(1) + par
 ! Powell implemented the loop by a GOTO, and K = N when the loop exits. It may not be true here.
