@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM12:36:28
+! Last Modified: Saturday, May 14, 2022 PM11:57:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -362,6 +362,9 @@ end if
 
 call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, cauchy, xalt, xnew)
 d = xnew - xopt
+!----------------!
+xnew = xopt + d
+!----------------!
 alpha = sum(zmat(knew, :)**2)
 
 230 continue
@@ -378,6 +381,9 @@ if (ntrits == 0) then
     if (denom < cauchy .and. cauchy > ZERO) then
         xnew = xalt
         d = xnew - xopt
+        !----------------!
+        xnew = xopt + d
+        !----------------!
         cauchy = ZERO
         go to 230
     end if
