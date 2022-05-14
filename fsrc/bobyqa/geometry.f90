@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 PM05:17:41
+! Last Modified: Sunday, May 15, 2022 AM12:17:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,14 +19,14 @@ public :: geostep
 contains
 
 
-subroutine geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, cauchy, xalt, xnew)
+function geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat) result(d)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, trueloc
-use, non_intrinsic :: powalg_mod, only : hess_mul
+use, non_intrinsic :: powalg_mod, only : hess_mul, calvlag, calbeta
 
 implicit none
 
@@ -42,14 +42,18 @@ real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Outputs
-real(RP), intent(out) :: cauchy
-real(RP), intent(out) :: xalt(:)  ! XALT(N)
-real(RP), intent(out) :: xnew(:)  ! XNEW(N)
+real(RP) :: d(size(xpt, 1))  ! D(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: cauchy
+real(RP) :: vlag_line(size(xpt, 1) + size(xpt, 2))
+real(RP) :: beta_line
+real(RP) :: denom_line
+real(RP) :: xalt(size(xpt, 1))
+real(RP) :: xnew(size(xpt, 1))
 real(RP) :: glag(size(xpt, 1))
 real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: s(size(xpt, 1)), xsav(size(xpt, 1))
@@ -80,8 +84,6 @@ if (DEBUGGING) then
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
-    call assert(size(xalt) == n, 'SIZE(XALT) == N', srname)
-    call assert(size(xnew) == n, 'SIZE(XNEW) == N', srname)
 end if
 
 !
@@ -116,10 +118,11 @@ alpha = pqlag(knew)
 ! Calculate the gradient of the KNEW-th Lagrange function at XOPT.
 glag = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
 
-cauchy = ZERO
-xnew = xopt
-xalt = xopt
+!cauchy = ZERO
+!xnew = xopt
+!xalt = xopt
 if (any(is_nan(glag)) .or. is_nan(adelt)) then  ! ADELT is not NaN if the input is correct.
+    d = ZERO
     return
 end if
 
@@ -276,6 +279,12 @@ if (ibd > 0) then
     xnew(ibd) = su(ibd)
 end if
 
+d = xnew - xopt
+! Calculate DENOM for the current choice of D.
+vlag_line = calvlag(kopt, bmat, d, xpt, zmat)
+beta_line = calbeta(kopt, bmat, d, xpt, zmat)
+denom_line = alpha * beta_line + vlag_line(knew)**2
+
 ! Prepare for the method that assembles the constrained Cauchy step in S. The sum of squares of the
 ! fixed components of S is formed in SFIXSQ, and the free components of S are set to BIGSTP. When
 ! UPHILL = 0, the method calculates the downhill version of XALT, which intends to minimize the
@@ -353,7 +362,14 @@ if (csave > cauchy) then
     xalt = xsav
     cauchy = csave
 end if
-end subroutine geostep
+
+! Take the Cauchy step if it is likely to render a larger denominator.
+if (denom_line < cauchy .and. cauchy > ZERO) then
+    d = xalt - xopt
+end if
+
+
+end function geostep
 
 
 end module geometry_mod

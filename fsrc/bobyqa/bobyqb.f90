@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 AM12:33:20
+! Last Modified: Sunday, May 15, 2022 AM12:28:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -88,7 +88,6 @@ real(RP) :: pq(npt)
 real(RP) :: vlag(npt + size(x))
 real(RP) :: sl(size(x))
 real(RP) :: su(size(x))
-real(RP) :: xalt(size(x))
 real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
@@ -96,7 +95,7 @@ real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
 real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
-&        biglsq, cauchy, crvmin, curv(size(x)), delta,  &
+&        biglsq, crvmin, curv(size(x)), delta,  &
 &        den(npt), denom, densav, diff, diffa, diffb, diffc,     &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbig, fopt,        &
 &        frhosq, gisq, gqsq, hdiag(npt),      &
@@ -307,26 +306,17 @@ if (ntrits == 0) then
         goto 720
     end if
 
-    call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, cauchy, xalt, xnew)
-    d = xnew - xopt
-    alpha = sum(zmat(knew, :)**2)
+    ! Calculate a geometry step.
+    d = geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat)
+    xnew = xopt + d
 
     ! Calculate VLAG, BETA, and DENOM for the current choice of D.
+    alpha = sum(zmat(knew, :)**2)
     vlag = calvlag(kopt, bmat, d, xpt, zmat)
     beta = calbeta(kopt, bmat, d, xpt, zmat)
     denom = alpha * beta + vlag(knew)**2
 
-    ! If NTRITS is ZERO, the denominator may be increased by replacing the step D of GEOSTEP by a Cauchy
-    ! step. Then RESCUE may be called if rounding errors have damaged the chosen denominator.
-    if (denom < cauchy .and. cauchy > ZERO) then
-        xnew = xalt
-        d = xnew - xopt
-        cauchy = ZERO
-
-        vlag = calvlag(kopt, bmat, d, xpt, zmat)
-        beta = calbeta(kopt, bmat, d, xpt, zmat)
-        denom = alpha * beta + vlag(knew)**2
-    end if
+    ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
     if (.not. (denom > HALF * vlag(knew)**2)) then
         if (nf <= nresc) then
             info = DAMAGING_ROUNDING
