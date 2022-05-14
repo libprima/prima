@@ -47,6 +47,12 @@ test_data/
 
 # automatically generated intersection-form files
 intersection_form/
+.intersection_form/
+.interform
+
+# automatically generated m files
+all_precisions.m
+all_variants.m
 
 # plusFORT
 SPAGged/
