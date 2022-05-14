@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 PM06:37:56
+! Last Modified: Saturday, May 14, 2022 PM08:59:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -352,6 +352,7 @@ if (paruest > 0 .and. parlest >= partmp) then
     ! entries are inherited from the previous iteration OR from the initial value before the
     ! iterations start, which is 0. If such inheriting happens, D_INITIALIZED will be FALSE. In a
     ! test on 20220514, the SECOND case did occur during the very first iteration. Is this intended?
+    ! Maybe this can only happen during the first iteration?
     call wassert(d_initialized, 'D is initialized', srname)
     !----------------------------------------------------------------------------------------------!
     !----------------------------------------------------------------------------------------------!
