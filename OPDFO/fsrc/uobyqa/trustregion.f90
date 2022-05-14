@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 13, 2022 PM01:59:14
+! Last Modified: Saturday, May 14, 2022 PM09:03:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -37,7 +37,7 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc
 
@@ -321,7 +321,7 @@ if (paruest > 0 .and. parlest >= partmp) then
 
 !----------------------------------------------------------------!
 !----------------------------------------------------------------!
-    call assert(d_initialized, 'D is initialized', srname)  ! Zaikun 20220512, TO BE REMOVED
+    call wassert(d_initialized, 'D is initialized', srname)  ! Zaikun 20220512, TO BE REMOVED
 !----------------------------------------------------------------!
 !----------------------------------------------------------------!
 
