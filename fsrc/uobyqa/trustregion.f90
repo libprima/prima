@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 13, 2022 PM01:57:43
+! Last Modified: Saturday, May 14, 2022 PM06:37:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc
 
@@ -185,7 +185,7 @@ hnorm = maxval(abs([ZERO, tn]) + abs(td) + abs([tn, ZERO]))
 parl = maxval([ZERO, -minval(td), gnorm / delta - hnorm])  ! Lower bound for the optimal PAR
 parlest = parl  ! Estimation for PARL
 par = parl
-paru = ZERO  ! Upper bound for the optimal PAR
+paru = ZERO  ! Upper bound for the optimal PAR ??? The initial value is less than PARL. Why?
 paruest = ZERO  ! Estimation for PARU
 posdef = .false.
 iter = 0
@@ -280,13 +280,15 @@ call assert(k >= 1 .and. k <= n, '1 <= K <= N', srname)
 d = ZERO  ! Zaikun 20220512: Powell's code does not include this initialization. Is it correct???
 d(k) = ONE  ! Zaikun 20220512: D(K+1:N) = ?
 
-!---------------------------------------------------------------------!
-!---------------------------------------------------------------------!
-! The following Boolean variable serves to check that D is always initialized in Powell's code
-! whenever D is used.
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+! The code until "Terminate with D set to a multipe of the current D ..." sets only D(1:KSAV) or
+! D(1:KSAV+1), with the KSAV defined later. D_INITIALIZED indicates whether D(1:N) is fully
+! initialized in this process (TRUE) or not (FALSE). See the comments above
+! CALL WASSERT(D_INITIALIZED, 'D IS INITIALIZED', SRNAME) for details.
 d_initialized = (k == n)  ! Zaikun 20220512, TO BE REMOVED
-!---------------------------------------------------------------------!
-!---------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
 
 dhd = piv(k)
 
@@ -296,6 +298,13 @@ dhd = piv(k)
 ! only N-1. This is not a problem in C, MATLAB, Python, Julia, or R, where short circuit is ensured.
 if (k < n) then
     if (abs(tn(k)) > abs(piv(k))) then
+
+        !---------------------------------------------------------------------!
+        !---------------------------------------------------------------------!
+        d_initialized = (k == n - 1)  ! Zaikun 20220512, TO BE REMOVED
+        !---------------------------------------------------------------------!
+        !---------------------------------------------------------------------!
+
         ! PIV(K+1) was named as "TEMP" in Powell's code. Is PIV(K+1) consistent with the meaning of PIV?
         piv(k + 1) = td(k + 1) + par
         if (piv(k + 1) <= abs(piv(k))) then
@@ -335,11 +344,17 @@ else
 end if
 if (paruest > 0 .and. parlest >= partmp) then
 
-!----------------------------------------------------------------!
-!----------------------------------------------------------------!
-    call assert(d_initialized, 'D is initialized', srname)  ! Zaikun 20220512, TO BE REMOVED
-!----------------------------------------------------------------!
-!----------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
+    ! Zaikun 20220512, TO BE REMOVED
+    ! The definition of D below requires that D is initialized. In Powell's code, it may happen that
+    ! only D(1:KSAV) or D(1:KSAV+1) is initialized during the current iteration, but the other
+    ! entries are inherited from the previous iteration OR from the initial value before the
+    ! iterations start, which is 0. If such inheriting happens, D_INITIALIZED will be FALSE. In a
+    ! test on 20220514, the SECOND case did occur during the very first iteration. Is this intended?
+    call wassert(d_initialized, 'D is initialized', srname)
+    !----------------------------------------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
 
     dtg = inprod(d, gg)
     !d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d

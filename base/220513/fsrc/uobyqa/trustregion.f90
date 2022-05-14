@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 PM01:27:04
+! Last Modified: Saturday, May 14, 2022 PM06:42:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -37,7 +37,7 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : wassert, assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc
 
@@ -257,6 +257,8 @@ if (.not. negcrv) then
 end if
 
 
+!write (16, *) k, 271
+
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 ! We arrive here only if 1 <= K <= N, when H + PAR*I has at least one nonpositive eigenvalue.
@@ -286,6 +288,7 @@ dhd = piv(k)
 ! only N-1. This is not a problem in C, MATLAB, Python, Julia, or R, where short circuit is ensured.
 if (k < n) then
     if (abs(tn(k)) > abs(piv(k))) then
+        d_initialized = (k == n - 1)  ! Zaikun 20220512, TO BE REMOVED
         ! PIV(K+1) was named as "TEMP" in Powell's code. Is PIV(K+1) consistent with the meaning of PIV?
         piv(k + 1) = td(k + 1) + par
         if (piv(k + 1) <= abs(piv(k))) then
@@ -330,12 +333,15 @@ if (paruest > 0 .and. parlest >= partmp) then
 
 !----------------------------------------------------------------!
 !----------------------------------------------------------------!
-    call assert(d_initialized, 'D is initialized', srname)  ! Zaikun 20220512, TO BE REMOVED
+!write (16, *) ksav, d
+    !close (16)
+    call wassert(d_initialized, 'D is initialized', srname)  ! Zaikun 20220512, TO BE REMOVED
 !----------------------------------------------------------------!
 !----------------------------------------------------------------!
 
     dtg = inprod(d, gg)
-    d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
+    !d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
+    d = -sign(delta, dtg) * (d / sqrt(dsq))  !!MATLAB: d = -sign(dtg) * delta * (d / sqrt(dsq))
     goto 370
 end if
 
@@ -389,7 +395,8 @@ end if
 dnorm = sqrt(dsq)
 phi = ONE / dnorm - ONE / delta
 if (tol * (ONE + par * dsq / wsq) - dsq * phi * phi >= 0) then
-    d = (delta / dnorm) * d
+    !d = (delta / dnorm) * d
+    d = delta * (d / dnorm)
     goto 370
 end if
 if (iter >= 2 .and. par <= parl) goto 370

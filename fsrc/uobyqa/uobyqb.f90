@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 13, 2022 PM08:12:06
+! Last Modified: Saturday, May 14, 2022 PM03:57:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -566,21 +566,16 @@ do k = 1, npt
 end do
 
 if (dnorm > rho) goto 70
-!
-!     Prepare to reduce RHO by shifting XBASE to the best point so far,
-!     and make the corresponding changes to the gradients of the Lagrange
-!     functions and the quadratic model.
-!
 
 600 continue
-
 if (rho > rhoend) then
-
+    ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the corresponding
+    ! changes to the gradients of the Lagrange functions and the quadratic model.
     xbase = xbase + xopt
     xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-    pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
+    pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)  ! Model gradient
     do k = 1, npt
-        pl(k, 1:n) = pl(k, 1:n) + smat_mul_vec(pl(k, n + 1:npt - 1), xopt)
+        pl(k, 1:n) = pl(k, 1:n) + smat_mul_vec(pl(k, n + 1:npt - 1), xopt)  ! Lagrange fun. gradient
     end do
 
 !

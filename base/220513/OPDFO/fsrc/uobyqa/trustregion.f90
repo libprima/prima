@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 PM01:27:44
+! Last Modified: Saturday, May 14, 2022 PM06:17:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -375,6 +375,8 @@ if (any(is_nan(piv))) then
 end if
 !-----------------------------!
 
+!write (17, *) k, 271
+
 d(k) = ONE
 kpo = .false.
 if (abs(tn(k)) <= abs(piv(k))) then
@@ -433,13 +435,18 @@ parlest = par - dhd / dsq
 190 temp = paruest
 if (gsq == ZERO) temp = temp * (ONE - tol)
 if (paruest > ZERO .and. parlest >= temp) then
+!write (17, *) ksav, d(1:n)
     dtg = ZERO
     do i = 1, n
         dtg = dtg + d(i) * gg(i)
     end do
-    scaling = -sign(delta / sqrt(dsq), dtg)
+    !scaling = -sign(delta / sqrt(dsq), dtg)
+    !do i = 1, n
+    !    d(i) = scaling * d(i)
+    !end do
+    scaling = -sign(delta, dtg)
     do i = 1, n
-        d(i) = scaling * d(i)
+        d(i) = scaling * (d(i) / sqrt(dsq))
     end do
     goto 370
 end if
@@ -486,8 +493,8 @@ temp = tol * (ONE + par * dsq / wsq) - dsq * phi * phi
 if (temp >= ZERO) then
     scaling = delta / dnorm
     do i = 1, n
-        d(i) = scaling * d(i)
-        !d(i) = delta * (d(i) / dnorm)
+        !d(i) = scaling * d(i)
+        d(i) = delta * (d(i) / dnorm)
     end do
     goto 370
 end if
