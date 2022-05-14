@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 13, 2022 AM12:39:48
+! Last Modified: Saturday, May 14, 2022 PM01:27:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -96,14 +96,8 @@ evalue = ZERO
 
 gsq = sum(g**2)
 gnorm = sqrt(gsq)
+!----------------------------------------------!
 
-if (.not. any(abs(h) > 0)) then
-    if (gnorm > 0) then
-        d_out = -delta * (g / gnorm)
-    end if
-    return
-end if
-!---------------------------------------------!
 
 delsq = delta * delta
 evalue = ZERO
@@ -114,12 +108,21 @@ do i = 1, n
         h(i, j) = h(j, i)
     end do
 end do
+!----------------------------------------------!
+if (.not. any(abs(h) > 0)) then
+    if (gnorm > 0) then
+        d_out = -delta * (g / gnorm)
+    end if
+    return
+end if
+!---------------------------------------------!
 !
 !     Apply Householder transformations to obtain a tridiagonal matrix that
 !     is similar to H, and put the elements of the Householder vectors in
 !     the lower triangular part of H. Further, TD and TN will contain the
 !     diagonal and other nonzero elements of the tridiagonal matrix.
 !
+!write (17, *) 'h', h
 
 !-------------------------------------------------------------------------------------------------!
 ! Zaikun 20220508
@@ -194,6 +197,9 @@ if (scaled) then
 end if
 !-------------------------------------------------------------------------------------------------!
 
+!write (17, *) 'hh', h
+!write (17, *) 'tn', tn(1:n - 1)
+!write (17, *) 'td', td(1:n)
 
 
 !
@@ -275,7 +281,6 @@ posdef = ZERO
 iterc = 0
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 26-06-2019: See the lines below line number 140
 do i = 1, n
     dsav(i) = d(i)
 end do
@@ -284,6 +289,7 @@ end do
 !     Calculate the pivots of the Cholesky factorization of (H+PAR*I).
 !
 140 iterc = iterc + 1
+!write (17, *) iterc, d(1:n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 26-06-2019
 ! The original code can encounter infinite cycling, which did happen
@@ -387,6 +393,8 @@ else
     dsq = ONE + d(k + 1)**2
 end if
 
+!write (17, *) 'd', d(1:k), tn(1:n - 1), td(1:n)
+
 !-----------!
 temp = dsq
 dsq = ZERO
@@ -414,7 +422,7 @@ else
     dsq = sum(d(1:ksav)**2)
 end if
 !--------------------------------------!
-write (17, *) ksav, dsq, d(1:n)
+!write (17, *) 'ksav', ksav, dsq, d(1:n)
 
 parl = par
 parlest = par - dhd / dsq
@@ -445,6 +453,8 @@ else
     par = max(par, parlest)
 end if
 if (paruest > ZERO) par = min(par, paruest)
+!write (17, *) par, parl, paru, parlest, gnorm, delta
+!write (17, *) 'goto140'
 goto 140
 !
 !     Calculate D for the current PAR in the positive definite case.
@@ -501,6 +511,7 @@ if (phi < ZERO) then
     posdef = ONE
     parl = par
     phil = phi
+    !write (17, *) 1, 'goto 220'
     goto 220
 end if
 !
@@ -555,6 +566,7 @@ if (posdef == ONE) then
 end if
 paru = par
 phiu = phi
+!write (17, *) 22, 'goto 220'
 goto 220
 !
 !     Set EVALUE to the least eigenvalue of the second derivative matrix if

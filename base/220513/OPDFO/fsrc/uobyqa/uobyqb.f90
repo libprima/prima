@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 AM08:32:37
+! Last Modified: Saturday, May 14, 2022 PM01:23:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -257,6 +257,8 @@ rhosq = rho**2
 !     Form the gradient of the quadratic model at the trust region centre.
 !
 70 knew = 0
+!write (17, *) 'pq', pq(1:npt - 1)
+!write (17, *) 'xopt', xopt(1:n)
 ih = n
 do j = 1, n
     xopt(j) = xpt(j, kopt)
@@ -277,6 +279,7 @@ do j = 1, n
 ! behavior of the code, including uninitialized indices.
 !   80 H(I,J)=PQ(IH)
         h(i, j) = pq(ih)
+        h(j, i) = pq(ih)
         if (h(i, j) /= h(i, j)) then
             info = -3
             goto 420
@@ -302,9 +305,13 @@ end do
 !& w(4 * n + 1), w(5 * n + 1), evalue)
 ! In Powell's TRSTEP code, n-dimensional vectors may be accessed at N+1, leading to memory errors.
 ! We assign one more place to the vectors to avoid such problems.
+!write (17, *) 'nf', nf
+!write (17, *) 'Grad', g
+!write (17, *) 'Hess', h
 call trstep(n, g, h, delta, tol, d(1:n), w(1), w(n + 1), w(2 * n + 2), w(3 * n + 3), &
 & w(4 * n + 4), w(5 * n + 5), evalue)
 !trstep(n, g, h, delta, tol, d, gg, td, tn, w, piv, z, evalue)
+!write (17, *) 'd', d(1:n), evalue
 temp = ZERO
 do i = 1, n
     temp = temp + d(i)**2
@@ -499,12 +506,17 @@ if (knew == 0) goto 290
     xpt(i, knew) = xnew(i)
 end do
 temp = ONE / vlag(knew)
+!write (17, *) 'pqb', pq(1:npt - 1)
+!write (17, *) 'vlag', vlag(1:npt)
+!write (17, *) 'pl', pl(knew, 1:npt - 1)
+!write (17, *) 'diff', diff
 do j = 1, nptm
     !pl(knew, j) = temp * pl(knew, j)
     pl(knew, j) = pl(knew, j) / vlag(knew)
 
     pq(j) = pq(j) + diff * pl(knew, j)
 end do
+!write (17, *) 'pqa', pq(1:npt - 1)
 do k = 1, npt
     if (k /= knew) then
         temp = vlag(k)
