@@ -49,6 +49,7 @@
 *.odg   binary
 *.svg   binary
 *.fig   text
+*.eps   text
 
 # Scripts
 *.sh    text eol=lf

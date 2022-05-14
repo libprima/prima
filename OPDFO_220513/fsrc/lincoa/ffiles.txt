@@ -1,8 +1,0 @@
-vm.f90
-update.f90
-initialize.f90
-getact.f90
-trustregion.f90
-geometry.f90
-lincob.f90
-lincoa.f90
