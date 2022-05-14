@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 AM12:32:16
+! Last Modified: Saturday, May 14, 2022 AM12:33:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -471,9 +471,6 @@ else
                 goto 720
             end if
             nresc = nf
-            !if (nfsav < nf) then
-            !    nfsav = nf
-            !end if
             nfsav = max(nfsav, nf)
             goto 60
         end if

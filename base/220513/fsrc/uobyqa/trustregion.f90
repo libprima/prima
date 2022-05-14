@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 13, 2022 AM02:15:22
+! Last Modified: Saturday, May 14, 2022 PM01:27:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -138,7 +138,11 @@ delsq = delta * delta
 ! Further, TD and TN will contain the diagonal and other nonzero elements of the tridiagonal matrix.
 ! In the comments hereafter, H indeed means this tridiagonal matrix.
 hh = h
+!write (16, *) 'h', h
 call hessenberg(hh, td, tn)  !!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1)
+!write (16, *) 'hh', hh
+!write (16, *) 'tn', tn
+!write (16, *) 'td', td
 
 ! Form GG by applying the similarity transformation to G.
 gg = g
@@ -179,6 +183,7 @@ maxiter = min(1000_IK, 100_IK * int(n, IK))  ! What is the theoretical bound of 
 140 continue
 
 iter = iter + 1_IK
+!write (16, *) iter, d
 
 ! Zaikun 26-06-2019: The original code can encounter infinite cycling, which did happen when testing
 ! the CUTEst problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. Indeed, in all these cases, Inf and NaN
@@ -293,6 +298,8 @@ if (k < n) then
     end if
 end if
 
+!write (16, *) 'd', d(1:k), tn(1:n - 1), td(1:n)
+
 ksav = k
 
 do k = ksav - 1_IK, 1, -1
@@ -305,7 +312,9 @@ do k = ksav - 1_IK, 1, -1
     end if
 end do
 
+
 dsq = sum(d**2)
+!write (16, *) 'ksav', ksav, dsq, d(1:n)
 parl = par
 parlest = par - dhd / dsq
 
@@ -340,6 +349,8 @@ else
     par = max(par, parlest)
 end if
 if (paruest > 0) par = min(par, paruest)
+!write (16, *) par, parl, paru, parlest, gnorm, delta
+!write (16, *) 'goto140'
 goto 140
 
 230 continue
@@ -406,6 +417,7 @@ if (phi < 0) then
     posdef = .true.
     parl = par
     phil = phi
+    !write (16, *) 1, 'goto 220'
     goto 220
 end if
 
@@ -452,6 +464,7 @@ if (posdef) then
 end if
 paru = par
 phiu = phi
+!write (16, *) 2, 'goto 220'
 goto 220
 
 370 continue

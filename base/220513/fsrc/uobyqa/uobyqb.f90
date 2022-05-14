@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM12:50:54
+! Last Modified: Saturday, May 14, 2022 PM01:24:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -337,6 +337,8 @@ knew = 0
 xopt = xpt(:, kopt)
 g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
 h = vec2smat(pq(n + 1:npt - 1))
+!write (16, *) 'pq', pq(1:npt - 1)
+!write (16, *) 'xopt', xopt(1:n)
 
 if (is_nan(sum(abs(g)) + sum(abs(h)))) then
     info = NAN_MODEL
@@ -348,7 +350,13 @@ end if
 !     Generate the next trust region step and test its length. Set KNEW
 !     to -1 if the purpose of the next F will be to improve conditioning,
 !     and also calculate a lower bound on the Hessian term of the model Q.
+
+!write (16, *) 'nf', nf
+!write (16, *) 'Grad', g
+!write (16, *) 'Hess', h
+
 call trstep(delta, g, h, tol, d, crvmin)
+!write(16,*) 'd', d, crvmin
 
 dnorm = min(delta, sqrt(sum(d**2)))
 errtol = -ONE
@@ -504,9 +512,14 @@ if (knew <= 0) goto 290
 
 xpt(:, knew) = xnew
 ! It can happen that VLAG(KNEW) = 0 due to rounding.
+!write (16, *) 'pqb', pq(1:npt - 1)
+!write (16, *) 'vlag', vlag(1:npt)
+!write (16, *) 'pl', pl(knew, 1:npt - 1)
+!write (16, *) 'diff', diff
 pl(knew, :) = pl(knew, :) / vlag(knew)
 plknew = pl(knew, :)
 pq = pq + diff * plknew
+!write (16, *) 'pqa', pq(1:npt - 1)
 pl = pl - outprod(vlag, plknew)
 pl(knew, :) = plknew
 
