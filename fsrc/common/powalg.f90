@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 15, 2022 PM04:09:54
+! Last Modified: Sunday, May 15, 2022 PM04:26:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -632,9 +632,9 @@ s = HALF * d + x
 sxpt = matprod(s, xpt)
 dxpt = matprod(d, xpt)
 if (present(hq)) then
-    qinc = inprod(d, gq + matprod(hq, s)) + inprod(sxpt, pq * dxpt)
+    qinc = inprod(d, gq + matprod(hq, s)) + inprod(dxpt, pq * sxpt)
 else
-    qinc = inprod(d, gq) + inprod(sxpt, pq * dxpt)
+    qinc = inprod(d, gq) + inprod(dxpt, pq * sxpt)
 end if
 
 !--------------------------------------------------------------------------------------------------!
