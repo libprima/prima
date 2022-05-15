@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 15, 2022 PM10:44:20
+! Last Modified: Monday, May 16, 2022 AM12:49:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -48,7 +48,7 @@ real(RP) :: d(size(xpt, 1))  ! D(N)
 character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: vlagsq_cauchy
+real(RP) :: vlagsq_cauchy, denom_cauchy, beta_cauchy, vlag_cauchy(size(xpt, 1) + size(xpt, 2))
 real(RP) :: vlag_line(size(xpt, 1) + size(xpt, 2))
 real(RP) :: beta_line
 real(RP) :: denom_line
@@ -290,6 +290,11 @@ vlag_line = calvlag(kopt, bmat, d, xpt, zmat)
 beta_line = calbeta(kopt, bmat, d, xpt, zmat)
 denom_line = alpha * beta_line + vlag_line(knew)**2
 
+!write (16, *) 'line', denom_line, vlag_line(knew), beta_line
+
+!if (adelt > 1.0E-2) return  ! This works strangely well ... Why?
+!if (adelt > 1.0E-3) return  ! This works strangely well ... Why?
+
 ! Prepare for the method that assembles the constrained Cauchy step in S. The sum of squares of the
 ! fixed components of S is formed in SFIXSQ, and the free components of S are set to BIGSTP. When
 ! UPHILL = 0, the method calculates the downhill version of XALT, which intends to minimize the
@@ -362,9 +367,21 @@ do uphill = 0, 1
     end if
 end do
 
+!-----------------------------------------------------!
+s = xnew - xopt
+vlag_cauchy = calvlag(kopt, bmat, s, xpt, zmat)
+beta_cauchy = calbeta(kopt, bmat, s, xpt, zmat)
+denom_cauchy = alpha * beta_cauchy + vlag_cauchy(knew)**2
+!-----------------------------------------------------!
+!write (16, *) 'cauchy', vlagsq, vlag_line(knew), beta_line
+
 ! Take the Cauchy step if it is likely to render a larger denominator.
-if (vlagsq > max(denom_line, ZERO) .or. is_nan(denom_line)) then
-    d = xnew - xopt
+if (adelt <= 1.0E-2) then
+!if (adelt <= 1.0E-3) then
+    if (vlagsq > max(denom_line, ZERO) .or. is_nan(denom_line)) then
+!if (denom_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then
+        d = s
+    end if
 end if
 
 

@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 15, 2022 PM10:24:51
+! Last Modified: Monday, May 16, 2022 AM12:16:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -370,7 +370,7 @@ xnew = xopt + d
 alpha = sum(zmat(knew, :)**2)
 is_cauchy = .false.
 
-write (17, *) nf, d
+!write (17, *) nf, d
 
 230 continue
 
