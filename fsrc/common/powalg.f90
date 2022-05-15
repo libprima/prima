@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 15, 2022 PM04:26:48
+! Last Modified: Sunday, May 15, 2022 PM04:56:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -553,7 +553,7 @@ function quadinc_dx(d, x, xpt, gq, pq, hq) result(qinc)
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 ! N.B.: QUADINC_DX(D, ZEROS(SIZE(D)), XPT, GQ, PQ, HQ) = QUADINC_D0(D, XPT, GQ, PQ, HQ)
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, issymmetric
@@ -572,15 +572,11 @@ real(RP) :: qinc
 
 ! Local variable
 character(len=*), parameter :: srname = 'QUADINC_DX'
-integer(IK) :: i
-integer(IK) :: j
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: dxpt(size(pq))
 real(RP) :: s(size(x))
 real(RP) :: sxpt(size(pq))
-real(RP) :: t
-real(RP) :: w(size(pq))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -603,8 +599,9 @@ end if
 ! Calculation starts !
 !====================!
 
+!!-------------------------------------------------------------------------------------------------!
+!!The following is Powell's scheme in NEWUOA.
 !s = x + d
-
 !qinc = ZERO
 !do j = 1, n
 !    ! First-order term
@@ -620,14 +617,18 @@ end if
 !        end do
 !    end if
 !end do
-
 !! Implicit second-order term
 !dxpt = matprod(d, xpt)
 !w = dxpt * (HALF * dxpt + matprod(x, xpt))
 !do i = 1, npt
 !    qinc = qinc + pq(i) * w(i)
 !end do
+!!-------------------------------------------------------------------------------------------------!
 
+!--------------------------------------------------------------------------------------------------!
+! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
+! N.B.: INPROD(DXPT, PQ * SXPT) = INPROD(D, HESS_MUL(S, XPT, PQ))
+!--------------------------------------------------------------------------------------------------!
 s = HALF * d + x
 sxpt = matprod(s, xpt)
 dxpt = matprod(d, xpt)
@@ -636,23 +637,12 @@ if (present(hq)) then
 else
     qinc = inprod(d, gq) + inprod(dxpt, pq * sxpt)
 end if
-
-!--------------------------------------------------------------------------------------------------!
-! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
-!--------------------------------------------------------------------------------------------------!
-!! The order of calculation seems quite important. The following order seems to work well.
-!! First-order term
-!qinc = inprod(d, gq)
-!s = HALF * d + x  ! Different from the above version.
-!! Implicit second-order term
-!qinc = qinc + sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
-!! Explicit second-order term
-!if (present(hq)) then
-!   qinc = qinc + inprod(s, matprod(hq, d))
-!end if
-!! In Fortran, the following implementations concerning HQ do not work as well as the above one.
-!!qinc = qinc + inprod(d, matprod(hq, s))
-!!qinc = qinc + HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
+!!MATLAB:
+!!if nargin >= 6
+!!    qinc = d'*(gq + hq*s) + 0.5*dxpt'*(pq*sxpt);
+!!else
+!!    qinc = d'*gq + 0.5*dxpt'*(pq*sxpt);
+!!end
 !--------------------------------------------------------------------------------------------------!
 
 !====================!
@@ -713,7 +703,7 @@ end if
 ! Calculation starts !
 !====================!
 
-!!--------------------------------------------------------------------------------------------------!
+!!-------------------------------------------------------------------------------------------------!
 !! The following is Powell's scheme in LINCOA.
 !! First-order term and explicit second-order term
 !qinc = ZERO
@@ -751,7 +741,7 @@ end if
 !!if nargin >= 5
 !!    qinc = d'*(gq + 0.5*hq*d) + 0.5*dxpt'*(pq*dxpt);
 !!else
-!!    qinc = d'*gq + 0.5*w'*(pq*dxpt);
+!!    qinc = d'*gq + 0.5*dxpt'*(pq*dxpt);
 !!end
 !--------------------------------------------------------------------------------------------------!
 
