@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, May 06, 2022 PM08:43:20
+! Last Modified: Sunday, May 15, 2022 PM05:08:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -556,7 +556,7 @@ function quadinc_dx(d, x, xpt, gq, pq, hq) result(qinc)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : matprod, issymmetric, inprod
 implicit none
 
 ! Inputs
@@ -577,6 +577,7 @@ integer(IK) :: j
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: dxpt(size(pq))
+real(RP) :: sxpt(size(pq))
 real(RP) :: s(size(x))
 real(RP) :: t
 real(RP) :: w(size(pq))
@@ -602,29 +603,38 @@ end if
 ! Calculation starts !
 !====================!
 
-s = x + d
+!s = x + d
 
-! First-order term and explicit second order term
-qinc = ZERO
-do j = 1, n
-    qinc = qinc + d(j) * gq(j)
-    do i = 1, j
-        t = d(i) * s(j) + d(j) * x(i)
-        if (i == j) then
-            t = HALF * t
-        end if
-        if (present(hq)) then
-            qinc = qinc + t * hq(i, j)
-        end if
-    end do
-end do
+!! First-order term and explicit second order term
+!qinc = ZERO
+!do j = 1, n
+!    qinc = qinc + d(j) * gq(j)
+!    do i = 1, j
+!        t = d(i) * s(j) + d(j) * x(i)
+!        if (i == j) then
+!            t = HALF * t
+!        end if
+!        if (present(hq)) then
+!            qinc = qinc + t * hq(i, j)
+!        end if
+!    end do
+!end do
 
-! Implicit second-order term
+!! Implicit second-order term
+!dxpt = matprod(d, xpt)
+!w = dxpt * (HALF * dxpt + matprod(x, xpt))
+!do i = 1, npt
+!    qinc = qinc + pq(i) * w(i)
+!end do
+
+s = HALF * d + x
+sxpt = matprod(s, xpt)
 dxpt = matprod(d, xpt)
-w = dxpt * (HALF * dxpt + matprod(x, xpt))
-do i = 1, npt
-    qinc = qinc + pq(i) * w(i)
-end do
+if (present(hq)) then
+    qinc = inprod(d, gq + matprod(hq, s)) + inprod(dxpt, pq * sxpt)
+else
+    qinc = inprod(d, gq) + inprod(dxpt, pq * sxpt)
+end if
 
 !--------------------------------------------------------------------------------------------------!
 ! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
