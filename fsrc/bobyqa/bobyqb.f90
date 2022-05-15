@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 15, 2022 AM12:28:12
+! Last Modified: Sunday, May 15, 2022 PM10:23:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -308,6 +308,7 @@ if (ntrits == 0) then
 
     ! Calculate a geometry step.
     d = geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat)
+    write (16, *) nf, d
     xnew = xopt + d
 
     ! Calculate VLAG, BETA, and DENOM for the current choice of D.
@@ -345,9 +346,10 @@ if (ntrits == 0) then
             !--------------------------------------------------------------------------------------!
 
 
+            write (16, *) nf, 'resc'
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fval, &
                 & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
-
+            ! Do we need to pass sl, su, vlag, xopt, f ???
 
             ! XOPT is updated now in case the branch below to label 720 is taken. Any updating of
             ! GOPT occurs after the branch below to label 20, which leads to a trust region

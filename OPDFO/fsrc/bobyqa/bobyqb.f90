@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 PM11:57:11
+! Last Modified: Sunday, May 15, 2022 PM10:24:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,7 +104,7 @@ real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
-logical :: shortd
+logical :: shortd, is_cauchy
 
 
 ! Sizes.
@@ -305,6 +305,8 @@ end if
 !--------------------------------------------------------------------------------------------------!
 
 
+if (ntrits == 0) write (17, *) nf, 'resc'
+
 call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fval, &
     & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
 
@@ -366,6 +368,9 @@ d = xnew - xopt
 xnew = xopt + d
 !----------------!
 alpha = sum(zmat(knew, :)**2)
+is_cauchy = .false.
+
+write (17, *) nf, d
 
 230 continue
 
@@ -378,13 +383,14 @@ beta = calbeta(kopt, bmat, d, xpt, zmat)
 ! step. Then RESCUE may be called if rounding errors have damaged the chosen denominator.
 if (ntrits == 0) then
     denom = alpha * beta + vlag(knew)**2
-    if (denom < cauchy .and. cauchy > ZERO) then
+    if (.not. is_cauchy .and. (denom < cauchy .and. cauchy > ZERO .or. is_nan(denom))) then
         xnew = xalt
         d = xnew - xopt
         !----------------!
         xnew = xopt + d
         !----------------!
         cauchy = ZERO
+        is_cauchy = .true.
         go to 230
     end if
     if (.not. (denom > HALF * vlag(knew)**2)) then

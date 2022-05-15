@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 PM05:17:41
+! Last Modified: Sunday, May 15, 2022 PM10:28:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -282,14 +282,22 @@ end if
 ! KNEW-th Lagrange function; when UPHILL = 1, it calculates the uphill version that intends to
 ! maximize the Lagrange function.
 bigstp = adelt + adelt
+xsav = xopt
+csave = ZERO
 do uphill = 0, 1
     s = ZERO
     mask_free = (min(xopt - sl, glag) > 0 .or. max(xopt - su, glag) < 0)
     s(trueloc(mask_free)) = bigstp
     ggfree = sum(glag(trueloc(mask_free))**2)
     if (ggfree <= ZERO) then
-        cauchy = ZERO
-        return
+        !cauchy = ZERO
+        !return
+        if (uphill == 0) then
+            glag = -glag
+            !xsav = xalt
+            !csave = cauchy
+        end if
+        cycle
     end if
 
     ! Investigate whether more components of S can be fixed. Note that the loop counter K does not
@@ -344,15 +352,21 @@ do uphill = 0, 1
     ! of CAUCHY.
     if (uphill == 0) then
         glag = -glag
+        !xsav = xalt
+        !csave = cauchy
+    end if
+
+    if (cauchy > csave) then
         xsav = xalt
         csave = cauchy
     end if
+
 end do
 
-if (csave > cauchy) then
-    xalt = xsav
-    cauchy = csave
-end if
+!if (csave > cauchy) then
+xalt = xsav
+cauchy = csave
+!end if
 end subroutine geostep
 
 
