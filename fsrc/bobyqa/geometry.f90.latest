@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 15, 2022 PM10:44:20
+! Last Modified: Sunday, May 15, 2022 PM09:43:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -48,16 +48,16 @@ real(RP) :: d(size(xpt, 1))  ! D(N)
 character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: vlagsq_cauchy
+real(RP) :: cauchy
 real(RP) :: vlag_line(size(xpt, 1) + size(xpt, 2))
 real(RP) :: beta_line
 real(RP) :: denom_line
-real(RP) :: x_cauchy(size(xpt, 1))
+real(RP) :: xalt(size(xpt, 1))
 real(RP) :: xnew(size(xpt, 1))
 real(RP) :: glag(size(xpt, 1))
 real(RP) :: pqlag(size(xpt, 2))
-real(RP) :: s(size(xpt, 1))
-real(RP) :: bigstp, vlagsq, curv, dderiv(size(xpt, 2)), distsq(size(xpt, 2)),  &
+real(RP) :: s(size(xpt, 1)), xsav(size(xpt, 1))
+real(RP) :: bigstp, csave, curv, dderiv(size(xpt, 2)), distsq(size(xpt, 2)),  &
 &        ggfree, gs, predsq(3, size(xpt, 2)), scaling, &
 &        resis, slbd, stplen(3, size(xpt, 2)), grdstp, subd, sumin, betabd(3, size(xpt, 2)), &
 &         vlag(3, size(xpt, 2)), sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2)),  &
@@ -275,17 +275,17 @@ if (ibd > 0) then
     xnew(ibd) = su(ibd)
 end if
 
+d = xnew - xopt
 ! Calculate DENOM for the current choice of D.
 ! N.B.: Indeed, only VLAG_LINE(KNEW) is needed. Moreover, VLAG_LINE(KNEW) = VLAG(ISQ, KSQ), which
 ! can be obtained directly from the array VLAG without any calculation. Therefore, evaluating the
-! whole VLAG_LINE from scratch is not really needed here. However, we still choose to do so, because
-! VLAG_LINE and BETA_LINE can be calculated in one single function if the language supports allow a
-! functions to have multiple output (e.g., MATLAB/Python/Julia/R, but NOT Fortran and C), and the
-! calculation of BETA_LINE needs the full VLAG_LINE. For instance, in MATLAB, the calculation will
-! look like [vlag_line, beta_line] = vlagbeta(kopt, bmat, d, xpt, zmat). See the code of CALVLAG and
-! CALBETA for more information. In other words, our code here is a suboptimal implementation but it
-! intends to illustrate what should be done in MATLAB/Python/Julia/R.
-d = xnew - xopt
+! whole VLAG_LINE from scratch is not really needed here. However, we choose to do so as VLAG_LINE
+! and BETA_LINE can be calculated in one single function if the language supports allow a functions
+! to have multiple output (e.g., MATLAB/Python/Julia/R, but NOT Fortran and C), and the calculation
+! of BETA_LINE needs the full VLAG_LINE. For instance, in MATLAB, the calculation will look like
+! [vlag_line, beta_line] = vlagbeta(kopt, bmat, d, xpt, zmat). See the code of CALVLAG and CALBETA
+! for more information. In other words, our code here is a suboptimal implementation but it intends
+! to illustrate what should be done in MATLAB/Python/Julia/R.
 vlag_line = calvlag(kopt, bmat, d, xpt, zmat)
 beta_line = calbeta(kopt, bmat, d, xpt, zmat)
 denom_line = alpha * beta_line + vlag_line(knew)**2
@@ -296,8 +296,8 @@ denom_line = alpha * beta_line + vlag_line(knew)**2
 ! KNEW-th Lagrange function; when UPHILL = 1, it calculates the uphill version that intends to
 ! maximize the Lagrange function.
 bigstp = adelt + adelt
-xnew = xopt
-vlagsq = ZERO
+xsav = xopt
+csave = ZERO
 do uphill = 0, 1
     if (uphill == 1) then
         glag = -glag
@@ -307,6 +307,8 @@ do uphill = 0, 1
     s(trueloc(mask_free)) = bigstp
     ggfree = sum(glag(trueloc(mask_free))**2)
     if (ggfree <= ZERO) then
+        !xalt = xopt
+        !cauchy = ZERO
         cycle
     end if
 
@@ -332,11 +334,11 @@ do uphill = 0, 1
     end do
 
     ! Set the remaining free components of S and all components of XALT. S may be scaled later.
-    x_cauchy(trueloc(glag > 0)) = sl(trueloc(glag > 0))
-    x_cauchy(trueloc(glag <= 0)) = su(trueloc(glag <= 0))
-    x_cauchy(trueloc(s == 0)) = xopt(trueloc(s == 0))
+    xalt(trueloc(glag > 0)) = sl(trueloc(glag > 0))
+    xalt(trueloc(glag <= 0)) = su(trueloc(glag <= 0))
+    xalt(trueloc(s == 0)) = xopt(trueloc(s == 0))
     xtemp = max(sl, min(su, xopt - grdstp * glag))
-    x_cauchy(trueloc(s == bigstp)) = xtemp(trueloc(s == bigstp))
+    xalt(trueloc(s == bigstp)) = xtemp(trueloc(s == bigstp))
     s(trueloc(s == bigstp)) = -grdstp * glag(trueloc(s == bigstp))
     gs = inprod(glag, s)
 
@@ -350,21 +352,34 @@ do uphill = 0, 1
     end if
     if (curv > -gs .and. curv < -(ONE + sqrt(TWO)) * gs) then
         scaling = -gs / curv
-        x_cauchy = max(sl, min(su, xopt + scaling * s))
-        vlagsq_cauchy = (HALF * gs * scaling)**2
+        xalt = max(sl, min(su, xopt + scaling * s))
+        cauchy = (HALF * gs * scaling)**2
     else
-        vlagsq_cauchy = (gs + HALF * curv)**2
+        cauchy = (gs + HALF * curv)**2
     end if
 
-    if (vlagsq_cauchy > vlagsq) then
-        xnew = x_cauchy
-        vlagsq = vlagsq_cauchy
+    !if (uphill == 0) then
+    !    xsav = xalt
+    !    csave = cauchy
+    !end if
+
+    if (cauchy > csave) then
+        xsav = xalt
+        csave = cauchy
     end if
+
 end do
 
+!if (csave > cauchy) then
+!    xalt = xsav
+!    cauchy = csave
+!end if
+
 ! Take the Cauchy step if it is likely to render a larger denominator.
-if (vlagsq > max(denom_line, ZERO) .or. is_nan(denom_line)) then
-    d = xnew - xopt
+!if (cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then
+!d = xalt - xopt
+if (csave > max(denom_line, ZERO) .or. is_nan(denom_line)) then
+    d = xsav - xopt
 end if
 
 
