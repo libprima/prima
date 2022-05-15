@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, May 06, 2022 PM08:43:20
+! Last Modified: Sunday, May 15, 2022 PM04:09:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -556,7 +556,7 @@ function quadinc_dx(d, x, xpt, gq, pq, hq) result(qinc)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, issymmetric
 implicit none
 
 ! Inputs
@@ -578,6 +578,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: dxpt(size(pq))
 real(RP) :: s(size(x))
+real(RP) :: sxpt(size(pq))
 real(RP) :: t
 real(RP) :: w(size(pq))
 
@@ -587,7 +588,7 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(n >= 1, 'N >= 1', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
@@ -602,29 +603,39 @@ end if
 ! Calculation starts !
 !====================!
 
-s = x + d
+!s = x + d
 
-! First-order term and explicit second order term
-qinc = ZERO
-do j = 1, n
-    qinc = qinc + d(j) * gq(j)
-    do i = 1, j
-        t = d(i) * s(j) + d(j) * x(i)
-        if (i == j) then
-            t = HALF * t
-        end if
-        if (present(hq)) then
-            qinc = qinc + t * hq(i, j)
-        end if
-    end do
-end do
+!qinc = ZERO
+!do j = 1, n
+!    ! First-order term
+!    qinc = qinc + d(j) * gq(j)
+!    ! Explicit second-order term
+!    if (present(hq)) then
+!        do i = 1, j
+!            t = d(i) * s(j) + d(j) * x(i)
+!            if (i == j) then
+!                t = HALF * t
+!            end if
+!            qinc = qinc + t * hq(i, j)
+!        end do
+!    end if
+!end do
 
-! Implicit second-order term
+!! Implicit second-order term
+!dxpt = matprod(d, xpt)
+!w = dxpt * (HALF * dxpt + matprod(x, xpt))
+!do i = 1, npt
+!    qinc = qinc + pq(i) * w(i)
+!end do
+
+s = HALF * d + x
+sxpt = matprod(s, xpt)
 dxpt = matprod(d, xpt)
-w = dxpt * (HALF * dxpt + matprod(x, xpt))
-do i = 1, npt
-    qinc = qinc + pq(i) * w(i)
-end do
+if (present(hq)) then
+    qinc = inprod(d, gq + matprod(hq, s)) + inprod(sxpt, pq * dxpt)
+else
+    qinc = inprod(d, gq) + inprod(sxpt, pq * dxpt)
+end if
 
 !--------------------------------------------------------------------------------------------------!
 ! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
@@ -688,7 +699,7 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(n >= 1, 'N >= 1', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(gq) == n, 'SIZE(GOPT) = N', srname)
@@ -846,7 +857,6 @@ npt = int(size(xpt, 2), kind(npt))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
     call assert(.not. any(is_nan(fval) .or. is_posinf(fval)), 'FVAL is not NaN/+Inf', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
@@ -919,7 +929,6 @@ npt = int(size(xpt, 2), kind(npt))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(size(x) == n, 'SIZE(Y) == N', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
