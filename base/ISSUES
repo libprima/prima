@@ -20,6 +20,16 @@ options = []; options.yw = 28; verify('lincoa', 'HS55', 13, options);
 %%%%%%
 Fix: blacklist 'HS55'
 
+3. SEGFAULT
+Version: base 220227
+Date: 20220306
+YW: 2211
+%%%%%%
+cd('base/220227/matlab/tests');
+options = []; options.yw = 2211; verify('lincoa', options);
+%%%%%%
+Fix: This seems to be caused by problem AVGASA or AVGASB; block them for the moment
+
 
 - BOBYQA
 
@@ -33,6 +43,18 @@ cd('base/220208/matlab/tests');
 options = []; options.yw = 27; verify('bobyqa', 'STREG', 27, options);
 %%%%%%
 Fix: blacklist 'STREG'
+
+2. bobyqaN returns an fx that does not match x (Should be tested again when the modernization finishes).
+Version: base 220513
+Date: 20220514
+YW: 222017
+Parallel of sequential: Parallel
+Reproduce:
+%%%%%%
+cd('base/220513/matlab/tests');
+options = []; options.yw = 2222017; verify('bobyqa', 'PALMER3A', options);  % Cannot reproduce locally
+%%%%%%
+Fix: blacklist 'PALMER3A'
 
 - COBYLA
 
