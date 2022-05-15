@@ -86,8 +86,9 @@ CHCKTST := $(TEST_DIR)/checktest
 # Flang and nvfortran do not support REAL128;
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # ifx encounters an internal error when compiling with REAL128.
-TESTS_QP = atest gtest ntest itest stest 9test
-TESTS_NO_QP = dtest ftest vtest xtest
+# NAG Fortran Compiler Release 7.0(Yurakucho) Build 7066 is buggy with REAL128
+TESTS_QP = atest gtest itest stest 9test
+TESTS_NO_QP = dtest ftest vtest xtest ntest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
 # When listing the tests, we first put the ones that are more likely to raise errors.
 $(foreach TST, $(TESTS_QP), $(eval $(TST): SUBTESTS := \
@@ -112,13 +113,13 @@ $(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
 # surely) to be OK, because the only difference in the code is the integer kind. Similar for others.
 TESTS_INT_QP = atest_i2 atest_i4 atest_i8 \
 			   gtest_i2 gtest_i4 gtest_i8 \
-			   ntest_i2 ntest_i4 ntest_i8 \
 			   itest_i2 itest_i4 itest_i8 \
 			   stest_i2 stest_i4 stest_i8 \
 			   9test_i2 9test_i4 9test_i8
 TESTS_INT_NO_QP = dtest_i2 dtest_i4 dtest_i8 \
 				  ftest_i2 ftest_i4 ftest_i8 \
 				  vtest_i2 vtest_i4 vtest_i8 \
+			   	  ntest_i2 ntest_i4 ntest_i8 \
 				  xtest_i2 xtest_i4 xtest_i8
 TESTS_INT = $(TESTS_INT_QP) $(TESTS_INT_NO_QP)
 $(foreach TST, $(TESTS_INT_QP), $(eval $(TST): SUBTESTS := \
