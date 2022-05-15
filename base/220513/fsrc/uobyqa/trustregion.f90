@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 PM06:42:03
+! Last Modified: Sunday, May 15, 2022 AM10:45:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -183,18 +183,20 @@ maxiter = min(1000_IK, 100_IK * int(n, IK))  ! What is the theoretical bound of 
 140 continue
 
 iter = iter + 1_IK
-!write (16, *) iter, d
+write (16, *) iter, d
 
 ! Zaikun 26-06-2019: The original code can encounter infinite cycling, which did happen when testing
 ! the CUTEst problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. Indeed, in all these cases, Inf and NaN
 ! appear in D due to extremely large values in the Hessian matrix (up to 10^219).
 if (.not. is_finite(sum(abs(d)))) then
     d = dold
+    write (16, *) 192
     goto 370
 else
     dold = d
 end if
 if (iter > maxiter) then
+    write (16, *) 198
     goto 370
 end if
 
@@ -219,6 +221,7 @@ end do
 
 ! Zaikun 20220509
 if (any(is_nan(piv))) then
+    write (16, *) 222
     goto 370  ! Better action to take???
 end if
 
@@ -242,6 +245,7 @@ if (.not. negcrv) then
         paru = par
         paruest = par
         if (par == ZERO) then  ! A rare case: the trust region center is optimal.
+            write (16, *) 245
             goto 370
         end if
         if (k == 0) then  ! H + PAR*I is positive definite.
@@ -333,15 +337,16 @@ if (paruest > 0 .and. parlest >= partmp) then
 
 !----------------------------------------------------------------!
 !----------------------------------------------------------------!
-!write (16, *) ksav, d
-    !close (16)
+    write (16, *) ksav, d
     call wassert(d_initialized, 'D is initialized', srname)  ! Zaikun 20220512, TO BE REMOVED
 !----------------------------------------------------------------!
 !----------------------------------------------------------------!
 
     dtg = inprod(d, gg)
+    write (16, *) dtg, gg
     !d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
     d = -sign(delta, dtg) * (d / sqrt(dsq))  !!MATLAB: d = -sign(dtg) * delta * (d / sqrt(dsq))
+    write (16, *) 345
     goto 370
 end if
 
@@ -388,6 +393,7 @@ if (par == ZERO .and. dsq <= delsq) then
     !!% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
     !!tridh = spdiags([[tn; 0], td, [0; tn]], -1:1, n, n);
     !!crvmin = eigs(tridh, 1, 'smallestreal');
+    write (16, *) 391
     goto 370
 end if
 
@@ -397,16 +403,26 @@ phi = ONE / dnorm - ONE / delta
 if (tol * (ONE + par * dsq / wsq) - dsq * phi * phi >= 0) then
     !d = (delta / dnorm) * d
     d = delta * (d / dnorm)
+    write (16, *) 400
     goto 370
 end if
-if (iter >= 2 .and. par <= parl) goto 370
-if (paru > 0 .and. par >= paru) goto 370
+if (iter >= 2 .and. par <= parl) then
+    write (16, *) 403
+    goto 370
+end if
+if (paru > 0 .and. par >= paru) then
+    write (16, *) 404
+    goto 370
+end if
 
 ! Complete the iteration when PHI is negative.
 if (phi < 0) then
     parlest = par
     if (posdef) then
-        if (phi <= phil) goto 370
+        if (phi <= phil) then
+            write (16, *) 410
+            goto 370
+        end if
         slope = (phi - phil) / (par - parl)
         parlest = par - phi / slope
     end if
@@ -452,6 +468,7 @@ if (.not. posdef) then
     gam = tempa / (sign(tempb, dtz) + dtz)
     if (tol * (wsq + par * delsq) - gam * gam * wwsq >= 0) then
         d = d + gam * z
+        write (16, *) 455
         goto 370
     end if
     parlest = max(parlest, par - wwsq / zsq)
@@ -460,7 +477,10 @@ end if
 ! Complete the iteration when PHI is positive.
 slope = ONE / gnorm
 if (paru > 0) then
-    if (phi >= phiu) goto 370
+    if (phi >= phiu) then
+        write (16, *) 465
+        goto 370
+    end if
     slope = (phiu - phi) / (paru - par)
 end if
 parlest = max(parlest, par - phi / slope)
@@ -474,13 +494,17 @@ phiu = phi
 !write (16, *) 2, 'goto 220'
 goto 220
 
+write (16, *) 477
+
 370 continue
 
 ! Apply the inverse Householder transformations to D.
+write (16, *) 'dh', d
 do k = n - 1_IK, 1, -1
     d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
 !!MATLAB: d = P*d;
+write (16, *) 'hd', d
 
 end subroutine trstep
 

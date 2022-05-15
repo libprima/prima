@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 PM01:23:36
+! Last Modified: Sunday, May 15, 2022 AM10:26:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -305,13 +305,13 @@ end do
 !& w(4 * n + 1), w(5 * n + 1), evalue)
 ! In Powell's TRSTEP code, n-dimensional vectors may be accessed at N+1, leading to memory errors.
 ! We assign one more place to the vectors to avoid such problems.
-!write (17, *) 'nf', nf
-!write (17, *) 'Grad', g
-!write (17, *) 'Hess', h
+write (17, *) 'nf', nf
+write (17, *) 'Grad', g
+write (17, *) 'Hess', h
 call trstep(n, g, h, delta, tol, d(1:n), w(1), w(n + 1), w(2 * n + 2), w(3 * n + 3), &
 & w(4 * n + 4), w(5 * n + 5), evalue)
 !trstep(n, g, h, delta, tol, d, gg, td, tn, w, piv, z, evalue)
-!write (17, *) 'd', d(1:n), evalue
+write (17, *) 'd', d(1:n), evalue
 temp = ZERO
 do i = 1, n
     temp = temp + d(i)**2

@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 PM01:24:19
+! Last Modified: Sunday, May 15, 2022 AM10:28:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -351,12 +351,12 @@ end if
 !     to -1 if the purpose of the next F will be to improve conditioning,
 !     and also calculate a lower bound on the Hessian term of the model Q.
 
-!write (16, *) 'nf', nf
-!write (16, *) 'Grad', g
-!write (16, *) 'Hess', h
+write (16, *) 'nf', nf
+write (16, *) 'Grad', g
+write (16, *) 'Hess', h
 
 call trstep(delta, g, h, tol, d, crvmin)
-!write(16,*) 'd', d, crvmin
+write (16, *) 'd', d, crvmin
 
 dnorm = min(delta, sqrt(sum(d**2)))
 errtol = -ONE

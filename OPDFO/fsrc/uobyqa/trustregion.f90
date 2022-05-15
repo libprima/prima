@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 PM09:03:56
+! Last Modified: Sunday, May 15, 2022 AM11:47:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -326,8 +326,7 @@ if (paruest > 0 .and. parlest >= partmp) then
 !----------------------------------------------------------------!
 
     dtg = inprod(d, gg)
-    !d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
-    d = -sign(delta, dtg) * (d / sqrt(dsq))
+    d = sign(delta, -dtg) * (d / sqrt(dsq))
     goto 370
 end if
 
@@ -419,7 +418,7 @@ if (.not. posdef) then
     z(1) = ONE / piv(1)
     do k = 1, n - 1_IK
         tnz = tn(k) * z(k)
-        z(k + 1) = -(sign(ONE, tnz) + tnz) / piv(k + 1)
+        z(k + 1) = (sign(ONE, -tnz) - tnz) / piv(k + 1)
     end do
     wwsq = inprod(piv, z**2)  ! Needed in the convergence test.
     do k = n - 1_IK, 1, -1
