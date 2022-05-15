@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 15, 2022 AM11:13:34
+! Last Modified: Sunday, May 15, 2022 PM12:14:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -289,7 +289,7 @@ end do
 !     Calculate the pivots of the Cholesky factorization of (H+PAR*I).
 !
 140 iterc = iterc + 1
-write (17, *) iterc, d(1:n)
+!write (17, *) iterc, d(1:n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 26-06-2019
 ! The original code can encounter infinite cycling, which did happen
@@ -439,8 +439,8 @@ parlest = par - dhd / dsq
 190 temp = paruest
 if (gsq == ZERO) temp = temp * (ONE - tol)
 if (paruest > ZERO .and. parlest >= temp) then
-    write (17, *) paruest, parlest, temp
-    write (17, *) ksav, d(1:n)
+!write (17, *) paruest, parlest, temp
+!write (17, *) ksav, d(1:n)
     dtg = ZERO
     do i = 1, n
         dtg = dtg + d(i) * gg(i)
@@ -449,12 +449,12 @@ if (paruest > ZERO .and. parlest >= temp) then
     !do i = 1, n
     !    d(i) = scaling * d(i)
     !end do
-    write (17, *) dtg, gg
+!write (17, *) dtg, gg
     scaling = -sign(delta, dtg)
     do i = 1, n
         d(i) = scaling * (d(i) / sqrt(dsq))
     end do
-    write (17, *) 345
+!write (17, *) 345
     goto 370
 end if
 !
@@ -633,7 +633,7 @@ if (.not. shfmax - shfmin <= 1.0E-2_RP * shfmax) goto 340
 !     Apply the inverse Householder transformations to D.
 !
 370 nm = n - 1
-write (17, *) 'dh', d(1:n)
+!write (17, *) 'dh', d(1:n)
 do k = nm, 1, -1
     kp = k + 1
     summ = ZERO
@@ -645,7 +645,7 @@ do k = nm, 1, -1
     end do
 end do
 
-write (17, *) 'hd', d(1:n)
+!write (17, *) 'hd', d(1:n)
 !
 !     Return from the subroutine.
 !
