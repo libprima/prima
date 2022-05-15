@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 16, 2022 AM12:53:07
+! Last Modified: Monday, May 16, 2022 AM12:54:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -376,8 +376,8 @@ denom_cauchy = alpha * beta_cauchy + vlag_cauchy(knew)**2
 !write (16, *) 'cauchy', vlagsq, vlag_line(knew), beta_line
 
 ! Take the Cauchy step if it is likely to render a larger denominator.
-if (adelt <= 1.0E-2) then
-!if (adelt <= 1.0E-3) then
+!if (adelt <= 1.0E-2) then
+if (adelt <= 1.0E-3) then
     !if (vlagsq > max(denom_line, ZERO) .or. is_nan(denom_line)) then
     if (denom_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then
         d = s
