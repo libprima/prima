@@ -1878,8 +1878,5 @@ vlag(kopt) = vlag(kopt) + ONE
 
 end function calvlag_qint
 
-!subroutine updatel
-!end subroutine updatel
-
 
 end module powalg_mod

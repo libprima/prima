@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 14, 2022 PM08:59:11
+! Last Modified: Sunday, May 15, 2022 AM11:56:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -135,7 +135,7 @@ end if
 ! encounter memory errors). This is indeed why the original UOBYQA code constantly terminates with
 ! "a trust region step has failed to reduce the quadratic model" when applied to univariate problems.
 if (n == 1) then
-    d = sign(delta, -g)  !!MATLAB: D_OUT = -DELTA * SIGN(G)
+    d = sign(delta, -g)  !!MATLAB: d = -delta * sign(g)
     if (h(1, 1) > 0) then
         dnewton = -g / h(1, 1)
         if (abs(dnewton(1)) <= delta) then
@@ -277,7 +277,16 @@ call assert(k >= 1 .and. k <= n, '1 <= K <= N', srname)
 
 ! Handle the case where H + PAR*I has at least one nonpositive eigenvalue.
 ! Set D to a direction of nonpositive curvature of the tridiagonal matrix, and thus revise PARLEST.
-d = ZERO  ! Zaikun 20220512: Powell's code does not include this initialization. Is it correct???
+
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220512: Powell's code does not include the following initialization. Consequently,
+! D(KSAV+1:N) or D(KSAV+2:N) will not be initialized but inherit values from the previous iteration.
+! Is this intended?
+d = ZERO
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+
 d(k) = ONE  ! Zaikun 20220512: D(K+1:N) = ?
 
 !--------------------------------------------------------------------------------------------------!
@@ -350,16 +359,25 @@ if (paruest > 0 .and. parlest >= partmp) then
     ! The definition of D below requires that D is initialized. In Powell's code, it may happen that
     ! only D(1:KSAV) or D(1:KSAV+1) is initialized during the current iteration, but the other
     ! entries are inherited from the previous iteration OR from the initial value before the
-    ! iterations start, which is 0. If such inheriting happens, D_INITIALIZED will be FALSE. In a
-    ! test on 20220514, the SECOND case did occur during the very first iteration. Is this intended?
-    ! Maybe this can only happen during the first iteration?
+    ! iterations start, which is 0. If such inheriting happens, D_INITIALIZED will be FALSE. In
+    ! tests on 20220514, both cases did occur. Interestingly, in both cases, the inherited values
+    ! were all zero or close to zero (1E-16), and hence not very different from the initial value
+    ! zero that we set above. Is this intended?
     call wassert(d_initialized, 'D is initialized', srname)
     !----------------------------------------------------------------------------------------------!
     !----------------------------------------------------------------------------------------------!
 
     dtg = inprod(d, gg)
-    !d = -sign(delta / sqrt(dsq), dtg) * d  !!MATLAB: d = -sign(dtg) * (delta / sqrt(dsq)) * d
-    d = -sign(delta, dtg) * (d / sqrt(dsq))  !!MATLAB: d = -sign(dtg) * delta * (d / sqrt(dsq))
+    d = sign(delta, -dtg) * (d / sqrt(dsq))
+    ! N.B.: As per Powell's code, the line above would be D = -SIGN(DELTA, DTG) * (D / SQRT(DSQ)).
+    ! However, our version here seems more reasonable in case DTG == 0, which is unlikely but did
+    ! happen numerically. Note that SIGN(A, 0) = |A| /= -SIGN(A, 0).
+    !!MATLAB:
+    !!if (dtg == 0)  % sign(0) == 0 in MATLAB. dtg == 0 is unlikely but did happen numerically.
+    !!    d = delta * (d / sqrt(dsq))
+    !!else
+    !!    d = -sign(dtg) * delta * (d / sqrt(dsq))
+    !!end
     goto 370
 end if
 
@@ -451,7 +469,8 @@ if (.not. posdef) then
     z(1) = ONE / piv(1)
     do k = 1, n - 1_IK
         tnz = tn(k) * z(k)
-        z(k + 1) = -(sign(ONE, tnz) + tnz) / piv(k + 1)
+        z(k + 1) = (sign(ONE, -tnz) - tnz) / piv(k + 1)
+        !!MATLAB: z(k + 1) = -(sign(tnz) + tnz) / piv(k + 1)
     end do
     wwsq = inprod(piv, z**2)  ! Needed in the convergence test.
     do k = n - 1_IK, 1, -1
@@ -465,6 +484,12 @@ if (.not. posdef) then
     tempa = abs(delsq - dsq)
     tempb = sqrt(dtz * dtz + tempa * zsq)
     gam = tempa / (sign(tempb, dtz) + dtz)
+    !!MATLAB:
+    !!if (dtz == 0)  % N.B.: sign(0) = 0 in MATLAB.
+    !!    gam = sqrt(tempa / zsq)
+    !!else
+    !!    gam = tempa / (sign(dtz)*tempb + dtz)
+    !!end
     if (tol * (wsq + par * delsq) - gam * gam * wwsq >= 0) then
         d = d + gam * z
         goto 370
