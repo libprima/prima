@@ -88,6 +88,7 @@ CHCKTST := $(TEST_DIR)/checktest
 # Flang and nvfortran do not support REAL128;
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # ifx encounters an internal error when compiling with REAL128.
+# NAG Fortran Compiler Release 7.0(Yurakucho) Build 7066 is buggy with REAL128
 TESTS_QP = atest gtest ltest itest stest 9test
 TESTS_NO_QP = dtest ftest vtest xtest ntest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
