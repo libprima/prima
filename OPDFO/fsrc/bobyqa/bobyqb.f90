@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 16, 2022 AM12:16:06
+! Last Modified: Monday, May 16, 2022 PM03:09:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,7 +85,7 @@ real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
-real(RP) :: vlag(npt + size(x))
+real(RP) :: vlag(npt + size(x)), vlag_cauchy(npt + size(x)), beta_cauchy, denom_cauchy
 real(RP) :: sl(size(x))
 real(RP) :: su(size(x))
 real(RP) :: xalt(size(x))
@@ -383,16 +383,25 @@ beta = calbeta(kopt, bmat, d, xpt, zmat)
 ! step. Then RESCUE may be called if rounding errors have damaged the chosen denominator.
 if (ntrits == 0) then
     denom = alpha * beta + vlag(knew)**2
-    if (.not. is_cauchy .and. (denom < cauchy .and. cauchy > ZERO .or. is_nan(denom))) then
-        xnew = xalt
-        d = xnew - xopt
-        !----------------!
-        xnew = xopt + d
-        !----------------!
-        cauchy = ZERO
-        is_cauchy = .true.
-        go to 230
+    !--------------------------------------------------------------------------------------!
+    !if (.not. is_cauchy .and. (denom < cauchy .and. cauchy > ZERO .or. is_nan(denom))) then
+    !
+    if (adelt <= 1.0E-2 .and. .not. is_cauchy) then
+        vlag_cauchy = calvlag(kopt, bmat, xalt - xopt, xpt, zmat)
+        beta_cauchy = calbeta(kopt, bmat, xalt - xopt, xpt, zmat)
+        denom_cauchy = alpha * beta_cauchy + vlag_cauchy(knew)**2
+        if (denom < denom_cauchy .and. denom_cauchy > ZERO .or. is_nan(denom)) then
+            xnew = xalt
+            d = xnew - xopt
+            !----------------!
+            xnew = xopt + d
+            !----------------!
+            cauchy = ZERO
+            is_cauchy = .true.
+            go to 230
+        end if
     end if
+    !--------------------------------------------------------------------------------------!
     if (.not. (denom > HALF * vlag(knew)**2)) then
         if (nf > nresc) goto 190
         info = DAMAGING_ROUNDING
