@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 16, 2022 AM12:54:55
+! Last Modified: Monday, May 16, 2022 AM10:21:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -123,13 +123,14 @@ if (any(is_nan(glag)) .or. is_nan(adelt)) then  ! ADELT is not NaN if the input 
 end if
 
 ! Search for a large denominator along the straight lines through XOPT and another interpolation
-! point. SLBD and SUBD will be lower and upper bounds on the step along each of these lines in turn.
-! On each line, we will evaluate the value of the KNEW-th Lagrange function at 3 trial points, and
-! estimate the denominator accordingly. The three points take the form (1-t)*XOPT + t*XPT(:, K)
-! with step lengths t = SLBD, SUBD, and STPM. In total, 3*(NPT-1) trial points will be considered.
-! On the K-th line, we intend to maximize the modulus of PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:,K));
-! overall, we attempt to find a trial point that renders a large value of the quantity PREDSQ
-! defined in (3.11) of the BOBYQA paper.
+! point, subject to the bound constraints and the trust region. According to these constraints, SLBD
+! and SUBD will be lower and upper bounds on the step along each of these lines in turn. On each
+! line, we will evaluate the value of the KNEW-th Lagrange function at 3 trial points, and estimate
+! the denominator accordingly. The three points take the form (1-t)*XOPT + t*XPT(:, K) with step
+! lengths t = SLBD, SUBD, and STPM, corresponding the upper (U) bound of t, the lower (L) bound of
+! t, and a medium (M) step. In total, 3*(NPT-1) trial points will be considered. On the K-th line,
+! we intend to maximize the modulus of PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:,K)); overall, we intend
+! to find a trial point rendering a large value of the PREDSQ defined in (3.11) of the BOBYQA paper.
 !
 ! We start with the following DO loop, the purpose of which is to define two 3-by-NPT arrays STPLEN
 ! and ISBD. For each K, STPLEN(1:3, K) and ISBD(1:3, K) corresponds to the straight line through
@@ -138,7 +139,6 @@ end if
 ! whether the corresponding trial points lie on bounds; SBDI(I, K) = J > 0 means that the I-th trail
 ! point on the K-th line attains the J-th upper bound, SBDI(I, K) = -J < 0 indicates reaching the
 ! J-th lower bound, and SBDI(I, K) = 0 means not touching any bound.
-!dderiv = matprod(glag, xpt - spread(xopt, dim=2, ncopies=npt))  ! The derivatives PHI_K'(0).
 dderiv = matprod(glag, xpt) - inprod(glag, xopt) ! The derivatives PHI_K'(0).
 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 do k = 1, npt
@@ -292,8 +292,14 @@ denom_line = alpha * beta_line + vlag_line(knew)**2
 
 !write (16, *) 'line', denom_line, vlag_line(knew), beta_line
 
-!if (adelt > 1.0E-2) return  ! This works strangely well ... Why?
-!if (adelt > 1.0E-3) return  ! This works strangely well ... Why?
+! It works strangely well to try the Cauchy step only in the late stage of the algorithm (e.g., when
+! ADELT is small). Why?
+! 1.0E-2 works well if we use DENOM_CAUCHY to decide whether to take the Cauchy step; 1.0E-3 works
+! well if we use VLAGSQ instead.
+!if (adelt > 1.0E-3) then
+if (adelt > 1.0E-2) then
+    return
+end if
 
 ! Prepare for the method that assembles the constrained Cauchy step in S. The sum of squares of the
 ! fixed components of S is formed in SFIXSQ, and the free components of S are set to BIGSTP. When
@@ -367,21 +373,15 @@ do uphill = 0, 1
     end if
 end do
 
-!-----------------------------------------------------!
 s = xnew - xopt
 vlag_cauchy = calvlag(kopt, bmat, s, xpt, zmat)
 beta_cauchy = calbeta(kopt, bmat, s, xpt, zmat)
 denom_cauchy = alpha * beta_cauchy + vlag_cauchy(knew)**2
-!-----------------------------------------------------!
-!write (16, *) 'cauchy', vlagsq, vlag_line(knew), beta_line
 
 ! Take the Cauchy step if it is likely to render a larger denominator.
-!if (adelt <= 1.0E-2) then
-if (adelt <= 1.0E-3) then
-    !if (vlagsq > max(denom_line, ZERO) .or. is_nan(denom_line)) then
-    if (denom_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then
-        d = s
-    end if
+!if (vlagsq > max(denom_line, ZERO) .or. is_nan(denom_line)) then
+if (denom_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then
+    d = s
 end if
 
 
