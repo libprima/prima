@@ -122,9 +122,7 @@ for COMP in $COMP_LIST; do
         make  "$COMP"test."$SOLVER"
     else
 #        TESTS="i4_r8_d1"
-        # NAG Fortran Compiler Release 7.0(Yurakucho) Build 7066 is buggy with REAL128
-       #if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' ]] ; then
-       if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' || $COMP == 'n' ]] ; then
+       if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' ]] ; then
             TESTS="i2_r4_d1 i8_r4_d0"
         else
             TESTS="i2_r16_d1 i8_r4_d0"
