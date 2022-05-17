@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 17, 2022 PM03:04:13
+! Last Modified: Tuesday, May 17, 2022 PM03:52:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,8 +52,9 @@ real(RP) :: vlagsq, denom_cauchy, beta_cauchy, vlag_cauchy(size(xpt, 1) + size(x
 real(RP) :: vlag_line(size(xpt, 1) + size(xpt, 2))
 real(RP) :: beta_line
 real(RP) :: denom_line
-real(RP) :: xalt(size(xpt, 1))
-real(RP) :: xnew(size(xpt, 1))
+real(RP) :: xcauchy(size(xpt, 1))
+real(RP) :: x(size(xpt, 1))
+real(RP) :: xline(size(xpt, 1))
 real(RP) :: glag(size(xpt, 1))
 real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: s(size(xpt, 1))
@@ -92,20 +93,20 @@ end if
 !     KOPT is the index of the optimal interpolation point.
 !     KNEW is the index of the interpolation point that is going to be moved.
 !     ADELT is the current trust region bound.
-!     XNEW will be set to a suitable new position for the interpolation point
+!     XLINE will be set to a suitable new position for the interpolation point
 !       XPT(KNEW,.). Specifically, it satisfies the SL, SU and trust region
 !       bounds and it should provide a large denominator in the next call of
-!       UPDATE. The step XNEW-XOPT from XOPT is restricted to moves along the
+!       UPDATE. The step XLINE-XOPT from XOPT is restricted to moves along the
 !       straight lines through XOPT and another interpolation point.
-!     XALT also provides a large value of the modulus of the KNEW-th Lagrange
-!       function subject to the constraints that have been mentiONEd, its main
-!       difference from XNEW being that XALT-XOPT is a constrained version of
-!       the Cauchy step within the trust region. An exception is that XALT is
+!     XCAUCHY also provides a large value of the modulus of the KNEW-th Lagrange
+!       function subject to the constraints that have been mentioned, its main
+!       difference from XLINE being that XCAUCHY-XOPT is a constrained version of
+!       the Cauchy step within the trust region. An exception is that XCAUCHY is
 !       not calculated if all components of GLAG (see below) are ZERO.
 !     ALPHA will be set to the KNEW-th diagonal element of the H matrix.
 !     CAUCHY will be set to the square of the KNEW-th Lagrange function at
-!       the step XALT-XOPT from XOPT for the vector XALT that is returned,
-!       except that CAUCHY is set to ZERO if XALT is not calculated.
+!       the step XCAUCHY-XOPT from XOPT for the vector XCAUCHY that is returned,
+!       except that CAUCHY is set to ZERO if XCAUCHY is not calculated.
 !     GLAG is a working space vector of length N for the gradient of the
 !       KNEW-th Lagrange function at XOPT.
 
@@ -263,16 +264,16 @@ ksq = ksqs(isq)
 !![~, isq] = max([predsq(1, ksqs(1)), predsq(2, ksqs(2)), predsq(3, ksqs(3))]);
 !!ksq = ksqs(isq);
 
-! Construct XNEW in a way that satisfies the bound constraints exactly.
+! Construct XLINE in a way that satisfies the bound constraints exactly.
 stpsiz = stplen(isq, ksq)
 ibd = isbd(isq, ksq)
 
-xnew = max(sl, min(su, xopt + stpsiz * (xpt(:, ksq) - xopt)))
+xline = max(sl, min(su, xopt + stpsiz * (xpt(:, ksq) - xopt)))
 if (ibd < 0) then
-    xnew(-ibd) = sl(-ibd)
+    xline(-ibd) = sl(-ibd)
 end if
 if (ibd > 0) then
-    xnew(ibd) = su(ibd)
+    xline(ibd) = su(ibd)
 end if
 
 ! Calculate DENOM for the current choice of D.
@@ -285,15 +286,13 @@ end if
 ! look like [vlag_line, beta_line] = vlagbeta(kopt, bmat, d, xpt, zmat). See the code of CALVLAG and
 ! CALBETA for more information. In other words, our code here is a suboptimal implementation but it
 ! intends to illustrate what should be done in MATLAB/Python/Julia/R.
-d = xnew - xopt
+d = xline - xopt
 vlag_line = calvlag(kopt, bmat, d, xpt, zmat)
 beta_line = calbeta(kopt, bmat, d, xpt, zmat)
 denom_line = alpha * beta_line + vlag_line(knew)**2
 
-!write (16, *) 'line', denom_line, vlag_line(knew), beta_line
-
 ! It works surprisingly well to try the Cauchy step only in the late stage of the algorithm,
-! e.g., when ADELT is small. Why?
+! e.g., when ADELT is small. Why? How to find an adaptive rule?
 ! 1.0E-2 works well if we use DENOM_CAUCHY to decide whether to take the Cauchy step;
 ! 1.0E-3 works well if we use VLAGSQ instead.
 !if (adelt > 1.0E-3) then
@@ -303,11 +302,11 @@ end if
 
 ! Prepare for the method that assembles the constrained Cauchy step in S. The sum of squares of the
 ! fixed components of S is formed in SFIXSQ, and the free components of S are set to BIGSTP. When
-! UPHILL = 0, the method calculates the downhill version of XALT, which intends to minimize the
+! UPHILL = 0, the method calculates the downhill version of XCAUCHY, which intends to minimize the
 ! KNEW-th Lagrange function; when UPHILL = 1, it calculates the uphill version that intends to
 ! maximize the Lagrange function.
 bigstp = adelt + adelt
-x_cauchy = xopt
+xcauchy = xopt
 vlagsq_cauchy = ZERO
 do uphill = 0, 1
     if (uphill == 1) then
@@ -342,12 +341,12 @@ do uphill = 0, 1
         if (.not. (sfixsq > ssqsav .and. ggfree > ZERO)) exit
     end do
 
-    ! Set the remaining free components of S and all components of XALT. S may be scaled later.
-    xalt(trueloc(glag > 0)) = sl(trueloc(glag > 0))
-    xalt(trueloc(glag <= 0)) = su(trueloc(glag <= 0))
-    xalt(trueloc(s == 0)) = xopt(trueloc(s == 0))
+    ! Set the remaining free components of S and all components of XCAUCHY. S may be scaled later.
+    x(trueloc(glag > 0)) = sl(trueloc(glag > 0))
+    x(trueloc(glag <= 0)) = su(trueloc(glag <= 0))
+    x(trueloc(s == 0)) = xopt(trueloc(s == 0))
     xtemp = max(sl, min(su, xopt - grdstp * glag))
-    xalt(trueloc(s == bigstp)) = xtemp(trueloc(s == bigstp))
+    x(trueloc(s == bigstp)) = xtemp(trueloc(s == bigstp))
     s(trueloc(s == bigstp)) = -grdstp * glag(trueloc(s == bigstp))
     gs = inprod(glag, s)
 
@@ -361,19 +360,19 @@ do uphill = 0, 1
     end if
     if (curv > -gs .and. curv < -(ONE + sqrt(TWO)) * gs) then
         scaling = -gs / curv
-        xalt = max(sl, min(su, xopt + scaling * s))
+        x = max(sl, min(su, xopt + scaling * s))
         vlagsq = (HALF * gs * scaling)**2
     else
         vlagsq = (gs + HALF * curv)**2
     end if
 
     if (vlagsq > vlagsq_cauchy) then
-        x_cauchy = xalt
+        xcauchy = x
         vlagsq_cauchy = vlagsq
     end if
 end do
 
-s = x_cauchy - xopt
+s = xcauchy - xopt
 vlag_cauchy = calvlag(kopt, bmat, s, xpt, zmat)
 beta_cauchy = calbeta(kopt, bmat, s, xpt, zmat)
 denom_cauchy = alpha * beta_cauchy + vlag_cauchy(knew)**2
