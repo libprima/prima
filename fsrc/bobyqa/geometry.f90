@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 17, 2022 PM03:52:03
+! Last Modified: Tuesday, May 17, 2022 PM05:15:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -292,7 +292,7 @@ beta_line = calbeta(kopt, bmat, d, xpt, zmat)
 denom_line = alpha * beta_line + vlag_line(knew)**2
 
 ! It works surprisingly well to try the Cauchy step only in the late stage of the algorithm,
-! e.g., when ADELT is small. Why? How to find an adaptive rule?
+! e.g., when ADELT is small. Why? How to make this rule adaptive?
 ! 1.0E-2 works well if we use DENOM_CAUCHY to decide whether to take the Cauchy step;
 ! 1.0E-3 works well if we use VLAGSQ instead.
 !if (adelt > 1.0E-3) then
