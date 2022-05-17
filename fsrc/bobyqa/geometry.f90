@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 16, 2022 AM10:21:33
+! Last Modified: Tuesday, May 17, 2022 PM03:04:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -48,16 +48,16 @@ real(RP) :: d(size(xpt, 1))  ! D(N)
 character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: vlagsq_cauchy, denom_cauchy, beta_cauchy, vlag_cauchy(size(xpt, 1) + size(xpt, 2))
+real(RP) :: vlagsq, denom_cauchy, beta_cauchy, vlag_cauchy(size(xpt, 1) + size(xpt, 2))
 real(RP) :: vlag_line(size(xpt, 1) + size(xpt, 2))
 real(RP) :: beta_line
 real(RP) :: denom_line
-real(RP) :: x_cauchy(size(xpt, 1))
+real(RP) :: xalt(size(xpt, 1))
 real(RP) :: xnew(size(xpt, 1))
 real(RP) :: glag(size(xpt, 1))
 real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: s(size(xpt, 1))
-real(RP) :: bigstp, vlagsq, curv, dderiv(size(xpt, 2)), distsq(size(xpt, 2)),  &
+real(RP) :: bigstp, vlagsq_cauchy, curv, dderiv(size(xpt, 2)), distsq(size(xpt, 2)),  &
 &        ggfree, gs, predsq(3, size(xpt, 2)), scaling, &
 &        resis, slbd, stplen(3, size(xpt, 2)), grdstp, subd, sumin, betabd(3, size(xpt, 2)), &
 &         vlag(3, size(xpt, 2)), sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2)),  &
@@ -292,10 +292,10 @@ denom_line = alpha * beta_line + vlag_line(knew)**2
 
 !write (16, *) 'line', denom_line, vlag_line(knew), beta_line
 
-! It works strangely well to try the Cauchy step only in the late stage of the algorithm (e.g., when
-! ADELT is small). Why?
-! 1.0E-2 works well if we use DENOM_CAUCHY to decide whether to take the Cauchy step; 1.0E-3 works
-! well if we use VLAGSQ instead.
+! It works surprisingly well to try the Cauchy step only in the late stage of the algorithm,
+! e.g., when ADELT is small. Why?
+! 1.0E-2 works well if we use DENOM_CAUCHY to decide whether to take the Cauchy step;
+! 1.0E-3 works well if we use VLAGSQ instead.
 !if (adelt > 1.0E-3) then
 if (adelt > 1.0E-2) then
     return
@@ -307,8 +307,8 @@ end if
 ! KNEW-th Lagrange function; when UPHILL = 1, it calculates the uphill version that intends to
 ! maximize the Lagrange function.
 bigstp = adelt + adelt
-xnew = xopt
-vlagsq = ZERO
+x_cauchy = xopt
+vlagsq_cauchy = ZERO
 do uphill = 0, 1
     if (uphill == 1) then
         glag = -glag
@@ -343,11 +343,11 @@ do uphill = 0, 1
     end do
 
     ! Set the remaining free components of S and all components of XALT. S may be scaled later.
-    x_cauchy(trueloc(glag > 0)) = sl(trueloc(glag > 0))
-    x_cauchy(trueloc(glag <= 0)) = su(trueloc(glag <= 0))
-    x_cauchy(trueloc(s == 0)) = xopt(trueloc(s == 0))
+    xalt(trueloc(glag > 0)) = sl(trueloc(glag > 0))
+    xalt(trueloc(glag <= 0)) = su(trueloc(glag <= 0))
+    xalt(trueloc(s == 0)) = xopt(trueloc(s == 0))
     xtemp = max(sl, min(su, xopt - grdstp * glag))
-    x_cauchy(trueloc(s == bigstp)) = xtemp(trueloc(s == bigstp))
+    xalt(trueloc(s == bigstp)) = xtemp(trueloc(s == bigstp))
     s(trueloc(s == bigstp)) = -grdstp * glag(trueloc(s == bigstp))
     gs = inprod(glag, s)
 
@@ -361,29 +361,28 @@ do uphill = 0, 1
     end if
     if (curv > -gs .and. curv < -(ONE + sqrt(TWO)) * gs) then
         scaling = -gs / curv
-        x_cauchy = max(sl, min(su, xopt + scaling * s))
-        vlagsq_cauchy = (HALF * gs * scaling)**2
+        xalt = max(sl, min(su, xopt + scaling * s))
+        vlagsq = (HALF * gs * scaling)**2
     else
-        vlagsq_cauchy = (gs + HALF * curv)**2
+        vlagsq = (gs + HALF * curv)**2
     end if
 
-    if (vlagsq_cauchy > vlagsq) then
-        xnew = x_cauchy
-        vlagsq = vlagsq_cauchy
+    if (vlagsq > vlagsq_cauchy) then
+        x_cauchy = xalt
+        vlagsq_cauchy = vlagsq
     end if
 end do
 
-s = xnew - xopt
+s = x_cauchy - xopt
 vlag_cauchy = calvlag(kopt, bmat, s, xpt, zmat)
 beta_cauchy = calbeta(kopt, bmat, s, xpt, zmat)
 denom_cauchy = alpha * beta_cauchy + vlag_cauchy(knew)**2
 
 ! Take the Cauchy step if it is likely to render a larger denominator.
-!if (vlagsq > max(denom_line, ZERO) .or. is_nan(denom_line)) then
-if (denom_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then
+!if (vlagsq_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then  ! Powell's version
+if (denom_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then  ! This works slightly better
     d = s
 end if
-
 
 end function geostep
 
