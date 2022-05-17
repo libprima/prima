@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 15, 2022 PM11:49:16
+! Last Modified: Tuesday, May 17, 2022 PM10:01:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -94,7 +94,7 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
-real(RP) :: adelt, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
+real(RP) :: delbar, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 &        biglsq, crvmin, curv(size(x)), delta,  &
 &        den(npt), denom, densav, diff, diffa, diffb, diffc,     &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbig, fopt,        &
@@ -280,7 +280,7 @@ end if
 ! Pick two alternative vectors of variables, relative to XBASE, that are suitable as new positions
 ! of the KNEW-th interpolation point. Firstly, XNEW is set to the point on a line through XOPT and
 ! another interpolation point that minimizes the predicted value of the next denominator, subject to
-! ||XNEW - XOPT|| .LEQ. ADELT and to the SL and SU bounds. Secondly, XALT is set to the best
+! ||XNEW - XOPT|| .LEQ. DELBAR and to the SL and SU bounds. Secondly, XALT is set to the best
 ! feasible point on a constrained version of the Cauchy step of the KNEW-th Lagrange function, the
 ! corresponding value of the square of this function being returned in CAUCHY. The choice between
 ! these alternatives is going to be made when the denominator is calculated.
@@ -307,7 +307,7 @@ if (ntrits == 0) then
     end if
 
     ! Calculate a geometry step.
-    d = geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat)
+    d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
     xnew = xopt + d
 
     ! Calculate VLAG, BETA, and DENOM for the current choice of D.
@@ -654,7 +654,7 @@ knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be ex
 dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
 
 ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th interpolation
-! point within distance ADELT of XOPT. It is reached via label 90. Otherwise, there is a branch to
+! point within distance DELBAR of XOPT. It is reached via label 90. Otherwise, there is a branch to
 ! label 60 for another trust region iteration, unless the calculations with the current RHO are
 ! complete.
 if (knew > 0) then
@@ -664,8 +664,8 @@ if (knew > 0) then
         if (delta <= 1.5_RP * rho) delta = rho
     end if
     ntrits = 0
-    adelt = max(min(TENTH * dist, delta), rho)
-    dsq = adelt * adelt
+    delbar = max(min(TENTH * dist, delta), rho)
+    dsq = delbar * delbar
     goto 90
 end if
 if (ntrits == -1) goto 680
