@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 17, 2022 PM10:03:32
+! Last Modified: Tuesday, May 17, 2022 PM10:37:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -117,7 +117,6 @@ real(RP) :: xdiff(size(xpt, 1))
 real(RP) :: xline(size(xpt, 1))
 real(RP) :: xopt(size(xpt, 1))
 real(RP) :: xtemp(size(xpt, 1))
-
 
 ! Sizes.
 n = int(size(xpt, 1), kind(n))
@@ -324,15 +323,19 @@ vlag_line = calvlag(kopt, bmat, d, xpt, zmat)
 beta_line = calbeta(kopt, bmat, d, xpt, zmat)
 denom_line = alpha * beta_line + vlag_line(knew)**2
 
-! It works surprisingly well to try the Cauchy step only in the late stage of the algorithm,
-! e.g., when DELBAR is small. Why? In the following condition, 1.0E-2 works well if we use
-! DENOM_CAUCHY to decide whether to take the Cauchy step; 1.0E-3 works well if we use VLAGSQ instead.
-! How to make this condition adaptive? A naive idea is to replace the thresholds to, e.g.,
-! 1.0E-2*RHOBEG. However, in a test on 20220517, this did not work well.
+!--------------------------------------------------------------------------------------------------!
+! The following IF ... END IF does not exist in Powell's code.
+! SURPRISINGLY, the performance of BOBYQA is evidently improved by this IF ... END IF, which means
+! to try the Cauchy step only in the late stage of the algorithm, e.g., when DELBAR is relatively
+! small. WHY? In the following condition, 1.0E-2 works well if we use DENOM_CAUCHY to decide whether
+! to take the Cauchy step; 1.0E-3 works well if we use VLAGSQ instead. How to make this condition
+! adaptive? A naive idea is to replace the thresholds to, e.g.,1.0E-2*RHOBEG. However, in a test on
+! 20220517, such an adaptation worsened the performance.
 !if (delbar > 1.0E-3) then
 if (delbar > 1.0E-2) then
     return
 end if
+!--------------------------------------------------------------------------------------------------!
 
 ! Prepare for the method that assembles the constrained Cauchy step in S. The sum of squares of the
 ! fixed components of S is formed in SFIXSQ, and the free components of S are set to BIGSTP. When
@@ -409,6 +412,8 @@ do uphill = 0, 1
     end if
 end do
 
+! Calculate the denominator rendered by the Cauchy step. The comments on the calculation of
+! VLAG_LINE are also applicable to VLAG_CAUCHY.
 s = xcauchy - xopt
 vlag_cauchy = calvlag(kopt, bmat, s, xpt, zmat)
 beta_cauchy = calbeta(kopt, bmat, s, xpt, zmat)
