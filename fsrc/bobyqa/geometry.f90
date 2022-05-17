@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 17, 2022 PM05:15:38
+! Last Modified: Tuesday, May 17, 2022 PM10:03:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,13 +19,29 @@ public :: geostep
 contains
 
 
-function geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat) result(d)
+function geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat) result(d)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine finds a step D such that intends to improve the geometry of the interpolation set
+! when XPT(:, KNEW) is changed to XOPT + D, where XOPT = XPT(:, KOPT).
+!
+! The arguments XPT, BMAT, ZMAT, SL and SU all have the same meanings as in BOBYQB.
+! KOPT is the index of the optimal interpolation point.
+! KNEW is the index of the interpolation point that is going to be moved.
+! DELBAR is the trust region bound for the geometry step.
+! XLINE will be a suitable new position for the interpolation point XPT(:, KNEW). Specifically, it
+! satisfies the SL, SU and trust region bounds and it should provide a large denominator in the next
+! call of UPDATE. The step XLINE-XOPT from XOPT is restricted to moves along the straight lines
+! through XOPT and another interpolation point.
+! XCAUCHY also provides a large value of the modulus of the KNEW-th Lagrange function subject to
+! the constraints that have been mentioned, its main difference from XLINE being that XCAUCHY-XOPT
+! is a bound-constrained version of the Cauchy step within the trust region.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, trueloc
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, trueloc, norm
 use, non_intrinsic :: powalg_mod, only : hess_mul, calvlag, calbeta
 
 implicit none
@@ -33,11 +49,10 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: knew
 integer(IK), intent(in) :: kopt
-real(RP), intent(in) :: adelt
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
+real(RP), intent(in) :: delbar
 real(RP), intent(in) :: sl(:)  ! SL(N)
 real(RP), intent(in) :: su(:)  ! SU(N)
-real(RP), intent(in) :: xopt(:)  ! XOPT(N)
 real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
@@ -46,27 +61,62 @@ real(RP) :: d(size(xpt, 1))  ! D(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GEOSTEP'
+integer(IK) :: ibd
+integer(IK) :: ilbd
+integer(IK) :: isbd(3, size(xpt, 2))
+integer(IK) :: isq
+integer(IK) :: iubd
+integer(IK) :: k
+integer(IK) :: ksq
+integer(IK) :: ksqs(3)
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: vlagsq, denom_cauchy, beta_cauchy, vlag_cauchy(size(xpt, 1) + size(xpt, 2))
-real(RP) :: vlag_line(size(xpt, 1) + size(xpt, 2))
-real(RP) :: beta_line
-real(RP) :: denom_line
-real(RP) :: xcauchy(size(xpt, 1))
-real(RP) :: x(size(xpt, 1))
-real(RP) :: xline(size(xpt, 1))
-real(RP) :: glag(size(xpt, 1))
-real(RP) :: pqlag(size(xpt, 2))
-real(RP) :: s(size(xpt, 1))
-real(RP) :: bigstp, vlagsq_cauchy, curv, dderiv(size(xpt, 2)), distsq(size(xpt, 2)),  &
-&        ggfree, gs, predsq(3, size(xpt, 2)), scaling, &
-&        resis, slbd, stplen(3, size(xpt, 2)), grdstp, subd, sumin, betabd(3, size(xpt, 2)), &
-&         vlag(3, size(xpt, 2)), sfixsq, ssqsav, xtemp(size(xpt, 1)), sxpt(size(xpt, 2)),  &
-&        subd_test(size(xpt, 1)), slbd_test(size(xpt, 1)), &
-&        ufrac(size(xpt, 1)), lfrac(size(xpt, 1)), xdiff(size(xpt, 1)), stpm
+integer(IK) :: uphill
+logical :: mask_fixl(size(xpt, 1))
+logical :: mask_fixu(size(xpt, 1))
+logical :: mask_free(size(xpt, 1))
 real(RP) :: alpha, stpsiz
-logical :: mask_fixl(size(xpt, 1)), mask_fixu(size(xpt, 1)), mask_free(size(xpt, 1))
-integer(IK) :: ibd, uphill, ilbd, isbd(3, size(xpt, 2)), iubd, k, ksqs(3), ksq, isq
+real(RP) :: beta_cauchy
+real(RP) :: beta_line
+real(RP) :: betabd(3, size(xpt, 2))
+real(RP) :: bigstp
+real(RP) :: curv
+real(RP) :: dderiv(size(xpt, 2))
+real(RP) :: denom_cauchy
+real(RP) :: denom_line
+real(RP) :: distsq(size(xpt, 2))
+real(RP) :: ggfree
+real(RP) :: glag(size(xpt, 1))
+real(RP) :: grdstp
+real(RP) :: gs
+real(RP) :: lfrac(size(xpt, 1))
+real(RP) :: pqlag(size(xpt, 2))
+real(RP) :: predsq(3, size(xpt, 2))
+real(RP) :: resis
+real(RP) :: s(size(xpt, 1))
+real(RP) :: scaling
+real(RP) :: sfixsq
+real(RP) :: slbd
+real(RP) :: slbd_test(size(xpt, 1))
+real(RP) :: ssqsav
+real(RP) :: stplen(3, size(xpt, 2))
+real(RP) :: stpm
+real(RP) :: subd
+real(RP) :: subd_test(size(xpt, 1))
+real(RP) :: sumin
+real(RP) :: sxpt(size(xpt, 2))
+real(RP) :: ufrac(size(xpt, 1))
+real(RP) :: vlag(3, size(xpt, 2))
+real(RP) :: vlag_cauchy(size(xpt, 1) + size(xpt, 2))
+real(RP) :: vlag_line(size(xpt, 1) + size(xpt, 2))
+real(RP) :: vlagsq
+real(RP) :: vlagsq_cauchy
+real(RP) :: x(size(xpt, 1))
+real(RP) :: xcauchy(size(xpt, 1))
+real(RP) :: xdiff(size(xpt, 1))
+real(RP) :: xline(size(xpt, 1))
+real(RP) :: xopt(size(xpt, 1))
+real(RP) :: xtemp(size(xpt, 1))
 
 
 ! Sizes.
@@ -80,45 +130,28 @@ if (DEBUGGING) then
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(knew /= kopt, 'KNEW /= KOPT', srname)
-    call assert(adelt > 0, 'ADELT > 0', srname)
+    call assert(delbar > 0, 'DELBAR > 0', srname)
     call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
-    call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
 end if
 
-!
-!     The arguments N, NPT, XPT, XOPT, BMAT, ZMAT, NDIM, SL and SU all have
-!       the same meanings as the corresponding arguments of BOBYQB.
-!     KOPT is the index of the optimal interpolation point.
-!     KNEW is the index of the interpolation point that is going to be moved.
-!     ADELT is the current trust region bound.
-!     XLINE will be set to a suitable new position for the interpolation point
-!       XPT(KNEW,.). Specifically, it satisfies the SL, SU and trust region
-!       bounds and it should provide a large denominator in the next call of
-!       UPDATE. The step XLINE-XOPT from XOPT is restricted to moves along the
-!       straight lines through XOPT and another interpolation point.
-!     XCAUCHY also provides a large value of the modulus of the KNEW-th Lagrange
-!       function subject to the constraints that have been mentioned, its main
-!       difference from XLINE being that XCAUCHY-XOPT is a constrained version of
-!       the Cauchy step within the trust region. An exception is that XCAUCHY is
-!       not calculated if all components of GLAG (see below) are ZERO.
-!     ALPHA will be set to the KNEW-th diagonal element of the H matrix.
-!     CAUCHY will be set to the square of the KNEW-th Lagrange function at
-!       the step XCAUCHY-XOPT from XOPT for the vector XCAUCHY that is returned,
-!       except that CAUCHY is set to ZERO if XCAUCHY is not calculated.
-!     GLAG is a working space vector of length N for the gradient of the
-!       KNEW-th Lagrange function at XOPT.
-
+!====================!
+! Calculation starts !
+!====================!
 
 ! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
-! derivative parameters of LFUNC, which is the KNEW-th Lagrange function.
+! derivative parameters of LFUNC, which is the KNEW-th Lagrange function. ALPHA will is the KNEW-th
+! diagonal element of the H matrix.
 pqlag = matprod(zmat, zmat(knew, :))
 alpha = pqlag(knew)
 
-! Calculate the gradient of the KNEW-th Lagrange function at XOPT.
+! Read XOPT.
+xopt = xpt(:, kopt)
+
+! Calculate the gradient GLAG of the KNEW-th Lagrange function at XOPT.
 glag = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
-if (any(is_nan(glag)) .or. is_nan(adelt)) then  ! ADELT is not NaN if the input is correct.
+if (any(is_nan(glag)) .or. is_nan(delbar)) then  ! DELBAR is not NaN if the input is correct.
     d = ZERO
     return
 end if
@@ -154,7 +187,7 @@ do k = 1, npt
         cycle
     end if
 
-    subd = adelt / sqrt(distsq(k))  ! DISTSQ(K) > 0 unless K == KOPT as long as the input is correct.
+    subd = delbar / sqrt(distsq(k))  ! DISTSQ(K) > 0 unless K == KOPT as long as the input is correct.
     slbd = -subd
     ilbd = 0
     iubd = 0
@@ -292,11 +325,12 @@ beta_line = calbeta(kopt, bmat, d, xpt, zmat)
 denom_line = alpha * beta_line + vlag_line(knew)**2
 
 ! It works surprisingly well to try the Cauchy step only in the late stage of the algorithm,
-! e.g., when ADELT is small. Why? How to make this rule adaptive?
-! 1.0E-2 works well if we use DENOM_CAUCHY to decide whether to take the Cauchy step;
-! 1.0E-3 works well if we use VLAGSQ instead.
-!if (adelt > 1.0E-3) then
-if (adelt > 1.0E-2) then
+! e.g., when DELBAR is small. Why? In the following condition, 1.0E-2 works well if we use
+! DENOM_CAUCHY to decide whether to take the Cauchy step; 1.0E-3 works well if we use VLAGSQ instead.
+! How to make this condition adaptive? A naive idea is to replace the thresholds to, e.g.,
+! 1.0E-2*RHOBEG. However, in a test on 20220517, this did not work well.
+!if (delbar > 1.0E-3) then
+if (delbar > 1.0E-2) then
     return
 end if
 
@@ -305,7 +339,7 @@ end if
 ! UPHILL = 0, the method calculates the downhill version of XCAUCHY, which intends to minimize the
 ! KNEW-th Lagrange function; when UPHILL = 1, it calculates the uphill version that intends to
 ! maximize the Lagrange function.
-bigstp = adelt + adelt
+bigstp = delbar + delbar
 xcauchy = xopt
 vlagsq_cauchy = ZERO
 do uphill = 0, 1
@@ -316,6 +350,9 @@ do uphill = 0, 1
     mask_free = (min(xopt - sl, glag) > 0 .or. max(xopt - su, glag) < 0)
     s(trueloc(mask_free)) = bigstp
     ggfree = sum(glag(trueloc(mask_free))**2)
+    ! In Powell's code, the subroutine returns immediately if GGFREE is 0. However, GGFREE depends
+    ! on GLAG, which in turn depends on UPHILL. It can happen that GGFREE is 0 when UPHILL = 0 but
+    ! not so when UPHILL= 1. Thus we skip the iteration for the current UPHILL but do not return.
     if (ggfree <= ZERO) then
         cycle
     end if
@@ -326,7 +363,7 @@ do uphill = 0, 1
     ! we can check that (SFIXSQ > SSQSAV .AND. GGFREE > ZERO) must fail within N loops.
     sfixsq = ZERO
     do k = 1, n
-        resis = adelt**2 - sfixsq
+        resis = delbar**2 - sfixsq
         if (resis <= 0) exit
         ssqsav = sfixsq
         grdstp = sqrt(resis / ggfree)
@@ -381,6 +418,20 @@ denom_cauchy = alpha * beta_cauchy + vlag_cauchy(knew)**2
 !if (vlagsq_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then  ! Powell's version
 if (denom_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then  ! This works slightly better
     d = s
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+if (DEBUGGING) then
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
+    call assert(all(is_finite(d)), 'D is finite', srname)
+    ! In theory, |D| <= DELBAR, which may be false due to rounding, but |D| > 2*DELBAR is unlikely.
+    call assert(norm(d) <= TWO * delbar, '|D| <= 2*DELBAR', srname)
+    ! D is supposed to satisfy the bound constraints SL <= XOPT + D <= SU.
+    call assert(all(xopt + d >= sl - TEN * EPS * max(ONE, abs(sl)) .and. &
+        & xopt + d <= su + TEN * EPS * max(ONE, abs(su))), 'SL <= XOPT + D <= SU', srname)
 end if
 
 end function geostep

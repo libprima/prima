@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM04:27:47
+! Last Modified: Tuesday, May 17, 2022 PM09:22:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: geostep
 contains
 
 
-subroutine geostep(iact, idz, knew, kopt, nact, amat, del, gl_in, qfac, rescon, xopt, xpt, zmat, ifeas, step)
+subroutine geostep(iact, idz, knew, kopt, nact, amat, delbar, gl_in, qfac, rescon, xopt, xpt, zmat, ifeas, step)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, EPS, DEBUGGING
@@ -40,7 +40,7 @@ integer(IK), intent(in) :: knew
 integer(IK), intent(in) :: kopt
 integer(IK), intent(in) :: nact
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
-real(RP), intent(in) :: del
+real(RP), intent(in) :: delbar
 real(RP), intent(in) :: gl_in(:)  ! GL_IN(N)
 real(RP), intent(in) :: qfac(:, :)  ! QFAC(N, N)
 real(RP), intent(in) :: rescon(:)  ! RESCON(M)
@@ -84,7 +84,7 @@ if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(knew /= kopt, 'KNEW /= KOPT', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
-    call assert(del > 0, 'DEL > 0', srname)
+    call assert(delbar > 0, 'DELBAR> 0', srname)
     call assert(size(gl_in) == n, 'SIZE(GL_IN) == N', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
@@ -104,7 +104,7 @@ gl = gl_in
 !     N, NPT, M, AMAT, B, XPT, XOPT, NACT, IACT, RESCON, QFAC, KOPT are the
 !       same as the terms with these names in SUBROUTINE LINCOB.
 !     KNEW is the index of the interpolation point that is going to be moved.
-!     DEL is the current restriction on the length of STEP, which is never
+!     DELBARis the current restriction on the length of STEP, which is never
 !       greater than the current trust region radius DELTA.
 !     STEP will be set to the required step from XOPT to the new point.
 !     GL must be set on entry to the gradient of LFUNC at XBASE, where LFUNC
@@ -113,12 +113,12 @@ gl = gl_in
 !     IFEAS will be set to TRUE or FALSE if XOPT+STEP is feasible or infeasible.
 !
 !     STEP is chosen to provide a relatively large value of the modulus of
-!       LFUNC(XOPT+STEP), subject to ||STEP|| .LE. DEL. A projected STEP is
+!       LFUNC(XOPT+STEP), subject to ||STEP|| .LE. DELBAR A projected STEP is
 !       calculated too, within the trust region, that does not alter the
 !       residuals of the active constraints. The projected step is preferred
 !       if its value of |LFUNC(XOPT+STEP)| is at least one fifth of the
 !       original one but the greatest violation of a linear constraint must
-!       be at least MINCV = 0.2*DEL, in order to keep the interpolation points apart.
+!       be at least MINCV = 0.2*DELBAR in order to keep the interpolation points apart.
 !       The remedy when the maximum constraint violation is too small is to
 !       restore the original step, which is perturbed if necessary so that
 !       its maximum constraint violation becomes MINCV.
@@ -126,7 +126,7 @@ gl = gl_in
 !     Set some constants.
 !
 
-mincv = 0.2_RP * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
+mincv = 0.2_RP * delbar ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
 
 ! Replace GL by the gradient of LFUNC at the trust region centre, and set the elements of RSTAT.
 ! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
@@ -137,7 +137,7 @@ gl = gl + hess_mul(xopt, xpt, pqlag)
 ! RSTAT(J) = -1, 0, or 1 respectively means constraint J is irrelevant, active, or inactive&relevant.
 ! RSTAT never changes after being set below.
 rstat = 1_IK
-rstat(trueloc(abs(rescon) >= del)) = -1_IK
+rstat(trueloc(abs(rescon) >= delbar)) = -1_IK
 rstat(iact(1:nact)) = 0_IK
 
 ! Maximize |LFUNC| within the trust region on the lines through XOPT and other interpolation points.
@@ -151,7 +151,7 @@ do k = 1, npt
     end if
     ss = sum((xpt(:, k) - xopt)**2)
     sp = inprod(gl, xpt(:, k) - xopt)
-    stplen(k) = -del / sqrt(ss)
+    stplen(k) = -delbar / sqrt(ss)
     if (k == knew) then
         if (sp * (sp - ONE) < ZERO) then
             stplen(k) = -stplen(k)
@@ -178,16 +178,16 @@ stpsav = stplen(ksav)
 ! by a steepest ascent step from XOPT.
 step = stpsav * (xpt(:, ksav) - xopt)
 gg = sum(gl**2)
-vgrad = del * sqrt(gg)
+vgrad = delbar * sqrt(gg)
 if (vgrad <= TENTH * vbig) goto 220
 
 ! Make the replacement if it provides a larger value of VBIG.
 gxpt = matprod(gl, xpt)
 ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
-vnew = vgrad + abs(HALF * del * del * ghg / gg)
+vnew = vgrad + abs(HALF * delbar * delbar * ghg / gg)
 if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     vbig = vnew
-    stp = del / sqrt(gg)
+    stp = delbar / sqrt(gg)
     if (ghg < ZERO) then
         stp = -stp
     end if
@@ -217,14 +217,14 @@ gl = matprod(qfac(:, nact + 1:n), matprod(gl, qfac(:, nact + 1:n)))
 !--------------------------------------------------------------------------------------------------!
 
 gg = sum(gl**2)
-vgrad = del * sqrt(gg)
+vgrad = delbar * sqrt(gg)
 if (vgrad <= TENTH * vbig) goto 220
 gxpt = matprod(gl, xpt)
 ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
-vnew = vgrad + abs(HALF * del * del * ghg / gg)
+vnew = vgrad + abs(HALF * delbar * delbar * ghg / gg)
 
 ! Set STMP to the possible move along the projected gradient.
-stp = del / sqrt(gg)
+stp = delbar / sqrt(gg)
 if (ghg < ZERO) then
     stp = -stp
 end if
@@ -237,7 +237,7 @@ sstmp = sum(stmp**2)
 ! contributions from computer rounding errors.
 ! As commented by Powell, "the projected step is preferred if its value of |LFUNC(XOPT+STEP)| is at
 ! least one fifth of the original one but the greatest violation of a linear constraint must be at
-! least MINCV = 0.2*DEL, in order to keep the interpolation points apart." WHY THE PREFERENCE?
+! least MINCV = 0.2*DELBAR in order to keep the interpolation points apart." WHY THE PREFERENCE?
 if (vnew >= 0.2_RP * vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
     ifeas = (bigcv < mincv)

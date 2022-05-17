@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM12:43:58
+! Last Modified: Tuesday, May 17, 2022 PM09:23:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -107,7 +107,7 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: xsav(size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
-real(RP) :: del, delsav, delta, dffalt, diff, &
+real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, snorm, ssq, temp, &
 &        qred, xdiff
@@ -317,19 +317,19 @@ if (knew == 0) then
     nvalb = 0
 
 !     Alternatively, KNEW is positive. Then the model step is calculated
-!       within a trust region of radius DEL, after setting the gradient at
+!       within a trust region of radius DELBAR, after setting the gradient at
 !       XBASE and the second derivative parameters of the KNEW-th Lagrange
 !       function in W(1) to W(N) and in PQW(1) to PQW(NPT), respectively.
 !
 else
-    del = max(TENTH * delta, rho)
+    delbar = max(TENTH * delta, rho)
 
     if (is_nan(sum(abs(bmat(:, knew))))) then  ! Necessary?
         info = NAN_MODEL
         goto 600
     end if
 
-    call geostep(iact, idz, knew, kopt, nact, amat, del, bmat(:, knew), qfac, rescon, xopt, xpt, zmat, ifeas, step)
+    call geostep(iact, idz, knew, kopt, nact, amat, delbar, bmat(:, knew), qfac, rescon, xopt, xpt, zmat, ifeas, step)
 end if
 
 !
