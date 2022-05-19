@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 17, 2022 PM09:22:00
+! Last Modified: Thursday, May 19, 2022 PM10:02:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -141,9 +141,10 @@ rstat(trueloc(abs(rescon) >= delbar)) = -1_IK
 rstat(iact(1:nact)) = 0_IK
 
 ! Maximize |LFUNC| within the trust region on the lines through XOPT and other interpolation points.
-! In the following loop, VLAG(K) is set to the maximum of PHI_K(t) with subject to the trust-region
+! In the following loop, VLAG(K) is set to the maximum of PHI_K(t) subject to the trust-region
 ! constraint with PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:, K)). Note that PHI_K(t) is a quadratic
 ! function with PHI_K(0) = 0, PHI_K(1) = 1, and PHI_K'(0) = SP = INPROD(GL, XPT(:, K) - XOPT).
+! The linear constraints are not considered.
 vlag = ZERO
 do k = 1, npt
     if (k == kopt) then
@@ -234,18 +235,20 @@ sstmp = sum(stmp**2)
 ! Set STEP to STMP if STMP gives a sufficiently large value of the modulus of the Lagrange function,
 ! andif STMP either preserves feasibility or gives a constraint violation of at least MINCV. The
 ! purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
-! contributions from computer rounding errors.
+! contributions from computer rounding errors. Note that CVTOL equals 0 in precise arithmetic.
 ! As commented by Powell, "the projected step is preferred if its value of |LFUNC(XOPT+STEP)| is at
 ! least one fifth of the original one but the greatest violation of a linear constraint must be at
 ! least MINCV = 0.2*DELBAR in order to keep the interpolation points apart." WHY THE PREFERENCE?
 if (vnew >= 0.2_RP * vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-    ifeas = (bigcv < mincv)
     cvtol = ZERO
     if (bigcv > ZERO .and. bigcv < 0.01_RP * sqrt(sstmp)) then
+        ! Note that STMP is a multiple of GL, which lies in the orthogonal complement of the column
+        ! space of AMAT(:, IACT(1:NACT)). Thus CVTOL is 0 in precise arithmetic.
         cvtol = maxval([ZERO, abs(matprod(stmp, amat(:, iact(1:nact))))])
     end if
     if (bigcv <= TEN * cvtol .or. bigcv >= mincv) then
+        ifeas = (bigcv <= TEN * cvtol)
         step = stmp
         return
     end if
