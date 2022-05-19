@@ -48,6 +48,7 @@ NEWUOA: 4*N*NPT-NPT-N (classical: (NPT+13)*(NPT+N)+3*N*(N+3)/2), OK if N*NPT < 6
 COBYLA: max(4+4M+6N, (M+2)*N, (N+2)*N) (classical: N*(3*N+2*M+11)+4*M+6), OK if (M+2)*(N+2) < 256*256
 TODO for COBYLA: implement getmodel(conmat, fval, simi, A), and call it before TR step and GEO step,
 so that we do not need to calculate A within GEOSTEP, which would necessitate a array of (m+1)*n in GEOSTEP.
+
 N.B.:
 1.) We do not implement GETMODEL as a function, or it will create an automatic/temporary array of (m+1)*n.
 2.) Do not call GETMODEL after updatexfc: if we do that, we would also need to call it at three other
