@@ -44,7 +44,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 12, 2022 PM09:43:02
+! Last Modified: Thursday, May 19, 2022 PM03:51:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2364,7 +2364,7 @@ if (scaling <= 0) then
     tdiag = ZERO
     tsubdiag = ZERO
     return
-elseif (scaling > 1.0E6 .or. scaling < 1.0E-6) then  ! 1.0E6 and 1.0E-6 are heuristic.
+elseif (scaling > 1.0E6 .or. scaling < 1.0E-6) then  ! 1.0E6 and 1.0E-6 are empirical.
     A = A / scaling
     scaled = .true.
 end if
