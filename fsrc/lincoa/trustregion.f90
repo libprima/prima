@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 26, 2022 AM10:47:18
+! Last Modified: Wednesday, May 18, 2022 PM03:02:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -188,6 +188,7 @@ if (any(resact(1:nact) > 1.0E-4_RP * snorm)) then
     ! when X contains NaN, and MATLAB/Python/R/Julia behave differently in this respect. Moreover,
     ! MATLAB defines max(X) = [] if X == [], which differs from mathematics and other languages.
     vlam(1:nact) = solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact))
+    !!MATLAB: vlam(1:nact) = rfac(1:nact, 1:nact)' \ resact(1:nact)
     d = matprod(qfac(:, 1:nact), vlam(1:nact))
 
     ! The vector D that has just been calculated is also the shortest move from STEP+DW to the

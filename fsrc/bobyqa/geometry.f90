@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 17, 2022 PM10:37:55
+! Last Modified: Wednesday, May 18, 2022 PM01:21:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -330,8 +330,9 @@ denom_line = alpha * beta_line + vlag_line(knew)**2
 ! small. WHY? In the following condition, 1.0E-2 works well if we use DENOM_CAUCHY to decide whether
 ! to take the Cauchy step; 1.0E-3 works well if we use VLAGSQ instead. How to make this condition
 ! adaptive? A naive idea is to replace the thresholds to, e.g.,1.0E-2*RHOBEG. However, in a test on
-! 20220517, such an adaptation worsened the performance.
-!if (delbar > 1.0E-3) then
+! 20220517, this adaptation worsened the performance. In such a test, we must set RHOBEG to a value
+! that is quite different from one. We tried RHOBEG = 0.9E-2.
+!IF (DELBAR > 1.0E-3) THEN
 if (delbar > 1.0E-2) then
     return
 end if
@@ -420,7 +421,7 @@ beta_cauchy = calbeta(kopt, bmat, s, xpt, zmat)
 denom_cauchy = alpha * beta_cauchy + vlag_cauchy(knew)**2
 
 ! Take the Cauchy step if it is likely to render a larger denominator.
-!if (vlagsq_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then  ! Powell's version
+!IF (VLAGSQ_CAUCHY > MAX(DENOM_LINE, ZERO) .OR. IS_NAN(DENOM_LINE)) THEN  ! Powell's version
 if (denom_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then  ! This works slightly better
     d = s
 end if

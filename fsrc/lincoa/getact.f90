@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 06, 2022 PM02:52:34
+! Last Modified: Wednesday, May 18, 2022 PM03:01:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -301,6 +301,7 @@ do iter = 1_IK, maxiter
         v(nact) = ONE / rfac(nact, nact) ! This is why we must ensure NACT > 0.
         ! Solve the linear system RFAC(1:NACT, 1:NACT) * VMU(1:NACT) = V(1:NACT) .
         vmu(1:nact) = solve(rfac(1:nact, 1:nact), v(1:nact)) ! VMU(NACT) = V(NACT)/RFAC(NACT,NACT)>0
+        !!MATLAB: vmu(1:nact) = rfac(1:nact, 1:nact) \ v(1:nact);
 
         ! Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
         ! N.B.: 1. VLAM(1:NACT-1) < 0 and VLAM(NACT) <= 0 by the updates of VLAM. 2. VMU(NACT) > 0.
