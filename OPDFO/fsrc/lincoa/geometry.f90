@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM04:27:47
+! Last Modified: Friday, May 20, 2022 PM01:00:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -179,7 +179,7 @@ stpsav = stplen(ksav)
 step = stpsav * (xpt(:, ksav) - xopt)
 gg = sum(gl**2)
 vgrad = del * sqrt(gg)
-if (vgrad <= TENTH * vbig) goto 220
+!if (vgrad <= TENTH * vbig) goto 220
 
 ! Make the replacement if it provides a larger value of VBIG.
 gxpt = matprod(gl, xpt)
@@ -218,7 +218,7 @@ gl = matprod(qfac(:, nact + 1:n), matprod(gl, qfac(:, nact + 1:n)))
 
 gg = sum(gl**2)
 vgrad = del * sqrt(gg)
-if (vgrad <= TENTH * vbig) goto 220
+!if (vgrad <= TENTH * vbig) goto 220
 gxpt = matprod(gl, xpt)
 ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
 vnew = vgrad + abs(HALF * del * del * ghg / gg)
@@ -240,12 +240,14 @@ sstmp = sum(stmp**2)
 ! least MINCV = 0.2*DEL, in order to keep the interpolation points apart." WHY THE PREFERENCE?
 if (vnew >= 0.2_RP * vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-    ifeas = (bigcv < mincv)
+    !ifeas = (bigcv < mincv)
     cvtol = ZERO
-    if (bigcv > ZERO .and. bigcv < 0.01_RP * sqrt(sstmp)) then
+    !if (bigcv > ZERO .and. bigcv < 0.01_RP * sqrt(sstmp)) then
+    if (bigcv > ZERO .and. bigcv <= 0.01_RP * sqrt(sstmp)) then
         cvtol = maxval([ZERO, abs(matprod(stmp, amat(:, iact(1:nact))))])
     end if
     if (bigcv <= TEN * cvtol .or. bigcv >= mincv) then
+        ifeas = (bigcv <= TEN * cvtol)
         step = stmp
         return
     end if
