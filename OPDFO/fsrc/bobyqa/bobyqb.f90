@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 16, 2022 PM03:09:44
+! Last Modified: Sunday, May 22, 2022 PM07:58:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -183,7 +183,9 @@ call initialize(calfun, iprint, ftarget, rhobeg, sl, su, x, xl, xu, kopt, nf, bm
     & gopt, hq, pq, xbase, xhist, xpt, zmat)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
-x = xbase + xopt
+x = min(max(xl, xbase + xopt), xu)
+x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
+x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
 f = fopt
 
 if (is_nan(f) .or. is_posinf(f)) then

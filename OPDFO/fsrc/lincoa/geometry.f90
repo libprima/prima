@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 20, 2022 PM01:00:08
+! Last Modified: Saturday, May 21, 2022 AM08:51:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ subroutine geostep(iact, idz, knew, kopt, nact, amat, del, gl_in, qfac, rescon, 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc, norm
 use, non_intrinsic :: powalg_mod, only : hess_mul, omega_col
 
 implicit none
@@ -240,14 +240,17 @@ sstmp = sum(stmp**2)
 ! least MINCV = 0.2*DEL, in order to keep the interpolation points apart." WHY THE PREFERENCE?
 if (vnew >= 0.2_RP * vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-    !ifeas = (bigcv < mincv)
-    cvtol = ZERO
-    !if (bigcv > ZERO .and. bigcv < 0.01_RP * sqrt(sstmp)) then
-    if (bigcv > ZERO .and. bigcv <= 0.01_RP * sqrt(sstmp)) then
-        cvtol = maxval([ZERO, abs(matprod(stmp, amat(:, iact(1:nact))))])
-    end if
-    if (bigcv <= TEN * cvtol .or. bigcv >= mincv) then
-        ifeas = (bigcv <= TEN * cvtol)
+    cvtol = min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))
+    ifeas = (bigcv <= cvtol)
+    !!ifeas = (bigcv < mincv)
+    !cvtol = ZERO
+    !!if (bigcv > ZERO .and. bigcv < 0.01_RP * sqrt(sstmp)) then
+    !if (bigcv > ZERO .and. bigcv <= 0.01_RP * sqrt(sstmp)) then
+    !    cvtol = maxval([ZERO, abs(matprod(stmp, amat(:, iact(1:nact))))])
+    !end if
+    !if (bigcv <= TEN * cvtol .or. bigcv >= mincv) then
+    if (ifeas .or. bigcv >= mincv) then
+        !ifeas = (bigcv <= TEN * cvtol)
         step = stmp
         return
     end if

@@ -44,7 +44,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 19, 2022 PM03:51:52
+! Last Modified: Sunday, May 22, 2022 PM05:43:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM12:43:58
+! Last Modified: Sunday, May 22, 2022 PM05:52:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -391,9 +391,8 @@ end if
 !       between the actual new value of F and the value predicted by the
 !       model is recorded in DIFF.
 !
-220 nf = nf + 1
-if (nf > maxfun) then
-    nf = nf - 1
+220 continue
+if (nf >= maxfun) then
     info = MAXFUN_REACHED
     goto 600
 end if
@@ -420,6 +419,7 @@ if (is_nan(sum(abs(x)))) then
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 call evaluate(calfun, x, f)
+nf = nf + 1
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 call savehist(nf, x, xhist, f, fhist, cstrv, chist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

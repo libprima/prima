@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 17, 2022 PM09:23:10
+! Last Modified: Sunday, May 22, 2022 PM05:52:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -329,7 +329,7 @@ else
         goto 600
     end if
 
-    call geostep(iact, idz, knew, kopt, nact, amat, delbar, bmat(:, knew), qfac, rescon, xopt, xpt, zmat, ifeas, step)
+    call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xopt, xpt, zmat, ifeas, step)
 end if
 
 !
@@ -391,9 +391,8 @@ end if
 !       between the actual new value of F and the value predicted by the
 !       model is recorded in DIFF.
 !
-220 nf = nf + 1
-if (nf > maxfun) then
-    nf = nf - 1
+220 continue
+if (nf >= maxfun) then
     info = MAXFUN_REACHED
     goto 600
 end if
@@ -420,15 +419,12 @@ if (is_nan(sum(abs(x)))) then
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 call evaluate(calfun, x, f)
+nf = nf + 1_IK
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 call savehist(nf, x, xhist, f, fhist, cstrv, chist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
 if (is_nan(f) .or. is_posinf(f)) then
-    if (nf == 1) then
-        fopt = f
-        xopt = ZERO
-    end if
     info = NAN_INF_F
     goto 600
 end if
