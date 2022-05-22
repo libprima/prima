@@ -14,6 +14,8 @@ eval_options = struct();
 nr = 5;
 ctol = 1e-10;
 cpenalty = 1e10;
+%ctol = inf
+%cpenalty  = 0
 type = 'ubln'; % The types of problems to test
 mindim = 1; % The minimal dimension of problems to test
 solvers = lower(solvers);
@@ -57,6 +59,7 @@ else
     end
     if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
         requirements.blacklist = [requirements.blacklist, {'3PK', 'LSNNODOC', 'SIPOW3', 'SIPOW4', 'OET1', 'MAKELA4','TFI2', 'QPCBOEI2', 'QPNBOEI2'}]; % The classical LINCOA encounters SIGFAULT
+        requirements.blacklist = [requirements.blacklist, {'TARGUS'}]; % Takes too long time
     end
     if startsWith(solvers{1}, 'uobyqa') || startsWith(solvers{2}, 'uobyqa')
         requirements.blacklist = [requirements.blacklist, {'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'ERRINRSM', 'TOINTGOR', 'TOINTPSP', 'VAREIGVL'}]; % Takes too long time
@@ -202,6 +205,7 @@ else
         warning(orig_warning_state); % Restore the behavior of displaying warnings
     end
 end
+
 
 mrec = frec + options.cpenalty*crec;
 mrec(crec > options.ctol) = NaN;

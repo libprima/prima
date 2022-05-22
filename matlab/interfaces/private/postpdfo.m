@@ -282,10 +282,10 @@ if isfield(output, 'chist')
 else % External solvers may not return chist
     chist = constrviolation + zeros(1, nhist);
 end
-if ~(isempty(chist) && ismember(solver, all_solvers('without_constraints'))) && ~(isrealvector(chist) && length(chist) == nhist)
+if ~(isempty(chist) && ismember(solver, all_solvers('without_constraints'))) && ~(isrealvector(chist) && length(chist) == nhist && all(chist >= 0))
     % Public/unexpected error
     error(sprintf('%s:InvalidChist', invoker), ...
-        '%s: UNEXPECTED ERROR: %s returns a chist that is not a real vector of length min(nf, maxfhist).', invoker, solver);
+        '%s: UNEXPECTED ERROR: %s returns a chist that is not a nonnegative vector of length min(nf, maxfhist).', invoker, solver);
 end
 if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
     if strcmp(solver, 'cobylan') && (any(chist > hugecon) || any(isnan(chist)))
