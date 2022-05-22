@@ -355,9 +355,10 @@ C     Calculate the next value of the objective function. The difference
 C       between the actual new value of F and the value predicted by the
 C       model is recorded in DIFF.
 C
-  220 NF=NF+1
-      IF (NF > MAXFUN) THEN
-          NF=NF-1
+  220 continue
+      !NF=NF+1
+      IF (NF >= MAXFUN) THEN
+          !NF=NF-1
           IF (IPRINT > 0) PRINT 230
   230     FORMAT (/4X,'Return from LINCOA because CALFUN has been',
      1      ' called MAXFUN times.')
@@ -392,6 +393,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !----------------------------------------------------------------------!
       !CALL CALFUN (N,X,F)
       call evaluate(calfun, x, f)
+      nf = nf + 1
       cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
       call savehist(nf, x, xhist, f, fhist, cstrv, chist)
 !----------------------------------------------------------------------!

@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 22, 2022 PM05:52:05
+! Last Modified: Sunday, May 22, 2022 PM10:10:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -419,8 +419,8 @@ if (is_nan(sum(abs(x)))) then
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 call evaluate(calfun, x, f)
-nf = nf + 1_IK
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+nf = nf + 1_IK
 call savehist(nf, x, xhist, f, fhist, cstrv, chist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
