@@ -27,14 +27,18 @@ end
 mincon = 0; % The minimal number of constraints of problems to test
 maxcon = min(5000, 100*maxdim); % The maximal number of constraints of problems to test
 sequential = false;
-debug = false;
+%debug = false;
+debug = true;
+chkfunval = true;
+output_xhist = true;
+output_nlchist = true;
 thorough_test = 0;
 minip = 1;
 
 % Set options
 options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
     eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
-    sequential, debug, thorough_test, minip);
+    sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip);
 
 % Select the problems to test.
 if isfield(options, 'list')
@@ -59,7 +63,7 @@ else
     end
     if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
         requirements.blacklist = [requirements.blacklist, {'3PK', 'LSNNODOC', 'SIPOW3', 'SIPOW4', 'OET1', 'MAKELA4','TFI2', 'QPCBOEI2', 'QPNBOEI2'}]; % The classical LINCOA encounters SIGFAULT
-        requirements.blacklist = [requirements.blacklist, {'TARGUS'}]; % Takes too long time
+        requirements.blacklist = [requirements.blacklist, {'TARGUS', 'ARGTRIGLS', 'VARDIM'}]; % Takes too long time
     end
     if startsWith(solvers{1}, 'uobyqa') || startsWith(solvers{2}, 'uobyqa')
         requirements.blacklist = [requirements.blacklist, {'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'ERRINRSM', 'TOINTGOR', 'TOINTPSP', 'VAREIGVL'}]; % Takes too long time
@@ -286,7 +290,7 @@ return
 
 function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, ...
         randomizex0, eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
-        sequential, debug, thorough_test, minip) % Set options
+        sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip) % Set options
 
 if (~isfield(options, 'rhoend'))
     options.rhoend = rhoend;
@@ -344,6 +348,15 @@ if (~isfield(options, 'sequential'))
 end
 if (~isfield(options, 'debug'))
     options.debug = debug;
+end
+if (~isfield(options, 'chkfunval'))
+    options.chkfunval = chkfunval;
+end
+if (~isfield(options, 'output_xhist'))
+    options.output_xhist = output_xhist;
+end
+if (~isfield(options, 'output_nlchist'))
+    options.output_nlchist = output_nlchist;
 end
 if (~isfield(options, 'thorough_test'))
     options.thorough_test = thorough_test;
@@ -465,12 +478,12 @@ solv_options.rhobeg = options.rhobeg;
 solv_options.rhoend = options.rhoend;
 solv_options.maxfun = min(options.maxfun_dim*n, options.maxfun);
 solv_options.ftarget = options.ftarget;
-solv_options.output_xhist = false;
-solv_options.output_nlchist = false;
+solv_options.output_xhist = options.output_xhist;
+solv_options.output_nlchist = options.output_nlchist;
 solv_options.iprint = 0;
 solv_options.quiet = true;
 solv_options.debug = options.debug;
-solv_options.chkfunval = false;
+solv_options.chkfunval = options.chkfunval;
 %solv_options.scale = true;
 
 if (strcmpi(solv, 'fmincon'))
