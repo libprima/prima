@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 PM05:43:21
+! Last Modified: Tuesday, May 24, 2022 PM03:38:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -190,7 +190,7 @@ xpq = matprod(xpt, pq) + HALF * sum(pq) * xopt
 call r2update(hq, ONE, xopt, xpq)
 
 ! Shift XBASE, SL, SU and XOPT. Set the elements of BMAT to ZERO, and set the elements of PTSAUX.
-xbase = xbase + xopt
+xbase = min(max(xl, xbase + xopt), xu)
 sl = sl - xopt
 su = su - xopt
 xopt = ZERO

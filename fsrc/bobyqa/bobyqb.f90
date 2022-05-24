@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 22, 2022 PM07:38:57
+! Last Modified: Tuesday, May 24, 2022 PM02:48:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -273,10 +273,12 @@ ntrits = ntrits + 1
 90 continue
 
 if (sum(xopt**2) >= 1.0E3_RP * dsq) then
-    xnew = xnew - xopt  ! Needed? Will XNEW be used again later?
-    sl = sl - xopt
-    su = su - xopt
+    sl = min(sl - xopt, ZERO)
+    su = max(su - xopt, ZERO)
+    !xnew = xnew - xopt  ! Needed? Will XNEW be used again later?
+    xnew = min(max(sl, xnew - xopt), su)  ! Needed? Will XNEW be used again later?
     call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
+    xbase = min(max(xl, xbase), xu)
 end if
 
 ! Pick two alternative vectors of variables, relative to XBASE, that are suitable as new positions
@@ -310,7 +312,8 @@ if (ntrits == 0) then
 
     ! Calculate a geometry step.
     d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
-    xnew = xopt + d
+    !xnew = xopt + d
+    xnew = min(max(sl, xopt + d), su)
 
     ! Calculate VLAG, BETA, and DENOM for the current choice of D.
     alpha = sum(zmat(knew, :)**2)

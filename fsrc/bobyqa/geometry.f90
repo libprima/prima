@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 18, 2022 PM01:21:46
+! Last Modified: Tuesday, May 24, 2022 PM02:53:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,7 +41,7 @@ function geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, trueloc, norm
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, trueloc, norm, issymmetric
 use, non_intrinsic :: powalg_mod, only : hess_mul, calvlag, calbeta
 
 implicit none
@@ -130,8 +130,13 @@ if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(knew /= kopt, 'KNEW /= KOPT', srname)
     call assert(delbar > 0, 'DELBAR > 0', srname)
-    call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
+    call assert(size(sl) == n .and. all(sl <= 0), 'SIZE(SL) == N, SL <= 0', srname)
+    call assert(size(su) == n .and. all(su >= 0), 'SIZE(SU) == N, SU >= 0', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
+        & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
 end if
 
@@ -186,7 +191,7 @@ do k = 1, npt
         cycle
     end if
 
-    subd = delbar / sqrt(distsq(k))  ! DISTSQ(K) > 0 unless K == KOPT as long as the input is correct.
+    subd = delbar / sqrt(distsq(k))  ! DISTSQ(K) > 0 unless K == KOPT or the input is incorrect.
     slbd = -subd
     ilbd = 0
     iubd = 0
@@ -196,8 +201,10 @@ do k = 1, npt
     ! N.B.: We calculate LFRAC only at the positions where SL - XOPT > -ABS(XDIFF) * SUBD, because
     ! the values of LFRAC are relevant only at the positions where ABS(LFRAC) < SUBD. Powell's code
     ! does not check this inequality before evaluating LFRAC, and overflow may occur due to large
-    ! entries of SL. Note that SL - XOPT > -ABS(XDIFF) * SUBD implies that DIFF /= 0, as long as
-    ! SL <= XOPT is ensured. Similar things can be said about UFRAC.
+    ! entries of SL. Note that SL - XOPT > -ABS(XDIFF) * SUBD implies that XDIFF /= 0, as long as
+    ! SL <= XOPT is ensured. In addition, when initializing LFRAC to SIGN(SUBD, -XDIFF), we do not
+    ! need to worry about the case where XDIFF = 0, because we only use LFRAC when XDIFF /= 0.
+    ! Similar things can be said about UFRAC.
     xdiff = xpt(:, k) - xopt
     lfrac = sign(subd, -xdiff)
     where (sl - xopt > -abs(xdiff) * subd) lfrac = (sl - xopt) / xdiff
@@ -208,7 +215,7 @@ do k = 1, npt
     !!lfrac = (sl - xopt) / xdiff;
     !!ufrac = (su - xopt) / xdiff;
 
-    ! First, revise SLBD.
+    ! First, revise SLBD. Note that SLBD_TEST <= 0 unless the input violates XOPT >= SL.
     slbd_test = slbd
     slbd_test(trueloc(xdiff > 0)) = lfrac(trueloc(xdiff > 0))
     slbd_test(trueloc(xdiff < 0)) = ufrac(trueloc(xdiff < 0))
@@ -221,7 +228,7 @@ do k = 1, npt
         !!ilbd = -ilbd * sign(xdiff(ilbd));
     end if
 
-    ! Second, revise SUBD.
+    ! Second, revise SUBD. Note that SUBD_TEST >= 0 unless the input violates XOPT <= SL.
     subd_test = subd
     subd_test(trueloc(xdiff > 0)) = ufrac(trueloc(xdiff > 0))
     subd_test(trueloc(xdiff < 0)) = lfrac(trueloc(xdiff < 0))

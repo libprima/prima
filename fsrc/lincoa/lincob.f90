@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 22, 2022 PM10:10:13
+! Last Modified: Monday, May 23, 2022 PM02:38:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -400,6 +400,7 @@ xnew = xopt + step
 x = xbase + xnew
 xdiff = sqrt(sum((x - xsav)**2))
 if (ksave == -1) xdiff = rho
+!if (.false.) then
 if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
     ifeas = .false.  ! Consistent with the meaning of IFEAS???
     info = DAMAGING_ROUNDING
