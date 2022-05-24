@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 22, 2022 PM07:22:45
+! Last Modified: Tuesday, May 24, 2022 AM09:18:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -82,7 +82,8 @@ real(RP) :: stmp(size(xpt, 1))
 real(RP) :: gl(size(xpt, 1))
 real(RP) :: constr(size(amat, 2))
 real(RP) :: bigcv, cvtol, gg, gxpt(size(xpt, 2)), ghg, sp, ss, tol, &
-&        stp, stplen(size(xpt, 2)), stpsav, mincv, vbig, vgrad, vlag(size(xpt, 2)), vnew, sstmp
+&        stp, stplen(size(xpt, 2)), stpsav, mincv, vbig, vgrad, vlag(size(xpt, 2)), vnew, sstmp, &
+&        vbig_line, vbig_grad, vbig_prjg
 real(RP) :: pqlag(size(xpt, 2))  ! PQLAG(NPT)
 integer(IK) :: jsav, k, ksav
 real(RP) :: step_line(size(xpt, 1)), step_grad(size(xpt, 1)), step_prjg(size(xpt, 1)), beta_line, &
@@ -174,8 +175,9 @@ if (any(vlag > vlag(knew))) then
 end if
 vbig = vlag(ksav)
 stpsav = stplen(ksav)
-step_line = stpsav * (xpt(:, ksav) - xopt)
 step = stpsav * (xpt(:, ksav) - xopt)
+step_line = stpsav * (xpt(:, ksav) - xopt)
+vbig_line = vlag(ksav)
 
 ! Replace STEP by a steepest ascent step from XOPT if the latter provides a larger value of VBIG.
 gg = sum(gl**2)
@@ -189,6 +191,8 @@ if (ghg < ZERO) then
     stp = -stp
 end if
 step_grad = stp * gl
+vbig_grad = vgrad + abs(HALF * delbar * delbar * ghg / gg)
+
 if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
 !if (vnew > 0.2_RP * vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     vbig = vnew
@@ -214,6 +218,7 @@ if (ghg < ZERO) then
     stp = -stp
 end if
 step_prjg = stp * gl
+vbig_prjg = vgrad + abs(HALF * delbar * delbar * ghg / gg)  ! GG can be ZERO!
 stmp = stp * gl
 sstmp = sum(stmp**2)
 
@@ -240,19 +245,35 @@ bigcv_prjg = maximum(matprod(step_prjg, amat(:, trueloc(rstat == 1))) - rescon(t
 
 bigcv = bigcv_line
 denom = denom_line
+!vbig = vbig_line
+vbig = vlag_line(knew)
 step = step_line
 cvtol = ZERO
-if (abs(denom_grad) > abs(denom)) then
+
+if (abs(vlag_grad(knew)) > abs(vbig)) then
+!if (abs(vbig_grad) > abs(vbig)) then
+!if (abs(denom_grad) > abs(denom)) then
 !if (bigcv_grad < bigcv) then
     bigcv = bigcv_grad
     denom = denom_grad
+    !vbig = vbig_grad
+    vbig = vlag_grad(knew)
     step = step_grad
 end if
-if (abs(denom_prjg) > 0.1_RP * abs(denom) .and. &
+if (abs(vlag_prjg(knew)) > 0.2_RP * abs(vbig) .and. &
     & bigcv_prjg <= min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))) then
+!if (abs(vlag_prjg(knew)) > 0.2_RP * abs(vbig)) then
+!if (abs(vbig_prjg) > 0.1_RP * abs(vbig)) then
+!if (abs(vbig_prjg) > 0._RP * abs(vbig) .and.&
+!    & bigcv_prjg <= min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))) then
+!if (abs(denom_prjg) > 0.1_RP * abs(denom)) then
+!if (abs(denom_prjg) > 0.1_RP * abs(denom) .and. &
+!    & bigcv_prjg <= min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))) then
 !if (bigcv_prjg < bigcv) then
-    bigcv = bigcv_prjg 
+    bigcv = bigcv_prjg
     denom = denom_prjg
+    !vbig = vbig_prjg
+    vbig = vlag_prjg(knew)
     step = step_prjg
     cvtol = min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))
 end if

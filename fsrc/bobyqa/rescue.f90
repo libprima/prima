@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 PM05:43:21
+! Last Modified: Tuesday, May 24, 2022 PM03:38:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -31,7 +31,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update, r2update, trueloc!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : hess_mul
@@ -108,21 +108,42 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(maxfun >= npt + 1, 'MAXFUN >= NPT+1', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(delta > 0, 'DELTA > 0', srname)
+    call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN/+Inf', srname)
+    call assert(.not. any(fval < fval(kopt)), 'FVAL(KOPT) is the smallest in FVAL', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST is not NaN/+Inf', srname)
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
-    call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
-    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(size(sl) == n .and. all(sl <= 0), 'SIZE(SL) == N, SL <= 0', srname)
+    call assert(size(su) == n .and. all(su >= 0), 'SIZE(SU) == N, SU >= 0', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(size(vlag) == n + npt, 'SIZE(PQ) == N + NPT', srname)
-    call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
-    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
-    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
+    call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
+    write (16, *) xbase
+    write (16, *) xl
+    write (16, *) xu
+    write (16, *) xbase >= xl
+    write (16, *) xbase <= xu
+    close (16)
+
+    call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
-    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(all(is_finite(xhist)), 'XHIST is finite', srname)
+    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(all(xopt >= sl .and. xopt <= su), 'SL <= XOPT <= SU', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
+        & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
 end if
 
 
@@ -190,9 +211,9 @@ xpq = matprod(xpt, pq) + HALF * sum(pq) * xopt
 call r2update(hq, ONE, xopt, xpq)
 
 ! Shift XBASE, SL, SU and XOPT. Set the elements of BMAT to ZERO, and set the elements of PTSAUX.
-xbase = xbase + xopt
-sl = sl - xopt
-su = su - xopt
+xbase = min(max(xl, xbase + xopt), xu)
+sl = min(sl - xopt, ZERO)
+su = max(su - xopt, ZERO)
 xopt = ZERO
 bmat = ZERO
 ptsaux(1, :) = min(delta, su)
@@ -468,6 +489,44 @@ if (kopt /= kbase) then
 end if
 
 350 continue
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(size(fhist) == maxfhist .and. .not. any(is_nan(fhist) .or. is_posinf(fhist)), &
+        & 'SIZE(FHIST) == MAX, FHIST is not NaN/+Inf', srname)
+    call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN/+Inf', srname)
+    call assert(.not. any(fval < fval(kopt)), 'FVAL(KOPT) is the smallest in FVAL', srname)
+    call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(size(vlag) == n + npt, 'SIZE(PQ) == N + NPT', srname)
+    call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
+    write (16, *) xbase
+    write (16, *) xl
+    write (16, *) xu
+    write (16, *) xbase >= xl
+    write (16, *) xbase <= xu
+    close (16)
+
+    call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(all(is_finite(xhist)), 'XHIST is finite', srname)
+    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(all(xopt >= sl .and. xopt <= su), 'SL <= XOPT <= SU', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
+        & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+end if
 
 return
 end subroutine rescue

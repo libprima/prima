@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 22, 2022 PM07:58:47
+! Last Modified: Tuesday, May 24, 2022 PM02:40:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -274,10 +274,12 @@ ntrits = ntrits + 1
 90 continue
 
 if (sum(xopt**2) >= 1.0E3_RP * dsq) then
-    xnew = xnew - xopt  ! Needed? Will XNEW be used again later?
+    !xnew = xnew - xopt  ! Needed? Will XNEW be used again later?
     sl = sl - xopt
     su = su - xopt
+    xnew = min(max(sl, xnew - xopt), su)  ! Needed? Will XNEW be used again later?
     call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
+    xbase = min(max(xl, xbase), xu)
 end if
 
 if (ntrits == 0) goto 210
@@ -367,7 +369,8 @@ end if
 call geostep(knew, kopt, adelt, bmat, sl, su, xopt, xpt, zmat, cauchy, xalt, xnew)
 d = xnew - xopt
 !----------------!
-xnew = xopt + d
+!xnew = xopt + d
+xnew = min(max(sl, xopt + d), su)
 !----------------!
 alpha = sum(zmat(knew, :)**2)
 is_cauchy = .false.
@@ -396,7 +399,8 @@ if (ntrits == 0) then
             xnew = xalt
             d = xnew - xopt
             !----------------!
-            xnew = xopt + d
+            !xnew = xopt + d
+            xnew = min(max(sl, xopt + d), su)
             !----------------!
             cauchy = ZERO
             is_cauchy = .true.

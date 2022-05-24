@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM01:30:35
+! Last Modified: Tuesday, May 24, 2022 PM02:51:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,10 +22,10 @@ contains
 subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, HALF, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, trueloc
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, trueloc, norm
 use, non_intrinsic :: powalg_mod, only : hess_mul
 use, non_intrinsic :: univar_mod, only : interval_max
 
@@ -76,9 +76,14 @@ if (DEBUGGING) then
     call assert(delta > 0, 'DELTA > 0', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
-    call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
-    call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
+    call assert(size(sl) == n .and. all(sl <= 0), 'SIZE(SL) == N, SL <= 0', srname)
+    call assert(size(su) == n .and. all(su >= 0), 'SIZE(SU) == N, SU >= 0', srname)
+    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(all(xopt >= sl .and. xopt <= su), 'SL <= XOPT <= SU', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
+        & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(size(gnew) == n, 'SIZE(GNEW) == N', srname)
     call assert(size(xnew) == n, 'SIZE(XNEW) == N', srname)
@@ -458,7 +463,16 @@ xnew(trueloc(xbdi == 1)) = su(trueloc(xbdi == 1))
 d = xnew - xopt
 dsq = sum(d**2)
 
-return
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
+    call assert(all(is_finite(d)), 'D is finite', srname)
+    ! In theory, |D| <= DELBAR, which may be false due to rounding, but |D| > 2*DELBAR is unlikely.
+    call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
+    ! D is supposed to satisfy the bound constraints SL <= XOPT + D <= SU.
+    call assert(all(xopt + d >= sl - TEN * EPS * max(ONE, abs(sl)) .and. &
+        & xopt + d <= su + TEN * EPS * max(ONE, abs(su))), 'SL <= XOPT + D <= SU', srname)
+end if
 
 end subroutine trsbox
 

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 02, 2022 PM11:02:04
+! Last Modified: Tuesday, May 24, 2022 PM02:57:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,12 +22,12 @@ contains
 subroutine initialize(calfun, iprint, ftarget, rhobeg, sl, su, x0, xl, xu, &
     & kopt, nf, bmat, f, fhist, fval, gopt, hq, pq, xbase, xhist, xpt, zmat)
 
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : matprod, trueloc!, norm
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, trueloc, issymmetric!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 implicit none
@@ -71,7 +71,7 @@ integer(IK) :: ipt, itemp, jpt, nfm, nfx, np
 logical :: evaluated(size(fval))
 
 ! Sizes.
-n = int(size(x), kind(n))
+n = int(size(x0), kind(n))
 npt = int(size(fval), kind(npt))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
@@ -83,8 +83,10 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(rhobeg > 0, 'RHOBEG > 0', srname)
-    call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
+    call assert(size(sl) == n .and. all(sl <= 0), 'SIZE(SL) == N, SL <= 0', srname)
+    call assert(size(su) == n .and. all(su >= 0), 'SIZE(SU) == N, SU >= 0', srname)
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
+    call assert(all(is_finite(x0) .and. x0 >= xl .and. x0 <= xu), 'X0 is finite, XL <= X0 <= XU', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
@@ -119,7 +121,13 @@ ipt = 1; jpt = 1  ! Temporary fix for G95 warning about these variables used uni
 !
 !     Set some constants.
 !
+! EVALUATED is a boolean array with EVALUATED(I) indicating whether the function value of the I-th
+! interpolation point has been evaluated. We need it for a portable counting of the number of
+! function evaluations, especially if the loop is conducted asynchronously.
 evaluated = .false.
+! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
+! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+fval = HUGENUM
 rhosq = rhobeg * rhobeg
 recip = ONE / rhosq
 np = n + 1
@@ -241,6 +249,25 @@ end if
 
 !nf = min(nf, npt)  ! NF may be NPT+1 at exit of the loop.
 nf = count(evaluated)
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(nf <= npt, 'NF <= NPT', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
+    call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
+        & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
+    call assert(size(fval) == npt .and. .not. any(evaluated .and. (is_nan(fval) .or. is_posinf(fval))), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
+    call assert(.not. any(fval < fval(kopt) .and. evaluated), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
+    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+end if
 
 end subroutine initialize
 
