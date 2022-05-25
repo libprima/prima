@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 24, 2022 PM02:48:00
+! Last Modified: Tuesday, May 24, 2022 PM05:09:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -350,7 +350,6 @@ if (ntrits == 0) then
             !--------------------------------------------------------------------------------------!
 
 
-            !write (16, *) nf, 'resc'
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fval, &
                 & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
             ! Do we need to pass sl, su, vlag, xopt, f ???
