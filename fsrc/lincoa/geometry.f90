@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 25, 2022 PM10:18:19
+! Last Modified: Wednesday, May 25, 2022 PM11:16:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,11 +45,11 @@ subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TEN, HALF, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TEN, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc, norm
-use, non_intrinsic :: powalg_mod, only : hess_mul, omega_col, calvlag, calbeta
+use, non_intrinsic :: powalg_mod, only : hess_mul, omega_col, calden
 
 implicit none
 
@@ -79,18 +79,14 @@ integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: rstat(size(amat, 2))
-real(RP) :: alpha
-real(RP) :: beta_grad
-real(RP) :: beta_line
-real(RP) :: beta_prjg
-real(RP) :: bigcv_prjg
 real(RP) :: constr(size(amat, 2))
+real(RP) :: cv_prjg
 real(RP) :: cvtol
 real(RP) :: cvtol_prjg
-real(RP) :: denom
-real(RP) :: denom_grad
-real(RP) :: denom_line
-real(RP) :: denom_prjg
+real(RP) :: den_grad(size(xpt, 2))
+real(RP) :: den_line(size(xpt, 2))
+real(RP) :: den_prjg(size(xpt, 2))
+real(RP) :: denabs
 real(RP) :: gg
 real(RP) :: ghg
 real(RP) :: gl(size(xpt, 1))
@@ -104,11 +100,7 @@ real(RP) :: step_prjg(size(xpt, 1))
 real(RP) :: stp
 real(RP) :: stplen(size(xpt, 2))
 real(RP) :: tol
-real(RP) :: vgrad
 real(RP) :: vlag(size(xpt, 2))
-real(RP) :: vlag_grad(size(xpt, 1) + size(xpt, 2))
-real(RP) :: vlag_line(size(xpt, 1) + size(xpt, 2))
-real(RP) :: vlag_prjg(size(xpt, 1) + size(xpt, 2))
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -191,7 +183,7 @@ step_line = stplen(k) * (xpt(:, k) - xopt)
 
 ! Replace STEP by a steepest ascent step from XOPT if the latter provides a larger value of VBIG.
 gg = sum(gl**2)
-vgrad = delbar * sqrt(gg)
+!vgrad = delbar * sqrt(gg)
 !if (vgrad <= TENTH * vbig) goto 220
 gxpt = matprod(gl, xpt)
 ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
@@ -220,7 +212,7 @@ step_prjg = stp * gl
 
 !--------------------------------------------------------------------------------------------------!
 if (nact == n) then
-    step_prjg = 0
+    step_prjg = ZERO
 else if (nact == 0) then
     step_prjg = step_grad
 end if
@@ -232,28 +224,22 @@ end if
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
-alpha = -sum(zmat(knew, 1:idz - 1)**2) + sum(zmat(knew, idz:size(zmat, 2))**2)
-vlag_line = calvlag(kopt, bmat, step_line, xpt, zmat, idz)
-beta_line = calbeta(kopt, bmat, step_line, xpt, zmat, idz)
-denom_line = alpha * beta_line + vlag_line(knew)**2
-vlag_grad = calvlag(kopt, bmat, step_grad, xpt, zmat, idz)
-beta_grad = calbeta(kopt, bmat, step_grad, xpt, zmat, idz)
-denom_grad = alpha * beta_grad + vlag_grad(knew)**2
-vlag_prjg = calvlag(kopt, bmat, step_prjg, xpt, zmat, idz)
-beta_prjg = calbeta(kopt, bmat, step_prjg, xpt, zmat, idz)
-denom_prjg = alpha * beta_prjg + vlag_prjg(knew)**2
+den_line = calden(kopt, bmat, step_line, xpt, zmat, idz)
+den_grad = calden(kopt, bmat, step_grad, xpt, zmat, idz)
+den_prjg = calden(kopt, bmat, step_prjg, xpt, zmat, idz)
 
-denom = denom_line
-step = step_line
-if (abs(denom_grad) > abs(denom)) then
-    denom = denom_grad
+if (abs(den_grad(knew)) > abs(den_line(knew))) then
+    denabs = abs(den_grad(knew))
     step = step_grad
+else
+    denabs = abs(den_line(knew))
+    step = step_line
 end if
 cvtol = ZERO
 
-bigcv_prjg = maximum(matprod(step_prjg, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
+cv_prjg = maximum(matprod(step_prjg, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
 cvtol_prjg = min(0.01_RP * sqrt(sum(step_prjg**2)), TEN * norm(matprod(step_prjg, amat(:, iact(1:nact))), 'inf'))
-if (abs(denom_prjg) > 0.1_RP * abs(denom) .and. bigcv_prjg <= cvtol_prjg) then
+if (abs(den_prjg(knew)) > 0.1_RP * denabs .and. cv_prjg <= cvtol_prjg) then
     step = step_prjg
     cvtol = cvtol_prjg
 end if

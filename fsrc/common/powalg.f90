@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 15, 2022 PM04:56:31
+! Last Modified: Wednesday, May 25, 2022 PM11:02:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,7 +34,7 @@ public :: hess_mul
 ! LAGINT (quadratic LAGrange INTerpolation):
 public :: omega_col, omega_mul, omega_inprod
 public :: updateh, errh
-public :: calvlag, calbeta
+public :: calvlag, calbeta, calden
 !--------------------------------------------------------------------------------------------------!
 
 interface qradd
@@ -1811,6 +1811,87 @@ beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - dvlag - wvlag
 !====================!
 
 end function calbeta
+
+
+function calden(kopt, bmat, d, xpt, zmat, idz) result(den)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates DENOM for a given step D. See (4.12) and (4.26) of the NEWUOA paper.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack):
+! REAL(RP) :: BW(N), BD(N), WCHECK(NPT), XOPT(N)
+! Size of local arrays: REAL(RP)*(3*NPT+4*N)
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert, wassert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : issymmetric
+
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: kopt
+real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
+real(RP), intent(in) :: d(:)    ! D(N)
+real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
+real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+integer(IK), intent(in), optional :: idz  ! Absent in BOBYQA, being equivalent to IDZ = 1
+
+! Outputs
+real(RP) :: den(size(xpt, 2))
+
+! Local variables
+character(len=*), parameter :: srname = 'CALBETA'
+integer(IK) :: idz_loc
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: beta
+real(RP) :: hdiag(size(xpt, 2))
+real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
+
+! Sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
+! Read IDZ, which is absent from BOBYQA, being equivalent to IDZ = 1.
+idz_loc = 1_IK
+if (present(idz)) then
+    idz_loc = idz
+end if
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(idz_loc >= 1 .and. idz_loc <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
+        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+
+    !--------------------------------------------------------------------------------------!
+    ! Disable the test for the moment, as it cannot pass in BOBYQA.!!!!!!!!!!!!!!!!!!!!!!!!!
+    call wassert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    !--------------------------------------------------------------------------------------!
+
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
+vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
+beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
+den = hdiag * beta + vlag(1:npt)**2
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function calden
 
 
 function calvlag_qint(pl, d, xopt, kopt) result(vlag)
