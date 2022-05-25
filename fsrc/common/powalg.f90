@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 25, 2022 PM11:02:20
+! Last Modified: Wednesday, May 25, 2022 PM11:45:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1532,13 +1532,16 @@ end subroutine updateh
 
 
 !--------------------------------------------------------------------------------------------------!
-! CALVLAG and CALBETA are subroutine that calculate VLAG and BETA for a given step D. Both VLAG and
-! BETA are critical for the updating procedure of H, which is detailed formula (4.11) of the NEWUOA
-! paper. See (4.12) for the definition of BETA, and VLAG is indeed H*w without the (NPT+1)the entry;
-! (4.25)--(4.26) formulate the actual calculating scheme of VLAG and BETA.
-! In languages like MATLAB/Python/Julia/R, CALVLAG and CALBETA should be implemented into one
-! single function, as they share most of the calculation. We separate them in Fortran (at the
-! expense of repeating some calculation) because Fortran functions can only have one output.
+! CALVLAG, CALBETA, and CALDEN are subroutine that calculate VLAG, BETA, and DEN for a given step D.
+! VLAG(K), BETA, and DEN(K) are critical for the updating procedure of H when the interpolation set
+! replaces XPT(:, K) with D. The updating formula of H is detailed in (4.11) of the NEWUOA paper,
+! where the point being replaced is XPT(:, t). See (4.12) for the definition of BETA; VLAG is indeed
+! H*w without the (NPT+1)the entry; DEN(t) is SIGMA in (4.12). (4.25)--(4.26) formulate the actual
+! calculating scheme of VLAG and BETA.
+!
+! In languages like MATLAB/Python/Julia/R, CALVLAG and CALBETA should be implemented into one single
+! function, as they share most of the calculation. We separate them in Fortran (at the expense of
+! repeating some calculation) because Fortran functions can only have one output.
 !
 ! Explanation on the matrix H in (3.12) and w(X) in (6.3) of the NEWUOA paper and WCHECK in the code:
 ! 0. As defined in (6.3) of the paper w(X)(K) = 0.5*[(X-X_0)^T*(X_K-X_0)]^2 for K = 1, ..., NPT,
@@ -1815,11 +1818,9 @@ end function calbeta
 
 function calden(kopt, bmat, d, xpt, zmat, idz) result(den)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates DENOM for a given step D. See (4.12) and (4.26) of the NEWUOA paper.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: BW(N), BD(N), WCHECK(NPT), XOPT(N)
-! Size of local arrays: REAL(RP)*(3*NPT+4*N)
+! This function calculates DEN for a given step D. DEN is an array of length NPT, and DEN(K) is the
+! value of SIGMA in (4.12) of the NEWUOA paper if XPT(:, K) is replaced with D. This value appears
+! as a DENominator in the updating formula of the matrix H as detailed in (4.11) of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -1842,7 +1843,7 @@ integer(IK), intent(in), optional :: idz  ! Absent in BOBYQA, being equivalent t
 real(RP) :: den(size(xpt, 2))
 
 ! Local variables
-character(len=*), parameter :: srname = 'CALBETA'
+character(len=*), parameter :: srname = 'CALDEN'
 integer(IK) :: idz_loc
 integer(IK) :: n
 integer(IK) :: npt
