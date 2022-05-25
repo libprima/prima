@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 24, 2022 PM08:25:43
+! Last Modified: Wednesday, May 25, 2022 PM10:15:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,7 +125,6 @@ if (DEBUGGING) then
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
-    call assert(all(is_finite(xhist)), 'XHIST is finite', srname)
     call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
     call assert(all(xopt >= sl .and. xopt <= su), 'SL <= XOPT <= SU', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
@@ -485,8 +484,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(size(fhist) == maxfhist .and. .not. any(is_nan(fhist) .or. is_posinf(fhist)), &
-        & 'SIZE(FHIST) == MAX, FHIST is not NaN/+Inf', srname)
+    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN/+Inf', srname)
     call assert(.not. any(fval < fval(kopt)), 'FVAL(KOPT) is the smallest in FVAL', srname)
@@ -499,7 +497,6 @@ if (DEBUGGING) then
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
-    call assert(all(is_finite(xhist)), 'XHIST is finite', srname)
     call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
     call assert(all(xopt >= sl .and. xopt <= su), 'SL <= XOPT <= SU', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
