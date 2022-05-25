@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 24, 2022 AM09:18:51
+! Last Modified: Wednesday, May 25, 2022 PM02:06:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -81,13 +81,13 @@ integer(IK) :: rstat(size(amat, 2))
 real(RP) :: stmp(size(xpt, 1))
 real(RP) :: gl(size(xpt, 1))
 real(RP) :: constr(size(amat, 2))
-real(RP) :: bigcv, cvtol, gg, gxpt(size(xpt, 2)), ghg, sp, ss, tol, &
+real(RP) :: bigcv, cvtol, cvtol_prjg, gg, gxpt(size(xpt, 2)), ghg, sp, ss, tol, &
 &        stp, stplen(size(xpt, 2)), stpsav, mincv, vbig, vgrad, vlag(size(xpt, 2)), vnew, sstmp, &
 &        vbig_line, vbig_grad, vbig_prjg
 real(RP) :: pqlag(size(xpt, 2))  ! PQLAG(NPT)
 integer(IK) :: jsav, k, ksav
 real(RP) :: step_line(size(xpt, 1)), step_grad(size(xpt, 1)), step_prjg(size(xpt, 1)), beta_line, &
-    & beta_grad, beta_prjg, denom_line, denom_grad, denom_prjg, denom, &
+    & beta_grad, beta_prjg, denom_line, denom_grad, denom_prjg, denom, denmax, &
     & vlag_line(size(xpt, 1) + size(xpt, 2)), &
     & vlag_grad(size(xpt, 1) + size(xpt, 2)), vlag_prjg(size(xpt, 1) + size(xpt, 2)), alpha, &
     & bigcv_line, bigcv_grad, bigcv_prjg
@@ -142,10 +142,10 @@ pqlag = omega_col(idz, zmat, knew)
 gl = gl + hess_mul(xopt, xpt, pqlag)
 
 ! Maximize |LFUNC| within the trust region on the lines through XOPT and other interpolation points.
-! In the following loop, VLAG(K) is set to the maximum of PHI_K(t) subject to the trust-region
+! In the following loop, VLAG(K) is set to the maximum of |PHI_K(t)| subject to the trust-region
 ! constraint with PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:, K)). Note that PHI_K(t) is a quadratic
-! function with PHI_K(0) = 0, PHI_K(1) = 1, and PHI_K'(0) = SP = INPROD(GL, XPT(:, K) - XOPT).
-! The linear constraints are not considered.
+! function with PHI_K'(0) = SP = INPROD(GL, XPT(:, K) - XOPT) and PHI_K(0) = 0; PHI_K(1) = 0 if
+! K /= KNEW and PHI_K(1) = 1 if K = KNEW. The linear constraints are not considered.
 vlag = ZERO
 do k = 1, npt
     if (k == kopt) then
@@ -155,7 +155,7 @@ do k = 1, npt
     ss = sum((xpt(:, k) - xopt)**2)
     stplen(k) = -delbar / sqrt(ss)
     if (k == knew) then
-        if (sp * (sp - ONE) < ZERO) then
+        if (sp * (sp - ONE) < 0) then
             stplen(k) = -stplen(k)
         end if
         vlag(k) = abs(stplen(k) * sp) + stplen(k)**2 * abs(sp - ONE)
@@ -173,11 +173,7 @@ if (any(vlag > vlag(knew))) then
     ksav = maxloc(vlag, mask=(.not. is_nan(vlag)), dim=1)
     !!MATLAB: [~, ksav] = max(vlag, [], 'omitnan');
 end if
-vbig = vlag(ksav)
-stpsav = stplen(ksav)
-step = stpsav * (xpt(:, ksav) - xopt)
-step_line = stpsav * (xpt(:, ksav) - xopt)
-vbig_line = vlag(ksav)
+step_line = stplen(ksav) * (xpt(:, ksav) - xopt)
 
 ! Replace STEP by a steepest ascent step from XOPT if the latter provides a larger value of VBIG.
 gg = sum(gl**2)
@@ -185,21 +181,11 @@ vgrad = delbar * sqrt(gg)
 !if (vgrad <= TENTH * vbig) goto 220
 gxpt = matprod(gl, xpt)
 ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
-vnew = vgrad + abs(HALF * delbar * delbar * ghg / gg)  ! GG can be ZERO!
-stp = delbar / sqrt(gg)
-if (ghg < ZERO) then
+stp = delbar / sqrt(gg)  ! GG may be ZERO!
+if (ghg < 0) then
     stp = -stp
 end if
 step_grad = stp * gl
-vbig_grad = vgrad + abs(HALF * delbar * delbar * ghg / gg)
-
-if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
-!if (vnew > 0.2_RP * vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
-    vbig = vnew
-    step = stp * gl
-end if
-
-!if (nact == 0 .or. nact == n) goto 220
 
 ! Overwrite GL by its projection to the column space of QFAC(:, NACT+1:N). Then set VNEW to the
 ! greatest value of |LFUNC| on the projected gradient from XOPT subject to the trust region bound.
@@ -212,23 +198,22 @@ vgrad = delbar * sqrt(gg)
 !if (vgrad <= TENTH * vbig) goto 220
 gxpt = matprod(gl, xpt)
 ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
-vnew = vgrad + abs(HALF * delbar * delbar * ghg / gg)  ! GG can be ZERO!
-stp = delbar / sqrt(gg)
-if (ghg < ZERO) then
+stp = delbar / sqrt(gg)  ! GG may be ZERO.
+if (ghg < 0) then
     stp = -stp
 end if
 step_prjg = stp * gl
-vbig_prjg = vgrad + abs(HALF * delbar * delbar * ghg / gg)  ! GG can be ZERO!
-stmp = stp * gl
-sstmp = sum(stmp**2)
+
 
 !--------------------------------------------------------------------------------------------------!
-if (nact == n) then
-    step_prjg = 0
-else if (nact == 0) then
-    step_prjg = step_grad
-end if
+!--------------------------------------------------------------------------------------------------!
+!N.B.: LINCOB tests whether xdiff > 0.1*RHO. Check whether it should be turned off.
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+
+
 alpha = -sum(zmat(knew, 1:idz - 1)**2) + sum(zmat(knew, idz:size(zmat, 2))**2)
+
 vlag_line = calvlag(kopt, bmat, step_line, xpt, zmat, idz)
 beta_line = calbeta(kopt, bmat, step_line, xpt, zmat, idz)
 denom_line = alpha * beta_line + vlag_line(knew)**2
@@ -239,50 +224,23 @@ vlag_prjg = calvlag(kopt, bmat, step_prjg, xpt, zmat, idz)
 beta_prjg = calbeta(kopt, bmat, step_prjg, xpt, zmat, idz)
 denom_prjg = alpha * beta_prjg + vlag_prjg(knew)**2
 
-bigcv_line = maximum(matprod(step_line, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-bigcv_grad = maximum(matprod(step_grad, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-bigcv_prjg = maximum(matprod(step_prjg, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-
-bigcv = bigcv_line
 denom = denom_line
-!vbig = vbig_line
-vbig = vlag_line(knew)
 step = step_line
-cvtol = ZERO
-
-if (abs(vlag_grad(knew)) > abs(vbig)) then
-!if (abs(vbig_grad) > abs(vbig)) then
-!if (abs(denom_grad) > abs(denom)) then
-!if (bigcv_grad < bigcv) then
-    bigcv = bigcv_grad
+if (abs(denom_grad) > abs(denom)) then
     denom = denom_grad
-    !vbig = vbig_grad
-    vbig = vlag_grad(knew)
     step = step_grad
 end if
-if (abs(vlag_prjg(knew)) > 0.2_RP * abs(vbig) .and. &
-    & bigcv_prjg <= min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))) then
-!if (abs(vlag_prjg(knew)) > 0.2_RP * abs(vbig)) then
-!if (abs(vbig_prjg) > 0.1_RP * abs(vbig)) then
-!if (abs(vbig_prjg) > 0._RP * abs(vbig) .and.&
-!    & bigcv_prjg <= min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))) then
-!if (abs(denom_prjg) > 0.1_RP * abs(denom)) then
-!if (abs(denom_prjg) > 0.1_RP * abs(denom) .and. &
-!    & bigcv_prjg <= min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))) then
-!if (bigcv_prjg < bigcv) then
-    bigcv = bigcv_prjg
-    denom = denom_prjg
-    !vbig = vbig_prjg
-    vbig = vlag_prjg(knew)
+cvtol = ZERO
+
+bigcv_prjg = maximum(matprod(step_prjg, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
+cvtol_prjg = min(0.01_RP * sqrt(sum(step_prjg**2)), TEN * norm(matprod(step_prjg, amat(:, iact(1:nact))), 'inf'))
+if (abs(denom_prjg) > 0.1_RP * abs(denom) .and. bigcv_prjg <= cvtol_prjg) then
     step = step_prjg
-    cvtol = min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))
 end if
 
-!step = step_grad
 constr = ZERO
 constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
 ifeas = all(constr <= cvtol)
-
 
 return
 !--------------------------------------------------------------------------------------------------!

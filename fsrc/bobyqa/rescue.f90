@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 24, 2022 PM03:38:49
+! Last Modified: Tuesday, May 24, 2022 PM08:25:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -114,7 +114,6 @@ if (DEBUGGING) then
         & 'SIZE(FVAL) == NPT and FVAL is not NaN/+Inf', srname)
     call assert(.not. any(fval < fval(kopt)), 'FVAL(KOPT) is the smallest in FVAL', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
-    call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST is not NaN/+Inf', srname)
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
     call assert(size(sl) == n .and. all(sl <= 0), 'SIZE(SL) == N, SL <= 0', srname)
     call assert(size(su) == n .and. all(su >= 0), 'SIZE(SU) == N, SU >= 0', srname)
@@ -123,13 +122,6 @@ if (DEBUGGING) then
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(size(vlag) == n + npt, 'SIZE(PQ) == N + NPT', srname)
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
-    write (16, *) xbase
-    write (16, *) xl
-    write (16, *) xu
-    write (16, *) xbase >= xl
-    write (16, *) xbase <= xu
-    close (16)
-
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
@@ -504,13 +496,6 @@ if (DEBUGGING) then
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(size(vlag) == n + npt, 'SIZE(PQ) == N + NPT', srname)
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
-    write (16, *) xbase
-    write (16, *) xl
-    write (16, *) xu
-    write (16, *) xbase >= xl
-    write (16, *) xbase <= xu
-    close (16)
-
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)

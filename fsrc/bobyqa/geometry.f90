@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 24, 2022 PM02:53:38
+! Last Modified: Tuesday, May 24, 2022 PM05:25:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -228,7 +228,7 @@ do k = 1, npt
         !!ilbd = -ilbd * sign(xdiff(ilbd));
     end if
 
-    ! Second, revise SUBD. Note that SUBD_TEST >= 0 unless the input violates XOPT <= SL.
+    ! Second, revise SUBD. Note that SUBD_TEST >= 0 unless the input violates XOPT <= SU.
     subd_test = subd
     subd_test(trueloc(xdiff > 0)) = ufrac(trueloc(xdiff > 0))
     subd_test(trueloc(xdiff < 0)) = lfrac(trueloc(xdiff < 0))
@@ -240,6 +240,10 @@ do k = 1, npt
         !![subd, iubd] = min(subd_test, [], 'omitnan');
         !!subd = max(sumin, subd);
         !!iubd = iubd * sign(xdiff(iubd));
+    end if
+
+    if (DEBUGGING) then
+        call assert(slbd <= 0 .and. subd >= 0, 'SLBD <= 0 <= SUBD', srname)
     end if
 
     ! Now, define the step length STPM between SLBD and SUBD by finding the critical point of the

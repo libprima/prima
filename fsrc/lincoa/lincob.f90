@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 23, 2022 PM02:38:56
+! Last Modified: Wednesday, May 25, 2022 PM03:40:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,7 +110,7 @@ real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, snorm, ssq, temp, &
-&        qred, xdiff
+&        qred
 logical :: ifeas, shortd
 integer(IK) :: idz, imprv, itest,  &
 &           knew, kopt, ksave, nact,      &
@@ -398,16 +398,23 @@ if (nf >= maxfun) then
 end if
 xnew = xopt + step
 x = xbase + xnew
-xdiff = sqrt(sum((x - xsav)**2))
-if (ksave == -1) xdiff = rho
-!if (.false.) then
-if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
-    ifeas = .false.  ! Consistent with the meaning of IFEAS???
-    info = DAMAGING_ROUNDING
-    goto 600
-end if
+
+!--------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------!
+!xdiff = sqrt(sum((x - xsav)**2))
+!if (ksave == -1) xdiff = rho
+!!if (.false.) then
+!if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
+!    ifeas = .false.  ! Consistent with the meaning of IFEAS???
+!    info = DAMAGING_ROUNDING
+!    goto 600
+!end if
+!--------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------!
+
 ifeas = (ifeas .or. ksave <= 0) ! Consistent with the meaning of IFEAS???
 f = merge(tsource=ONE, fsource=ZERO, mask=ifeas)  ! Zaikun 20220415 What does this mean???
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (is_nan(sum(abs(x)))) then
     f = sum(x)  ! Set F to NaN
