@@ -63,7 +63,9 @@ else
     end
     if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
         requirements.blacklist = [requirements.blacklist, {'3PK', 'LSNNODOC', 'SIPOW3', 'SIPOW4', 'OET1', 'MAKELA4','TFI2', 'QPCBOEI2', 'QPNBOEI2'}]; % The classical LINCOA encounters SIGFAULT
-        requirements.blacklist = [requirements.blacklist, {'TARGUS', 'ARGTRIGLS', 'VARDIM'}]; % Takes too long time
+        requirements.blacklist = [requirements.blacklist, {'TARGUS', 'ARGTRIGLS', 'VARDIM'}];  % Takes too long time
+        requirements.blacklist = [requirements.blacklist, {'AGG', 'DALLASM', 'GMNCASE1', 'GMNCASE2', 'SMBANK', 'SSEBLIN'}];  % Takes more than 10 seconds to solve; removed for quick profiling
+        %requirements.blacklist = [requirements.blacklist, {'DALLASM','GMNCASE1', 'GMNCASE2', 'SMBANK'}];  % Takes more than 10 seconds to solve; removed for quick profiling
     end
     if startsWith(solvers{1}, 'uobyqa') || startsWith(solvers{2}, 'uobyqa')
         requirements.blacklist = [requirements.blacklist, {'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'ERRINRSM', 'TOINTGOR', 'TOINTPSP', 'VAREIGVL'}]; % Takes too long time

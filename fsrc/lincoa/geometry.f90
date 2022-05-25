@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 25, 2022 PM03:47:07
+! Last Modified: Wednesday, May 25, 2022 PM09:42:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,7 +45,7 @@ subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TEN, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TEN, HALF, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc, norm
@@ -74,21 +74,41 @@ real(RP), intent(out) :: step(:)  ! STEP(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GEOSTEP'
+integer(IK) :: k
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: rstat(size(amat, 2))
-real(RP) :: gl(size(xpt, 1))
+real(RP) :: alpha
+real(RP) :: beta_grad
+real(RP) :: beta_line
+real(RP) :: beta_prjg
+real(RP) :: bigcv_prjg
 real(RP) :: constr(size(amat, 2))
-real(RP) :: cvtol, cvtol_prjg, gg, gxpt(size(xpt, 2)), ghg, sp, ss, tol, &
-&        stp, stplen(size(xpt, 2)), vlag(size(xpt, 2))
+real(RP) :: cvtol
+real(RP) :: cvtol_prjg
+real(RP) :: denom
+real(RP) :: denom_grad
+real(RP) :: denom_line
+real(RP) :: denom_prjg
+real(RP) :: gg
+real(RP) :: ghg
+real(RP) :: gl(size(xpt, 1))
+real(RP) :: gxpt(size(xpt, 2))
 real(RP) :: pqlag(size(xpt, 2))
-integer(IK) :: k, ksav
-real(RP) :: step_line(size(xpt, 1)), step_grad(size(xpt, 1)), step_prjg(size(xpt, 1)), beta_line, &
-    & beta_grad, beta_prjg, denom_line, denom_grad, denom_prjg, denom, &
-    & vlag_line(size(xpt, 1) + size(xpt, 2)), &
-    & vlag_grad(size(xpt, 1) + size(xpt, 2)), vlag_prjg(size(xpt, 1) + size(xpt, 2)), alpha, &
-    & bigcv_prjg
+real(RP) :: sp
+real(RP) :: ss
+real(RP) :: step_grad(size(xpt, 1))
+real(RP) :: step_line(size(xpt, 1))
+real(RP) :: step_prjg(size(xpt, 1))
+real(RP) :: stp
+real(RP) :: stplen(size(xpt, 2))
+real(RP) :: tol
+real(RP) :: vgrad
+real(RP) :: vlag(size(xpt, 2))
+real(RP) :: vlag_grad(size(xpt, 1) + size(xpt, 2))
+real(RP) :: vlag_line(size(xpt, 1) + size(xpt, 2))
+real(RP) :: vlag_prjg(size(xpt, 1) + size(xpt, 2))
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -158,20 +178,20 @@ do k = 1, npt
     end if
 end do
 
-! N.B.: 0. We define KSAV in a way slightly different from Powell's code, which sets KSAV to
-! MAXLOC(VLAG,DIM=1) by comparing the entries of VLAG sequentially.
-! 1. If VLAG contains only NaN, which can happen, Powell's code leaves KSAV uninitialized.
-! 2. If VLAG(KNEW) = MINVAL(VLAG) = VLAG(K) with K < KNEW, Powell's code does not set KSAV = KNEW.
-ksav = knew
+! N.B.: 1. We define K in a way slightly different from Powell's code, which sets K to MAXLOC(VLAG)
+! by comparing the entries of VLAG sequentially.
+! 1. If VLAG contains only NaN, which can happen, Powell's code leaves K uninitialized.
+! 2. If VLAG(KNEW) = MINVAL(VLAG) = VLAG(K) with K < KNEW, Powell's code does not set K = KNEW.
+k = knew
 if (any(vlag > vlag(knew))) then
-    ksav = maxloc(vlag, mask=(.not. is_nan(vlag)), dim=1)
-    !!MATLAB: [~, ksav] = max(vlag, [], 'omitnan');
+    k = maxloc(vlag, mask=(.not. is_nan(vlag)), dim=1)
+    !!MATLAB: [~, k] = max(vlag, [], 'omitnan');
 end if
-step_line = stplen(ksav) * (xpt(:, ksav) - xopt)
+step_line = stplen(k) * (xpt(:, k) - xopt)
 
 ! Replace STEP by a steepest ascent step from XOPT if the latter provides a larger value of VBIG.
 gg = sum(gl**2)
-!vgrad = delbar * sqrt(gg)
+vgrad = delbar * sqrt(gg)
 !if (vgrad <= TENTH * vbig) goto 220
 gxpt = matprod(gl, xpt)
 ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
@@ -212,9 +232,7 @@ end if
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
-
 alpha = -sum(zmat(knew, 1:idz - 1)**2) + sum(zmat(knew, idz:size(zmat, 2))**2)
-
 vlag_line = calvlag(kopt, bmat, step_line, xpt, zmat, idz)
 beta_line = calbeta(kopt, bmat, step_line, xpt, zmat, idz)
 denom_line = alpha * beta_line + vlag_line(knew)**2
