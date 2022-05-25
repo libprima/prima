@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 25, 2022 PM11:45:27
+! Last Modified: Thursday, May 26, 2022 AM12:47:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1883,9 +1883,9 @@ end if
 ! Calculation starts !
 !====================!
 
-hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
-vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
-beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
+hdiag = -sum(zmat(:, 1:idz_loc - 1)**2, dim=2) + sum(zmat(:, idz_loc:size(zmat, 2))**2, dim=2)
+vlag = calvlag(kopt, bmat, d, xpt, zmat, idz_loc)
+beta = calbeta(kopt, bmat, d, xpt, zmat, idz_loc)
 den = hdiag * beta + vlag(1:npt)**2
 
 !====================!

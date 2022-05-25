@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 24, 2022 PM05:25:33
+! Last Modified: Thursday, May 26, 2022 AM12:15:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,7 +42,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, EPS,
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, trueloc, norm, issymmetric
-use, non_intrinsic :: powalg_mod, only : hess_mul, calvlag, calbeta
+use, non_intrinsic :: powalg_mod, only : hess_mul, calden
 
 implicit none
 
@@ -76,14 +76,12 @@ logical :: mask_fixl(size(xpt, 1))
 logical :: mask_fixu(size(xpt, 1))
 logical :: mask_free(size(xpt, 1))
 real(RP) :: alpha, stpsiz
-real(RP) :: beta_cauchy
-real(RP) :: beta_line
 real(RP) :: betabd(3, size(xpt, 2))
 real(RP) :: bigstp
 real(RP) :: curv
 real(RP) :: dderiv(size(xpt, 2))
-real(RP) :: denom_cauchy
-real(RP) :: denom_line
+real(RP) :: den_cauchy(size(xpt, 2))
+real(RP) :: den_line(size(xpt, 2))
 real(RP) :: distsq(size(xpt, 2))
 real(RP) :: ggfree
 real(RP) :: glag(size(xpt, 1))
@@ -107,8 +105,6 @@ real(RP) :: sumin
 real(RP) :: sxpt(size(xpt, 2))
 real(RP) :: ufrac(size(xpt, 1))
 real(RP) :: vlag(3, size(xpt, 2))
-real(RP) :: vlag_cauchy(size(xpt, 1) + size(xpt, 2))
-real(RP) :: vlag_line(size(xpt, 1) + size(xpt, 2))
 real(RP) :: vlagsq
 real(RP) :: vlagsq_cauchy
 real(RP) :: x(size(xpt, 1))
@@ -319,26 +315,15 @@ if (ibd > 0) then
     xline(ibd) = su(ibd)
 end if
 
-! Calculate DENOM for the current choice of D.
-! N.B.: Indeed, only VLAG_LINE(KNEW) is needed. Moreover, VLAG_LINE(KNEW) = VLAG(ISQ, KSQ), which
-! can be obtained directly from the array VLAG without any calculation. Therefore, evaluating the
-! whole VLAG_LINE from scratch is not really needed here. However, we still choose to do so, because
-! VLAG_LINE and BETA_LINE can be calculated in one single function if the language supports allow a
-! functions to have multiple output (e.g., MATLAB/Python/Julia/R, but NOT Fortran and C), and the
-! calculation of BETA_LINE needs the full VLAG_LINE. For instance, in MATLAB, the calculation will
-! look like [vlag_line, beta_line] = vlagbeta(kopt, bmat, d, xpt, zmat). See the code of CALVLAG and
-! CALBETA for more information. In other words, our code here is a suboptimal implementation but it
-! intends to illustrate what should be done in MATLAB/Python/Julia/R.
+! Calculate DENOM for the current choice of D. Indeed, only DEN_LINE(KNEW) is needed.
 d = xline - xopt
-vlag_line = calvlag(kopt, bmat, d, xpt, zmat)
-beta_line = calbeta(kopt, bmat, d, xpt, zmat)
-denom_line = alpha * beta_line + vlag_line(knew)**2
+den_line = calden(kopt, bmat, d, xpt, zmat)
 
 !--------------------------------------------------------------------------------------------------!
 ! The following IF ... END IF does not exist in Powell's code.
 ! SURPRISINGLY, the performance of BOBYQA is evidently improved by this IF ... END IF, which means
 ! to try the Cauchy step only in the late stage of the algorithm, e.g., when DELBAR is relatively
-! small. WHY? In the following condition, 1.0E-2 works well if we use DENOM_CAUCHY to decide whether
+! small. WHY? In the following condition, 1.0E-2 works well if we use DEN_CAUCHY to decide whether
 ! to take the Cauchy step; 1.0E-3 works well if we use VLAGSQ instead. How to make this condition
 ! adaptive? A naive idea is to replace the thresholds to, e.g.,1.0E-2*RHOBEG. However, in a test on
 ! 20220517, this adaptation worsened the performance. In such a test, we must set RHOBEG to a value
@@ -424,16 +409,13 @@ do uphill = 0, 1
     end if
 end do
 
-! Calculate the denominator rendered by the Cauchy step. The comments on the calculation of
-! VLAG_LINE are also applicable to VLAG_CAUCHY.
+! Calculate the denominator rendered by the Cauchy step. Indeed, only DEN_CAUCHY(KNEW) is needed.
 s = xcauchy - xopt
-vlag_cauchy = calvlag(kopt, bmat, s, xpt, zmat)
-beta_cauchy = calbeta(kopt, bmat, s, xpt, zmat)
-denom_cauchy = alpha * beta_cauchy + vlag_cauchy(knew)**2
+den_cauchy = calden(kopt, bmat, s, xpt, zmat)
 
 ! Take the Cauchy step if it is likely to render a larger denominator.
-!IF (VLAGSQ_CAUCHY > MAX(DENOM_LINE, ZERO) .OR. IS_NAN(DENOM_LINE)) THEN  ! Powell's version
-if (denom_cauchy > max(denom_line, ZERO) .or. is_nan(denom_line)) then  ! This works slightly better
+!IF (VLAGSQ_CAUCHY > MAX(DEN_LINE(KNEW), ZERO) .OR. IS_NAN(DEN_LINE(KNEW))) THEN  ! Powell's version
+if (den_cauchy(knew) > max(den_line(knew), ZERO) .or. is_nan(den_line(knew))) then  ! Works better
     d = s
 end if
 

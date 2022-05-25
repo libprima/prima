@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 04, 2022 PM03:07:06
+! Last Modified: Thursday, May 26, 2022 AM01:12:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -108,6 +108,7 @@ beta = calbeta(kopt, bmat, step, xpt, zmat, idz)
 ! maximizing the absolute value of the denominator of the updating formula times a weighting factor.
 if (knew == 0) then
     hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
+    !denabs = abs(calden(kopt, bmat, step, xpt, zmat, idz))
     denabs = abs(beta * hdiag + vlag(1:npt)**2)
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     weight = distsq**2
