@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 24, 2022 PM05:09:26
+! Last Modified: Thursday, May 26, 2022 AM12:21:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,6 +35,7 @@ use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calvlag, calbeta, hess_mul
+!!! TODO (Zaikun 20220525): Use CALDEN instead of CALVLAG and CALBETA wherever possible!!!
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize

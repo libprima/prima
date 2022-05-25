@@ -398,13 +398,15 @@ if (nf >= maxfun) then
 end if
 xnew = xopt + step
 x = xbase + xnew
-xdiff = sqrt(sum((x - xsav)**2))
-if (ksave == -1) xdiff = rho
-if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
-    ifeas = .false.  ! Consistent with the meaning of IFEAS???
-    info = DAMAGING_ROUNDING
-    goto 600
-end if
+
+!xdiff = sqrt(sum((x - xsav)**2))
+!if (ksave == -1) xdiff = rho
+!if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
+!    ifeas = .false.  ! Consistent with the meaning of IFEAS???
+!    info = DAMAGING_ROUNDING
+!    goto 600
+!end if
+
 ifeas = (ifeas .or. ksave <= 0) ! Consistent with the meaning of IFEAS???
 f = merge(tsource=ONE, fsource=ZERO, mask=ifeas)  ! Zaikun 20220415 What does this mean???
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

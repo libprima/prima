@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, May 17, 2022 PM09:56:47
+! Last Modified: Thursday, May 26, 2022 AM12:17:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,7 +45,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric
-use, non_intrinsic :: powalg_mod, only : calvlag, calbeta
+use, non_intrinsic :: powalg_mod, only : calden
 implicit none
 
 ! Inputs
@@ -66,12 +66,9 @@ integer(IK) :: knew
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: beta
 real(RP) :: denabs(size(xpt, 2))
 real(RP) :: distsq(size(xpt, 2))
-real(RP) :: hdiag(size(xpt, 2))
 real(RP) :: score(size(xpt, 2))
-real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: weight(size(xpt, 2))
 
 ! Sizes
@@ -96,10 +93,6 @@ end if
 ! Calculation starts !
 !====================!
 
-! Calculate VLAG and BETA for D. Indeed, only VLAG(1:NPT) is needed.
-vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
-beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
-
 ! Calculate the distance squares between the interpolation points and the optimal point up to now.
 if (tr_success) then
     distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
@@ -109,8 +102,7 @@ else
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
 end if
 
-hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
-denabs = abs(beta * hdiag + vlag(1:npt)**2)
+denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
 weight = max(distsq / max(TENTH * delta, rho)**2, ONE)**3
 score = weight * denabs
 ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
