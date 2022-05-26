@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 AM10:50:15
+! Last Modified: Thursday, May 26, 2022 PM12:32:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,10 +79,8 @@ integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: rstat(size(amat, 2))
-real(RP) :: constr(size(amat, 2))
-real(RP) :: cv_prjg
+real(RP) :: cstrv
 real(RP) :: cvtol
-real(RP) :: cvtol_prjg
 real(RP) :: den_grad(size(xpt, 2))
 real(RP) :: den_line(size(xpt, 2))
 real(RP) :: den_prjg(size(xpt, 2))
@@ -133,7 +131,9 @@ if (DEBUGGING) then
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT- N-1]', srname)
 end if
 
-gl = bmat(:, knew)
+!====================!
+! Calculation starts !
+!====================!
 
 ! RSTAT(J) = -1, 0, or 1 respectively means constraint J is irrelevant, active, or inactive&relevant.
 ! RSTAT never changes after being set below.
@@ -141,11 +141,10 @@ rstat = 1_IK
 rstat(trueloc(abs(rescon) >= delbar)) = -1_IK
 rstat(iact(1:nact)) = 0_IK
 
-! Replace GL by the gradient of LFUNC at the trust region centre, and set the elements of RSTAT.
 ! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
-! derivative parameters of LFUNC.
+! derivative parameters of LFUNC. Set GL to the gradient of LFUNC at the trust region centre.
 pqlag = omega_col(idz, zmat, knew)
-gl = gl + hess_mul(xopt, xpt, pqlag)
+gl = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
 
 ! Maximize |LFUNC| within the trust region on the lines through XOPT and other interpolation points.
 ! In the following loop, VLAG(K) is set to the maximum of |PHI_K(t)| subject to the trust-region
@@ -170,16 +169,18 @@ do k = 1, npt
     end if
 end do
 
-! N.B.: 1. We define K in a way slightly different from Powell's code, which sets K to MAXLOC(VLAG)
-! by comparing the entries of VLAG sequentially.
-! 1. If VLAG contains only NaN, which can happen, Powell's code leaves K uninitialized.
-! 2. If VLAG(KNEW) = MINVAL(VLAG) = VLAG(K) with K < KNEW, Powell's code does not set K = KNEW.
+! N.B.:
+! 1. We define K in a way slightly different from Powell's code, which sets K to MAXLOC(VLAG) by
+! comparing the entries of VLAG sequentially.
+! 2. If VLAG contains only NaN, which can happen, Powell's code leaves K uninitialized.
+! 3. If VLAG(KNEW) = MINVAL(VLAG) = VLAG(K) with K < KNEW, Powell's code does not set K = KNEW.
 k = knew
 if (any(vlag > vlag(knew))) then
     k = maxloc(vlag, mask=(.not. is_nan(vlag)), dim=1)
     !!MATLAB: [~, k] = max(vlag, [], 'omitnan');
 end if
 step_line = stplen(k) * (xpt(:, k) - xopt)
+den_line = calden(kopt, bmat, step_line, xpt, zmat, idz)
 
 ! Replace STEP by a steepest ascent step from XOPT if the latter provides a larger value of VBIG.
 gg = sum(gl**2)
@@ -192,6 +193,17 @@ if (ghg < 0) then
     stp = -stp
 end if
 step_grad = stp * gl
+den_grad = calden(kopt, bmat, step_grad, xpt, zmat, idz)
+
+if (abs(den_grad(knew)) > abs(den_line(knew))) then
+    denabs = abs(den_grad(knew))
+    step = step_grad
+else
+    denabs = abs(den_line(knew))
+    step = step_line
+end if
+cstrv = maximum([ZERO, matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
+ifeas = (cstrv <= 0)
 
 ! Overwrite GL by its projection to the column space of QFAC(:, NACT+1:N). Then set VNEW to the
 ! greatest value of |LFUNC| on the projected gradient from XOPT subject to the trust region bound.
@@ -218,35 +230,22 @@ else if (nact == 0) then
 end if
 !--------------------------------------------------------------------------------------------------!
 
-!--------------------------------------------------------------------------------------------------!
+den_prjg = calden(kopt, bmat, step_prjg, xpt, zmat, idz)
+cstrv = maximum([ZERO, matprod(step_prjg, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))])
+cvtol = min(0.01_RP * sqrt(sum(step_prjg**2)), TEN * norm(matprod(step_prjg, amat(:, iact(1:nact))), 'inf'))
+if (abs(den_prjg(knew)) > 0.1_RP * denabs .and. cstrv <= cvtol) then
+    step = step_prjg
+    ifeas = .true.  ! IFEAS = (CSTRV <= CVTOL)
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
 !--------------------------------------------------------------------------------------------------!
 !N.B.: LINCOB tests whether xdiff > 0.1*RHO. Check whether it should be turned off.
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
-
-den_line = calden(kopt, bmat, step_line, xpt, zmat, idz)
-den_grad = calden(kopt, bmat, step_grad, xpt, zmat, idz)
-den_prjg = calden(kopt, bmat, step_prjg, xpt, zmat, idz)
-
-if (abs(den_grad(knew)) > abs(den_line(knew))) then
-    denabs = abs(den_grad(knew))
-    step = step_grad
-else
-    denabs = abs(den_line(knew))
-    step = step_line
-end if
-cvtol = ZERO
-
-cv_prjg = maximum(matprod(step_prjg, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-cvtol_prjg = min(0.01_RP * sqrt(sum(step_prjg**2)), TEN * norm(matprod(step_prjg, amat(:, iact(1:nact))), 'inf'))
-if (abs(den_prjg(knew)) > 0.1_RP * denabs .and. cv_prjg <= cvtol_prjg) then
-    step = step_prjg
-    cvtol = cvtol_prjg
-end if
-
-constr = ZERO
-constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
-ifeas = all(constr <= cvtol)
 
 end subroutine geostep
 
