@@ -249,7 +249,7 @@ do iter = 1_IK, maxiter
     end if
     ! In our tests, tolerating the following cases seems to render better numerical results.
     !!if (dd > gg) then
-    !!    psd = (psd / dnorm) * sqrt(gg)
+    !!    psd = (sqrt(gg) / dnorm) * psd
     !!    exit
     !!end if
     !!if (inprod(psd, g) < -gg) then

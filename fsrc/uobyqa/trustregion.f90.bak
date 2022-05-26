@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 AM12:31:57
+! Last Modified: Friday, May 27, 2022 AM12:01:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,7 +125,7 @@ gnorm = sqrt(gsq)
 
 if (.not. any(abs(h) > 0)) then
     if (gnorm > 0) then
-        d = -(delta / gnorm) * g
+        d = -delta * (g / gnorm)
     end if
     return
 end if
@@ -368,15 +368,15 @@ if (paruest > 0 .and. parlest >= partmp) then
     !----------------------------------------------------------------------------------------------!
 
     dtg = inprod(d, gg)
-    d = sign(delta / sqrt(dsq), -dtg) * d
-    ! N.B.: As per Powell's code, the line above would be D = -SIGN(DELTA/SQRT(DSQ), DTG) * D.
+    d = sign(delta, -dtg) * (d / sqrt(dsq))
+    ! N.B.: As per Powell's code, the line above would be D = -SIGN(DELTA, DTG) * (D / SQRT(DSQ)).
     ! However, our version here seems more reasonable in case DTG == 0, which is unlikely but did
     ! happen numerically. Note that SIGN(A, 0) = |A| /= -SIGN(A, 0).
     !!MATLAB:
     !!if (dtg == 0)  % sign(0) == 0 in MATLAB. dtg == 0 is unlikely but did happen numerically.
-    !!    d = (delta / sqrt(dsq)) * d
+    !!    d = delta * (d / sqrt(dsq))
     !!else
-    !!    d = -sign(dtg) * (delta / sqrt(dsq)) * d
+    !!    d = -sign(dtg) * delta * (d / sqrt(dsq))
     !!end
     goto 370
 end if
@@ -429,7 +429,8 @@ end if
 dnorm = sqrt(dsq)
 phi = ONE / dnorm - ONE / delta
 if (tol * (ONE + par * dsq / wsq) - dsq * phi * phi >= 0) then
-    d = (delta / dnorm) * d
+    !d = (delta / dnorm) * d
+    d = delta * (d / dnorm)
     goto 370
 end if
 if (iter >= 2 .and. par <= parl) goto 370

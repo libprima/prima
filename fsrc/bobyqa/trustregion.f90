@@ -359,7 +359,7 @@ do iter = 1, maxiter
     ! orthogonal to the reduced D.
     ! Zaikun 20210926:
     !!! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that |S| = |D|??? Namely:
-    ! S = something, then S = (S/norm(S))*norm(D).
+    ! S = something, then S = (norm(D)/norm(S))*S
     ! Also, should exit if the orthogonality of S and D is damaged, or S is  not finite.
     ! See the corresponding part of TRSAPP.
     temp = gredsq * dredsq - dredg * dredg

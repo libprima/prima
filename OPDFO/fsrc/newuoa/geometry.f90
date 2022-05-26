@@ -427,7 +427,8 @@ do iter = 1, maxiter
     if (norm(s) <= tol * sqrt(ss)) then
         exit
     end if
-    s = (s / norm(s)) * norm(d)
+    !s = (s / norm(s)) * norm(d)
+    s = (norm(d) / norm(s)) * s
     ! In precise arithmetic, INPROD(S, D) = 0 and |S| = |D| = DELBAR.
     if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(s) >= TWO * delbar) then
         exit
