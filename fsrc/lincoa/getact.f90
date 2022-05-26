@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 18, 2022 PM03:01:52
+! Last Modified: Thursday, May 26, 2022 PM04:47:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,7 +33,7 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 !
 ! This subroutine solves a linearly constrained projected problem (LCPP)
 !
-! min ||D + G|| subject to AMAT(:, J)^T * D <= 0.
+! min ||D + G|| subject to AMAT(:, j)^T * D <= 0 for j in J.
 !
 ! The solution is PSD, which is a projected steepest descent direction PSD for a linearly
 ! constrained trust-region subproblem (LCTRS)
@@ -46,24 +46,28 @@ subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
 !
 ! J = {j : B_j - A_j^T*Y <= 0.2*Delta_k*||A_j||, 1 <= j <= M} with A_j = AMAT(:, j),
 !
-! i.e., the index set of constraints in (LCTRS) that are nearly active (as per Powell, j is in J if
+! i.e., the index set of the nearly active constraints of (LCTRS) (as per Powell, j is in J if
 ! and only if the distance from Y to the boundary of the j-th constraint is at most 0.2*Delta_k).
 ! Here, Y is the point where G is taken, namely G = grad Q(Y). Y is not necessarily X_k, but an
 ! iterate of the algorithm (e.g., truncated conjugate gradient) that solves (LCTRS). In LINCOA,
 ! ||A_j|| is 1 as the gradients of the linear constraints are normalized before LINCOA starts.
 !
 ! The subroutine solves (LCPP) by the active set method of Goldfarb-Idnani (1983). It does not only
-! calculate PSD, but also identify the active set of (LCPP) at the solution PSD, and maintains a QR
-! factorization of A corresponding to the active set. More specifically, IACT(1:NACT) is a set of
-! indices such that the columns of AMAT(:, IACT(1:NACT)) constitute a basis of the active constraint
-! gradients, ans QFAC*RFAC(:, 1:NACT) is the QR factorization of AMAT(:, IACT(1:NACT)) such that
+! calculate PSD, but also identify the active set of (LCPP) at the solution PSD, namely
+!
+! I = {j in J : AMAT(:, j)^T*PSD = 0} (see 3.5 of Powell (2015)),
+!
+! and maintains a QR factorization of A corresponding to the active set. More specifically,
+! IACT(1:NACT) is a set of indices such that the columns of AMAT(:, IACT(1:NACT)) constitute a basis
+! of the active constraint gradients, ans QFAC*RFAC(:, 1:NACT) is the QR factorization of
+! AMAT(:, IACT(1:NACT)) such that
 !
 ! SIZE(QFAC) = [N, N], SIZE(RFAC, 1) = N, diag(RFAC(:, 1:NACT)) > 0.
 !
 ! NACT, IACT, QFAC and RFAC are maintained up to date across invocations of GETACT for warm starts.
 !
 ! SNORM, RESNEW, RESACT, and G are the same as the terms with these names in SUBROUTINE TRSTEP.
-! The elements of RESNEW and RESACT are also kept up to date.
+! The elements of RESNEW and RESACT are also kept up to date. See Section 3 of Powell (2015).
 !
 ! VLAM is the vector of Lagrange multipliers of the calculation.
 !
