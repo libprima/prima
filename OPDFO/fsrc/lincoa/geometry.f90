@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 21, 2022 AM08:51:03
+! Last Modified: Thursday, May 26, 2022 AM11:52:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,14 +22,14 @@ public :: geostep
 contains
 
 
-subroutine geostep(iact, idz, knew, kopt, nact, amat, del, gl_in, qfac, rescon, xopt, xpt, zmat, ifeas, step)
+subroutine geostep(iact, idz, knew, kopt, nact, amat, del, gl_in, qfac, rescon, xopt, xpt, zmat, ifeas, step, bmat)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc, norm
-use, non_intrinsic :: powalg_mod, only : hess_mul, omega_col
+use, non_intrinsic :: powalg_mod, only : hess_mul, omega_col, calvlag, calbeta
 
 implicit none
 
@@ -42,6 +42,7 @@ integer(IK), intent(in) :: nact
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: del
 real(RP), intent(in) :: gl_in(:)  ! GL_IN(N)
+real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
 real(RP), intent(in) :: qfac(:, :)  ! QFAC(N, N)
 real(RP), intent(in) :: rescon(:)  ! RESCON(M)
 real(RP), intent(in) :: xopt(:)  ! XOPT(N)
@@ -61,10 +62,14 @@ integer(IK) :: rstat(size(amat, 2))
 real(RP) :: stmp(size(xopt))
 real(RP) :: gl(size(gl_in))
 real(RP) :: constr(size(amat, 2))
-real(RP) :: bigcv, cvtol, gg, gxpt(size(xpt, 2)), ghg, sp, ss, tol, &
+real(RP) :: bigcv, cvtol, cvtol_prjg, gg, gxpt(size(xpt, 2)), ghg, sp, ss, tol, &
 &        stp, stplen(size(xpt, 2)), stpsav, mincv, vbig, vgrad, vlag(size(xpt, 2)), vnew, sstmp
 real(RP) :: pqlag(size(xpt, 2))  ! PQLAG(NPT)
 integer(IK) :: jsav, k, ksav
+real(RP) :: step_prjg(size(xpt, 1)), step_grad(size(xpt, 1)), step_line(size(xpt, 1))
+real(RP) :: denabs, beta_line, beta_grad, beta_prjg, denom_line, denom_grad, denom_prjg, denom, denmax, &
+    & vlag_line(size(xpt, 1) + size(xpt, 2)), &
+    & vlag_grad(size(xpt, 1) + size(xpt, 2)), vlag_prjg(size(xpt, 1) + size(xpt, 2)), alpha
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -180,21 +185,23 @@ step = stpsav * (xpt(:, ksav) - xopt)
 gg = sum(gl**2)
 vgrad = del * sqrt(gg)
 !if (vgrad <= TENTH * vbig) goto 220
+step_line = step
 
 ! Make the replacement if it provides a larger value of VBIG.
 gxpt = matprod(gl, xpt)
 ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
 vnew = vgrad + abs(HALF * del * del * ghg / gg)
-if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
-    vbig = vnew
-    stp = del / sqrt(gg)
-    if (ghg < ZERO) then
-        stp = -stp
-    end if
-    step = stp * gl
+!if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
+vbig = vnew
+stp = del / sqrt(gg)
+if (ghg < ZERO) then
+    stp = -stp
 end if
+step = stp * gl
+!end if
+step_grad = step
 
-if (nact == 0 .or. nact == n) goto 220
+!if (nact == 0 .or. nact == n) goto 220
 
 ! Overwrite GL by its projection to the column space of QFAC(:, NACT+1:N). Then set VNEW to the
 ! greatest value of |LFUNC| on the projected gradient from XOPT subject to the trust region bound.
@@ -230,6 +237,53 @@ if (ghg < ZERO) then
 end if
 stmp = stp * gl
 sstmp = sum(stmp**2)
+step_prjg = stmp
+
+
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220526
+if (nact == n) then
+    step_prjg = ZERO
+else if (nact == 0) then
+    step_prjg = step_grad
+end if
+
+alpha = -sum(zmat(knew, 1:idz - 1)**2) + sum(zmat(knew, idz:size(zmat, 2))**2)
+
+vlag_line = calvlag(kopt, bmat, step_line, xpt, zmat, idz)
+beta_line = calbeta(kopt, bmat, step_line, xpt, zmat, idz)
+denom_line = alpha * beta_line + vlag_line(knew)**2
+vlag_grad = calvlag(kopt, bmat, step_grad, xpt, zmat, idz)
+beta_grad = calbeta(kopt, bmat, step_grad, xpt, zmat, idz)
+denom_grad = alpha * beta_grad + vlag_grad(knew)**2
+vlag_prjg = calvlag(kopt, bmat, step_prjg, xpt, zmat, idz)
+beta_prjg = calbeta(kopt, bmat, step_prjg, xpt, zmat, idz)
+denom_prjg = alpha * beta_prjg + vlag_prjg(knew)**2
+
+cvtol = ZERO
+denabs = abs(denom_line)
+step = step_line
+if (abs(denom_grad) > denabs) then
+    denabs = abs(denom_grad)
+    step = step_grad
+end if
+
+bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
+cvtol_prjg = min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))
+if (abs(denom_prjg) > 0.1_RP * denabs .and. bigcv <= cvtol_prjg) then
+    step = step_prjg
+    cvtol = cvtol_prjg
+end if
+
+constr = ZERO
+constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
+!ifeas = all(constr <= 0)
+ifeas = all(constr <= cvtol)
+return
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+
 
 ! Set STEP to STMP if STMP gives a sufficiently large value of the modulus of the Lagrange function,
 ! andif STMP either preserves feasibility or gives a constraint violation of at least MINCV. The
