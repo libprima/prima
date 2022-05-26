@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 25, 2022 PM03:40:27
+! Last Modified: Thursday, May 26, 2022 PM04:51:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -297,7 +297,7 @@ if (knew == 0) then
     ! A trust region step is applied whenever its length, namely SNORM, is at least 0.5*DELTA.
     ! It is also applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has
     ! caused a change to the active set, indicated by NGETACT > 1. Otherwise, the trust region
-    ! step is considered to short to try.
+    ! step is considered too short to try.
     shortd = ((snorm <= HALF * delta .and. ngetact <= 1) .or. snorm <= 0.1999_RP * delta)
     if (shortd) then
         delta = HALF * delta
@@ -526,6 +526,7 @@ end if
 !       least calculated value so far with a feasible vector of variables.
 !
 if (f < fopt .and. ifeas) then
+    ! Note that XOPT always corresponds to a feasible point.
     fopt = f
     xsav = x
     xopt = xnew

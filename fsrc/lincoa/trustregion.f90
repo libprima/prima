@@ -121,7 +121,7 @@ g = gq
 !       value of RESNEW(J) indicates that the J-th constraint does not
 !       restrict the CG steps of the current trust region calculation, a
 !       zero value of RESNEW(J) indicates that the J-th constraint is active,
-!       and otherwise RESNEW(J) is set to the greater of TINY and the actual
+!       and otherwise RESNEW(J) is set to the greater of TINYCV and the actual
 !       residual of the J-th constraint for the current STEP. RESACT holds
 !       the residuals of the active constraints, which may be positive.
 !       D is the search direction of each line search. DW is either another
@@ -140,7 +140,7 @@ snsq = snorm * snorm
 ! Set the initial elements of RESNEW, RESACT and STEP.
 ! 1. RESNEW(J) < 0 indicates that the J-th constraint does not restrict the CG steps of the current
 ! trust region calculation. In other words, RESCON >= DELTA.
-! 2. RESNEW(J) = 0 indicates that the J-th constraint is active, namely B(J) = AMAT(:, J)^T*(XOPT+D).
+! 2. RESNEW(J) = 0 indicates that J is an entry of IACT(1:NACT).
 ! 3. RESNEW(J) > 0 means that RESNEW(J) = max(B(J) - AMAT(:, J)^T*(XOPT+D), TINYCV).
 ! N.B.: The order of the following lines is important, as the later ones override the earlier.
 resnew = rescon
