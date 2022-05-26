@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 PM04:47:00
+! Last Modified: Thursday, May 26, 2022 PM05:33:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -180,13 +180,12 @@ end do
 ! The following loop will run for at most NACT times, since each call of DEL_ACT reduces NACT by 1.
 do while (nact > 0)
     vlam(1:nact) = lsqr(g, qfac(:, 1:nact), rfac(1:nact, 1:nact))
-    if (any(vlam(1:nact) >= 0)) then
-        ic = maxval(trueloc(vlam(1:nact) >= 0))
-        !!MATLAB: ic = max(find(vlam(1:nact) >= 0)); % OR: ic = find(vlam(1:nact) >= 0, 1, 'last')
-        call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
-    else
+    if (.not. any(vlam(1:nact) >= 0)) then
         exit
     end if
+    ic = maxval(trueloc(vlam(1:nact) >= 0))
+    !!MATLAB: ic = max(find(vlam(1:nact) >= 0)); % OR: ic = find(vlam(1:nact) >= 0, 1, 'last')
+    call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
 end do
 ! Zaikun 20220330: What if NACT = 0 at this point?
 

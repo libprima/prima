@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 PM04:51:01
+! Last Modified: Thursday, May 26, 2022 PM09:16:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -330,6 +330,7 @@ else
     end if
 
     call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xopt, xpt, zmat, ifeas, step)
+    write (16, *) nf, step
 end if
 
 !
@@ -540,19 +541,20 @@ if (f < fopt .and. ifeas) then
 
     ! RESCON holds useful information about the constraint residuals.
     ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-    ! 2. Otherwise, RESCON(J) is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA.
-    ! RESCON can be updated without evaluating the constraints that are far from being active:
-    ! Powell set RESCON to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
+    ! 2. Otherwise, |RESCON(J)| is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA;
+    ! RESCON is set to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
+    ! RESCON can be updated without evaluating the constraints that are far from being active.
     where (abs(rescon) >= snorm + delta)
         rescon = min(-abs(rescon) + snorm, -delta)
     elsewhere
         rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
     end where
+    rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
     !!MATLAB:
     !!mask = (rescon >= delta+snorm);
     !!rescon(mask) = max(rescon(mask) - snorm, delta);
     !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
-    rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
+    !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
 !     Also revise GOPT when symmetric Broyden updating is applied.
 !
@@ -643,7 +645,7 @@ cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist)
 
-!close (16)
+close (16)
 
 end subroutine lincob
 

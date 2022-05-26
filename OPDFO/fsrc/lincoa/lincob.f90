@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 AM11:49:37
+! Last Modified: Thursday, May 26, 2022 PM09:17:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -330,6 +330,7 @@ else
     end if
 
     call geostep(iact, idz, knew, kopt, nact, amat, del, bmat(:, knew), qfac, rescon, xopt, xpt, zmat, ifeas, step, bmat)
+    write (17, *) nf, step
 end if
 
 !
@@ -640,7 +641,7 @@ cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist)
 
-!close (16)
+close (17)
 
 end subroutine lincob
 

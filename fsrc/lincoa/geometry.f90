@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 PM02:49:32
+! Last Modified: Thursday, May 26, 2022 PM09:37:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -81,9 +81,7 @@ integer(IK) :: npt
 integer(IK) :: rstat(size(amat, 2))
 real(RP) :: cstrv
 real(RP) :: cvtol
-real(RP) :: den_grad(size(xpt, 2))
-real(RP) :: den_line(size(xpt, 2))
-real(RP) :: den_prjg(size(xpt, 2))
+real(RP) :: den(size(xpt, 2))
 real(RP) :: denabs
 real(RP) :: gg
 real(RP) :: ghg
@@ -93,7 +91,6 @@ real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: sp
 real(RP) :: ss
 real(RP) :: step_grad(size(xpt, 1))
-real(RP) :: step_line(size(xpt, 1))
 real(RP) :: step_prjg(size(xpt, 1))
 real(RP) :: stp
 real(RP) :: stplen(size(xpt, 2))
@@ -179,31 +176,33 @@ if (any(vlag > vlag(knew))) then
     k = maxloc(vlag, mask=(.not. is_nan(vlag)), dim=1)
     !!MATLAB: [~, k] = max(vlag, [], 'omitnan');
 end if
-step_line = stplen(k) * (xpt(:, k) - xopt)
-den_line = calden(kopt, bmat, step_line, xpt, zmat, idz)
+step = stplen(k) * (xpt(:, k) - xopt)
+den = calden(kopt, bmat, step, xpt, zmat, idz)
+denabs = abs(den(knew))
 
-! Replace STEP by a steepest ascent step from XOPT if the latter provides a larger value of VBIG.
+! Replace STEP by a steepest ascent step from XOPT if the latter provides a larger value of DENABS.
 gg = sum(gl**2)
-!vgrad = delbar * sqrt(gg)
-!if (vgrad <= TENTH * vbig) goto 220
-gxpt = matprod(gl, xpt)
-ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
-stp = delbar / sqrt(gg)  ! GG can be ZERO!
-if (ghg < 0) then
-    stp = -stp
+if (gg > 0) then
+    gxpt = matprod(gl, xpt)
+    ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
+    stp = delbar / sqrt(gg)  ! GG can be ZERO!
+    if (ghg < 0) then
+        stp = -stp
+    end if
+    step_grad = stp * gl
+    den = calden(kopt, bmat, step_grad, xpt, zmat, idz)
+    if (abs(den(knew)) > denabs) then
+        denabs = abs(den(knew))
+        step = step_grad
+    end if
 end if
-step_grad = stp * gl
-den_grad = calden(kopt, bmat, step_grad, xpt, zmat, idz)
 
-if (abs(den_grad(knew)) > abs(den_line(knew))) then
-    denabs = abs(den_grad(knew))
-    step = step_grad
-else
-    denabs = abs(den_line(knew))
-    step = step_line
-end if
 cstrv = maximum([ZERO, matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
 ifeas = (cstrv <= 0)
+
+if (nact <= 0 .or. nact >= n) then
+    return
+end if
 
 ! Overwrite GL by its projection to the column space of QFAC(:, NACT+1:N). Then set VNEW to the
 ! greatest value of |LFUNC| on the projected gradient from XOPT subject to the trust region bound.
@@ -212,30 +211,21 @@ ifeas = (cstrv <= 0)
 gl = matprod(qfac(:, nact + 1:n), matprod(gl, qfac(:, nact + 1:n)))
 !!MATLAB: gl = qfac(:, nact+1:n) * (gl' * qfac(:, nact+1:n))';
 gg = sum(gl**2)
-!vgrad = delbar * sqrt(gg)
-!if (vgrad <= TENTH * vbig) goto 220
-gxpt = matprod(gl, xpt)
-ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
-stp = delbar / sqrt(gg)  ! GG can be ZERO!
-if (ghg < 0) then
-    stp = -stp
-end if
-step_prjg = stp * gl
-
-!--------------------------------------------------------------------------------------------------!
-if (nact == n) then
-    step_prjg = ZERO
-else if (nact == 0) then
-    step_prjg = step_grad
-end if
-!--------------------------------------------------------------------------------------------------!
-
-den_prjg = calden(kopt, bmat, step_prjg, xpt, zmat, idz)
-cstrv = maximum([ZERO, matprod(step_prjg, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))])
-cvtol = min(0.01_RP * sqrt(sum(step_prjg**2)), TEN * norm(matprod(step_prjg, amat(:, iact(1:nact))), 'inf'))
-if (abs(den_prjg(knew)) > 0.1_RP * denabs .and. cstrv <= cvtol) then
-    step = step_prjg
-    ifeas = .true.  ! IFEAS = (CSTRV <= CVTOL)
+if (gg > 0) then
+    gxpt = matprod(gl, xpt)
+    ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
+    stp = delbar / sqrt(gg)
+    if (ghg < 0) then
+        stp = -stp
+    end if
+    step_prjg = stp * gl
+    den = calden(kopt, bmat, step_prjg, xpt, zmat, idz)
+    cstrv = maximum([ZERO, matprod(step_prjg, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))])
+    cvtol = min(0.01_RP * sqrt(sum(step_prjg**2)), TEN * norm(matprod(step_prjg, amat(:, iact(1:nact))), 'inf'))
+    if (abs(den(knew)) > 0.1_RP * denabs .and. cstrv <= cvtol) then
+        step = step_prjg
+        ifeas = .true.  ! IFEAS = (CSTRV <= CVTOL)
+    end if
 end if
 
 !====================!
