@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 AM11:52:41
+! Last Modified: Thursday, May 26, 2022 PM02:34:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,6 +54,7 @@ logical, intent(out) :: ifeas
 real(RP), intent(out) :: step(:)  ! STEP(N)
 
 ! Local variables
+logical :: prjg
 character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: m
 integer(IK) :: n
@@ -261,25 +262,31 @@ vlag_prjg = calvlag(kopt, bmat, step_prjg, xpt, zmat, idz)
 beta_prjg = calbeta(kopt, bmat, step_prjg, xpt, zmat, idz)
 denom_prjg = alpha * beta_prjg + vlag_prjg(knew)**2
 
-cvtol = ZERO
 denabs = abs(denom_line)
 step = step_line
 if (abs(denom_grad) > denabs) then
     denabs = abs(denom_grad)
     step = step_grad
 end if
+cvtol = ZERO
 
+prjg = .false.
 bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
 cvtol_prjg = min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))
 if (abs(denom_prjg) > 0.1_RP * denabs .and. bigcv <= cvtol_prjg) then
     step = step_prjg
     cvtol = cvtol_prjg
+    prjg = .true.
 end if
 
 constr = ZERO
-constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
-!ifeas = all(constr <= 0)
-ifeas = all(constr <= cvtol)
+if (prjg) then
+    constr(trueloc(rstat == 1)) = matprod(step, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))
+    ifeas = all(constr <= cvtol_prjg)
+else
+    constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
+    ifeas = all(constr <= 0)
+end if
 return
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
