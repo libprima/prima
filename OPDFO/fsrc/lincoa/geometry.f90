@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 PM02:34:08
+! Last Modified: Thursday, May 26, 2022 PM09:52:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,6 +104,8 @@ if (DEBUGGING) then
 end if
 
 ifeas = .false. !??? Added by Zaikun 20220227
+prjg = .false.
+alpha = -sum(zmat(knew, 1:idz - 1)**2) + sum(zmat(knew, idz:size(zmat, 2))**2)
 gl = gl_in
 
 !
@@ -183,26 +185,41 @@ stpsav = stplen(ksav)
 ! Set STEP to the move that gives the greatest modulus calculated above. This move may be replaced
 ! by a steepest ascent step from XOPT.
 step = stpsav * (xpt(:, ksav) - xopt)
+step_line = step
+vlag_line = calvlag(kopt, bmat, step_line, xpt, zmat, idz)
+beta_line = calbeta(kopt, bmat, step_line, xpt, zmat, idz)
+denom_line = alpha * beta_line + vlag_line(knew)**2
+denabs = abs(denom_line)
+cvtol = ZERO
+
 gg = sum(gl**2)
 vgrad = del * sqrt(gg)
 !if (vgrad <= TENTH * vbig) goto 220
-step_line = step
-
+if (gg > 0) then
 ! Make the replacement if it provides a larger value of VBIG.
-gxpt = matprod(gl, xpt)
-ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
-vnew = vgrad + abs(HALF * del * del * ghg / gg)
+    gxpt = matprod(gl, xpt)
+    ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
+    vnew = vgrad + abs(HALF * del * del * ghg / gg)
 !if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
-vbig = vnew
-stp = del / sqrt(gg)
-if (ghg < ZERO) then
-    stp = -stp
-end if
-step = stp * gl
+    vbig = vnew
+    stp = del / sqrt(gg)
+    if (ghg < ZERO) then
+        stp = -stp
+    end if
 !end if
-step_grad = step
+    step_grad = stp * gl
+    vlag_grad = calvlag(kopt, bmat, step_grad, xpt, zmat, idz)
+    beta_grad = calbeta(kopt, bmat, step_grad, xpt, zmat, idz)
+    denom_grad = alpha * beta_grad + vlag_grad(knew)**2
+    if (abs(denom_grad) > denabs) then
+        denabs = abs(denom_grad)
+        step = step_grad
+    end if
+end if
 
-!if (nact == 0 .or. nact == n) goto 220
+constr = ZERO
+constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
+ifeas = all(constr <= 0)
 
 ! Overwrite GL by its projection to the column space of QFAC(:, NACT+1:N). Then set VNEW to the
 ! greatest value of |LFUNC| on the projected gradient from XOPT subject to the trust region bound.
@@ -225,112 +242,77 @@ gl = matprod(qfac(:, nact + 1:n), matprod(gl, qfac(:, nact + 1:n)))
 !--------------------------------------------------------------------------------------------------!
 
 gg = sum(gl**2)
-vgrad = del * sqrt(gg)
+if (nact > 0 .and. nact < n .and. gg > 0) then
+    vgrad = del * sqrt(gg)
 !if (vgrad <= TENTH * vbig) goto 220
-gxpt = matprod(gl, xpt)
-ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
-vnew = vgrad + abs(HALF * del * del * ghg / gg)
+    gxpt = matprod(gl, xpt)
+    ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
+    vnew = vgrad + abs(HALF * del * del * ghg / gg)
 
 ! Set STMP to the possible move along the projected gradient.
-stp = del / sqrt(gg)
-if (ghg < ZERO) then
-    stp = -stp
-end if
-stmp = stp * gl
-sstmp = sum(stmp**2)
-step_prjg = stmp
+    stp = del / sqrt(gg)
+    if (ghg < ZERO) then
+        stp = -stp
+    end if
+    stmp = stp * gl
+    sstmp = sum(stmp**2)
+    step_prjg = stmp
+    vlag_prjg = calvlag(kopt, bmat, step_prjg, xpt, zmat, idz)
+    beta_prjg = calbeta(kopt, bmat, step_prjg, xpt, zmat, idz)
+    denom_prjg = alpha * beta_prjg + vlag_prjg(knew)**2
 
-
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20220526
-if (nact == n) then
-    step_prjg = ZERO
-else if (nact == 0) then
-    step_prjg = step_grad
-end if
-
-alpha = -sum(zmat(knew, 1:idz - 1)**2) + sum(zmat(knew, idz:size(zmat, 2))**2)
-
-vlag_line = calvlag(kopt, bmat, step_line, xpt, zmat, idz)
-beta_line = calbeta(kopt, bmat, step_line, xpt, zmat, idz)
-denom_line = alpha * beta_line + vlag_line(knew)**2
-vlag_grad = calvlag(kopt, bmat, step_grad, xpt, zmat, idz)
-beta_grad = calbeta(kopt, bmat, step_grad, xpt, zmat, idz)
-denom_grad = alpha * beta_grad + vlag_grad(knew)**2
-vlag_prjg = calvlag(kopt, bmat, step_prjg, xpt, zmat, idz)
-beta_prjg = calbeta(kopt, bmat, step_prjg, xpt, zmat, idz)
-denom_prjg = alpha * beta_prjg + vlag_prjg(knew)**2
-
-denabs = abs(denom_line)
-step = step_line
-if (abs(denom_grad) > denabs) then
-    denabs = abs(denom_grad)
-    step = step_grad
-end if
-cvtol = ZERO
-
-prjg = .false.
-bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-cvtol_prjg = min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))
-if (abs(denom_prjg) > 0.1_RP * denabs .and. bigcv <= cvtol_prjg) then
-    step = step_prjg
-    cvtol = cvtol_prjg
-    prjg = .true.
-end if
-
-constr = ZERO
-if (prjg) then
-    constr(trueloc(rstat == 1)) = matprod(step, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))
-    ifeas = all(constr <= cvtol_prjg)
-else
-    constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
-    ifeas = all(constr <= 0)
-end if
-return
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-
-
-! Set STEP to STMP if STMP gives a sufficiently large value of the modulus of the Lagrange function,
-! andif STMP either preserves feasibility or gives a constraint violation of at least MINCV. The
-! purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
-! contributions from computer rounding errors.
-! As commented by Powell, "the projected step is preferred if its value of |LFUNC(XOPT+STEP)| is at
-! least one fifth of the original one but the greatest violation of a linear constraint must be at
-! least MINCV = 0.2*DEL, in order to keep the interpolation points apart." WHY THE PREFERENCE?
-if (vnew >= 0.2_RP * vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-    cvtol = min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))
-    ifeas = (bigcv <= cvtol)
-    !!ifeas = (bigcv < mincv)
-    !cvtol = ZERO
-    !!if (bigcv > ZERO .and. bigcv < 0.01_RP * sqrt(sstmp)) then
-    !if (bigcv > ZERO .and. bigcv <= 0.01_RP * sqrt(sstmp)) then
-    !    cvtol = maxval([ZERO, abs(matprod(stmp, amat(:, iact(1:nact))))])
-    !end if
-    !if (bigcv <= TEN * cvtol .or. bigcv >= mincv) then
-    if (ifeas .or. bigcv >= mincv) then
-        !ifeas = (bigcv <= TEN * cvtol)
-        step = stmp
-        return
+    cvtol_prjg = min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))
+    if (abs(denom_prjg) > 0.1_RP * denabs .and. bigcv <= cvtol_prjg) then
+        step = step_prjg
+        cvtol = cvtol_prjg
+        prjg = .true.
+        ifeas = (bigcv <= cvtol_prjg)
     end if
 end if
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
 
-220 continue
 
-! Calculate the greatest constraint violation at XOPT+STEP with STEP at its original value. Modify
-! STEP if this violation is unacceptable.
-! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
-constr = ZERO
-constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
-ifeas = all(constr <= 0)
-if (all(constr < mincv) .and. any(constr > 0)) then
-    jsav = int(maxloc(constr, mask=(.not. is_nan(constr)), dim=1), IK)
-    bigcv = constr(jsav)
-    !!MATLAB: [bigcv, jsav] = max(constr, [], 'omitnan');
-    step = step + (mincv - bigcv) * amat(:, jsav)
-end if
+!! Set STEP to STMP if STMP gives a sufficiently large value of the modulus of the Lagrange function,
+!! andif STMP either preserves feasibility or gives a constraint violation of at least MINCV. The
+!! purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
+!! contributions from computer rounding errors.
+!! As commented by Powell, "the projected step is preferred if its value of |LFUNC(XOPT+STEP)| is at
+!! least one fifth of the original one but the greatest violation of a linear constraint must be at
+!! least MINCV = 0.2*DEL, in order to keep the interpolation points apart." WHY THE PREFERENCE?
+!if (vnew >= 0.2_RP * vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
+!    bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
+!    cvtol = min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))
+!    ifeas = (bigcv <= cvtol)
+!    !!ifeas = (bigcv < mincv)
+!    !cvtol = ZERO
+!    !!if (bigcv > ZERO .and. bigcv < 0.01_RP * sqrt(sstmp)) then
+!    !if (bigcv > ZERO .and. bigcv <= 0.01_RP * sqrt(sstmp)) then
+!    !    cvtol = maxval([ZERO, abs(matprod(stmp, amat(:, iact(1:nact))))])
+!    !end if
+!    !if (bigcv <= TEN * cvtol .or. bigcv >= mincv) then
+!    if (ifeas .or. bigcv >= mincv) then
+!        !ifeas = (bigcv <= TEN * cvtol)
+!        step = stmp
+!        return
+!    end if
+!end if
+
+!220 continue
+
+!! Calculate the greatest constraint violation at XOPT+STEP with STEP at its original value. Modify
+!! STEP if this violation is unacceptable.
+!! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
+!constr = ZERO
+!constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
+!ifeas = all(constr <= 0)
+!if (all(constr < mincv) .and. any(constr > 0)) then
+!    jsav = int(maxloc(constr, mask=(.not. is_nan(constr)), dim=1), IK)
+!    bigcv = constr(jsav)
+!    !!MATLAB: [bigcv, jsav] = max(constr, [], 'omitnan');
+!    step = step + (mincv - bigcv) * amat(:, jsav)
+!end if
 
 end subroutine geostep
 
