@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 AM01:12:05
+! Last Modified: Thursday, May 26, 2022 AM11:10:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ subroutine update(kopt, step, xpt, idz, knew, bmat, zmat)
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: powalg_mod, only : updateh, calvlag, calbeta
+use, non_intrinsic :: powalg_mod, only : updateh, calden
 
 implicit none
 
@@ -45,10 +45,8 @@ real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATE'
-real(RP) :: beta, denabs(size(xpt, 2)), distsq(size(xpt, 2)), hdiag(size(xpt, 2)), score(size(xpt, 2))
+real(RP) :: denabs(size(xpt, 2)), distsq(size(xpt, 2)), score(size(xpt, 2))
 real(RP) :: weight(size(xpt, 2))
-real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
-!integer(IK) :: j, k
 integer(IK) :: n
 integer(IK) :: npt
 !real(RP) :: xopt(size(xpt, 1))
@@ -70,7 +68,6 @@ if (DEBUGGING) then
     call wassert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
-    call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT+N', srname)
 end if
 
 !
@@ -101,15 +98,10 @@ end if
 !
 
 
-vlag = calvlag(kopt, bmat, step, xpt, zmat, idz)
-beta = calbeta(kopt, bmat, step, xpt, zmat, idz)
-
 ! If KNEW is ZERO initially, then pick the index of the interpolation point to be deleted, by
 ! maximizing the absolute value of the denominator of the updating formula times a weighting factor.
 if (knew == 0) then
-    hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
-    !denabs = abs(calden(kopt, bmat, step, xpt, zmat, idz))
-    denabs = abs(beta * hdiag + vlag(1:npt)**2)
+    denabs = abs(calden(kopt, bmat, step, xpt, zmat, idz))
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     weight = distsq**2
     score = weight * denabs
