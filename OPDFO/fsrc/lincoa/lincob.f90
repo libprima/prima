@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 22, 2022 PM05:52:46
+! Last Modified: Thursday, May 26, 2022 AM11:49:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -329,7 +329,7 @@ else
         goto 600
     end if
 
-    call geostep(iact, idz, knew, kopt, nact, amat, del, bmat(:, knew), qfac, rescon, xopt, xpt, zmat, ifeas, step)
+    call geostep(iact, idz, knew, kopt, nact, amat, del, bmat(:, knew), qfac, rescon, xopt, xpt, zmat, ifeas, step, bmat)
 end if
 
 !
