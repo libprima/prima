@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, April 30, 2022 PM11:08:46
+! Last Modified: Friday, May 27, 2022 AM12:05:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -542,7 +542,7 @@ end do
 
 ! Due to rounding errors, it can happen that |D| > DELTA. We brutally scale D down if |D| > 2*DELTA.
 if (norm(d) > TWO * delta) then
-    d = (d / norm(d)) * delta
+    d = (delta / norm(d)) * d
 end if
 
 !====================!

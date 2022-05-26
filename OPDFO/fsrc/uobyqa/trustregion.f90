@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 15, 2022 AM11:47:46
+! Last Modified: Friday, May 27, 2022 AM12:52:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,7 +110,8 @@ gnorm = sqrt(gsq)
 
 if (.not. any(abs(h) > 0)) then
     if (gnorm > 0) then
-        d = -delta * (g / gnorm)
+        !d = -delta * (g / gnorm)
+        d = -(delta / gnorm) * g
     end if
     return
 end if
@@ -326,7 +327,8 @@ if (paruest > 0 .and. parlest >= partmp) then
 !----------------------------------------------------------------!
 
     dtg = inprod(d, gg)
-    d = sign(delta, -dtg) * (d / sqrt(dsq))
+    !d = sign(delta, -dtg) * (d / sqrt(dsq))
+    d = (sign(delta, -dtg) / sqrt(dsq)) * d
     goto 370
 end if
 
@@ -378,8 +380,8 @@ end if
 dnorm = sqrt(dsq)
 phi = ONE / dnorm - ONE / delta
 if (tol * (ONE + par * dsq / wsq) - dsq * phi * phi >= 0) then
-    !d = (delta / dnorm) * d
-    d = delta * (d / dnorm)
+    d = (delta / dnorm) * d
+    !d = delta * (d / dnorm)
     goto 370
 end if
 if (iter >= 2 .and. par <= parl) goto 370

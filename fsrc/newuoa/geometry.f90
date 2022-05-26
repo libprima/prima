@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 26, 2022 AM12:17:29
+! Last Modified: Friday, May 27, 2022 AM12:20:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -417,7 +417,8 @@ do iter = 1, maxiter
     if (norm(s) <= tol * sqrt(ss)) then
         exit
     end if
-    s = (s / norm(s)) * norm(d)
+    s = (norm(d) / norm(s)) * s
+
     ! In precise arithmetic, INPROD(S, D) = 0 and |S| = |D| = DELBAR.
     if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(s) >= TWO * delbar) then
         exit

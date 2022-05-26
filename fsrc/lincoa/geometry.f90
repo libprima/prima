@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 PM09:37:40
+! Last Modified: Friday, May 27, 2022 AM12:25:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -92,7 +92,6 @@ real(RP) :: sp
 real(RP) :: ss
 real(RP) :: step_grad(size(xpt, 1))
 real(RP) :: step_prjg(size(xpt, 1))
-real(RP) :: stp
 real(RP) :: stplen(size(xpt, 2))
 real(RP) :: tol
 real(RP) :: vlag(size(xpt, 2))
@@ -185,11 +184,12 @@ gg = sum(gl**2)
 if (gg > 0) then
     gxpt = matprod(gl, xpt)
     ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
-    stp = delbar / sqrt(gg)  ! GG can be ZERO!
     if (ghg < 0) then
-        stp = -stp
+        step_grad = -(delbar / sqrt(gg)) * gl
+    else
+        step_grad = (delbar / sqrt(gg)) * gl
     end if
-    step_grad = stp * gl
+
     den = calden(kopt, bmat, step_grad, xpt, zmat, idz)
     if (abs(den(knew)) > denabs) then
         denabs = abs(den(knew))
@@ -214,11 +214,12 @@ gg = sum(gl**2)
 if (gg > 0) then
     gxpt = matprod(gl, xpt)
     ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
-    stp = delbar / sqrt(gg)
     if (ghg < 0) then
-        stp = -stp
+        step_prjg = -(delbar / sqrt(gg)) * gl
+    else
+        step_prjg = (delbar / sqrt(gg)) * gl
     end if
-    step_prjg = stp * gl
+
     den = calden(kopt, bmat, step_prjg, xpt, zmat, idz)
     cstrv = maximum([ZERO, matprod(step_prjg, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))])
     cvtol = min(0.01_RP * sqrt(sum(step_prjg**2)), TEN * norm(matprod(step_prjg, amat(:, iact(1:nact))), 'inf'))

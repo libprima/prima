@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, May 07, 2022 PM01:31:12
+! Last Modified: Friday, May 27, 2022 AM12:10:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -310,7 +310,7 @@ do iter = 1, maxiter
         info_loc = 0_IK
         exit
     end if
-    d = (d / norm(d)) * norm(s)
+    d = (norm(s) / norm(d)) * d
     ! In precise arithmetic, INPROD(D, S) = 0 and |D| = |S| = DELTA.
     if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(d) >= TWO * delta) then
         info_loc = -1_IK

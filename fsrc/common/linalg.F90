@@ -44,7 +44,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 22, 2022 PM05:43:31
+! Last Modified: Friday, May 27, 2022 AM12:49:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2364,7 +2364,7 @@ if (scaling <= 0) then
     tdiag = ZERO
     tsubdiag = ZERO
     return
-elseif (scaling > 1.0E6 .or. scaling < 1.0E-6) then  ! 1.0E6 and 1.0E-6 are empirical.
+elseif (scaling > 1.0E8 .or. scaling < 1.0E-4) then  ! The thresholds are empirical
     A = A / scaling
     scaled = .true.
 end if
