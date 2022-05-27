@@ -186,7 +186,7 @@ if (gg > 0) then
     ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
     if (ghg < 0) then
         step_grad = -(delbar / sqrt(gg)) * gl
-    else
+    else  ! This ELSE covers the unlikely yet possible case where GHG is zero or even NaN.
         step_grad = (delbar / sqrt(gg)) * gl
     end if
 
@@ -216,7 +216,7 @@ if (gg > 0) then
     ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
     if (ghg < 0) then
         step_prjg = -(delbar / sqrt(gg)) * gl
-    else
+    else  ! This ELSE covers the unlikely yet possible case where GHG is zero or even NaN.
         step_prjg = (delbar / sqrt(gg)) * gl
     end if
 

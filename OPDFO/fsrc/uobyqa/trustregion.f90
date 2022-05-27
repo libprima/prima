@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 AM12:52:45
+! Last Modified: Friday, May 27, 2022 PM01:10:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -328,7 +328,11 @@ if (paruest > 0 .and. parlest >= partmp) then
 
     dtg = inprod(d, gg)
     !d = sign(delta, -dtg) * (d / sqrt(dsq))
-    d = (sign(delta, -dtg) / sqrt(dsq)) * d
+    if (dtg > 0) then
+        d = -(delta / sqrt(dsq)) * d
+    else  ! This ELSE covers the unlikely yet possible case where DTG is zero or even NaN.
+        d = (delta / sqrt(dsq)) * d
+    end if
     goto 370
 end if
 
@@ -420,7 +424,12 @@ if (.not. posdef) then
     z(1) = ONE / piv(1)
     do k = 1, n - 1_IK
         tnz = tn(k) * z(k)
-        z(k + 1) = (sign(ONE, -tnz) - tnz) / piv(k + 1)
+        !z(k + 1) = (sign(ONE, -tnz) - tnz) / piv(k + 1)
+        if (tnz > 0) then
+            z(k + 1) = (sign(ONE, -tnz) - tnz) / piv(k + 1)
+        else
+            z(k + 1) = (ONE - tnz) / piv(k + 1)
+        end if
     end do
     wwsq = inprod(piv, z**2)  ! Needed in the convergence test.
     do k = n - 1_IK, 1, -1
@@ -434,6 +443,7 @@ if (.not. posdef) then
     tempa = abs(delsq - dsq)
     tempb = sqrt(dtz * dtz + tempa * zsq)
     gam = tempa / (sign(tempb, dtz) + dtz)
+    if (.not. abs(dtz) > 0) gam = sqrt(tempa / zsq)
     if (tol * (wsq + par * delsq) - gam * gam * wwsq >= 0) then
         d = d + gam * z
         goto 370

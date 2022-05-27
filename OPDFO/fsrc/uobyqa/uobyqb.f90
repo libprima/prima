@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM12:50:54
+! Last Modified: Friday, May 27, 2022 AM11:04:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -622,7 +622,7 @@ end if
 
 430 continue
 
-close (16)
+close (17)
 
 call rangehist(nf, xhist, fhist)
 
