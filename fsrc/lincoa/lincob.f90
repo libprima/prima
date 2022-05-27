@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 PM11:48:08
+! Last Modified: Saturday, May 28, 2022 AM01:14:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,7 +100,7 @@ real(RP) :: pqinc(npt)
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: rescon(size(bvec))
 real(RP) :: rfac(size(x), size(x))
-real(RP) :: step(size(x))
+real(RP) :: d(size(x))
 real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
@@ -109,7 +109,7 @@ real(RP) :: xsav(size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
-&        rho, snorm, ssq, temp, &
+&        rho, dnorm, temp, &
 &        qred
 logical :: ifeas, shortd
 integer(IK) :: idz, imprv, itest,  &
@@ -177,7 +177,7 @@ rfac = ZERO
 !       of H, this factorization being ZMAT times Diag(DZ) times ZMAT^T,
 !       where the elements of DZ are plus or minus ONE, as specified by IDZ.
 !     NDIM is the second dimension of BMAT and has the value NPT+N.
-!     STEP is employed for trial steps from XOPT. It is also used for working
+!     D is employed for trial steps from XOPT. It is also used for working
 !       space when XBASE is shifted and in PRELIM.
 !     XNEW is the displacement from XBASE of the vector of variables for
 !       the current calculation of F, except that SUBROUTINE TRSTEP uses it
@@ -222,7 +222,7 @@ imprv = 0
 !
 call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
     & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, &
-    & step, xbase, xhist, xopt, xpt, xsav, zmat)
+    & d, xbase, xhist, xopt, xpt, xsav, zmat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 if (is_nan(f) .or. is_posinf(f)) then
@@ -279,7 +279,7 @@ end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: For ill-conditiONEd problems, NaN may occur in the
 ! models. In such a case, we terminate the code. Otherwise, the behavior
-! of TRSTEP or QMSTEP is not predictable, and Segmentation Fault or
+! of TRSTEP or GEOSTEP is not predictable, and Segmentation Fault or
 ! infinite cycling may happen. This is because any equality/inequality
 ! comparison involving NaN returns FALSE, which can lead to unintended
 ! behavior of the code, including uninitialized indices, which can lead
@@ -292,25 +292,25 @@ end if
 delsav = delta
 ksave = knew
 if (knew == 0) then
-    call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
+    call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, dnorm, d)
 
     ! A trust region step is applied whenever its length, namely SNORM, is at least 0.5*DELTA.
     ! It is also applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has
     ! caused a change to the active set, indicated by NGETACT > 1. Otherwise, the trust region
     ! step is considered too short to try.
-    shortd = ((snorm <= HALF * delta .and. ngetact <= 1) .or. snorm <= 0.1999_RP * delta)
+    shortd = ((dnorm <= HALF * delta .and. ngetact <= 1) .or. dnorm <= 0.1999_RP * delta)
     if (shortd) then
         delta = HALF * delta
         if (delta <= 1.4_RP * rho) delta = rho
         nvala = nvala + 1
         nvalb = nvalb + 1
-        temp = snorm / rho
+        temp = dnorm / rho
         if (delsav > rho) temp = ONE
         if (temp >= HALF) nvala = 0
         if (temp >= TENTH) nvalb = 0
         if (delsav > rho) goto 530
         if (nvala < 5 .and. nvalb < 3) goto 530
-        if (snorm > ZERO) ksave = -1
+        if (dnorm > ZERO) ksave = -1
         goto 560
     end if
     nvala = 0
@@ -329,20 +329,19 @@ else
         goto 600
     end if
 
-    call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, ifeas, step)
-    write (16, *) nf, step
+    call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, ifeas, d)
 end if
 
 !
-!     Set VQUAD to the change to the quadratic model when the move STEP is
-!       made from XOPT. If STEP is a trust region step, then VQUAD should be
+!     Set VQUAD to the change to the quadratic model when the move D is
+!       made from XOPT. If D is a trust region step, then VQUAD should be
 !       negative. If it is nonnegative due to rounding errors in this case,
 !       there is a branch to label 530 to try to improve the model.
 !-------------------------------------------------------------------------------------------!
 ! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should try the same.
 !-------------------------------------------------------------------------------------------!
 !
-qred = -quadinc(step, xpt, gopt, pq, hq)
+qred = -quadinc(d, xpt, gopt, pq, hq)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
@@ -397,7 +396,7 @@ if (nf >= maxfun) then
     info = MAXFUN_REACHED
     goto 600
 end if
-xnew = xopt + step
+xnew = xopt + d
 x = xbase + xnew
 
 !--------------------------------------------------------------------------------!
@@ -452,7 +451,7 @@ if (ifeas .and. itest < 3) then
     ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
     pqalt = omega_mul(idz, zmat, fshift)
     galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-    dffalt = f - fopt - quadinc(step, xpt, galt, pqalt)
+    dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
 end if
 if (itest == 3) then
     dffalt = diff
@@ -466,20 +465,20 @@ if (ksave == 0) then
     if (ratio <= TENTH) then
         delta = HALF * delta
     else if (ratio <= 0.7_RP) then
-        delta = max(HALF * delta, snorm)
+        delta = max(HALF * delta, dnorm)
     else
         temp = sqrt(TWO) * delta
-        delta = max(HALF * delta, snorm + snorm)
+        delta = max(HALF * delta, dnorm + dnorm)
         delta = min(delta, temp)
     end if
     if (delta <= 1.4_RP * rho) delta = rho
 end if
 !
 !     Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
-!       can be moved. If STEP is a trust region step, then KNEW is ZERO at
+!       can be moved. If D is a trust region step, then KNEW is ZERO at
 !       present, but a positive value is picked by subroutine UPDATE.
 !
-call update(kopt, step, xpt, idz, knew, bmat, zmat)
+call update(kopt, d, xpt, idz, knew, bmat, zmat)
 if (knew == 0) then
     info = DAMAGING_ROUNDING
     goto 600
@@ -518,7 +517,7 @@ end if
 ! Make the changes of the symmetric Broyden method to GOPT at the old XOPT if ITEST is less than 3.
 fval(knew) = f
 xpt(:, knew) = xnew
-ssq = sum(step**2)
+!ssq = sum(d**2)
 if (itest < 3) then
     gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)  ! Needs the updated XPT.
 end if
@@ -537,29 +536,29 @@ if (f < fopt .and. ifeas) then
         goto 616
     end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    snorm = sqrt(ssq)
+    dnorm = sqrt(sum(d**2))
 
     ! RESCON holds useful information about the constraint residuals.
     ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
     ! 2. Otherwise, |RESCON(J)| is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA;
     ! RESCON is set to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
     ! RESCON can be updated without evaluating the constraints that are far from being active.
-    where (abs(rescon) >= snorm + delta)
-        rescon = min(-abs(rescon) + snorm, -delta)
+    where (abs(rescon) >= dnorm + delta)
+        rescon = min(-abs(rescon) + dnorm, -delta)
     elsewhere
         rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
     end where
     rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
     !!MATLAB:
-    !!mask = (rescon >= delta+snorm);
-    !!rescon(mask) = max(rescon(mask) - snorm, delta);
+    !!mask = (rescon >= delta+dnorm);
+    !!rescon(mask) = max(rescon(mask) - dnorm, delta);
     !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
     !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
 !     Also revise GOPT when symmetric Broyden updating is applied.
 !
     if (itest < 3) then
-        gopt = gopt + hess_mul(step, xpt, pq, hq)
+        gopt = gopt + hess_mul(d, xpt, pq, hq)
     end if
 end if
 !
