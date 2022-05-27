@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 18, 2022 PM03:02:58
+! Last Modified: Saturday, May 28, 2022 AM01:06:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: trstep
 contains
 
 
-subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, step)
+subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, s)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, EPS, TINYCV, DEBUGGING
@@ -54,7 +54,7 @@ real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N); Will be updated in GETACT
 ! Outputs
 integer(IK), intent(out) :: ngetact
 real(RP), intent(out) :: snorm
-real(RP), intent(out) :: step(:)  ! STEP(N)
+real(RP), intent(out) :: s(:)  ! S(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTEP'
@@ -109,20 +109,20 @@ g = gq
 !       is negative, then |RESCON(J)| must be no less than the trust region
 !       radius, so that the J-th constraint can be ignored.
 !     SNORM is set to the trust region radius DELTA initially. On the
-!       return, however, it is the length of the calculated STEP, which is
+!       return, however, it is the length of the calculated S, which is
 !       set to zero if the constraints prohibit a long enough step.
-!     STEP is the total calculated step so far from the trust region centre,
+!     S is the total calculated step so far from the trust region centre,
 !       its final value being given by the sequence of CG iterations, which
 !       terminate if the trust region boundary is reached.
 !     G must be set on entry to the gradient of the quadratic model at the
 !       trust region centre. It is used as working space, however, and is
-!       always the gradient of the model at the current STEP.
+!       always the gradient of the model at the current S.
 !     RESNEW, RESACT, D, DW and GW are used for working space. A negative
 !       value of RESNEW(J) indicates that the J-th constraint does not
 !       restrict the CG steps of the current trust region calculation, a
 !       zero value of RESNEW(J) indicates that the J-th constraint is active,
 !       and otherwise RESNEW(J) is set to the greater of TINYCV and the actual
-!       residual of the J-th constraint for the current STEP. RESACT holds
+!       residual of the J-th constraint for the current S. RESACT holds
 !       the residuals of the active constraints, which may be positive.
 !       D is the search direction of each line search. DW is either another
 !       search direction or the change in gradient along D.
@@ -137,7 +137,7 @@ snorm = delta
 !--------------------------------------------------------------------------------------------------!
 snsq = snorm * snorm
 
-! Set the initial elements of RESNEW, RESACT and STEP.
+! Set the initial elements of RESNEW, RESACT and S.
 ! 1. RESNEW(J) < 0 indicates that the J-th constraint does not restrict the CG steps of the current
 ! trust region calculation. In other words, RESCON >= DELTA.
 ! 2. RESNEW(J) = 0 indicates that J is an entry of IACT(1:NACT).
@@ -151,14 +151,14 @@ resnew(trueloc(rescon >= snorm)) = -ONE
 resnew(iact(1:nact)) = ZERO
 resact(1:nact) = rescon(iact(1:nact))
 
-step = ZERO
+s = ZERO
 ss = ZERO
 reduct = ZERO
 ngetact = 0
 
-! GETACT picks the active set for the current STEP. It also sets DW to the vector closest to -G that
+! GETACT picks the active set for the current S. It also sets DW to the vector closest to -G that
 ! is orthogonal to the normals of the active constraints. DW is scaled to have length 0.2*SNORM, as
-! then a move of DW from STEP is allowed by the linear constraints.
+! then a move of DW from S is allowed by the linear constraints.
 40 ngetact = ngetact + 1
 call getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dw)
 dd = inprod(dw, dw)
@@ -181,7 +181,7 @@ dw = scaling * dw
 !--------------------------------------------------------------------------------------------------!
 
 ! If the modulus of the residual of an active constraint is substantial, then set D to the shortest
-! move from STEP to the boundaries of the active constraints.
+! move from S to the boundaries of the active constraints.
 bstep = ZERO
 if (any(resact(1:nact) > 1.0E-4_RP * snorm)) then
     ! N.B.: We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify MAXVAL(X)
@@ -191,12 +191,12 @@ if (any(resact(1:nact) > 1.0E-4_RP * snorm)) then
     !!MATLAB: vlam(1:nact) = rfac(1:nact, 1:nact)' \ resact(1:nact)
     d = matprod(qfac(:, 1:nact), vlam(1:nact))
 
-    ! The vector D that has just been calculated is also the shortest move from STEP+DW to the
+    ! The vector D that has just been calculated is also the shortest move from S+DW to the
     ! boundaries of the active constraints. Set BSTEP to the greatest steplength of this move that
     ! satisfies the trust region bound.
-    ds = inprod(d, step + dw)
+    ds = inprod(d, s + dw)
     dd = sum(d**2)
-    rhs = snsq - sum((step + dw)**2)  ! Calculation changed
+    rhs = snsq - sum((s + dw)**2)  ! Calculation changed
 
     if (rhs > 0) then
         temp = sqrt(ds * ds + dd * rhs)
@@ -229,13 +229,13 @@ else
 end if
 alpbd = ONE
 
-! Set ALPHA to the steplength from STEP along D to the trust region boundary. Return if the first
+! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
 ! derivative term of this step is sufficiently small or if no further progress is possible.
 150 icount = icount + 1
 rhs = snsq - ss
 if (rhs <= 0) goto 320
 dg = inprod(d, g)
-ds = inprod(d, step)
+ds = inprod(d, s)
 dd = inprod(d, d)
 if (dg >= 0) goto 320
 temp = sqrt(rhs * dd + ds * ds)
@@ -282,9 +282,9 @@ end if
 alpha = min(max(alpha, alpbd), alphm)
 if (icount == nact) alpha = min(alpha, ONE)
 
-! Update STEP, G, RESNEW, RESACT and REDUCT.
-step = step + alpha * d
-ss = sum(step**2)
+! Update S, G, RESNEW, RESACT and REDUCT.
+s = s + alpha * d
+ss = sum(s**2)
 g = g + alpha * dw
 restmp = resnew - alpha * ad  ! Only RESTMP(TRUELOC(RESNEW > 0)) is needed.
 resnew(trueloc(resnew > 0)) = max(TINYCV, restmp(trueloc(resnew > 0)))
@@ -295,7 +295,7 @@ end if
 reduct = reduct - alpha * (dg + HALF * alpha * dgd)
 
 ! Test for termination. Branch to label 40 if there is a new active constraint and if the distance
-! from STEP to the trust region boundary is at least 0.2*SNORM.
+! from S to the trust region boundary is at least 0.2*SNORM.
 
 ! Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN values. Exit when NGETACT is
 ! large or NaN is detected.
