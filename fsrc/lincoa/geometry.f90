@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 AM12:25:43
+! Last Modified: Friday, May 27, 2022 PM11:43:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,30 +22,30 @@ public :: geostep
 contains
 
 
-subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xopt, xpt, zmat, ifeas, step)
+subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xopt, xpt, zmat, ifeas, s)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine finds STEP such that intends to improve the geometry of the interpolation set
-! when XPT(:, KNEW) is changed to XOPT + STEP, where XOPT = XPT(:, KOPT).
-!  STEP is chosen to provide a relatively large value of the modulus of
-!       LFUNC(XOPT+STEP), subject to ||STEP|| .LE. DELBAR. A projected STEP is
+! This subroutine finds S such that intends to improve the geometry of the interpolation set
+! when XPT(:, KNEW) is changed to XOPT + S, where XOPT = XPT(:, KOPT).
+!  S is chosen to provide a relatively large value of the modulus of
+!       LFUNC(XOPT+S), subject to ||S|| .LE. DELBAR. A projected S is
 !       calculated too, within the trust region, that does not alter the
 !       residuals of the active constraints. The projected step is preferred
-!       if its value of |LFUNC(XOPT+STEP)| is at least one fifth of the
+!       if its value of |LFUNC(XOPT+S)| is at least one fifth of the
 !       original one but the greatest violation of a linear constraint must
 !       be at least MINCV = 0.2*DELBAR in order to keep the interpolation points apart.
 !       The remedy when the maximum constraint violation is too small is to
 !       restore the original step, which is perturbed if necessary so that
 !       its maximum constraint violation becomes MINCV.
-!     IFEAS will be set to TRUE or FALSE if XOPT+STEP is feasible or infeasible.
+!     IFEAS will be set to TRUE or FALSE if XOPT+S is feasible or infeasible.
 !
 !     AMAT, B, XPT, XOPT, NACT, IACT, RESCON, QFAC, KOPT are the same as the terms with these names
 !     in subroutine LINCOB. KNEW is the index of the interpolation point that is going to be moved.
-!     DELBAR is the current restriction on the length of STEP, which is never greater than the
+!     DELBAR is the current restriction on the length of S, which is never greater than the
 !     current trust region radius DELTA.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TEN, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc, norm
@@ -70,7 +70,7 @@ real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Outputs
 logical, intent(out) :: ifeas
-real(RP), intent(out) :: step(:)  ! STEP(N)
+real(RP), intent(out) :: s(:)  ! S(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GEOSTEP'
@@ -81,20 +81,20 @@ integer(IK) :: npt
 integer(IK) :: rstat(size(amat, 2))
 real(RP) :: cstrv
 real(RP) :: cvtol
+real(RP) :: dderiv(size(xpt, 2))
 real(RP) :: den(size(xpt, 2))
 real(RP) :: denabs
+real(RP) :: distsq(size(xpt, 2))
 real(RP) :: gg
 real(RP) :: ghg
-real(RP) :: gl(size(xpt, 1))
+real(RP) :: glag(size(xpt, 1))
+real(RP) :: grads(size(xpt, 1))
 real(RP) :: gxpt(size(xpt, 2))
+real(RP) :: pgrads(size(xpt, 1))
 real(RP) :: pqlag(size(xpt, 2))
-real(RP) :: sp
-real(RP) :: ss
-real(RP) :: step_grad(size(xpt, 1))
-real(RP) :: step_prjg(size(xpt, 1))
 real(RP) :: stplen(size(xpt, 2))
 real(RP) :: tol
-real(RP) :: vlag(size(xpt, 2))
+real(RP) :: vlagabs(size(xpt, 2))
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -131,100 +131,98 @@ end if
 ! Calculation starts !
 !====================!
 
-! RSTAT(J) = -1, 0, or 1 respectively means constraint J is irrelevant, active, or inactive&relevant.
-! RSTAT never changes after being set below.
+! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
+! derivative parameters of LFUNC. Set GLAG to the gradient of LFUNC at the trust region centre.
+pqlag = omega_col(idz, zmat, knew)
+glag = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
+
+! Maximize |LFUNC| within the trust region on the lines through XOPT and other interpolation points,
+! without considering the linear constraints. In the following, VLAGABS(K) is set to the maximum of
+! |PHI_K(t)| subject to the trust-region constraint with PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:, K)).
+dderiv = matprod(glag, xpt) - inprod(glag, xopt) ! The derivatives PHI_K'(0).
+distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+! For each K /= KNEW, |PHI_K(t)| is maximized by STPLEN(K), the maximum being VLAGABS(K). Note that
+! PHI_K(t) is a quadratic function with PHI_K'(0) = DDERIV(K) and PHI_K(0) = 0 = PHI_K(1).
+stplen = -delbar / sqrt(distsq)
+vlagabs = abs(stplen * (ONE - stplen) * dderiv)
+! The maximization of |PHI_K(t)| is as follows. Note that PHI_K(t) is a quadratic function with
+! PHI_K'(0) = DDERIV(K), PHI_K(0) = 0, and PHI_K(1) = 1.
+if (dderiv(knew) * (dderiv(knew) - ONE) < 0) then
+    stplen(knew) = -stplen(knew)
+end if
+vlagabs(knew) = abs(stplen(knew) * dderiv(knew)) + stplen(knew)**2 * abs(dderiv(knew) - ONE)
+! It does not make sense to consider "straight line through XOPT and XPT(:, KOPT)". Thus we set
+! VLAGABS(KOPT) to -1 so that KOPT is skipped in the comparison below.
+vlagabs(kopt) = -ONE
+
+! Find K so that VLAGABS(K) is maximized. We define K in a way slightly different from Powell's
+! code, which sets K to MAXLOC(VLAGABS) by comparing the entries of VLAGABS sequentially.
+! 1. If VLAGABS contains only NaN, which can happen, Powell's code leaves K uninitialized.
+! 2. If VLAGABS(KNEW) = MINVAL(VLAG) = VLAG(K) with K < KNEW, Powell's code does not set K = KNEW.
+k = knew
+if (any(vlagabs > vlagabs(knew))) then
+    k = maxloc(vlagabs, mask=(.not. is_nan(vlagabs)), dim=1)
+    !!MATLAB: [~, k] = max(vlagabs, [], 'omitnan');
+end if
+s = stplen(k) * (xpt(:, k) - xopt)
+den = calden(kopt, bmat, s, xpt, zmat, idz)
+denabs = abs(den(knew))
+
+! Replace S by a steepest ascent step from XOPT if the latter provides a larger value of DENABS.
+gg = sum(glag**2)
+if (gg > 0) then
+    gxpt = matprod(glag, xpt)
+    ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
+    if (ghg < 0) then
+        grads = -(delbar / sqrt(gg)) * glag
+    else  ! This ELSE covers the unlikely yet possible case where GHG is zero or even NaN.
+        grads = (delbar / sqrt(gg)) * glag
+    end if
+    den = calden(kopt, bmat, grads, xpt, zmat, idz)
+    if (abs(den(knew)) > denabs) then
+        denabs = abs(den(knew))
+        s = grads
+    end if
+end if
+
+! Set IFEAS for the calculated S. RSTAT identifies the constraints that need evaluation. RSTAT(J)
+! is -1, 0, or 1 respectively means constraint J is irrelevant, active, or inactive and relevant.
 rstat = 1_IK
 rstat(trueloc(abs(rescon) >= delbar)) = -1_IK
 rstat(iact(1:nact)) = 0_IK
-
-! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
-! derivative parameters of LFUNC. Set GL to the gradient of LFUNC at the trust region centre.
-pqlag = omega_col(idz, zmat, knew)
-gl = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
-
-! Maximize |LFUNC| within the trust region on the lines through XOPT and other interpolation points.
-! In the following loop, VLAG(K) is set to the maximum of |PHI_K(t)| subject to the trust-region
-! constraint with PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:, K)). Note that PHI_K(t) is a quadratic
-! function with PHI_K'(0) = SP = INPROD(GL, XPT(:, K) - XOPT) and PHI_K(0) = 0; PHI_K(1) = 0 if
-! K /= KNEW and PHI_K(1) = 1 if K = KNEW. The linear constraints are not considered.
-vlag = ZERO
-do k = 1, npt
-    if (k == kopt) then
-        cycle
-    end if
-    sp = inprod(gl, xpt(:, k) - xopt)
-    ss = sum((xpt(:, k) - xopt)**2)
-    stplen(k) = -delbar / sqrt(ss)
-    if (k == knew) then
-        if (sp * (sp - ONE) < 0) then
-            stplen(k) = -stplen(k)
-        end if
-        vlag(k) = abs(stplen(k) * sp) + stplen(k)**2 * abs(sp - ONE)
-    else
-        vlag(k) = abs(stplen(k) * (ONE - stplen(k)) * sp)
-    end if
-end do
-
-! N.B.:
-! 1. We define K in a way slightly different from Powell's code, which sets K to MAXLOC(VLAG) by
-! comparing the entries of VLAG sequentially.
-! 2. If VLAG contains only NaN, which can happen, Powell's code leaves K uninitialized.
-! 3. If VLAG(KNEW) = MINVAL(VLAG) = VLAG(K) with K < KNEW, Powell's code does not set K = KNEW.
-k = knew
-if (any(vlag > vlag(knew))) then
-    k = maxloc(vlag, mask=(.not. is_nan(vlag)), dim=1)
-    !!MATLAB: [~, k] = max(vlag, [], 'omitnan');
-end if
-step = stplen(k) * (xpt(:, k) - xopt)
-den = calden(kopt, bmat, step, xpt, zmat, idz)
-denabs = abs(den(knew))
-
-! Replace STEP by a steepest ascent step from XOPT if the latter provides a larger value of DENABS.
-gg = sum(gl**2)
-if (gg > 0) then
-    gxpt = matprod(gl, xpt)
-    ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
-    if (ghg < 0) then
-        step_grad = -(delbar / sqrt(gg)) * gl
-    else  ! This ELSE covers the unlikely yet possible case where GHG is zero or even NaN.
-        step_grad = (delbar / sqrt(gg)) * gl
-    end if
-
-    den = calden(kopt, bmat, step_grad, xpt, zmat, idz)
-    if (abs(den(knew)) > denabs) then
-        denabs = abs(den(knew))
-        step = step_grad
-    end if
-end if
-
-cstrv = maximum([ZERO, matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
+cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
 ifeas = (cstrv <= 0)
 
+! Return with the current S if NACT == 0 or NACT == N.
 if (nact <= 0 .or. nact >= n) then
     return
 end if
 
-! Overwrite GL by its projection to the column space of QFAC(:, NACT+1:N). Then set VNEW to the
-! greatest value of |LFUNC| on the projected gradient from XOPT subject to the trust region bound.
-! If VNEW is sufficiently large, then STEP may be changed to a move along the projected gradient,
-! which is the STMP below. STMP does not alter the residuals of the active constraints.
-gl = matprod(qfac(:, nact + 1:n), matprod(gl, qfac(:, nact + 1:n)))
-!!MATLAB: gl = qfac(:, nact+1:n) * (gl' * qfac(:, nact+1:n))';
-gg = sum(gl**2)
+! When 0 < NACT < N, define PGRADS by maximizing |LFUNC| within the trust region from XOPT along the
+! projection of GLAG to the column space of QFAC(:, NACT+1:N), which is the orthogonal complement of
+! the space spanned by the active gradients. In precise arithmetic, moving along PGRADS does not
+! change the values of the active constraints. This projected gradient step is preferred and will
+! override S if it renders a denominator not too small and leads to good feasibility. This turns out
+! critical for the performance of LINCOA. We first replace GLAG with the projected gradient, so that
+! the calculation of PGRADS follows the same scheme as PGRAD.
+glag = matprod(qfac(:, nact + 1:n), matprod(glag, qfac(:, nact + 1:n)))
+!!MATLAB: glag = qfac(:, nact+1:n) * (glag' * qfac(:, nact+1:n))';
+gg = sum(glag**2)
 if (gg > 0) then
-    gxpt = matprod(gl, xpt)
+    gxpt = matprod(glag, xpt)
     ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
     if (ghg < 0) then
-        step_prjg = -(delbar / sqrt(gg)) * gl
+        pgrads = -(delbar / sqrt(gg)) * glag
     else  ! This ELSE covers the unlikely yet possible case where GHG is zero or even NaN.
-        step_prjg = (delbar / sqrt(gg)) * gl
+        pgrads = (delbar / sqrt(gg)) * glag
     end if
-
-    den = calden(kopt, bmat, step_prjg, xpt, zmat, idz)
-    cstrv = maximum([ZERO, matprod(step_prjg, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))])
-    cvtol = min(0.01_RP * sqrt(sum(step_prjg**2)), TEN * norm(matprod(step_prjg, amat(:, iact(1:nact))), 'inf'))
-    if (abs(den(knew)) > 0.1_RP * denabs .and. cstrv <= cvtol) then
-        step = step_prjg
+    den = calden(kopt, bmat, pgrads, xpt, zmat, idz)
+    cstrv = maximum([ZERO, matprod(pgrads, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))])
+    !The purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
+    !contributions from computer rounding errors. Note that CVTOL equals 0 in precise arithmetic.
+    cvtol = min(0.01_RP * sqrt(sum(pgrads**2)), TEN * norm(matprod(pgrads, amat(:, iact(1:nact))), 'inf'))
+    if (abs(den(knew)) > TENTH * denabs .and. cstrv <= cvtol) then
+        s = pgrads
         ifeas = .true.  ! IFEAS = (CSTRV <= CVTOL)
     end if
 end if
@@ -243,54 +241,3 @@ end subroutine geostep
 
 
 end module geometry_mod
-
-!return
-!!--------------------------------------------------------------------------------------------------!
-
-!! Set STEP to STMP if STMP gives a sufficiently large value of the modulus of the Lagrange function,
-!! and if STMP either preserves feasibility or gives a constraint violation of at least MINCV. The
-!! purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
-!! contributions from computer rounding errors. Note that CVTOL equals 0 in precise arithmetic.
-!! As commented by Powell, "the projected step is preferred if its value of |LFUNC(XOPT+STEP)| is at
-!! least one fifth of the original one but the greatest violation of a linear constraint must be at
-!! least MINCV = 0.2*DELBAR in order to keep the interpolation points apart." WHY THE PREFERENCE?
-!if (vnew >= 0.2_RP * vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
-!    bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
-!    cvtol = min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))
-!    ifeas = (bigcv <= cvtol)
-!    if (ifeas .or. bigcv >= mincv) then
-!        step = stmp
-!        return
-!    end if
-!end if
-
-!220 continue
-
-!! Calculate the greatest constraint violation at XOPT+STEP with STEP at its original value. Modify
-!! STEP if this violation is unacceptable.
-!! RSTAT(J) = -1, 0, or 1 means constraint J is irrelevant, active, or inactive&relevant, respectively.
-!constr = ZERO
-!constr(trueloc(rstat >= 0)) = matprod(step, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))
-!ifeas = all(constr <= 0)
-!if (all(constr < mincv) .and. any(constr > 0)) then
-!    jsav = int(maxloc(constr, mask=(.not. is_nan(constr)), dim=1), IK)
-!    bigcv = constr(jsav)
-!    !!MATLAB: [bigcv, jsav] = max(constr, [], 'omitnan');
-!    step = step + (mincv - bigcv) * amat(:, jsav)
-!end if
-
-!!--------------------------------------------------------------------------------------------------!
-!! Zaikun: For the projected gradient, the schemes below work evidently worse than the one above as
-!! tested on 20220417. Why?
-!!------------------------------------------------------------------------!
-!! VESION 1:
-!!!gl = gl - matprod(qfac(:, 1:nact), matprod(gl, qfac(:, 1:nact)))
-!!------------------------------------------------------------------------!
-!! VERSION 2:
-!!!if (2 * nact < n) then
-!!!    gl = gl - matprod(qfac(:, 1:nact), matprod(gl, qfac(:, 1:nact)))
-!!!else
-!!!    gl = matprod(qfac(:, nact + 1:n), matprod(gl, qfac(:, nact + 1:n)))
-!!!end if
-!!------------------------------------------------------------------------!
-!!--------------------------------------------------------------------------------------------------!

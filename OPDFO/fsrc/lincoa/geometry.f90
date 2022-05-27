@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 PM09:52:24
+! Last Modified: Friday, May 27, 2022 PM10:36:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -158,7 +158,8 @@ do k = 1, npt
         cycle
     end if
     ss = sum((xpt(:, k) - xopt)**2)
-    sp = inprod(gl, xpt(:, k) - xopt)
+    !sp = inprod(gl, xpt(:, k) - xopt)
+    sp = inprod(gl, xpt(:, k)) - inprod(gl, xopt)
     stplen(k) = -del / sqrt(ss)
     if (k == knew) then
         if (sp * (sp - ONE) < ZERO) then
