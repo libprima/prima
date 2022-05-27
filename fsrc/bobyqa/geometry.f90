@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 AM12:15:36
+! Last Modified: Saturday, May 28, 2022 AM12:51:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,7 +21,7 @@ contains
 
 function geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat) result(d)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine finds a step D such that intends to improve the geometry of the interpolation set
+! This subroutine finds a step D that intends to improve the geometry of the interpolation set
 ! when XPT(:, KNEW) is changed to XOPT + D, where XOPT = XPT(:, KOPT).
 !
 ! The arguments XPT, BMAT, ZMAT, SL and SU all have the same meanings as in BOBYQB.
@@ -423,6 +423,7 @@ end if
 !  Calculation ends  !
 !====================!
 
+! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)

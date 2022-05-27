@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 PM10:36:20
+! Last Modified: Saturday, May 28, 2022 AM12:10:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -212,7 +212,7 @@ if (gg > 0) then
     vlag_grad = calvlag(kopt, bmat, step_grad, xpt, zmat, idz)
     beta_grad = calbeta(kopt, bmat, step_grad, xpt, zmat, idz)
     denom_grad = alpha * beta_grad + vlag_grad(knew)**2
-    if (abs(denom_grad) > denabs) then
+    if (abs(denom_grad) > denabs .or. is_nan(denabs)) then
         denabs = abs(denom_grad)
         step = step_grad
     end if
@@ -264,13 +264,15 @@ if (nact > 0 .and. nact < n .and. gg > 0) then
 
     bigcv = maximum(matprod(stmp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1)))
     cvtol_prjg = min(0.01_RP * sqrt(sstmp), TEN * norm(matprod(stmp, amat(:, iact(1:nact))), 'inf'))
-    if (abs(denom_prjg) > 0.1_RP * denabs .and. bigcv <= cvtol_prjg) then
+    if (is_nan(denabs) .or. abs(denom_prjg) > 0.1_RP * denabs .and. bigcv <= cvtol_prjg) then
         step = step_prjg
         cvtol = cvtol_prjg
         prjg = .true.
         ifeas = (bigcv <= cvtol_prjg)
     end if
 end if
+! In case S contains NaN entries, set them to zero.
+step(trueloc(is_nan(step))) = ZERO
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 

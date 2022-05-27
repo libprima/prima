@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, May 27, 2022 AM12:20:34
+! Last Modified: Saturday, May 28, 2022 AM12:52:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -141,8 +141,8 @@ end function setdrop_tr
 
 function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine finds a step D such that intends to improve the geometry of the interpolation set
-! when XPT(:, KNEW) is changed to XOPT + D, where XOPT = XPT(:, KOPT).
+! This subroutine finds a step D that intends to improve the geometry of the interpolation set when
+! XPT(:, KNEW) is changed to XOPT + D, where XOPT = XPT(:, KOPT).
 !
 ! XPT contains the current interpolation points.
 ! BMAT provides the last N ROWs of H.
