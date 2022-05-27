@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 PM11:43:16
+! Last Modified: Saturday, May 28, 2022 AM12:56:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,30 +22,51 @@ public :: geostep
 contains
 
 
-subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xopt, xpt, zmat, ifeas, s)
+subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, ifeas, s)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine finds S such that intends to improve the geometry of the interpolation set
-! when XPT(:, KNEW) is changed to XOPT + S, where XOPT = XPT(:, KOPT).
-!  S is chosen to provide a relatively large value of the modulus of
-!       LFUNC(XOPT+S), subject to ||S|| .LE. DELBAR. A projected S is
-!       calculated too, within the trust region, that does not alter the
-!       residuals of the active constraints. The projected step is preferred
-!       if its value of |LFUNC(XOPT+S)| is at least one fifth of the
-!       original one but the greatest violation of a linear constraint must
-!       be at least MINCV = 0.2*DELBAR in order to keep the interpolation points apart.
-!       The remedy when the maximum constraint violation is too small is to
-!       restore the original step, which is perturbed if necessary so that
-!       its maximum constraint violation becomes MINCV.
-!     IFEAS will be set to TRUE or FALSE if XOPT+S is feasible or infeasible.
+! This subroutine finds a step S hat intends to improve the geometry of the interpolation set when
+! XPT(:, KNEW) is changed to XOPT + S, where XOPT = XPT(:, KOPT).
 !
-!     AMAT, B, XPT, XOPT, NACT, IACT, RESCON, QFAC, KOPT are the same as the terms with these names
-!     in subroutine LINCOB. KNEW is the index of the interpolation point that is going to be moved.
-!     DELBAR is the current restriction on the length of S, which is never greater than the
-!     current trust region radius DELTA.
+! S is chosen to provide a relatively large value of the modulus of the denominator SIGMA in the
+! updating formula (4.11) of the NEWUOA paper (in theory, SIGMA is positive, yet this may not hold
+! numerically due to rounding errors; in the code, SIGMA is represented by DEN and its modulus by
+! DENABS). This is done by solving
+!
+!   |LFUNC(XOPT + S)|, subject to |S| <= DELBAR,
+!
+! because SIGMA >= |LFUNC(XOPT + S)|^2 according to (4.12) of the NEWUOA paper. We do not solve this
+! problem exactly, but calculate three approximate solutions as follows and then choose S from them.
+! 1. The step that maximizes |LFUNC| within the trust region on the lines through XOPT and other
+! interpolation points.
+! 2. The gradient step that maximizes |LFUNC| within the trust region.
+! 3. A projected gradient step that maximizes |LFUNC| within the trust region, the projection being
+! made onto the orthogonal complement of the space spanned by the active gradients.
+!
+! We select S from these three steps by the following criteria.
+! 1. First, set S to either the first or second step, whichever renders a larger value of |SIGMA|.
+! 2. Second, override S by the third step if the latter provides a |SIGMA| that is not small
+! compared with the above one, while leading to a good feasibility.
+!
+! N.B.:
+! 1. The linear constraints are NOT considered in the calculation of the first two steps.
+! 2. For the selection of S, Powell adopted a different set of criteria as follows.
+! 2.1. First, set S to either the first or second step, whichever renders a larger value of |LFUNC|.
+! 2.2. Second, override S by the third step if the latter provides a |LFUNC| that is not small
+! compared with the above one, while being either feasible or with a constraint violation that is at
+! least 0.2*DELBAR.
+! 2.3. If S is not feasible and its constraint violation is less than 0.2*DELBAR, then it is
+! perturbed so that the constraint violation becomes 0.2*DELBAR or more.
+! 3. Powell required the positive constraint violation to be at least 0.2*DELBAR in order to keep
+! the interpolation points apart. In our criteria specified above, we have removed this requirement
+! as we believe that it is implied by the maximization of |LFUNC|. Our criteria works well in tests.
+!
+! AMAT, XPT, NACT, IACT, RESCON, QFAC, KOPT are the same as the terms with these names in subroutine
+! LINCOB. KNEW is the index of the interpolation point that is going to be moved. DELBAR is the
+! restriction on the length of S, which is never greater than the current trust region radius DELTA.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TEN, TENTH, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc, norm
@@ -64,7 +85,6 @@ real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
 real(RP), intent(in) :: delbar
 real(RP), intent(in) :: qfac(:, :)  ! QFAC(N, N)
 real(RP), intent(in) :: rescon(:)  ! RESCON(M)
-real(RP), intent(in) :: xopt(:)  ! XOPT(N)
 real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
@@ -95,6 +115,7 @@ real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: stplen(size(xpt, 2))
 real(RP) :: tol
 real(RP) :: vlagabs(size(xpt, 2))
+real(RP) :: xopt(size(xpt, 1))
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -121,15 +142,16 @@ if (DEBUGGING) then
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
-    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N and XOPT is finite', srname)
     call wassert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(all(abs(xopt - xpt(:, kopt)) <= 0), 'XOPT = XPT(:, KOPT)', srname) ! If this is true, XOPT should not be passed.
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT- N-1]', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
+
+! Read XOPT.
+xopt = xpt(:, kopt)
 
 ! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
 ! derivative parameters of LFUNC. Set GLAG to the gradient of LFUNC at the trust region centre.
@@ -152,7 +174,7 @@ if (dderiv(knew) * (dderiv(knew) - ONE) < 0) then
 end if
 vlagabs(knew) = abs(stplen(knew) * dderiv(knew)) + stplen(knew)**2 * abs(dderiv(knew) - ONE)
 ! It does not make sense to consider "straight line through XOPT and XPT(:, KOPT)". Thus we set
-! VLAGABS(KOPT) to -1 so that KOPT is skipped in the comparison below.
+! VLAGABS(KOPT) to -1 so that KOPT is skipped when we maximize VLAGABS.
 vlagabs(kopt) = -ONE
 
 ! Find K so that VLAGABS(K) is maximized. We define K in a way slightly different from Powell's
@@ -179,7 +201,7 @@ if (gg > 0) then
         grads = (delbar / sqrt(gg)) * glag
     end if
     den = calden(kopt, bmat, grads, xpt, zmat, idz)
-    if (abs(den(knew)) > denabs) then
+    if (abs(den(knew)) > denabs .or. is_nan(denabs)) then
         denabs = abs(den(knew))
         s = grads
     end if
@@ -193,14 +215,9 @@ rstat(iact(1:nact)) = 0_IK
 cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
 ifeas = (cstrv <= 0)
 
-! Return with the current S if NACT == 0 or NACT == N.
-if (nact <= 0 .or. nact >= n) then
-    return
-end if
-
 ! When 0 < NACT < N, define PGRADS by maximizing |LFUNC| within the trust region from XOPT along the
-! projection of GLAG to the column space of QFAC(:, NACT+1:N), which is the orthogonal complement of
-! the space spanned by the active gradients. In precise arithmetic, moving along PGRADS does not
+! projection of GLAG onto the column space of QFAC(:, NACT+1:N), which is the orthogonal complement
+! of the space spanned by the active gradients. In precise arithmetic, moving along PGRADS does not
 ! change the values of the active constraints. This projected gradient step is preferred and will
 ! override S if it renders a denominator not too small and leads to good feasibility. This turns out
 ! critical for the performance of LINCOA. We first replace GLAG with the projected gradient, so that
@@ -208,7 +225,7 @@ end if
 glag = matprod(qfac(:, nact + 1:n), matprod(glag, qfac(:, nact + 1:n)))
 !!MATLAB: glag = qfac(:, nact+1:n) * (glag' * qfac(:, nact+1:n))';
 gg = sum(glag**2)
-if (gg > 0) then
+if (nact > 0 .and. nact < n .and. gg > 0) then
     gxpt = matprod(glag, xpt)
     ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
     if (ghg < 0) then
@@ -221,21 +238,26 @@ if (gg > 0) then
     !The purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
     !contributions from computer rounding errors. Note that CVTOL equals 0 in precise arithmetic.
     cvtol = min(0.01_RP * sqrt(sum(pgrads**2)), TEN * norm(matprod(pgrads, amat(:, iact(1:nact))), 'inf'))
-    if (abs(den(knew)) > TENTH * denabs .and. cstrv <= cvtol) then
+    if (is_nan(denabs) .or. (abs(den(knew)) > TENTH * denabs .and. cstrv <= cvtol)) then
         s = pgrads
         ifeas = .true.  ! IFEAS = (CSTRV <= CVTOL)
     end if
 end if
 
+! In case S contains NaN entries, set them to zero.
+s(trueloc(is_nan(s))) = ZERO
+
 !====================!
 !  Calculation ends  !
 !====================!
 
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-!N.B.: LINCOB tests whether xdiff > 0.1*RHO. Check whether it should be turned off.
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(s) == n, 'SIZE(S) == N', srname)
+    call assert(all(is_finite(s)), 'S is finite', srname)
+    ! In theory, |S| <= DELBAR, which may be false due to rounding, but |S| > 2*DELBAR is unlikely.
+    call assert(norm(s) <= TWO * delbar, '|S| <= 2*DELBAR', srname)
+end if
 
 end subroutine geostep
 
