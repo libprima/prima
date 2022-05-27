@@ -1286,8 +1286,8 @@ elseif (any(is_nan(x)) .or. any(is_nan(v))) then
     y = sum(x) + sum(v)  ! Set Y to NaN
 elseif (any(is_inf(v))) then
     u = ZERO
-    u(trueloc(is_inf(v))) = sign(ONE, v)
-    !!MATLAB: u = 0; u(isinf(v)) = sign(v)
+    u(trueloc(is_inf(v))) = sign(ONE, v(trueloc(is_inf(v))))
+    !!MATLAB: u = 0; u(isinf(v)) = sign(v(isinf(v)))
     u = u / norm(u)
     !y = inprod(x, u) * u
     scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.

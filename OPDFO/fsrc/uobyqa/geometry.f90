@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 06, 2022 PM09:41:35
+! Last Modified: Friday, May 27, 2022 PM12:58:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,7 +103,13 @@ if (vhv * vhv <= 0.9999_RP * sum(d**2) * vv) then
     vhv = ratio * ratio * vhv
     vhd = ratio * dd
     temp = HALF * (dhd - vhv)
-    temp = temp + sign(sqrt(temp**2 + vhd**2), dhd + vhv)
+    !temp = temp + sign(sqrt(temp**2 + vhd**2), dhd + vhv)
+    if (dhd + vhv < 0) then
+        !temp = temp - sqrt(temp**2 + vhd**2)
+        temp = temp + sign(sqrt(temp**2 + vhd**2), dhd + vhv)
+    else
+        temp = temp + sqrt(temp**2 + vhd**2)
+    end if
     d = vhd * v + temp * d
 end if
 
@@ -121,7 +127,13 @@ if (.not. (gg > 0 .and. dd > 0)) then
     return
 end if
 
-scaling = sign(rho / sqrt(dd), gd * dhd)
+!scaling = sign(rho / sqrt(dd), gd * dhd)
+if (gd * dhd < 0) then
+    !scaling = -rho / sqrt(dd)
+    scaling = sign(rho / sqrt(dd), gd * dhd)
+else
+    scaling = rho / sqrt(dd)
+end if
 v = d - (gd / gg) * g
 vv = sum(v**2)
 d = scaling * d
@@ -148,7 +160,12 @@ if (abs(vhg) <= 0.01_RP * max(abs(ghg), abs(vhv))) then
     wsin = ZERO
 else
     temp = HALF * (ghg - vhv)
-    vmu = temp + sign(sqrt(temp**2 + vhg**2), temp)
+    !vmu = temp + sign(sqrt(temp**2 + vhg**2), temp)
+    if (temp < 0) then
+        vmu = temp + sign(sqrt(temp**2 + vhg**2), temp)
+    else
+        vmu = temp + sqrt(temp**2 + vhg**2)
+    end if
     temp = sqrt(vmu**2 + vhg**2)
     wcos = vmu / temp
     wsin = vhg / temp
@@ -168,14 +185,36 @@ tempa = abs(dlin) + HALF * abs(vmu + vhv)
 tempb = abs(vlin) + HALF * abs(ghg - vmu)
 tempc = sqrt(HALF) * (abs(dlin) + abs(vlin)) + QUART * abs(ghg + vhv)
 if (tempa >= tempb .and. tempa >= tempc) then
-    tempd = sign(rho, dlin * (vmu + vhv))
+    !tempd = sign(rho, dlin * (vmu + vhv))
+    if (dlin * (vmu + vhv) < 0) then
+        !tempd = -rho
+        tempd = sign(rho, dlin * (vmu + vhv))
+    else
+        tempd = rho
+    end if
     tempv = ZERO
 else if (tempb >= tempc) then
     tempd = ZERO
-    tempv = sign(rho, vlin * (ghg - vmu))
+
+    !tempv = sign(rho, vlin * (ghg - vmu))
+    if (vlin * (ghg - vmu) < 0) then
+        tempv = sign(rho, vlin * (ghg - vmu))
+    else
+        tempv = rho
+    end if
 else
-    tempd = sign(sqrt(HALF) * rho, dlin * (ghg + vhv))
-    tempv = sign(sqrt(HALF) * rho, vlin * (ghg + vhv))
+    !tempd = sign(sqrt(HALF) * rho, dlin * (ghg + vhv))
+    !tempv = sign(sqrt(HALF) * rho, vlin * (ghg + vhv))
+    if (dlin * (ghg + vhv) < 0) then
+        tempd = sign(sqrt(HALF) * rho, dlin * (ghg + vhv))
+    else
+        tempd = sqrt(HALF) * rho
+    end if
+    if (vlin * (ghg + vhv) < 0) then
+        tempv = sign(sqrt(HALF) * rho, vlin * (ghg + vhv))
+    else
+        tempv = sqrt(HALF) * rho
+    end if
 end if
 d = tempd * d + tempv * v
 vmax = rho * rho * max(tempa, tempb, tempc)

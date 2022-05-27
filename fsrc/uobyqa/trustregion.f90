@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 AM12:31:57
+! Last Modified: Friday, May 27, 2022 PM01:11:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -368,16 +368,14 @@ if (paruest > 0 .and. parlest >= partmp) then
     !----------------------------------------------------------------------------------------------!
 
     dtg = inprod(d, gg)
-    d = sign(delta / sqrt(dsq), -dtg) * d
-    ! N.B.: As per Powell's code, the line above would be D = -SIGN(DELTA/SQRT(DSQ), DTG) * D.
+    if (dtg > 0) then
+        d = -(delta / sqrt(dsq)) * d
+    else  ! This ELSE covers the unlikely yet possible case where DTG is zero or even NaN.
+        d = (delta / sqrt(dsq)) * d
+    end if
+    ! N.B.: As per Powell's code, the lines above would be D = -SIGN(DELTA/SQRT(DSQ), DTG) * D.
     ! However, our version here seems more reasonable in case DTG == 0, which is unlikely but did
     ! happen numerically. Note that SIGN(A, 0) = |A| /= -SIGN(A, 0).
-    !!MATLAB:
-    !!if (dtg == 0)  % sign(0) == 0 in MATLAB. dtg == 0 is unlikely but did happen numerically.
-    !!    d = (delta / sqrt(dsq)) * d
-    !!else
-    !!    d = -sign(dtg) * (delta / sqrt(dsq)) * d
-    !!end
     goto 370
 end if
 
@@ -468,8 +466,11 @@ if (.not. posdef) then
     z(1) = ONE / piv(1)
     do k = 1, n - 1_IK
         tnz = tn(k) * z(k)
-        z(k + 1) = (sign(ONE, -tnz) - tnz) / piv(k + 1)
-        !!MATLAB: z(k + 1) = -(sign(tnz) + tnz) / piv(k + 1)
+        if (tnz > 0) then
+            z(k + 1) = -(ONE + tnz) / piv(k + 1)
+        else
+            z(k + 1) = (ONE - tnz) / piv(k + 1)
+        end if
     end do
     wwsq = inprod(piv, z**2)  ! Needed in the convergence test.
     do k = n - 1_IK, 1, -1
@@ -482,13 +483,11 @@ if (.not. posdef) then
     ! Apply the alternative test for convergence.
     tempa = abs(delsq - dsq)
     tempb = sqrt(dtz * dtz + tempa * zsq)
-    gam = tempa / (sign(tempb, dtz) + dtz)
-    !!MATLAB:
-    !!if (dtz == 0)  % N.B.: sign(0) = 0 in MATLAB.
-    !!    gam = sqrt(tempa / zsq)
-    !!else
-    !!    gam = tempa / (sign(dtz)*tempb + dtz)
-    !!end
+    if (abs(dtz) > 0) then
+        gam = tempa / (sign(tempb, dtz) + dtz)  !!MATLAB: gam = tempa / (sign(dtz)*tempb + dtz)
+    else  ! This ELSE covers the unlikely yet possible case where DTZ is zero or even NaN.
+        gam = sqrt(tempa / zsq)
+    end if
     if (tol * (wsq + par * delsq) - gam * gam * wwsq >= 0) then
         d = d + gam * z
         goto 370
