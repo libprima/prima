@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 05, 2022 PM06:26:12
+! Last Modified: Saturday, May 28, 2022 PM08:54:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -255,9 +255,9 @@ do tr = 1, maxtr
 
         ! Shift XBASE if XOPT may be too far from XBASE.
         !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell's code
-        if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
-            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
-        end if
+        !if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
+        !    call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
+        !end if
 
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
@@ -432,9 +432,9 @@ do tr = 1, maxtr
         delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
 
         ! Shift XBASE if XOPT may be too far from XBASE.
-        if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
-            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
-        end if
+        ! if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
+        !     call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
+        !end if
 
         ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
         ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN.
@@ -495,6 +495,9 @@ do tr = 1, maxtr
             moderrsav = HUGENUM
         end if
     end if  ! End of IF (REDUCE_RHO_1 .OR. REDUCE_RHO_2). The procedure of reducing RHO ends.
+    if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
+        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
+    end if
 
 end do  ! End of Do TR = 1, MAXTR. The iterative procedure ends.
 

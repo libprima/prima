@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 05, 2022 PM06:26:12
+! Last Modified: Saturday, May 28, 2022 PM08:57:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -253,12 +253,6 @@ do tr = 1, maxtr
         ! DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
-        ! Shift XBASE if XOPT may be too far from XBASE.
-        !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell's code
-        if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
-            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
-        end if
-
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
         call evaluate(calfun, x, f)
@@ -426,15 +420,9 @@ do tr = 1, maxtr
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
 
         ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
-        ! scheme GEOSTEP. We also need it to decide whether to shift XBASE or not.
-        ! Note that DELTA has been updated before arriving here. See the comments above the
-        ! definition of IMPROVE_GEO.
+        ! scheme GEOSTEP. Note that DELTA has been updated before arriving here. See the comments
+        ! above the definition of IMPROVE_GEO.
         delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
-
-        ! Shift XBASE if XOPT may be too far from XBASE.
-        if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
-            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
-        end if
 
         ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
         ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN.
@@ -496,7 +484,14 @@ do tr = 1, maxtr
         end if
     end if  ! End of IF (REDUCE_RHO_1 .OR. REDUCE_RHO_2). The procedure of reducing RHO ends.
 
-end do  ! End of Do TR = 1, MAXTR. The iterative procedure ends.
+    ! Shift XBASE if XOPT may be too far from XBASE.
+    ! Zaikun 20220528: Our criterion for shifting XBASE differs from Powell's, which is as follows.
+    ! 1. After a trust region step that is not short, shift XBASE if SUM(XOPT**2) >= 1.0E3*DNORM**2.
+    ! 2. Before a geometry step, shift XBASE if SUM(XOPT**2) >= 1.0E3*DELBAR**2.
+    if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
+        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
+    end if
+end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.

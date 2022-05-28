@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 28, 2022 AM01:14:25
+! Last Modified: Saturday, May 28, 2022 PM05:26:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -258,6 +258,10 @@ nvalb = 0
 fsave = fopt
 
 ! Shift XBASE if XOPT may be too far from XBASE.
+! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
+! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably to
+! the one here? What about comparing with RHO? What about calling SHIFTBASE only before TRSTEP but
+! not GEOSTEP (consider GEOSTEP as a postprocessor).
 if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
     b = b - matprod(xopt, amat)
     call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
