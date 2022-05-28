@@ -425,9 +425,9 @@ vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_ts
 	FC2 := $(VFORT) $(FFLAGS2) -Kieee #-Ktrap=divz
 
 vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
-	FC1 := $(VFORT) $(FFLAGS1) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
+	FC1 := $(VFORT) $(FFLAGS1) -Kieee -Ktrap=divz,inv#,ovf,,unf,denorm
 vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
-	FC2 := $(VFORT) $(FFLAGS2) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
+	FC2 := $(VFORT) $(FFLAGS2) -Kieee -Ktrap=divz,inv#,ovf,unf,denorm
 
 vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d0_tst_c vtest_i4_r16_d0_tst_c vtest_i8_r16_d0_tst_c: \
 	FC1 := $(VFORT) $(FFLAGS1) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
@@ -667,10 +667,10 @@ source_%: $(SRC_DIRS)
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../lfsrc ./ ; \
 	fi
-	#@if echo $@ | grep -q "ntest"; then \
-	#	printf "\nPreparing the source code for $@.\n" ; \
-	#	bash ../nagsrc ./ ; \
-	#fi
+	@if echo $@ | grep -q "ftest\|vtest\|dtest"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../fvdsrc ./ ; \
+	fi
 	@if echo $@ | grep -q "stest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../sunsrc ./ ; \
