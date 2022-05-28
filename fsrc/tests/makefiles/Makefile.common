@@ -229,14 +229,7 @@ endif
 ####################################################################################################
 
 # Absoft af95
-# For Debian-based systems, -no-pie is needed; for other systems, this option may not work.
-AFORT :=
-ifneq ("$(wildcard /etc/debian_version)","")
-	AFORT = af95 -no-pie
-else
-	AFORT = af95
-endif
-AFORT := $(AFORT) -m1 -en -et -Rb -Rc -Rs -Rp
+AFORT := af95 -m1 -en -et -Rb -Rc -Rs -Rp
 
 atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
 	FC1 := $(AFORT) $(FFLAGS1) -TENV:simd_zmask=off
