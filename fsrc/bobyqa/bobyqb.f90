@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 AM12:21:52
+! Last Modified: Saturday, May 28, 2022 PM09:00:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -274,6 +274,7 @@ ntrits = ntrits + 1
 90 continue
 
 if (sum(xopt**2) >= 1.0E3_RP * dsq) then
+    ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
     sl = min(sl - xopt, ZERO)
     su = max(su - xopt, ZERO)
     !xnew = xnew - xopt  ! Needed? Will XNEW be used again later?
