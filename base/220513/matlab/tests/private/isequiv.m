@@ -122,7 +122,7 @@ else
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
-        blacklist = [blacklist, {'POLAK2'}]; % Cannot pass A = B^{-1}.
+        %blacklist = [blacklist, {'POLAK2'}]; % Cannot pass A = B^{-1}.
         blacklist = [blacklist, {'MINMAXRB'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
