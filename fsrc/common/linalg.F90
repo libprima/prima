@@ -44,7 +44,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, May 27, 2022 AM12:49:25
+! Last Modified: Saturday, May 28, 2022 PM02:28:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -599,29 +599,23 @@ if (n <= 0) then  ! Of course, N < 0 should never happen.
     return
 end if
 
+! For the following code, the classic flang 7.0.1, Huawei Bisheng flang 1.3.3, NVIDIA nvfortran
+! 22.3, and AOCC 3.2.0 flang raise a false positive error of out-bound subscripts when invoked with
+! the -Mbounds flag. See https://github.com/flang-compiler/flang/issues/1238 .
 if (istril(A)) then
-    x(1) = b(1) / A(1, 1)  ! Make sure that N >= 1!
-    ! Indeed, the last line should be merged to the following loop, but some compilers (particularly
-    ! Flang 7.0.1) are buggy concerning the array sections here when I == 1.
-    ! See https://github.com/flang-compiler/flang/issues/1238
-    do i = 2, n
-        x(i) = (b(i) - inprod(A(i, 1:i - 1), x(1:i - 1))) / A(i, i)
+    do i = 1, n
+        x(i) = (b(i) - inprod(A(i, 1:i - 1), x(1:i - 1))) / A(i, i)  ! INPROD = 0 if I == 1.
     end do
 elseif (istriu(A)) then  ! This case is invoked in LINCOA.
-    x(n) = b(n) / A(n, n)  ! Make sure that N >= 1!
-    ! Indeed, the last line should be merged to the following loop, but some compilers (particularly
-    ! Flang 7.0.1) are buggy concerning the array sections here when I == N.
-    ! See https://github.com/flang-compiler/flang/issues/1238
-    do i = n - 1_IK, 1, -1
-        x(i) = (b(i) - inprod(A(i, i + 1:n), x(i + 1:n))) / A(i, i)
+    do i = n, 1, -1
+        x(i) = (b(i) - inprod(A(i, i + 1:n), x(i + 1:n))) / A(i, i)  ! INPROD = 0 if I == N.
     end do
 else
     ! This is NOT a good algorithm for linear systems, but since the QR subroutine is available ...
     call qr(A, Q, R, P)
     x = matprod(b, Q)
-    x(n) = x(n) / R(n, n)  ! Make sure that N >= 1!
-    do i = n - 1_IK, 1, -1
-        x(i) = (x(i) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
+    do i = n, 1, -1
+        x(i) = (x(i) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)  ! INPROD = 0 if I == N.
     end do
     x(P) = x  ! Handle the permutation.
 end if

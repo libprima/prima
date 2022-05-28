@@ -678,10 +678,10 @@ source_%: $(SRC_DIRS)
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../lfsrc ./ ; \
 	fi
-	#@if echo $@ | grep -q "ntest"; then \
-	#	printf "\nPreparing the source code for $@.\n" ; \
-	#	bash ../nagsrc ./ ; \
-	#fi
+	@if echo $@ | grep -q "ftest\|vtest\|dtest"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../fvdsrc ./ ; \
+	fi
 	@if echo $@ | grep -q "stest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../sunsrc ./ ; \
