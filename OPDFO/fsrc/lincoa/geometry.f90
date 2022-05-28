@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 28, 2022 AM12:10:03
+! Last Modified: Saturday, May 28, 2022 AM11:42:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -199,16 +199,18 @@ vgrad = del * sqrt(gg)
 if (gg > 0) then
 ! Make the replacement if it provides a larger value of VBIG.
     gxpt = matprod(gl, xpt)
-    ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
+    !ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
     vnew = vgrad + abs(HALF * del * del * ghg / gg)
 !if (vnew > vbig .or. (is_nan(vbig) .and. .not. is_nan(vnew))) then
     vbig = vnew
     stp = del / sqrt(gg)
+    step_grad = stp * gl
+    ghg = inprod(step_grad, hess_mul(step_grad, xpt, pqlag))
     if (ghg < ZERO) then
-        stp = -stp
+        !stp = -stp
+        step_grad = -step_grad
     end if
 !end if
-    step_grad = stp * gl
     vlag_grad = calvlag(kopt, bmat, step_grad, xpt, zmat, idz)
     beta_grad = calbeta(kopt, bmat, step_grad, xpt, zmat, idz)
     denom_grad = alpha * beta_grad + vlag_grad(knew)**2
@@ -247,15 +249,18 @@ if (nact > 0 .and. nact < n .and. gg > 0) then
     vgrad = del * sqrt(gg)
 !if (vgrad <= TENTH * vbig) goto 220
     gxpt = matprod(gl, xpt)
-    ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
+    !ghg = inprod(gxpt, pqlag * gxpt)  ! GHG = INPROD(G, HESS_MUL(G, XPT, PQLAG))
     vnew = vgrad + abs(HALF * del * del * ghg / gg)
 
 ! Set STMP to the possible move along the projected gradient.
     stp = del / sqrt(gg)
-    if (ghg < ZERO) then
-        stp = -stp
-    end if
     stmp = stp * gl
+    ghg = inprod(stmp, hess_mul(stmp, xpt, pqlag))
+    if (ghg < ZERO) then
+        !stp = -stp
+        stmp = -stmp
+    end if
+    !stmp = stp * gl
     sstmp = sum(stmp**2)
     step_prjg = stmp
     vlag_prjg = calvlag(kopt, bmat, step_prjg, xpt, zmat, idz)

@@ -48,13 +48,7 @@ test:
 # Here are the compilers to test.
 
 # Absoft af95
-AFORT :=
-ifneq ("$(wildcard /etc/debian_version)","")
-	AFORT := af95 -no-pie
-else
-	AFORT := af95
-endif
-atest: FC := $(AFORT) -m3
+atest: FC := af95 -m3
 
 # AMD AOCC Flang
 AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2> /dev/null | sort | tail -n 1)

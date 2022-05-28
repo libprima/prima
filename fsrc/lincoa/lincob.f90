@@ -111,7 +111,7 @@ real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, dnorm, temp, &
 &        qred
-logical :: ifeas, shortd
+logical :: feasible, shortd
 integer(IK) :: idz, imprv, itest,  &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
@@ -245,7 +245,7 @@ nf = npt
 fopt = fval(kopt)
 rho = rhobeg
 delta = rho
-ifeas = .false.
+feasible = .false.
 shortd = .false.
 nact = 0
 itest = 3
@@ -329,7 +329,7 @@ else
         goto 600
     end if
 
-    call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, ifeas, d)
+    call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
 end if
 
 !
@@ -405,15 +405,15 @@ x = xbase + xnew
 !if (ksave == -1) xdiff = rho
 !!if (.false.) then
 !if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
-!    ifeas = .false.  ! Consistent with the meaning of IFEAS???
+!    feasible = .false.  ! Consistent with the meaning of FEASIBLE???
 !    info = DAMAGING_ROUNDING
 !    goto 600
 !end if
 !--------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------!
 
-ifeas = (ifeas .or. ksave <= 0) ! Consistent with the meaning of IFEAS???
-f = merge(tsource=ONE, fsource=ZERO, mask=ifeas)  ! Zaikun 20220415 What does this mean???
+feasible = (feasible .or. ksave <= 0) ! Consistent with the meaning of FEASIBLE???
+f = merge(tsource=ONE, fsource=ZERO, mask=feasible)  ! Zaikun 20220415 What does this mean???
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (is_nan(sum(abs(x)))) then
@@ -446,7 +446,7 @@ diff = f - fopt + qred
 !     If X is feasible, then set DFFALT to the difference between the new
 !       value of F and the value predicted by the alternative model.
 !
-if (ifeas .and. itest < 3) then
+if (feasible .and. itest < 3) then
     fshift = fval - fval(kopt)
     ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
     pqalt = omega_mul(idz, zmat, fshift)
@@ -496,7 +496,7 @@ end if
 !       interpolation conditions. Otherwise the new model is constructed
 !       by the symmetric Broyden method in the usual way.
 !
-if (ifeas) then
+if (feasible) then
     itest = itest + 1
     if (abs(dffalt) >= TENTH * abs(diff)) itest = 0
 end if
@@ -525,7 +525,7 @@ end if
 !     Update FOPT, XSAV, XOPT, KOPT, and RESCON if the new F is the
 !       least calculated value so far with a feasible vector of variables.
 !
-if (f < fopt .and. ifeas) then
+if (f < fopt .and. feasible) then
     ! Note that XOPT always corresponds to a feasible point.
     fopt = f
     xsav = x
@@ -631,9 +631,9 @@ info = INFO_DFT  !!info = SMALL_TR_RADIUS !!??
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (ksave == -1) goto 220
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!  600 IF (FOPT .LE. F .OR. IFEAS .EQ. 0) THEN
+!  600 IF (FOPT .LE. F .OR. FEASIBLE .EQ. 0) THEN
 600 continue
-if (fopt <= f .or. is_nan(f) .or. .not. ifeas) then
+if (fopt <= f .or. is_nan(f) .or. .not. feasible) then
     x = xsav
     f = fopt
 end if

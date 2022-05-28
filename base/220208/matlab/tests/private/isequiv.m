@@ -117,7 +117,7 @@ if isempty(requirements.list)
         blacklist = [blacklist, {'PALMER4ANE'}];
         % For PALMER4ANE, the original and modernized version differ due to a mistake in the extreme barrier of the original version.
         % We did not spend time on finding the mistake, but it returns an Inf in the constraint value, which should not happen.
-        blacklist = [blacklist, {'DEGENLPB'}]; % Takes long to solve
+        blacklist = [blacklist, {'DEGENLPB', 'LSNNODOC'}]; % Takes long to solve
         blacklist = [blacklist, {'MINMAXRB'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
