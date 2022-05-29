@@ -1,6 +1,6 @@
 module rescue_mod
 !--------------------------------------------------------------------------------------------------!
-! This module contains the `rescue` subroutine described in Section 5 of the BOBYQA paper.  
+! This module contains the `rescue` subroutine described in Section 5 of the BOBYQA paper.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
 !
@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 29, 2022 PM11:18:53
+! Last Modified: Monday, May 30, 2022 AM01:16:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,8 +23,8 @@ public :: rescue
 contains
 
 
-subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fval, &
-    & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
+subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fval, &
+    & gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, fopt, xopt, zmat)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
@@ -53,7 +53,6 @@ real(RP), intent(in) :: xu(:)  ! XU(N)
 ! In-outputs
 integer(IK), intent(inout) :: kopt
 integer(IK), intent(inout) :: nf
-real(RP), intent(inout) :: bmat(:, :)  !  BMAT(N, NPT + N)
 real(RP), intent(inout) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(inout) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(inout) :: gopt(:)  ! GOPT(N)
@@ -61,27 +60,20 @@ real(RP), intent(inout) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(inout) :: pq(:)  ! PQ(NPT)
 real(RP), intent(inout) :: sl(:)  ! SL(N)
 real(RP), intent(inout) :: su(:)  ! SU(N)
-real(RP), intent(inout) :: vlag(:)  ! VLAG(NPT+N)
 real(RP), intent(inout) :: xbase(:)  ! XBASE(N)
 real(RP), intent(inout) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
-real(RP), intent(inout) :: xopt(:)  ! XOPT(N)
 real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
-real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Outputs
-!real(RP), intent(out) :: f
-! Zaikun: 20220306
-! For the moment, declare F as INOUT; otherwise, F is undefined if the subroutine exits in abnormal
-! cases before the first evaluation of F. This should be resolved later when we can always keep the
-! consistency between FOPT, XOPT, FVAL(KOPT), XPT(:, KOPT), F, and X. Maybe we do not even need to
-! output F at all.
-real(RP), intent(inout) :: f
+real(RP), intent(out) :: bmat(:, :)  !  BMAT(N, NPT + N)
+real(RP), intent(out) :: fopt
+real(RP), intent(out) :: xopt(:)  ! XOPT(N)
+real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
 character(len=*), parameter :: srname = 'RESCUE'
 integer(IK) :: ip
 integer(IK) :: iq
-integer(IK) :: iter
 integer(IK) :: iw
 integer(IK) :: j
 integer(IK) :: jp
@@ -98,32 +90,34 @@ integer(IK) :: n
 integer(IK) :: nnew
 integer(IK) :: np
 integer(IK) :: npt
-logical :: mask(size(xopt))
+logical :: mask(size(xpt, 1))
 real(RP) :: beta
 real(RP) :: bsum
-real(RP) :: den(size(fval))
+real(RP) :: den(size(xpt, 2))
 real(RP) :: denom
+real(RP) :: f
 real(RP) :: fbase
-real(RP) :: hdiag(size(fval))
+real(RP) :: hdiag(size(xpt, 2))
 real(RP) :: moderr
-real(RP) :: pqinc(size(fval))
-real(RP) :: ptsaux(2, size(xopt))
-real(RP) :: ptsid(size(fval))
-real(RP) :: score(size(fval))
+real(RP) :: pqinc(size(xpt, 2))
+real(RP) :: ptsaux(2, size(xpt, 1))
+real(RP) :: ptsid(size(xpt, 2))
+real(RP) :: score(size(xpt, 2))
 real(RP) :: scoreinc
 real(RP) :: sfrac
 real(RP) :: temp
+real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: vlmxsq
 real(RP) :: vquad
-real(RP) :: wmv(size(xopt) + size(fval))
-real(RP) :: x(size(xopt))
+real(RP) :: wmv(size(xpt, 1) + size(xpt, 2))
+real(RP) :: x(size(xpt, 1))
 real(RP) :: xp
-real(RP) :: xpq(size(xopt))
+real(RP) :: xpq(size(xpt, 1))
 real(RP) :: xq
-real(RP) :: xxpt(size(fval))
+real(RP) :: xxpt(size(xpt, 2))
 
-n = int(size(xopt), kind(n))
-npt = int(size(fval), kind(npt))
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
@@ -146,19 +140,15 @@ if (DEBUGGING) then
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
-    call assert(size(vlag) == n + npt, 'SIZE(PQ) == N + NPT', srname)
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
-    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
-    call assert(all(xopt >= sl .and. xopt <= su), 'SL <= XOPT <= SU', srname)
-    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(size(xopt) == n, 'SIZE(XOPT) == N, XOPT is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
         & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
-    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
 end if
@@ -175,9 +165,6 @@ end if
 !       new least function value is found, but the corresponding changes to
 !       XOPT and GOPT have to be made later by the calling program.
 !     DELTA is the current trust region radius.
-!     VLAG is a working space vector that will be used for the values of the
-!       provisional Lagrange functions at each of the interpolation points.
-!       They are part of a product that requires VLAG to be of length NDIM.
 !     PTSAUX is also a working space array. For J=1,2,...,N, PTSAUX(1,J) and
 !       PTSAUX(2,J) specify the two positions of provisional interpolation
 !       points when a nonzero step is taken along e_J (the J-th coordinate
@@ -194,7 +181,6 @@ end if
 !       interpolation point is PTSAUX(1,p)*e_p + PTSAUX(1,q)*e_q. Otherwise
 !       the step is PTSAUX(1,p)*e_p or PTSAUX(2,q)*e_q in the cases q=0 or
 !       p=0, respectively.
-!     The first NDIM+NPT elements of the array W are used for working space.
 !     The final elements of BMAT and ZMAT are set in a well-conditioned way
 !       to the values that are appropriate for the new interpolation points.
 !     The elements of GOPT, HQ and PQ are also revised to the values that are
@@ -212,27 +198,29 @@ kbase = kopt
 np = n + 1
 sfrac = HALF / real(np, RP)
 
-! Shift the interpolation points so that XOPT becomes the origin, and set the elements of ZMAT to
-! ZERO. The value of SUMPQ is required in the updating of HQ below. The squares of the distances
-! from XOPT to the other interpolation points are set at DISTSQ. Increments of DINC may be added
-! later to these squares to balance the consideration of the choice of point that is going to
-! become current.
+! Shift the interpolation points so that XOPT becomes the origin. The squares of the distances from
+! XOPT to the other interpolation points are set at SCORE. Increments of SCOREINC may be added later
+! to these squares to balance the consideration of the choice of point that is going to become
+! current. Note that, in the BOBYQA paper, the scores are the distances rather than their squares.
+! See the paragraph between (5.9) and (5.10) of the BOBYQA paper.
+xopt = xpt(:, kopt)
 xpt = xpt - spread(xopt, dim=2, ncopies=npt)
 score = sum((xpt)**2, dim=1)
 scoreinc = maxval(score)
-zmat = ZERO
 
 ! Update HQ so that HQ and PQ define the second derivatives of the model after XBASE has been
 ! shifted to the trust region centre.
 xpq = matprod(xpt, pq) + HALF * sum(pq) * xopt
 call r2update(hq, ONE, xopt, xpq)
 
-! Shift XBASE, SL, SU and XOPT. Set the elements of BMAT to ZERO, and set the elements of PTSAUX.
+! Shift XBASE, SL, SU and XOPT. Set the elements of BMAT and ZMAT to ZERO.
 xbase = min(max(xl, xbase + xopt), xu)
 sl = min(sl - xopt, ZERO)
 su = max(su - xopt, ZERO)
 xopt = ZERO
 bmat = ZERO
+zmat = ZERO
+! Set the elements of PTSAUX.
 ptsaux(1, :) = min(delta, su)
 ptsaux(2, :) = max(-delta, sl)
 mask = (ptsaux(1, :) + ptsaux(2, :) < 0)
@@ -291,13 +279,14 @@ ptsid(kopt) = ZERO
 score(kopt) = ZERO
 nnew = npt - 1_IK
 
-do iter = 1_IK, npt**2
+! The following loop runs for at most NPT^2 times: for each original interpolation point, we need
+! at most NPT loops to find a provisional interpolation point that is "safe" (as per Powell) to be
+! replaced with the original point; if no such provisional point is found, then SCORE will be all
+! nonpositive, and the loop will exit.
+do while (any(score(1:npt) > 0) .and. nnew > 0)
     ! Pick the index KNEW of an original interpolation point that has not yet replaced one of the
     ! provisional interpolation points, giving attention to the closeness to XOPT and to previous
     ! tries with KNEW.
-    if (.not. any(score(1:npt) > 0)) then
-        exit
-    end if
     knew = int(minloc(score(1:npt), mask=(score(1:npt) > 0), dim=1), IK)
 
     ! Calculate VLAG and BETA for the required updating of the H matrix if XPT(:, KNEW) is
@@ -355,10 +344,10 @@ do iter = 1_IK, npt**2
     ! make way for the KNEW-th original interpolation point. The choice of KOLD is governed by the
     ! avoidance of a small value of the denominator in the updating calculation of UPDATE.
     hdiag = sum(zmat**2, dim=2)  ! Indeed, only HDIAG(PTSID /= 0) is needed.
-    !!MATLAB: hdiag(ptsid ~= 0) = sum(zmat(ptsid ~= 0, :), 2);
+    !!MATLAB: hdiag(ptsid > 0) = sum(zmat(ptsid > 0, :), 2);
     den = ZERO
-    where (ptsid /= 0) den = hdiag * beta + vlag(1:npt)**2
-    !!MATLAB: den(ptsid ~= 0) = hdiag(ptsid ~= 0)*beta + vlag(ptsid ~= 0)
+    where (ptsid > 0) den = hdiag * beta + vlag(1:npt)**2
+    !!MATLAB: den(ptsid > 0) = hdiag(ptsid > 0)*beta + vlag(ptsid > 0)
     kold = 0
     denom = ZERO
     if (any(den > 0)) then
@@ -368,6 +357,9 @@ do iter = 1_IK, npt**2
     end if
     vlmxsq = maxval(vlag(1:npt)**2)
     if (.not. denom > 1.0E-2_RP * vlmxsq) then
+        ! Until we find the next KOLD with DEN(KOLD) > 1.0E-2*VLMXSQ, the original interpolation
+        ! points with a negative score will not be considered. When the next KOLD satisfying the
+        ! aforesaid inequality is found, all the scores will be reset to their absolute values.
         score(knew) = -score(knew) - scoreinc
         cycle
     end if
@@ -380,24 +372,15 @@ do iter = 1_IK, npt**2
     end if
     ptsid(kold) = ptsid(knew)
     ptsid(knew) = ZERO
-    score(knew) = ZERO
-    score = abs(score)
+    score(knew) = ZERO  ! The KNEW-th original interpolation point will be skipped in later loops.
+    score = abs(score)  ! Reset SCORE to ABS(SCORE) when a satisfactory KOLD is found.
 
     ! Update the BMAT and ZMAT matrices so that the status of the KNEW-th interpolation point can be
     ! changed from provisional to original. The branch to label 350 occurs if all the original
     ! points are reinstated. The nonnegative values of W(NDIM+K) are required in the search below.
-
-    !----------------------------------------------------------------------------------------------!
-    write (99, *) sum(zmat(knew, :)**2) * beta + vlag(knew)**2
-    ! Without the writing, the following assertion may fail with NVFORTRAN.
-    call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
-    !----------------------------------------------------------------------------------------------!
     call updateh(knew, beta, vlag, bmat, zmat)
 
     nnew = nnew - 1_IK
-    if (nnew == 0) then
-        exit
-    end if
 end do
 
 ! All the final positions of the interpolation points have been chosen although any changes have not
@@ -408,7 +391,7 @@ end do
 ! interpolation points are included in the model.
 if (nnew > 0) then
     do kpt = 1, npt
-        if (ptsid(kpt) == ZERO) then
+        if (ptsid(kpt) <= ZERO) then
             cycle
         end if
 
@@ -481,9 +464,9 @@ if (nnew > 0) then
         moderr = f - vquad
         gopt = gopt + moderr * bmat(:, kpt)
         pqinc = moderr * matprod(zmat, zmat(kpt, :))
-        pq(trueloc(ptsid == 0)) = pq(trueloc(ptsid == 0)) + pqinc(trueloc(ptsid == 0))
+        pq(trueloc(ptsid <= 0)) = pq(trueloc(ptsid <= 0)) + pqinc(trueloc(ptsid <= 0))
         do k = 1, npt
-            if (ptsid(k) == 0) then
+            if (ptsid(k) <= 0) then
                 cycle
             end if
             ip = int(ptsid(k))
@@ -502,16 +485,19 @@ if (nnew > 0) then
         ptsid(kpt) = ZERO
 
     end do
+end if
 
-    if (kopt /= kbase) then
-        xopt = xpt(:, kopt)
-        gopt = gopt + hess_mul(xopt, xpt, pq, hq)
-    end if
+! Update FOPT, XOPT, and GOPT if necessary.
+if (kopt /= kbase) then
+    fopt = fval(kopt)
+    xopt = xpt(:, kopt)
+    gopt = gopt + hess_mul(xopt, xpt, pq, hq)
 end if
 
 ! Postconditions
 if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(.not. (is_nan(fopt) .or. is_posinf(fopt)), 'FOPT is not NaN/+Inf', srname)
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN/+Inf', srname)
@@ -520,7 +506,6 @@ if (DEBUGGING) then
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
-    call assert(size(vlag) == n + npt, 'SIZE(PQ) == N + NPT', srname)
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
