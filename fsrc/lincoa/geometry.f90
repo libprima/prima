@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 28, 2022 PM04:01:02
+! Last Modified: Sunday, May 29, 2022 PM12:01:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -61,6 +61,22 @@ subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon
 ! as we believe that it is implied by the maximization of |LFUNC|. Our criteria works well in tests.
 ! 4. In terms of flops, our criteria are more expensive than Powell's due to the evaluation of SIGMA.
 ! In derivative-free optimization, we are willing to save function evaluations at the cost of flops.
+! 5. The geometry step of BOBYQA is calculated in a fashion similar to this subroutine: first obtain
+! a step by maximizing |LFUNC| along the lines through XOPT and other interpolation points, then
+! find the Cauchy step, which maximizes |LFUNC| in the 1D space spanned by the gradient of LFUNC,
+! and finally select the geometry step from the aforesaid steps according to the value of |LFUNC| or
+! SIGMA. Yet there still exist three major differences between geometry steps of BOBYQA and LINCOA.
+! 5.1. The geometry step of BOBYQA is calculated subject to the bound constraints, and the computed
+! step is always feasible; the geometry step of LINCOA may violate the linear constraints.
+! 5.2. BOBYQA uses an estimated value of SIGMA (see (3.11) of the BOBYQA paper)to select the step
+! along the lines through XOPT and other interpolation points; LINCOA uses |LFUNC|. According to
+! a test on 20220529, using the estimated SIGMA does not improve the performance of LINCOA.
+! 5.3. LINCOA tries a projected gradient step and prefers this step when its quality is reasonable.
+! BOBYQA does not compute such a step.
+! Additionally, we observe in BOBYQA that it is beneficial for bound constrained problems (but NOT
+! unconstrained ones) to take the Cauchy step only in the late stage of the algorithm, e.g., when
+! DELBAR <= 1.0E-2. Similar phenomenon is not observed in LINCOA, where it worsens the performance
+! of the algorithm to skip the gradient step or the projected gradient step even in the early stage.
 !
 ! AMAT, XPT, NACT, IACT, RESCON, QFAC, KOPT are the same as the terms with these names in subroutine
 ! LINCOB. KNEW is the index of the interpolation point that is going to be moved. DELBAR is the
@@ -218,12 +234,12 @@ rstat(iact(1:nact)) = 0_IK
 cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
 feasible = (cstrv <= 0)
 
-! When 0 < NACT < N, define PGSTP by maximizing |LFUNC| within the trust region from XOPT along the
-! projection of GLAG onto the column space of QFAC(:, NACT+1:N), which is the orthogonal complement
-! of the space spanned by the active gradients. In precise arithmetic, moving along PGSTP does not
-! change the values of the active constraints. This projected gradient step is preferred and will
-! override S if it renders a denominator not too small and leads to good feasibility. This strategy
-! turns out critical for the performance of LINCOA.
+! If NACT <= 0 or NACT >= N, the calculation has finished. Otherwise, define PGSTP by maximizing
+! |LFUNC| within the trust region from XOPT along the projection of GLAG onto the column space of
+! QFAC(:, NACT+1:N), i.e., the orthogonal complement of the space spanned by the active gradients.
+! In precise arithmetic, moving along PGSTP does not change the values of the active constraints.
+! This projected gradient step is preferred and will override S if it renders a denominator not too
+! small and leads to good feasibility. This strategy is critical for the performance of LINCOA.
 pglag = matprod(qfac(:, nact + 1:n), matprod(glag, qfac(:, nact + 1:n)))
 !!MATLAB: pglag = qfac(:, nact+1:n) * (glag' * qfac(:, nact+1:n))';
 normg = sqrt(sum(pglag**2))
