@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 29, 2022 PM04:02:53
+! Last Modified: Sunday, May 29, 2022 PM06:42:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -410,8 +410,7 @@ if (ntrits == 0) then
     !--------------------------------------------------------------------------------------!
     !if (.not. (denom > HALF * vlag(knew)**2)) then
     if (.not. (denom > vlag(knew)**2)) then
-        !if (nf > nresc) goto 190
-        if (modulo(nf, 3_IK) /= 0) goto 190
+        if (nf > nresc) goto 190
         info = DAMAGING_ROUNDING
         goto 720
     end if
@@ -450,8 +449,7 @@ else
     ! KNEW > 0 explicitly.
     !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
     if (.not. (knew > 0 .and. scaden > biglsq)) then
-        !if (nf > nresc) then
-        if (modulo(nf, 3_IK) /= 0) then
+        if (nf > nresc) then
             goto 190
         else
             info = DAMAGING_ROUNDING
