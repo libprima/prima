@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 24, 2022 PM02:40:24
+! Last Modified: Sunday, May 29, 2022 PM03:13:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -309,7 +309,7 @@ end if
 !--------------------------------------------------------------------------------------------------!
 
 
-if (ntrits == 0) write (17, *) nf, 'resc'
+!if (ntrits == 0) write (17, *) nf, 'resc'
 
 call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fval, &
     & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
@@ -408,8 +408,10 @@ if (ntrits == 0) then
         end if
     end if
     !--------------------------------------------------------------------------------------!
-    if (.not. (denom > HALF * vlag(knew)**2)) then
-        if (nf > nresc) goto 190
+    !if (.not. (denom > HALF * vlag(knew)**2)) then
+    if (.not. (denom > 10.0_RP * vlag(knew)**2)) then
+        !if (nf > nresc) goto 190
+        if (.true.) goto 190
         info = DAMAGING_ROUNDING
         goto 720
     end if
@@ -446,8 +448,10 @@ else
 
     ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet prefer to require
     ! KNEW > 0 explicitly.
-    if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-        if (nf > nresc) then
+    !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
+    if (.not. (knew > 0 .and. scaden > 10.0_RP * biglsq)) then
+        !if (nf > nresc) then
+        if (.true.) then
             goto 190
         else
             info = DAMAGING_ROUNDING

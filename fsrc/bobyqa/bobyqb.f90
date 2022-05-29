@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 28, 2022 PM09:00:27
+! Last Modified: Sunday, May 29, 2022 PM03:14:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -324,8 +324,10 @@ if (ntrits == 0) then
     denom = alpha * beta + vlag(knew)**2
 
     ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-    if (.not. (denom > HALF * vlag(knew)**2)) then
-        if (nf <= nresc) then
+    !if (.not. (denom > HALF * vlag(knew)**2)) then
+    if (.not. (denom > 10.0_RP * vlag(knew)**2)) then
+        !if (nf <= nresc) then
+        if (.false.) then
             info = DAMAGING_ROUNDING
             goto 720
         else
@@ -421,8 +423,10 @@ else
 
     ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet we prefer to require
     ! KNEW > 0 explicitly.
-    if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-        if (nf <= nresc) then
+    !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
+    if (.not. (knew > 0 .and. scaden > 10.0_RP * biglsq)) then
+        !if (nf <= nresc) then
+        if (.false.) then
             info = DAMAGING_ROUNDING
             goto 720
         else
