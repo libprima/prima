@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 25, 2022 PM10:15:37
+! Last Modified: Sunday, May 29, 2022 PM03:14:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -258,41 +258,52 @@ nrem = npt
 kold = 1
 knew = kopt
 
+!---------------------------------------------!
+! Zaikun 20220529: the following two lines are artificial
+denom = ONE
+vlmxsq = ZERO
+!---------------------------------------------!
+
+
 80 continue
 
+do while (.true.)
+! KOLD > 0 is implied by DENOM > 1.0E-2*VLMXSQ (but NOT DENOM >= ...), yet we prefer to require
+! KOLD > 0 explicitly.
+    if (kold > 0 .and. denom > 1.0E-2_RP * vlmxsq) then
 ! Reorder the provisional points in the way that exchanges PTSID(KOLD) with PTSID(KNEW).
-bmat(:, [kold, knew]) = bmat(:, [knew, kold])
-zmat([kold, knew], :) = zmat([knew, kold], :)
-ptsid(kold) = ptsid(knew)
-ptsid(knew) = ZERO
-distsq(knew) = ZERO
-nrem = nrem - 1
-if (knew /= kopt) then
-    vlag([kold, knew]) = vlag([knew, kold])
-    ! Update the BMAT and ZMAT matrices so that the status of the KNEW-th interpolation point can be
-    ! changed from provisional to original. The branch to label 350 occurs if all the original
-    ! points are reinstated. The nonnegative values of W(NDIM+K) are required in the search below.
+        bmat(:, [kold, knew]) = bmat(:, [knew, kold])
+        zmat([kold, knew], :) = zmat([knew, kold], :)
+        ptsid(kold) = ptsid(knew)
+        ptsid(knew) = ZERO
+        distsq(knew) = ZERO
+        nrem = nrem - 1
+        if (knew /= kopt) then
+            vlag([kold, knew]) = vlag([knew, kold])
+            ! Update the BMAT and ZMAT matrices so that the status of the KNEW-th interpolation point can be
+            ! changed from provisional to original. The branch to label 350 occurs if all the original
+            ! points are reinstated. The nonnegative values of W(NDIM+K) are required in the search below.
 
-    !----------------------------------------------------------------------------------------------!
-    write (99, *) sum(zmat(knew, :)**2) * beta + vlag(knew)**2
-    ! Without the writing, the following assertion may fail with NVFORTRAN.
-    call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
-    !----------------------------------------------------------------------------------------------!
-    call updateh(knew, beta, vlag, bmat, zmat)
-    if (nrem == 0) goto 350
-    distsq(1:npt) = abs(distsq(1:npt))
-end if
-
-120 continue
+            !----------------------------------------------------------------------------------------------!
+            write (99, *) sum(zmat(knew, :)**2) * beta + vlag(knew)**2
+            ! Without the writing, the following assertion may fail with NVFORTRAN.
+            call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
+            !----------------------------------------------------------------------------------------------!
+            call updateh(knew, beta, vlag, bmat, zmat)
+            if (nrem == 0) then
+                exit
+            end if
+            distsq(1:npt) = abs(distsq(1:npt))
+        end if
+    end if
 
 ! Pick the index KNEW of an original interpolation point that has not yet replaced ONE of the
 ! provisional interpolation points, giving attention to the closeness to XOPT and to previous tries
 ! with KNEW.
-if (any(distsq(1:npt) > 0)) then
+    if (.not. any(distsq(1:npt) > 0)) then
+        exit
+    end if
     knew = int(minloc(distsq(1:npt), mask=(distsq(1:npt) > 0), dim=1), IK)
-else
-    goto 260
-end if
 
 ! Calculate VLAG and BETA for the required updating of the H matrix if XPT(:, KNEW) is reinstated
 ! in the set of interpolation points.
@@ -310,65 +321,63 @@ end if
 ! Therefore, WMV= [HALF*MATPROD(XNEW, XPT_TEST)**2, XNEW].
 ! Question (20220425): Can this be merged into CALVLAG/BETA in POWALG_MOD, maybe by modifying the
 ! signature of CALVLAG/BETA?
-do k = 1, npt
-    if (k == kopt) then
-        wmv(k) = ZERO
-    else if (ptsid(k) <= 0) then  ! Indeed, PTSID >= 0. So PTSID(K) <= 0 means PTSID(K) = 0.
-        wmv(k) = inprod(xpt(:, knew), xpt(:, k))
-    else
-        ip = int(ptsid(k))  ! IP = 0 if 0 < PTSID(K) < 1. INT(X) = [X], i.e., it rounds X towards 0.
-        iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
-        call assert(ip >= 0 .and. ip <= npt .and. iq >= 0 .and. iq <= npt, '0 <= IP, IQ <= NPT', srname)
-        if (ip > 0 .and. iq > 0) then
-            wmv(k) = xpt(ip, knew) * ptsaux(1, ip) + xpt(iq, knew) * ptsaux(1, iq)
-        elseif (ip > 0) then
-            wmv(k) = xpt(ip, knew) * ptsaux(1, ip)
-        elseif (iq > 0) then
-            wmv(k) = xpt(iq, knew) * ptsaux(2, iq)
-        else
+    do k = 1, npt
+        if (k == kopt) then
             wmv(k) = ZERO
+        else if (ptsid(k) <= 0) then  ! Indeed, PTSID >= 0. So PTSID(K) <= 0 means PTSID(K) = 0.
+            wmv(k) = inprod(xpt(:, knew), xpt(:, k))
+        else
+            ip = int(ptsid(k))  ! IP = 0 if 0 < PTSID(K) < 1. INT(X) = [X], i.e., it rounds X towards 0.
+            iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
+            call assert(ip >= 0 .and. ip <= npt .and. iq >= 0 .and. iq <= npt, '0 <= IP, IQ <= NPT', srname)
+            if (ip > 0 .and. iq > 0) then
+                wmv(k) = xpt(ip, knew) * ptsaux(1, ip) + xpt(iq, knew) * ptsaux(1, iq)
+            elseif (ip > 0) then
+                wmv(k) = xpt(ip, knew) * ptsaux(1, ip)
+            elseif (iq > 0) then
+                wmv(k) = xpt(iq, knew) * ptsaux(2, iq)
+            else
+                wmv(k) = ZERO
+            end if
         end if
-    end if
-    wmv(k) = HALF * wmv(k) * wmv(k)
-end do
-wmv(npt + 1:npt + n) = xpt(:, knew)
+        wmv(k) = HALF * wmv(k) * wmv(k)
+    end do
+    wmv(npt + 1:npt + n) = xpt(:, knew)
 ! Now calculate VLAG = H*WMV + e_KOPT according to (4.26) of the NEWUOA paper, except for VLAG(KOPT).
-vlag(1:npt) = matprod(zmat, matprod(wmv(1:npt), zmat)) + matprod(wmv(npt + 1:npt + n), bmat(:, 1:npt))
-vlag(npt + 1:npt + n) = matprod(bmat, wmv(1:npt + n))
+    vlag(1:npt) = matprod(zmat, matprod(wmv(1:npt), zmat)) + matprod(wmv(npt + 1:npt + n), bmat(:, 1:npt))
+    vlag(npt + 1:npt + n) = matprod(bmat, wmv(1:npt + n))
 ! Now calculate BETA. According to (4.12) of the NEWUOA paper (as well as (4.10) of the BOBYQA paper),
 ! BETA = HALF*|XNEW - XOPT|^4 - WMV'*H*WMV. To calculate WMX'*H*WMV, note that
 ! WMV'*H*WMV = WMV' * [Z*Z', B2^T; B1, B2] * WMV with Z = ZMAT, B1 = BMAT(:, 1:NPT), and
 ! B2 = BMAT(:, NPT+1:NPT+N). Denoting W1 = WMV(1:NPT) and W2 = WMV(NPT+1:NPT+N), we then have
 ! WMV'*H*WMV = |W1*Z|^2 + 2*W1'*B1*W2 + W1'*B2*W2 = |W1*Z|^2 + W1'(B1*W2 + [B1, B2]*WMV).
-bsum = inprod(wmv(1:n), matprod(bmat(:, 1:npt), wmv(1:npt)) + matprod(bmat, wmv))
-beta = HALF * sum(xpt(:, knew)**2)**2 - sum(matprod(wmv(1:npt), zmat)**2) - bsum
+    bsum = inprod(wmv(1:n), matprod(bmat(:, 1:npt), wmv(1:npt)) + matprod(bmat, wmv))
+    beta = HALF * sum(xpt(:, knew)**2)**2 - sum(matprod(wmv(1:npt), zmat)**2) - bsum
 ! Finally, set VLAG(KOPT) to the correct value.
-vlag(kopt) = vlag(kopt) + ONE
+    vlag(kopt) = vlag(kopt) + ONE
 
 ! KOLD is set to the index of the provisional interpolation point that is going to be deleted to
 ! make way for the KNEW-th original interpolation point. The choice of KOLD is governed by the
 ! avoidance of a small value of the denominator in the updating calculation of UPDATE.
-hdiag = sum(zmat**2, dim=2)  ! Indeed, only HDIAG(PTSID /= 0) is needed.
+    hdiag = sum(zmat**2, dim=2)  ! Indeed, only HDIAG(PTSID /= 0) is needed.
 !!MATLAB: hdiag(ptsid ~= 0) = sum(zmat(ptsid ~= 0, :), 2);
-den = ZERO
-where (ptsid /= 0) den = hdiag * beta + vlag(1:npt)**2
+    den = ZERO
+    where (ptsid /= 0) den = hdiag * beta + vlag(1:npt)**2
 !!MATLAB: den(ptsid ~= 0) = hdiag(ptsid ~= 0)*beta + vlag(ptsid ~= 0)
-kold = 0
-denom = ZERO
-if (any(den > 0)) then
-    kold = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
-    denom = den(kold)
+    kold = 0
+    denom = ZERO
+    if (any(den > 0)) then
+        kold = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
+        denom = den(kold)
     !!MATLAB: [denom, kold] = max(den, [], 'omitnan');
-end if
-vlmxsq = maxval(vlag(1:npt)**2)
+    end if
+    vlmxsq = maxval(vlag(1:npt)**2)
 ! KOLD > 0 is implied by DENOM > 1.0E-2*VLMXSQ (but NOT DENOM >= ...), yet we prefer to require
 ! KOLD > 0 explicitly.
-if (kold > 0 .and. denom > 1.0E-2_RP * vlmxsq) then
-    goto 80
-else
-    distsq(knew) = -distsq(knew) - dinc
-    goto 120
-end if
+    if (kold <= 0 .or. .not. denom > 1.0E-2_RP * vlmxsq) then
+        distsq(knew) = -distsq(knew) - dinc
+    end if
+end do
 
 ! All the final positions of the interpolation points have been chosen although any changes have not
 ! been included yet in XPT. Also the final BMAT and ZMAT matrices are complete, but, apart from the
@@ -376,110 +385,110 @@ end if
 ! the new interpolation points begins by putting the new point in XPT(:, KPT) and by setting PQ(KPT)
 ! to zero. A return occurs if MAXFUN prohibits another value of F or when all the new interpolation
 ! points are included in the model.
-260 continue
-do kpt = 1, npt
-    if (ptsid(kpt) == ZERO) then
-        cycle
-    end if
-
-    ! Absorb PQ(KPT)*XPT(:, KPT)*XPT(:, KPT)^T into the explicit part of the Hessian of the
-    ! quadratic model. Implement R1UPDATE properly so that it ensures HQ is symmetric.
-    call r1update(hq, pq(kpt), xpt(:, kpt))
-    pq(kpt) = ZERO
-
-    ip = int(ptsid(kpt))
-    iq = int(real(np, RP) * ptsid(kpt) - real(ip * np, RP))
-
-    ! Update XPT(:, KPT) to the new point. It contains at most two nonzeros XP and XQ at the IP
-    ! and IQ entries.
-    xpt(:, kpt) = ZERO
-    if (ip > 0 .and. iq > 0) then
-        xp = ptsaux(1, ip)
-        xpt(ip, kpt) = xp
-        xq = ptsaux(1, iq)
-        xpt(iq, kpt) = xq
-    elseif (ip > 0) then  ! IP > 0, IQ == 0
-        xp = ptsaux(1, ip)
-        xpt(ip, kpt) = xp
-    elseif (iq > 0) then  ! IP == 0, IQ > 0
-        xq = ptsaux(2, iq)
-        xpt(iq, kpt) = xq
-    end if
-
-    ! Calculate F at the new interpolation point, and set MODERR to the factor that is going to
-    ! multiply the KPT-th Lagrange function when the model is updated to provide interpolation to
-    ! the new function value.
-    x = min(max(xl, xbase + xpt(:, kpt)), xu)
-    x(trueloc(xpt(:, kpt) <= sl)) = xl(trueloc(xpt(:, kpt) <= sl))
-    x(trueloc(xpt(:, kpt) >= su)) = xu(trueloc(xpt(:, kpt) >= su))
-    nf = nf + 1
-    call evaluate(calfun, x, f)
-    call savehist(nf, x, xhist, f, fhist)
-    fval(kpt) = f
-    if (f < fval(kopt)) then
-        kopt = kpt
-    end if
-    if (is_nan(f) .or. is_posinf(f)) then
-        exit
-    end if
-    if (f <= ftarget) then
-        exit
-    end if
-    if (nf >= maxfun) then
-        exit
-    end if
-
-    ! Set VQUAD to the value of the current model at the new XPT(:, KPT), which has at most two
-    ! nonzeros XP and XQ at the IP and IQ entries respectively.
-    vquad = fbase
-    if (ip > 0 .and. iq > 0) then
-        vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
-        vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
-        vquad = vquad + xp * xq * hq(ip, iq)
-        xxpt = xp * xpt(ip, :) + xq * xpt(iq, :)
-    elseif (ip > 0) then  ! IP > 0, IQ == 0
-        vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
-        xxpt = xp * xpt(ip, :)
-    elseif (iq > 0) then  ! IP == 0, IQ > 0
-        vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
-        xxpt = xq * xpt(iq, :)
-    end if
-    vquad = vquad + HALF * inprod(xxpt, pq * xxpt)
-    ! N.B.: INPROD(XXPT, PQ * XXPT) = INPROD(X, HESS_MUL(X, XPT, PQ))
-
-    ! Update the quadratic model.
-    moderr = f - vquad
-    gopt = gopt + moderr * bmat(:, kpt)
-    pqinc = moderr * matprod(zmat, zmat(kpt, :))
-    pq(trueloc(ptsid == 0)) = pq(trueloc(ptsid == 0)) + pqinc(trueloc(ptsid == 0))
-    do k = 1, npt
-        if (ptsid(k) == 0) then
+if (nrem > 0) then
+    do kpt = 1, npt
+        if (ptsid(kpt) == ZERO) then
             cycle
         end if
-        ip = int(ptsid(k))
-        iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
-        call assert(ip >= 0 .and. ip <= npt .and. iq >= 0 .and. iq <= npt, '0 <= IP, IQ <= NPT', srname)
+
+        ! Absorb PQ(KPT)*XPT(:, KPT)*XPT(:, KPT)^T into the explicit part of the Hessian of the
+        ! quadratic model. Implement R1UPDATE properly so that it ensures HQ is symmetric.
+        call r1update(hq, pq(kpt), xpt(:, kpt))
+        pq(kpt) = ZERO
+
+        ip = int(ptsid(kpt))
+        iq = int(real(np, RP) * ptsid(kpt) - real(ip * np, RP))
+
+        ! Update XPT(:, KPT) to the new point. It contains at most two nonzeros XP and XQ at the IP
+        ! and IQ entries.
+        xpt(:, kpt) = ZERO
         if (ip > 0 .and. iq > 0) then
-            hq(ip, ip) = hq(ip, ip) + pqinc(k) * ptsaux(1, ip)**2
-            hq(iq, iq) = hq(iq, iq) + pqinc(k) * ptsaux(1, iq)**2
-            hq(ip, iq) = hq(ip, iq) + pqinc(k) * ptsaux(1, ip) * ptsaux(1, iq)
-            hq(iq, ip) = hq(ip, iq)
+            xp = ptsaux(1, ip)
+            xpt(ip, kpt) = xp
+            xq = ptsaux(1, iq)
+            xpt(iq, kpt) = xq
         elseif (ip > 0) then  ! IP > 0, IQ == 0
-            hq(ip, ip) = hq(ip, ip) + pqinc(k) * ptsaux(1, ip)**2
-        elseif (iq > 0) then  ! IP == 0, IP > 0
-            hq(iq, iq) = hq(iq, iq) + pqinc(k) * ptsaux(2, iq)**2
+            xp = ptsaux(1, ip)
+            xpt(ip, kpt) = xp
+        elseif (iq > 0) then  ! IP == 0, IQ > 0
+            xq = ptsaux(2, iq)
+            xpt(iq, kpt) = xq
         end if
+
+        ! Calculate F at the new interpolation point, and set MODERR to the factor that is going to
+        ! multiply the KPT-th Lagrange function when the model is updated to provide interpolation to
+        ! the new function value.
+        x = min(max(xl, xbase + xpt(:, kpt)), xu)
+        x(trueloc(xpt(:, kpt) <= sl)) = xl(trueloc(xpt(:, kpt) <= sl))
+        x(trueloc(xpt(:, kpt) >= su)) = xu(trueloc(xpt(:, kpt) >= su))
+        nf = nf + 1
+        call evaluate(calfun, x, f)
+        call savehist(nf, x, xhist, f, fhist)
+        fval(kpt) = f
+        if (f < fval(kopt)) then
+            kopt = kpt
+        end if
+        if (is_nan(f) .or. is_posinf(f)) then
+            exit
+        end if
+        if (f <= ftarget) then
+            exit
+        end if
+        if (nf >= maxfun) then
+            exit
+        end if
+
+        ! Set VQUAD to the value of the current model at the new XPT(:, KPT), which has at most two
+        ! nonzeros XP and XQ at the IP and IQ entries respectively.
+        vquad = fbase
+        if (ip > 0 .and. iq > 0) then
+            vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
+            vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
+            vquad = vquad + xp * xq * hq(ip, iq)
+            xxpt = xp * xpt(ip, :) + xq * xpt(iq, :)
+        elseif (ip > 0) then  ! IP > 0, IQ == 0
+            vquad = vquad + xp * (gopt(ip) + HALF * xp * hq(ip, ip))
+            xxpt = xp * xpt(ip, :)
+        elseif (iq > 0) then  ! IP == 0, IQ > 0
+            vquad = vquad + xq * (gopt(iq) + HALF * xq * hq(iq, iq))
+            xxpt = xq * xpt(iq, :)
+        end if
+        vquad = vquad + HALF * inprod(xxpt, pq * xxpt)
+        ! N.B.: INPROD(XXPT, PQ * XXPT) = INPROD(X, HESS_MUL(X, XPT, PQ))
+
+        ! Update the quadratic model.
+        moderr = f - vquad
+        gopt = gopt + moderr * bmat(:, kpt)
+        pqinc = moderr * matprod(zmat, zmat(kpt, :))
+        pq(trueloc(ptsid == 0)) = pq(trueloc(ptsid == 0)) + pqinc(trueloc(ptsid == 0))
+        do k = 1, npt
+            if (ptsid(k) == 0) then
+                cycle
+            end if
+            ip = int(ptsid(k))
+            iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
+            call assert(ip >= 0 .and. ip <= npt .and. iq >= 0 .and. iq <= npt, '0 <= IP, IQ <= NPT', srname)
+            if (ip > 0 .and. iq > 0) then
+                hq(ip, ip) = hq(ip, ip) + pqinc(k) * ptsaux(1, ip)**2
+                hq(iq, iq) = hq(iq, iq) + pqinc(k) * ptsaux(1, iq)**2
+                hq(ip, iq) = hq(ip, iq) + pqinc(k) * ptsaux(1, ip) * ptsaux(1, iq)
+                hq(iq, ip) = hq(ip, iq)
+            elseif (ip > 0) then  ! IP > 0, IQ == 0
+                hq(ip, ip) = hq(ip, ip) + pqinc(k) * ptsaux(1, ip)**2
+            elseif (iq > 0) then  ! IP == 0, IP > 0
+                hq(iq, iq) = hq(iq, iq) + pqinc(k) * ptsaux(2, iq)**2
+            end if
+        end do
+        ptsid(kpt) = ZERO
+
     end do
-    ptsid(kpt) = ZERO
 
-end do
-
-if (kopt /= kbase) then
-    xopt = xpt(:, kopt)
-    gopt = gopt + hess_mul(xopt, xpt, pq, hq)
+    if (kopt /= kbase) then
+        xopt = xpt(:, kopt)
+        gopt = gopt + hess_mul(xopt, xpt, pq, hq)
+    end if
 end if
 
-350 continue
 
 ! Postconditions
 if (DEBUGGING) then
