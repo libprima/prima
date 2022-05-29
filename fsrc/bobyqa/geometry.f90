@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 28, 2022 AM12:51:25
+! Last Modified: Sunday, May 29, 2022 AM11:49:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -320,14 +320,14 @@ d = xline - xopt
 den_line = calden(kopt, bmat, d, xpt, zmat)
 
 !--------------------------------------------------------------------------------------------------!
-! The following IF ... END IF does not exist in Powell's code.
-! SURPRISINGLY, the performance of BOBYQA is evidently improved by this IF ... END IF, which means
-! to try the Cauchy step only in the late stage of the algorithm, e.g., when DELBAR is relatively
-! small. WHY? In the following condition, 1.0E-2 works well if we use DEN_CAUCHY to decide whether
-! to take the Cauchy step; 1.0E-3 works well if we use VLAGSQ instead. How to make this condition
-! adaptive? A naive idea is to replace the thresholds to, e.g.,1.0E-2*RHOBEG. However, in a test on
-! 20220517, this adaptation worsened the performance. In such a test, we must set RHOBEG to a value
-! that is quite different from one. We tried RHOBEG = 0.9E-2.
+! The following IF ... END IF does not exist in Powell's code. SURPRISINGLY, the performance of
+! BOBYQA on bound constrained problems (but NOT unconstrained ones) is evidently improved by this IF
+! ... END IF, which means to try the Cauchy step only in the late stage of the algorithm, e.g., when
+! DELBAR is relatively small. WHY? In the following condition, 1.0E-2 works well if we use
+! DEN_CAUCHY to decide whether to take the Cauchy step; 1.0E-3 works well if we use VLAGSQ instead.
+! How to make this condition adaptive? A naive idea is to replace the thresholds to,
+! e.g.,1.0E-2*RHOBEG. However, in a test on 20220517, this adaptation worsened the performance. In
+! such a test, RHOBEG must take a value that is quite different from one. We tried RHOBEG = 0.9E-2.
 !IF (DELBAR > 1.0E-3) THEN
 if (delbar > 1.0E-2) then
     return
