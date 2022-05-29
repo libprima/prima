@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 30, 2022 AM01:16:32
+! Last Modified: Monday, May 30, 2022 AM01:41:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -80,15 +80,14 @@ integer(IK) :: jp
 integer(IK) :: jpn
 integer(IK) :: k
 integer(IK) :: kbase
-integer(IK) :: knew
-integer(IK) :: kold
+integer(IK) :: korig
+integer(IK) :: kprov
 integer(IK) :: kpt
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
-integer(IK) :: nnew
-integer(IK) :: np
+integer(IK) :: nprov
 integer(IK) :: npt
 logical :: mask(size(xpt, 1))
 real(RP) :: beta
@@ -195,8 +194,7 @@ end if
 
 kbase = kopt
 
-np = n + 1
-sfrac = HALF / real(np, RP)
+sfrac = HALF / real(n + 1, RP)
 
 ! Shift the interpolation points so that XOPT becomes the origin. The squares of the distances from
 ! XOPT to the other interpolation points are set at SCORE. Increments of SCOREINC may be added later
@@ -238,7 +236,7 @@ do j = 1, n
     jpn = jp + n
     ptsid(jp) = real(j, RP) + sfrac
     if (jpn <= npt) then
-        ptsid(jpn) = real(j, RP) / real(np, RP) + sfrac
+        ptsid(jpn) = real(j, RP) / real(n + 1, RP) + sfrac
         temp = ONE / (ptsaux(1, j) - ptsaux(2, j))
         bmat(j, jp) = -temp + ONE / ptsaux(1, j)
         bmat(j, jpn) = temp + ONE / ptsaux(2, j)
@@ -254,20 +252,18 @@ do j = 1, n
 end do
 
 ! Set any remaining identifiers with their nonzero elements of ZMAT.
-if (npt >= n + np) then
-    do k = 2 * np, npt
-        iw = floor((real(k - np) - HALF) / real(n))
-        ip = k - np - iw * n
-        iq = ip + iw
-        if (iq > n) iq = iq - n
-        ptsid(k) = real(ip, RP) + real(iq, RP) / real(np, RP) + sfrac
-        temp = ONE / (ptsaux(1, ip) * ptsaux(1, iq))
-        zmat(1, k - np) = temp
-        zmat(ip + 1, k - np) = -temp
-        zmat(iq + 1, k - np) = -temp
-        zmat(k, k - np) = temp
-    end do
-end if
+do k = 2_IK * n + 2_IK, npt
+    iw = floor((real(k - n - 1) - HALF) / real(n))
+    ip = k - n - 1_IK - iw * n
+    iq = ip + iw
+    if (iq > n) iq = iq - n
+    ptsid(k) = real(ip, RP) + real(iq, RP) / real(n + 1, RP) + sfrac
+    temp = ONE / (ptsaux(1, ip) * ptsaux(1, iq))
+    zmat(1, k - n - 1) = temp
+    zmat(ip + 1, k - n - 1) = -temp
+    zmat(iq + 1, k - n - 1) = -temp
+    zmat(k, k - n - 1) = temp
+end do
 
 ! Reorder the provisional points in the way that exchanges PTSID(1) with PTSID(KOPT).
 if (kopt /= 1) then
@@ -277,21 +273,21 @@ end if
 ptsid(1) = ptsid(kopt)
 ptsid(kopt) = ZERO
 score(kopt) = ZERO
-nnew = npt - 1_IK
+nprov = npt - 1_IK
 
 ! The following loop runs for at most NPT^2 times: for each original interpolation point, we need
 ! at most NPT loops to find a provisional interpolation point that is "safe" (as per Powell) to be
 ! replaced with the original point; if no such provisional point is found, then SCORE will be all
-! nonpositive, and the loop will exit.
-do while (any(score(1:npt) > 0) .and. nnew > 0)
-    ! Pick the index KNEW of an original interpolation point that has not yet replaced one of the
+! zero or negative, and the loop will exit.
+do while (any(score(1:npt) > 0) .and. nprov > 0)
+    ! Pick the index KORIG of an original interpolation point that has not yet replaced one of the
     ! provisional interpolation points, giving attention to the closeness to XOPT and to previous
-    ! tries with KNEW.
-    knew = int(minloc(score(1:npt), mask=(score(1:npt) > 0), dim=1), IK)
+    ! tries with KORIG.
+    korig = int(minloc(score(1:npt), mask=(score(1:npt) > 0), dim=1), IK)
 
-    ! Calculate VLAG and BETA for the required updating of the H matrix if XPT(:, KNEW) is
+    ! Calculate VLAG and BETA for the required updating of the H matrix if XPT(:, KORIG) is
     ! reinstated in the set of interpolation points.
-    ! First, form the (W - V) vector for XPT(:, KNEW) as if it is going to replace XPT_TEST(:, KNEW)
+    ! First, form the (W-V) vector for XPT(:, KORIG) as if it is going to replace XPT_TEST(:, KORIG)
     ! with the following XPT_TEST as defined in (5.4)--(5.5) of the BOBYQA paper for details.
     ! 1. XPT_TEST(:, KOPT) = 0;
     ! 2. For each K /= KOPT, if PTSID(K) == 0, then XPT_TEST(:, K) = XPT(:, K); if PTSID(K) > 0,
@@ -299,7 +295,7 @@ do while (any(score(1:npt) > 0) .and. nnew > 0)
     ! and IQ are the P(J) and Q(J) defined in and below (2.4) of the BOBYQA paper.
     !
     ! In the code below, WMV = W - V = w(XNEW) - w(XOPT) without the (NPT+1)th entry, where
-    ! XNEW = XPT(:,KNEW), XOPT = XPT_TEST = 0, and w(.) being defined by (6.3) of the NEWUOA paper
+    ! XNEW = XPT(:,KORIG), XOPT = XPT_TEST = 0, and w(.) being defined by (6.3) of the NEWUOA paper
     ! (as well as (4.10) of the BOBYQA paper). Since XOPT = 0, we see from (6.3) that w(XOPT)(K) = 0
     ! for all K except that w(XOPT)(NPT+1) = 1. Thus WMV is the same at w(XNEW) without the
     ! (NPT+1)-th entry. Therefore, WMV= [HALF*MATPROD(XNEW, XPT_TEST)**2, XNEW].
@@ -309,24 +305,24 @@ do while (any(score(1:npt) > 0) .and. nnew > 0)
         if (k == kopt) then
             wmv(k) = ZERO
         else if (ptsid(k) <= 0) then  ! Indeed, PTSID >= 0. So PTSID(K) <= 0 means PTSID(K) = 0.
-            wmv(k) = inprod(xpt(:, knew), xpt(:, k))
+            wmv(k) = inprod(xpt(:, korig), xpt(:, k))
         else
             ip = int(ptsid(k))  ! IP = 0 if 0 < PTSID(K) < 1. INT(X) = [X], i.e., it rounds X towards 0.
-            iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
+            iq = int(real(n + 1, RP) * ptsid(k) - real(ip * (n + 1), RP))
             call assert(ip >= 0 .and. ip <= npt .and. iq >= 0 .and. iq <= npt, '0 <= IP, IQ <= NPT', srname)
             if (ip > 0 .and. iq > 0) then
-                wmv(k) = xpt(ip, knew) * ptsaux(1, ip) + xpt(iq, knew) * ptsaux(1, iq)
+                wmv(k) = xpt(ip, korig) * ptsaux(1, ip) + xpt(iq, korig) * ptsaux(1, iq)
             elseif (ip > 0) then
-                wmv(k) = xpt(ip, knew) * ptsaux(1, ip)
+                wmv(k) = xpt(ip, korig) * ptsaux(1, ip)
             elseif (iq > 0) then
-                wmv(k) = xpt(iq, knew) * ptsaux(2, iq)
+                wmv(k) = xpt(iq, korig) * ptsaux(2, iq)
             else
                 wmv(k) = ZERO
             end if
         end if
         wmv(k) = HALF * wmv(k) * wmv(k)
     end do
-    wmv(npt + 1:npt + n) = xpt(:, knew)
+    wmv(npt + 1:npt + n) = xpt(:, korig)
     ! Now calculate VLAG = H*WMV + e_KOPT according to (4.26) of the NEWUOA paper, except VLAG(KOPT).
     vlag(1:npt) = matprod(zmat, matprod(wmv(1:npt), zmat)) + matprod(wmv(npt + 1:npt + n), bmat(:, 1:npt))
     vlag(npt + 1:npt + n) = matprod(bmat, wmv(1:npt + n))
@@ -336,51 +332,51 @@ do while (any(score(1:npt) > 0) .and. nnew > 0)
     ! B2 = BMAT(:, NPT+1:NPT+N). Denoting W1 = WMV(1:NPT) and W2 = WMV(NPT+1:NPT+N), we then have
     ! WMV'*H*WMV = |W1*Z|^2 + 2*W1'*B1*W2 + W1'*B2*W2 = |W1*Z|^2 + W1'(B1*W2 + [B1, B2]*WMV).
     bsum = inprod(wmv(1:n), matprod(bmat(:, 1:npt), wmv(1:npt)) + matprod(bmat, wmv))
-    beta = HALF * sum(xpt(:, knew)**2)**2 - sum(matprod(wmv(1:npt), zmat)**2) - bsum
+    beta = HALF * sum(xpt(:, korig)**2)**2 - sum(matprod(wmv(1:npt), zmat)**2) - bsum
     ! Finally, set VLAG(KOPT) to the correct value.
     vlag(kopt) = vlag(kopt) + ONE
 
-    ! KOLD is set to the index of the provisional interpolation point that is going to be deleted to
-    ! make way for the KNEW-th original interpolation point. The choice of KOLD is governed by the
+    ! KPROV is set to the index of the provisional interpolation point that is going to be deleted to
+    ! make way for the KORIG-th original interpolation point. The choice of KPROV is governed by the
     ! avoidance of a small value of the denominator in the updating calculation of UPDATE.
     hdiag = sum(zmat**2, dim=2)  ! Indeed, only HDIAG(PTSID /= 0) is needed.
     !!MATLAB: hdiag(ptsid > 0) = sum(zmat(ptsid > 0, :), 2);
     den = ZERO
     where (ptsid > 0) den = hdiag * beta + vlag(1:npt)**2
     !!MATLAB: den(ptsid > 0) = hdiag(ptsid > 0)*beta + vlag(ptsid > 0)
-    kold = 0
+    kprov = 0
     denom = ZERO
     if (any(den > 0)) then
-        kold = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
-        denom = den(kold)
-        !!MATLAB: [denom, kold] = max(den, [], 'omitnan');
+        kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
+        denom = den(kprov)
+        !!MATLAB: [denom, kprov] = max(den, [], 'omitnan');
     end if
     vlmxsq = maxval(vlag(1:npt)**2)
     if (.not. denom > 1.0E-2_RP * vlmxsq) then
-        ! Until we find the next KOLD with DEN(KOLD) > 1.0E-2*VLMXSQ, the original interpolation
-        ! points with a negative score will not be considered. When the next KOLD satisfying the
+        ! Until we find the next KPROV with DEN(KPROV) > 1.0E-2*VLMXSQ, the original interpolation
+        ! points with a negative score will not be considered. When the next KPROV satisfying the
         ! aforesaid inequality is found, all the scores will be reset to their absolute values.
-        score(knew) = -score(knew) - scoreinc
+        score(korig) = -score(korig) - scoreinc
         cycle
     end if
 
-    ! Reorder the provisional points in the way that exchanges PTSID(KOLD) with PTSID(KNEW).
-    if (kold /= knew) then
-        bmat(:, [kold, knew]) = bmat(:, [knew, kold])
-        zmat([kold, knew], :) = zmat([knew, kold], :)
-        vlag([kold, knew]) = vlag([knew, kold])
+    ! Reorder the provisional points in the way that exchanges PTSID(KPROV) with PTSID(KORIG).
+    if (kprov /= korig) then
+        bmat(:, [kprov, korig]) = bmat(:, [korig, kprov])
+        zmat([kprov, korig], :) = zmat([korig, kprov], :)
+        vlag([kprov, korig]) = vlag([korig, kprov])
     end if
-    ptsid(kold) = ptsid(knew)
-    ptsid(knew) = ZERO
-    score(knew) = ZERO  ! The KNEW-th original interpolation point will be skipped in later loops.
-    score = abs(score)  ! Reset SCORE to ABS(SCORE) when a satisfactory KOLD is found.
+    ptsid(kprov) = ptsid(korig)
+    ptsid(korig) = ZERO
+    score(korig) = ZERO  ! The KORIG-th original interpolation point will be skipped in later loops.
+    score = abs(score)  ! Reset SCORE to ABS(SCORE) when a satisfactory KPROV is found.
 
-    ! Update the BMAT and ZMAT matrices so that the status of the KNEW-th interpolation point can be
-    ! changed from provisional to original. The branch to label 350 occurs if all the original
-    ! points are reinstated. The nonnegative values of W(NDIM+K) are required in the search below.
-    call updateh(knew, beta, vlag, bmat, zmat)
+    ! Update the BMAT and ZMAT matrices so that the status of the KORIG-th interpolation point can
+    ! be changed from provisional to original. The branch to label occurs if all the original
+    ! points are reinstated.
+    call updateh(korig, beta, vlag, bmat, zmat)
 
-    nnew = nnew - 1_IK
+    nprov = nprov - 1_IK
 end do
 
 ! All the final positions of the interpolation points have been chosen although any changes have not
@@ -389,7 +385,7 @@ end do
 ! through the new interpolation points begins by putting the new point in XPT(:, KPT) and by setting
 ! PQ(KPT) to zero. A return occurs if MAXFUN prohibits another value of F or when all the new
 ! interpolation points are included in the model.
-if (nnew > 0) then
+if (nprov > 0) then
     do kpt = 1, npt
         if (ptsid(kpt) <= ZERO) then
             cycle
@@ -401,7 +397,7 @@ if (nnew > 0) then
         pq(kpt) = ZERO
 
         ip = int(ptsid(kpt))
-        iq = int(real(np, RP) * ptsid(kpt) - real(ip * np, RP))
+        iq = int(real(n + 1, RP) * ptsid(kpt) - real(ip * (n + 1), RP))
 
         ! Update XPT(:, KPT) to the new point. It contains at most two nonzeros XP and XQ at the IP
         ! and IQ entries.
@@ -470,7 +466,7 @@ if (nnew > 0) then
                 cycle
             end if
             ip = int(ptsid(k))
-            iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
+            iq = int(real(n + 1, RP) * ptsid(k) - real(ip * (n + 1), RP))
             if (ip > 0 .and. iq > 0) then
                 hq(ip, ip) = hq(ip, ip) + pqinc(k) * ptsaux(1, ip)**2
                 hq(iq, iq) = hq(iq, iq) + pqinc(k) * ptsaux(1, iq)**2
