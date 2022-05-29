@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 24, 2022 PM02:51:05
+! Last Modified: Sunday, May 29, 2022 PM03:23:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -153,6 +153,7 @@ gnew = gopt
 delsq = delta * delta
 qred = ZERO
 crvmin = -ONE
+beta = ZERO
 
 ! Set the next search direction of the conjugate gradient method. It is the steepest descent
 ! direction initially and when the iterations are restarted because a variable has just been fixed
@@ -160,10 +161,6 @@ crvmin = -ONE
 ! bound on the indices of the conjugate gradient iterations.
 
 20 continue
-
-beta = ZERO
-
-30 continue
 
 if (beta == 0) then
     s = -gnew  ! If we are sure that S contain only finite values, we may merge this case into the next.
@@ -291,6 +288,7 @@ if (iact > 0) then
     xbdi(iact) = int(sign(ONE, s(iact)), IK)  !!MATLAB: xbdi(iact) = sign(s(iact))
     delsq = delsq - d(iact)**2
     if (delsq <= 0) goto 90
+    beta = ZERO
     goto 20  ! Zaikun 20220421 Caution: infinite cycling may occur. Fix it!!!
 end if
 
@@ -299,11 +297,11 @@ if (stplen < bstep) then
     if (iter == maxiter) goto 190
     !if (iter >= maxiter) goto 190 ??? Zaikun 20220401
     !----------------------------------------------------------------------------------------------!
-    !if (sdec <= 0.01_RP * qred) goto 190  ! An infinite loop to 30 occurred because sdec became NaN
+    !if (sdec <= 0.01_RP * qred) goto 190  ! An infinite loop to 20 occurred because sdec became NaN
     if (sdec <= 0.01_RP * qred .or. is_nan(sdec) .or. is_nan(qred)) goto 190  ! Zaikun 20220401
     !----------------------------------------------------------------------------------------------!
     beta = gredsq / ggsav
-    goto 30  ! Zaikun 20220421 Caution: infinite cycling may occur. Fix it!!!
+    goto 20  ! Zaikun 20220421 Caution: infinite cycling may occur. Fix it!!!
 end if
 
 90 continue

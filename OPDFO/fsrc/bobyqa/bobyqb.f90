@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 29, 2022 PM03:13:26
+! Last Modified: Sunday, May 29, 2022 PM04:02:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -409,9 +409,9 @@ if (ntrits == 0) then
     end if
     !--------------------------------------------------------------------------------------!
     !if (.not. (denom > HALF * vlag(knew)**2)) then
-    if (.not. (denom > 10.0_RP * vlag(knew)**2)) then
+    if (.not. (denom > vlag(knew)**2)) then
         !if (nf > nresc) goto 190
-        if (.true.) goto 190
+        if (modulo(nf, 3_IK) /= 0) goto 190
         info = DAMAGING_ROUNDING
         goto 720
     end if
@@ -449,9 +449,9 @@ else
     ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet prefer to require
     ! KNEW > 0 explicitly.
     !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-    if (.not. (knew > 0 .and. scaden > 10.0_RP * biglsq)) then
+    if (.not. (knew > 0 .and. scaden > biglsq)) then
         !if (nf > nresc) then
-        if (.true.) then
+        if (modulo(nf, 3_IK) /= 0) then
             goto 190
         else
             info = DAMAGING_ROUNDING
