@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 29, 2022 PM10:41:25
+! Last Modified: Monday, May 30, 2022 AM12:22:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -264,7 +264,7 @@ if (shortd) then
         goto 680
     end if
 end if
-ntrits = ntrits + 1
+ntrits = ntrits + 1_IK
 
 ! Severe cancellation is likely to occur if XOPT is too far from XBASE. If the following test holds,
 ! then XBASE is shifted so that XOPT becomes zero. The appropriate changes are made to BMAT and to
@@ -353,20 +353,19 @@ if (ntrits == 0) then
             !--------------------------------------------------------------------------------------!
 
 
-            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fval, &
-                & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
-            ! Do we need to pass sl, su, vlag, xopt, f ???
+            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fval, &
+                & gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, fopt, xopt, zmat)
 
             ! XOPT is updated now in case the branch below to label 720 is taken. Any updating of
             ! GOPT occurs after the branch below to label 20, which leads to a trust region
             ! iteration as does the branch to label 60.
-            if (is_nan(f) .or. is_posinf(f)) then
-                info = NAN_INF_F
-                goto 720
-            end if
-            if (f <= ftarget) then
+            !if (is_nan(f) .or. is_posinf(f)) then
+            !    info = NAN_INF_F
+            !    goto 720
+            !end if
+            if (fopt <= ftarget) then
                 info = FTARGET_ACHIEVED
-                goto 736
+                goto 720
             end if
 
             if (nf >= maxfun) then
@@ -450,19 +449,19 @@ else
             end if
             !--------------------------------------------------------------------------------------!
 
-            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fval, &
-                & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
+            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fval, &
+                & gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, fopt, xopt, zmat)
 
             ! XOPT is updated now in case the branch below to label 720 is taken. Any updating of
             ! GOPT occurs after the branch below to label 20, which leads to a trust region
             ! iteration as does the branch to label 60.
-            if (is_nan(f) .or. is_posinf(f)) then
-                info = NAN_INF_F
-                goto 720
-            end if
-            if (f <= ftarget) then
+            !if (is_nan(f) .or. is_posinf(f)) then
+            !    info = NAN_INF_F
+            !    goto 720
+            !end if
+            if (fopt <= ftarget) then
                 info = FTARGET_ACHIEVED
-                goto 736
+                goto 720
             end if
 
             if (nf >= maxfun) then
