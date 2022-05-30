@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 AM12:18:44
+! Last Modified: Tuesday, May 31, 2022 AM12:51:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -158,7 +158,7 @@ beta = ZERO
 
 twod_search = .false.  ! NEWUOA
 
-do while (.true.)
+do while (.true.)  ! TODO: prevent infinite cycling
     ! Set the next search direction of the conjugate gradient method. It is the steepest descent
     ! direction initially and when the iterations are restarted because a variable has just been
     ! fixed by a bound, and of course the components of the fixed variables are zero. MAXITER is an
