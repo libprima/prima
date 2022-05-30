@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 PM01:10:34
+! Last Modified: Tuesday, May 31, 2022 AM01:29:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -107,6 +107,8 @@ crvmin = ZERO
 
 gsq = sum(g**2)
 gnorm = sqrt(gsq)
+
+if (is_nan(gsq)) return
 
 if (.not. any(abs(h) > 0)) then
     if (gnorm > 0) then

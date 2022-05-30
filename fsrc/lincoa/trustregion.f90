@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 AM12:50:34
+! Last Modified: Tuesday, May 31, 2022 AM01:06:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -157,6 +157,8 @@ ss = ZERO
 reduct = ZERO
 ngetact = 0
 get_act = .true.
+
+icount = nact  ! Artificial value. Not used. To entertain compilers. To be removed.
 
 do while (.true.)  !TODO: prevent infinite cycling
     if (get_act) then
