@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 PM01:11:46
+! Last Modified: Tuesday, May 31, 2022 AM02:05:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -84,7 +84,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        paruest, phi, phil, phiu, &
 &        slope, partmp, &
 &        tnz, tempa, tempb, wsq, wwsq, zsq
-integer(IK) :: iter, k, ksav, maxiter
+integer(IK) :: i, iter, k, maxiter
 logical :: posdef, negcrv
 logical :: d_initialized  ! TO BE REMOVED.
 
@@ -123,7 +123,9 @@ crvmin = ZERO
 gsq = sum(g**2)
 gnorm = sqrt(gsq)
 
-if (.not. any(abs(h) > 0)) then
+if (is_nan(gsq)) then
+    return
+elseif (.not. any(abs(h) > 0)) then
     if (gnorm > 0) then
         d = -(delta / gnorm) * g
     end if
@@ -191,22 +193,21 @@ posdef = .false.
 iter = 0
 maxiter = min(1000_IK, 100_IK * int(n, IK))  ! What is the theoretical bound of iterations?
 
-140 continue
-
-iter = iter + 1_IK
+do while (.true.)
+    iter = iter + 1_IK
 
 ! Zaikun 26-06-2019: The original code can encounter infinite cycling, which did happen when testing
 ! the CUTEst problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. Indeed, in all these cases, Inf and NaN
 ! appear in D due to extremely large values in the Hessian matrix (up to 10^219).
-if (.not. is_finite(sum(abs(d)))) then
-    d = dold
-    goto 370
-else
-    dold = d
-end if
-if (iter > maxiter) then
-    goto 370
-end if
+    if (.not. is_finite(sum(abs(d)))) then
+        d = dold
+        exit
+    else
+        dold = d
+    end if
+    if (iter > maxiter) then
+        exit
+    end if
 
 ! Calculate the pivots of the Cholesky factorization of (H + PAR*I), which correspond to the squares
 ! of the diagonal entries of L in the Cholesky factorization LL^T, or the diagonal matrix in the LDL
@@ -214,63 +215,55 @@ end if
 ! L*diag(PIV)*L^T, where diag(PIV) is the diagonal matrix with PIV being the diagonal, and L is the
 ! lower triangular matrix with all the diagonal entries being 1, the subdiagonal being the vector
 ! TN/PIV(1:N-1) (entrywise division), and all the other entries being 0.
-piv = ZERO  ! PIV must be initialized, so that we know that any NaN in PIV is due to the loop below.
-piv(1) = td(1) + par
+    piv = ZERO  ! PIV must be initialized, so that we know that any NaN in PIV is due to the loop below.
+    piv(1) = td(1) + par
 ! Powell implemented the loop by a GOTO, and K = N when the loop exits. It may not be true here.
-do k = 1, n - 1_IK
-    if (piv(k) > 0) then
-        piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)
-    elseif (abs(piv(k)) + abs(tn(k)) <= 0) then  ! PIV(K) == 0 == TN(K)
-        piv(k + 1) = td(k + 1) + par
-    else  ! PIV(K) < 0 .OR. (PIV(K) == 0 .AND. TN(K) /= 0)
-        exit
-    end if
-end do
+    do k = 1, n - 1_IK
+        if (piv(k) > 0) then
+            piv(k + 1) = td(k + 1) + par - tn(k)**2 / piv(k)
+        elseif (abs(piv(k)) + abs(tn(k)) <= 0) then  ! PIV(K) == 0 == TN(K)
+            piv(k + 1) = td(k + 1) + par
+        else  ! PIV(K) < 0 .OR. (PIV(K) == 0 .AND. TN(K) /= 0)
+            exit
+        end if
+    end do
 
 ! Zaikun 20220509
-if (any(is_nan(piv))) then
-    goto 370  ! Better action to take???
-end if
+    if (any(is_nan(piv))) then
+        exit  ! Better action to take???
+    end if
 
 ! NEGCRV is TRUE iff H + PAR*I has at least one negative eigenvalue (CRV means curvature).
-negcrv = any(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0))
+    negcrv = any(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0))
 
-if (negcrv) then
-    ! Set K to the first index corresponding to a negative curvature.
-    k = minval(trueloc(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0)))
-else
-    ! Set K to the last index corresponding to a zero curvature; K = 0 if no such curvature exits.
-    k = maxval([0_IK, trueloc(abs(piv) + abs([tn, 0.0_RP]) <= 0)])
-end if
+    if (negcrv) then
+        ! Set K to the first index corresponding to a negative curvature.
+        k = minval(trueloc(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0)))
+    else
+        ! Set K to the last index corresponding to a zero curvature; K = 0 if no such curvature exits.
+        k = maxval([0_IK, trueloc(abs(piv) + abs([tn, 0.0_RP]) <= 0)])
+    end if
+
+! Handle the case where H + PAR*I is positive semidefinite.
+    if (.not. negcrv) then
+        ! Handle the case where the gradient at the trust region center is zero.
+        if (gsq <= 0) then
+            paru = par
+            paruest = par
+            if (par == ZERO) then  ! A rare case: the trust region center is optimal.
+                exit
+            end if
+        end if
+    end if
+
 
 ! At this point, K == 0 iff H + PAR*I is positive definite.
 
-! Handle the case where H + PAR*I is positive semidefinite.
-if (.not. negcrv) then
-    ! Handle the case where the gradient at the trust region center is zero.
-    if (gsq <= 0) then
-        paru = par
-        paruest = par
-        if (par == ZERO) then  ! A rare case: the trust region center is optimal.
-            goto 370
-        end if
-        if (k == 0) then  ! H + PAR*I is positive definite.
-            goto 190
-        end if
-    end if
-
-    ! Handle the case where the gradient at the trust region center is nonzero and H + PAR*I is
-    ! positive definite.
-    if (gsq > 0 .and. k == 0) then
-        goto 230
-    end if
-end if
-
-
+    if (k >= 1) then
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 ! We arrive here only if 1 <= K <= N, when H + PAR*I has at least one nonpositive eigenvalue.
-call assert(k >= 1 .and. k <= n, '1 <= K <= N', srname)
+        call assert(k >= 1 .and. k <= n, '1 <= K <= N', srname)
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
@@ -283,11 +276,11 @@ call assert(k >= 1 .and. k <= n, '1 <= K <= N', srname)
 ! Zaikun 20220512: Powell's code does not include the following initialization. Consequently,
 ! D(KSAV+1:N) or D(KSAV+2:N) will not be initialized but inherit values from the previous iteration.
 ! Is this intended?
-d = ZERO
+        d = ZERO
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
-d(k) = ONE  ! Zaikun 20220512: D(K+1:N) = ?
+        d(k) = ONE  ! Zaikun 20220512: D(K+1:N) = ?
 
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
@@ -295,223 +288,236 @@ d(k) = ONE  ! Zaikun 20220512: D(K+1:N) = ?
 ! D(1:KSAV+1), with the KSAV defined later. D_INITIALIZED indicates whether D(1:N) is fully
 ! initialized in this process (TRUE) or not (FALSE). See the comments above
 ! CALL WASSERT(D_INITIALIZED, 'D IS INITIALIZED', SRNAME) for details.
-d_initialized = (k == n)  ! Zaikun 20220512, TO BE REMOVED
+        d_initialized = (k == n)  ! Zaikun 20220512, TO BE REMOVED
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
-dhd = piv(k)
+        dhd = piv(k)
 
 ! In Fortran, the following two IFs CANNOT be merged into IF(K < N .AND. ABS(TN(K)) > ABS(PIV(K))).
 ! This is because Fortran may not perform a short-circuit evaluation of this logic expression, and
 ! hence TN(K) may be accessed even if K >= N, leading to an out-of-boundary index since SIZE(TN) is
 ! only N-1. This is not a problem in C, MATLAB, Python, Julia, or R, where short circuit is ensured.
-if (k < n) then
-    if (abs(tn(k)) > abs(piv(k))) then
+        if (k < n) then
+            if (abs(tn(k)) > abs(piv(k))) then
 
-        !---------------------------------------------------------------------!
-        !---------------------------------------------------------------------!
-        d_initialized = (k == n - 1)  ! Zaikun 20220512, TO BE REMOVED
-        !---------------------------------------------------------------------!
-        !---------------------------------------------------------------------!
+                !---------------------------------------------------------------------!
+                !---------------------------------------------------------------------!
+                d_initialized = (k == n - 1)  ! Zaikun 20220512, TO BE REMOVED
+                !---------------------------------------------------------------------!
+                !---------------------------------------------------------------------!
 
-        ! PIV(K+1) was named as "TEMP" in Powell's code. Is PIV(K+1) consistent with the meaning of PIV?
-        piv(k + 1) = td(k + 1) + par
-        if (piv(k + 1) <= abs(piv(k))) then
-            d(k + 1) = sign(ONE, -tn(k))  !!MATLAB: d(k + 1) = -sing(tn(k))
-            dhd = piv(k) + piv(k + 1) - TWO * abs(tn(k))
-        else
-            d(k + 1) = -tn(k) / piv(k + 1)
-            dhd = piv(k) + tn(k) * d(k + 1)
+                ! PIV(K+1) was named as "TEMP" in Powell's code. Is PIV(K+1) consistent with the meaning of PIV?
+                piv(k + 1) = td(k + 1) + par
+                if (piv(k + 1) <= abs(piv(k))) then
+                    d(k + 1) = sign(ONE, -tn(k))  !!MATLAB: d(k + 1) = -sing(tn(k))
+                    dhd = piv(k) + piv(k + 1) - TWO * abs(tn(k))
+                else
+                    d(k + 1) = -tn(k) / piv(k + 1)
+                    dhd = piv(k) + tn(k) * d(k + 1)
+                end if
+            end if
         end if
+
+        do i = k - 1_IK, 1, -1
+            ! It may happen that TN(I) == 0 == PIV(I). Without checking TN(I), we will get D(I) = NaN.
+            ! Once we encounter a zero TN(I), D(I) is set to zero, and D(1:I-1) will consequently be
+            ! zero as well, because D(J) is a multiple of D(J+1) for each J.
+            if (tn(i) /= ZERO) then
+                d(i) = -tn(i) * d(i + 1) / piv(i)
+            else
+                d(1:i) = ZERO
+                exit
+            end if
+        end do
+
+        dsq = sum(d**2)
+        parl = par
+        parlest = par - dhd / dsq
     end if
-end if
 
-ksav = k
-do k = ksav - 1_IK, 1, -1
-    ! It may happen that TN(K) == 0 == PIV(K). Without checking TN(K), we will get D(K) = NaN.
-    ! Once we encounter a zero TN(K), D(K) is set to zero, and D(1:K-1) will consequently be zero as
-    ! well, because D(I) is a multiple of D(I+1) for each I.
-    if (tn(k) /= ZERO) then
-        d(k) = -tn(k) * d(k + 1) / piv(k)
-    else
-        d(1:k) = ZERO
-        exit
-    end if
-end do
+    if (gsq <= 0 .or. k >= 1) then
 
-dsq = sum(d**2)
-parl = par
-parlest = par - dhd / dsq
+        ! Terminate with D set to a multiple of the current D if the following test suggests so.
+        if (gsq <= 0) then
+            partmp = paruest * (ONE - tol)
+        else
+            partmp = paruest
+        end if
+        if (paruest > 0 .and. parlest >= partmp) then
 
-190 continue
+            !----------------------------------------------------------------------------------------------!
+            !----------------------------------------------------------------------------------------------!
+            ! Zaikun 20220512, TO BE REMOVED
+            ! The definition of D below requires that D is initialized. In Powell's code, it may happen that
+            ! only D(1:KSAV) or D(1:KSAV+1) is initialized during the current iteration, but the other
+            ! entries are inherited from the previous iteration OR from the initial value before the
+            ! iterations start, which is 0. If such inheriting happens, D_INITIALIZED will be FALSE. In
+            ! tests on 20220514, both cases did occur. Interestingly, in both cases, the inherited values
+            ! were all zero or close to zero (1E-16), and hence not very different from the initial value
+            ! zero that we set above. Is this intended?
+            call wassert(d_initialized, 'D is initialized', srname)
+            !----------------------------------------------------------------------------------------------!
+            !----------------------------------------------------------------------------------------------!
 
-! Terminate with D set to a multiple of the current D if the following test suggests so.
-if (gsq <= 0) then
-    partmp = paruest * (ONE - tol)
-else
-    partmp = paruest
-end if
-if (paruest > 0 .and. parlest >= partmp) then
-
-    !----------------------------------------------------------------------------------------------!
-    !----------------------------------------------------------------------------------------------!
-    ! Zaikun 20220512, TO BE REMOVED
-    ! The definition of D below requires that D is initialized. In Powell's code, it may happen that
-    ! only D(1:KSAV) or D(1:KSAV+1) is initialized during the current iteration, but the other
-    ! entries are inherited from the previous iteration OR from the initial value before the
-    ! iterations start, which is 0. If such inheriting happens, D_INITIALIZED will be FALSE. In
-    ! tests on 20220514, both cases did occur. Interestingly, in both cases, the inherited values
-    ! were all zero or close to zero (1E-16), and hence not very different from the initial value
-    ! zero that we set above. Is this intended?
-    call wassert(d_initialized, 'D is initialized', srname)
-    !----------------------------------------------------------------------------------------------!
-    !----------------------------------------------------------------------------------------------!
-
-    dtg = inprod(d, gg)
-    if (dtg > 0) then
-        d = -(delta / sqrt(dsq)) * d
-    else  ! This ELSE covers the unlikely yet possible case where DTG is zero or even NaN.
-        d = (delta / sqrt(dsq)) * d
-    end if
-    ! N.B.: As per Powell's code, the lines above would be D = -SIGN(DELTA/SQRT(DSQ), DTG) * D.
-    ! However, our version here seems more reasonable in case DTG == 0, which is unlikely but did
-    ! happen numerically. Note that SIGN(A, 0) = |A| /= -SIGN(A, 0).
-    goto 370
-end if
-
-220 continue
+            dtg = inprod(d, gg)
+            if (dtg > 0) then
+                d = -(delta / sqrt(dsq)) * d
+            else  ! This ELSE covers the unlikely yet possible case where DTG is zero or even NaN.
+                d = (delta / sqrt(dsq)) * d
+            end if
+            ! N.B.: As per Powell's code, the lines above would be D = -SIGN(DELTA/SQRT(DSQ), DTG) * D.
+            ! However, our version here seems more reasonable in case DTG == 0, which is unlikely but did
+            ! happen numerically. Note that SIGN(A, 0) = |A| /= -SIGN(A, 0).
+            exit
+        end if
 
 ! Pick the value of PAR for the next iteration.
-if (paru == ZERO) then
-    par = TWO * parlest + gnorm / delta
-else
-    par = HALF * (parl + paru)
-    par = max(par, parlest)
-end if
-if (paruest > 0) par = min(par, paruest)
-goto 140
+        if (paru == ZERO) then
+            par = TWO * parlest + gnorm / delta
+        else
+            par = HALF * (parl + paru)
+            par = max(par, parlest)
+        end if
+        if (paruest > 0) par = min(par, paruest)
+    else
 
-230 continue
-
+! Handle the case where the gradient at the trust region center is nonzero and H + PAR*I is
+! positive definite.
 ! Calculate D = -(H + PAR*I)^{-1}*G for the current PAR in the positive definite case. The two loops
 ! below find D using the LDL factorization of the (tridiagonalized) H + PAR*I = L*diag(PIV)*L^T.
-d(1) = -gg(1) / piv(1)
-do k = 1, n - 1_IK  ! The loop sets D = -PIV^{-1}L^{-1}*GG
-    d(k + 1) = -(gg(k + 1) + tn(k) * d(k)) / piv(k + 1)
-end do
-wsq = inprod(piv, d**2)  ! GG^T*(H+PAR*I)^{-1}*GG. Needed in the convergence test.
-do k = n - 1_IK, 1, -1  ! The loop sets D = L^{-T}*D = -L^{-T}*PIV^{-1}*L^{-1}*GG = -(H+PAR*I)^{-1}*GG.
-    d(k) = d(k) - tn(k) * d(k + 1) / piv(k)
-end do
+        d(1) = -gg(1) / piv(1)
+        do k = 1, n - 1_IK  ! The loop sets D = -PIV^{-1}L^{-1}*GG
+            d(k + 1) = -(gg(k + 1) + tn(k) * d(k)) / piv(k + 1)
+        end do
+        wsq = inprod(piv, d**2)  ! GG^T*(H+PAR*I)^{-1}*GG. Needed in the convergence test.
+        do k = n - 1_IK, 1, -1  ! The loop sets D = L^{-T}*D = -L^{-T}*PIV^{-1}*L^{-1}*GG = -(H+PAR*I)^{-1}*GG.
+            d(k) = d(k) - tn(k) * d(k + 1) / piv(k)
+        end do
 
 !----------------------------------------------------------------!
 !----------------------------------------------------------------!
-d_initialized = .true.  ! Zaikun 20220512, TO BE REMOVED
+        d_initialized = .true.  ! Zaikun 20220512, TO BE REMOVED
 !----------------------------------------------------------------!
 !----------------------------------------------------------------!
 
 
-dsq = sum(d**2)
+        dsq = sum(d**2)
 
 ! Return if the Newton-Raphson step is feasible, setting CRVMIN to the least eigenvalue of Hessian.
-if (par == ZERO .and. dsq <= delsq) then
-    crvmin = eigmin(td, tn, 1.0E-2_RP)
+        if (par == ZERO .and. dsq <= delsq) then
+            crvmin = eigmin(td, tn, 1.0E-2_RP)
     !!MATLAB:
     !!% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
     !!tridh = spdiags([[tn; 0], td, [0; tn]], -1:1, n, n);
     !!crvmin = eigs(tridh, 1, 'smallestreal');
-    goto 370
-end if
+            exit
+        end if
 
 ! Make the usual test for acceptability of a full trust region step.
-dnorm = sqrt(dsq)
-phi = ONE / dnorm - ONE / delta
-if (tol * (ONE + par * dsq / wsq) - dsq * phi * phi >= 0) then
-    d = (delta / dnorm) * d
-    goto 370
-end if
-if (iter >= 2 .and. par <= parl) goto 370
-if (paru > 0 .and. par >= paru) goto 370
+        dnorm = sqrt(dsq)
+        phi = ONE / dnorm - ONE / delta
+        if (tol * (ONE + par * dsq / wsq) - dsq * phi * phi >= 0) then
+            d = (delta / dnorm) * d
+            exit
+        end if
+        if (iter >= 2 .and. par <= parl) exit
+        if (paru > 0 .and. par >= paru) exit
 
 ! Complete the iteration when PHI is negative.
-if (phi < 0) then
-    parlest = par
-    if (posdef) then
-        if (phi <= phil) goto 370
-        slope = (phi - phil) / (par - parl)
-        parlest = par - phi / slope
-    end if
-    if (paru > 0) then
-        slope = (phiu - phi) / (paru - par)
-    else
-        slope = ONE / gnorm
-    end if
-    partmp = par - phi / slope
-    if (paruest > 0) then
-        paruest = min(partmp, paruest)
-    else
-        paruest = partmp
-    end if
-    posdef = .true.
-    parl = par
-    phil = phi
-    goto 220
-end if
+        if (phi < 0) then
+            parlest = par
+            if (posdef) then
+                if (phi <= phil) exit
+                slope = (phi - phil) / (par - parl)
+                parlest = par - phi / slope
+            end if
+            if (paru > 0) then
+                slope = (phiu - phi) / (paru - par)
+            else
+                slope = ONE / gnorm
+            end if
+            partmp = par - phi / slope
+            if (paruest > 0) then
+                paruest = min(partmp, paruest)
+            else
+                paruest = partmp
+            end if
+            posdef = .true.
+            parl = par
+            phil = phi
+! Pick the value of PAR for the next iteration.
+            if (paru == ZERO) then
+                par = TWO * parlest + gnorm / delta
+            else
+                par = HALF * (parl + paru)
+                par = max(par, parlest)
+            end if
+            if (paruest > 0) par = min(par, paruest)
+            cycle
+        end if
 
 ! If required, calculate Z for the alternative test for convergence.
 ! For information on Z, see the discussions below (16) in Section 2 of the UOBYQA paper (the 2002
 ! version in Math. Program.; in the DAMTP 2000/NA14 report, it is below (2.8) in Section 2). The two
 ! loops below find Z using the LDL factorization of the (tridiagonalized) H + PAR*I.
-if (.not. posdef) then
-    z(1) = ONE / piv(1)
-    do k = 1, n - 1_IK
-        tnz = tn(k) * z(k)
-        if (tnz > 0) then
-            z(k + 1) = -(ONE + tnz) / piv(k + 1)
-        else
-            z(k + 1) = (ONE - tnz) / piv(k + 1)
+        if (.not. posdef) then
+            z(1) = ONE / piv(1)
+            do k = 1, n - 1_IK
+                tnz = tn(k) * z(k)
+                if (tnz > 0) then
+                    z(k + 1) = -(ONE + tnz) / piv(k + 1)
+                else
+                    z(k + 1) = (ONE - tnz) / piv(k + 1)
+                end if
+            end do
+            wwsq = inprod(piv, z**2)  ! Needed in the convergence test.
+            do k = n - 1_IK, 1, -1
+                z(k) = z(k) - tn(k) * z(k + 1) / piv(k)
+            end do
+
+            zsq = sum(z**2)
+            dtz = inprod(d, z)
+
+            ! Apply the alternative test for convergence.
+            tempa = abs(delsq - dsq)
+            tempb = sqrt(dtz * dtz + tempa * zsq)
+            if (abs(dtz) > 0) then
+                gam = tempa / (sign(tempb, dtz) + dtz)  !!MATLAB: gam = tempa / (sign(dtz)*tempb + dtz)
+            else  ! This ELSE covers the unlikely yet possible case where DTZ is zero or even NaN.
+                gam = sqrt(tempa / zsq)
+            end if
+            if (tol * (wsq + par * delsq) - gam * gam * wwsq >= 0) then
+                d = d + gam * z
+                exit
+            end if
+            parlest = max(parlest, par - wwsq / zsq)
         end if
-    end do
-    wwsq = inprod(piv, z**2)  ! Needed in the convergence test.
-    do k = n - 1_IK, 1, -1
-        z(k) = z(k) - tn(k) * z(k + 1) / piv(k)
-    end do
-
-    zsq = sum(z**2)
-    dtz = inprod(d, z)
-
-    ! Apply the alternative test for convergence.
-    tempa = abs(delsq - dsq)
-    tempb = sqrt(dtz * dtz + tempa * zsq)
-    if (abs(dtz) > 0) then
-        gam = tempa / (sign(tempb, dtz) + dtz)  !!MATLAB: gam = tempa / (sign(dtz)*tempb + dtz)
-    else  ! This ELSE covers the unlikely yet possible case where DTZ is zero or even NaN.
-        gam = sqrt(tempa / zsq)
-    end if
-    if (tol * (wsq + par * delsq) - gam * gam * wwsq >= 0) then
-        d = d + gam * z
-        goto 370
-    end if
-    parlest = max(parlest, par - wwsq / zsq)
-end if
 
 ! Complete the iteration when PHI is positive.
-slope = ONE / gnorm
-if (paru > 0) then
-    if (phi >= phiu) goto 370
-    slope = (phiu - phi) / (paru - par)
-end if
-parlest = max(parlest, par - phi / slope)
-paruest = par
-if (posdef) then
-    slope = (phi - phil) / (par - parl)
-    paruest = par - phi / slope
-end if
-paru = par
-phiu = phi
-goto 220
-
-370 continue
+        slope = ONE / gnorm
+        if (paru > 0) then
+            if (phi >= phiu) exit
+            slope = (phiu - phi) / (paru - par)
+        end if
+        parlest = max(parlest, par - phi / slope)
+        paruest = par
+        if (posdef) then
+            slope = (phi - phil) / (par - parl)
+            paruest = par - phi / slope
+        end if
+        paru = par
+        phiu = phi
+! Pick the value of PAR for the next iteration.
+        if (paru == ZERO) then
+            par = TWO * parlest + gnorm / delta
+        else
+            par = HALF * (parl + paru)
+            par = max(par, parlest)
+        end if
+        if (paruest > 0) par = min(par, paruest)
+    end if
+end do
 
 ! Apply the inverse Householder transformations to D.
 do k = n - 1_IK, 1, -1
