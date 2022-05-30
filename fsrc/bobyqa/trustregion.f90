@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 29, 2022 PM03:23:03
+! Last Modified: Monday, May 30, 2022 PM11:29:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -64,6 +64,7 @@ real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        xtest(size(xopt)), diact
 real(RP) :: ssq(size(gopt)), tanbd(size(gopt)), sqrtd(size(gopt))
 integer(IK) :: iact, iter, maxiter, grid_size, nact, nactsav
+logical :: twod_search
 
 ! Sizes
 n = int(size(gopt), kind(n))
@@ -155,6 +156,9 @@ qred = ZERO
 crvmin = -ONE
 beta = ZERO
 
+!twod_search = .false.  ! NEWUOA
+twod_search = .true.
+
 ! Set the next search direction of the conjugate gradient method. It is the steepest descent
 ! direction initially and when the iterations are restarted because a variable has just been fixed
 ! by a bound, and of course the components of the fixed variables are zero. MAXITER is an upper
@@ -169,13 +173,19 @@ else
 end if
 s(trueloc(xbdi /= 0)) = ZERO
 stepsq = sum(s**2)
-if (stepsq <= 0) goto 190
+if (stepsq <= 0) then
+    twod_search = .false.
+    goto 90
+end if
 
 if (beta == 0) then
     gredsq = stepsq
     maxiter = iter + n - nact
 end if
-if (gredsq * delsq <= 1.0E-4_RP * qred * qred) go to 190
+if (gredsq * delsq <= 1.0E-4_RP * qred * qred) then
+    twod_search = .false.
+    goto 90
+end if
 
 ! Multiply the search direction by the second derivative matrix of Q and calculate some scalars for
 ! the choice of steplength. Then set BSTEP to the length of the the step to the trust region
@@ -186,7 +196,10 @@ resid = delsq - sum(d(trueloc(xbdi == 0))**2)
 ds = inprod(d(trueloc(xbdi == 0)), s(trueloc(xbdi == 0)))
 shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
 
-if (resid <= 0) goto 90
+if (resid <= 0) then
+    twod_search = .true.
+    goto 90
+end if
 temp = sqrt(stepsq * resid + ds * ds)
 
 ! Zaikun 20220210: For the IF ... ELSE ... END IF below, Powell's condition for the IF is DS < 0.
@@ -278,7 +291,10 @@ if (stplen > 0) then
     qred = qred + sdec
 end if
 !----------------------------------------------------------------------!
-!if (is_nan(stplen) .or. iter > 100 * maxiter) goto 190 ! Zaikun 20220401
+!if (is_nan(stplen) .or. iter > 100 * maxiter) then
+!   twod_search = .false.
+!   goto 90 ! Zaikun 20220401
+!end if
 !----------------------------------------------------------------------!
 
 ! Restart the conjugate gradient method if it has hit a new bound.
@@ -287,18 +303,25 @@ if (iact > 0) then
     call assert(abs(s(iact)) > 0, 'S(IACT) /= 0', srname)
     xbdi(iact) = int(sign(ONE, s(iact)), IK)  !!MATLAB: xbdi(iact) = sign(s(iact))
     delsq = delsq - d(iact)**2
-    if (delsq <= 0) goto 90
+    if (delsq <= 0) then
+        twod_search = .true.
+        goto 90
+    end if
     beta = ZERO
     goto 20  ! Zaikun 20220421 Caution: infinite cycling may occur. Fix it!!!
 end if
 
 ! If STPLEN is less than BSTEP, then either apply another conjugate gradient iteration or RETURN.
 if (stplen < bstep) then
-    if (iter == maxiter) goto 190
-    !if (iter >= maxiter) goto 190 ??? Zaikun 20220401
-    !----------------------------------------------------------------------------------------------!
-    !if (sdec <= 0.01_RP * qred) goto 190  ! An infinite loop to 20 occurred because sdec became NaN
-    if (sdec <= 0.01_RP * qred .or. is_nan(sdec) .or. is_nan(qred)) goto 190  ! Zaikun 20220401
+    if (iter == maxiter) then
+        twod_search = .false.
+        goto 90
+    end if
+    !if (sdec <= 0.01_RP * qred) then  ! An infinite loop to 20 occurred because sdec became NaN
+    if (sdec <= 0.01_RP * qred .or. is_nan(sdec) .or. is_nan(qred)) then
+        twod_search = .false.
+        goto 90
+    end if
     !----------------------------------------------------------------------------------------------!
     beta = gredsq / ggsav
     goto 20  ! Zaikun 20220421 Caution: infinite cycling may occur. Fix it!!!
@@ -306,8 +329,16 @@ end if
 
 90 continue
 
-crvmin = ZERO
 
+! In Powell's code, MAXITER is essentially infinity; the loop will exit when NACT >= N - 1 or the
+! procedure cannot significantly reduce the quadratic model. We impose an explicit but large bound
+! on the number of iterations as a safeguard; in our tests, this bound is never reached.
+if (twod_search) then
+    crvmin = ZERO
+    maxiter = 10_IK * (n - nact)
+else
+    maxiter = 0_IK
+end if
 
 ! Improve D by a sequential 2D search on the boundary of the trust region for the variables that
 ! have not reached a bound. See (3.6) of the BOBYQA paper and the elaborations nearby.
@@ -326,10 +357,6 @@ crvmin = ZERO
 ! be the reason for the apparent typo mentioned above.
 ! Question (Zaikun 20220424): Shouldn't we try something similar in GEOSTEP?
 
-! In Powell's code, MAXITER is essentially infinity; the loop will exit when NACT >= N - 1 or the
-! procedure cannot significantly reduce the quadratic model. We impose an explicit but large bound
-! on the number of iterations as a safeguard; in our tests, this bound is never reached.
-maxiter = 10_IK * (n - nact)
 nactsav = nact - 1
 do iter = 1, maxiter
     xnew = xopt + d
@@ -451,8 +478,6 @@ do iter = 1, maxiter
         exit
     end if
 end do
-
-190 continue
 
 ! Return after setting XNEW to XOPT+D, giving careful attention to the bounds.
 xnew = max(min(xopt + d, su), sl)
