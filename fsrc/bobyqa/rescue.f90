@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 30, 2022 PM09:46:09
+! Last Modified: Monday, May 30, 2022 PM10:32:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,8 +23,8 @@ public :: rescue
 contains
 
 
-subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fval, &
-    & gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, fopt, xopt, zmat)
+subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval, &
+    & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine implements "the method of RESCUE" introduced in Section 5 of BOBYQA paper. The
 ! purpose of this subroutine is to replace a few interpolation points by new points in order to
@@ -90,7 +90,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update, r2update, trueloc!, norm
+use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update, r2update, trueloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : hess_mul
 
@@ -112,6 +112,7 @@ real(RP), intent(in) :: xu(:)  ! XU(N)
 integer(IK), intent(inout) :: kopt
 integer(IK), intent(inout) :: nf
 real(RP), intent(inout) :: fhist(:)  ! FHIST(MAXFHIST)
+real(RP), intent(inout) :: fopt
 real(RP), intent(inout) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(inout) :: gopt(:)  ! GOPT(N)
 real(RP), intent(inout) :: hq(:, :)  ! HQ(N, N)
@@ -120,12 +121,11 @@ real(RP), intent(inout) :: sl(:)  ! SL(N)
 real(RP), intent(inout) :: su(:)  ! SU(N)
 real(RP), intent(inout) :: xbase(:)  ! XBASE(N)
 real(RP), intent(inout) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
+real(RP), intent(inout) :: xopt(:)  ! XOPT(N)
 real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! Outputs
 real(RP), intent(out) :: bmat(:, :)  !  BMAT(N, NPT + N)
-real(RP), intent(out) :: fopt
-real(RP), intent(out) :: xopt(:)  ! XOPT(N)
 real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
@@ -360,14 +360,18 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
     ! Finally, set VLAG(KOPT) to the correct value.
     vlag(kopt) = vlag(kopt) + ONE
 
-    ! KPROV is set to the index of the provisional point that is going to be deleted to make way for
-    ! the KORIG-th original point. The choice of KPROV is governed by the avoidance of a small value
-    ! of the denominator in the updating calculation of UPDATE.
+    ! For all K with PTSID(K) > 0, calculate the denominator DEN(K) = SIGMA in the updating formula
+    ! of H for XPT(:, KORIG) to replace XPT_PROV(:, K).
     hdiag = sum(zmat**2, dim=2)  ! Indeed, only HDIAG(PTSID /= 0) is needed.
     !!MATLAB: hdiag(ptsid > 0) = sum(zmat(ptsid > 0, :), 2);
     den = ZERO
     where (ptsid > 0) den = hdiag * beta + vlag(1:npt)**2
     !!MATLAB: den(ptsid > 0) = hdiag(ptsid > 0)*beta + vlag(ptsid > 0)
+
+    ! KPROV is set to the index of the provisional point that is going to be deleted to make way for
+    ! the KORIG-th original point. The choice of KPROV is governed by the avoidance of a small value
+    ! of the denominator evaluated above.
+    kprov = 0_IK
     denom = ZERO
     if (any(den > 0)) then
         kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
@@ -375,7 +379,9 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
         !!MATLAB: [denom, kprov] = max(den, [], 'omitnan');
     end if
     vlmxsq = maxval(vlag(1:npt)**2)
-    if (.not. denom > 1.0E-2_RP * vlmxsq) then
+    if (kopt == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
+        ! Indeed, KOPT == 0 can be removed from the above condition, because KOPT == 0 implies that
+        ! DENOM == 0 <= 1.0E-2*VLMXSQ. However, we prefer to mention KOPT == 0 explicitly.
         ! Until finding the next KORIG that renders DENOM > 1.0E-2*VLMXSQ, we will skip the original
         ! interpolation points with a negative or zero score when looking for KORIG (see the
         ! definition of KORIG). When the KORIG satisfying the aforesaid inequality is found, all the
@@ -513,7 +519,6 @@ if (nprov > 0) then
             end if
         end do
         ptsid(kpt) = ZERO
-
     end do
 end if
 
