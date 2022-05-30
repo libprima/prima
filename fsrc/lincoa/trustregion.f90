@@ -156,17 +156,15 @@ s = ZERO
 ss = ZERO
 reduct = ZERO
 ngetact = 0
-get_act = .true.
+get_act = .true.  ! Better name? 
 
 icount = nact  ! Artificial value. Not used. To entertain compilers. To be removed.
 
 do while (.true.)  !TODO: prevent infinite cycling
     if (get_act) then
-
-! GETACT picks the active set for the current S. It also sets DW to the vector closest to -G that
-! is orthogonal to the normals of the active constraints. DW is scaled to have length 0.2*SNORM, as
-! then a move of DW from S is allowed by the linear constraints.
-
+        ! GETACT picks the active set for the current S. It also sets DW to the vector closest to -G 
+        ! that is orthogonal to the normals of the active constraints. DW is scaled to have length 
+        ! 0.2*SNORM, as then a move of DW from S is allowed by the linear constraints.
         ngetact = ngetact + 1
         call getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dw)
         dd = inprod(dw, dw)
@@ -176,32 +174,21 @@ do while (.true.)  !TODO: prevent infinite cycling
         scaling = 0.2_RP * snorm / sqrt(dd)
         dw = scaling * dw
 
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20220416: The following RESMAX is not needed anymore.
-!!resmax = maxval([ZERO, resact(1:nact)])
-! N.B.: Powell's COBYLA code also contains a variable named RESMAX. However, the meanings of RESMAX
-! here and in COBYLA are different --- indeed, almost opposite to each other. In COBYLA, RESMAX(X)
-! is the L-infinity constraint violation of a given point X. In the context of LINCOA, where the
-! constraint is A^T * X <= B, the RESMAX in COBYLA corresponds to MAXVAL([ZERO, A^T * X - B]). In
-! contrast, the RESMAX here corresponds to MAXVAL([ZERO, B_act - A_act^T * X]) with A_act and B_act
-! being the slices of A and B indexed by IACT(1:NACT). Due to this difference, the modernized
-! code of COBYLA has renamed RESMAX to CSTRV, signifying ConSTRaint Violation.
-!--------------------------------------------------------------------------------------------------!
-
-! If the modulus of the residual of an active constraint is substantial, then set D to the shortest
-! move from S to the boundaries of the active constraints.
+        ! If the modulus of the residual of an active constraint is substantial, then set D to the 
+        ! shortest move from S to the boundaries of the active constraints.
         bstep = ZERO
         if (any(resact(1:nact) > 1.0E-4_RP * snorm)) then
-            ! N.B.: We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify MAXVAL(X)
-            ! when X contains NaN, and MATLAB/Python/R/Julia behave differently in this respect. Moreover,
-            ! MATLAB defines max(X) = [] if X == [], which differs from mathematics and other languages.
+            ! N.B.: We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify 
+            ! MAXVAL(X) when X contains NaN, and MATLAB/Python/R/Julia behave differently in this 
+            ! respect. Moreover, MATLAB defines max(X) = [] if X == [], differing from mathematics 
+            ! and other languages.
             vlam(1:nact) = solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact))
-    !!MATLAB: vlam(1:nact) = rfac(1:nact, 1:nact)' \ resact(1:nact)
+            !!MATLAB: vlam(1:nact) = rfac(1:nact, 1:nact)' \ resact(1:nact)
             d = matprod(qfac(:, 1:nact), vlam(1:nact))
 
             ! The vector D that has just been calculated is also the shortest move from S+DW to the
-            ! boundaries of the active constraints. Set BSTEP to the greatest steplength of this move that
-            ! satisfies the trust region bound.
+            ! boundaries of the active constraints. Set BSTEP to the greatest steplength of this 
+            ! move that satisfies the trust region bound.
             ds = inprod(d, s + dw)
             dd = sum(d**2)
             rhs = snsq - sum((s + dw)**2)  ! Calculation changed
@@ -209,8 +196,7 @@ do while (.true.)  !TODO: prevent infinite cycling
             if (rhs > 0) then
                 temp = sqrt(ds * ds + dd * rhs)
                 if (ds <= 0) then
-                    ! Zaikun 20210925
-                    ! What if we are at the first iteration? BLEN = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
+                    ! Zaikun 20210925: What if we are at the first iteration? BLEN = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
                     bstep = (temp - ds) / dd
                 else
                     bstep = rhs / (temp + ds)
@@ -223,11 +209,11 @@ do while (.true.)  !TODO: prevent infinite cycling
             frac = ONE
             restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))
             frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))
-            bstep = minval([bstep, ONE, frac])  ! Indeed, BSTEP = MINVAL([BSTEP, ONE, FRAC(TRUELOC(AD>0))])
+            bstep = minval([bstep, ONE, frac])  ! BSTEP = MINVAL([BSTEP, ONE, FRAC(TRUELOC(AD>0))])
         end if
 
-! Set the next direction for seeking a reduction in the model function subject to the trust region
-! bound and the linear constraints.
+        ! Set the next direction for seeking a reduction in the model function subject to the trust 
+        ! region bound and the linear constraints.
         if (bstep > 0) then
             d = dw + bstep * d
             icount = nact - 1
@@ -238,9 +224,8 @@ do while (.true.)  !TODO: prevent infinite cycling
         alpbd = ONE
     end if
 
-
-! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
-! derivative term of this step is sufficiently small or if no further progress is possible.
+    ! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
+    ! derivative term of this step is sufficiently small or if no further progress is possible.
     icount = icount + 1
     rhs = snsq - ss
     if (rhs <= 0) exit
@@ -258,16 +243,16 @@ do while (.true.)  !TODO: prevent infinite cycling
 
     dw = hess_mul(d, xpt, pq, hq)
 
-! Set DGD to the curvature of the model along D. Then reduce ALPHA if necessary to the value that
-! minimizes the model.
+    ! Set DGD to the curvature of the model along D. Then reduce ALPHA if necessary to the value 
+    ! that minimizes the model.
     dgd = inprod(d, dw)
     alpht = alpha
     if (dg + alpha * dgd > 0) then
         alpha = -dg / dgd
     end if
 
-! Make a further reduction in ALPHA if necessary to preserve feasibility, and put some scalar
-! products of D with constraint gradients in W.
+    ! Make a further reduction in ALPHA if necessary to preserve feasibility, and put some scalar
+    ! products of D with constraint gradients in W.
     alphm = alpha
     ad = -ONE
     ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
@@ -279,37 +264,37 @@ do while (.true.)  !TODO: prevent infinite cycling
         jsav = int(minloc(frac, dim=1), IK)
         alpha = frac(jsav)
     end if
-!--------------------------------------------------------------------------------------------------!
-! Alternatively, JSAV and ALPHA can be calculated as below.
-!JSAV = INT(MINLOC([ALPHA, FRAC], DIM=1), IK) - 1_IK  ! This line cannot be exchanged with the next.
-!ALPHA = MINVAL([ALPHA, FRAC])  ! This line cannot be exchanged with the last.
-! We prefer our implementation as the code is more explicit; in addition, it is more flexible: we
-! can change the condition ANY(FRAC < ALPHA) to ANY(FRAC < (1 - EPS) * ALPHA) or
-! ANY(FRAC < (1 + EPS) * ALPHA), depending on whether we believe a false positive or a false
-! negative of JSAV > 0 is more harmful.
-!--------------------------------------------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
+    ! Alternatively, JSAV and ALPHA can be calculated as below.
+    !JSAV = INT(MINLOC([ALPHA, FRAC], DIM=1), IK) - 1_IK  
+    !ALPHA = MINVAL([ALPHA, FRAC])  ! This line cannot be exchanged with the last.
+    ! We prefer our implementation as the code is more explicit; in addition, it is more flexible: 
+    ! we can change the condition ANY(FRAC < ALPHA) to ANY(FRAC < (1 - EPS) * ALPHA) or
+    ! ANY(FRAC < (1 + EPS) * ALPHA), depending on whether we believe a false positive or a false
+    ! negative of JSAV > 0 is more harmful.
+    !----------------------------------------------------------------------------------------------!
 
     alpha = min(max(alpha, alpbd), alphm)
     if (icount == nact) alpha = min(alpha, ONE)
 
-! Update S, G, RESNEW, RESACT and REDUCT.
+    ! Update S, G, RESNEW, RESACT and REDUCT.
     s = s + alpha * d
     ss = sum(s**2)
     g = g + alpha * dw
     restmp = resnew - alpha * ad  ! Only RESTMP(TRUELOC(RESNEW > 0)) is needed.
     resnew(trueloc(resnew > 0)) = max(TINYCV, restmp(trueloc(resnew > 0)))
-!!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
+    !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
     if (icount == nact) then
         resact(1:nact) = (ONE - bstep) * resact(1:nact)
     end if
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
 
-! Test for termination. Branch to label 40 if there is a new active constraint and if the distance
-! from S to the trust region boundary is at least 0.2*SNORM.
+    ! Test for termination. Branch to a new loop if there is a new active constraint and if the 
+    ! distance from S to the trust region boundary is at least 0.2*SNORM.
 
-! Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN values. Exit when NGETACT is
-! large or NaN is detected.
-! Caution: 1. MIN accepts only data with the same KIND; 2. Integer overflow.
+    ! Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN values. Exit when 
+    ! NGETACT is large or NaN is detected.
+    ! Caution: 1. MIN accepts only data with the same KIND; 2. Integer overflow.
     if (ngetact > min(10000, 100 * int(m + 1) * int(n)) .or.  &
     & alpha /= alpha .or. alpht /= alpht .or. &
     & alphm /= alphm .or. dgd /= dgd .or. dg /= dg .or. &
@@ -329,29 +314,15 @@ do while (.true.)  !TODO: prevent infinite cycling
     end if
     if (icount == n) exit
 
-! Calculate the next search direction, which is conjugate to the previous one unless ICOUNT == NACT.
-! N.B.: NACT < 0 is impossible unless GETACT is buggy; NACT = 0 can happen, particularly if there is
-! no constraint. In theory, the code for the second case below covers the first case as well.
+    ! Calculate the next search direction, which is conjugate to the previous one if ICOUNT /= NACT.
+    ! N.B.: NACT < 0 is impossible unless GETACT is buggy; NACT = 0 can happen, particularly if 
+    ! there is no constraint. In theory, the code for the second case below covers the first as well.
     if (nact <= 0) then
         gw = g
     else
         gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
-    !!MATLAB: gw = qfac(:, nact+1:n) * (g' * qfac(:, nact+1:n))';
+        !!MATLAB: gw = qfac(:, nact+1:n) * (g' * qfac(:, nact+1:n))';
     end if
-!--------------------------------------------------------------------------------------------------!
-! Zaikun: The schemes below work evidently worse than the one above in a test on 20220417. Why?
-!-----------------------------------------------------------------------!
-! VERSION 1:
-!!gw = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
-!-----------------------------------------------------------------------!
-! VERSION 2:
-!!if (2 * nact < n) then
-!!    gw = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
-!!else
-!!    gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
-!!end if
-!-----------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
 
     if (icount == nact) then
         beta = ZERO
@@ -379,3 +350,19 @@ end subroutine trstep
 
 
 end module trustregion_mod
+
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220417:
+! For GW, the schemes below work evidently worse than the one above in a test on 20220417. Why?
+!-----------------------------------------------------------------------!
+! VERSION 1:
+!!gw = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
+!-----------------------------------------------------------------------!
+! VERSION 2:
+!!if (2 * nact < n) then
+!!    gw = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
+!!else
+!!    gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+!!end if
+!-----------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
