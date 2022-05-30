@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 16, 2022 AM01:23:20
+! Last Modified: Monday, May 30, 2022 PM09:42:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -118,7 +118,7 @@ end if
 xoptsq = inprod(xopt, xopt)
 
 ! Update BMAT. See (7.11)--(7.12) of the NEWUOA paper and the elaborations around.
-! XPTXAV corresponds to XPT - XAV in the NEWUOA paper, with XAV  (X0 + XOPT)/2.
+! XPTXAV corresponds to XPT - XAV in the NEWUOA paper, with XAV = (X0 + XOPT)/2.
 xptxav = xpt - HALF * spread(xopt, dim=2, ncopies=npt)
 !!MATLAB: xptxav = xpt - xopt/2  % xopt should be a column!! Implicit expansion
 !sxpt = matprod(xopt, xptxav)

@@ -1,6 +1,6 @@
 module rescue_mod
 !--------------------------------------------------------------------------------------------------!
-! This module contains the `rescue` subroutine described in Section 5 of the BOBYQA paper.
+! This module contains the RESCUE subroutine described in Section 5 of the BOBYQA paper.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
 !
@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 30, 2022 AM01:41:40
+! Last Modified: Monday, May 30, 2022 PM09:46:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,6 +25,64 @@ contains
 
 subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fval, &
     & gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, fopt, xopt, zmat)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine implements "the method of RESCUE" introduced in Section 5 of BOBYQA paper. The
+! purpose of this subroutine is to replace a few interpolation points by new points in order to
+! improve the geometry of the interpolation set and the conditioning of the interpolation system.
+! This is done in the following way.
+!
+! 1. Define a set of "provisional interpolation points" XPT_PROV around the current XOPT. Similar to
+! the construction of the initial interpolation set, XPT_PROV is obtained by perturbing XOPT subject
+! to the bound constraints along one or two coordinate directions, the latter taking place only if
+! NPT >= 2*N+2. See (5.4)--(5.5) of the BOBYQA paper for details. After defining XPT_PROV, set BMAT
+! and ZMAT to represent the H matrix defined in (2.7) of the BOBYQA paper corresponding to XPT_PROV.
+! 2. For each "original interpolation point" in XPT, check whether it can replace a point in XPT_PROV
+! without damaging the geometry of XPT_PROV, which is indicated by the denominator SIGMA in the
+! updating formula of H due to the replacement (see (4.9) of the BOBYQA paper). If yes, update
+! XPT_PROV by the performing such an replacement. Continue doing this until all the original points
+! get reinstated in XPT_PROV, or we cannot find any original point that can safely replace
+! a provisional point. Note the following.
+! 2.1. Suppose that the KORIG-th original point is going to replace the KPROV-th provisional point.
+! Then we first exchange the KORIG-th and KPROV-th provisional points, and then replace the new
+! KORIG-th provisional point by the KORIG-th original point. BMAT and ZMAT are updated accordingly.
+! In this way, FVAL(KORIG) is consistent with XPT_PROV(:, KORIG), so that we need not update FVAL.
+! 2.1. The KOPT-th original point (i.e., XOPT) is always reinstated in XPT_PROV. This is done by
+! replacing XPT_PROV(:, 1) with XOPT. This is the first replacement to perform.
+! 2.2. After XOPT is reinstated, the original points are ranked according the scores saved in SCORE.
+! SCORE is initialized to the squares of the distances from between the original point and XOPT.
+! The KORIG is set to the index of the point with the smallest positive score. If XPT(:, KORIG)
+! cannot replace any provisional point safely, then set SCORE(KORIG) to -SCORE(KORIG)-SCOREINC;
+! otherwise, set SCORE(KORIG) to 0 and all the other scores to their absolute values. In this way,
+! an original point that fails to replace any provisional point during the current attempt will be
+! skipped until another original point succeeds in doing so; moreover, the failing point will get
+! a lower priority in later attempts. An original point that successfully replaces a provisional
+! point will not be tried again due to the zero score.
+! 2.3. Once a provisional point is replaced, it will be marked (by setting the corresponding entry
+! of PTSID to zero) so that it will not be replaced again.
+! 3. When the above procedure finishes, normally most original points are reinstated in XPT_PROV, so
+! that XPT_PROV differs from XPT only at very few positions. Set XPT to XPT_PROV, update FVAL at the
+! new interpolation points by evaluating F, and then quadratic interpolant [GQ, PQ, HQ] accordingly.
+!
+! At the end of the subroutine, the elements of BMAT and ZMAT are set in a well-conditioned way to
+! the values that are appropriate for the new interpolation points. The elements of GOPT, HQ and PQ
+! are also revised to the values that are appropriate to the final quadratic model.
+!
+! The arguments NF, KOPT, XL, XU, IPRINT, MAXFUN, XBASE, XPT, FVAL GOPT, HQ, PQ, BMAT, ZMAT, SL
+! and, SU have the same meanings as the corresponding arguments of BOBYQB on the entry to RESCUE.
+! DELTA is the current trust region radius.
+!
+! PTSAUX is a 2-by-N real array. For J = 1, 2, ..., N, PTSAUX(1, J) and PTSAUX(2, J) specify the two
+! positions of provisional interpolation points when a nonzero step is taken along e_J (the J-th
+! coordinate direction) through XBASE + XOPT, as specified below. Usually these steps have length
+! DELTA, but other lengths are chosen if necessary in order to satisfy the bound constraints.
+!
+! PTSID is an integer array of length NPT. Its components denote provisional new positions of the
+! interpolation points. The K-th point is a candidate for change if and only if PTSID(K) is nonzero.
+! In this case let IP and IQ be the integer parts of PTSID(K) and (PTSID(K)-IP)*(N+1). If IP and IQ
+! are both positive, the step from XBASE + XOPT to the new K-th interpolation point is
+! PTSAUX(1, IP)*e_IP + PTSAUX(1, IQ)*e_IQ. Otherwise the step is either PTSAUX(1, IP)*e_IP or
+! PTSAUX(2, IQ)*e_IQ in the cases IQ=0 or  IP=0, respectively.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
@@ -111,7 +169,7 @@ real(RP) :: vquad
 real(RP) :: wmv(size(xpt, 1) + size(xpt, 2))
 real(RP) :: x(size(xpt, 1))
 real(RP) :: xp
-real(RP) :: xpq(size(xpt, 1))
+real(RP) :: v(size(xpt, 1))
 real(RP) :: xq
 real(RP) :: xxpt(size(xpt, 2))
 
@@ -152,72 +210,26 @@ if (DEBUGGING) then
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
 end if
 
-
-!
-!     The arguments N, NPT, XL, XU, IPRINT, MAXFUN, XBASE, XPT, FVAL, XOPT,
-!       GOPT, HQ, PQ, BMAT, ZMAT, NDIM, SL and SU have the same meanings as
-!       the corresponding arguments of BOBYQB on the entry to RESCUE.
-!     NF is maintained as the number of calls of CALFUN so far, except that
-!       NF is set to -1 if the value of MAXFUN prevents further progress.
-!     KOPT is maintained so that FVAL(KOPT) is the least calculated function
-!       value. Its correct value must be given on entry. It is updated if a
-!       new least function value is found, but the corresponding changes to
-!       XOPT and GOPT have to be made later by the calling program.
-!     DELTA is the current trust region radius.
-!     PTSAUX is also a working space array. For J=1,2,...,N, PTSAUX(1,J) and
-!       PTSAUX(2,J) specify the two positions of provisional interpolation
-!       points when a nonzero step is taken along e_J (the J-th coordinate
-!       direction) through XBASE+XOPT, as specified below. Usually these
-!       steps have length DELTA, but other lengths are chosen if necessary
-!       in order to satisfy the given bounds on the variables.
-!     PTSID is also a working space array. It has NPT components that denote
-!       provisional new positions of the original interpolation points, in
-!       case changes are needed to restore the linear independence of the
-!       interpolation conditions. The K-th point is a candidate for change
-!       if and only if PTSID(K) is nonzero. In this case let p and q be the
-!       integer parts of PTSID(K) and (PTSID(K)-p) multiplied by N+1. If p
-!       and q are both positive, the step from XBASE+XOPT to the new K-th
-!       interpolation point is PTSAUX(1,p)*e_p + PTSAUX(1,q)*e_q. Otherwise
-!       the step is PTSAUX(1,p)*e_p or PTSAUX(2,q)*e_q in the cases q=0 or
-!       p=0, respectively.
-!     The final elements of BMAT and ZMAT are set in a well-conditioned way
-!       to the values that are appropriate for the new interpolation points.
-!     The elements of GOPT, HQ and PQ are also revised to the values that are
-!       appropriate to the final quadratic model.
-!
-!     Set some constants.
-!
-
+! Do nothing if NF already reaches it upper bound.
 if (nf >= maxfun) then
     return
 end if
 
-kbase = kopt
-
-sfrac = HALF / real(n + 1, RP)
-
-! Shift the interpolation points so that XOPT becomes the origin. The squares of the distances from
-! XOPT to the other interpolation points are set at SCORE. Increments of SCOREINC may be added later
-! to these squares to balance the consideration of the choice of point that is going to become
-! current. Note that, in the BOBYQA paper, the scores are the distances rather than their squares.
-! See the paragraph between (5.9) and (5.10) of the BOBYQA paper.
+! Shift the interpolation points so that XOPT becomes the origin.
 xopt = xpt(:, kopt)
 xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-score = sum((xpt)**2, dim=1)
-scoreinc = maxval(score)
 
 ! Update HQ so that HQ and PQ define the second derivatives of the model after XBASE has been
 ! shifted to the trust region centre.
-xpq = matprod(xpt, pq) + HALF * sum(pq) * xopt
-call r2update(hq, ONE, xopt, xpq)
+v = matprod(xpt, pq) + HALF * sum(pq) * xopt
+call r2update(hq, ONE, xopt, v)
 
 ! Shift XBASE, SL, SU and XOPT. Set the elements of BMAT and ZMAT to ZERO.
 xbase = min(max(xl, xbase + xopt), xu)
 sl = min(sl - xopt, ZERO)
 su = max(su - xopt, ZERO)
 xopt = ZERO
-bmat = ZERO
-zmat = ZERO
+
 ! Set the elements of PTSAUX.
 ptsaux(1, :) = min(delta, su)
 ptsaux(2, :) = max(-delta, sl)
@@ -226,11 +238,12 @@ ptsaux([1, 2], trueloc(mask)) = ptsaux([2, 1], trueloc(mask))
 mask = (abs(ptsaux(2, :)) < HALF * abs(ptsaux(1, :)))
 ptsaux(2, trueloc(mask)) = HALF * ptsaux(1, trueloc(mask))
 
-fbase = fval(kopt)
-
 ! Set the identifiers of the artificial interpolation points that are along a coordinate direction
 ! from XOPT, and set the corresponding nonzero elements of BMAT and ZMAT.
+sfrac = HALF / real(n + 1, RP)
 ptsid(1) = sfrac
+bmat = ZERO
+zmat = ZERO
 do j = 1, n
     jp = j + 1
     jpn = jp + n
@@ -256,7 +269,9 @@ do k = 2_IK * n + 2_IK, npt
     iw = floor((real(k - n - 1) - HALF) / real(n))
     ip = k - n - 1_IK - iw * n
     iq = ip + iw
-    if (iq > n) iq = iq - n
+    if (iq > n) then
+        iq = iq - n
+    end if
     ptsid(k) = real(ip, RP) + real(iq, RP) / real(n + 1, RP) + sfrac
     temp = ONE / (ptsaux(1, ip) * ptsaux(1, iq))
     zmat(1, k - n - 1) = temp
@@ -265,42 +280,51 @@ do k = 2_IK * n + 2_IK, npt
     zmat(k, k - n - 1) = temp
 end do
 
-! Reorder the provisional points in the way that exchanges PTSID(1) with PTSID(KOPT).
+! Update BMAT, ZMAT, ans PTSID so that the 1st and the KOPT-th provisional points are exchanged.
+! After the exchanging, the KOPT-th point in the provisional set becomes the zero vector, which is
+! exactly the KOPT-th original point (after the shift of XBASE at the beginning of the subroutine).
 if (kopt /= 1) then
     bmat(:, [1_IK, kopt]) = bmat(:, [kopt, 1_IK])
     zmat([1_IK, kopt], :) = zmat([kopt, 1_IK], :)
 end if
 ptsid(1) = ptsid(kopt)
 ptsid(kopt) = ZERO
-score(kopt) = ZERO
+
+! The squares of the distances from XOPT to the other interpolation points are set at SCORE, which
+! will be used to define the index KORIG in the loop below.  Increments of SCOREINC may be added
+! later to these scores to balance the consideration of the choice of point that is going to become
+! current. Note that, in the BOBYQA paper, the scores are the distances rather than their
+! squares. See the paragraph between (5.9) and (5.10) of the BOBYQA paper.
+score = sum((xpt)**2, dim=1)
+score(kopt) = ZERO  ! Set SCORE(KOPT) to 0 so that KOPT will be skipped when we choose KORIG below.
+scoreinc = maxval(score)
+
+! NPROV is the number of provisional points that has not yet been replaced by original points.
 nprov = npt - 1_IK
 
-! The following loop runs for at most NPT^2 times: for each original interpolation point, we need
-! at most NPT loops to find a provisional interpolation point that is "safe" (as per Powell) to be
-! replaced with the original point; if no such provisional point is found, then SCORE will be all
-! zero or negative, and the loop will exit.
+! The following loop runs for at most NPT^2 times: for each value of NPROV, we need at most NPT
+! loops to find an original point that can safely replace a provisional point; if such
+! a pair of origin and provisional points are found, then NPROV will de reduced by 1; otherwise,
+! SCORE will become all zero or negative, and the loop will exit.
 do while (any(score(1:npt) > 0) .and. nprov > 0)
-    ! Pick the index KORIG of an original interpolation point that has not yet replaced one of the
-    ! provisional interpolation points, giving attention to the closeness to XOPT and to previous
-    ! tries with KORIG.
+    ! Pick the index KORIG of an original point that has not yet replaced one of the provisional
+    ! points, giving attention to the closeness to XOPT and to previous tries with KORIG.
     korig = int(minloc(score(1:npt), mask=(score(1:npt) > 0), dim=1), IK)
 
     ! Calculate VLAG and BETA for the required updating of the H matrix if XPT(:, KORIG) is
-    ! reinstated in the set of interpolation points.
-    ! First, form the (W-V) vector for XPT(:, KORIG) as if it is going to replace XPT_TEST(:, KORIG)
-    ! with the following XPT_TEST as defined in (5.4)--(5.5) of the BOBYQA paper for details.
-    ! 1. XPT_TEST(:, KOPT) = 0;
-    ! 2. For each K /= KOPT, if PTSID(K) == 0, then XPT_TEST(:, K) = XPT(:, K); if PTSID(K) > 0,
-    ! then XPT_TEST(:, K) has nonzeros only at IP (if IP > 0), IQ (if IQ > 0) positions, where IP
+    ! reinstated in the set of interpolation points, which means to replace a point in the
+    ! following provisional interpolation set XPT_PROV defined in (5.4)--(5.5) of the BOBYQA paper.
+    ! 1. XPT_PROV(:, KOPT) = 0;
+    ! 2. For each K /= KOPT, if PTSID(K) == 0, then XPT_PROV(:, K) = XPT(:, K); if PTSID(K) > 0,
+    ! then XPT_PROV(:, K) has nonzeros only at IP (if IP > 0), IQ (if IQ > 0) positions, where IP
     ! and IQ are the P(J) and Q(J) defined in and below (2.4) of the BOBYQA paper.
     !
+    ! First, form the (W - V) vector for XPT(:, KORIG).
     ! In the code below, WMV = W - V = w(XNEW) - w(XOPT) without the (NPT+1)th entry, where
-    ! XNEW = XPT(:,KORIG), XOPT = XPT_TEST = 0, and w(.) being defined by (6.3) of the NEWUOA paper
+    ! XNEW = XPT(:,KORIG), XOPT = XPT_PROV = 0, and w(.) is defined by (6.3) of the NEWUOA paper
     ! (as well as (4.10) of the BOBYQA paper). Since XOPT = 0, we see from (6.3) that w(XOPT)(K) = 0
     ! for all K except that w(XOPT)(NPT+1) = 1. Thus WMV is the same at w(XNEW) without the
-    ! (NPT+1)-th entry. Therefore, WMV= [HALF*MATPROD(XNEW, XPT_TEST)**2, XNEW].
-    ! Question (20220425): Can this be merged into CALVLAG/BETA in POWALG_MOD, maybe by modifying
-    ! the signature of CALVLAG/BETA?
+    ! (NPT+1)-th entry. Therefore, WMV= [HALF*MATPROD(XNEW, XPT_PROV)**2, XNEW].
     do k = 1, npt
         if (k == kopt) then
             wmv(k) = ZERO
@@ -336,15 +360,14 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
     ! Finally, set VLAG(KOPT) to the correct value.
     vlag(kopt) = vlag(kopt) + ONE
 
-    ! KPROV is set to the index of the provisional interpolation point that is going to be deleted to
-    ! make way for the KORIG-th original interpolation point. The choice of KPROV is governed by the
-    ! avoidance of a small value of the denominator in the updating calculation of UPDATE.
+    ! KPROV is set to the index of the provisional point that is going to be deleted to make way for
+    ! the KORIG-th original point. The choice of KPROV is governed by the avoidance of a small value
+    ! of the denominator in the updating calculation of UPDATE.
     hdiag = sum(zmat**2, dim=2)  ! Indeed, only HDIAG(PTSID /= 0) is needed.
     !!MATLAB: hdiag(ptsid > 0) = sum(zmat(ptsid > 0, :), 2);
     den = ZERO
     where (ptsid > 0) den = hdiag * beta + vlag(1:npt)**2
     !!MATLAB: den(ptsid > 0) = hdiag(ptsid > 0)*beta + vlag(ptsid > 0)
-    kprov = 0
     denom = ZERO
     if (any(den > 0)) then
         kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
@@ -353,29 +376,38 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
     end if
     vlmxsq = maxval(vlag(1:npt)**2)
     if (.not. denom > 1.0E-2_RP * vlmxsq) then
-        ! Until we find the next KPROV with DEN(KPROV) > 1.0E-2*VLMXSQ, the original interpolation
-        ! points with a negative score will not be considered. When the next KPROV satisfying the
-        ! aforesaid inequality is found, all the scores will be reset to their absolute values.
+        ! Until finding the next KORIG that renders DENOM > 1.0E-2*VLMXSQ, we will skip the original
+        ! interpolation points with a negative or zero score when looking for KORIG (see the
+        ! definition of KORIG). When the KORIG satisfying the aforesaid inequality is found, all the
+        ! scores will be reset to their absolute values, so that all the original
+        ! points with nonzero scores will be considered again.
         score(korig) = -score(korig) - scoreinc
         cycle
     end if
 
-    ! Reorder the provisional points in the way that exchanges PTSID(KPROV) with PTSID(KORIG).
+    ! Update BMAT, ZMAT, VLAG, and PTSID to exchange the KPROV-th and KORIG-th provisional points.
+    ! After the exchanging, the KORIG-th original point will replace the KORIG-th provisional point.
     if (kprov /= korig) then
         bmat(:, [kprov, korig]) = bmat(:, [korig, kprov])
         zmat([kprov, korig], :) = zmat([korig, kprov], :)
         vlag([kprov, korig]) = vlag([korig, kprov])
     end if
     ptsid(kprov) = ptsid(korig)
-    ptsid(korig) = ZERO
-    score(korig) = ZERO  ! The KORIG-th original interpolation point will be skipped in later loops.
-    score = abs(score)  ! Reset SCORE to ABS(SCORE) when a satisfactory KPROV is found.
 
-    ! Update the BMAT and ZMAT matrices so that the status of the KORIG-th interpolation point can
-    ! be changed from provisional to original. The branch to label occurs if all the original
-    ! points are reinstated.
+    ! Set PTSID(KORIG) = 0 so that the KORIG-th provisional point (after the exchanging) will be
+    ! skipped in the later loops.
+    ptsid(korig) = ZERO
+    ! Set SCORE(KORIG) = 0 so that the KORIG-th original point will be skipped in later loops.
+    score(korig) = ZERO
+    ! Reset SCORE to ABS(SCORE) so that all the origin points with a nonzero score will be checked
+    ! in later loops.
+    score = abs(score)
+
+    ! Update the BMAT and ZMAT matrices so that the KORIG-th original point replaces the KORIG-th
+    ! provisional point.
     call updateh(korig, beta, vlag, bmat, zmat)
 
+    ! NPROV is the number of provisional points that has not yet been replaced by original points.
     nprov = nprov - 1_IK
 end do
 
@@ -385,6 +417,8 @@ end do
 ! through the new interpolation points begins by putting the new point in XPT(:, KPT) and by setting
 ! PQ(KPT) to zero. A return occurs if MAXFUN prohibits another value of F or when all the new
 ! interpolation points are included in the model.
+kbase = kopt
+fbase = fval(kopt)
 if (nprov > 0) then
     do kpt = 1, npt
         if (ptsid(kpt) <= ZERO) then
