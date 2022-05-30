@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 30, 2022 PM10:14:07
+! Last Modified: Monday, May 30, 2022 PM11:03:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -210,6 +210,12 @@ diffa = ZERO
 diffb = ZERO
 itest = 0
 nfsav = nf
+
+! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
+! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
+! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
+! Similar for KNEW_TR.
+ratio = -ONE
 shortd = .false.
 
 ! Generate the next point in the trust region that provides a small value of the quadratic model
@@ -478,8 +484,6 @@ end if
 ! Put the variables for the next calculation of the objective function in XNEW, with any adjustments
 ! for the bounds. Calculate the value of the objective function at XBASE+XNEW.
 
-360 continue
-
 x = min(max(xl, xbase + xnew), xu)
 x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
 x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
@@ -675,9 +679,10 @@ if (knew > 0) then
     dsq = delbar * delbar
     goto 90
 end if
-if (ntrits == -1) goto 680
-if (ratio > ZERO) goto 60
-if (max(delta, dnorm) > rho) goto 60
+!if (ntrits == -1) goto 680
+!if (ratio > ZERO) goto 60
+!if (max(delta, dnorm) > rho) goto 60
+if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) goto 60
 
 680 continue
 
@@ -702,7 +707,27 @@ end if
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
-if (ntrits == -1) goto 360
+if (ntrits == -1 .and. nf < maxfun) then
+    info = INFO_DFT  !!??
+    x = min(max(xl, xbase + xnew), xu)
+    x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
+    x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
+    nf = nf + 1_IK
+    if (is_nan(abs(sum(x)))) then
+        f = sum(x)  ! Set F to NaN
+        info = NAN_INF_X
+    else
+        call evaluate(calfun, x, f)
+        call savehist(nf, x, xhist, f, fhist)
+
+        if (is_nan(f) .or. is_posinf(f)) then
+            info = NAN_INF_F
+        end if
+    end if
+    if (f <= ftarget) then
+        info = FTARGET_ACHIEVED
+    end if
+end if
 
 720 continue
 
