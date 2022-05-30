@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 30, 2022 AM12:22:37
+! Last Modified: Monday, May 30, 2022 PM10:14:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -353,8 +353,8 @@ if (ntrits == 0) then
             !--------------------------------------------------------------------------------------!
 
 
-            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fval, &
-                & gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, fopt, xopt, zmat)
+            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval,&
+                & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat)
 
             ! XOPT is updated now in case the branch below to label 720 is taken. Any updating of
             ! GOPT occurs after the branch below to label 20, which leads to a trust region
@@ -449,8 +449,8 @@ else
             end if
             !--------------------------------------------------------------------------------------!
 
-            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fval, &
-                & gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, fopt, xopt, zmat)
+            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval,&
+                & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat)
 
             ! XOPT is updated now in case the branch below to label 720 is taken. Any updating of
             ! GOPT occurs after the branch below to label 20, which leads to a trust region
