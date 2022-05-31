@@ -642,7 +642,6 @@ do while (.true.)
 
 end do
 
-600 continue
 
 !     Return from the calculation, after branching to label 220 for another
 !       Newton-Raphson step if it has not been tried before.

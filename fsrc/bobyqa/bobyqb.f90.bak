@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 AM02:25:42
+! Last Modified: Wednesday, June 01, 2022 AM01:35:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,7 +104,7 @@ real(RP) :: delbar, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
-logical :: shortd, improve_geo, rescued
+logical :: shortd, improve_geo, reduce_rho
 
 
 ! Sizes.
@@ -227,7 +227,6 @@ nfsav = nf
 ratio = -ONE
 shortd = .false.
 improve_geo = .false.
-rescued = .false.
 
 ! Generate the next point in the trust region that provides a small value of the quadratic model
 ! subject to the constraints on the variables. The integer NTRITS is set to the number "trust
@@ -258,7 +257,8 @@ if (.not. improve_geo) then
     if (shortd) then
         ntrits = -1
         dsquare = (TEN * rho)**2
-        if (nf <= nfsav + 2) goto 650
+        !if (nf <= nfsav + 2) goto 650
+        improve_geo = (nf <= nfsav + 2)
 
 ! The following choice between labels 650 and 680 depends on whether or not our work with the
 ! current RHO seems to be complete. Either RHO is decreased or termination occurs if the errors in
@@ -266,20 +266,29 @@ if (.not. improve_geo) then
 ! likely improvements to the model within distance HALF*RHO of XOPT.
         errbig = max(diffa, diffb, diffc)
         frhosq = 0.125_RP * rho * rho
-        if (crvmin > ZERO .and. errbig > frhosq * crvmin) goto 650
-        bdtol = errbig / rho
+        !if (crvmin > ZERO .and. errbig > frhosq * crvmin) goto 650
 
-        bdtest = bdtol
-        bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
-        bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
-        hqdiag = diag(hq)
-        curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
-        where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
-    !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
-        if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
-            goto 650
-        else
-            goto 680
+        improve_geo = (crvmin > ZERO .and. errbig > frhosq * crvmin)
+
+        if (.not. improve_geo) then
+            bdtol = errbig / rho
+
+            bdtest = bdtol
+            bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
+            bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
+            hqdiag = diag(hq)
+            curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
+            where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
+            !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
+
+            improve_geo = (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol))
+            reduce_rho = (.not. improve_geo)
+
+            !if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
+            !    goto 650
+            !else
+            !    goto 680
+            !end if
         end if
     else
         ntrits = ntrits + 1_IK
@@ -293,13 +302,10 @@ end if
 
 !90 continue
 
-
 if (improve_geo .or. .not. shortd) then
-
     improve_geo = .false.
 
-
-    if (sum(xopt**2) >= 1.0E3_RP * dsq .and. .not. rescued) then
+    if (sum(xopt**2) >= 1.0E3_RP * dsq) then
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         sl = min(sl - xopt, ZERO)
         su = max(su - xopt, ZERO)
@@ -308,8 +314,6 @@ if (improve_geo .or. .not. shortd) then
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
         xbase = min(max(xl, xbase), xu)
     end if
-
-    rescued = .false.
 
 ! Pick two alternative vectors of variables, relative to XBASE, that are suitable as new positions
 ! of the KNEW-th interpolation point. Firstly, XNEW is set to the point on a line through XOPT and
@@ -405,14 +409,11 @@ if (improve_geo .or. .not. shortd) then
                     nfsav = nf
                     goto 60
                 end if
-                rescued = .true.
-                improve_geo = .true.
-                goto 60
                 !--------------------------------------------------------------------------------------!
                 ! After RESCUE, Powell's code takes immediately another GEOSTEP. If the geometry is then
                 ! acceptable (i.e., DENOM > HALF * VLAG(KNEW)**2), then the algorithm will continue.
                 ! Otherwise, it will exit with INFO set to DAMAGING_ROUNDING.
-                !goto 210
+                goto 210
                 !--------------------------------------------------------------------------------------!
             end if
         end if
@@ -678,34 +679,41 @@ if (improve_geo .or. .not. shortd) then
 ! Alternatively, find out if the interpolation points are close enough to the best point so far.
     dsquare = max((TWO * delta)**2, (TEN * rho)**2)
 
+    improve_geo = .true.
+
 end if
 
-650 continue
+!650 continue
 
-distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
-dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
+if (improve_geo) then
+
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
+    dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
 
 ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th interpolation
 ! point within distance DELBAR of XOPT. It is reached via label 90. Otherwise, there is a branch to
 ! label 60 for another trust region iteration, unless the calculations with the current RHO are
 ! complete.
-if (knew > 0) then
-    dist = sqrt(dsquare)
-    if (ntrits == -1) then
-        delta = min(TENTH * delta, HALF * dist)
-        if (delta <= 1.5_RP * rho) delta = rho
+    if (knew > 0) then
+        dist = sqrt(dsquare)
+        if (ntrits == -1) then
+            delta = min(TENTH * delta, HALF * dist)
+            if (delta <= 1.5_RP * rho) delta = rho
+        end if
+        ntrits = 0
+        delbar = max(min(TENTH * dist, delta), rho)
+        dsq = delbar * delbar
+
+        improve_geo = .true.
+        goto 60
+    else
+        improve_geo = .false.
     end if
-    ntrits = 0
-    delbar = max(min(TENTH * dist, delta), rho)
-    dsq = delbar * delbar
-
-    improve_geo = .true.
-    goto 60
+    if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) goto 60
 end if
-if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) goto 60
 
-680 continue
+!680 continue
 
 ! The calculations with the current value of RHO are complete. Pick the next values of RHO and DELTA.
 if (rho > rhoend) then
