@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 AM02:31:15
+! Last Modified: Tuesday, May 31, 2022 PM01:26:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,14 +26,13 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 !     minimize <G, D> + 0.5 * <D, H*D> subject to ||D|| <= DELTA.
 !
 ! The algorithm first tridiagonalizes H and then applies the More-Sorensen method in
-! More, J. J., and Danny C. S., "Computing a trust region step", SIAM J. Sci. Stat. Comput. 4:
-! 553-572, 1983.
+! More and Sorensen, "Computing a trust region step", SIAM J. Sci. Stat. Comput. 4: 553-572, 1983.
 !
 ! The major calculations of the More-Sorensen method lie in the Cholesky factorization or LDL
-! factorization of H + PAR*I with the iteratively selected values of PAR (in More-Sorensen 1983, the
-! parameter is named LAMBDA; in Powell's UOBYQA paper, it is THETA). Powell's method in this code
-! simplifies the calculations by first tridiagonalizing H with an orthogonal transformation. If a
-! matrix T is tridiagonal, its LDL factorization, if exits, can be obtained easily:
+! factorization of H + PAR*I with the iteratively selected values of PAR (in More-Sorensen (1983), 
+! the parameter is named LAMBDA; in Powell's UOBYQA paper, it is THETA). Powell's method in this 
+! code simplifies the calculations by first tridiagonalizing H with an orthogonal transformation. 
+! If a matrix T is tridiagonal, its LDL factorization, if exits, can be obtained easily:
 !
 !       T = L*diag(PIV)*L^T,
 !
@@ -181,9 +180,9 @@ end if
 hnorm = maxval(abs([ZERO, tn]) + abs(td) + abs([tn, ZERO]))
 
 ! Set the initial values of PAR and its bounds.
-! N.B.: PAR is the parameter LAMBDA in More-Sorensen 1983 and Powell 1997, as well as the THETA in
-! Section 2 of the UOBYQA paper. The algorithm looks for the optimal PAR characterized in Lemmas
-! 2.1--2.3 of More-Sorensen 1983.
+! N.B.: PAR is the parameter LAMBDA in More-Sorensen (1983) and Powell (1997), as well as the THETA
+! in Section 2 of the UOBYQA paper. The algorithm looks for the optimal PAR characterized in Lemmas
+! 2.1--2.3 of More-Sorensen (1983).
 parl = maxval([ZERO, -minval(td), gnorm / delta - hnorm])  ! Lower bound for the optimal PAR
 parlest = parl  ! Estimation for PARL
 par = parl
@@ -330,6 +329,8 @@ do while (.true.)
     end if
 
     if (gsq <= 0 .or. k >= 1) then
+        ! Handle the case where the gradient at the trust region center is zero or H + PAR*I is not
+        ! positive definite.
 
         ! Terminate with D set to a multiple of the current D if the following test suggests so.
         if (gsq <= 0) then
@@ -364,15 +365,6 @@ do while (.true.)
             ! but did happen numerically. Note that SIGN(A, 0) = |A| /= -SIGN(A, 0).
             exit
         end if
-
-        ! Pick the value of PAR for the next iteration.
-        if (paru == ZERO) then
-            par = TWO * parlest + gnorm / delta
-        else
-            par = HALF * (parl + paru)
-            par = max(par, parlest)
-        end if
-        if (paruest > 0) par = min(par, paruest)
     else
 
         ! Handle the case where the gradient at the trust region center is nonzero and H + PAR*I
@@ -440,79 +432,70 @@ do while (.true.)
             posdef = .true.
             parl = par
             phil = phi
-
-            ! Pick the value of PAR for the next iteration.
-            if (paru == ZERO) then
-                par = TWO * parlest + gnorm / delta
-            else
-                par = HALF * (parl + paru)
-                par = max(par, parlest)
-            end if
-            if (paruest > 0) par = min(par, paruest)
-            cycle
-        end if
-
-        ! If required, calculate Z for the alternative test for convergence.
-        ! For Z, see the discussions below (16) in Section 2 of the UOBYQA paper (the 2002 version
-        ! in Math. Program.; in the DAMTP 2000/NA14 report, it is below (2.8) in Section 2). The two
-        ! loops below find Z using the LDL factorization of the (tridiagonalized) H + PAR*I.
-        if (.not. posdef) then
-            z(1) = ONE / piv(1)
-            do k = 1, n - 1_IK
-                tnz = tn(k) * z(k)
-                if (tnz > 0) then
-                    z(k + 1) = -(ONE + tnz) / piv(k + 1)
-                else
-                    z(k + 1) = (ONE - tnz) / piv(k + 1)
-                end if
-            end do
-            wwsq = inprod(piv, z**2)  ! Needed in the convergence test.
-            do k = n - 1_IK, 1, -1
-                z(k) = z(k) - tn(k) * z(k + 1) / piv(k)
-            end do
-
-            zsq = sum(z**2)
-            dtz = inprod(d, z)
-
-            ! Apply the alternative test for convergence.
-            tempa = abs(delsq - dsq)
-            tempb = sqrt(dtz * dtz + tempa * zsq)
-            if (abs(dtz) > 0) then
-                gam = tempa / (sign(tempb, dtz) + dtz)  !!MATLAB: gam = tempa / (sign(dtz)*tempb + dtz)
-            else  ! This ELSE covers the unlikely yet possible case where DTZ is zero or even NaN.
-                gam = sqrt(tempa / zsq)
-            end if
-            if (tol * (wsq + par * delsq) - gam * gam * wwsq >= 0) then
-                d = d + gam * z
-                exit
-            end if
-            parlest = max(parlest, par - wwsq / zsq)
-        end if
-
-        ! Complete the iteration when PHI is positive.
-        slope = ONE / gnorm
-        if (paru > 0) then
-            if (phi >= phiu) exit
-            slope = (phiu - phi) / (paru - par)
-        end if
-        parlest = max(parlest, par - phi / slope)
-        paruest = par
-        if (posdef) then
-            slope = (phi - phil) / (par - parl)
-            paruest = par - phi / slope
-        end if
-        paru = par
-        phiu = phi
-
-        ! Pick the value of PAR for the next iteration.
-        if (paru == ZERO) then
-            par = TWO * parlest + gnorm / delta
         else
-            par = HALF * (parl + paru)
-            par = max(par, parlest)
+
+            ! If required, calculate Z for the alternative test for convergence.
+            ! For Z, see the discussions below (16) in Section 2 of the UOBYQA paper (the 2002 version
+            ! in Math. Program.; in the DAMTP 2000/NA14 report, it is below (2.8) in Section 2). The two
+            ! loops below find Z using the LDL factorization of the (tridiagonalized) H + PAR*I.
+            if (.not. posdef) then
+                z(1) = ONE / piv(1)
+                do k = 1, n - 1_IK
+                    tnz = tn(k) * z(k)
+                    if (tnz > 0) then
+                        z(k + 1) = -(ONE + tnz) / piv(k + 1)
+                    else
+                        z(k + 1) = (ONE - tnz) / piv(k + 1)
+                    end if
+                end do
+                wwsq = inprod(piv, z**2)  ! Needed in the convergence test.
+                do k = n - 1_IK, 1, -1
+                    z(k) = z(k) - tn(k) * z(k + 1) / piv(k)
+                end do
+
+                zsq = sum(z**2)
+                dtz = inprod(d, z)
+
+                ! Apply the alternative test for convergence.
+                tempa = abs(delsq - dsq)
+                tempb = sqrt(dtz * dtz + tempa * zsq)
+                if (abs(dtz) > 0) then
+                    gam = tempa / (sign(tempb, dtz) + dtz)  !!MATLAB: gam = tempa / (sign(dtz)*tempb + dtz)
+                else  ! This ELSE covers the unlikely yet possible case where DTZ is zero or even NaN.
+                    gam = sqrt(tempa / zsq)
+                end if
+                if (tol * (wsq + par * delsq) - gam * gam * wwsq >= 0) then
+                    d = d + gam * z
+                    exit
+                end if
+                parlest = max(parlest, par - wwsq / zsq)
+            end if
+
+            ! Complete the iteration when PHI is positive.
+            slope = ONE / gnorm
+            if (paru > 0) then
+                if (phi >= phiu) exit
+                slope = (phiu - phi) / (paru - par)
+            end if
+            parlest = max(parlest, par - phi / slope)
+            paruest = par
+            if (posdef) then
+                slope = (phi - phil) / (par - parl)
+                paruest = par - phi / slope
+            end if
+            paru = par
+            phiu = phi
         end if
-        if (paruest > 0) par = min(par, paruest)
     end if
+
+    ! Pick the value of PAR for the next iteration.
+    if (paru == ZERO) then
+        par = TWO * parlest + gnorm / delta
+    else
+        par = HALF * (parl + paru)
+        par = max(par, parlest)
+    end if
+    if (paruest > 0) par = min(par, paruest)
 end do
 
 ! Apply the inverse Householder transformations to D.
