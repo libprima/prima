@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 PM10:02:29
+! Last Modified: Tuesday, May 31, 2022 PM10:52:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -651,14 +651,16 @@ if (rho > rhoend) then
 else
     info = SMALL_TR_RADIUS
 end if
-!
+
+600 continue
+
 !     Return from the calculation, after branching to label 220 for another
 !       Newton-Raphson step if it has not been tried before.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !info = INFO_DFT  !!info = SMALL_TR_RADIUS !!??  See NEWUOA
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (ksave == -1 .and. nf < maxfun) then
+if (info == SMALL_TR_RADIUS .and. ksave == -1 .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
     cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])  ! Must be evaluated, as SAVEHIST needs it.
@@ -667,7 +669,7 @@ if (ksave == -1 .and. nf < maxfun) then
     feasible = .true. ! Why? Consistent with the meaning of FEASIBLE???
 end if
 
-600 continue
+!600 continue
 if (fopt <= f .or. is_nan(f) .or. .not. feasible) then
     x = xsav
     f = fopt
