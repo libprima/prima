@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 PM09:24:34
+! Last Modified: Tuesday, May 31, 2022 PM10:02:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -37,7 +37,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
-    & MAXFUN_REACHED, DAMAGING_ROUNDING!, SMALL_TR_RADIUS, MAXTR_REACHED
+    & MAXFUN_REACHED, DAMAGING_ROUNDING, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, r1update
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_col, omega_mul, hess_mul
@@ -585,67 +585,42 @@ if (knew /= 0 .or. .not. shortd) then
 !       step.
 !
         knew = 0
-        !if (ksave > 0 .or. ratio > TENTH) then
-        !    improve_geo = .false.
-        !    goto 20
-        !else
-        !    improve_geo = .true.
-        !    goto 530
-        !end if
-
         improve_geo = (ksave <= 0 .and. .not. ratio > TENTH)
-        if (improve_geo) goto 530
+        !if (improve_geo) goto 530
         if (.not. improve_geo) goto 20
     else
-        !if (.not. improve_geo) then
-        !    improve_geo = .true.
-        !    goto 530
-        !else
-        !    improve_geo = .false.
-        !    goto 560
-        !end if
-
         improve_geo = (.not. improve_geo)
-        if (improve_geo) goto 530
-        if (.not. improve_geo) goto 560
+        !if (improve_geo) goto 530
+        !if (.not. improve_geo) goto 560
     end if
 else
-    !if (delsav > rho .or. (nvala < 5 .and. nvalb < 3)) then
-    !    improve_geo = .true.
-    !    goto 530
-    !else
-    !    if (dnorm > ZERO) ksave = -1
-    !    improve_geo = .false.
-    !    goto 560
-    !end if
-
     improve_geo = (delsav > rho .or. (nvala < 5 .and. nvalb < 3))
     if (dnorm > 0 .and. .not. improve_geo) then
         ksave = -1
     end if
-    if (improve_geo) goto 530
-    if (.not. improve_geo) goto 560
+    !if (improve_geo) goto 530
+    !if (.not. improve_geo) goto 560
 end if
 
-530 continue
+!530 continue
 
-!if (improve_geo) then
-improve_geo = .true.
+if (improve_geo) then
+    improve_geo = .true.
 ! Alternatively, find out if the interpolation points are close enough to the best point so far.
-distsq = max(delta * delta, 4.0_RP * rho * rho)
-xopt = xpt(:, kopt)
-xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    distsq = max(delta * delta, 4.0_RP * rho * rho)
+    xopt = xpt(:, kopt)
+    xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 ! MATLAB: xdsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-knew = maxloc([distsq, xdsq], dim=1) - 1_IK
+    knew = maxloc([distsq, xdsq], dim=1) - 1_IK
 
 ! If KNEW is positive, then branch back for the next iteration, which will generate a "model step".
 ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound when the
 ! last trust region step was calculated, then try a "trust region" step instead.
-if (knew > 0) goto 20
-knew = 0
-if (fopt < fsave) goto 20
-if (delsav > rho) goto 20
-!end if
+    if (knew > 0) goto 20
+    knew = 0
+    if (fopt < fsave) goto 20
+    if (delsav > rho) goto 20
+end if
 !
 !     The calculations with the current value of RHO are complete.
 !       Pick the next value of RHO.
@@ -655,7 +630,7 @@ if (delsav > rho) goto 20
 ! See the comments below line number 210
 !  560 IF (RHO .GT. RHOEND) THEN
 
-560 continue
+!560 continue
 
 improve_geo = .false.
 if (rho > rhoend) then
@@ -673,13 +648,15 @@ if (rho > rhoend) then
     nvala = 0
     nvalb = 0
     goto 20
+else
+    info = SMALL_TR_RADIUS
 end if
 !
 !     Return from the calculation, after branching to label 220 for another
 !       Newton-Raphson step if it has not been tried before.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-info = INFO_DFT  !!info = SMALL_TR_RADIUS !!??  See NEWUOA
+!info = INFO_DFT  !!info = SMALL_TR_RADIUS !!??  See NEWUOA
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (ksave == -1 .and. nf < maxfun) then
     x = xbase + (xopt + d)
@@ -696,7 +673,6 @@ if (fopt <= f .or. is_nan(f) .or. .not. feasible) then
     f = fopt
 end if
 
-!616 continue
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 
 
