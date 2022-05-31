@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 AM09:18:59
+! Last Modified: Tuesday, May 31, 2022 PM05:13:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -747,7 +747,7 @@ end if
 
 call rangehist(nf, xhist, fhist)
 
-close (16)
+close (17)
 
 end subroutine bobyqb
 

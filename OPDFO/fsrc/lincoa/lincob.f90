@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 28, 2022 PM05:26:03
+! Last Modified: Tuesday, May 31, 2022 PM05:13:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -648,7 +648,7 @@ cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist)
 
-close (16)
+close (17)
 
 end subroutine lincob
 

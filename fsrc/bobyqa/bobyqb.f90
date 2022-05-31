@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 AM09:18:59
+! Last Modified: Tuesday, May 31, 2022 PM04:37:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -518,10 +518,10 @@ if (f <= ftarget) then
     goto 736
 end if
 
-if (ntrits == -1) then
-    info = INFO_DFT  !!??
-    goto 720
-end if
+!if (ntrits == -1) then
+!    info = INFO_DFT  !!??
+!    goto 720
+!end if
 
 ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the error
 ! of this prediction.
@@ -708,25 +708,20 @@ end if
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
 if (ntrits == -1 .and. nf < maxfun) then
-    info = INFO_DFT  !!??
-    x = min(max(xl, xbase + xnew), xu)
+    info = INFO_DFT  !!?? See NEWUOA
+    x = min(max(xl, xbase + xnew), xu)  ! XNEW = XOPT + D??? See NEWUOA, LINCOA.
     x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
     x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
     nf = nf + 1_IK
-    if (is_nan(abs(sum(x)))) then
-        f = sum(x)  ! Set F to NaN
-        info = NAN_INF_X
-    else
-        call evaluate(calfun, x, f)
-        call savehist(nf, x, xhist, f, fhist)
+    call evaluate(calfun, x, f)
+    call savehist(nf, x, xhist, f, fhist)
 
-        if (is_nan(f) .or. is_posinf(f)) then
-            info = NAN_INF_F
-        end if
-    end if
-    if (f <= ftarget) then
-        info = FTARGET_ACHIEVED
-    end if
+    !if (is_nan(f) .or. is_posinf(f)) then
+    !    info = NAN_INF_F
+    !end if
+    !if (f <= ftarget) then
+    !    info = FTARGET_ACHIEVED
+    !end if
 end if
 
 720 continue

@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 AM11:05:21
+! Last Modified: Tuesday, May 31, 2022 PM05:11:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, DE
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
@@ -366,14 +366,14 @@ end if
 xnew = xopt + d
 x = xbase + xnew
 
-if (nf >= maxfun) then
+if (nf >= maxfun .and. knew /= -1) then
     info = MAXFUN_REACHED
     goto 420
 end if
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (is_nan(sum(abs(x)))) then
+if (is_nan(sum(abs(x))) .and. knew /= -1) then
     f = sum(x) ! Set F to NaN
     if (nf == 1) then
         fopt = f
@@ -396,7 +396,7 @@ call savehist(nf, x, xhist, f, fhist)
 !     If this happens at the very first function evaluation (i.e.,
 !     NF=1), then it is necessary to set FOPT and XOPT before going to
 !     530, because these two variables have not been set yet.
-if (is_nan(f) .or. is_posinf(f)) then
+if ((is_nan(f) .or. is_posinf(f)) .and. knew /= -1) then
     if (nf == 1) then
         fopt = f
         xopt = ZERO
@@ -405,7 +405,7 @@ if (is_nan(f) .or. is_posinf(f)) then
     goto 420
 end if
 
-if (f <= ftarget) then
+if (f <= ftarget .and. knew /= -1) then
     info = FTARGET_ACHIEVED
     goto 430  ! Should not goto 420. fopt may not be defined yet
 end if
@@ -600,7 +600,8 @@ info = SMALL_TR_RADIUS !!??
 !     it is too short to have been tried before.
 
 !if (errtol >= ZERO) goto 100
-if (errtol >= ZERO) then
+!if (errtol >= ZERO) then
+if (errtol >= ZERO .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
     !----------------!
     knew = -1  ! Zaikun 20220506: Tell the algorithm to come to 420 immediately after the function evaluation.
     !----------------!
@@ -616,7 +617,7 @@ end if
 
 430 continue
 
-close (16)
+!close (17)
 
 call rangehist(nf, xhist, fhist)
 
