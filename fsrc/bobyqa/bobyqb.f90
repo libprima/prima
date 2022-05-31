@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 PM04:37:21
+! Last Modified: Wednesday, June 01, 2022 AM12:17:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -190,15 +190,26 @@ f = fopt
 
 if (is_nan(f) .or. is_posinf(f)) then
     info = NAN_INF_F
-    goto 720
+    xopt = xpt(:, kopt)
+    fopt = fval(kopt)
+    x = min(max(xl, xbase + xopt), xu)
+    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
+    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
+    f = fopt
+    return
+!    goto 720
 end if
 if (f <= ftarget) then
     info = FTARGET_ACHIEVED
-    goto 736
-end if
-if (nf < npt) then
-    info = MAXFUN_REACHED  ! Zaikun 20220406: Should not happen here.
-    goto 720
+    xopt = xpt(:, kopt)
+    fopt = fval(kopt)
+    x = min(max(xl, xbase + xopt), xu)
+    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
+    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
+    f = fopt
+    call rangehist(nf, xhist, fhist)
+    return
+!    goto 720
 end if
 
 ! Complete the settings that are required for the iterative procedure.
@@ -515,7 +526,8 @@ if (is_nan(f) .or. is_posinf(f)) then
 end if
 if (f <= ftarget) then
     info = FTARGET_ACHIEVED
-    goto 736
+    !goto 736
+    goto 720
 end if
 
 !if (ntrits == -1) then
@@ -705,9 +717,11 @@ else
     info = SMALL_TR_RADIUS
 end if
 
+720 continue
+
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
-if (ntrits == -1 .and. nf < maxfun) then
+if (info == SMALL_TR_RADIUS .and. ntrits == -1 .and. nf < maxfun) then
     info = INFO_DFT  !!?? See NEWUOA
     x = min(max(xl, xbase + xnew), xu)  ! XNEW = XOPT + D??? See NEWUOA, LINCOA.
     x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
@@ -724,7 +738,7 @@ if (ntrits == -1 .and. nf < maxfun) then
     !end if
 end if
 
-720 continue
+!720 continue
 
 !--------------------------------------------------------------------------------------------------!
 !  720 IF (FVAL(KOPT) .LE. FSAVE) THEN
@@ -738,7 +752,7 @@ if (fval(kopt) <= f .or. is_nan(f)) then
     f = fval(kopt)
 end if
 
-736 continue
+!736 continue
 
 call rangehist(nf, xhist, fhist)
 
