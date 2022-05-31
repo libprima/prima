@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 28, 2022 PM05:26:03
+! Last Modified: Tuesday, May 31, 2022 PM05:16:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -395,7 +395,7 @@ end if
 !       between the actual new value of F and the value predicted by the
 !       model is recorded in DIFF.
 !
-220 continue
+
 if (nf >= maxfun) then
     info = MAXFUN_REACHED
     goto 600
@@ -440,10 +440,10 @@ if (is_nan(f) .or. is_posinf(f)) then
     info = NAN_INF_F
     goto 600
 end if
-if (ksave == -1) then
-    info = INFO_DFT !!??
-    goto 600
-end if
+!if (ksave == -1) then
+!    info = INFO_DFT !!??
+!    goto 600
+!end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 diff = f - fopt + qred
 !
@@ -631,16 +631,23 @@ end if
 !       Newton-Raphson step if it has not been tried before.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-info = INFO_DFT  !!info = SMALL_TR_RADIUS !!??
+info = INFO_DFT  !!info = SMALL_TR_RADIUS !!??  See NEWUOA
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (ksave == -1) goto 220
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!  600 IF (FOPT .LE. F .OR. FEASIBLE .EQ. 0) THEN
+if (ksave == -1 .and. nf < maxfun) then
+    x = xbase + (xopt + d)
+    call evaluate(calfun, x, f)
+    cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])  ! Must be evaluated, as SAVEHIST needs it.
+    nf = nf + 1_IK
+    call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+    feasible = .true. ! Why? Consistent with the meaning of FEASIBLE???
+end if
+
 600 continue
 if (fopt <= f .or. is_nan(f) .or. .not. feasible) then
     x = xsav
     f = fopt
 end if
+
 616 continue
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 

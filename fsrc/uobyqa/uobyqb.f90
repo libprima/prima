@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 AM11:05:21
+! Last Modified: Tuesday, May 31, 2022 PM04:52:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, DE
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
@@ -413,10 +413,10 @@ end if
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IF (KNEW .EQ. -1) GOTO 420
-if (knew == -1) then
-    info = SMALL_TR_RADIUS !!??
-    goto 420
-end if
+!if (knew == -1) then
+!    info = SMALL_TR_RADIUS !!??
+!    goto 420
+!end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Use the quadratic model to predict the change in F due to the step D, and find the values of the
@@ -599,12 +599,14 @@ info = SMALL_TR_RADIUS !!??
 !     Return from the calculation, after another Newton-Raphson step, if
 !     it is too short to have been tried before.
 
-!if (errtol >= ZERO) goto 100
-if (errtol >= ZERO) then
-    !----------------!
-    knew = -1  ! Zaikun 20220506: Tell the algorithm to come to 420 immediately after the function evaluation.
-    !----------------!
-    goto 100
+! Zaikun 20220531: For the moment, D may contain NaN. Should be avoided later.
+if (errtol >= ZERO .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
+!if (errtol >= ZERO .and. nf < maxfun) then
+    info = SMALL_TR_RADIUS !!?? See NEWUOA
+    x = xbase + (xopt + d)
+    call evaluate(calfun, x, f)
+    nf = nf + 1
+    call savehist(nf, x, xhist, f, fhist)
 end if
 
 420 continue
@@ -616,7 +618,7 @@ end if
 
 430 continue
 
-close (16)
+!close (16)
 
 call rangehist(nf, xhist, fhist)
 
