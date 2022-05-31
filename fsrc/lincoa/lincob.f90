@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 PM05:16:32
+! Last Modified: Tuesday, May 31, 2022 PM05:25:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -234,8 +234,11 @@ end if
 if (fval(kopt) <= ftarget) then
     f = fval(kopt)
     x = xsav
+    fopt = f
+    xopt = x
     info = FTARGET_ACHIEVED
-    goto 616
+    !goto 616
+    goto 600
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -249,7 +252,7 @@ feasible = .false.
 shortd = .false.
 nact = 0
 itest = 3
-10 knew = 0
+knew = 0
 nvala = 0
 nvalb = 0
 
@@ -537,7 +540,8 @@ if (f < fopt .and. feasible) then
     kopt = knew
     if (fopt <= ftarget) then
         info = FTARGET_ACHIEVED
-        goto 616
+        goto 600
+        !goto 616
     end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     dnorm = sqrt(sum(d**2))
@@ -624,7 +628,10 @@ if (rho > rhoend) then
         rho = sqrt(rho * rhoend)
     end if
     delta = max(delta, rho)
-    goto 10
+    knew = 0
+    nvala = 0
+    nvalb = 0
+    goto 20
 end if
 !
 !     Return from the calculation, after branching to label 220 for another
@@ -648,7 +655,7 @@ if (fopt <= f .or. is_nan(f) .or. .not. feasible) then
     f = fopt
 end if
 
-616 continue
+!616 continue
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 
 
