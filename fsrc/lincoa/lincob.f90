@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 PM05:25:04
+! Last Modified: Tuesday, May 31, 2022 PM07:12:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -315,13 +315,18 @@ if (knew == 0) then
         if (delsav > rho) temp = ONE
         if (temp >= HALF) nvala = 0
         if (temp >= TENTH) nvalb = 0
-        if (delsav > rho) goto 530
-        if (nvala < 5 .and. nvalb < 3) goto 530
-        if (dnorm > ZERO) ksave = -1
-        goto 560
+        !if (delsav > rho) goto 530
+        !if (nvala < 5 .and. nvalb < 3) goto 530
+        !if (delsav > rho .or. (nvala < 5 .and. nvalb < 3)) then
+        !    goto 530
+        !else
+        !    if (dnorm > ZERO) ksave = -1
+        !    goto 560
+        !end if
+    else
+        nvala = 0
+        nvalb = 0
     end if
-    nvala = 0
-    nvalb = 0
 
 !     Alternatively, KNEW is positive. Then the model step is calculated
 !       within a trust region of radius DELBAR, after setting the gradient at
@@ -347,8 +352,8 @@ end if
 !-------------------------------------------------------------------------------------------!
 ! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should try the same.
 !-------------------------------------------------------------------------------------------!
-!
-qred = -quadinc(d, xpt, gopt, pq, hq)
+if (knew /= 0 .or. .not. shortd) then
+    qred = -quadinc(d, xpt, gopt, pq, hq)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
@@ -382,29 +387,20 @@ qred = -quadinc(d, xpt, gopt, pq, hq)
 ! region step, we should not goto 530 but goto 560, where IMPRV will be
 ! set to 0 and DELTA will be reduced. Otherwise, an infinite loop would happen.
 !      IF (KSAVE .EQ. 0 .AND. VQUAD .GE. ZERO) GOTO 530
-if (ksave == 0 .and. .not. (qred > ZERO)) then
-    if (imprv == 1) then
-        goto 560
-    else
-        imprv = 1
-        goto 530
-    end if
-else
-    imprv = 0
-end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Calculate the next value of the objective function. The difference
 !       between the actual new value of F and the value predicted by the
 !       model is recorded in DIFF.
 !
-
-if (nf >= maxfun) then
-    info = MAXFUN_REACHED
-    goto 600
-end if
-xnew = xopt + d
-x = xbase + xnew
+    if (ksave /= 0 .or. (qred > ZERO)) then
+        imprv = 0
+        if (nf >= maxfun) then
+            info = MAXFUN_REACHED
+            goto 600
+        end if
+        xnew = xopt + d
+        x = xbase + xnew
 
 !--------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------!
@@ -419,83 +415,83 @@ x = xbase + xnew
 !--------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------!
 
-feasible = (feasible .or. ksave <= 0) ! Consistent with the meaning of FEASIBLE???
-f = merge(tsource=ONE, fsource=ZERO, mask=feasible)  ! Zaikun 20220415 What does this mean???
+        feasible = (feasible .or. ksave <= 0) ! Consistent with the meaning of FEASIBLE???
+        f = merge(tsource=ONE, fsource=ZERO, mask=feasible)  ! Zaikun 20220415 What does this mean???
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (is_nan(sum(abs(x)))) then
-    f = sum(x)  ! Set F to NaN
-    if (nf == 1) then
-        fopt = f
-        xopt = ZERO
-    end if
-    info = NAN_INF_X
-    goto 600
-end if
+        if (is_nan(sum(abs(x)))) then
+            f = sum(x)  ! Set F to NaN
+            if (nf == 1) then
+                fopt = f
+                xopt = ZERO
+            end if
+            info = NAN_INF_X
+            goto 600
+        end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-call evaluate(calfun, x, f)
-cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
-nf = nf + 1_IK
-call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+        call evaluate(calfun, x, f)
+        cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+        nf = nf + 1_IK
+        call savehist(nf, x, xhist, f, fhist, cstrv, chist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
-if (is_nan(f) .or. is_posinf(f)) then
-    info = NAN_INF_F
-    goto 600
-end if
+        if (is_nan(f) .or. is_posinf(f)) then
+            info = NAN_INF_F
+            goto 600
+        end if
 !if (ksave == -1) then
 !    info = INFO_DFT !!??
 !    goto 600
 !end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-diff = f - fopt + qred
+        diff = f - fopt + qred
 !
 !     If X is feasible, then set DFFALT to the difference between the new
 !       value of F and the value predicted by the alternative model.
 !
-if (feasible .and. itest < 3) then
-    fshift = fval - fval(kopt)
-    ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
-    pqalt = omega_mul(idz, zmat, fshift)
-    galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-    dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
-end if
-if (itest == 3) then
-    dffalt = diff
-    itest = 0
-end if
+        if (feasible .and. itest < 3) then
+            fshift = fval - fval(kopt)
+            ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
+            pqalt = omega_mul(idz, zmat, fshift)
+            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+            dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
+        end if
+        if (itest == 3) then
+            dffalt = diff
+            itest = 0
+        end if
 !
 !     Pick the next value of DELTA after a trust region step.
 !
-if (ksave == 0) then
-    ratio = (fopt - f) / qred
-    if (ratio <= TENTH) then
-        delta = HALF * delta
-    else if (ratio <= 0.7_RP) then
-        delta = max(HALF * delta, dnorm)
-    else
-        temp = sqrt(TWO) * delta
-        delta = max(HALF * delta, dnorm + dnorm)
-        delta = min(delta, temp)
-    end if
-    if (delta <= 1.4_RP * rho) delta = rho
-end if
+        if (ksave == 0) then
+            ratio = (fopt - f) / qred
+            if (ratio <= TENTH) then
+                delta = HALF * delta
+            else if (ratio <= 0.7_RP) then
+                delta = max(HALF * delta, dnorm)
+            else
+                temp = sqrt(TWO) * delta
+                delta = max(HALF * delta, dnorm + dnorm)
+                delta = min(delta, temp)
+            end if
+            if (delta <= 1.4_RP * rho) delta = rho
+        end if
 !
 !     Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
 !       can be moved. If D is a trust region step, then KNEW is ZERO at
 !       present, but a positive value is picked by subroutine UPDATE.
 !
-call update(kopt, d, xpt, idz, knew, bmat, zmat)
-if (knew == 0) then
-    info = DAMAGING_ROUNDING
-    goto 600
-end if
+        call update(kopt, d, xpt, idz, knew, bmat, zmat)
+        if (knew == 0) then
+            info = DAMAGING_ROUNDING
+            goto 600
+        end if
 
 ! Zaikun 19-03-2020: Exit if BMAT or ZMAT contians NaN
-if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-    info = NAN_MODEL
-    goto 600
-end if
+        if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+            info = NAN_MODEL
+            goto 600
+        end if
 
 !
 !     If ITEST is increased to 3, then the next quadratic model is the
@@ -503,10 +499,10 @@ end if
 !       interpolation conditions. Otherwise the new model is constructed
 !       by the symmetric Broyden method in the usual way.
 !
-if (feasible) then
-    itest = itest + 1
-    if (abs(dffalt) >= TENTH * abs(diff)) itest = 0
-end if
+        if (feasible) then
+            itest = itest + 1
+            if (abs(dffalt) >= TENTH * abs(diff)) itest = 0
+        end if
 !
 !     Update the second derivatives of the model by the symmetric Broyden
 !       method, using PQW for the second derivative parameters of the new
@@ -514,49 +510,49 @@ end if
 !       PQ(KNEW) is included in the second derivative matrix HQ. W is used
 !       later for the gradient of the new KNEW-th Lagrange function.
 !
-if (itest < 3) then
-    call r1update(hq, pq(knew), xpt(:, knew))  ! Needs the un-updated XPT(:, KNEW).
-    pq(knew) = ZERO
-    pqinc = diff * omega_col(idz, zmat, knew)
-    pq = pq + pqinc
-end if
+        if (itest < 3) then
+            call r1update(hq, pq(knew), xpt(:, knew))  ! Needs the un-updated XPT(:, KNEW).
+            pq(knew) = ZERO
+            pqinc = diff * omega_col(idz, zmat, knew)
+            pq = pq + pqinc
+        end if
 
 ! Make the changes of the symmetric Broyden method to GOPT at the old XOPT if ITEST is less than 3.
-fval(knew) = f
-xpt(:, knew) = xnew
+        fval(knew) = f
+        xpt(:, knew) = xnew
 !ssq = sum(d**2)
-if (itest < 3) then
-    gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)  ! Needs the updated XPT.
-end if
+        if (itest < 3) then
+            gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)  ! Needs the updated XPT.
+        end if
 !
 !     Update FOPT, XSAV, XOPT, KOPT, and RESCON if the new F is the
 !       least calculated value so far with a feasible vector of variables.
 !
-if (f < fopt .and. feasible) then
-    ! Note that XOPT always corresponds to a feasible point.
-    fopt = f
-    xsav = x
-    xopt = xnew
-    kopt = knew
-    if (fopt <= ftarget) then
-        info = FTARGET_ACHIEVED
-        goto 600
-        !goto 616
-    end if
+        if (f < fopt .and. feasible) then
+            ! Note that XOPT always corresponds to a feasible point.
+            fopt = f
+            xsav = x
+            xopt = xnew
+            kopt = knew
+            if (fopt <= ftarget) then
+                info = FTARGET_ACHIEVED
+                goto 600
+                !goto 616
+            end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    dnorm = sqrt(sum(d**2))
+            dnorm = sqrt(sum(d**2))
 
-    ! RESCON holds useful information about the constraint residuals.
-    ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-    ! 2. Otherwise, |RESCON(J)| is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA;
-    ! RESCON is set to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
-    ! RESCON can be updated without evaluating the constraints that are far from being active.
-    where (abs(rescon) >= dnorm + delta)
-        rescon = min(-abs(rescon) + dnorm, -delta)
-    elsewhere
-        rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-    end where
-    rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
+            ! RESCON holds useful information about the constraint residuals.
+            ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
+            ! 2. Otherwise, |RESCON(J)| is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA;
+            ! RESCON is set to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
+            ! RESCON can be updated without evaluating the constraints that are far from being active.
+            where (abs(rescon) >= dnorm + delta)
+                rescon = min(-abs(rescon) + dnorm, -delta)
+            elsewhere
+                rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
+            end where
+            rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
     !!MATLAB:
     !!mask = (rescon >= delta+dnorm);
     !!rescon(mask) = max(rescon(mask) - dnorm, delta);
@@ -565,32 +561,48 @@ if (f < fopt .and. feasible) then
 
 !     Also revise GOPT when symmetric Broyden updating is applied.
 !
-    if (itest < 3) then
-        gopt = gopt + hess_mul(d, xpt, pq, hq)
-    end if
-end if
+            if (itest < 3) then
+                gopt = gopt + hess_mul(d, xpt, pq, hq)
+            end if
+        end if
 !
 !     Replace the current model by the least Frobenius norm interpolant if
 !       this interpolant gives substantial reductions in the predictions
 !       of values of F at feasible points.
 !
-if (itest == 3) then
-    fshift = fval - fval(kopt)
-    pq = omega_mul(idz, zmat, fshift)
-    hq = ZERO
-    !gopt = matprod(bmat(:, 1:npt), w(1:npt))
-    !gopt = gopt + hess_mul(xopt, xpt, pq)
-    gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
-end if
+        if (itest == 3) then
+            fshift = fval - fval(kopt)
+            pq = omega_mul(idz, zmat, fshift)
+            hq = ZERO
+            !gopt = matprod(bmat(:, 1:npt), w(1:npt))
+            !gopt = gopt + hess_mul(xopt, xpt, pq)
+            gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+        end if
 !
 !     If a trust region step has provided a sufficient decrease in F, then
 !       branch for another trust region calculation. Every iteration that
 !       takes a model step is followed by an attempt to take a trust region
 !       step.
 !
-knew = 0
-if (ksave > 0) goto 20
-if (ratio >= TENTH) goto 20
+        knew = 0
+        if (ksave > 0) goto 20
+        if (ratio >= TENTH) goto 20
+    else
+        if (imprv == 0) then
+            imprv = 1
+            goto 530
+        else
+            goto 560
+        end if
+    end if
+else
+    if (delsav > rho .or. (nvala < 5 .and. nvalb < 3)) then
+        goto 530
+    else
+        if (dnorm > ZERO) ksave = -1
+        goto 560
+    end if
+end if
 
 530 continue
 
