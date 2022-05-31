@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 PM07:12:39
+! Last Modified: Tuesday, May 31, 2022 PM09:24:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -111,8 +111,8 @@ real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, dnorm, temp, &
 &        qred
-logical :: feasible, shortd
-integer(IK) :: idz, imprv, itest,  &
+logical :: feasible, shortd, improve_geo
+integer(IK) :: idz, itest,  &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
 real(RP) :: fshift(npt)
@@ -210,7 +210,7 @@ b = bvec
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
 ! See the comments below line number 210
-imprv = 0
+improve_geo = .false.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Set the elements of XBASE, XPT, FVAL, XSAV, XOPT, GOPT, HQ, PQ, BMAT,
@@ -394,7 +394,7 @@ if (knew /= 0 .or. .not. shortd) then
 !       model is recorded in DIFF.
 !
     if (ksave /= 0 .or. (qred > ZERO)) then
-        imprv = 0
+        !improve_geo = .false.
         if (nf >= maxfun) then
             info = MAXFUN_REACHED
             goto 600
@@ -585,27 +585,52 @@ if (knew /= 0 .or. .not. shortd) then
 !       step.
 !
         knew = 0
-        if (ksave > 0) goto 20
-        if (ratio >= TENTH) goto 20
+        !if (ksave > 0 .or. ratio > TENTH) then
+        !    improve_geo = .false.
+        !    goto 20
+        !else
+        !    improve_geo = .true.
+        !    goto 530
+        !end if
+
+        improve_geo = (ksave <= 0 .and. .not. ratio > TENTH)
+        if (improve_geo) goto 530
+        if (.not. improve_geo) goto 20
     else
-        if (imprv == 0) then
-            imprv = 1
-            goto 530
-        else
-            goto 560
-        end if
+        !if (.not. improve_geo) then
+        !    improve_geo = .true.
+        !    goto 530
+        !else
+        !    improve_geo = .false.
+        !    goto 560
+        !end if
+
+        improve_geo = (.not. improve_geo)
+        if (improve_geo) goto 530
+        if (.not. improve_geo) goto 560
     end if
 else
-    if (delsav > rho .or. (nvala < 5 .and. nvalb < 3)) then
-        goto 530
-    else
-        if (dnorm > ZERO) ksave = -1
-        goto 560
+    !if (delsav > rho .or. (nvala < 5 .and. nvalb < 3)) then
+    !    improve_geo = .true.
+    !    goto 530
+    !else
+    !    if (dnorm > ZERO) ksave = -1
+    !    improve_geo = .false.
+    !    goto 560
+    !end if
+
+    improve_geo = (delsav > rho .or. (nvala < 5 .and. nvalb < 3))
+    if (dnorm > 0 .and. .not. improve_geo) then
+        ksave = -1
     end if
+    if (improve_geo) goto 530
+    if (.not. improve_geo) goto 560
 end if
 
 530 continue
 
+!if (improve_geo) then
+improve_geo = .true.
 ! Alternatively, find out if the interpolation points are close enough to the best point so far.
 distsq = max(delta * delta, 4.0_RP * rho * rho)
 xopt = xpt(:, kopt)
@@ -620,6 +645,7 @@ if (knew > 0) goto 20
 knew = 0
 if (fopt < fsave) goto 20
 if (delsav > rho) goto 20
+!end if
 !
 !     The calculations with the current value of RHO are complete.
 !       Pick the next value of RHO.
@@ -628,7 +654,10 @@ if (delsav > rho) goto 20
 ! Zaikun 15-08-2019
 ! See the comments below line number 210
 !  560 IF (RHO .GT. RHOEND) THEN
-560 imprv = 0
+
+560 continue
+
+improve_geo = .false.
 if (rho > rhoend) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     delta = HALF * rho
