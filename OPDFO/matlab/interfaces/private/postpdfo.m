@@ -252,6 +252,11 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
         wmsg = sprintf('%s: the moderated extreme barrier is invoked; function values that are NaN or larger than hugefun = %g are replaced by hugefun.', invoker, hugefun);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
+    elseif ~isempty(fhist) && any(fhist < -hugefun)
+        wid = sprintf('%s:HugeNegativeF', invoker);
+        wmsg = sprintf('%s: fhist contains values that are below %g. Check the objective function to see whether it is expected.', invoker, -hugefun);
+        warning(wid, '%s', wmsg);
+        output.warnings = [output.warnings, wmsg];
     end
 end
 
@@ -288,6 +293,10 @@ if ~(isempty(chist) && ismember(solver, all_solvers('without_constraints'))) && 
         '%s: UNEXPECTED ERROR: %s returns a chist that is not a real vector of length min(nf, maxfhist).', invoker, solver);
 end
 if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
+    if any(chist < 0)
+        error(sprintf('%s:InvalidChist', invoker), ...
+            '%s: UNEXPECTED ERROR: %s returns a chist that contains negative values.', invoker, solver);
+    end
     if strcmp(solver, 'cobyla') && (any(chist > hugecon) || any(isnan(chist)))
         % Public/unexpected error
         error(sprintf('%s:InvalidChist', invoker), ...
