@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 PM11:44:40
+! Last Modified: Tuesday, May 31, 2022 PM11:53:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -236,10 +236,8 @@ if (is_nan(f) .or. is_posinf(f)) then
     x = xbase + xopt
     f = fopt
     call rangehist(nf, xhist, fhist, chist)
-    !fopt = fval(kopt)
     info = NAN_INF_F
     return
-    !goto 600
 end if
 ! Note that we should NOT compare F and FTARGET, because X may not be feasible.
 if (fval(kopt) <= ftarget) then
@@ -248,13 +246,8 @@ if (fval(kopt) <= ftarget) then
     x = xbase + xopt
     f = fopt
     call rangehist(nf, xhist, fhist, chist)
-    !f = fval(kopt)
-    !x = xsav
-    !fopt = f
-    !xopt = x
     info = FTARGET_ACHIEVED
     return
-    !goto 600
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
