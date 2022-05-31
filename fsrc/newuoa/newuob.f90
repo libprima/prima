@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, May 28, 2022 PM08:57:03
+! Last Modified: Tuesday, May 31, 2022 PM11:34:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -168,8 +168,8 @@ end if
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
-x = xbase + xopt  ! Set X.
-f = fopt  ! Set F.
+x = xbase + xopt
+f = fopt
 
 ! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
