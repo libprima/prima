@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM09:24:38
+! Last Modified: Wednesday, June 01, 2022 PM09:32:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -166,6 +166,7 @@ end if
 ! Calculation starts !
 !====================!
 
+info = INFO_DFT
 sl = sl_in
 su = su_in
 
@@ -708,7 +709,6 @@ end do
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
 if (info == SMALL_TR_RADIUS .and. ntrits == -1 .and. nf < maxfun) then
-    info = INFO_DFT  !!?? See NEWUOA
     x = min(max(xl, xbase + xnew), xu)  ! XNEW = XOPT + D??? See NEWUOA, LINCOA.
     x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
     x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
