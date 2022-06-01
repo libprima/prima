@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 AM10:23:57
+! Last Modified: Wednesday, June 01, 2022 AM11:23:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,7 +104,7 @@ real(RP) :: delbar, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
-logical :: shortd, improve_geo, rescued
+logical :: shortd, improve_geo, rescued, geo_step
 
 
 ! Sizes.
@@ -227,6 +227,7 @@ nfsav = nf
 ratio = -ONE
 shortd = .false.
 improve_geo = .false.
+geo_step = .false.
 rescued = .false.
 
 ! Generate the next point in the trust region that provides a small value of the quadratic model
@@ -242,9 +243,16 @@ rescued = .false.
 ! including uninitialized indices. STILL NECESSARY???
 !--------------------------------------------------------------------------------------------------!
 
+
+knew = 0_IK
+
 60 continue
 
-if (.not. improve_geo) then
+if (.not. geo_step) then
+!if (.not. improve_geo) then
+!if (.not. geo_step) then
+!if (knew == 0) then
+!if (ntrits > 0 .or. knew == 0) then
     if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
         info = NAN_MODEL
         goto 720
@@ -260,7 +268,7 @@ if (.not. improve_geo) then
         dsquare = (TEN * rho)**2
         if (nf <= nfsav + 2) then
             improve_geo = .true.
-            goto 650
+            !goto 650
             !end if
         else
 
@@ -272,7 +280,7 @@ if (.not. improve_geo) then
             frhosq = 0.125_RP * rho * rho
             if (crvmin > ZERO .and. errbig > frhosq * crvmin) then
                 improve_geo = .true.
-                goto 650
+                !goto 650
             else
                 bdtol = errbig / rho
 
@@ -285,10 +293,10 @@ if (.not. improve_geo) then
         !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
                 if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
                     improve_geo = .true.
-                    goto 650
+                    !goto 650
                 else
                     improve_geo = .false.
-                    goto 680
+                    !goto 680
                 end if
             end if
         end if
@@ -305,9 +313,10 @@ end if
 !90 continue
 
 
-if (improve_geo .or. .not. shortd) then
+if (geo_step .or. .not. shortd) then
 
-    improve_geo = .false.
+    !improve_geo = .false.
+    geo_step = .false.
 
 
     if (sum(xopt**2) >= 1.0E3_RP * dsq .and. .not. rescued) then
@@ -363,8 +372,8 @@ if (improve_geo .or. .not. shortd) then
         denom = alpha * beta + vlag(knew)**2
 
         ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-        if (.not. (denom > HALF * vlag(knew)**2)) then
-            !if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
+        !if (.not. (denom > HALF * vlag(knew)**2)) then
+        if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
             if (nf <= nresc) then
                 info = DAMAGING_ROUNDING
                 goto 720
@@ -413,7 +422,8 @@ if (improve_geo .or. .not. shortd) then
                     goto 60
                 end if
                 rescued = .true.
-                improve_geo = .true.
+                !improve_geo = .true.
+                geo_step = .true.
                 goto 60
                 !--------------------------------------------------------------------------------------!
                 ! After RESCUE, Powell's code takes immediately another GEOSTEP. If the geometry is then
@@ -458,8 +468,8 @@ if (improve_geo .or. .not. shortd) then
 
         ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet we prefer to require
         ! KNEW > 0 explicitly.
-        if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-            !if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
+        !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
+        if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
             if (nf <= nresc) then
                 info = DAMAGING_ROUNDING
                 goto 720
@@ -705,10 +715,12 @@ if (improve_geo) then
         delbar = max(min(TENTH * dist, delta), rho)
         dsq = delbar * delbar
 
-        improve_geo = .true.
+        !improve_geo = .true.
+        geo_step = .true.
         goto 60
     else
-        improve_geo = .false.
+        !improve_geo = .false.
+        geo_step = .false.
     end if
     if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) goto 60
 end if
