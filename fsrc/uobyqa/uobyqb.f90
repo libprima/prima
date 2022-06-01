@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM03:13:00
+! Last Modified: Wednesday, June 01, 2022 PM03:34:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -365,7 +365,6 @@ if (.not. geo_step) then
         knew = -1
         errtol = HALF * crvmin * rho * rho
         if (nf <= npt + 9) errtol = ZERO
-        goto 290
     end if
 end if
 
@@ -533,7 +532,6 @@ end if
 !     Alternatively, find out if the interpolation points are close
 !     enough to the best point so far.
 !
-290 continue
 
 if (improve_geo) then
 
@@ -577,10 +575,8 @@ if (improve_geo) then
     end do
 
     if (geo_step .or. dnorm > rho) goto 70
-    goto 600
 end if
 
-600 continue
 if (rho > rhoend) then
     ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the corresponding
     ! changes to the gradients of the Lagrange functions and the quadratic model.
