@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 AM02:31:29
+! Last Modified: Wednesday, June 01, 2022 AM10:23:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -258,28 +258,39 @@ if (.not. improve_geo) then
     if (shortd) then
         ntrits = -1
         dsquare = (TEN * rho)**2
-        if (nf <= nfsav + 2) goto 650
+        if (nf <= nfsav + 2) then
+            improve_geo = .true.
+            goto 650
+            !end if
+        else
 
 ! The following choice between labels 650 and 680 depends on whether or not our work with the
 ! current RHO seems to be complete. Either RHO is decreased or termination occurs if the errors in
 ! the quadratic model at the last three interpolation points compare favourably with predictions of
 ! likely improvements to the model within distance HALF*RHO of XOPT.
-        errbig = max(diffa, diffb, diffc)
-        frhosq = 0.125_RP * rho * rho
-        if (crvmin > ZERO .and. errbig > frhosq * crvmin) goto 650
-        bdtol = errbig / rho
+            errbig = max(diffa, diffb, diffc)
+            frhosq = 0.125_RP * rho * rho
+            if (crvmin > ZERO .and. errbig > frhosq * crvmin) then
+                improve_geo = .true.
+                goto 650
+            else
+                bdtol = errbig / rho
 
-        bdtest = bdtol
-        bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
-        bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
-        hqdiag = diag(hq)
-        curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
-        where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
-    !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
-        if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
-            goto 650
-        else
-            goto 680
+                bdtest = bdtol
+                bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
+                bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
+                hqdiag = diag(hq)
+                curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
+                where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
+        !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
+                if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
+                    improve_geo = .true.
+                    goto 650
+                else
+                    improve_geo = .false.
+                    goto 680
+                end if
+            end if
         end if
     else
         ntrits = ntrits + 1_IK
@@ -669,32 +680,38 @@ if (improve_geo .or. .not. shortd) then
 ! Alternatively, find out if the interpolation points are close enough to the best point so far.
     dsquare = max((TWO * delta)**2, (TEN * rho)**2)
 
+    improve_geo = .true.
+
 end if
 
 650 continue
 
-distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
-dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
+if (improve_geo) then
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
+    dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
 
 ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th interpolation
 ! point within distance DELBAR of XOPT. It is reached via label 90. Otherwise, there is a branch to
 ! label 60 for another trust region iteration, unless the calculations with the current RHO are
 ! complete.
-if (knew > 0) then
-    dist = sqrt(dsquare)
-    if (ntrits == -1) then
-        delta = min(TENTH * delta, HALF * dist)
-        if (delta <= 1.5_RP * rho) delta = rho
-    end if
-    ntrits = 0
-    delbar = max(min(TENTH * dist, delta), rho)
-    dsq = delbar * delbar
+    if (knew > 0) then
+        dist = sqrt(dsquare)
+        if (ntrits == -1) then
+            delta = min(TENTH * delta, HALF * dist)
+            if (delta <= 1.5_RP * rho) delta = rho
+        end if
+        ntrits = 0
+        delbar = max(min(TENTH * dist, delta), rho)
+        dsq = delbar * delbar
 
-    improve_geo = .true.
-    goto 60
+        improve_geo = .true.
+        goto 60
+    else
+        improve_geo = .false.
+    end if
+    if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) goto 60
 end if
-if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) goto 60
 
 680 continue
 
