@@ -1,0 +1,486 @@
+%\documentclass[11pt,a4paper]{article}  % Use this line if this document will be released
+\documentclass[11pt,a4paper,draft]{article}  % Use this line if this document is a draft
+\usepackage{ifdraft}
+
+
+%% Bibliography
+\newcommand{\bibfile}{\jobname.bib}  % Name of the BibTeX file.
+\newcommand{\universalbib}{/home/zaikunzhang/Bureau/bibliographie/ref.bib}
+\ifdraft{\IfFileExists{\universalbib}{\renewcommand{\bibfile}{\universalbib}}{}}{}
+\newcommand{\iscite}{0}  % \iscite=0: without citation; \iscite=1: with citation
+\def\oldcite{} \let\oldcite=\cite \def\cite{\renewcommand\iscite{1}\oldcite}
+
+
+%% Geometry
+%\voffset=-1.5cm \hoffset=-1.4cm \textwidth=16cm \textheight=22.0cm  % Luis' setting
+\usepackage[a4paper, textwidth=16.0cm, textheight=22.0cm]{geometry}
+\renewcommand{\baselinestretch}{1.2}
+
+
+%% Basic packages
+\usepackage{amsmath,amsthm,amssymb,amsfonts,mathtools}
+\usepackage{empheq}
+\usepackage{color}
+\usepackage[bbgreekl]{mathbbol}
+\DeclareSymbolFontAlphabet{\mathbbm}{bbold}
+\DeclareSymbolFontAlphabet{\mathbb}{AMSb}
+\usepackage{bbm}
+\usepackage{upgreek}
+\usepackage{accents}
+\usepackage{xspace}
+\usepackage{rotating}
+\usepackage{multirow,booktabs}
+\usepackage[en-US]{datetime2}
+
+
+%% Graph, tikz and pgf
+%\usepackage{subfigure}
+\setlength{\unitlength}{1mm}
+% The \unitlength command is a Length command. It defines the units used in the Picture Environment.
+\usepackage{graphicx}
+%\usepackage{tikz,tikzscale,pgf,pgfarrows,pgfnodes,filecontents,tikz-cd}
+\usepackage{tikz,tikzscale,pgf}
+\usetikzlibrary{arrows,arrows.meta,patterns,positioning,decorations.markings,shapes}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage[justification=centering]{caption}
+\usepgfplotslibrary{fillbetween}
+\pgfplotsset{compat=1.11}
+
+%% Format of the table of content
+\usepackage[normalem]{ulem}
+\usepackage[toc,page]{appendix}
+\renewcommand{\appendixpagename}{\Large{Appendix}}
+\renewcommand{\appendixname}{Appendix}
+\renewcommand{\appendixtocname}{Appendix}
+%\usepackage{sectsty}
+\setcounter{tocdepth}{2}
+
+
+%% Turn off some unharmful warnings
+\usepackage{silence}
+\WarningFilter{hyperref}{Draft mode on}
+\WarningFilter{refcheck}{Unused label}
+\WarningFilter{microtype}{`draft' option active}
+\WarningFilter{latex}{Writing or overwriting file} % Mute the warning about 'writing/overwriting file'
+\WarningFilter{latex}{Writing file} % Mute the warning about 'writing/overwriting file'
+\WarningFilter{latex}{Tab has} % Mute the warning about 'Tab has been converted to Blank Space'
+
+
+%% Enumerate and itemize
+\usepackage{eqlist}
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=*}
+\setlist[enumerate]{leftmargin=*}
+
+
+%% Hyperref
+\definecolor{darkblue}{rgb}{0,0.1,0.5}
+\definecolor{darkgreen}{rgb}{0,0.5,0.1}
+\definecolor{darkyellow}{rgb}{0.65,0.65,0.01}
+\usepackage{hyperref}
+\hypersetup{colorlinks, linkcolor=darkblue, anchorcolor=darkblue, citecolor=darkblue, urlcolor=darkblue}
+\ifdraft{\usepackage{refcheck}}{} % Check unused labels
+\usepackage{url}
+
+
+%% Algorithm environment
+\usepackage[section]{algorithm}
+\usepackage{algpseudocode,algorithmicx}
+\newcommand{\INPUT}{\textbf{Input}}
+\newcommand{\FOR}{\textbf{For}~}
+\algrenewcommand\algorithmicrequire{\textbf{Input:}}
+\algrenewcommand\algorithmicensure{\textbf{Output:}}
+\algrenewcommand\alglinenumber[1]{\normalsize #1.}
+\newcommand*\Let[2]{\State #1 $=$ #2}
+
+
+%% Theorem-like environments
+\newtheorem{theorem}{Theorem}%[section]
+\newtheorem{conjecture}{Conjecture}%[section]
+\newtheorem{corollary}{Corollary}%[section]
+\newtheorem{exercise}{Exercise}%[section]
+\newtheorem{lemma}{Lemma}%[section]
+\newtheorem{problem}{Problem}%[section]
+\newtheorem{proposition}{Proposition}%[section]
+\newtheorem{remark}{Remark}%[section]
+\newtheorem{assumption}{Assumption}%[section]
+\newtheorem{example}{Example}%[section]
+% Change theoremstyle to ``definition'', which uses textnormal for the text.
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}%[section]
+% proof
+\usepackage{xpatch}
+\xpatchcmd{\proof}{\itshape}{\normalfont\proofnamefont}{}{}
+\newcommand{\proofnamefont}{\bfseries}
+
+%% Equation numbering
+\numberwithin{equation}{section}
+
+
+%% Fine tuning
+\usepackage{microtype}
+\usepackage[nobottomtitles*]{titlesec} % No section title at the bottom of pages
+% Prevent footnote from running to the next page
+\interfootnotelinepenalty=10000
+% No line break in inline math
+\interdisplaylinepenalty=10000
+\relpenalty=10000
+\binoppenalty=10000
+% No widow or orphan lines
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+
+
+% Use @ to put 1 math unit (mu) in math
+% See https://nhigham.com/2013/01/07/fine-tuning-spacing-in-latex-equations/
+% and also TeXbook p. 155.
+\mathcode`@="8000{\catcode`\@=\active\gdef@{\mkern1mu}}
+
+
+%% Operators, commands
+\usepackage{relsize}
+\usepackage{nccmath}
+\DeclareMathOperator*{\mcap}{\medmath{\bigcap}}
+\DeclareMathOperator*{\mcup}{\medmath{\bigcup}}
+%\renewcommand{\cap}{\mathsmaller{\bigcap}}
+%\renewcommand{\cap}{\mcap}
+
+\newcommand{\ceil}[1]{ {\lceil{#1}\rceil} }
+\newcommand{\floor}[1]{ {\lfloor{#1}\rfloor} }
+
+\newcommand{\mbarr}[1]{\mskip.5\thinmuskip\overline{\mskip-.5\thinmuskip {#1} \mskip-.5\thinmuskip}\mskip.5\thinmuskip} % overline short
+\newcommand{\mbar}[1]{\,\overline{\!{#1}\!}\,} % overline short italic
+
+\newcommand{\xopt}{\mbar}
+\DeclareMathOperator{\xdist}{\updelta}
+
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\sort}{sort}
+\DeclareMathOperator*{\Argmax}{Argmax}
+\DeclareMathOperator*{\Argmin}{Argmin}
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\diag}{diag}
+\DeclareMathOperator*{\Diag}{Diag}
+\DeclareMathOperator{\Span}{span}
+\DeclareMathOperator{\med}{med}
+\DeclareMathOperator{\essinf}{essinf}
+\DeclareMathOperator{\cl}{cl}
+\DeclareMathOperator{\vol}{vol}
+\DeclareMathOperator{\comp}{C}
+\DeclareMathOperator{\sign}{sign}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\range}{range}
+\DeclareMathOperator{\card}{card}
+\DeclareMathOperator{\diam}{diam}
+\DeclareMathOperator{\dist}{dist}
+\newcommand{\disth}{{\operatorname{\updelta_{\sss{H}}}}}
+%\newcommand{\ind}[2]{\operatorname{\mathbbm{1}}\;\!\!\!\big(#2\in#1\big)}
+\DeclareMathOperator{\ind}{\mathbbm{1}}
+\newcommand{\shortd}{\mathsf{S}}
+\newcommand{\redrho}{\mathtt{R}}
+\newcommand{\impgeo}{\mathsfit{G}}
+%\newcommand*{\defeq}{\stackrel{\mbox{\normalfont\tiny{\textnormal{def}}}}{=}}
+\newcommand\defeq{\mathrel{\overset{\makebox[0pt]{\mbox{\normalfont\tiny\sffamily def}}}{=}}}
+
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\BB}{\mathcal{B}}
+\renewcommand{\SS}{\mathbb{S}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\FF}{\mathbb{F}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\Int}{\mathcal{X}}
+\newcommand{\Qua}{\mathcal{Q}}
+\newcommand{\sss}[1]{{\scriptscriptstyle{#1}}}
+\newcommand{\add}{{\textrm{a}}}
+\newcommand{\drop}{{\textrm{d}}}
+\newcommand{\new}{{\sss{+}}}
+\newcommand{\fin}{{\textrm{end}}}
+\newcommand{\sK}{{\scriptscriptstyle{K}}}
+\newcommand{\sT}{{\scriptscriptstyle{T}}}
+\newcommand{\fro}{{\scriptscriptstyle{\textrm{F}}}}
+\newcommand{\sob}{{\scriptscriptstyle{\textrm{S}}}}
+\newcommand{\pow}{{\scriptscriptstyle{\textrm{P}}}}
+\newcommand{\Proj}{\mathrm{Proj}}
+\newcommand{\Projs}{\mathrm{P}^\sob}
+\newcommand{\trs}{{\scriptscriptstyle{\mathsf{T}}}}
+\newcommand{\hmt}{{\scriptscriptstyle{{\mathsf{H}}}}}
+\newcommand{\pin}{{\scriptscriptstyle{{\mathsf{+}}}}}
+\newcommand{\inv}{{-1}}
+\newcommand{\adj}{*}
+
+\newcommand{\cs}{\text{c}}
+\newcommand{\hp}{\circ}
+\newcommand{\cc}{\sss{\textnormal{C}}}
+\newcommand{\dec}{\sss{\textnormal{D}}}
+\newcommand{\cauchy}{\sss{\textnormal{C}}}
+\newcommand{\scauchy}{\sss{\textnormal{S}}}
+\newcommand{\crit}{\textnormal{crit}}
+\newcommand{\rsg}{\hat{\partial}}
+\newcommand{\gsg}{\partial}
+\newcommand{\dom}{\textnormal{dom}}
+\newcommand{\tf}{{\textnormal{f}}}
+\newcommand{\tg}{{\textnormal{g}}}
+\newcommand{\ts}{{\textnormal{s}}}
+\newcommand{\st}{\textnormal{s.t.}}
+\newcommand{\etc}{{etc.}}
+\newcommand{\ie}{{i.e.}}
+\newcommand{\eg}{{e.g.}}
+\newcommand{\etal}{{et al.}}
+\newcommand{\iid}{\text{i.i.d.}}
+
+\newcommand{\me}{\mathrm{e}}
+\newcommand{\md}{\mathrm{d}}
+\newcommand{\mi}{\mathrm{i}}
+\newcommand{\lev}{\mathrm{lev}}
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\bx}{\mathbf{u}}
+%\newcommand{\bb}{\mathbf{f}}
+\newcommand{\bb}{\mathbf{r}}
+\newcommand{\nov}{n_{\textnormal{o}}}
+\xspaceaddexceptions{]\}}
+% tex.stackexchange.com/questions/15252/why-does-xspace-behave-differently-for-parenthesis-vs-braces-brackets
+\newcommand{\MATLAB}{\textsc{Matlab}\xspace}
+\newcommand{\octave}{\mbox{GNU Octave}\xspace}
+\newcommand{\prblm}{\texttt}
+\DeclareMathAlphabet{\mathsfit}{T1}{\sfdefault}{\mddefault}{\sldefault}
+\SetMathAlphabet{\mathsfit}{bold}{T1}{\sfdefault}{\bfdefault}{\sldefault}
+\newcommand{\prbb}{\mathsfit{p}}
+\newcommand{\pp}{\mathsf{p}}
+\newcommand{\qq}{\mathsf{q}}
+\newcommand{\ttt}{\mathsfit{t}}
+\newcommand{\tol}{\varepsilon}
+\newcommand{\bt}{\mathbf{t}}
+\newcommand{\br}{\mathbf{r}}
+\newcommand{\dd}{\mathbf{d}}
+\newcommand{\ii}{\mathbf{i}}
+\newcommand{\jj}{\mathbf{j}}
+\newcommand{\xx}{\mathbf{x}}
+\renewcommand{\pp}{\mathbf{p}}
+\renewcommand{\ggg}{\mathbf{g}}
+\newcommand{\GG}{\mathbf{G}}
+\renewcommand{\Pr}{\mathbb{P}}
+
+% mathlcal font
+\DeclareFontFamily{U}{dutchcal}{\skewchar\font=45 }
+\DeclareFontShape{U}{dutchcal}{m}{n}{<-> s*[1.0] dutchcal-r}{}
+\DeclareFontShape{U}{dutchcal}{b}{n}{<-> s*[1.0] dutchcal-b}{}
+\DeclareMathAlphabet{\mathlcal}{U}{dutchcal}{m}{n}
+\SetMathAlphabet{\mathlcal}{bold}{U}{dutchcal}{b}{n}
+
+% mathscr font (supporting lowercase letters)
+%\usepackage[scr=dutchcal]{mathalfa}
+%\usepackage[scr=esstix]{mathalfa}
+%\usepackage[scr=boondox]{mathalfa}
+%\usepackage[scr=boondoxo]{mathalfa}
+\usepackage[scr=boondoxupr]{mathalfa}
+%\newcommand{\model}{\mathscr{h}}
+\newcommand{\model}{\tilde{f}}
+\newcommand{\rmod}{F}
+
+\newcommand{\Set}[1]{\mathcal{#1}}
+\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it} % The mathpzc font
+\newcommand{\slv}{\mathpzc}
+% mathpzc looks great, but it stops working on 19 Feb 2020 for no reason.
+%\newcommand{\slv}{\mathscr}
+\newcommand{\software}{\texttt}
+\DeclareMathOperator{\eff}{\mathsf{e}\;\!}
+\DeclareMathOperator{\Eff}{\mathsf{E}\;\!}
+\newcommand{\out}{{\text{out}}}
+
+
+%% Commands for revision
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\green}[1]{\textcolor{darkgreen}{#1}}
+\newcommand{\TYPO}[1]{{\color{orange}{#1}}}
+\newcommand{\MISTAKE}[1]{{\color{violet}{#1}}}
+\newcommand{\REPHRASE}[1]{{\color{darkgreen}{#1}}}
+\newcommand{\REVISION}[1]{{\color{blue}{#1}}}
+\newcommand{\REVISIONred}[1]{{\color{red}{#1}}}
+\newcommand{\COMMENT}[1]{\textcolor{brown}{{\small{(comment: #1)}}}}
+%\newcommand{\REVISION}[1]{#1}
+%\newcommand{\REVISIONred}[1]{#1}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Notes on NEWUOA}
+
+\date{\DTMnow}
+
+\author{Zaikun Zhang
+    \thanks{Hong Kong Polytechnic University, \url{zaikun.zhang@polyu.edu.hk}}
+    %\and
+    %Author2
+    %\thanks{Information2}
+}
+
+
+\begin{document}
+
+\maketitle
+
+%\begin{abstract}
+%\end{abstract}
+
+%\textbf{Keywords}: Keyword1, Keyword2
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+We use~$\Int_k$ to denote the set of interpolation points at iteration~$k$.
+In addition, we define~$\xopt{\Int_k}$ to be a point in~$\Int_k$ such that
+\begin{equation}
+    \label{eq:xopt}
+    f(\xopt{\Int_k}) = \min\{f(x) \mathrel{:} x\in \Int_k\}.
+\end{equation}
+If multiple points attain the minimum, then we take the earliest one visited by the algorithm.
+Meanwhile, we define
+\begin{equation}
+    \label{eq:xdist}
+    \xdist(\Int_k) = \max\{\|x-\xopt{\Int_k}\| \mathrel{:} x\in \Int_k\}.
+\end{equation}
+
+Let~$\Qua$ be the linear space of all the $n$-variable polynomials with degree at most two. The
+elements in~$\Qua$ will be referred to as quadratics, even though they may be linear or constant.
+Given~$\Int_k$, we denote
+\begin{equation}
+    \label{eq:quak}
+    \Qua_k = \{Q\in\Qua \mathrel{:} Q(x) = f(x)~\text{for}~x\in\Int_k\},
+\end{equation}
+which is the set of quadratics that interpolate~$f$ at~$\Int_k$. Note that~$\Qua_k$ is an affine
+subset of~$\Qua$.
+%Similarly,~$\Qua_k^\new = \{Q\in\Qua \mathrel{:} Q(x) = f(x)~\text{for}~x\in\Int_k^\new\}$.
+\begin{equation}
+    \label{eq:snorm}
+    \|Q\|_\sob = \|\nabla^2 Q\|_\fro
+\end{equation}
+\begin{equation*}
+    \Proj_\mathcal{C}^\pow \quad
+    \Projs_{\mathcal{C}}(\Phi) = \argmin\{\|Q-\Phi\|_\sob \mathrel{:} Q\in\mathcal{C}\}
+\end{equation*}
+
+
+
+
+%\usepackage{algorithm, algpseudocode, algorithmicx}
+\begin{algorithm}[htbp!]
+    \caption{\label{alg:optim}OPTimization based on Interpolation Models (OPTIM)}
+    Input $\Delta_0\in (0,+\infty)$, $\tau>0$, $m\in \{1, 2, \dots, (n+1)(n+2)/2\}$,
+    and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) \le \kappa_0$. Set~$k=0$.
+    \begin{algorithmic}[1]
+        \State \textbf{Model construction}.
+        Pick~$Q_k \in \Qua_k$.
+        \State \textbf{Trust-region step evaluation}.
+        Calculate
+        \begin{equation}
+         \label{eq:xadd}
+         x_k^\add \approx \argmin\{Q_k(x)\mathrel{:} \|x-\xopt{\Int_k}\|\le \Delta_k\}.
+        \end{equation}
+        If~$\|x_k^\add-\xopt{\Int_k}\| < \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$;
+        otherwise, update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$r_k = [f(\xopt{\Int_k})
+        - f(x_k^\add)]/[Q_k(\xopt{\Int_k}) - Q_k(x_k^\add)]$.
+        \State \textbf{Interpolation set update}.
+        Let
+        \begin{equation}
+            \label{eq:xdrop}
+            x_k^\drop \approx \argmin\{\kappa(\Int_k\cup x_k^\add\setminus x) \mathrel{:} x \in
+            \Int_k\}.
+        \end{equation}
+        If~$\|x_k^\add-\xopt{\Int_k}\| \ge \alpha\Delta_k$
+        and either $r_k>\eta_0$ or $\kappa(\Int_k\cup x_k^\add \setminus x_k^\drop) \le \kappa_0$,
+        then set~$\Int_{k+1} = \Int_k\cup x_k^\add\setminus x_k^\drop$.
+        \State \textbf{Geometry improvement}.
+        If~$\|x_k^\add-\xopt{\Int_k}\|< \alpha \Delta_k$, or if~$r_k\le \eta_0$ and $\kappa(\Int_k
+        \cup x_k^\add\setminus x_k^\drop) > \kappa_0$, then set~$\Int_{k+1} = \Int_k\cup
+        y_k^\add\setminus y_k^\drop$ with
+          \begin{align}
+              \label{eq:ydrop}
+              y_k^\drop &= \argmax\{\|y-\xopt{\Int_k}\| \mathrel{:} y \in \Int_k\}, \\
+              \label{eq:yadd}
+              y_k^\add &\approx \argmin\{\kappa(\Int_k \cup y \setminus y_k^\drop) \mathrel{:}
+                  \|y-\xopt{\Int_k}\|\le
+              \Delta_k\}.
+          \end{align}
+    \end{algorithmic}
+\end{algorithm}
+
+
+%\usepackage{algorithm, algpseudocode, algorithmicx}
+\begin{algorithm}[htbp!]
+    \caption{\label{alg:newuoa}NEWUOA}
+    Input $\Delta_0\in (0,+\infty)$, $\rho_{\fin}>0$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
+    and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) \le \kappa_0$.
+    Define~$Q_0 = \Projs_{\Qua_0}(0)$.
+    Set~$k=0$.
+    \begin{algorithmic}[1]
+        \State \textbf{Trust-region step evaluation}.
+        Set
+        \begin{align}
+             \label{eq:xaddn}
+             x_k^\add \approx &\argmin\{Q_k(x)\mathrel{:} \|x-\xopt{\Int_k}\|\le \Delta_k\}.\\
+            \label{eq:shortd}
+            \shortd = &\ind(\|x_k^\add-\xopt{\Int_k}\| < \rho_k/2),\\
+            \label{eq:redrho}
+            \redrho = & \ind(\shortd=1\text{ and the errors in recent models are small}).
+        \end{align}
+        If~$\redrho = 1$, then let~$\Int_{k+1} = \Int_k$, $Q_{k+1} = Q_k$, and go to step 4.
+        If~$\redrho = 0$ and~$\shortd = 1$, then set~$\Delta_{k+1} = \max\{\Delta_k/10,\, \rho_k\}$.
+        If~$\shortd = 0$, then evaluate $r_k = [f(\xopt{\Int_k})-f(x_k^\add)]/[Q_k(\xopt{\Int_k})-Q_k(x_k^\add)]$ and update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$r_k$.
+        \State \textbf{Interpolation set update}.
+        Let
+        \begin{equation}
+            \label{eq:xdropn}
+            x_k^\drop \approx \argmin\{\kappa(\Int_k\cup x_k^\add\setminus x) \mathrel{:} x \in
+            \Int_k\}.
+        \end{equation}
+        If~$\shortd = 0$ and either~$r_k>0$ or $\kappa(\Int_k\cup x_k^\add \setminus x_k^\drop) \le
+        \kappa_0$, then set
+        \begin{equation}
+            \label{eq:updateq1}
+            \Int^{\new}_{k} = \Int_k\cup x_k^\add\setminus x_k^\drop, \quad
+            {Q}^{\new}_k = \Projs_{\Qua_k^\new}(Q_k);
+        \end{equation}
+        otherwise, $\Int_k^\new = \Int_k$ and~$Q_k^\new =Q_k$.
+        \State \textbf{Geometry improvement}.
+        Let~$\Delta^{\new}_k = \max\{\min\{\xdist(\Int_k^\new)/10,\, \Delta_{k+1}/2\},\,\rho_{k}\}$,
+        and
+          \begin{align}
+              \label{eq:ydropn}
+              y_k^\drop &= \argmax\{\|y-\xopt{\Int^{\new}_k}\| \mathrel{:} y \in \Int^{\new}_k\},\\
+              \label{eq:yaddn}
+              y_k^\add &\approx \argmin\{\kappa(\Int^{\new}_k \cup y \setminus y_k^\drop) \mathrel{:}
+              \|y-\xopt{\Int^{\new}_k}\|\le \Delta^{\new}_k\}.
+          \end{align}
+        If~$\xdist(\Int^\new_k)\ge 2\Delta_{k+1}$ and either $\shortd = 1$ or $r_k < 1/10$, then set
+          \begin{align}
+            \label{eq:updateq2}
+              \Int_{k+1} = \Int^{\new}_k\cup y_k^\add\setminus y_k^\drop,
+              \quad
+              Q_{k+1} = \Projs_{\Qua_{k+1}}(Q_k^\new) ;
+          \end{align}
+          otherwise, $\Int_{k+1} = \Int_k^\new$ and~$Q_{k+1} = Q_k^{\new}$.
+          If~$\xdist(\Int_k^{\new}) < 2\Delta_{k+1}$, $\max\{\Delta_{k+1},\, \|x_k^\add
+          - \xopt{\Int_k}\|\}\le \rho_k$, and either $\shortd=1$ or~$r_k\le 0$,
+          then set~$\redrho$ to~$1$.
+       \State \textbf{Resolution enhancement}.
+       If~$\redrho = 0$, then set~$\rho_{k+1} = \rho_k$.
+       If~$\redrho = 1$ and~$\rho_k >\rho_{\fin}$, then reduce~$\rho_k$ by about a factor of~$10$ to
+       obtain~$\rho_{k+1}$ and set~$\Delta_{k+1} = \max\{\rho_{k}/2,\, \rho_{k+1}\}$.
+       If~$\redrho = 1$ and~$\rho_k\le\rho_{\fin}$, then exit.
+    \end{algorithmic}
+\end{algorithm}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% References
+% Include references only if \iscite=1, i.e., there are citations.
+\ifnum\iscite=1
+    \small
+    \bibliography{\bibfile}
+    \bibliographystyle{plain}
+\fi
+
+%% The end
+\end{document}

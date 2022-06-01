@@ -1,0 +1,732 @@
+# This Makefile tests the modern-Fortran version of Powell's solvers on multiple compilers.
+#
+# The following compilers are tested:
+# 9: G95 (compilation only; no compilation of the testing code, which contains F03 constructs unsupported by G95)
+# a: Absoft af95
+# d: AOCC flang
+# f: Classic flang
+# g: GNU gfortran
+# l: Lahey lf95 (compilation only; no compilation of the testing code, which contains F03 constructs unsupported by lf95)
+# n: NAG nagfor
+# i: Intel ifort
+# s: Oracle sunf95
+# v: NVIDIA nvfortran
+# x: Intel ifx
+#
+# The following tests are available, where C = 9, a, d, f, g, l, n, i, s, v, x, and N = 2, 4, 8:
+# Ctest: test with compiler C
+# Ctest_c: test with compiler C; compilation only (do not run the binary)
+# Ctest_iN: test with compiler C and integer kind INT(N*8)
+# Ctest_iN_c: test with compiler C and integer kind INT(N*8); compilation only
+#
+# Coded by Zaikun ZHANG (www.zhangzk.net).
+#
+# Started: September 2021
+#
+# Last Modified: February 2022
+####################################################################################################
+
+#$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
+
+SHELL = /bin/bash
+
+####################################################################################################
+# Variables
+
+# Fortran standard to follow. We aim to make the code compatible with F2003 and above.
+FS ?= 03
+FSTD := 20$(FS)
+
+# Default options for all the compilers.
+FFLAGS1 := -O3
+FFLAGS2 := -g -O0
+
+# Log file stamp.
+RANDNUM := $(shell awk 'BEGIN{srand();printf("%d", 65536*rand())}')
+TIME := $(shell date +%Y.%m.%d_%H.%M.%S)
+STAMP := $(TIME)_$(RANDNUM)
+
+# Test directory.
+TEST_SOLVER_DIR := $(CURDIR)
+TEST_DIR := $(TEST_SOLVER_DIR)/..
+# Log directory.
+LOG_DIR := $(TEST_SOLVER_DIR)/log
+# Trash directory.
+TRASH_DIR := $(TEST_SOLVER_DIR)/trash
+# Common directory.
+COMMON := common
+COMMON_DIR := $(TEST_DIR)/../$(COMMON)
+# Solver directory.
+SOLVER_DIR := $(TEST_DIR)/../$(SOLVER)
+# Test suite directory.
+TESTSUITE := testsuite
+TESTSUITE_DIR := $(TEST_DIR)/$(TESTSUITE)
+# Source directories.
+SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR) $(TESTSUITE_DIR)
+# Driver directory.
+DRIVER_DIR := $(TEST_DIR)
+
+# Sources.
+COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
+SOLVER_SRC := $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
+TESTSUITE_SRC := $(shell sed "s/^/\.\/$(TESTSUITE)\//" $(TESTSUITE_DIR)/ffiles.txt)
+DRIVER_SRC := test_$(SOLVER).f90 test.f90
+SRC := $(COMMON_SRC) $(SOLVER_SRC) $(TESTSUITE_SRC) $(DRIVER_SRC)
+SRC_NO_TEST := $(COMMON_SRC) $(SOLVER_SRC)
+
+# Headers.
+# N.B.: If we define COMMON as "./common/", then, when adapting the header, sed will complain
+# that"./common//*.h" cannot be found on macOS.
+HEADERS := $(TEST_SOLVER_DIR)/$(COMMON)/*.h
+
+# The checktest script.
+CHCKTST := $(TEST_DIR)/checktest
+
+# Define the tests.
+######################################################################################
+# Decide whether to test QP, i.e., REAL128.
+# Flang and nvfortran do not support REAL128;
+# AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
+# ifx encounters an internal error when compiling with REAL128.
+# NAG Fortran Compiler Release 7.0(Yurakucho) Build 7074 encounters the following runtime error:
+# Runtime Error: Double-double IEEE_VALUE invoked, but IEEE_SUPPORT_DATATYPE is false for double-double
+# ./common/ieee_4dev.f90, line 26: Error occurred in IEEE_4DEV_MOD:IEEENAN
+# Since IEEE_4DEV_MOD is only used for developments, this error does not affect the finished solvers.
+TESTS_QP = atest gtest ltest itest stest 9test
+TESTS_NO_QP = dtest ftest vtest xtest ntest
+TESTS = $(TESTS_QP) $(TESTS_NO_QP)
+# When listing the tests, we first put the ones that are more likely to raise errors.
+$(foreach TST, $(TESTS_QP), $(eval $(TST): SUBTESTS := \
+	$(TST)_i2_r16_d1_tst $(TST)_i2_r4_d1_tst $(TST)_i2_r8_d1_tst \
+	$(TST)_i4_r16_d1_tst $(TST)_i4_r4_d1_tst $(TST)_i4_r8_d1_tst \
+	$(TST)_i8_r16_d1_tst $(TST)_i8_r4_d1_tst $(TST)_i8_r8_d1_tst \
+	$(TST)_i2_r16_d0_tst $(TST)_i2_r4_d0_tst $(TST)_i2_r8_d0_tst \
+	$(TST)_i4_r16_d0_tst $(TST)_i4_r4_d0_tst $(TST)_i4_r8_d0_tst \
+	$(TST)_i8_r16_d0_tst $(TST)_i8_r4_d0_tst $(TST)_i8_r8_d0_tst \
+	))
+$(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
+	$(TST)_i2_r4_d1_tst $(TST)_i2_r8_d1_tst \
+	$(TST)_i4_r4_d1_tst $(TST)_i4_r8_d1_tst \
+	$(TST)_i8_r4_d1_tst $(TST)_i8_r8_d1_tst \
+	$(TST)_i2_r4_d0_tst $(TST)_i2_r8_d0_tst \
+	$(TST)_i4_r4_d0_tst $(TST)_i4_r8_d0_tst \
+	$(TST)_i8_r4_d0_tst $(TST)_i8_r8_d0_tst \
+	))
+$(foreach TST, $(TESTS), $(eval $(TST): TST_C := $(TST)_c))
+
+# The following tests compile the code but do not run the binary. This is useful if we want to
+# check whether the code can compile.
+TESTS_C_QP = atest_c gtest_c ltest_c itest_c stest_c 9test_c
+TESTS_C_NO_QP = dtest_c ftest_c vtest_c xtest_c ntest_c
+TESTS_C = $(TESTS_C_QP) $(TESTS_C_NO_QP)
+$(foreach TST, $(TESTS_C_QP), $(eval $(TST): SUBTESTS_C := \
+	$(subst _c,,$(TST))_i2_r16_d1_tst_c $(subst _c,,$(TST))_i2_r4_d1_tst_c $(subst _c,,$(TST))_i2_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i4_r16_d1_tst_c $(subst _c,,$(TST))_i4_r4_d1_tst_c $(subst _c,,$(TST))_i4_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i8_r16_d1_tst_c $(subst _c,,$(TST))_i8_r4_d1_tst_c $(subst _c,,$(TST))_i8_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i2_r16_d0_tst_c $(subst _c,,$(TST))_i2_r4_d0_tst_c $(subst _c,,$(TST))_i2_r8_d0_tst_c \
+	$(subst _c,,$(TST))_i4_r16_d0_tst_c $(subst _c,,$(TST))_i4_r4_d0_tst_c $(subst _c,,$(TST))_i4_r8_d0_tst_c \
+	$(subst _c,,$(TST))_i8_r16_d0_tst_c $(subst _c,,$(TST))_i8_r4_d0_tst_c $(subst _c,,$(TST))_i8_r8_d0_tst_c \
+	))
+$(foreach TST, $(TESTS_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
+	$(subst _c,,$(TST))_i2_r4_d1_tst_c $(subst _c,,$(TST))_i2_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i4_r4_d1_tst_c $(subst _c,,$(TST))_i4_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i8_r4_d1_tst_c $(subst _c,,$(TST))_i8_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i2_r4_d0_tst_c $(subst _c,,$(TST))_i2_r8_d0_tst_c \
+	$(subst _c,,$(TST))_i4_r4_d0_tst_c $(subst _c,,$(TST))_i4_r8_d0_tst_c \
+	$(subst _c,,$(TST))_i8_r4_d0_tst_c $(subst _c,,$(TST))_i8_r8_d0_tst_c \
+	))
+
+# The tests with ifort, ifx, etc are slow due to the extensive runtime checks. To save time, we
+# define the following tests. If itest_i2 succeeds, then itest_i4 and itest_i8 are likely (but not
+# surely) to be OK, because the only difference in the code is the integer kind. Similar for others.
+TESTS_INT_QP = atest_i2 atest_i4 atest_i8 \
+			   gtest_i2 gtest_i4 gtest_i8 \
+			   ltest_i2 ltest_i4 ltest_i8 \
+			   itest_i2 itest_i4 itest_i8 \
+			   stest_i2 stest_i4 stest_i8 \
+			   9test_i2 9test_i4 9test_i8
+TESTS_INT_NO_QP = dtest_i2 dtest_i4 dtest_i8 \
+				  ftest_i2 ftest_i4 ftest_i8 \
+				  vtest_i2 vtest_i4 vtest_i8 \
+				  ntest_i2 ntest_i4 ntest_i8 \
+				  xtest_i2 xtest_i4 xtest_i8
+TESTS_INT = $(TESTS_INT_QP) $(TESTS_INT_NO_QP)
+$(foreach TST, $(TESTS_INT_QP), $(eval $(TST): SUBTESTS := \
+	$(TST)_r16_d1_tst $(TST)_r4_d1_tst $(TST)_r8_d1_tst \
+	$(TST)_r16_d0_tst $(TST)_r4_d0_tst $(TST)_r8_d0_tst \
+	))
+$(foreach TST, $(TESTS_INT_NO_QP), $(eval $(TST): SUBTESTS := \
+	$(TST)_r4_d1_tst $(TST)_r8_d1_tst \
+	$(TST)_r4_d0_tst $(TST)_r8_d0_tst \
+	))
+$(foreach TST, $(TESTS_INT), $(eval $(TST): TST_C := $(TST)_c))
+
+# The following tests compile the code but do not run the binary. This is useful if we want to
+# check whether the code can compile.
+TESTS_INT_C_QP = atest_i2_c atest_i4_c atest_i8_c \
+				 gtest_i2_c gtest_i4_c gtest_i8_c \
+				 ltest_i2_c ltest_i4_c ltest_i8_c \
+				 itest_i2_c itest_i4_c itest_i8_c \
+				 stest_i2_c stest_i4_c stest_i8_c \
+				 9test_i2_c 9test_i4_c 9test_i8_c
+TESTS_INT_C_NO_QP = dtest_i2_c dtest_i4_c dtest_i8_c \
+					ftest_i2_c ftest_i4_c ftest_i8_c \
+					vtest_i2_c vtest_i4_c vtest_i8_c \
+				    ntest_i2_c ntest_i4_c ntest_i8_c \
+					xtest_i2_c xtest_i4_c xtest_i8_c
+TESTS_INT_C = $(TESTS_INT_C_QP) $(TESTS_INT_C_NO_QP)
+$(foreach TST, $(TESTS_INT_C_QP), $(eval $(TST): SUBTESTS_C := \
+	$(subst _c,,$(TST))_r16_d1_tst_c $(subst _c,,$(TST))_r4_d1_tst_c $(subst _c,,$(TST))_r8_d1_tst_c \
+	$(subst _c,,$(TST))_r16_d0_tst_c $(subst _c,,$(TST))_r4_d0_tst_c $(subst _c,,$(TST))_r8_d0_tst_c \
+	))
+$(foreach TST, $(TESTS_INT_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
+	$(subst _c,,$(TST))_r4_d1_tst_c $(subst _c,,$(TST))_r8_d1_tst_c \
+	$(subst _c,,$(TST))_r4_d0_tst_c $(subst _c,,$(TST))_r8_d0_tst_c \
+	))
+######################################################################################
+
+.PHONY: all test test_c clean $(TESTS) $(TESTS_C) $(TESTS_INT) $(TESTS_INT_C) source_* header_* clean*
+
+# Operating system.
+OSTYPE :=
+ifeq ($(OS),Windows_NT)
+	OSTYPE := WINDOWS
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Darwin)
+		OSTYPE := MAC
+	else # We assume the OS is LINUX by default.
+		OSTYPE := LINUX
+	endif
+endif
+
+# Define SEDI.
+# When calling "sed -i" on macOS, it is obligatory to specify a string (e.g., .bak) after -i as the
+# extension for saving a backup. If the string is "", then no backup will be saved. If no string is
+# specified, then an error will be raised, saying "invalid command code".
+SEDI :=
+ifeq ($(OSTYPE), MAC)
+	SEDI := @sed -i ""
+else
+	SEDI := @sed -i
+endif
+
+# Define NPROCS to be the number of processors available to make tests in parallel.
+NPROCS :=
+ifeq ($(OSTYPE), LINUX)
+	NPROCS := $(shell grep -c 'processor' /proc/cpuinfo 2>/dev/null || echo 1)
+else ifeq ($(OSTYPE), MAC)
+	NPROCS := $(shell sysctl hw.ncpu | grep -o '[0-9]\+' || echo 1)
+else
+	NPROCS := $(shell echo $(NUMBER_OF_PROCESSORS) || echo 1)
+endif
+
+
+####################################################################################################
+# Here are the testing options for each compiler. We try to turn on as many debugging options as
+# possible, in particular, the options regarding the following are included whenever available.
+# 1. Standard conformity.
+# 2. Runtime bound checking of arrays.
+# 3. IEEE 754 Floating-Point Exceptions (FPE).
+# Depending on the compiler, some FPEs are ignored for the tests with r4 (single-precision real),
+# e.g., over/underflow.
+####################################################################################################
+
+# Absoft af95
+# For Debian-based systems, -no-pie is needed; for other systems, this option may not work.
+AFORT := af95 -m1 -en -et -Rb -Rc -Rs -Rp
+
+atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
+	FC1 := $(AFORT) $(FFLAGS1) #-TENV:simd_zmask=off
+atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
+	FC2 := $(AFORT) $(FFLAGS2) #-TENV:simd_zmask=off
+
+atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
+	FC1 := $(AFORT) $(FFLAGS1) \
+	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
+atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
+	FC2 := $(AFORT) $(FFLAGS2) \
+	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
+
+atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d0_tst_c atest_i4_r16_d0_tst_c atest_i8_r16_d0_tst_c: \
+	FC1 := $(AFORT) $(FFLAGS1) -TENV:simd_zmask=off
+atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d0_tst_c atest_i4_r16_d0_tst_c atest_i8_r16_d0_tst_c: \
+	FC2 := $(AFORT) $(FFLAGS2) -TENV:simd_zmask=off
+
+# AMD AOCC Flang
+AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2> /dev/null | sort | tail -n 1)
+AFLANG := $(AFLANG) #-pedantic-errors -Werror
+# Strangely, with `-Mchkptr`, the compiler may not print the error message of `-Mbounds` anymore.
+DFORT := $(AFLANG) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Kieee #-Mchkptr
+
+dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
+	FC1 := $(DFORT) $(FFLAGS1)
+dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
+	FC2 := $(DFORT) $(FFLAGS2)
+
+dtest_i2_r8_d1_tst_c dtest_i4_r8_d1_tst_c dtest_i8_r8_d1_tst_c dtest_i2_r8_d0_tst_c dtest_i4_r8_d0_tst_c dtest_i8_r8_d0_tst_c: \
+	FC1 := $(DFORT) $(FFLAGS1) -ffp-exception-behavior=strict
+dtest_i2_r8_d1_tst_c dtest_i4_r8_d1_tst_c dtest_i8_r8_d1_tst_c dtest_i2_r8_d0_tst_c dtest_i4_r8_d0_tst_c dtest_i8_r8_d0_tst_c: \
+	FC2 := $(DFORT) $(FFLAGS2) -ffp-exception-behavior=strict
+
+dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d0_tst_c dtest_i4_r16_d0_tst_c dtest_i8_r16_d0_tst_c: \
+	FC1 := $(DFORT) $(FFLAGS1) -ffp-exception-behavior=strict
+dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d0_tst_c dtest_i4_r16_d0_tst_c dtest_i8_r16_d0_tst_c: \
+	FC2 := $(DFORT) $(FFLAGS2) -ffp-exception-behavior=strict
+
+# Classic Flang
+FFORT := flang
+FFORT := $(FFORT) #-pedantic-errors -Werror
+FFORT := $(FFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkptr -Kieee
+
+ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
+	FC1 := $(FFORT) $(FFLAGS1)
+ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
+	FC2 := $(FFORT) $(FFLAGS2)
+
+ftest_i2_r8_d1_tst_c ftest_i4_r8_d1_tst_c ftest_i8_r8_d1_tst_c ftest_i2_r8_d0_tst_c ftest_i4_r8_d0_tst_c ftest_i8_r8_d0_tst_c: \
+	FC1 := $(FFORT) $(FFLAGS1)
+ftest_i2_r8_d1_tst_c ftest_i4_r8_d1_tst_c ftest_i8_r8_d1_tst_c ftest_i2_r8_d0_tst_c ftest_i4_r8_d0_tst_c ftest_i8_r8_d0_tst_c: \
+	FC2 := $(FFORT) $(FFLAGS2)
+
+ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d0_tst_c ftest_i4_r16_d0_tst_c ftest_i8_r16_d0_tst_c: \
+	FC1 := $(FFORT) $(FFLAGS1)
+ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d0_tst_c ftest_i4_r16_d0_tst_c ftest_i8_r16_d0_tst_c: \
+	FC2 := $(FFORT) $(FFLAGS2)
+
+# GNU gfortran
+# In the debug mode, our code includes the BACKTRACE function if the compiler is gfortran. This
+# makes the code not standard-conforming. So -std=f$(FSTD) cannot be imposed without -fall-intrinsics.
+# As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
+GFORT := gfortran
+GFORT := $(GFORT) -Wno-compare-reals -Wno-conversion
+GFORT := $(GFORT) -fautomatic -fstack-arrays -fstack-check # Force all automatic arrays to be on the stack to test whether stack overflow can occur
+GFORT := $(GFORT) -std=f$(FSTD) -fall-intrinsics \
+	-Wall -Wextra -pedantic -Wampersand  -Wuninitialized -Wmaybe-uninitialized \
+	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \
+	-Wuse-without-only -Wunused-parameter \
+	-fPIC -fimplicit-none -fbacktrace -fcheck=all \
+	-finit-real=nan -finit-integer=-9999999 #\
+	#-Wrealloc-lhs -Wrealloc-lhs-all
+
+gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
+	FC1 := $(GFORT) $(FFLAGS1) -Wno-function-elimination
+gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
+	FC2 := $(GFORT) $(FFLAGS2)
+
+gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
+	FC1 := $(GFORT) $(FFLAGS1) -Wno-function-elimination -ftrapv -ffpe-trap=zero,overflow,#,invalid,underflow,denorm
+gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
+	FC2 := $(GFORT) $(FFLAGS2) -ftrapv -ffpe-trap=zero#,invalid#,overflow,underflow,denorm
+
+gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
+	FC1 := $(GFORT) $(FFLAGS1) -Wno-function-elimination -ffpe-trap=zero,overflow,#invalid,underflow,denorm
+gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
+	FC2 := $(GFORT) $(FFLAGS2) -ffpe-trap=zero#,overflow,#,invalid,underflow,denorm
+
+# Intel ifort
+# -standard-semantics: enforce the compiler to behave according to the current standard (F2018 as of Dec 2021).
+#  See https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/compiler-reference/compiler-options/compiler-option-details/language-options/standard-semantics.html
+#  Option standard-semantics enables option fpscomp logicals and the following settings for option
+#  assume: byterecl, failed_images, fpe_summary, ieee_compares, ieee_fpe_flags (if the fp-model
+#  option setting is strict or precise), minus0, nan_compares, noold_inquire_recl,
+#  noold_ldout_format, noold_ldout_zero, noold_maxminloc, noold_unit_star, noold_xor,
+#  protect_parens, realloc_lhs1, recursion, std_intent_in, std_minus0_rounding1, std_mod_proc_name,
+#  and std_value1.
+#  We impose -assume norecursion, because -standard-semantics will enable -assume recursion, which
+#  will cause a warning; due to -warn errors, the compilation will abort. See
+#  https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/language-reference/a-to-z-reference/q-to-r/recursive-and-non-recursive.html
+IFORT := ifort
+IFORT := $(IFORT) #-warn errors #-diag-error-limit 1
+IFORT := $(IFORT) -auto -no-heap-arrays
+IFORT := $(IFORT) -stand f$(FS) -standard-semantics -assume norecursion -warn all -debug extended -fimplicit-none \
+	-traceback -debug-parameters all -fp-stack-check
+
+itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
+	FC1 := $(IFORT) $(FFLAGS1) -fp-trap=divzero
+itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
+	FC2 := $(IFORT) $(FFLAGS2) -check all -fp-trap=divzero
+
+itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
+	FC1 := $(IFORT) $(FFLAGS1) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
+	FC2 := $(IFORT) $(FFLAGS2) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+
+itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
+	FC1 := $(IFORT) $(FFLAGS1) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
+	FC2 := $(IFORT) $(FFLAGS2) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+
+# Lahey lf95
+# The compiler encounters the following internal error randomly. In that case, rerun the test.
+# ```
+# double free or corruption (!prev)
+# f95: /usr/local/lf6481/bin/../bin/jwd_fort: SIGABRT signal received.
+# ```
+LFORT := lf95
+LFORT := $(LFORT) --f95 -v95s -v95o -AU --ap --chkglobal --lst --sav --xref --in --info --nswm --trace \
+		-w --warn --wo --chk a,e,f,o,s,u,x
+
+ltest_i2_r4_d1_tst_c ltest_i4_r4_d1_tst_c ltest_i8_r4_d1_tst_c ltest_i2_r4_d0_tst_c ltest_i4_r4_d0_tst_c ltest_i8_r4_d0_tst_c: \
+	FC1 := $(LFORT) $(FFLAGS1) #--trap
+ltest_i2_r4_d1_tst_c ltest_i4_r4_d1_tst_c ltest_i8_r4_d1_tst_c ltest_i2_r4_d0_tst_c ltest_i4_r4_d0_tst_c ltest_i8_r4_d0_tst_c: \
+	FC2 := $(LFORT) $(FFLAGS2) #--trap
+
+ltest_i2_r8_d1_tst_c ltest_i4_r8_d1_tst_c ltest_i8_r8_d1_tst_c ltest_i2_r8_d0_tst_c ltest_i4_r8_d0_tst_c ltest_i8_r8_d0_tst_c: \
+	FC1 := $(LFORT) $(FFLAGS1) --trap
+ltest_i2_r8_d1_tst_c ltest_i4_r8_d1_tst_c ltest_i8_r8_d1_tst_c ltest_i2_r8_d0_tst_c ltest_i4_r8_d0_tst_c ltest_i8_r8_d0_tst_c: \
+	FC2 := $(LFORT) $(FFLAGS2) --trap
+
+ltest_i2_r16_d1_tst_c ltest_i4_r16_d1_tst_c ltest_i8_r16_d1_tst_c ltest_i2_r16_d0_tst_c ltest_i4_r16_d0_tst_c ltest_i8_r16_d0_tst_c: \
+	FC1 := $(LFORT) $(FFLAGS1) --trap
+ltest_i2_r16_d1_tst_c ltest_i4_r16_d1_tst_c ltest_i8_r16_d1_tst_c ltest_i2_r16_d0_tst_c ltest_i4_r16_d0_tst_c ltest_i8_r16_d0_tst_c: \
+	FC2 := $(LFORT) $(FFLAGS2) --trap
+
+# NAG nagfor
+# In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.
+# It is necessary to use "-I $(TESTSUITE_DIR)"; otherwise, the INCLUDE lines in the test suite will not work.
+NFORT := nagfor
+NFORT := $(NFORT) -I $(TESTSUITE_DIR)
+NFORT := $(NFORT) -colour=error:red,warn:magenta,info:cyan
+NFORT := $(NFORT) -f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
+	-Warn=constant_coindexing -Warn=subnormal #-Warn=allocation
+
+ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
+	FC1 := $(NFORT) $(FFLAGS1) -nan -ieee=full
+ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
+	FC2 := $(NFORT) $(FFLAGS2) -nan -ieee=full
+
+ntest_i2_r8_d1_tst_c ntest_i4_r8_d1_tst_c ntest_i8_r8_d1_tst_c ntest_i2_r8_d0_tst_c ntest_i4_r8_d0_tst_c ntest_i8_r8_d0_tst_c: \
+	FC1 := $(NFORT) $(FFLAGS1) -nan -ieee=stop
+ntest_i2_r8_d1_tst_c ntest_i4_r8_d1_tst_c ntest_i8_r8_d1_tst_c ntest_i2_r8_d0_tst_c ntest_i4_r8_d0_tst_c ntest_i8_r8_d0_tst_c: \
+	FC2 := $(NFORT) $(FFLAGS2) -nan -ieee=stop
+
+ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d0_tst_c ntest_i4_r16_d0_tst_c ntest_i8_r16_d0_tst_c: \
+	FC1 := $(NFORT) $(FFLAGS1) -nan -ieee=stop
+ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d0_tst_c ntest_i4_r16_d0_tst_c ntest_i8_r16_d0_tst_c: \
+	FC2 := $(NFORT) $(FFLAGS2) -nan -ieee=stop
+
+# NVIDIA nvfortran (aka, pgfortran)
+VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
+VFORT := $(VFORT) #-Werror
+VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr
+
+vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
+	FC1 := $(VFORT) $(FFLAGS1) -Kieee #-Ktrap=divz
+vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
+	FC2 := $(VFORT) $(FFLAGS2) -Kieee #-Ktrap=divz
+
+vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
+	FC1 := $(VFORT) $(FFLAGS1) -Kieee -Ktrap=divz,inv#,ovf,,unf,denorm
+vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
+	FC2 := $(VFORT) $(FFLAGS2) -Kieee -Ktrap=divz,inv#,ovf,unf,denorm
+
+vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d0_tst_c vtest_i4_r16_d0_tst_c vtest_i8_r16_d0_tst_c: \
+	FC1 := $(VFORT) $(FFLAGS1) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
+vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d0_tst_c vtest_i4_r16_d0_tst_c vtest_i8_r16_d0_tst_c: \
+	FC2 := $(VFORT) $(FFLAGS2) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
+
+# Oracle sunf95
+SFORT := sunf95
+SFORT := $(SFORT) -w3 -u -U -ansi -xcheck=%all -C
+
+stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
+	FC1 := $(SFORT) $(FFLAGS1) -fnonstd -ftrap=division
+stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
+	FC2 := $(SFORT) $(FFLAGS2) -fnonstd -ftrap=division
+
+stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
+	FC1 := $(SFORT) $(FFLAGS1) -fnonstd -ftrap=overflow,division,invalid#,underflow
+stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
+	FC2 := $(SFORT) $(FFLAGS2) -fnonstd -ftrap=overflow,division,invalid#,underflow
+
+stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
+	FC1 := $(SFORT) $(FFLAGS1) -fnonstd -ftrap=overflow,division,invalid#,underflow
+stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
+	FC2 := $(SFORT) $(FFLAGS2) -fnonstd -ftrap=overflow,division,invalid#,underflow
+
+# Intel ifx
+XFORT := ifx
+XFORT := $(XFORT) #-warn errors
+XFORT := $(XFORT) -auto -no-heap-arrays
+XFORT := $(XFORT) -stand f$(FS) -warn all -debug extended -fimplicit-none \
+	-traceback -debug-parameters all -fp-stack-check
+
+xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
+	FC1 := $(XFORT) $(FFLAGS1) -fp-trap=divzero
+xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
+	FC2 := $(XFORT) $(FFLAGS2) -check all -fp-trap=divzero
+
+xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
+	FC1 := $(XFORT) $(FFLAGS1) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
+	FC2 := $(XFORT) $(FFLAGS2) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+
+xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
+	FC1 := $(XFORT) $(FFLAGS1) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
+	FC2 := $(XFORT) $(FFLAGS2) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+
+# G95
+# G95 supports f2003, but not higher.
+9FORT := g95 -Wno=140
+9FORT := $(9FORT) -std=f2003 -pedantic -Wall -Wextra \
+	-Werror=100,113,115,137,146,147,159,163 \
+	-Wimplicit-none -Wline-truncation -Wunused-module-vars -Wunused-vars -Wunset-vars \
+	-fimplicit-none -fbounds-check -ftrace=full -freal=nan -fmodule-private
+
+9test_i2_r4_d1_tst_c 9test_i4_r4_d1_tst_c 9test_i8_r4_d1_tst_c 9test_i2_r4_d0_tst_c 9test_i4_r4_d0_tst_c 9test_i8_r4_d0_tst_c: \
+	FC1 := $(9FORT) $(FFLAGS1)
+9test_i2_r4_d1_tst_c 9test_i4_r4_d1_tst_c 9test_i8_r4_d1_tst_c 9test_i2_r4_d0_tst_c 9test_i4_r4_d0_tst_c 9test_i8_r4_d0_tst_c: \
+	FC2 := $(9FORT) $(FFLAGS2)
+
+9test_i2_r8_d1_tst_c 9test_i4_r8_d1_tst_c 9test_i8_r8_d1_tst_c 9test_i2_r8_d0_tst_c 9test_i4_r8_d0_tst_c 9test_i8_r8_d0_tst_c: \
+	FC1 := $(9FORT) $(FFLAGS1)
+9test_i2_r8_d1_tst_c 9test_i4_r8_d1_tst_c 9test_i8_r8_d1_tst_c 9test_i2_r8_d0_tst_c 9test_i4_r8_d0_tst_c 9test_i8_r8_d0_tst_c: \
+	FC2 := $(9FORT) $(FFLAGS2)
+
+9test_i2_r16_d1_tst_c 9test_i4_r16_d1_tst_c 9test_i8_r16_d1_tst_c 9test_i2_r16_d0_tst_c 9test_i4_r16_d0_tst_c 9test_i8_r16_d0_tst_c: \
+	FC1 := $(9FORT) $(FFLAGS1)
+9test_i2_r16_d1_tst_c 9test_i4_r16_d1_tst_c 9test_i8_r16_d1_tst_c 9test_i2_r16_d0_tst_c 9test_i4_r16_d0_tst_c 9test_i8_r16_d0_tst_c: \
+	FC2 := $(9FORT) $(FFLAGS2)
+
+####################################################################################################
+# All the tests.
+# GNU make manual: Recursive make commands should always use the variable MAKE, not the explicit command name ‘make’.
+test:
+	$(MAKE) $(TESTS)
+
+test_c:
+	$(MAKE) $(TESTS_C)
+
+####################################################################################################
+# Make a compiler-specific test.
+# N.B.:
+# 1. Execute CHCKTST by  "bash $(CHCKTST)" instead of just "$(CHCKTST)", because "$(CHCKTST)" may
+# not be executable on all operating systems.
+# 2. The log for itest or itest_i2 will be itest_(STAMP). Similar for other tests.
+# 3. In the following, `@$(MAKE) $(TST_C)` will trigger `@$(MAKE) $(SUBTESTS_C)`, which compile the code
+# for all subtests. Then `@$(MAKE) $(SUBTESTS)` will test the binaries. We not test any binary until
+# the code can compile in all cases.
+$(TESTS) $(TESTS_INT):
+	@mkdir -p $(LOG_DIR)
+	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
+	@$(MAKE) $(TST_C)
+	@$(MAKE) $(SUBTESTS) --jobs $(NPROCS)
+	@bash $(CHCKTST) --error "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
+	@bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
+	@printf "\n\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
+	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log"
+	@$(MAKE) clean
+
+# Make the binary corresponding to a test in TESTS_C or TESTS_INT_C, but do not execute it.
+# This is useful if we want to check whether the code can compile.
+$(TESTS_C) $(TESTS_INT_C):
+	@mkdir -p $(LOG_DIR)
+	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
+	@$(MAKE) $(SUBTESTS_C)
+	@bash $(CHCKTST) --error "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
+	@bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
+	@printf "\n\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
+	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log" "$(LOG_DIR)/$@_$(STAMP).log"
+	@$(MAKE) cleanmisc
+
+# Make a compiler-specific subtest.
+# N.B.: The prerequisite should NOT include files that may not exist, e.g., $(SRC), because
+# Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
+#%_tst: %_tst_c
+%_tst:
+	@if [[ ! -f $@_c ]] ; then \
+		$(MAKE) $@_c ; \
+	else \
+		printf "\n$@_c exists!\n\n" ; \
+	fi
+	@mkdir -p $(LOG_DIR)
+	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
+	@if echo $@ | grep -q "9test\|ltest" ; then \
+		printf "\n$@ is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
+	elif [[ -x $@_c ]] ; then \
+		set -o pipefail && ./$@_c 2>&1 \
+		| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
+		| tee -a "$(LOG_DIR)/$@.log" ; \
+	else \
+		printf "\n$@_c is not executable!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
+		exit 126 ; \
+	fi
+	@set +o pipefail  # Restore the original pipe setting
+	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
+	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
+	@printf "$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n" | tee -a "$(LOG_DIR)/$@.log"
+	@cat "$(LOG_DIR)/$@.log" >> "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
+	@rm "$(LOG_DIR)/$@.log" || :
+	@$(MAKE) cleanmisc
+
+# Make the binary corresponding to %_tst_c, but do not execute it.
+# This is useful if we want to check whether the code can compile.
+%_tst_c: source_% header_%
+	@mkdir -p $(LOG_DIR)
+	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
+	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
+	$(eval SRC := $(shell if echo $@ | grep -q "ltest"; then echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||' ; else echo $(SRC) ; fi))
+	@(if echo $@ | grep -q "9test\|ltest"; then \
+		$(FC1) -c $(SRC) && $(FC2) -c $(SRC) ; \
+	else \
+		$(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC) ; \
+	fi) 2>&1 \
+	| grep -v "^[[:blank:]]*$$" \
+	| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
+	| grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
+	| grep -v "Warning (102): MODULE PROCEDURE 'inv' USEd at (1) is not referenced" \
+	| grep -v "Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced" \
+	| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \
+	| grep -v "Warning (102): MODULE PROCEDURE 'redrat' USEd at (1) is not referenced" \
+	| grep -v "Warning (102): MODULE PROCEDURE 'redrho' USEd at (1) is not referenced" \
+	| grep -v "Warning: Array reference at (1) out of bounds (0 < 1) in loop beginning" \
+	| grep -v "common/linalg.F90:[0-9]*:.*pivote.*may be used uninitialized in this function" \
+	| grep -v "common/linalg.F90:[0-9]*:.*rank.*may be used uninitialized in this function" \
+	| grep -v "common/preproc.f90:22:.*min_maxfun.*may be used uninitialized in this function" \
+	| grep -v "common/preproc.f90:22:.*unit_memo.*may be used uninitialized in this function" \
+	| grep -v "Compiling file\|Module subprogram name" \
+	| grep -v "An allocatable array function '.*' is an extended feature" \
+	| grep -v "An allocatable dummy array\ '.*' is an extended feature" \
+	| grep -v "WARNING --  When --chk x is specified, it must be used to compile all source files of a program" \
+	| grep -v "0 Errors, 0 Warnings" \
+	| grep -v "Encountered 0 errors, 0 warnings, [0-9]* information.* in file" \
+	| grep -v 'Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages,' \
+	| grep -v "Absoft ANSI 1610:" \
+	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
+	| grep -v "NAG Fortran Compiler Release [0-9]*.* Build [0-9]*" \
+	| grep -v "Questionable: ./lincoa/geometry.f90, line [0-9]*: Variable RSTAT set but never referenced" \
+	| grep -v "Expression in IF construct is constant" \
+	| grep -v "NAG Fortran Compiler normal termination" \
+	| grep -v "NAG Fortran Compiler normal termination, [0-9]* info message" \
+	| grep -v "Info: No licences currently available for product" \
+	| grep -v "Info: Licence received, continuing" \
+	| grep -v "Loading..." \
+	| grep -v "Linking:" \
+	| grep -v "univar\.f90([0-9]*): remark #7712: This variable has not been used\.\s*\[ANGLE\]" \
+	| grep -v "f90comp: [0-9]* SOURCE LINES" \
+	| grep -v "f90comp: [0-9]* ERRORS, [0-9]* WARNINGS" \
+	| grep -v "ANSI: PROCEDURE is a Fortran 2003 feature" \
+	| grep -v "remark #5415: Feature not yet implemented" \
+	| grep -v "interpolation error" \
+	| grep -v "In file ./common/evaluate.f90:134" \
+	| grep -v "In file ./common/evaluate.f90:201" \
+	| grep -v "./common/linalg.F90: In function ‘linalg_mod_MP_lsqr’:" \
+	| grep -v "./common/preproc.f90: In function ‘preproc_mod_MP_preproc’:" \
+	| grep -v "WARNING --  When --chk x is specified" \
+	| grep -v "bin/ld.*bisheng.*unsupported GNU_PROPERTY_TYPE (5) type: 0xc0000000" \
+	| grep -v "all warnings being treated as errors" \
+	| grep -v "Value of real or complex expression being compared by relational operator" \
+	| tee -a "$(LOG_DIR)/$@.log"
+	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
+	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
+	@printf "$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n" | tee -a "$(LOG_DIR)/$@.log"
+	@cat "$(LOG_DIR)/$@.log" >> "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
+	@rm "$(LOG_DIR)/$@.log" || :
+	@$(MAKE) cleanmisc
+	@touch $@
+# Without the last line, 9test_c is always remade when making 9test even if 9test_c is up
+# to date. Also observed for gtest on Windows. No idea why. Strange! Better approach?
+# Note that %test is made in parallel. If %test_c is remade when making %test, then it will also
+# be in parallel, which will cause errors.
+
+# Make a local copy of the source code for the test.
+source_%: $(SRC_DIRS)
+	@printf "\nMaking a copy of the source code for the test.\n"
+	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
+	@for SRC in $(DRIVER_SRC); do cp $(DRIVER_DIR)/"$$SRC" ./; done
+	@find ./ -type f \( \
+		-name "*.mod" \
+		-o -name "*.o" \
+		-o -name "*.dbg" \
+		-o -name "*.cmdx" \
+		-o -name "*.cmod" \
+		-o -name "*.ilm" \
+		-o -name "*.stb" \
+		-o -name "*.out" \
+		-o -name "*__genmod.f90" \
+		\) -exec rm {} \;  # Cleaning up; important!!!
+	@if echo $@ | grep -q "ltest"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../lfsrc ./ ; \
+	fi
+	@if echo $@ | grep -q "ftest\|vtest\|dtest"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../fvdsrc ./ ; \
+	fi
+	@if echo $@ | grep -q "stest"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../sunsrc ./ ; \
+	fi
+	@if echo $@ | grep -q "atest\|9test"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../a9src ./ ; \
+	fi
+	@if echo $@ | grep -q "ftest" && ! type flang | grep -iq "bisheng\|AMD" ; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../flsrc ./ ; \
+	fi
+	@printf "Done.\n"
+
+# Adapt the header file for the test.
+header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
+header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
+header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
+header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
+header_%: source_%
+	@printf "\nPreparing the header file for the test.\n"
+	$(SEDI) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
+	$(SEDI) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
+	$(SEDI) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
+	$(SEDI) "0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/" $(HEADERS)
+	@printf "Done.\n"
+
+
+####################################################################################################
+# Cleaning up.
+# ":" means to do nothing in bash. We can use "COMMAND || :" to avoid errors when COMMAND fails.
+cleanbin:
+	@printf "\nCleaning up the binaries ...\n"
+	@rm -f *_tst_c || :
+	@rm -f *_test_c || :
+	@printf "Done.\n"
+
+cleanmisc:
+	@printf "\nCleaning up miscellaneous files ...\n"
+	@rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb *.out *__genmod.f90 || :
+	@rm -f *_output.txt || :
+	@printf "Done.\n"
+
+cleansrc:
+	@printf "\nCleaning up the source code ...\n"
+	@for ITEM in $(COMMON) $(SOLVER) $(TESTSUITE) $(DRIVER_SRC) ; do  \
+		if [ `ls -1 "$$ITEM" 2>/dev/null | wc -l ` -gt 0 ] ; \
+			then mkdir -p $(TRASH_DIR) && rm -rf $(TRASH_DIR)/"$$ITEM" || : ; \
+			mv "$$ITEM" $(TRASH_DIR) > /dev/null 2>&1 || : ; \
+		fi ; \
+	done
+	@printf "Done.\n"
+
+clean: cleanbin cleanmisc cleansrc
+
+cleanall: clean
+	@printf "\nRemoving the contents of $(TEST_SOLVER_DIR) ...\n"
+	@rm -rf $(TEST_SOLVER_DIR)/* &> /dev/null || :
+	@printf "Done.\n"
