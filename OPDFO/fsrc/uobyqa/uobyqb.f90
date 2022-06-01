@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM06:54:37
+! Last Modified: Wednesday, June 01, 2022 PM08:55:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -541,7 +541,8 @@ do k = 1, npt
     h = vec2smat(pl(knew, n + 1:npt - 1))
     if (is_nan(sum(abs(g)) + sum(abs(h)))) then
         info = NAN_MODEL
-        goto 420
+        !goto 420
+        goto 600
     end if
 
     ! If ERRTOL is positive, test whether to replace the interpolation point with index KNEW, using
