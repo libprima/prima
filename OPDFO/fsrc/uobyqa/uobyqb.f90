@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 PM05:11:57
+! Last Modified: Wednesday, June 01, 2022 PM06:54:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -556,7 +556,8 @@ do k = 1, npt
     ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the modulus of
     ! its Lagrange function within the trust region.
     call geostep(g, h, rho, d, vmax)
-    if (errtol > 0 .and. wmult * vmax <= errtol) then
+    !if (errtol > 0 .and. wmult * vmax <= errtol) then
+    if ((max(wmult * vmax, ZERO) < errtol)) then
         cycle
     elseif (vmax > 0) then
         goto 100  ! GEOSTEP succeeds.

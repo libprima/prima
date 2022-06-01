@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM02:52:18
+! Last Modified: Wednesday, June 01, 2022 PM07:32:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -534,7 +534,7 @@ end if
 !     Alternatively, find out if the interpolation points are close
 !     enough to the best point so far.
 !
-290 continue
+!290 continue
 
 !reduce_rho = .true.
 
@@ -573,35 +573,16 @@ if (improve_geo) then
         ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the modulus of
         ! its Lagrange function within the trust region.
         call geostep(g, h, rho, d, vmax)
-        if (errtol > 0 .and. wmult * vmax <= errtol) then
-            cycle
-        elseif (vmax > 0) then
-            geo_step = .true.  ! A geometry step has been taken.
-            reduce_rho = .false.
+        if (.not. (max(wmult * vmax, ZERO) < errtol)) then
+            geo_step = (vmax > 0)
+            reduce_rho = (.not. geo_step)
             exit
-            !goto 70  ! GEOSTEP succeeds.
-        else
-            geo_step = .false.
-            reduce_rho = .true.
-            exit
-            !goto 600  ! GEOSTEP fails.
         end if
     end do
 
     reduce_rho = (reduce_rho .or. .not. dnorm > rho)
-
     if (geo_step .or. .not. reduce_rho) goto 70
-    if (reduce_rho) goto 600
-    !goto 70
-
-    !!reduce_rho = reduce_rho
-    !if (dnorm > rho) then
-    !    reduce_rho = .false.
-    !    goto 70
-    !else
-    !    reduce_rho = .true.
-    !    goto 600
-    !end if
+    goto 600
 end if
 
 600 continue
