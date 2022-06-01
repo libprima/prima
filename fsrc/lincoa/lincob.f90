@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM06:04:22
+! Last Modified: Wednesday, June 01, 2022 PM09:30:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -237,6 +237,7 @@ knew = 0
 nvala = 0
 nvalb = 0
 ksave = 0  ! To entertain g95.
+info = INFO_DFT
 
 do while (.true.)
     fsave = fopt

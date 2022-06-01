@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM09:23:13
+! Last Modified: Wednesday, June 01, 2022 PM09:33:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -599,8 +599,6 @@ end do
 ! tried before.
 ! Zaikun 20220531: For the moment, D may contain NaN. Should be avoided later.
 if (info == SMALL_TR_RADIUS .and. errtol >= ZERO .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
-!if (errtol >= ZERO .and. nf < maxfun) then
-    info = SMALL_TR_RADIUS !!?? See NEWUOA
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
     nf = nf + 1
