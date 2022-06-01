@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 AM02:25:42
+! Last Modified: Wednesday, June 01, 2022 AM02:31:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -387,10 +387,6 @@ if (improve_geo .or. .not. shortd) then
                 ! XOPT is updated now in case the branch below to label 720 is taken. Any updating of
                 ! GOPT occurs after the branch below to label 20, which leads to a trust region
                 ! iteration as does the branch to label 60.
-                !if (is_nan(f) .or. is_posinf(f)) then
-                !    info = NAN_INF_F
-                !    goto 720
-                !end if
                 if (fopt <= ftarget) then
                     info = FTARGET_ACHIEVED
                     goto 720
@@ -412,7 +408,6 @@ if (improve_geo .or. .not. shortd) then
                 ! After RESCUE, Powell's code takes immediately another GEOSTEP. If the geometry is then
                 ! acceptable (i.e., DENOM > HALF * VLAG(KNEW)**2), then the algorithm will continue.
                 ! Otherwise, it will exit with INFO set to DAMAGING_ROUNDING.
-                !goto 210
                 !--------------------------------------------------------------------------------------!
             end if
         end if
@@ -486,10 +481,6 @@ if (improve_geo .or. .not. shortd) then
                 ! XOPT is updated now in case the branch below to label 720 is taken. Any updating of
                 ! GOPT occurs after the branch below to label 20, which leads to a trust region
                 ! iteration as does the branch to label 60.
-                !if (is_nan(f) .or. is_posinf(f)) then
-                !    info = NAN_INF_F
-                !    goto 720
-                !end if
                 if (fopt <= ftarget) then
                     info = FTARGET_ACHIEVED
                     goto 720
