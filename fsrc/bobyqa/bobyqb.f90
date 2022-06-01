@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM06:01:47
+! Last Modified: Wednesday, June 01, 2022 PM09:24:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -162,6 +162,9 @@ if (DEBUGGING) then
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
 end if
 
+!====================!
+! Calculation starts !
+!====================!
 
 sl = sl_in
 su = su_in
@@ -727,6 +730,12 @@ if (fval(kopt) <= f .or. is_nan(f)) then
 end if
 
 call rangehist(nf, xhist, fhist)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
 
 !close (16)
 
