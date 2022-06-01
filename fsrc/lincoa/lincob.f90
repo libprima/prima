@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 AM09:54:47
+! Last Modified: Wednesday, June 01, 2022 PM06:04:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -227,6 +227,7 @@ nf = npt
 fopt = fval(kopt)
 rho = rhobeg
 delta = rho
+ratio = -ONE
 feasible = .false.
 shortd = .false.
 improve_geo = .false.

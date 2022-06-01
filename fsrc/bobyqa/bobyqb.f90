@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM12:09:32
+! Last Modified: Wednesday, June 01, 2022 PM06:01:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -368,8 +368,8 @@ do while (.true.)
                     !--------------------------------------------------------------------------------------!
 
                     nfsav = nf
-                    call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval,&
-                        & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat)
+                    call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
+                        & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
 
                     ! XOPT is updated now in case the loop will exit. {?}
                     ! Update GOPT?
@@ -462,8 +462,8 @@ do while (.true.)
                     !------------------------------------------------------------------------------!
 
                     nfsav = nf
-                    call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval,&
-                        & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat)
+                    call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
+                        & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
 
                     ! XOPT is updated now in case the loop exits. (?)
                     ! Update GOPT?

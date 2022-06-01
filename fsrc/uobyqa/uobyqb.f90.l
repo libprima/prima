@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM02:52:18
+! Last Modified: Wednesday, June 01, 2022 PM04:36:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -97,7 +97,7 @@ real(RP) :: ddknew, delta, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score
 &        temp, tempa, tol, vmax,  &
 &        qred, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
 integer(IK) :: ih, ip, iq, iw, j, k, knew, kopt, ksave
-logical :: tr_success, shortd, geo_step, improve_geo, reduce_rho
+logical :: tr_success, shortd, geo_step, improve_geo
 
 ! Sizes.
 n = int(size(x), kind(n))
@@ -333,7 +333,6 @@ delta = rho
 shortd = .false.
 geo_step = .false.
 improve_geo = .false.
-reduce_rho = .false.
 
 !     Form the gradient of the quadratic model at the trust region centre.
 !
@@ -536,12 +535,9 @@ end if
 !
 290 continue
 
-!reduce_rho = .true.
-
 if (improve_geo) then
 
     geo_step = .false.
-    reduce_rho = .false.
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! DISTSQ is updated during the loop.
 ! The loop counter K does not appear in the loop body. Its purpose is only to impose an upper bound on the maximal number of loops.
     do k = 1, npt
@@ -573,35 +569,14 @@ if (improve_geo) then
         ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the modulus of
         ! its Lagrange function within the trust region.
         call geostep(g, h, rho, d, vmax)
-        if (errtol > 0 .and. wmult * vmax <= errtol) then
-            cycle
-        elseif (vmax > 0) then
-            geo_step = .true.  ! A geometry step has been taken.
-            reduce_rho = .false.
+        if (.not. (errtol > 0 .and. wmult * vmax <= errtol)) then
+            geo_step = (vmax > 0)
             exit
-            !goto 70  ! GEOSTEP succeeds.
-        else
-            geo_step = .false.
-            reduce_rho = .true.
-            exit
-            !goto 600  ! GEOSTEP fails.
         end if
     end do
 
-    reduce_rho = (reduce_rho .or. .not. dnorm > rho)
-
-    if (geo_step .or. .not. reduce_rho) goto 70
-    if (reduce_rho) goto 600
-    !goto 70
-
-    !!reduce_rho = reduce_rho
-    !if (dnorm > rho) then
-    !    reduce_rho = .false.
-    !    goto 70
-    !else
-    !    reduce_rho = .true.
-    !    goto 600
-    !end if
+    if (geo_step .or. dnorm > rho) goto 70
+    goto 600
 end if
 
 600 continue

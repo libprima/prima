@@ -590,7 +590,8 @@ if (improve_geo) then
 
     reduce_rho = (reduce_rho .or. .not. dnorm > rho)
 
-    if (geo_step .or. .not. reduce_rho) goto 70
+    !if (geo_step .or. .not. reduce_rho) goto 70
+    if (geo_step .or. dnorm > rho) goto 70
     if (reduce_rho) goto 600
     !goto 70
 

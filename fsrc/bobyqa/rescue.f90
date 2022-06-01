@@ -23,8 +23,8 @@ public :: rescue
 contains
 
 
-subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval, &
-    & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat)
+subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, fval,&
+    & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine implements "the method of RESCUE" introduced in Section 5 of BOBYQA paper. The
 ! purpose of this subroutine is to replace a few interpolation points by new points in order to
@@ -111,6 +111,7 @@ real(RP), intent(in) :: xu(:)  ! XU(N)
 ! In-outputs
 integer(IK), intent(inout) :: kopt
 integer(IK), intent(inout) :: nf
+real(RP), intent(inout) :: bmat(:, :)  !  BMAT(N, NPT + N)
 real(RP), intent(inout) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(inout) :: fopt
 real(RP), intent(inout) :: fval(:)  ! FVAL(NPT)
@@ -123,10 +124,7 @@ real(RP), intent(inout) :: xbase(:)  ! XBASE(N)
 real(RP), intent(inout) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(inout) :: xopt(:)  ! XOPT(N)
 real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
-
-! Outputs
-real(RP), intent(out) :: bmat(:, :)  !  BMAT(N, NPT + N)
-real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
+real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
 character(len=*), parameter :: srname = 'RESCUE'
@@ -206,6 +204,7 @@ if (DEBUGGING) then
     call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
         & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
 end if
