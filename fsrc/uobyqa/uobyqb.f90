@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM04:10:16
+! Last Modified: Wednesday, June 01, 2022 PM04:24:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -569,13 +569,8 @@ if (improve_geo) then
         ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the modulus of
         ! its Lagrange function within the trust region.
         call geostep(g, h, rho, d, vmax)
-        if (errtol > 0 .and. wmult * vmax <= errtol) then
-            cycle
-        elseif (vmax > 0) then
-            geo_step = .true.  ! A geometry step has been taken.
-            exit
-        else
-            geo_step = .false.
+        if (.not. (errtol > 0 .and. wmult * vmax <= errtol)) then
+            geo_step = (vmax > 0)
             exit
         end if
     end do
