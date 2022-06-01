@@ -366,7 +366,7 @@ if (.not. geo_step) then
         knew = -1
         errtol = HALF * crvmin * rho * rho
         if (nf <= npt + 9) errtol = ZERO
-        goto 290
+        !goto 290
     end if
 end if
 
