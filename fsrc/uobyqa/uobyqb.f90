@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM07:32:49
+! Last Modified: Wednesday, June 01, 2022 PM07:46:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -582,10 +582,10 @@ if (improve_geo) then
 
     reduce_rho = (reduce_rho .or. .not. dnorm > rho)
     if (geo_step .or. .not. reduce_rho) goto 70
-    goto 600
+    !goto 600
 end if
 
-600 continue
+!600 continue
 if (rho > rhoend) then
     ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the corresponding
     ! changes to the gradients of the Lagrange functions and the quadratic model.
