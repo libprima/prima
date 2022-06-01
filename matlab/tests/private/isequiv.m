@@ -570,7 +570,8 @@ if strcmpi(solvers{1}, 'newuoan') && strcmpi(solvers{2}, 'newuoa') && exitflag2 
     output1.funcCount = output2.funcCount;
     fprintf('The original solver exits due to failure of the TR subproblem solver.\n');
 end
-if (ismember('newuoa', solvers) || ismember('bobyqa', solvers)) && fx1 == fx2 && norm(x1 - x2) > 0 && output1.funcCount == output2.funcCount ...
+if (ismember('newuoa', solvers) || ismember('bobyqa', solvers) || ismember('uobyqa', solvers)) ...
+        && fx1 == fx2 && norm(x1 - x2) > 0 && output1.funcCount == output2.funcCount ...
         && all(output1.fhist(end-minfhist+1:end) == output2.fhist(end-minfhist+1:end))
     x1 = x2;
     fprintf('x1 changed to x2\n');
