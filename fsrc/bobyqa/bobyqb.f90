@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 AM11:40:14
+! Last Modified: Wednesday, June 01, 2022 PM12:09:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,32 @@ contains
 
 subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, &
     & sl_in, su_in, xl, xu, x, nf, f, fhist, xhist, info)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine performs the major calculations of BOBYQA.
+!
+! The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to the
+! corresponding arguments in SUBROUTINE BOBYQA.
+! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
+! of the model and Lagrange functions.
+! XPT is a TWO-dimensional array that holds the coordinates of the interpolation points relative to XBASE.
+! FVAL holds the values of F at the interpolation points.
+! XOPT is set to the displacement from XBASE of the trust region centre.
+! GOPT holds the gradient of the quadratic model at XBASE+XOPT.
+! HQ holds the explicit second derivatives of the quadratic model.
+! PQ contains the parameters of the implicit second derivatives of the quadratic model.
+! BMAT holds the last N columns of H.
+! ZMAT holds the factorization of the leading NPT by NPT submatrix of H, this factorization being
+! ZMAT * ZMAT^T, which provides both the correct rank and positive semi-definiteness.
+! SL and SU hold the differences XL-XBASE and XU-XBASE, respectively. All the components of every
+! XOPT are going to satisfy the bounds SL(I) <= XOPT(I) <= SU(I), with appropriate equalities when
+! XOPT is on a constraint boundary.
+! XNEW is chosen by subroutine TRSBOX or GEOSTEP. Usually XBASE+XNEW is the vector of variables for
+! the next call of CALFUN. XNEW also satisfies the SL and SU constraints in the way above-mentioned.
+! XALT is an alternative to XNEW, chosen by GEOSTEP, that may replace XNEW in order to increase the
+! denominator in the updating of UPDATE.
+! D is reserved for a trial step from XOPT, which is usually XNEW-XOPT.
+! VLAG contains the values of the Lagrange functions at a new point X.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, DEBUGGING
@@ -140,41 +166,6 @@ end if
 sl = sl_in
 su = su_in
 
-!     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
-!       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
-!     XBASE holds a shift of origin that should reduce the contributions
-!       from rounding errors to values of the model and Lagrange functions.
-!     XPT is a TWO-dimensional array that holds the coordinates of the
-!       interpolation points relative to XBASE.
-!     FVAL holds the values of F at the interpolation points.
-!     XOPT is set to the displacement from XBASE of the trust region centre.
-!     GOPT holds the gradient of the quadratic model at XBASE+XOPT.
-!     HQ holds the explicit second derivatives of the quadratic model.
-!     PQ contains the parameters of the implicit second derivatives of the
-!       quadratic model.
-!     BMAT holds the last N columns of H.
-!     ZMAT holds the factorization of the leading NPT by NPT submatrix of H,
-!       this factorization being ZMAT times ZMAT^T, which provides both the
-!       correct rank and positive semi-definiTENess.
-!     NDIM is the first dimension of BMAT and has the value NPT+N.
-!     SL and SU hold the differences XL-XBASE and XU-XBASE, respectively.
-!       All the compONEnts of every XOPT are going to satisfy the bounds
-!       SL(I) .LEQ. XOPT(I) .LEQ. SU(I), with appropriate equalities when
-!       XOPT is on a constraint boundary.
-!     XNEW is chosen by SUBROUTINE TRSBOX or GEOSTEP. Usually XBASE+XNEW is the
-!       vector of variables for the next call of CALFUN. XNEW also satisfies
-!       the SL and SU constraints in the way that has just been mentiONEd.
-!     XALT is an alternative to XNEW, chosen by GEOSTEP, that may replace XNEW
-!       in order to increase the denominator in the updating of UPDATE.
-!     D is reserved for a trial step from XOPT, which is usually XNEW-XOPT.
-!     VLAG contains the values of the Lagrange functions at a new point X.
-!       They are part of a product that requires VLAG to be of length NDIM.
-!     W is a ONE-dimensional array that is used for working space. Its length
-!       must be at least 3*NDIM = 3*(NPT+N).
-!
-!     Set some constants.
-!
-
 ! Initialize XBASE, XPT, FVAL, GOPT, HQ, PQ, BMAT and ZMAT together with the corresponding values of
 ! of NF and KOPT, which are the number of calls of CALFUN so far and the index of the interpolation
 ! point at the trust region centre. Then the initial XOPT is set too. The branch to label 720 occurs
@@ -243,9 +234,6 @@ rescued = .false.
 ! including uninitialized indices. STILL NECESSARY???
 !--------------------------------------------------------------------------------------------------!
 
-
-knew = 0_IK
-
 do while (.true.)
     if (.not. geo_step) then
         if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
@@ -258,31 +246,30 @@ do while (.true.)
         dnorm = min(delta, sqrt(dsq))
         shortd = (dnorm < HALF * rho)
 
+        ! When D is short make a choice between improving the geometry and reducing RHO depends on
+        ! whether or not our work with the current RHO seems to be complete. Either RHO is decreased
+        ! or termination occurs if the errors in the quadratic model at the last three interpolation
+        ! points compare favourably with predictions of likely improvements to the model within
+        ! distance HALF*RHO of XOPT.
         if (shortd) then
             ntrits = -1
             dsquare = (TEN * rho)**2
             if (nf <= nfsav + 2) then
                 improve_geo = .true.
             else
-
-! The following choice between labels 650 and 680 depends on whether or not our work with the
-! current RHO seems to be complete. Either RHO is decreased or termination occurs if the errors in
-! the quadratic model at the last three interpolation points compare favourably with predictions of
-! likely improvements to the model within distance HALF*RHO of XOPT.
                 errbig = max(diffa, diffb, diffc)
                 frhosq = 0.125_RP * rho * rho
                 if (crvmin > ZERO .and. errbig > frhosq * crvmin) then
                     improve_geo = .true.
                 else
                     bdtol = errbig / rho
-
                     bdtest = bdtol
                     bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
                     bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
                     hqdiag = diag(hq)
                     curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
                     where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
-        !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
+                    !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
                     if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
                         improve_geo = .true.
                     else
@@ -295,19 +282,14 @@ do while (.true.)
         end if
     end if
 
-! Severe cancellation is likely to occur if XOPT is too far from XBASE. If the following test holds,
-! then XBASE is shifted so that XOPT becomes zero. The appropriate changes are made to BMAT and to
-! the second derivatives of the current model, beginning with the changes to BMAT that are
-! independent of ZMAT. VLAG is used temporarily for working space.
-
     if (geo_step .or. .not. shortd) then
-
-        !improve_geo = .false.
         geo_step = .false.
-
-
+        ! Severe cancellation is likely to occur if XOPT is too far from XBASE. If the following
+        ! test holds, then XBASE is shifted so that XOPT becomes zero. The appropriate changes are
+        ! made to BMAT and to the second derivatives of the current model, beginning with the
+        ! changes to BMAT that are independent of ZMAT. VLAG is used temporarily for working space.
+        ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dsq .and. .not. rescued) then
-            ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
             !xnew = xnew - xopt  ! Needed? Will XNEW be used again later?
@@ -318,26 +300,28 @@ do while (.true.)
 
         rescued = .false.
 
-! Pick two alternative vectors of variables, relative to XBASE, that are suitable as new positions
-! of the KNEW-th interpolation point. Firstly, XNEW is set to the point on a line through XOPT and
-! another interpolation point that minimizes the predicted value of the next denominator, subject to
-! ||XNEW - XOPT|| .LEQ. DELBAR and to the SL and SU bounds. Secondly, XALT is set to the best
-! feasible point on a constrained version of the Cauchy step of the KNEW-th Lagrange function, the
-! corresponding value of the square of this function being returned in CAUCHY. The choice between
-! these alternatives is going to be made when the denominator is calculated.
-!--------------------------------------------------------------------------------------------------!
-!  Zaikun 23-07-2019: (STILL NECESSARY???)
-!  Although very rare, NaN can sometimes occur in BMAT or ZMAT. If it happens, we terminate the
-!  code. See the comments above line number 60. Indeed, if GEOSTEP is called with such matrices, then
-!  geostep.f90 will encounter a memory error at lines 173--174. This is because the first value of
-!  PREDSQ in GEOSTEP (see line 159 of geostep.f90) will be NaN, line 164 will not be reached, and
-!  hence no value will be assigned to IBDSAV.
-!  Such an error was observed when BOBYQA was (mistakenly) tested on CUTEst problem CONCON. CONCON
-!  is a nonlinearly constrained problem with bounds. By mistake, BOBYQA was called to solve this
-!  problem, neglecting all the constraints other than bounds. With only the bound constraints, the
-!  objective function turned to be unbounded from below, which led to abnormal values in BMAT
-!  (indeed, BETA defined in lines 366--389 took NaN/infinite values).
-!--------------------------------------------------------------------------------------------------!
+        ! Pick two alternative vectors of variables, relative to XBASE, that are suitable as new
+        ! positions of the KNEW-th interpolation point. Firstly, XNEW is set to the point on a line
+        ! through XOPT and another interpolation point that minimizes the predicted value of the
+        ! next denominator, subject to ||XNEW - XOPT|| .LEQ. DELBAR and to the SL and SU bounds.
+        ! Secondly, XALT is set to the best feasible point on a constrained version of the Cauchy
+        ! step of the KNEW-th Lagrange function, the corresponding value of the square of this
+        ! function being returned in CAUCHY. The choice between these alternatives is going to be
+        ! made when the denominator is calculated.
+
+        !------------------------------------------------------------------------------------------!
+        !  Zaikun 23-07-2019: (STILL NECESSARY???)
+        ! Although very rare, NaN can sometimes occur in BMAT or ZMAT. If it happens, we terminate
+        ! the code. See the comments above line number 60. Indeed, if GEOSTEP is called with such
+        ! matrices, then geostep.f90 will encounter a memory error at lines 173--174. This is
+        ! because the first value of PREDSQ in GEOSTEP (see line 159 of geostep.f90) will be NaN,
+        ! line 164 will not be reached, and hence no value will be assigned to IBDSAV. Such an error
+        ! was observed when BOBYQA was (mistakenly) tested on CUTEst problem CONCON. CONCON is
+        ! a nonlinearly constrained problem with bounds. By mistake, BOBYQA was called to solve this
+        ! problem, neglecting all the constraints other than bounds. With only the bound
+        ! constraints, the objective function turned to be unbounded from below, which led to
+        ! abnormal values in BMAT(indeed, BETA defined in lines 366--389 took NaN/infinite values).
+        !------------------------------------------------------------------------------------------!
 
         if (ntrits == 0) then
             if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
@@ -363,18 +347,16 @@ do while (.true.)
                     info = DAMAGING_ROUNDING
                     exit
                 else
-                    ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more expensive than
-                    ! the previous shift, because new matrices BMAT and ZMAT are generated from scratch, which
-                    ! may include the replacement of interpolation points whose positions seem to be causing
-                    ! near linear dependence in the interpolation conditions. Therefore RESCUE is called only if
-                    ! rounding errors have reduced by at least a factor of TWO the denominator of the formula
-                    ! for updating the H matrix. It provides a useful safeguard, but is not invoked in most
-                    ! applications of BOBYQA.
-
-                    nfsav = nf
-
+                    ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more
+                    ! expensive than the previous shift, because new matrices BMAT and ZMAT are
+                    ! generated from scratch, which may include the replacement of interpolation
+                    ! points whose positions seem to be causing near linear dependence in the
+                    ! interpolation conditions. Therefore RESCUE is called only if rounding errors
+                    ! have reduced by at least a factor of TWO the denominator of the formula for
+                    ! updating the H matrix. It provides a useful safeguard, but is not invoked in
+                    ! most applications of BOBYQA.
                     !--------------------------------------------------------------------------------------!
-                    ! Zaikun 2019-08-29: See the comments above line number 60. STILL NECESSARY?
+                    ! Zaikun 2019-08-29: STILL NECESSARY?
                     if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
                         info = NAN_MODEL
                         exit
@@ -385,18 +367,16 @@ do while (.true.)
                     end if
                     !--------------------------------------------------------------------------------------!
 
-
+                    nfsav = nf
                     call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval,&
                         & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat)
 
-                    ! XOPT is updated now in case the branch below to label 720 is taken. Any updating of
-                    ! GOPT occurs after the branch below to label 20, which leads to a trust region
-                    ! iteration as does the branch to label 60.
+                    ! XOPT is updated now in case the loop will exit. {?}
+                    ! Update GOPT?
                     if (fopt <= ftarget) then
                         info = FTARGET_ACHIEVED
                         exit
                     end if
-
                     if (nf >= maxfun) then
                         info = MAXFUN_REACHED
                         exit
@@ -407,21 +387,21 @@ do while (.true.)
                         cycle
                     end if
                     rescued = .true.
-                    !improve_geo = .true.
                     geo_step = .true.
                     cycle
-                    !--------------------------------------------------------------------------------------!
-                    ! After RESCUE, Powell's code takes immediately another GEOSTEP. If the geometry is then
-                    ! acceptable (i.e., DENOM > HALF * VLAG(KNEW)**2), then the algorithm will continue.
-                    ! Otherwise, it will exit with INFO set to DAMAGING_ROUNDING.
-                    !--------------------------------------------------------------------------------------!
+                    !------------------------------------------------------------------------------!
+                    ! After RESCUE, Powell's code takes immediately another GEOSTEP. If the geometry
+                    ! becomes acceptable (i.e., DENOM > HALF * VLAG(KNEW)**2), then the algorithm
+                    ! will continue.Otherwise, it will exit with INFO set to DAMAGING_ROUNDING.
+                    !------------------------------------------------------------------------------!
                 end if
             end if
 
-! Alternatively, if NTRITS is positive, then set KNEW to the index of the next interpolation point
-! to be deleted to make room for a trust region step. Again RESCUE may be called if rounding errors
-! have damaged the chosen denominator, which is the reason for attempting to select KNEW before
-! calculating the next value of the objective function.
+            ! Alternatively, if NTRITS is positive, then set KNEW to the index of the next
+            ! interpolation point to be deleted to make room for a trust region step. Again RESCUE
+            ! may be called if rounding errors have damaged the chosen denominator, which is the
+            ! reason for attempting to select KNEW before calculating the next value of the
+            ! objective function.
         else
             ! Calculate VLAG and BETA for the current choice of D.
             vlag = calvlag(kopt, bmat, d, xpt, zmat)
@@ -436,10 +416,11 @@ do while (.true.)
             knew = 0
             scaden = ZERO
             if (any(score > 0)) then
-                ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we exclude such K.
+                ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we exclude
+                ! such K.
                 knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
                 scaden = score(knew)
-        !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
+                !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
                 denom = den(knew)
             end if
 
@@ -448,28 +429,27 @@ do while (.true.)
             biglsq = ZERO
             if (any(wlagsq > 0)) then
                 biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
-        !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
+                !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
             end if
 
-            ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet we prefer to require
-            ! KNEW > 0 explicitly.
+            ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet we prefer to
+            ! require KNEW > 0 explicitly.
             !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
             if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
                 if (nf <= nresc) then
                     info = DAMAGING_ROUNDING
                     exit
                 else
-                    ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more expensive than
-                    ! the previous shift, because new matrices BMAT and ZMAT are generated from scratch, which
-                    ! may include the replacement of interpolation points whose positions seem to be causing
-                    ! near linear dependence in the interpolation conditions. Therefore RESCUE is called only if
-                    ! rounding errors have reduced by at least a factor of TWO the denominator of the formula
-                    ! for updating the H matrix. It provides a useful safeguard, but is not invoked in most
-                    ! applications of BOBYQA.
+                    ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more
+                    ! expensive than the previous shift, because new matrices BMAT and ZMAT are
+                    ! generated from scratch, which may include the replacement of interpolation
+                    ! points whose positions seem to be causing near linear dependence in the
+                    ! interpolation conditions. Therefore RESCUE is called only if rounding errors
+                    ! have reduced by at least a factor of TWO the denominator of the formula for
+                    ! updating the H matrix. It provides a useful safeguard, but is not invoked in
+                    ! most applications of BOBYQA.
 
-                    nfsav = nf
-
-                    !--------------------------------------------------------------------------------------!
+                    !------------------------------------------------------------------------------!
                     ! Zaikun 2019-08-29: See the comments above line number 60. STILL NECESSARY?
                     if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
                         info = NAN_MODEL
@@ -479,19 +459,18 @@ do while (.true.)
                         info = NAN_MODEL
                         exit
                     end if
-                    !--------------------------------------------------------------------------------------!
+                    !------------------------------------------------------------------------------!
 
+                    nfsav = nf
                     call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval,&
                         & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat)
 
-                    ! XOPT is updated now in case the branch below to label 720 is taken. Any updating of
-                    ! GOPT occurs after the branch below to label 20, which leads to a trust region
-                    ! iteration as does the branch to label 60.
+                    ! XOPT is updated now in case the loop exits. (?)
+                    ! Update GOPT?
                     if (fopt <= ftarget) then
                         info = FTARGET_ACHIEVED
                         exit
                     end if
-
                     if (nf >= maxfun) then
                         info = MAXFUN_REACHED
                         exit
@@ -503,9 +482,8 @@ do while (.true.)
             end if
         end if
 
-! Put the variables for the next calculation of the objective function in XNEW, with any adjustments
-! for the bounds. Calculate the value of the objective function at XBASE+XNEW.
-
+        ! Put the variables for the next calculation of the objective function in XNEW, with any
+        ! adjustments for the bounds. Calculate the value of the objective function at XBASE+XNEW.
         x = min(max(xl, xbase + xnew), xu)
         x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
         x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
@@ -540,8 +518,8 @@ do while (.true.)
             exit
         end if
 
-! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the error
-! of this prediction.
+        ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the
+        ! error of this prediction.
         fopt = fval(kopt)
         qred = -quadinc(d, xpt, gopt, pq, hq)
         diff = f - fopt + qred
@@ -550,12 +528,12 @@ do while (.true.)
         diffa = abs(diff)
         if (dnorm > rho) nfsav = nf
 
-! Pick the next value of DELTA after a trust region step.
+        ! Pick the next value of DELTA after a trust region step.
         if (ntrits > 0) then
             if (.not. (qred > ZERO)) then
-                !------------------------------------------------------------------------------------------!
-                ! Zaikun 20220405: LINCOA improves the model in this case. BOBYQA should try the same.
-                !------------------------------------------------------------------------------------------!
+                !----------------------------------------------------------------------------------!
+                ! Zaikun 20220405: LINCOA improves the model in this case. Try the same here?
+                !----------------------------------------------------------------------------------!
                 info = TRSUBP_FAILED
                 exit
             end if
@@ -582,10 +560,11 @@ do while (.true.)
                 knew = 0
                 scaden = ZERO
                 if (any(score > 0)) then
-                    ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we exclude such K.
+                    ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we
+                    ! exclude such K.
                     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
                     scaden = score(knew)
-            !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
+                    !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
                     denom = den(knew)
                 end if
 
@@ -593,11 +572,11 @@ do while (.true.)
                 biglsq = ZERO
                 if (any(wlagsq > 0)) then
                     biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
-            !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
+                    !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
                 end if
 
-                ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet prefer to require
-                ! KNEW > 0 explicitly.
+                ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet prefer to
+                ! require KNEW > 0 explicitly.
                 if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
                     knew = ksav
                     denom = densav
@@ -605,40 +584,39 @@ do while (.true.)
             end if
         end if
 
-! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update the second
-! derivative terms of the model.
-!--------------------------------------------------------------------------------------------------!
+        ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
+        ! the second derivative terms of the model.
+        !------------------------------------------------------------------------------------------!
         call assert(knew >= 1, 'KNEW >= 1', srname)
         call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
         call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
-!write (99, *) 1, denom, (sum(zmat(knew, :)**2)) * beta + vlag(knew)**2, denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)
-!close(99)
         call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
-!--------------------------------------------------------------------------------------------------!
+        !--------------------------------------------------------------------------------------------------!
         call updateh(knew, beta, vlag, bmat, zmat)
 
         call r1update(hq, pq(knew), xpt(:, knew))
         pq(knew) = ZERO
         pqinc = matprod(zmat, diff * zmat(knew, :))
         pq = pq + pqinc
-!pq = pq + matprod(zmat, diff * zmat(knew, :))
-!pq = pq + diff * matprod(zmat, zmat(knew, :))
+        ! Alternatives:
+        !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
+        !!PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
 
-! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are caused
-! by the updating of the quadratic model.
+        ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
+        ! caused by the updating of the quadratic model.
         fval(knew) = f
         xpt(:, knew) = xnew
         gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)
 
-! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
+        ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
         if (f < fopt) then
             kopt = knew
             xopt = xnew
             gopt = gopt + hess_mul(d, xpt, pq, hq)
         end if
 
-! Calculate the parameters of the least Frobenius norm interpolant to the current data, the gradient
-! of this interpolant at XOPT being put into VLAG(NPT+I), I=1,2,...,N.
+        ! Calculate the parameters of the least Frobenius norm interpolant to the current data, the
+        ! gradient of this interpolant at XOPT being put into VLAG(NPT+I), I=1,2,...,N.
         if (ntrits > 0) then
             fshift = fval - fval(kopt)
             pqalt = matprod(zmat, matprod(fshift, zmat))
@@ -666,30 +644,25 @@ do while (.true.)
             end if
         end if
 
-! If a trust region step has provided a sufficient decrease in F, then branch for another trust
-! region calculation. The case NTRITS=0 occurs when the new interpolation point was reached by an
-! alternative step.
+        ! If a trust region step has provided a sufficient decrease in F, then branch for another
+        ! trust region calculation. The case NTRITS=0 occurs when the new interpolation point was
+        ! reached by an alternative step.
         if (ntrits == 0) cycle
         if (f <= fopt - TENTH * qred) cycle
 
-! Alternatively, find out if the interpolation points are close enough to the best point so far.
+        ! Alternatively, find out if the interpolation points are close enough to the best point so far.
         dsquare = max((TWO * delta)**2, (TEN * rho)**2)
-
         improve_geo = .true.
-
     end if
-
-
 
     if (improve_geo) then
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
         dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
 
-! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th interpolation
-! point within distance DELBAR of XOPT. It is reached via label 90. Otherwise, there is a branch to
-! label 60 for another trust region iteration, unless the calculations with the current RHO are
-! complete.
+        ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
+        ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region
+        ! iteration, unless the calculations with the current RHO are complete.
         if (knew > 0) then
             dist = sqrt(dsquare)
             if (ntrits == -1) then
@@ -699,19 +672,15 @@ do while (.true.)
             ntrits = 0
             delbar = max(min(TENTH * dist, delta), rho)
             dsq = delbar * delbar
-
-            !improve_geo = .true.
             geo_step = .true.
             cycle
         else
-            !improve_geo = .false.
             geo_step = .false.
         end if
         if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) cycle
     end if
 
-
-! The calculations with the current value of RHO are complete. Pick the next values of RHO and DELTA.
+    ! The calculations with the current value of RHO are complete. Update RHO and DELTA.
     if (rho > rhoend) then
         delta = HALF * rho
         ratio = rho / rhoend
@@ -743,13 +712,6 @@ if (info == SMALL_TR_RADIUS .and. ntrits == -1 .and. nf < maxfun) then
     nf = nf + 1_IK
     call evaluate(calfun, x, f)
     call savehist(nf, x, xhist, f, fhist)
-
-    !if (is_nan(f) .or. is_posinf(f)) then
-    !    info = NAN_INF_F
-    !end if
-    !if (f <= ftarget) then
-    !    info = FTARGET_ACHIEVED
-    !end if
 end if
 
 !--------------------------------------------------------------------------------------------------!
