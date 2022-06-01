@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM07:46:29
+! Last Modified: Wednesday, June 01, 2022 PM08:10:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,7 +33,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
+use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
 use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
@@ -153,7 +153,7 @@ f = ieeenan()
 tol = 0.01_RP
 rho = rhobeg
 rhosq = rho**2
-
+info = INFO_DFT
 
 ! Initialization. NF is the number of function calculations so far. The least function value so far,
 ! the corresponding X and its index are noted in FOPT, XOPT, and KOPT respectively.
@@ -366,7 +366,6 @@ if (.not. geo_step) then
         knew = -1
         errtol = HALF * crvmin * rho * rho
         if (nf <= npt + 9) errtol = ZERO
-        !goto 290
     end if
 end if
 
@@ -534,7 +533,6 @@ end if
 !     Alternatively, find out if the interpolation points are close
 !     enough to the best point so far.
 !
-!290 continue
 
 !reduce_rho = .true.
 
@@ -582,13 +580,13 @@ if (improve_geo) then
 
     reduce_rho = (reduce_rho .or. .not. dnorm > rho)
     if (geo_step .or. .not. reduce_rho) goto 70
-    !goto 600
 end if
 
-!600 continue
-if (rho > rhoend) then
-    ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the corresponding
-    ! changes to the gradients of the Lagrange functions and the quadratic model.
+if (rho <= rhoend) then
+    info = SMALL_TR_RADIUS
+else
+! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the corresponding
+! changes to the gradients of the Lagrange functions and the quadratic model.
     xbase = xbase + xopt
     xpt = xpt - spread(xopt, dim=2, ncopies=npt)
     pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)  ! Model gradient
@@ -612,13 +610,14 @@ if (rho > rhoend) then
     goto 70
 end if
 
-info = SMALL_TR_RADIUS !!??
+420 continue
+!info = SMALL_TR_RADIUS !!??
 
 !     Return from the calculation, after another Newton-Raphson step, if
 !     it is too short to have been tried before.
 
 ! Zaikun 20220531: For the moment, D may contain NaN. Should be avoided later.
-if (errtol >= ZERO .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
+if (info == SMALL_TR_RADIUS .and. errtol >= ZERO .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
 !if (errtol >= ZERO .and. nf < maxfun) then
     info = SMALL_TR_RADIUS !!?? See NEWUOA
     x = xbase + (xopt + d)
@@ -627,7 +626,6 @@ if (errtol >= ZERO .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
     call savehist(nf, x, xhist, f, fhist)
 end if
 
-420 continue
 
 if (fopt <= f .or. is_nan(f)) then
     x = xbase + xopt
