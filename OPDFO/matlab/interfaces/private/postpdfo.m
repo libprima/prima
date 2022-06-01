@@ -254,7 +254,7 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
         output.warnings = [output.warnings, wmsg];
     elseif ~isempty(fhist) && any(fhist < -hugefun)
         wid = sprintf('%s:HugeNegativeF', invoker);
-        wmsg = sprintf('%s: fhist contains values that are below %g. Check the objective function to see whether it is expected.', invoker, -hugefun);
+        wmsg = sprintf('%s: fhist contains values below %g. Check the objective function to see whether it is expected.', invoker, -hugefun);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     end

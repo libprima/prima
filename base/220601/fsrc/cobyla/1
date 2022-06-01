@@ -1,0 +1,245 @@
+subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ftarget, &
+    & gamma1, gamma2, rhobeg, rhoend, constr, f, x, nf, chist, conhist, cstrv, fhist, xhist, info)
+
+m = int(size(constr), kind(m))
+n = int(size(x), kind(n))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxconhist = int(size(conhist, 2), kind(maxconhist))
+maxchist = int(size(chist), kind(maxchist))
+maxhist = int(max(maxxhist, maxfhist, maxconhist, maxchist), kind(maxhist))
+
+call initxfc(calcfc, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, chist, conhist, &
+   & conmat, cval, fhist, fval, sim, simi, xhist, evaluated, subinfo)
+
+call initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
+
+if (subinfo /= INFO_DFT) then
+    info = subinfo
+    kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
+    x = xfilt(:, kopt)
+    f = ffilt(kopt)
+    constr = confilt(:, kopt)
+    cstrv = cfilt(kopt)
+    call rangehist(nf, xhist, fhist, chist, conhist)
+    call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
+    if (DEBUGGING) then
+        call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
+        call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+        call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
+        call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+        call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+        call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+        call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
+            & 'FHIST does not contain NaN/+Inf', srname)
+        call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
+            & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
+        call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
+            & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
+        call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
+        call assert(.not. any(is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist)))), &
+            & 'CHIST does not contain NaN/+Inf', srname)
+        k = minval([nf, maxfhist, maxchist])
+        call assert(.not. any(isbetter(fhist(1:k), chist(1:k), f, cstrv, ctol)), &
+            & 'No point in the history is better than X', srname)
+    end if
+    return
+end if
+
+rho = rhobeg
+delta = rhobeg
+cpen = ZERO
+
+actrem = -HUGENUM
+prerem = HUGENUM
+jdrop_tr = 0_IK
+jdrop_geo = 0_IK
+
+maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
+info = MAXTR_REACHED
+
+do tr = 1, maxtr
+
+    good_geo = goodgeo(delta, factor_alpha, factor_beta, sim, simi)
+
+    A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+    A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
+
+    b = [-conmat(:, n + 1), -fval(n + 1)]
+    d = trstlp(A, b, delta)
+    dnorm = min(delta, norm(d))
+
+    shortd = (dnorm < TENTH * rho)
+
+    if (shortd) then
+        delta = TENTH * delta
+        if (delta <= 1.5_RP * rho) then
+            delta = rho  ! Set DELTA to RHO when it is close.
+        end if
+    else
+        preref = inprod(d, A(:, m + 1))  ! Can be negative.
+        prerec = cval(n + 1) - maxval([-matprod(d, A(:, 1:m)) - conmat(:, n + 1), ZERO])
+
+        if (prerec > 0) then
+            barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
+        else  ! PREREC == 0 can happen if B <= 0.
+            barmu = ZERO
+        end if
+        if (cpen < 1.5_RP * barmu) then
+            cpen = min(TWO * barmu, HUGENUM)
+            call cpenmsg(solver, iprint, cpen)
+            if (findpole(cpen, cval, fval) <= n) then
+                call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+                if (subinfo == DAMAGING_ROUNDING) then
+                    info = subinfo
+                    exit  ! Better action to take? Geometry step, or simply continue?
+                end if
+                cycle  ! Zaikun 20211111: Can this lead to infinite cycling?
+            end if
+        end if
+
+        x = sim(:, n + 1) + d
+        call evaluate(calcfc, x, f, constr, cstrv)
+        nf = nf + 1_IK
+        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
+        call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+
+        prerem = preref + cpen * prerec  ! Theoretically nonnegative; equals 0 if CPEN = 0 = PREREF.
+        actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
+        if (cpen <= 0 .and. abs(f - fval(n + 1)) <= 0) then
+            prerem = prerec
+            actrem = cval(n + 1) - cstrv
+        end if
+
+
+        ratio = redrat(actrem, prerem, eta1)
+        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+        if (delta <= 1.5_RP * rho) then
+            delta = rho
+        end if
+
+        tr_success = (actrem > 0)  ! N.B.: If ACTREM is NaN, then TR_SUCCESS should & will be FALSE.
+        jdrop_tr = setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi)
+
+        call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
+        if (subinfo == DAMAGING_ROUNDING) then
+            info = subinfo
+            exit  ! Better action to take? Geometry step, or simply continue?
+        end if
+
+        subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
+    end if  ! End of IF (SHORTD). The normal trust-region calculation ends here.
+
+
+
+    bad_trstep = (shortd .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
+
+    improve_geo = (bad_trstep .and. .not. good_geo)
+
+    reduce_rho = (bad_trstep .and. good_geo .and. max(delta, dnorm) <= rho)
+
+
+    if (improve_geo .and. .not. goodgeo(delta, factor_alpha, factor_beta, sim, simi)) then
+
+        jdrop_geo = setdrop_geo(delta, factor_alpha, factor_beta, sim, simi)
+
+        if (jdrop_geo == 0) then
+            info = DAMAGING_ROUNDING
+            exit
+        end if
+
+        d = geostep(jdrop_geo, cpen, conmat, cval, delta, fval, factor_gamma, simi)
+
+        x = sim(:, n + 1) + d
+        call evaluate(calcfc, x, f, constr, cstrv)
+        nf = nf + 1_IK
+        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
+        call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+        call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
+        if (subinfo == DAMAGING_ROUNDING) then
+            info = subinfo
+            exit  ! Better action to take? Geometry step, or simply continue?
+        end if
+
+        subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
+    end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
+
+    if (reduce_rho) then
+        if (rho <= rhoend) then
+            info = SMALL_TR_RADIUS
+            exit
+        end if
+        delta = HALF * rho
+        rho = redrho(rho, rhoend)
+        delta = max(delta, rho)
+        cpen = min(cpen, fcratio(fval, conmat))  ! It may set CPEN to 0.
+        call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
+        call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+        if (subinfo == DAMAGING_ROUNDING) then
+            info = subinfo
+            exit  ! Better action to take? Geometry step, or simply continue?
+        end if
+    end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
+
+end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
+
+kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), max(cpen, cweight), ctol)
+x = xfilt(:, kopt)
+f = ffilt(kopt)
+constr = confilt(:, kopt)
+cstrv = cfilt(kopt)
+
+call rangehist(nf, xhist, fhist, chist, conhist)
+
+call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
+
+
+end subroutine cobylb
+
+
+function fcratio(fval, conmat) result(r)
+
+use, non_intrinsic :: consts_mod, only : RP, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+real(RP), intent(in) :: fval(:)     ! FVAL(N+1)
+real(RP), intent(in) :: conmat(:, :)    ! CONMAT(M, N+1)
+
+real(RP) :: r
+
+real(RP) :: cmax(size(conmat, 1))
+real(RP) :: cmin(size(conmat, 1))
+real(RP) :: denom
+character(len=*), parameter :: srname = 'FCRATIO'
+
+if (DEBUGGING) then
+    call assert(size(fval) >= 1, 'SIZE(FVAL) >= 1', srname)
+    call assert(size(conmat, 2) == size(fval), 'SIZE(CONMAT, 2) == SIZE(FVAL)', srname)
+end if
+
+
+cmin = minval(conmat, dim=2)
+cmax = maxval(conmat, dim=2)
+if (any(cmin < HALF * cmax)) then
+    denom = minval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
+    r = (maxval(fval) - minval(fval)) / denom
+else
+    r = ZERO
+end if
+
+
+if (DEBUGGING) then
+    call assert(r >= 0, 'R >= 0', srname)
+end if
+end function fcratio
