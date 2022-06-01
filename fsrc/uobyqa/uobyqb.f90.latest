@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM04:10:16
+! Last Modified: Wednesday, June 01, 2022 PM03:51:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -365,7 +365,6 @@ if (.not. geo_step) then
         knew = -1
         errtol = HALF * crvmin * rho * rho
         if (nf <= npt + 9) errtol = ZERO
-        goto 290
     end if
 end if
 
@@ -533,7 +532,6 @@ end if
 !     Alternatively, find out if the interpolation points are close
 !     enough to the best point so far.
 !
-290 continue
 
 if (improve_geo) then
 
@@ -569,23 +567,20 @@ if (improve_geo) then
         ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the modulus of
         ! its Lagrange function within the trust region.
         call geostep(g, h, rho, d, vmax)
-        if (errtol > 0 .and. wmult * vmax <= errtol) then
-            cycle
-        elseif (vmax > 0) then
-            geo_step = .true.  ! A geometry step has been taken.
-            exit
-        else
-            geo_step = .false.
+        !if (errtol > 0 .and. wmult * vmax <= errtol) then
+        if (.not. (errtol > 0 .and. wmult * vmax <= errtol)) then
+            geo_step = (vmax > 0)
             exit
         end if
     end do
 
     if (geo_step .or. dnorm > rho) goto 70
-    goto 600
 end if
 
-600 continue
-if (rho > rhoend) then
+!if (rho > rhoend) then
+if (rho <= rhoend) then
+    info = SMALL_TR_RADIUS
+else
     ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the corresponding
     ! changes to the gradients of the Lagrange functions and the quadratic model.
     xbase = xbase + xopt
@@ -611,13 +606,12 @@ if (rho > rhoend) then
     goto 70
 end if
 
-info = SMALL_TR_RADIUS !!??
 
 !     Return from the calculation, after another Newton-Raphson step, if
 !     it is too short to have been tried before.
 
 ! Zaikun 20220531: For the moment, D may contain NaN. Should be avoided later.
-if (errtol >= ZERO .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
+if (info == SMALL_TR_RADIUS .and. errtol >= ZERO .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
 !if (errtol >= ZERO .and. nf < maxfun) then
     info = SMALL_TR_RADIUS !!?? See NEWUOA
     x = xbase + (xopt + d)
