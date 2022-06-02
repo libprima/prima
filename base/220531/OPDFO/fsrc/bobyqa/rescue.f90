@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 24, 2022 PM03:38:17
+! Last Modified: Thursday, June 02, 2022 PM01:57:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat
     & gopt, hq, pq, sl, su, vlag, xbase, xhist, xopt, xpt, zmat, f)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
@@ -348,7 +348,12 @@ if (any(den > 0)) then
     denom = den(kold)
     !!MATLAB: [denom, kold] = max(den, [], 'omitnan');
 end if
-vlmxsq = maxval(vlag(1:npt)**2)
+!vlmxsq = maxval(vlag(1:npt)**2)
+vlmxsq = HUGENUM
+if (any(.not. is_nan(vlag(1:npt)))) then
+    vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
+        !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
+end if
 ! KOLD > 0 is implied by DENOM > 1.0E-2*VLMXSQ (but NOT DENOM >= ...), yet we prefer to require
 ! KOLD > 0 explicitly.
 if (kold > 0 .and. denom > 1.0E-2_RP * vlmxsq) then

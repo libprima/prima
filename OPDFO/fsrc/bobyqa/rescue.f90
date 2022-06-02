@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 30, 2022 PM10:32:19
+! Last Modified: Thursday, June 02, 2022 PM03:26:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,7 +85,7 @@ subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
@@ -377,7 +377,15 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
         denom = den(kprov)
         !!MATLAB: [denom, kprov] = max(den, [], 'omitnan');
     end if
-    vlmxsq = maxval(vlag(1:npt)**2)
+    vlmxsq = HUGENUM
+    if (any(.not. is_nan(vlag(1:npt)))) then
+        vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
+        !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
+    end if
+    if (any(.not. is_nan(vlag(1:npt)))) then
+        vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
+        !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
+    end if
     if (kopt == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
         ! Indeed, KOPT == 0 can be removed from the above condition, because KOPT == 0 implies that
         ! DENOM == 0 <= 1.0E-2*VLMXSQ. However, we prefer to mention KOPT == 0 explicitly.
