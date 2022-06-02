@@ -56,6 +56,19 @@ options = []; options.yw = 2222017; verify('bobyqa', 'PALMER3A', options);  % Ca
 %%%%%%
 Fix: blacklist 'PALMER3A'
 
+2. bobyqaN returns an fx that does not match x (Should be tested again when the modernization finishes).
+Version: base 220513
+Date: 20220603
+YW: 222316
+Parallel of sequential: Parallel
+Reproduce:
+%%%%%%
+cd('base/220513/matlab/tests'); options = []; options.yw = 222316; verify('bobyqa', 'HS4', options);  % Cannot reproduce locally
+%%%%%%
+Fix: blacklist 'HS4'
+
+
+
 - COBYLA
 
 1. cobylan and cobyla selects different x for CHACONN1, 8; no one is better than the other
