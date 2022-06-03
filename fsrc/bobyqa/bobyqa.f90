@@ -1,7 +1,6 @@
 module bobyqa_mod
 !--------------------------------------------------------------------------------------------------!
-! BOBYQA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
-! BOBYQA algorithm in
+! BOBYQA_MOD is a module providing the reference implementation of Powell's BOBYQA algorithm in
 !
 ! M. J. D. Powell, The BOBYQA algorithm for bound constrained optimization without derivatives,
 ! Technical Report DAMTP 2009/NA06, Department of Applied Mathematics and Theoretical Physics,
@@ -19,13 +18,14 @@ module bobyqa_mod
 ! derivative of the model, beginning with the ZERO matrix. The values of the variables are
 ! constrained by upper and lower bounds. The arguments of the subroutine are as follows.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on the BOBYQA paper and Powell's code, with
+! modernization and improvements.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 02, 2022 PM11:00:13
+! Last Modified: Friday, June 03, 2022 PM06:32:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

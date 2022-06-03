@@ -1,11 +1,13 @@
-This is a modernized and improved Fortran implementation of Powell's LINCOA algorithm.
+This is the reference implementation of Powell's LINCOA algorithm.
 
-Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the paper
+Coded by Zaikun ZHANG (www.zhangzk.net) based on the paper
 
 M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
 Math. Program. Comput., 7:237--267, 2015
 
-Powell did not publish a paper to introduce the algorithm. The above-mentioned paper does not 
+and Powell's code, with modernization and improvements.
+
+Powell did not publish a paper to introduce the algorithm. The above-mentioned paper does not
 describe LINCOA but discusses how to solve linearly-constrained trust-region subproblems.
 
 Due to the dependency among the modules, the files must be compiled in the order indicated in

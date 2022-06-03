@@ -1,10 +1,11 @@
-This is a modernized and improved Fortran implementation of the BOBYQA algorithm described in
+This is the reference implementation of Powell's BOBYQA algorithm described in
 
 M. J. D. Powell, The BOBYQA algorithm for bound constrained optimization without derivatives,
 Technical Report DAMTP 2009/NA06, Department of Applied Mathematics and Theoretical Physics,
 Cambridge University, Cambridge, UK, 2009
 
-Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the above-mentioned paper.
+Coded by Zaikun ZHANG (www.zhangzk.net) based the above-mentioned paper and Powell's code, with
+modernization and improvements.
 
 Due to the dependency among the modules, the files must be compiled in the order indicated in
 ffiles.txt. Before that, one must compile the Fotran files in the directory "common" according

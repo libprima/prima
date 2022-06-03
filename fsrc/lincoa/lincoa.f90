@@ -1,7 +1,8 @@
 module lincoa_mod
 !--------------------------------------------------------------------------------------------------!
-! LINCOA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
-! LINCOA algorithm. The algorithm approximately solves
+! LINCOA_MOD is a module providing the reference implementation of Powell's LINCOA algorithm.
+!
+! The algorithm approximately solves
 !
 !   min F(X) subject to A^T*X <= B,
 !
@@ -15,10 +16,12 @@ module lincoa_mod
 ! Alternatively, a new vector of variables may be chosen to replace an interpolation point that may
 ! be too far away for reliability, and then the new point does not have to satisfy the constraints.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the paper
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on the paper
 !
 ! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
 ! Math. Program. Comput., 7:237--267, 2015
+!
+! and Powell's code, with modernization and improvements.
 !
 ! Powell did not publish a paper to introduce the algorithm. The above paper does not describe
 ! LINCOA but discusses how to solve linearly-constrained trust-region subproblems.
@@ -27,7 +30,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 22, 2022 PM11:31:24
+! Last Modified: Friday, June 03, 2022 PM06:34:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
