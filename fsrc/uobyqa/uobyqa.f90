@@ -1,7 +1,6 @@
 module uobyqa_mod
 !--------------------------------------------------------------------------------------------------!
-! UOBYQA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
-! UOBYQA algorithm in
+! UOBYQA_MOD is a module providing the reference implementation of Powell's UOBYQA algorithm in
 !
 ! M. J. D. Powell, UOBYQA: unconstrained optimization by quadratic approximation, Math. Program.,
 ! 92(B):555--582, 2002
@@ -13,13 +12,14 @@ module uobyqa_mod
 ! where X is a vector of variables that has N components and F is a real-valued objective function.
 ! It tackles the problem by a trust region method that forms quadratic models by interpolation.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the UOBYQA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on the UOBYQA paper and Powell's code, with
+! modernization and improvements.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 07, 2022 PM12:18:10
+! Last Modified: Friday, June 03, 2022 PM06:30:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

@@ -1,7 +1,6 @@
 module newuoa_mod
 !--------------------------------------------------------------------------------------------------!
-! NEWUOA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
-! NEWUOA algorithm in
+! NEWUOA_MOD is a module providing the reference implementation of Powell's NEWUOA algorithm in
 !
 ! M. J. D. Powell, The NEWUOA software for unconstrained optimization without derivatives, In Large-
 ! Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma, 255--297, Springer, New York, 2006
@@ -16,13 +15,14 @@ module newuoa_mod
 ! Frobenius norm of the change to the second derivative of the quadratic model, beginning with a
 ! zero matrix.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's  code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on the NEWUOA paper and Powell's code, with
+! modernization and improvements.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 07, 2022 PM12:13:17
+! Last Modified: Friday, June 03, 2022 PM06:31:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

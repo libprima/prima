@@ -1,9 +1,10 @@
-This is a modernized and improved Fortran implementation of the UOBYQA algorithm described in
+This is the reference implementation of Powell's UOBYQA algorithm described in
 
 M. J. D. Powell, UOBYQA: unconstrained optimization by quadratic approximation, Math. Program.,
 92(B):555--582, 2002
 
-Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the above-mentioned paper.
+Coded by Zaikun ZHANG (www.zhangzk.net) based the above-mentioned paper and Powell's code, with
+modernization and improvements.
 
 Due to the dependency among the modules, the files must be compiled in the order indicated in
 ffiles.txt. Before that, one must compile the Fotran files in the directory "common" according

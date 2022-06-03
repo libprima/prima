@@ -1,7 +1,8 @@
-This is a modernized and improved Fortran implementation of Powell's derivative-free optimization
-solvers, namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
+This is the reference implementation of Powell's derivative-free optimization solvers, namely COBYLA,
+UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 
-Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the following papers.
+Coded by Zaikun ZHANG (www.zhangzk.net) based on the following paper and Powell's code, with
+modernization and improvements.
 
 [1] M. J. D. Powell, A direct search optimization method that models the objective and constraint
 functions by linear interpolation, In Advances in Optimization and Numerical Analysis, eds. S. Gomez

@@ -1,7 +1,6 @@
 module cobyla_mod
 !--------------------------------------------------------------------------------------------------!
-! COBYLA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
-! COBYLA algorithm in
+! COBYLA_MOD is a module providing the reference implementation of of Powell's COBYLA algorithm in
 !
 ! M. J. D. Powell, A direct search optimization method that models the objective and constraint
 ! functions by linear interpolation, In Advances in Optimization and Numerical Analysis, eds. S.
@@ -25,13 +24,14 @@ module cobyla_mod
 ! lumping the constraints together into a single penalty function. The name of the subroutine is
 ! derived from the phrase Constrained Optimization BY Linear Approximations.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the COBYLA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on the COBYLA paper and Powell's code, with
+! modernization and improvements.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, April 07, 2022 PM12:14:41
+! Last Modified: Friday, June 03, 2022 PM06:28:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
