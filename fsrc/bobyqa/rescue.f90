@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 02, 2022 PM01:59:45
+! Last Modified: Friday, June 03, 2022 AM05:30:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,6 +36,8 @@ subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat
 ! to the bound constraints along one or two coordinate directions, the latter taking place only if
 ! NPT >= 2*N+2. See (5.4)--(5.5) of the BOBYQA paper for details. After defining XPT_PROV, set BMAT
 ! and ZMAT to represent the H matrix defined in (2.7) of the BOBYQA paper corresponding to XPT_PROV.
+! N.B.: In the code, XPT_PROV is not formed explicitly, but represented implicitly by XPT, PTSID,
+! and PTSAUX.
 ! 2. For each "original interpolation point" in XPT, check whether it can replace a point in XPT_PROV
 ! without damaging the geometry of XPT_PROV, which is indicated by the denominator SIGMA in the
 ! updating formula of H due to the replacement (see (4.9) of the BOBYQA paper). If yes, update
