@@ -2,13 +2,13 @@ module initialize_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines for initializing FVAL, XBASE, XPT, GQ, HQ, PQ, IDZ, ZMAT, BMAT.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
 !
 ! Started: July 2020
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Saturday, April 30, 2022 PM11:10:13
+! Last Modified: Friday, June 03, 2022 PM05:29:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

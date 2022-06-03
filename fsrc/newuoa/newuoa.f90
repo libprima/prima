@@ -16,7 +16,7 @@ module newuoa_mod
 ! Frobenius norm of the change to the second derivative of the quadratic model, beginning with a
 ! zero matrix.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's  code and the NEWUOA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !

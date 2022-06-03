@@ -12,7 +12,7 @@ module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of COBYLA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the COBYLA paper.
 !
 ! N.B. (Zaikun 20220131): Powell's implementation of COBYLA uses RHO rather than DELTA as the
 ! trust-region radius, and RHO is never increased. DELTA does not exist in Powell's COBYLA code.

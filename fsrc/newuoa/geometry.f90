@@ -2,13 +2,13 @@ module geometry_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines concerning the geometry-improving of the interpolation set XPT.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, May 28, 2022 AM12:52:28
+! Last Modified: Friday, June 03, 2022 PM05:29:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

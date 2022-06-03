@@ -2,7 +2,7 @@ module bobyqb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of BOBYQA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
 ! TODO: verify that the iterates/steps respect bounds in the pre/postconditions.
 !
@@ -30,7 +30,7 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! corresponding arguments in SUBROUTINE BOBYQA.
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
 ! of the model and Lagrange functions.
-! XPT is a TWO-dimensional array that holds the coordinates of the interpolation points relative to XBASE.
+! XPT is a 2D array that holds the coordinates of the interpolation points relative to XBASE.
 ! FVAL holds the values of F at the interpolation points.
 ! XOPT is set to the displacement from XBASE of the trust region centre.
 ! GOPT holds the gradient of the quadratic model at XBASE+XOPT.

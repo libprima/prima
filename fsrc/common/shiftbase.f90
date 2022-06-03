@@ -3,7 +3,7 @@ module shiftbase_mod
 ! This module contanis a subroutine that shifts the base point from XBASE to XBASE + XPT. It is
 ! used in NEWUOA, BOBYQA, and LINCOA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !

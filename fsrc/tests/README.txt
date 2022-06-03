@@ -1,5 +1,5 @@
-This directory contains tests for the modernized Fortran implementation of Powell's derivative-free
-optimization solvers.
+This directory contains tests for a modernized and improved Fortran implementation of Powell's
+derivative-free optimization solvers.
 
 N.B.: The scripts in this directory are written for testing and developing purposes. They do NOT
 intend to illustrate the usage of the package. For such illustrations, see the "examples" directory.

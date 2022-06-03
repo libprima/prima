@@ -19,7 +19,7 @@ module bobyqa_mod
 ! derivative of the model, beginning with the ZERO matrix. The values of the variables are
 ! constrained by upper and lower bounds. The arguments of the subroutine are as follows.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !

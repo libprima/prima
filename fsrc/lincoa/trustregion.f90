@@ -2,7 +2,7 @@ module trustregion_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region calculations of LINCOA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the paper
 !
 ! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
 ! Math. Program. Comput., 7:237--267, 2015

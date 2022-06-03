@@ -2,7 +2,7 @@ module rescue_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains the RESCUE subroutine described in Section 5 of the BOBYQA paper.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
 ! N.B.: According to a test on 20220425, the invocations of RESCUE is rare --- it is never invoked
 ! on CUTEst unconstrained or bound constrained problems with at most 50 variables unless heavy noise
