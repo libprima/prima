@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Tuesday, April 12, 2022 PM11:49:53
+! Last Modified: Friday, June 03, 2022 PM08:12:01
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -95,7 +95,7 @@ end subroutine wassert
 
 subroutine errstop(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'!' to STDERR, then stop.
+! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.' to STDERR, then stop.
 ! It also calls BACKTR to print the backtrace.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : STDERR
@@ -104,7 +104,7 @@ character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
 call backtr()
-write (STDERR, '(/1A/)') 'ERROR: '//trim(srname)//': '//trim(msg)//'!'
+write (STDERR, '(/1A/)') 'ERROR: '//trim(srname)//': '//trim(msg)//'.'
 stop  ! This means to stop the whole program.
 end subroutine errstop
 

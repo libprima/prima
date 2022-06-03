@@ -17,7 +17,7 @@ module debug_mod
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, April 12, 2022 PM11:48:47
+! Last Modified: Friday, June 03, 2022 PM08:12:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -119,7 +119,7 @@ end subroutine wassert
 
 subroutine errstop(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'!', then stop.
+! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.', then stop.
 ! It also calls BACKTR to print the backtrace.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : MSGLEN
@@ -132,7 +132,7 @@ character(len=MSGLEN) :: emsg
 
 call backtr()
 eid = 'FMXAPI:'//trim(srname)
-emsg = trim(srname)//': '//trim(msg)//'!'
+emsg = trim(srname)//': '//trim(msg)//'.'
 call mexErrMsgIdAndTxt(trim(eid), trim(emsg))
 end subroutine errstop
 
