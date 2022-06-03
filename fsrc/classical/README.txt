@@ -1,6 +1,6 @@
 This directory contains the classical version of Powell's derivative-free optimization solvers.
 The code is identical to Powell's original version except that the interfaces are modernized.
-For original code, see pdfo/fsrc/original/.
+For Powell's original code, see pdfo/fsrc/original/.
 
 This version is not maintained and not recommended. Please use the modernized version instead.
 
@@ -11,4 +11,4 @@ Modified by:Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 
 Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 
-March 2020, Hong Kong
+March 2020, Hong Kong, China
