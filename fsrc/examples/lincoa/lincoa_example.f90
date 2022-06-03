@@ -1,7 +1,7 @@
 !--------------------------------------------------------------------------------------------------!
 ! This is an example to illustrate the usage of the solver.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code.
 !
 ! Started: July 2020
 !

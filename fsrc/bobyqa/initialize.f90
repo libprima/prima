@@ -2,7 +2,7 @@ module initialize_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the initialization of BOBYQA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !

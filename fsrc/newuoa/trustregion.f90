@@ -2,13 +2,13 @@ module trustregion_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region calculations of NEWUOA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, May 27, 2022 AM12:10:21
+! Last Modified: Friday, June 03, 2022 PM05:30:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

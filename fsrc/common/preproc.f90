@@ -2,7 +2,7 @@ module preproc_mod
 !--------------------------------------------------------------------------------------------------!
 ! PREPROC_MOD is a module that preprocesses the inputs.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and papers.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and papers.
 !
 ! Started: July 2020
 !

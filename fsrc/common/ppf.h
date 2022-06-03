@@ -23,10 +23,10 @@
  * 0. USE THE DEFAULT IF UNSURE.
  *
  * 1. When __USE_POWELL_ALGEBRA__ == 1, the released version will produce EXACTLY
- * the same results as Powell's Fortran 77 code (necessarily, this means that the
- * code performs EXACTLY the same calculations as Powell's code, or else rounding
- * errors will lead to different computed results, the difference being sometimes
- * significant for nonconvex problems).
+ * the same results as Powell's code (necessarily, this means that the code performs
+ * EXACTLY the same calculations as Powell's code, or else rounding errors will lead
+ * to different computed results, the difference being sometimes significant for
+ * nonconvex problems).
  *
  * 2. If you change these flags, make sure that your compiler is supportive
  * when changing __INTEGER_KIND__, __REAL_PRECISION__, __FORTRAN_STANDARD__,

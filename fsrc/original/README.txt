@@ -1,4 +1,4 @@
-This directory contains the original Fortran 77 code of Powell's derivative-free optimization
+This directory contains the original FORTRAN 77 code of Powell's derivative-free optimization
 solvers, namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 
 The code of COBYLA, NEWUOA, BOBYQA, and LINCOA was sent by late Professor M. J. D. Powell FRS

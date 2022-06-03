@@ -2,13 +2,13 @@ module trustregion_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region calculations of COBYLA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the COBYLA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: June 2021
 !
-! Last Modified: Friday, May 27, 2022 AM12:05:42
+! Last Modified: Friday, June 03, 2022 PM05:28:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

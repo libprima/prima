@@ -4,7 +4,7 @@ module output_mod
 ! operations are sequential in nature. In case parallelism is desirable (especially during
 ! initializaton), the subroutines may have to be modified or disabled.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and papers.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and papers.
 !
 ! Started: July 2020
 !

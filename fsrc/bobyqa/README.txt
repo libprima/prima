@@ -4,7 +4,7 @@ M. J. D. Powell, The BOBYQA algorithm for bound constrained optimization without
 Technical Report DAMTP 2009/NA06, Department of Applied Mathematics and Theoretical Physics,
 Cambridge University, Cambridge, UK, 2009
 
-Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper.
+Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the above-mentioned paper.
 
 Due to the dependency among the modules, the files must be compiled in the order indicated in
 ffiles.txt. Before that, one must compile the Fotran files in the directory "common" according

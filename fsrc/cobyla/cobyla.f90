@@ -25,7 +25,7 @@ module cobyla_mod
 ! lumping the constraints together into a single penalty function. The name of the subroutine is
 ! derived from the phrase Constrained Optimization BY Linear Approximations.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the COBYLA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !

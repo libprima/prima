@@ -2,13 +2,13 @@ module newuob_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of NEWUOA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, May 31, 2022 PM11:34:42
+! Last Modified: Friday, June 03, 2022 PM05:29:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

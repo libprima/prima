@@ -2,13 +2,13 @@ module initialize_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines for initialization.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the COBYLA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, May 28, 2022 PM12:55:53
+! Last Modified: Friday, June 03, 2022 PM05:27:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

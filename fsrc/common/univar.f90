@@ -3,7 +3,7 @@ module univar_mod
 ! This module implements functions that approximately optimizes univariate functions. They are used
 ! in NEWUOA (TRSAPP, BIGLAG, and BIGDEN) and BOBYQA (TRSBOX).
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code.
 !
 ! Started: January 2021
 !
