@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 AM11:45:12
+! Last Modified: Saturday, June 04, 2022 PM03:36:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -67,7 +67,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: x(size(x0))
 real(RP) :: diff, fbeg, recip, rhosq, stepa, stepb, temp
-integer(IK) :: ipt, itemp, jpt, nfm, nfx, np
+integer(IK) :: ipt, itemp, jpt
 logical :: evaluated(size(fval))
 
 ! Sizes.
@@ -130,7 +130,6 @@ evaluated = .false.
 fval = HUGENUM
 rhosq = rhobeg * rhobeg
 recip = ONE / rhosq
-np = n + 1
 
 ! Set XBASE to the initial vector of variables, and set the initial elements of XPT, BMAT, HQ, PQ
 ! and ZMAT to ZERO.
@@ -144,26 +143,22 @@ zmat = ZERO
 ! Begin the initialization procedure. NF becomes one more than the number of function values so far.
 ! The coordinates of the displacement of the next initial interpolation point from XBASE are set in
 ! XPT(NF+1,.).
-nf = 0
-do while (.true.)
-    nfm = nf
-    nfx = nf - n
-    nf = nf + 1
+do nf = 1, npt
     if (nf <= 2 * n + 1) then
-        if (nfm >= 1 .and. nfm <= n) then
+        if (nf >= 2 .and. nf <= n + 1) then
             stepa = rhobeg
-            if (su(nfm) == ZERO) stepa = -stepa
-            xpt(nfm, nf) = stepa
-        else if (nfm > n) then
-            stepa = xpt(nfx, nf - n)
+            if (su(nf - 1) == ZERO) stepa = -stepa
+            xpt(nf - 1, nf) = stepa
+        else if (nf >= n + 2) then
+            stepa = xpt(nf - n - 1, nf - n)
             stepb = -rhobeg
-            if (sl(nfx) == ZERO) stepb = min(TWO * rhobeg, su(nfx))
-            if (su(nfx) == ZERO) stepb = max(-TWO * rhobeg, sl(nfx))
-            xpt(nfx, nf) = stepb
+            if (sl(nf - n - 1) == ZERO) stepb = min(TWO * rhobeg, su(nf - n - 1))
+            if (su(nf - n - 1) == ZERO) stepb = max(-TWO * rhobeg, sl(nf - n - 1))
+            xpt(nf - n - 1, nf) = stepb
         end if
     else
-        itemp = (nfm - np) / n
-        jpt = nfm - itemp * n - n
+        itemp = (nf - n - 2) / n
+        jpt = nf - (itemp + 1) * n - 1
         ipt = jpt + itemp
         if (ipt > n) then
             itemp = jpt
@@ -174,19 +169,13 @@ do while (.true.)
         xpt(jpt, nf) = xpt(jpt, jpt + 1)
     end if
 
-! Calculate the next value of F. The least function value so far and its index are required.
+    ! Calculate the next value of F. The least function value so far and its index are required.
     x = min(max(xl, xbase + xpt(:, nf)), xu)
     x(trueloc(xpt(:, nf) <= sl)) = xl(trueloc(xpt(:, nf) <= sl))
     x(trueloc(xpt(:, nf) >= su)) = xu(trueloc(xpt(:, nf) >= su))
 
-
-!-------------------------------------------------------------------!
-!call calfun(n, x, f)
     call evaluate(calfun, x, f)
     call savehist(nf, x, xhist, f, fhist)
-!-------------------------------------------------------------------!
-
-
     evaluated(nf) = .true.
     fval(nf) = f
     if (nf == 1) then
@@ -196,51 +185,53 @@ do while (.true.)
         kopt = nf
     end if
 
+
 ! Set the nonzero initial elements of BMAT and the quadratic model in the cases when NF is at most
 ! 2*N+1. If NF exceeds N+1, then the positions of the NF-th and (NF-N)-th interpolation points may
 ! be switched, in order that the function value at the first of them contributes to the off-diagonal
 ! second derivative terms of the initial quadratic model.
+!do nf = 1, npt
     if (nf <= 2 * n + 1) then
         if (nf >= 2 .and. nf <= n + 1) then
-            gopt(nfm) = (f - fbeg) / stepa
+            gopt(nf - 1) = (f - fbeg) / stepa
             if (npt < nf + n) then
-                bmat(nfm, 1) = -ONE / stepa
-                bmat(nfm, nf) = ONE / stepa
-                bmat(nfm, npt + nfm) = -HALF * rhosq
+                bmat(nf - 1, 1) = -ONE / stepa
+                bmat(nf - 1, nf) = ONE / stepa
+                bmat(nf - 1, npt + nf - 1) = -HALF * rhosq
             end if
         else if (nf >= n + 2) then
             temp = (f - fbeg) / stepb
             diff = stepb - stepa
-            hq(nfx, nfx) = TWO * (temp - gopt(nfx)) / diff
-            gopt(nfx) = (gopt(nfx) * stepb - temp * stepa) / diff
+            hq(nf - n - 1, nf - n - 1) = TWO * (temp - gopt(nf - n - 1)) / diff
+            gopt(nf - n - 1) = (gopt(nf - n - 1) * stepb - temp * stepa) / diff
             if (stepa * stepb < ZERO) then
                 if (f < fval(nf - n)) then
                     fval(nf) = fval(nf - n)
                     fval(nf - n) = f
                     if (kopt == nf) kopt = nf - n
-                    xpt(nfx, nf - n) = stepb
-                    xpt(nfx, nf) = stepa
+                    xpt(nf - n - 1, nf - n) = stepb
+                    xpt(nf - n - 1, nf) = stepa
                 end if
             end if
-            bmat(nfx, 1) = -(stepa + stepb) / (stepa * stepb)
-            bmat(nfx, nf) = -HALF / xpt(nfx, nf - n)
-            bmat(nfx, nf - n) = -bmat(nfx, 1) - bmat(nfx, nf)
-            zmat(1, nfx) = sqrt(TWO) / (stepa * stepb)
-            zmat(nf, nfx) = sqrt(HALF) / rhosq
-            zmat(nf - n, nfx) = -zmat(1, nfx) - zmat(nf, nfx)
+            bmat(nf - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
+            bmat(nf - n - 1, nf) = -HALF / xpt(nf - n - 1, nf - n)
+            bmat(nf - n - 1, nf - n) = -bmat(nf - n - 1, 1) - bmat(nf - n - 1, nf)
+            zmat(1, nf - n - 1) = sqrt(TWO) / (stepa * stepb)
+            zmat(nf, nf - n - 1) = sqrt(HALF) / rhosq
+            zmat(nf - n, nf - n - 1) = -zmat(1, nf - n - 1) - zmat(nf, nf - n - 1)
         end if
 ! Set the off-diagonal second derivatives of the Lagrange functions and the initial quadratic model.
     else
-        zmat(1, nfx) = recip
-        zmat(nf, nfx) = recip
-        zmat(ipt + 1, nfx) = -recip
-        zmat(jpt + 1, nfx) = -recip
+        zmat(1, nf - n - 1) = recip
+        zmat(nf, nf - n - 1) = recip
+        zmat(ipt + 1, nf - n - 1) = -recip
+        zmat(jpt + 1, nf - n - 1) = -recip
         temp = xpt(ipt, nf) * xpt(jpt, nf)
         hq(ipt, jpt) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
         hq(jpt, ipt) = hq(ipt, jpt)
     end if
     if (f <= ftarget .or. is_nan(f) .or. is_posinf(f)) exit
-    if (nf >= npt) exit
+    !if (nf >= npt) exit
 end do
 
 if (kopt /= 1 .and. all(evaluated)) then

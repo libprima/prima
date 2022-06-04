@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Friday, June 03, 2022 PM05:29:31
+! Last Modified: Saturday, June 04, 2022 PM03:35:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -142,7 +142,9 @@ fval = HUGENUM
 ! Set XPT.
 xpt(:, 1) = ZERO
 xpt(:, 2:n + 1) = rhobeg * eye(n)
-xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZERO if it is nonempty.
+! After the following line, XPT(:, 2*N+2 : NPT) = ZERO if it is nonempty. It will be revised later
+! according to FVAL(2 : 2*N + 1).
+xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)
 
 ! Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for FMSG.
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
