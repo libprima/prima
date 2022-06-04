@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 04, 2022 PM03:36:15
+! Last Modified: Saturday, June 04, 2022 PM05:51:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -146,15 +146,18 @@ zmat = ZERO
 do nf = 1, npt
     if (nf <= 2 * n + 1) then
         if (nf >= 2 .and. nf <= n + 1) then
-            stepa = rhobeg
-            if (su(nf - 1) == ZERO) stepa = -stepa
-            xpt(nf - 1, nf) = stepa
+            xpt(nf - 1, nf) = rhobeg
+            if (su(nf - 1) <= 0) then  ! SU(NF - 1) == 0
+                xpt(nf - 1, nf) = -rhobeg
+            end if
         else if (nf >= n + 2) then
-            stepa = xpt(nf - n - 1, nf - n)
-            stepb = -rhobeg
-            if (sl(nf - n - 1) == ZERO) stepb = min(TWO * rhobeg, su(nf - n - 1))
-            if (su(nf - n - 1) == ZERO) stepb = max(-TWO * rhobeg, sl(nf - n - 1))
-            xpt(nf - n - 1, nf) = stepb
+            xpt(nf - n - 1, nf) = -rhobeg
+            if (sl(nf - n - 1) >= 0) then  ! SL(NF - N - 1) == 0
+                xpt(nf - n - 1, nf) = min(TWO * rhobeg, su(nf - n - 1))
+            end if
+            if (su(nf - n - 1) <= 0) then  ! SU(NF - N - 1) == 0
+                xpt(nf - n - 1, nf) = max(-TWO * rhobeg, sl(nf - n - 1))
+            end if
         end if
     else
         itemp = (nf - n - 2) / n
@@ -180,9 +183,6 @@ do nf = 1, npt
     fval(nf) = f
     if (nf == 1) then
         fbeg = f
-        kopt = 1
-    else if (f < fval(kopt)) then
-        kopt = nf
     end if
 
 
@@ -193,25 +193,23 @@ do nf = 1, npt
 !do nf = 1, npt
     if (nf <= 2 * n + 1) then
         if (nf >= 2 .and. nf <= n + 1) then
-            gopt(nf - 1) = (f - fbeg) / stepa
+            gopt(nf - 1) = (f - fbeg) / xpt(nf - 1, nf)
             if (npt < nf + n) then
-                bmat(nf - 1, 1) = -ONE / stepa
-                bmat(nf - 1, nf) = ONE / stepa
+                bmat(nf - 1, 1) = -ONE / xpt(nf - 1, nf)
+                bmat(nf - 1, nf) = ONE / xpt(nf - 1, nf)
                 bmat(nf - 1, npt + nf - 1) = -HALF * rhosq
             end if
         else if (nf >= n + 2) then
+            stepa = xpt(nf - n - 1, nf - n)
+            stepb = xpt(nf - n - 1, nf)
             temp = (f - fbeg) / stepb
             diff = stepb - stepa
             hq(nf - n - 1, nf - n - 1) = TWO * (temp - gopt(nf - n - 1)) / diff
             gopt(nf - n - 1) = (gopt(nf - n - 1) * stepb - temp * stepa) / diff
-            if (stepa * stepb < ZERO) then
-                if (f < fval(nf - n)) then
-                    fval(nf) = fval(nf - n)
-                    fval(nf - n) = f
-                    if (kopt == nf) kopt = nf - n
-                    xpt(nf - n - 1, nf - n) = stepb
-                    xpt(nf - n - 1, nf) = stepa
-                end if
+            if (stepa * stepb < ZERO .and. fval(nf) < fval(nf - n)) then
+                ! Switch the NF-th and (NF-N)-th interpolation points.
+                fval([nf, nf - n]) = fval([nf - n, nf])
+                xpt(nf - n - 1, [nf - n, nf]) = xpt(nf - n - 1, [nf, nf - n])
             end if
             bmat(nf - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
             bmat(nf - n - 1, nf) = -HALF / xpt(nf - n - 1, nf - n)
@@ -234,12 +232,13 @@ do nf = 1, npt
     !if (nf >= npt) exit
 end do
 
+!nf = min(nf, npt)  ! NF may be NPT+1 at exit of the loop.
+nf = count(evaluated)
+kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 if (kopt /= 1 .and. all(evaluated)) then
     gopt = gopt + matprod(hq, xpt(:, kopt))
 end if
 
-!nf = min(nf, npt)  ! NF may be NPT+1 at exit of the loop.
-nf = count(evaluated)
 
 ! Postconditions
 if (DEBUGGING) then
