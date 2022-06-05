@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM09:32:03
+! Last Modified: Sunday, June 05, 2022 AM07:48:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -237,6 +237,7 @@ rescued = .false.
 ! comparison involving NaN returns FALSE, which can lead to unintended  behavior of the code,
 ! including uninitialized indices. STILL NECESSARY???
 !--------------------------------------------------------------------------------------------------!
+
 
 do while (.true.)
     if (.not. geo_step) then
@@ -737,7 +738,8 @@ call rangehist(nf, xhist, fhist)
 
 ! Postconditions
 
-!close (16)
+close (17)
+
 
 end subroutine bobyqb
 

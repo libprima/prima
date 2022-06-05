@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 04, 2022 PM05:51:12
+! Last Modified: Sunday, June 05, 2022 AM08:33:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -191,6 +191,7 @@ do nf = 1, npt
 ! be switched, in order that the function value at the first of them contributes to the off-diagonal
 ! second derivative terms of the initial quadratic model.
 !do nf = 1, npt
+!    f = fval(nf)
     if (nf <= 2 * n + 1) then
         if (nf >= 2 .and. nf <= n + 1) then
             gopt(nf - 1) = (f - fbeg) / xpt(nf - 1, nf)

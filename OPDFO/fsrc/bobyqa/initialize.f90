@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 AM11:45:12
+! Last Modified: Sunday, June 05, 2022 AM08:33:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -145,6 +145,7 @@ zmat = ZERO
 ! The coordinates of the displacement of the next initial interpolation point from XBASE are set in
 ! XPT(NF+1,.).
 nf = 0
+!write (17, *) npt
 do while (.true.)
     nfm = nf
     nfx = nf - n
@@ -183,6 +184,8 @@ do while (.true.)
 !-------------------------------------------------------------------!
 !call calfun(n, x, f)
     call evaluate(calfun, x, f)
+
+    !write (17, *) nf, f, x
     call savehist(nf, x, xhist, f, fhist)
 !-------------------------------------------------------------------!
 
@@ -194,6 +197,7 @@ do while (.true.)
         kopt = 1
     else if (f < fval(kopt)) then
         kopt = nf
+        !write (17, *) nf, kopt
     end if
 
 ! Set the nonzero initial elements of BMAT and the quadratic model in the cases when NF is at most
@@ -218,6 +222,7 @@ do while (.true.)
                     fval(nf) = fval(nf - n)
                     fval(nf - n) = f
                     if (kopt == nf) kopt = nf - n
+                    !write (17, *) '-', nf, kopt
                     xpt(nfx, nf - n) = stepb
                     xpt(nfx, nf) = stepa
                 end if
@@ -243,6 +248,8 @@ do while (.true.)
     if (nf >= npt) exit
 end do
 
+!write (17, *) kopt, fval(kopt), fval(kopt) < fval(4)
+kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 if (kopt /= 1 .and. all(evaluated)) then
     gopt = gopt + matprod(hq, xpt(:, kopt))
 end if
