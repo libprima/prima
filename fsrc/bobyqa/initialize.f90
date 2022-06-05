@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 PM09:27:29
+! Last Modified: Sunday, June 05, 2022 PM09:45:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -257,7 +257,7 @@ if (all(evaluated)) then
             zmat(k, k - n - 1) = recip
             zmat(ipt(k) + 1, k - n - 1) = -recip
             zmat(jpt(k) + 1, k - n - 1) = -recip
-            hq(ipt(k), jpt(k)) = (fbase - fval(ipt(k) + 1) - fval(jpt(k) + 1) + f) / (xpt(ipt(k), k) * xpt(jpt(k), k))
+            hq(ipt(k), jpt(k)) = (fbase - fval(ipt(k) + 1) - fval(jpt(k) + 1) + fval(k)) / (xpt(ipt(k), k) * xpt(jpt(k), k))
             hq(jpt(k), ipt(k)) = hq(ipt(k), jpt(k))
         end if
     end do
