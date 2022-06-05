@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 PM10:21:58
+! Last Modified: Sunday, June 05, 2022 PM10:31:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -153,22 +153,61 @@ zmat = ZERO
 ! Begin the initialization procedure. NF becomes one more than the number of function values so far.
 ! The coordinates of the displacement of the next initial interpolation point from XBASE are set in
 ! XPT(NF+1,.).
-do k = 1, npt
-    if (k <= 2 * n + 1) then
-        if (k >= 2 .and. k <= n + 1) then
-            xpt(k - 1, k) = rhobeg
-            if (su(k - 1) <= 0) then  ! SU(NF - 1) == 0
-                xpt(k - 1, k) = -rhobeg
-            end if
-        else if (k >= n + 2) then
-            xpt(k - n - 1, k) = -rhobeg
-            if (sl(k - n - 1) >= 0) then  ! SL(NF - N - 1) == 0
-                xpt(k - n - 1, k) = min(TWO * rhobeg, su(k - n - 1))
-            end if
-            if (su(k - n - 1) <= 0) then  ! SU(NF - N - 1) == 0
-                xpt(k - n - 1, k) = max(-TWO * rhobeg, sl(k - n - 1))
-            end if
+do k = 1, min(npt, int(2 * n + 1, kind(npt)))
+    !if (k <= 2 * n + 1) then
+    if (k >= 2 .and. k <= n + 1) then
+        xpt(k - 1, k) = rhobeg
+        if (su(k - 1) <= 0) then  ! SU(NF - 1) == 0
+            xpt(k - 1, k) = -rhobeg
         end if
+    else if (k >= n + 2) then
+        xpt(k - n - 1, k) = -rhobeg
+        if (sl(k - n - 1) >= 0) then  ! SL(NF - N - 1) == 0
+            xpt(k - n - 1, k) = min(TWO * rhobeg, su(k - n - 1))
+        end if
+        if (su(k - n - 1) <= 0) then  ! SU(NF - N - 1) == 0
+            xpt(k - n - 1, k) = max(-TWO * rhobeg, sl(k - n - 1))
+        end if
+    end if
+    x = min(max(xl, xbase + xpt(:, k)), xu)
+    x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
+    x(trueloc(xpt(:, k) >= su)) = xu(trueloc(xpt(:, k) >= su))
+    call evaluate(calfun, x, f)
+    call savehist(k, x, xhist, f, fhist)
+    evaluated(k) = .true.
+    fval(k) = f
+    subinfo = checkexit(maxfun, k, f, ftarget, x)
+    if (subinfo /= INFO_DFT) then
+        info = subinfo
+        exit
+    end if
+    !end if
+end do
+
+do k = n + 2, min(npt, int(2 * n + 1, kind(npt)))
+!    if (k >= n + 2 .and. k <= 2 * n + 1) then
+    if (xpt(k - n - 1, k - n) * xpt(k - n - 1, k) < 0 .and. fval(k) < fval(k - n)) then
+        ! Switch the K-th and (K-N)-th interpolation points.
+        fval([k, k - n]) = fval([k - n, k])
+        xpt(k - n - 1, [k - n, k]) = xpt(k - n - 1, [k, k - n])
+    end if
+!    end if
+end do
+
+if (info == INFO_DFT) then
+    do k = int(2 * n + 2, kind(k)), npt
+        !if (k >= 2 * n + 2) then
+        itemp = (k - n - 2) / n
+        jpt(k) = k - (itemp + 1) * n - 1
+        ipt(k) = jpt(k) + itemp
+        if (ipt(k) > n) then
+            itemp = jpt(k)
+            jpt(k) = ipt(k) - n
+            ipt(k) = itemp
+        end if
+        xpt(ipt(k), k) = xpt(ipt(k), ipt(k) + 1)
+        xpt(jpt(k), k) = xpt(jpt(k), jpt(k) + 1)
+
         x = min(max(xl, xbase + xpt(:, k)), xu)
         x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
         x(trueloc(xpt(:, k) >= su)) = xu(trueloc(xpt(:, k) >= su))
@@ -181,45 +220,7 @@ do k = 1, npt
             info = subinfo
             exit
         end if
-    end if
-end do
-do k = 1, npt
-    if (k >= n + 2 .and. k <= 2 * n + 1) then
-        if (xpt(k - n - 1, k - n) * xpt(k - n - 1, k) < 0 .and. fval(k) < fval(k - n)) then
-            ! Switch the K-th and (K-N)-th interpolation points.
-            fval([k, k - n]) = fval([k - n, k])
-            xpt(k - n - 1, [k - n, k]) = xpt(k - n - 1, [k, k - n])
-        end if
-    end if
-end do
-
-if (info == INFO_DFT) then
-    do k = 1, npt
-        if (k >= 2 * n + 2) then
-            itemp = (k - n - 2) / n
-            jpt(k) = k - (itemp + 1) * n - 1
-            ipt(k) = jpt(k) + itemp
-            if (ipt(k) > n) then
-                itemp = jpt(k)
-                jpt(k) = ipt(k) - n
-                ipt(k) = itemp
-            end if
-            xpt(ipt(k), k) = xpt(ipt(k), ipt(k) + 1)
-            xpt(jpt(k), k) = xpt(jpt(k), jpt(k) + 1)
-
-            x = min(max(xl, xbase + xpt(:, k)), xu)
-            x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
-            x(trueloc(xpt(:, k) >= su)) = xu(trueloc(xpt(:, k) >= su))
-            call evaluate(calfun, x, f)
-            call savehist(k, x, xhist, f, fhist)
-            evaluated(k) = .true.
-            fval(k) = f
-            subinfo = checkexit(maxfun, k, f, ftarget, x)
-            if (subinfo /= INFO_DFT) then
-                info = subinfo
-                exit
-            end if
-        end if
+        !end if
     end do
 end if
 
