@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 PM04:24:28
+! Last Modified: Sunday, June 05, 2022 PM07:09:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -72,7 +72,7 @@ integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
 real(RP) :: x(size(xpt, 1))
-real(RP) :: diff, fbeg, recip, rhosq, stepa, stepb, temp
+real(RP) :: diff, fbeg, recip, rhosq, stepa, stepb
 integer(IK) :: ipt(size(xpt, 2)), itemp, jpt(size(xpt, 2)), k
 logical :: evaluated(size(xpt, 2))
 
@@ -149,6 +149,8 @@ pq = ZERO
 bmat = ZERO
 zmat = ZERO
 
+write (16, *) xl, xu
+
 ! Begin the initialization procedure. NF becomes one more than the number of function values so far.
 ! The coordinates of the displacement of the next initial interpolation point from XBASE are set in
 ! XPT(NF+1,.).
@@ -190,6 +192,8 @@ do k = 1, npt
     call savehist(k, x, xhist, f, fhist)
     evaluated(k) = .true.
     fval(k) = f
+    write (16, *) k, xpt(:, k)
+    write (16, *) f, x
     if (k == 1) then
         fbeg = f
     end if
@@ -200,59 +204,75 @@ do k = 1, npt
     end if
 !end do
 
+    if (k >= n + 2 .and. k <= 2 * n + 1) then
+        if (xpt(k - n - 1, k - n) * xpt(k - n - 1, k) < 0 .and. fval(k) < fval(k - n)) then
+            ! Switch the NF-th and (NF-N)-th interpolation points.
+            fval([k, k - n]) = fval([k - n, k])
+            xpt(k - n - 1, [k - n, k]) = xpt(k - n - 1, [k, k - n])
+        end if
+    end if
+end do
+
+nf = count(evaluated)
+
 
 ! Set the nonzero initial elements of BMAT and the quadratic model in the cases when NF is at most
 ! 2*N+1. If NF exceeds N+1, then the positions of the NF-th and (NF-N)-th interpolation points may
 ! be switched, in order that the function value at the first of them contributes to the off-diagonal
 ! second derivative terms of the initial quadratic model.
-!do k = 1, npt
-    f = fval(k)
-    if (k <= 2 * n + 1) then
-        if (k >= 2 .and. k <= n + 1) then
-            gopt(k - 1) = (f - fbeg) / xpt(k - 1, k)
-            if (npt < k + n) then
-                bmat(k - 1, 1) = -ONE / xpt(k - 1, k)
-                bmat(k - 1, k) = ONE / xpt(k - 1, k)
-                bmat(k - 1, npt + k - 1) = -HALF * rhosq
+if (all(evaluated)) then
+    do k = 1, npt
+        f = fval(k)
+        if (k <= 2 * n + 1) then
+            if (k >= 2 .and. k <= n + 1) then
+                gopt(k - 1) = (f - fbeg) / xpt(k - 1, k)
+                write (16, *) k, gopt(k - 1)
+                if (npt < k + n) then
+                    bmat(k - 1, 1) = -ONE / xpt(k - 1, k)
+                    bmat(k - 1, k) = ONE / xpt(k - 1, k)
+                    bmat(k - 1, npt + k - 1) = -HALF * rhosq
+                end if
+            else if (k >= n + 2) then
+                stepa = xpt(k - n - 1, k - n)
+                stepb = xpt(k - n - 1, k)
+                diff = stepb - stepa
+                hq(k - n - 1, k - n - 1) = TWO * ((fval(k) - fbeg) / stepb - (fval(k - n) - fbeg) / stepa) / diff
+                gopt(k - n - 1) = (((fval(k - n) - fbeg) / stepa) * stepb - ((fval(k) - fbeg) / stepb) * stepa) / diff
+                !write (16, *) k, gopt(k - n - 1)
+                bmat(k - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
+                bmat(k - n - 1, k) = -HALF / xpt(k - n - 1, k - n)
+                bmat(k - n - 1, k - n) = -bmat(k - n - 1, 1) - bmat(k - n - 1, k)
+                zmat(1, k - n - 1) = sqrt(TWO) / (stepa * stepb)
+                zmat(k, k - n - 1) = sqrt(HALF) / rhosq
+                zmat(k - n, k - n - 1) = -zmat(1, k - n - 1) - zmat(k, k - n - 1)
             end if
-        else if (k >= n + 2) then
-            stepa = xpt(k - n - 1, k - n)
-            stepb = xpt(k - n - 1, k)
-            temp = (f - fbeg) / stepb
-            diff = stepb - stepa
-            hq(k - n - 1, k - n - 1) = TWO * (temp - gopt(k - n - 1)) / diff
-            gopt(k - n - 1) = (gopt(k - n - 1) * stepb - temp * stepa) / diff
-            if (stepa * stepb < ZERO .and. fval(k) < fval(k - n)) then
-                ! Switch the NF-th and (NF-N)-th interpolation points.
-                fval([k, k - n]) = fval([k - n, k])
-                xpt(k - n - 1, [k - n, k]) = xpt(k - n - 1, [k, k - n])
-            end if
-            bmat(k - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
-            bmat(k - n - 1, k) = -HALF / xpt(k - n - 1, k - n)
-            bmat(k - n - 1, k - n) = -bmat(k - n - 1, 1) - bmat(k - n - 1, k)
-            zmat(1, k - n - 1) = sqrt(TWO) / (stepa * stepb)
-            zmat(k, k - n - 1) = sqrt(HALF) / rhosq
-            zmat(k - n, k - n - 1) = -zmat(1, k - n - 1) - zmat(k, k - n - 1)
-        end if
 ! Set the off-diagonal second derivatives of the Lagrange functions and the initial quadratic model.
-    else
-        zmat(1, k - n - 1) = recip
-        zmat(k, k - n - 1) = recip
-        zmat(ipt(k) + 1, k - n - 1) = -recip
-        zmat(jpt(k) + 1, k - n - 1) = -recip
-        temp = xpt(ipt(k), k) * xpt(jpt(k), k)
-        hq(ipt(k), jpt(k)) = (fbeg - fval(ipt(k) + 1) - fval(jpt(k) + 1) + f) / temp
-        hq(jpt(k), ipt(k)) = hq(ipt(k), jpt(k))
-    end if
-end do
+        else
+            zmat(1, k - n - 1) = recip
+            zmat(k, k - n - 1) = recip
+            zmat(ipt(k) + 1, k - n - 1) = -recip
+            zmat(jpt(k) + 1, k - n - 1) = -recip
+            hq(ipt(k), jpt(k)) = (fbeg - fval(ipt(k) + 1) - fval(jpt(k) + 1) + f) / (xpt(ipt(k), k) * xpt(jpt(k), k))
+            hq(jpt(k), ipt(k)) = hq(ipt(k), jpt(k))
+        end if
+    end do
 
-nf = count(evaluated)
+end if
+
 kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
-if (kopt /= 1 .and. all(evaluated)) then
-    gopt = gopt + matprod(hq, xpt(:, kopt))
+if (all(evaluated)) then
+    !write (16, *) '>', kopt, gopt, hq, xpt
+    if (kopt /= 1) then
+        gopt = gopt + matprod(hq, xpt(:, kopt))
+    end if
+    !write (16, *) '<', gopt
 end if
 
 !write (16, *) nf, fval
+!write (16, *) xpt
+!write (16, *) bmat
+!write (16, *) zmat
+!write (16, *) gopt, hq
 
 ! Postconditions
 if (DEBUGGING) then

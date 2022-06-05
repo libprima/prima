@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 PM04:40:39
+! Last Modified: Sunday, June 05, 2022 PM06:55:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -141,6 +141,7 @@ pq = ZERO
 bmat = ZERO
 zmat = ZERO
 
+write (17, *) xl, xu
 ! Begin the initialization procedure. NF becomes one more than the number of function values so far.
 ! The coordinates of the displacement of the next initial interpolation point from XBASE are set in
 ! XPT(NF+1,.).
@@ -188,6 +189,8 @@ do while (.true.)
     !write (17, *) nf, f, x
     call savehist(nf, x, xhist, f, fhist)
 !-------------------------------------------------------------------!
+    !write (17, *) nf, xpt(:, nf)
+    !write (17, *) f, x
 
 
     evaluated(nf) = .true.
@@ -207,6 +210,7 @@ do while (.true.)
     if (nf <= 2 * n + 1) then
         if (nf >= 2 .and. nf <= n + 1) then
             gopt(nfm) = (f - fbeg) / stepa
+            !write (17, *) nf, gopt(nfm)
             if (npt < nf + n) then
                 bmat(nfm, 1) = -ONE / stepa
                 bmat(nfm, nf) = ONE / stepa
@@ -217,6 +221,7 @@ do while (.true.)
             diff = stepb - stepa
             hq(nfx, nfx) = TWO * (temp - gopt(nfx)) / diff
             gopt(nfx) = (gopt(nfx) * stepb - temp * stepa) / diff
+            !write (17, *) nf, gopt(nfx)
             if (stepa * stepb < ZERO) then
                 if (f < fval(nf - n)) then
                     fval(nf) = fval(nf - n)
@@ -250,14 +255,21 @@ end do
 
 !write (17, *) kopt, fval(kopt), fval(kopt) < fval(4)
 kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
+!write (17, *) '>', kopt, gopt, hq, xpt
 if (kopt /= 1 .and. all(evaluated)) then
     gopt = gopt + matprod(hq, xpt(:, kopt))
 end if
+!write (17, *) '<', gopt
 
 !nf = min(nf, npt)  ! NF may be NPT+1 at exit of the loop.
 nf = count(evaluated)
 
 !write (17, *) nf, fval
+!write (17, *) xpt
+!write (17, *) bmat
+!write (17, *) zmat
+!write (17, *) gopt, hq
+
 
 ! Postconditions
 if (DEBUGGING) then
