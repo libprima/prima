@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 PM09:45:26
+! Last Modified: Sunday, June 05, 2022 PM10:21:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -72,7 +72,7 @@ integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
 real(RP) :: x(size(xpt, 1))
-real(RP) :: diff, fbase, recip, rhosq, stepa, stepb
+real(RP) :: fbase, recip, rhosq, stepa, stepb
 integer(IK) :: ipt(size(xpt, 2)), itemp, jpt(size(xpt, 2)), k
 logical :: evaluated(size(xpt, 2))
 
@@ -182,8 +182,8 @@ do k = 1, npt
             exit
         end if
     end if
-!end do
-!do k = 1, npt
+end do
+do k = 1, npt
     if (k >= n + 2 .and. k <= 2 * n + 1) then
         if (xpt(k - n - 1, k - n) * xpt(k - n - 1, k) < 0 .and. fval(k) < fval(k - n)) then
             ! Switch the K-th and (K-N)-th interpolation points.
@@ -191,34 +191,37 @@ do k = 1, npt
             xpt(k - n - 1, [k - n, k]) = xpt(k - n - 1, [k, k - n])
         end if
     end if
-!end do
-!do k = 1, npt
-    if (k >= 2 * n + 2) then
-        itemp = (k - n - 2) / n
-        jpt(k) = k - (itemp + 1) * n - 1
-        ipt(k) = jpt(k) + itemp
-        if (ipt(k) > n) then
-            itemp = jpt(k)
-            jpt(k) = ipt(k) - n
-            ipt(k) = itemp
-        end if
-        xpt(ipt(k), k) = xpt(ipt(k), ipt(k) + 1)
-        xpt(jpt(k), k) = xpt(jpt(k), jpt(k) + 1)
-
-        x = min(max(xl, xbase + xpt(:, k)), xu)
-        x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
-        x(trueloc(xpt(:, k) >= su)) = xu(trueloc(xpt(:, k) >= su))
-        call evaluate(calfun, x, f)
-        call savehist(k, x, xhist, f, fhist)
-        evaluated(k) = .true.
-        fval(k) = f
-        subinfo = checkexit(maxfun, k, f, ftarget, x)
-        if (subinfo /= INFO_DFT) then
-            info = subinfo
-            exit
-        end if
-    end if
 end do
+
+if (info == INFO_DFT) then
+    do k = 1, npt
+        if (k >= 2 * n + 2) then
+            itemp = (k - n - 2) / n
+            jpt(k) = k - (itemp + 1) * n - 1
+            ipt(k) = jpt(k) + itemp
+            if (ipt(k) > n) then
+                itemp = jpt(k)
+                jpt(k) = ipt(k) - n
+                ipt(k) = itemp
+            end if
+            xpt(ipt(k), k) = xpt(ipt(k), ipt(k) + 1)
+            xpt(jpt(k), k) = xpt(jpt(k), jpt(k) + 1)
+
+            x = min(max(xl, xbase + xpt(:, k)), xu)
+            x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
+            x(trueloc(xpt(:, k) >= su)) = xu(trueloc(xpt(:, k) >= su))
+            call evaluate(calfun, x, f)
+            call savehist(k, x, xhist, f, fhist)
+            evaluated(k) = .true.
+            fval(k) = f
+            subinfo = checkexit(maxfun, k, f, ftarget, x)
+            if (subinfo /= INFO_DFT) then
+                info = subinfo
+                exit
+            end if
+        end if
+    end do
+end if
 
 nf = count(evaluated)
 kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
@@ -241,9 +244,8 @@ if (all(evaluated)) then
             else if (k >= n + 2) then
                 stepa = xpt(k - n - 1, k - n)
                 stepb = xpt(k - n - 1, k)
-                diff = stepb - stepa
-                hq(k - n - 1, k - n - 1) = TWO * ((fval(k) - fbase) / stepb - (fval(k - n) - fbase) / stepa) / diff
-                gopt(k - n - 1) = (((fval(k - n) - fbase) / stepa) * stepb - ((fval(k) - fbase) / stepb) * stepa) / diff
+                hq(k - n - 1, k - n - 1) = TWO * ((fval(k) - fbase) / stepb - (fval(k - n) - fbase) / stepa) / (stepb - stepa)
+                gopt(k - n - 1) = (((fval(k - n) - fbase) / stepa) * stepb - ((fval(k) - fbase) / stepb) * stepa) / (stepb - stepa)
                 bmat(k - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
                 bmat(k - n - 1, k) = -HALF / xpt(k - n - 1, k - n)
                 bmat(k - n - 1, k - n) = -bmat(k - n - 1, 1) - bmat(k - n - 1, k)
