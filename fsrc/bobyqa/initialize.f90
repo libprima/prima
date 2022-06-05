@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 AM08:33:22
+! Last Modified: Sunday, June 05, 2022 PM12:48:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -181,9 +181,11 @@ do nf = 1, npt
     call savehist(nf, x, xhist, f, fhist)
     evaluated(nf) = .true.
     fval(nf) = f
+    if (f <= ftarget .or. is_nan(f) .or. is_posinf(f)) exit
     if (nf == 1) then
         fbeg = f
     end if
+!end do
 
 
 ! Set the nonzero initial elements of BMAT and the quadratic model in the cases when NF is at most
@@ -191,7 +193,7 @@ do nf = 1, npt
 ! be switched, in order that the function value at the first of them contributes to the off-diagonal
 ! second derivative terms of the initial quadratic model.
 !do nf = 1, npt
-!    f = fval(nf)
+    f = fval(nf)
     if (nf <= 2 * n + 1) then
         if (nf >= 2 .and. nf <= n + 1) then
             gopt(nf - 1) = (f - fbeg) / xpt(nf - 1, nf)
@@ -229,7 +231,6 @@ do nf = 1, npt
         hq(ipt, jpt) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
         hq(jpt, ipt) = hq(ipt, jpt)
     end if
-    if (f <= ftarget .or. is_nan(f) .or. is_posinf(f)) exit
     !if (nf >= npt) exit
 end do
 
