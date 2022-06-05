@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 AM07:44:45
+! Last Modified: Sunday, June 05, 2022 PM03:39:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -102,6 +102,7 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
 character(len=*), parameter :: srname = 'BOBYQB'
+integer(IK) :: subinfo
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
@@ -174,8 +175,8 @@ su = su_in
 ! of NF and KOPT, which are the number of calls of CALFUN so far and the index of the interpolation
 ! point at the trust region centre. Then the initial XOPT is set too. The branch to label 720 occurs
 ! if MAXFUN is less than NPT. GOPT will be updated if KOPT is different from KBASE.
-call initialize(calfun, iprint, ftarget, rhobeg, sl, su, x, xl, xu, kopt, nf, bmat, f, fhist, fval, &
-    & gopt, hq, pq, xbase, xhist, xpt, zmat)
+call initialize(calfun, iprint, maxfun, ftarget, rhobeg, sl, su, x, xl, xu, kopt, nf, bmat, f, fhist, fval, &
+    & gopt, hq, pq, xbase, xhist, xpt, zmat, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = min(max(xl, xbase + xopt), xu)
@@ -183,27 +184,33 @@ x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
 x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
 f = fopt
 
-if (is_nan(f) .or. is_posinf(f)) then
-    info = NAN_INF_F
-    xopt = xpt(:, kopt)
-    fopt = fval(kopt)
-    x = min(max(xl, xbase + xopt), xu)
-    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
-    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
-    f = fopt
-    return
-end if
-if (f <= ftarget) then
-    info = FTARGET_ACHIEVED
-    xopt = xpt(:, kopt)
-    fopt = fval(kopt)
-    x = min(max(xl, xbase + xopt), xu)
-    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
-    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
-    f = fopt
+if (subinfo /= INFO_DFT) then
     call rangehist(nf, xhist, fhist)
     return
 end if
+
+!if (is_nan(f) .or. is_posinf(f)) then
+!    info = NAN_INF_F
+!    xopt = xpt(:, kopt)
+!    fopt = fval(kopt)
+!    x = min(max(xl, xbase + xopt), xu)
+!    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
+!    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
+!    f = fopt
+!    call rangehist(nf, xhist, fhist)
+!    return
+!end if
+!if (f <= ftarget) then
+!    info = FTARGET_ACHIEVED
+!    xopt = xpt(:, kopt)
+!    fopt = fval(kopt)
+!    x = min(max(xl, xbase + xopt), xu)
+!    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
+!    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
+!    f = fopt
+!    call rangehist(nf, xhist, fhist)
+!    return
+!end if
 
 ! Complete the settings that are required for the iterative procedure.
 rho = rhobeg

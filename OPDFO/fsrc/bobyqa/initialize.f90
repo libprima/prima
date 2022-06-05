@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 AM08:33:12
+! Last Modified: Sunday, June 05, 2022 PM04:40:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -256,6 +256,8 @@ end if
 
 !nf = min(nf, npt)  ! NF may be NPT+1 at exit of the loop.
 nf = count(evaluated)
+
+!write (17, *) nf, fval
 
 ! Postconditions
 if (DEBUGGING) then

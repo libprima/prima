@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 PM12:48:38
+! Last Modified: Sunday, June 05, 2022 PM04:24:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,14 +19,16 @@ public :: initialize
 contains
 
 
-subroutine initialize(calfun, iprint, ftarget, rhobeg, sl, su, x0, xl, xu, &
-    & kopt, nf, bmat, f, fhist, fval, gopt, hq, pq, xbase, xhist, xpt, zmat)
+subroutine initialize(calfun, iprint, maxfun, ftarget, rhobeg, sl, su, x0, xl, xu, &
+    & kopt, nf, bmat, f, fhist, fval, gopt, hq, pq, xbase, xhist, xpt, zmat, info)
 
+use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
+use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_INF_F, FTARGET_ACHIEVED
 use, non_intrinsic :: linalg_mod, only : matprod, trueloc, issymmetric!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -35,6 +37,7 @@ implicit none
 ! Inputs
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
+integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: sl(:)  ! SL(N)
@@ -44,6 +47,7 @@ real(RP), intent(in) :: xl(:)  ! XL(N)
 real(RP), intent(in) :: xu(:)  ! XU(N)
 
 ! Outputs
+integer(IK), intent(out) :: info
 integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
 real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT + N)
@@ -58,6 +62,7 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
 real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
+
 ! Local variables
 character(len=*), parameter :: srname = 'INITIIALIZE'
 integer(IK) :: maxfhist
@@ -65,14 +70,15 @@ integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: x(size(x0))
+integer(IK) :: subinfo
+real(RP) :: x(size(xpt, 1))
 real(RP) :: diff, fbeg, recip, rhosq, stepa, stepb, temp
-integer(IK) :: ipt, itemp, jpt
-logical :: evaluated(size(fval))
+integer(IK) :: ipt(size(xpt, 2)), itemp, jpt(size(xpt, 2)), k
+logical :: evaluated(size(xpt, 2))
 
 ! Sizes.
-n = int(size(x0), kind(n))
-npt = int(size(fval), kind(npt))
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
@@ -83,10 +89,12 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(rhobeg > 0, 'RHOBEG > 0', srname)
+    call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
     call assert(size(sl) == n .and. all(sl <= 0), 'SIZE(SL) == N, SL <= 0', srname)
     call assert(size(su) == n .and. all(su >= 0), 'SIZE(SU) == N, SU >= 0', srname)
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
-    call assert(all(is_finite(x0) .and. x0 >= xl .and. x0 <= xu), 'X0 is finite, XL <= X0 <= XU', srname)
+    call assert(size(x0) == n .and. all(is_finite(x0)), 'SIZE(X0) == N, X0 is finite', srname)
+    call assert(all(x0 >= xl .and. x0 <= xu), 'XL <= X0 <= XU', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
@@ -119,8 +127,9 @@ ipt = 1; jpt = 1  ! Temporary fix for G95 warning about these variables used uni
 !     BMAT and ZMAT for the first iteration, and it maintains the values of
 !     NF and KOPT. The vector X is also changed by PRELIM.
 !
-!     Set some constants.
-!
+
+info = INFO_DFT
+
 ! EVALUATED is a boolean array with EVALUATED(I) indicating whether the function value of the I-th
 ! interpolation point has been evaluated. We need it for a portable counting of the number of
 ! function evaluations, especially if the loop is conducted asynchronously.
@@ -143,47 +152,51 @@ zmat = ZERO
 ! Begin the initialization procedure. NF becomes one more than the number of function values so far.
 ! The coordinates of the displacement of the next initial interpolation point from XBASE are set in
 ! XPT(NF+1,.).
-do nf = 1, npt
-    if (nf <= 2 * n + 1) then
-        if (nf >= 2 .and. nf <= n + 1) then
-            xpt(nf - 1, nf) = rhobeg
-            if (su(nf - 1) <= 0) then  ! SU(NF - 1) == 0
-                xpt(nf - 1, nf) = -rhobeg
+do k = 1, npt
+    if (k <= 2 * n + 1) then
+        if (k >= 2 .and. k <= n + 1) then
+            xpt(k - 1, k) = rhobeg
+            if (su(k - 1) <= 0) then  ! SU(NF - 1) == 0
+                xpt(k - 1, k) = -rhobeg
             end if
-        else if (nf >= n + 2) then
-            xpt(nf - n - 1, nf) = -rhobeg
-            if (sl(nf - n - 1) >= 0) then  ! SL(NF - N - 1) == 0
-                xpt(nf - n - 1, nf) = min(TWO * rhobeg, su(nf - n - 1))
+        else if (k >= n + 2) then
+            xpt(k - n - 1, k) = -rhobeg
+            if (sl(k - n - 1) >= 0) then  ! SL(NF - N - 1) == 0
+                xpt(k - n - 1, k) = min(TWO * rhobeg, su(k - n - 1))
             end if
-            if (su(nf - n - 1) <= 0) then  ! SU(NF - N - 1) == 0
-                xpt(nf - n - 1, nf) = max(-TWO * rhobeg, sl(nf - n - 1))
+            if (su(k - n - 1) <= 0) then  ! SU(NF - N - 1) == 0
+                xpt(k - n - 1, k) = max(-TWO * rhobeg, sl(k - n - 1))
             end if
         end if
     else
-        itemp = (nf - n - 2) / n
-        jpt = nf - (itemp + 1) * n - 1
-        ipt = jpt + itemp
-        if (ipt > n) then
-            itemp = jpt
-            jpt = ipt - n
-            ipt = itemp
+        itemp = (k - n - 2) / n
+        jpt(k) = k - (itemp + 1) * n - 1
+        ipt(k) = jpt(k) + itemp
+        if (ipt(k) > n) then
+            itemp = jpt(k)
+            jpt(k) = ipt(k) - n
+            ipt(k) = itemp
         end if
-        xpt(ipt, nf) = xpt(ipt, ipt + 1)
-        xpt(jpt, nf) = xpt(jpt, jpt + 1)
+        xpt(ipt(k), k) = xpt(ipt(k), ipt(k) + 1)
+        xpt(jpt(k), k) = xpt(jpt(k), jpt(k) + 1)
     end if
 
     ! Calculate the next value of F. The least function value so far and its index are required.
-    x = min(max(xl, xbase + xpt(:, nf)), xu)
-    x(trueloc(xpt(:, nf) <= sl)) = xl(trueloc(xpt(:, nf) <= sl))
-    x(trueloc(xpt(:, nf) >= su)) = xu(trueloc(xpt(:, nf) >= su))
+    x = min(max(xl, xbase + xpt(:, k)), xu)
+    x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
+    x(trueloc(xpt(:, k) >= su)) = xu(trueloc(xpt(:, k) >= su))
 
     call evaluate(calfun, x, f)
-    call savehist(nf, x, xhist, f, fhist)
-    evaluated(nf) = .true.
-    fval(nf) = f
-    if (f <= ftarget .or. is_nan(f) .or. is_posinf(f)) exit
-    if (nf == 1) then
+    call savehist(k, x, xhist, f, fhist)
+    evaluated(k) = .true.
+    fval(k) = f
+    if (k == 1) then
         fbeg = f
+    end if
+    subinfo = checkexit(maxfun, k, f, ftarget, x)
+    if (subinfo /= INFO_DFT) then
+        info = subinfo
+        exit
     end if
 !end do
 
@@ -192,55 +205,54 @@ do nf = 1, npt
 ! 2*N+1. If NF exceeds N+1, then the positions of the NF-th and (NF-N)-th interpolation points may
 ! be switched, in order that the function value at the first of them contributes to the off-diagonal
 ! second derivative terms of the initial quadratic model.
-!do nf = 1, npt
-    f = fval(nf)
-    if (nf <= 2 * n + 1) then
-        if (nf >= 2 .and. nf <= n + 1) then
-            gopt(nf - 1) = (f - fbeg) / xpt(nf - 1, nf)
-            if (npt < nf + n) then
-                bmat(nf - 1, 1) = -ONE / xpt(nf - 1, nf)
-                bmat(nf - 1, nf) = ONE / xpt(nf - 1, nf)
-                bmat(nf - 1, npt + nf - 1) = -HALF * rhosq
+!do k = 1, npt
+    f = fval(k)
+    if (k <= 2 * n + 1) then
+        if (k >= 2 .and. k <= n + 1) then
+            gopt(k - 1) = (f - fbeg) / xpt(k - 1, k)
+            if (npt < k + n) then
+                bmat(k - 1, 1) = -ONE / xpt(k - 1, k)
+                bmat(k - 1, k) = ONE / xpt(k - 1, k)
+                bmat(k - 1, npt + k - 1) = -HALF * rhosq
             end if
-        else if (nf >= n + 2) then
-            stepa = xpt(nf - n - 1, nf - n)
-            stepb = xpt(nf - n - 1, nf)
+        else if (k >= n + 2) then
+            stepa = xpt(k - n - 1, k - n)
+            stepb = xpt(k - n - 1, k)
             temp = (f - fbeg) / stepb
             diff = stepb - stepa
-            hq(nf - n - 1, nf - n - 1) = TWO * (temp - gopt(nf - n - 1)) / diff
-            gopt(nf - n - 1) = (gopt(nf - n - 1) * stepb - temp * stepa) / diff
-            if (stepa * stepb < ZERO .and. fval(nf) < fval(nf - n)) then
+            hq(k - n - 1, k - n - 1) = TWO * (temp - gopt(k - n - 1)) / diff
+            gopt(k - n - 1) = (gopt(k - n - 1) * stepb - temp * stepa) / diff
+            if (stepa * stepb < ZERO .and. fval(k) < fval(k - n)) then
                 ! Switch the NF-th and (NF-N)-th interpolation points.
-                fval([nf, nf - n]) = fval([nf - n, nf])
-                xpt(nf - n - 1, [nf - n, nf]) = xpt(nf - n - 1, [nf, nf - n])
+                fval([k, k - n]) = fval([k - n, k])
+                xpt(k - n - 1, [k - n, k]) = xpt(k - n - 1, [k, k - n])
             end if
-            bmat(nf - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
-            bmat(nf - n - 1, nf) = -HALF / xpt(nf - n - 1, nf - n)
-            bmat(nf - n - 1, nf - n) = -bmat(nf - n - 1, 1) - bmat(nf - n - 1, nf)
-            zmat(1, nf - n - 1) = sqrt(TWO) / (stepa * stepb)
-            zmat(nf, nf - n - 1) = sqrt(HALF) / rhosq
-            zmat(nf - n, nf - n - 1) = -zmat(1, nf - n - 1) - zmat(nf, nf - n - 1)
+            bmat(k - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
+            bmat(k - n - 1, k) = -HALF / xpt(k - n - 1, k - n)
+            bmat(k - n - 1, k - n) = -bmat(k - n - 1, 1) - bmat(k - n - 1, k)
+            zmat(1, k - n - 1) = sqrt(TWO) / (stepa * stepb)
+            zmat(k, k - n - 1) = sqrt(HALF) / rhosq
+            zmat(k - n, k - n - 1) = -zmat(1, k - n - 1) - zmat(k, k - n - 1)
         end if
 ! Set the off-diagonal second derivatives of the Lagrange functions and the initial quadratic model.
     else
-        zmat(1, nf - n - 1) = recip
-        zmat(nf, nf - n - 1) = recip
-        zmat(ipt + 1, nf - n - 1) = -recip
-        zmat(jpt + 1, nf - n - 1) = -recip
-        temp = xpt(ipt, nf) * xpt(jpt, nf)
-        hq(ipt, jpt) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
-        hq(jpt, ipt) = hq(ipt, jpt)
+        zmat(1, k - n - 1) = recip
+        zmat(k, k - n - 1) = recip
+        zmat(ipt(k) + 1, k - n - 1) = -recip
+        zmat(jpt(k) + 1, k - n - 1) = -recip
+        temp = xpt(ipt(k), k) * xpt(jpt(k), k)
+        hq(ipt(k), jpt(k)) = (fbeg - fval(ipt(k) + 1) - fval(jpt(k) + 1) + f) / temp
+        hq(jpt(k), ipt(k)) = hq(ipt(k), jpt(k))
     end if
-    !if (nf >= npt) exit
 end do
 
-!nf = min(nf, npt)  ! NF may be NPT+1 at exit of the loop.
 nf = count(evaluated)
 kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 if (kopt /= 1 .and. all(evaluated)) then
     gopt = gopt + matprod(hq, xpt(:, kopt))
 end if
 
+!write (16, *) nf, fval
 
 ! Postconditions
 if (DEBUGGING) then
