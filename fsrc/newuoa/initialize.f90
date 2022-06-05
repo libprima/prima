@@ -282,7 +282,7 @@ integer(IK) :: j
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: fbeg
+real(RP) :: fbase
 real(RP) :: rhobeg
 real(RP) :: xi
 real(RP) :: xj
@@ -316,17 +316,17 @@ hq = ZERO
 pq = ZERO  ! We will not update PQ. It is ZERO at return.
 
 rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
-fbeg = fval(1)
+fbase = fval(1)
 
 ! Set GQ by forward difference.
-gq(1:n) = (fval(2:n + 1) - fbeg) / rhobeg
+gq(1:n) = (fval(2:n + 1) - fbase) / rhobeg
 ! If possible, revise GQ to central difference.
 k = min(int(npt - n - 1, kind(n)), n)
-gq(1:k) = HALF * (gq(1:k) + (fbeg - fval(n + 2:n + 1 + k)) / rhobeg)
+gq(1:k) = HALF * (gq(1:k) + (fbase - fval(n + 2:n + 1 + k)) / rhobeg)
 
 ! Set the diagonal of HQ by 2nd-order central finite difference.
 do k = 1, min(int(npt - n - 1, kind(n)), n)
-    hq(k, k) = ((fval(k + 1) - fbeg) / rhobeg - (fbeg - fval(k + n + 1)) / rhobeg) / rhobeg
+    hq(k, k) = ((fval(k + 1) - fbase) / rhobeg - (fbase - fval(k + n + 1)) / rhobeg) / rhobeg
 end do
 ! When NPT > 2*N + 1, set the off-diagonal entries of HQ.
 do k = 1, npt - 2_IK * n - 1_IK
@@ -339,7 +339,7 @@ do k = 1, npt - 2_IK * n - 1_IK
     j = modulo(ij(k, 2) - 2_IK, n) + 1_IK
     xi = xpt(i, k + 2 * n + 1)
     xj = xpt(j, k + 2 * n + 1)
-    hq(i, j) = (fbeg - fval(ij(k, 1)) - fval(ij(k, 2)) + fval(k + 2 * n + 1)) / (xi * xj)
+    hq(i, j) = (fbase - fval(ij(k, 1)) - fval(ij(k, 2)) + fval(k + 2 * n + 1)) / (xi * xj)
     hq(j, i) = hq(i, j)
 end do
 
