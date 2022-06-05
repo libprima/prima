@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 PM10:31:32
+! Last Modified: Monday, June 06, 2022 AM12:36:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,6 +30,7 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_INF_F, FTARGET_ACHIEVED
 use, non_intrinsic :: linalg_mod, only : matprod, trueloc, issymmetric!, norm
+use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 implicit none
@@ -64,6 +65,7 @@ real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 
 ! Local variables
+character(len=*), parameter :: solver = 'NEWUOA'
 character(len=*), parameter :: srname = 'INITIIALIZE'
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
@@ -150,11 +152,9 @@ bmat = ZERO
 zmat = ZERO
 
 
-! Begin the initialization procedure. NF becomes one more than the number of function values so far.
-! The coordinates of the displacement of the next initial interpolation point from XBASE are set in
-! XPT(NF+1,.).
+! Set XPT(:, 1 : 2*N + 1).
+xpt(:, 1) = ZERO
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
-    !if (k <= 2 * n + 1) then
     if (k >= 2 .and. k <= n + 1) then
         xpt(k - 1, k) = rhobeg
         if (su(k - 1) <= 0) then  ! SU(NF - 1) == 0
@@ -169,34 +169,37 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
             xpt(k - n - 1, k) = max(-TWO * rhobeg, sl(k - n - 1))
         end if
     end if
+end do
+
+! Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for FMSG.
+do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     x = min(max(xl, xbase + xpt(:, k)), xu)
     x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
     x(trueloc(xpt(:, k) >= su)) = xu(trueloc(xpt(:, k) >= su))
     call evaluate(calfun, x, f)
-    call savehist(k, x, xhist, f, fhist)
     evaluated(k) = .true.
     fval(k) = f
+    call savehist(k, x, xhist, f, fhist)
+    call fmsg(solver, iprint, k, f, x)
     subinfo = checkexit(maxfun, k, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
         info = subinfo
         exit
     end if
-    !end if
 end do
 
-do k = n + 2, min(npt, int(2 * n + 1, kind(npt)))
-!    if (k >= n + 2 .and. k <= 2 * n + 1) then
-    if (xpt(k - n - 1, k - n) * xpt(k - n - 1, k) < 0 .and. fval(k) < fval(k - n)) then
-        ! Switch the K-th and (K-N)-th interpolation points.
-        fval([k, k - n]) = fval([k - n, k])
-        xpt(k - n - 1, [k - n, k]) = xpt(k - n - 1, [k, k - n])
+! For each K between 2 and N + 1, switch XPT(:, K) and XPT(:, K+1) if XPT(K-1, K) * XPT(K-1, K+N) is
+! negative and FVAL(K) <= FVAL(K+N).
+do k = 2, min(npt - n, int(n + 1, kind(npt)))
+    if (xpt(k - 1, k) * xpt(k - 1, k + n) < 0 .and. fval(k + n) < fval(k)) then
+        fval([k, k + n]) = fval([k + n, k])
+        xpt(:, [k, k + n]) = xpt(:, [k + n, k])
+        ! Indeed, only XPT(K-1, [K, K+N]) needs switching, as the other entries are zero.
     end if
-!    end if
 end do
 
 if (info == INFO_DFT) then
     do k = int(2 * n + 2, kind(k)), npt
-        !if (k >= 2 * n + 2) then
         itemp = (k - n - 2) / n
         jpt(k) = k - (itemp + 1) * n - 1
         ipt(k) = jpt(k) + itemp
@@ -205,6 +208,7 @@ if (info == INFO_DFT) then
             jpt(k) = ipt(k) - n
             ipt(k) = itemp
         end if
+
         xpt(ipt(k), k) = xpt(ipt(k), ipt(k) + 1)
         xpt(jpt(k), k) = xpt(jpt(k), jpt(k) + 1)
 
@@ -220,7 +224,6 @@ if (info == INFO_DFT) then
             info = subinfo
             exit
         end if
-        !end if
     end do
 end if
 
