@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 AM12:36:23
+! Last Modified: Monday, June 06, 2022 AM11:29:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,7 +29,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_INF_F, FTARGET_ACHIEVED
-use, non_intrinsic :: linalg_mod, only : matprod, trueloc, issymmetric!, norm
+use, non_intrinsic :: linalg_mod, only : matprod, trueloc, issymmetric, diag!, norm
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -73,9 +73,9 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
-real(RP) :: x(size(xpt, 1))
-real(RP) :: fbase, recip, rhosq, stepa, stepb
-integer(IK) :: ipt(size(xpt, 2)), itemp, jpt(size(xpt, 2)), k
+real(RP) :: x(size(xpt, 1)), xa(min(size(xpt, 1), size(xpt, 2) - size(xpt, 1) - 1)), xb(size(xa))
+real(RP) :: fbase, recip, rhosq, stepa, stepb, xi, xj
+integer(IK) :: ipt(size(xpt, 2)), itemp, jpt(size(xpt, 2)), k, i, j, ndiag
 logical :: evaluated(size(xpt, 2))
 
 ! Sizes.
@@ -152,7 +152,7 @@ bmat = ZERO
 zmat = ZERO
 
 
-! Set XPT(:, 1 : 2*N + 1).
+! Set XPT(:, 1 : MIN(2*N + 1, NPT)).
 xpt(:, 1) = ZERO
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     if (k >= 2 .and. k <= n + 1) then
@@ -171,7 +171,7 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     end if
 end do
 
-! Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for FMSG.
+! Set FVAL(1 : MIN(2*N + 1, NPT)) by evaluating F. Totally parallelizable except for FMSG.
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     x = min(max(xl, xbase + xpt(:, k)), xu)
     x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
@@ -188,8 +188,10 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     end if
 end do
 
-! For each K between 2 and N + 1, switch XPT(:, K) and XPT(:, K+1) if XPT(K-1, K) * XPT(K-1, K+N) is
-! negative and FVAL(K) <= FVAL(K+N).
+! For the K between 2 and N + 1, switch XPT(:, K) and XPT(:, K+1) if XPT(K-1, K) and XPT(K-1, K+N)
+! have different signs and FVAL(K) <= FVAL(K+N). This provides a bias towards potentially lower
+! values of F when defining XPT(:, 2*N + 2 : NPT). We may drop the requirement on the signs, but
+! Powell's code has such a requirement.
 do k = 2, min(npt - n, int(n + 1, kind(npt)))
     if (xpt(k - 1, k) * xpt(k - 1, k + n) < 0 .and. fval(k + n) < fval(k)) then
         fval([k, k + n]) = fval([k + n, k])
@@ -198,20 +200,25 @@ do k = 2, min(npt - n, int(n + 1, kind(npt)))
     end if
 end do
 
+do k = int(2 * n + 2, kind(k)), npt
+    itemp = (k - n - 2) / n
+    jpt(k) = k - (itemp + 1) * n - 1
+    ipt(k) = jpt(k) + itemp
+    if (ipt(k) > n) then
+        itemp = jpt(k)
+        jpt(k) = ipt(k) - n
+        ipt(k) = itemp
+    end if
+end do
+ipt = ipt + 1_IK
+jpt = jpt + 1_IK
+
+! Revise XPT(:, 2*N + 2 : NPT). Indeed, XPT(:, K) only has two nonzeros for each K >= 2*N+2.
+xpt(:, 2 * n + 2:npt) = xpt(:, ipt(2 * n + 2:npt)) + xpt(:, jpt(2 * n + 2:npt))
+
+! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSG.
 if (info == INFO_DFT) then
     do k = int(2 * n + 2, kind(k)), npt
-        itemp = (k - n - 2) / n
-        jpt(k) = k - (itemp + 1) * n - 1
-        ipt(k) = jpt(k) + itemp
-        if (ipt(k) > n) then
-            itemp = jpt(k)
-            jpt(k) = ipt(k) - n
-            ipt(k) = itemp
-        end if
-
-        xpt(ipt(k), k) = xpt(ipt(k), ipt(k) + 1)
-        xpt(jpt(k), k) = xpt(jpt(k), jpt(k) + 1)
-
         x = min(max(xl, xbase + xpt(:, k)), xu)
         x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
         x(trueloc(xpt(:, k) >= su)) = xu(trueloc(xpt(:, k) >= su))
@@ -236,10 +243,31 @@ kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 ! second derivative terms of the initial quadratic model.
 if (all(evaluated)) then
     fbase = fval(1)
+    gopt = (fval(2:n + 1) - fbase) / diag(xpt(:, 2:n + 1))
+    ndiag = min(n, npt - n - 1_IK)
+    xa = diag(xpt(:, 2:ndiag + 1))
+    xb = diag(xpt(:, n + 2:n + ndiag + 1))
+    gopt(1:ndiag) = (((fval(2:ndiag + 1) - fbase) / xa) * xb - ((fval(n + 2:n + ndiag + 1) - fbase) / xb) * xa) / (xb - xa)
+    do k = 1, ndiag
+        hq(k, k) = TWO * ((fval(k + 1) - fbase) / xa(k) - (fval(n + k + 1) - fbase) / xb(k)) / (xa(k) - xb(k))
+    end do
+    do k = 1, npt - 2_IK * n - 1_IK
+        i = ipt(k + 2 * n + 1) - 1
+        j = jpt(k + 2 * n + 1) - 1
+        xi = xpt(i, k + 2 * n + 1)
+        xj = xpt(j, k + 2 * n + 1)
+        hq(i, j) = (fbase - fval(ipt(k + 2 * n + 1)) - fval(jpt(k + 2 * n + 1)) + fval(k + 2 * n + 1)) / (xi * xj)
+        hq(j, i) = hq(i, j)
+    end do
+    if (kopt /= 1) then
+        gopt = gopt + matprod(hq, xpt(:, kopt))
+    end if
+end if
+
+if (all(evaluated)) then
     do k = 1, npt
         if (k <= 2 * n + 1) then
             if (k >= 2 .and. k <= n + 1) then
-                gopt(k - 1) = (fval(k) - fbase) / xpt(k - 1, k)
                 if (npt < k + n) then
                     bmat(k - 1, 1) = -ONE / xpt(k - 1, k)
                     bmat(k - 1, k) = ONE / xpt(k - 1, k)
@@ -248,8 +276,6 @@ if (all(evaluated)) then
             else if (k >= n + 2) then
                 stepa = xpt(k - n - 1, k - n)
                 stepb = xpt(k - n - 1, k)
-                hq(k - n - 1, k - n - 1) = TWO * ((fval(k) - fbase) / stepb - (fval(k - n) - fbase) / stepa) / (stepb - stepa)
-                gopt(k - n - 1) = (((fval(k - n) - fbase) / stepa) * stepb - ((fval(k) - fbase) / stepb) * stepa) / (stepb - stepa)
                 bmat(k - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
                 bmat(k - n - 1, k) = -HALF / xpt(k - n - 1, k - n)
                 bmat(k - n - 1, k - n) = -bmat(k - n - 1, 1) - bmat(k - n - 1, k)
@@ -261,16 +287,10 @@ if (all(evaluated)) then
         else
             zmat(1, k - n - 1) = recip
             zmat(k, k - n - 1) = recip
-            zmat(ipt(k) + 1, k - n - 1) = -recip
-            zmat(jpt(k) + 1, k - n - 1) = -recip
-            hq(ipt(k), jpt(k)) = (fbase - fval(ipt(k) + 1) - fval(jpt(k) + 1) + fval(k)) / (xpt(ipt(k), k) * xpt(jpt(k), k))
-            hq(jpt(k), ipt(k)) = hq(ipt(k), jpt(k))
+            zmat(ipt(k), k - n - 1) = -recip
+            zmat(jpt(k), k - n - 1) = -recip
         end if
     end do
-
-    if (kopt /= 1) then
-        gopt = gopt + matprod(hq, xpt(:, kopt))
-    end if
 end if
 
 !write (16, *) nf, fval

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Saturday, June 04, 2022 PM03:35:35
+! Last Modified: Monday, June 06, 2022 AM11:08:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -139,14 +139,14 @@ fval = HUGENUM
 
 ! Set XPT, FVAL, KOPT, and XOPT.
 
-! Set XPT.
+! Initialize XPT.
 xpt(:, 1) = ZERO
 xpt(:, 2:n + 1) = rhobeg * eye(n)
 ! After the following line, XPT(:, 2*N+2 : NPT) = ZERO if it is nonempty. It will be revised later
 ! according to FVAL(2 : 2*N + 1).
 xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)
 
-! Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for FMSG.
+! Set FVAL(1 : min(2*N + 1, NPT)) by evaluating F. Totally parallelizable except for FMSG.
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     x = xpt(:, k) + xbase
     call evaluate(calfun, x, f)
@@ -194,7 +194,7 @@ ij = ij + 1_IK
 where (fval(ij(:, 1) + n) < fval(ij(:, 1))) ij(:, 1) = ij(:, 1) + n
 where (fval(ij(:, 2) + n) < fval(ij(:, 2))) ij(:, 2) = ij(:, 2) + n
 
-! Set XPT(:, 2*N + 2 : NPT). It depends on IJ and hence on FVAL(2 : 2*N + 1).
+! Revise XPT(:, 2*N + 2 : NPT). It depends on IJ and hence on FVAL(2 : 2*N + 1).
 xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1)) + xpt(:, ij(:, 2))
 
 ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSG.
@@ -335,8 +335,8 @@ do k = 1, npt - 2_IK * n - 1_IK
     ! FVAL(IJ(K, 1)) = F(XBASE + XI*e_I),
     ! FVAL(IJ(K, 2)) = F(XBASE + XJ*e_J).
     ! Thus the HQ(I,J) defined below approximates frac{partial^2}{partial X_I partial X_J} F(XBASE).
-    i = modulo(ij(k, 1) - 2_IK, n) + 1_IK
-    j = modulo(ij(k, 2) - 2_IK, n) + 1_IK
+    i = modulo(ij(k, 1) - 2_IK, n) + 1_IK  ! Is the modulo needed?
+    j = modulo(ij(k, 2) - 2_IK, n) + 1_IK  ! Is the modulo needed?
     xi = xpt(i, k + 2 * n + 1)
     xj = xpt(j, k + 2 * n + 1)
     hq(i, j) = (fbase - fval(ij(k, 1)) - fval(ij(k, 2)) + fval(k + 2 * n + 1)) / (xi * xj)
