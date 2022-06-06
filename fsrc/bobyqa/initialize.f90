@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 AM11:43:41
+! Last Modified: Monday, June 06, 2022 AM11:57:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -266,39 +266,33 @@ if (all(evaluated)) then
 end if
 
 if (all(evaluated)) then
-    do k = 1, npt
-        if (k <= 2 * n + 1) then
-            if (k >= 2 .and. k <= n + 1) then
-                if (npt < k + n) then
-                    bmat(k - 1, 1) = -ONE / xpt(k - 1, k)
-                    bmat(k - 1, k) = ONE / xpt(k - 1, k)
-                    bmat(k - 1, npt + k - 1) = -HALF * rhosq
-                end if
-            else if (k >= n + 2) then
-                stepa = xpt(k - n - 1, k - n)
-                stepb = xpt(k - n - 1, k)
-                bmat(k - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
-                bmat(k - n - 1, k) = -HALF / xpt(k - n - 1, k - n)
-                bmat(k - n - 1, k - n) = -bmat(k - n - 1, 1) - bmat(k - n - 1, k)
+    do k = 2, npt
+        if (k >= 2 .and. k <= n + 1) then
+            if (npt < k + n) then
+                bmat(k - 1, 1) = -ONE / xpt(k - 1, k)
+                bmat(k - 1, k) = ONE / xpt(k - 1, k)
+                bmat(k - 1, npt + k - 1) = -HALF * rhosq
             end if
-        else
+        end if
+        if (k >= n + 2 .and. k <= 2 * n + 1) then
+            stepa = xpt(k - n - 1, k - n)
+            stepb = xpt(k - n - 1, k)
+            bmat(k - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
+            bmat(k - n - 1, k) = -HALF / xpt(k - n - 1, k - n)
+            bmat(k - n - 1, k - n) = -bmat(k - n - 1, 1) - bmat(k - n - 1, k)
         end if
     end do
 end if
 if (all(evaluated)) then
     do k = 1, npt
-        if (k <= 2 * n + 1) then
-            if (k >= 2 .and. k <= n + 1) then
-                if (npt < k + n) then
-                end if
-            else if (k >= n + 2) then
-                stepa = xpt(k - n - 1, k - n)
-                stepb = xpt(k - n - 1, k)
-                zmat(1, k - n - 1) = sqrt(TWO) / (stepa * stepb)
-                zmat(k, k - n - 1) = sqrt(HALF) / rhosq
-                zmat(k - n, k - n - 1) = -zmat(1, k - n - 1) - zmat(k, k - n - 1)
-            end if
-        else
+        if (k >= n + 2 .and. k <= 2 * n + 1) then
+            stepa = xpt(k - n - 1, k - n)
+            stepb = xpt(k - n - 1, k)
+            zmat(1, k - n - 1) = sqrt(TWO) / (stepa * stepb)
+            zmat(k, k - n - 1) = sqrt(HALF) / rhosq
+            zmat(k - n, k - n - 1) = -zmat(1, k - n - 1) - zmat(k, k - n - 1)
+        end if
+        if (k >= 2 * n + 2) then
             ! Set the off-diagonal second derivatives of the Lagrange functions.
             zmat(1, k - n - 1) = recip
             zmat(k, k - n - 1) = recip
