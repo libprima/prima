@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 PM07:07:10
+! Last Modified: Monday, June 06, 2022 PM10:01:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,7 +29,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT
-use, non_intrinsic :: linalg_mod, only : matprod, trueloc, issymmetric, diag!, norm
+use, non_intrinsic :: linalg_mod, only : matprod, trueloc, issymmetric, diag, eye, sort
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -74,8 +74,8 @@ integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
 real(RP) :: x(size(xpt, 1)), xa(min(size(xpt, 1), size(xpt, 2) - size(xpt, 1) - 1)), xb(size(xa))
-real(RP) :: fbase, recip, rhosq, stepa, stepb, xi, xj
-integer(IK) :: ipt(size(xpt, 2)), itemp, jpt(size(xpt, 2)), k, i, j, ndiag
+real(RP) :: fbase, rhosq, stepa, stepb, xi, xj
+integer(IK) :: ij(max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1), 2), itemp, k, i, j, ndiag
 logical :: evaluated(size(xpt, 2))
 
 ! Sizes.
@@ -110,12 +110,12 @@ if (DEBUGGING) then
 end if
 
 !--------------------------------------------------------------------------------------------------!
-ipt = 1; jpt = 1  ! Temporary fix for G95 warning about these variables used uninitialized
+ij = 1  ! Temporary fix for G95 warning about these variables used uninitialized
 !--------------------------------------------------------------------------------------------------!
 !
 !     The arguments N, NPT, X, XL, XU, RHOBEG, IPRINT and MAXFUN are the
 !       same as the corresponding arguments in SUBROUTINE BOBYQA.
-!     The arguments XBASE, XPT, FVAL, HQ, PQ, BMAT, ZMAT, NDIM, SL and SU
+!     The arguments XBASE, XPT, FVAL, HQ, PQ, BMAT, ZMAT, SL and SU
 !       are the same as the corresponding arguments in BOBYQB, the elements
 !       of SL and SU being set in BOBYQA.
 !     GOPT is usually the gradient of the quadratic model at XOPT+XBASE, but
@@ -140,7 +140,6 @@ evaluated = .false.
 ! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
 fval = HUGENUM
 rhosq = rhobeg * rhobeg
-recip = ONE / rhosq
 
 ! Set XBASE to the initial vector of variables, and set the initial elements of XPT, BMAT, HQ, PQ
 ! and ZMAT to ZERO.
@@ -189,9 +188,9 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
 end do
 
 ! For the K between 2 and N + 1, switch XPT(:, K) and XPT(:, K+1) if XPT(K-1, K) and XPT(K-1, K+N)
-! have different signs and FVAL(K) <= FVAL(K+N). This provides a bias towards potentially lower
-! values of F when defining XPT(:, 2*N + 2 : NPT). We may drop the requirement on the signs, but
-! Powell's code has such a requirement.
+! have different signs and FVAL(K) <= FVAL(K+N). This is OPTIONAL. It provides a bias towards
+! potentially lower values of F when defining XPT(:, 2*N + 2 : NPT). We may drop the requirement on
+! the signs, but Powell's code has such a requirement.
 do k = 2, min(npt - n, int(n + 1, kind(npt)))
     if (xpt(k - 1, k) * xpt(k - 1, k + n) < 0 .and. fval(k + n) < fval(k)) then
         fval([k, k + n]) = fval([k + n, k])
@@ -200,21 +199,22 @@ do k = 2, min(npt - n, int(n + 1, kind(npt)))
     end if
 end do
 
-do k = int(2 * n + 2, kind(k)), npt
-    itemp = (k - n - 2) / n
-    jpt(k) = k - (itemp + 1) * n - 1
-    ipt(k) = jpt(k) + itemp
-    if (ipt(k) > n) then
-        itemp = jpt(k)
-        jpt(k) = ipt(k) - n
-        ipt(k) = itemp
-    end if
-end do
-ipt = ipt + 1_IK
-jpt = jpt + 1_IK
+! Set IJ.
+! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(1 : NPT - (2*N+1), :) to ANY permutation
+! of {(I, J) : 1 <= J < I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first
+! NPT - (2*N + 1) elements of such a permutation. Powell took the following one.
+ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
+!!MATLAB: ij(:, 1) = floor((n : npt - n - 2) / n);
+ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
+!!MATLAB: ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1
+ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
+! The next line ensures IJ(:, 1) > IJ(:, 2).
+ij = sort(ij, 2, 'descend')
+! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
+ij = ij + 1_IK
 
-! Revise XPT(:, 2*N + 2 : NPT). Indeed, XPT(:, K) only has two nonzeros for each K >= 2*N+2.
-xpt(:, 2 * n + 2:npt) = xpt(:, ipt(2 * n + 2:npt)) + xpt(:, jpt(2 * n + 2:npt))
+! Set XPT(:, 2*N + 2 : NPT). Indeed, XPT(:, K) only has two nonzeros for each K >= 2*N+2.
+xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1)) + xpt(:, ij(:, 2))
 
 ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSG.
 if (info == INFO_DFT) then
@@ -244,6 +244,7 @@ kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 if (all(evaluated)) then
     fbase = fval(1)
     gopt = (fval(2:n + 1) - fbase) / diag(xpt(:, 2:n + 1))
+    ! The interpolation conditions decide the first NDIAG diagonal 2nd derivatives of the initial quadratic model.
     ndiag = min(n, npt - n - 1_IK)
     xa = diag(xpt(:, 2:ndiag + 1))
     xb = diag(xpt(:, n + 2:n + ndiag + 1))
@@ -251,13 +252,14 @@ if (all(evaluated)) then
     do k = 1, ndiag
         hq(k, k) = TWO * ((fval(k + 1) - fbase) / xa(k) - (fval(n + k + 1) - fbase) / xb(k)) / (xa(k) - xb(k))
     end do
+
     ! Set the off-diagonal second derivatives of the initial quadratic model.
     do k = 1, npt - 2_IK * n - 1_IK
-        i = ipt(k + 2 * n + 1) - 1
-        j = jpt(k + 2 * n + 1) - 1
+        i = ij(k, 1) - 1
+        j = ij(k, 2) - 1
         xi = xpt(i, k + 2 * n + 1)
         xj = xpt(j, k + 2 * n + 1)
-        hq(i, j) = (fbase - fval(ipt(k + 2 * n + 1)) - fval(jpt(k + 2 * n + 1)) + fval(k + 2 * n + 1)) / (xi * xj)
+        hq(i, j) = (fbase - fval(ij(k, 1)) - fval(ij(k, 2)) + fval(k + 2 * n + 1)) / (xi * xj)
         hq(j, i) = hq(i, j)
     end do
     if (kopt /= 1) then
@@ -266,14 +268,19 @@ if (all(evaluated)) then
 end if
 
 if (all(evaluated)) then
+    ! The interpolation set decides the first NDIAG diagonal 2nd derivatives of the Lagrange polynomials.
+    ndiag = min(n, npt - n - 1_IK)
+    xa = diag(xpt(:, 2:ndiag + 1))
+    xb = diag(xpt(:, n + 2:n + ndiag + 1))
+
     bmat = ZERO
-    ! Set BMAT(1 : MIN(NPT-N-1, N), :)
-    do k = 1, min(npt - n - 1_IK, n)
-        bmat(k, 1) = -(xpt(k, k + 1) + xpt(k, k + n + 1)) / (xpt(k, k + 1) * xpt(k, k + n + 1))
+    ! Set BMAT(1 : NDIAG, :)
+    bmat(1:ndiag, 1) = -(xa + xb) / (xa * xb)
+    do k = 1, ndiag
         bmat(k, k + n + 1) = -HALF / xpt(k, k + 1)
         bmat(k, k + 1) = -bmat(k, 1) - bmat(k, k + n + 1)
     end do
-    ! Set BMAT(NPT-N : N, :)
+    ! Set BMAT(NDIAG+1 : N, :)
     bmat(npt - n:n, 1) = -ONE / diag(xpt(npt - n:n, npt - n + 1:n + 1))
     do k = npt - n, n
         bmat(k, k + 1) = ONE / xpt(k, k + 1)
@@ -281,26 +288,19 @@ if (all(evaluated)) then
     end do
 
     zmat = ZERO
-    ! Set ZMAT(:, 1 : MIN(NPT-N-1, N))
-    do k = 1, min(npt - n - 1_IK, n)
-        zmat(1, k) = sqrt(TWO) / (xpt(k, k + 1) * xpt(k, k + n + 1))
-        zmat(k + n + 1, k) = sqrt(HALF) / rhosq
+    ! Set ZMAT(:, 1 : NDIAG)
+    zmat(1, 1:ndiag) = sqrt(TWO) / (xa * xb)
+    zmat(n + 2:ndiag + n + 1, 1:ndiag) = (sqrt(HALF) / rhosq) * eye(ndiag)
+    do k = 1, ndiag
         zmat(k + 1, k) = -zmat(1, k) - zmat(k + n + 1, k)
     end do
-    ! Set ZMAT(:, N+1 : NPT-N-1)
+    ! Set ZMAT(:, NDIAG+1 : NPT-N-1)
     zmat(1, n + 1:npt - n - 1) = ONE / rhosq
-    do k = n + 1, npt - n - 1
-        zmat(k + n + 1, k) = ONE / rhosq
-        zmat(ipt(k + n + 1), k) = -ONE / rhosq
-        zmat(jpt(k + n + 1), k) = -ONE / rhosq
+    zmat(2 * n + 2:npt, n + 1:npt - n - 1) = (ONE / rhosq) * eye(npt - 2_IK * n - 1_IK)
+    do k = 1, npt - 2_IK * n - 1_IK
+        zmat(ij(k, :), k + n) = -ONE / rhosq
     end do
 end if
-
-!write (16, *) nf, fval
-!write (16, *) xpt
-!write (16, *) bmat
-!write (16, *) zmat
-!write (16, *) gopt, hq
 
 ! Postconditions
 if (DEBUGGING) then
