@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 PM05:37:36
+! Last Modified: Monday, June 06, 2022 PM07:07:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -266,39 +266,33 @@ if (all(evaluated)) then
 end if
 
 if (all(evaluated)) then
-    do k = 2, npt
-        if (k >= 2 .and. k <= n + 1) then
-            if (npt < k + n) then
-                bmat(k - 1, 1) = -ONE / xpt(k - 1, k)
-                bmat(k - 1, k) = ONE / xpt(k - 1, k)
-                bmat(k - 1, npt + k - 1) = -HALF * rhosq
-            end if
-        end if
-        if (k >= n + 2 .and. k <= 2 * n + 1) then
-            stepa = xpt(k - n - 1, k - n)
-            stepb = xpt(k - n - 1, k)
-            bmat(k - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
-            bmat(k - n - 1, k) = -HALF / xpt(k - n - 1, k - n)
-            bmat(k - n - 1, k - n) = -bmat(k - n - 1, 1) - bmat(k - n - 1, k)
-        end if
+    bmat = ZERO
+    ! Set BMAT(1 : MIN(NPT-N-1, N), :)
+    do k = 1, min(npt - n - 1_IK, n)
+        bmat(k, 1) = -(xpt(k, k + 1) + xpt(k, k + n + 1)) / (xpt(k, k + 1) * xpt(k, k + n + 1))
+        bmat(k, k + n + 1) = -HALF / xpt(k, k + 1)
+        bmat(k, k + 1) = -bmat(k, 1) - bmat(k, k + n + 1)
     end do
-end if
-if (all(evaluated)) then
-    do k = 1, npt
-        if (k >= n + 2 .and. k <= 2 * n + 1) then
-            stepa = xpt(k - n - 1, k - n)
-            stepb = xpt(k - n - 1, k)
-            zmat(1, k - n - 1) = sqrt(TWO) / (stepa * stepb)
-            zmat(k, k - n - 1) = sqrt(HALF) / rhosq
-            zmat(k - n, k - n - 1) = -zmat(1, k - n - 1) - zmat(k, k - n - 1)
-        end if
-        if (k >= 2 * n + 2) then
-            ! Set the off-diagonal second derivatives of the Lagrange functions.
-            zmat(1, k - n - 1) = recip
-            zmat(k, k - n - 1) = recip
-            zmat(ipt(k), k - n - 1) = -recip
-            zmat(jpt(k), k - n - 1) = -recip
-        end if
+    ! Set BMAT(NPT-N : N, :)
+    bmat(npt - n:n, 1) = -ONE / diag(xpt(npt - n:n, npt - n + 1:n + 1))
+    do k = npt - n, n
+        bmat(k, k + 1) = ONE / xpt(k, k + 1)
+        bmat(k, npt + k) = -HALF * rhosq
+    end do
+
+    zmat = ZERO
+    ! Set ZMAT(:, 1 : MIN(NPT-N-1, N))
+    do k = 1, min(npt - n - 1_IK, n)
+        zmat(1, k) = sqrt(TWO) / (xpt(k, k + 1) * xpt(k, k + n + 1))
+        zmat(k + n + 1, k) = sqrt(HALF) / rhosq
+        zmat(k + 1, k) = -zmat(1, k) - zmat(k + n + 1, k)
+    end do
+    ! Set ZMAT(:, N+1 : NPT-N-1)
+    zmat(1, n + 1:npt - n - 1) = ONE / rhosq
+    do k = n + 1, npt - n - 1
+        zmat(k + n + 1, k) = ONE / rhosq
+        zmat(ipt(k + n + 1), k) = -ONE / rhosq
+        zmat(jpt(k + n + 1), k) = -ONE / rhosq
     end do
 end if
 
