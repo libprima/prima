@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 PM03:39:03
+! Last Modified: Monday, June 06, 2022 PM11:39:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 
 
 subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, &
-    & sl_in, su_in, xl, xu, x, nf, f, fhist, xhist, info)
+    & xl, xu, x, nf, f, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the major calculations of BOBYQA.
 !
@@ -85,8 +85,6 @@ real(RP), intent(in) :: gamma1
 real(RP), intent(in) :: gamma2
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
-real(RP), intent(in) :: sl_in(:)  ! SL_IN(N)
-real(RP), intent(in) :: su_in(:)  ! SU_IN(N)
 real(RP), intent(in) :: xl(:)  ! XL(N)
 real(RP), intent(in) :: xu(:)  ! XU(N)
 
@@ -149,9 +147,6 @@ if (DEBUGGING) then
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
     call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
-    call assert(size(sl_in) == n .and. size(su_in) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
-    call assert(all(sl_in <= 0 .and. (sl_in >= 0 .or. sl_in <= -rhobeg)), 'SL == 0 or SL <= -RHOBEG', srname)
-    call assert(all(su_in >= 0 .and. (su_in <= 0 .or. su_in >= rhobeg)), 'SU == 0 or SU >= RHOBEG', srname)
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
     call assert(all(rhobeg <= (xu - xl) / TWO), 'RHOBEG <= MINVAL(XU-XL)/2', srname)
     call assert(all(is_finite(x)), 'X is finite', srname)
@@ -168,15 +163,13 @@ end if
 !====================!
 
 info = INFO_DFT
-sl = sl_in
-su = su_in
 
 ! Initialize XBASE, XPT, FVAL, GOPT, HQ, PQ, BMAT and ZMAT together with the corresponding values of
 ! of NF and KOPT, which are the number of calls of CALFUN so far and the index of the interpolation
 ! point at the trust region centre. Then the initial XOPT is set too. The branch to label 720 occurs
 ! if MAXFUN is less than NPT. GOPT will be updated if KOPT is different from KBASE.
-call initialize(calfun, iprint, maxfun, ftarget, rhobeg, sl, su, x, xl, xu, kopt, nf, bmat, f, fhist, fval, &
-    & gopt, hq, pq, xbase, xhist, xpt, zmat, subinfo)
+call initialize(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, kopt, nf, bmat, f, fhist, fval, &
+    & gopt, hq, pq, sl, su, xbase, xhist, xpt, zmat, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = min(max(xl, xbase + xopt), xu)
