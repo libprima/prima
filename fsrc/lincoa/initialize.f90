@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 19, 2022 AM12:57:33
+! Last Modified: Monday, June 06, 2022 PM10:36:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -166,7 +166,7 @@ xbase = x0
 xopt = ZERO
 xsav = xbase
 
-! Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT], !       but they may be altered
+! Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT], but they may be altered
 ! later to make a constraint violation sufficiently large.
 xpt(:, 1) = ZERO
 xpt(:, 2:n + 1) = rhobeg * eye(n)
@@ -190,7 +190,7 @@ do j = 1, n
     end if
 end do
 
-! Set the remaining initial nonZERO elements of XPT and ZMAT when the number of interpolation
+! Set the remaining initial nonzero elements of XPT and ZMAT when the number of interpolation
 ! points exceeds 2*N+1.
 if (npt > 2 * n + 1) then
     do k = n + 1, npt - n - 1
@@ -211,7 +211,7 @@ end if
 b = b - matprod(xbase, amat)
 
 ! Go through the initial points, shifting every infeasible point if necessary so that its constraint
-! violation is at least 0.2*RHOBEG.
+! violation is at least 0.2*RHOBEG. Zaikun 20220606: Is this really necessary?
 !--------------------------------------------------------------------------------------------------!
 jsav = 0_IK  ! Temporary fix for attention: jsav may be used uninitialized in this function from g95
 !--------------------------------------------------------------------------------------------------!
@@ -230,6 +230,7 @@ do nf = 1, npt
         end if
     end if
     if (feas < ZERO) then
+        !if (.false.) then
         step = xpt(:, nf) + (test - bigv) * amat(:, jsav)
         knew = nf
         call update(kbase, step, xpt, idz, knew, bmat, zmat)

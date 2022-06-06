@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 PM10:04:03
+! Last Modified: Tuesday, June 07, 2022 AM12:04:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,8 +19,8 @@ public :: initialize
 contains
 
 
-subroutine initialize(calfun, iprint, maxfun, ftarget, rhobeg, sl, su, x0, xl, xu, &
-    & kopt, nf, bmat, f, fhist, fval, gopt, hq, pq, xbase, xhist, xpt, zmat, info)
+subroutine initialize(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x0, &
+    & kopt, nf, bmat, f, fhist, fval, gopt, hq, pq, sl, su, xbase, xhist, xpt, zmat, info)
 
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, HUGENUM, DEBUGGING
@@ -41,11 +41,11 @@ integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
-real(RP), intent(in) :: sl(:)  ! SL(N)
-real(RP), intent(in) :: su(:)  ! SU(N)
-real(RP), intent(in) :: x0(:)  ! X(N)
 real(RP), intent(in) :: xl(:)  ! XL(N)
 real(RP), intent(in) :: xu(:)  ! XU(N)
+
+! In-outputs
+real(RP), intent(inout) :: x0(:)  ! X(N)
 
 ! Outputs
 integer(IK), intent(out) :: info
@@ -58,6 +58,8 @@ real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(out) :: gopt(:)  ! GOPT(N)
 real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
+real(RP), intent(out) :: sl(:)  ! SL(N)
+real(RP), intent(out) :: su(:)  ! SU(N)
 real(RP), intent(out) :: xbase(:)  ! XBASE(N)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
@@ -65,7 +67,7 @@ real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 
 ! Local variables
-character(len=*), parameter :: solver = 'NEWUOA'
+character(len=*), parameter :: solver = 'BOBYQA'
 character(len=*), parameter :: srname = 'INITIIALIZE'
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
@@ -92,11 +94,11 @@ if (DEBUGGING) then
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(rhobeg > 0, 'RHOBEG > 0', srname)
     call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
-    call assert(size(sl) == n .and. all(sl <= 0), 'SIZE(SL) == N, SL <= 0', srname)
-    call assert(size(su) == n .and. all(su >= 0), 'SIZE(SU) == N, SU >= 0', srname)
+    call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
     call assert(size(x0) == n .and. all(is_finite(x0)), 'SIZE(X0) == N, X0 is finite', srname)
-    call assert(all(x0 >= xl .and. x0 <= xu), 'XL <= X0 <= XU', srname)
+    call assert(all(x0 >= xl .and. (x0 <= xl .or. x0 >= xl + rhobeg)), 'X0 == XL or X0 >= XL + RHOBEG', solver)
+    call assert(all(x0 <= xu .and. (x0 >= xu .or. x0 <= xu - rhobeg)), 'X0 == XU or X0 >= XU - RHOBEG', solver)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
@@ -109,9 +111,6 @@ if (DEBUGGING) then
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
 end if
 
-!--------------------------------------------------------------------------------------------------!
-ij = 1  ! Temporary fix for G95 warning about these variables used uninitialized
-!--------------------------------------------------------------------------------------------------!
 !
 !     The arguments N, NPT, X, XL, XU, RHOBEG, IPRINT and MAXFUN are the
 !       same as the corresponding arguments in SUBROUTINE BOBYQA.
@@ -130,7 +129,41 @@ ij = 1  ! Temporary fix for G95 warning about these variables used uninitialized
 !     NF and KOPT. The vector X is also changed by PRELIM.
 !
 
+! Initialize INFO to the default value. At return, an INFO different from this value will indicate
+! an abnormal return.
 info = INFO_DFT
+
+! The lower and upper bounds on moves from X0 are set now, in order to provide useful and exact
+! information about components of X0 that become within distance RHOBEG from their bounds.
+sl = xl - x0
+su = xu - x0
+! After the preprocessing subroutine PREPROC, SL <= 0 and the nonzero entries of SL should be less
+! than -RHOBEG, while SU >= 0 and the nonzeros of SU should be larger than RHOBEG. However, this may
+! not be true due to rounding. The following lines revise SL and SU to ensure it. X0 is also revised
+! accordingly. In precise arithmetic, the "revisions" do not change SL, SU, or X0.
+where (sl < 0)
+    sl = min(sl, -rhobeg)
+elsewhere
+    x0 = xl
+    sl = ZERO
+    su = xu - xl
+end where
+where (su > 0)
+    su = max(su, rhobeg)
+elsewhere
+    x0 = xu
+    sl = xl - xu
+    su = ZERO
+end where
+!!MATLAB code for revising X, SL, and SU:
+!!sl(sl < 0) = min(sl(sl < 0), -rhobeg);
+!!x0(sl >= 0) = xl(sl >= 0);
+!!sl(sl >= 0) = 0;
+!!su(sl >= 0) = xu(sl >= 0) - xl(sl >= 0);
+!!su(su > 0) = max(su(su > 0), rhobeg);
+!!x0(su <= 0) = xu(su <= 0);
+!!sl(su <= 0) = xl(su <= 0) - xu(su <= 0);
+!!su(su <= 0) = 0;
 
 ! EVALUATED is a boolean array with EVALUATED(I) indicating whether the function value of the I-th
 ! interpolation point has been evaluated. We need it for a portable counting of the number of
@@ -139,34 +172,30 @@ evaluated = .false.
 ! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
 ! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
 fval = HUGENUM
-rhosq = rhobeg * rhobeg
 
-! Set XBASE to the initial vector of variables, and set the initial elements of XPT, BMAT, HQ, PQ
-! and ZMAT to ZERO.
+! Set XBASE to the initial vector of variables.
 xbase = x0
-xpt = ZERO
 hq = ZERO
 pq = ZERO
 bmat = ZERO
 zmat = ZERO
 
-
-! Set XPT(:, 1 : MIN(2*N + 1, NPT)).
-xpt(:, 1) = ZERO
-do k = 1, min(npt, int(2 * n + 1, kind(npt)))
-    if (k >= 2 .and. k <= n + 1) then
-        xpt(k - 1, k) = rhobeg
-        if (su(k - 1) <= 0) then  ! SU(NF - 1) == 0
-            xpt(k - 1, k) = -rhobeg
-        end if
-    else if (k >= n + 2) then
-        xpt(k - n - 1, k) = -rhobeg
-        if (sl(k - n - 1) >= 0) then  ! SL(NF - N - 1) == 0
-            xpt(k - n - 1, k) = min(TWO * rhobeg, su(k - n - 1))
-        end if
-        if (su(k - n - 1) <= 0) then  ! SU(NF - N - 1) == 0
-            xpt(k - n - 1, k) = max(-TWO * rhobeg, sl(k - n - 1))
-        end if
+xpt = ZERO
+! Set XPT(:, 2 : N+1)
+do k = 1, n
+    xpt(k, k + 1) = rhobeg
+    if (su(k) <= 0) then  ! SU(K) == 0
+        xpt(k, k + 1) = -rhobeg
+    end if
+end do
+! Set XPT(:, N+2 : MIN(2*N + 1, NPT)).
+do k = 1, min(npt - n - 1_IK, n)
+    xpt(k, k + n + 1) = -rhobeg
+    if (sl(k) >= 0) then  ! SL(K) == 0
+        xpt(k, k + n + 1) = min(TWO * rhobeg, su(k))
+    end if
+    if (su(k) <= 0) then  ! SU(K) == 0
+        xpt(k, k + n + 1) = max(-TWO * rhobeg, sl(k))
     end if
 end do
 
@@ -213,7 +242,7 @@ ij = sort(ij, 2, 'descend')
 ! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
 ij = ij + 1_IK
 
-! Set XPT(:, 2*N + 2 : NPT). Indeed, XPT(:, K) only has two nonzeros for each K >= 2*N+2.
+! Set XPT(:, 2*N + 2 : NPT). Indeed, XPT(:, K) has only two nonzeros for each K >= 2*N+2.
 xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1)) + xpt(:, ij(:, 2))
 
 ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSG.
@@ -243,6 +272,8 @@ kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 ! be switched, in order that the function value at the first of them contributes to the off-diagonal
 ! second derivative terms of the initial quadratic model.
 if (all(evaluated)) then
+    hq = ZERO
+    pq = ZERO
     fbase = fval(1)
     gopt = (fval(2:n + 1) - fbase) / diag(xpt(:, 2:n + 1))
     ! The interpolation conditions decide the first NDIAG diagonal 2nd derivatives of the initial quadratic model.
@@ -269,6 +300,7 @@ if (all(evaluated)) then
 end if
 
 if (all(evaluated)) then
+    rhosq = rhobeg * rhobeg
     ! The interpolation set decides the first NDIAG diagonal 2nd derivatives of the Lagrange polynomials.
     ndiag = min(n, npt - n - 1_IK)
     xa = diag(xpt(:, 2:ndiag + 1))
@@ -317,6 +349,8 @@ if (DEBUGGING) then
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
     call assert(.not. any(fval < fval(kopt) .and. evaluated), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+    call assert(size(sl) == n .and. all(sl <= 0), 'SIZE(SL) == N, SL <= 0', srname)
+    call assert(size(su) == n .and. all(su >= 0), 'SIZE(SU) == N, SU >= 0', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Monday, June 06, 2022 AM11:08:48
+! Last Modified: Monday, June 06, 2022 PM10:39:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -184,13 +184,13 @@ ij = ij + 1_IK
 ! 2. The idea of this revision is as follows: Let [I, J] = IJ(K, :) with the IJ BEFORE the revision;
 ! XPT(:, K) is the sum of either {XPT(:, I+1) or XPT(:, I+N+1)} + {XPT(:, J+1) or XPT(:, J+N+1)},
 ! each choice being made in favor of the point that has a lower function value, with the hope that
-! such a choice will more likely render an XPT(:, K) with a low function value.
+! such a choice will more likely render an XPT(:, K) with a lower function value.
 ! 3. This revision is OPTIONAL. Due to this revision, the definition of XPT(:, 2*N + 2 : NPT) relies
 ! on FVAL(2 : 2*N + 1), and it is the sole origin of the such dependency. If we remove the revision
 ! IJ, then the evaluations of FVAL(1 : NPT) can be merged, and they are totally PARALLELIZABLE; this
 ! can be beneficial if the function evaluations are expensive, which is likely the case.
-! 4. MATLAB can index a vector using a 2D array of indices (not in Fortran), thus the MATLAB code is
-!!MATLAB: ij(fval(ij + n) < fval(ij)) = ij + n;
+! 4. MATLAB (but not Fortran) can index a vector using a 2D array of indices, thus the MATLAB code is
+!!MATLAB: ij(fval(ij + n) < fval(ij)) = ij(fval(ij +n) < fval(ij)) + n;
 where (fval(ij(:, 1) + n) < fval(ij(:, 1))) ij(:, 1) = ij(:, 1) + n
 where (fval(ij(:, 2) + n) < fval(ij(:, 2))) ij(:, 2) = ij(:, 2) + n
 
@@ -229,7 +229,7 @@ kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 if (DEBUGGING) then
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
-    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
+    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '2 <= IJ <= 2*N + 1', srname)
     call assert(all(modulo(ij(:, 1) - 2_IK, n) > modulo(ij(:, 2) - 2_IK, n)), &
         & 'MODULO(IJ(:, 1) - 2, N) > MODULO(IJ(:, 2) - 2, N)', srname)
     call assert(nf <= npt, 'NF <= NPT', srname)
@@ -298,7 +298,7 @@ if (DEBUGGING) then
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
-    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
+    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '2 <= IJ <= 2*N + 1', srname)
     call assert(all(modulo(ij(:, 1) - 2_IK, n) > modulo(ij(:, 2) - 2_IK, n)), &
         & 'MODULO(IJ(:, 1) - 2, N) > MODULO(IJ(:, 2) - 2, N)', srname)
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
@@ -335,8 +335,8 @@ do k = 1, npt - 2_IK * n - 1_IK
     ! FVAL(IJ(K, 1)) = F(XBASE + XI*e_I),
     ! FVAL(IJ(K, 2)) = F(XBASE + XJ*e_J).
     ! Thus the HQ(I,J) defined below approximates frac{partial^2}{partial X_I partial X_J} F(XBASE).
-    i = modulo(ij(k, 1) - 2_IK, n) + 1_IK  ! Is the modulo needed?
-    j = modulo(ij(k, 2) - 2_IK, n) + 1_IK  ! Is the modulo needed?
+    i = modulo(ij(k, 1) - 2_IK, n) + 1_IK
+    j = modulo(ij(k, 2) - 2_IK, n) + 1_IK
     xi = xpt(i, k + 2 * n + 1)
     xj = xpt(j, k + 2 * n + 1)
     hq(i, j) = (fbase - fval(ij(k, 1)) - fval(ij(k, 2)) + fval(k + 2 * n + 1)) / (xi * xj)
@@ -406,7 +406,7 @@ if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
-    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
+    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '2 <= IJ <= 2*N + 1', srname)
     call assert(all(modulo(ij(:, 1) - 2_IK, n) > modulo(ij(:, 2) - 2_IK, n)), &
         & 'MODULO(IJ(:, 1) - 2, N) > MODULO(IJ(:, 2) - 2, N)', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)

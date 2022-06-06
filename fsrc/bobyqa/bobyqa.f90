@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, June 03, 2022 PM06:32:12
+! Last Modified: Monday, June 06, 2022 PM11:41:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -165,8 +165,6 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
-real(RP) :: sl(size(x))
-real(RP) :: su(size(x))
 real(RP) :: xl_loc(size(x))
 real(RP) :: xu_loc(size(x))
 real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
@@ -324,42 +322,10 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 ! if they are requested; replace MAXFUN with 0 for the history that is not requested.
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc)
 
-! The lower and upper bounds on moves from the updated X are set now, in the ISL and ISU partitions
-! of W, in order to provide useful and exact information about components of X that become within
-! distance RHOBEG from their bounds.
-sl = xl_loc - x
-su = xu_loc - x
-! After PREPROC, the nonzero entries of SL should be less than -RHOBEG_LOC, while those of SU should
-! be larger than RHOBEG_LOC. However, this may not be true due to rounding. The following lines
-! revise SL and SU to ensure it.
-where (sl < 0)
-    sl = min(sl, -rhobeg_loc)
-elsewhere
-    x = xl_loc
-    sl = ZERO
-    su = xu_loc - xl_loc
-end where
-where (su > 0)
-    su = max(su, rhobeg_loc)
-elsewhere
-    x = xu_loc
-    sl = xl_loc - xu_loc
-    su = ZERO
-end where
-!!MATLAB code for revising X, SL, and SU:
-!!sl(sl < 0) = min(sl(sl < 0), -rhobeg_loc);
-!!x(sl >= 0) = xl_loc(sl >= 0);
-!!sl(sl >= 0) = 0;
-!!su(sl >= 0) = xu_loc(sl >= 0) - xl_loc(sl >= 0);
-!!su(su > 0) = max(su(su > 0), rhobeg_loc);
-!!x(su <= 0) = xu_loc(su <= 0);
-!!sl(su <= 0) = xl_loc(su <= 0) - xu_loc(su <= 0);
-!!su(su <= 0) = 0;
-
 
 !-------------------- Call BOBYQB, which performs the real calculations. --------------------------!
 call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
-    & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, sl, su, xl_loc, xu_loc, x, nf_loc, f, &
+    & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, f, &
     & fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
