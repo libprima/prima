@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 PM10:01:20
+! Last Modified: Monday, June 06, 2022 PM10:04:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -223,9 +223,10 @@ if (info == INFO_DFT) then
         x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
         x(trueloc(xpt(:, k) >= su)) = xu(trueloc(xpt(:, k) >= su))
         call evaluate(calfun, x, f)
-        call savehist(k, x, xhist, f, fhist)
         evaluated(k) = .true.
         fval(k) = f
+        call savehist(k, x, xhist, f, fhist)
+        call fmsg(solver, iprint, k, f, x)
         subinfo = checkexit(maxfun, k, f, ftarget, x)
         if (subinfo /= INFO_DFT) then
             info = subinfo
