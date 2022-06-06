@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 PM01:26:36
+! Last Modified: Monday, June 06, 2022 PM05:17:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,9 +29,9 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 ! More and Sorensen, "Computing a trust region step", SIAM J. Sci. Stat. Comput. 4: 553-572, 1983.
 !
 ! The major calculations of the More-Sorensen method lie in the Cholesky factorization or LDL
-! factorization of H + PAR*I with the iteratively selected values of PAR (in More-Sorensen (1983), 
-! the parameter is named LAMBDA; in Powell's UOBYQA paper, it is THETA). Powell's method in this 
-! code simplifies the calculations by first tridiagonalizing H with an orthogonal transformation. 
+! factorization of H + PAR*I with the iteratively selected values of PAR (in More-Sorensen (1983),
+! the parameter is named LAMBDA; in Powell's UOBYQA paper, it is THETA). Powell's method in this
+! code simplifies the calculations by first tridiagonalizing H with an orthogonal transformation.
 ! If a matrix T is tridiagonal, its LDL factorization, if exits, can be obtained easily:
 !
 !       T = L*diag(PIV)*L^T,
@@ -82,9 +82,9 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, &
 &        slope, partmp, &
-&        tnz, tempa, tempb, wsq, wwsq, zsq
+&        tnz, tempa, tempb, wsq, wwsq, zsq, scaling
 integer(IK) :: i, iter, k, maxiter
-logical :: posdef, negcrv
+logical :: posdef, negcrv, scaled
 logical :: d_initialized  ! TO BE REMOVED.
 
 !     N is the number of variables of a quadratic objective function, Q say.
@@ -119,14 +119,26 @@ end if
 d = ZERO
 crvmin = ZERO
 
-gsq = sum(g**2)
+! Scale the problem if GNORM is large. Otherwise, floating point exceptions may occur. In the sequel,
+! GG and HH are used instead of G and H, which are INTENT(IN) and hence cannot be changed.
+scaling = maxval(abs(g))
+if (scaling > 1.0E8) then  ! 1.0E6 is empirical.
+    gg = g / scaling
+    hh = h / scaling
+else
+    gg = g
+    hh = h
+end if
+
+gsq = sum(gg**2)
 gnorm = sqrt(gsq)
 
 if (is_nan(gsq)) then
     return
-elseif (.not. any(abs(h) > 0)) then
+end if
+if (.not. any(abs(hh) > 0)) then
     if (gnorm > 0) then
-        d = -(delta / gnorm) * g
+        d = -(delta / gnorm) * gg
     end if
     return
 end if
@@ -135,29 +147,26 @@ end if
 ! Powell's original code requires that N >= 2.  When N = 1, the code does not work (sometimes even
 ! encounters memory errors). This is indeed why the original UOBYQA code constantly terminates with
 ! "a trust region step has failed to reduce the quadratic model" when applied to univariate problems.
+! This special case should be handled after the case where GSQ is NaN.
 if (n == 1) then
     d = sign(delta, -g)  !!MATLAB: d = -delta * sign(g)
     if (h(1, 1) > 0) then
         dnewton = -g / h(1, 1)
         if (abs(dnewton(1)) <= delta) then
             d = dnewton
-            crvmin = h(1, 1)
+            crvmin = h(1, 1)  ! If we use HH(1, 1) here, then we need to scale it back.
         end if
     end if
     return
 end if
 
-delsq = delta * delta
-
 ! Apply Householder transformations to get a tridiagonal matrix similar to H (i.e., the Hessenberg
 ! form of H), and put the elements of the Householder vectors in the lower triangular part of HH.
 ! Further, TD and TN will contain the diagonal and other nonzero elements of the tridiagonal matrix.
 ! In the comments hereafter, H indeed means this tridiagonal matrix.
-hh = h
-call hessenberg(hh, td, tn)  !!MATLAB: [P, h] = hess(h); td = diag(h); tn = diag(h, 1)
+call hessenberg(hh, td, tn)  !!MATLAB: [P, hh] = hess(hh); td = diag(hh); tn = diag(hh, 1)
 
 ! Form GG by applying the similarity transformation to G.
-gg = g
 do k = 1, n - 1_IK
     gg(k + 1:n) = gg(k + 1:n) - inprod(gg(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
@@ -175,9 +184,12 @@ if (.not. is_finite(sum(abs(gg)) + sum(abs(hh)) + sum(abs(td)) + sum(abs(tn)))) 
     return
 end if
 
+
+
 ! Begin the trust region calculation with a tridiagonal matrix by calculating the L_1-norm of the
 ! Hessenberg form of H, which is an upper bound for the spectral norm of H.
 hnorm = maxval(abs([ZERO, tn]) + abs(td) + abs([tn, ZERO]))
+delsq = delta * delta
 
 ! Set the initial values of PAR and its bounds.
 ! N.B.: PAR is the parameter LAMBDA in More-Sorensen (1983) and Powell (1997), as well as the THETA
@@ -402,6 +414,7 @@ do while (.true.)
 
         ! Make the usual test for acceptability of a full trust region step.
         dnorm = sqrt(dsq)
+
         phi = ONE / dnorm - ONE / delta
         if (tol * (ONE + par * dsq / wsq) - dsq * phi * phi >= 0) then
             d = (delta / dnorm) * d
@@ -503,6 +516,10 @@ do k = n - 1_IK, 1, -1
     d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
 !!MATLAB: d = P*d;
+
+if (scaled) then
+    crvmin = crvmin * scaling  ! CRVMIN is not invariant under the scaling.
+end if
 
 end subroutine trstep
 
