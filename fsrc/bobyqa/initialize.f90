@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 AM11:29:29
+! Last Modified: Monday, June 06, 2022 AM11:43:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -251,6 +251,7 @@ if (all(evaluated)) then
     do k = 1, ndiag
         hq(k, k) = TWO * ((fval(k + 1) - fbase) / xa(k) - (fval(n + k + 1) - fbase) / xb(k)) / (xa(k) - xb(k))
     end do
+    ! Set the off-diagonal second derivatives of the initial quadratic model.
     do k = 1, npt - 2_IK * n - 1_IK
         i = ipt(k + 2 * n + 1) - 1
         j = jpt(k + 2 * n + 1) - 1
@@ -279,12 +280,26 @@ if (all(evaluated)) then
                 bmat(k - n - 1, 1) = -(stepa + stepb) / (stepa * stepb)
                 bmat(k - n - 1, k) = -HALF / xpt(k - n - 1, k - n)
                 bmat(k - n - 1, k - n) = -bmat(k - n - 1, 1) - bmat(k - n - 1, k)
+            end if
+        else
+        end if
+    end do
+end if
+if (all(evaluated)) then
+    do k = 1, npt
+        if (k <= 2 * n + 1) then
+            if (k >= 2 .and. k <= n + 1) then
+                if (npt < k + n) then
+                end if
+            else if (k >= n + 2) then
+                stepa = xpt(k - n - 1, k - n)
+                stepb = xpt(k - n - 1, k)
                 zmat(1, k - n - 1) = sqrt(TWO) / (stepa * stepb)
                 zmat(k, k - n - 1) = sqrt(HALF) / rhosq
                 zmat(k - n, k - n - 1) = -zmat(1, k - n - 1) - zmat(k, k - n - 1)
             end if
-! Set the off-diagonal second derivatives of the Lagrange functions and the initial quadratic model.
         else
+            ! Set the off-diagonal second derivatives of the Lagrange functions.
             zmat(1, k - n - 1) = recip
             zmat(k, k - n - 1) = recip
             zmat(ipt(k), k - n - 1) = -recip
