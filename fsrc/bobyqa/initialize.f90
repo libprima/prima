@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 AM11:57:55
+! Last Modified: Monday, June 06, 2022 PM05:37:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_INF_F, FTARGET_ACHIEVED
+use, non_intrinsic :: info_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : matprod, trueloc, issymmetric, diag!, norm
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
