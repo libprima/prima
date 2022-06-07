@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, June 03, 2022 PM05:29:44
+! Last Modified: Tuesday, June 07, 2022 AM07:44:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,7 +100,7 @@ real(RP), intent(out) :: xhist(:, :)    ! XHIST(N, MAXXHIST)
 character(len=*), parameter :: solver = 'NEWUOA'
 character(len=*), parameter :: srname = 'NEWUOB'
 integer(IK) :: idz
-integer(IK) :: ij(max(0_IK, int(npt - 2 * size(x) - 1, IK)), 2_IK)
+integer(IK) :: ij(max(0_IK, int(npt - 2 * size(x) - 1, IK)), 2)
 integer(IK) :: itest
 integer(IK) :: knew_geo
 integer(IK) :: knew_tr
@@ -194,15 +194,15 @@ if (subinfo /= INFO_DFT) then
 end if
 
 ! Initialize GQ, HQ, and PQ.
-call initq(ij, fval, xpt, gq, hq, pq, subinfo)
+call initq(ij, fval, xpt, gq, hq, pq)
 
-! Initialize BMAT and ZMAT, and IDZ.
-call inith(ij, xpt, idz, bmat, zmat, subinfo)
+! Initialize BMAT, ZMAT, and IDZ.
+call inith(ij, xpt, idz, bmat, zmat)
 
-! After initializing GQ, HQ, PQ, BMAT, ZMAT, one can also choose to return if subinfo = NAN_MODEL
-! (NaN occurs in the model). We do not do it here. If such a model is harmful, then it will probably
-! lead to other returns (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the
-! code will continue to run and possibly recovers by geometry steps.
+! After initializing GQ, HQ, PQ, BMAT, ZMAT, one can also choose to return if these arrays contain
+! NaN. We do not do it here. If such a model is harmful, then it will probably lead to other returns
+! (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the code will continue to run
+! and possibly recovers by geometry steps.
 
 ! Set some more initial values and parameters.
 rho = rhobeg

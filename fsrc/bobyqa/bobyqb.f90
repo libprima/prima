@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 PM11:39:55
+! Last Modified: Tuesday, June 07, 2022 AM08:18:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -64,7 +64,7 @@ use, non_intrinsic :: powalg_mod, only : quadinc, calvlag, calbeta, hess_mul
 !!! TODO (Zaikun 20220525): Use CALDEN instead of CALVLAG and CALBETA wherever possible!!!
 
 ! Solver-specific modules
-use, non_intrinsic :: initialize_mod, only : initialize
+use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox
@@ -129,6 +129,7 @@ real(RP) :: delbar, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
+integer(IK) :: ij(max(0_IK, int(npt - 2 * size(x) - 1, IK)), 2)
 logical :: shortd, improve_geo, rescued, geo_step
 
 
@@ -168,44 +169,31 @@ info = INFO_DFT
 ! of NF and KOPT, which are the number of calls of CALFUN so far and the index of the interpolation
 ! point at the trust region centre. Then the initial XOPT is set too. The branch to label 720 occurs
 ! if MAXFUN is less than NPT. GOPT will be updated if KOPT is different from KBASE.
-call initialize(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, kopt, nf, bmat, f, fhist, fval, &
-    & gopt, hq, pq, sl, su, xbase, xhist, xpt, zmat, subinfo)
+call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fhist, fval, &
+    & sl, su, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = min(max(xl, xbase + xopt), xu)
 x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
 x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
 f = fopt
-
 if (subinfo /= INFO_DFT) then
     call rangehist(nf, xhist, fhist)
     return
 end if
 
-!if (is_nan(f) .or. is_posinf(f)) then
-!    info = NAN_INF_F
-!    xopt = xpt(:, kopt)
-!    fopt = fval(kopt)
-!    x = min(max(xl, xbase + xopt), xu)
-!    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
-!    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
-!    f = fopt
-!    call rangehist(nf, xhist, fhist)
-!    return
-!end if
-!if (f <= ftarget) then
-!    info = FTARGET_ACHIEVED
-!    xopt = xpt(:, kopt)
-!    fopt = fval(kopt)
-!    x = min(max(xl, xbase + xopt), xu)
-!    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
-!    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
-!    f = fopt
-!    call rangehist(nf, xhist, fhist)
-!    return
-!end if
+! Initialize GOPT, HQ, and PQ.
+call initq(ij, fval, xpt, gopt, hq, pq)
 
-! Complete the settings that are required for the iterative procedure.
+! Initialize BMAT and ZMAT.
+call inith(ij, xpt, bmat, zmat)
+
+! After initializing GOPT, HQ, PQ, BMAT, ZMAT, one can also choose to return if these arrays contain
+! NaN. We do not do it here. If such a model is harmful, then it will probably lead to other returns
+! (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the code will continue to run
+! and possibly recovers by geometry steps.
+
+! Set some more initial values and parameters.
 rho = rhobeg
 delta = rho
 nresc = nf

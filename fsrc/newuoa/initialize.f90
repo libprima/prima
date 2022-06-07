@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Monday, June 06, 2022 PM10:39:15
+! Last Modified: Tuesday, June 07, 2022 AM08:26:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -120,13 +120,12 @@ end if
 ! Calculation starts !
 !====================!
 
-info = INFO_DFT  ! Default info.
+! Initialize INFO to the default value. At return, an INFO different from this value will indicate
+! an abnormal return.
+info = INFO_DFT
 
 ! Initialize XBASE to X0.
 xbase = x0
-
-! Begin the initialization procedure. The coordinates of the displacement of the next initial
-! interpolation point from XBASE are set in XPT(:, :).
 
 ! EVALUATED is a boolean array with EVALUATED(I) indicating whether the function value of the I-th
 ! interpolation point has been evaluated. We need it for a portable counting of the number of
@@ -137,9 +136,7 @@ evaluated = .false.
 ! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
 fval = HUGENUM
 
-! Set XPT, FVAL, KOPT, and XOPT.
-
-! Initialize XPT.
+! Initialize XPT(:, 1: MIN(2*N + 1, NPT)).
 xpt(:, 1) = ZERO
 xpt(:, 2:n + 1) = rhobeg * eye(n)
 ! After the following line, XPT(:, 2*N+2 : NPT) = ZERO if it is nonempty. It will be revised later
@@ -147,7 +144,7 @@ xpt(:, 2:n + 1) = rhobeg * eye(n)
 xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)
 
 ! Set FVAL(1 : min(2*N + 1, NPT)) by evaluating F. Totally parallelizable except for FMSG.
-do k = 1, min(npt, int(2 * n + 1, kind(npt)))
+do k = 1, min(npt, 2_IK * n + 1_IK)
     x = xpt(:, k) + xbase
     call evaluate(calfun, x, f)
     evaluated(k) = .true.
@@ -194,12 +191,13 @@ ij = ij + 1_IK
 where (fval(ij(:, 1) + n) < fval(ij(:, 1))) ij(:, 1) = ij(:, 1) + n
 where (fval(ij(:, 2) + n) < fval(ij(:, 2))) ij(:, 2) = ij(:, 2) + n
 
-! Revise XPT(:, 2*N + 2 : NPT). It depends on IJ and hence on FVAL(2 : 2*N + 1).
+! Set XPT(:, 2*N + 2 : NPT). It depends on IJ and hence on FVAL(2 : 2*N + 1). Indeed, XPT(:, K) has
+! only two nonzeros for each K >= 2*N+2.
 xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1)) + xpt(:, ij(:, 2))
 
 ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSG.
 if (info == INFO_DFT) then
-    do k = int(2 * n + 2, kind(k)), npt
+    do k = 2_IK * n + 2_IK, npt
         x = xpt(:, k) + xbase
         call evaluate(calfun, x, f)
         call fmsg(solver, iprint, k, f, x)
@@ -270,7 +268,7 @@ real(RP), intent(in) :: fval(:)     ! FVAL(NPT)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 
 ! Outputs
-integer(IK), intent(out) :: info
+integer(IK), intent(out), optional :: info
 real(RP), intent(out) :: gq(:)  ! GQ(N)
 real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
@@ -281,6 +279,7 @@ integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: k
 integer(IK) :: n
+integer(IK) :: ndiag
 integer(IK) :: npt
 real(RP) :: fbase
 real(RP) :: rhobeg
@@ -311,21 +310,21 @@ end if
 ! Calculation starts !
 !====================!
 
-gq = ZERO
-hq = ZERO
-pq = ZERO  ! We will not update PQ. It is ZERO at return.
-
 rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
-fbase = fval(1)
+fbase = fval(1)  ! FBASE is the function value at XBASE.
 
-! Set GQ by forward difference.
+! Set GQ by the forward difference.
 gq(1:n) = (fval(2:n + 1) - fbase) / rhobeg
-! If possible, revise GQ to central difference.
-k = min(int(npt - n - 1, kind(n)), n)
-gq(1:k) = HALF * (gq(1:k) + (fbase - fval(n + 2:n + 1 + k)) / rhobeg)
 
-! Set the diagonal of HQ by 2nd-order central finite difference.
-do k = 1, min(int(npt - n - 1, kind(n)), n)
+! The interpolation conditions decide GQ(1:NDIAG) and the first NDIAG diagonal 2nd derivatives of
+! the initial quadratic model by a quadratic interpolation on three points, which is equivalent to
+! the central finite difference.
+ndiag = min(npt - n - 1_IK, n)
+gq(1:ndiag) = HALF * (gq(1:k) + (fbase - fval(n + 2:n + 1 + k)) / rhobeg)
+
+! Set the diagonal of HQ by the 2nd-order central finite difference.
+hq = ZERO
+do k = 1, ndiag
     hq(k, k) = ((fval(k + 1) - fbase) / rhobeg - (fbase - fval(k + n + 1)) / rhobeg) / rhobeg
 end do
 ! When NPT > 2*N + 1, set the off-diagonal entries of HQ.
@@ -343,10 +342,14 @@ do k = 1, npt - 2_IK * n - 1_IK
     hq(j, i) = hq(i, j)
 end do
 
-if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq))) then
-    info = NAN_MODEL
-else
-    info = INFO_DFT
+pq = ZERO
+
+if (present(info)) then
+    if (is_nan(sum(abs(gq)) + sum(abs(hq)))) then
+        info = NAN_MODEL
+    else
+        info = INFO_DFT
+    end if
 end if
 
 !====================!
@@ -385,7 +388,7 @@ real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 
 ! Outputs
 integer(IK), intent(out) :: idz
-integer(IK), intent(out) :: info
+integer(IK), intent(out), optional :: info
 real(RP), intent(out) :: bmat(:, :) ! BMAT(N, NPT + N)
 real(RP), intent(out) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
 
@@ -460,10 +463,12 @@ else
     end do
 end if
 
-if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
-    info = NAN_MODEL
-else
-    info = INFO_DFT
+if (present(info)) then
+    if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+        info = NAN_MODEL
+    else
+        info = INFO_DFT
+    end if
 end if
 
 !====================!
