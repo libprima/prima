@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 PM05:17:51
+! Last Modified: Tuesday, June 07, 2022 PM01:40:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,9 +125,11 @@ scaling = maxval(abs(g))
 if (scaling > 1.0E8) then  ! 1.0E6 is empirical.
     gg = g / scaling
     hh = h / scaling
+    scaled = .true.
 else
     gg = g
     hh = h
+    scaled = .false.
 end if
 
 gsq = sum(gg**2)

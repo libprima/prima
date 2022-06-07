@@ -320,7 +320,7 @@ gq(1:n) = (fval(2:n + 1) - fbase) / rhobeg
 ! the initial quadratic model by a quadratic interpolation on three points, which is equivalent to
 ! the central finite difference.
 ndiag = min(npt - n - 1_IK, n)
-gq(1:ndiag) = HALF * (gq(1:k) + (fbase - fval(n + 2:n + 1 + k)) / rhobeg)
+gq(1:ndiag) = HALF * (gq(1:ndiag) + (fbase - fval(n + 2:n + 1 + ndiag)) / rhobeg)
 
 ! Set the diagonal of HQ by the 2nd-order central finite difference.
 hq = ZERO
