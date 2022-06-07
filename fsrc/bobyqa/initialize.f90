@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 07, 2022 AM09:03:57
+! Last Modified: Tuesday, June 07, 2022 PM06:27:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -367,13 +367,20 @@ gopt = (fval(2:n + 1) - fbase) / diag(xpt(:, 2:n + 1))
 ndiag = min(n, npt - n - 1_IK)
 xa = diag(xpt(:, 2:ndiag + 1))
 xb = diag(xpt(:, n + 2:n + ndiag + 1))
-gopt(1:ndiag) = (((fval(2:ndiag + 1) - fbase) / xa) * xb - ((fval(n + 2:n + ndiag + 1) - fbase) / xb) * xa) / (xb - xa)
 
-! Set the diagonal of HQ.
+! Revise GOPT(1:NDIAG) to the value provided by the three-point interpolation.
+gopt(1:ndiag) = (gopt(1:ndiag) * xb - ((fval(n + 2:n + ndiag + 1) - fbase) / xb) * xa) / (xb - xa)
+
+! Set the diagonal of HQ by the three-point interpolation. If we do this before the revision of
+! GQ(1:NDIAG), we can avoid the calculation of FVAL(K + 1) - FBASE) / RHOBEG. But we prefer to
+! decouple the initialization of GQ and HQ. We are not concerned by this amount of flops.
 hq = ZERO
 do k = 1, ndiag
     hq(k, k) = TWO * ((fval(k + 1) - fbase) / xa(k) - (fval(n + k + 1) - fbase) / xb(k)) / (xa(k) - xb(k))
 end do
+!!MATLAB:
+!!hdiag = 2*((fval(2 : ndiag+1) - fbase) / xa - (fval(n+2 : n+ndiag+1) - fbase) / xb) / (xa-xb)
+!!hq(1:ndiag, 1:ndiag) = diag(hdiag)
 
 ! When NPT > 2*N + 1, set the off-diagonal entries of HQ.
 do k = 1, npt - 2_IK * n - 1_IK
@@ -426,7 +433,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_MODEL
-use, non_intrinsic :: linalg_mod, only : issymmetric, eye, diag
+use, non_intrinsic :: linalg_mod, only : issymmetric, diag
 
 implicit none
 
@@ -488,24 +495,24 @@ do k = 1, ndiag
     bmat(k, k + 1) = -bmat(k, 1) - bmat(k, k + n + 1)
 end do
 ! Set BMAT(NDIAG+1 : N, :)
-bmat(npt - n:n, 1) = -ONE / diag(xpt(npt - n:n, npt - n + 1:n + 1))
-do k = npt - n, n
-    bmat(k, k + 1) = ONE / xpt(k, k + 1)
+do k = ndiag + 1_IK, n
+    bmat(k, 1) = -ONE / xpt(k, k + 1)
+    bmat(k, k + 1) = -bmat(k, 1)
     bmat(k, npt + k) = -HALF * rhosq
 end do
 
 zmat = ZERO
 ! Set ZMAT(:, 1 : NDIAG)
 zmat(1, 1:ndiag) = sqrt(TWO) / (xa * xb)
-zmat(n + 2:ndiag + n + 1, 1:ndiag) = (sqrt(HALF) / rhosq) * eye(ndiag)
 do k = 1, ndiag
-    zmat(k + 1, k) = -zmat(1, k) - zmat(k + n + 1, k)
+    zmat(k + 1, k) = -zmat(1, k) - sqrt(HALF) / rhosq
+    zmat(k + n + 1, k) = sqrt(HALF) / rhosq
 end do
 ! Set ZMAT(:, NDIAG+1 : NPT-N-1)
-zmat(1, n + 1:npt - n - 1) = ONE / rhosq
-zmat(2 * n + 2:npt, n + 1:npt - n - 1) = (ONE / rhosq) * eye(npt - 2_IK * n - 1_IK)
-do k = 1, npt - 2_IK * n - 1_IK
-    zmat(ij(k, :), k + n) = -ONE / rhosq
+do k = ndiag + 1_IK, npt - n - 1_IK
+    zmat(1, k) = ONE / rhosq
+    zmat(k + n + 1, k) = ONE / rhosq
+    zmat(ij(k - n, :), k) = -ONE / rhosq
 end do
 
 if (present(info)) then
