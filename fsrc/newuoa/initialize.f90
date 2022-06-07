@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Tuesday, June 07, 2022 AM08:26:36
+! Last Modified: Tuesday, June 07, 2022 PM06:25:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -320,13 +320,21 @@ gq(1:n) = (fval(2:n + 1) - fbase) / rhobeg
 ! the initial quadratic model by a quadratic interpolation on three points, which is equivalent to
 ! the central finite difference.
 ndiag = min(npt - n - 1_IK, n)
+
+! Revise GQ(1:NDIAG) to the value provided by the central finite difference.
 gq(1:ndiag) = HALF * (gq(1:ndiag) + (fbase - fval(n + 2:n + 1 + ndiag)) / rhobeg)
 
-! Set the diagonal of HQ by the 2nd-order central finite difference.
+! Set the diagonal of HQ by the 2nd-order central finite difference. If we do this before the
+! revision of GQ(1:NDIAG), we can avoid the calculation of FVAL(K + 1) - FBASE) / RHOBEG. But we
+! prefer to decouple the initialization of GQ and HQ. We are not concerned by this amount of flops.
 hq = ZERO
 do k = 1, ndiag
     hq(k, k) = ((fval(k + 1) - fbase) / rhobeg - (fbase - fval(k + n + 1)) / rhobeg) / rhobeg
 end do
+!!MATLAB:
+!!hdiag = ((fval(2 : ndiag+1) - fbase) / rhobeg - (fbase - fval(n+2 : n+ndiag+1)) / rhobeg) / rhobeg
+!!hq(1:ndiag, 1:ndiag) = diag(hdiag)
+
 ! When NPT > 2*N + 1, set the off-diagonal entries of HQ.
 do k = 1, npt - 2_IK * n - 1_IK
     ! With the I, J, XI, and XJ defined below, we have
