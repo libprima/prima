@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 08, 2022 PM03:08:51
+! Last Modified: Wednesday, June 08, 2022 PM03:53:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,7 +30,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : INFO_DFT
-use, non_intrinsic :: linalg_mod, only : eye
+use, non_intrinsic :: linalg_mod, only : eye, trueloc, linspace
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, MAXFUN_REACHED
@@ -68,7 +68,7 @@ integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
 logical :: evaluated(size(xpt, 2))
-real(RP) :: f, fval(size(xpt, 2))
+real(RP) :: f, fval(size(xpt, 2)), ffval(size(xpt, 1))
 real(RP) :: x(size(x0))
 
 integer(IK) :: iw, ih, ip, iq, jj, kk
@@ -108,9 +108,6 @@ fval = HUGENUM
 info = INFO_DFT
 xpt = ZERO
 pl = ZERO
-ih = n
-! In the following loop, FPLUS is set to F(X + RHO*e_I) when NF = 2*I, and the value of FPLUS is
-! used subsequently when NF = 2*I + 1.
 do k = 1, 2_IK * n + 1_IK
     jj = k / 2_IK
     kk = 2_IK * jj
@@ -119,10 +116,10 @@ do k = 1, 2_IK * n + 1_IK
     if (k > 1) then
         if (modulo(k, 2_IK) == 1_IK) then
             if (fval(kk) < fval(1)) then
-                xw(jj) = rho
+                !xw(jj) = rho
                 xpt(jj, k) = TWO * rho
             else
-                xw(jj) = -rho
+                !xw(jj) = -rho
                 xpt(jj, k) = -rho
             end if
         else
@@ -145,6 +142,10 @@ do k = 1, 2_IK * n + 1_IK
     end if
 end do
 
+ffval = fval(linspace(2_IK, 2_IK * n, n))
+xw = -rho
+xw(trueloc(ffval < fval(1))) = rho
+
 if (info == INFO_DFT) then
     ip = 0
     iq = 2
@@ -156,9 +157,8 @@ if (info == INFO_DFT) then
             ip = 1
             iq = iq + 1
         end if
-        xpt(ip, k) = xw(ip)
-        ! N.B.: XPT(2, NF+1) is accessed by XPT(IQ, NF+1) even if N = 1.
-        xpt(iq, k) = xw(iq)
+        ! N.B.: XPT(2, K+1) is accessed by XPT(IQ, K+1) even if N = 1.
+        xpt([ip, iq], k) = xw([ip, iq])
         x = xpt(:, k) + xbase
         call evaluate(calfun, x, f)
         evaluated(k) = .true.
@@ -179,33 +179,29 @@ end if
 fbase = fval(1)
 
 if (all(evaluated)) then
-    do k = 1, 2_IK * n + 1_IK
-        if (modulo(k, 2_IK) == 0_IK) then
-            cycle
-        end if
-        jj = k / 2_IK
+    ih = n
+    do jj = 1, n
+        k = 2_IK * jj + 1_IK
         kk = 2_IK * jj
         ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
-        if (jj >= 1 .and. k >= 3) then  ! NF >= 3 is implied by JJ >= 1. We prefer to impose it explicitly.
-            ih = ih + jj
-            if (xpt(jj, k) > 0) then  ! XPT(JJ, NF) = 2*RHO
-                pq(jj) = (4.0_RP * fval(kk) - 3.0_RP * fbase - fval(k)) / (TWO * rho)
-                d(jj) = (fbase + fval(k) - TWO * fval(kk)) / rhosq
-                pl(1, jj) = -1.5_RP / rho
-                pl(1, ih) = ONE / rhosq
-                pl(k - 1, jj) = TWO / rho  ! Should be moved out of the loop
-                pl(k - 1, ih) = -TWO / rhosq  ! Should be moved out of the loop
-            else  ! XPT(JJ, NF) = -RHO
-                d(jj) = (fval(kk) + fval(k) - TWO * fbase) / rhosq
-                pq(jj) = (fval(kk) - fval(k)) / (TWO * rho)
-                pl(1, ih) = -TWO / rhosq
-                pl(k - 1, jj) = HALF / rho  ! Should be moved out of the loop
-                pl(k - 1, ih) = ONE / rhosq  ! Should be moved out of the loop
-            end if
-            pq(ih) = d(jj)
-            pl(k, jj) = -HALF / rho
-            pl(k, ih) = ONE / rhosq
+        ih = n + jj * (jj + 1_IK) / 2_IK
+        if (xpt(jj, k) > 0) then  ! XPT(JJ, K) = 2*RHO
+            pq(jj) = (4.0_RP * fval(kk) - 3.0_RP * fbase - fval(k)) / (TWO * rho)
+            d(jj) = (fbase + fval(k) - TWO * fval(kk)) / rhosq
+            pl(1, jj) = -1.5_RP / rho
+            pl(1, ih) = ONE / rhosq
+            pl(k - 1, jj) = TWO / rho  ! Should be moved out of the loop
+            pl(k - 1, ih) = -TWO / rhosq  ! Should be moved out of the loop
+        else  ! XPT(JJ, K) = -RHO
+            d(jj) = (fval(kk) + fval(k) - TWO * fbase) / rhosq
+            pq(jj) = (fval(kk) - fval(k)) / (TWO * rho)
+            pl(1, ih) = -TWO / rhosq
+            pl(k - 1, jj) = HALF / rho  ! Should be moved out of the loop
+            pl(k - 1, ih) = ONE / rhosq  ! Should be moved out of the loop
         end if
+        pq(ih) = d(jj)
+        pl(k, jj) = -HALF / rho
+        pl(k, ih) = ONE / rhosq
     end do
 
 ! Form the off-diagonal second derivatives of the initial quadratic model.
