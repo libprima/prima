@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 08, 2022 PM03:53:47
+! Last Modified: Wednesday, June 08, 2022 PM04:14:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -181,8 +181,8 @@ fbase = fval(1)
 if (all(evaluated)) then
     ih = n
     do jj = 1, n
-        k = 2_IK * jj + 1_IK
-        kk = 2_IK * jj
+        kk = 2_IK * jj; k = 2_IK * jj + 1_IK
+        !kk = jj + 1_IK; k = jj + n + 1_IK
         ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
         ih = n + jj * (jj + 1_IK) / 2_IK
         if (xpt(jj, k) > 0) then  ! XPT(JJ, K) = 2*RHO
@@ -190,14 +190,14 @@ if (all(evaluated)) then
             d(jj) = (fbase + fval(k) - TWO * fval(kk)) / rhosq
             pl(1, jj) = -1.5_RP / rho
             pl(1, ih) = ONE / rhosq
-            pl(k - 1, jj) = TWO / rho  ! Should be moved out of the loop
-            pl(k - 1, ih) = -TWO / rhosq  ! Should be moved out of the loop
+            pl(kk, jj) = TWO / rho  ! Should be moved out of the loop
+            pl(kk, ih) = -TWO / rhosq  ! Should be moved out of the loop
         else  ! XPT(JJ, K) = -RHO
             d(jj) = (fval(kk) + fval(k) - TWO * fbase) / rhosq
             pq(jj) = (fval(kk) - fval(k)) / (TWO * rho)
             pl(1, ih) = -TWO / rhosq
-            pl(k - 1, jj) = HALF / rho  ! Should be moved out of the loop
-            pl(k - 1, ih) = ONE / rhosq  ! Should be moved out of the loop
+            pl(kk, jj) = HALF / rho  ! Should be moved out of the loop
+            pl(kk, ih) = ONE / rhosq  ! Should be moved out of the loop
         end if
         pq(ih) = d(jj)
         pl(k, jj) = -HALF / rho
