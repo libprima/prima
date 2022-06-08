@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 08, 2022 PM01:27:20
+! Last Modified: Wednesday, June 08, 2022 PM01:57:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -126,8 +126,8 @@ do k = 1, 2_IK * n + 1_IK
                 xw(j) = -rho
                 xpt(j, k) = -rho
             end if
-        elseif (j < n) then
-            j = j + 1
+        else
+            j = k / 2_IK
             xpt(j, k) = rho
         end if
     end if
@@ -153,7 +153,10 @@ do k = 1, 2_IK * n + 1_IK
         fval(kk) = f  ! FPLUS = F(X + RHO*e_I) with I = NF/2.
         cycle
     end if
+end do
 
+do k = 1, 2_IK * n + 1_IK
+    j = k / 2_IK
     ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
     if (j >= 1 .and. k >= 3) then  ! NF >= 3 is implied by J >= 1. We prefer to impose it explicitly.
         ih = ih + j
