@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 16, 2022 AM11:55:09
+! Last Modified: Wednesday, June 08, 2022 AM06:49:34
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -31,17 +31,21 @@ module consts_mod
 !    type keyword DOUBLE PRECISION is specified, the kind value is KIND (0.0D0) and the type
 !    specified is DOUBLE PRECISION real; the decimal precision of the double precision real
 !    approximation method shall be greater than that of the default real method.
+!    - Default integer, default real, and default logical all occupy one storage unit. Double
+!    precision and complex occupy two storage units and double complex requires four storage units.
 !
 !    In other words, the standard only imposes that the following three types should be supported:
 !    - INTEGER(KIND(0)), i.e., default integer,
 !    - REAL(KIND(0.0)), i.e., default real (single-precision real),
 !    - REAL(KIND(0.0D0)), i.e., double-precision real.
 !
-!    Therefore, the following should be noted.
+!    Moreover, the following should be noted.
 !
 !    - Other types of INTEGER/REAL may not be available on all platforms (e.g., nvfortran 20 and
 !    flang 7.1.0 do not support REAL128).
-!    - The standard does not specify the range of the default integer.
+!    - The standard does not specify the range of the default integer. However, if the default real 
+!    occupies 32 bits, which is normally the case, then the default integer occupies also 32 bits, 
+!    and hence the range is probably [2^32, 2^31-1], approximately [-2*10^9, 2*10^9].
 !    - The standard does not specify what the range and precision of the default real or the
 !    double-precision real, except that KIND(0.0D0) should have a greater precision than KIND(0.0)
 !    --- no requirement about the range.
@@ -177,7 +181,7 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 
 ! SYMTOL_DFT is the default tolerance for testing symmetry of matrices. It can be set to 0 if the
 ! IEEE Standard for Floating-Point Arithmetic (IEEE 754) is respected, particularly if addition and
-! multiplication are commutative. However, as of 20220408, NAG nagfor do not ensure commutativity 
+! multiplication are commutative. However, as of 20220408, NAG nagfor do not ensure commutativity
 ! for REAL128. Indeed, Fortran standards do not enforce IEEE 754, so compilers are not guaranteed to
 ! respect it. Hence we set SYMTOL_DFT to a nonzero number when __RELEASED__ is 1, although we do not
 ! intend to test symmetry in production.

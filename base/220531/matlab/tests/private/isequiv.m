@@ -110,7 +110,7 @@ else
         blacklist = [blacklist, {'VARDIM', 'HATFLDFL'}];  % too large for UOBYQA
     case {'newuoa', 'newuoan'}
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.
-        blacklist = [blacklist, {'PENALTY2', 'HYDC20LS'}]; % Too long time
+        blacklist = [blacklist, {'PENALTY2', 'HYDC20LS', 'MANCINO'}]; % Too long time
     case {'bobyqa', 'bobyqan'}
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}];  % More than 10 minutes to solve.
