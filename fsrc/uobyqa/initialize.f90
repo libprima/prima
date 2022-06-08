@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 08, 2022 PM02:58:23
+! Last Modified: Wednesday, June 08, 2022 PM03:08:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -71,7 +71,7 @@ logical :: evaluated(size(xpt, 2))
 real(RP) :: f, fval(size(xpt, 2))
 real(RP) :: x(size(x0))
 
-integer(IK) :: iw, ih, ip, iq, i, jj, kk
+integer(IK) :: iw, ih, ip, iq, jj, kk
 real(RP) :: rho, rhosq, fbase, xw(size(x0)), d(size(x0)), temp, tempa
 
 n = int(size(xpt, 1), kind(n))
@@ -145,38 +145,6 @@ do k = 1, 2_IK * n + 1_IK
     end if
 end do
 
-fbase = fval(1)
-
-do k = 1, 2_IK * n + 1_IK
-    if (modulo(k, 2_IK) == 0_IK) then
-        cycle
-    end if
-    jj = k / 2_IK
-    kk = 2_IK * jj
-    ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
-    if (jj >= 1 .and. k >= 3) then  ! NF >= 3 is implied by JJ >= 1. We prefer to impose it explicitly.
-        ih = ih + jj
-        if (xpt(jj, k) > 0) then  ! XPT(JJ, NF) = 2*RHO
-            pq(jj) = (4.0_RP * fval(kk) - 3.0_RP * fbase - fval(k)) / (TWO * rho)
-            d(jj) = (fbase + fval(k) - TWO * fval(kk)) / rhosq
-            pl(1, jj) = -1.5_RP / rho
-            pl(1, ih) = ONE / rhosq
-            pl(k - 1, jj) = TWO / rho  ! Should be moved out of the loop
-            pl(k - 1, ih) = -TWO / rhosq  ! Should be moved out of the loop
-        else  ! XPT(JJ, NF) = -RHO
-            d(jj) = (fval(kk) + fval(k) - TWO * fbase) / rhosq
-            pq(jj) = (fval(kk) - fval(k)) / (TWO * rho)
-            pl(1, ih) = -TWO / rhosq
-            pl(k - 1, jj) = HALF / rho  ! Should be moved out of the loop
-            pl(k - 1, ih) = ONE / rhosq  ! Should be moved out of the loop
-        end if
-        pq(ih) = d(jj)
-        pl(k, jj) = -HALF / rho
-        pl(k, ih) = ONE / rhosq
-    end if
-end do
-
-! Form the off-diagonal second derivatives of the initial quadratic model.
 if (info == INFO_DFT) then
     ip = 0
     iq = 2
@@ -205,8 +173,42 @@ if (info == INFO_DFT) then
             exit
         end if
     end do
+end if
 
 
+fbase = fval(1)
+
+if (all(evaluated)) then
+    do k = 1, 2_IK * n + 1_IK
+        if (modulo(k, 2_IK) == 0_IK) then
+            cycle
+        end if
+        jj = k / 2_IK
+        kk = 2_IK * jj
+        ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
+        if (jj >= 1 .and. k >= 3) then  ! NF >= 3 is implied by JJ >= 1. We prefer to impose it explicitly.
+            ih = ih + jj
+            if (xpt(jj, k) > 0) then  ! XPT(JJ, NF) = 2*RHO
+                pq(jj) = (4.0_RP * fval(kk) - 3.0_RP * fbase - fval(k)) / (TWO * rho)
+                d(jj) = (fbase + fval(k) - TWO * fval(kk)) / rhosq
+                pl(1, jj) = -1.5_RP / rho
+                pl(1, ih) = ONE / rhosq
+                pl(k - 1, jj) = TWO / rho  ! Should be moved out of the loop
+                pl(k - 1, ih) = -TWO / rhosq  ! Should be moved out of the loop
+            else  ! XPT(JJ, NF) = -RHO
+                d(jj) = (fval(kk) + fval(k) - TWO * fbase) / rhosq
+                pq(jj) = (fval(kk) - fval(k)) / (TWO * rho)
+                pl(1, ih) = -TWO / rhosq
+                pl(k - 1, jj) = HALF / rho  ! Should be moved out of the loop
+                pl(k - 1, ih) = ONE / rhosq  ! Should be moved out of the loop
+            end if
+            pq(ih) = d(jj)
+            pl(k, jj) = -HALF / rho
+            pl(k, ih) = ONE / rhosq
+        end if
+    end do
+
+! Form the off-diagonal second derivatives of the initial quadratic model.
     ih = n + 1
     ip = 0
     iq = 2
