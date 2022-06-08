@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 08, 2022 AM11:14:26
+! Last Modified: Wednesday, June 08, 2022 PM01:27:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -71,8 +71,8 @@ logical :: evaluated(size(xpt, 2))
 real(RP) :: f, fval(size(xpt, 2))
 real(RP) :: x(size(x0))
 
-integer(IK) :: iw, ih, ip, iq, i, j
-real(RP) :: rho, rhosq, fplus, fbase, xw(size(x0)), d(size(x0)), temp, tempa
+integer(IK) :: iw, ih, ip, iq, i, j, kk
+real(RP) :: rho, rhosq, fbase, xw(size(x0)), d(size(x0)), temp, tempa
 
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
@@ -112,13 +112,14 @@ j = 0
 ih = n
 ! In the following loop, FPLUS is set to F(X + RHO*e_I) when NF = 2*I, and the value of FPLUS is
 ! used subsequently when NF = 2*I + 1.
-fplus = ZERO ! This initial value is not used but to entertain the Fortran compilers.
+!fval(kk) = ZERO ! This initial value is not used but to entertain the Fortran compilers.
 do k = 1, 2_IK * n + 1_IK
+    kk = 2 * (k / 2)
     ! Pick the shift from XBASE to the next initial interpolation point that provides diagonal
     ! second derivatives.
     if (k > 1) then
         if (modulo(k, 2_IK) == 1_IK) then
-            if (fplus < fbase) then
+            if (fval(kk) < fbase) then
                 xw(j) = rho
                 xpt(j, k) = TWO * rho
             else
@@ -149,7 +150,7 @@ do k = 1, 2_IK * n + 1_IK
     end if
 
     if (modulo(k, 2_IK) == 0_IK) then
-        fplus = f  ! FPLUS = F(X + RHO*e_I) with I = NF/2.
+        fval(kk) = f  ! FPLUS = F(X + RHO*e_I) with I = NF/2.
         cycle
     end if
 
@@ -157,15 +158,15 @@ do k = 1, 2_IK * n + 1_IK
     if (j >= 1 .and. k >= 3) then  ! NF >= 3 is implied by J >= 1. We prefer to impose it explicitly.
         ih = ih + j
         if (xpt(j, k) > 0) then  ! XPT(J, NF) = 2*RHO
-            pq(j) = (4.0_RP * fplus - 3.0_RP * fbase - f) / (TWO * rho)
-            d(j) = (fbase + f - TWO * fplus) / rhosq
+            pq(j) = (4.0_RP * fval(kk) - 3.0_RP * fbase - fval(k)) / (TWO * rho)
+            d(j) = (fbase + fval(k) - TWO * fval(kk)) / rhosq
             pl(1, j) = -1.5_RP / rho
             pl(1, ih) = ONE / rhosq
             pl(k - 1, j) = TWO / rho  ! Should be moved out of the loop
             pl(k - 1, ih) = -TWO / rhosq  ! Should be moved out of the loop
         else  ! XPT(J, NF) = -RHO
-            d(j) = (fplus + f - TWO * fbase) / rhosq
-            pq(j) = (fplus - f) / (TWO * rho)
+            d(j) = (fval(kk) + fval(k) - TWO * fbase) / rhosq
+            pq(j) = (fval(kk) - fval(k)) / (TWO * rho)
             pl(1, ih) = -TWO / rhosq
             pl(k - 1, j) = HALF / rho  ! Should be moved out of the loop
             pl(k - 1, ih) = ONE / rhosq  ! Should be moved out of the loop
@@ -210,7 +211,7 @@ if (info == INFO_DFT) then
 
         ih = ih + 1
         temp = ONE / (xw(ip) * xw(iq))
-        tempa = f - fbase - xw(ip) * pq(ip) - xw(iq) * pq(iq)
+        tempa = fval(k) - fbase - xw(ip) * pq(ip) - xw(iq) * pq(iq)
         ! N.B.: D(2) is accessed by D(IQ) even if N = 1.
         pq(ih) = (tempa - HALF * rhosq * (d(ip) + d(iq))) * temp
         pl(1, ih) = temp
