@@ -340,6 +340,8 @@ if (fopt <= f .or. is_nan(f)) then
     f = fopt
 end if
 
+
+
 if (to_return) then
     call rangehist(nf, xhist, fhist)
     return

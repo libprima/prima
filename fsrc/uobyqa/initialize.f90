@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 08, 2022 PM04:52:01
+! Last Modified: Wednesday, June 08, 2022 PM11:01:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -109,8 +109,8 @@ info = INFO_DFT
 xpt = ZERO
 pl = ZERO
 
-k0 = linspace(2_IK, 2_IK * n, n)
-k1 = linspace(3_IK, 2_IK * n + 1, n)
+!k0 = linspace(2_IK, n + 1_IK, n); k1 = k0 + n
+k0 = linspace(2_IK, 2_IK * n, n); k1 = k0 + 1_IK
 
 do k = 1, 1
     x = xpt(:, k) + xbase
@@ -201,33 +201,26 @@ if (info == INFO_DFT) then
     end do
 end if
 
+nf = int(count(evaluated), kind(nf))  !!MATLAB: nf = sum(evaluated);
+kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
+fopt = fval(kopt)
+!!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first')
 
-fbase = fval(1)
 
 if (all(evaluated)) then
-    ih = n
+    fbase = fval(1)
     do jj = 1, n
         kk = k0(jj); k = k1(jj)
-        !kk = jj + 1_IK; k = jj + n + 1_IK
         ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
         ih = n + jj * (jj + 1_IK) / 2_IK
         if (xpt(jj, k) > 0) then  ! XPT(JJ, K) = 2*RHO
-            pq(jj) = (4.0_RP * fval(kk) - 3.0_RP * fbase - fval(k)) / (TWO * rho)
             d(jj) = (fbase + fval(k) - TWO * fval(kk)) / rhosq
-            pl(1, jj) = -1.5_RP / rho
-            pl(1, ih) = ONE / rhosq
-            pl(kk, jj) = TWO / rho  ! Should be moved out of the loop
-            pl(kk, ih) = -TWO / rhosq  ! Should be moved out of the loop
+            pq(jj) = (4.0_RP * fval(kk) - 3.0_RP * fbase - fval(k)) / (TWO * rho)
         else  ! XPT(JJ, K) = -RHO
             d(jj) = (fval(kk) + fval(k) - TWO * fbase) / rhosq
             pq(jj) = (fval(kk) - fval(k)) / (TWO * rho)
-            pl(1, ih) = -TWO / rhosq
-            pl(kk, jj) = HALF / rho  ! Should be moved out of the loop
-            pl(kk, ih) = ONE / rhosq  ! Should be moved out of the loop
         end if
         pq(ih) = d(jj)
-        pl(k, jj) = -HALF / rho
-        pl(k, ih) = ONE / rhosq
     end do
 
 ! Form the off-diagonal second derivatives of the initial quadratic model.
@@ -246,21 +239,60 @@ if (all(evaluated)) then
         tempa = fval(k) - fbase - xw(ip) * pq(ip) - xw(iq) * pq(iq)
         ! N.B.: D(2) is accessed by D(IQ) even if N = 1.
         pq(ih) = (tempa - HALF * rhosq * (d(ip) + d(iq))) * temp
-        pl(1, ih) = temp
-        iw = ip + ip
-        if (xw(ip) < ZERO) iw = iw + 1
-        pl(iw, ih) = -temp
-        iw = iq + iq
-        if (xw(iq) < ZERO) iw = iw + 1
-        pl(iw, ih) = -temp
-        pl(k, ih) = temp
     end do
 end if
 
-nf = int(count(evaluated), kind(nf))  !!MATLAB: nf = sum(evaluated);
-kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
-fopt = fval(kopt)
-!!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first')
+
+if (all(evaluated)) then
+    do jj = 1, n
+        kk = k0(jj); k = k1(jj)
+        ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
+        ih = n + jj * (jj + 1_IK) / 2_IK
+        if (xpt(jj, k) > 0) then  ! XPT(JJ, K) = 2*RHO
+            pl(1, jj) = -1.5_RP / rho
+            pl(1, ih) = ONE / rhosq
+            pl(kk, jj) = TWO / rho  ! Should be moved out of the loop
+            pl(kk, ih) = -TWO / rhosq  ! Should be moved out of the loop
+        else  ! XPT(JJ, K) = -RHO
+            pl(1, ih) = -TWO / rhosq
+            pl(kk, jj) = HALF / rho  ! Should be moved out of the loop
+            pl(kk, ih) = ONE / rhosq  ! Should be moved out of the loop
+        end if
+        pl(k, jj) = -HALF / rho
+        pl(k, ih) = ONE / rhosq
+    end do
+
+! Form the off-diagonal second derivatives of the initial quadratic model.
+    ih = n + 1
+    ip = 0
+    iq = 2
+    do k = 2_IK * n + 2_IK, npt
+        ip = ip + 1
+        if (ip == iq) then
+            ih = ih + 1
+            ip = 1
+            iq = iq + 1
+        end if
+        ih = ih + 1
+        temp = ONE / (xw(ip) * xw(iq))
+        pl(1, ih) = temp
+        pl(k, ih) = temp
+
+        if (xw(ip) < 0) then
+            iw = 2_IK * ip + 1_IK
+        else
+            iw = 2_IK * ip
+        end if
+        pl(iw, ih) = -temp
+
+        if (xw(iq) < 0) then
+            iw = 2_IK * iq + 1_IK
+        else
+            iw = 2_IK * iq
+        end if
+        pl(iw, ih) = -temp
+    end do
+end if
 
 end subroutine
 
