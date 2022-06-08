@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 08, 2022 AM08:45:40
+! Last Modified: Wednesday, June 08, 2022 AM11:14:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -430,15 +430,16 @@ if (fopt <= f .or. is_nan(f)) then
     f = fopt
 end if
 
+call rangehist(nf, xhist, fhist)
+
 !====================!
 !  Calculation ends  !
 !====================!
 
 ! Postconditions
 
-!close (16)
+close (16)
 
-call rangehist(nf, xhist, fhist)
 
 end subroutine uobyqb
 
