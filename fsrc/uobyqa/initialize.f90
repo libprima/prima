@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 08, 2022 PM02:48:36
+! Last Modified: Wednesday, June 08, 2022 PM02:58:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -71,7 +71,7 @@ logical :: evaluated(size(xpt, 2))
 real(RP) :: f, fval(size(xpt, 2))
 real(RP) :: x(size(x0))
 
-integer(IK) :: iw, ih, ip, iq, i, j, kk
+integer(IK) :: iw, ih, ip, iq, i, jj, kk
 real(RP) :: rho, rhosq, fbase, xw(size(x0)), d(size(x0)), temp, tempa
 
 n = int(size(xpt, 1), kind(n))
@@ -108,29 +108,26 @@ fval = HUGENUM
 info = INFO_DFT
 xpt = ZERO
 pl = ZERO
-j = 0
 ih = n
 ! In the following loop, FPLUS is set to F(X + RHO*e_I) when NF = 2*I, and the value of FPLUS is
 ! used subsequently when NF = 2*I + 1.
-!fval(kk) = ZERO ! This initial value is not used but to entertain the Fortran compilers.
 do k = 1, 2_IK * n + 1_IK
-    j = k / 2_IK
-    kk = 2_IK * j
+    jj = k / 2_IK
+    kk = 2_IK * jj
     ! Pick the shift from XBASE to the next initial interpolation point that provides diagonal
     ! second derivatives.
     if (k > 1) then
         if (modulo(k, 2_IK) == 1_IK) then
             if (fval(kk) < fval(1)) then
-                xw(j) = rho
-                xpt(j, k) = TWO * rho
+                xw(jj) = rho
+                xpt(jj, k) = TWO * rho
             else
-                xw(j) = -rho
-                xpt(j, k) = -rho
+                xw(jj) = -rho
+                xpt(jj, k) = -rho
             end if
-        else!if (j < n) then
-            !j = j + 1
-            j = k / 2_IK
-            xpt(j, k) = rho
+        else
+            jj = k / 2_IK
+            xpt(jj, k) = rho
         end if
     end if
     x = xpt(:, k) + xbase
@@ -151,47 +148,43 @@ end do
 fbase = fval(1)
 
 do k = 1, 2_IK * n + 1_IK
-
     if (modulo(k, 2_IK) == 0_IK) then
         cycle
     end if
-    j = k / 2_IK
-    kk = 2_IK * j
+    jj = k / 2_IK
+    kk = 2_IK * jj
     ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
-    if (j >= 1 .and. k >= 3) then  ! NF >= 3 is implied by J >= 1. We prefer to impose it explicitly.
-        ih = ih + j
-        if (xpt(j, k) > 0) then  ! XPT(J, NF) = 2*RHO
-            pq(j) = (4.0_RP * fval(kk) - 3.0_RP * fbase - fval(k)) / (TWO * rho)
-            d(j) = (fbase + fval(k) - TWO * fval(kk)) / rhosq
-            pl(1, j) = -1.5_RP / rho
+    if (jj >= 1 .and. k >= 3) then  ! NF >= 3 is implied by JJ >= 1. We prefer to impose it explicitly.
+        ih = ih + jj
+        if (xpt(jj, k) > 0) then  ! XPT(JJ, NF) = 2*RHO
+            pq(jj) = (4.0_RP * fval(kk) - 3.0_RP * fbase - fval(k)) / (TWO * rho)
+            d(jj) = (fbase + fval(k) - TWO * fval(kk)) / rhosq
+            pl(1, jj) = -1.5_RP / rho
             pl(1, ih) = ONE / rhosq
-            pl(k - 1, j) = TWO / rho  ! Should be moved out of the loop
+            pl(k - 1, jj) = TWO / rho  ! Should be moved out of the loop
             pl(k - 1, ih) = -TWO / rhosq  ! Should be moved out of the loop
-        else  ! XPT(J, NF) = -RHO
-            d(j) = (fval(kk) + fval(k) - TWO * fbase) / rhosq
-            pq(j) = (fval(kk) - fval(k)) / (TWO * rho)
+        else  ! XPT(JJ, NF) = -RHO
+            d(jj) = (fval(kk) + fval(k) - TWO * fbase) / rhosq
+            pq(jj) = (fval(kk) - fval(k)) / (TWO * rho)
             pl(1, ih) = -TWO / rhosq
-            pl(k - 1, j) = HALF / rho  ! Should be moved out of the loop
+            pl(k - 1, jj) = HALF / rho  ! Should be moved out of the loop
             pl(k - 1, ih) = ONE / rhosq  ! Should be moved out of the loop
         end if
-        pq(ih) = d(j)
-        pl(k, j) = -HALF / rho
+        pq(ih) = d(jj)
+        pl(k, jj) = -HALF / rho
         pl(k, ih) = ONE / rhosq
     end if
 end do
 
-ih = n + 1
-ip = 0
-iq = 2
-
 ! Form the off-diagonal second derivatives of the initial quadratic model.
 if (info == INFO_DFT) then
+    ip = 0
+    iq = 2
     do k = 2_IK * n + 2_IK, npt
         ! Pick the shift from XBASE to the next initial interpolation point that provides
         ! off-diagonal second derivatives.
         ip = ip + 1
         if (ip == iq) then
-            ih = ih + 1
             ip = 1
             iq = iq + 1
         end if
@@ -211,7 +204,19 @@ if (info == INFO_DFT) then
             info = subinfo
             exit
         end if
+    end do
 
+
+    ih = n + 1
+    ip = 0
+    iq = 2
+    do k = 2_IK * n + 2_IK, npt
+        ip = ip + 1
+        if (ip == iq) then
+            ih = ih + 1
+            ip = 1
+            iq = iq + 1
+        end if
         ih = ih + 1
         temp = ONE / (xw(ip) * xw(iq))
         tempa = fval(k) - fbase - xw(ip) * pq(ip) - xw(iq) * pq(iq)
