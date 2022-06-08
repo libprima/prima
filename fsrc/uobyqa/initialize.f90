@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 08, 2022 PM01:57:21
+! Last Modified: Wednesday, June 08, 2022 PM02:48:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -114,19 +114,21 @@ ih = n
 ! used subsequently when NF = 2*I + 1.
 !fval(kk) = ZERO ! This initial value is not used but to entertain the Fortran compilers.
 do k = 1, 2_IK * n + 1_IK
-    kk = 2 * (k / 2)
+    j = k / 2_IK
+    kk = 2_IK * j
     ! Pick the shift from XBASE to the next initial interpolation point that provides diagonal
     ! second derivatives.
     if (k > 1) then
         if (modulo(k, 2_IK) == 1_IK) then
-            if (fval(kk) < fbase) then
+            if (fval(kk) < fval(1)) then
                 xw(j) = rho
                 xpt(j, k) = TWO * rho
             else
                 xw(j) = -rho
                 xpt(j, k) = -rho
             end if
-        else
+        else!if (j < n) then
+            !j = j + 1
             j = k / 2_IK
             xpt(j, k) = rho
         end if
@@ -144,19 +146,17 @@ do k = 1, 2_IK * n + 1_IK
         info = subinfo
         exit
     end if
-
-    if (k == 1) then
-        fbase = f
-    end if
-
-    if (modulo(k, 2_IK) == 0_IK) then
-        fval(kk) = f  ! FPLUS = F(X + RHO*e_I) with I = NF/2.
-        cycle
-    end if
 end do
 
+fbase = fval(1)
+
 do k = 1, 2_IK * n + 1_IK
+
+    if (modulo(k, 2_IK) == 0_IK) then
+        cycle
+    end if
     j = k / 2_IK
+    kk = 2_IK * j
     ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
     if (j >= 1 .and. k >= 3) then  ! NF >= 3 is implied by J >= 1. We prefer to impose it explicitly.
         ih = ih + j
