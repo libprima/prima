@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 08, 2022 PM04:14:09
+! Last Modified: Wednesday, June 08, 2022 PM04:52:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,10 +68,10 @@ integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
 logical :: evaluated(size(xpt, 2))
-real(RP) :: f, fval(size(xpt, 2)), ffval(size(xpt, 1))
+real(RP) :: f, fval(size(xpt, 2))
 real(RP) :: x(size(x0))
 
-integer(IK) :: iw, ih, ip, iq, jj, kk
+integer(IK) :: iw, ih, ip, iq, jj, kk, k0(size(x0)), k1(size(x0))
 real(RP) :: rho, rhosq, fbase, xw(size(x0)), d(size(x0)), temp, tempa
 
 n = int(size(xpt, 1), kind(n))
@@ -108,25 +108,11 @@ fval = HUGENUM
 info = INFO_DFT
 xpt = ZERO
 pl = ZERO
-do k = 1, 2_IK * n + 1_IK
-    jj = k / 2_IK
-    kk = 2_IK * jj
-    ! Pick the shift from XBASE to the next initial interpolation point that provides diagonal
-    ! second derivatives.
-    if (k > 1) then
-        if (modulo(k, 2_IK) == 1_IK) then
-            if (fval(kk) < fval(1)) then
-                !xw(jj) = rho
-                xpt(jj, k) = TWO * rho
-            else
-                !xw(jj) = -rho
-                xpt(jj, k) = -rho
-            end if
-        else
-            jj = k / 2_IK
-            xpt(jj, k) = rho
-        end if
-    end if
+
+k0 = linspace(2_IK, 2_IK * n, n)
+k1 = linspace(3_IK, 2_IK * n + 1, n)
+
+do k = 1, 1
     x = xpt(:, k) + xbase
     call evaluate(calfun, x, f)
     evaluated(k) = .true.
@@ -142,9 +128,49 @@ do k = 1, 2_IK * n + 1_IK
     end if
 end do
 
-ffval = fval(linspace(2_IK, 2_IK * n, n))
+if (info == INFO_DFT) then
+    do jj = 1, n
+        !kk = 2_IK * jj
+        k = k0(jj)
+        xpt(jj, k) = rho
+        x = xpt(:, k) + xbase
+        call evaluate(calfun, x, f)
+        evaluated(k) = .true.
+        fval(k) = f
+        call fmsg(solver, iprint, k, f, x)
+        ! Save X and F into the history.
+        call savehist(k, x, xhist, f, fhist)
+        ! Check whether to exit.
+        subinfo = checkexit(maxfun, k, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
+
+        k = k1(jj)
+        if (fval(k0(jj)) < fval(1)) then
+            xpt(jj, k) = TWO * rho
+        else
+            xpt(jj, k) = -rho
+        end if
+        x = xpt(:, k) + xbase
+        call evaluate(calfun, x, f)
+        evaluated(k) = .true.
+        fval(k) = f
+        call fmsg(solver, iprint, k, f, x)
+        ! Save X and F into the history.
+        call savehist(k, x, xhist, f, fhist)
+        ! Check whether to exit.
+        subinfo = checkexit(maxfun, k, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
+    end do
+end if
+
 xw = -rho
-xw(trueloc(ffval < fval(1))) = rho
+xw(trueloc(fval(k0) < fval(1))) = rho
 
 if (info == INFO_DFT) then
     ip = 0
@@ -181,7 +207,7 @@ fbase = fval(1)
 if (all(evaluated)) then
     ih = n
     do jj = 1, n
-        kk = 2_IK * jj; k = 2_IK * jj + 1_IK
+        kk = k0(jj); k = k1(jj)
         !kk = jj + 1_IK; k = jj + n + 1_IK
         ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
         ih = n + jj * (jj + 1_IK) / 2_IK
