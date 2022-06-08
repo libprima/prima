@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 08, 2022 AM08:44:19
+! Last Modified: Wednesday, June 08, 2022 AM11:14:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,7 +68,7 @@ integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
 logical :: evaluated(size(xpt, 2))
-real(RP) :: f
+real(RP) :: f, fval(size(xpt, 2))
 real(RP) :: x(size(x0))
 
 integer(IK) :: iw, ih, ip, iq, i, j
@@ -83,10 +83,29 @@ maxhist = max(maxxhist, maxfhist)
 rho = rhobeg
 rhosq = rho**2
 
+!====================!
+! Calculation starts !
+!====================!
+
+! Initialize INFO to the default value. At return, an INFO different from this value will indicate
+! an abnormal return.
+info = INFO_DFT
+
+! Initialize XBASE to X0.
+xbase = x0
+
+! EVALUATED is a boolean array with EVALUATED(I) indicating whether the function value of the I-th
+! interpolation point has been evaluated. We need it for a portable counting of the number of
+! function evaluations, especially if the loop is conducted asynchronously. However, the loop here
+! is not fully parallelizable if NPT>2N+1, as the definition XPT(;, 2N+2:end) involves FVAL(1:2N+1).
+evaluated = .false.
+! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
+! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+fval = HUGENUM
+
 ! Initialization. NF is the number of function calculations so far. The least function value so far,
 ! the corresponding X and its index are noted in FOPT, XOPT, and KOPT respectively.
 info = INFO_DFT
-xbase = x0
 xpt = ZERO
 pl = ZERO
 j = 0
@@ -94,91 +113,66 @@ ih = n
 ! In the following loop, FPLUS is set to F(X + RHO*e_I) when NF = 2*I, and the value of FPLUS is
 ! used subsequently when NF = 2*I + 1.
 fplus = ZERO ! This initial value is not used but to entertain the Fortran compilers.
-do nf = 1, 2_IK * n + 1_IK
+do k = 1, 2_IK * n + 1_IK
     ! Pick the shift from XBASE to the next initial interpolation point that provides diagonal
     ! second derivatives.
-    if (nf > 1) then
-        if (modulo(nf, 2_IK) == 1_IK) then
+    if (k > 1) then
+        if (modulo(k, 2_IK) == 1_IK) then
             if (fplus < fbase) then
                 xw(j) = rho
-                xpt(j, nf) = TWO * rho
+                xpt(j, k) = TWO * rho
             else
                 xw(j) = -rho
-                xpt(j, nf) = -rho
+                xpt(j, k) = -rho
             end if
         elseif (j < n) then
             j = j + 1
-            xpt(j, nf) = rho
+            xpt(j, k) = rho
         end if
     end if
-    x = xbase + xpt(:, nf)
-
-    if (is_nan(sum(abs(x)))) then
-        f = sum(x) ! Set F to NaN
-        if (nf == 1) then
-            kopt = 1
-            fopt = f
-        end if
-        info = NAN_INF_X
-        exit
-    end if
+    x = xpt(:, k) + xbase
     call evaluate(calfun, x, f)
-    call savehist(nf, x, xhist, f, fhist)
-    if (is_nan(f) .or. is_posinf(f)) then
-        if (nf == 1) then
-            kopt = 1
-            fopt = f
-        end if
-        info = NAN_INF_F
+    evaluated(k) = .true.
+    fval(k) = f
+    call fmsg(solver, iprint, k, f, x)
+    ! Save X and F into the history.
+    call savehist(k, x, xhist, f, fhist)
+    ! Check whether to exit.
+    subinfo = checkexit(maxfun, k, f, ftarget, x)
+    if (subinfo /= INFO_DFT) then
+        info = subinfo
         exit
     end if
 
-    if (f <= ftarget) then
-        info = FTARGET_ACHIEVED
-        kopt = nf
-        fopt = f
-        exit
-    end if
-
-    if (nf == 1) then
-        fopt = f
-        kopt = nf
+    if (k == 1) then
         fbase = f
-    elseif (f < fopt) then
-        fopt = f
-        kopt = nf
     end if
 
-    if (nf >= maxfun) then
-        info = MAXFUN_REACHED
-        exit
-    end if
-
-    if (modulo(nf, 2_IK) == 0_IK) then
+    if (modulo(k, 2_IK) == 0_IK) then
         fplus = f  ! FPLUS = F(X + RHO*e_I) with I = NF/2.
         cycle
     end if
 
     ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
-    if (j >= 1 .and. nf >= 3) then  ! NF >= 3 is implied by J >= 1. We prefer to impose it explicitly.
+    if (j >= 1 .and. k >= 3) then  ! NF >= 3 is implied by J >= 1. We prefer to impose it explicitly.
         ih = ih + j
-        if (xpt(j, nf) > 0) then  ! XPT(J, NF) = 2*RHO
+        if (xpt(j, k) > 0) then  ! XPT(J, NF) = 2*RHO
             pq(j) = (4.0_RP * fplus - 3.0_RP * fbase - f) / (TWO * rho)
             d(j) = (fbase + f - TWO * fplus) / rhosq
             pl(1, j) = -1.5_RP / rho
             pl(1, ih) = ONE / rhosq
-            pl(nf - 1, j) = TWO / rho  ! Should be moved out of the loop
-            pl(nf - 1, ih) = -TWO / rhosq  ! Should be moved out of the loop
+            pl(k - 1, j) = TWO / rho  ! Should be moved out of the loop
+            pl(k - 1, ih) = -TWO / rhosq  ! Should be moved out of the loop
         else  ! XPT(J, NF) = -RHO
             d(j) = (fplus + f - TWO * fbase) / rhosq
             pq(j) = (fplus - f) / (TWO * rho)
             pl(1, ih) = -TWO / rhosq
-            pl(nf - 1, j) = HALF / rho  ! Should be moved out of the loop
-            pl(nf - 1, ih) = ONE / rhosq  ! Should be moved out of the loop
+            pl(k - 1, j) = HALF / rho  ! Should be moved out of the loop
+            pl(k - 1, ih) = ONE / rhosq  ! Should be moved out of the loop
         end if
         pq(ih) = d(j)
-        pl(nf, j) = -HALF / rho
-        pl(nf, ih) = ONE / rhosq
+        pl(k, j) = -HALF / rho
+        pl(k, ih) = ONE / rhosq
     end if
 end do
 
@@ -188,7 +182,7 @@ iq = 2
 
 ! Form the off-diagonal second derivatives of the initial quadratic model.
 if (info == INFO_DFT) then
-    do nf = 2_IK * n + 2_IK, npt
+    do k = 2_IK * n + 2_IK, npt
         ! Pick the shift from XBASE to the next initial interpolation point that provides
         ! off-diagonal second derivatives.
         ip = ip + 1
@@ -197,37 +191,20 @@ if (info == INFO_DFT) then
             ip = 1
             iq = iq + 1
         end if
-        xpt(ip, nf) = xw(ip)
+        xpt(ip, k) = xw(ip)
         ! N.B.: XPT(2, NF+1) is accessed by XPT(IQ, NF+1) even if N = 1.
-        xpt(iq, nf) = xw(iq)
-        x = xbase + xpt(:, nf)
-
-        if (is_nan(sum(abs(x)))) then
-            f = sum(x) ! Set F to NaN
-            info = NAN_INF_X
-            exit
-        end if
-
+        xpt(iq, k) = xw(iq)
+        x = xpt(:, k) + xbase
         call evaluate(calfun, x, f)
-        call savehist(nf, x, xhist, f, fhist)
-        if (is_nan(f) .or. is_posinf(f)) then
-            info = NAN_INF_F
-            exit
-        end if
-
-        if (f <= ftarget) then
-            info = FTARGET_ACHIEVED
-            kopt = nf
-            fopt = f
-            exit
-        end if
-
-        if (f < fopt) then
-            fopt = f
-            kopt = nf
-        end if
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
+        evaluated(k) = .true.
+        fval(k) = f
+        call fmsg(solver, iprint, k, f, x)
+        ! Save X and F into the history.
+        call savehist(k, x, xhist, f, fhist)
+        ! Check whether to exit.
+        subinfo = checkexit(maxfun, k, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
             exit
         end if
 
@@ -243,14 +220,14 @@ if (info == INFO_DFT) then
         iw = iq + iq
         if (xw(iq) < ZERO) iw = iw + 1
         pl(iw, ih) = -temp
-        pl(nf, ih) = temp
+        pl(k, ih) = temp
     end do
 end if
 
-!--------------------------------------------------------------------------------------------------!
-! When the loop exits, the value of NF is not specified by the standard. With gfortran, it will be
-! NPT+1, which is not proper for the subsequent use. !!!
-nf = min(nf, npt) !!!
+nf = int(count(evaluated), kind(nf))  !!MATLAB: nf = sum(evaluated);
+kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
+fopt = fval(kopt)
+!!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first')
 
 end subroutine
 
