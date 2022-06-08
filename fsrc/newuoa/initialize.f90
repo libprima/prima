@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Tuesday, June 07, 2022 PM06:25:19
+! Last Modified: Wednesday, June 08, 2022 AM07:05:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,12 +68,12 @@ real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: x0(:)   ! X0(N)
 
 ! Outputs
-integer(IK), intent(out) :: info
 integer(IK), intent(out) :: ij(:, :)    ! IJ(MAX(0_IK, NPT-2*N-1_IK), 2)
+integer(IK), intent(out) :: info
 integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: fval(:)    ! FVAL(NPT)
 real(RP), intent(out) :: fhist(:)   ! FHIST(MAXFHIST)
+real(RP), intent(out) :: fval(:)    ! FVAL(NPT)
 real(RP), intent(out) :: xbase(:)   ! XBASE(N)
 real(RP), intent(out) :: xhist(:, :)    ! XHIST(N, MAXXHIST)
 real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
@@ -93,8 +93,8 @@ real(RP) :: f
 real(RP) :: x(size(x0))
 
 ! Sizes
-n = int(size(x0), kind(n))
-npt = int(size(fval), kind(npt))
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = max(maxxhist, maxfhist)
@@ -106,14 +106,14 @@ if (DEBUGGING) then
     call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(rhobeg > 0, 'RHOBEG > 0', srname)
-    call assert(all(is_finite(x0)), 'X0 is finite', srname)
+    call assert(size(x0) == n .and. all(is_finite(x0)), 'SIZE(X0) == N, X0 is finite', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
-    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
 end if
 
 !====================!
