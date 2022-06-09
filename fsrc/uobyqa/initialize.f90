@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Thursday, June 09, 2022 PM11:25:11
+! Last Modified: Friday, June 10, 2022 AM12:06:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,7 +60,10 @@ real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
 ! Local variables
 character(len=*), parameter :: solver = 'UOBYQA'
 character(len=*), parameter :: srname = 'INITXF'
+integer(IK) :: ip
+integer(IK) :: iq
 integer(IK) :: k
+integer(IK) :: kk(size(x0))
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
@@ -70,10 +73,9 @@ integer(IK) :: subinfo
 logical :: evaluated(size(xpt, 2))
 real(RP) :: f
 real(RP) :: x(size(x0))
-
-integer(IK) :: ip, iq, kk(size(x0))
 real(RP) :: xw(size(x0))
 
+! Sizes
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
@@ -177,6 +179,10 @@ nf = int(count(evaluated), kind(nf))  !!MATLAB: nf = sum(evaluated);
 kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 !!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first')
 
+!====================!
+!  Calculation ends  !
+!====================!
+
 ! Postconditions
 if (DEBUGGING) then
     call assert(nf <= npt, 'NF <= NPT', srname)
@@ -219,11 +225,20 @@ real(RP), intent(out) :: pq(:)  ! PQ((N + 1) * (N + 2) / 2 - 1)
 
 ! Local variables
 character(len=*), parameter :: srname = 'INITL'
+integer(IK) :: k1
+integer(IK) :: ih
+integer(IK) :: ip
+integer(IK) :: iq
+integer(IK) :: k
+integer(IK) :: k0
 integer(IK) :: n
 integer(IK) :: npt
-integer(IK) :: ih, ip, iq, k0, k1, k
-real(RP) :: rhobeg, rhosq, fbase, deriv(size(xpt, 1))
+real(RP) :: deriv(size(xpt, 1))
+real(RP) :: fbase
+real(RP) :: rhobeg
+real(RP) :: rhosq
 
+! Sizes
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
@@ -316,13 +331,19 @@ real(RP), intent(out) :: pl(:, :)  ! PL((N + 1) * (N + 2) / 2 - 1, (N + 1) * (N 
 
 ! Local variables
 character(len=*), parameter :: srname = 'INITL'
+integer(IK) :: ih
+integer(IK) :: ip
+integer(IK) :: iq
 integer(IK) :: k
+integer(IK) :: k0
+integer(IK) :: k1
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: rhobeg
+real(RP) :: rhosq
+real(RP) :: temp
 
-integer(IK) :: ih, ip, iq, k0, k1
-real(RP) :: rhobeg, rhosq, temp
-
+! Sizes
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
@@ -406,5 +427,6 @@ if (DEBUGGING) then
 end if
 
 end subroutine initl
+
 
 end module initialize_mod
