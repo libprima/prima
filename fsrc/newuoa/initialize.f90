@@ -1,6 +1,6 @@
 module initialize_mod
 !--------------------------------------------------------------------------------------------------!
-! This module contains subroutines for initializing FVAL, XBASE, XPT, GQ, HQ, PQ, IDZ, ZMAT, BMAT.
+! This module performs the initialization of NEWUOA, described in Section 3 of the NEWUOA paper.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
 !
@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 08, 2022 AM07:05:34
+! Last Modified: Thursday, June 09, 2022 PM01:44:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhist, fval, xbase, &
     & xhist, xpt, info)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine does the initialization regarding the interpolation points & their function values
+! This subroutine does the initialization about the interpolation points & their function values.
 !
 ! N.B.:
 ! 1. Remark on IJ:

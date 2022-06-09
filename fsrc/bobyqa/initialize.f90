@@ -1,6 +1,6 @@
 module initialize_mod
 !--------------------------------------------------------------------------------------------------!
-! This module performs the initialization of BOBYQA.
+! This module performs the initialization of BOBYQA, described in Section 2 of the BOBYQA paper.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 07, 2022 PM06:27:24
+! Last Modified: Thursday, June 09, 2022 PM01:57:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x0, ij, kopt, nf, fhist, fval, &
     & sl, su, xbase, xhist, xpt, info)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine does the initialization regarding the interpolation points & their function values
+! This subroutine does the initialization about the interpolation points & their function values.
 !
 ! N.B.:
 ! 1. Remark on IJ:
@@ -108,8 +108,8 @@ if (DEBUGGING) then
     call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
     call assert(size(x0) == n .and. all(is_finite(x0)), 'SIZE(X0) == N, X0 is finite', srname)
-    call assert(all(x0 >= xl .and. (x0 <= xl .or. x0 >= xl + rhobeg)), 'X0 == XL or X0 >= XL + RHOBEG', solver)
-    call assert(all(x0 <= xu .and. (x0 >= xu .or. x0 <= xu - rhobeg)), 'X0 == XU or X0 >= XU - RHOBEG', solver)
+    call assert(all(x0 >= xl .and. (x0 <= xl .or. x0 >= xl + rhobeg)), 'X0 == XL or X0 >= XL + RHOBEG', srname)
+    call assert(all(x0 <= xu .and. (x0 >= xu .or. x0 <= xu - rhobeg)), 'X0 == XU or X0 >= XU - RHOBEG', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
