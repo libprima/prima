@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 08, 2022 AM11:14:56
+! Last Modified: Thursday, June 09, 2022 PM12:03:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,7 +53,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, DE
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: initialize_mod, only : initalize
+use, non_intrinsic :: initialize_mod, only : initxf, initq, initl
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
@@ -116,7 +116,7 @@ real(RP) :: ddknew, delta, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score
 &        dnorm, errtol, estim, crvmin, fopt,&
 &        fsave, ratio, rho, sixthm, summ, &
 &        trtol, vmax,  &
-&        qred, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
+&        qred, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1), fval((size(x) + 1) * (size(x) + 2) / 2)
 integer(IK) :: k, knew, kopt, ksave, subinfo
 logical :: tr_success, shortd, geo_step, improve_geo, reduce_rho
 
@@ -151,9 +151,9 @@ f = ieeenan()
 ! Calculation starts !
 !====================!
 
-call initalize(calfun, iprint, maxfun, ftarget, rhobeg, x, kopt, nf, fhist, fopt, xbase, &
-    & xhist, xpt, pq, pl, subinfo)
+call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
+fopt = fval(kopt)
 x = xbase + xopt
 f = fopt
 
@@ -162,6 +162,9 @@ if (subinfo /= INFO_DFT) then
     call rangehist(nf, xhist, fhist)
     return
 end if
+
+call initq(fval, xpt, pq)
+call initl(xpt, pl)
 
 ! Set parameters to begin the iterations for the current RHO.
 sixthm = ZERO

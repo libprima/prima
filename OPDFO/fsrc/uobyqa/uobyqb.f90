@@ -13,7 +13,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM09:33:19
+! Last Modified: Thursday, June 09, 2022 AM09:04:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -318,7 +318,8 @@ if (.not. to_return) then
         temp = ONE / (xw(ip) * xw(iq))
         tempa = f - fbase - xw(ip) * pq(ip) - xw(iq) * pq(iq)
         ! N.B.: D(2) is accessed by D(IQ) even if N = 1.
-        pq(ih) = (tempa - HALF * rhosq * (d(ip) + d(iq))) * temp
+        !pq(ih) = (tempa - HALF * rhosq * (d(ip) + d(iq))) * temp
+        pq(ih) = (tempa - HALF * rhosq * (d(ip) + d(iq))) / (xw(ip) * xw(iq))
         pl(1, ih) = temp
         iw = ip + ip
         if (xw(ip) < ZERO) iw = iw + 1
