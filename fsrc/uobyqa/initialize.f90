@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Thursday, June 09, 2022 PM04:06:24
+! Last Modified: Thursday, June 09, 2022 PM11:25:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -96,8 +96,6 @@ if (DEBUGGING) then
 end if
 
 !====================!
-
-!====================!
 ! Calculation starts !
 !====================!
 
@@ -111,7 +109,7 @@ xbase = x0
 ! EVALUATED is a boolean array with EVALUATED(I) indicating whether the function value of the I-th
 ! interpolation point has been evaluated. We need it for a portable counting of the number of
 ! function evaluations, especially if the loop is conducted asynchronously. However, the loop here
-! is not fully parallelizable if NPT>2N+1, as the definition XPT(;, 2N+2:end) involves FVAL(1:2N+1).
+! is not fully parallelizable if NPT>2N+1, as the definition XPT(:, 2N+2:end) involves FVAL(1:2N+1).
 evaluated = .false.
 
 ! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
@@ -120,7 +118,7 @@ fval = HUGENUM
 
 ! Set XPT(:, 1 : 2*N+1) and FVAL(:, 1 : 2*N+1).
 xpt = ZERO
-kk = linspace(2_IK, 2_IK * n, n); 
+kk = linspace(2_IK, 2_IK * n, n)
 xpt(:, kk) = rhobeg * eye(n)
 do k = 1, 2_IK * n + 1_IK
     if (k >= 3 .and. modulo(k, 2_IK) == 1) then
@@ -148,7 +146,6 @@ end do
 if (info == INFO_DFT) then
     xw = -rhobeg
     xw(trueloc(fval(kk) < fval(1))) = rhobeg
-
     ip = 0
     iq = 2
     do k = 2_IK * n + 2_IK, npt
@@ -263,17 +260,15 @@ do k = 1, n
 end do
 
 ! Form the off-diagonal second derivatives of the initial quadratic model.
-ih = n + 1_IK
 ip = 0
 iq = 2
 do k = 2_IK * n + 2_IK, npt
     ip = ip + 1_IK
     if (ip == iq) then
-        ih = ih + 1_IK
         ip = 1
         iq = iq + 1_IK
     end if
-    ih = ih + 1_IK
+    ih = n + (iq - 1_IK) * iq / 2_IK + ip
     pq(ih) = (fval(k) - fbase - xpt(ip, k) * pq(ip) - xpt(iq, k) * pq(iq) &
         & - HALF * rhosq * (deriv(ip) + deriv(iq))) / (xpt(ip, k) * xpt(iq, k))
 end do
@@ -367,31 +362,29 @@ do k = 1, n
 end do
 
 ! Form the off-diagonal second derivatives of the Lagrange functions.
-ih = n + 1_IK
 ip = 0
 iq = 2
 do k = 2_IK * n + 2_IK, npt
     ip = ip + 1_IK
     if (ip == iq) then
-        ih = ih + 1_IK
         ip = 1
         iq = iq + 1_IK
     end if
-    ih = ih + 1_IK
+    ih = n + (iq - 1_IK) * iq / 2_IK + ip
     temp = ONE / (xpt(ip, k) * xpt(iq, k))
     pl(ih, 1) = temp
     pl(ih, k) = temp
 
     if (xpt(ip, k) < 0) then
-        pl(ih, 2_IK * ip + 1_IK) = -temp
+        pl(ih, 2 * ip + 1) = -temp
     else
-        pl(ih, 2_IK * ip) = -temp
+        pl(ih, 2 * ip) = -temp
     end if
 
     if (xpt(iq, k) < 0) then
-        pl(ih, 2_IK * iq + 1_IK) = -temp
+        pl(ih, 2 * iq + 1) = -temp
     else
-        pl(ih, 2_IK * iq) = -temp
+        pl(ih, 2 * iq) = -temp
     end if
 end do
 
