@@ -113,7 +113,7 @@ else
         blacklist = [blacklist, {'PENALTY2'}]; % Takes too long to solve
         blacklist = [blacklist, {'BA-L1LS'}]; % Takes too long to solve
         blacklist = [blacklist, {'ARGLINC'}]; % Takes too long to solve
-        blacklist = [blacklist, {'HYDC20LS'}]; % Takes too long to solve
+        blacklist = [blacklist, {'HYDC20LS', 'BA-L1SPLS'}]; % Takes too long to solve
     case {'bobyqa', 'bobyqan'}
         blacklist = [blacklist, {'PALMER3A', 'HS4'}];  % bobyqaN returns an fx that does not match x; should test it after the modernization.
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
