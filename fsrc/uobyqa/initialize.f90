@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Thursday, June 09, 2022 PM02:21:36
+! Last Modified: Thursday, June 09, 2022 PM04:06:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -353,17 +353,17 @@ do k = 1, n
     k1 = 2_IK * k + 1_IK
     ih = n + k * (k + 1_IK) / 2_IK
     if (xpt(k, k1) > 0) then  ! XPT(K, K1) = 2*RHO
-        pl(1, k) = -1.5_RP / rhobeg
-        pl(1, ih) = ONE / rhosq
-        pl(k0, k) = TWO / rhobeg
-        pl(k0, ih) = -TWO / rhosq
+        pl(k, 1) = -1.5_RP / rhobeg
+        pl(ih, 1) = ONE / rhosq
+        pl(k, k0) = TWO / rhobeg
+        pl(ih, k0) = -TWO / rhosq
     else  ! XPT(K, K1) = -RHO
-        pl(1, ih) = -TWO / rhosq
-        pl(k0, k) = HALF / rhobeg
-        pl(k0, ih) = ONE / rhosq
+        pl(ih, 1) = -TWO / rhosq
+        pl(k, k0) = HALF / rhobeg
+        pl(ih, k0) = ONE / rhosq
     end if
-    pl(k1, k) = -HALF / rhobeg
-    pl(k1, ih) = ONE / rhosq
+    pl(k, k1) = -HALF / rhobeg
+    pl(ih, k1) = ONE / rhosq
 end do
 
 ! Form the off-diagonal second derivatives of the Lagrange functions.
@@ -379,19 +379,19 @@ do k = 2_IK * n + 2_IK, npt
     end if
     ih = ih + 1_IK
     temp = ONE / (xpt(ip, k) * xpt(iq, k))
-    pl(1, ih) = temp
-    pl(k, ih) = temp
+    pl(ih, 1) = temp
+    pl(ih, k) = temp
 
     if (xpt(ip, k) < 0) then
-        pl(2_IK * ip + 1_IK, ih) = -temp
+        pl(ih, 2_IK * ip + 1_IK) = -temp
     else
-        pl(2_IK * ip, ih) = -temp
+        pl(ih, 2_IK * ip) = -temp
     end if
 
     if (xpt(iq, k) < 0) then
-        pl(2_IK * iq + 1_IK, ih) = -temp
+        pl(ih, 2_IK * iq + 1_IK) = -temp
     else
-        pl(2_IK * iq, ih) = -temp
+        pl(ih, 2_IK * iq) = -temp
     end if
 end do
 
@@ -409,7 +409,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(pl, 1) == npt .and. size(pl, 2) == npt - 1, 'SIZE(PL) == [NPT - 1, NPT]', srname)
+    call assert(size(pl, 1) == npt - 1 .and. size(pl, 2) == npt, 'SIZE(PL) == [NPT - 1, NPT]', srname)
 end if
 
 end subroutine initl

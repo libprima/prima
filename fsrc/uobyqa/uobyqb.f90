@@ -104,19 +104,18 @@ integer(IK) :: maxxhist
 real(RP) :: d(size(x))
 real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x))
-real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2, (size(x) + 1) * (size(x) + 2) / 2 - 1)
-real(RP) :: pq(size(pl, 2))
-real(RP) :: vlag(size(pl, 1))
+real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2 - 1, (size(x) + 1) * (size(x) + 2) / 2)
+real(RP) :: pq(size(pl, 1))
+real(RP) :: vlag(size(pl, 2))
 real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
-real(RP) :: xpt(size(x), size(pl, 1))
-!real(RP) :: xpt(size(x) + 1, size(pl, 1))  ! XPT(2, :) is accessed when N = 1
-real(RP) :: ddknew, delta, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score(size(pl, 1)),    &
+real(RP) :: xpt(size(x), size(pl, 2))
+real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, errtol, estim, crvmin, fopt,&
 &        fsave, ratio, rho, sixthm, summ, &
 &        trtol, vmax,  &
-&        qred, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1), fval((size(x) + 1) * (size(x) + 2) / 2)
+&        qred, wmult, plknew(size(pl, 1)), fval(size(pl, 2))
 integer(IK) :: k, knew, kopt, ksave, subinfo
 logical :: tr_success, shortd, geo_step, improve_geo, reduce_rho
 
@@ -321,11 +320,11 @@ do while (.true.)
             ! the Lagrange functions and the quadratic model.
             xpt(:, knew) = xnew
             ! It can happen that VLAG(KNEW) = 0 due to rounding.
-            pl(knew, :) = pl(knew, :) / vlag(knew)
-            plknew = pl(knew, :)
+            pl(:, knew) = pl(:, knew) / vlag(knew)
+            plknew = pl(:, knew)
             pq = pq + diff * plknew
-            pl = pl - outprod(vlag, plknew)
-            pl(knew, :) = plknew
+            pl = pl - outprod(plknew, vlag)
+            pl(:, knew) = plknew
 
             ! Update KOPT if F is the least calculated value of the objective function. Then branch
             ! for another trust region calculation. The case KSAVE>0 indicates that a model step has
@@ -359,8 +358,8 @@ do while (.true.)
             ! function at the centre of the trust region.
             knew = int(maxloc(distsq, dim=1), IK)
             !!MATLAB: [~, knew] = max(distsq(1:npt));
-            g = pl(knew, 1:n) + smat_mul_vec(pl(knew, n + 1:npt - 1), xopt)
-            h = vec2smat(pl(knew, n + 1:npt - 1))
+            g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
+            h = vec2smat(pl(n + 1:npt - 1, knew))
             if (is_nan(sum(abs(g)) + sum(abs(h)))) then
                 info = NAN_MODEL
                 reduce_rho = .true.
@@ -400,7 +399,7 @@ do while (.true.)
         xpt = xpt - spread(xopt, dim=2, ncopies=npt)
         pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)  ! Model gradient
         do k = 1, npt
-            pl(k, 1:n) = pl(k, 1:n) + smat_mul_vec(pl(k, n + 1:npt - 1), xopt)  ! Lagrange fun. gradient
+            pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)  ! Lagrange fun. gradient
         end do
 
 

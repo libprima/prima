@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 26, 2022 AM12:47:38
+! Last Modified: Thursday, June 09, 2022 PM04:02:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1899,13 +1899,13 @@ function calvlag_qint(pl, d, xopt, kopt) result(vlag)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates VLAG = [LFUNC_1(XOPT+D), ..., LFUNC_NPT(XOPT+D)] for a quadratic
 ! interpolation problem, where LFUNC_K is the K-the Lagrange function, and XOPT is the KOPT-th
-! interpolation node. The coefficients of LFUNC_K are provided by PL(K, :) so that
+! interpolation node. The coefficients of LFUNC_K are provided by PL(:, K) so that
 ! LFUNC_K(Y) = <Y, G> + <HESSIAN*Y, Y>
-! where G is PL(K, 1:N), and HESSIAN is the symmetric matrix whose upper triangular part is stored in
-! PL(K, N+1:N*(N+3)/2) column by column. Note the following:
+! where G is PL(1:N, K), and HESSIAN is the symmetric matrix whose upper triangular part is stored
+! in PL(N+1:N*(N+3)/2, K) column by column. Note the following:
 ! 1. For K /= KOPT, LFUNC_K(XOPT + D) = LFUNC_K(XOPT + D) - LFUNC_K(XOPT) as LFUNC_K(XOPT) = 0.
 ! 2. When K = KOPT, LFUNC_K(XOPT + D) = LFUNC_K(XOPT + D) - LFUNC_K(XOPT) + 1 as LFUNC_K(XOPT) = 1.
-! Therefore, the function first calculates VLAG(K) = QUADINC_GHV(PL(K, :), D, XOPT) for each K, and
+! Therefore, the function first calculates VLAG(K) = QUADINC_GHV(PL(:, K), D, XOPT) for each K, and
 ! then increase VLAG(KOPT) by 1.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, ONE, DEBUGGING
@@ -1918,14 +1918,14 @@ real(RP), intent(in) :: d(:)
 real(RP), intent(in) :: xopt(:)
 integer(IK), intent(in) :: kopt
 ! Outputs
-real(RP) :: vlag(size(pl, 1))
+real(RP) :: vlag(size(pl, 2))
 ! Local variables
 character(len=*), parameter :: srname = 'CALVLAG_QINT'
 integer(IK) :: ih
 integer(IK) :: n
 integer(IK) :: j
 real(RP) :: s(size(xopt))
-real(RP) :: w(size(pl, 2))
+real(RP) :: w(size(pl, 1))
 
 ! Sizes
 n = int(size(xopt), kind(n))
@@ -1933,8 +1933,8 @@ n = int(size(xopt), kind(n))
 ! Preconditions
 if (DEBUGGING) then
     call assert(size(d) == n, 'SIZE(D) = N', srname)
-    call assert(size(pl, 1) == (n + 1) * (n + 2) / 2 .and. size(pl, 2) == size(pl, 1) - 1, &
-        & 'SIZE(PL) = [(N+1)*(N+2)/2,  N*(N+3)/2]', srname)
+    call assert(size(pl, 2) == (n + 1) * (n + 2) / 2 .and. size(pl, 1) == size(pl, 2) - 1, &
+        & 'SIZE(PL) = [N*(N+3)/2, (N+1)*(N+2)/2]', srname)
 end if
 
 !====================!
@@ -1950,7 +1950,7 @@ do j = 1, n
     w(ih + j) = HALF * w(ih + j)
 end do
 
-vlag = matprod(pl, w)  ! VLAG(K) = QUADINC_GHV(PL(K, :), D, XOPT)
+vlag = matprod(w, pl)  ! VLAG(K) = QUADINC_GHV(PL(:, K), D, XOPT)
 vlag(kopt) = vlag(kopt) + ONE
 
 !====================!
