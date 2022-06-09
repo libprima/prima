@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Friday, June 10, 2022 AM12:06:35
+! Last Modified: Friday, June 10, 2022 AM07:33:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -151,12 +151,12 @@ if (info == INFO_DFT) then
     ip = 0
     iq = 2
     do k = 2_IK * n + 2_IK, npt
-        ! Pick the shift from XBASE to the next initial interpolation point that provides
-        ! off-diagonal second derivatives.
+        ! Pick the shift from XBASE to the next initial interpolation point that provides the
+        ! off-diagonal second derivatives of the quadratic interpolant.
         ip = ip + 1
         if (ip == iq) then
-            ip = 1
             iq = iq + 1_IK
+            ip = 1
         end if
         xpt([ip, iq], k) = xw([ip, iq])
         x = xpt(:, k) + xbase
@@ -263,6 +263,7 @@ fbase = fval(1)
 do k = 1, n
     k0 = 2_IK * k
     k1 = 2_IK * k + 1_IK
+    ! Find the (K, K) element of the Hessian.
     ih = n + k * (k + 1_IK) / 2_IK
     if (xpt(k, k1) > 0) then  ! XPT(K, K1) = 2*RHO
         deriv(k) = (fbase + fval(k1) - TWO * fval(k0)) / rhosq
@@ -280,9 +281,10 @@ iq = 2
 do k = 2_IK * n + 2_IK, npt
     ip = ip + 1_IK
     if (ip == iq) then
-        ip = 1
         iq = iq + 1_IK
+        ip = 1
     end if
+    ! Find the (IQ, IP) entry of the Hessian.
     ih = n + (iq - 1_IK) * iq / 2_IK + ip
     pq(ih) = (fval(k) - fbase - xpt(ip, k) * pq(ip) - xpt(iq, k) * pq(iq) &
         & - HALF * rhosq * (deriv(ip) + deriv(iq))) / (xpt(ip, k) * xpt(iq, k))
@@ -312,7 +314,7 @@ subroutine initl(xpt, pl, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine initializes the Lagrange functions. The coefficients of the K-th Lagrange function
 ! is stored in PL(:, K), with PL(1 : N, K) containing the gradient of the function at XBASE, and
-! PL(N+1 : NPT-1, K) containin the upper triangular part of the Hessian, column by column.
+! PL(N+1 : NPT-1, K) containing the upper triangular part of the Hessian, column by column.
 !--------------------------------------------------------------------------------------------------!
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
@@ -367,7 +369,7 @@ pl = ZERO
 do k = 1, n
     k0 = 2_IK * k
     k1 = 2_IK * k + 1_IK
-    ih = n + k * (k + 1_IK) / 2_IK
+    ih = n + k * (k + 1_IK) / 2_IK  ! The (K, K) entry of the Hessian
     if (xpt(k, k1) > 0) then  ! XPT(K, K1) = 2*RHO
         pl(k, 1) = -1.5_RP / rhobeg
         pl(ih, 1) = ONE / rhosq
@@ -388,11 +390,14 @@ iq = 2
 do k = 2_IK * n + 2_IK, npt
     ip = ip + 1_IK
     if (ip == iq) then
-        ip = 1
         iq = iq + 1_IK
+        ip = 1
     end if
-    ih = n + (iq - 1_IK) * iq / 2_IK + ip
+
+    ! Find the (IQ, IP) entry of the Hessian.
     temp = ONE / (xpt(ip, k) * xpt(iq, k))
+    ih = n + (iq - 1_IK) * iq / 2_IK + ip
+
     pl(ih, 1) = temp
     pl(ih, k) = temp
 
