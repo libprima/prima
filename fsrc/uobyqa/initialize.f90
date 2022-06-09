@@ -1,14 +1,14 @@
 module initialize_mod
 !--------------------------------------------------------------------------------------------------!
-! This module performs the initialization of UOBYQA.
+! This module performs the initialization of UOBYQA, described in Section 4 of the UOBYQA paper.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the UOBYQA paper.
 !
 ! Started: July 2020
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Thursday, June 09, 2022 PM12:15:03
+! Last Modified: Thursday, June 09, 2022 PM02:21:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,6 +21,9 @@ contains
 
 subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, kopt, nf, fhist, fval, xbase, &
     & xhist, xpt, info)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine does the initialization about the interpolation points & their function values.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
@@ -28,6 +31,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
+use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
 use, non_intrinsic :: info_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : eye, trueloc, linspace
 use, non_intrinsic :: output_mod, only : fmsg
@@ -68,7 +72,7 @@ real(RP) :: f
 real(RP) :: x(size(x0))
 
 integer(IK) :: ip, iq, kk(size(x0))
-real(RP) :: rho, xw(size(x0))
+real(RP) :: xw(size(x0))
 
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
@@ -76,7 +80,22 @@ maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = max(maxxhist, maxfhist)
 
-rho = rhobeg
+! Preconditions
+if (DEBUGGING) then
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(n >= 1 .and. npt == (n + 1) * (n + 2) / 2, 'N >= 1, NPT == (N+1)*(N+2)/2', srname)
+    call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', srname)
+    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(rhobeg > 0, 'RHOBEG > 0', srname)
+    call assert(size(x0) == n .and. all(is_finite(x0)), 'SIZE(X0) == N, X0 is finite', srname)
+    call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
+end if
+
+!====================!
 
 !====================!
 ! Calculation starts !
@@ -102,13 +121,13 @@ fval = HUGENUM
 ! Set XPT(:, 1 : 2*N+1) and FVAL(:, 1 : 2*N+1).
 xpt = ZERO
 kk = linspace(2_IK, 2_IK * n, n); 
-xpt(:, kk) = rho * eye(n)
+xpt(:, kk) = rhobeg * eye(n)
 do k = 1, 2_IK * n + 1_IK
     if (k >= 3 .and. modulo(k, 2_IK) == 1) then
         if (fval(k - 1) < fval(1)) then
-            xpt((k - 1) / 2, k) = TWO * rho
+            xpt((k - 1) / 2, k) = TWO * rhobeg
         else
-            xpt((k - 1) / 2, k) = -rho
+            xpt((k - 1) / 2, k) = -rhobeg
         end if
     end if
     x = xpt(:, k) + xbase
@@ -126,9 +145,9 @@ do k = 1, 2_IK * n + 1_IK
     end if
 end do
 
-if (info == INFO_DFT .and. n > 1) then
-    xw = -rho
-    xw(trueloc(fval(kk) < fval(1))) = rho
+if (info == INFO_DFT) then
+    xw = -rhobeg
+    xw(trueloc(fval(kk) < fval(1))) = rhobeg
 
     ip = 0
     iq = 2
@@ -138,7 +157,7 @@ if (info == INFO_DFT .and. n > 1) then
         ip = ip + 1
         if (ip == iq) then
             ip = 1
-            iq = iq + 1
+            iq = iq + 1_IK
         end if
         xpt([ip, iq], k) = xw([ip, iq])
         x = xpt(:, k) + xbase
@@ -161,15 +180,34 @@ nf = int(count(evaluated), kind(nf))  !!MATLAB: nf = sum(evaluated);
 kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 !!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first')
 
+! Postconditions
+if (DEBUGGING) then
+    call assert(nf <= npt, 'NF <= NPT', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(fval) == npt .and. .not. any(evaluated .and. (is_nan(fval) .or. is_posinf(fval))), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
+    call assert(.not. any(fval < fval(kopt) .and. evaluated), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
+    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+end if
+
 end subroutine initxf
 
 
 subroutine initq(fval, xpt, pq, info)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine initializes the quadratic model, whose coefficients are stored in PQ, where
+! PQ(1 : N) containing the gradient of the model at XBASE, and PQ(N+1 : NPT-1) containing the upper
+! triangular part of the Hessian, column by column.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_MODEL
 
 implicit none
@@ -186,15 +224,27 @@ real(RP), intent(out) :: pq(:)  ! PQ((N + 1) * (N + 2) / 2 - 1)
 character(len=*), parameter :: srname = 'INITL'
 integer(IK) :: n
 integer(IK) :: npt
-
 integer(IK) :: ih, ip, iq, k0, k1, k
-real(RP) :: rho, rhosq, fbase, deriv(size(xpt, 1))
+real(RP) :: rhobeg, rhosq, fbase, deriv(size(xpt, 1))
 
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
-rho = maxval(abs(xpt(:, 2)))
-rhosq = rho**2
+! Postconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt == (n + 1) * (n + 2) / 2, 'N >= 1, NPT == (N+1)*(N+2)/2', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(fval) == npt .and. .not. any((is_nan(fval) .or. is_posinf(fval))), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+rhobeg = maxval(abs(xpt(:, 2)))
+rhosq = rhobeg**2
 fbase = fval(1)
 
 ! Form the gradient and diagonal second derivatives of the quadratic model.
@@ -204,31 +254,29 @@ do k = 1, n
     ih = n + k * (k + 1_IK) / 2_IK
     if (xpt(k, k1) > 0) then  ! XPT(K, K1) = 2*RHO
         deriv(k) = (fbase + fval(k1) - TWO * fval(k0)) / rhosq
-        pq(k) = (4.0_RP * fval(k0) - 3.0_RP * fbase - fval(k1)) / (TWO * rho)
+        pq(k) = (4.0_RP * fval(k0) - 3.0_RP * fbase - fval(k1)) / (TWO * rhobeg)
     else  ! XPT(K, K1) = -RHO
         deriv(k) = (fval(k0) + fval(k1) - TWO * fbase) / rhosq
-        pq(k) = (fval(k0) - fval(k1)) / (TWO * rho)
+        pq(k) = (fval(k0) - fval(k1)) / (TWO * rhobeg)
     end if
     pq(ih) = deriv(k)
 end do
 
 ! Form the off-diagonal second derivatives of the initial quadratic model.
-if (n > 1) then
-    ih = n + 1
-    ip = 0
-    iq = 2
-    do k = 2_IK * n + 2_IK, npt
-        ip = ip + 1
-        if (ip == iq) then
-            ih = ih + 1
-            ip = 1
-            iq = iq + 1
-        end if
-        ih = ih + 1
-        pq(ih) = (fval(k) - fbase - xpt(ip, k) * pq(ip) - xpt(iq, k) * pq(iq) &
-            & - HALF * rhosq * (deriv(ip) + deriv(iq))) / (xpt(ip, k) * xpt(iq, k))
-    end do
-end if
+ih = n + 1_IK
+ip = 0
+iq = 2
+do k = 2_IK * n + 2_IK, npt
+    ip = ip + 1_IK
+    if (ip == iq) then
+        ih = ih + 1_IK
+        ip = 1
+        iq = iq + 1_IK
+    end if
+    ih = ih + 1_IK
+    pq(ih) = (fval(k) - fbase - xpt(ip, k) * pq(ip) - xpt(iq, k) * pq(iq) &
+        & - HALF * rhosq * (deriv(ip) + deriv(iq))) / (xpt(ip, k) * xpt(iq, k))
+end do
 
 if (present(info)) then
     if (is_nan(sum(abs(pq)))) then
@@ -238,15 +286,28 @@ if (present(info)) then
     end if
 end if
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(pq) == npt - 1, 'SIZE(PQ) == NPT - 1', srname)
+end if
+
 end subroutine initq
 
 
 subroutine initl(xpt, pl, info)
-
+!--------------------------------------------------------------------------------------------------!
+! This subroutine initializes the Lagrange functions. The coefficients of the K-th Lagrange function
+! is stored in PL(:, K), with PL(1 : N, K) containing the gradient of the function at XBASE, and
+! PL(N+1 : NPT-1, K) containin the upper triangular part of the Hessian, column by column.
+!--------------------------------------------------------------------------------------------------!
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_MODEL
 
 implicit none
@@ -256,7 +317,7 @@ real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! Outputs
 integer(IK), intent(out), optional :: info
-real(RP), intent(out) :: pl(:, :)  ! PL((N + 1) * (N + 2) / 2, (N + 1) * (N + 2) / 2 - 1)
+real(RP), intent(out) :: pl(:, :)  ! PL((N + 1) * (N + 2) / 2 - 1, (N + 1) * (N + 2) / 2)
 
 ! Local variables
 character(len=*), parameter :: srname = 'INITL'
@@ -265,13 +326,24 @@ integer(IK) :: n
 integer(IK) :: npt
 
 integer(IK) :: ih, ip, iq, k0, k1
-real(RP) :: rho, rhosq, temp
+real(RP) :: rhobeg, rhosq, temp
 
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
-rho = maxval(abs(xpt(:, 2)))
-rhosq = rho**2
+! Postconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt == (n + 1) * (n + 2) / 2, 'N >= 1, NPT == (N+1)*(N+2)/2', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+rhobeg = maxval(abs(xpt(:, 2)))
+rhosq = rhobeg**2
 
 pl = ZERO
 
@@ -281,49 +353,47 @@ do k = 1, n
     k1 = 2_IK * k + 1_IK
     ih = n + k * (k + 1_IK) / 2_IK
     if (xpt(k, k1) > 0) then  ! XPT(K, K1) = 2*RHO
-        pl(1, k) = -1.5_RP / rho
+        pl(1, k) = -1.5_RP / rhobeg
         pl(1, ih) = ONE / rhosq
-        pl(k0, k) = TWO / rho
+        pl(k0, k) = TWO / rhobeg
         pl(k0, ih) = -TWO / rhosq
     else  ! XPT(K, K1) = -RHO
         pl(1, ih) = -TWO / rhosq
-        pl(k0, k) = HALF / rho
+        pl(k0, k) = HALF / rhobeg
         pl(k0, ih) = ONE / rhosq
     end if
-    pl(k1, k) = -HALF / rho
+    pl(k1, k) = -HALF / rhobeg
     pl(k1, ih) = ONE / rhosq
 end do
 
 ! Form the off-diagonal second derivatives of the Lagrange functions.
-if (n > 1) then
-    ih = n + 1
-    ip = 0
-    iq = 2
-    do k = 2_IK * n + 2_IK, npt
-        ip = ip + 1
-        if (ip == iq) then
-            ih = ih + 1
-            ip = 1
-            iq = iq + 1
-        end if
-        ih = ih + 1
-        temp = ONE / (xpt(ip, k) * xpt(iq, k))
-        pl(1, ih) = temp
-        pl(k, ih) = temp
+ih = n + 1_IK
+ip = 0
+iq = 2
+do k = 2_IK * n + 2_IK, npt
+    ip = ip + 1_IK
+    if (ip == iq) then
+        ih = ih + 1_IK
+        ip = 1
+        iq = iq + 1_IK
+    end if
+    ih = ih + 1_IK
+    temp = ONE / (xpt(ip, k) * xpt(iq, k))
+    pl(1, ih) = temp
+    pl(k, ih) = temp
 
-        if (xpt(ip, k) < 0) then
-            pl(2_IK * ip + 1_IK, ih) = -temp
-        else
-            pl(2_IK * ip, ih) = -temp
-        end if
+    if (xpt(ip, k) < 0) then
+        pl(2_IK * ip + 1_IK, ih) = -temp
+    else
+        pl(2_IK * ip, ih) = -temp
+    end if
 
-        if (xpt(iq, k) < 0) then
-            pl(2_IK * iq + 1_IK, ih) = -temp
-        else
-            pl(2_IK * iq, ih) = -temp
-        end if
-    end do
-end if
+    if (xpt(iq, k) < 0) then
+        pl(2_IK * iq + 1_IK, ih) = -temp
+    else
+        pl(2_IK * iq, ih) = -temp
+    end if
+end do
 
 if (present(info)) then
     if (is_nan(sum(abs(pl)))) then
@@ -331,6 +401,15 @@ if (present(info)) then
     else
         info = INFO_DFT
     end if
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(pl, 1) == npt .and. size(pl, 2) == npt - 1, 'SIZE(PL) == [NPT - 1, NPT]', srname)
 end if
 
 end subroutine initl
