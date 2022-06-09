@@ -229,7 +229,7 @@ end do
 ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
 !!MATLAB: ij(:, 1) = floor((n : npt - n - 2) / n);
 ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
-!!MATLAB: ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1
+!!MATLAB: ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1;
 ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
 ! The next line ensures IJ(:, 1) > IJ(:, 2).
 ij = sort(ij, 2, 'descend')
