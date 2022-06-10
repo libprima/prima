@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Thursday, June 09, 2022 PM01:44:29
+! Last Modified: Friday, June 10, 2022 PM09:54:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,8 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhi
 ! let IJ = IJ(K, 1) - N - 1; define J using IJ(K, 2) similarly. Then all the entries of XPT(:, K)
 ! are zero except that the I and J entries are RHOBEG or -RHOBEG. Indeed, XPT(I, K) is RHOBEG if
 ! IJ(K, 1) <= N + 1 and -RHOBEG otherwise; XPT(J, K) is similar. Consequently, the Hessian of the
-! quadratic model will get a possibly nonzero (I, J) entry.
+! quadratic model will get a possibly nonzero (I, J) entry. In the code, IJ is defined according to
+! Powell's original code as well as Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
 ! 2. At return,
 ! INFO = INFO_DFT: initialization finishes normally
 ! INFO = FTARGET_ACHIEVED: return because F <= FTARGET
@@ -162,17 +163,22 @@ end do
 
 ! Set IJ.
 ! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(1 : NPT - (2*N+1), :) to ANY permutation
-! of {(I, J) : 1 <= J < I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first
-! NPT - (2*N + 1) elements of such a permutation. Powell took the following one.
+! of {(I, J) : 1 <= J < I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
+! elements of such a permutation. The following IJ is defined according to Powell's code. See also
+! Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
 ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
-!!MATLAB: ij(:, 1) = floor((n : npt - n - 2) / n);
 ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
-!!MATLAB: ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1
 ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
-! The next line ensures IJ(:, 1) > IJ(:, 2).
-ij = sort(ij, 2, 'descend')
+ij = sort(ij, 2, 'descend')  ! Ensure IJ(:, 1) > IJ(:, 2).
+!!MATLAB: (N.B.: Fortran MODULO == MATLAB `mod`, Fortran MOD == MATLAB `rem`)
+!!ij(:, 1) = floor((n : npt - n - 2) / n);
+!!ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1;
+!!ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1, n) + 1;  ! mod(k-1,n) + 1 = k-n for k in [n+1,2n]
+!!ij = sort(ij, 2, 'descend');  ! Ensure ij(:, 1) > ij(:, 2).
+
 ! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
 ij = ij + 1_IK
+
 ! Further revise IJ according to FVAL(2 : 2*N + 1).
 ! N.B.:
 ! 1. For each K below, the following lines revises IJ(K, :) as follows:
@@ -382,7 +388,7 @@ subroutine inith(ij, xpt, idz, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_MODEL
@@ -405,6 +411,8 @@ character(len=*), parameter :: srname = 'INITH'
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: recip
+real(RP) :: reciq
 real(RP) :: rhobeg
 real(RP) :: rhosq
 
@@ -430,46 +438,50 @@ end if
 ! Calculation starts !
 !====================!
 
-! Set IDZ = 1. It will not be changed in the following.
-idz = 1_IK
-
 ! Some values to be used for setting BMAT and ZMAT.
 rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
 rhosq = rhobeg**2
 
 ! Set BMAT.
+recip = ONE / rhobeg
+reciq = HALF / rhobeg
 bmat = ZERO
 if (npt <= 2 * n + 1) then
     ! Set BMAT(1 : NPT-N-1, :)
-    bmat(1:npt - n - 1, 2:npt - n) = (HALF / rhobeg) * eye(npt - n - 1_IK)
-    bmat(1:npt - n - 1, n + 2:npt) = -(HALF / rhobeg) * eye(npt - n - 1_IK)
+    bmat(1:npt - n - 1, 2:npt - n) = reciq * eye(npt - n - 1_IK)
+    bmat(1:npt - n - 1, n + 2:npt) = -reciq * eye(npt - n - 1_IK)
     ! Set BMAT(NPT-N : N, :)
-    bmat(npt - n:n, 1) = -ONE / rhobeg
-    bmat(npt - n:n, npt - n + 1:n + 1) = (ONE / rhobeg) * eye(2_IK * n - npt + 1_IK)
+    bmat(npt - n:n, 1) = -recip
+    bmat(npt - n:n, npt - n + 1:n + 1) = recip * eye(2_IK * n - npt + 1_IK)
     bmat(npt - n:n, 2 * npt - n:npt + n) = -(HALF * rhosq) * eye(2_IK * n - npt + 1_IK)
 else
-    bmat(:, 2:n + 1) = (HALF / rhobeg) * eye(n)
-    bmat(:, n + 2:2 * n + 1) = -(HALF / rhobeg) * eye(n)
+    bmat(:, 2:n + 1) = reciq * eye(n)
+    bmat(:, n + 2:2 * n + 1) = -reciq * eye(n)
 end if
 
 ! Set ZMAT.
+recip = ONE / rhosq
+reciq = sqrt(HALF) / rhosq
 zmat = ZERO
 if (npt <= 2 * n + 1) then
-    zmat(1, :) = -sqrt(TWO) / rhosq
-    zmat(2:npt - n, :) = (sqrt(HALF) / rhosq) * eye(npt - n - 1_IK)
-    zmat(n + 2:npt, :) = (sqrt(HALF) / rhosq) * eye(npt - n - 1_IK)
+    zmat(1, :) = -reciq - reciq
+    zmat(2:npt - n, :) = reciq * eye(npt - n - 1_IK)
+    zmat(n + 2:npt, :) = reciq * eye(npt - n - 1_IK)
 else
     ! Set ZMAT(:, 1:N).
-    zmat(1, 1:n) = -sqrt(TWO) / rhosq
-    zmat(2:n + 1, 1:n) = (sqrt(HALF) / rhosq) * eye(n)
-    zmat(n + 2:2 * n + 1, 1:n) = (sqrt(HALF) / rhosq) * eye(n)
+    zmat(1, 1:n) = -reciq - reciq
+    zmat(2:npt - n, 1:n) = reciq * eye(npt - n - 1_IK)
+    zmat(n + 2:npt, 1:n) = reciq * eye(npt - n - 1_IK)
     ! Set ZMAT(:, N+1 : NPT-N-1).
-    zmat(1, n + 1:npt - n - 1) = ONE / rhosq
-    zmat(2 * n + 2:npt, n + 1:npt - n - 1) = (ONE / rhosq) * eye(npt - 2_IK * n - 1_IK)
+    zmat(1, n + 1:npt - n - 1) = recip
+    zmat(2 * n + 2:npt, n + 1:npt - n - 1) = recip * eye(npt - 2_IK * n - 1_IK)
     do k = 1, npt - 2_IK * n - 1_IK
-        zmat(ij(k, :), k + n) = -ONE / rhosq
+        zmat(ij(k, :), k + n) = -recip
     end do
 end if
+
+! Set IDZ = 1.
+idz = 1_IK
 
 if (present(info)) then
     if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then

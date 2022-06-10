@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM09:30:09
+! Last Modified: Friday, June 10, 2022 AM08:10:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -195,29 +195,30 @@ qfac = eye(n)
 rfac = ZERO
 call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
     & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, &
-    & d, xbase, xhist, xopt, xpt, xsav, zmat)
+    & d, xbase, xhist, xopt, xpt, zmat)
 !--------------------------------------------------------------------------------------------------!
-!xopt = xpt(:, kopt)
-!fopt = fval(kopt)
-!x = xbase + xopt
-!f = fopt
+xopt = xpt(:, kopt)
+fopt = fval(kopt)
+x = xbase + xopt
+f = fopt
+xsav = x
 !--------------------------------------------------------------------------------------------------!
 
 if (is_nan(f) .or. is_posinf(f)) then
-    xopt = xpt(:, kopt)
-    fopt = fval(kopt)
-    x = xbase + xopt
-    f = fopt
+    !xopt = xpt(:, kopt)
+    !fopt = fval(kopt)
+    !x = xbase + xopt
+    !f = fopt
     call rangehist(nf, xhist, fhist, chist)
     info = NAN_INF_F
     return
 end if
 ! Note that we should NOT compare F and FTARGET, because X may not be feasible.
 if (fval(kopt) <= ftarget) then
-    xopt = xpt(:, kopt)
-    fopt = fval(kopt)
-    x = xbase + xopt
-    f = fopt
+    !xopt = xpt(:, kopt)
+    !fopt = fval(kopt)
+    !x = xbase + xopt
+    !f = fopt
     call rangehist(nf, xhist, fhist, chist)
     info = FTARGET_ACHIEVED
     return
