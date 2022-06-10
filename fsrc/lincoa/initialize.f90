@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 PM10:36:34
+! Last Modified: Friday, June 10, 2022 PM10:00:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,7 +24,7 @@ contains
 
 subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x0, b, &
     & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, &
-    & step, xbase, xhist, xopt, xpt, xsav, zmat)
+    & step, xbase, xhist, xopt, xpt, zmat)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
@@ -32,7 +32,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, sort
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul
 
@@ -76,7 +76,6 @@ real(RP), intent(out) :: xbase(:)  ! XBASE(N)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(out) :: xopt(:)  ! XOPT(N)
 real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
-real(RP), intent(out) :: xsav(:)  ! XSAV(N)  ; necessary ???
 real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
@@ -91,6 +90,7 @@ integer(IK) :: npt
 real(RP) :: x(size(x0))
 real(RP) :: bigv, feas, recip, reciq, resid(size(b)), rhosq, test
 integer(IK) :: ipt, itemp, j, jp, jpt, jsav, k, kbase, knew
+integer(IK) :: ij(max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1), 2)    ! IJ(MAX(0_IK, NPT-2*N-1_IK), 2)
 
 
 ! Sizes.
@@ -119,7 +119,7 @@ if (DEBUGGING) then
     call assert(size(step) == n, 'SIZE(STEP) == N', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
     call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
-    call assert(size(xsav) == n, 'SIZE(XSAV) == N', srname)
+    !call assert(size(xsav) == n, 'SIZE(XSAV) == N', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
     call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) = [N, N]', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
@@ -155,8 +155,6 @@ fval = ieeenan()
 !--------------------------------------------------------------------------------------------------!
 
 rhosq = rhobeg * rhobeg
-recip = ONE / rhosq
-reciq = sqrt(HALF) / rhosq
 test = 0.2_RP * rhobeg
 idz = 1
 kbase = 1
@@ -164,7 +162,7 @@ kbase = 1
 ! Set the initial elements of XPT, BMAT, and ZMAT to ZERO.
 xbase = x0
 xopt = ZERO
-xsav = xbase
+!xsav = xbase
 
 ! Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT], but they may be altered
 ! later to make a constraint violation sufficiently large.
@@ -172,38 +170,62 @@ xpt(:, 1) = ZERO
 xpt(:, 2:n + 1) = rhobeg * eye(n)
 xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZERO if it is nonempty.
 
-! Set the initial elements of BMAT and of the first min[N,NPT-N-1] columns of ZMAT.
-bmat = ZERO
-zmat = ZERO
-do j = 1, n
-    if (j < npt - n) then
-        jp = n + j + 1
-        bmat(j, j + 1) = HALF / rhobeg
-        bmat(j, jp) = -HALF / rhobeg
-        zmat(1, j) = -reciq - reciq
-        zmat(j + 1, j) = reciq
-        zmat(jp, j) = reciq
-    else
-        bmat(j, 1) = -ONE / rhobeg
-        bmat(j, j + 1) = ONE / rhobeg
-        bmat(j, npt + j) = -HALF * rhosq
-    end if
-end do
+! Set IJ.
+! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(1 : NPT - (2*N+1), :) to ANY permutation
+! elements of such a permutation. The following IJ is defined according to Powell's code. See also
+! Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
+ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
+ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
+ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
+ij = sort(ij, 2, 'descend')  ! Ensure IJ(:, 1) > IJ(:, 2).
+!!MATLAB: (N.B.: Fortran MODULO == MATLAB `mod`, Fortran MOD == MATLAB `rem`)
+!!ij(:, 1) = floor((n : npt - n - 2) / n);
+!!ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1;
+!!ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1, n) + 1;  ! mod(k-1,n) + 1 = k-n for k in [n+1,2n]
+!!ij = sort(ij, 2, 'descend');  ! Ensure ij(:, 1) > ij(:, 2).
 
-! Set the remaining initial nonzero elements of XPT and ZMAT when the number of interpolation
-! points exceeds 2*N+1.
-if (npt > 2 * n + 1) then
-    do k = n + 1, npt - n - 1
-        itemp = (k - 1) / n
-        ipt = k - itemp * n
-        jpt = ipt + itemp
-        if (jpt > n) jpt = jpt - n
-        xpt(ipt, n + k + 1) = rhobeg
-        xpt(jpt, n + k + 1) = rhobeg
-        zmat(1, k) = recip
-        zmat(ipt + 1, k) = -recip
-        zmat(jpt + 1, k) = -recip
-        zmat(n + k + 1, k) = recip
+! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
+ij = ij + 1_IK
+
+! Set XPT(:, 2*N + 2 : NPT).
+! Indeed, XPT(:, K) has only two nonzeros for each K >= 2*N + 2,
+xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1)) + xpt(:, ij(:, 2))
+
+! Set BMAT.
+recip = ONE / rhobeg
+reciq = HALF / rhobeg
+bmat = ZERO
+if (npt <= 2 * n + 1) then
+    ! Set BMAT(1 : NPT-N-1, :)
+    bmat(1:npt - n - 1, 2:npt - n) = reciq * eye(npt - n - 1_IK)
+    bmat(1:npt - n - 1, n + 2:npt) = -reciq * eye(npt - n - 1_IK)
+    ! Set BMAT(NPT-N : N, :)
+    bmat(npt - n:n, 1) = -recip
+    bmat(npt - n:n, npt - n + 1:n + 1) = recip * eye(2_IK * n - npt + 1_IK)
+    bmat(npt - n:n, 2 * npt - n:npt + n) = -(HALF * rhosq) * eye(2_IK * n - npt + 1_IK)
+else
+    bmat(:, 2:n + 1) = reciq * eye(n)
+    bmat(:, n + 2:2 * n + 1) = -reciq * eye(n)
+end if
+
+! Set ZMAT.
+recip = ONE / rhosq
+reciq = sqrt(HALF) / rhosq
+zmat = ZERO
+if (npt <= 2 * n + 1) then
+    zmat(1, :) = -reciq - reciq
+    zmat(2:npt - n, :) = reciq * eye(npt - n - 1_IK)
+    zmat(n + 2:npt, :) = reciq * eye(npt - n - 1_IK)
+else
+    ! Set ZMAT(:, 1:N).
+    zmat(1, 1:n) = -reciq - reciq
+    zmat(2:npt - n, 1:n) = reciq * eye(npt - n - 1_IK)
+    zmat(n + 2:npt, 1:n) = reciq * eye(npt - n - 1_IK)
+    ! Set ZMAT(:, N+1 : NPT-N-1).
+    zmat(1, n + 1:npt - n - 1) = recip
+    zmat(2 * n + 2:npt, n + 1:npt - n - 1) = recip * eye(npt - 2_IK * n - 1_IK)
+    do k = 1, npt - 2_IK * n - 1_IK
+        zmat(ij(k, :), k + n) = -recip
     end do
 end if
 
@@ -240,7 +262,6 @@ do nf = 1, npt
     ! Calculate the objective function at the current interpolation point, and set KOPT to the index
     ! of the first trust region centre.
     x = xbase + xpt(:, nf)
-    f = feas
     !---------------------------------------------------!
     call evaluate(calfun, x, f)  ! What if X contains NaN?
     cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
@@ -263,12 +284,11 @@ nf = min(nf, npt)  ! At exit of the loop, nf = npt + 1
 
 ! Set XOPT.
 xopt = xpt(:, kopt)
-xsav = xbase + xopt
+!xsav = xbase + xopt
 
 ! Set HQ, PQ, and GOPT for the first quadratic model.
 hq = ZERO
 pq = omega_mul(idz, zmat, fval)
-gopt = ZERO
 gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
 
 ! Set the initial elements of RESCON.

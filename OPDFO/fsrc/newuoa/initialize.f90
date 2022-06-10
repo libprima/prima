@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Saturday, April 30, 2022 PM11:10:13
+! Last Modified: Friday, June 10, 2022 PM09:46:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -442,12 +442,12 @@ end if
 ! Set ZMAT.
 zmat = ZERO
 if (npt <= 2 * n + 1) then
-    zmat(1, :) = -sqrt(TWO) / rhosq
+    zmat(1, :) = -(sqrt(HALF) / rhosq) - (sqrt(HALF) / rhosq) !-sqrt(TWO) / rhosq
     zmat(2:npt - n, :) = (sqrt(HALF) / rhosq) * eye(npt - n - 1_IK)
     zmat(n + 2:npt, :) = (sqrt(HALF) / rhosq) * eye(npt - n - 1_IK)
 else
     ! Set ZMAT(:, 1:N).
-    zmat(1, 1:n) = -sqrt(TWO) / rhosq
+    zmat(1, 1:n) = -(sqrt(HALF) / rhosq) - (sqrt(HALF) / rhosq) !-sqrt(TWO) / rhosq
     zmat(2:n + 1, 1:n) = (sqrt(HALF) / rhosq) * eye(n)
     zmat(n + 2:2 * n + 1, 1:n) = (sqrt(HALF) / rhosq) * eye(n)
     ! Set ZMAT(:, N+1 : NPT-N-1).

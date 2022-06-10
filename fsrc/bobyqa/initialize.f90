@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 09, 2022 PM01:57:28
+! Last Modified: Friday, June 10, 2022 PM12:12:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -224,15 +224,19 @@ end do
 
 ! Set IJ.
 ! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(1 : NPT - (2*N+1), :) to ANY permutation
-! of {(I, J) : 1 <= J < I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first
-! NPT - (2*N + 1) elements of such a permutation. Powell took the following one.
+! of {(I, J) : 1 <= J < I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
+! elements of such a permutation. The following IJ is defined according to Powell's code. See also
+! Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
 ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
-!!MATLAB: ij(:, 1) = floor((n : npt - n - 2) / n);
 ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
-!!MATLAB: ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1;
 ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
-! The next line ensures IJ(:, 1) > IJ(:, 2).
-ij = sort(ij, 2, 'descend')
+ij = sort(ij, 2, 'descend')  ! Ensure IJ(:, 1) > IJ(:, 2).
+!!MATLAB: (N.B.: Fortran MODULO == MATLAB `mod`, Fortran MOD == MATLAB `rem`)
+!!ij(:, 1) = floor((n : npt - n - 2) / n);
+!!ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1;
+!!ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1, n) + 1;  ! mod(k-1,n) + 1 = k-n for k in [n+1,2n]
+!!ij = sort(ij, 2, 'descend');  ! Ensure ij(:, 1) > ij(:, 2).
+
 ! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
 ij = ij + 1_IK
 
