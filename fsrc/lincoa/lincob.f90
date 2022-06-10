@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, June 10, 2022 AM08:10:55
+! Last Modified: Friday, June 10, 2022 PM11:18:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -194,13 +194,14 @@ b = bvec
 qfac = eye(n)
 rfac = ZERO
 call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
-    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, &
-    & d, xbase, xhist, xopt, xpt, zmat)
+    & idz, kopt, nf, bmat, chist, fhist, fval, gopt, hq, pq, rescon, &
+    & xbase, xhist, xpt, zmat)
 !--------------------------------------------------------------------------------------------------!
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt
 f = fopt
+cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 xsav = x
 !--------------------------------------------------------------------------------------------------!
 

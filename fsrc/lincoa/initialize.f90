@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, June 10, 2022 PM10:00:42
+! Last Modified: Friday, June 10, 2022 PM11:25:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,11 +23,11 @@ contains
 
 
 subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x0, b, &
-    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, &
-    & step, xbase, xhist, xopt, xpt, zmat)
+    & idz, kopt, nf, bmat, chist, fhist, fval, gopt, hq, pq, rescon, &
+    & xbase, xhist, xpt, zmat)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
@@ -63,18 +63,14 @@ integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
 real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT+N)
 real(RP), intent(out) :: chist(:)  ! CHIST(MAXCHIST)
-real(RP), intent(out) :: cstrv
-real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(out) :: gopt(:)  ! GOPT(N)
 real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
 real(RP), intent(out) :: rescon(:)  ! RESCON(M)
-real(RP), intent(out) :: step(:)  ! STEP(N)
 real(RP), intent(out) :: xbase(:)  ! XBASE(N)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
-real(RP), intent(out) :: xopt(:)  ! XOPT(N)
 real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
 real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
@@ -88,7 +84,7 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: x(size(x0))
-real(RP) :: bigv, feas, recip, reciq, resid(size(b)), rhosq, test
+real(RP) :: bigv, feas, recip, reciq, resid(size(b)), rhosq, test, cstrv, step(size(x0)), f, xopt(size(x0))
 integer(IK) :: ipt, itemp, j, jp, jpt, jsav, k, kbase, knew
 integer(IK) :: ij(max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1), 2)    ! IJ(MAX(0_IK, NPT-2*N-1_IK), 2)
 
@@ -116,10 +112,7 @@ if (DEBUGGING) then
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
-    call assert(size(step) == n, 'SIZE(STEP) == N', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
-    call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
-    !call assert(size(xsav) == n, 'SIZE(XSAV) == N', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
     call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) = [N, N]', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
@@ -159,9 +152,10 @@ test = 0.2_RP * rhobeg
 idz = 1
 kbase = 1
 
+fval = HUGENUM
+
 ! Set the initial elements of XPT, BMAT, and ZMAT to ZERO.
 xbase = x0
-xopt = ZERO
 !xsav = xbase
 
 ! Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT], but they may be altered
