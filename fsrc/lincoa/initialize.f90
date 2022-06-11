@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, June 10, 2022 PM11:25:01
+! Last Modified: Saturday, June 11, 2022 PM10:59:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,7 +85,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: x(size(x0))
 real(RP) :: bigv, feas, recip, reciq, resid(size(b)), rhosq, test, cstrv, step(size(x0)), f, xopt(size(x0))
-integer(IK) :: ipt, itemp, j, jp, jpt, jsav, k, kbase, knew
+integer(IK) :: j, jsav, k, kbase, knew
 integer(IK) :: ij(max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1), 2)    ! IJ(MAX(0_IK, NPT-2*N-1_IK), 2)
 
 
@@ -213,8 +213,8 @@ if (npt <= 2 * n + 1) then
 else
     ! Set ZMAT(:, 1:N).
     zmat(1, 1:n) = -reciq - reciq
-    zmat(2:npt - n, 1:n) = reciq * eye(npt - n - 1_IK)
-    zmat(n + 2:npt, 1:n) = reciq * eye(npt - n - 1_IK)
+    zmat(2:n + 1, 1:n) = reciq * eye(n)
+    zmat(n + 2:2 * n + 1, 1:n) = reciq * eye(n)
     ! Set ZMAT(:, N+1 : NPT-N-1).
     zmat(1, n + 1:npt - n - 1) = recip
     zmat(2 * n + 2:npt, n + 1:npt - n - 1) = recip * eye(npt - 2_IK * n - 1_IK)
