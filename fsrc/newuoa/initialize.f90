@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Friday, June 10, 2022 PM09:54:50
+! Last Modified: Saturday, June 11, 2022 PM10:55:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -470,8 +470,8 @@ if (npt <= 2 * n + 1) then
 else
     ! Set ZMAT(:, 1:N).
     zmat(1, 1:n) = -reciq - reciq
-    zmat(2:npt - n, 1:n) = reciq * eye(npt - n - 1_IK)
-    zmat(n + 2:npt, 1:n) = reciq * eye(npt - n - 1_IK)
+    zmat(2:n + 1, 1:n) = reciq * eye(n)
+    zmat(n + 2:2 * n + 1, 1:n) = reciq * eye(n)
     ! Set ZMAT(:, N+1 : NPT-N-1).
     zmat(1, n + 1:npt - n - 1) = recip
     zmat(2 * n + 2:npt, n + 1:npt - n - 1) = recip * eye(npt - 2_IK * n - 1_IK)

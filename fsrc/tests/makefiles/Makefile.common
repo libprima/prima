@@ -443,6 +443,7 @@ vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d
 
 # Oracle sunf95
 SFORT := sunf95
+SFORT := $(SFORT) -stackvar  # Force all automatic arrays to be on the stack to test whether stack overflow can occur
 SFORT := $(SFORT) -w3 -u -U -ansi -xcheck=%all -C
 
 stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
