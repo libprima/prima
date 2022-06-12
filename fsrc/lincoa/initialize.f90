@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 11, 2022 PM10:59:44
+! Last Modified: Sunday, June 12, 2022 AM10:42:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,8 +85,9 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: x(size(x0))
 real(RP) :: bigv, feas, recip, reciq, resid(size(b)), rhosq, test, cstrv, step(size(x0)), f, xopt(size(x0))
-integer(IK) :: j, jsav, k, kbase, knew
+integer(IK) :: jsav, k, kbase, knew
 integer(IK) :: ij(max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1), 2)    ! IJ(MAX(0_IK, NPT-2*N-1_IK), 2)
+logical :: evaluated(size(xpt, 2))
 
 
 ! Sizes.
@@ -152,6 +153,7 @@ test = 0.2_RP * rhobeg
 idz = 1
 kbase = 1
 
+evaluated = .false.
 fval = HUGENUM
 
 ! Set the initial elements of XPT, BMAT, and ZMAT to ZERO.
@@ -259,6 +261,7 @@ do nf = 1, npt
     !---------------------------------------------------!
     call evaluate(calfun, x, f)  ! What if X contains NaN?
     cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+    evaluated(nf) = .true.
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
     !---------------------------------------------------!
     if (nf == 1) then
@@ -276,14 +279,15 @@ end do
 nf = min(nf, npt)  ! At exit of the loop, nf = npt + 1
 !----------------------------------------------------------!
 
+if (all(evaluated)) then
+
 ! Set XOPT.
-xopt = xpt(:, kopt)
-!xsav = xbase + xopt
+    xopt = xpt(:, kopt)
 
 ! Set HQ, PQ, and GOPT for the first quadratic model.
-hq = ZERO
-pq = omega_mul(idz, zmat, fval)
-gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
+    hq = ZERO
+    pq = omega_mul(idz, zmat, fval)
+    gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
 
 ! Set the initial elements of RESCON.
 ! RESCON holds useful information about the constraint residuals. Every nonnegative RESCON(J) is the
@@ -293,9 +297,11 @@ gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
 ! trust region radius DELTA.
 ! 1. Normally, RESCON = B - AMAT^T*XOPT (theoretically, B - AMAT^T*XOPT >= 0 since XOPT is feasible)
 ! 2. If RESCON(J) >= DELTA (current trust-region radius), its sign is flipped: RESCON(J) = -RESCON(J).
-rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
+    rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
+    rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
 !!MATLAB: rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
+
+end if
 
 ! Postconditions
 ! More to come.
