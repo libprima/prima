@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 AM12:51:56
+! Last Modified: Sunday, June 12, 2022 PM08:41:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -443,6 +443,7 @@ do iter = 1, maxiter
     ! Seek the greatest reduction in Q for a range of equally spaced values of HANGT in [0, ANGBD],
     ! with HANGT being the TANGENT of HALF the angle of the alternative iteration.
     args = [shs, dhd, dhs, dredg, sredg]
+    if (any(is_nan(args))) exit
     !grid_size = int(17.0_RP * hangt_bd + 4.1_RP, IK)  ! Powell's version
     grid_size = 2_IK * int(17.0_RP * hangt_bd + 4.1_RP, IK)  ! It doubles the value in Powell's code
     hangt = interval_max(interval_fun_trsbox, ZERO, hangt_bd, args, grid_size)
