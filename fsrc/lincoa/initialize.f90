@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 12, 2022 AM10:42:54
+! Last Modified: Sunday, June 12, 2022 AM11:14:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -236,7 +236,6 @@ jsav = 0_IK  ! Temporary fix for attention: jsav may be used uninitialized in th
 do nf = 1, npt
     feas = ONE
     bigv = ZERO
-    j = 0
     if (nf >= 2) then
         resid = -b + matprod(xpt(:, nf), amat)
         bigv = maxval([ZERO, resid])
