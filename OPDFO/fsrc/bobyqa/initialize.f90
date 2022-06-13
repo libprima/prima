@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 13, 2022 PM04:52:48
+! Last Modified: Tuesday, June 14, 2022 AM12:14:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -163,13 +163,13 @@ do while (.true.)
         end if
     else
         itemp = (nfm - np) / n
-        jpt = nfm - itemp * n - n
-        ipt = jpt + itemp
-        if (ipt > n) then
-            !itemp = jpt
-            !jpt = ipt - n
-            !ipt = itemp
-            ipt = ipt - n
+        ipt = nfm - itemp * n - n
+        jpt = ipt + itemp
+        if (jpt > n) then
+            !itemp = ipt
+            !ipt = jpt - n
+            !jpt = itemp
+            jpt = jpt - n
         end if
         xpt(ipt, nf) = xpt(ipt, ipt + 1)
         xpt(jpt, nf) = xpt(jpt, jpt + 1)

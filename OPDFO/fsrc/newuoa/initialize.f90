@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Monday, June 13, 2022 PM06:12:54
+! Last Modified: Tuesday, June 14, 2022 AM12:12:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -170,6 +170,7 @@ ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
 ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
 !!MATLAB: ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1
 ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
+ij(:, [1, 2]) = ij(:, [2, 1])
 ! The next line ensures IJ(:, 1) > IJ(:, 2).
 !ij = sort(ij, 2, 'descend')
 ! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.

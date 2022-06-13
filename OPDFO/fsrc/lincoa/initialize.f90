@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, April 19, 2022 AM12:57:33
+! Last Modified: Tuesday, June 14, 2022 AM12:13:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -195,9 +195,11 @@ end do
 if (npt > 2 * n + 1) then
     do k = n + 1, npt - n - 1
         itemp = (k - 1) / n
-        ipt = k - itemp * n
-        jpt = ipt + itemp
-        if (jpt > n) jpt = jpt - n
+
+        jpt = k - itemp * n
+        ipt = jpt + itemp
+        if (ipt > n) ipt = ipt - n
+
         xpt(ipt, n + k + 1) = rhobeg
         xpt(jpt, n + k + 1) = rhobeg
         zmat(1, k) = recip

@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, June 14, 2022 AM12:03:58
+! Last Modified: Tuesday, June 14, 2022 AM12:15:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1998,16 +1998,16 @@ end if
 ! Calculation starts !
 !====================!
 
-l = floor([(k, k=n, npt - n - 2_IK)] / n, IK)
-ij(2, :) = [(k, k=n, npt - n - 2_IK)] - n * l + 1_IK
-ij(1, :) = modulo(ij(2, :) + l - 1_IK, n) + 1_IK  ! MODULO(K-1, N) + 1 = K-N for K in [N+1, 2N]
+l = int([(k, k=n, npt - n - 2_IK)] / n, IK)
+ij(1, :) = [(k, k=n, npt - n - 2_IK)] - n * l + 1_IK
+ij(2, :) = modulo(ij(1, :) + l - 1_IK, n) + 1_IK  ! MODULO(K-1, N) + 1 = K-N for K in [N+1, 2N]
 if (present(sorting_direction)) then
     ij = sort(ij, 1, sorting_direction)  ! SORTING_DIRECTION is 'DESCEND' of 'ASCEND'
 end if
 !!MATLAB: (N.B.: Fortran MODULO == MATLAB `mod`, Fortran MOD == MATLAB `rem`)
 !!l = floor((n : npt-n-2) / n);
-!!ij(2, :) = (n : npt-n-2) - n*l + 1;
-!!ij(1, :) = mod(ij(2, :) + l - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
+!!ij(1, :) = (n : npt-n-2) - n*l + 1;
+!!ij(2, :) = mod(ij(1, :) + l - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
 !!if nargin >= 3
 !!    ij = sort(ij, 2, sorting_direction)  % `sorting_direction` is 'descend' of 'ascend'
 !!end
