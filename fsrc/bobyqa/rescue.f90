@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, June 03, 2022 AM05:30:30
+! Last Modified: Monday, June 13, 2022 PM06:32:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -248,21 +248,19 @@ ptsid(1) = sfrac
 bmat = ZERO
 zmat = ZERO
 do j = 1, n
-    jp = j + 1
-    jpn = jp + n
-    ptsid(jp) = real(j, RP) + sfrac
-    if (jpn <= npt) then
-        ptsid(jpn) = real(j, RP) / real(n + 1, RP) + sfrac
+    ptsid(j + 1) = real(j, RP) + sfrac
+    if (j <= npt - n - 1) then
+        ptsid(j + n + 1) = real(j, RP) / real(n + 1, RP) + sfrac
         temp = ONE / (ptsaux(1, j) - ptsaux(2, j))
-        bmat(j, jp) = -temp + ONE / ptsaux(1, j)
-        bmat(j, jpn) = temp + ONE / ptsaux(2, j)
-        bmat(j, 1) = -bmat(j, jp) - bmat(j, jpn)
+        bmat(j, j + 1) = -temp + ONE / ptsaux(1, j)
+        bmat(j, j + n + 1) = temp + ONE / ptsaux(2, j)
+        bmat(j, 1) = -bmat(j, j + 1) - bmat(j, j + n + 1)
         zmat(1, j) = sqrt(TWO) / abs(ptsaux(1, j) * ptsaux(2, j))
-        zmat(jp, j) = zmat(1, j) * ptsaux(2, j) * temp
-        zmat(jpn, j) = -zmat(1, j) * ptsaux(1, j) * temp
+        zmat(j + 1, j) = zmat(1, j) * ptsaux(2, j) * temp
+        zmat(j + n + 1, j) = -zmat(1, j) * ptsaux(1, j) * temp
     else
         bmat(j, 1) = -ONE / ptsaux(1, j)
-        bmat(j, jp) = ONE / ptsaux(1, j)
+        bmat(j, j + 1) = ONE / ptsaux(1, j)
         bmat(j, j + npt) = -HALF * ptsaux(1, j)**2
     end if
 end do
@@ -272,9 +270,7 @@ do k = 2_IK * n + 2_IK, npt
     iw = floor((real(k - n - 1) - HALF) / real(n))
     ip = k - n - 1_IK - iw * n
     iq = ip + iw
-    if (iq > n) then
-        iq = iq - n
-    end if
+    iq = modulo(ip + iw - 1_IK, n) + 1_IK
     ptsid(k) = real(ip, RP) + real(iq, RP) / real(n + 1, RP) + sfrac
     temp = ONE / (ptsaux(1, ip) * ptsaux(1, iq))
     zmat(1, k - n - 1) = temp

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 13, 2022 AM10:35:36
+! Last Modified: Monday, June 13, 2022 PM04:52:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -166,9 +166,10 @@ do while (.true.)
         jpt = nfm - itemp * n - n
         ipt = jpt + itemp
         if (ipt > n) then
-            itemp = jpt
-            jpt = ipt - n
-            ipt = itemp
+            !itemp = jpt
+            !jpt = ipt - n
+            !ipt = itemp
+            ipt = ipt - n
         end if
         xpt(ipt, nf) = xpt(ipt, ipt + 1)
         xpt(jpt, nf) = xpt(jpt, jpt + 1)
@@ -236,8 +237,8 @@ do while (.true.)
         zmat(ipt + 1, nfx) = -recip
         zmat(jpt + 1, nfx) = -recip
         temp = xpt(ipt, nf) * xpt(jpt, nf)
-        !hq(ipt, jpt) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
-        hq(ipt, jpt) = (fbeg - (fval(ipt + 1) + fval(jpt + 1)) + f) / temp
+        hq(ipt, jpt) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
+        !hq(ipt, jpt) = (fbeg - (fval(ipt + 1) + fval(jpt + 1)) + f) / temp
         hq(jpt, ipt) = hq(ipt, jpt)
     end if
     if (f <= ftarget .or. is_nan(f) .or. is_posinf(f)) exit

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 13, 2022 PM04:33:10
+! Last Modified: Monday, June 13, 2022 PM05:39:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,8 +27,9 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x0, ij, kopt,
 ! N.B.:
 ! 1. Remark on IJ:
 ! If NPT <= 2*N + 1, then IJ is empty. Assume that NPT >= 2*N + 2. Then SIZE(IJ) = [NPT-2*N-1, 2].
-! IJ contains integers between 2 and N+1. For each K > 2*N + 1, XPT(:, K) is
-! XPT(:, IJ(K, 1)) + XPT(:, IJ(K, 2)). Let I = IJ(K, 1) - 1 and J = IJ(K, 2) - 1. Then all the
+! IJ contains integers between 1 and N. For each K > 2*N + 1, XPT(:, K) is
+! XPT(:, IJ(K, 1) + 1) + XPT(:, IJ(K, 2) + 1). The 1 in IJ + 1 comes from the fact that XPT(:, 1)
+! corresponds to the base point XBASE. Let I = IJ(K, 1) and J = IJ(K, 2). Then all the
 ! entries of XPT(:, K) are zero except for the I and J entries. Consequently, the Hessian of the
 ! quadratic model will get a possibly nonzero (I, J) entry.
 ! 2. At return,
@@ -223,8 +224,8 @@ do k = 2, min(npt - n, int(n + 1, kind(npt)))
 end do
 
 ! Set IJ.
-! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(1 : NPT - (2*N+1), :) to ANY permutation
-! of {{I, J} : 1 <= J /= I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
+! In general, when NPT = (N+1)*(N+2)/2, we can set IJ(1 : NPT - (2*N+1), :) to ANY permutation
+! of {{I, J} : 1 <= I /= J <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
 ! elements of such a permutation. The following IJ is defined according to Powell's code. See also
 ! Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
 ! N.B.: We do not distinguish between {I, J} and {J, I}, which represent the same set. If we want to
@@ -238,12 +239,10 @@ ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K
 !!ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1;
 !!ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
 
-! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
-ij = ij + 1_IK
-
 ! Set XPT(:, 2*N + 2 : NPT). It depends on XPT(:, 1 : 2*N + 1) and hence on FVAL(1: 2*N + 1).
 ! Indeed, XPT(:, K) has only two nonzeros for each K >= 2*N+2.
-xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1)) + xpt(:, ij(:, 2))
+! N.B.: The 1 in IJ + 1 comes from the fact that XPT(:, 1) corresponds to XBASE.
+xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1) + 1) + xpt(:, ij(:, 2) + 1)
 
 ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSG.
 if (info == INFO_DFT) then
@@ -279,7 +278,7 @@ if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
-    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '2 <= IJ <= 2*N + 1', srname)
+    call assert(all(ij >= 1 .and. ij <= n), '1 <= IJ <= N', srname)
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
@@ -349,7 +348,7 @@ if (DEBUGGING) then
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
-    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '2 <= IJ <= 2*N + 1', srname)
+    call assert(all(ij >= 1 .and. ij <= n), '1 <= IJ <= N', srname)
     call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) = [N, N]', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
@@ -387,11 +386,12 @@ end do
 
 ! When NPT > 2*N + 1, set the off-diagonal entries of HQ.
 do k = 1, npt - 2_IK * n - 1_IK
-    i = ij(k, 1) - 1
-    j = ij(k, 2) - 1
+    i = ij(k, 1)
+    j = ij(k, 2)
     xi = xpt(i, k + 2 * n + 1)
     xj = xpt(j, k + 2 * n + 1)
-    hq(i, j) = (fbase - (fval(ij(k, 1)) + fval(ij(k, 2))) + fval(k + 2 * n + 1)) / (xi * xj)
+    ! N.B.: The 1 in I+1 and J+1 comes from the fact that XPT(:, 1) corresponds to XBASE.
+    hq(i, j) = (fbase - fval(i + 1) - fval(j + 1) + fval(k + 2 * n + 1)) / (xi * xj)
     hq(j, i) = hq(i, j)
 end do
 
@@ -469,7 +469,7 @@ if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
-    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '2 <= IJ <= 2*N + 1', srname)
+    call assert(all(ij >= 1 .and. ij <= n), '1 <= IJ <= N', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
@@ -514,7 +514,7 @@ end do
 do k = ndiag + 1_IK, npt - n - 1_IK
     zmat(1, k) = ONE / rhosq
     zmat(k + n + 1, k) = ONE / rhosq
-    zmat(ij(k - n, :), k) = -ONE / rhosq
+    zmat(ij(k - n, :) + 1, k) = -ONE / rhosq
 end do
 
 if (present(info)) then
