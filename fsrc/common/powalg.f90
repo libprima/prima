@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, June 13, 2022 PM10:59:44
+! Last Modified: Tuesday, June 14, 2022 AM12:03:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1968,8 +1968,8 @@ function setij(n, npt, sorting_direction) result(ij)
 ! If NPT <= 2*N + 1, then IJ is empty. Assume that NPT >= 2*N + 2. Then SIZE(IJ) = [2, NPT-2*N-1].
 ! IJ contains integers between 1 and N. In general, when NPT = (N+1)*(N+2)/2, we can set IJ to
 ! ANY permutation of {{I, J} : 1 <= I /= J <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the
-! first NPT - 2*N - 1 elements of such a permutation. Here, IJ is defined according to Powell's code
-! and the aforementioned papers.
+! first NPT - 2*N - 1 elements of such a permutation. In the implementation here, IJ is defined
+! according to Powell's code and the aforementioned papers.
 ! We do not distinguish between {I, J} and {J, I}, which represent the same set. If we want to
 ! ensure an order, e.g., IJ(:, 1) > IJ(:, 2) (so that the (IJ(K, 1), IJ(K, 2)) position is in the
 ! lower triangular part of a matrix), then we can specify a SORTING_DIRECTION, e.g., 'descend'.
@@ -1982,7 +1982,7 @@ implicit none
 integer(IK), intent(in) :: n
 integer(IK), intent(in) :: npt
 character(len=*), intent(in), optional :: sorting_direction
-integer(IK) :: ij(max(0_IK, npt - 2_IK * n - 1_IK), 2)
+integer(IK) :: ij(2, max(0_IK, npt - 2_IK * n - 1_IK))
 
 ! Local variables
 character(len=*), parameter :: srname = 'SETIJ'
@@ -1998,18 +1998,18 @@ end if
 ! Calculation starts !
 !====================!
 
-l = int([(k, k=n, npt - n - 2_IK)] / n, IK)
-ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * l + 1_IK, IK)
-ij(:, 1) = modulo(ij(:, 2) + l - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
+l = floor([(k, k=n, npt - n - 2_IK)] / n, IK)
+ij(2, :) = [(k, k=n, npt - n - 2_IK)] - n * l + 1_IK
+ij(1, :) = modulo(ij(2, :) + l - 1_IK, n) + 1_IK  ! MODULO(K-1, N) + 1 = K-N for K in [N+1, 2N]
 if (present(sorting_direction)) then
-    ij = sort(ij, 2, sorting_direction)
+    ij = sort(ij, 1, sorting_direction)  ! SORTING_DIRECTION is 'DESCEND' of 'ASCEND'
 end if
 !!MATLAB: (N.B.: Fortran MODULO == MATLAB `mod`, Fortran MOD == MATLAB `rem`)
 !!l = floor((n : npt-n-2) / n);
-!!ij(:, 2) = (n : npt-n-2) - n*l + 1;
-!!ij(:, 1) = mod(ij(:, 2) + l - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
+!!ij(2, :) = (n : npt-n-2) - n*l + 1;
+!!ij(1, :) = mod(ij(2, :) + l - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
 !!if nargin >= 3
-!!    ij = sort(ij, 2, sorting_direction)
+!!    ij = sort(ij, 2, sorting_direction)  % `sorting_direction` is 'descend' of 'ascend'
 !!end
 
 !====================!
@@ -2018,10 +2018,10 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
-        & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
+    call assert(size(ij, 1) == 2 .and. size(ij, 2) == max(0_IK, npt - 2_IK * n - 1_IK), &
+        & 'SIZE(IJ) == [2, NPT - 2*N - 1]', srname)
     call assert(all(ij >= 1 .and. ij <= n), '1 <= IJ <= N', srname)
-    call assert(all(ij(:, 1) /= ij(:, 2)), 'IJ(1, :) /= IJ(:, 2)', srname)
+    call assert(all(ij(1, :) /= ij(2, :)), 'IJ(1, :) /= IJ(2, :)', srname)
 end if
 end function setij
 
