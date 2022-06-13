@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 PM10:22:29
+! Last Modified: Monday, June 13, 2022 AM10:35:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -236,7 +236,8 @@ do while (.true.)
         zmat(ipt + 1, nfx) = -recip
         zmat(jpt + 1, nfx) = -recip
         temp = xpt(ipt, nf) * xpt(jpt, nf)
-        hq(ipt, jpt) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
+        !hq(ipt, jpt) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
+        hq(ipt, jpt) = (fbeg - (fval(ipt + 1) + fval(jpt + 1)) + f) / temp
         hq(jpt, ipt) = hq(ipt, jpt)
     end if
     if (f <= ftarget .or. is_nan(f) .or. is_posinf(f)) exit

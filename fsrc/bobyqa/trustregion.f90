@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 12, 2022 PM08:30:49
+! Last Modified: Sunday, June 12, 2022 PM09:56:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -336,7 +336,7 @@ end if
 ! bounds, and S is a linear combination of P*D and P*G(XOPT+D) with |S| = |P*D| and G(.) being the
 ! gradient of the quadratic model. The iteration is performed only if P*D and P*G(XOPT+D) are not
 ! nearly parallel. The arc lies in the hyperplane (I-P)*D + Span{P*D, P*G(XOPT+D)} and the trust
-! region boundary {D: |D| = DELTA}; it is part of the circle (I-P)*D + {[COS(THETA)*P*D + SIN(THETA)*S]}
+! region boundary {D: |D|=DELTA}; it is part of the circle (I-P)*D + {COS(THETA)*P*D + SIN(THETA)*S}
 ! with THETA being in [0, PI/2] and restricted by the bounds on X.
 ! 2. In (3.6) of the BOBYQA paper, Powell wrote that 0 <= THETA <= PI/4, which seems a typo.
 ! 3. The search on the arch is done by calling INTERVAL_MAX, which maximizes INTERVAL_FUN_TRSBOX.
@@ -349,7 +349,7 @@ nactsav = nact - 1
 do iter = 1, maxiter
     xnew = xopt + d
 
-    ! Update XBDI. It indicates whether the lower (-1) or upper bound (+1) has been reached or not (0).
+    ! Update XBDI. It indicates whether the lower (-1) or upper bound (+1) is reached or not (0).
     xbdi(trueloc(xbdi == 0 .and. (xnew >= su))) = 1
     xbdi(trueloc(xbdi == 0 .and. (xnew <= sl))) = -1
     nact = count(xbdi /= 0)
@@ -510,7 +510,7 @@ real(RP), intent(in) :: args(:)
 real(RP) :: f
 
 ! Local variables
-character(len=*), parameter :: srname = 'ANGLE_FUN_TRSBOX'
+character(len=*), parameter :: srname = 'INTERVAL_FUN_TRSBOX'
 real(RP) :: sth
 
 ! Preconditions

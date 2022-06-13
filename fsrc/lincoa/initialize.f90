@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 12, 2022 AM11:14:59
+! Last Modified: Monday, June 13, 2022 PM03:01:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, sort
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul
 
@@ -168,17 +168,19 @@ xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZE
 
 ! Set IJ.
 ! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(1 : NPT - (2*N+1), :) to ANY permutation
+! of {{I, J} : 1 <= J /= I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
 ! elements of such a permutation. The following IJ is defined according to Powell's code. See also
 ! Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
+! N.B.: Note that we do not distinguish between {I, J} and {J, I}. They represent the same set. If
+! we want to ensure an order, e.g., I < J (so that the (I, J) entry is in the upper-triangular part
+! of a matrix), then we can sort IJ, e.g., by IJ = SORT(IJ, 2, 'DESCEND').
 ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
 ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
 ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
-ij = sort(ij, 2, 'descend')  ! Ensure IJ(:, 1) > IJ(:, 2).
 !!MATLAB: (N.B.: Fortran MODULO == MATLAB `mod`, Fortran MOD == MATLAB `rem`)
-!!ij(:, 1) = floor((n : npt - n - 2) / n);
+!!ij(:, 1) = floor((n : npt-n-2) / n);
 !!ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1;
-!!ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1, n) + 1;  ! mod(k-1,n) + 1 = k-n for k in [n+1,2n]
-!!ij = sort(ij, 2, 'descend');  ! Ensure ij(:, 1) > ij(:, 2).
+!!ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
 
 ! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
 ij = ij + 1_IK
@@ -233,11 +235,11 @@ b = b - matprod(xbase, amat)
 !--------------------------------------------------------------------------------------------------!
 jsav = 0_IK  ! Temporary fix for attention: jsav may be used uninitialized in this function from g95
 !--------------------------------------------------------------------------------------------------!
-do nf = 1, npt
+do k = 1, npt
     feas = ONE
     bigv = ZERO
-    if (nf >= 2) then
-        resid = -b + matprod(xpt(:, nf), amat)
+    if (k >= 2) then
+        resid = -b + matprod(xpt(:, k), amat)
         bigv = maxval([ZERO, resid])
         jsav = int(maxloc(resid, dim=1), IK)
         if (bigv > test) then
@@ -248,27 +250,27 @@ do nf = 1, npt
     end if
     if (feas < ZERO) then
         !if (.false.) then
-        step = xpt(:, nf) + (test - bigv) * amat(:, jsav)
-        knew = nf
+        step = xpt(:, k) + (test - bigv) * amat(:, jsav)
+        knew = k
         call update(kbase, step, xpt, idz, knew, bmat, zmat)
-        xpt(:, nf) = step
+        xpt(:, k) = step
     end if
 
     ! Calculate the objective function at the current interpolation point, and set KOPT to the index
     ! of the first trust region centre.
-    x = xbase + xpt(:, nf)
+    x = xbase + xpt(:, k)
     !---------------------------------------------------!
     call evaluate(calfun, x, f)  ! What if X contains NaN?
     cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
-    evaluated(nf) = .true.
-    call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+    evaluated(k) = .true.
+    call savehist(k, x, xhist, f, fhist, cstrv, chist)
     !---------------------------------------------------!
-    if (nf == 1) then
+    if (k == 1) then
         kopt = 1
     else if (f < fval(kopt) .and. feas > ZERO) then
-        kopt = nf
+        kopt = k
     end if
-    fval(nf) = f
+    fval(k) = f
     ! Note that we should NOT compare F and FTARGET, because X may not be feasible.
     if (is_nan(f) .or. is_posinf(f) .or. fval(kopt) <= ftarget) then
         exit
@@ -276,6 +278,7 @@ do nf = 1, npt
 end do
 !----------------------------------------------------------!
 nf = min(nf, npt)  ! At exit of the loop, nf = npt + 1
+nf = int(count(evaluated), kind(nf))
 !----------------------------------------------------------!
 
 if (all(evaluated)) then
