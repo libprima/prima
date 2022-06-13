@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 13, 2022 PM03:01:58
+! Last Modified: Monday, June 13, 2022 PM06:21:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,6 +25,23 @@ contains
 subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x0, b, &
     & idz, kopt, nf, bmat, chist, fhist, fval, gopt, hq, pq, rescon, &
     & xbase, xhist, xpt, zmat)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine does the initialization about the interpolation points & their function values.
+!
+! N.B.:
+! 1. Remark on IJ:
+! If NPT <= 2*N + 1, then IJ is empty. Assume that NPT >= 2*N + 2. Then SIZE(IJ) = [NPT-2*N-1, 2].
+! IJ contains integers between 1 and N. For each K > 2*N + 1, XPT(:, K) is
+! XPT(:, IJ(K, 1) + 1) + XPT(:, IJ(K, 2) + 1). The 1 in IJ + 1 comes from the fact that XPT(:, 1)
+! corresponds to the base point XBASE. Let I = IJ(K, 1) and J = IJ(K, 2). Then all the
+! entries of XPT(:, K) are zero except for the I and J entries. Consequently, the Hessian of the
+! quadratic model will get a possibly nonzero (I, J) entry.
+! 2. At return,
+! INFO = INFO_DFT: initialization finishes normally
+! INFO = FTARGET_ACHIEVED: return because F <= FTARGET
+! INFO = NAN_INF_X: return because X contains NaN
+! INFO = NAN_INF_F: return because F is either NaN or +Inf
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, HUGENUM, DEBUGGING
@@ -167,12 +184,12 @@ xpt(:, 2:n + 1) = rhobeg * eye(n)
 xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZERO if it is nonempty.
 
 ! Set IJ.
-! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(1 : NPT - (2*N+1), :) to ANY permutation
+! In general, when NPT = (N+1)*(N+2)/2, we can set IJ(1 : NPT - (2*N+1), :) to ANY permutation
 ! of {{I, J} : 1 <= J /= I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
 ! elements of such a permutation. The following IJ is defined according to Powell's code. See also
 ! Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
-! N.B.: We do not distinguish between {I, J} and {J, I}, which represent the same set. If we want to 
-! ensure an order, e.g., IJ(:, 1) > IJ(:, 2) (so that the (IJ(K, 1), IJ(K, 2)) position is in the 
+! N.B.: We do not distinguish between {I, J} and {J, I}, which represent the same set. If we want to
+! ensure an order, e.g., IJ(:, 1) > IJ(:, 2) (so that the (IJ(K, 1), IJ(K, 2)) position is in the
 ! lower triangular part of a matrix), then we can sort IJ, e.g., by IJ = SORT(IJ, 2, 'DESCEND').
 ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
 ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
@@ -182,12 +199,10 @@ ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K
 !!ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1;
 !!ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
 
-! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
-ij = ij + 1_IK
-
 ! Set XPT(:, 2*N + 2 : NPT).
 ! Indeed, XPT(:, K) has only two nonzeros for each K >= 2*N + 2,
-xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1)) + xpt(:, ij(:, 2))
+! N.B.: The 1 in IJ + 1 comes from the fact that XPT(:, 1) corresponds to XBASE.
+xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1) + 1) + xpt(:, ij(:, 2) + 1)
 
 ! Set BMAT.
 recip = ONE / rhobeg
@@ -223,7 +238,7 @@ else
     zmat(1, n + 1:npt - n - 1) = recip
     zmat(2 * n + 2:npt, n + 1:npt - n - 1) = recip * eye(npt - 2_IK * n - 1_IK)
     do k = 1, npt - 2_IK * n - 1_IK
-        zmat(ij(k, :), k + n) = -recip
+        zmat(ij(k, :) + 1, k + n) = -recip
     end do
 end if
 
