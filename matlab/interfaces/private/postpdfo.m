@@ -294,7 +294,6 @@ if ~(isempty(chist) && ismember(solver, all_solvers('without_constraints'))) && 
 end
 if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
     if any(chist < 0)
-        keyboard
         error(sprintf('%s:InvalidChist', invoker), ...
             '%s: UNEXPECTED ERROR: %s returns a chist that contains negative values.', invoker, solver);
     end

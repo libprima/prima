@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Monday, June 13, 2022 PM02:59:52
+! Last Modified: Monday, June 13, 2022 PM04:32:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -166,9 +166,9 @@ end do
 ! of {{I, J} : 1 <= J /= I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
 ! elements of such a permutation. The following IJ is defined according to Powell's code. See also
 ! Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
-! N.B.: Note that we do not distinguish between {I, J} and {J, I}. They represent the same set. If
-! we want to ensure an order, e.g., I < J (so that the (I, J) entry is in the upper-triangular part
-! of a matrix), then we can sort IJ, e.g., by IJ = SORT(IJ, 2, 'DESCEND').
+! N.B.: We do not distinguish between {I, J} and {J, I}, which represent the same set. If we want to
+! ensure an order, e.g., IJ(:, 1) > IJ(:, 2) (so that the (IJ(K, 1), IJ(K, 2)) position is in the
+! lower triangular part of a matrix), then we can sort IJ, e.g., by IJ = SORT(IJ, 2, 'DESCEND').
 ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
 ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
 ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
@@ -346,8 +346,8 @@ do k = 1, npt - 2_IK * n - 1_IK
     ! FVAL(IJ(K, 2)) = F(XBASE + XJ*e_J).
     ! Thus the HQ(I,J) defined below approximates frac{partial^2}{partial X_I partial X_J} F(XBASE).
     ! N.B.: Here, exchanging I and J will not lead to any change in precise arithmetic. Powell's
-    ! code exchanges I and J if needed to ensure that  I < J. This is because Powell's code saves HQ
-    ! as a 1D array that contains the upper triangular part of this symmetric matrix.
+    ! code exchanges I and J if needed to ensure that  I > J. This is because Powell's code saves HQ
+    ! as a 1D array that contains the lower triangular part of this symmetric matrix.
     i = modulo(ij(k, 1) - 2_IK, n) + 1_IK
     j = modulo(ij(k, 2) - 2_IK, n) + 1_IK
     xi = xpt(i, k + 2 * n + 1)
