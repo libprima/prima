@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 07, 2022 AM08:18:56
+! Last Modified: Monday, June 13, 2022 PM11:46:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,7 +129,7 @@ real(RP) :: delbar, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
-integer(IK) :: ij(max(0_IK, int(npt - 2 * size(x) - 1, IK)), 2)
+integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 logical :: shortd, improve_geo, rescued, geo_step
 
 

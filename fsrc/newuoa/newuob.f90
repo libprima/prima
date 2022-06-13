@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, June 07, 2022 AM07:44:33
+! Last Modified: Monday, June 13, 2022 PM11:31:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,7 +100,7 @@ real(RP), intent(out) :: xhist(:, :)    ! XHIST(N, MAXXHIST)
 character(len=*), parameter :: solver = 'NEWUOA'
 character(len=*), parameter :: srname = 'NEWUOB'
 integer(IK) :: idz
-integer(IK) :: ij(max(0_IK, int(npt - 2 * size(x) - 1, IK)), 2)
+integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: itest
 integer(IK) :: knew_geo
 integer(IK) :: knew_tr
