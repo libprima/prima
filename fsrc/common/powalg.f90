@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, June 12, 2022 PM09:08:35
+! Last Modified: Monday, June 13, 2022 PM10:59:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,6 +35,7 @@ public :: hess_mul
 public :: omega_col, omega_mul, omega_inprod
 public :: updateh, errh
 public :: calvlag, calbeta, calden
+public :: setij
 !--------------------------------------------------------------------------------------------------!
 
 interface qradd
@@ -1958,6 +1959,71 @@ vlag(kopt) = vlag(kopt) + ONE
 !====================!
 
 end function calvlag_qint
+
+
+function setij(n, npt, sorting_direction) result(ij)
+!--------------------------------------------------------------------------------------------------!
+! Set IJ to a 2-by-(NPT-2*N-1) integer array so that IJ(:, K) = [P(K + 2*N + 1), Q(K + 2*N + 1)],
+! with P and Q defined in (2.4) of the BOBYQA paper as well as Section 3 of the NEWUOA paper.
+! If NPT <= 2*N + 1, then IJ is empty. Assume that NPT >= 2*N + 2. Then SIZE(IJ) = [2, NPT-2*N-1].
+! IJ contains integers between 1 and N. In general, when NPT = (N+1)*(N+2)/2, we can set IJ to
+! ANY permutation of {{I, J} : 1 <= I /= J <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the
+! first NPT - 2*N - 1 elements of such a permutation. Here, IJ is defined according to Powell's code
+! and the aforementioned papers.
+! We do not distinguish between {I, J} and {J, I}, which represent the same set. If we want to
+! ensure an order, e.g., IJ(:, 1) > IJ(:, 2) (so that the (IJ(K, 1), IJ(K, 2)) position is in the
+! lower triangular part of a matrix), then we can specify a SORTING_DIRECTION, e.g., 'descend'.
+! This function is used in the initialization of NEWUOA, BOBYQA, and LINCOA.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : sort
+implicit none
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: npt
+character(len=*), intent(in), optional :: sorting_direction
+integer(IK) :: ij(max(0_IK, npt - 2_IK * n - 1_IK), 2)
+
+! Local variables
+character(len=*), parameter :: srname = 'SETIJ'
+integer(IK) :: k
+integer(IK) :: l(max(0_IK, npt - 2_IK * n - 1_IK))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+l = int([(k, k=n, npt - n - 2_IK)] / n, IK)
+ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * l + 1_IK, IK)
+ij(:, 1) = modulo(ij(:, 2) + l - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
+if (present(sorting_direction)) then
+    ij = sort(ij, 2, sorting_direction)
+end if
+!!MATLAB: (N.B.: Fortran MODULO == MATLAB `mod`, Fortran MOD == MATLAB `rem`)
+!!l = floor((n : npt-n-2) / n);
+!!ij(:, 2) = (n : npt-n-2) - n*l + 1;
+!!ij(:, 1) = mod(ij(:, 2) + l - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
+!!if nargin >= 3
+!!    ij = sort(ij, 2, sorting_direction)
+!!end
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
+        & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
+    call assert(all(ij >= 1 .and. ij <= n), '1 <= IJ <= N', srname)
+    call assert(all(ij(:, 1) /= ij(:, 2)), 'IJ(1, :) /= IJ(:, 2)', srname)
+end if
+end function setij
 
 
 end module powalg_mod

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Monday, June 13, 2022 PM05:47:58
+! Last Modified: Monday, June 13, 2022 PM09:52:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,6 +58,7 @@ use, non_intrinsic :: info_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : eye
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: powalg_mod, only : setij
 
 implicit none
 
@@ -167,16 +168,7 @@ end do
 ! of {{I, J} : 1 <= I /= J <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
 ! elements of such a permutation. The following IJ is defined according to Powell's code. See also
 ! Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
-! N.B.: We do not distinguish between {I, J} and {J, I}, which represent the same set. If we want to
-! ensure an order, e.g., IJ(:, 1) > IJ(:, 2) (so that the (IJ(K, 1), IJ(K, 2)) position is in the
-! lower triangular part of a matrix), then we can sort IJ, e.g., by IJ = SORT(IJ, 2, 'DESCEND').
-ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
-ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
-ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
-!!MATLAB: (N.B.: Fortran MODULO == MATLAB `mod`, Fortran MOD == MATLAB `rem`)
-!!ij(:, 1) = floor((n : npt-n-2) / n);
-!!ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1;
-!!ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
+ij = setij(n, npt)
 
 ! Further revise IJ according to FVAL(2 : 2*N + 1).
 ! N.B.:
@@ -234,6 +226,7 @@ if (DEBUGGING) then
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(all(ij >= 1 .and. ij <= 2 * n), '1 <= IJ <= 2*N', srname)
+    call assert(all(ij(:, 1) /= ij(:, 2)), 'IJ(1, :) /= IJ(:, 2)', srname)
     call assert(nf <= npt, 'NF <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= nf, '1 <= KOPT <= NF', srname)
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)

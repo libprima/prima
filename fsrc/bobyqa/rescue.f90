@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 13, 2022 PM06:32:18
+! Last Modified: Monday, June 13, 2022 PM11:04:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -136,8 +136,6 @@ integer(IK) :: ip
 integer(IK) :: iq
 integer(IK) :: iw
 integer(IK) :: j
-integer(IK) :: jp
-integer(IK) :: jpn
 integer(IK) :: k
 integer(IK) :: kbase
 integer(IK) :: korig
@@ -267,7 +265,8 @@ end do
 
 ! Set any remaining identifiers with their nonzero elements of ZMAT.
 do k = 2_IK * n + 2_IK, npt
-    iw = floor((real(k - n - 1) - HALF) / real(n))
+    !iw = floor((real(k - n - 1) - HALF) / real(n))
+    iw = floor(real(k - n - 2) / real(n))
     ip = k - n - 1_IK - iw * n
     iq = ip + iw
     iq = modulo(ip + iw - 1_IK, n) + 1_IK
