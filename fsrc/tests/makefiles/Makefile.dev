@@ -445,9 +445,9 @@ stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_ts
 	FC2 := $(SFORT) $(FFLAGS2) -fnonstd -ftrap=division
 
 stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
-	FC1 := $(SFORT) $(FFLAGS1) -fnonstd -ftrap=overflow,division,invalid#,underflow
+	FC1 := $(SFORT) $(FFLAGS1) -fnonstd -ftrap=overflow,division#,invalid#,underflow
 stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
-	FC2 := $(SFORT) $(FFLAGS2) -fnonstd -ftrap=overflow,division,invalid#,underflow
+	FC2 := $(SFORT) $(FFLAGS2) -fnonstd -ftrap=overflow,division#,invalid#,underflow
 
 stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
 	FC1 := $(SFORT) $(FFLAGS1) -fnonstd -ftrap=overflow,division#,invalid#,underflow

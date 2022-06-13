@@ -171,9 +171,9 @@ xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZE
 ! of {{I, J} : 1 <= J /= I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
 ! elements of such a permutation. The following IJ is defined according to Powell's code. See also
 ! Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
-! N.B.: Note that we do not distinguish between {I, J} and {J, I}. They represent the same set. If
-! we want to ensure an order, e.g., I < J (so that the (I, J) entry is in the upper-triangular part
-! of a matrix), then we can sort IJ, e.g., by IJ = SORT(IJ, 2, 'DESCEND').
+! N.B.: We do not distinguish between {I, J} and {J, I}, which represent the same set. If we want to 
+! ensure an order, e.g., IJ(:, 1) > IJ(:, 2) (so that the (IJ(K, 1), IJ(K, 2)) position is in the 
+! lower triangular part of a matrix), then we can sort IJ, e.g., by IJ = SORT(IJ, 2, 'DESCEND').
 ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
 ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
 ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
