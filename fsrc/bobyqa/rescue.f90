@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 13, 2022 PM11:07:49
+! Last Modified: Tuesday, June 14, 2022 AM12:38:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -94,7 +94,7 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update, r2update, trueloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : hess_mul
+use, non_intrinsic :: powalg_mod, only : hess_mul, setij
 
 ! Solver-specif modules
 use, non_intrinsic :: update_mod, only : updateh
@@ -134,8 +134,7 @@ real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 character(len=*), parameter :: srname = 'RESCUE'
 integer(IK) :: ip
 integer(IK) :: iq
-integer(IK) :: iw
-integer(IK) :: j
+integer(IK) :: ij(2, max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1))
 integer(IK) :: k
 integer(IK) :: kbase
 integer(IK) :: korig
@@ -245,37 +244,33 @@ sfrac = HALF / real(n + 1, RP)
 ptsid(1) = sfrac
 bmat = ZERO
 zmat = ZERO
-do j = 1, n
-    ptsid(j + 1) = real(j, RP) + sfrac
-    if (j <= npt - n - 1) then
-        ptsid(j + n + 1) = real(j, RP) / real(n + 1, RP) + sfrac
-        temp = ONE / (ptsaux(1, j) - ptsaux(2, j))
-        bmat(j, j + 1) = -temp + ONE / ptsaux(1, j)
-        bmat(j, j + n + 1) = temp + ONE / ptsaux(2, j)
-        bmat(j, 1) = -bmat(j, j + 1) - bmat(j, j + n + 1)
-        zmat(1, j) = sqrt(TWO) / abs(ptsaux(1, j) * ptsaux(2, j))
-        zmat(j + 1, j) = zmat(1, j) * ptsaux(2, j) * temp
-        zmat(j + n + 1, j) = -zmat(1, j) * ptsaux(1, j) * temp
+do k = 1, n
+    ptsid(k + 1) = real(k, RP) + sfrac
+    if (k <= npt - n - 1) then
+        ptsid(k + n + 1) = real(k, RP) / real(n + 1, RP) + sfrac
+        temp = ONE / (ptsaux(1, k) - ptsaux(2, k))
+        bmat(k, k + 1) = -temp + ONE / ptsaux(1, k)
+        bmat(k, k + n + 1) = temp + ONE / ptsaux(2, k)
+        bmat(k, 1) = -bmat(k, k + 1) - bmat(k, k + n + 1)
+        zmat(1, k) = sqrt(TWO) / abs(ptsaux(1, k) * ptsaux(2, k))
+        zmat(k + 1, k) = zmat(1, k) * ptsaux(2, k) * temp
+        zmat(k + n + 1, k) = -zmat(1, k) * ptsaux(1, k) * temp
     else
-        bmat(j, 1) = -ONE / ptsaux(1, j)
-        bmat(j, j + 1) = ONE / ptsaux(1, j)
-        bmat(j, j + npt) = -HALF * ptsaux(1, j)**2
+        bmat(k, 1) = -ONE / ptsaux(1, k)
+        bmat(k, k + 1) = ONE / ptsaux(1, k)
+        bmat(k, k + npt) = -HALF * ptsaux(1, k)**2
     end if
 end do
 
 ! Set any remaining identifiers with their nonzero elements of ZMAT.
+ij = setij(n, npt)
 do k = 2_IK * n + 2_IK, npt
-    !iw = floor((real(k - n - 1) - HALF) / real(n))
-    iw = floor(real(k - n - 2) / real(n))
-    ip = k - n - 1_IK - iw * n
-    iq = ip + iw
-    iq = modulo(ip + iw - 1_IK, n) + 1_IK
+    ip = ij(1, k - 2 * n - 1)
+    iq = ij(2, k - 2 * n - 1)
     ptsid(k) = real(ip, RP) + real(iq, RP) / real(n + 1, RP) + sfrac
     temp = ONE / (ptsaux(1, ip) * ptsaux(1, iq))
-    zmat(1, k - n - 1) = temp
-    zmat(ip + 1, k - n - 1) = -temp
-    zmat(iq + 1, k - n - 1) = -temp
-    zmat(k, k - n - 1) = temp
+    zmat([1_IK, k], k - n - 1) = temp
+    zmat([ip + 1, iq + 1], k - n - 1) = -temp
 end do
 
 ! Update BMAT, ZMAT, ans PTSID so that the 1st and the KOPT-th provisional points are exchanged.
