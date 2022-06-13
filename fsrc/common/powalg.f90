@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, June 09, 2022 PM04:02:36
+! Last Modified: Sunday, June 12, 2022 PM09:08:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -293,7 +293,7 @@ subroutine qrexc_Rdiag(A, Q, Rdiag, i)  ! Used in COBYLA
 ! N.B.:
 ! 0. Instead of R, this subroutine updates RDIAG, which is diag(R), the size being N.
 ! 1. With L = SIZE(Q, 2) = SIZE(R, 1), we have M >= L >= N. Most often, L = M or N.
-! 2. The subroutine changes only Q(:, I:N) and Rdiag(I:N).
+! 2. The subroutine changes only Q(:, I:N) and RDIAG(I:N).
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert

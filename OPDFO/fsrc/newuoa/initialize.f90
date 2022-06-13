@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Friday, June 10, 2022 PM09:46:45
+! Last Modified: Monday, June 13, 2022 AM10:16:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -337,7 +337,8 @@ do k = 1, npt - 2_IK * n - 1_IK
     j = modulo(ij(k, 2) - 2_IK, n) + 1_IK
     xi = xpt(i, k + 2 * n + 1)
     xj = xpt(j, k + 2 * n + 1)
-    hq(i, j) = (fbeg - fval(ij(k, 1)) - fval(ij(k, 2)) + fval(k + 2 * n + 1)) / (xi * xj)
+    !hq(i, j) = (fbeg - fval(ij(k, 1)) - fval(ij(k, 2)) + fval(k + 2 * n + 1)) / (xi * xj)
+    hq(i, j) = (fbeg - (fval(ij(k, 1)) + fval(ij(k, 2))) + fval(k + 2 * n + 1)) / (xi * xj)
     hq(j, i) = hq(i, j)
 end do
 
