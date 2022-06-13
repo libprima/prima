@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 13, 2022 PM06:21:57
+! Last Modified: Monday, June 13, 2022 PM10:01:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul
+use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul, setij
 
 ! Solver-specific modules
 use, non_intrinsic :: update_mod, only : update
@@ -191,13 +191,7 @@ xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZE
 ! N.B.: We do not distinguish between {I, J} and {J, I}, which represent the same set. If we want to
 ! ensure an order, e.g., IJ(:, 1) > IJ(:, 2) (so that the (IJ(K, 1), IJ(K, 2)) position is in the
 ! lower triangular part of a matrix), then we can sort IJ, e.g., by IJ = SORT(IJ, 2, 'DESCEND').
-ij(:, 1) = int([(k, k=n, npt - n - 2_IK)] / n, IK)
-ij(:, 2) = int([(k, k=n, npt - n - 2_IK)] - n * ij(:, 1) + 1_IK, IK)
-ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
-!!MATLAB: (N.B.: Fortran MODULO == MATLAB `mod`, Fortran MOD == MATLAB `rem`)
-!!ij(:, 1) = floor((n : npt-n-2) / n);
-!!ij(:, 2) = (n : npt-n-2) - n*ij(:, 1) + 1;
-!!ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
+ij = setij(n, npt)
 
 ! Set XPT(:, 2*N + 2 : NPT).
 ! Indeed, XPT(:, K) has only two nonzeros for each K >= 2*N + 2,
@@ -292,7 +286,6 @@ do k = 1, npt
     end if
 end do
 !----------------------------------------------------------!
-nf = min(nf, npt)  ! At exit of the loop, nf = npt + 1
 nf = int(count(evaluated), kind(nf))
 !----------------------------------------------------------!
 
