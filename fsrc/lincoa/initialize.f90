@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 AM11:56:36
+! Last Modified: Tuesday, June 14, 2022 PM03:39:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -285,7 +285,8 @@ do k = 1, npt
     !end if
     fval(k) = f
     ! Note that we should NOT compare F and FTARGET, because X may not be feasible.
-    if (is_nan(f) .or. is_posinf(f) .or. fval(kopt) <= ftarget) then
+    !if (is_nan(f) .or. is_posinf(f) .or. fval(kopt) <= ftarget) then
+    if (is_nan(f) .or. is_posinf(f) .or. (f <= ftarget .and. feasible(k))) then
         exit
     end if
 end do
