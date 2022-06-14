@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, May 05, 2022 PM03:41:48
+! Last Modified: Wednesday, June 15, 2022 AM01:21:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -231,8 +231,8 @@ if (subinfo /= INFO_DFT) then
         call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
             & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
         call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
-        call assert(.not. any(is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist)))), &
-            & 'CHIST does not contain NaN/+Inf', srname)
+        call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) &
+            & .or. is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain negative values or NaN/+Inf', srname)
         k = minval([nf, maxfhist, maxchist])
         call assert(.not. any(isbetter(fhist(1:k), chist(1:k), f, cstrv, ctol)), &
             & 'No point in the history is better than X', srname)
@@ -294,10 +294,10 @@ do tr = 1, maxtr
     dnorm = min(delta, norm(d))
 
     ! Is the trust-region trial step short? N.B.: we compare DNORM with RHO, not DELTA.
-    ! Powell's code especially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,  
+    ! Powell's code especially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
     ! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.
     ! Note that LINCOA has a slightly more sophisticated way of defining SHORTD, taking into account
-    ! whether D causes a change to the active set. Should we try the same here? 
+    ! whether D causes a change to the active set. Should we try the same here?
     shortd = (dnorm < TENTH * rho)
 
     if (shortd) then
@@ -548,8 +548,8 @@ if (DEBUGGING) then
     call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
         & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
     call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
-    call assert(.not. any(is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist)))), &
-        & 'CHIST does not contain NaN/+Inf', srname)
+    call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) &
+        & .or. is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain negative values or NaN/+Inf', srname)
     k = minval([nf, maxfhist, maxchist])
     call assert(.not. any(isbetter(fhist(1:k), chist(1:k), f, cstrv, ctol)), &
         & 'No point in the history is better than X', srname)

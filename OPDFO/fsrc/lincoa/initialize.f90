@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 PM06:40:14
+! Last Modified: Wednesday, June 15, 2022 AM12:41:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,8 +22,8 @@ public :: initialize
 contains
 
 
-subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x0, b, &
-    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, &
+subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x0, b, &
+    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, cval, gopt, hq, pq, rescon, &
     & step, xbase, xhist, xopt, xpt, xsav, zmat)
 
 ! Generic modules
@@ -50,6 +50,7 @@ integer(IK), intent(in) :: iprint
 real(RP), intent(in) :: A_orig(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: b_orig(:)  ! B_ORIG(M)
+real(RP), intent(in) :: ctol
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: x0(:)  ! X0(N)
@@ -66,7 +67,7 @@ real(RP), intent(out) :: chist(:)  ! CHIST(MAXCHIST)
 real(RP), intent(out) :: cstrv
 real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
-real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
+real(RP), intent(out) :: fval(:), cval(:)  ! FVAL(NPT)
 real(RP), intent(out) :: gopt(:)  ! GOPT(N)
 real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
@@ -222,7 +223,8 @@ do nf = 1, npt
     bigv = ZERO
     j = 0
     if (nf >= 2) then
-        resid = -b + matprod(xpt(:, nf), amat)
+        !resid = -b + matprod(xpt(:, nf), amat)
+        resid = matprod(xpt(:, nf), amat) - b
         !bigv = maxval([ZERO, resid])
         !jsav = int(maxloc(resid, dim=1), IK)
         !if (bigv > test) then
@@ -268,8 +270,10 @@ do nf = 1, npt
         kopt = nf
     end if
     fval(nf) = f
+    cval(nf) = cstrv
     ! Note that we should NOT compare F and FTARGET, because X may not be feasible.
-    if (is_nan(f) .or. is_posinf(f) .or. fval(kopt) <= ftarget) then
+    !if (is_nan(f) .or. is_posinf(f) .or. fval(kopt) <= ftarget) then
+    if (is_nan(f) .or. is_posinf(f) .or. f <= ftarget .and. cstrv <= ctol) then
         exit
     end if
 end do

@@ -367,6 +367,7 @@ test_options.fortran = (rand > 0.5);
 test_options.output_xhist = 1;
 test_options.output_nlchist = (rand > 0.5);
 test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
+%test_options.maxhist = test_options.maxfun;
 if single_test
     % DO NOT INVOKE ANY RANDOMIZATION WITHIN THIS IF. Otherwise, a single test cannot reproduce the
     % corresponding test in a multiple one.
@@ -613,7 +614,8 @@ if ~equiv
         chist2 = output2.chist(end-nhist+1:end);
         chist1 == chist2
     end
-    if single_test && options.sequential
+    %if single_test && options.sequential
+    if options.sequential
         fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
         cd(options.olddir);
         keyboard

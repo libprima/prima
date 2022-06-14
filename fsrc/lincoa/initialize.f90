@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 PM06:44:47
+! Last Modified: Wednesday, June 15, 2022 AM01:41:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,9 +22,8 @@ public :: initialize
 contains
 
 
-subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x0, b, &
-    & idz, kopt, nf, bmat, chist, fhist, fval, gopt, hq, pq, rescon, &
-    & xbase, xhist, xpt, zmat)
+subroutine initialize(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x0, b, &
+    & idz, kopt, nf, bmat, chist, fhist, fval, xbase, xhist, xpt, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the initialization about the interpolation points & their function values.
 !
@@ -44,12 +43,15 @@ subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x0,
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
+use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
+use, non_intrinsic :: info_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
+use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul, setij, updateh
 
@@ -64,9 +66,11 @@ implicit none
 ! Inputs
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
+integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: A_orig(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: b_orig(:)  ! B_ORIG(M)
+real(RP), intent(in) :: ctol
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: x0(:)  ! X0(N)
@@ -75,6 +79,7 @@ real(RP), intent(in) :: x0(:)  ! X0(N)
 real(RP), intent(inout) :: b(:)  ! B(M)
 
 ! Outputs
+integer(IK), intent(out) :: info
 integer(IK), intent(out) :: idz
 integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
@@ -82,16 +87,13 @@ real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT+N)
 real(RP), intent(out) :: chist(:)  ! CHIST(MAXCHIST)
 real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
-real(RP), intent(out) :: gopt(:)  ! GOPT(N)
-real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(out) :: pq(:)  ! PQ(NPT)
-real(RP), intent(out) :: rescon(:)  ! RESCON(M)
 real(RP), intent(out) :: xbase(:)  ! XBASE(N)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
 real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
+character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'INITIIALIZE'
 integer(IK) :: knew
 integer(IK) :: m
@@ -102,8 +104,8 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: x(size(x0))
-real(RP) :: bigcv, feas, recip, reciq, resid(size(b)), rhosq, mincv, cstrv, step(size(x0)), f, xopt(size(x0))
-integer(IK) :: jsav, k, kbase
+real(RP) :: recip, reciq, constr(size(b)), rhosq, mincv, cstrv, step(size(x0)), f, xopt(size(x0))
+integer(IK) :: j, k, kbase, subinfo
 integer(IK) :: ij(2, max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1))    ! IJ(2, MAX(0_IK, NPT-2*N-1_IK))
 logical :: evaluated(size(xpt, 2)), feasible(size(xpt, 2))
 
@@ -129,12 +131,8 @@ if (DEBUGGING) then
     call assert(rhobeg > 0, 'RHOBEG > 0', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
-    call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
-    call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
-    call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) = [N, N]', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
@@ -160,6 +158,8 @@ end if
 !       the initial elements of FVAL, XOPT, GOPT, HQ, PQ, and RESCON.
 !
 !     Set some constants.
+
+info = INFO_DFT
 
 !--------------------------------------------------------------------------------------------------!
 ! Temporary fix for uninitialized variables when initialization terminates because of f < ftarget etc
@@ -234,59 +234,45 @@ else
     end do
 end if
 
-! Update the constraint right hand sides to allow for the shift XBASE.
+! Update the constraint right-hand sides to allow for the shift XBASE.
 b = b - matprod(xbase, amat)
 
 ! Go through the initial points, shifting every infeasible point if necessary so that its constraint
-! violation is at least 0.2*RHOBEG. Zaikun 20220606: Is this really necessary?
-!--------------------------------------------------------------------------------------------------!
-jsav = 0_IK  ! Temporary fix for attention: jsav may be used uninitialized in this function from g95
-!--------------------------------------------------------------------------------------------------!
+! violation is at least 0.2*RHOBEG. Zaikun 20220614: This seems to improve the performance modestly.
 feasible = .false.
 do k = 1, npt
-    !feas = ONE
-    !bigcv = ZERO
-    !if (k >= 2) then
-    !    resid = -b + matprod(xpt(:, k), amat)
-    !    bigcv = maxval([ZERO, resid])
-    !    jsav = int(maxloc(resid, dim=1), IK)
-    !    if (bigcv > mincv) then
-    !        feas = ZERO
-    !    elseif (bigcv > 0) then
-    !        feas = -ONE
-    !    end if
-    !end if
-
-    !if (any(resid > 0) .and. all(resid < mincv)) then
-    !    jsav = int(maxloc(resid, dim=1), IK)
-    !    bigcv = resid(jsav)
-    !    step = xpt(:, k) + (mincv - bigcv) * amat(:, jsav)
-    !    call updateh(k, kbase, idz, step, xpt, bmat, zmat)
-    !    xpt(:, k) = step
-    !end if
-
     if (k == 1) then  ! LINCOA always start with a feasible point.
         feasible(k) = .true.
     else
-        resid = -b + matprod(xpt(:, k), amat)
-        feasible(k) = all(resid <= 0)
-        if (all(resid < mincv) .and. .not. feasible(k)) then
-            jsav = int(maxloc(resid, dim=1), IK)
-            bigcv = resid(jsav)
-            step = xpt(:, k) + (mincv - bigcv) * amat(:, jsav)
+        ! Internally, we use AMAT and B to evaluate the constraints.
+        constr = matprod(xpt(:, k), amat) - b
+        feasible(k) = all(constr <= 0)
+        if (all(constr < mincv) .and. .not. feasible(k)) then
+            j = int(maxloc(constr, dim=1), IK)
+            cstrv = constr(j)
+            step = xpt(:, k) + (mincv - cstrv) * amat(:, j)
             call updateh(k, kbase, idz, step, xpt, bmat, zmat)
             xpt(:, k) = step
         end if
     end if
+
     x = xbase + xpt(:, k)
     call evaluate(calfun, x, f)
-    cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+    ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
+    constr = matprod(x, A_orig) - b_orig
+    cstrv = maximum([ZERO, constr])
+    call fmsg(solver, iprint, k, f, x, cstrv, constr)
     evaluated(k) = .true.
     call savehist(k, x, xhist, f, fhist, cstrv, chist)
     fval(k) = f
-    if (is_nan(f) .or. is_posinf(f) .or. (f <= ftarget .and. feasible(k))) then
+    subinfo = checkexit(maxfun, k, cstrv, ctol, f, ftarget, x)
+    if (subinfo /= INFO_DFT) then
+        info = subinfo
         exit
     end if
+    !if (is_nan(f) .or. is_posinf(f) .or. (f <= ftarget .and. feasible(k))) then
+    !    exit
+    !end if
 end do
 
 nf = int(count(evaluated), kind(nf))
@@ -295,32 +281,7 @@ kopt = int(minloc(fval, mask=(evaluated .and. feasible), dim=1), kind(kopt))
 !!fopt = min(fval(evaluated & feasible));
 !!kopt = find(evaluated & feasible & ~(fval > fopt), 1,'first');
 
-if (all(evaluated)) then
-
-! Set XOPT.
-    xopt = xpt(:, kopt)
-
-! Set HQ, PQ, and GOPT for the first quadratic model.
-    hq = ZERO
-    pq = omega_mul(idz, zmat, fval)
-    gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
-
-! Set the initial elements of RESCON.
-! RESCON holds useful information about the constraint residuals. Every nonnegative RESCON(J) is the
-! residual of the J-th constraint at the current trust region centre. Otherwise, if RESCON(J) is
-! negative, the J-th constraint holds as a strict inequality at the trust region centre, its
-! residual being at least |RESCON(J)|; further, the value of |RESCON(J)| is at least the current
-! trust region radius DELTA.
-! 1. Normally, RESCON = B - AMAT^T*XOPT (theoretically, B - AMAT^T*XOPT >= 0 since XOPT is feasible)
-! 2. If RESCON(J) >= DELTA (current trust-region radius), its sign is flipped: RESCON(J) = -RESCON(J).
-    rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-    rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
-!!MATLAB: rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
-
-end if
-
 ! Postconditions
-! More to come.
 if (DEBUGGING) then
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)

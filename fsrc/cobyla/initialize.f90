@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, June 03, 2022 PM05:27:48
+! Last Modified: Wednesday, June 15, 2022 AM01:22:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -200,8 +200,9 @@ if (DEBUGGING) then
     call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
     call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N + 1', srname)
     call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
-    call assert(.not. any(evaluated(1:min(nf, maxchist)) .and. (is_nan(chist(1:min(nf, maxchist))) &
-        & .or. is_posinf(chist(1:min(nf, maxchist))))), 'CHIST does not contain NaN/Inf', srname)
+    call assert(.not. any(evaluated(1:min(nf, maxchist)) .and. (chist(1:min(nf, maxchist)) < 0 .or. &
+        & is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist))))), &
+        & 'CHIST does not contain negative values or NaN/+Inf', srname)
     call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
         & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
@@ -323,8 +324,8 @@ if (DEBUGGING) then
     call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &
         & 'CONFILT does not contain NaN/-Inf', srname)
     call assert(size(cfilt) == maxfilt, 'SIZE(CFILT) == MAXFILT', srname)
-    call assert(.not. any(is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
-        & 'CFILT does not contain NaN/Inf', srname)
+    call assert(.not. any(cfilt(1:nfilt) < 0 .or. is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
+        & 'CFILT does not contain negative values or NaN/Inf', srname)
     call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
     call assert(.not. any(is_nan(xfilt(:, 1:nfilt))), 'XFILT does not contain NaN', srname)
     ! The last calculated X can be Inf (finite + finite can be Inf numerically).

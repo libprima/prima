@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 AM11:53:41
+! Last Modified: Wednesday, June 15, 2022 AM01:47:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,8 +22,8 @@ public :: lincob
 contains
 
 
-subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bvec, eta1, eta2, &
-    & ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, chist, cstrv, f, fhist, xhist, info)
+subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bvec, ctol, cweight, &
+    & eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, chist, cstrv, f, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of LINCOA.
 !
@@ -72,6 +72,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, r1update
+use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_col, omega_mul, hess_mul
 
@@ -94,6 +95,8 @@ real(RP), intent(in) :: A_orig(:, :)  ! A_ORIG(N, M) ; Better names? necessary?
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M) ; Better names? necessary?
 real(RP), intent(in) :: b_orig(:) ! B_ORIG(M) ; Better names? necessary?
 real(RP), intent(in) :: bvec(:)  ! BVEC(M) ; Better names? necessary?
+real(RP), intent(in) :: ctol
+real(RP), intent(in) :: cweight
 real(RP), intent(in) :: eta1
 real(RP), intent(in) :: eta2
 real(RP), intent(in) :: ftarget
@@ -115,6 +118,7 @@ real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
+character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'LINCOB'
 integer(IK) :: iact(size(bvec))
 integer(IK) :: m
@@ -143,11 +147,11 @@ real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, dnorm, temp, &
-&        qred
+&        qred, constr(size(bvec))
 logical :: feasible, shortd, improve_geo
 integer(IK) :: idz, itest,  &
 &           knew, kopt, ksave, nact,      &
-&           nvala, nvalb, ngetact
+&           nvala, nvalb, ngetact, subinfo
 real(RP) :: fshift(npt)
 real(RP) :: pqalt(npt), galt(size(x))
 
@@ -191,41 +195,43 @@ end if
 ! constraint violation is at least 0.2*RHOBEG. Also KOPT is set so that XPT(KOPT,.) is the initial
 ! trust region centre.
 b = bvec
-qfac = eye(n)
-rfac = ZERO
-call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
-    & idz, kopt, nf, bmat, chist, fhist, fval, gopt, hq, pq, rescon, &
-    & xbase, xhist, xpt, zmat)
-!--------------------------------------------------------------------------------------------------!
+call initialize(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
+    & idz, kopt, nf, bmat, chist, fhist, fval, xbase, xhist, xpt, zmat, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt
 f = fopt
+! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 xsav = x
-!--------------------------------------------------------------------------------------------------!
 
-if (is_nan(f) .or. is_posinf(f)) then
-    !xopt = xpt(:, kopt)
-    !fopt = fval(kopt)
-    !x = xbase + xopt
-    !f = fopt
+if (subinfo /= INFO_DFT) then
+    info = subinfo
     call rangehist(nf, xhist, fhist, chist)
-    info = NAN_INF_F
-    return
-end if
-if (fval(kopt) <= ftarget) then
-    !xopt = xpt(:, kopt)
-    !fopt = fval(kopt)
-    !x = xbase + xopt
-    !f = fopt
-    call rangehist(nf, xhist, fhist, chist)
-    info = FTARGET_ACHIEVED
+    close (16)
     return
 end if
 
-nf = npt
-fopt = fval(kopt)
+! Initialize the quadratic model.
+hq = ZERO
+pq = omega_mul(idz, zmat, fval)
+gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
+
+! Initialize RESCON.
+! RESCON holds useful information about the constraint residuals.
+! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
+! 2. Otherwise, |RESCON(J)| is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA;
+! RESCON is set to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
+! RESCON can be updated without calculating the constraints that are far from being active, so that
+! we only need to evaluate the constraints that are nearly active. RESCON is initialized as follows.
+! 1. Normally, RESCON = B - AMAT^T*XOPT (theoretically, B - AMAT^T*XOPT >= 0 since XOPT is feasible)
+! 2. If RESCON(J) >= RHOBEG (current trust-region radius), its sign is flipped.
+rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
+rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
+!!MATLAB: rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
+
+qfac = eye(n)
+rfac = ZERO
 rho = rhobeg
 delta = rho
 ratio = -ONE
@@ -379,8 +385,12 @@ do while (.true.)
                 exit
             end if
             call evaluate(calfun, x, f)
-            cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+            ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is
+            ! not usable).
+            constr = matprod(x, A_orig) - b_orig
+            cstrv = maximum([ZERO, constr])
             nf = nf + 1_IK
+            call fmsg(solver, iprint, nf, f, x, cstrv, constr)
             call savehist(nf, x, xhist, f, fhist, cstrv, chist)
             if (is_nan(f) .or. is_posinf(f)) then
                 info = NAN_INF_F
@@ -557,8 +567,11 @@ end do
 if (info == SMALL_TR_RADIUS .and. ksave == -1 .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
-    cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])  ! Must be evaluated, as SAVEHIST needs it.
+    ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
+    constr = matprod(x, A_orig) - b_orig
+    cstrv = maximum([ZERO, constr])
     nf = nf + 1_IK
+    call fmsg(solver, iprint, nf, f, x, cstrv, constr)
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
     feasible = .true. ! Why? Consistent with the meaning of FEASIBLE???
 end if
@@ -580,7 +593,7 @@ call rangehist(nf, xhist, fhist, chist)
 
 ! Postconditions
 
-!close (16)
+close (16)
 
 end subroutine lincob
 

@@ -1,3 +1,4 @@
+!TODO: merge CHECKEXIT_UNC and CHECKEXIT_CON, using optional CSTRV and CTOL.
 module checkexit_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module checks whether to exit the solver.
@@ -6,7 +7,7 @@ module checkexit_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, February 02, 2022 PM08:07:54
+! Last Modified: Wednesday, June 15, 2022 AM01:43:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
