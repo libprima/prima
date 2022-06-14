@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, June 03, 2022 PM06:28:23
+! Last Modified: Wednesday, June 15, 2022 AM01:20:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -545,7 +545,8 @@ if (DEBUGGING) then
     end if
     if (present(chist)) then
         call assert(size(chist) == nhist, 'SIZE(CHIST) == NHIST', srname)
-        call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
+        call assert(.not. any(chist < 0 .or. is_nan(chist) .or. is_posinf(chist)), &
+            & 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
     end if
     if (present(conhist)) then
         call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M, NHIST]', srname)

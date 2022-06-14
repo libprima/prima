@@ -27,7 +27,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 22, 2022 PM11:31:24
+! Last Modified: Wednesday, June 15, 2022 AM12:33:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -358,7 +358,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 ! Normalize the constraints, and copy the resultant constraint matrix and right hand sides into
 ! working space, after increasing the right hand sides if necessary so that the starting point
 ! is feasible.
-constr_modified = .false.; 
+constr_modified = .false.;
 smallx = 1.0E-6_RP * rhoend_loc
 call safealloc(A_normalized, n, m)
 call safealloc(b_normalized, m)
@@ -382,7 +382,7 @@ end if
 
 !-------------------- Call LINCOB, which performs the real calculations. --------------------------!
 call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, A_loc, A_normalized, &
-    & b_loc, b_normalized, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, &
+    & b_loc, b_normalized, ctol, cweight, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, &
     & rhobeg_loc, rhoend_loc, x, nf_loc, chist_loc, cstrv_loc, f, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
@@ -479,6 +479,8 @@ if (DEBUGGING) then
 !!!            & 'No point in the history is better than X', srname)
 !!!    end if
 end if
+
+close(17)
 
 end subroutine lincoa
 

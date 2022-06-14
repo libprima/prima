@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM09:30:09
+! Last Modified: Wednesday, June 15, 2022 AM12:57:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: lincob
 contains
 
 
-subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bvec, eta1, eta2, &
+subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bvec, ctol, cweight, eta1, eta2, &
     & ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, chist, cstrv, f, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of LINCOA.
@@ -96,6 +96,7 @@ real(RP), intent(in) :: b_orig(:) ! B_ORIG(M) ; Better names? necessary?
 real(RP), intent(in) :: bvec(:)  ! BVEC(M) ; Better names? necessary?
 real(RP), intent(in) :: eta1
 real(RP), intent(in) :: eta2
+real(RP), intent(in) :: ctol, cweight
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: gamma1
 real(RP), intent(in) :: gamma2
@@ -125,7 +126,7 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 real(RP) :: b(size(bvec))
 real(RP) :: bmat(size(x), npt + size(x))
-real(RP) :: fval(npt)
+real(RP) :: fval(npt),  cval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
@@ -193,10 +194,16 @@ end if
 b = bvec
 qfac = eye(n)
 rfac = ZERO
-call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
-    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, gopt, hq, pq, rescon, &
+call initialize(calfun, iprint, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
+    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, cval, gopt, hq, pq, rescon, &
     & d, xbase, xhist, xopt, xpt, xsav, zmat)
 !--------------------------------------------------------------------------------------------------!
+xopt = xpt(:, kopt)
+fopt = fval(kopt)
+x = xbase + xopt
+f = fopt
+cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+xsav = x
 !xopt = xpt(:, kopt)
 !fopt = fval(kopt)
 !x = xbase + xopt
@@ -204,22 +211,17 @@ call initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x, b, &
 !--------------------------------------------------------------------------------------------------!
 
 if (is_nan(f) .or. is_posinf(f)) then
-    xopt = xpt(:, kopt)
-    fopt = fval(kopt)
-    x = xbase + xopt
-    f = fopt
     call rangehist(nf, xhist, fhist, chist)
     info = NAN_INF_F
+    close(17)
     return
 end if
 ! Note that we should NOT compare F and FTARGET, because X may not be feasible.
-if (fval(kopt) <= ftarget) then
-    xopt = xpt(:, kopt)
-    fopt = fval(kopt)
-    x = xbase + xopt
-    f = fopt
+!if (fval(kopt) <= ftarget) then
+if (any(fval(1:nf) <= ftarget .and. cval(1:nf) <= ctol)) then
     call rangehist(nf, xhist, fhist, chist)
     info = FTARGET_ACHIEVED
+    close(17)
     return
 end if
 
@@ -579,7 +581,7 @@ call rangehist(nf, xhist, fhist, chist)
 
 ! Postconditions
 
-!close (16)
+close (17)
 
 end subroutine lincob
 
