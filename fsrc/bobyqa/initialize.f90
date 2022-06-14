@@ -258,7 +258,7 @@ end if
 ! Set NF, KOPT
 nf = int(count(evaluated), kind(nf))
 kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
-!!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first')
+!!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first');
 
 !====================!
 !  Calculation ends  !

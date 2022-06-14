@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, June 10, 2022 PM11:18:59
+! Last Modified: Tuesday, June 14, 2022 AM11:53:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -214,7 +214,6 @@ if (is_nan(f) .or. is_posinf(f)) then
     info = NAN_INF_F
     return
 end if
-! Note that we should NOT compare F and FTARGET, because X may not be feasible.
 if (fval(kopt) <= ftarget) then
     !xopt = xpt(:, kopt)
     !fopt = fval(kopt)
