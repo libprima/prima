@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 PM06:16:13
+! Last Modified: Tuesday, June 14, 2022 PM05:40:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul, setij, updateh
+use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul, setij
 
 ! Solver-specific modules
 use, non_intrinsic :: update_mod, only : update
@@ -93,7 +93,6 @@ real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
 character(len=*), parameter :: srname = 'INITIIALIZE'
-integer(IK) :: knew
 integer(IK) :: m
 integer(IK) :: maxchist
 integer(IK) :: maxfhist
@@ -102,8 +101,8 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: x(size(x0))
-real(RP) :: bigcv, feas, recip, reciq, resid(size(b)), rhosq, mincv, cstrv, step(size(x0)), f, xopt(size(x0))
-integer(IK) :: jsav, k, kbase
+real(RP) :: bigv, feas, recip, reciq, resid(size(b)), rhosq, test, cstrv, step(size(x0)), f, xopt(size(x0))
+integer(IK) :: jsav, k, kbase, knew
 integer(IK) :: ij(2, max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1))    ! IJ(2, MAX(0_IK, NPT-2*N-1_IK))
 logical :: evaluated(size(xpt, 2)), feasible(size(xpt, 2))
 
@@ -167,7 +166,7 @@ fval = ieeenan()
 !--------------------------------------------------------------------------------------------------!
 
 rhosq = rhobeg * rhobeg
-mincv = 0.2_RP * rhobeg
+test = 0.2_RP * rhobeg
 idz = 1
 kbase = 1
 
@@ -245,36 +244,48 @@ jsav = 0_IK  ! Temporary fix for attention: jsav may be used uninitialized in th
 feasible = .false.
 do k = 1, npt
     feas = ONE
-    bigcv = ZERO
+    bigv = ZERO
     if (k >= 2) then
         resid = -b + matprod(xpt(:, k), amat)
-        bigcv = maxval([ZERO, resid])
+        bigv = maxval([ZERO, resid])
         jsav = int(maxloc(resid, dim=1), IK)
-        if (bigcv > mincv) then
+        if (bigv > test) then
             feas = ZERO
-        elseif (bigcv > 0) then
+        elseif (bigv > 0) then
             feas = -ONE
         end if
     end if
-
     if (feas < ZERO) then
-        step = xpt(:, k) + (mincv - bigcv) * amat(:, jsav)
-        !knew = k; call update(kbase, step, xpt, idz, knew, bmat, zmat)
-        call updateh(k, kbase, idz, step, xpt, bmat, zmat)
+        !if (.false.) then
+        step = xpt(:, k) + (test - bigv) * amat(:, jsav)
+        knew = k
+        call update(kbase, step, xpt, idz, knew, bmat, zmat)
         xpt(:, k) = step
     end if
 
     if (k == 1) then
         feasible(k) = .true.
     else
-        feasible(k) = (feas > 0)!all(matprod(xpt(:, k), amat) - b <= 0)
+        feasible(k) = all(matprod(xpt(:, k), amat) - b <= 0)
     end if
+
+    ! Calculate the objective function at the current interpolation point, and set KOPT to the index
+    ! of the first trust region centre.
     x = xbase + xpt(:, k)
+    !---------------------------------------------------!
     call evaluate(calfun, x, f)
     cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
     evaluated(k) = .true.
     call savehist(k, x, xhist, f, fhist, cstrv, chist)
+    !---------------------------------------------------!
+    !if (k == 1) then
+    !    kopt = 1
+    !else if (f < fval(kopt) .and. feas > ZERO) then
+    !    kopt = k
+    !end if
     fval(k) = f
+    ! Note that we should NOT compare F and FTARGET, because X may not be feasible.
+    !if (is_nan(f) .or. is_posinf(f) .or. fval(kopt) <= ftarget) then
     if (is_nan(f) .or. is_posinf(f) .or. (f <= ftarget .and. feasible(k))) then
         exit
     end if

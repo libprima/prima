@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 AM12:13:19
+! Last Modified: Tuesday, June 14, 2022 PM05:41:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -232,6 +232,7 @@ do nf = 1, npt
         end if
     end if
     if (feas < ZERO) then
+        !if (.false.) then
         step = xpt(:, nf) + (test - bigv) * amat(:, jsav)
         knew = nf
         call update(kbase, step, xpt, idz, knew, bmat, zmat)
