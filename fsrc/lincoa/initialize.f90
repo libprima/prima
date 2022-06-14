@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 AM09:37:15
+! Last Modified: Tuesday, June 14, 2022 AM11:56:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,7 +104,7 @@ real(RP) :: x(size(x0))
 real(RP) :: bigv, feas, recip, reciq, resid(size(b)), rhosq, test, cstrv, step(size(x0)), f, xopt(size(x0))
 integer(IK) :: jsav, k, kbase, knew
 integer(IK) :: ij(2, max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1))    ! IJ(2, MAX(0_IK, NPT-2*N-1_IK))
-logical :: evaluated(size(xpt, 2))
+logical :: evaluated(size(xpt, 2)), feasible(size(xpt, 2))
 
 
 ! Sizes.
@@ -241,41 +241,48 @@ b = b - matprod(xbase, amat)
 !--------------------------------------------------------------------------------------------------!
 jsav = 0_IK  ! Temporary fix for attention: jsav may be used uninitialized in this function from g95
 !--------------------------------------------------------------------------------------------------!
+feasible = .false.
 do k = 1, npt
-    feas = ONE
-    bigv = ZERO
-    if (k >= 2) then
-        resid = -b + matprod(xpt(:, k), amat)
-        bigv = maxval([ZERO, resid])
-        jsav = int(maxloc(resid, dim=1), IK)
-        if (bigv > test) then
-            feas = ZERO
-        elseif (bigv > 0) then
-            feas = -ONE
-        end if
-    end if
-    if (feas < ZERO) then
-        !if (.false.) then
-        step = xpt(:, k) + (test - bigv) * amat(:, jsav)
-        knew = k
-        call update(kbase, step, xpt, idz, knew, bmat, zmat)
-        xpt(:, k) = step
+    !feas = ONE
+    !bigv = ZERO
+    !if (k >= 2) then
+    !    resid = -b + matprod(xpt(:, k), amat)
+    !    bigv = maxval([ZERO, resid])
+    !    jsav = int(maxloc(resid, dim=1), IK)
+    !    if (bigv > test) then
+    !        feas = ZERO
+    !    elseif (bigv > 0) then
+    !        feas = -ONE
+    !    end if
+    !end if
+    !if (feas < ZERO) then
+    !    !if (.false.) then
+    !    step = xpt(:, k) + (test - bigv) * amat(:, jsav)
+    !    knew = k
+    !    call update(kbase, step, xpt, idz, knew, bmat, zmat)
+    !    xpt(:, k) = step
+    !end if
+
+    if (k == 1) then
+        feasible(k) = .true.
+    else
+        feasible(k) = all(matprod(xpt(:, k), amat) - b <= 0)
     end if
 
     ! Calculate the objective function at the current interpolation point, and set KOPT to the index
     ! of the first trust region centre.
     x = xbase + xpt(:, k)
     !---------------------------------------------------!
-    call evaluate(calfun, x, f)  ! What if X contains NaN?
+    call evaluate(calfun, x, f)
     cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
     evaluated(k) = .true.
     call savehist(k, x, xhist, f, fhist, cstrv, chist)
     !---------------------------------------------------!
-    if (k == 1) then
-        kopt = 1
-    else if (f < fval(kopt) .and. feas > ZERO) then
-        kopt = k
-    end if
+    !if (k == 1) then
+    !    kopt = 1
+    !else if (f < fval(kopt) .and. feas > ZERO) then
+    !    kopt = k
+    !end if
     fval(k) = f
     ! Note that we should NOT compare F and FTARGET, because X may not be feasible.
     if (is_nan(f) .or. is_posinf(f) .or. fval(kopt) <= ftarget) then
@@ -284,6 +291,10 @@ do k = 1, npt
 end do
 !----------------------------------------------------------!
 nf = int(count(evaluated), kind(nf))
+kopt = int(minloc(fval, mask=(evaluated .and. feasible), dim=1), kind(kopt))
+!!MATLAB:
+!!fopt = min(fval(evaluated & feasible));
+!!kopt = find(evaluated & feasible & ~(fval > fopt), 1,'first');
 !----------------------------------------------------------!
 
 if (all(evaluated)) then
