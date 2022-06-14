@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, June 14, 2022 AM12:15:51
+! Last Modified: Tuesday, June 14, 2022 AM09:35:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1966,28 +1966,31 @@ function setij(n, npt, sorting_direction) result(ij)
 ! Set IJ to a 2-by-(NPT-2*N-1) integer array so that IJ(:, K) = [P(K + 2*N + 1), Q(K + 2*N + 1)],
 ! with P and Q defined in (2.4) of the BOBYQA paper as well as Section 3 of the NEWUOA paper.
 ! If NPT <= 2*N + 1, then IJ is empty. Assume that NPT >= 2*N + 2. Then SIZE(IJ) = [2, NPT-2*N-1].
-! IJ contains integers between 1 and N. In general, when NPT = (N+1)*(N+2)/2, we can set IJ to
-! ANY permutation of {{I, J} : 1 <= I /= J <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the
-! first NPT - 2*N - 1 elements of such a permutation. In the implementation here, IJ is defined
-! according to Powell's code and the aforementioned papers.
-! We do not distinguish between {I, J} and {J, I}, which represent the same set. If we want to
-! ensure an order, e.g., IJ(:, 1) > IJ(:, 2) (so that the (IJ(K, 1), IJ(K, 2)) position is in the
-! lower triangular part of a matrix), then we can specify a SORTING_DIRECTION, e.g., 'descend'.
+! IJ contains integers between 1 and N. When NPT = (N+1)*(N+2)/2, the columns of IJ correspond to
+! a permutation of {{I, J} : 1 <= I /= J <= N}; when NPT < (N+1)*(N+2)/2, they correspond to the
+! first NPT - 2*N - 1 elements of such a permutation. The permutation is enumerated first in the
+! ascending order of |I - J| and then in the ascending order of MAX{I, J}. We do not distinguish
+! between {I, J} and {J, I}, which represent the same set. If we want to ensure IJ(1, :) > IJ(2, :),
+! then we can specify SORTING_DIRECTION = 'descend'.
+!
 ! This function is used in the initialization of NEWUOA, BOBYQA, and LINCOA.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : sort
+use, non_intrinsic :: string_mod, only : lower
 implicit none
+
+! Inputs
 integer(IK), intent(in) :: n
 integer(IK), intent(in) :: npt
 character(len=*), intent(in), optional :: sorting_direction
+! Outputs
 integer(IK) :: ij(2, max(0_IK, npt - 2_IK * n - 1_IK))
-
 ! Local variables
 character(len=*), parameter :: srname = 'SETIJ'
 integer(IK) :: k
-integer(IK) :: l(max(0_IK, npt - 2_IK * n - 1_IK))
+integer(IK) :: ell(max(0_IK, npt - 2_IK * n - 1_IK))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1998,16 +2001,16 @@ end if
 ! Calculation starts !
 !====================!
 
-l = int([(k, k=n, npt - n - 2_IK)] / n, IK)
-ij(1, :) = [(k, k=n, npt - n - 2_IK)] - n * l + 1_IK
-ij(2, :) = modulo(ij(1, :) + l - 1_IK, n) + 1_IK  ! MODULO(K-1, N) + 1 = K-N for K in [N+1, 2N]
+ell = int([(k, k=n, npt - n - 2_IK)] / n, IK)  ! The ell below (2.4) of the BOBYQA paper.
+ij(1, :) = [(k, k=n, npt - n - 2_IK)] - n * ell + 1_IK
+ij(2, :) = modulo(ij(1, :) + ell - 1_IK, n) + 1_IK  ! MODULO(K-1, N) + 1 = K-N for K in [N+1, 2N]
 if (present(sorting_direction)) then
     ij = sort(ij, 1, sorting_direction)  ! SORTING_DIRECTION is 'DESCEND' of 'ASCEND'
 end if
 !!MATLAB: (N.B.: Fortran MODULO == MATLAB `mod`, Fortran MOD == MATLAB `rem`)
-!!l = floor((n : npt-n-2) / n);
-!!ij(1, :) = (n : npt-n-2) - n*l + 1;
-!!ij(2, :) = mod(ij(1, :) + l - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
+!!ell = floor((n : npt-n-2) / n);
+!!ij(1, :) = (n : npt-n-2) - n*ell + 1;
+!!ij(2, :) = mod(ij(1, :) + ell - 1, n) + 1;  % mod(k-1,n) + 1 = k-n for k in [n+1,2n]
 !!if nargin >= 3
 !!    ij = sort(ij, 2, sorting_direction)  % `sorting_direction` is 'descend' of 'ascend'
 !!end
@@ -2021,7 +2024,15 @@ if (DEBUGGING) then
     call assert(size(ij, 1) == 2 .and. size(ij, 2) == max(0_IK, npt - 2_IK * n - 1_IK), &
         & 'SIZE(IJ) == [2, NPT - 2*N - 1]', srname)
     call assert(all(ij >= 1 .and. ij <= n), '1 <= IJ <= N', srname)
-    call assert(all(ij(1, :) /= ij(2, :)), 'IJ(1, :) /= IJ(2, :)', srname)
+    if (present(sorting_direction)) then
+        if (lower(sorting_direction) == 'descend') then
+            call assert(all(ij(1, :) > ij(2, :)), 'IJ(1, :) > IJ(2, :)', srname)
+        elseif (lower(sorting_direction) == 'ascend') then
+            call assert(all(ij(1, :) < ij(2, :)), 'IJ(1, :) < IJ(2, :)', srname)
+        end if
+    else
+        call assert(all(ij(1, :) /= ij(2, :)), 'IJ(1, :) /= IJ(2, :)', srname)
+    end if
 end if
 end function setij
 

@@ -213,9 +213,9 @@ end do
 ! 1. The switching is OPTIONAL. It we remove it, then the evaluations of FVAL(1 : NPT) can be
 ! merged, and they are totally PARALLELIZABLE; this can be beneficial if the function evaluations
 ! are expensive, which is likely the case.
-! 2. The initialization of NEWUOA revises IJ (see below) instead of XPT and FVAL. Mathematically,
-! it is equivalent; practically, after XPT is revised, the initialization of the quadratic model and
-! the Lagrange polynomials needs revision as well, as, e.g., XPT(:, 2:N) is not RHOBEG*EYE(N) anymore.
+! 2. The initialization of NEWUOA revises IJ (see below) instead of XPT and FVAL. Theoretically, it 
+! is equivalent; practically, after XPT is revised, the initialization of the quadratic model and 
+! the Lagrange polynomials also needs revision, as, e.g., XPT(:, 2:N) is not RHOBEG*EYE(N) anymore.
 do k = 2, min(npt - n, int(n + 1, kind(npt)))
     if (xpt(k - 1, k) * xpt(k - 1, k + n) < 0 .and. fval(k + n) < fval(k)) then
         fval([k, k + n]) = fval([k + n, k])

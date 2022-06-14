@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 13, 2022 PM11:40:05
+! Last Modified: Tuesday, June 14, 2022 AM09:37:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,9 +33,9 @@ subroutine initialize(calfun, iprint, A_orig, amat, b_orig, ftarget, rhobeg, x0,
 ! If NPT <= 2*N + 1, then IJ is empty. Assume that NPT >= 2*N + 2. Then SIZE(IJ) = [2, NPT-2*N-1].
 ! IJ contains integers between 1 and N. For each K > 2*N + 1, XPT(:, K) is
 ! XPT(:, IJ(1, K) + 1) + XPT(:, IJ(2, K) + 1). The 1 in IJ + 1 comes from the fact that XPT(:, 1)
-! corresponds to the base point XBASE. Let I = IJ(1, K) and J = IJ(2, K). Then all the
-! entries of XPT(:, K) are zero except for the I and J entries. Consequently, the Hessian of the
-! quadratic model will get a possibly nonzero (I, J) entry.
+! corresponds to the base point XBASE. Let I = IJ(1, K) and J = IJ(2, K). Then all the entries of
+! XPT(:, K) are zero except for the I and J entries. Consequently, the Hessian of the quadratic
+! model will get a possibly nonzero (I, J) entry.
 ! 2. At return,
 ! INFO = INFO_DFT: initialization finishes normally
 ! INFO = FTARGET_ACHIEVED: return because F <= FTARGET
@@ -185,7 +185,7 @@ xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZE
 
 ! Set IJ.
 ! In general, when NPT = (N+1)*(N+2)/2, we can set IJ(:, 1 : NPT - (2*N+1)) to ANY permutation
-! of {{I, J} : 1 <= J /= I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
+! of {{I, J} : 1 <= I /= J <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
 ! elements of such a permutation. The following IJ is defined according to Powell's code. See also
 ! Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
 ij = setij(n, npt)
