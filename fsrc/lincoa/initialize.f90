@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 PM06:16:13
+! Last Modified: Tuesday, June 14, 2022 PM06:44:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -244,30 +244,39 @@ jsav = 0_IK  ! Temporary fix for attention: jsav may be used uninitialized in th
 !--------------------------------------------------------------------------------------------------!
 feasible = .false.
 do k = 1, npt
-    feas = ONE
-    bigcv = ZERO
-    if (k >= 2) then
-        resid = -b + matprod(xpt(:, k), amat)
-        bigcv = maxval([ZERO, resid])
-        jsav = int(maxloc(resid, dim=1), IK)
-        if (bigcv > mincv) then
-            feas = ZERO
-        elseif (bigcv > 0) then
-            feas = -ONE
-        end if
-    end if
+    !feas = ONE
+    !bigcv = ZERO
+    !if (k >= 2) then
+    !    resid = -b + matprod(xpt(:, k), amat)
+    !    bigcv = maxval([ZERO, resid])
+    !    jsav = int(maxloc(resid, dim=1), IK)
+    !    if (bigcv > mincv) then
+    !        feas = ZERO
+    !    elseif (bigcv > 0) then
+    !        feas = -ONE
+    !    end if
+    !end if
 
-    if (feas < ZERO) then
-        step = xpt(:, k) + (mincv - bigcv) * amat(:, jsav)
-        !knew = k; call update(kbase, step, xpt, idz, knew, bmat, zmat)
-        call updateh(k, kbase, idz, step, xpt, bmat, zmat)
-        xpt(:, k) = step
-    end if
+    !if (any(resid > 0) .and. all(resid < mincv)) then
+    !    jsav = int(maxloc(resid, dim=1), IK)
+    !    bigcv = resid(jsav)
+    !    step = xpt(:, k) + (mincv - bigcv) * amat(:, jsav)
+    !    call updateh(k, kbase, idz, step, xpt, bmat, zmat)
+    !    xpt(:, k) = step
+    !end if
 
-    if (k == 1) then
+    if (k == 1) then  ! LINCOA always start with a feasible point.
         feasible(k) = .true.
     else
-        feasible(k) = (feas > 0)!all(matprod(xpt(:, k), amat) - b <= 0)
+        resid = -b + matprod(xpt(:, k), amat)
+        feasible(k) = all(resid <= 0)
+        if (all(resid < mincv) .and. .not. feasible(k)) then
+            jsav = int(maxloc(resid, dim=1), IK)
+            bigcv = resid(jsav)
+            step = xpt(:, k) + (mincv - bigcv) * amat(:, jsav)
+            call updateh(k, kbase, idz, step, xpt, bmat, zmat)
+            xpt(:, k) = step
+        end if
     end if
     x = xbase + xpt(:, k)
     call evaluate(calfun, x, f)
@@ -279,13 +288,12 @@ do k = 1, npt
         exit
     end if
 end do
-!----------------------------------------------------------!
+
 nf = int(count(evaluated), kind(nf))
 kopt = int(minloc(fval, mask=(evaluated .and. feasible), dim=1), kind(kopt))
 !!MATLAB:
 !!fopt = min(fval(evaluated & feasible));
 !!kopt = find(evaluated & feasible & ~(fval > fopt), 1,'first');
-!----------------------------------------------------------!
 
 if (all(evaluated)) then
 

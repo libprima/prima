@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 PM05:41:27
+! Last Modified: Tuesday, June 14, 2022 PM06:40:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -223,16 +223,30 @@ do nf = 1, npt
     j = 0
     if (nf >= 2) then
         resid = -b + matprod(xpt(:, nf), amat)
-        bigv = maxval([ZERO, resid])
-        jsav = int(maxloc(resid, dim=1), IK)
-        if (bigv > test) then
-            feas = ZERO
-        elseif (bigv > 0) then
+        !bigv = maxval([ZERO, resid])
+        !jsav = int(maxloc(resid, dim=1), IK)
+        !if (bigv > test) then
+        !    feas = ZERO
+        !elseif (bigv > 0) then
+        !    feas = -ONE
+        !end if
+        !if (.not. all(resid < test)) then
+        !    feas = ZERO
+        !else if (any(resid > 0)) then
+        !    feas = -ONE
+        !end if
+        if (all(resid <= 0)) then
+            feas = ONE
+        elseif (all(resid < test)) then
             feas = -ONE
+        else
+            feas = ZERO
         end if
     end if
     if (feas < ZERO) then
         !if (.false.) then
+        jsav = int(maxloc(resid, dim=1), IK)
+        bigv = resid(jsav)
         step = xpt(:, nf) + (test - bigv) * amat(:, jsav)
         knew = nf
         call update(kbase, step, xpt, idz, knew, bmat, zmat)
