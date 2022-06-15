@@ -2,7 +2,7 @@ module bobyqb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of BOBYQA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
 ! TODO: verify that the iterates/steps respect bounds in the pre/postconditions.
 !
@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 05, 2022 AM07:48:46
+! Last Modified: Thursday, June 16, 2022 AM12:43:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 
 
 subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, &
-    & sl_in, su_in, xl, xu, x, nf, f, fhist, xhist, info)
+    & xl, xu, x, nf, f, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the major calculations of BOBYQA.
 !
@@ -30,7 +30,7 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! corresponding arguments in SUBROUTINE BOBYQA.
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
 ! of the model and Lagrange functions.
-! XPT is a TWO-dimensional array that holds the coordinates of the interpolation points relative to XBASE.
+! XPT is a 2D array that holds the coordinates of the interpolation points relative to XBASE.
 ! FVAL holds the values of F at the interpolation points.
 ! XOPT is set to the displacement from XBASE of the trust region centre.
 ! GOPT holds the gradient of the quadratic model at XBASE+XOPT.
@@ -64,7 +64,7 @@ use, non_intrinsic :: powalg_mod, only : quadinc, calvlag, calbeta, hess_mul
 !!! TODO (Zaikun 20220525): Use CALDEN instead of CALVLAG and CALBETA wherever possible!!!
 
 ! Solver-specific modules
-use, non_intrinsic :: initialize_mod, only : initialize
+use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox
@@ -85,8 +85,6 @@ real(RP), intent(in) :: gamma1
 real(RP), intent(in) :: gamma2
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
-real(RP), intent(in) :: sl_in(:)  ! SL_IN(N)
-real(RP), intent(in) :: su_in(:)  ! SU_IN(N)
 real(RP), intent(in) :: xl(:)  ! XL(N)
 real(RP), intent(in) :: xu(:)  ! XU(N)
 
@@ -102,6 +100,7 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
 character(len=*), parameter :: srname = 'BOBYQB'
+integer(IK) :: subinfo
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
@@ -130,6 +129,7 @@ real(RP) :: delbar, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
+integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 logical :: shortd, improve_geo, rescued, geo_step
 
 
@@ -148,9 +148,6 @@ if (DEBUGGING) then
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
     call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
-    call assert(size(sl_in) == n .and. size(su_in) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
-    call assert(all(sl_in <= 0 .and. (sl_in >= 0 .or. sl_in <= -rhobeg)), 'SL == 0 or SL <= -RHOBEG', srname)
-    call assert(all(su_in >= 0 .and. (su_in <= 0 .or. su_in >= rhobeg)), 'SU == 0 or SU >= RHOBEG', srname)
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
     call assert(all(rhobeg <= (xu - xl) / TWO), 'RHOBEG <= MINVAL(XU-XL)/2', srname)
     call assert(all(is_finite(x)), 'X is finite', srname)
@@ -167,45 +164,36 @@ end if
 !====================!
 
 info = INFO_DFT
-sl = sl_in
-su = su_in
 
 ! Initialize XBASE, XPT, FVAL, GOPT, HQ, PQ, BMAT and ZMAT together with the corresponding values of
 ! of NF and KOPT, which are the number of calls of CALFUN so far and the index of the interpolation
 ! point at the trust region centre. Then the initial XOPT is set too. The branch to label 720 occurs
 ! if MAXFUN is less than NPT. GOPT will be updated if KOPT is different from KBASE.
-call initialize(calfun, iprint, ftarget, rhobeg, sl, su, x, xl, xu, kopt, nf, bmat, f, fhist, fval, &
-    & gopt, hq, pq, xbase, xhist, xpt, zmat)
+call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fhist, fval, &
+    & sl, su, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = min(max(xl, xbase + xopt), xu)
 x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
 x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
 f = fopt
-
-if (is_nan(f) .or. is_posinf(f)) then
-    info = NAN_INF_F
-    xopt = xpt(:, kopt)
-    fopt = fval(kopt)
-    x = min(max(xl, xbase + xopt), xu)
-    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
-    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
-    f = fopt
-    return
-end if
-if (f <= ftarget) then
-    info = FTARGET_ACHIEVED
-    xopt = xpt(:, kopt)
-    fopt = fval(kopt)
-    x = min(max(xl, xbase + xopt), xu)
-    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
-    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
-    f = fopt
+if (subinfo /= INFO_DFT) then
     call rangehist(nf, xhist, fhist)
     return
 end if
 
-! Complete the settings that are required for the iterative procedure.
+! Initialize GOPT, HQ, and PQ.
+call initq(ij, fval, xpt, gopt, hq, pq)
+
+! Initialize BMAT and ZMAT.
+call inith(ij, xpt, bmat, zmat)
+
+! After initializing GOPT, HQ, PQ, BMAT, ZMAT, one can also choose to return if these arrays contain
+! NaN. We do not do it here. If such a model is harmful, then it will probably lead to other returns
+! (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the code will continue to run
+! and possibly recovers by geometry steps.
+
+! Set some more initial values and parameters.
 rho = rhobeg
 delta = rho
 nresc = nf
@@ -237,7 +225,6 @@ rescued = .false.
 ! comparison involving NaN returns FALSE, which can lead to unintended  behavior of the code,
 ! including uninitialized indices. STILL NECESSARY???
 !--------------------------------------------------------------------------------------------------!
-
 
 do while (.true.)
     if (.not. geo_step) then
@@ -739,7 +726,6 @@ call rangehist(nf, xhist, fhist)
 ! Postconditions
 
 close (17)
-
 
 end subroutine bobyqb
 

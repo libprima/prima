@@ -614,8 +614,8 @@ if ~equiv
         chist2 = output2.chist(end-nhist+1:end);
         chist1 == chist2
     end
-    %if single_test && options.sequential
-    if options.sequential
+    if single_test && options.sequential
+    %if options.sequential
         fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
         cd(options.olddir);
         keyboard

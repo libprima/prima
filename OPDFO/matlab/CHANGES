@@ -16,5 +16,7 @@
    not finite, etc) value of rhobeg for BOBYQA.
 9. Check that chist is nonnegative.
 10. If fhist contain any value blow -hugefun, raise the warning 'HugeNegativeF'.
+11. "returns positive constrviolations" in the error messages should be "returns a positive
+    constrviolation".
 
 Check other changes by comparing the matlab interfaces (vimdiff).

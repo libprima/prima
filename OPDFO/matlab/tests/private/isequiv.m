@@ -120,7 +120,7 @@ else
         blacklist = [blacklist, {'CHEBYQAD'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2'}]; % Too long to solve
-        blacklist = [blacklist, {'DUAL3'}]; % Too long to solve
+        blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1'}]; % Too long to solve
     case {'cobyla', 'cobyla'}
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails
         blacklist = [blacklist, {'MINMAXRB'}]; % Classical COBYLA encounters SEGFAULT
@@ -128,7 +128,7 @@ else
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
         end
-        blacklist = [blacklist, {'PRODPL0', 'DEGENLPB'}]; % Takes long to solve
+        blacklist = [blacklist, {'PRODPL0', 'DEGENLPB', 'AVION2'}]; % Takes long to solve
         blacklist=[blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Takes more than 5 min to solve
         blacklist = [blacklist, {'KISSING2', 'LUKSAN16', 'QPCBLEND', 'VANDERM4'}]; % Takes more than 20 sec to solve
         %blacklist = [blacklist, {'DUAL2', 'FEEDLOC', 'GROUPING', 'HYDCAR20', 'LINSPANH', 'LUKSAN11', ...
@@ -367,6 +367,7 @@ test_options.fortran = (rand > 0.5);
 test_options.output_xhist = 1;
 test_options.output_nlchist = (rand > 0.5);
 test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
+%test_options.maxhist = test_options.maxfun;
 if single_test
     % DO NOT INVOKE ANY RANDOMIZATION WITHIN THIS IF. Otherwise, a single test cannot reproduce the
     % corresponding test in a multiple one.
@@ -613,7 +614,8 @@ if ~equiv
         chist2 = output2.chist(end-nhist+1:end);
         chist1 == chist2
     end
-    if single_test && options.sequential
+    %if single_test && options.sequential
+    if options.sequential
         fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
         cd(options.olddir);
         keyboard

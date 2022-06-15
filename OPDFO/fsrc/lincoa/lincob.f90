@@ -2,7 +2,7 @@ module lincob_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of LINCOA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the paper
 !
 ! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
 ! Math. Program. Comput., 7:237--267, 2015
@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 15, 2022 AM12:57:20
+! Last Modified: Thursday, June 16, 2022 AM12:42:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,8 +22,8 @@ public :: lincob
 contains
 
 
-subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bvec, ctol, cweight, eta1, eta2, &
-    & ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, chist, cstrv, f, fhist, xhist, info)
+subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bvec, ctol, cweight, &
+    & eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, chist, cstrv, f, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of LINCOA.
 !
@@ -72,12 +72,13 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, r1update
+use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_col, omega_mul, hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
-use, non_intrinsic :: initialize_mod, only : initialize
+use, non_intrinsic :: initialize_mod, only : initxf, inith
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trstep
 use, non_intrinsic :: update_mod, only : update
@@ -94,9 +95,10 @@ real(RP), intent(in) :: A_orig(:, :)  ! A_ORIG(N, M) ; Better names? necessary?
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M) ; Better names? necessary?
 real(RP), intent(in) :: b_orig(:) ! B_ORIG(M) ; Better names? necessary?
 real(RP), intent(in) :: bvec(:)  ! BVEC(M) ; Better names? necessary?
+real(RP), intent(in) :: ctol
+real(RP), intent(in) :: cweight
 real(RP), intent(in) :: eta1
 real(RP), intent(in) :: eta2
-real(RP), intent(in) :: ctol, cweight
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: gamma1
 real(RP), intent(in) :: gamma2
@@ -116,6 +118,7 @@ real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
+character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'LINCOB'
 integer(IK) :: iact(size(bvec))
 integer(IK) :: m
@@ -126,7 +129,7 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 real(RP) :: b(size(bvec))
 real(RP) :: bmat(size(x), npt + size(x))
-real(RP) :: fval(npt),  cval(npt)
+real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
@@ -144,11 +147,12 @@ real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, dnorm, temp, &
-&        qred
+&        qred, constr(size(bvec))
 logical :: feasible, shortd, improve_geo
-integer(IK) :: idz, itest,  &
+integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
+integer(IK) :: idz, itest, &
 &           knew, kopt, ksave, nact,      &
-&           nvala, nvalb, ngetact
+&           nvala, nvalb, ngetact, subinfo
 real(RP) :: fshift(npt)
 real(RP) :: pqalt(npt), galt(size(x))
 
@@ -192,41 +196,46 @@ end if
 ! constraint violation is at least 0.2*RHOBEG. Also KOPT is set so that XPT(KOPT,.) is the initial
 ! trust region centre.
 b = bvec
-qfac = eye(n)
-rfac = ZERO
-call initialize(calfun, iprint, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
-    & idz, kopt, nf, bmat, chist, cstrv, f, fhist, fval, cval, gopt, hq, pq, rescon, &
-    & d, xbase, xhist, xopt, xpt, xsav, zmat)
-!--------------------------------------------------------------------------------------------------!
+call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
+    & ij, kopt, nf, chist, fhist, fval, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt
 f = fopt
+! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 xsav = x
-!xopt = xpt(:, kopt)
-!fopt = fval(kopt)
-!x = xbase + xopt
-!f = fopt
-!--------------------------------------------------------------------------------------------------!
 
-if (is_nan(f) .or. is_posinf(f)) then
+if (subinfo /= INFO_DFT) then
+    info = subinfo
     call rangehist(nf, xhist, fhist, chist)
-    info = NAN_INF_F
-    close(17)
-    return
-end if
-! Note that we should NOT compare F and FTARGET, because X may not be feasible.
-!if (fval(kopt) <= ftarget) then
-if (any(fval(1:nf) <= ftarget .and. cval(1:nf) <= ctol)) then
-    call rangehist(nf, xhist, fhist, chist)
-    info = FTARGET_ACHIEVED
-    close(17)
+    close (17)
     return
 end if
 
-nf = npt
-fopt = fval(kopt)
+! Initialize BMAT, ZMAT, and IDZ.
+call inith(ij, rhobeg, xpt, idz, bmat, zmat)
+
+! Initialize the quadratic model.
+hq = ZERO
+pq = omega_mul(idz, zmat, fval)
+gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
+
+! Initialize RESCON.
+! RESCON holds useful information about the constraint residuals.
+! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
+! 2. Otherwise, |RESCON(J)| is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA;
+! RESCON is set to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
+! RESCON can be updated without calculating the constraints that are far from being active, so that
+! we only need to evaluate the constraints that are nearly active. RESCON is initialized as follows.
+! 1. Normally, RESCON = B - AMAT^T*XOPT (theoretically, B - AMAT^T*XOPT >= 0 since XOPT is feasible)
+! 2. If RESCON(J) >= RHOBEG (current trust-region radius), its sign is flipped.
+rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
+rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
+!!MATLAB: rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
+
+qfac = eye(n)
+rfac = ZERO
 rho = rhobeg
 delta = rho
 ratio = -ONE
@@ -380,8 +389,12 @@ do while (.true.)
                 exit
             end if
             call evaluate(calfun, x, f)
-            cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+            ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is
+            ! not usable).
+            constr = matprod(x, A_orig) - b_orig
+            cstrv = maximum([ZERO, constr])
             nf = nf + 1_IK
+            call fmsg(solver, iprint, nf, f, x, cstrv, constr)
             call savehist(nf, x, xhist, f, fhist, cstrv, chist)
             if (is_nan(f) .or. is_posinf(f)) then
                 info = NAN_INF_F
@@ -558,8 +571,11 @@ end do
 if (info == SMALL_TR_RADIUS .and. ksave == -1 .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
-    cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])  ! Must be evaluated, as SAVEHIST needs it.
+    ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
+    constr = matprod(x, A_orig) - b_orig
+    cstrv = maximum([ZERO, constr])
     nf = nf + 1_IK
+    call fmsg(solver, iprint, nf, f, x, cstrv, constr)
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
     feasible = .true. ! Why? Consistent with the meaning of FEASIBLE???
 end if

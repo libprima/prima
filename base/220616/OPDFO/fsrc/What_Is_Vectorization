@@ -1,0 +1,11 @@
+https://fortran-lang.discourse.group/t/what-really-is-vectorization-and-how-to-implement-it/1665
+
+One other thing that is probably contributing to the confusion here, is that there are two completely different things that are sometimes referred to as “vectorization”.
+
+Vectorization can mean the use of SIMD instructions like AVX, which allow the CPU to perform multiple operations in the time it would otherwise take to perform one, as you know.
+
+Vectorization can mean using array statements instead of loops. For example, some people refer to c(:) = a(:) + b(:) as “vectorized”, where an equivalent do loop (like in your example) would be “non-vectorized”. This difference doesn’t matter that much in Fortran, where do loops are still fast, but it matters a lot in interpreted languages like matlab and python, where a for loop might be tens or hundreds of times slower than using a numpy array statement.
+
+But the key thing that I think is causing some of your confusion is that those two different uses of the word “vectorization” are completely different. Using an array statement doesn’t necessarily mean that the compiler is more likely to emit SIMD instructions than if you use a do loop.
+
+As for why you sometimes find that do loops are faster than array statements, I don’t know for sure but I can speculate. At the end of the day, array statements are just syntactic shorthand for loops - in the simple example you posted, I think a compiler could very well emit the exact same assembly code for the two versions. But in a more complicated example, there could be differences. Suppose, for example, you have a series of array statements, and you’re comparing that with a do-loop that does a series of operations in the body of the loop. If the compiler emits a separate loop for each array statement, then the array statement version might well be slower than that do-loop version, because it has to walk over the data multiple times. See for example section 2.3.8 in the optimization guide that you linked (I haven’t read the whole guide yet so I won’t comment on its overall accuracy).
