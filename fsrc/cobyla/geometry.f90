@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, June 03, 2022 PM05:27:23
+! Last Modified: Thursday, June 16, 2022 AM12:14:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -351,8 +351,8 @@ if (DEBUGGING) then
         & 'SIZE(FVAL) == NPT and FVAL is not NaN/+Inf', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) == [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
-    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
-        & 'SIZE(CVAL) == NPT and FVAL is not NaN/+Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == NPT and CVAL does not contain negative NaN/+Inf', srname)
     call assert(jdrop >= 1 .and. jdrop <= n, '1 <= JDROP <= N', srname)
 end if
 
