@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, June 15, 2022 AM09:47:26
+! Last Modified: Wednesday, June 15, 2022 PM02:01:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -368,7 +368,7 @@ do k = i, n - 1_IK
 
     ! Powell's code updates RDIAG in the following way.
     !----------------------------------------------------------------!
-    !!Rdiag([k, k + 1_IK]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]!
+    !!RDIAG([K, K + 1_IK]) = [HYPT, (RDIAG(K + 1) / HYPT) * RDIAG(K)]!
     !----------------------------------------------------------------!
     ! Note that RDIAG(N) inherits all rounding in RDIAG(I:N-1) and Q(:, I:N-1) and hence contain
     ! significant errors. Thus we may modify Powell's code to set only RDIAG(K) = HYPT here and then
@@ -485,8 +485,8 @@ end if
 do k = i, n - 1_IK
     G = planerot(R([k + 1_IK, k], k + 1))  ! G = [c, -s; s, c]. It improves the performance of LINCOA
     hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)  ! HYPT must be calculated before R is updated
-    !!hypt = G(1, 1) * R(k + 1, k + 1) + G(1, 2) * R(k, k + 1)  ! Does not perform well on 20220312
-    !!hypt = hypotenuse(R(k + 1, k + 1), R(k, k + 1))  ! Does not perform well on 20220312
+    !!HYPT = G(1, 1) * R(K + 1, K + 1) + G(1, 2) * R(K, K + 1)  ! Does not perform well on 20220312
+    !!HYPT = HYPOTENUSE(R(K + 1, K + 1), R(K, K + 1))  ! Does not perform well on 20220312
 
     ! Update Q(:, [K, K+1]).
     Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
@@ -495,8 +495,8 @@ do k = i, n - 1_IK
     R([k, k + 1_IK], k:n) = matprod(G, R([k + 1_IK, k], k:n))
     R(1:k + 1, [k, k + 1_IK]) = R(1:k + 1, [k + 1_IK, k])
     ! N.B.: The above two lines implement the following while noting that R is upper triangular.
-    !!R([k, k + 1_IK], :) = matprod(G, R([k + 1_IK, k], :))  ! No need for R([K, K+1], 1:K-1) = 0
-    !!R(:, [k, k + 1_IK]) = R(:, [k + 1_IK, k])  ! No need for R(K+2:, [K, K+1]) = 0
+    !!R([K, K + 1_IK], :) = MATPROD(G, R([K + 1_IK, K], :))  ! No need for R([K, K+1], 1:K-1) = 0
+    !!R(:, [K, K + 1_IK]) = R(:, [K + 1_IK, K])  ! No need for R(K+2:, [K, K+1]) = 0
 
     ! Revise R([K, K+1], K). Changes nothing in theory but seems good for the practical performance.
     R([k, k + 1_IK], k) = [hypt, ZERO]
@@ -508,8 +508,8 @@ do k = i, n - 1_IK
     !
     !G = planerot(R([k, k + 1_IK], k + 1))
     !hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
-    !!hypt = G(1, 1) * R(k, k + 1) + G(1, 2) * R(k+1, k + 1)  ! Does not perform well on 20220312
-    !!hypt = hypotenuse(R(k, k + 1), R(k + 1, k + 1))  ! Does not perform well on 20220312
+    !!HYPT = G(1, 1) * R(K, K + 1) + G(1, 2) * R(K+1, K + 1)  ! Does not perform well on 20220312
+    !!HYPT = HYPOTENUSE(R(K, K + 1), R(K + 1, K + 1))  ! Does not perform well on 20220312
     !
     !Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
     !
@@ -671,7 +671,7 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: d(:)      ! D(N)
 real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
-real(RP), intent(in) :: gq(:)   ! GOPT(N)
+real(RP), intent(in) :: gq(:)   ! GQ(N)
 real(RP), intent(in) :: pq(:)     ! PQ(NPT)
 real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 
@@ -693,7 +693,7 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(gq) == n, 'SIZE(GOPT) = N', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
     if (present(hq)) then
         call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
@@ -1169,16 +1169,16 @@ err = maxval(e) / (maxabs * real(n + npt, RP))
 end function errh
 
 
-subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat, info)
+subroutine updateh(knew, kref, idz, d, xpt, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates arrays BMAT and ZMAT together with IDZ, in order to replace the
-! interpolation point XPT(:, KNEW) by XNEW = XPT(:, KOPT) + D. See Section 4 of the NEWUOA paper.
-! [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12), which is the inverse of
-! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
-! ZMAT holds a factorization of the leading NPT*NPT submatrix OMEGA of H, the factorization being
-! OMEGA = ZMAT*Diag(S)*ZMAT^T with S(1:IDZ-1)= -1 and S(IDZ : NPT-N-1) = +1; BMAT holds the last N
-! ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th column of
-! H are not stored as they are unnecessary for the calculation.
+! This subroutine updates arrays [BMAT, ZMAT, IDZ], in order to replace the interpolation point
+! XPT(:, KNEW) by XNEW = XPT(:, KREF) + D, where KREF usually equals KOPT in practice. See Section 4
+! of the NEWUOA paper. [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12),
+! which is the inverse of the coefficient matrix of the KKT system for the least-Frobenius norm
+! interpolation problem: ZMAT holds a factorization of the leading NPT*NPT submatrix OMEGA of H, the
+! factorization being OMEGA = ZMAT*Diag(S)*ZMAT^T with S(1:IDZ-1)= -1 and S(IDZ : NPT-N-1) = +1;
+! BMAT holds the last N ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and
+! (NPT + 1)th column of H are not stored as they are unnecessary for the calculation.
 !
 ! N.B.:
 ! 1. What is H? As mentioned above, it is the inverse of the coefficient matrix of the KKT system
@@ -1189,9 +1189,13 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat, info)
 ! the last N entries of H(:, K) constitute precisely the gradient of LFUNC_K at the base point XBASE.
 ! Recalling that H is represented by OMEGA and BMAT in the block form elaborated above, we can see
 ! OMEGA(:, K) contains the leading NPT entries of H(:, K), while BMAT(:, K) contains the last N.
-! 2. The most natural (not necessarily the best numerically) version of UPDATEH should work based
-! on [KNEW, XNEW - XPT(:,KNEW)] instead of [KNEW, KOPT, D], because the update is independent of KOPT
-! in theory. UPDATEH needs KOPT only for calculating VLAG and BETA, which can also be found by
+! 2. Powell's code normally invokes this subroutine with KREF set to KOPT, which is the index of the
+! current best interpolation point (also the current center of the trust region). In theory, the
+! update should however be independent of KREF. The most natural version (not necessarily the best
+! one in practice) of UPDATEH should work based on [KNEW, XNEW - XPT(:,KNEW)] rather than
+! [KNEW, KREF, D]. UPDATEH needs KREF only for calculating VLAG and BETA, where XPT(:, KREF) is used
+! as a reference point that can be any column of XPT in precise arithmetic. Using XPT(:, KNEW) as
+! the reference point, VLAG and BETA can be calculated by
 !!VLAG = CALVLAG(KNEW, BMAT, XNEW - XPT(:, KNEW), XPT, ZMAT, IDZ)
 !!BETA = CALBETA(KNEW, BMAT, XNEW - XPT(:, KNEW), XPT, ZMAT, IDZ)
 ! Theoretically (but not numerically), they should return the same VLAG and BETA as the calls below.
@@ -1213,7 +1217,7 @@ implicit none
 
 ! Inputs
 integer(IK), intent(in) :: knew
-integer(IK), intent(in) :: kopt
+integer(IK), intent(in) :: kref
 real(RP), intent(in) :: d(:)  ! D(N)
 real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
@@ -1264,7 +1268,7 @@ npt = int(size(xpt, 2), kind(npt))
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(kref >= 1 .and. kref <= npt, '1 <= KREF <= NPT', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
@@ -1273,19 +1277,19 @@ if (DEBUGGING) then
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 
-    ! Theoretically, CALVLAG and CALBETA should be independent of the reference point XPT(:, KOPT).
+    ! Theoretically, CALVLAG and CALBETA should be independent of the reference point XPT(:, KREF).
     ! So we test the following. By the implementation of CALVLAG and CALBETA, we are indeed testing
-    ! H*[w(X_KOPT) - w(X_KNEW)] = e_KOPT - e_KNEW. Thus H = W^{-1} is also tested to some extend.
+    ! H*[w(X_KREF) - w(X_KNEW)] = e_KREF - e_KNEW. Thus H = W^{-1} is also tested to some extend.
     ! However, this is expensive to check.
     !if (knew >= 1) then
     !    tol = 1.0E-2_RP  ! W and H are quite ill-conditioned, so we do not test a high precision.
     !    call safealloc(vlag_test, npt + n)
-    !    vlag_test = calvlag(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
-    !    call wassert(all(abs(vlag_test - calvlag(kopt, bmat, d, xpt, zmat, idz)) <= &
+    !    vlag_test = calvlag(knew, bmat, d + (xpt(:, kref) - xpt(:, knew)), xpt, zmat, idz)
+    !    call wassert(all(abs(vlag_test - calvlag(kref, bmat, d, xpt, zmat, idz)) <= &
     !        & tol * maxval([ONE, abs(vlag_test)])) .or. RP == kind(0.0), 'VLAG_TEST == VLAG', srname)
     !    deallocate (vlag_test)
-    !    beta_test = calbeta(knew, bmat, d + (xpt(:, kopt) - xpt(:, knew)), xpt, zmat, idz)
-    !    call wassert(abs(beta_test - calbeta(kopt, bmat, d, xpt, zmat, idz)) <= &
+    !    beta_test = calbeta(knew, bmat, d + (xpt(:, kref) - xpt(:, knew)), xpt, zmat, idz)
+    !    call wassert(abs(beta_test - calbeta(kref, bmat, d, xpt, zmat, idz)) <= &
     !        & tol * max(ONE, abs(beta_test)) .or. RP == kind(0.0), 'BETA_TEST == BETA', srname)
     !end if
 
@@ -1310,7 +1314,7 @@ end if
 ! Do nothing if D does not cause a real change to XPT. This is rare but possible.
 ! In Fortran, do NOT merge this case with the last one, or XPT(:, KNEW) may be accessed even
 ! when KNEW = 0 due to the non-short-circuit logical evaluation of Fortran.
-if (all(abs(xpt(:, kopt) + d - xpt(:, knew)) <= 0)) then
+if (all(abs(xpt(:, kref) + d - xpt(:, knew)) <= 0)) then
     return
 end if
 
@@ -1319,8 +1323,8 @@ end if
 ! and BETA holds the value of the parameter that has this name.
 ! N.B.: Powell's original comments mention that VLAG is "the vector THETA*WCHECK + e_b of the
 ! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
-vlag = calvlag(kopt, bmat, d, xpt, zmat, idz)
-beta = calbeta(kopt, bmat, d, xpt, zmat, idz)
+vlag = calvlag(kref, bmat, d, xpt, zmat, idz)
+beta = calbeta(kref, bmat, d, xpt, zmat, idz)
 
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT and set JL. After this,
 ! ZMAT(KNEW, :) contains at most two nonzero entries ZMAT(KNEW, 1) and ZMAT(KNEW, JL), one
@@ -1382,7 +1386,7 @@ if (abs(denom) <= 0 .or. is_nan(denom)) then
     return
 end if
 sqrtdn = sqrt(abs(denom))
-! After the following line, VLAG = H*w - e_t in the NEWUOA paper.
+! After the following line, VLAG = H*w - e_KNEW in the NEWUOA paper (where t = KNEW).
 vlag(knew) = vlag(knew) - ONE
 
 if (jl == 1) then
@@ -1531,7 +1535,7 @@ if (DEBUGGING) then
     ! The following is too expensive to check.
     !call safealloc(xpt_test, n, npt)
     !xpt_test = xpt
-    !xpt_test(:, knew) = xpt(:, kopt) + d
+    !xpt_test(:, knew) = xpt(:, kref) + d
     !call wassert(errh(idz, bmat, zmat, xpt_test) <= tol .or. RP == kind(0.0), &
     !    & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
     !deallocate (xpt_test)
@@ -1578,34 +1582,38 @@ end subroutine updateh
 ! 3. Since the matrix H is W^{-1} as defined in (3.12) of the paper, we have H*w(X_K) = e_K for
 ! any K in {1, ..., NPT}.
 ! 4. When the interpolation set is updated by replacing X_K with X, W is correspondingly updated by
-! changing the K-th column from w(X_t) to w(X). This is why the update of H = W^{-1} must involve
-! H*[w(X) - w(X_t)] = H*w(X) - e_t.
+! changing the K-th column from w(X_K) to w(X). This is why the update of H = W^{-1} must involve
+! H*[w(X) - w(X_K)] = H*w(X) - e_K.
 ! 5. As explained above, the vector H*w(X) is essential to the algorithm. The quantity w(X)^T*H*w(X)
 ! is also needed in the update of H (particularly by BETA). However, they can be tricky to calculate,
 ! because much cancellation can happen when X_0 is far away from the interpolation set, as explained
-! in (7.8)--(7.10) of the paper and the discussions around. To overcome the difficulty, note that
-! H*w(X) = H*[w(X) - w(X_K)] + H*w(X_K) = H*[w(X) - w(X_K)] + e_K, and
-! w(x)^T*H*w(X) = [w(X) - w(X_K)]^T*H*[w(X) - w(X_K)] + 2*w(X)(K) - w(X_K)(K).
-! The dependence of w(X)-w(X_K) on X_0 is weaker, which reduces (but does not resolve) the difficulty.
-! In theory, these formulas are invariant with respect to K. In the code, this means that
-! CALVLAG(K, BMAT, X - XPT(:, K), XPT, ZMAT, IDZ) and CALBETA(K, BMAT, X - XPT(:, K), XPT, ZMAT, IDZ)
-! are invariant with respect to K in {1, ..., NPT}. Powell's code uses always K = KOPT.
-! 6. Since the (NPT+1)-th entry of w(X) - w(X_K) is 0, the above formulas do not require the
+! in (7.8)--(7.10) of the paper and the discussions around. To overcome the difficulty, we take
+! an integer KREF in {1, ..., NPT}, use XPT(:, KREF) as a reference point, and note that
+! H*w(X) = H*[w(X) - w(X_KREF)] + H*w(X_KREF) = H*[w(X) - w(X_KREF)] + e_KREF, and
+! w(x)^T*H*w(X) = [w(X) - w(X_KREF)]^T*H*[w(X) - w(X_KREF)] + 2*w(X)(KREF) - w(X_KREF)(KREF),
+! The dependence of w(X)-w(X_KREF) on X_0 is weaker, which reduces (but does not resolve) the
+! difficulty. In theory, these formulas are invariant with respect to KREF. In the code, this means
+! CALVLAG(KREF, BMAT, X - XPT(:, KREF), XPT, ZMAT, IDZ) and
+! CALBETA(KREF, BMAT, X - XPT(:, KREF), XPT, ZMAT, IDZ)
+! are invariant with respect to KREF. Powell's code normally uses KREF = KOPT.
+! 6. Since the (NPT+1)-th entry of w(X) - w(X_KREF) is 0, the above formulas do not require the
 ! (NPT+1)-th column of H, which is not stored in the code.
-! 7. WCHECK contains the first NPT entries of w-v for the vectors w and v defined in (4.10) and
-! (4.24) of the NEWUOA paper, with w = w(X) and v = w(X_KOPT); it is also hat{w} in (6.5) of
-! M. J. D. Powell, Least Frobenius norm updating of quadratic models that satisfy interpolation
-! conditions. Math. Program., 100:183--215, 2004
-! 8. Assume that the |D| ~ DELTA, |XPT| ~ |XOPT|, and DELTA < |XOPT|. Then WCHECK is of the order
-! DELTA*|XOPT|^3, which is can be huge at the beginning of the algorithm and quickly become tiny.
+! 7. In the code, WCHECK contains the first NPT entries of w-v for the vectors w and v in (4.10) and
+! (4.24) of the NEWUOA paper, with w = w(X) and v = w(X_KREF) (KREF = KOPT in the paper); it is
+! also hat{w} in (6.5) of M. J. D. Powell, Least Frobenius norm updating of quadratic models that
+! satisfy interpolation conditions. Math. Program., 100:183--215, 2004 (KREF = b in the paper).
+! 8. Assume that the |D| ~ DELTA, |XPT| ~ |XREF|, and DELTA < |XREF|. Then WCHECK is of the order
+! DELTA*|XREF|^3, which is can be huge at the beginning of the algorithm and quickly become tiny.
 !--------------------------------------------------------------------------------------------------!
 
-function calvlag_lfqint(kopt, bmat, d, xpt, zmat, idz) result(vlag)
+function calvlag_lfqint(kref, bmat, d, xpt, zmat, idz) result(vlag)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates VLAG = H*w for a given step D. See (4.25) of the NEWUOA paper.
+! This function calculates VLAG = H*w for a given step D with respect to XREF = XPT(:, KREF). This
+! subroutine is usually invoked with KREF = KOPT, which correspond to the current best interpolation
+! point as well as the center of the trust region. See (4.25) of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: VLAG(NPT+N), WCHECK(NPT), XOPT(N)
+! REAL(RP) :: VLAG(NPT+N), WCHECK(NPT), XREF(N)
 ! Size of local arrays: REAL(RP)*(2*NPT+2*N)
 !--------------------------------------------------------------------------------------------------!
 
@@ -1618,7 +1626,7 @@ use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: kopt
+integer(IK), intent(in) :: kref
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:)    ! D(N)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
@@ -1635,7 +1643,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: tol  ! For debugging only
 real(RP) :: wcheck(size(zmat, 1))
-real(RP) :: xopt(size(xpt, 1))
+real(RP) :: xref(size(xpt, 1))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -1651,7 +1659,7 @@ end if
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(idz_loc >= 1 .and. idz_loc <= size(zmat, 2) + 1, '1 <= ID <= SIZE(ZMAT, 2) + 1', srname)
-    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(kref >= 1 .and. kref <= npt, '1 <= KREF <= NPT', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
@@ -1669,11 +1677,11 @@ end if
 ! Calculation starts !
 !====================!
 
-xopt = xpt(:, kopt)  ! Read XOPT.
+xref = xpt(:, kref)  ! Read XREF.
 
 ! Set WCHECK to the first NPT entries of (w-v) for w and v in (4.10) and (4.24) of the NEWUOA paper.
 wcheck = matprod(d, xpt)
-wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
+wcheck = wcheck * (HALF * wcheck + matprod(xref, xpt))
 
 ! The following two lines set VLAG to H*(w-v).
 vlag(1:npt) = omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))
@@ -1681,8 +1689,8 @@ vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
 ! The following line is equivalent to the above one, but handles WCHECK and D separately.
 !!vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 
-! The following line sets VLAG(KOPT) to the correct value.
-vlag(kopt) = vlag(kopt) + ONE
+! The following line sets VLAG(KREF) to the correct value.
+vlag(kref) = vlag(kref) + ONE
 
 !====================!
 !  Calculation ends  !
@@ -1699,12 +1707,14 @@ end if
 end function calvlag_lfqint
 
 
-function calbeta(kopt, bmat, d, xpt, zmat, idz) result(beta)
+function calbeta(kref, bmat, d, xpt, zmat, idz) result(beta)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates BETA for a given step D. See (4.12) and (4.26) of the NEWUOA paper.
+! This function calculates BETA for a given step D with respect to XREF = XPT(:, KREF). This
+! subroutine is usually invoked with KREF = KOPT, which correspond to the current best interpolation
+! point as well as the center of the trust region. See (4.12) and (4.26) of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: BW(N), BD(N), WCHECK(NPT), XOPT(N)
+! REAL(RP) :: BW(N), BD(N), WCHECK(NPT), XREF(N)
 ! Size of local arrays: REAL(RP)*(3*NPT+4*N)
 !--------------------------------------------------------------------------------------------------!
 
@@ -1717,7 +1727,7 @@ use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: kopt
+integer(IK), intent(in) :: kref
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:)    ! D(N)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
@@ -1734,13 +1744,13 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: dsq
 real(RP) :: dvlag
-real(RP) :: dxopt
+real(RP) :: dxref
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: wcheck(size(zmat, 1))
 real(RP) :: wmv(size(xpt, 1) + size(xpt, 2))
 real(RP) :: wvlag
-real(RP) :: xopt(size(xpt, 1))
-real(RP) :: xoptsq
+real(RP) :: xref(size(xpt, 1))
+real(RP) :: xrefsq
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -1756,7 +1766,7 @@ end if
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(idz_loc >= 1 .and. idz_loc <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
-    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(kref >= 1 .and. kref <= npt, '1 <= KREF <= NPT', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
@@ -1774,11 +1784,15 @@ end if
 ! Calculation starts !
 !====================!
 
-xopt = xpt(:, kopt)  ! Read XOPT.
+xref = xpt(:, kref)  ! Read XREF.
+
+!--------------------------------------------------------------------------------------------------!
+! N.B.: When checking the NEWUOA paper, note that the paper takes KREF = KOPT and XREF = XOPT.
+!--------------------------------------------------------------------------------------------------!
 
 ! Set WCHECK to the first NPT entries of (w-v) for w and v in (4.10) and (4.24) of the NEWUOA paper.
 wcheck = matprod(d, xpt)
-wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
+wcheck = wcheck * (HALF * wcheck + matprod(xref, xpt))
 
 ! WMV is the vector (w-v) for w and v in (4.10) and (4.24) of the NEWUOA paper.
 wmv = [wcheck, d]
@@ -1786,36 +1800,36 @@ wmv = [wcheck, d]
 vlag(1:npt) = omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))
 vlag(npt + 1:npt + n) = matprod(bmat, wmv)
 ! The following line is equivalent to the above one, but handles WCHECK and D separately.
-!!vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
+!!VLAG(NPT + 1:NPT + N) = MATPROD(BMAT(:, 1:NPT), WCHECK) + MATPROD(BMAT(:, NPT + 1:NPT + N), D)
 
-! BETA = HALF*|XOPT + D|^4 - (W-V)'*H*(W-V) - [XOPT'*(X+XOPT)]^2 + HALF*|XOPT|^4. See equations
+! Set BETA = HALF*|XREF + D|^4 - (W-V)'*H*(W-V) - [XREF'*(X+XREF)]^2 + HALF*|XREF|^4. See equations
 ! (4.10), (4.12), (4.24), and (4.26) of the NEWUOA paper.
-dxopt = inprod(d, xopt)
+dxref = inprod(d, xref)
 dsq = inprod(d, d)
-xoptsq = inprod(xopt, xopt)
+xrefsq = inprod(xref, xref)
 dvlag = inprod(d, vlag(npt + 1:npt + n))
 wvlag = inprod(wcheck, vlag(1:npt))
-beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - dvlag - wvlag
+beta = dxref**2 + dsq * (xrefsq + dxref + dxref + HALF * dsq) - dvlag - wvlag
 !---------------------------------------------------------------------------------------------------!
 ! The last line is equivalent to either of the following lines, but performs better numerically.
-!!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - inprod(vlag, wmv) ! Not good
-!!beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - wvlag - dvlag  ! Bad
+!!BETA = DXREF**2 + DSQ * (XREFSQ + DXREF + DXREF + HALF * DSQ) - INPROD(VLAG, WMV)  ! not good
+!!BETA = DXREF**2 + DSQ * (XREFSQ + DXREF + DXREF + HALF * DSQ) - WVLAG - DVLAG  ! bad
 !---------------------------------------------------------------------------------------------------!
 
 ! N.B.:
 ! 1. Mathematically, the following two quantities are equal:
-! DXOPT**2 + DSQ * (XOPTSQ + DXOPT + DXOPT + HALF * DSQ) ,
-! HALF * (INPROD(X, X)**2 + INPROD(XOPT, XOPT)**2) - INPROD(X, XOPT)**2 with X = XOPT + D.
+! DXREF**2 + DSQ * (XREFSQ + DXREF + DXREF + HALF * DSQ) ,
+! HALF * (INPROD(X, X)**2 + INPROD(XREF, XREF)**2) - INPROD(X, XREF)**2 with X = XREF + D.
 ! However, the first (by Powell) is a better numerical scheme. According to the first formulation,
-! this quantity is in the oder of |D|^2*|XOPT|^2 if |XOPT| >> |D|, which is normally the case.
-! However, each term in the second formulation has an order of |XOPT|^4. Thus much cancellation will
+! this quantity is in the oder of |D|^2*|XREF|^2 if |XREF| >> |D|, which is normally the case.
+! However, each term in the second formulation has an order of |XREF|^4. Thus much cancellation will
 ! occur in the second formulation. In addition, the first formulation contracts the rounding error
-! in (XOPTSQ + DXOPT + DXOPT + HALF * DSQ) by a factor of |D|^2, which is typically small.
+! in (XREFSQ + DXREF + DXREF + HALF * DSQ) by a factor of |D|^2, which is typically small.
 ! 2. We can evaluate INPROD(VLAG, WMV) as INPROD(VLAG(1:NPT), WCHECK) + INPROD(VLAG(NPT+1:NPT+N),D)
 ! if it is desirable to handle WCHECK and D separately due to their significantly different magnitudes.
 
-! The following line sets VLAG(KOPT) to the correct value if we intend to output VLAG.
-!!vlag(kopt) = vlag(kopt) + ONE
+! The following line sets VLAG(KREF) to the correct value if we intend to output VLAG.
+!!VLAG(KREF) = VLAG(KREF) + ONE
 
 !====================!
 !  Calculation ends  !
@@ -1824,11 +1838,14 @@ beta = dxopt**2 + dsq * (xoptsq + dxopt + dxopt + HALF * dsq) - dvlag - wvlag
 end function calbeta
 
 
-function calden(kopt, bmat, d, xpt, zmat, idz) result(den)
+function calden(kref, bmat, d, xpt, zmat, idz) result(den)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates DEN for a given step D. DEN is an array of length NPT, and DEN(K) is the
-! value of SIGMA in (4.12) of the NEWUOA paper if XPT(:, K) is replaced with D. This value appears
-! as a DENominator in the updating formula of the matrix H as detailed in (4.11) of the NEWUOA paper.
+! This function calculates DEN for a given step D with respect to XREF = XPT(:, KREF). DEN is an
+! array of length NPT, and DEN(K) is the value of SIGMA in (4.12) of the NEWUOA paper if XPT(:, K)
+! is replaced with XPT(:, KREF)+D. This value appears as a DENominator in the updating formula of
+! the matrix H as detailed in (4.11) of the NEWUOA paper. This subroutine is usually invoked with
+! KREF = KOPT, which correspond to the current best interpolation point as well as the center of the
+! trust region.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -1840,7 +1857,7 @@ use, non_intrinsic :: linalg_mod, only : issymmetric
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: kopt
+integer(IK), intent(in) :: kref
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:)    ! D(N)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
@@ -1873,7 +1890,7 @@ end if
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(idz_loc >= 1 .and. idz_loc <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
-    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(kref >= 1 .and. kref <= npt, '1 <= KREF <= NPT', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
@@ -1892,8 +1909,8 @@ end if
 !====================!
 
 hdiag = -sum(zmat(:, 1:idz_loc - 1)**2, dim=2) + sum(zmat(:, idz_loc:size(zmat, 2))**2, dim=2)
-vlag = calvlag(kopt, bmat, d, xpt, zmat, idz_loc)
-beta = calbeta(kopt, bmat, d, xpt, zmat, idz_loc)
+vlag = calvlag(kref, bmat, d, xpt, zmat, idz_loc)
+beta = calbeta(kref, bmat, d, xpt, zmat, idz_loc)
 den = hdiag * beta + vlag(1:npt)**2
 
 !====================!
@@ -1903,18 +1920,19 @@ den = hdiag * beta + vlag(1:npt)**2
 end function calden
 
 
-function calvlag_qint(pl, d, xopt, kopt) result(vlag)
+function calvlag_qint(pl, d, xref, kref) result(vlag)
 !--------------------------------------------------------------------------------------------------!
-! This function evaluates VLAG = [LFUNC_1(XOPT+D), ..., LFUNC_NPT(XOPT+D)] for a quadratic
-! interpolation problem, where LFUNC_K is the K-the Lagrange function, and XOPT is the KOPT-th
-! interpolation node. The coefficients of LFUNC_K are provided by PL(:, K) so that
-! LFUNC_K(Y) = <Y, G> + <HESSIAN*Y, Y>
+! This function evaluates VLAG = [LFUNC_1(XREF+D), ..., LFUNC_NPT(XREF+D)] for a quadratic
+! interpolation problem, where LFUNC_K is the K-the Lagrange function, and XREF is the KREF-th
+! interpolation node. This subroutine is usually invoked with KREF = KOPT, which correspond to the
+! current best interpolation point as well as the center of the trust region.
+! The coefficients of LFUNC_K are provided by PL(:, K) so that LFUNC_K(Y) = <Y, G> + <HESSIAN*Y, Y>,
 ! where G is PL(1:N, K), and HESSIAN is the symmetric matrix whose upper triangular part is stored
 ! in PL(N+1:N*(N+3)/2, K) column by column. Note the following:
-! 1. For K /= KOPT, LFUNC_K(XOPT + D) = LFUNC_K(XOPT + D) - LFUNC_K(XOPT) as LFUNC_K(XOPT) = 0.
-! 2. When K = KOPT, LFUNC_K(XOPT + D) = LFUNC_K(XOPT + D) - LFUNC_K(XOPT) + 1 as LFUNC_K(XOPT) = 1.
-! Therefore, the function first calculates VLAG(K) = QUADINC_GHV(PL(:, K), D, XOPT) for each K, and
-! then increase VLAG(KOPT) by 1.
+! 1. For K /= KREF, LFUNC_K(XREF + D) = LFUNC_K(XREF + D) - LFUNC_K(XREF) as LFUNC_K(XREF) = 0.
+! 2. When K = KREF, LFUNC_K(XREF + D) = LFUNC_K(XREF + D) - LFUNC_K(XREF) + 1 as LFUNC_K(XREF) = 1.
+! Therefore, the function first calculates VLAG(K) = QUADINC_GHV(PL(:, K), D, XREF) for each K, and
+! then increase VLAG(KREF) by 1.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -1923,8 +1941,8 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: pl(:, :)
 real(RP), intent(in) :: d(:)
-real(RP), intent(in) :: xopt(:)
-integer(IK), intent(in) :: kopt
+real(RP), intent(in) :: xref(:)
+integer(IK), intent(in) :: kref
 ! Outputs
 real(RP) :: vlag(size(pl, 2))
 ! Local variables
@@ -1932,11 +1950,11 @@ character(len=*), parameter :: srname = 'CALVLAG_QINT'
 integer(IK) :: ih
 integer(IK) :: n
 integer(IK) :: j
-real(RP) :: s(size(xopt))
+real(RP) :: s(size(xref))
 real(RP) :: w(size(pl, 1))
 
 ! Sizes
-n = int(size(xopt), kind(n))
+n = int(size(xref), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1949,17 +1967,17 @@ end if
 ! Calculation starts !
 !====================!
 
-s = xopt + d
+s = xref + d
 
 w(1:n) = d
 do j = 1, n
     ih = n + (j - 1_IK) * j / 2_IK
-    w(ih + 1:ih + j) = d(1:j) * s(j) + d(j) * xopt(1:j)
+    w(ih + 1:ih + j) = d(1:j) * s(j) + d(j) * xref(1:j)
     w(ih + j) = HALF * w(ih + j)
 end do
 
-vlag = matprod(w, pl)  ! VLAG(K) = QUADINC_GHV(PL(:, K), D, XOPT)
-vlag(kopt) = vlag(kopt) + ONE
+vlag = matprod(w, pl)  ! VLAG(K) = QUADINC_GHV(PL(:, K), D, XREF)
+vlag(kref) = vlag(kref) + ONE
 
 !====================!
 ! Calculation ends   !
