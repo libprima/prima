@@ -2,16 +2,13 @@ module update_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines concerning the update of the interpolation set.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the paper
-!
-! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
-! Math. Program. Comput., 7:237--267, 2015
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 AM11:10:19
+! Last Modified: Wednesday, June 15, 2022 PM11:07:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 AM12:05:48
+! Last Modified: Wednesday, June 15, 2022 PM11:27:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -165,6 +165,7 @@ xbase = x0
 ! interpolation point has been evaluated. We need it for a portable counting of the number of
 ! function evaluations, especially if the loop is conducted asynchronously.
 evaluated = .false.
+
 ! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
 ! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
 fval = HUGENUM
@@ -213,8 +214,8 @@ end do
 ! 1. The switching is OPTIONAL. It we remove it, then the evaluations of FVAL(1 : NPT) can be
 ! merged, and they are totally PARALLELIZABLE; this can be beneficial if the function evaluations
 ! are expensive, which is likely the case.
-! 2. The initialization of NEWUOA revises IJ (see below) instead of XPT and FVAL. Theoretically, it 
-! is equivalent; practically, after XPT is revised, the initialization of the quadratic model and 
+! 2. The initialization of NEWUOA revises IJ (see below) instead of XPT and FVAL. Theoretically, it
+! is equivalent; practically, after XPT is revised, the initialization of the quadratic model and
 ! the Lagrange polynomials also needs revision, as, e.g., XPT(:, 2:N) is not RHOBEG*EYE(N) anymore.
 do k = 2, min(npt - n, int(n + 1, kind(npt)))
     if (xpt(k - 1, k) * xpt(k - 1, k + n) < 0 .and. fval(k + n) < fval(k)) then
@@ -280,7 +281,7 @@ if (DEBUGGING) then
         & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
     call assert(size(fval) == npt .and. .not. any(evaluated .and. (is_nan(fval) .or. is_posinf(fval))), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
-    call assert(.not. any(fval < fval(kopt) .and. evaluated), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
+    call assert(.not. any(evaluated .and. fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
 end if
@@ -420,7 +421,8 @@ end subroutine initq
 
 subroutine inith(ij, xpt, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine initializes BMAT and ZMAT.
+! This subroutine initializes [BMAT, ZMAT] which represents the matrix H in (2.7) of the BOBYQA
+! paper (see also (3.12) of the NEWUOA paper).
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!

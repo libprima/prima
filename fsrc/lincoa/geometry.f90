@@ -2,16 +2,13 @@ module geometry_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines concerning the geometry-improving of the interpolation set XPT.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the paper
-!
-! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
-! Math. Program. Comput., 7:237--267, 2015
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 29, 2022 PM12:01:38
+! Last Modified: Wednesday, June 15, 2022 PM11:07:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
