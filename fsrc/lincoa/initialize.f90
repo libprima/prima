@@ -230,9 +230,6 @@ if (DEBUGGING) then
     call assert(.not. any(evaluated .and. feasible .and. fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
-    call assert(.not. any(evaluated(1:min(nf, maxchist)) .and. (chist(1:min(nf, maxchist)) < 0 .or. &
-        & is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist))))), &
-        & 'CHIST does not contain negative values or NaN/+Inf', srname)
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
 end if
 

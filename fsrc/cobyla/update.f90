@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, June 03, 2022 PM05:28:13
+! Last Modified: Thursday, June 16, 2022 AM12:17:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,8 +77,8 @@ if (DEBUGGING) then
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
-    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
-        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
@@ -118,8 +118,8 @@ call updatepole(cpen, conmat, cval, fval, sim, simi, info)
 if (DEBUGGING) then
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
-    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
-        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
@@ -215,8 +215,8 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
-    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
-        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
@@ -297,8 +297,8 @@ if (DEBUGGING) then
         & 'The best point is SIM(:, N+1) unless the rounding is damaging', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
-    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
-        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
@@ -351,8 +351,8 @@ n = int(size(fval) - 1, kind(n))
 ! Preconditions
 if (DEBUGGING) then
     call assert(cpen >= 0, 'CPEN >= 0', srname)
-    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
-        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
 end if
