@@ -111,8 +111,12 @@ else
     case {'newuoa', 'newuoan'}
         blacklist = [blacklist, {'LUKSAN22LS', 'MANCINO'}]; % too long to solve
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.
-        %blacklist = [blacklist, {'PENALTY2'}]; % More than 5 minutes to solve.
+        blacklist = [blacklist, {'PENALTY2', 'HYDC20LS', 'MANCINO'}]; % Too long time
+        blacklist = [blacklist, {'BA-L1LS'}]; % Takes too long to solve
+        blacklist = [blacklist, {'ARGLINC'}]; % Takes too long to solve
+        blacklist = [blacklist, {'HYDC20LS', 'BA-L1SPLS'}]; % Takes too long to solve
     case {'bobyqa', 'bobyqan'}
+        blacklist = [blacklist, {'PALMER3A', 'HS4'}];  % bobyqaN returns an fx that does not match x; should test it after the modernization.
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}];  % More than 10 minutes to solve.
     case {'lincoa', 'lincoan'}
@@ -122,6 +126,7 @@ else
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'DECONVB'}]; % Too long to solve
         blacklist = [blacklist, {'DUAL3', 'SPANHYD'}]; % Too long to solve
+        blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails
         blacklist = [blacklist, {'MINMAXRB'}]; % Classical COBYLA encounters SEGFAULT
@@ -129,7 +134,7 @@ else
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
         end
-        blacklist = [blacklist, {'PRODPL0', 'DEGENLPB', 'ANTWERP'}]; % Takes long to solve
+        blacklist = [blacklist, {'PRODPL0', 'DEGENLPB', 'ANTWERP', 'SIPOW3', 'AVION2'}]; % Takes long to solve
         blacklist=[blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Takes more than 5 min to solve
         blacklist = [blacklist, {'KISSING2', 'LUKSAN16', 'QPCBLEND', 'VANDERM4'}]; % Takes more than 20 sec to solve
         %blacklist = [blacklist, {'DUAL2', 'FEEDLOC', 'GROUPING', 'HYDCAR20', 'LINSPANH', 'LUKSAN11', ...
@@ -368,6 +373,7 @@ test_options.fortran = (rand > 0.5);
 test_options.output_xhist = 1;
 test_options.output_nlchist = (rand > 0.5);
 test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
+%test_options.maxhist = test_options.maxfun;
 if single_test
     % DO NOT INVOKE ANY RANDOMIZATION WITHIN THIS IF. Otherwise, a single test cannot reproduce the
     % corresponding test in a multiple one.

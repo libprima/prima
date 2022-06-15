@@ -1,5 +1,6 @@
 !TODO:
-!1. Take case of N = 1.
+!0. Transpose PL.
+!1. Take care of N = 1.
 !2. SIZE of d in TRSTEP is N + 1 instead of N, maybe also other arrays and other places.
 !3. THE checks in rangehist cannot pass(xhist does not contain NaN)
 
@@ -7,13 +8,13 @@ module uobyqb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of UOBYQA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the UOBYQA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the UOBYQA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 09, 2022 AM09:04:20
+! Last Modified: Thursday, June 16, 2022 AM12:42:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,6 +53,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, DE
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
+use, non_intrinsic :: initialize_mod, only : initxf, initq, initl
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
@@ -102,22 +104,20 @@ integer(IK) :: maxxhist
 real(RP) :: d(size(x))
 real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x))
-real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2, (size(x) + 1) * (size(x) + 2) / 2 - 1)
-real(RP) :: pq(size(pl, 2))
-real(RP) :: vlag(size(pl, 1))
-real(RP) :: xw(size(x))
+real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2 - 1, (size(x) + 1) * (size(x) + 2) / 2)
+real(RP) :: pq(size(pl, 1))
+real(RP) :: vlag(size(pl, 2))
 real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
-real(RP) :: xpt(size(x), size(pl, 1))
-!real(RP) :: xpt(size(x) + 1, size(pl, 1))  ! XPT(2, :) is accessed when N = 1
-real(RP) :: ddknew, delta, diff, distsq(size(pl, 1)), weight(size(pl, 1)), score(size(pl, 1)),    &
-&        dnorm, errtol, estim, crvmin, fplus, fbase, fopt,&
-&        fsave, ratio, rho, rhosq, sixthm, summ, &
-&        temp, tempa, tol, vmax,  &
-&        qred, wmult, plknew((size(x) + 1) * (size(x) + 2) / 2 - 1)
-integer(IK) :: ih, ip, iq, iw, j, k, knew, kopt, ksave
-logical :: tr_success, shortd, geo_step, improve_geo, reduce_rho, to_return
+real(RP) :: xpt(size(x), size(pl, 2))
+real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), weight(size(pl, 2)), score(size(pl, 2)),    &
+&        dnorm, errtol, estim, crvmin, fopt,&
+&        fsave, ratio, rho, sixthm, summ, &
+&        trtol, vmax,  &
+&        qred, wmult, plknew(size(pl, 1)), fval(size(pl, 2))
+integer(IK) :: k, knew, kopt, ksave, subinfo
+logical :: tr_success, shortd, geo_step, improve_geo, reduce_rho
 
 ! Sizes.
 n = int(size(x), kind(n))
@@ -150,211 +150,30 @@ f = ieeenan()
 ! Calculation starts !
 !====================!
 
-tol = 0.01_RP
-rho = rhobeg
-rhosq = rho**2
-info = INFO_DFT
+call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
+xopt = xpt(:, kopt)
+fopt = fval(kopt)
+x = xbase + xopt
+f = fopt
 
-! Initialization. NF is the number of function calculations so far. The least function value so far,
-! the corresponding X and its index are noted in FOPT, XOPT, and KOPT respectively.
-to_return = .false.
-xbase = x
-xpt = ZERO
-pl = ZERO
-j = 0
-ih = n
-! In the following loop, FPLUS is set to F(X + RHO*e_I) when NF = 2*I, and the value of FPLUS is
-! used subsequently when NF = 2*I + 1.
-fplus = ZERO ! This initial value is not used but to entertain the Fortran compilers.
-do nf = 1, 2_IK * n + 1_IK
-    ! Pick the shift from XBASE to the next initial interpolation point that provides diagonal
-    ! second derivatives.
-    if (nf > 1) then
-        if (modulo(nf, 2_IK) == 1_IK) then
-            if (fplus < fbase) then
-                xw(j) = rho
-                xpt(j, nf) = TWO * rho
-            else
-                xw(j) = -rho
-                xpt(j, nf) = -rho
-            end if
-        elseif (j < n) then
-            j = j + 1
-            xpt(j, nf) = rho
-        end if
-    end if
-    x = xbase + xpt(:, nf)
-
-    if (is_nan(sum(abs(x)))) then
-        f = sum(x) ! Set F to NaN
-        if (nf == 1) then
-            fopt = f
-            xopt = ZERO
-        end if
-        info = NAN_INF_X
-        to_return = .true.
-        exit
-    end if
-    call evaluate(calfun, x, f)
-    call savehist(nf, x, xhist, f, fhist)
-    if (is_nan(f) .or. is_posinf(f)) then
-        if (nf == 1) then
-            fopt = f
-            xopt = ZERO
-        end if
-        info = NAN_INF_F
-        to_return = .true.
-        exit
-    end if
-
-    if (f <= ftarget) then
-        info = FTARGET_ACHIEVED
-        xopt = xpt(:, nf)
-        fopt = f
-        to_return = .true.
-        exit
-    end if
-
-    if (nf == 1) then
-        fopt = f
-        kopt = nf
-        xopt = xpt(:, nf)
-        fbase = f
-    elseif (f < fopt) then
-        fopt = f
-        kopt = nf
-        xopt = xpt(:, nf)
-    end if
-
-    if (nf >= maxfun) then
-        info = MAXFUN_REACHED
-        to_return = .true.
-        exit
-    end if
-
-    if (modulo(nf, 2_IK) == 0_IK) then
-        fplus = f  ! FPLUS = F(X + RHO*e_I) with I = NF/2.
-        cycle
-    end if
-
-    ! Form the gradient and diagonal second derivatives of the quadratic model and Lagrange functions.
-    if (j >= 1 .and. nf >= 3) then  ! NF >= 3 is implied by J >= 1. We prefer to impose it explicitly.
-        ih = ih + j
-        if (xpt(j, nf) > 0) then  ! XPT(J, NF) = 2*RHO
-            pq(j) = (4.0_RP * fplus - 3.0_RP * fbase - f) / (TWO * rho)
-            d(j) = (fbase + f - TWO * fplus) / rhosq
-            pl(1, j) = -1.5_RP / rho
-            pl(1, ih) = ONE / rhosq
-            pl(nf - 1, j) = TWO / rho  ! Should be moved out of the loop
-            pl(nf - 1, ih) = -TWO / rhosq  ! Should be moved out of the loop
-        else  ! XPT(J, NF) = -RHO
-            d(j) = (fplus + f - TWO * fbase) / rhosq
-            pq(j) = (fplus - f) / (TWO * rho)
-            pl(1, ih) = -TWO / rhosq
-            pl(nf - 1, j) = HALF / rho  ! Should be moved out of the loop
-            pl(nf - 1, ih) = ONE / rhosq  ! Should be moved out of the loop
-        end if
-        pq(ih) = d(j)
-        pl(nf, j) = -HALF / rho
-        pl(nf, ih) = ONE / rhosq
-    end if
-end do
-
-ih = n + 1
-ip = 0
-iq = 2
-
-! Form the off-diagonal second derivatives of the initial quadratic model.
-if (.not. to_return) then
-    do nf = 2_IK * n + 2_IK, npt
-        ! Pick the shift from XBASE to the next initial interpolation point that provides
-        ! off-diagonal second derivatives.
-        ip = ip + 1
-        if (ip == iq) then
-            ih = ih + 1
-            ip = 1
-            iq = iq + 1
-        end if
-        xpt(ip, nf) = xw(ip)
-        ! N.B.: XPT(2, NF+1) is accessed by XPT(IQ, NF+1) even if N = 1.
-        xpt(iq, nf) = xw(iq)
-        x = xbase + xpt(:, nf)
-
-        if (is_nan(sum(abs(x)))) then
-            f = sum(x) ! Set F to NaN
-            info = NAN_INF_X
-            to_return = .true.
-            exit
-        end if
-
-        call evaluate(calfun, x, f)
-        call savehist(nf, x, xhist, f, fhist)
-        if (is_nan(f) .or. is_posinf(f)) then
-            info = NAN_INF_F
-            to_return = .true.
-            exit
-        end if
-
-        if (f <= ftarget) then
-            info = FTARGET_ACHIEVED
-            xopt = xpt(:, nf)
-            fopt = f
-            to_return = .true.
-            exit
-        end if
-
-        if (f < fopt) then
-            fopt = f
-            kopt = nf
-            xopt = xpt(:, nf)
-        end if
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
-            to_return = .true.
-            exit
-        end if
-
-        ih = ih + 1
-        temp = ONE / (xw(ip) * xw(iq))
-        tempa = f - fbase - xw(ip) * pq(ip) - xw(iq) * pq(iq)
-        ! N.B.: D(2) is accessed by D(IQ) even if N = 1.
-        !pq(ih) = (tempa - HALF * rhosq * (d(ip) + d(iq))) * temp
-        pq(ih) = (tempa - HALF * rhosq * (d(ip) + d(iq))) / (xw(ip) * xw(iq))
-        pl(1, ih) = temp
-        iw = ip + ip
-        if (xw(ip) < ZERO) iw = iw + 1
-        pl(iw, ih) = -temp
-        iw = iq + iq
-        if (xw(iq) < ZERO) iw = iw + 1
-        pl(iw, ih) = -temp
-        pl(nf, ih) = temp
-    end do
-end if
-!--------------------------------------------------------------------------------------------------!
-! When the loop exits, the value of NF is not specified by the standard. With gfortran, it will be
-! NPT+1, which is not proper for the subsequent use. !!!
-nf = min(nf, npt) !!!
-!--------------------------------------------------------------------------------------------------!
-
-if (fopt <= f .or. is_nan(f)) then
-    x = xbase + xopt
-    f = fopt
-end if
-
-
-
-if (to_return) then
+if (subinfo /= INFO_DFT) then
+    info = subinfo
     call rangehist(nf, xhist, fhist)
     return
 end if
 
+call initq(fval, xpt, pq)
+call initl(xpt, pl)
+
 ! Set parameters to begin the iterations for the current RHO.
 sixthm = ZERO
+rho = rhobeg
 delta = rho
 shortd = .false.
 geo_step = .false.
 improve_geo = .false.
 reduce_rho = .false.
+trtol = 0.01_RP
 
 ! Form the gradient of the quadratic model at the trust region centre.
 do while (.true.)
@@ -372,7 +191,7 @@ do while (.true.)
         ! Generate the next trust region step and test its length. Set KNEW to -1 if the purpose of
         ! the next F will be to improve conditioning, and also calculate a lower bound on the
         ! Hessian term of the model Q.
-        call trstep(delta, g, h, tol, d, crvmin)
+        call trstep(delta, g, h, trtol, d, crvmin)
         dnorm = min(delta, sqrt(sum(d**2)))
         errtol = -ONE
         shortd = (dnorm < HALF * rho)
@@ -501,11 +320,11 @@ do while (.true.)
             ! the Lagrange functions and the quadratic model.
             xpt(:, knew) = xnew
             ! It can happen that VLAG(KNEW) = 0 due to rounding.
-            pl(knew, :) = pl(knew, :) / vlag(knew)
-            plknew = pl(knew, :)
+            pl(:, knew) = pl(:, knew) / vlag(knew)
+            plknew = pl(:, knew)
             pq = pq + diff * plknew
-            pl = pl - outprod(vlag, plknew)
-            pl(knew, :) = plknew
+            pl = pl - outprod(plknew, vlag)
+            pl(:, knew) = plknew
 
             ! Update KOPT if F is the least calculated value of the objective function. Then branch
             ! for another trust region calculation. The case KSAVE>0 indicates that a model step has
@@ -539,8 +358,8 @@ do while (.true.)
             ! function at the centre of the trust region.
             knew = int(maxloc(distsq, dim=1), IK)
             !!MATLAB: [~, knew] = max(distsq(1:npt));
-            g = pl(knew, 1:n) + smat_mul_vec(pl(knew, n + 1:npt - 1), xopt)
-            h = vec2smat(pl(knew, n + 1:npt - 1))
+            g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
+            h = vec2smat(pl(n + 1:npt - 1, knew))
             if (is_nan(sum(abs(g)) + sum(abs(h)))) then
                 info = NAN_MODEL
                 reduce_rho = .true.
@@ -580,7 +399,7 @@ do while (.true.)
         xpt = xpt - spread(xopt, dim=2, ncopies=npt)
         pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)  ! Model gradient
         do k = 1, npt
-            pl(k, 1:n) = pl(k, 1:n) + smat_mul_vec(pl(k, n + 1:npt - 1), xopt)  ! Lagrange fun. gradient
+            pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)  ! Lagrange fun. gradient
         end do
 
 
@@ -613,15 +432,16 @@ if (fopt <= f .or. is_nan(f)) then
     f = fopt
 end if
 
+call rangehist(nf, xhist, fhist)
+
 !====================!
 !  Calculation ends  !
 !====================!
 
 ! Postconditions
 
-!close (16)
+close (17)
 
-call rangehist(nf, xhist, fhist)
 
 end subroutine uobyqb
 

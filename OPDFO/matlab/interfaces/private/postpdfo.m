@@ -430,7 +430,7 @@ output.constrviolation = constrviolation;
 if strcmp(probinfo.refined_type, 'unconstrained') && (constrviolation > 0 || max([0, chist]) > 0)
     % Public/unexpected error
     error(sprintf('%s:InvalidConstrViolation', invoker), ...
-    '%s: UNEXPECTED ERROR: %s returns positive constrviolations for an unconstrained problem.', invoker, solver);
+    '%s: UNEXPECTED ERROR: %s returns a positive constrviolation for an unconstrained problem.', invoker, solver);
 end
 if strcmp(probinfo.raw_type, 'unconstrained')
     % Do not include constrviolation or chist in output for unconstrained problems
@@ -586,7 +586,7 @@ if options.debug && ~options.classical
     if strcmp(solver, 'bobyqa') && (max([chist, constrviolation]) > 0) && ~probinfo.infeasible
         % Public/unexpected error
         error(sprintf('%s:InvalidChist', invoker), ...
-             '%s: UNEXPECTED ERROR: %s is a feasible solver yet it returns positive constrviolations.', invoker, solver);
+             '%s: UNEXPECTED ERROR: %s is a feasible solver yet it returns a positive constrviolation.', invoker, solver);
     end
     if strcmp(options.precision, 'double') && ((strcmp(solver, 'lincoa') && ~constr_modified) || strcmp(solver, 'cobyla'))
         Aineq = probinfo.raw_data.Aineq;
