@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 15, 2022 AM01:47:41
+! Last Modified: Wednesday, June 15, 2022 PM10:32:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -78,7 +78,7 @@ use, non_intrinsic :: powalg_mod, only : quadinc, omega_col, omega_mul, hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
-use, non_intrinsic :: initialize_mod, only : initialize
+use, non_intrinsic :: initialize_mod, only : initxf, inith
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trstep
 use, non_intrinsic :: update_mod, only : update
@@ -149,7 +149,8 @@ real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
 logical :: feasible, shortd, improve_geo
-integer(IK) :: idz, itest,  &
+integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
+integer(IK) :: idz, itest, &
 &           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact, subinfo
 real(RP) :: fshift(npt)
@@ -195,8 +196,8 @@ end if
 ! constraint violation is at least 0.2*RHOBEG. Also KOPT is set so that XPT(KOPT,.) is the initial
 ! trust region centre.
 b = bvec
-call initialize(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
-    & idz, kopt, nf, bmat, chist, fhist, fval, xbase, xhist, xpt, zmat, subinfo)
+call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
+    & ij, kopt, nf, chist, fhist, fval, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt
@@ -211,6 +212,9 @@ if (subinfo /= INFO_DFT) then
     close (16)
     return
 end if
+
+! Initialize BMAT, ZMAT, and IDZ.
+call inith(ij, rhobeg, xpt, idz, bmat, zmat)
 
 ! Initialize the quadratic model.
 hq = ZERO

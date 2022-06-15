@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, June 15, 2022 PM02:01:05
+! Last Modified: Wednesday, June 15, 2022 PM11:05:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1178,7 +1178,9 @@ subroutine updateh(knew, kref, idz, d, xpt, bmat, zmat, info)
 ! interpolation problem: ZMAT holds a factorization of the leading NPT*NPT submatrix OMEGA of H, the
 ! factorization being OMEGA = ZMAT*Diag(S)*ZMAT^T with S(1:IDZ-1)= -1 and S(IDZ : NPT-N-1) = +1;
 ! BMAT holds the last N ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and
-! (NPT + 1)th column of H are not stored as they are unnecessary for the calculation.
+! (NPT + 1)th column of H are not stored as they are unnecessary for the calculation. The matrix
+! H is also formulated in (2.7) of the BOBYQA paper. Thanks to the RESCUE method (see Section 5 of
+! the BOBYQA paper), BOBYQA does not have IDZ (equivalent to IDZ = 1).
 !
 ! N.B.:
 ! 1. What is H? As mentioned above, it is the inverse of the coefficient matrix of the KKT system

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Friday, June 10, 2022 AM07:33:05
+! Last Modified: Wednesday, June 15, 2022 PM11:28:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -192,7 +192,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(fval) == npt .and. .not. any(evaluated .and. (is_nan(fval) .or. is_posinf(fval))), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
-    call assert(.not. any(fval < fval(kopt) .and. evaluated), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
+    call assert(.not. any(evaluated .and. fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
 end if
