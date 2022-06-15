@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 15, 2022 AM09:29:09
+! Last Modified: Wednesday, June 15, 2022 AM08:15:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -158,32 +158,19 @@ end if
 !
 !     Set some constants.
 
+info = INFO_DFT
+
 !--------------------------------------------------------------------------------------------------!
 ! Temporary fix for uninitialized variables when initialization terminates because of f < ftarget etc
 fval = ieeenan()
 !--------------------------------------------------------------------------------------------------!
 
-!====================!
-! Calculation starts !
-!====================!
-
 rhosq = rhobeg * rhobeg
 mincv = 0.2_RP * rhobeg
+idz = 1
+kbase = 1
 
-! Initialize INFO to the default value. At return, an INFO different from this value will indicate
-! an abnormal return.
-info = INFO_DFT
-
-! Initialize XBASE to X0.
-xbase = x0
-
-! EVALUATED is a boolean array with EVALUATED(I) indicating whether the function value of the I-th
-! interpolation point has been evaluated. We need it for a portable counting of the number of
-! function evaluations, especially if the loop is conducted asynchronously. However, the loop here
-! is not fully parallelizable if NPT>2N+1, as the definition XPT(;, 2N+2:end) involves FVAL(1:2N+1).
 evaluated = .false.
-! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
-! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
 fval = HUGENUM
 
 ! Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT], but they may be altered
@@ -204,6 +191,7 @@ ij = setij(n, npt)
 ! N.B.: The 1 in IJ + 1 comes from the fact that XPT(:, 1) corresponds to XBASE.
 xpt(:, 2 * n + 2:npt) = xpt(:, ij(1, :) + 1) + xpt(:, ij(2, :) + 1)
 
+xbase = x0
 ! Update the constraint right-hand sides to allow for the shift XBASE.
 b = b - matprod(xbase, amat)
 
@@ -221,7 +209,6 @@ do k = 1, npt
             j = int(maxloc(constr, dim=1), IK)
             cstrv = constr(j)
             step = xpt(:, k) + (mincv - cstrv) * amat(:, j)
-            ! call updateh(k, kbase, idz, step, xpt, bmat, zmat)
             xpt(:, k) = step
         end if
     end if
@@ -250,7 +237,8 @@ kopt = int(minloc(fval, mask=(evaluated .and. feasible), dim=1), kind(kopt))
 !!fopt = min(fval(evaluated & feasible));
 !!kopt = find(evaluated & feasible & ~(fval > fopt), 1,'first');
 
-! Set BMAT corresponding to the XPT_REF that will be defined later.
+
+! Set BMAT.
 recip = ONE / rhobeg
 reciq = HALF / rhobeg
 bmat = ZERO
@@ -267,7 +255,7 @@ else
     bmat(:, n + 2:2 * n + 1) = -reciq * eye(n)
 end if
 
-! Set ZMAT corresponding to the XPT_REF that will be defined later.
+! Set ZMAT.
 recip = ONE / rhosq
 reciq = sqrt(HALF) / rhosq
 zmat = ZERO
@@ -288,25 +276,28 @@ else
     end do
 end if
 
-! Set IDZ = 1.
-idz = 1_IK
-
-! Up to now, [BMAT, ZMAT, IDZ] corresponds to the XPT_REF defined below.
 xpt_ref(:, 1) = ZERO
 xpt_ref(:, 2:n + 1) = rhobeg * eye(n)
-xpt_ref(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)
-ij = setij(n, npt)
-xpt_ref(:, 2 * n + 2:npt) = xpt_ref(:, ij(1, :) + 1) + xpt_ref(:, ij(2, :) + 1)
+xpt_ref(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZERO if it is nonempty.
 
-! Update [BMAT, ZMAT, IDZ] so that it corresponds to XPT.
-kbase = 1_IK
+! Set IJ.
+! In general, when NPT = (N+1)*(N+2)/2, we can set IJ(:, 1 : NPT - (2*N+1)) to ANY permutation
+! of {{I, J} : 1 <= I /= J <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first NPT - (2*N+1)
+! elements of such a permutation. The following IJ is defined according to Powell's code. See also
+! Section 3 of the NEWUOA paper and (2.4) of the BOBYQA paper.
+ij = setij(n, npt)
+
+! Set XPT(:, 2*N + 2 : NPT).
+! Indeed, XPT(:, K) has only two nonzeros for each K >= 2*N + 2,
+! N.B.: The 1 in IJ + 1 comes from the fact that XPT(:, 1) corresponds to XBASE.
+xpt_ref(:, 2 * n + 2:npt) = xpt_ref(:, ij(1, :) + 1) + xpt_ref(:, ij(2, :) + 1)
 do k = 2, npt
-    if (all(abs(xpt(:, k) - xpt_ref(:, k)) <= 0)) then
-        cycle
+    if (.not. all(abs(xpt(:, k) - xpt_ref(:, k)) <= 0)) then
+        call updateh(k, kbase, idz, xpt(:, k), xpt_ref, bmat, zmat)
+        xpt_ref(:, k) = xpt(:, k)
     end if
-    call updateh(k, kbase, idz, xpt(:, k), xpt_ref, bmat, zmat)
-    xpt_ref(:, k) = xpt(:, k)
 end do
+
 
 ! Postconditions
 if (DEBUGGING) then

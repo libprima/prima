@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, June 03, 2022 PM05:30:09
+! Last Modified: Wednesday, June 15, 2022 AM09:45:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,8 +22,8 @@ contains
 
 subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW = XOPT + D. See
-! Section 4 of the NEWUOA paper.
+! This subroutine updates GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW = XPT(:, KOPT) + D.
+! See Section 4 of the NEWUOA paper.
 ! N.B.: Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
@@ -99,6 +99,13 @@ end if
 
 ! Do nothing when KNEW is 0. This can only happen after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
+    return
+end if
+
+! Do nothing if D does not cause a real change to XPT. This is rare but possible.
+! In Fortran, do NOT merge this case with the last one, or XPT(:, KNEW) may be accessed even
+! when KNEW = 0 due to the non-short-circuit logical evaluation of Fortran.
+if (all(abs(xpt(:, kopt) + d - xpt(:, knew)) <= 0)) then
     return
 end if
 
@@ -195,6 +202,16 @@ end if
 
 ! Do essentially nothing when KNEW is 0. This can only happen after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
+    ! We must set FOPT and XOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
+    fopt = fval(kopt)
+    xopt = xpt(:, kopt)
+    return
+end if
+
+! Do essentially nothing if D does not cause a real change to XPT. This is rare but possible.
+! In Fortran, do NOT merge this case with the last one, or XPT(:, KNEW) may be accessed even
+! when KNEW = 0 due to the non-short-circuit logical evaluation of Fortran.
+if (all(abs(xpt(:, kopt) + d - xpt(:, knew)) <= 0)) then
     ! We must set FOPT and XOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
     fopt = fval(kopt)
     xopt = xpt(:, kopt)

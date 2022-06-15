@@ -120,7 +120,7 @@ else
         blacklist = [blacklist, {'CHEBYQAD'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2'}]; % Too long to solve
-        blacklist = [blacklist, {'DUAL3'}]; % Too long to solve
+        blacklist = [blacklist, {'DUAL3', 'DUAL2'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails
         blacklist = [blacklist, {'MINMAXRB'}]; % Classical COBYLA encounters SEGFAULT

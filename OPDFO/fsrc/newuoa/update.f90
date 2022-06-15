@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 05, 2022 PM06:28:01
+! Last Modified: Wednesday, June 15, 2022 AM09:41:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -99,6 +99,11 @@ end if
 
 ! Do nothing when KNEW is 0. This can only happen after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
+    return
+end if
+
+! Do nothing if D does not cause a real change to XPT. This is rare but possible.
+if (all(abs(xpt(:, kopt) + d - xpt(:, knew)) <= 0)) then
     return
 end if
 
@@ -195,6 +200,14 @@ end if
 
 ! Do essentially nothing when KNEW is 0. This can only happen after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
+    ! We must set FOPT and XOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
+    fopt = fval(kopt)
+    xopt = xpt(:, kopt)
+    return
+end if
+
+! Do essentially nothing if D does not cause a real change to XPT. This is rare but possible.
+if (all(abs(xpt(:, kopt) + d - xpt(:, knew)) <= 0)) then
     ! We must set FOPT and XOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
     fopt = fval(kopt)
     xopt = xpt(:, kopt)
