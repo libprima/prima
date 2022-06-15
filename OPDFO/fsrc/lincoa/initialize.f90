@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 15, 2022 AM12:41:40
+! Last Modified: Wednesday, June 15, 2022 PM11:37:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -266,7 +266,8 @@ do nf = 1, npt
     !---------------------------------------------------!
     if (nf == 1) then
         kopt = 1
-    else if (f < fval(kopt) .and. feas > ZERO) then
+        !else if (f < fval(kopt) .and. feas > ZERO) then
+    else if (f < fval(kopt) .and. cstrv <= 0) then
         kopt = nf
     end if
     fval(nf) = f

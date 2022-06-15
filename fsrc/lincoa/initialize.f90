@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 15, 2022 PM11:24:39
+! Last Modified: Thursday, June 16, 2022 AM12:00:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -175,12 +175,10 @@ b = b - matprod(xbase, amat)
 ! violation is at least 0.2*RHOBEG. This is OPTIONAL. According to a test on 20220614, it seems to
 ! improve the performance of LINCOA modestly.
 mincv = 0.2_RP * rhobeg
-feasible(1) = .true.  ! LINCOA always start with a feasible point.
-do k = 2, npt
+do k = 2, npt  ! LINCOA always start with a feasible point. So we do this only for K >= 2.
     ! Internally, we use AMAT and B to evaluate the constraints.
     constr = matprod(xpt(:, k), amat) - b
-    feasible(k) = all(constr <= 0)
-    if (all(constr < mincv) .and. .not. feasible(k)) then
+    if (all(constr < mincv) .and. any(constr > 0)) then
         j = int(maxloc(constr, dim=1), IK)
         xpt(:, k) = xpt(:, k) + (mincv - constr(j)) * amat(:, j)
     end if
@@ -194,8 +192,9 @@ do k = 1, npt
     constr = matprod(x, A_orig) - b_orig
     cstrv = maximum([ZERO, constr])
     call fmsg(solver, iprint, k, f, x, cstrv, constr)
-    evaluated(k) = .true.
     call savehist(k, x, xhist, f, fhist, cstrv, chist)
+    evaluated(k) = .true.
+    feasible(k) = all(constr <= 0)
     fval(k) = f
     subinfo = checkexit(maxfun, k, cstrv, ctol, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
@@ -203,6 +202,7 @@ do k = 1, npt
         exit
     end if
 end do
+feasible(1) = .true.  ! LINCOA always start with a feasible point.
 
 nf = int(count(evaluated), kind(nf))
 kopt = int(minloc(fval, mask=(evaluated .and. feasible), dim=1), kind(kopt))
