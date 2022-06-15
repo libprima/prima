@@ -1306,6 +1306,11 @@ if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
 
+! Do nothing if D does not lead to a real change in XPT. This is possible in very rare cases.
+if (all(abs(xpt(:, kopt) + d - xpt(:, knew)) <= 0)) then
+    return
+end if
+
 ! Calculate VLAG and BETA according to D.
 ! VLAG contains the components of the vector H*w of the updating formula (4.11) in the NEWUOA paper,
 ! and BETA holds the value of the parameter that has this name.
