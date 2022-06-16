@@ -256,8 +256,8 @@ maxfun = options.maxfun;
 fval_history = NaN(1, maxfun);
 cv_history = NaN(1, maxfun);
 
-has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options));
-prob.options.output_xhist = has_eval_options;
+%has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options));
+prob.options.output_xhist = true;  % We always need xhist to recover the history of the computation.
 
 [~, ~, ~, output] = solver(prob);
 % Some solvers (e.g., fmincon) may not respect maxfun. Indeed, PDFO solvers may also increase maxfun
@@ -265,20 +265,14 @@ prob.options.output_xhist = has_eval_options;
 nf = min(maxfun, output.funcCount);
 
 if (nf >= 1)
-    if has_eval_options
-        xhist_cell = num2cell(output.xhist(:, 1:nf), 1);
-        fval_history(1:nf) = cellfun(prob.orig_objective, xhist_cell);
-        orig_cstrv = @(x) get_cstrv(x, prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.orig_nonlcon);
-        cv_history(1:nf) = cellfun(orig_cstrv, xhist_cell);
-    else
-        fval_history(1:nf) = output.fhist(1:nf);
-        if isfield(output, 'chist')
-            cv_history(1:nf) = max(0, output.chist(1:nf));
-        else
-            cv_history(1:nf) = zeros(1, nf);
-        end
-    end
-
+    % Use xhist and the original data of the problem to get fval_history and cv_history. Do NOT use
+    % the information returned by the solver, as the solver may change the data (e.g., lincoa
+    % may modify the right-hand side of linear constraints when x0 is infeasible; in addition, it
+    % scales the constraints so that their gradients have norm 1)
+    xhist_cell = num2cell(output.xhist(:, 1:nf), 1);
+    fval_history(1:nf) = cellfun(prob.orig_objective, xhist_cell);
+    orig_cstrv = @(x) get_cstrv(x, prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.orig_nonlcon);
+    cv_history(1:nf) = cellfun(orig_cstrv, xhist_cell);
     fval_history(nf+1:maxfun) = fval_history(nf);
     cv_history(nf+1:maxfun) = cv_history(nf);
 else
