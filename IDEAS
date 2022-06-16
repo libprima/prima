@@ -96,7 +96,10 @@ end function
 !----------------------------!
 Note that hprod must have access to the Hessian. Thus it has to be implemented an internal
 function in the function that calls trstep. In MATLAB/Python/R/C++, it can be implemented as an
-anonymous/lambda function the Hessian as a parameter.
+anonymous/lambda function with the Hessian being a parameter.
+
+Also, implement circle_fun_trsapp etc as internal functions with `args` being a parameter that does
+not need to be passed.
 
 
 C++

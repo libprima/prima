@@ -2,7 +2,7 @@
 ! 1. Check whether it is possible to change the definition of RESCON, RESNEW, RESTMP, RESACT so that
 ! we do not need to encode information into their signs.
 ! 2. Use RESCON to evaluate CSTRV.
-! 3. In FMSG, do not print CONSTR
+! 3. In FMSG, do not print CONSTR, which will not be computed due to 2.
 !
 module lincob_mod
 !--------------------------------------------------------------------------------------------------!
@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 16, 2022 AM10:28:43
+! Last Modified: Thursday, June 16, 2022 AM11:05:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
