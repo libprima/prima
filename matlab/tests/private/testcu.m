@@ -153,6 +153,8 @@ if sequential
 
             if permuted
                 prob = permprob(orig_prob, permutations(ir, :));
+                prob.orig_objective = prob.objective;
+                prob.orig_nonlcon = prob.nonlcon;
             end
 
             for is = 1 : ns
@@ -201,6 +203,8 @@ else
 
             if permuted
                 prob = permprob(orig_prob, permutations(ir, :));
+                prob.orig_objective = prob.objective;
+                prob.orig_nonlcon = prob.nonlcon;
             end
 
             for is = 1 : ns
@@ -268,7 +272,7 @@ if (nf >= 1)
     % Use xhist and the original data of the problem to get fval_history and cv_history. Do NOT use
     % the information returned by the solver, as the solver may change the data (e.g., lincoa
     % may modify the right-hand side of linear constraints when x0 is infeasible; in addition, it
-    % scales the constraints so that their gradients have norm 1)
+    % scales the constraints so that their gradients have norm 1), making results not comparable.
     xhist_cell = num2cell(output.xhist(:, 1:nf), 1);
     fval_history(1:nf) = cellfun(prob.orig_objective, xhist_cell);
     orig_cstrv = @(x) get_cstrv(x, prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.orig_nonlcon);
