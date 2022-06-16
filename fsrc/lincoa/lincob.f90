@@ -1,3 +1,9 @@
+!TODO:
+! 1. Check whether it is possible to change the definition of RESCON, RESNEW, RESTMP, RESACT so that
+! we do not need to encode information into their signs.
+! 2. Use RESCON to evaluate CSTRV.
+! 3. In FMSG, do not print CONSTR
+!
 module lincob_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of LINCOA.
@@ -11,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 15, 2022 PM10:32:08
+! Last Modified: Thursday, June 16, 2022 AM10:28:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -186,6 +192,12 @@ if (DEBUGGING) then
     call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
 end if
 
+!---------------------------------------------------------!
+if (cweight < 0) then
+    write (*, *) cweight  ! Temporary, to be removed.
+end if
+!---------------------------------------------------------!
+
 !====================!
 ! Calculation starts !
 !====================!
@@ -203,6 +215,7 @@ fopt = fval(kopt)
 x = xbase + xopt
 f = fopt
 ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
+!cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 xsav = x
 
@@ -222,10 +235,10 @@ pq = omega_mul(idz, zmat, fval)
 gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
 
 ! Initialize RESCON.
-! RESCON holds useful information about the constraint residuals.
-! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-! 2. Otherwise, |RESCON(J)| is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA;
-! RESCON is set to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
+! RESCON holds information about the constraint residuals at the current trust region center XOPT.
+! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA. Note
+! that RESCON >= 0 in this case, because the algorithm keeps XOPT to be feasible.
+! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
 ! RESCON can be updated without calculating the constraints that are far from being active, so that
 ! we only need to evaluate the constraints that are nearly active. RESCON is initialized as follows.
 ! 1. Normally, RESCON = B - AMAT^T*XOPT (theoretically, B - AMAT^T*XOPT >= 0 since XOPT is feasible)
@@ -393,6 +406,8 @@ do while (.true.)
             ! not usable).
             constr = matprod(x, A_orig) - b_orig
             cstrv = maximum([ZERO, constr])
+            !cstrv = maximum([ZERO, matprod(x, amat(:, trueloc(abs(rescon) <= dnorm))) - b(trueloc(abs(rescon) <= dnorm))])
+
             nf = nf + 1_IK
             call fmsg(solver, iprint, nf, f, x, cstrv, constr)
             call savehist(nf, x, xhist, f, fhist, cstrv, chist)

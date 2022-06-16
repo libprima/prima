@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 16, 2022 AM12:00:45
+! Last Modified: Thursday, June 16, 2022 AM10:56:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -172,10 +172,10 @@ xpt(:, 2 * n + 2:npt) = xpt(:, ij(1, :) + 1) + xpt(:, ij(2, :) + 1)
 b = b - matprod(xbase, amat)
 
 ! Go through the initial points, shifting every infeasible point if necessary so that its constraint
-! violation is at least 0.2*RHOBEG. This is OPTIONAL. According to a test on 20220614, it seems to
-! improve the performance of LINCOA modestly.
+! violation is at least 0.2*RHOBEG. This is OPTIONAL. According to a test on 20220614, it does
+! improve the performance of LINCOA modestly. The magic number 0.2 set by Powell works well.
 mincv = 0.2_RP * rhobeg
-do k = 2, npt  ! LINCOA always start with a feasible point. So we do this only for K >= 2.
+do k = 2, npt  ! LINCOA always starts with a feasible point. So we do this only for K >= 2.
     ! Internally, we use AMAT and B to evaluate the constraints.
     constr = matprod(xpt(:, k), amat) - b
     if (all(constr < mincv) .and. any(constr > 0)) then
