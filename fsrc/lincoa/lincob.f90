@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 16, 2022 AM11:05:40
+! Last Modified: Sunday, June 19, 2022 AM09:21:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -215,7 +215,6 @@ fopt = fval(kopt)
 x = xbase + xopt
 f = fopt
 ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
-!cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 xsav = x
 
@@ -293,12 +292,13 @@ do while (.true.)
     delsav = delta
     ksave = knew
     if (knew == 0) then
-        call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, dnorm, d)
+        call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
 
         ! A trust region step is applied whenever its length, namely SNORM, is at least 0.5*DELTA.
         ! It is also applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has
         ! caused a change to the active set, indicated by NGETACT > 1. Otherwise, the trust region
         ! step is considered too short to try.
+        dnorm = sqrt(sum(d**2))
         shortd = ((dnorm <= HALF * delta .and. ngetact <= 1) .or. dnorm <= 0.1999_RP * delta)
         if (shortd) then
             delta = HALF * delta

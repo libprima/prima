@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 26, 2022 PM05:33:05
+! Last Modified: Sunday, June 19, 2022 AM09:43:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: getact
 contains
 
 
-subroutine getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, psd)
+subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 !--------------------------------------------------------------------------------------------------!
 !!!-------------------------------------------------------------!!!
 !!! THE FOLLOWING DESCRIPTION NEEDS VERIFICATION!               !!!
@@ -84,8 +84,8 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
+real(RP), intent(in) :: delta
 real(RP), intent(in) :: g(:)  ! G(N)
-real(RP), intent(in) :: snorm
 
 ! In-outputs
 integer(IK), intent(inout) :: iact(:)  ! IACT(M)
@@ -158,7 +158,7 @@ end if
 
 ! Set some constants.
 gg = inprod(g, g)
-tdel = 0.2_RP * snorm
+tdel = 0.2_RP * delta
 
 ! Set the initial QFAC to the identity matrix in the case NACT = 0.
 if (nact == 0) then
@@ -262,7 +262,7 @@ do iter = 1_IK, maxiter
 
     ! Pick the next integer L or terminate; a positive L is the index of the most violated constraint.
     apsd = matprod(psd, amat)
-    mask = (resnew > 0 .and. resnew <= tdel .and. apsd > (dnorm / snorm) * resnew)
+    mask = (resnew > 0 .and. resnew <= tdel .and. apsd > (dnorm / delta) * resnew)
     !----------------------------------------------------------------------------------------------!
     ! N.B.: the definition of L and VIOLMX can be simplified as follows, but we prefer explicitness.
     !L = INT(MAXLOC(APSD, MASK=MASK, DIM=1), IK) ! MAXLOC(...) = 0 if MASK is all FALSE.
