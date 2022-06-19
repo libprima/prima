@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 16, 2022 AM10:56:00
+! Last Modified: Sunday, June 19, 2022 AM08:52:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -185,6 +185,7 @@ do k = 2, npt  ! LINCOA always starts with a feasible point. So we do this only 
 end do
 
 ! Set FVAL by evaluating F. Totally parallelizable except for FMSG.
+feasible = .false.
 do k = 1, npt
     x = xbase + xpt(:, k)
     call evaluate(calfun, x, f)

@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 AM08:40:33
+! Last Modified: Sunday, June 19, 2022 AM09:40:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: trstep
 contains
 
 
-subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, s)
+subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, s)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, EPS, TINYCV, DEBUGGING
@@ -53,7 +53,6 @@ real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N); Will be updated in GETACT
 
 ! Outputs
 integer(IK), intent(out) :: ngetact
-real(RP), intent(out) :: snorm
 real(RP), intent(out) :: s(:)  ! S(N)
 
 ! Local variables
@@ -69,7 +68,7 @@ real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, snsq, ss, temp
+&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, delsq, ss, temp
 integer(IK) :: icount, jsav
 integer(IK) :: m
 integer(IK) :: n
@@ -131,12 +130,7 @@ g = gq
 !     Set some numbers for the conjugate gradient iterations.
 !
 ctest = 0.01_RP
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20220302: The following line is added so that SNORM is INTENT(OUT) rather than
-! INTNT(INOUT). Is SNORM really the norm of step, or just DELTA??? Check also GETACT.
-snorm = delta
-!--------------------------------------------------------------------------------------------------!
-snsq = snorm * snorm
+delsq = delta * delta
 
 ! Set the initial elements of RESNEW, RESACT and S.
 ! 1. RESNEW(J) < 0 indicates that the J-th constraint does not restrict the CG steps of the current
@@ -146,9 +140,9 @@ snsq = snorm * snorm
 ! N.B.: The order of the following lines is important, as the later ones override the earlier.
 resnew = rescon
 resnew(trueloc(rescon >= 0)) = max(TINYCV, rescon(trueloc(rescon >= 0)))
-resnew(trueloc(rescon >= snorm)) = -ONE
+resnew(trueloc(rescon >= delta)) = -ONE
 !!MATLAB:
-!!resnew = rescon; resnew(rescon >= 0) = max(TINYCV, rescon(rescon >= 0)); resnew(rescon >= snorm) = -1;
+!!resnew = rescon; resnew(rescon >= 0) = max(TINYCV, rescon(rescon >= 0)); resnew(rescon >= delta) = -1;
 resnew(iact(1:nact)) = ZERO
 resact(1:nact) = rescon(iact(1:nact))
 
@@ -166,18 +160,18 @@ do while (.true.)  !TODO: prevent infinite cycling
         ! that is orthogonal to the normals of the active constraints. DW is scaled to have length
         ! 0.2*SNORM, as then a move of DW from S is allowed by the linear constraints.
         ngetact = ngetact + 1
-        call getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dw)
+        call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, dw)
         dd = inprod(dw, dw)
         if (.not. dd > 0) then
             exit
         end if
-        scaling = 0.2_RP * snorm / sqrt(dd)
+        scaling = 0.2_RP * delta / sqrt(dd)
         dw = scaling * dw
 
         ! If the modulus of the residual of an active constraint is substantial, then set D to the
         ! shortest move from S to the boundaries of the active constraints.
         bstep = ZERO
-        if (any(resact(1:nact) > 1.0E-4_RP * snorm)) then
+        if (any(resact(1:nact) > 1.0E-4_RP * delta)) then
             ! N.B.: We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify
             ! MAXVAL(X) when X contains NaN, and MATLAB/Python/R/Julia behave differently in this
             ! respect. Moreover, MATLAB defines max(X) = [] if X == [], differing from mathematics
@@ -191,7 +185,7 @@ do while (.true.)  !TODO: prevent infinite cycling
             ! move that satisfies the trust region bound.
             ds = inprod(d, s + dw)
             dd = sum(d**2)
-            rhs = snsq - sum((s + dw)**2)  ! Calculation changed
+            rhs = delsq - sum((s + dw)**2)  ! Calculation changed
 
             if (rhs > 0) then
                 temp = sqrt(ds * ds + dd * rhs)
@@ -227,7 +221,7 @@ do while (.true.)  !TODO: prevent infinite cycling
     ! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
     ! derivative term of this step is sufficiently small or if no further progress is possible.
     icount = icount + 1
-    rhs = snsq - ss
+    rhs = delsq - ss
     if (rhs <= 0) exit
     dg = inprod(d, g)
     ds = inprod(d, s)
@@ -251,8 +245,7 @@ do while (.true.)  !TODO: prevent infinite cycling
         alpha = -dg / dgd
     end if
 
-    ! Make a further reduction in ALPHA if necessary to preserve feasibility, and put some scalar
-    ! products of D with constraint gradients in W.
+    ! Make a further reduction in ALPHA if necessary to preserve feasibility.
     alphm = alpha
     ad = -ONE
     ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
@@ -298,14 +291,14 @@ do while (.true.)  !TODO: prevent infinite cycling
     if (ngetact > min(10000, 100 * int(m + 1) * int(n)) .or.  &
     & alpha /= alpha .or. alpht /= alpht .or. &
     & alphm /= alphm .or. dgd /= dgd .or. dg /= dg .or. &
-    & ss /= ss .or. snsq /= snsq .or. reduct /= reduct) then
+    & ss /= ss .or. reduct /= reduct) then
         exit
     end if
     if (alpha == alpht) exit
     temp = -alphm * (dg + HALF * alphm * dgd)
     if (temp <= ctest * reduct) exit
     if (jsav > 0) then
-        if (ss <= 0.64_RP * snsq) then
+        if (ss <= 0.64_RP * delsq) then
             get_act = .true.
             cycle
         else
@@ -335,8 +328,9 @@ do while (.true.)  !TODO: prevent infinite cycling
 end do
 
 ! Return from the subroutine.
-snorm = ZERO
-if (reduct > 0) snorm = sqrt(ss)
+if (reduct <= 0 .or. is_nan(reduct)) then
+    s = ZERO
+end if
 
 if (DEBUGGING) then
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
