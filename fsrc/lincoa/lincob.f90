@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 19, 2022 AM09:21:34
+! Last Modified: Sunday, June 19, 2022 AM10:07:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -293,6 +293,8 @@ do while (.true.)
     ksave = knew
     if (knew == 0) then
         call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
+        ! Zaikun 20220619: Is it possible to move NGETACT out of the arguments?
+        ! Is it possible that NGETACT > 0 but IACT stays the same? 
 
         ! A trust region step is applied whenever its length, namely SNORM, is at least 0.5*DELTA.
         ! It is also applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has

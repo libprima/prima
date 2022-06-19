@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 19, 2022 AM09:40:35
+! Last Modified: Sunday, June 19, 2022 PM04:31:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,7 +69,7 @@ real(RP) :: vlam(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, delsq, ss, temp
-integer(IK) :: icount, jsav
+integer(IK) :: icount, jsav  ! Better name for ICOUNT?
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
