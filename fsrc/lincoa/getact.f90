@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 19, 2022 AM09:43:48
+! Last Modified: Sunday, June 19, 2022 PM04:29:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,7 +100,7 @@ real(RP), intent(out) :: psd(:)  ! PSD(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GETACT'
-integer(IK) :: ic
+integer(IK) :: icon
 integer(IK) :: iter
 integer(IK) :: l
 integer(IK) :: m
@@ -168,10 +168,10 @@ end if
 ! Remove any constraints from the initial active set whose residuals exceed TDEL.
 ! Compilers may complain if VLAM is not set. The value does not matter, as it will be overwritten.
 vlam = ZERO
-do ic = nact, 1, -1
-    if (resact(ic) > tdel) then
-        ! Delete constraint IACT(IC) from the active set, and set NACT = NACT - 1.
-        call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+do icon = nact, 1, -1
+    if (resact(icon) > tdel) then
+        ! Delete constraint IACT(ICON) from the active set, and set NACT = NACT - 1.
+        call del_act(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
     end if
 end do
 
@@ -183,9 +183,9 @@ do while (nact > 0)
     if (.not. any(vlam(1:nact) >= 0)) then
         exit
     end if
-    ic = maxval(trueloc(vlam(1:nact) >= 0))
-    !!MATLAB: ic = max(find(vlam(1:nact) >= 0)); % OR: ic = find(vlam(1:nact) >= 0, 1, 'last')
-    call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+    icon = maxval(trueloc(vlam(1:nact) >= 0))
+    !!MATLAB: icon = max(find(vlam(1:nact) >= 0)); % OR: icon = find(vlam(1:nact) >= 0, 1, 'last')
+    call del_act(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
 end do
 ! Zaikun 20220330: What if NACT = 0 at this point?
 
@@ -297,8 +297,8 @@ do iter = 1_IK, maxiter
     ! Set the components of the vector VMU if VIOLMX is positive.
     ! N.B.: 1. In theory, NACT > 0 is not needed in the condition below, because VIOLMX must be 0
     ! when NACT is 0. We keep NACT > 0 for security: when NACT <= 0, RFAC(NACT, NACT) is invalid.
-    ! 2. The loop will run for at most NACT <= N times: if VIOLMX > 0, then IC > 0, and hence
-    ! VLAM(IC) = 0, which implies that DEL_ACT will be called to reduce NACT by 1.
+    ! 2. The loop will run for at most NACT <= N times: if VIOLMX > 0, then ICON > 0, and hence
+    ! VLAM(ICON) = 0, which implies that DEL_ACT will be called to reduce NACT by 1.
     do while (violmx > 0 .and. nact > 0)
         v(1:nact - 1) = ZERO
         v(nact) = ONE / rfac(nact, nact) ! This is why we must ensure NACT > 0.
@@ -313,30 +313,31 @@ do iter = 1_IK, maxiter
         where (vmu(1:nact) < 0 .and. vlam(1:nact) < 0) frac(1:nact) = vlam(1:nact) / vmu(1:nact)
         !!MATLAB: frac = vlam / vmu; frac(vmu >= 0 | vlam >= 0) = Inf;
         vmult = minval([violmx, frac(1:nact)])
-        ic = maxval([0_IK, trueloc(frac(1:nact) <= vmult)])
-        !!MATLAB: ic = max([0; find(frac(1:nact) <= vmult)]); % find(frac(1:nact)<=vmult) can be empty
+        icon = maxval([0_IK, trueloc(frac(1:nact) <= vmult)])
+        !!MATLAB: icon = max([0; find(frac(1:nact) <= vmult)]); % find(frac(1:nact)<=vmult) can be empty
 
-        ! N.B.: 0. The definition of IC given above is mathematically equivalent to the following.
-        !!IC = MAXVAL(TRUELOC([VIOLMX, FRACMULT(1:NACT)] <= VMULT)) - 1_IK, OR
-        !!IC = INT(MINLOC([VIOLMX, FRACMULT(1:NACT)], DIM=1, BACK=.TRUE.), IK) - 1_IK
-        ! However, such implementations are problematic in the unlikely case of VMULT = NaN: IC will
-        ! be -Inf in the first and unspecified in the second. The MATLAB counterpart of the first
-        ! implementation will render IC = [] as `find` (the MATLAB version of TRUELOC) returns [].
+        ! N.B.: 0. The definition of ICON given above is mathematically equivalent to the following.
+        !!ICON = MAXVAL(TRUELOC([VIOLMX, FRACMULT(1:NACT)] <= VMULT)) - 1_IK, OR
+        !!ICON = INT(MINLOC([VIOLMX, FRACMULT(1:NACT)], DIM=1, BACK=.TRUE.), IK) - 1_IK
+        ! However, such implementations are problematic in the unlikely case of VMULT = NaN: ICON
+        ! will be -Inf in the first and unspecified in the second. The MATLAB counterpart of the
+        ! first implementation will render ICON = [] as `find` (the MATLAB version of TRUELOC)
+        ! returns [].
         ! 1. The BACK argument in MINLOC is available in F2008. Not supported by Absoft as of 2022.
         ! 2. A motivation for backward MINLOC is to save computation in DEL_ACT below (what else?).
 
         violmx = max(violmx - vmult, ZERO)
         vlam(1:nact) = vlam(1:nact) - vmult * vmu(1:nact)
-        if (ic > 0 .and. ic <= nact) then  ! Powell's code: IF (IC>0). We check IC<=NACT for safety.
-            vlam(ic) = ZERO
+        if (icon > 0 .and. icon <= nact) then  ! Powell: IF (ICON>0). We check ICON<=NACT for safety.
+            vlam(icon) = ZERO
         end if
 
         ! Reduce the active set if necessary, so that all components of the new VLAM are negative,
         ! with resetting of the residuals of the constraints that become inactive.
-        do ic = nact, 1, -1
-            if (vlam(ic) >= 0) then  ! Powell's version: IF (.NOT. VLAM(IC) < 0) THEN
-                ! Delete the constraint with index IACT(IC) from the active set; set NACT = NACT-1.
-                call del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+        do icon = nact, 1, -1
+            if (vlam(icon) >= 0) then  ! Powell's version: IF (.NOT. VLAM(ICON) < 0) THEN
+                ! Delete the constraint with index IACT(ICON) from the active set; set NACT = NACT-1.
+                call del_act(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
             end if
         end do
     end do  ! End of DO WHILE (VIOLMX > 0 .AND. NACT > 0)
@@ -482,9 +483,9 @@ end if
 end subroutine add_act
 
 
-subroutine del_act(ic, iact, nact, qfac, resact, resnew, rfac, vlam)
+subroutine del_act(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine deletes the constraint with index IACT(IC) from the active set, updates IACT,
+! This subroutine deletes the constraint with index IACT(ICON) from the active set, updates IACT,
 ! QFAC, etc accordingly, and reduces NACT to NACT-1.
 !--------------------------------------------------------------------------------------------------!
 
@@ -495,7 +496,7 @@ use, non_intrinsic :: powalg_mod, only : qrexc
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: ic
+integer(IK), intent(in) :: icon
 
 ! In-outputs
 integer(IK), intent(inout) :: iact(:)  ! IACT(M)
@@ -524,7 +525,7 @@ if (DEBUGGING) then
     call assert(m >= 1, 'M >= 1', srname)  ! Should not be called when M == 0.
     call assert(n >= 1, 'N >= 1', srname)
     call assert(nact >= 1 .and. nact <= min(m, n), '1 <= NACT <= MIN(M, N)', srname)
-    call assert(ic >= 1 .and. ic <= nact, '1 <= IC <= NACT', srname)
+    call assert(icon >= 1 .and. icon <= nact, '1 <= ICON <= NACT', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
@@ -534,7 +535,7 @@ if (DEBUGGING) then
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
     nsave = nact  ! For debugging only
-    l = iact(ic)  ! For debugging only
+    l = iact(icon)  ! For debugging only
 end if
 
 !====================!
@@ -542,18 +543,18 @@ end if
 !====================!
 
 ! The following instructions rearrange the active constraints so that the new value of IACT(NACT) is
-! the old value of IACT(IC). QREXC implements the updates of QFAC and RFAC by a sequence of Givens
+! the old value of IACT(ICON). QREXC implements the updates of QFAC and RFAC by a sequence of Givens
 ! rotations. Then NACT is reduced by one.
 
-call qrexc(qfac, rfac(:, 1:nact), ic)  ! QREXC does nothing if IC == NACT.
+call qrexc(qfac, rfac(:, 1:nact), icon)  ! QREXC does nothing if ICON == NACT.
 ! Indeed, it suffices to pass QFAC(:, 1:NACT) and RFAC(1:NACT, 1:NACT) to QREXC as follows. However,
 ! compilers may create a temporary copy of RFAC(1:NACT, 1:NACT), which is not contiguous in memory.
-!!call qrexc(qfac(:, 1:nact), rfac(1:nact, 1:nact), ic)
+!!call qrexc(qfac(:, 1:nact), rfac(1:nact, 1:nact), icon)
 
-iact(ic:nact) = [iact(ic + 1:nact), iact(ic)]
-resact(ic:nact) = [resact(ic + 1:nact), resact(ic)]
+iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
+resact(icon:nact) = [resact(icon + 1:nact), resact(icon)]
 resnew(iact(nact)) = max(resact(nact), TINYCV)
-vlam(ic:nact) = [vlam(ic + 1:nact), vlam(ic)]
+vlam(icon:nact) = [vlam(icon + 1:nact), vlam(icon)]
 nact = nact - 1_IK
 
 !====================!
