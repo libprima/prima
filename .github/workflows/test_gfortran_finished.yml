@@ -123,7 +123,7 @@ jobs:
         # Note that `$TEST_DIR` does not work on Windows, where its equivalent is `$env:TEST_DIR`.
         # In the following, we enquire `$TEST_DIR` by using the `env` context, which is platform independent.
         with:
-          path: ${{ env.TEST_DIR }}/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+          path: ${{ env.TEST_DIR }}/neupdfo/fsrc/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
         shell: bash  # Important; otherwise, `rm -rf` will not work on Windows.
