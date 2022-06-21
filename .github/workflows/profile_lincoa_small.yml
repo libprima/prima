@@ -1,0 +1,84 @@
+name: Plot performance profiles for lincoa, small (put only 1 job to see the profile ASAP)
+
+on:
+  # Trigger the workflow on push or pull request
+  push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  # schedule:
+  #   - cron: '0 2,6,10,14,18,22 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+env:
+  GFORTRAN_VERSION: 10
+  MATLAB_RELEASE: latest
+
+jobs:
+  test:
+    name: Plot the performance profiles of the modernized solvers.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        dim: [small]
+        solver: [lincoa]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: cache install CUTEst
+        id: cache-install-cutest
+        uses: actions/cache@v3
+        with:
+          path: ~/local/cutesif
+          key:  ${{ runner.os }}-${{ hashFiles('**/.github/scripts/install_cutest') }}
+      - name: Install CUTEst
+        if: steps.cache-install-cutest.outputs.cache-hit != 'true'
+        run: |
+          bash .github/scripts/install_cutest
+
+      - name: Link gfortran for MATLAB on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: sudo bash .github/scripts/link_gfortran_for_matlab ${{ env.GFORTRAN_VERSION }}
+
+      - name: install epstopdf and ghostscript
+        if: startsWith(matrix.os, 'ubuntu')
+        run: sudo apt install texlive-font-utils ghostscript -y
+
+      - name: Check MATLAB
+        id: check_matlab
+        run: |
+            if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
+
+      - name: Set up MATLAB
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
+        uses: matlab-actions/setup-matlab@v1.1.1
+        with:
+          release: ${{ env.MATLAB_RELEASE }}
+
+      - name: Run script
+        uses: matlab-actions/run-command@v1.0.1
+        with:
+          command: |
+            root_dir = pwd();
+            cd('matlab/tests');
+            prof('${{ matrix.solver }}', '${{ matrix.dim }}');
+            delete(fullfile(cd(), 'testdata', '*.mat'));
+            cd(fullfile(root_dir)); setup path  % Test that `setup path` works properly.
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: |
+            matlab/tests/testdata
+            !matlab/tests/testdata/*.mat
+            !matlab/tests/testdata/**/*.mat
+            !matlab/tests/testdata/*perf*.pdf
+            !matlab/tests/testdata/*perf*.eps
+            !matlab/tests/testdata/*problems.txt
+
+      - name: Remove the test data
+        run:
+          rm -rf ./matlab/tests/testdata

@@ -1,0 +1,84 @@
+name: Test Flang for the finished solvers
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 12 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+
+jobs:
+  # check_date:
+  #   runs-on: ubuntu-latest
+  #   name: Check latest commit
+  #   outputs:
+  #     has_recent_commit: ${{ steps.has_recent_commit.outputs.has_recent_commit }}
+
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: print latest_commit
+  #       run: echo ${{ github.sha }}
+  #     - id: has_recent_commit
+  #       continue-on-error: true
+  #       name: check whether the last commit is sufficiently recent
+  #       if: ${{ github.event_name == 'schedule' }}
+  #       run: if [[ -n $(git rev-list  --after="6 hours"  ${{ github.sha }}) ]] ; then echo "::set-output name=has_recent_commit::true"; fi
+
+
+  test:
+    name: Run Flang tests
+    #needs: check_date
+    #if: ${{ github.event_name != 'schedule' || needs.check_date.outputs.has_recent_commit == 'true' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # As of 20210918, according to https://github.com/actions/virtual-environments ,
+        # ubuntu-latest = ubuntu-20.04,
+        # macos-latest = macos-10.15,
+        # windows-latest = windows-2019
+        #os: [ubuntu-latest, ubuntu-18.04]
+        os: [ubuntu-latest]
+        bitness: [32, 64]
+        ikind: [i2, i4, i8]
+        #solver: [newuoa]  # Flang fails on COBYLA
+        solver: [newuoa, cobyla]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Flang
+        run: |
+            bash .github/scripts/install_flang
+
+      - name: Make sed available on Windows
+        if: runner.os == 'Windows'
+        run: $env:Path += ";C:\Program Files\Git\usr\bin"
+
+      - name: Set environment variables
+        run: |
+          TEST_DIR=/tmp/gittest_"$(date +%s)"_"$((RANDOM*RANDOM))"  # Needed in the Makefiles
+          echo "TEST_DIR=$TEST_DIR" >> $GITHUB_ENV  # Make the environment variable available in subsequent steps
+          echo "$TEST_DIR"
+
+      - name: Conduct the test
+        run: |
+          source /tmp/setenv.sh
+          ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"  # `realpath` is unavailable on macOS
+          cd $ROOT/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd $ROOT/fsrc/tests && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
+          #cd $ROOT/fsrc/examples/${{ matrix.solver }} && make ftest  # Flang cannot resolve `evaluate`
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ env.TEST_DIR }}/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+
+      - name: Remove the test data
+        run:
+          rm -rf ${{ env.TEST_DIR }}

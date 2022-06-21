@@ -1,0 +1,40 @@
+name: Get fintrf.h of MATLAB
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  # schedule:
+  #   - cron: '0 2,6,10,14,18,22 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Get fintrf.h of matlab
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Check MATLAB
+        id: check_matlab
+        run: |
+            if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
+
+      - name: Set up MATLAB
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
+        uses: matlab-actions/setup-matlab@v1.1.1
+
+      - name: Run script
+        uses: matlab-actions/run-command@v1.0.1
+        with:
+          command: |
+            cd('matlab/setup_tools');
+            getfintrf;
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: matlab/setup_tools/fintrf.h

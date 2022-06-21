@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cd /tmp/ || exit 1
+
+git clone https://github.com/zaikunzhang/resources
+
+cd resources/ || exit 1
+
+unzip g95.zip
+
+SETENV="/tmp/setenv.sh"
+cat > "$SETENV" <<EOF
+export PATH=$PATH:/tmp/resources/g95/bin:/tmp/resources/g95/lib/gcc-lib/x86_64-unknown-linux-gnu/4.0.3
+EOF
+
+source "$SETENV"

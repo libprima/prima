@@ -1,0 +1,15 @@
+#!/bin/bash
+
+cd /tmp/
+
+wget "https://www.dropbox.com/s/ayi572hcf5drdvk/OracleDevStd.zip"
+
+unzip OracleDevStd.zip
+
+SETENV="/tmp/setenv.sh"
+cat > "$SETENV" <<EOF
+export PATH=$PATH:/tmp/OracleDevStd/bin
+export LD_LIBRARY_PATH=/tmp/OracleDevStd/lib/compilers/sys/amd64:/tmp/OracleDevStd/lib/compilers/sys/:$LD_LIBRARY_PATH
+EOF
+
+source "$SETENV"

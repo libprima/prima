@@ -1,0 +1,13 @@
+#!/bin/bash
+
+git clone https://github.com/zaikunzhang/resources
+
+cd resources/
+
+apt install ./aocc*.deb
+
+SETENV="$(find /opt/AMD/ -name *setenv*.sh -print -quit)"
+
+source "$SETENV"
+
+cp "$SETENV" /tmp/setenv.sh
