@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 21, 2022 AM09:40:57
+! Last Modified: Monday, June 20, 2022 AM09:45:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,7 +77,7 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING, SMALL_TR_RADIUS!, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, r1update
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, r1update, sort, linspace
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_col, omega_mul, hess_mul
@@ -126,7 +126,7 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 ! Local variables
 character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'LINCOB'
-integer(IK) :: iact(size(bvec))
+integer(IK) :: iact(size(bvec)), iactsav(size(iact)), nactsav
 integer(IK) :: m
 integer(IK) :: maxchist
 integer(IK) :: maxfhist
@@ -154,7 +154,7 @@ real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
-logical :: feasible, shortd, improve_geo
+logical :: feasible, shortd, improve_geo, same_act
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: idz, itest, &
 &           knew, kopt, ksave, nact,      &
@@ -255,6 +255,7 @@ feasible = .false.
 shortd = .false.
 improve_geo = .false.
 nact = 0
+iact = linspace(1_IK, m, m)
 itest = 3
 knew = 0
 nvala = 0
@@ -292,16 +293,25 @@ do while (.true.)
     delsav = delta
     ksave = knew
     if (knew == 0) then
+        iactsav = iact
+        nactsav = nact
         call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
+        same_act = (nact == nactsav .and. all(sort(iact(1:nact)) == sort(iactsav(1:nact))))
+        !call assert(nact /= nactsav .or. any(sort(iact(1:nact)) - sort(iactsav(1:nact)) /= 0) .or. ngetact == 0, 'NGETACT', srname)
+        !call assert(nact == nactsav .and. all(sort(iact(1:nact)) - sort(iactsav(1:nact)) == 0) .or. ngetact > 0, 'NGETACT', srname)
+        call assert(ngetact >= 1, 'NGETACT >= 1', srname)
         ! Zaikun 20220619: Is it possible to move NGETACT out of the arguments?
+        ! Is it possible that NGETACT > 0 but IACT stays the same?
 
         ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
         ! applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has caused a
         ! change to the active set, indicated by NGETACT >= 2. Otherwise, the trust region
         ! step is considered too short to try.
         dnorm = sqrt(sum(d**2))
-        !shortd = ((dnorm <= HALF * delta .and. ngetact < 2) .or. dnorm <= 0.1999_RP * delta)
-        shortd = (dnorm <= HALF * rho)
+        shortd = ((dnorm <= HALF * delta .and. ngetact < 2) .or. dnorm <= 0.1999_RP * delta)
+        !shortd = ((dnorm <= HALF * delta .and. same_act) .or. dnorm <= 0.1999_RP * delta)
+        !shortd = ((dnorm <= HALF * rho .and. same_act) .or. dnorm <= 0.1999_RP * rho)
+        !shortd = (dnorm <= HALF * rho)
         if (shortd) then
             delta = HALF * delta
             if (delta <= 1.4_RP * rho) delta = rho
