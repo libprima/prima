@@ -44,7 +44,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 29, 2022 AM10:00:43
+! Last Modified: Tuesday, June 21, 2022 PM11:15:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2697,7 +2697,7 @@ end do
 eig_min = eminlb
 
 !====================!
-! Calculation starts !
+!  Calculation ends  !
 !====================!
 
 end function eigmin_sym_trid

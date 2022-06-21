@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 21, 2022 AM09:40:57
+! Last Modified: Wednesday, June 22, 2022 AM12:17:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -300,8 +300,8 @@ do while (.true.)
         ! change to the active set, indicated by NGETACT >= 2. Otherwise, the trust region
         ! step is considered too short to try.
         dnorm = sqrt(sum(d**2))
-        !shortd = ((dnorm <= HALF * delta .and. ngetact < 2) .or. dnorm <= 0.1999_RP * delta)
-        shortd = (dnorm <= HALF * rho)
+        shortd = ((dnorm <= HALF * delta .and. ngetact < 2) .or. dnorm <= 0.1999_RP * delta)
+        !shortd = (dnorm <= HALF * rho)
         if (shortd) then
             delta = HALF * delta
             if (delta <= 1.4_RP * rho) delta = rho
