@@ -251,3 +251,5 @@ Here are points to note when translating the Fortran code to other languages.
     can simply be translated to Y(X).
     2. If the return of TRUELOC is NOT used for indexing, its analogs in other languages are:
     MATLAB -- find, Python -- numpy.argwhere, Julia -- findall, R -- which.
+
+15. Comparison between Python and Fortran: https://www.fortran90.org/src/rosetta.html

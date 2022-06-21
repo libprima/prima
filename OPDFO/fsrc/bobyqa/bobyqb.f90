@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 16, 2022 AM12:43:05
+! Last Modified: Tuesday, June 21, 2022 AM09:34:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -235,6 +235,9 @@ do while (.true.)
 
         call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
 
+        xnew = max(min(xopt + d, su), sl)
+        gnew = gopt + hess_mul(d, xpt, pq, hq)
+
         dnorm = min(delta, sqrt(dsq))
         shortd = (dnorm < HALF * rho)
 
@@ -333,8 +336,8 @@ do while (.true.)
             denom = alpha * beta + vlag(knew)**2
 
             ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-            !if (.not. (denom > HALF * vlag(knew)**2)) then
-            if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
+            if (.not. (denom > HALF * vlag(knew)**2)) then
+                !if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
                 if (nf <= nresc) then
                     info = DAMAGING_ROUNDING
                     exit
@@ -426,8 +429,8 @@ do while (.true.)
 
             ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet we prefer to
             ! require KNEW > 0 explicitly.
-            !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-            if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
+            if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
+                !if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
                 if (nf <= nresc) then
                     info = DAMAGING_ROUNDING
                     exit

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 12, 2022 PM09:56:36
+! Last Modified: Tuesday, June 21, 2022 AM09:35:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: trsbox
 contains
 
 
-subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d, dsq, gnew, xnew)
+subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, HALF, EPS, HUGENUM, DEBUGGING
@@ -44,9 +44,6 @@ real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 ! Outputs
 real(RP), intent(out) :: crvmin
 real(RP), intent(out) :: d(:)  ! D(N)
-real(RP), intent(out) :: dsq
-real(RP), intent(out) :: gnew(:)  ! GNEW(N)
-real(RP), intent(out) :: xnew(:)  ! XNEW(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSBOX'
@@ -63,6 +60,8 @@ real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        stplen, sbound(size(gopt)), temp, &
 &        xtest(size(xopt)), diact
 real(RP) :: ssq(size(gopt)), tanbd(size(gopt)), sqrtd(size(gopt))
+real(RP) :: gnew(size(gopt))
+real(RP) :: xnew(size(gopt))
 integer(IK) :: iact, iter, maxiter, grid_size, nact, nactsav
 logical :: twod_search
 
@@ -475,7 +474,6 @@ xnew = max(min(xopt + d, su), sl)
 xnew(trueloc(xbdi == -1)) = sl(trueloc(xbdi == -1))
 xnew(trueloc(xbdi == 1)) = su(trueloc(xbdi == 1))
 d = xnew - xopt
-dsq = sum(d**2)
 
 ! Postconditions
 if (DEBUGGING) then
