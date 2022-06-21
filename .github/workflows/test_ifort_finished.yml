@@ -1,0 +1,114 @@
+name: Test ifort for the finished solvers
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 14 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+env:
+  WINDOWS_BASEKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18497/w_BaseKit_p_2022.1.2.154_offline.exe
+  WINDOWS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18529/w_HPCKit_p_2022.1.2.116_offline.exe
+  MACOS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18341/m_HPCKit_p_2022.1.0.86_offline.dmg
+  WINDOWS_FORTRAN_COMPONENTS: intel.oneapi.win.ifort-compiler
+  MACOS_FORTRAN_COMPONENTS: intel.oneapi.mac.ifort-compiler
+
+jobs:
+  # check_date:
+  #   runs-on: ubuntu-latest
+  #   name: Check latest commit
+  #   outputs:
+  #     has_recent_commit: ${{ steps.has_recent_commit.outputs.has_recent_commit }}
+
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: print latest_commit
+  #       run: echo ${{ github.sha }}
+  #     - id: has_recent_commit
+  #       continue-on-error: true
+  #       name: check whether the last commit is sufficiently recent
+  #       if: ${{ github.event_name != 'schedule' || github.event_name == 'schedule' }}
+  #       run: if [[ -n $(git rev-list  --after="6 hours"  ${{ github.sha }}) ]] ; then echo "::set-output name=has_recent_commit::true"; fi
+
+
+  test:
+    name: Run ifort tests
+    #needs: check_date
+    #if: ${{ needs.check_date.outputs.has_recent_commit == 'true' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # As of 20210918, according to https://github.com/actions/virtual-environments ,
+        # ubuntu-latest = ubuntu-20.04,
+        # macos-latest = macos-10.15,
+        # windows-latest = windows-2019
+        os: [ubuntu-latest, macos-latest]  # windows-latest does not work
+        bitness: [32, 64]
+        ikind: [i2, i4, i8]
+        solver: [cobyla, newuoa]
+        exclude:
+          - os: macos-latest
+            bitness: 32
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Intel oneAPI on Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo .github/scripts/install_oneapi_linux.sh
+
+      - name: prepare for cache restore for Intel oneAPI on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          sudo mkdir -p /opt/intel
+          sudo chown $USER /opt/intel
+      - name: cache install Intel oneAPI on macOS
+        if: matrix.os == 'macos-latest'
+        id: cache-install-macos
+        uses: actions/cache@v3
+        with:
+          path: /opt/intel/oneapi
+          key: install-${{ env.MACOS_HPCKIT_URL }}-${{ env.MACOS_FORTRAN_COMPONENTS }}
+      - name: install Intel oneAPI on macOS
+        if: matrix.os == 'macos-latest' && steps.cache-install-macos.outputs.cache-hit != 'true'
+        run: bash .github/scripts/install_oneapi_macos.sh $MACOS_HPCKIT_URL $MACOS_FORTRAN_COMPONENTS
+      - name: Run intelvas_macos.sh on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+            bash .github/scripts/intelvars_macos.sh
+
+      - name: Set environment variables
+        shell: bash  # Important; otherwise, the following statements do not work on Windows.
+        run: |
+          TEST_DIR=/tmp/gittest_"$(date +%s)"_"$((RANDOM*RANDOM))"  # Needed in the Makefiles
+          echo "TEST_DIR=$TEST_DIR" >> $GITHUB_ENV  # Make the environment variable available in subsequent steps
+          echo "$TEST_DIR"
+
+      - name: Conduct the test
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+              "C:\Program Files (x86)\Intel\oneAPI\compiler\latest\env\vars.bat"
+          else
+              source /opt/intel/oneapi/setvars.sh
+          fi
+          ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"
+          cd $ROOT/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd $ROOT/fsrc/tests && make itest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd $ROOT/fsrc/examples/${{ matrix.solver }} && make itest
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ env.TEST_DIR }}/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+
+      - name: Remove the test data
+        run:
+          rm -rf ${{ env.TEST_DIR }}

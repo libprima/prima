@@ -1,0 +1,120 @@
+name: Test MATLAB
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 1,7,13,19 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+env:
+  WINDOWS_BASEKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18497/w_BaseKit_p_2022.1.2.154_offline.exe
+  WINDOWS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18529/w_HPCKit_p_2022.1.2.116_offline.exe
+  MACOS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18341/m_HPCKit_p_2022.1.0.86_offline.dmg
+  WINDOWS_FORTRAN_COMPONENTS: intel.oneapi.win.ifort-compiler
+  MACOS_FORTRAN_COMPONENTS: intel.oneapi.mac.ifort-compiler
+  GFORTRAN_VERSION: 10
+  MATLAB_RELEASE: latest
+
+jobs:
+  test:
+    name: Test MATLAB
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-2019]   # MEX Fortran does not work on windows-latest yet
+        bitness: [32, 64]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: prepare for cache restore for Intel oneAPI on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          sudo mkdir -p /opt/intel
+          sudo chown $USER /opt/intel
+      - name: cache install Intel oneAPI on macOS
+        if: matrix.os == 'macos-latest'
+        id: cache-install-macos
+        uses: actions/cache@v3
+        with:
+          path: /opt/intel/oneapi
+          key: install-${{ env.MACOS_HPCKIT_URL }}-${{ env.MACOS_FORTRAN_COMPONENTS }}
+      - name: install Intel oneAPI on macOS
+        if: matrix.os == 'macos-latest' && steps.cache-install-macos.outputs.cache-hit != 'true'
+        run: bash .github/scripts/install_oneapi_macos.sh $MACOS_HPCKIT_URL $MACOS_FORTRAN_COMPONENTS
+      - name: Run intelvas_macos.sh on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+            bash .github/scripts/intelvars_macos.sh
+
+
+      - name: cache install Intel oneAPI on Windows
+        if: startsWith(matrix.os, 'windows')
+        id: cache-install-windows
+        uses: actions/cache@v3
+        with:
+          path: C:\Program Files (x86)\Intel\oneAPI\compiler
+          key: install-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_FORTRAN_COMPONENTS }}-compiler-${{ hashFiles('**/.github/scripts/cache_exclude_oneapi_windows.sh') }}
+      - name: install Intel oneAPI on Windows
+        if: startsWith(matrix.os, 'windows') && steps.cache-install-windows.outputs.cache-hit != 'true'
+        shell: bash
+        run: .github/scripts/install_oneapi_windows.bat $WINDOWS_HPCKIT_URL $WINDOWS_FORTRAN_COMPONENTS
+      - name: exclude unused files from cache for Intel oneAPI on Windows
+        if: startsWith(matrix.os, 'windows') && steps.cache-install-windows.outputs.cache-hit != 'true'
+        shell: bash
+        run: .github/scripts/cache_exclude_oneapi_windows.sh
+      - name: Run intelvars_windows.bat
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          cmd.exe "/K" '".github/scripts/intelvars_windows.bat" && powershell'
+
+      - name: Link gfortran for MATLAB on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: sudo bash .github/scripts/link_gfortran_for_matlab ${{ env.GFORTRAN_VERSION }}
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v1.1.1
+        with:
+          release: ${{ env.MATLAB_RELEASE }}
+
+      - name: Run script
+        uses: matlab-actions/run-command@v1.0.1
+        with:
+          command: |
+              root_dir = pwd();
+              cd(fullfile(root_dir));
+              options = struct();
+              if ismac
+                  tic
+                  setup
+                  testpdfon;
+                  toc
+                  setup path
+                  setup clean
+                  setup uninstall
+              else
+                  options.debug=true;
+                  setup(options);
+                  testpdfon;
+                  setup
+                  setup path
+                  testpdfon;
+                  setup cobylan
+                  setup uobyqan
+                  setup newuoan
+                  setup bobyqan
+                  setup lincoan
+                  setup path
+                  setup clean
+                  setup path
+                  setup uninstall
+                  setup path
+                  setup uninstall
+                  cd(fullfile(root_dir, 'matlab', 'tests')); pdv
+              end

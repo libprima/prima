@@ -1,0 +1,53 @@
+name: Lint the Fortran code and the MEX gateways for the finished solvers
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 18 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+
+jobs:
+   # check_date:
+   #   runs-on: ubuntu-latest
+   #   name: Check latest commit
+   #   outputs:
+   #     has_recent_commit: ${{ steps.has_recent_commit.outputs.has_recent_commit }}
+
+   #  steps:
+   #    - uses: actions/checkout@v3
+   #    - name: print latest_commit
+   #      run: echo ${{ github.sha }}
+   #    - id: has_recent_commit
+   #      continue-on-error: true
+   #      name: check whether the last commit is sufficiently recent
+   #      if: ${{ github.event_name == 'schedule' }}
+   #      run: if [[ -n $(git rev-list  --after="6 hours"  ${{ github.sha }}) ]] ; then echo "::set-output name=has_recent_commit::true"; fi
+
+
+  test:
+    name: Lint the Fortran code and the MEX gateways
+    #needs: check_date
+    #if: ${{ github.event_name != 'schedule' || needs.check_date.outputs.has_recent_commit == 'true' }}
+    runs-on: [self-hosted, linter]
+    strategy:
+      fail-fast: false
+      matrix:
+        linter: [flint, mlint]
+        solver: [newuoa, cobyla]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Conduct the test
+        run: |
+          source ~/.bashrc
+          export PATH=$PATH:"~/local/bin"
+          source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
+          ROOT=$(realpath ./)
+          cd $ROOT/fsrc/${{ matrix.solver }} && bash ./${{ matrix.linter }} --all

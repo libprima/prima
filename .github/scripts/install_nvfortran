@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# ARCH is the architecture of the current system.
+if [[ "$(uname -m)" == "aarch64" || "$(uname -m)" == "aarch" ]]  ; then
+    ARCH=arm64
+else
+    ARCH=amd64
+fi
+
+echo "deb [trusted=yes] https://developer.download.nvidia.com/hpc-sdk/ubuntu/$ARCH /" > /etc/apt/sources.list.d/nvhpc.list
+apt-get update -y
+apt-get install -y nvhpc
+
+NVFORTRAN="$(find /opt/*nvidia* -type f -executable -name nvfortran -print | tail -1)"
+
+ln -s "$NVFORTRAN" /usr/bin

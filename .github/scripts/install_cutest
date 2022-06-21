@@ -1,0 +1,49 @@
+#!/bin/bash
+# This script installs CUTEst on Linux, using the compiled CUTEst in $GITREPO.
+# CUTEst version: 20220310
+
+#GIT="gitee.com"
+GIT="github.com"
+GIT_USR="zaikunzhang"
+REPONAME="CUTEst"
+PKG="cutesif.7z"
+CSRC="cutesifrc"
+MTOOLS="mtools"
+
+INSTALL_DIR="$HOME/local"  # CUTEst will be installed $INSTALL_DIR/$PKG_NAME
+TMPDIR="/tmp"
+
+if command -v 7z &> /dev/null ; then
+    DECOMP="$(command -v 7z) x"  # Command to decompress the package
+else
+    printf "\nError: 7z is needed to decompress the package, yet it is not installed.\n\n"
+    exit 1
+fi
+
+GITREPO="https://$GIT/$GIT_USR/$REPONAME"
+PKG_NAME="${PKG//.*/}"  # Remove the suffix from $PKG
+
+if [[ -d "$INSTALL_DIR"/"$PKG_NAME" ]] ;then
+    # Exit if the package seems to have be installed.
+    printf "\n%s already exists. Remove it to (re-)install the package.\n\n" "$INSTALL_DIR"/"$PKG_NAME"
+    exit 0
+elif [[ -f "./$PKG" ]] ; then
+    # If $PKG exists in the current directory, use it.
+    cp "./$PKG" "$INSTALL_DIR"
+else
+    # If $PKG does not exist in the current directory, download it.
+    cd "$TMPDIR" && rm -rf "$REPONAME" && git clone "$GITREPO"
+    mkdir -p "$INSTALL_DIR"
+    mv "$TMPDIR"/"$REPONAME"/$PKG "$INSTALL_DIR"
+fi
+
+cd "$INSTALL_DIR" && $DECOMP $PKG   # "$DECOMP $PKG" does not work
+rm -f "$INSTALL_DIR"/"$PKG"
+
+printf "\nTo use CUTEst, do the following.\n"
+printf "\n1. Append the following line to ~/.bashrc:\n\n"
+printf "   source %s\n" "$INSTALL_DIR"/"$PKG_NAME"/"$CSRC"
+printf "\n2. In MATLAB, go to the following directory and then run 'setup':\n"
+printf "\n   %s\n\n" "$INSTALL_DIR"/"$PKG_NAME"/"$MTOOLS"
+
+exit 0

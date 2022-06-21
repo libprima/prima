@@ -1,0 +1,79 @@
+name: Test Fortran compilers on Kunpeng for the solvers
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 15 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+jobs:
+  # check_date:
+  #   runs-on: ubuntu-latest
+  #   name: Check latest commit
+  #   outputs:
+  #     has_recent_commit: ${{ steps.has_recent_commit.outputs.has_recent_commit }}
+
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: print latest_commit
+  #       run: echo ${{ github.sha }}
+  #     - id: has_recent_commit
+  #       continue-on-error: true
+  #       name: check whether the last commit is sufficiently recent
+  #       if: ${{ github.event_name == 'schedule' }}
+  #       run: if [[ -n $(git rev-list --after="6 hours" ${{ github.sha }}) ]] ; then echo "::set-output name=has_recent_commit::true"; fi
+
+
+  test:
+    name: Run the tests
+    #needs: check_date
+    #if: ${{ github.event_name != 'schedule' || needs.check_date.outputs.has_recent_commit == 'true' }}
+    runs-on: [self-hosted, kunpeng]
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [g, f, v]
+        ikind: [i2, i4, i8]
+        solver: [lincoa, bobyqa, uobyqa]
+        exclude:
+          - compiler: v  # Exclude vtest for BOBYQA for the moment, as it will encounter `DENOM_TEST /= DENOM`.
+            solver: bobyqa
+          - compiler: f  # Exclude ftest.lincoa, as it encounters a false positive failure of memory allocation when calling matprod21 (geostep.f90, when calculating the projected gradient PGLAG)
+            solver: lincoa
+          - compiler: v  # Exclude vtest.lincoa, as it encounters a false positive failure of memory allocation when calling matprod21 (geostep.f90, when calculating the projected gradient PGLAG)
+            solver: lincoa
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set environment variables
+        run: |
+          TEST_DIR=/tmp/gittest_"$(date +%s)"_"$((RANDOM*RANDOM))"  # Needed in the Makefiles
+          echo "TEST_DIR=$TEST_DIR" >> $GITHUB_ENV  # Make the environment variable available in subsequent steps
+          echo "$TEST_DIR"
+
+      - name: Conduct the test
+        run: |
+          LOCAL=$HOME/local
+          BFDIR="$(find "$LOCAL/bisheng" -maxdepth 1 -name "bisheng-compiler-*" -type d -print | sort | tail -n 1)"
+          export PATH="$BFDIR"/bin:$PATH
+          export LD_LIBRARY_PATH="$BFDIR"/lib:$LD_LIBRARY_PATH
+          NVFORTRAN="$(find /opt/nvidia -type f -executable -name nvfortran -print | sort | tail -n 1)"
+          export PATH=$PATH:$(dirname $NVFORTRAN)
+          cd ./fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd ../tests && make ${{ matrix.compiler }}test_${{ matrix.ikind }}_c.${{ matrix.solver }} && make ${{ matrix.compiler }}test_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd ../examples/${{ matrix.solver }} && make ${{ matrix.compiler }}test
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ env.TEST_DIR }}/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+
+      - name: Remove the test data
+        run:
+          rm -rf ${{ env.TEST_DIR }}

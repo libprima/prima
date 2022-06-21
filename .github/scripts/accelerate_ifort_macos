@@ -1,0 +1,24 @@
+#!/bin/bash
+# See https://community.intel.com/t5/Intel-oneAPI-HPC-Toolkit/slow-execution-of-ifort-icpc-on-MacOSX-catalina/m-p/1203190
+
+INTEL_OSXSDK_VER=$(xcodebuild -sdk macosx -version | grep SDKVersion)
+INTEL_OSXSDK_PATH=$(xcodebuild -sdk macosx -version Path)
+
+mkdir -p /tmp/bin
+
+cat > /tmp/bin/xcodebuild <<EOF
+#!/bin/bash
+case "\$4" in
+    "")
+      echo $INTEL_OSXSDK_VER;;
+     *)
+      echo $INTEL_OSXSDK_PATH;;
+esac
+EOF
+
+sudo cp /tmp/bin/xcodebuild /usr/local/bin  # /usr/local/bin appear before /usr/bin in $PATH
+echo "PATH=/tmp/bin:${PATH}" >> $GITHUB_ENV
+export PATH=/tmp/bin:${PATH}
+
+# Despite all the efforts, this does not work in GitHub Actions. The system always recognize
+# `xcodebuild` as the one under /usr/bin, which is read-only in macOS.

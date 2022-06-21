@@ -1,0 +1,123 @@
+name: Test gfortran for the solvers
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 15 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+
+jobs:
+  # check_date:
+  #   runs-on: ubuntu-latest
+  #   name: Check latest commit
+  #   outputs:
+  #     has_recent_commit: ${{ steps.has_recent_commit.outputs.has_recent_commit }}
+
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: print latest_commit
+  #       run: echo ${{ github.sha }}
+  #     - id: has_recent_commit
+  #       continue-on-error: true
+  #       name: check whether the last commit is sufficiently recent
+  #       if: ${{ github.event_name == 'schedule' }}
+  #       run: if [[ -n $(git rev-list  --after="6 hours"  ${{ github.sha }}) ]] ; then echo "::set-output name=has_recent_commit::true"; fi
+
+
+  test:
+    name: Run gfortran tests
+    #needs: check_date
+    #if: ${{ github.event_name != 'schedule' || needs.check_date.outputs.has_recent_commit == 'true' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # As of 20210918, according to https://github.com/actions/virtual-environments ,
+        # ubuntu-latest = ubuntu-20.04,
+        # macos-latest = macos-10.15,
+        # windows-latest = windows-2019
+        # The following list should be updated when these latest versions change.
+        #os: [ubuntu-latest, ubuntu-18.04, macos-latest, macos-11, windows-latest, windows-2022]
+        os: [ubuntu-22.04, ubuntu-latest, ubuntu-18.04, macos-latest, windows-latest]
+        compiler: [gcc]
+        version: [11, 12]  # Too expensive to test all available compilers from gcc-7 to gcc-12.
+        bitness: [32, 64]
+        ikind: [i2, i4, i8]
+        solver: [lincoa, bobyqa, uobyqa]
+        # Limit the test on ubuntu-18.04 to the oldest available version of the compiler.
+        # Limit the test on macos to 64-bit.
+        # Limit the test on Windows to 64-bit and the latest version of the compiler.
+        exclude:
+          - os: ubuntu-latest
+            version: 12
+          - os: ubuntu-18.04
+            version: 12
+          - os: macos-latest
+            bitness: 32
+          - os: macos-latest
+            version: 12
+          - os: windows-latest
+            bitness: 32
+          - os: windows-latest
+            version: 12
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Fortran
+        id: setup_fortran
+        # Use the action defined at github.com/zaikunzhang/setup-fortran to setup Fortran
+        uses: awvwgk/setup-fortran@main
+        with:
+          compiler: ${{ matrix.compiler }}
+          version: ${{ matrix.version }}
+
+      - name: Check Fortran compiler
+        run: |
+          ${{ env.FC }} --version
+          ${{ env.CC }} --version
+        shell: bash
+        env:
+          FC: ${{ steps.setup_fortran.outputs.fc }}
+          CC: ${{ steps.setup_fortran.outputs.cc }}
+
+      - name: Make sed available on Windows
+        if: runner.os == 'Windows'
+        run: $env:Path += ";C:\Program Files\Git\usr\bin;C:\Program Files\Git\bin"
+
+      - name: Set environment variables
+        shell: bash  # Important; otherwise, the following statements do not work on Windows.
+        run: |
+          TEST_DIR=/tmp/gittest_"$(date +%s)"_"$((RANDOM*RANDOM))"  # Needed in the Makefiles
+          echo "TEST_DIR=$TEST_DIR" >> $GITHUB_ENV  # Make the environment variable available in subsequent steps
+          echo "$TEST_DIR"
+
+      - name: Conduct the test
+        shell: bash  # Important; otherwise, `<` will not work on Windows.
+        # Not sure whether the Makefile has bugs, but on Windows the making of gtest always invokes
+        # the making of gtest_c twice even if the former is up to date after the first making. It
+        # may lead to errors due to parallel making. To avoid this, we make gtest_c first.
+        run: |
+            ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"  # `realpath` is unavailable on macOS
+            cd "$ROOT"/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+            cd "$ROOT"/fsrc/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
+            if (( ${{ matrix.version }} < 8 )) ; then export FS=08; else export FS=18; fi  # Needed by the next line; `-f2018` is not implemented until gcc-8
+            cd "$ROOT"/fsrc/examples/${{ matrix.solver }} && make gtest
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3
+        # Note that `$TEST_DIR` does not work on Windows, where its equivalent is `$env:TEST_DIR`.
+        # In the following, we enquire `$TEST_DIR` by using the `env` context, which is platform independent.
+        with:
+          path: ${{ env.TEST_DIR }}/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+
+      - name: Remove the test data
+        shell: bash  # Important; otherwise, `rm -rf` will not work on Windows.
+        run:
+          rm -rf ${{ env.TEST_DIR }}
