@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         dim: [big, large, all]
         #solver: [lincoa, bobyqa, uobyqa]  ! There is no big/large problems left for uobyqa after the blacklist
         solver: [lincoa, bobyqa]

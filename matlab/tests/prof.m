@@ -27,7 +27,7 @@ output = cell(1,4);
 timerVal = tic;
 
 argin = [varargin, {options}];
-output{1} = profile(argin{:});
+output{1} = profile(argin{:});  % The plain profiling
 
 if any(cellfun(@(x)strcmpi(x, 'load'), varargin))
     toc;
@@ -38,22 +38,29 @@ if ~any(cellfun(@(x)strcmpi(x, 'ncp'), varargin))
     varargin = [varargin, {'ncp'}];
 end
 
-options.eval_options = struct('single', true);
+options.randomizex0 = eps;
 argin = [varargin, {options}];
 output{2} = profile(argin{:});
+options = rmfield(options, {'randomizex0'});
+
+options.perm = true;
+argin = [varargin, {options}];
+output{3} = profile(argin{:});
+options = rmfield(options, {'perm'});
+
+options.eval_options = struct('single', true);
+argin = [varargin, {options}];
+output{4} = profile(argin{:});
+options = rmfield(options, {'eval_options'});
 
 options.eval_options = struct('signif', 5);
 argin = [varargin, {options}];
-output{3} = profile(argin{:});
+output{5} = profile(argin{:});
+options = rmfield(options, {'eval_options'});
 
 options.eval_options = struct('dnoise', 1e-5);
 argin = [varargin, {options}];
-output{4} = profile(argin{:});
-
-options = rmfield(options, {'eval_options'});
-options.perm = true;
-argin = [varargin, {options}];
-output{5} = profile(argin{:});
+output{6} = profile(argin{:});
 
 outputfiles = struct();
 prob_types = fieldnames(output{1});
