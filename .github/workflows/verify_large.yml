@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  GFORTRAN_VERSION: 10
+  GFORTRAN_VERSION: 11
   MATLAB_RELEASE: latest
 
 jobs:
@@ -59,6 +59,7 @@ jobs:
         uses: matlab-actions/run-command@v1.0.1
         with:
           command: |
+            ver;
             root_dir = pwd();
             cd('matlab/tests');
             options.nr = 5;

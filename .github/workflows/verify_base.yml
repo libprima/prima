@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  GFORTRAN_VERSION: 10
+  GFORTRAN_VERSION: 11
   MATLAB_RELEASE: latest
 
 jobs:
@@ -64,6 +64,7 @@ jobs:
         uses: matlab-actions/run-command@v1.0.1
         with:
           command: |
+            ver;
             cd('base/${{ matrix.version }}/matlab/tests');
             tz = 'Asia/Shanghai';
             dt = datetime('now', 'TimeZone', tz);

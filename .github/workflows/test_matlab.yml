@@ -16,7 +16,7 @@ env:
   MACOS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18341/m_HPCKit_p_2022.1.0.86_offline.dmg
   WINDOWS_FORTRAN_COMPONENTS: intel.oneapi.win.ifort-compiler
   MACOS_FORTRAN_COMPONENTS: intel.oneapi.mac.ifort-compiler
-  GFORTRAN_VERSION: 10
+  GFORTRAN_VERSION: 11
   MATLAB_RELEASE: latest
 
 jobs:
@@ -87,6 +87,7 @@ jobs:
         uses: matlab-actions/run-command@v1.0.1
         with:
           command: |
+              ver;
               root_dir = pwd();
               cd(fullfile(root_dir));
               options = struct();
