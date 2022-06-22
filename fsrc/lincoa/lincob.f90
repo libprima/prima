@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 22, 2022 AM11:55:41
+! Last Modified: Wednesday, June 22, 2022 AM11:56:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -304,7 +304,7 @@ do while (.true.)
         ! The SHORTD defined above needs NGETACT, which relies on Powell's trust region subproblem
         ! solver. If a different subproblem solver is used, we can take the following SHORTD adopted
         ! from UOBYQA, NEWUOA and BOBYQA. According to a test on 20220620, it works well.
-        SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
+        !!SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
         !------------------------------------------------------------------------------------------!
 
         if (shortd) then
