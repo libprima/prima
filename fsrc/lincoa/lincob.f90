@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 22, 2022 AM12:17:00
+! Last Modified: Wednesday, June 22, 2022 AM10:17:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -293,15 +293,20 @@ do while (.true.)
     ksave = knew
     if (knew == 0) then
         call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
-        ! Zaikun 20220619: Is it possible to move NGETACT out of the arguments?
+        dnorm = sqrt(sum(d**2))
 
         ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
         ! applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has caused a
-        ! change to the active set, indicated by NGETACT >= 2. Otherwise, the trust region
-        ! step is considered too short to try.
-        dnorm = sqrt(sum(d**2))
-        shortd = ((dnorm <= HALF * delta .and. ngetact < 2) .or. dnorm <= 0.1999_RP * delta)
-        !shortd = (dnorm <= HALF * rho)
+        ! change to the active set, indicated by NGETACT >= 2 (note that NGETACT is at least 1).
+        ! Otherwise, the trust region step is considered too short to try.
+        shortd = ((dnorm < HALF * delta .and. ngetact < 2) .or. dnorm < 0.1999_RP * delta)
+        !------------------------------------------------------------------------------------------!
+        ! The SHORTD defined above needs NGETACT, which relies on Powell's trust region subproblem
+        ! solver. If we switch to a different subproblem solver, we can take the following SHORTD
+        ! adopted from UOBYQA, NEWUOA and BOBYQA. According to a test on 20220620, it works well.
+        !!SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
+        !------------------------------------------------------------------------------------------!
+
         if (shortd) then
             delta = HALF * delta
             if (delta <= 1.4_RP * rho) delta = rho

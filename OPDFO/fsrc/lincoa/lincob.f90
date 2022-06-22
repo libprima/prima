@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 22, 2022 AM12:23:39
+! Last Modified: Wednesday, June 22, 2022 AM10:17:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -286,8 +286,8 @@ do while (.true.)
         ! It is also applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has
         ! caused a change to the active set, indicated by NGETACT > 1. Otherwise, the trust region
         ! step is considered too short to try.
-        shortd = ((dnorm <= HALF * delta .and. ngetact <= 1) .or. dnorm <= 0.1999_RP * delta)
-        !shortd = (dnorm <= HALF * rho)
+        shortd = ((dnorm < HALF * delta .and. ngetact <= 1) .or. dnorm < 0.1999_RP * delta)
+        !shortd = (dnorm < HALF * rho)
         if (shortd) then
             delta = HALF * delta
             if (delta <= 1.4_RP * rho) delta = rho
