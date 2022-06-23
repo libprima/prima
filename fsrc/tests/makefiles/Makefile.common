@@ -611,8 +611,8 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'redrat' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'redrho' USEd at (1) is not referenced" \
-	| grep -v "common/linalg.F90:[0-9]*:.*pivote.*may be used uninitialized in this function" \
-	| grep -v "common/linalg.F90:[0-9]*:.*rank.*may be used uninitialized in this function" \
+	| grep -v "common/linalg.f90:[0-9]*:.*pivote.*may be used uninitialized in this function" \
+	| grep -v "common/linalg.f90:[0-9]*:.*rank.*may be used uninitialized in this function" \
 	| grep -v "common/preproc.f90:22:.*min_maxfun.*may be used uninitialized in this function" \
 	| grep -v "common/preproc.f90:22:.*unit_memo.*may be used uninitialized in this function" \
 	| grep -v "Compiling file\|Module subprogram name" \
@@ -641,7 +641,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "interpolation error" \
 	| grep -v "In file ./common/evaluate.f90:134" \
 	| grep -v "In file ./common/evaluate.f90:201" \
-	| grep -v "./common/linalg.F90: In function ‘linalg_mod_MP_lsqr’:" \
+	| grep -v "./common/linalg.f90: In function ‘linalg_mod_MP_lsqr’:" \
 	| grep -v "./common/preproc.f90: In function ‘preproc_mod_MP_preproc’:" \
 	| grep -v "WARNING --  When --chk x is specified" \
 	| grep -v "bin/ld.*bisheng.*unsupported GNU_PROPERTY_TYPE (5) type: 0xc0000000" \

@@ -5,7 +5,7 @@
 # See https://github.com/flang-compiler/flang/issues/1238
 
 DIR="$(realpath "$1")"
-LINALG="$DIR/common/linalg.F90"
+LINALG="$DIR/common/linalg.f90"
 LINGEO="$DIR/lincoa/geometry.f90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then

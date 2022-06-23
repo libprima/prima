@@ -11,8 +11,6 @@
  * __RELEASED__                released or not: 1, 0
  * __DEBUGGING__               debug or not: 0, 1
  * __FORTRAN_STANDARD__        which Fortran standard to follow: 2003, 2008, 2018
- * __USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 1, 0
- * __USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 0, 1
  * __INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16
  * __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0
  * __USE_STORAGE_SIZE__        use the STORAGE_SIZE intrinsic or not: 0, 1
@@ -22,23 +20,17 @@
  *
  * 0. USE THE DEFAULT IF UNSURE.
  *
- * 1. When __USE_POWELL_ALGEBRA__ == 1, the released version will produce EXACTLY
- * the same results as Powell's code (necessarily, this means that the code performs
- * EXACTLY the same calculations as Powell's code, or else rounding errors will lead
- * to different computed results, the difference being sometimes significant for
- * nonconvex problems).
- *
- * 2. If you change these flags, make sure that your compiler is supportive
+ * 1. If you change these flags, make sure that your compiler is supportive
  * when changing __INTEGER_KIND__, __REAL_PRECISION__, __FORTRAN_STANDARD__,
  * __USE_STORAGE_SIZE__ (Fortran 2008),
  * __USE_ISO_FORTRAN_ENV_INTREAL__ (Fortran 2008).
  *
- * 3. Later, when Fortran 2008 is more widely supported by the compilers (e.g.,
+ * 2. Later, when Fortran 2008 is more widely supported by the compilers (e.g.,
  * in 2025?), we will default __FORTRAN_STANDARD__ to 2008. In addition, we will
  * remove __USE_STORAGE_SIZE__ and __USE_ISO_FORTRAN_ENV_INTREAL__ and modify
  * the package so that everything behaves as if the flags are both 1.
  *
- * 4. Why not define these flags as parameters in the Fortran code, e.g.,
+ * 3. Why not define these flags as parameters in the Fortran code, e.g.,
  *
  * logical, parameter :: __DEBUGGING__ == .false. ?
  *
@@ -74,49 +66,6 @@
 #undef __FORTRAN_STANDARD__
 #endif
 #define __FORTRAN_STANDARD__ 2003 /* Will be default to 2008 later (in 2025?).*/
-/******************************************************************************/
-
-
-/******************************************************************************/
-/* Do we use Powell's linear algebra procedures? */
-/* If not, some basic algebraic procedures will be implemented with matrix/vector
- * operations instead of loops. This does not change Powell's algorithms, but
- * it may not produce exactly the same results as Powell's code due to properties
- * of floating-point arithmetic, e.g., the non-associativity of floating-point
- * addition and multiplication. */
-#if defined __USE_POWELL_ALGEBRA__
-#undef __USE_POWELL_ALGEBRA__
-#endif
-#define __USE_POWELL_ALGEBRA__ 1
-/******************************************************************************/
-
-
-/******************************************************************************/
-/* Do we use the intrinsic algebra procedures (e.g., matmul, dot_product)? */
-/* If no, we use the procedures implemented in linalg.F. */
-/* When __USE_INTRINSIC_ALGEBRA__ == 1, the code may not produce exactly the
- * same results as Powell's code, because the intrinsic matmul behaves
- * differently from a naive triple loop due to finite-precision arithmetic.
- * The difference has been observed on matprod22 and matprod12. The second case
- * occurred on Oct. 11, 2021 in the trust-region subproblem solver of COBYLA, and
- * it took enormous time to find out that Powell's code and the modernized code
- * behaved differently due to matmul and matprod12 when calculating RESMAX (in
- * Powell's code) and CSTRV (in the modernized code) when stage 2 starts. */
-#if defined __USE_INTRINSIC_ALGEBRA__
-#undef __USE_INTRINSIC_ALGEBRA__
-#endif
-#define __USE_INTRINSIC_ALGEBRA__ 0
-/******************************************************************************/
-
-
-/******************************************************************************/
-/* __USE_POWELL_ALGEBRA__ == 1 and __USE_INTRINSIC_ALGEBRA__ == 1 do NOT conflict.
- * However, to make sure that the code produces exactly the same results as
- * Powell's code when __USE_POWELL_ALGEBRA__ == 1, we impose the following.*/
-#if __USE_POWELL_ALGEBRA__ == 1 && __RELEASED__ == 1
-#undef __USE_INTRINSIC_ALGEBRA__
-#define __USE_INTRINSIC_ALGEBRA__ 0
-#endif
 /******************************************************************************/
 
 

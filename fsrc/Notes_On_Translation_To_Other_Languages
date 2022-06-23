@@ -243,7 +243,7 @@ Here are points to note when translating the Fortran code to other languages.
 
     If X is a vector, then sum(X) will work.
 
-14. Logical indexing and the function TRUELOC implemented in linalg.F90.
+14. Logical indexing and the function TRUELOC implemented in linalg.f90.
     Similar to the `find` function in MATLAB, TRUELOC returns the indices where X is true.
     The motivation for this function is the fact that Fortran does not support logical indexing. See,
     for example, https://fortran-lang.discourse.group/t/indexing-arrays-by-an-array-of-logicals
