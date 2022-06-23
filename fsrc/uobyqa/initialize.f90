@@ -32,7 +32,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
-use, non_intrinsic :: info_mod, only : INFO_DFT
+use, non_intrinsic :: infos_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : eye, trueloc, linspace
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -211,7 +211,7 @@ subroutine initq(fval, xpt, pq, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_MODEL
+use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_MODEL
 
 implicit none
 
@@ -320,7 +320,7 @@ subroutine initl(xpt, pl, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_MODEL
+use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_MODEL
 
 implicit none
 

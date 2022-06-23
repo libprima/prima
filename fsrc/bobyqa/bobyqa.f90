@@ -105,7 +105,7 @@ use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: info_mod, only : NO_SPACE_BETWEEN_BOUNDS
+use, non_intrinsic :: infos_mod, only : NO_SPACE_BETWEEN_BOUNDS
 use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ

@@ -56,8 +56,8 @@ subroutine retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, MSGLEN, FNAMELEN, OUTUNIT, STDOUT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, warning
-use, non_intrinsic :: info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, SMALL_TR_RADIUS
-use, non_intrinsic :: info_mod, only : TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_MODEL, DAMAGING_ROUNDING
+use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, SMALL_TR_RADIUS
+use, non_intrinsic :: infos_mod, only : TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_MODEL, DAMAGING_ROUNDING
 implicit none
 
 ! Compulsory inputs

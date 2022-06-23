@@ -7,7 +7,7 @@
 ! Last Modified: Sunday, May 22, 2022 PM11:32:18
 
 
-module info_mod
+module infos_mod
 
 use, non_intrinsic :: consts_mod, only : IK
 
@@ -43,4 +43,4 @@ integer(IK), parameter :: DAMAGING_ROUNDING = 7_IK
 integer(IK), parameter :: ZERO_LINEAR_CONSTRAINT = 8_IK
 
 
-end module info_mod
+end module infos_mod

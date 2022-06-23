@@ -46,7 +46,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: info_mod, only : INFO_DFT
+use, non_intrinsic :: infos_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: powalg_mod, only : setij
@@ -300,7 +300,7 @@ subroutine initq(ij, fval, xpt, gopt, hq, pq, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_MODEL
+use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_MODEL
 use, non_intrinsic :: linalg_mod, only : issymmetric, diag, matprod
 
 implicit none
@@ -431,7 +431,7 @@ subroutine inith(ij, xpt, bmat, zmat, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_MODEL
+use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_MODEL
 use, non_intrinsic :: linalg_mod, only : issymmetric, diag
 
 implicit none
