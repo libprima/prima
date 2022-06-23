@@ -215,7 +215,7 @@ do while (.true.)  ! TODO: prevent infinite cycling
 
     ! Reduce STPLEN if necessary in order to preserve the simple bounds, letting IACT be the index
     ! of the new constrained variable.
-    ! Zaikun 20220422:
+    ! N.B. (Zaikun 20220422):
     ! Theory and computation differ considerably in the calculation of STPLEN and IACT.
     ! 1. Theoretically, the WHERE constructs can simplify (S > 0 .and. XTEST > SU) to (S > 0) and
     ! (S < 0, XTEST < SL) to (S < 0), which will be equivalent to Powell's original code. However,
