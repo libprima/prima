@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, June 23, 2022 PM04:19:49
+! Last Modified: Friday, June 24, 2022 AM01:14:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -240,15 +240,14 @@ if (subinfo /= INFO_DFT) then
     return
 end if
 
-! Initialize RHO, DELTA, and CPEN.
-rho = rhobeg
-delta = rhobeg
-cpen = ZERO
-
+! Set some more initial values and parameters.
 ! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
 ! run-time error that they are undefined. The values will not be used: when SHORTD = FALSE, they
 ! will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is TRUE
 ! regardless of ACTREM or PREREM. Similar for JDROP_TR.
+rho = rhobeg
+delta = rhobeg
+cpen = ZERO
 actrem = -HUGENUM
 prerem = HUGENUM
 jdrop_tr = 0_IK
