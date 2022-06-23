@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 PM11:41:49
+! Last Modified: Thursday, June 23, 2022 PM06:27:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -209,7 +209,8 @@ if (any(xu_loc - xl_loc < TWO * EPS)) then
         info = NO_SPACE_BETWEEN_BOUNDS
     end if
     write (wmsg, ifmt) minval(trueloc(xu_loc - xl_loc < TWO * EPS))
-    call warning(solver, 'There is no space between the lower and upper bounds of variable '//'. The solver cannot continue')
+    call warning(solver, 'There is no space between the lower and upper bounds of variable '// &
+        & '. The solver cannot continue')
     return
 end if
 

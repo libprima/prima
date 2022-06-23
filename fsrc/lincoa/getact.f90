@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 19, 2022 PM04:29:50
+! Last Modified: Thursday, June 23, 2022 PM10:24:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -171,7 +171,7 @@ vlam = ZERO
 do icon = nact, 1, -1
     if (resact(icon) > tdel) then
         ! Delete constraint IACT(ICON) from the active set, and set NACT = NACT - 1.
-        call del_act(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
+        call delact(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
     end if
 end do
 
@@ -185,7 +185,7 @@ do while (nact > 0)
     end if
     icon = maxval(trueloc(vlam(1:nact) >= 0))
     !!MATLAB: icon = max(find(vlam(1:nact) >= 0)); % OR: icon = find(vlam(1:nact) >= 0, 1, 'last')
-    call del_act(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
+    call delact(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
 end do
 ! Zaikun 20220330: What if NACT = 0 at this point?
 
@@ -292,7 +292,7 @@ do iter = 1_IK, maxiter
     end if
 
     ! Add constraint L to the active set. ADD_ACT sets NACT = NACT + 1 and VLAM(NACT) = 0.
-    call add_act(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)
+    call addact(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)
 
     ! Set the components of the vector VMU if VIOLMX is positive.
     ! N.B.: 1. In theory, NACT > 0 is not needed in the condition below, because VIOLMX must be 0
@@ -337,7 +337,7 @@ do iter = 1_IK, maxiter
         do icon = nact, 1, -1
             if (vlam(icon) >= 0) then  ! Powell's version: IF (.NOT. VLAM(ICON) < 0) THEN
                 ! Delete the constraint with index IACT(ICON) from the active set; set NACT = NACT-1.
-                call del_act(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
+                call delact(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
             end if
         end do
     end do  ! End of DO WHILE (VIOLMX > 0 .AND. NACT > 0)
@@ -389,7 +389,7 @@ end if
 end subroutine getact
 
 
-subroutine add_act(l, c, iact, nact, qfac, resact, resnew, rfac, vlam)
+subroutine addact(l, c, iact, nact, qfac, resact, resnew, rfac, vlam)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine adds the constraint with index L to the active set as the (NACT+ )-th active
 ! constriant, updates IACT, QFAC, etc accordingly, and increments NACT to NACT+1. Here, C is the
@@ -480,10 +480,10 @@ if (DEBUGGING) then
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
 end if
 
-end subroutine add_act
+end subroutine addact
 
 
-subroutine del_act(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
+subroutine delact(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine deletes the constraint with index IACT(ICON) from the active set, updates IACT,
 ! QFAC, etc accordingly, and reduces NACT to NACT-1.
@@ -575,7 +575,7 @@ if (DEBUGGING) then
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
 end if
 
-end subroutine del_act
+end subroutine delact
 
 
 end module getact_mod
