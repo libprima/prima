@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, June 13, 2022 PM11:31:53
+! Last Modified: Friday, June 24, 2022 AM01:10:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,9 +33,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! D is reserved for trial steps from XOPT.
 ! [XPT, FVAL, KOPT] describes the interpolation set:
 ! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
-! However, there is a delay between the update of XOPT and KOPT. So they are not always consistent
-! in the mid of an iteration. See the comment on the update of XOPT for details.
-! values of F at the interpolation points; KOPT is the index of XOPT in XPT (XPT(:,KOPT) = XOPT).
+! values of F at the interpolation points; KOPT is the index of XOPT in XPT.
 ! [GQ, HQ, PQ] describes the quadratic model: GQ will hold the gradient of the quadratic model at
 ! XBASE; HQ will hold the explicit second order derivatives of the quadratic model; PQ will contain
 ! the parameters of the implicit second order derivatives of the quadratic model.
@@ -147,6 +145,7 @@ maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = max(maxxhist, maxfhist)
 
+! Preconditions
 if (DEBUGGING) then
     call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
@@ -205,18 +204,18 @@ call inith(ij, xpt, idz, bmat, zmat)
 ! and possibly recovers by geometry steps.
 
 ! Set some more initial values and parameters.
+! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
+! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
+! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
+! Similar for KNEW_TR.
+! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
 rho = rhobeg
 delta = rho
 moderrsav = HUGENUM
 dnormsav = HUGENUM
 itest = 0_IK
-! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
-! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
-! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
-! Similar for KNEW_TR.
-ratio = -ONE
+ratio = -ONE 
 knew_tr = 0_IK
-! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
 shortd = .false.
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
@@ -228,12 +227,11 @@ info = MAXTR_REACHED
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
 ! SHORTD - Is the trust-region trial step too short to invoke a function evaluation?
-! IMPROVE_GEO - Will we improve the model after the trust-region iteration?
-! REDUCE_RHO - Will we reduce rho after the trust-region iteration?
-! REDUCE_RHO = REDUCE_RHO_1 .OR. REDUCE_RHO_2 (see boxes 14 and 10 of Fig. 1 in the NEWUOA paper).
+! IMPROVE_GEO - Will we improve the geometry (Box 8 of Fig. 1 in the NEWUOA paper)?
+! REDUCE_RHO - Will we reduce rho?
+! REDUCE_RHO = REDUCE_RHO_1 .OR. REDUCE_RHO_2 (Boxes 14 and 10 of Fig. 1 in the NEWUOA paper).
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
-    ! Solve the trust-region subproblem.
     call trsapp(delta, gq, hq, pq, tr_tol, xopt, xpt, crvmin, d)
     dnorm = min(delta, norm(d))
 
@@ -258,8 +256,8 @@ do tr = 1, maxtr
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
         call fmsg(solver, iprint, nf, f, x)
-        ! Save X and F into the history.
         call savehist(nf, x, xhist, f, fhist)
+
         ! Check whether to exit
         subinfo = checkexit(maxfun, nf, f, ftarget, x)
         if (subinfo /= INFO_DFT) then
@@ -274,11 +272,12 @@ do tr = 1, maxtr
 
         ! Calculate the reduction ratio.
         !------------------------------------------------------------------------------------------!
-        ! Zaikun 20220405: REDRAT sets returns a large negative value if QRED is nonpositive or NaN.
+        ! Zaikun 20220405: REDRAT returns a large negative value if QRED is nonpositive or NaN.
         ! This ratio will lead to a contraction of DELTA and make IMPROVE_GEO or REDUCE_RHO true.
         ! Is there a better strategy? LINCOA does something to improve the model. Applicable here?
         !------------------------------------------------------------------------------------------!
         ratio = redrat(fopt - f, qred, eta1)
+
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
@@ -303,11 +302,8 @@ do tr = 1, maxtr
         ! quadratic model), and FVAL, XPT, KOPT, FOPT, XOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
         ! If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
         ! decides not to include XNEW into XPT.
-        ! Update BMAT, ZMAT and IDZ.
         call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
-        ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
         call updateq(idz, knew_tr, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
-        ! Update XPT(:, KNEW_TR) to XOPT + D. Then update KOPT, XOPT, and FOPT.
         call updatexf(knew_tr, d, f, kopt, fval, xpt, fopt, xopt)
 
         ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
@@ -442,8 +438,8 @@ do tr = 1, maxtr
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
         call fmsg(solver, iprint, nf, f, x)
-        ! Save X and F into the history.
         call savehist(nf, x, xhist, f, fhist)
+
         ! Check whether to exit
         subinfo = checkexit(maxfun, nf, f, ftarget, x)
         if (subinfo /= INFO_DFT) then
@@ -457,12 +453,9 @@ do tr = 1, maxtr
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
 
         ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (defining the
-        ! quadratic model), and FVAL, XPT, KOPT, FOPT, XOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
-        ! Update BMAT, ZMAT and IDZ.
+        ! quadratic model), and FVAL, XPT, KOPT, FOPT, XOPT so that XPT(:, KNEW_TR) becomes XOPT+D.
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
-        ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
         call updateq(idz, knew_geo, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
-        ! Update XPT(:, KNEW_GEO) to XOPT + D. Then update KOPT, XOPT, and FOPT.
         call updatexf(knew_geo, d, f, kopt, fval, xpt, fopt, xopt)
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
@@ -485,7 +478,7 @@ do tr = 1, maxtr
     end if  ! End of IF (REDUCE_RHO_1 .OR. REDUCE_RHO_2). The procedure of reducing RHO ends.
 
     ! Shift XBASE if XOPT may be too far from XBASE.
-    ! Zaikun 20220528: Our criterion for shifting XBASE differs from Powell's, which is as follows.
+    ! Powell's original criterion for shifting XBASE is as follows.
     ! 1. After a trust region step that is not short, shift XBASE if SUM(XOPT**2) >= 1.0E3*DNORM**2.
     ! 2. Before a geometry step, shift XBASE if SUM(XOPT**2) >= 1.0E3*DELBAR**2.
     if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
@@ -500,7 +493,6 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
     call fmsg(solver, iprint, nf, f, x)
-    ! Save X and F into the history.
     call savehist(nf, x, xhist, f, fhist)
 end if
 
