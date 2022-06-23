@@ -216,7 +216,7 @@ if isempty(prob)
     % Define the number of random runs.
     if ~isfield(options, 'nr')
         if strcmpi(invoker, 'profile')
-            options.nr = 5;
+            options.nr = 4;
         else
             options.nr = 10; % For the verification, the actual number of run is 20 + nr.
         end
