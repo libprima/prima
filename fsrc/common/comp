@@ -2,4 +2,4 @@
 
 FC="gfortran -Werror -pedantic-errors -Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion -Wuninitialized -Wmaybe-uninitialized -Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow -Wuse-without-only -Wunused-parameter -Wreturn-type -fPIC -fimplicit-none -fbacktrace -fcheck=all -finit-real=nan -finit-integer=-9999999"
 
-$FC -c consts.F90 infos.f90 debug.F90 memory.F90 infnan.F90 string.f90 linalg.F90 powalg.f90
+$FC -c consts.F90 infos.f90 debug.F90 memory.F90 infnan.F90 string.f90 linalg.f90 powalg.f90

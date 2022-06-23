@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, June 16, 2022 AM12:14:53
+! Last Modified: Thursday, June 23, 2022 PM04:20:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -372,9 +372,6 @@ d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 
 ! Calculate the coefficients of the linear approximations to the objective and constraint functions,
 ! placing minus the objective function gradient after the constraint gradients in the array A.
-! When __USE_INTRINSIC_ALGEBRA__ = 1, the following code may not produce the same result as
-! Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
-! finite-precision arithmetic.
 A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
 !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))'; % Implicit expansion for subtraction
 A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)

@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, June 15, 2022 AM01:21:16
+! Last Modified: Thursday, June 23, 2022 PM04:19:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -277,11 +277,7 @@ do tr = 1, maxtr
 
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
-    ! N.B.:
-    ! 1. When __USE_INTRINSIC_ALGEBRA__ = 1, the following code may not produce the same result
-    ! as Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
-    ! finite-precision arithmetic.
-    ! 2. TRSTLP accesses A mostly by columns, so it is not more reasonable to save A^T instead of A.
+    ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)

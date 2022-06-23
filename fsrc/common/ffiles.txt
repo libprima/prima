@@ -4,7 +4,7 @@ infnan.F90
 debug.F90
 memory.F90
 string.f90
-linalg.F90
+linalg.f90
 univar.f90
 rand.f90
 ratio.f90

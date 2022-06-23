@@ -5,7 +5,7 @@
 DIR="$(realpath "$1")"
 HISTORYF90="history.f90"
 HISTORY="$DIR/common/$HISTORYF90"
-LINALG90="linalg.F90"
+LINALG90="linalg.f90"
 LINALG="$DIR/common/$LINALG90"
 LINGEO="$DIR/lincoa/geometry.f90"
 LINTR="$DIR/lincoa/trustregion.f90"
