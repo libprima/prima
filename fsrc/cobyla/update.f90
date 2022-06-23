@@ -31,7 +31,7 @@ subroutine updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, TENTH, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
-use, non_intrinsic :: info_mod, only : INFO_DFT, DAMAGING_ROUNDING
+use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, isinv
 use, non_intrinsic :: debug_mod, only : assert
 
@@ -168,7 +168,7 @@ subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TENTH, DEBUGGING
-use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING, INFO_DFT
+use, non_intrinsic :: infos_mod, only : DAMAGING_ROUNDING, INFO_DFT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, eye, inv, isinv, maximum

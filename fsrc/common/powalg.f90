@@ -1212,7 +1212,7 @@ subroutine updateh(knew, kref, idz, d, xpt, bmat, zmat, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert!, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
-use, non_intrinsic :: info_mod, only : INFO_DFT, DAMAGING_ROUNDING
+use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, symmetrize, issymmetric, outprod!, r2update
 !use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
