@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, June 23, 2022 PM04:05:35
+! Last Modified: Thursday, June 23, 2022 PM04:34:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1153,14 +1153,14 @@ integer(IK) :: k_loc
 ! Calculation starts !
 !====================!
 
-dlen = int(min(size(A, 1), size(A, 2)), IK)
 if (present(k)) then
     k_loc = k
 else
     k_loc = 0_IK
 end if
 
-dlen = max(0_IK, dlen - abs(k_loc)) ! We allow |K| to exceed the number of rows/columns in A.
+dlen = int(min(size(A, 1), size(A, 2)), IK)
+dlen = max(0_IK, dlen - abs(k_loc))  ! We allow |K| to exceed the number of rows/columns in A.
 call safealloc(D, dlen)
 if (k_loc >= 0) then
     D = [(A(i, i + k_loc), i=1, dlen)]

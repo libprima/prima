@@ -40,7 +40,7 @@ their sizes if DEBUGGING is true.
 2. Use matrix/vector operations.
 
 If appropriate, replace loops with matrix/vector operations (inprod, matprod,
-r1update, etc.; see linalg.f90). This will reduce the complexity of the code.
+r1update, etc.; see linalg.F90). This will reduce the complexity of the code.
 
 Note that floating-point arithmetic is NOT ASSOCIATIVE! For example,
 
@@ -94,6 +94,10 @@ INTEGER(IK).
 
 It is also useful to try RP = 32. The reason is the same as above. But
 changing RP will obviously affect the result.
+
+7.3. We should also try different combinations of DEBUGGING,
+USE_INTRINSIC_ALGEBRA, USE_POWELL_ALGEBRA to make sure that all
+variations of the code works correctly.
 
 7.4 Do not use ZERO, ONE,TWO, TEN, TENTH, etc in Powell's original code, as they may not be defined.
 
