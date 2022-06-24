@@ -21,7 +21,7 @@ end
 options.time = time;
 options.data_dir = data_dir;
 
-output = cell(1,5);
+output = cell(1, 4);
 
 
 timerVal = tic;
@@ -53,10 +53,10 @@ argin = [varargin, {options}];
 output{4} = profile(argin{:});
 options = rmfield(options, {'eval_options'});
 
-options.eval_options = struct('signif', 5);
-argin = [varargin, {options}];
-output{5} = profile(argin{:});
-options = rmfield(options, {'eval_options'});
+%options.eval_options = struct('signif', 5);
+%argin = [varargin, {options}];
+%output{5} = profile(argin{:});
+%options = rmfield(options, {'eval_options'});
 
 %options.eval_options = struct('dnoise', 1e-5);
 %argin = [varargin, {options}];

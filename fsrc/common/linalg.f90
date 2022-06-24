@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, June 23, 2022 PM04:34:37
+! Last Modified: Friday, June 24, 2022 AM08:33:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1014,10 +1014,7 @@ if (present(Q)) then
     end if
     rank = min(m, n)
     pivote = .false.
-end if
-
-!if (.not. present(Q) .or. any(abs(Rdiag_loc) <= ZERO)) then ! This is more reasonable
-if (.not. present(Q)) then
+else
     call qr(A, Q=Q_loc, P=P)
     Rdiag_loc = [(inprod(Q_loc(:, i), A(:, P(i))), i=1, min(m, n))]
     !!MATLAB: Rdiag_loc = sum(Q_loc(:, 1:min(m,n)) .* A(:, P(1:min(m,n))), 1); % Row vector
