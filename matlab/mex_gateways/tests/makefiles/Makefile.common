@@ -506,8 +506,8 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'redrat' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'redrho' USEd at (1) is not referenced" \
-	| grep -v "common/linalg.F90:[0-9]*:.*pivote.*may be used uninitialized in this function" \
-	| grep -v "common/linalg.F90:[0-9]*:.*rank.*may be used uninitialized in this function" \
+	| grep -v "common/linalg.f90:[0-9]*:.*pivote.*may be used uninitialized in this function" \
+	| grep -v "common/linalg.f90:[0-9]*:.*rank.*may be used uninitialized in this function" \
 	| grep -v "common/preproc.f90:22:.*min_maxfun.*may be used uninitialized in this function" \
 	| grep -v "common/preproc.f90:22:.*unit_memo.*may be used uninitialized in this function" \
 	| grep -v "W-0173-PGI Fortran extension: nonstandard use of data type length specifier" \

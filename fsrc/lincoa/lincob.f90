@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 22, 2022 AM11:56:32
+! Last Modified: Saturday, June 25, 2022 PM12:23:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -83,11 +83,12 @@ use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_col, omega_mul, hess_mul
 
 ! Solver-specific modules
-use, non_intrinsic :: geometry_mod, only : geostep
+use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, inith
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trstep
-use, non_intrinsic :: update_mod, only : update
+use, non_intrinsic :: update_mod, only : updateq
+use, non_intrinsic :: powalg_mod, only : updateh
 
 implicit none
 
@@ -456,11 +457,10 @@ do while (.true.)
             ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
             ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
             ! by subroutine UPDATE.
-            call update(kopt, d, xpt, idz, knew, bmat, zmat)
             if (knew == 0) then
-                info = DAMAGING_ROUNDING
-                exit
+                knew = setdrop_tr(idz, kopt, bmat, d, xpt, zmat)
             end if
+            call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 
             if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
                 info = NAN_MODEL
@@ -479,19 +479,11 @@ do while (.true.)
             ! contribution from the old parameter PQ(KNEW) is included in the second derivative
             ! matrix HQ.
             if (itest < 3) then
-                call r1update(hq, pq(knew), xpt(:, knew))  ! Needs the un-updated XPT(:, KNEW).
-                pq(knew) = ZERO
-                pqinc = diff * omega_col(idz, zmat, knew)
-                pq = pq + pqinc
+                call updateq(idz, knew, kopt, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
             end if
 
-            ! Make the changes of the symmetric Broyden method to GOPT at the old XOPT if ITEST is
-            ! less than 3.
             fval(knew) = f
             xpt(:, knew) = xnew
-            if (itest < 3) then
-                gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)  ! Needs the updated XPT.
-            end if
             ! Update FOPT, XSAV, XOPT, KOPT, and RESCON if the new F is the least calculated value
             ! so far with a feasible vector of variables.
             ! Note that XOPT always corresponds to a feasible point.
