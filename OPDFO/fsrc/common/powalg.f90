@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, June 15, 2022 PM11:05:38
+! Last Modified: Saturday, June 25, 2022 PM07:23:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1316,9 +1316,9 @@ end if
 ! Do nothing if D does not cause a real change to XPT. This is rare but possible.
 ! In Fortran, do NOT merge this case with the last one, or XPT(:, KNEW) may be accessed even
 ! when KNEW = 0 due to the non-short-circuit logical evaluation of Fortran.
-if (all(abs(xpt(:, kref) + d - xpt(:, knew)) <= 0)) then
-    return
-end if
+!if (all(abs(xpt(:, kref) + d - xpt(:, knew)) <= 0)) then
+!    return
+!end if
 
 ! Calculate VLAG and BETA according to D.
 ! VLAG contains the components of the vector H*w of the updating formula (4.11) in the NEWUOA paper,
