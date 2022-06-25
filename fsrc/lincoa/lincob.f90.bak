@@ -1,3 +1,9 @@
+!TODO:
+! 1. Check whether it is possible to change the definition of RESCON, RESNEW, RESTMP, RESACT so that
+! we do not need to encode information into their signs.
+! 2. Use RESCON to evaluate CSTRV.
+! 3. In FMSG, do not print CONSTR, which will not be computed due to 2.
+!
 module lincob_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of LINCOA.
@@ -11,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 25, 2022 PM03:34:54
+! Last Modified: Saturday, June 25, 2022 PM12:23:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,7 +75,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
+use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, r1update
 use, non_intrinsic :: output_mod, only : fmsg
@@ -77,11 +83,12 @@ use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_col, omega_mul, hess_mul
 
 ! Solver-specific modules
-use, non_intrinsic :: geometry_mod, only : geostep
+use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, inith
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trstep
-use, non_intrinsic :: update_mod, only : update
+use, non_intrinsic :: update_mod, only : updateq
+use, non_intrinsic :: powalg_mod, only : updateh
 
 implicit none
 
@@ -142,7 +149,7 @@ real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
-real(RP) :: xsav(size(x)), xtmp(size(x))
+real(RP) :: xsav(size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
@@ -186,6 +193,12 @@ if (DEBUGGING) then
     call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
 end if
 
+!---------------------------------------------------------!
+if (cweight < 0) then
+    write (*, *) cweight  ! Temporary, to be removed.
+end if
+!---------------------------------------------------------!
+
 !====================!
 ! Calculation starts !
 !====================!
@@ -209,7 +222,7 @@ xsav = x
 if (subinfo /= INFO_DFT) then
     info = subinfo
     call rangehist(nf, xhist, fhist, chist)
-    close (17)
+    close (16)
     return
 end if
 
@@ -222,10 +235,10 @@ pq = omega_mul(idz, zmat, fval)
 gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
 
 ! Initialize RESCON.
-! RESCON holds useful information about the constraint residuals.
-! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-! 2. Otherwise, |RESCON(J)| is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA;
-! RESCON is set to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
+! RESCON holds information about the constraint residuals at the current trust region center XOPT.
+! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA. Note
+! that RESCON >= 0 in this case, because the algorithm keeps XOPT to be feasible.
+! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
 ! RESCON can be updated without calculating the constraints that are far from being active, so that
 ! we only need to evaluate the constraints that are nearly active. RESCON is initialized as follows.
 ! 1. Normally, RESCON = B - AMAT^T*XOPT (theoretically, B - AMAT^T*XOPT >= 0 since XOPT is feasible)
@@ -280,14 +293,21 @@ do while (.true.)
     delsav = delta
     ksave = knew
     if (knew == 0) then
-        call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, dnorm, d)
+        call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
+        dnorm = sqrt(sum(d**2))
 
-        ! A trust region step is applied whenever its length, namely SNORM, is at least 0.5*DELTA.
-        ! It is also applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has
-        ! caused a change to the active set, indicated by NGETACT > 1. Otherwise, the trust region
-        ! step is considered too short to try.
-        shortd = ((dnorm < HALF * delta .and. ngetact <= 1) .or. dnorm < 0.1999_RP * delta)
-        !shortd = (dnorm < HALF * rho)
+        ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
+        ! applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has caused a
+        ! change to the active set, indicated by NGETACT >= 2 (note that NGETACT is at least 1).
+        ! Otherwise, the trust region step is considered too short to try.
+        shortd = ((dnorm < HALF * delta .and. ngetact < 2) .or. dnorm < 0.1999_RP * delta)
+        !------------------------------------------------------------------------------------------!
+        ! The SHORTD defined above needs NGETACT, which relies on Powell's trust region subproblem
+        ! solver. If a different subproblem solver is used, we can take the following SHORTD adopted
+        ! from UOBYQA, NEWUOA and BOBYQA. According to a test on 20220620, it works well.
+        !!SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
+        !------------------------------------------------------------------------------------------!
+
         if (shortd) then
             delta = HALF * delta
             if (delta <= 1.4_RP * rho) delta = rho
@@ -394,6 +414,8 @@ do while (.true.)
             ! not usable).
             constr = matprod(x, A_orig) - b_orig
             cstrv = maximum([ZERO, constr])
+            !cstrv = maximum([ZERO, matprod(x, amat(:, trueloc(abs(rescon) <= dnorm))) - b(trueloc(abs(rescon) <= dnorm))])
+
             nf = nf + 1_IK
             call fmsg(solver, iprint, nf, f, x, cstrv, constr)
             call savehist(nf, x, xhist, f, fhist, cstrv, chist)
@@ -435,9 +457,13 @@ do while (.true.)
             ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
             ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
             ! by subroutine UPDATE.
-            call update(kopt, d, xpt, idz, knew, bmat, zmat)
             if (knew == 0) then
-                info = DAMAGING_ROUNDING
+                knew = setdrop_tr(idz, kopt, bmat, d, xpt, zmat)
+            end if
+            call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
+
+            if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+                info = NAN_MODEL
                 exit
             end if
 
@@ -452,21 +478,12 @@ do while (.true.)
             ! for the second derivative parameters of the new KNEW-th Lagrange function. The
             ! contribution from the old parameter PQ(KNEW) is included in the second derivative
             ! matrix HQ.
-            xtmp = xpt(:, knew)
-            if (itest < 3 .and. .not. all(abs(xnew - xtmp) <= 0)) then
-                call r1update(hq, pq(knew), xpt(:, knew))  ! Needs the un-updated XPT(:, KNEW).
-                pq(knew) = ZERO
-                pqinc = diff * omega_col(idz, zmat, knew)
-                pq = pq + pqinc
+            if (itest < 3) then
+                call updateq(idz, knew, kopt, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
             end if
 
-            ! Make the changes of the symmetric Broyden method to GOPT at the old XOPT if ITEST is
-            ! less than 3.
             fval(knew) = f
             xpt(:, knew) = xnew
-            if (itest < 3 .and. .not. all(abs(xnew - xtmp) <= 0)) then
-                gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)  ! Needs the updated XPT.
-            end if
             ! Update FOPT, XSAV, XOPT, KOPT, and RESCON if the new F is the least calculated value
             ! so far with a feasible vector of variables.
             ! Note that XOPT always corresponds to a feasible point.
@@ -499,7 +516,7 @@ do while (.true.)
                 !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
                 ! Also revise GOPT when symmetric Broyden updating is applied.
-                if (itest < 3 .and. .not. all(abs(xnew - xtmp) <= 0)) then
+                if (itest < 3) then
                     gopt = gopt + hess_mul(d, xpt, pq, hq)
                 end if
             end if
@@ -594,7 +611,7 @@ call rangehist(nf, xhist, fhist, chist)
 
 ! Postconditions
 
-close (17)
+close (16)
 
 end subroutine lincob
 

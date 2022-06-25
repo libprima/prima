@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 25, 2022 PM03:25:36
+! Last Modified: Saturday, June 25, 2022 PM12:42:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ public :: updateq, updatexf, tryqalt
 contains
 
 
-subroutine updateq(idz, knew, kopt, tr_success, bmat, d, f, fval, xnew, xpt_in, zmat, gopt, hq, pq)
+subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xnew, xpt_in, zmat, gopt, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GOPT, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW = XPT(:, KOPT) + D.
 ! See Section 4 of the NEWUOA paper.
@@ -44,7 +44,6 @@ implicit none
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
 integer(IK), intent(in) :: kopt
-logical, intent(in) :: tr_success
 real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:) ! D(N)
 real(RP), intent(in) :: f
@@ -113,7 +112,7 @@ xpt = xpt_in
 ! In Fortran, do NOT merge this case with the last one, or XPT(:, KNEW) may be accessed even
 ! when KNEW = 0 due to the non-short-circuit logical evaluation of Fortran.
 if (all(abs(xpt(:, kopt) + d - xpt(:, knew)) <= 0)) then
-    return
+!    return
 end if
 
 ! The unupdated model corresponding to [GOPT, HQ, PQ] interpolates F at all points in XPT except for
@@ -130,15 +129,9 @@ pq(knew) = ZERO
 pqinc = moderr * omega_col(idz, zmat, knew)
 pq = pq + pqinc
 
-! Update the gradient, which needs the updated XPT.
+! Update the gradient.
 xpt(:, knew) = xnew
-gopt = gopt + moderr * bmat(:, knew) + hess_mul(xpt(:, kopt), xpt, pqinc)
-
-! Further update GOPT if TR_SUCCESS is TRUE, as XOPT will be updated to XOPT + D.
-if (tr_success) then
-    gopt = gopt + hess_mul(d, xpt, pq, hq)
-end if
-
+gopt = gopt + moderr * bmat(:, knew) + hess_mul(xpt(:, kopt), xpt, pqinc)  ! Needs the updated XPT.
 
 !====================!
 !  Calculation ends  !

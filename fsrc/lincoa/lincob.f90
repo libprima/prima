@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 25, 2022 PM12:23:23
+! Last Modified: Saturday, June 25, 2022 PM03:16:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -155,7 +155,7 @@ real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
-logical :: feasible, shortd, improve_geo
+logical :: feasible, shortd, improve_geo, tr_success
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: idz, itest, &
 &           knew, kopt, ksave, nact,      &
@@ -454,6 +454,8 @@ do while (.true.)
                 if (delta <= 1.4_RP * rho) delta = rho
             end if
 
+            tr_success = (f < fopt .and. feasible)
+
             ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
             ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
             ! by subroutine UPDATE.
@@ -461,11 +463,6 @@ do while (.true.)
                 knew = setdrop_tr(idz, kopt, bmat, d, xpt, zmat)
             end if
             call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
-
-            if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-                info = NAN_MODEL
-                exit
-            end if
 
             ! If ITEST is increased to 3, then the next quadratic model is the one whose second
             ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
@@ -478,10 +475,7 @@ do while (.true.)
             ! for the second derivative parameters of the new KNEW-th Lagrange function. The
             ! contribution from the old parameter PQ(KNEW) is included in the second derivative
             ! matrix HQ.
-            if (itest < 3) then
-                call updateq(idz, knew, kopt, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
-            end if
-
+            call updateq(idz, knew, kopt, tr_success, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
             fval(knew) = f
             xpt(:, knew) = xnew
             ! Update FOPT, XSAV, XOPT, KOPT, and RESCON if the new F is the least calculated value
@@ -515,10 +509,6 @@ do while (.true.)
                 !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
                 !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
-                ! Also revise GOPT when symmetric Broyden updating is applied.
-                if (itest < 3) then
-                    gopt = gopt + hess_mul(d, xpt, pq, hq)
-                end if
             end if
 
             ! Replace the current model by the least Frobenius norm interpolant if this interpolant
@@ -527,8 +517,6 @@ do while (.true.)
                 fshift = fval - fval(kopt)
                 pq = omega_mul(idz, zmat, fshift)
                 hq = ZERO
-                !gopt = matprod(bmat(:, 1:npt), w(1:npt))
-                !gopt = gopt + hess_mul(xopt, xpt, pq)
                 gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
             end if
 
