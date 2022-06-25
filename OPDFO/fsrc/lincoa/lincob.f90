@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 25, 2022 PM06:03:46
+! Last Modified: Saturday, June 25, 2022 PM06:38:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -453,7 +453,7 @@ do while (.true.)
             ! contribution from the old parameter PQ(KNEW) is included in the second derivative
             ! matrix HQ.
             xtmp = xpt(:, knew)
-            if (itest < 3 .and. .not. all(abs(xnew - xtmp) <= 0)) then
+            if (itest < 3) then ! .and. .not. all(abs(xnew - xtmp) <= 0)) then
                 call r1update(hq, pq(knew), xpt(:, knew))  ! Needs the un-updated XPT(:, KNEW).
                 pq(knew) = ZERO
                 pqinc = diff * omega_col(idz, zmat, knew)
@@ -464,7 +464,7 @@ do while (.true.)
             ! less than 3.
             fval(knew) = f
             xpt(:, knew) = xnew
-            if (itest < 3 .and. .not. all(abs(xnew - xtmp) <= 0)) then
+            if (itest < 3) then! .and. .not. all(abs(xnew - xtmp) <= 0)) then
                 gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)  ! Needs the updated XPT.
             end if
             ! Update FOPT, XSAV, XOPT, KOPT, and RESCON if the new F is the least calculated value
@@ -495,7 +495,7 @@ do while (.true.)
                 !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
                 ! Also revise GOPT when symmetric Broyden updating is applied.
-                if (itest < 3 .and. .not. all(abs(xnew - xtmp) <= 0)) then
+                if (itest < 3) then! .and. .not. all(abs(xnew - xtmp) <= 0)) then
                     gopt = gopt + hess_mul(d, xpt, pq, hq)
                 end if
             end if
@@ -542,7 +542,7 @@ do while (.true.)
         if (knew > 0 .or. fopt < fsave .or. delsav > rho) cycle
     end if
 
-    ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
+! The calculations with the current value of RHO are complete. Pick the next value of RHO.
     improve_geo = .false.
     if (rho > rhoend) then
         delta = HALF * rho

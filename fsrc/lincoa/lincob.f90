@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 25, 2022 PM06:17:07
+! Last Modified: Saturday, June 25, 2022 PM06:26:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -462,11 +462,10 @@ do while (.true.)
             ! matrix HQ.
             call updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
             call updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+            ! Update RESCON.
+            ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
+            ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
             if (freduced) then
-
-                ! Update RESCON.
-                ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-                ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
                 dnorm = sqrt(sum(d**2))
                 where (abs(rescon) >= dnorm + delta)
                     rescon = min(-abs(rescon) + dnorm, -delta)
