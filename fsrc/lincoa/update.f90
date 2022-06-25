@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 25, 2022 PM04:39:49
+! Last Modified: Saturday, June 25, 2022 PM06:31:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -109,13 +109,6 @@ end if
 
 ! Copy XPT_IN to XPT. XPT_IN cannot be changed since it is INTENT(IN).
 xpt = xpt_in
-
-! Do nothing if D does not cause a real change to XPT. This is rare but possible.
-! In Fortran, do NOT merge this case with the last one, or XPT(:, KNEW) may be accessed even
-! when KNEW = 0 due to the non-short-circuit logical evaluation of Fortran.
-if (all(abs(xpt(:, kopt) + d - xpt(:, knew)) <= 0)) then
-    return
-end if
 
 ! The unupdated model corresponding to [GOPT, HQ, PQ] interpolates F at all points in XPT except for
 ! XNEW, which will become XPT(:, KNEW). The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
@@ -223,16 +216,6 @@ if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     xopt = xpt(:, kopt)
     return
 end if
-
-!! Do essentially nothing if D does not cause a real change to XPT. This is rare but possible.
-!! In Fortran, do NOT merge this case with the last one, or XPT(:, KNEW) may be accessed even
-!! when KNEW = 0 due to the non-short-circuit logical evaluation of Fortran.
-!if (all(abs(xpt(:, kopt) + d - xpt(:, knew)) <= 0)) then
-!    ! We must set FOPT and XOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
-!    fopt = fval(kopt)
-!    xopt = xpt(:, kopt)
-!    return
-!end if
 
 xpt(:, knew) = xpt(:, kopt) + d
 fval(knew) = f

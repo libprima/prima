@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, June 15, 2022 PM11:05:38
+! Last Modified: Saturday, June 25, 2022 PM06:34:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1310,13 +1310,6 @@ end if
 
 ! We must not do anything if KNEW is 0. This can only happen sometimes after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
-    return
-end if
-
-! Do nothing if D does not cause a real change to XPT. This is rare but possible.
-! In Fortran, do NOT merge this case with the last one, or XPT(:, KNEW) may be accessed even
-! when KNEW = 0 due to the non-short-circuit logical evaluation of Fortran.
-if (all(abs(xpt(:, kref) + d - xpt(:, knew)) <= 0)) then
     return
 end if
 
