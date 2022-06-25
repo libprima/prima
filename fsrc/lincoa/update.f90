@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 25, 2022 PM03:25:36
+! Last Modified: Saturday, June 25, 2022 PM04:39:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ public :: updateq, updatexf, tryqalt
 contains
 
 
-subroutine updateq(idz, knew, kopt, tr_success, bmat, d, f, fval, xnew, xpt_in, zmat, gopt, hq, pq)
+subroutine updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt_in, zmat, gopt, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GOPT, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW = XPT(:, KOPT) + D.
 ! See Section 4 of the NEWUOA paper.
@@ -44,7 +44,7 @@ implicit none
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
 integer(IK), intent(in) :: kopt
-logical, intent(in) :: tr_success
+logical, intent(in) :: freduced
 real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:) ! D(N)
 real(RP), intent(in) :: f
@@ -86,6 +86,7 @@ if (DEBUGGING) then
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
+    call assert(size(xnew) == n .and. all(is_finite(xnew)), 'SIZE(XNEW) = N, XNEW is finite', srname)
     call assert(all(is_finite(xpt_in)), 'XPT is finite', srname)
     call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
@@ -101,10 +102,10 @@ end if
 ! Calculation starts !
 !====================!
 
-! Do nothing when KNEW is 0. This can only happen after a trust-region step in NEWUOA. What about LINCOA?
-!if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
-!    return
-!end if
+! Do nothing when KNEW is 0. This can only happen after a trust-region step.
+if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
+    return
+end if
 
 ! Copy XPT_IN to XPT. XPT_IN cannot be changed since it is INTENT(IN).
 xpt = xpt_in
@@ -134,8 +135,8 @@ pq = pq + pqinc
 xpt(:, knew) = xnew
 gopt = gopt + moderr * bmat(:, knew) + hess_mul(xpt(:, kopt), xpt, pqinc)
 
-! Further update GOPT if TR_SUCCESS is TRUE, as XOPT will be updated to XOPT + D.
-if (tr_success) then
+! Further update GOPT if FREDUCED is TRUE, as XOPT will be updated to XOPT + D.
+if (freduced) then
     gopt = gopt + hess_mul(d, xpt, pq, hq)
 end if
 
@@ -156,7 +157,7 @@ end if
 end subroutine updateq
 
 
-subroutine updatexf(knew, d, f, kopt, fval, xpt, fopt, xopt)
+subroutine updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates XPT, FVAL, KOPT, XOPT, and FOPT so that X(:, KNEW) is replaced by XOPT+D.
 !--------------------------------------------------------------------------------------------------!
@@ -178,6 +179,7 @@ real(RP), intent(in) :: f
 
 ! In-outputs
 integer(IK), intent(inout) :: kopt
+logical, intent(in) :: freduced
 real(RP), intent(inout) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(inout) :: xpt(:, :)! XPT(N, NPT)
 
@@ -206,7 +208,6 @@ if (DEBUGGING) then
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
-    call assert(.not. any(fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
     call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
     ! N.B.: Do NOT test the value of FOPT or XOPT. Being INTENT(OUT), they are UNDEFINED up to here.
 end if
@@ -223,27 +224,25 @@ if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
 
-! Do essentially nothing if D does not cause a real change to XPT. This is rare but possible.
-! In Fortran, do NOT merge this case with the last one, or XPT(:, KNEW) may be accessed even
-! when KNEW = 0 due to the non-short-circuit logical evaluation of Fortran.
-if (all(abs(xpt(:, kopt) + d - xpt(:, knew)) <= 0)) then
-    ! We must set FOPT and XOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
-    fopt = fval(kopt)
-    xopt = xpt(:, kopt)
-    return
-end if
+!! Do essentially nothing if D does not cause a real change to XPT. This is rare but possible.
+!! In Fortran, do NOT merge this case with the last one, or XPT(:, KNEW) may be accessed even
+!! when KNEW = 0 due to the non-short-circuit logical evaluation of Fortran.
+!if (all(abs(xpt(:, kopt) + d - xpt(:, knew)) <= 0)) then
+!    ! We must set FOPT and XOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
+!    fopt = fval(kopt)
+!    xopt = xpt(:, kopt)
+!    return
+!end if
 
 xpt(:, knew) = xpt(:, kopt) + d
 fval(knew) = f
 
-! KOPT is NOT identical to MINLOC(FVAL). Indeed, if FVAL(KNEW) = FVAL(KOPT) and KNEW < KOPT, then
-! MINLOC(FVAL) = KNEW /= KOPT. Do not change KOPT in this case.
-if (fval(knew) < fval(kopt)) then
+if (freduced) then
     kopt = knew
 end if
 
-! Even if FVAL(KNEW) >= FVAL(KOPT) and KOPT remains unchanged, we still need to update XOPT and FOPT,
-! because it may happen that KNEW = KOPT, so that XPT(:, KOPT) has been updated to XNEW = XOPT + D.
+! Even if KOPT remains unchanged, we still need to update XOPT and FOPT, because it may happen that
+! KNEW = KOPT, so that XPT(:, KOPT) has been updated to XNEW = XOPT + D.
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 
@@ -258,7 +257,6 @@ if (DEBUGGING) then
     call assert(abs(fopt - fval(kopt)) <= 0, 'FOPT == FVAL(KOPT)', srname)
     call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
     call assert(norm(xopt - xpt(:, kopt)) <= 0, 'XOPT == XPT(:, KOPT)', srname)
-    call assert(.not. any(fval < fopt), '.NOT. ANY(FVAL < FOPT)', srname)
 end if
 
 end subroutine updatexf

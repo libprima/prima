@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 25, 2022 PM03:34:54
+! Last Modified: Saturday, June 25, 2022 PM06:03:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -475,10 +475,6 @@ do while (.true.)
                 xsav = x
                 xopt = xnew
                 kopt = knew
-                if (fopt <= ftarget) then
-                    info = FTARGET_ACHIEVED
-                    exit
-                end if
                 dnorm = sqrt(sum(d**2))
 
                 ! RESCON holds useful information about the constraint residuals.
@@ -502,6 +498,10 @@ do while (.true.)
                 if (itest < 3 .and. .not. all(abs(xnew - xtmp) <= 0)) then
                     gopt = gopt + hess_mul(d, xpt, pq, hq)
                 end if
+            end if
+            if (fopt <= ftarget) then
+                info = FTARGET_ACHIEVED
+                exit
             end if
 
             ! Replace the current model by the least Frobenius norm interpolant if this interpolant

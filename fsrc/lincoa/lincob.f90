@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 25, 2022 PM03:16:20
+! Last Modified: Saturday, June 25, 2022 PM06:17:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -87,7 +87,7 @@ use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, inith
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trstep
-use, non_intrinsic :: update_mod, only : updateq
+use, non_intrinsic :: update_mod, only : updateq, updatexf
 use, non_intrinsic :: powalg_mod, only : updateh
 
 implicit none
@@ -149,13 +149,12 @@ real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
-real(RP) :: xsav(size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq, xdsq(npt), fopt, fsave, ratio,     &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
-logical :: feasible, shortd, improve_geo, tr_success
+logical :: feasible, shortd, improve_geo, freduced
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: idz, itest, &
 &           knew, kopt, ksave, nact,      &
@@ -217,7 +216,6 @@ x = xbase + xopt
 f = fopt
 ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
-xsav = x
 
 if (subinfo /= INFO_DFT) then
     info = subinfo
@@ -384,19 +382,6 @@ do while (.true.)
             xnew = xopt + d
             x = xbase + xnew
 
-            !--------------------------------------------------------------------------------!
-            !--------------------------------------------------------------------------------!
-            !xdiff = sqrt(sum((x - xsav)**2))
-            !if (ksave == -1) xdiff = rho
-            !!if (.false.) then
-            !if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
-            !    feasible = .false.  ! Consistent with the meaning of FEASIBLE???
-            !    info = DAMAGING_ROUNDING
-            !    exit
-            !end if
-            !--------------------------------------------------------------------------------!
-            !--------------------------------------------------------------------------------!
-
             feasible = (feasible .or. ksave <= 0) ! Consistent with the meaning of FEASIBLE???
             f = merge(tsource=ONE, fsource=ZERO, mask=feasible)  ! Zaikun 20220415 What does this mean???
 
@@ -454,7 +439,7 @@ do while (.true.)
                 if (delta <= 1.4_RP * rho) delta = rho
             end if
 
-            tr_success = (f < fopt .and. feasible)
+            freduced = (f < fopt .and. feasible)
 
             ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
             ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
@@ -475,28 +460,14 @@ do while (.true.)
             ! for the second derivative parameters of the new KNEW-th Lagrange function. The
             ! contribution from the old parameter PQ(KNEW) is included in the second derivative
             ! matrix HQ.
-            call updateq(idz, knew, kopt, tr_success, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
-            fval(knew) = f
-            xpt(:, knew) = xnew
-            ! Update FOPT, XSAV, XOPT, KOPT, and RESCON if the new F is the least calculated value
-            ! so far with a feasible vector of variables.
-            ! Note that XOPT always corresponds to a feasible point.
-            if (f < fopt .and. feasible) then
-                fopt = f
-                xsav = x
-                xopt = xnew
-                kopt = knew
-                if (fopt <= ftarget) then
-                    info = FTARGET_ACHIEVED
-                    exit
-                end if
-                dnorm = sqrt(sum(d**2))
+            call updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
+            call updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+            if (freduced) then
 
-                ! RESCON holds useful information about the constraint residuals.
+                ! Update RESCON.
                 ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-                ! 2. Otherwise, |RESCON(J)| is a value such that B(J) - AMAT(:, J)^T*XOPT >= RESCON(J) >= DELTA;
-                ! RESCON is set to the negative of the above value when B(J) - AMAT(:, J)^T*XOPT > DELTA.
-                ! RESCON can be updated without evaluating the constraints that are far from being active.
+                ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
+                dnorm = sqrt(sum(d**2))
                 where (abs(rescon) >= dnorm + delta)
                     rescon = min(-abs(rescon) + dnorm, -delta)
                 elsewhere
@@ -508,7 +479,6 @@ do while (.true.)
                 !!rescon(mask) = max(rescon(mask) - dnorm, delta);
                 !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
                 !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
-
             end if
 
             ! Replace the current model by the least Frobenius norm interpolant if this interpolant
@@ -518,6 +488,10 @@ do while (.true.)
                 pq = omega_mul(idz, zmat, fshift)
                 hq = ZERO
                 gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+            end if
+            if (fopt <= ftarget) then
+                info = FTARGET_ACHIEVED
+                exit
             end if
 
             ! If a trust region step has provided a sufficient decrease in F, then branch for
@@ -583,7 +557,7 @@ if (info == SMALL_TR_RADIUS .and. ksave == -1 .and. nf < maxfun) then
 end if
 
 if (fopt <= f .or. is_nan(f) .or. .not. feasible) then
-    x = xsav
+    x = xbase + xopt
     f = fopt
 end if
 
