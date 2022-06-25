@@ -8,15 +8,104 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 16, 2022 AM09:57:16
+! Last Modified: Saturday, June 25, 2022 AM10:38:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: geostep
+public :: setdrop_tr, geostep
 
 
 contains
+
+
+function setdrop_tr(idz, kopt, bmat, d, xpt, zmat) result(knew)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
+! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
+! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.
+! N.B.:
+! It is tempting to take the function value into consideration when defining KNEW, for example,
+! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL), unless there is a better
+! choice. However, this is not a good idea, because the definition of KNEW should benefit the
+! quality of the model that interpolates f at XPT. A set of points with low function values is not
+! necessarily a good interpolation set. In contrast, a good interpolation set needs to include
+! points with relatively high function values; otherwise, the interpolant will unlikely reflect the
+! landscape of the function sufficiently.
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : issymmetric
+use, non_intrinsic :: powalg_mod, only : calden
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+integer(IK), intent(in) :: kopt
+real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
+real(RP), intent(in) :: d(:)
+real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
+real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+
+! Outputs
+integer(IK) :: knew
+
+! Local variables
+character(len=*), parameter :: srname = 'SETDROP_TR'
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: denabs(size(xpt, 2))
+real(RP) :: distsq(size(xpt, 2))
+real(RP) :: score(size(xpt, 2))
+real(RP) :: weight(size(xpt, 2))
+
+! Sizes
+n = int(size(xpt, 1), kind(npt))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
+        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
+distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+weight = distsq**2
+score = weight * denabs
+
+if (any(score > 0)) then
+    ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
+    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+    !!MATLAB: [~, knew] = max(score, [], 'omitnan');
+else
+    ! Powell's code does not handle this case, leaving KNEW = 0 and leading to a segfault.
+    knew = int(maxloc(distsq, dim=1), IK)
+end if
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(knew >= 1 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
+    call assert(knew /= kopt, 'KNEW /= KOPT', srname)
+end if
+end function setdrop_tr
 
 
 subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, s)
