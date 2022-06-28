@@ -39,7 +39,7 @@ requirements.type = options.type;
 if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')
     requirements.blacklist = {};
     requirements.blacklist = [requirements.blacklist, {'CHEBYQADNE','HAIFAM','HIMMELBI','HYDCAR20','LUKSAN12','LUKSAN13','MSS1','SPANHYD','VANDERM1','VANDERM2','VANDERM3', 'TAX13322', 'TAXR13322'}]; % Takes more than 2 min to solve
-    requirements.blacklist = [requirements.blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143', 'SIPOW3'}]; % Time-consuming
+    requirements.blacklist = [requirements.blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Time-consuming
     requirements.blacklist = [requirements.blacklist, {'GMNCASE2'}];
 end
 plist = secup(requirements);
