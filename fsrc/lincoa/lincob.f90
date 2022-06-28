@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 25, 2022 PM06:26:28
+! Last Modified: Tuesday, June 28, 2022 PM02:44:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -76,11 +76,11 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
-    & MAXFUN_REACHED, DAMAGING_ROUNDING, SMALL_TR_RADIUS!, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, r1update
+    & MAXFUN_REACHED, SMALL_TR_RADIUS!, MAXTR_REACHED
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : quadinc, omega_col, omega_mul, hess_mul
+use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
@@ -140,7 +140,6 @@ real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
-real(RP) :: pqinc(npt)
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: rescon(size(bvec))
 real(RP) :: rfac(size(x), size(x))
@@ -462,23 +461,23 @@ do while (.true.)
             ! matrix HQ.
             call updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
             call updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-            ! Update RESCON.
-            ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-            ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
-            if (freduced) then
-                dnorm = sqrt(sum(d**2))
-                where (abs(rescon) >= dnorm + delta)
-                    rescon = min(-abs(rescon) + dnorm, -delta)
-                elsewhere
-                    rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-                end where
-                rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
-                !!MATLAB:
-                !!mask = (rescon >= delta+dnorm);
-                !!rescon(mask) = max(rescon(mask) - dnorm, delta);
-                !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
-                !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
-            end if
+            !! Update RESCON.
+            !! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
+            !! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
+            !if (freduced) then
+            !    dnorm = sqrt(sum(d**2))
+            !    where (abs(rescon) >= dnorm + delta)
+            !        rescon = min(-abs(rescon) + dnorm, -delta)
+            !    elsewhere
+            !        rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
+            !    end where
+            !    rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
+            !    !!MATLAB:
+            !    !!mask = (rescon >= delta+dnorm);
+            !    !!rescon(mask) = max(rescon(mask) - dnorm, delta);
+            !    !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
+            !    !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
+            !end if
 
             ! Replace the current model by the least Frobenius norm interpolant if this interpolant
             ! gives substantial reductions in the predictions of values of F at feasible points.

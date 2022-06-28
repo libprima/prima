@@ -102,7 +102,7 @@ if isempty(requirements.list)
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
     switch lower(solvers{1})
     case {'uobyqa', 'uobyqan'}
-        blacklist = [blacklist, {'VARDIM', 'HATFLDFL'}];  % too large for UOBYQA
+        blacklist = [blacklist, {'VARDIM', 'HATFLDFL', 'BENNETT5LS'}];  % too large for UOBYQA
     case {'newuoa', 'newuoan'}
           blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.
           %blacklist = [blacklist, {'PENALTY2'}]; % More than 5 minutes to solve.
@@ -113,10 +113,11 @@ if isempty(requirements.list)
         blacklist = [blacklist, {'LSNNODOC', 'HS55', 'AVGASA', 'AVGASB'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'CHEBYQAD', 'HIMMELBJ'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
-        blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2', 'EXTRASIM'}]; % Too long to solve
+        blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2', 'EXTRASIM', 'SIM2BQP'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'LSNNODOC', 'DEGENLPB', 'RES', 'AVION2'}];  % Takes long to solve
-        blacklist = [blacklist, {'MINMAXRB'}]; % Classical COBYLA encounters SEGFAULT
+        blacklist = [blacklist, {'MINMAXRB', 'MAKELA1'}]; % Classical COBYLA encounters SEGFAULT
+        blacklist = [blacklist, {'POLAK6'}]; % Cannot pass  B = A^{-1}!
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem

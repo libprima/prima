@@ -102,6 +102,7 @@ if isempty(requirements.list)
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
     switch lower(solvers{1})
     case {'uobyqa', 'uobyqan'}
+        blacklist = [blacklist, {'BENNETT5LS'}]; % More than 30 minutes to solve.
     case {'newuoa', 'newuoan'}
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM', 'HATFLDFL'}]; % More than 30 minutes to solve.
          %blacklist = [blacklist, {'PENALTY2'}]; % More than 5 minutes to solve.
@@ -112,13 +113,14 @@ if isempty(requirements.list)
         blacklist = [blacklist, {'LSNNODOC', 'HS55', 'AVGASA', 'AVGASB'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'CHEBYQAD'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
-        blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2'}]; % Too long to solve
+        blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2', 'SIM2BQP'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'PALMER4ANE'}];
         % For PALMER4ANE, the original and modernized version differ due to a mistake in the extreme barrier of the original version.
         % We did not spend time on finding the mistake, but it returns an Inf in the constraint value, which should not happen.
         blacklist = [blacklist, {'DEGENLPB', 'LSNNODOC', 'AVION2', 'RES'}]; % Takes long to solve
-        blacklist = [blacklist, {'MINMAXRB'}]; % Classical COBYLA encounters SEGFAULT
+        blacklist = [blacklist, {'POLAK6'}]; % Cannot pass  B = A^{-1}!
+        blacklist = [blacklist, {'MINMAXRB', 'MAKELA1'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
