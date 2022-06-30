@@ -43,19 +43,16 @@ jobs:
         # windows-latest = windows-2019
         # The following list should be updated when these latest versions change.
         #os: [ubuntu-latest, ubuntu-18.04, macos-latest, macos-11, windows-latest, windows-2022]
-        os: [ubuntu-22.04, ubuntu-latest, ubuntu-18.04, macos-latest, windows-latest]
+        os: [ubuntu-22.04, ubuntu-latest, macos-latest, windows-latest]
         compiler: [gcc]
         version: [11, 12]  # Too expensive to test all available compilers from gcc-7 to gcc-12.
         bitness: [32, 64]
         ikind: [i2, i4, i8]
         solver: [lincoa, bobyqa, uobyqa]
-        # Limit the test on ubuntu-18.04 to the oldest available version of the compiler.
         # Limit the test on macos to 64-bit.
         # Limit the test on Windows to 64-bit and the latest version of the compiler.
         exclude:
           - os: ubuntu-latest
-            version: 12
-          - os: ubuntu-18.04
             version: 12
           - os: macos-latest
             bitness: 32
