@@ -109,7 +109,7 @@ else
     case {'uobyqa', 'uobyqan'}
         blacklist = [blacklist, {'VARDIM', 'HATFLDFL', 'BENNETT5LS'}];  % too large for UOBYQA
     case {'newuoa', 'newuoan'}
-        blacklist = [blacklist, {'LUKSAN22LS', 'MANCINO'}]; % too long to solve
+        blacklist = [blacklist, {'LUKSAN22LS', 'MANCINO', 'LUKSAN11LS'}]; % too long to solve
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.
         blacklist = [blacklist, {'PENALTY2', 'HYDC20LS', 'MANCINO'}]; % Too long time
         blacklist = [blacklist, {'BA-L1LS'}]; % Takes too long to solve
