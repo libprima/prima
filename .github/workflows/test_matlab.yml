@@ -91,31 +91,21 @@ jobs:
               root_dir = pwd();
               cd(fullfile(root_dir));
               options = struct();
-              if ismac
-                  tic
-                  setup
-                  testpdfon;
-                  toc
-                  setup path
-                  setup clean
-                  setup uninstall
-              else
-                  options.debug=true;
-                  setup(options);
-                  testpdfon;
-                  setup
-                  setup path
-                  testpdfon;
-                  setup cobylan
-                  setup uobyqan
-                  setup newuoan
-                  setup bobyqan
-                  setup lincoan
-                  setup path
-                  setup clean
-                  setup path
-                  setup uninstall
-                  setup path
-                  setup uninstall
-                  cd(fullfile(root_dir, 'matlab', 'tests')); pdv
-              end
+              options.debug=true;
+              setup(options);
+              testpdfon;
+              setup
+              setup path
+              testpdfon;
+              setup cobylan
+              setup uobyqan
+              setup newuoan
+              setup bobyqan
+              setup lincoan
+              setup path
+              setup clean
+              setup path
+              setup uninstall
+              setup path
+              setup uninstall
+              cd(fullfile(root_dir, 'matlab', 'tests')); pdv

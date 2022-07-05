@@ -46,6 +46,9 @@ jobs:
         bitness: [32, 64]
         ikind: [i2, i4, i8]
         solver: [lincoa, bobyqa, uobyqa]
+        exclude:
+          - solver: lincoa  # FLANG encounters an allocation error for no reason. Check later.
+            ikind: i8
 
     steps:
       - name: Checkout repository
