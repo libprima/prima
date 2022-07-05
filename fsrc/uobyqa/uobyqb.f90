@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 09, 2022 PM12:03:41
+! Last Modified: Tuesday, July 05, 2022 PM12:18:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,7 +100,6 @@ integer(IK) :: npt
 integer(IK) :: maxhist
 integer(IK) :: maxfhist
 integer(IK) :: maxxhist
-!real(RP) :: d(size(x) + 1)  ! D(N+1) is accessed when N = 1
 real(RP) :: d(size(x))
 real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x))
