@@ -6,8 +6,8 @@ The goal is to implement these solvers in modern languages --- first [**modern**
 sense that the new code will be mathematically equivalent to Powell’s, except for the bug fixing and
 improvements that we make intentionally.
 
-The focus is to implement Powell’s solvers in a modularized and structured way so that they are readable,
-maintainable, and extendable. The new code will have no GOTO (of course) and will use
+The focus is to implement Powell’s solvers in a modularized and structured way so that they are
+**readable**, **maintainable**, and **extendable**. The new code will have no GOTO (of course) and will use
 matrix-vector procedures instead of loops whenever possible.
 
 This is not a trivial mission due to the delicacy of Powell's algorithms and the unique style of his code.
