@@ -19,4 +19,9 @@
 11. "returns positive constrviolations" in the error messages should be "returns a positive
     constrviolation".
 
+12. The warning 'uobyqa:UnivariateProblem' is only emitted for uobyqa when n <= 1 and classical = true.
+    The warning message is modified as follows:
+    wmsg = sprintf('%s: a univariate problem received and classical = true; %s may crash; classical is set to false.', funname, funname) "
+    The modern version now can handle univariate problems properly, while the classical version may crash with memory errors.
+
 Check other changes by comparing the matlab interfaces (vimdiff).

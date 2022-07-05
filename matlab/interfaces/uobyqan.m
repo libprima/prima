@@ -272,9 +272,10 @@ if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 else
-    if (length(x0) <= 1)
+    if (length(x0) <= 1 && strcmp(variant, 'classical'))
+        variant = 'modern';
         wid = sprintf('%s:UnivariateProblem', funname);
-        wmsg = sprintf('%s: a univariate problem received; %s may fail. Try other solvers.', funname, funname);
+        wmsg = sprintf('%s: a univariate problem received and classical = true; %s may crash; classical is set to false.', funname, funname);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     end
