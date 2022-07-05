@@ -24,6 +24,9 @@ jobs:
         os: [ubuntu-latest]
         dim: [small, big, large, all]
         solver: [newuoa, cobyla]
+        exclude:
+            - solver: cobyla  # Takes too long time
+            - dim: all
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
