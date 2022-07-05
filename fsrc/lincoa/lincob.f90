@@ -277,9 +277,9 @@ do while (.true.)
         exit
     end if
 
-    ! In the case KNEW=0, generate the next trust region step by calling TRSTEP, where SNORM is the
-    ! current trust region radius initially. The final value of SNORM is the length of the
-    ! calculated step, except that SNORM is ZERO on return if the projected gradient is unsuitable
+    ! In the case KNEW=0, generate the next trust region step by calling TRSTEP, where DNORM is the
+    ! current trust region radius initially. The final value of DNORM is the length of the
+    ! calculated step, except that DNORM is ZERO on return if the projected gradient is unsuitable
     ! for starting the conjugate gradient iterations.
 
     if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then  ! Still needed?
@@ -347,14 +347,14 @@ do while (.true.)
         !------------------------------------------------------------------------------------------!
         ! Zaikun 15-08-2019
         ! Although very rarely, with the original code, an infinite loop can occur in the following
-        ! scenario. Suppose that, at an certain iteration, KNEW = 0, SNORM > 0.5*DELTA > RHO, QRED
-        ! <= 0, and summ_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2 (i.e., DELTA is large and SNORM
+        ! scenario. Suppose that, at an certain iteration, KNEW = 0, DNORM > 0.5*DELTA > RHO, QRED
+        ! <= 0, and summ_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2 (i.e., DELTA is large and DNORM
         ! is not small, yet QRED <= 0 due to rounding errors and XPT are not far from XOPT). Then
         ! the program will goto 530 (try whether to improve the geometry) and then cycle, where
         ! XBASE may be shifted to the current best point, in the hope of reducing rounding errors
         ! and 'improve' the model. Afterwards, another trust region step is produced by the
         ! 'improved' model. Note that DELTA remains unchanged in this process. If the new trust
-        ! region step turns out to satisfy SNORM > 0.5*DELTA and QRED <= 0 again (i.e., the
+        ! region step turns out to satisfy DNORM > 0.5*DELTA and QRED <= 0 again (i.e., the
         ! 'improved' model still suffers from rounding errors), then the program will goto 530 and
         ! then cycle, where shifting will not happen because either XBASE was already shifted to the
         ! current best point in last step, or XBASE is close to the current best point.

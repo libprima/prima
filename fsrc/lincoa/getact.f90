@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 23, 2022 PM10:24:06
+! Last Modified: Wednesday, July 06, 2022 AM01:09:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -66,7 +66,7 @@ subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 !
 ! NACT, IACT, QFAC and RFAC are maintained up to date across invocations of GETACT for warm starts.
 !
-! SNORM, RESNEW, RESACT, and G are the same as the terms with these names in SUBROUTINE TRSTEP.
+! DELTA, RESNEW, RESACT, and G are the same as the terms with these names in SUBROUTINE TRSTEP.
 ! The elements of RESNEW and RESACT are also kept up to date. See Section 3 of Powell (2015).
 !
 ! VLAM is the vector of Lagrange multipliers of the calculation.
@@ -190,7 +190,7 @@ end do
 ! Zaikun 20220330: What if NACT = 0 at this point?
 
 ! Set the new search direction D. Terminate if the 2-norm of D is ZERO or does not decrease, or if
-! NACT=N holds. The situation NACT=N occurs for sufficiently large SNORM if the origin is in the
+! NACT=N holds. The situation NACT=N occurs for sufficiently large DELTA if the origin is in the
 ! convex hull of the constraint gradients.
 ! Start with initialization of PSDSAV and DDSAV.
 psdsav = ZERO  ! Must be set, in case the loop exits due to abnormality at iteration 1.

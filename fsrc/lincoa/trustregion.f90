@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 20, 2022 AM05:08:02
+! Last Modified: Wednesday, July 06, 2022 AM01:08:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -108,9 +108,6 @@ g = gq
 !       are the same as the terms with these names in LINCOB. If RESCON(J)
 !       is negative, then |RESCON(J)| must be no less than the trust region
 !       radius, so that the J-th constraint can be ignored.
-!     SNORM is set to the trust region radius DELTA initially. On the
-!       return, however, it is the length of the calculated S, which is
-!       set to zero if the constraints prohibit a long enough step.
 !     S is the total calculated step so far from the trust region centre,
 !       its final value being given by the sequence of CG iterations, which
 !       terminate if the trust region boundary is reached.
@@ -158,7 +155,7 @@ do while (.true.)  !TODO: prevent infinite cycling
     if (get_act) then
         ! GETACT picks the active set for the current S. It also sets DW to the vector closest to -G
         ! that is orthogonal to the normals of the active constraints. DW is scaled to have length
-        ! 0.2*SNORM, as then a move of DW from S is allowed by the linear constraints.
+        ! 0.2*DELTA, as then a move of DW from S is allowed by the linear constraints.
         ngetact = ngetact + 1
         call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, dw)
         dd = inprod(dw, dw)
@@ -283,7 +280,7 @@ do while (.true.)  !TODO: prevent infinite cycling
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
 
     ! Test for termination. Branch to a new loop if there is a new active constraint and if the
-    ! distance from S to the trust region boundary is at least 0.2*SNORM.
+    ! distance from S to the trust region boundary is at least 0.2*DELTA.
 
     ! Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN values. Exit when
     ! NGETACT is large or NaN is detected.
