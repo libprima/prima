@@ -277,11 +277,6 @@ do while (.true.)
         exit
     end if
 
-    ! In the case KNEW=0, generate the next trust region step by calling TRSTEP, where DNORM is the
-    ! current trust region radius initially. The final value of DNORM is the length of the
-    ! calculated step, except that DNORM is ZERO on return if the projected gradient is unsuitable
-    ! for starting the conjugate gradient iterations.
-
     if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then  ! Still needed?
         info = NAN_MODEL
         exit
@@ -290,6 +285,7 @@ do while (.true.)
     delsav = delta
     ksave = knew
     if (knew == 0) then
+        ! In the case KNEW=0, generate the next trust region step by calling TRSTEP.
         call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
         dnorm = sqrt(sum(d**2))
 
