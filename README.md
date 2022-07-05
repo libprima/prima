@@ -17,7 +17,8 @@ by ourselves. However, such refactored code is far from what we want, because it
 completely the structure and style of Powell's code except for the format. Extensive modifications
 are needed to reorganize the code.
 To maintain the faithfulness quality of our implementation, intensive tests are conducted
-after every tiny modification. The tests are automated with the help of
+after every tiny modification, the test problems coming from the [CUTEst set](https://github.com/ralna/CUTEst).
+The tests are automated with the help of
 [GitHub Actions](https://en.wikipedia.org/wiki/Explorative_strategies). As of July 2022, more than 20,000
 "workflows" have been run by GitHub Actions
 (see https://github.com/zequipe/gitpersonal/actions and https://github.com/zequipe/pdfo_ref/actions).
