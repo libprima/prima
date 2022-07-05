@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, May 06, 2022 AM11:36:50
+! Last Modified: Tuesday, July 05, 2022 PM01:05:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -76,8 +76,7 @@ end if
 if (present(mindim)) then
     mindim_loc = mindim
 else
-    !mindim_loc = MINDIM_DFT
-    mindim_loc = max(2_IK, MINDIM_DFT)  ! As of 20220503, UOBYQA does not handle 1D problems.
+    mindim_loc = MINDIM_DFT
 end if
 
 if (present(maxdim)) then
