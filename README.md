@@ -13,14 +13,14 @@ matrix-vector procedures instead of loops whenever possible.
 This is not a trivial mission due to the delicacy of Powell's algorithms and the unique style of his code.
 We started The Fortran code by refactoring Powell's code into the free form via a small
 [MATLAB tool](https://github.com/zequipe/pdfo_ref/blob/master/matlab/setup_tools/freeform.m) written
-by ourselves. However, such refactored code is far from what we want, because it will inherit
+by ourselves. However, such refactored code is far from what we want, because it inherits
 completely the structure and style of Powell's code except for the format. Extensive modifications
 are needed to reorganize the code.
 To maintain the faithfulness quality of our implementation, intensive tests are conducted each
-every tiny modification. The tests are automated with the help of
+after every tiny modification. The tests are automated with the help of
 [GitHub Actions](https://en.wikipedia.org/wiki/Explorative_strategies). As of July 2022, more than 20,000
-`workflows` have been run by GitHub Actions
-(see [https://github.com/zequipe/gitpersonal/actions] and [https://github.com/zequipe/pdfo_ref/actions]).
+"workflows" have been run by GitHub Actions
+(see https://github.com/zequipe/gitpersonal/actions and https://github.com/zequipe/pdfo_ref/actions).
 Normally, each workflow consists of more than 5 tests
 that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum is
 6 hours, after which the workflow will be canceled automatically). In other words, our
