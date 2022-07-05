@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 02, 2022 AM08:03:59
+! Last Modified: Tuesday, July 05, 2022 AM10:04:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -308,11 +308,6 @@ else
     honour_x0_loc = (.not. has_rhobeg)
 end if
 
-write (17, *) xl_loc
-write (17, *) xu_loc
-write (17, *) rhobeg
-write (17, *) x
-write (17, *) '---'
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
     & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
@@ -387,12 +382,10 @@ do j = 1, n
     !    end if
     !    return
     !end if
-    write (17, *) '>', j, x(j)
     jsl = isl + j - 1
     jsu = jsl + n
     w(jsl) = xl_loc(j) - x(j)
     w(jsu) = xu_loc(j) - x(j)
-    write (17, *) 'wjslu', w(jsl), w(jsu)
     !if (w(jsl) >= -rhobeg_loc) then
     if (x(j) < xl(j) + rhobeg_loc) then
         if (w(jsl) >= ZERO) then
@@ -420,13 +413,8 @@ do j = 1, n
     end if
     if (w(jsl) < 0) w(jsl) = min(w(jsl), -rhobeg)
     if (w(jsu) > 0) w(jsu) = max(w(jsu), rhobeg)
-    write (17, *) '<', j, x(j)
 end do
 
-write (17, *) rhobeg
-write (17, *) x
-write (17, *) w(isl:isl + n - 1)
-write (17, *) w(isu:isu + n - 1)
 
 !     Make the call of BOBYQB.
 !

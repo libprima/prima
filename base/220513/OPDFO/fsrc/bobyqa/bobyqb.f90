@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 29, 2022 PM08:42:57
+! Last Modified: Tuesday, July 05, 2022 AM11:26:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -245,6 +245,7 @@ end if
 ! behavior of the code, including uninitialized indices.
 !
 !   60 CALL TRSBOX (N,NPT,XPT,XOPT,GOPT,HQ,PQ,SL,SU,DELTA,XNEW,D,
+
 60 do i = 1, n
     if (gopt(i) /= gopt(i)) then
         info = -3
@@ -602,6 +603,7 @@ do j = 1, nptm
 end do
 call geostep(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, &
 & knew, adelt, xnew, xalt, cauchy, w, w(np), w(ndim + 1))
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 alpha = sum(zmat(knew, :)**2)
 do i = 1, n
