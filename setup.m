@@ -41,23 +41,6 @@ function setup(varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can be called directly by users)
 %
-% Remarks
-%
-% 1. Remarks on the directory mexdir.
-% Functions and MEX files in the directory mexdir are
-% automatically available to functions in the directory interfaces, and
-% to scripts called by the functions that reside in interfaces. They are
-% not available to other functions/scripts unless mexdir is
-% added to the search path.
-%
-% 2. Remarks on the 'files_with_wildcard' function.
-% MATLAB R2015b does not handle wildcard (*) properly. For example, if
-% we would like to removed all the .mod files under a directory specified
-% by dirname, then the following would workd for MATLAB later than R2016a:
-% delete(fullfile(dirname, '*.mod'));
-% However, MATLAB R2015b would complain that it cannot find '*.mod'.
-% The 'files_with_wildcard' function provides a workaround.
-%
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
