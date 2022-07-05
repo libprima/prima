@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, May 07, 2022 PM12:36:28
+! Last Modified: Tuesday, July 05, 2022 AM11:08:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -451,6 +451,7 @@ if (is_nan(abs(sum(x)))) then
     info = NAN_INF_X
     goto 720
 end if
+
 
 call evaluate(calfun, x, f)
 call savehist(nf, x, xhist, f, fhist)

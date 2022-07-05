@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 30, 2022 AM01:52:04
+! Last Modified: Tuesday, July 05, 2022 AM11:25:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -501,6 +501,8 @@ end if
 !     XOPT+D, giving careful attention to the bounds.
 !
 if (sdec > 0.01_RP * qred) goto 120
+
+
 190 dsq = ZERO
 do i = 1, n
     xnew(i) = max(min(xopt(i) + d(i), su(i)), sl(i))

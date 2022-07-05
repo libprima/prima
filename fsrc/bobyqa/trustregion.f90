@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 21, 2022 AM09:35:30
+! Last Modified: Tuesday, July 05, 2022 AM11:27:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -319,7 +319,7 @@ end do
 
 ! In Powell's code, MAXITER is essentially infinity; the loop will exit when NACT >= N - 1 or the
 ! procedure cannot significantly reduce the quadratic model. We impose an explicit but large bound
-! on the number of iterations as a safeguard; in our tests, this bound is never reached.
+! on the number of iterations as a safeguard.
 if (twod_search) then
     crvmin = ZERO
     maxiter = 10_IK * (n - nact)
