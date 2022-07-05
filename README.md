@@ -16,7 +16,7 @@ We started The Fortran code by refactoring Powell's code into the free form via 
 by ourselves. However, such refactored code is far from what we want, because it inherits
 completely the structure and style of Powell's code except for the format. Extensive modifications
 are needed to reorganize the code.
-To maintain the faithfulness quality of our implementation, intensive tests are conducted each
+To maintain the faithfulness quality of our implementation, intensive tests are conducted
 after every tiny modification. The tests are automated with the help of
 [GitHub Actions](https://en.wikipedia.org/wiki/Explorative_strategies). As of July 2022, more than 20,000
 "workflows" have been run by GitHub Actions
