@@ -1,0 +1,70 @@
+name: Test Absoft for the finished solvers
+
+on:
+  # Trigger the workflow on push or pull request
+  # push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 2 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+jobs:
+  # check_date:
+  #   runs-on: ubuntu-latest
+  #   name: Check latest commit
+  #   outputs:
+  #     has_recent_commit: ${{ steps.has_recent_commit.outputs.has_recent_commit }}
+
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: print latest_commit
+  #       run: echo ${{ github.sha }}
+  #     - id: has_recent_commit
+  #       continue-on-error: true
+  #       name: check whether the last commit is sufficiently recent
+  #       if: ${{ github.event_name == 'schedule' }}
+  #       run: if [[ -n $(git rev-list --after="6 hours" ${{ github.sha }}) ]] ; then echo "::set-output name=has_recent_commit::true"; fi
+
+
+  test:
+    name: Run Absoft tests
+    #needs: check_date
+    #if: ${{ github.event_name != 'schedule' || needs.check_date.outputs.has_recent_commit == 'true' }}
+    runs-on: [self-hosted, absoft]
+    strategy:
+      fail-fast: false
+      matrix:
+          #ikind: [i2, i8]  # [i2, i4, i8] fails frequently due to unavailability of license servers.
+        ikind: [i2]  # Absoft 22.02 is buggy with i8
+        solver: [newuoa, cobyla]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set environment variables
+        run: |
+          TEST_DIR=/tmp/gittest_"$(date +%s)"_"$((RANDOM*RANDOM))"  # Needed in the Makefiles
+          echo "TEST_DIR=$TEST_DIR" >> $GITHUB_ENV  # Make the environment variable available in subsequent steps
+          echo "$TEST_DIR"
+
+      - name: Conduct the test
+        run: |
+          LOCAL="$HOME/local"
+          AFDIR="$(find "$LOCAL" -maxdepth 2 -name "absoft[0-9]*" -type d -print | sort | tail -n 1)"
+          source "$AFDIR"/bin/absvars.sh
+          export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
+          ROOT=$(realpath ./)
+          cd $ROOT/fsrc/tests && make atest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd $ROOT/fsrc/examples/${{ matrix.solver }} && make atest
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ env.TEST_DIR }}/neupdfo/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+
+      - name: Remove the test data
+        run:
+          rm -rf ${{ env.TEST_DIR }}
