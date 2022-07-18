@@ -16,16 +16,16 @@ We started The Fortran code by refactoring Powell's code into the free form via 
 by ourselves. However, such refactored code is far from what we want, because it inherits
 completely the structure and style of Powell's code except for the format. Extensive modifications
 are needed to reorganize the code.
-To maintain the faithfulness quality of our implementation, intensive tests are conducted
+To maintain the faithfulness and quality of our implementation, intensive tests are conducted
 after every tiny modification, the test problems coming from the [CUTEst set](https://github.com/ralna/CUTEst).
 The tests are automated with the help of
 [GitHub Actions](https://en.wikipedia.org/wiki/Explorative_strategies). As of July 2022, more than 20,000
 "workflows" have been run by GitHub Actions
 (see https://github.com/zequipe/gitpersonal/actions and https://github.com/zequipe/pdfo_ref/actions).
-Normally, each workflow consists of more than 5 **randomized** tests
+Normally, each workflow consists of \~ 5 **randomized** tests
 that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum is
 6 hours, after which the workflow will be canceled automatically). In other words, our
-implementation has been tested by  \~ $10^5$ hours (or \~ $10$ years) of computation.
+implementation has been tested by  \~ $10^5$ hours (or \~ $10$ years) of randomized computation.
 
 
 This package is part of a research project funded by the [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and the [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU). It is still under intensive development, and
