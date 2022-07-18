@@ -22,7 +22,7 @@ The tests are automated with the help of
 [GitHub Actions](https://en.wikipedia.org/wiki/Explorative_strategies). As of July 2022, more than 20,000
 "workflows" have been run by GitHub Actions
 (see https://github.com/zequipe/gitpersonal/actions and https://github.com/zequipe/pdfo_ref/actions).
-Normally, each workflow consists of more than 5 tests
+Normally, each workflow consists of more than 5 **randomized** tests
 that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum is
 6 hours, after which the workflow will be canceled automatically). In other words, our
 implementation has been tested by  \~ $10^5$ hours (or \~ $10$ years) of computation.

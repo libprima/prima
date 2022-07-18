@@ -120,11 +120,11 @@ else
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}];  % More than 10 minutes to solve.
     case {'lincoa', 'lincoan'}
-        blacklist = [blacklist, {'LSNNODOC', 'HS55'}]; % possible reason for a segfault; should test it after the modernization.
+        blacklist = [blacklist, {'LSNNODOC', 'HS55', 'HEART6'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
         blacklist = [blacklist, {'CHEBYQAD'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
-        blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2'}]; % Too long to solve
+        blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'SPANHYD', 'SPANHYD', 'SPANHYD'}]; % Too long to solve
         blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1', 'HIMMELBI', 'SIM2BQP'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails
@@ -133,7 +133,7 @@ else
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
         end
-        blacklist = [blacklist, {'PRODPL0', 'DEGENLPB', 'AVION2'}]; % Takes long to solve
+        blacklist = [blacklist, {'PRODPL0', 'DEGENLPB', 'ANTWERP', 'SIPOW3', 'AVION2', 'HIMMELBI', 'HS55'}]; % Takes long to solve
         blacklist=[blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Takes more than 5 min to solve
         blacklist = [blacklist, {'KISSING2', 'LUKSAN16', 'QPCBLEND', 'VANDERM4'}]; % Takes more than 20 sec to solve
         %blacklist = [blacklist, {'DUAL2', 'FEEDLOC', 'GROUPING', 'HYDCAR20', 'LINSPANH', 'LUKSAN11', ...
