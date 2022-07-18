@@ -1,7 +1,7 @@
 This is the reference implementation of Powell's derivative-free optimization solvers, namely COBYLA,
 UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 
-Coded by Zaikun ZHANG (www.zhangzk.net) based on the following paper and Powell's code, with
+Coded by Zaikun ZHANG (www.zhangzk.net) based on the following papers and Powell's code, with
 modernization and improvements.
 
 [1] M. J. D. Powell, A direct search optimization method that models the objective and constraint
