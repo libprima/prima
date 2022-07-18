@@ -129,7 +129,7 @@ else
         blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1', 'SIM2BQP'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails
-        blacklist = [blacklist, {'SIPOW3'}]; % Takes too long
+        blacklist = [blacklist, {'SIPOW3', 'HS55'}]; % Takes too long
         blacklist = [blacklist, {'MINMAXRB', 'MAKELA1'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that

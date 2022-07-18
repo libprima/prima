@@ -67,6 +67,17 @@ cd('base/220513/matlab/tests'); options = []; options.yw = 222316; verify('bobyq
 %%%%%%
 Fix: blacklist 'HS4'
 
+2. bobyqaN returns an fx that does not match x (Should be tested again when the modernization finishes).
+Version: base 220513
+Date: 20220718
+YW: 222902
+Parallel of sequential: Parallel
+Reproduce:
+%%%%%%
+cd('base/220513/matlab/tests'); options = []; options.yw = 222902; verify('bobyqa', 'PALMER4A', options);  % Cannot reproduce locally
+%%%%%%
+Fix: blacklist 'PALMER4A'
+
 
 
 - COBYLA
