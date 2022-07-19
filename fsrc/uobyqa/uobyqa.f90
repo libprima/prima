@@ -13,7 +13,7 @@ module uobyqa_mod
 ! It tackles the problem by a trust region method that forms quadratic models by interpolation.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on the UOBYQA paper and Powell's code, with
-! modernization and improvements.
+! modernization, bug fixes, and improvements.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !

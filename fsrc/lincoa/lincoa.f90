@@ -21,7 +21,7 @@ module lincoa_mod
 ! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
 ! Math. Program. Comput., 7:237--267, 2015
 !
-! and Powell's code, with modernization and improvements.
+! and Powell's code, with modernization, bug fixes, and improvements.
 !
 ! Powell did not publish a paper to introduce the algorithm. The above paper does not describe
 ! LINCOA but discusses how to solve linearly-constrained trust-region subproblems.

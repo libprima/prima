@@ -5,7 +5,7 @@ In Large-Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma, pages 255--
 New York, US, 2006
 
 Coded by Zaikun ZHANG (www.zhangzk.net) based on the above-mentioned paper and Powell's code, with
-modernization and improvements.
+modernization, bug fixes, and improvements.
 
 Due to the dependency among the modules, the files must be compiled in the order indicated in
 ffiles.txt. Before that, one must compile the Fotran files in the directory "common" according

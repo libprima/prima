@@ -25,13 +25,13 @@ module cobyla_mod
 ! derived from the phrase Constrained Optimization BY Linear Approximations.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on the COBYLA paper and Powell's code, with
-! modernization and improvements.
+! modernization, bug fixes, and improvements.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, July 19, 2022 PM01:53:45
+! Last Modified: Tuesday, July 19, 2022 PM10:03:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -61,7 +61,7 @@ subroutine cobyla(calcfc, m, x, f, &
 ! See examples/cobyla_exmp.f90 for a concrete example.
 !
 ! A detailed introduction to the arguments is as follows.
-! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory name
+! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory named
 ! "common". By default, RP = kind(0.0D0) and IK = kind(0), with REAL(RP) being the double-precision
 ! real, and INTEGER(IK) being the default integer. For ADVANCED USERS, RP and IK can be defined by
 ! setting __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if unsure.

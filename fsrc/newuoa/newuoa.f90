@@ -16,13 +16,13 @@ module newuoa_mod
 ! zero matrix.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on the NEWUOA paper and Powell's code, with
-! modernization and improvements.
+! modernization, bug fixes, and improvements.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, July 19, 2022 PM01:39:46
+! Last Modified: Tuesday, July 19, 2022 PM10:04:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -50,7 +50,7 @@ subroutine newuoa(calfun, x, f, &
 ! See examples/newuoa_exmp.f90 for a concrete example.
 !
 ! A detailed introduction to the arguments is as follows.
-! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory name
+! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory named
 ! "common". By default, RP = kind(0.0D0) and IK = kind(0), with REAL(RP) being the double-precision
 ! real, and INTEGER(IK) being the default integer. For ADVANCED USERS, RP and IK can be defined by
 ! setting __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if unsure.
