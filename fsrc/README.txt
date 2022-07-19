@@ -2,7 +2,7 @@ This is the reference implementation of Powell's derivative-free optimization so
 UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 
 Coded by Zaikun ZHANG (www.zhangzk.net) based on the following papers and Powell's code, with
-modernization and improvements.
+modernization, bug fixes, and improvements.
 
 [1] M. J. D. Powell, A direct search optimization method that models the objective and constraint
 functions by linear interpolation, In Advances in Optimization and Numerical Analysis, eds. S. Gomez

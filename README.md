@@ -3,7 +3,7 @@ namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 
 The goal is to implement these solvers in modern languages --- first [**modern** Fortran](https://fortran-lang.org)
 (F2003 or later), and then MATLAB, Python, and probably Julia and R. It will be a faithful implementation, in the
-sense that the new code will be mathematically equivalent to Powell’s, except for the bug fixing and
+sense that the new code will be mathematically equivalent to Powell’s, except for the bug fixes and
 improvements that we make intentionally.
 
 The focus is to implement Powell’s solvers in a modularized and structured way so that they are
