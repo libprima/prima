@@ -22,7 +22,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, June 03, 2022 PM06:31:24
+! Last Modified: Tuesday, July 19, 2022 PM01:39:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -38,8 +38,8 @@ subroutine newuoa(calfun, x, f, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, maxhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
-! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,
-! it will be assigned the default value detailed below. For instance, we may invoke the solver by
+! neglect them unless you are familiar with the algorithm.  Any unspecified optional input will take
+! the default value detailed below. For instance, we may invoke the solver by
 !
 ! call newuoa(calfun, x, f)
 !

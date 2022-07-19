@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, June 15, 2022 AM01:20:18
+! Last Modified: Tuesday, July 19, 2022 PM01:53:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -48,15 +48,15 @@ subroutine cobyla(calcfc, m, x, f, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, chist, conhist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
-! Among all the arguments, only CALCFC, X, and F are obligatory. The others are OPTIONAL and you can
-! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,
-! it will be assigned the default value detailed below. For instance, we may invoke the solver by
+! Among all the arguments, only CALCFC, M, X, and F are obligatory. The others are OPTIONAL and you
+! can neglect them unless you are familiar with the algorithm. Any unspecified optional input will
+! take the default value detailed below. For instance, we may invoke the solver by
 !
-! call cobyla(calcfc, x, f)
+! call cobyla(calcfc, m, x, f)
 !
 ! or
 !
-! call cobyla(calcfc, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! call cobyla(calcfc, x, m, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! See examples/cobyla_exmp.f90 for a concrete example.
 !
@@ -84,6 +84,11 @@ subroutine cobyla(calcfc, m, x, f, &
 ! M
 !   Input, INTEGER(IK) scalar.
 !   M must be set to the number of constraints, namely the size (length) of CONSTR(X).
+!   N.B.:
+!   1. M must be specified correctly, or the program will crash!!!
+!   2. Why don't we define M as optional and default it to 0 when it is absent? This is because
+!   we need to allocate memory for CONSTR_LOC according to M. To ensure that the size of CONSTR_LOC
+!   is correct,  we requiring the user to specify M explicitly.
 !
 ! X
 !   Input and output, REAL(RP) vector.
@@ -315,7 +320,7 @@ if (present(constr0)) then
     end if
 end if
 
-! Allocate memory for CONSTR_LOC, since M is now available.
+! Allocate memory for CONSTR_LOC.
 call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 
 ! If the user provides the function & constraint value at X0, then set up [F, CONSTR_LOC] to them.
