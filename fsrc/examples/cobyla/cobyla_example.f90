@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, June 23, 2022 AM11:46:09
+! Last Modified: Tuesday, July 19, 2022 PM01:54:22
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -108,7 +108,7 @@ integer :: m, i
 
 ! The following lines illustrates how to call the solver to solve the Chebyquad problem.
 x_chebyquad = [(real(i, kind(0.0D0)) / real(n_chebyquad + 1, kind(0.0D0)), i=1, n_chebyquad)] ! Starting point
-m = 0  ! Dimension of constraints defined by CALCFC_CHEBYQUAD (there is none).
+m = 0  ! Dimension of constraints. M must the specified correctly, or the program will crash!
 call cobyla(calcfc_chebyquad, m, x_chebyquad, f)  ! This call will not print anything.
 
 ! In addition to the compulsory arguments, the following illustration specifies also CONSTR, RHOBEG,
@@ -119,7 +119,7 @@ call cobyla(calcfc_chebyquad, m, x_chebyquad, f, rhobeg=0.2D0 * x_chebyquad(1), 
 
 ! The following lines illustrates how to call the solver to solve the Hexagon problem.
 x_hexagon = 2.0D0  ! Starting point.
-m = 14  ! Dimension of constraints defined by CALCFC_HEXAGON.
+m = 14  ! Dimension of constraints. M must the specified correctly, or the program will crash!
 call cobyla(calcfc_hexagon, m, x_hexagon, f)  ! This call will not print anything.
 
 ! In addition to the compulsory arguments, the following illustration specifies also CONSTR, RHOBEG,

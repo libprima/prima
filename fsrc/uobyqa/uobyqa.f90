@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, June 03, 2022 PM06:30:09
+! Last Modified: Tuesday, July 19, 2022 PM01:38:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,8 +35,8 @@ subroutine uobyqa(calfun, x, f, &
     & xhist, fhist, maxhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
-! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,
-! it will be assigned the default value detailed below. For instance, we may invoke the solver by
+! neglect them unless you are familiar with the algorithm.  Any unspecified optional input will take
+! the default value detailed below. For instance, we may invoke the solver by
 !
 ! call uobyqa(calfun, x, f)
 !
