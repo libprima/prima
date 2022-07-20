@@ -17,22 +17,25 @@ The focus is to implement Powell’s solvers in a modularized and structured way
 **readable**, **maintainable**, and **extendable**. The new code will have no GOTO (of course) and will use
 matrix-vector procedures instead of loops whenever possible.
 
-This is not a trivial mission due to the delicacy of Powell's algorithms and the unique style of his code.
+The mission is nontrivial due to the delicacy of Powell's algorithms and the unique style of his code.
 We started The Fortran code by refactoring Powell's code into the free form via a small
 [MATLAB tool](https://github.com/zequipe/pdfo_ref/blob/master/matlab/setup_tools/freeform.m) written
 by ourselves. However, such refactored code is far from what we want, because it inherits
 completely the structure and style of Powell's code except for the format. Extensive modifications
 are needed to reorganize (indeed, to **rewrite**) the code.
 To maintain the faithfulness and quality of our implementation, intensive tests are conducted
-after every tiny modification, the test problems coming from the [CUTEst set](https://github.com/ralna/CUTEst).
-The tests are automated with the help of
-[GitHub Actions](https://en.wikipedia.org/wiki/Explorative_strategies). As of July 2022, more than 20,000
-"workflows" have been run by GitHub Actions
+after each and every tiny modification, the test problems coming from the
+[CUTEst set](https://github.com/ralna/CUTEst). The tests verify not only the faithfulness of our
+implementation, but also check that the solvers behave properly even if they are called with
+improper inputs or encounter failures of function evaluations.
+
+All the tests are automated by
+[GitHub Actions](https://en.wikipedia.org/wiki/Explorative_strategies). As of July 2022, more than
+20,000 "workflows" have been successfully run by GitHub Actions
 (see https://github.com/zequipe/gitpersonal/actions and https://github.com/zequipe/pdfo_ref/actions).
 Normally, each workflow consists of \~ 5 **randomized** tests
 that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum is
 6 hours, after which the workflow will be canceled automatically). In other words, our
-implementation has been tested by  \~ $10^5$ hours (or \~ $10$ years) of randomized computation.
-
+implementation has been tested by \~ $10^5$ hours (or \~ $10$ years) of randomized computation.
 
 Dedicated to late Professor [M. J. D. Powell](https://www.zhangzk.net/powell.html) FRS (1936--2015).
