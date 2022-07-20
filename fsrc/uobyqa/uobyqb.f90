@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, July 05, 2022 PM12:18:43
+! Last Modified: Wednesday, July 20, 2022 PM12:39:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -342,13 +342,13 @@ do while (.true.)
     if (improve_geo) then
         geo_step = .false.
         reduce_rho = .false.
-        ! Fnd out if the interpolation points are close enough to the best point so far.
-        ! DISTSQ is updated during the loop.
+        ! Find out if the interpolation points are close enough to the best point so far.
+        ! Note that DISTSQ is updated during the loop, so its value does not always match the name.
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         ! The loop counter K does not appear in the loop body. Its purpose is only to impose an
         ! upper bound on the maximal number of loops.
         do k = 1, npt
-            knew = -1  ! Still needed?
+            !knew = -1  ! Still needed?
             if (all(distsq <= 4.0_RP * rho**2)) then
                 exit
             end if
@@ -376,6 +376,9 @@ do while (.true.)
 
             ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the
             ! modulus of its Lagrange function within the trust region.
+            ! NEWUOA etc uses DELBAR, which is NOT RHO; possible improvement?
+            !!delbar = max(min(TENTH * sqrt(maxval(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2,
+            !& dim=1))), HALF * delta), rho)
             call geostep(g, h, rho, d, vmax)
             if (.not. (max(wmult * vmax, ZERO) < errtol)) then
                 geo_step = (vmax > 0)
