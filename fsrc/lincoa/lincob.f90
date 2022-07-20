@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 28, 2022 PM03:13:27
+! Last Modified: Wednesday, July 20, 2022 PM01:27:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -321,7 +321,7 @@ do while (.true.)
 
     else
         ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
-        delbar = max(TENTH * delta, rho)
+        delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
 
         if (is_nan(sum(abs(bmat(:, knew))))) then  ! Necessary?
             info = NAN_MODEL

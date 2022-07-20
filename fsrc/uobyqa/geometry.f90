@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 27, 2022 PM01:14:40
+! Last Modified: Wednesday, July 20, 2022 PM01:32:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: geostep
 contains
 
 
-subroutine geostep(g, h, rho, d, vmax)
+subroutine geostep(g, h, delbar, d, vmax)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
@@ -32,7 +32,7 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: g(:)  ! G(N)
 real(RP), intent(in) :: h(:, :)  ! H(N, N)
-real(RP), intent(in) :: rho  ! NEWUOA etc uses DELBAR, which is NOT RHO; possible improvement?
+real(RP), intent(in) :: delbar
 
 ! Outputs
 real(RP), intent(out) :: d(:)  ! D(N)
@@ -54,7 +54,7 @@ n = int(size(g), kind(n))
 
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(rho > 0, 'RHO > 0', srname)
+    call assert(delbar > 0, 'DELBAR > 0', srname)
     call assert(size(h, 1) == n .and. issymmetric(h), 'H is n-by-n and symmetric', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
 end if
@@ -64,12 +64,12 @@ end if
 !     G is the gradient of Q at the origin.
 !     H is the symmetric Hessian matrix of Q. Only the upper triangular and
 !       diagonal parts need be set.
-!     RHO is the trust region radius, and has to be positive.
+!     DELBAR is the trust region radius, and has to be positive.
 !     D will be set to the calculated vector of variables.
 !     The array V will be used for working space.
 !     VMAX will be set to |Q(0)-Q(D)|.
 !
-!     Calculating the D that maximizes |Q(0)-Q(D)| subject to ||D|| .LEQ. RHO
+!     Calculating the D that maximizes |Q(0)-Q(D)| subject to ||D|| .LEQ. DELBAR
 !     requires of order N**3 operations, but sometimes it is adequate if
 !     |Q(0)-Q(D)| is within about 0.9 of its greatest possible value. This
 !     subroutine provides such a solution in only of order N**2 operations,
@@ -127,14 +127,14 @@ end if
 v = d - (gd / gg) * g
 vv = sum(v**2)
 if (gd * dhd < 0) then
-    scaling = -rho / sqrt(dd)
+    scaling = -delbar / sqrt(dd)
 else
-    scaling = rho / sqrt(dd)
+    scaling = delbar / sqrt(dd)
 end if
 d = scaling * d
 gnorm = sqrt(gg)
 
-if (.not. (gnorm * dd > 0.5E-2_RP * rho * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
+if (.not. (gnorm * dd > 0.5E-2_RP * delbar * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
     vmax = abs(scaling * (gd + HALF * scaling * dhd))
     return
 end if
@@ -173,39 +173,39 @@ v = tempc * v - tempd * g
 
 ! The final D is a multiple of the current D, V, D + V or D - V. We make the choice from these
 ! possibilities that is optimal.
-dlin = wcos * gnorm / rho
-vlin = -wsin * gnorm / rho
+dlin = wcos * gnorm / delbar
+vlin = -wsin * gnorm / delbar
 tempa = abs(dlin) + HALF * abs(vmu + vhv)
 tempb = abs(vlin) + HALF * abs(ghg - vmu)
 tempc = sqrt(HALF) * (abs(dlin) + abs(vlin)) + QUART * abs(ghg + vhv)
 if (tempa >= tempb .and. tempa >= tempc) then
     if (dlin * (vmu + vhv) < 0) then
-        tempd = -rho
+        tempd = -delbar
     else
-        tempd = rho
+        tempd = delbar
     end if
     tempv = ZERO
 else if (tempb >= tempc) then
     tempd = ZERO
     if (vlin * (ghg - vmu) < 0) then
-        tempv = -rho
+        tempv = -delbar
     else
-        tempv = rho
+        tempv = delbar
     end if
 else
     if (dlin * (ghg + vhv) < 0) then
-        tempd = -sqrt(HALF) * rho
+        tempd = -sqrt(HALF) * delbar
     else
-        tempd = sqrt(HALF) * rho
+        tempd = sqrt(HALF) * delbar
     end if
     if (vlin * (ghg + vhv) < 0) then
-        tempv = -sqrt(HALF) * rho
+        tempv = -sqrt(HALF) * delbar
     else
-        tempv = sqrt(HALF) * rho
+        tempv = sqrt(HALF) * delbar
     end if
 end if
 d = tempd * d + tempv * v
-vmax = rho * rho * max(tempa, tempb, tempc)
+vmax = delbar * delbar * max(tempa, tempb, tempc)
 
 end subroutine geostep
 
