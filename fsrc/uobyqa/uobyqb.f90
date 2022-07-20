@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 20, 2022 PM01:42:22
+! Last Modified: Wednesday, July 20, 2022 PM01:57:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -381,14 +381,16 @@ do while (.true.)
             ! improve the performance slightly according to a test on 20220720.
             delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
             call geostep(g, h, delbar, d, vmax)
-            if (.not. (max(wmult * vmax, ZERO) < errtol)) then
+            ! If MAX(WMULT * VMAX, ZERO) >= ERRTOL, then D will be accepted as the geometry step
+            ! (in case VMAX > 0) or RHO will be reduced; otherwise, we try another KNEW.
+            if (max(wmult * vmax, ZERO) >= errtol) then
                 geo_step = (vmax > 0)
                 reduce_rho = (.not. geo_step)
                 exit
             end if
         end do
 
-        reduce_rho = (reduce_rho .or. .not. dnorm > rho)
+        reduce_rho = (reduce_rho .or. dnorm <= rho)
         if (geo_step .or. .not. reduce_rho) cycle
     end if
 

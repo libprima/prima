@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 20, 2022 PM01:35:39
+! Last Modified: Wednesday, July 20, 2022 PM01:51:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -381,14 +381,16 @@ do while (.true.)
                 & dim=1))), HALF * delta), rho)
             call geostep(g, h, delbar, d, vmax)
             !call geostep(g, h, rho, d, vmax)
-            if (.not. (max(wmult * vmax, ZERO) < errtol)) then
+            !if (.not. (max(wmult * vmax, ZERO) < errtol)) then
+            if ((max(wmult * vmax, ZERO) >= errtol)) then
                 geo_step = (vmax > 0)
                 reduce_rho = (.not. geo_step)
                 exit
             end if
         end do
 
-        reduce_rho = (reduce_rho .or. .not. dnorm > rho)
+        !reduce_rho = (reduce_rho .or. .not. dnorm > rho)
+        reduce_rho = (reduce_rho .or. dnorm <= rho)
         if (geo_step .or. .not. reduce_rho) cycle
     end if
 
