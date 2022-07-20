@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 20, 2022 PM04:55:34
+! Last Modified: Wednesday, July 20, 2022 PM05:22:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -545,7 +545,9 @@ do while (.true.)
             ! Zaikun 20220720: On the top of page 29 of the BOBYQA paper, Powell wrote: If the k-th
             ! iteration is of "alternative" type, then the (k+1)-th iteration always calculates a
             ! "trust region" step with Delta_{k+1} = Delta_k and rho_{k+1} = rho_k. This is true for
-            ! rho, but isn't it a typo for Delta?
+            ! rho, but isn't it a typo for Delta? NO. It simply means that the algorithm does not
+            ! update Delta after taking a geometry step. In the BOBYQA paper, the iteration counter
+            ! k is increase by 1 both after a trust region step and after a geometry step.
 
             ! Recalculate KNEW and DENOM if the new F is less than FOPT.
             if (f < fopt) then
