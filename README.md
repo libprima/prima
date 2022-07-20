@@ -26,7 +26,7 @@ are needed to reorganize (indeed, to **rewrite**) the code.
 To maintain the faithfulness and quality of our implementation, intensive tests are conducted
 after each and every tiny modification, the test problems coming from the
 [CUTEst set](https://github.com/ralna/CUTEst). The tests verify not only the faithfulness of our
-implementation, but also check that the solvers behave properly even if they are called with
+implementation, but also check that the solvers behave properly even if they are invoked with
 improper inputs or encounter failures of function evaluations.
 
 All the tests are automated by
