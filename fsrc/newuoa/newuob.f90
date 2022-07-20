@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, June 24, 2022 AM01:10:48
+! Last Modified: Wednesday, July 20, 2022 PM04:59:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -214,7 +214,7 @@ delta = rho
 moderrsav = HUGENUM
 dnormsav = HUGENUM
 itest = 0_IK
-ratio = -ONE 
+ratio = -ONE
 knew_tr = 0_IK
 shortd = .false.
 
@@ -380,8 +380,8 @@ do tr = 1, maxtr
     ! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
     ! for the "closeness" and SHORTD). REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper.
     ! N.B.:
-    ! 0. KNEW_TR == 0 implies RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definition
-    ! of BAD_TRSTEP. Nevertheless, we keep it for robustness.
+    ! 0. KNEW_TR == 0 implies RATIO <= 0 unless SETDROP_TR is buggy. Therefore, we can remove
+    ! KNEW_TR == 0 from the definition of BAD_TRSTEP. Nevertheless, we keep it for robustness.
     ! 1. The definition of REDUCE_RHO_2 is equivalent to the following:
     ! REDUCE_RHO_2 = (.NOT. IMPROVE_GEO) .AND. (MAX(DELTA, DNORM) <= RHO) .AND. BAD_TRSTEP
     ! 2. The definition of REDUCE_RHO_2 can be moved downward below IF (IMPROVE_GEO) ... END IF.
@@ -396,11 +396,9 @@ do tr = 1, maxtr
     ! above. Unifying them to <= 0 makes little difference to the performance, sometimes worsening,
     ! sometimes improving, but never substantially; unifying them to 0.1 makes little difference to
     ! the performance either.
-    ! Update 20220204: In the current version, unifying the two thresholds to 0 seems to worsen the
-    ! performance on noise-free CUTEst problems with at most 200 variables; unifying them to 0.1
+    ! 2. Update 20220204: In the current version, unifying the two thresholds to 0 seems to worsen
+    ! the performance on noise-free CUTEst problems with at most 200 variables; unifying them to 0.1
     ! worsens it a bit as well.
-    ! 2. KNEW_TR == 0 implies RATIO <= 0, and hence BAD_TRSTEP = TRUE. Otherwise, SETDROP_TR is buggy.
-    ! Indeed, we can remove KNEW_TR == 0 from the definition of BAD_TRSTEP. It is kept for robustness.
 
     !----------------------------------------------------------------------------------------------!
     ! N.B.: NEWUOA never sets IMPROVE_GEO and (REDUCE_RHO_1 .OR. REDUCE_RHO_2) to TRUE

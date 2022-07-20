@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 20, 2022 PM01:30:15
+! Last Modified: Wednesday, July 20, 2022 PM04:55:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -542,6 +542,10 @@ do while (.true.)
                 delta = max(HALF * delta, dnorm + dnorm)
             end if
             if (delta <= 1.5_RP * rho) delta = rho
+            ! Zaikun 20220720: On the top of page 29 of the BOBYQA paper, Powell wrote: If the k-th
+            ! iteration is of "alternative" type, then the (k+1)-th iteration always calculates a
+            ! "trust region" step with Delta_{k+1} = Delta_k and rho_{k+1} = rho_k. This is true for
+            ! rho, but isn't it a typo for Delta?
 
             ! Recalculate KNEW and DENOM if the new F is less than FOPT.
             if (f < fopt) then
