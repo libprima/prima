@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 20, 2022 PM12:44:29
+! Last Modified: Wednesday, July 20, 2022 PM01:42:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -344,7 +344,6 @@ do while (.true.)
         geo_step = .false.
         reduce_rho = .false.
         ! Find out if the interpolation points are close enough to the best point so far.
-        ! Note that DISTSQ is updated during the loop, so its value does not always match the name.
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         dsqtest = distsq
         ! The loop counter K does not appear in the loop body. Its purpose is only to impose an
@@ -377,10 +376,11 @@ do while (.true.)
 
             ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the
             ! modulus of its Lagrange function within the trust region.
-            ! NEWUOA etc uses DELBAR, which is NOT RHO; possible improvement?
-            !!delbar = max(min(TENTH * sqrt(maxval(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2,
-            !& dim=1))), HALF * delta), rho)
-            call geostep(g, h, rho, d, vmax)
+            ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
+            ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
+            ! improve the performance slightly according to a test on 20220720.
+            delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
+            call geostep(g, h, delbar, d, vmax)
             if (.not. (max(wmult * vmax, ZERO) < errtol)) then
                 geo_step = (vmax > 0)
                 reduce_rho = (.not. geo_step)

@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 16, 2022 AM12:42:54
+! Last Modified: Wednesday, July 20, 2022 PM01:35:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -111,7 +111,7 @@ real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
-real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), weight(size(pl, 2)), score(size(pl, 2)),    &
+real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), delbar, weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, errtol, estim, crvmin, fopt,&
 &        fsave, ratio, rho, sixthm, summ, &
 &        trtol, vmax,  &
@@ -377,7 +377,10 @@ do while (.true.)
 
             ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the
             ! modulus of its Lagrange function within the trust region.
-            call geostep(g, h, rho, d, vmax)
+            delbar = max(min(TENTH * sqrt(maxval(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, &
+                & dim=1))), HALF * delta), rho)
+            call geostep(g, h, delbar, d, vmax)
+            !call geostep(g, h, rho, d, vmax)
             if (.not. (max(wmult * vmax, ZERO) < errtol)) then
                 geo_step = (vmax > 0)
                 reduce_rho = (.not. geo_step)
