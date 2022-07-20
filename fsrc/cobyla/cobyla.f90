@@ -79,7 +79,8 @@ subroutine cobyla(calcfc, m, x, f, &
 !    real(RP), intent(out) :: constr(:)
 !    end subroutine calcfc
 !   !-------------------------------------------------------------------------!
-!   Besides, the size of CONSTR must be M, which is the second compulsory argument (see below).
+!   Besides, the subroutine should NOT access CONSTR beyond CONSTR(1:M), where M is the second 
+!   compulsory argument (see below), signifying the number of constraints. 
 !
 ! M
 !   Input, INTEGER(IK) scalar.
