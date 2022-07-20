@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 20, 2022 PM12:39:20
+! Last Modified: Wednesday, July 20, 2022 PM12:44:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,7 +110,8 @@ real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
-real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), weight(size(pl, 2)), score(size(pl, 2)),    &
+real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), dsqtest(size(pl, 2)), delbar, &
+& weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, errtol, estim, crvmin, fopt,&
 &        fsave, ratio, rho, sixthm, summ, &
 &        trtol, vmax,  &
@@ -345,18 +346,18 @@ do while (.true.)
         ! Find out if the interpolation points are close enough to the best point so far.
         ! Note that DISTSQ is updated during the loop, so its value does not always match the name.
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+        dsqtest = distsq
         ! The loop counter K does not appear in the loop body. Its purpose is only to impose an
         ! upper bound on the maximal number of loops.
         do k = 1, npt
-            !knew = -1  ! Still needed?
-            if (all(distsq <= 4.0_RP * rho**2)) then
+            if (all(dsqtest <= 4.0_RP * rho**2)) then
                 exit
             end if
 
             ! If a point is sufficiently far away, then set the gradient and Hessian of its Lagrange
             ! function at the centre of the trust region.
-            knew = int(maxloc(distsq, dim=1), IK)
-            !!MATLAB: [~, knew] = max(distsq(1:npt));
+            knew = int(maxloc(dsqtest, dim=1), IK)
+            !!MATLAB: [~, knew] = max(dsqtest(1:npt));
             g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
             h = vec2smat(pl(n + 1:npt - 1, knew))
             if (is_nan(sum(abs(g)) + sum(abs(h)))) then
@@ -367,9 +368,9 @@ do while (.true.)
 
             ! If ERRTOL is positive, test whether to replace the interpolation point with index KNEW,
             ! using a bound on the maximum modulus of its Lagrange function in the trust region.
-            wmult = sixthm * distsq(knew)**1.5_RP
+            wmult = sixthm * dsqtest(knew)**1.5_RP
             if (errtol > 0) then
-                distsq(knew) = ZERO
+                dsqtest(knew) = ZERO
                 estim = rho * (sqrt(sum(g**2)) + rho * HALF * sqrt(sum(h**2)))
                 if (wmult * estim <= errtol) cycle
             end if
