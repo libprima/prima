@@ -13,15 +13,15 @@ The goal is to implement these solvers in modern languages --- first [**modern**
 sense that the new code will be mathematically equivalent to Powell’s, except for the bug fixes and
 improvements that we make intentionally.
 
-The focus is to implement Powell’s solvers in a modularized and structured way so that they are
-**readable**, **maintainable**, and **extendable**. The new code will have no GOTO (of course) and
-will use matrix-vector procedures instead of loops whenever possible.
+The focus is to implement Powell’s solvers in a **structured** and **modularized** way so that they
+are **readable**, **maintainable**, and **extendable**. The new code will have no GOTO (of course)
+and will use matrix-vector procedures instead of loops whenever possible.
 
 The mission is nontrivial due to the delicacy of Powell's algorithms and the unique style of his code.
 We started the Fortran code by refactoring Powell's code into the free form via a small
 [MATLAB tool](https://github.com/zequipe/pdfo_ref/blob/master/matlab/setup_tools/freeform.m) written
 by ourselves. However, such refactored code is far from what we want, because it inherits
-completely the structure and style of Powell's code except for the format. Extensive modifications
+completely the structure and style of Powell's code except for the layout. Extensive modifications
 are needed to reorganize (indeed, to **rewrite**) the code.
 To maintain the faithfulness and quality of our implementation, intensive tests are conducted
 after each and every tiny modification, the test problems coming from the
