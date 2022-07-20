@@ -22,7 +22,7 @@ We started The Fortran code by refactoring Powell's code into the free form via 
 [MATLAB tool](https://github.com/zequipe/pdfo_ref/blob/master/matlab/setup_tools/freeform.m) written
 by ourselves. However, such refactored code is far from what we want, because it inherits
 completely the structure and style of Powell's code except for the format. Extensive modifications
-are needed to reorganize (if not rewrite) the code.
+are needed to reorganize (indeed, to rewrite) the code.
 To maintain the faithfulness and quality of our implementation, intensive tests are conducted
 after every tiny modification, the test problems coming from the [CUTEst set](https://github.com/ralna/CUTEst).
 The tests are automated with the help of
