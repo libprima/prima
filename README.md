@@ -16,9 +16,10 @@ Dedicated to late Professor [M. J. D. Powell](https://www.zhangzk.net/powell.htm
 
 ### Why
 
-The goal is to implement these solvers in modern languages --- first [**modern** Fortran](https://fortran-lang.org)
-(F2003 or later), and then MATLAB, Python, and probably Julia and R. It will be a faithful implementation, in the
-sense that the new code will be mathematically equivalent to Powell’s, except for the
+The goal is to implement these solvers in modern languages ---
+first [**modern** Fortran](https://fortran-lang.org) (F2003 or later), and then MATLAB, Python, and
+probably Julia and R. It will be a faithful implementation, in the sense that the new code will be
+mathematically equivalent to Powell’s, except for the
 [bug fixes](https://github.com/zequipe/pdfo_ref#bug-fixes) and improvements that we make intentionally.
 
 The focus is to implement Powell’s solvers in a **structured** and **modularized** way so that they
@@ -27,35 +28,35 @@ and will use matrix-vector procedures instead of loops whenever possible.
 
 ### How
 
-The mission is nontrivial due to the delicacy of Powell's algorithms and the unique style of his code.
-We started the Fortran code by refactoring Powell's code into the free form via a small
+The mission is nontrivial due to the delicacy of Powell's algorithms and the unique style of his
+code.  We started the Fortran code by refactoring Powell's code into the free form via a small
 [MATLAB tool](https://github.com/zequipe/pdfo_ref/blob/master/matlab/setup_tools/freeform.m) written
-by ourselves. However, such refactored code is far from what we want, because it inherits
-completely the structure and style of Powell's code except for the layout. Extensive modifications
-are needed to reorganize (indeed, to **rewrite**) the code.
-To maintain the faithfulness and quality of our implementation, intensive tests are conducted
-after each and every tiny modification, the test problems coming from the
-[CUTEst set](https://github.com/ralna/CUTEst). The tests verify not only the faithfulness of our
-implementation, but also check that the solvers behave properly even if they are invoked with
-improper inputs or encounter failures of function evaluations.
+by ourselves. However, such refactored code is far from what we want, because it inherits completely
+the structure and style of Powell's code except for the layout. Extensive modifications are needed
+to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of our
+implementation, intensive tests are conducted after each and every tiny modification, the test
+problems coming from the [CUTEst set](https://github.com/ralna/CUTEst). The tests verify not only
+the faithfulness of our implementation, but also check that the solvers behave properly even if they
+are invoked with improper inputs or encounter failures of function evaluations.
 
 All the tests are automated by
 [GitHub Actions](https://en.wikipedia.org/wiki/Explorative_strategies). As of July 2022, more than
 20,000 "workflows" have been successfully run by GitHub Actions
 (see https://github.com/zequipe/gitpersonal/actions and https://github.com/zequipe/pdfo_ref/actions).
 Normally, each workflow consists of \~ 5 **randomized** tests
-that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum is
-6 hours, after which the workflow will be canceled automatically). In other words, our
+that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum
+is 6 hours, after which the workflow will be canceled automatically). In other words, our
 implementation has been tested by \~ $10^5$ hours (or \~ $10$ years) of randomized computation.
 
 ------
 
 ### Bug fixes
 
-The **old Fortran 77 implementation** has the following known issues, which **have been fixed in this
-modernized reference implementation**. Note that all the problems are bugs in the code rather than
-flaws in the algorithms. All the examples below are issues in [NLopt](https://github.com/stevengj/nlopt),
-a package providing interfaces to the **old Fortran 77 implementation**.
+The **old Fortran 77 implementation** has the following known issues, which **have been fixed in
+this modernized reference implementation**. Note that all the problems are bugs in the code rather
+than flaws in the algorithms. The examples below are issues reported to
+[NLopt](https://github.com/stevengj/nlopt), a package providing interfaces to the **old Fortran 77
+implementation**.
 
 - The solvers may crash with segmentation faults due to uninitialized variables that are used as indices.
 
