@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, July 19, 2022 PM10:03:33
+! Last Modified: Saturday, July 23, 2022 PM12:26:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,8 +79,8 @@ subroutine cobyla(calcfc, m, x, f, &
 !    real(RP), intent(out) :: constr(:)
 !    end subroutine calcfc
 !   !-------------------------------------------------------------------------!
-!   Besides, the subroutine should NOT access CONSTR beyond CONSTR(1:M), where M is the second 
-!   compulsory argument (see below), signifying the number of constraints. 
+!   Besides, the subroutine should NOT access CONSTR beyond CONSTR(1:M), where M is the second
+!   compulsory argument (see below), signifying the number of constraints.
 !
 ! M
 !   Input, INTEGER(IK) scalar.
@@ -89,7 +89,7 @@ subroutine cobyla(calcfc, m, x, f, &
 !   1. M must be specified correctly, or the program will crash!!!
 !   2. Why don't we define M as optional and default it to 0 when it is absent? This is because
 !   we need to allocate memory for CONSTR_LOC according to M. To ensure that the size of CONSTR_LOC
-!   is correct,  we requiring the user to specify M explicitly.
+!   is correct, we require the user to specify M explicitly.
 !
 ! X
 !   Input and output, REAL(RP) vector.
