@@ -1,5 +1,10 @@
 ## Reference Implementation of Powell's Derivative-Free Optimization Solvers
 
+[![license](https://img.shields.io/badge/license-LGPLv3+-blue)](https://github.com/zequipe/pdfo_ref/blob/master/LICENCE.txt)
+[![Faithfulness verification](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_small.yml/badge.svg)]
+(https://github.com/zequipe/pdfo_ref/actions/workflows/verify_small.yml)
+
+
 ### What
 
 This is the reference implementation of Powell's derivative-free optimization solvers,
@@ -52,8 +57,8 @@ implementation has been tested by \~ $10^5$ hours (or \~ $10$ years) of randomiz
 
 ### Bug fixes
 
-This modernized reference implementation has fixed the following known issues in the **old Fortran 
-77 implementation**. Note that all the problems are bugs in the Fortran 77 code rather than flaws in 
+This modernized reference implementation has fixed the following known issues in the **old Fortran
+77 implementation**. Note that all the problems are bugs in the Fortran 77 code rather than flaws in
 the algorithms. The examples below are issues reported to
 [NLopt](https://github.com/stevengj/nlopt), a package providing interfaces to the **old Fortran 77
 implementation**.
@@ -72,8 +77,8 @@ implementation**.
 
 	 - [NEWUOA_BOUND stuck in infinite loop inside MMA #117](https://github.com/stevengj/nlopt/issues/117)
 
-- The constrained solvers may not return the best point that is evaluated; sometimes, the returned
-point can have a large constraint violation even though the starting point is feasible.
+- COBYLA may not return the best point that is evaluated; sometimes, the returned point can have a
+large constraint violation even though the starting point is feasible.
 
 	 - [COBYLA optimizer gives unexpected output #182](https://github.com/stevengj/nlopt/issues/182)
 
