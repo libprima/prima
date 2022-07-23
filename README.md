@@ -1,8 +1,7 @@
 ## Reference Implementation of Powell's Derivative-Free Optimization Solvers
 
 [![license](https://img.shields.io/badge/license-LGPLv3+-blue)](https://github.com/zequipe/pdfo_ref/blob/master/LICENCE.txt)
-[![Faithfulness verification](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_small.yml/badge.svg)]
-(https://github.com/zequipe/pdfo_ref/actions/workflows/verify_small.yml)
+[![Faithfulness verification](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_small.yml/badge.svg)](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_small.yml)
 
 
 ### What
