@@ -1,6 +1,6 @@
 ## Reference Implementation of Powell's Derivative-Free Optimization Solvers
 
-## What
+### What
 
 This is the reference implementation of Powell's derivative-free optimization solvers,
 namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
@@ -14,7 +14,7 @@ and [repository](https://github.com/pdfo/pdfo) of PDFO instead.
 
 Dedicated to late Professor [M. J. D. Powell](https://www.zhangzk.net/powell.html) FRS (1936--2015).
 
-## Why
+### Why
 
 The goal is to implement these solvers in modern languages --- first [**modern** Fortran](https://fortran-lang.org)
 (F2003 or later), and then MATLAB, Python, and probably Julia and R. It will be a faithful implementation, in the
@@ -25,7 +25,7 @@ The focus is to implement Powell’s solvers in a **structured** and **modulariz
 are **readable**, **maintainable**, and **extendable**. The new code will have no GOTO (of course)
 and will use matrix-vector procedures instead of loops whenever possible.
 
-## How
+### How
 
 The mission is nontrivial due to the delicacy of Powell's algorithms and the unique style of his code.
 We started the Fortran code by refactoring Powell's code into the free form via a small
@@ -54,24 +54,28 @@ implementation has been tested by \~ $10^5$ hours (or \~ $10$ years) of randomiz
 
 The **old Fortran 77 implementation** has the following known issues, which **have been fixed in this
 modernized reference implementation**. Note that all the problems are bugs in the code rather than
-flaws in the algorithms. All the examples below are issues in [Nlopt](https://github.com/stevengj/nlopt),
+flaws in the algorithms. All the examples below are issues in [NLopt](https://github.com/stevengj/nlopt),
 a package providing interfaces to the **old Fortran 77 implementation**.
 
-- The solvers may crash with segmentation faults
+- The solvers may crash with segmentation faults.
 
 	 - [BOBYQA uninitialised variables in rare cases #133](https://github.com/stevengj/nlopt/issues/133)
+
 	 - [Use of uninitialized variable in BOBYQA altmov #36](https://github.com/stevengj/nlopt/issues/36)
 
-- The solvers may get stuck in infinite loops. For example, see
+- The solvers may get stuck in infinite loops.
 
 	 - [COBYLA freezes (though maxeval and maxtime are given) #370](https://github.com/stevengj/nlopt/issues/370)
+
 	 - [COBYLA hangs #118](https://github.com/stevengj/nlopt/issues/118)
+
 	 - [NEWUOA_BOUND stuck in infinite loop inside MMA #117](https://github.com/stevengj/nlopt/issues/117)
 
 - The constrained solvers may not return the best point that is evaluated by the solver; sometimes,
 the returned point can have a large constraint violation even if the starting point is feasible.
-For example, see
 
 	 - [COBYLA optimizer gives unexpected output #182](https://github.com/stevengj/nlopt/issues/182)
+
 	 - [Last Result Returned Not Optimized Result #110](https://github.com/stevengj/nlopt/issues/110)
+
 	 - [COBYLA returns last evaluated function which might not be minimum #57](https://github.com/stevengj/nlopt/issues/57)
