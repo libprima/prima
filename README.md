@@ -17,7 +17,7 @@ Dedicated to late Professor [M. J. D. Powell](https://www.zhangzk.net/powell.htm
 ### Why
 
 The goal is to implement these solvers in modern languages ---
-first [**modern** Fortran](https://fortran-lang.org) (F2003 or later), and then MATLAB, Python, and
+first [**modern** Fortran](https://fortran-lang.org) (F2003 or newer), and then MATLAB, Python, and
 probably Julia and R. It will be a faithful implementation, in the sense that the new code will be
 mathematically equivalent to Powell’s, except for the
 [bug fixes](https://github.com/zequipe/pdfo_ref#bug-fixes) and improvements that we make intentionally.
