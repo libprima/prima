@@ -72,8 +72,8 @@ implementation**.
 
 	 - [NEWUOA_BOUND stuck in infinite loop inside MMA #117](https://github.com/stevengj/nlopt/issues/117)
 
-- The constrained solvers may not return the best point that is evaluated by the solver; sometimes,
-the returned point can have a large constraint violation even if the starting point is feasible.
+- The constrained solvers may not return the best point that is evaluated; sometimes, the returned
+point can have a large constraint violation even though the starting point is feasible.
 
 	 - [COBYLA optimizer gives unexpected output #182](https://github.com/stevengj/nlopt/issues/182)
 
