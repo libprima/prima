@@ -50,14 +50,14 @@ implementation has been tested by \~ $10^5$ hours (or \~ $10$ years) of randomiz
 
 ------
 
-## Bug fixes
+### Bug fixes
 
 The **old Fortran 77 implementation** has the following known issues, which **have been fixed in this
 modernized reference implementation**. Note that all the problems are bugs in the code rather than
 flaws in the algorithms. All the examples below are issues in [NLopt](https://github.com/stevengj/nlopt),
 a package providing interfaces to the **old Fortran 77 implementation**.
 
-- The solvers may crash with segmentation faults.
+- The solvers may crash with segmentation faults due to uninitialized variables that are used as indices.
 
 	 - [BOBYQA uninitialised variables in rare cases #133](https://github.com/stevengj/nlopt/issues/133)
 
