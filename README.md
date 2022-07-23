@@ -39,7 +39,7 @@ problems coming from the [CUTEst set](https://github.com/ralna/CUTEst). The test
 the faithfulness of our implementation, but also check that the solvers behave properly even if they
 are invoked with improper inputs or encounter failures of function evaluations.
 
-All the tests are automated by
+The tests are automated by
 [GitHub Actions](https://en.wikipedia.org/wiki/Explorative_strategies). As of July 2022, more than
 20,000 "workflows" have been successfully run by GitHub Actions
 (see https://github.com/zequipe/gitpersonal/actions and https://github.com/zequipe/pdfo_ref/actions).
@@ -52,9 +52,9 @@ implementation has been tested by \~ $10^5$ hours (or \~ $10$ years) of randomiz
 
 ### Bug fixes
 
-The **old Fortran 77 implementation** has the following known issues, which **have been fixed in
-this modernized reference implementation**. Note that all the problems are bugs in the code rather
-than flaws in the algorithms. The examples below are issues reported to
+This modernized reference implementation has fixed the following known issues in the **old Fortran 
+77 implementation**. Note that all the problems are bugs in the Fortran 77 code rather than flaws in 
+the algorithms. The examples below are issues reported to
 [NLopt](https://github.com/stevengj/nlopt), a package providing interfaces to the **old Fortran 77
 implementation**.
 

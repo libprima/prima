@@ -46,7 +46,7 @@
 #if defined __RELEASED__
 #undef __RELEASED__
 #endif
-#define __RELEASED__ 0
+#define __RELEASED__ 1
 /******************************************************************************/
 
 
@@ -56,7 +56,7 @@
 #if defined __DEBUGGING__
 #undef __DEBUGGING__
 #endif
-#define __DEBUGGING__ 1
+#define __DEBUGGING__ 0
 /******************************************************************************/
 
 
