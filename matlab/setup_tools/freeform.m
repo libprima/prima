@@ -3,10 +3,10 @@ function freeform(files)
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net) in August, 2020.
 
-if nargin < 1 || isempty(files) || strcmpi(files, 'ALL')
+if nargin < 1 || isempty(files) || (ischarstr(files) && strcmpi(files, 'ALL'))
     listing = dir();
     files = {listing.name};
-else
+elseif ischarstr(files)
     files = {files};
 end
 
