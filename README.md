@@ -41,7 +41,7 @@ by ourselves. However, such refactored code is far from what we want, because it
 the structure and style of Powell's code except for the layout. Extensive modifications are needed
 to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of our
 implementation, intensive tests are conducted after each and every tiny modification, the test
-problems coming from the [CUTEst set](https://github.com/ralna/CUTEst). The tests verify not only
+problems coming from the [CUTEst set](https://github.com/ralna/CUTEst). The tests do not only verify
 the faithfulness of our implementation, but also check that the solvers behave properly even if they
 are invoked with improper inputs or encounter failures of function evaluations.
 
@@ -61,8 +61,8 @@ implementation has been tested by \~ $10^5$ hours (or \~ $10$ years) of randomiz
 This modernized reference implementation has fixed the following known issues in the **old Fortran
 77 implementation**.
 
-Note that all the problems are bugs in the Fortran 77 code rather than flaws in the algorithms.
-The examples given below are issues reported to [NLopt](https://github.com/stevengj/nlopt), a
+Note that all the issues are problems in the Fortran 77 code rather than flaws in the algorithms.
+The examples given below are bugs or requests sent to [NLopt](https://github.com/stevengj/nlopt), a
 package providing a C version of COBYLA, NEWUOA, and BOBYQA based on the **old Fortran 77
 implementation**. The C code in NLopt is translated from the Fortran 77 code straightforwardly, if
 not automatically by [f2c](https://netlib.org/f2c/f2c.pdf), and hence inherits the style, structure,
