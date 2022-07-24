@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, June 24, 2022 AM08:33:39
+! Last Modified: Monday, July 25, 2022 AM02:02:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2682,7 +2682,7 @@ end if
 
 H = A
 if (present(Q)) then
-    Q = eye(n, n)
+    Q = eye(n)
 end if
 
 ! According to a test on 20220508, scaling enhances the stability and slightly improves the
