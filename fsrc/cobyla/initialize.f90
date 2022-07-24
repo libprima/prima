@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, June 16, 2022 AM12:15:46
+! Last Modified: Monday, July 25, 2022 AM02:02:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -128,7 +128,7 @@ sim = eye(n, n + 1_IK) * rhobeg
 sim(:, n + 1) = x0
 ! The following line is mathematically unnecessary, yet compilers may complain if we return due to
 ! CHECKEXIT before SIMI is set to INV(SIM(:, 1:N)).
-simi = eye(n, n) / rhobeg
+simi = eye(n) / rhobeg
 
 ! EVALUATED(J) = TRUE iff the function/constraint of SIM(:, J) has been evaluated.
 evaluated = .false.
