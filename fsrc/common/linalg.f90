@@ -9,7 +9,7 @@ module linalg_mod
 !
 ! If your needs are of a different nature, you may still use these procedures to prototype your
 ! ideas, but keep in mind that the implementations here are mostly STRAIGHTFORWARD and NAIVE, and
-! some algorithms selected here may be suboptimal for the your problems.
+! some algorithms selected here may be suboptimal for your problems.
 !
 ! If it is needed to enhance the performance of these procedures, one can optimize their
 ! implementations according to the resources (hardware, e.g., C/GPU, cache, and libraries, e.g.,
@@ -36,13 +36,13 @@ module linalg_mod
 ! relatively easy way when necessary.
 !
 ! TODO: To avoid stack overflows, functions that return a potentially large array (e.g., MATPROD)
-! should declare the array as ALLOCATABLE rather than automatic.
+! should declare the array as ALLOCATABLE rather than automatic (20220725: should we?).
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, July 25, 2022 AM02:02:19
+! Last Modified: Monday, July 25, 2022 AM02:47:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
