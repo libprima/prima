@@ -346,8 +346,8 @@ else % The problem turns out 'normal' during prepdfo
         error(sprintf('%s:InvalidAugLinCon', funname), '%s: UNEXPECTED ERROR: invalid augmented linear constraints.', funname);
     end
     if isempty(A_aug)
-    % We uniformly use [] to represent empty objects; its size is 0x0.
-    % Changing this may cause matrix dimension inconsistency
+        % We uniformly use [] to represent empty objects; its size is 0x0.
+        % Changing this may cause matrix dimension inconsistency.
         A_aug = [];
         b_aug = [];
     end
@@ -383,13 +383,13 @@ else % The problem turns out 'normal' during prepdfo
     solver = options.solver;
 
     % If x0 is not feasible, LINCOA will modify the constraints to make
-    % it feasible (which is a bit strange).
+    % it feasible (which is a bit strange, but Powell decided to do it).
     % prepdfo has tried to make find a feasible x0. Raise a warning is
     % x0 is not 'feasible enough' so that the constraints will be modified.
     if ~isempty(A_aug) && any(A_aug'*x0 > b_aug + 1e-10*max(1, abs(b_aug)))
         output.constr_modified = true;
-        wid = sprintf('%s:InfeasibleX0', funname);
-        wmsg = sprintf('%s: preprocessing code did not find a feasible x0; problem is likely infeasible; %s will modify the right-hand side of the constraints to make x0 feasible.', funname, funname);
+        wid = sprintf('%s:ConstraintModified', funname);
+        wmsg = sprintf('%s will modify the right-hand side of the constraints to make x0 feasible.', funname);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     else

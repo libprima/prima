@@ -87,7 +87,7 @@ and probably bugs of the old Fortran 77 implementation.
 - COBYLA may not return the best point that is evaluated; sometimes, the returned point can have a
 large constraint violation even though the starting point is feasible.
 
-	 - [COBYLA optimizer gives unexpected output #182](https://github.com/stevengj/nlopt/issues/182)
+	 - [nlopt COBYLA optimizer gives unexpected output #182](https://github.com/stevengj/nlopt/issues/182)
 
 	 - [Last Result Returned Not Optimized Result #110](https://github.com/stevengj/nlopt/issues/110)
 

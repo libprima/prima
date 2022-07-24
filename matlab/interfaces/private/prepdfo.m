@@ -245,22 +245,30 @@ end
 % are dealing with an option that is not in user_options_fields.
 [options, probinfo.user_options_fields, warnings] = pre_options(invoker, options, lenx0, lb, ub, warnings);
 
-% Revise x0 for bound and linearly constrained problems
+% Revise x0 for bound and linearly constrained problems.
 % This is necessary for LINCOA, which accepts only feasible x0.
 % Should we do this even if there are nonlinear constraints?
 % For now, we do not, because doing so may dramatically increase the
 % infeasibility of x0 with respect to the nonlinear constraints.
 if ismember(probinfo.refined_type, {'bound-constrained', 'linearly-constrained'}) && ~probinfo.nofreex && ~probinfo.infeasible
-    x0_old = x0;
     % Another possibility for bound-constrained problems:
     % xind = (x0 < lb) | (x0 > ub);
     % x0(xind) = (lb(xind) + ub(xind))/2;
-    x0 = project(Aineq, bineq, Aeq, beq, lb, ub, x0);
-    if norm(x0_old-x0) > eps*max(1, norm(x0_old)) && ~probinfo.feasibility_problem
-        % No warning about revising x0 if the problem is a linear feasibility problem
-        % Note that the linearity is guaranteed by THE OUTER IF.
-        wid = sprintf('%s:ReviseX0', invoker);
-        wmsg = sprintf('%s: x0 is revised to satisfy the constraints.', invoker);
+    x0_new = project(Aineq, bineq, Aeq, beq, lb, ub, x0);
+    if get_cstrv(x0_new, Aineq, bineq, Aeq, beq, lb, ub) < get_cstrv(x0, Aineq, bineq, Aeq, beq, lb, ub)
+        if norm(x0_new-x0) > eps*max(1, norm(x0)) && ~probinfo.feasibility_problem
+            % No warning about revising x0 if the problem is a linear feasibility problem.
+            % Note that the linearity is guaranteed by THE OUTER IF.
+            wid = sprintf('%s:ReviseX0', invoker);
+            wmsg = sprintf('%s: x0 is revised to satisfy the constraints better.', invoker);
+            warning(wid, '%s', wmsg);
+            warnings = [warnings, wmsg];
+        end
+        x0 = x0_new;
+    end
+    if get_cstrv(x0, Aineq, bineq, Aeq, beq, lb, ub) > 1.0e-10*max(abs([1; bineq; beq; x0]))
+        wid = sprintf('%s:InfeasibleX0', invoker);
+        wmsg = sprintf('%s: preprocessing code did not find a feasible x0; problem is likely infeasible.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     end

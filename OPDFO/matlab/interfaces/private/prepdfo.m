@@ -256,13 +256,17 @@ if ismember(probinfo.refined_type, {'bound-constrained', 'linearly-constrained'}
     % xind = (x0 < lb) | (x0 > ub);
     % x0(xind) = (lb(xind) + ub(xind))/2;
     x0 = project(Aineq, bineq, Aeq, beq, lb, ub, x0);
-    if norm(x0_old-x0) > eps*max(1, norm(x0_old)) && ~probinfo.feasibility_problem
-        % No warning about revising x0 if the problem is a linear feasibility problem
-        % Note that the linearity is guaranteed by THE OUTER IF.
-        wid = sprintf('%s:ReviseX0', invoker);
-        wmsg = sprintf('%s: x0 is revised to satisfy the constraints.', invoker);
-        warning(wid, '%s', wmsg);
-        warnings = [warnings, wmsg];
+    if get_cstrv(x0, Aineq, bineq, Aeq, beq, lb, ub) <  get_cstrv(x0_old, Aineq, bineq, Aeq, beq, lb, ub)
+        if norm(x0_old-x0) > eps*max(1, norm(x0_old)) && ~probinfo.feasibility_problem
+            % No warning about revising x0 if the problem is a linear feasibility problem
+            % Note that the linearity is guaranteed by THE OUTER IF.
+            wid = sprintf('%s:ReviseX0', invoker);
+            wmsg = sprintf('%s: x0 is revised to satisfy the constraints.', invoker);
+            warning(wid, '%s', wmsg);
+            warnings = [warnings, wmsg];
+        end
+    else
+        x0 = x0_old;
     end
 end
 
