@@ -251,3 +251,16 @@ Here are points to note when translating the Fortran code to other languages.
     can simply be translated to Y(X).
     2. If the return of TRUELOC is NOT used for indexing, its analogs in other languages are:
     MATLAB -- find, Python -- numpy.argwhere, Julia -- findall, R -- which.
+
+15. Array slicing in different languages
+
+    Consider X(m:n) or X[m:n], depending on the language. In general, it should give us the
+    array [X(m), ..., X(n)]. However, note the following.
+    0) The behavior of X(m:n) is identical in MATLAB and in Fortran, but there are differences in
+       other languages.
+    1) The index in Python starts from 0.
+    2) In Julia, if either m or n exceeds the index range of X, an error will be raised, but
+       Fortran/MATLAB/Python will return the array corresponding to the indices between m and n and
+       within the index range of X.
+    3) In Fortran/MATLAB/Python/Julia, an empty array will be returned if m > n.
+    4) In R, X(m:n+1) means X((m:n)+1), but it means X(m:(n+1)) in Fortran/MATLAB/Python/Julia.
