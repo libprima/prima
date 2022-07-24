@@ -62,7 +62,8 @@ This modernized reference implementation has fixed the following known issues in
 77 implementation**. Note that all the problems are bugs in the Fortran 77 code rather than flaws in
 the algorithms. The examples below are issues reported to
 [NLopt](https://github.com/stevengj/nlopt), a package providing C translations of the **old Fortran
-77 implementation**.
+77 implementation** (the translations are done straightforwardly, inheriting the style, structure,
+and probably bugs of the old Fortran 77 implementation).
 
 - The solvers may crash with segmentation faults due to uninitialized variables that are used as indices.
 
