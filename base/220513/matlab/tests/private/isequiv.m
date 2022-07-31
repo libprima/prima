@@ -126,7 +126,7 @@ else
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'DECONVB'}]; % Too long to solve
         blacklist = [blacklist, {'DUAL3', 'SPANHYD'}]; % Too long to solve
-        blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1', 'SIM2BQP'}]; % Too long to solve
+        blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1', 'SIM2BQP','BQP1VAR'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails
         blacklist = [blacklist, {'SIPOW3', 'HS55'}]; % Takes too long
