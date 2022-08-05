@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 06, 2022 AM01:09:24
+! Last Modified: Friday, August 05, 2022 PM02:00:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -59,8 +59,8 @@ subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 !
 ! and maintains a QR factorization of A corresponding to the active set. More specifically,
 ! IACT(1:NACT) is a set of indices such that the columns of AMAT(:, IACT(1:NACT)) constitute a basis
-! of the active constraint gradients, ans QFAC*RFAC(:, 1:NACT) is the QR factorization of
-! AMAT(:, IACT(1:NACT)) such that
+! of the active constraint gradients (i.e., those corresponding to the set I mentioned above, but
+! not J!), and QFAC*RFAC(:, 1:NACT) is the QR factorization of! AMAT(:, IACT(1:NACT)) such that
 !
 ! SIZE(QFAC) = [N, N], SIZE(RFAC, 1) = N, diag(RFAC(:, 1:NACT)) > 0.
 !

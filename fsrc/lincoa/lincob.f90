@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 20, 2022 PM01:27:03
+! Last Modified: Saturday, August 06, 2022 AM01:20:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -304,6 +304,7 @@ do while (.true.)
         if (shortd) then
             delta = HALF * delta
             if (delta <= 1.4_RP * rho) delta = rho
+            !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
             nvala = nvala + 1
             nvalb = nvalb + 1
             temp = dnorm / rho
@@ -429,9 +430,14 @@ do while (.true.)
                 else
                     temp = sqrt(TWO) * delta
                     delta = max(HALF * delta, dnorm + dnorm)
-                    delta = min(delta, temp)
+                    delta = min(delta, temp)  ! This does not exist in NEWUOA/BOBYQA. It works well.
                 end if
                 if (delta <= 1.4_RP * rho) delta = rho
+                !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
+                ! N.B.: The factor in the line above should be smaller than SQRT(2). Imagine a very
+                ! successful step with DENORM = DELTA (un-updated) = RHO. Then the scheme will first
+                ! update DELTA to SQRT(2)*RHO. If this factor were larger than or equal to SQRT(2),
+                ! then DELTA will be reset to RHO, which is not reasonable as D is very successful.
             end if
 
             freduced = (f < fopt .and. feasible)
