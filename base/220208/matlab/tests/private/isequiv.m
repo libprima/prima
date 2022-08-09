@@ -115,7 +115,7 @@ if isempty(requirements.list)
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2', 'SIM2BQP', 'BQP1VAR'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
-        blacklist = [blacklist, {'PALMER4ANE'}];
+        blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE'}];
         % For PALMER4ANE, the original and modernized version differ due to a mistake in the extreme barrier of the original version.
         % We did not spend time on finding the mistake, but it returns an Inf in the constraint value, which should not happen.
         blacklist = [blacklist, {'DEGENLPB', 'LSNNODOC', 'AVION2', 'RES', 'SIPOW3', 'HS55'}]; % Takes long to solve
