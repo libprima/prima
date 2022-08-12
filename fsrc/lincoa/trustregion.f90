@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 06, 2022 AM01:08:39
+! Last Modified: Friday, August 12, 2022 PM11:47:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -145,6 +145,7 @@ resact(1:nact) = rescon(iact(1:nact))
 
 s = ZERO
 ss = ZERO
+alpbd = ONE  ! Artificial value. Not used.
 reduct = ZERO
 ngetact = 0
 get_act = .true.  ! Better name?
@@ -155,7 +156,9 @@ do while (.true.)  !TODO: prevent infinite cycling
     if (get_act) then
         ! GETACT picks the active set for the current S. It also sets DW to the vector closest to -G
         ! that is orthogonal to the normals of the active constraints. DW is scaled to have length
-        ! 0.2*DELTA, as then a move of DW from S is allowed by the linear constraints.
+        ! 0.2*DELTA. Then a move of DW from S is allowed by the linear constraints: DW reduces
+        ! the values of the nearly active constraints; it changes the inactive constraints by at
+        ! most 0.2*DELTA, but the residuals of the inactive constraints at no less than 0.2*DELTA.
         ngetact = ngetact + 1
         call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, dw)
         dd = inprod(dw, dw)
@@ -165,8 +168,9 @@ do while (.true.)  !TODO: prevent infinite cycling
         scaling = 0.2_RP * delta / sqrt(dd)
         dw = scaling * dw
 
-        ! If the modulus of the residual of an active constraint is substantial, then set D to the
-        ! shortest move from S to the boundaries of the active constraints.
+        ! If the modulus of the residual of an active constraint is substantial (namely, is more
+        ! than 1.0E-4*DELTA), then set D to the shortest move from S to the boundaries of the active
+        ! constraints.
         bstep = ZERO
         if (any(resact(1:nact) > 1.0E-4_RP * delta)) then
             ! N.B.: We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify
@@ -265,7 +269,9 @@ do while (.true.)  !TODO: prevent infinite cycling
     !----------------------------------------------------------------------------------------------!
 
     alpha = min(max(alpha, alpbd), alphm)
-    if (icount == nact) alpha = min(alpha, ONE)
+    if (icount == nact) then
+        alpha = min(alpha, ONE)
+    end if
 
     ! Update S, G, RESNEW, RESACT and REDUCT.
     s = s + alpha * d
