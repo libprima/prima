@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 28, 2022 PM02:12:31
+! Last Modified: Saturday, August 13, 2022 AM12:05:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -154,7 +154,7 @@ subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon
 ! SIGMA. Yet there still exist three major differences between geometry steps of BOBYQA and LINCOA.
 ! 5.1. The geometry step of BOBYQA is calculated subject to the bound constraints, and the computed
 ! step is always feasible; the geometry step of LINCOA may violate the linear constraints.
-! 5.2. BOBYQA uses an estimated value of SIGMA (see (3.11) of the BOBYQA paper)to select the step
+! 5.2. BOBYQA uses an estimated value of SIGMA (see (3.11) of the BOBYQA paper) to select the step
 ! along the lines through XOPT and other interpolation points; LINCOA uses |LFUNC|. According to
 ! a test on 20220529, using the estimated SIGMA does not improve the performance of LINCOA.
 ! 5.3. LINCOA tries a projected gradient step and prefers this step when its quality is reasonable.
@@ -337,8 +337,8 @@ if (nact > 0 .and. nact < n .and. normg > 0) then
 
     ! Decide whether to replace S with PGSTP and set FEASIBLE accordingly.
     cstrv = maximum([ZERO, matprod(pgstp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))])
-    !The purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
-    !contributions from computer rounding errors. Note that CVTOL equals 0 in precise arithmetic.
+    ! The purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
+    ! contributions from computer rounding errors. Note that CVTOL equals 0 in precise arithmetic.
     cvtol = min(0.01_RP * sqrt(sum(pgstp**2)), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
     take_pgstp = .false.
     if (cstrv <= cvtol) then
