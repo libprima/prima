@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, August 13, 2022 AM12:05:43
+! Last Modified: Saturday, August 13, 2022 AM12:09:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -280,7 +280,7 @@ if (dderiv(knew) * (dderiv(knew) - ONE) < 0) then
     stplen(knew) = -stplen(knew)
 end if
 vlagabs(knew) = abs(stplen(knew) * dderiv(knew)) + stplen(knew)**2 * abs(dderiv(knew) - ONE)
-! It does not make sense to consider "straight line through XOPT and XPT(:, KOPT)". Thus we set
+! It does not make sense to consider "the straight line through XOPT and XPT(:, KOPT)". Thus we set
 ! VLAGABS(KOPT) to -1 so that KOPT is skipped when we maximize VLAGABS.
 vlagabs(kopt) = -ONE
 ! Find K so that VLAGABS(K) is maximized. We define K in a way slightly different from Powell's
@@ -325,7 +325,7 @@ feasible = (cstrv <= 0)
 ! QFAC(:, NACT+1:N), i.e., the orthogonal complement of the space spanned by the active gradients.
 ! In precise arithmetic, moving along PGSTP does not change the values of the active constraints.
 ! This projected gradient step is preferred and will override S if it renders a denominator not too
-! small and leads to good feasibility. This strategy is critical for the performance of LINCOA.
+! small and leads to good feasibility. **This strategy is critical for the performance of LINCOA.**
 pglag = matprod(qfac(:, nact + 1:n), matprod(glag, qfac(:, nact + 1:n)))
 !!MATLAB: pglag = qfac(:, nact+1:n) * (glag' * qfac(:, nact+1:n))';
 normg = sqrt(sum(pglag**2))
