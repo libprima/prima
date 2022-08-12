@@ -79,7 +79,7 @@ jobs:
         run: sudo bash .github/scripts/link_gfortran_for_matlab ${{ env.GFORTRAN_VERSION }}
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v1.1.1
+        uses: matlab-actions/setup-matlab@v1.2.0
         with:
           release: ${{ env.MATLAB_RELEASE }}
 
