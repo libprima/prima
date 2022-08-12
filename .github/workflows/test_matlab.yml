@@ -84,7 +84,7 @@ jobs:
           release: ${{ env.MATLAB_RELEASE }}
 
       - name: Run script
-        uses: matlab-actions/run-command@v1.0.1
+        uses: matlab-actions/run-command@v1.1.0
         with:
           command: |
               ver;
