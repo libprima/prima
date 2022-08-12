@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 05, 2022 PM02:00:35
+! Last Modified: Friday, August 12, 2022 PM11:05:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -55,7 +55,7 @@ subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 ! The subroutine solves (LCPP) by the active set method of Goldfarb-Idnani (1983). It does not only
 ! calculate PSD, but also identify the active set of (LCPP) at the solution PSD, namely
 !
-! I = {j in J : AMAT(:, j)^T*PSD = 0} (see 3.5 of Powell (2015)),
+! I = {j in J : AMAT(:, j)^T*PSD = 0} (see (3.5) of Powell (2015)),
 !
 ! and maintains a QR factorization of A corresponding to the active set. More specifically,
 ! IACT(1:NACT) is a set of indices such that the columns of AMAT(:, IACT(1:NACT)) constitute a basis
