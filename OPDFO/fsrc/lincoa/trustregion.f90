@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 AM08:40:33
+! Last Modified: Thursday, August 18, 2022 AM12:19:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,8 +69,8 @@ real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, snsq, ss, temp
-integer(IK) :: icount, jsav
+&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, snsq, ss, temp, sold(size(s))
+integer(IK) :: iter, icount, jsav
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
@@ -160,7 +160,8 @@ get_act = .true.  ! Better name?
 
 icount = -1_IK  ! Artificial value. Not used. To entertain compilers. To be removed.
 
-do while (.true.)  !TODO: prevent infinite cycling
+!do while (.true.)  !TODO: prevent infinite cycling
+do iter = 1, min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper bound of ITER?
     if (get_act) then
         ! GETACT picks the active set for the current S. It also sets DW to the vector closest to -G
         ! that is orthogonal to the normals of the active constraints. DW is scaled to have length
@@ -278,9 +279,15 @@ do while (.true.)  !TODO: prevent infinite cycling
     if (icount == nact) alpha = min(alpha, ONE)
 
     ! Update S, G, RESNEW, RESACT and REDUCT.
+    sold = s
     s = s + alpha * d
+    if (.not. is_finite(sum(abs(s)))) then
+        s = sold
+        exit
+    end if
     ss = sum(s**2)
     g = g + alpha * dw
+    if (.not. all(is_finite(g))) exit
     restmp = resnew - alpha * ad  ! Only RESTMP(TRUELOC(RESNEW > 0)) is needed.
     resnew(trueloc(resnew > 0)) = max(TINYCV, restmp(trueloc(resnew > 0)))
     !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
@@ -295,12 +302,12 @@ do while (.true.)  !TODO: prevent infinite cycling
     ! Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN values. Exit when
     ! NGETACT is large or NaN is detected.
     ! Caution: 1. MIN accepts only data with the same KIND; 2. Integer overflow.
-    if (ngetact > min(10000, 100 * int(m + 1) * int(n)) .or.  &
-    & alpha /= alpha .or. alpht /= alpht .or. &
-    & alphm /= alphm .or. dgd /= dgd .or. dg /= dg .or. &
-    & ss /= ss .or. snsq /= snsq .or. reduct /= reduct) then
-        exit
-    end if
+    !if (ngetact > min(10000, 100 * int(m + 1) * int(n)) .or.  &
+    !& alpha /= alpha .or. alpht /= alpht .or. &
+    !& alphm /= alphm .or. dgd /= dgd .or. dg /= dg .or. &
+    !& ss /= ss .or. snsq /= snsq .or. reduct /= reduct) then
+    !    exit
+    !end if
     if (alpha == alpht) exit
     temp = -alphm * (dg + HALF * alphm * dgd)
     if (temp <= ctest * reduct) exit
