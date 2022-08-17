@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, August 06, 2022 AM01:20:09
+! Last Modified: Thursday, August 18, 2022 AM12:22:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -287,6 +287,7 @@ do while (.true.)
     if (knew == 0) then
         ! In the case KNEW=0, generate the next trust region step by calling TRSTEP.
         call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
+        write (16, *) 'tr', d
         dnorm = sqrt(sum(d**2))
 
         ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
@@ -330,7 +331,10 @@ do while (.true.)
         end if
 
         call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
+        write (16, *) 'geo', d
     end if
+    write (16, *) d
+
 
     if (knew /= 0 .or. .not. shortd) then
         ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. If D
@@ -573,7 +577,7 @@ call rangehist(nf, xhist, fhist, chist)
 
 ! Postconditions
 
-close (16)
+!close (16)
 
 end subroutine lincob
 

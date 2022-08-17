@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 12, 2022 PM11:05:19
+! Last Modified: Wednesday, August 17, 2022 PM09:00:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,6 +131,7 @@ if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
+    call assert(all(is_finite(g)), 'G is finite', srname)
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
@@ -382,6 +383,8 @@ if (DEBUGGING) then
     call assert(all(is_finite(psd)) .or. nact == 0, 'PSD is finite unless NACT == 0', srname)
     ! In theory, |PSD|^2 <= GG and -GG <= PSD^T*G <= 0.
     ! N.B. 1. Do not use DD, which may not be up to date. 2. PSD^T*G can be NaN if G is huge.
+    write (16, *) psd, gg
+    close (16)
     call assert(inprod(psd, psd) <= TWO * gg, '|PSD|^2 <= 2*GG', srname)
     call assert(.not. (inprod(psd, g) > 0 .or. inprod(psd, g) < -TWO * gg), '-2*GG <= PSD^T*G <= 0', srname)
 end if
