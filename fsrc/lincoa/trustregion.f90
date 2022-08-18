@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, August 18, 2022 AM08:38:24
+! Last Modified: Thursday, August 18, 2022 AM11:41:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -102,6 +102,7 @@ if (DEBUGGING) then
 end if
 
 g = gq
+
 ! Return if G is not finite. Otherwise, GETACT will fail in the debugging mode.
 if (.not. is_finite(sum(abs(g)))) then
     ngetact = 0
@@ -307,7 +308,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
 
     ! Test for termination. Branch to a new loop if there is a new active constraint and if the
     ! distance from S to the trust region boundary is at least 0.2*DELTA.
-    if (alpha == alpht) then
+    if (alpha >= alpht) then
         exit
     end if
     if (-alphm * (dg + HALF * alphm * dgd) <= ctest * reduct) then
