@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, August 18, 2022 PM12:26:05
+! Last Modified: Thursday, August 18, 2022 PM01:00:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,7 +69,7 @@ real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, snsq, ss, temp, sold(size(s))
+&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, snsq, ss, temp, sold(size(s)), redold
 integer(IK) :: iter, icount, jsav
 integer(IK) :: m
 integer(IK) :: n
