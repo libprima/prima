@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, August 18, 2022 PM01:00:31
+! Last Modified: Friday, August 19, 2022 AM07:47:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,7 +69,7 @@ real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, snsq, ss, temp, sold(size(s)), redold
+&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, snsq, ss, temp, sold(size(s))
 integer(IK) :: iter, icount, jsav
 integer(IK) :: m
 integer(IK) :: n
@@ -103,6 +103,13 @@ if (DEBUGGING) then
 end if
 
 g = gq
+
+! Return if G is not finite. Otherwise, GETACT will fail in the debugging mode.
+if (.not. is_finite(sum(abs(g)))) then
+    ngetact = 0
+    s = ZERO
+    return
+end if
 
 !
 !     N, NPT, M, AMAT, B, XPT, HQ, PQ, NACT, IACT, RESCON, QFAC and RFAC
@@ -281,26 +288,22 @@ do iter = 1, min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper boun
     ! Update S, G, RESNEW, RESACT and REDUCT.
     sold = s
     s = s + alpha * d
-    if (.not. is_finite(sum(abs(s)))) then
+    ss = sum(s**2)
+    !if (.not. is_finite(sum(abs(s)))) then
+    if (.not. is_finite(ss)) then
         s = sold
         exit
     end if
-    ss = sum(s**2)
     g = g + alpha * dw
-    if (.not. all(is_finite(g))) exit
+    !if (.not. all(is_finite(g))) exit
+    if (.not. is_finite(sum(abs(g)))) exit
     restmp = resnew - alpha * ad  ! Only RESTMP(TRUELOC(RESNEW > 0)) is needed.
     resnew(trueloc(resnew > 0)) = max(TINYCV, restmp(trueloc(resnew > 0)))
     !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
     if (icount == nact) then
         resact(1:nact) = (ONE - bstep) * resact(1:nact)
     end if
-    redold = reduct
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
-    if (reduct <= 0 .or. is_nan(reduct)) then
-        s = sold
-        reduct = redold
-        exit
-    end if
 
     ! Test for termination. Branch to a new loop if there is a new active constraint and if the
     ! distance from S to the trust region boundary is at least 0.2*SNORM.
@@ -314,9 +317,7 @@ do iter = 1, min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper boun
     !& ss /= ss .or. snsq /= snsq .or. reduct /= reduct) then
     !    exit
     !end if
-    if (alpha == alpht) exit
-    temp = -alphm * (dg + HALF * alphm * dgd)
-    if (temp <= ctest * reduct) exit
+    if (alpha >= alpht .or. -alphm * (dg + HALF * alphm * dgd) <= ctest * reduct) exit
     if (jsav > 0) then
         if (ss <= 0.64_RP * snsq) then
             get_act = .true.
