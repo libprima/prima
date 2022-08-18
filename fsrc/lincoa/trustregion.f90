@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, August 18, 2022 AM11:41:44
+! Last Modified: Thursday, August 18, 2022 PM12:25:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,7 +68,7 @@ real(RP) :: tol
 real(RP) :: g(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, delres, scaling, delsq, ss, temp, sold(size(s))
+&        dd, dg, dgd, ds, bstep, reduct, delres, scaling, delsq, ss, temp, sold(size(s)), redold
 integer(IK) :: maxiter, iter, icount, jsav  ! What is ICOUNT counting? Better name for ICOUNT?
 integer(IK) :: m
 integer(IK) :: n
@@ -236,7 +236,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     dg = inprod(d, g)
     ds = inprod(d, s)
     dd = inprod(d, d)
-    if (dg >= 0) then
+    if (dg >= 0 .or. is_nan(dg)) then
         exit
     end if
     temp = sqrt(ds * ds + dd * delres)
@@ -289,11 +289,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! Update S, G, RESNEW, RESACT and REDUCT.
     sold = s
     s = s + alpha * d
-    if (.not. is_finite(sum(abs(s)))) then
+    ss = sum(s**2)
+    if (.not. is_finite(ss)) then
         s = sold
         exit
     end if
-    ss = sum(s**2)
     g = g + alpha * dw
     if (.not. is_finite(sum(abs(g)))) then
         exit
@@ -304,14 +304,17 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     if (icount == nact) then
         resact(1:nact) = (ONE - bstep) * resact(1:nact)
     end if
+    redold = reduct
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
+    if (reduct <= 0 .or. is_nan(reduct)) then
+        s = sold
+        reduct = redold
+        exit
+    end if
 
     ! Test for termination. Branch to a new loop if there is a new active constraint and if the
     ! distance from S to the trust region boundary is at least 0.2*DELTA.
-    if (alpha >= alpht) then
-        exit
-    end if
-    if (-alphm * (dg + HALF * alphm * dgd) <= ctest * reduct) then
+    if (alpha >= alpht .or. -alphm * (dg + HALF * alphm * dgd) <= ctest * reduct) then
         exit
     end if
     if (jsav > 0) then
@@ -345,11 +348,6 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     alpbd = ZERO
     get_act = .false.
 end do
-
-! Return from the subroutine.
-if (reduct <= 0 .or. is_nan(reduct)) then
-    s = ZERO
-end if
 
 if (DEBUGGING) then
     call assert(size(s) == n .and. all(is_finite(s)), 'SIZE(S) == N, S is finite', srname)
