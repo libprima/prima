@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, August 18, 2022 AM12:19:19
+! Last Modified: Thursday, August 18, 2022 PM12:26:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -233,7 +233,7 @@ do iter = 1, min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper boun
     dg = inprod(d, g)
     ds = inprod(d, s)
     dd = inprod(d, d)
-    if (dg >= 0) exit
+    if (dg >= 0 .or. is_nan(dg)) exit
     temp = sqrt(rhs * dd + ds * ds)
     if (ds <= 0) then
         alpha = (temp - ds) / dd
@@ -294,7 +294,13 @@ do iter = 1, min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper boun
     if (icount == nact) then
         resact(1:nact) = (ONE - bstep) * resact(1:nact)
     end if
+    redold = reduct
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
+    if (reduct <= 0 .or. is_nan(reduct)) then
+        s = sold
+        reduct = redold
+        exit
+    end if
 
     ! Test for termination. Branch to a new loop if there is a new active constraint and if the
     ! distance from S to the trust region boundary is at least 0.2*SNORM.
