@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 19, 2022 AM07:52:07
+! Last Modified: Friday, August 19, 2022 AM07:31:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,14 +22,13 @@ public :: trstep
 contains
 
 
-subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, s)
+subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, snorm, s)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TWO, HALF, EPS, TINYCV, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, EPS, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, solve, isorth, istriu, &
-    & issymmetric, trueloc
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, solve, isorth, istriu, issymmetric, trueloc
 use, non_intrinsic :: powalg_mod, only : hess_mul
 
 ! Solver-specific modules
@@ -54,6 +53,7 @@ real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N); Will be updated in GETACT
 
 ! Outputs
 integer(IK), intent(out) :: ngetact
+real(RP), intent(out) :: snorm
 real(RP), intent(out) :: s(:)  ! S(N)
 
 ! Local variables
@@ -66,10 +66,11 @@ real(RP) :: resact(size(amat, 2))
 real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
 real(RP) :: g(size(gq))
+real(RP) :: vlam(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, delres, scaling, delsq, ss, temp, sold(size(s))
-integer(IK) :: maxiter, iter, icount, jsav  ! What is ICOUNT counting? Better name for ICOUNT?
+&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, snsq, ss, temp, sold(size(s)), redold
+integer(IK) :: iter, icount, jsav
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
@@ -115,6 +116,9 @@ end if
 !       are the same as the terms with these names in LINCOB. If RESCON(J)
 !       is negative, then |RESCON(J)| must be no less than the trust region
 !       radius, so that the J-th constraint can be ignored.
+!     SNORM is set to the trust region radius DELTA initially. On the
+!       return, however, it is the length of the calculated S, which is
+!       set to zero if the constraints prohibit a long enough step.
 !     S is the total calculated step so far from the trust region centre,
 !       its final value being given by the sequence of CG iterations, which
 !       terminate if the trust region boundary is reached.
@@ -134,7 +138,12 @@ end if
 !     Set some numbers for the conjugate gradient iterations.
 !
 ctest = 0.01_RP
-delsq = delta * delta
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20220302: The following line is added so that SNORM is INTENT(OUT) rather than
+! INTNT(INOUT). Is SNORM really the norm of step, or just DELTA??? Check also GETACT.
+snorm = delta
+!--------------------------------------------------------------------------------------------------!
+snsq = snorm * snorm
 
 ! Set the initial elements of RESNEW, RESACT and S.
 ! 1. RESNEW(J) < 0 indicates that the J-th constraint does not restrict the CG steps of the current
@@ -144,74 +153,71 @@ delsq = delta * delta
 ! N.B.: The order of the following lines is important, as the later ones override the earlier.
 resnew = rescon
 resnew(trueloc(rescon >= 0)) = max(TINYCV, rescon(trueloc(rescon >= 0)))
-resnew(trueloc(rescon >= delta)) = -ONE
+resnew(trueloc(rescon >= snorm)) = -ONE
 !!MATLAB:
-!!resnew = rescon; resnew(rescon >= 0) = max(TINYCV, rescon(rescon >= 0)); resnew(rescon >= delta) = -1;
+!!resnew = rescon; resnew(rescon >= 0) = max(TINYCV, rescon(rescon >= 0)); resnew(rescon >= snorm) = -1;
 resnew(iact(1:nact)) = ZERO
 resact(1:nact) = rescon(iact(1:nact))
 
 s = ZERO
 ss = ZERO
-alpbd = ONE  ! Artificial value. Not used.
 reduct = ZERO
 ngetact = 0
 get_act = .true.  ! Better name?
 
 icount = -1_IK  ! Artificial value. Not used. To entertain compilers. To be removed.
 
-maxiter = min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper bound of ITER?
-do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
+!do while (.true.)  !TODO: prevent infinite cycling
+do iter = 1, min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper bound of ITER?
     if (get_act) then
         ! GETACT picks the active set for the current S. It also sets DW to the vector closest to -G
         ! that is orthogonal to the normals of the active constraints. DW is scaled to have length
-        ! 0.2*DELTA. Then a move of DW from S is allowed by the linear constraints: DW reduces
-        ! the values of the nearly active constraints; it changes the inactive constraints by at
-        ! most 0.2*DELTA, but the residuals of the inactive constraints at no less than 0.2*DELTA.
+        ! 0.2*SNORM, as then a move of DW from S is allowed by the linear constraints.
         ngetact = ngetact + 1
-        call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, dw)
+        call getact(amat, g, snorm, iact, nact, qfac, resact, resnew, rfac, dw)
         dd = inprod(dw, dw)
-        if (dd <= 0 .or. is_nan(dd)) then
+        if (.not. dd > 0) then
             exit
         end if
-        scaling = 0.2_RP * delta / sqrt(dd)
+        scaling = 0.2_RP * snorm / sqrt(dd)
         dw = scaling * dw
 
+        ! If the modulus of the residual of an active constraint is substantial, then set D to the
+        ! shortest move from S to the boundaries of the active constraints.
         bstep = ZERO
-        if (any(resact(1:nact) > 1.0E-4_RP * delta)) then
-            ! If the modulus of the residual of an active constraint is substantial (namely, is more
-            ! than 1.0E-4*DELTA), then set D to the shortest move from S to the boundaries of the
-            ! active constraints.
+        if (any(resact(1:nact) > 1.0E-4_RP * snorm)) then
             ! N.B.: We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify
             ! MAXVAL(X) when X contains NaN, and MATLAB/Python/R/Julia behave differently in this
             ! respect. Moreover, MATLAB defines max(X) = [] if X == [], differing from mathematics
             ! and other languages.
-            d = matprod(qfac(:, 1:nact), solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact)))
-            !!MATLAB: d = qfac(:, 1:nact) * (rfac(1:nact, 1:nact)' \ resact(1:nact))
+            vlam(1:nact) = solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact))
+            !!MATLAB: vlam(1:nact) = rfac(1:nact, 1:nact)' \ resact(1:nact)
+            d = matprod(qfac(:, 1:nact), vlam(1:nact))
 
             ! The vector D that has just been calculated is also the shortest move from S+DW to the
             ! boundaries of the active constraints. Set BSTEP to the greatest steplength of this
-            ! move that satisfies both the trust region bound and the linear constraints.
+            ! move that satisfies the trust region bound.
             ds = inprod(d, s + dw)
             dd = sum(d**2)
-            delres = delsq - sum((s + dw)**2)  ! Calculation changed
+            rhs = snsq - sum((s + dw)**2)  ! Calculation changed
 
-            if (delres > 0) then
-                ! Set BSTEP to the greatest value so that S + DW + BSTEP*D satisfies the trust
-                ! region bound.
-                temp = sqrt(ds * ds + dd * delres)
+            if (rhs > 0) then
+                temp = sqrt(ds * ds + dd * rhs)
                 if (ds <= 0) then
+                    ! Zaikun 20210925: What if we are at the first iteration? BLEN = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
                     bstep = (temp - ds) / dd
                 else
-                    bstep = delres / (temp + ds)
+                    bstep = rhs / (temp + ds)
                 end if
-                ! Reduce BSTEP so that the move along D also satisfies the linear constraints.
-                ad = -ONE
-                ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
-                frac = ONE
-                restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))
-                frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))
-                bstep = minval([ONE, bstep, frac])  ! BSTEP = MINVAL([ONES, BSTEP, FRAC(TRUELOC(AD>0))])
             end if
+
+            ! Reduce BSTEP if necessary so that the move along D also satisfies the linear constraints.
+            ad = -ONE
+            ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
+            frac = ONE
+            restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))
+            frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))
+            bstep = minval([bstep, ONE, frac])  ! BSTEP = MINVAL([BSTEP, ONE, FRAC(TRUELOC(AD>0))])
         end if
 
         ! Set the next direction for seeking a reduction in the model function subject to the trust
@@ -229,25 +235,19 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
     ! derivative term of this step is sufficiently small or if no further progress is possible.
     icount = icount + 1
-    delres = delsq - ss
-    if (delres <= 0) then
-        exit
-    end if
+    rhs = snsq - ss
+    if (rhs <= 0) exit
     dg = inprod(d, g)
     ds = inprod(d, s)
     dd = inprod(d, d)
-    if (dg >= 0 .or. is_nan(dg)) then
-        exit
-    end if
-    temp = sqrt(ds * ds + dd * delres)
+    if (dg >= 0 .or. is_nan(dg)) exit
+    temp = sqrt(rhs * dd + ds * ds)
     if (ds <= 0) then
         alpha = (temp - ds) / dd
     else
-        alpha = delres / (temp + ds)
+        alpha = rhs / (temp + ds)
     end if
-    if (-alpha * dg <= ctest * reduct) then
-        exit
-    end if
+    if (-alpha * dg <= ctest * reduct) exit
 
     dw = hess_mul(d, xpt, pq, hq)
 
@@ -259,7 +259,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         alpha = -dg / dgd
     end if
 
-    ! Make a further reduction in ALPHA if necessary to preserve feasibility.
+    ! Make a further reduction in ALPHA if necessary to preserve feasibility, and put some scalar
+    ! products of D with constraint gradients in W.
     alphm = alpha
     ad = -ONE
     ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
@@ -282,46 +283,56 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     !----------------------------------------------------------------------------------------------!
 
     alpha = min(max(alpha, alpbd), alphm)
-    if (icount == nact) then
-        alpha = min(alpha, ONE)
-    end if
+    if (icount == nact) alpha = min(alpha, ONE)
 
     ! Update S, G, RESNEW, RESACT and REDUCT.
     sold = s
     s = s + alpha * d
     ss = sum(s**2)
+    !if (.not. is_finite(sum(abs(s)))) then
     if (.not. is_finite(ss)) then
         s = sold
         exit
     end if
     g = g + alpha * dw
-    if (.not. is_finite(sum(abs(g)))) then
-        exit
-    end if
+    !if (.not. all(is_finite(g))) exit
+    if (.not. is_finite(sum(abs(g)))) exit
     restmp = resnew - alpha * ad  ! Only RESTMP(TRUELOC(RESNEW > 0)) is needed.
     resnew(trueloc(resnew > 0)) = max(TINYCV, restmp(trueloc(resnew > 0)))
     !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
     if (icount == nact) then
         resact(1:nact) = (ONE - bstep) * resact(1:nact)
     end if
+    redold = reduct
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
-
-    ! Test for termination. Branch to a new loop if there is a new active constraint and if the
-    ! distance from S to the trust region boundary is at least 0.2*DELTA.
-    if (alpha >= alpht .or. -alphm * (dg + HALF * alphm * dgd) <= ctest * reduct) then
+    if (reduct <= 0 .or. is_nan(reduct)) then
+        s = sold
+        reduct = redold
         exit
     end if
+
+    ! Test for termination. Branch to a new loop if there is a new active constraint and if the
+    ! distance from S to the trust region boundary is at least 0.2*SNORM.
+
+    ! Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN values. Exit when
+    ! NGETACT is large or NaN is detected.
+    ! Caution: 1. MIN accepts only data with the same KIND; 2. Integer overflow.
+    !if (ngetact > min(10000, 100 * int(m + 1) * int(n)) .or.  &
+    !& alpha /= alpha .or. alpht /= alpht .or. &
+    !& alphm /= alphm .or. dgd /= dgd .or. dg /= dg .or. &
+    !& ss /= ss .or. snsq /= snsq .or. reduct /= reduct) then
+    !    exit
+    !end if
+    if (alpha >= alpht .or. -alphm * (dg + HALF * alphm * dgd) <= ctest * reduct) exit
     if (jsav > 0) then
-        if (ss <= 0.64_RP * delsq) then
+        if (ss <= 0.64_RP * snsq) then
             get_act = .true.
             cycle
         else
             exit
         end if
     end if
-    if (icount == n) then
-        exit
-    end if
+    if (icount == n) exit
 
     ! Calculate the next search direction, which is conjugate to the previous one if ICOUNT /= NACT.
     ! N.B.: NACT < 0 is impossible unless GETACT is buggy; NACT = 0 can happen, particularly if
@@ -343,14 +354,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     get_act = .false.
 end do
 
-if (reduct <= 0 .or. is_nan(reduct)) then
-    s = ZERO
-end if
+! Return from the subroutine.
+snorm = ZERO
+if (reduct > 0) snorm = sqrt(ss)
 
 if (DEBUGGING) then
-    call assert(size(s) == n .and. all(is_finite(s)), 'SIZE(S) == N, S is finite', srname)
-    call assert(norm(s) <= TWO * delta, '|S| <= 2*DELTA', srname)
-    ! Due to rounding, it may happen that |S| > DELTA, but |S| > 2*DELTA is highly improbable.
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
