@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, August 17, 2022 PM10:20:06
+! Last Modified: Thursday, August 18, 2022 AM08:38:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -102,6 +102,12 @@ if (DEBUGGING) then
 end if
 
 g = gq
+! Return if G is not finite. Otherwise, GETACT will fail in the debugging mode.
+if (.not. is_finite(sum(abs(g)))) then
+    ngetact = 0
+    s = ZERO
+    return
+end if
 
 !
 !     N, NPT, M, AMAT, B, XPT, HQ, PQ, NACT, IACT, RESCON, QFAC and RFAC

@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, August 18, 2022 AM12:09:51
+! Last Modified: Thursday, August 18, 2022 AM08:15:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -691,9 +691,6 @@ npt = int(size(xpt, 2), kind(npt))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
-    write (16, *) 'd', d, n
-    write (16, *) size(d), is_finite(d)
-    close (16)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
