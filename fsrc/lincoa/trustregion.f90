@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 19, 2022 AM08:31:38
+! Last Modified: Friday, August 19, 2022 PM08:24:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,7 +68,7 @@ real(RP) :: tol
 real(RP) :: g(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, delres, scaling, delsq, ss, temp, sold(size(s))
+&        dd, dg, dgd, ds, bstep, reduct, resid, scaling, delsq, ss, temp, sold(size(s))
 integer(IK) :: maxiter, iter, icount, jsav  ! What is ICOUNT counting? Better name for ICOUNT?
 integer(IK) :: m
 integer(IK) :: n
@@ -197,16 +197,16 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
             ! move that satisfies both the trust region bound and the linear constraints.
             ds = inprod(d, s + dw)
             dd = sum(d**2)
-            delres = delsq - sum((s + dw)**2)  ! Calculation changed
+            resid = delsq - sum((s + dw)**2)  ! Calculation changed
 
-            if (delres > 0) then
+            if (resid > 0) then
                 ! Set BSTEP to the greatest value so that S + DW + BSTEP*D satisfies the trust
                 ! region bound.
-                temp = sqrt(ds * ds + dd * delres)
+                temp = sqrt(ds * ds + dd * resid)
                 if (ds <= 0) then
                     bstep = (temp - ds) / dd
                 else
-                    bstep = delres / (temp + ds)
+                    bstep = resid / (temp + ds)
                 end if
                 ! Reduce BSTEP so that the move along D also satisfies the linear constraints.
                 ad = -ONE
@@ -233,8 +233,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
     ! derivative term of this step is sufficiently small or if no further progress is possible.
     icount = icount + 1
-    delres = delsq - ss
-    if (delres <= 0) then
+    resid = delsq - ss
+    if (resid <= 0) then
         exit
     end if
     dg = inprod(d, g)
@@ -243,11 +243,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     if (dg >= 0 .or. is_nan(dg)) then
         exit
     end if
-    temp = sqrt(ds * ds + dd * delres)
+    temp = sqrt(ds * ds + dd * resid)
     if (ds <= 0) then
         alpha = (temp - ds) / dd
     else
-        alpha = delres / (temp + ds)
+        alpha = resid / (temp + ds)
     end if
     if (-alpha * dg <= ctest * reduct) then
         exit

@@ -258,7 +258,7 @@ do while (.true.)  ! TODO: prevent infinite cycling
     if (any(sbound < stplen)) then
         iact = int(minloc(sbound, dim=1), IK)
         stplen = sbound(iact)
-    !!MATLAB: [stplen, iact] = min(sbound);
+        !!MATLAB: [stplen, iact] = min(sbound);
     end if
     !----------------------------------------------------------------------------------------------!
     ! Alternatively, IACT and STPLEN can be calculated as below.
