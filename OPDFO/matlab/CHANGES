@@ -19,4 +19,22 @@
 11. "returns positive constrviolations" in the error messages should be "returns a positive
     constrviolation".
 
+12. The warning 'uobyqa:UnivariateProblem' is only emitted for uobyqa when n <= 1 and classical = true,
+    as the modernized version can handle n == 1.
+    The warning message is modified as follows:
+    wmsg = sprintf('%s: a univariate problem received and classical = true; %s may crash; classical is set to false.', funname, funname) "
+    The modern version now can handle univariate problems properly, while the classical version may crash with memory errors.
+
+13. (see line 248--271 of prepdfo.m, only in the bound/linear-constrained case) x0 is revised only
+    if the preprocessing code find a new starting point with a smaller constraint violation. If x0
+    is still infeasible (up to a tolerance, 10e-10 in the code) after the possible revision, then
+    warn that "INVOKER: preprocessing code did not find a feasible x0; problem is likely infeasible",
+    the warning identifier being "INVOKER:InfeasibleX0".
+
+    At the same time, in lincoa.m (line 385--397), when x0 is infeasible (this x0 has been
+    preprocessed), warn that "lincoa will modify the right-hand side of the constraints to make x0
+    feasible.", the warning identifier being "lincoa:ConstraintModified". Originally, it warns about
+    also the infeasibility of x0 (which has been warned in prepdfo.m now), with the warning
+    identifier being "lincoa:InfeasibleX0".
+
 Check other changes by comparing the matlab interfaces (vimdiff).

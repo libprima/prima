@@ -1,0 +1,22 @@
+1. Handle evaluation failures.
+2. New options: fortran, precision, eta1/2, gammma1/2, iprint, maxhist, output_xhist, output_nlchist, maxfilt, ctol, cweight
+   New output: xhist, nlcihist, nlcehist
+   When debug = chckfunval = true, check the consistency between xhist, fhist, chist, nlcihist,
+   nlcehist if they are available.
+3. Compile/call different versions of the solvers according to precision and debug_flag.
+4. New functions: evalobj.m, evalcon.m, cobyla_con, cobyla_funcon, all_solvers, all_precisions,
+   all_variants.
+5. Unify the signatures of the classical and modern version
+6. gethuge now accpets 'precision' as an input; implement maxint; call gethuge only in prepdfo and
+   maxint; call maxint only in prepdfo and lincoa, cobyla; record hugenum, hugefun, hugecon in
+   probinfo and use hugefun/hugecon in postpdfo.
+7. No need to check maxint in uobyqa, newuoa, and bobyqa; in lincoa, cobyla, and prepdfo, only check
+   that the number of variables/constraints do not exceed maxint.
+8. Do not take the value of rhoend into consideration when correcting the incorrect (non-positive,
+   not finite, etc) value of rhobeg for BOBYQA.
+9. Check that chist is nonnegative.
+10. If fhist contain any value blow -hugefun, raise the warning 'HugeNegativeF'.
+11. "returns positive constrviolations" in the error messages should be "returns a positive
+    constrviolation".
+
+Check other changes by comparing the matlab interfaces (vimdiff).

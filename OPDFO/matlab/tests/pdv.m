@@ -33,8 +33,7 @@ try
     testpdfo
     toc
 
-    %solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
-    solvers = {'cobyla', 'newuoa', 'bobyqa', 'lincoa'};  % uobyqa cannot solve 1D problem as of 20220502
+    solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
     precisions = {'double', 'single', 'quadruple'};
     debug_flags = {true, false};
     variants = {'modern', 'classical'};
