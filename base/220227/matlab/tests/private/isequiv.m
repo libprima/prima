@@ -116,7 +116,7 @@ if isempty(requirements.list)
         blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2', 'EXTRASIM', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE'}];
-        blacklist = [blacklist, {'LSNNODOC', 'DEGENLPB', 'RES', 'AVION2', 'SIPOW3', 'HS55','PRODPL1'}];  % Takes long to solve
+        blacklist = [blacklist, {'LSNNODOC', 'DEGENLPB', 'RES', 'AVION2', 'SIPOW3', 'HS55','PRODPL1','BQPGASIM'}];  % Takes long to solve
         blacklist = [blacklist, {'MINMAXRB', 'MAKELA1'}]; % Classical COBYLA encounters SEGFAULT
         blacklist = [blacklist, {'POLAK6'}]; % Cannot pass  B = A^{-1}!
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
