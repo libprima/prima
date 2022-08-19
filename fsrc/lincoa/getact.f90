@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, August 18, 2022 AM08:40:22
+! Last Modified: Saturday, August 20, 2022 AM02:46:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -159,7 +159,7 @@ end if
 
 ! Set some constants.
 gg = inprod(g, g)
-tdel = 0.2_RP * delta
+tdel = 0.2_RP * delta  ! Changing TDEL to 0.1_RP*DELTA does not improve the performance of LINCOA.
 
 ! Set the initial QFAC to the identity matrix in the case NACT = 0.
 if (nact == 0) then
