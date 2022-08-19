@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 19, 2022 PM11:10:10
+! Last Modified: Saturday, August 20, 2022 AM02:12:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -314,20 +314,29 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         exit
     end if
 
-    ! Test for termination. Branch to a new loop if there is a new active constraint and if the
-    ! distance from S to the trust region boundary is at least 0.2*DELTA.
+    ! Test for termination.
     if (alpha >= alpht .or. -alphm * (dg + HALF * alphm * dgd) <= ctest * reduct) then
         exit
     end if
+
+    ! Branch to a new loop if there is a new active constraint.
+    ! Powell's code branches back with GET_ACT = .TRUE. only if |S| <= 0.8*DELTA, as mentioned
+    ! at the end of Section 3 of Powell 2014. The motivation seems to avoid small steps that
+    ! changes the active set. However, according to a test on 20220820, removing this condition
+    ! (essentially replacing it with |S| < DELTA) improves the performance of LINCOA a bit.
     if (jsav > 0) then
         get_act = .true.
         cycle
+
+        ! Powell's code is as follows.
+        !---------------------------------!
         !if (ss <= 0.64_RP * delsq) then
         !    get_act = .true.
         !    cycle
         !else
         !    exit
         !end if
+        !---------------------------------!
     end if
     if (icount == n) then
         exit
