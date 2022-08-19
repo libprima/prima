@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 19, 2022 AM08:10:04
+! Last Modified: Friday, August 19, 2022 AM08:31:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,7 +68,7 @@ real(RP) :: tol
 real(RP) :: g(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, delres, scaling, delsq, ss, temp, sold(size(s)), redold
+&        dd, dg, dgd, ds, bstep, reduct, delres, scaling, delsq, ss, temp, sold(size(s))
 integer(IK) :: maxiter, iter, icount, jsav  ! What is ICOUNT counting? Better name for ICOUNT?
 integer(IK) :: m
 integer(IK) :: n
@@ -100,6 +100,10 @@ if (DEBUGGING) then
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 g = gq
 
@@ -304,11 +308,9 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     if (icount == nact) then
         resact(1:nact) = (ONE - bstep) * resact(1:nact)
     end if
-    redold = reduct
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
     if (reduct <= 0 .or. is_nan(reduct)) then
         s = sold
-        reduct = redold
         exit
     end if
 
@@ -349,10 +351,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     get_act = .false.
 end do
 
-if (reduct <= 0 .or. is_nan(reduct)) then
-    s = ZERO
-end if
+!====================!
+!  Calculation ends  !
+!====================!
 
+! Postconditions
 if (DEBUGGING) then
     call assert(size(s) == n .and. all(is_finite(s)), 'SIZE(S) == N, S is finite', srname)
     call assert(norm(s) <= TWO * delta, '|S| <= 2*DELTA', srname)
