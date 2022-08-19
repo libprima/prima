@@ -292,6 +292,7 @@ do iter = 1, min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper boun
     !if (.not. is_finite(sum(abs(s)))) then
     if (.not. is_finite(ss)) then
         s = sold
+        ss = sum(s**2)
         exit
     end if
     g = g + alpha * dw
@@ -308,6 +309,7 @@ do iter = 1, min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper boun
     if (reduct <= 0 .or. is_nan(reduct)) then
         s = sold
         reduct = redold
+        ss = sum(s**2)
         exit
     end if
 

@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 19, 2022 AM07:47:46
+! Last Modified: Friday, August 19, 2022 AM08:12:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,7 +69,7 @@ real(RP) :: g(size(gq))
 real(RP) :: vlam(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, snsq, ss, temp, sold(size(s))
+&        dd, dg, dgd, ds, bstep, reduct, rhs, scaling, snsq, ss, temp, sold(size(s)), redold
 integer(IK) :: iter, icount, jsav
 integer(IK) :: m
 integer(IK) :: n
@@ -292,6 +292,7 @@ do iter = 1, min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper boun
     !if (.not. is_finite(sum(abs(s)))) then
     if (.not. is_finite(ss)) then
         s = sold
+        ss = sum(s**2)
         exit
     end if
     g = g + alpha * dw
@@ -303,7 +304,14 @@ do iter = 1, min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper boun
     if (icount == nact) then
         resact(1:nact) = (ONE - bstep) * resact(1:nact)
     end if
+    redold = reduct
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
+    if (reduct <= 0 .or. is_nan(reduct)) then
+        s = sold
+        reduct = redold
+        ss = sum(s**2)
+        exit
+    end if
 
     ! Test for termination. Branch to a new loop if there is a new active constraint and if the
     ! distance from S to the trust region boundary is at least 0.2*SNORM.
@@ -349,6 +357,7 @@ do iter = 1, min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper boun
 end do
 
 ! Return from the subroutine.
+ss = sum(s**2)
 snorm = ZERO
 if (reduct > 0) snorm = sqrt(ss)
 
