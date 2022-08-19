@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 19, 2022 PM08:24:34
+! Last Modified: Friday, August 19, 2022 PM11:10:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -320,12 +320,14 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         exit
     end if
     if (jsav > 0) then
-        if (ss <= 0.64_RP * delsq) then
-            get_act = .true.
-            cycle
-        else
-            exit
-        end if
+        get_act = .true.
+        cycle
+        !if (ss <= 0.64_RP * delsq) then
+        !    get_act = .true.
+        !    cycle
+        !else
+        !    exit
+        !end if
     end if
     if (icount == n) then
         exit
