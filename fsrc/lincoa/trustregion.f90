@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM06:44:00
+! Last Modified: Sunday, August 21, 2022 AM07:14:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -201,7 +201,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         if (any(resact(1:nact) > 1.0E-4_RP * delta)) then
             ! If the modulus of the residual of an active constraint is substantial (namely, is more
             ! than 1.0E-4*DELTA), then set DPROJ to the shortest move (projection step) from S to
-            ! the boundaries of the active constraints.
+            ! the boundaries of the active constraints. We will use DPROJ to modify PSD.
             ! N.B.: We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify
             ! MAXVAL(X) when X contains NaN, and MATLAB/Python/R/Julia behave differently in this
             ! respect. Moreover, MATLAB defines max(X) = [] if X == [], differing from mathematics
@@ -235,6 +235,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
                 gamma = minval([ONE, gamma, frac])  ! GAMMA = MINVAL([ONE, GAMMA, FRAC(TRUELOC(AD>0))])
             end if
         end if
+
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        ! This is to test how important is this modification procedure.
+        gamma = ZERO !!! For testing. Will be removed
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         ! Set the next direction for seeking a reduction in the model function subject to the trust
         ! region bound and the linear constraints.
