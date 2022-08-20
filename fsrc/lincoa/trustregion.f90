@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM05:28:14
+! Last Modified: Sunday, August 21, 2022 AM05:29:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -330,7 +330,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     resnew(trueloc(resnew > 0)) = max(TINYCV, restmp(trueloc(resnew > 0)))
     !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
 
-    ! Update RESACT. This i done iff GETACT has been called, and D is not PSD but a modified step.
+    ! Update RESACT. This is done iff GETACT has been called, and D is not PSD but a modified step.
     !----------------------------------------------------------------------------------------------!
     ! Zaikun 20220821: There seems be a typo here. Powell's original code does not take ALPHA into
     ! account. Then RESACT seems to correspond to S + D, where D is defined as PSD + GAMMA*DPROJ
