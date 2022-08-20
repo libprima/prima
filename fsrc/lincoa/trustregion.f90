@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM04:28:19
+! Last Modified: Sunday, August 21, 2022 AM05:28:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,6 +60,7 @@ real(RP), intent(out) :: s(:)  ! S(N)
 logical :: get_act
 character(len=*), parameter :: srname = 'TRSTEP'
 real(RP) :: d(size(gq))
+real(RP) :: dproj(size(gq))
 real(RP) :: psd(size(gq))
 real(RP) :: hd(size(gq))
 real(RP) :: pg(size(gq))
@@ -158,12 +159,12 @@ resnew(iact(1:nact)) = ZERO
 ! RESACT contains the constraint residuals of the constraints in IACT(1:NACT), namely the values
 ! of B(J) - AMAT(:, J)^T*(XOPT+S) for the J in IACT(1:NACT). Here, IACT(1:NACT) is a set of
 ! indicates such that the columns of AMAT(:, IACT(1:NACT)) form a basis of the constraint gradients
-! in the active set. For the definition of the active set, see (3.5) of Powell (2015) and the
+! in the "active set". For the definition of the "active set", see (3.5) of Powell (2015) and the
 ! comments at the beginning of the GETACT subroutine.
-! N.B.: Between two calls of GETACT, S is updated in the orthogonal complement of the active
-! gradients (i.e., null space of the active constraints). Therefore, RESACT remains unchanged.
+! N.B.: Between two calls of GETACT, S is updated in the orthogonal complement of the "active"
+! gradients (i.e., null space of the "active" constraints). Therefore, RESACT remains unchanged.
 ! RESACT is changed right after GETACT is called if the first search direction D is not PSD
-! but PSD + GAMMA * D.
+! but PSD + GAMMA * DPROJ.
 resact(1:nact) = rescon(iact(1:nact))
 
 s = ZERO
@@ -200,25 +201,25 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         gamma = ZERO
         if (any(resact(1:nact) > 1.0E-4_RP * delta)) then
             ! If the modulus of the residual of an active constraint is substantial (namely, is more
-            ! than 1.0E-4*DELTA), then set D to the shortest move from S to the boundaries of the
-            ! active constraints.
+            ! than 1.0E-4*DELTA), then set DPROJ to the shortest move (projection step) from S to
+            ! the boundaries of the active constraints.
             ! N.B.: We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify
             ! MAXVAL(X) when X contains NaN, and MATLAB/Python/R/Julia behave differently in this
             ! respect. Moreover, MATLAB defines max(X) = [] if X == [], differing from mathematics
             ! and other languages.
-            d = matprod(qfac(:, 1:nact), solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact)))
-            !!MATLAB: d = qfac(:, 1:nact) * (rfac(1:nact, 1:nact)' \ resact(1:nact))
+            dproj = matprod(qfac(:, 1:nact), solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact)))
+            !!MATLAB: dproj = qfac(:, 1:nact) * (rfac(1:nact, 1:nact)' \ resact(1:nact))
 
-            ! The vector D that has just been calculated is also the shortest move from S+PSD to the
-            ! boundaries of the active constraints (this is because PSD is parallel to the
+            ! The vector DPROJ that has just been calculated is also the shortest move from S+PSD
+            ! to the boundaries of the active constraints (this is because PSD is parallel to the
             ! boundaries of the active constraints). Set GAMMA to the greatest steplength of this
             ! move that satisfies both the trust region bound and the linear constraints.
-            ds = inprod(d, s + psd)
-            dd = sum(d**2)
+            ds = inprod(dproj, s + psd)
+            dd = sum(dproj**2)
             resid = delsq - sum((s + psd)**2)  ! Calculation changed
 
             if (resid > 0) then
-                ! Set GAMMA to the greatest value so that S + PSD + GAMMA*D satisfies the trust
+                ! Set GAMMA to the greatest value so that S + PSD + GAMMA*DPROJ satisfies the trust
                 ! region bound.
                 temp = sqrt(ds * ds + dd * resid)
                 if (ds <= 0) then
@@ -226,9 +227,9 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
                 else
                     gamma = resid / (temp + ds)
                 end if
-                ! Reduce GAMMA so that the move along D also satisfies the linear constraints.
+                ! Reduce GAMMA so that the move along DPROJ also satisfies the linear constraints.
                 ad = -ONE
-                ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
+                ad(trueloc(resnew > 0)) = matprod(dproj, amat(:, trueloc(resnew > 0)))
                 frac = ONE
                 restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(psd, amat(:, trueloc(ad > 0)))
                 frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))
@@ -239,8 +240,9 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         ! Set the next direction for seeking a reduction in the model function subject to the trust
         ! region bound and the linear constraints.
         if (gamma > 0) then
-            d = psd + gamma * d
+            d = psd + gamma * dproj
             itercg = -1_IK
+            !resact(1:nact) = (ONE - gamma) * resact(1:nact)
         else
             d = psd
             itercg = 0_IK
@@ -251,6 +253,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
     ! derivative term of this step is sufficiently small or if no further progress is possible.
     itercg = itercg + 1
+    ! After the above line, ITERCG = 0 iff GETACT has been just called, and D is not PSD but a
+    ! modified step.
     resid = delsq - ss
     if (resid <= 0) then
         exit
@@ -304,11 +308,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     !----------------------------------------------------------------------------------------------!
 
     alpha = min(max(alpha, alpbd), alphm)
-    if (itercg == 0) then
+    if (itercg == 0) then  ! Iff GETACT has been called, and D is not PSD but a modified step.
         alpha = min(alpha, ONE)
     end if
 
-    ! Update S, G, RESNEW, RESACT and REDUCT.
+    ! Update S, G.
     sold = s
     s = s + alpha * d
     ss = sum(s**2)
@@ -320,16 +324,29 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     if (.not. is_finite(sum(abs(g)))) then
         exit
     end if
+
+    ! Update RESNEW
     restmp = resnew - alpha * ad  ! Only RESTMP(TRUELOC(RESNEW > 0)) is needed.
     resnew(trueloc(resnew > 0)) = max(TINYCV, restmp(trueloc(resnew > 0)))
     !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
-    !---------------------------------------------------!
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    ! Update RESACT. This i done iff GETACT has been called, and D is not PSD but a modified step.
+    !----------------------------------------------------------------------------------------------!
+    ! Zaikun 20220821: There seems be a typo here. Powell's original code does not take ALPHA into
+    ! account. Then RESACT seems to correspond to S + D, where D is defined as PSD + GAMMA*DPROJ
+    ! during the modification procedure after GETACT is called. Without this modification, RESACT
+    ! would remain unchanged because D = PSD, which is in the null space of the active constraints.
+    ! The GAMMA*DPROJ component in the modified step D reduces RESACT by GAMMA*RESACT. However,
+    ! since S is updated to S + ALPHA*D, shouldn't RESACT be reduced by ALPHA*GAMMA*RESACT?
+    ! Note that Powell chose to update RESACT after ALPHA is calculated (instead of right after
+    ! GAMMA is calculated), which might be an indication that he wanted to take ALPHA into account.
     if (itercg == 0) then
-        resact(1:nact) = (ONE - gamma) * resact(1:nact)
+        resact(1:nact) = (ONE - gamma) * resact(1:nact)  ! Powell's code.
+        !resact(1:nact) = (ONE - alpha * gamma) * resact(1:nact)
     end if
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !---------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
+
+    ! Update REDUCT, the reduction up to now.
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
     if (reduct <= 0 .or. is_nan(reduct)) then
         s = sold
@@ -362,6 +379,14 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         !end if
         !---------------------------------!
     end if
+
+    ! If N - NACT CG iterations has been taken in the current null space (corresponding to the
+    ! current "active set"), then, in theory, a stationary point in this subspace has been found.
+    ! If the "active set" is the true active set, then a stationary point of the
+    ! linearly-constrained trust region subproblem is found. So a termination is reasonable.
+    ! However, the "active set" is not precisely the true active set, is it? See (3.5) of Powell
+    ! (2015) and the comments at the beginning of the GETACT subroutine. Also, we should take into
+    ! account the modification after GETACT is called.
     if (itercg == n - nact) then
         exit
     end if
@@ -376,7 +401,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         !!MATLAB: pg = qfac(:, nact+1:n) * (g' * qfac(:, nact+1:n))';
     end if
 
-    if (itercg == 0) then
+    if (itercg == 0) then  ! Iff GETACT has been called, and D is not PSD but a modified step.
         beta = ZERO
     else
         beta = inprod(pg, hd) / dgd
