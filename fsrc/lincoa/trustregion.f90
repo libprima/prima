@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM06:06:02
+! Last Modified: Sunday, August 21, 2022 AM06:44:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,7 +68,7 @@ real(RP) :: resact(size(amat, 2))
 real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
 real(RP) :: g(size(gq))
-real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
+real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpha, alphm, alpht, &
 & beta, ctest, &
 &        dd, dg, dhd, ds, gamma, reduct, resid, scaling, delsq, ss, temp, sold(size(s))
 integer(IK) :: maxiter, iter, itercg, jsav
@@ -169,7 +169,6 @@ resact(1:nact) = rescon(iact(1:nact))
 
 s = ZERO
 ss = ZERO
-alpbd = ZERO  ! Artificial value. Not used. Zaikun 20220821: What is ALPBD???
 reduct = ZERO
 ngetact = 0
 get_act = .true.  ! Better name?
@@ -247,7 +246,6 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
             d = psd
             itercg = 0_IK
         end if
-        alpbd = ONE
     end if
 
     ! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
@@ -307,15 +305,24 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! negative of JSAV > 0 is more harmful.
     !----------------------------------------------------------------------------------------------!
 
-    !alpha = max(alpha, alpbd)
-    !if (itercg == 0) then  ! Iff GETACT has been called, and D is not PSD but a modified step.
-    !    alpha = min(alpha, ONE)
-    !end if
-    if (itercg == 0) then
+    ! Post-process ALPHA according to some prior information.
+    ! N.B.:
+    ! 1. Since we set ALPHA=1 when ITERCG=0, the ALPHA calculated above is needed only if ITERCG>0.
+    ! 2. Zaikun 20220821: In theory, shouldn't this post-processing change nothing? According to
+    ! a test on 20220821, it does change ALPHA sometimes. Strange! Why?
+    if (itercg == 0) then  ! Iff GETACT has been called, and D is not PSD but a modified step.
+        ! By the definition of D, ALPHA = ONE is the largest ALPHA so that S + ALPHA*D satisfies the
+        ! linear and trust region constraints.
         alpha = ONE
+    elseif (itercg == 1 .and. gamma <= 0) then  ! Iff GETACT has been called, and D is not modified.
+        ! Due to the scaling of PSD, S+D satisfies the linear and trust region constraints.
+        alpha = max(alpha, ONE)
     else
-        alpha = max(alpha, alpbd)
+        alpha = max(alpha, ZERO)
     end if
+
+    ! Set ALPHA to the minimum between ALPHA and ALPHM, namely the steplength obtained by minimizing
+    ! the quadratic model along D.
     alpha = min(alpha, alphm)
 
     ! Update S, G.
@@ -415,7 +422,6 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         beta = inprod(pg, hd) / dhd
     end if
     d = -pg + beta * d
-    alpbd = ZERO
     get_act = .false.
 end do
 

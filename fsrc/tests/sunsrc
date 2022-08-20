@@ -33,6 +33,9 @@ if [[ -f "$LINTR" ]] ; then
     sed -i "s|restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))|ind = trueloc(ad > 0)\nrestmp(ind) = resnew(ind) - matprod(dw, amat(:, ind))|"  "$LINTR"
     sed -i "s|frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))|frac(ind) = restmp(ind) / ad(ind)|"  "$LINTR"
     sed -i "s|ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))|ind = trueloc(resnew > 0)\nad(ind) = matprod(d, amat(:, ind))|"  "$LINTR"
+    sed -i "s|frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))|ind = trueloc(ad > 0)\nfrac(ind) = restmp(ind) / ad(ind)|" "$LINTR"
+    sed -i "s|restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(psd, amat(:, trueloc(ad > 0)))|ind = trueloc(ad > 0)\nrestmp(ind) = resnew(ind) - matprod(psd, amat(:, ind))|" "$LINTR"
+    sed -i "s|ad(trueloc(resnew > 0)) = matprod(dproj, amat(:, trueloc(resnew > 0)))|ind = trueloc(ad > 0)\nad(ind) = matprod(dproj, amat(:, ind))|" "$LINTR"
 fi
 
 if [[ -f "$BOBTR" ]] ; then
