@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, August 20, 2022 PM05:43:08
+! Last Modified: Sunday, August 21, 2022 AM04:28:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,8 +69,8 @@ real(RP) :: tol
 real(RP) :: g(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, bstep, reduct, resid, scaling, delsq, ss, temp, sold(size(s))
-integer(IK) :: maxiter, iter, icount, jsav  ! What is ICOUNT counting? Better name for ICOUNT?
+&        dd, dg, dgd, ds, gamma, reduct, resid, scaling, delsq, ss, temp, sold(size(s))
+integer(IK) :: maxiter, iter, itercg, jsav
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
@@ -141,10 +141,12 @@ ctest = 0.01_RP
 delsq = delta * delta
 
 ! Set the initial elements of RESNEW, RESACT and S.
+
 ! 1. RESNEW(J) < 0 indicates that the J-th constraint does not restrict the CG steps of the current
 ! trust region calculation. In other words, RESCON >= DELTA.
 ! 2. RESNEW(J) = 0 indicates that J is an entry of IACT(1:NACT).
-! 3. RESNEW(J) > 0 means that RESNEW(J) = max(B(J) - AMAT(:, J)^T*(XOPT+D), TINYCV).
+! 3. RESNEW(J) > 0 means that RESNEW(J) = max(B(J) - AMAT(:, J)^T*(XOPT+S), TINYCV), where S is the
+! step up to now, calculated by a sequence of (truncated) CG iterations.
 ! N.B.: The order of the following lines is important, as the later ones override the earlier.
 resnew = rescon
 resnew(trueloc(rescon >= 0)) = max(TINYCV, rescon(trueloc(rescon >= 0)))
@@ -152,6 +154,16 @@ resnew(trueloc(rescon >= delta)) = -ONE
 !!MATLAB:
 !!resnew = rescon; resnew(rescon >= 0) = max(TINYCV, rescon(rescon >= 0)); resnew(rescon >= delta) = -1;
 resnew(iact(1:nact)) = ZERO
+
+! RESACT contains the constraint residuals of the constraints in IACT(1:NACT), namely the values
+! of B(J) - AMAT(:, J)^T*(XOPT+S) for the J in IACT(1:NACT). Here, IACT(1:NACT) is a set of
+! indicates such that the columns of AMAT(:, IACT(1:NACT)) form a basis of the constraint gradients
+! in the active set. For the definition of the active set, see (3.5) of Powell (2015) and the
+! comments at the beginning of the GETACT subroutine.
+! N.B.: Between two calls of GETACT, S is updated in the orthogonal complement of the active
+! gradients (i.e., null space of the active constraints). Therefore, RESACT remains unchanged.
+! RESACT is changed right after GETACT is called if the first search direction D is not PSD
+! but PSD + GAMMA * D.
 resact(1:nact) = rescon(iact(1:nact))
 
 s = ZERO
@@ -161,7 +173,12 @@ reduct = ZERO
 ngetact = 0
 get_act = .true.  ! Better name?
 
-icount = -1_IK  ! Artificial value. Not used. To entertain compilers. To be removed.
+! ITERCG is the number of CG iterations corresponding to the current "active set" obtained by
+! calling GETACT. These CG iterations are restricted in the orthogonal complement of the active
+! gradients (i.e., null space of the active constraints).
+! The following initial value of ITERCG is an artificial value that is not used. It is to entertain
+! Fortran compilers (can it be be removed?).
+itercg = -1_IK
 
 maxiter = min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper bound of ITER?
 do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
@@ -180,7 +197,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         scaling = 0.2_RP * delta / sqrt(dd)
         psd = scaling * psd
 
-        bstep = ZERO
+        gamma = ZERO
         if (any(resact(1:nact) > 1.0E-4_RP * delta)) then
             ! If the modulus of the residual of an active constraint is substantial (namely, is more
             ! than 1.0E-4*DELTA), then set D to the shortest move from S to the boundaries of the
@@ -193,46 +210,47 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
             !!MATLAB: d = qfac(:, 1:nact) * (rfac(1:nact, 1:nact)' \ resact(1:nact))
 
             ! The vector D that has just been calculated is also the shortest move from S+PSD to the
-            ! boundaries of the active constraints. Set BSTEP to the greatest steplength of this
+            ! boundaries of the active constraints (this is because PSD is parallel to the
+            ! boundaries of the active constraints). Set GAMMA to the greatest steplength of this
             ! move that satisfies both the trust region bound and the linear constraints.
             ds = inprod(d, s + psd)
             dd = sum(d**2)
             resid = delsq - sum((s + psd)**2)  ! Calculation changed
 
             if (resid > 0) then
-                ! Set BSTEP to the greatest value so that S + PSD + BSTEP*D satisfies the trust
+                ! Set GAMMA to the greatest value so that S + PSD + GAMMA*D satisfies the trust
                 ! region bound.
                 temp = sqrt(ds * ds + dd * resid)
                 if (ds <= 0) then
-                    bstep = (temp - ds) / dd
+                    gamma = (temp - ds) / dd
                 else
-                    bstep = resid / (temp + ds)
+                    gamma = resid / (temp + ds)
                 end if
-                ! Reduce BSTEP so that the move along D also satisfies the linear constraints.
+                ! Reduce GAMMA so that the move along D also satisfies the linear constraints.
                 ad = -ONE
                 ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
                 frac = ONE
                 restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(psd, amat(:, trueloc(ad > 0)))
                 frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))
-                bstep = minval([ONE, bstep, frac])  ! BSTEP = MINVAL([ONE, BSTEP, FRAC(TRUELOC(AD>0))])
+                gamma = minval([ONE, gamma, frac])  ! GAMMA = MINVAL([ONE, GAMMA, FRAC(TRUELOC(AD>0))])
             end if
         end if
 
         ! Set the next direction for seeking a reduction in the model function subject to the trust
         ! region bound and the linear constraints.
-        if (bstep > 0) then
-            d = psd + bstep * d
-            icount = nact - 1
+        if (gamma > 0) then
+            d = psd + gamma * d
+            itercg = -1_IK
         else
             d = psd
-            icount = nact
+            itercg = 0_IK
         end if
         alpbd = ONE
     end if
 
     ! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
     ! derivative term of this step is sufficiently small or if no further progress is possible.
-    icount = icount + 1
+    itercg = itercg + 1
     resid = delsq - ss
     if (resid <= 0) then
         exit
@@ -286,7 +304,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     !----------------------------------------------------------------------------------------------!
 
     alpha = min(max(alpha, alpbd), alphm)
-    if (icount == nact) then
+    if (itercg == 0) then
         alpha = min(alpha, ONE)
     end if
 
@@ -305,9 +323,13 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     restmp = resnew - alpha * ad  ! Only RESTMP(TRUELOC(RESNEW > 0)) is needed.
     resnew(trueloc(resnew > 0)) = max(TINYCV, restmp(trueloc(resnew > 0)))
     !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
-    if (icount == nact) then
-        resact(1:nact) = (ONE - bstep) * resact(1:nact)
+    !---------------------------------------------------!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if (itercg == 0) then
+        resact(1:nact) = (ONE - gamma) * resact(1:nact)
     end if
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !---------------------------------------------------!
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
     if (reduct <= 0 .or. is_nan(reduct)) then
         s = sold
@@ -340,11 +362,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         !end if
         !---------------------------------!
     end if
-    if (icount == n) then
+    if (itercg == n - nact) then
         exit
     end if
 
-    ! Calculate the next search direction, which is conjugate to the previous one if ICOUNT /= NACT.
+    ! Calculate the next search direction, which is conjugate to the previous one if ITERCG /= NACT.
     ! N.B.: NACT < 0 is impossible unless GETACT is buggy; NACT = 0 can happen, particularly if
     ! there is no constraint. In theory, the code for the second case below covers the first as well.
     if (nact <= 0) then
@@ -354,7 +376,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         !!MATLAB: pg = qfac(:, nact+1:n) * (g' * qfac(:, nact+1:n))';
     end if
 
-    if (icount == nact) then
+    if (itercg == 0) then
         beta = ZERO
     else
         beta = inprod(pg, hd) / dgd
