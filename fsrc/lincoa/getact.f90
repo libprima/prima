@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, August 20, 2022 AM02:46:06
+! Last Modified: Sunday, August 21, 2022 AM03:53:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,6 +68,7 @@ subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 !
 ! DELTA, RESNEW, RESACT, and G are the same as the terms with these names in SUBROUTINE TRSTEP.
 ! The elements of RESNEW and RESACT are also kept up to date. See Section 3 of Powell (2015).
+! Note that the updates only permute RESACT but do not change the values inside.
 !
 ! VLAM is the vector of Lagrange multipliers of the calculation.
 !
