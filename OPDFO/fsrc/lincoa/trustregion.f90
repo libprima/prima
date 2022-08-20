@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, August 20, 2022 AM02:47:09
+! Last Modified: Sunday, August 21, 2022 AM05:33:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -306,7 +306,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     resnew(trueloc(resnew > 0)) = max(TINYCV, restmp(trueloc(resnew > 0)))
     !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
     if (icount == nact) then
-        resact(1:nact) = (ONE - bstep) * resact(1:nact)
+        !resact(1:nact) = (ONE - bstep) * resact(1:nact)
+        resact(1:nact) = (ONE - alpha*bstep) * resact(1:nact)
     end if
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
     if (reduct <= 0 .or. is_nan(reduct)) then
