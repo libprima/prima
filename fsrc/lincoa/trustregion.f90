@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM05:29:25
+! Last Modified: Sunday, August 21, 2022 AM05:35:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -169,7 +169,7 @@ resact(1:nact) = rescon(iact(1:nact))
 
 s = ZERO
 ss = ZERO
-alpbd = ONE  ! Artificial value. Not used.
+alpbd = ONE  ! Artificial value. Not used. Zaikun 20220821: What is ALPBD???
 reduct = ZERO
 ngetact = 0
 get_act = .true.  ! Better name?
@@ -341,8 +341,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! Note that Powell chose to update RESACT after ALPHA is calculated (instead of right after
     ! GAMMA is calculated), which might be an indication that he wanted to take ALPHA into account.
     if (itercg == 0) then
-        resact(1:nact) = (ONE - gamma) * resact(1:nact)  ! Powell's code.
-        !resact(1:nact) = (ONE - alpha * gamma) * resact(1:nact)
+        resact(1:nact) = (ONE - alpha * gamma) * resact(1:nact)
+        !resact(1:nact) = (ONE - gamma) * resact(1:nact)  ! Powell's code.
     end if
     !----------------------------------------------------------------------------------------------!
 
@@ -380,7 +380,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         !---------------------------------!
     end if
 
-    ! If N - NACT CG iterations has been taken in the current null space (corresponding to the
+    ! If N-NACT CG iterations has been taken in the current null space (corresponding to the
     ! current "active set"), then, in theory, a stationary point in this subspace has been found.
     ! If the "active set" is the true active set, then a stationary point of the
     ! linearly-constrained trust region subproblem is found. So a termination is reasonable.
