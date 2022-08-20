@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM05:35:19
+! Last Modified: Sunday, August 21, 2022 AM06:06:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -70,7 +70,7 @@ real(RP) :: tol
 real(RP) :: g(size(gq))
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpbd, alpha, alphm, alpht, &
 & beta, ctest, &
-&        dd, dg, dgd, ds, gamma, reduct, resid, scaling, delsq, ss, temp, sold(size(s))
+&        dd, dg, dhd, ds, gamma, reduct, resid, scaling, delsq, ss, temp, sold(size(s))
 integer(IK) :: maxiter, iter, itercg, jsav
 integer(IK) :: m
 integer(IK) :: n
@@ -169,7 +169,7 @@ resact(1:nact) = rescon(iact(1:nact))
 
 s = ZERO
 ss = ZERO
-alpbd = ONE  ! Artificial value. Not used. Zaikun 20220821: What is ALPBD???
+alpbd = ZERO  ! Artificial value. Not used. Zaikun 20220821: What is ALPBD???
 reduct = ZERO
 ngetact = 0
 get_act = .true.  ! Better name?
@@ -277,12 +277,12 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
 
     hd = hess_mul(d, xpt, pq, hq)
 
-    ! Set DGD to the curvature of the model along D. Then reduce ALPHA if necessary to the value
+    ! Set DHD to the curvature of the model along D. Then reduce ALPHA if necessary to the value
     ! that minimizes the model.
-    dgd = inprod(d, hd)
+    dhd = inprod(d, hd)
     alpht = alpha
-    if (dg + alpha * dgd > 0) then
-        alpha = -dg / dgd
+    if (dg + alpha * dhd > 0) then
+        alpha = -dg / dhd
     end if
 
     ! Make a further reduction in ALPHA if necessary to preserve feasibility.
@@ -307,10 +307,16 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! negative of JSAV > 0 is more harmful.
     !----------------------------------------------------------------------------------------------!
 
-    alpha = min(max(alpha, alpbd), alphm)
-    if (itercg == 0) then  ! Iff GETACT has been called, and D is not PSD but a modified step.
-        alpha = min(alpha, ONE)
+    !alpha = max(alpha, alpbd)
+    !if (itercg == 0) then  ! Iff GETACT has been called, and D is not PSD but a modified step.
+    !    alpha = min(alpha, ONE)
+    !end if
+    if (itercg == 0) then
+        alpha = ONE
+    else
+        alpha = max(alpha, alpbd)
     end if
+    alpha = min(alpha, alphm)
 
     ! Update S, G.
     sold = s
@@ -340,6 +346,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! since S is updated to S + ALPHA*D, shouldn't RESACT be reduced by ALPHA*GAMMA*RESACT?
     ! Note that Powell chose to update RESACT after ALPHA is calculated (instead of right after
     ! GAMMA is calculated), which might be an indication that he wanted to take ALPHA into account.
+    ! In the following code, we try correcting this apparent typo, but it has little impact on the
+    ! performance of LINCOA according to a test on 20220821.
     if (itercg == 0) then
         resact(1:nact) = (ONE - alpha * gamma) * resact(1:nact)
         !resact(1:nact) = (ONE - gamma) * resact(1:nact)  ! Powell's code.
@@ -347,14 +355,14 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     !----------------------------------------------------------------------------------------------!
 
     ! Update REDUCT, the reduction up to now.
-    reduct = reduct - alpha * (dg + HALF * alpha * dgd)
+    reduct = reduct - alpha * (dg + HALF * alpha * dhd)
     if (reduct <= 0 .or. is_nan(reduct)) then
         s = sold
         exit
     end if
 
     ! Test for termination.
-    if (alpha >= alpht .or. -alphm * (dg + HALF * alphm * dgd) <= ctest * reduct) then
+    if (alpha >= alpht .or. -alphm * (dg + HALF * alphm * dhd) <= ctest * reduct) then
         exit
     end if
 
@@ -404,7 +412,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     if (itercg == 0) then  ! Iff GETACT has been called, and D is not PSD but a modified step.
         beta = ZERO
     else
-        beta = inprod(pg, hd) / dgd
+        beta = inprod(pg, hd) / dhd
     end if
     d = -pg + beta * d
     alpbd = ZERO
