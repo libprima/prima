@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM07:14:33
+! Last Modified: Sunday, August 21, 2022 AM07:23:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -197,11 +197,18 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         scaling = 0.2_RP * delta / sqrt(dd)
         psd = scaling * psd
 
+        ! If the modulus of the residual of an "active constraint" is substantial (namely, is more
+        ! than 1.0E-4*DELTA), then modify the searching direction PSD by a projection step to the
+        ! boundaries of the active constraint. This modified step will reduce the constraint
+        ! residuals of the "active constraints" (see the update of RESACT below). The motivation is
+        ! that the constraints in the "active set" are presumed to be active, and hence should have
+        ! zero residuals (the method is a feasible method; the active constraints are not violated).
+        ! According to a test on 20220821, this modification is important for the performance of
+        ! LINCOA.
         gamma = ZERO
         if (any(resact(1:nact) > 1.0E-4_RP * delta)) then
-            ! If the modulus of the residual of an active constraint is substantial (namely, is more
-            ! than 1.0E-4*DELTA), then set DPROJ to the shortest move (projection step) from S to
-            ! the boundaries of the active constraints. We will use DPROJ to modify PSD.
+            ! Set DPROJ to the shortest move (projection step) from S to the boundaries of the
+            ! active constraints. We will use DPROJ to modify PSD.
             ! N.B.: We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify
             ! MAXVAL(X) when X contains NaN, and MATLAB/Python/R/Julia behave differently in this
             ! respect. Moreover, MATLAB defines max(X) = [] if X == [], differing from mathematics
@@ -235,11 +242,6 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
                 gamma = minval([ONE, gamma, frac])  ! GAMMA = MINVAL([ONE, GAMMA, FRAC(TRUELOC(AD>0))])
             end if
         end if
-
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ! This is to test how important is this modification procedure.
-        gamma = ZERO !!! For testing. Will be removed
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         ! Set the next direction for seeking a reduction in the model function subject to the trust
         ! region bound and the linear constraints.
