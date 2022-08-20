@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, August 20, 2022 AM02:12:49
+! Last Modified: Saturday, August 20, 2022 PM05:43:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,8 +60,9 @@ real(RP), intent(out) :: s(:)  ! S(N)
 logical :: get_act
 character(len=*), parameter :: srname = 'TRSTEP'
 real(RP) :: d(size(gq))
-real(RP) :: dw(size(gq))
-real(RP) :: gw(size(gq))
+real(RP) :: psd(size(gq))
+real(RP) :: hd(size(gq))
+real(RP) :: pg(size(gq))
 real(RP) :: resact(size(amat, 2))
 real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
@@ -125,15 +126,14 @@ end if
 !     G must be set on entry to the gradient of the quadratic model at the
 !       trust region centre. It is used as working space, however, and is
 !       always the gradient of the model at the current S.
-!     RESNEW, RESACT, D, DW and GW are used for working space. A negative
+!     RESNEW, RESACT, D, PG are used for working space. A negative
 !       value of RESNEW(J) indicates that the J-th constraint does not
 !       restrict the CG steps of the current trust region calculation, a
 !       zero value of RESNEW(J) indicates that the J-th constraint is active,
 !       and otherwise RESNEW(J) is set to the greater of TINYCV and the actual
 !       residual of the J-th constraint for the current S. RESACT holds
 !       the residuals of the active constraints, which may be positive.
-!       D is the search direction of each line search. DW is either another
-!       search direction or the change in gradient along D.
+!       D is the search direction of each line search.
 !
 !     Set some numbers for the conjugate gradient iterations.
 !
@@ -166,19 +166,19 @@ icount = -1_IK  ! Artificial value. Not used. To entertain compilers. To be remo
 maxiter = min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper bound of ITER?
 do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
     if (get_act) then
-        ! GETACT picks the active set for the current S. It also sets DW to the vector closest to -G
-        ! that is orthogonal to the normals of the active constraints. DW is scaled to have length
-        ! 0.2*DELTA. Then a move of DW from S is allowed by the linear constraints: DW reduces
-        ! the values of the nearly active constraints; it changes the inactive constraints by at
-        ! most 0.2*DELTA, but the residuals of the inactive constraints at no less than 0.2*DELTA.
+        ! GETACT picks the active set for the current S. It also sets PSD to the vector closest to
+        ! -G that is orthogonal to the normals of the active constraints. PSD is scaled to have
+        ! length 0.2*DELTA. Then a move of PSD from S is allowed by the linear constraints: PSD
+        ! reduces the values of the nearly active constraints; it changes the inactive constraints
+        ! by at most 0.2*DELTA, but the residuals of these constraints at no less than 0.2*DELTA.
         ngetact = ngetact + 1
-        call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, dw)
-        dd = inprod(dw, dw)
+        call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
+        dd = inprod(psd, psd)
         if (dd <= 0 .or. is_nan(dd)) then
             exit
         end if
         scaling = 0.2_RP * delta / sqrt(dd)
-        dw = scaling * dw
+        psd = scaling * psd
 
         bstep = ZERO
         if (any(resact(1:nact) > 1.0E-4_RP * delta)) then
@@ -192,15 +192,15 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
             d = matprod(qfac(:, 1:nact), solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact)))
             !!MATLAB: d = qfac(:, 1:nact) * (rfac(1:nact, 1:nact)' \ resact(1:nact))
 
-            ! The vector D that has just been calculated is also the shortest move from S+DW to the
+            ! The vector D that has just been calculated is also the shortest move from S+PSD to the
             ! boundaries of the active constraints. Set BSTEP to the greatest steplength of this
             ! move that satisfies both the trust region bound and the linear constraints.
-            ds = inprod(d, s + dw)
+            ds = inprod(d, s + psd)
             dd = sum(d**2)
-            resid = delsq - sum((s + dw)**2)  ! Calculation changed
+            resid = delsq - sum((s + psd)**2)  ! Calculation changed
 
             if (resid > 0) then
-                ! Set BSTEP to the greatest value so that S + DW + BSTEP*D satisfies the trust
+                ! Set BSTEP to the greatest value so that S + PSD + BSTEP*D satisfies the trust
                 ! region bound.
                 temp = sqrt(ds * ds + dd * resid)
                 if (ds <= 0) then
@@ -212,19 +212,19 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
                 ad = -ONE
                 ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))
                 frac = ONE
-                restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))
+                restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(psd, amat(:, trueloc(ad > 0)))
                 frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))
-                bstep = minval([ONE, bstep, frac])  ! BSTEP = MINVAL([ONES, BSTEP, FRAC(TRUELOC(AD>0))])
+                bstep = minval([ONE, bstep, frac])  ! BSTEP = MINVAL([ONE, BSTEP, FRAC(TRUELOC(AD>0))])
             end if
         end if
 
         ! Set the next direction for seeking a reduction in the model function subject to the trust
         ! region bound and the linear constraints.
         if (bstep > 0) then
-            d = dw + bstep * d
+            d = psd + bstep * d
             icount = nact - 1
         else
-            d = dw
+            d = psd
             icount = nact
         end if
         alpbd = ONE
@@ -253,11 +253,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         exit
     end if
 
-    dw = hess_mul(d, xpt, pq, hq)
+    hd = hess_mul(d, xpt, pq, hq)
 
     ! Set DGD to the curvature of the model along D. Then reduce ALPHA if necessary to the value
     ! that minimizes the model.
-    dgd = inprod(d, dw)
+    dgd = inprod(d, hd)
     alpht = alpha
     if (dg + alpha * dgd > 0) then
         alpha = -dg / dgd
@@ -298,7 +298,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         s = sold
         exit
     end if
-    g = g + alpha * dw
+    g = g + alpha * hd
     if (.not. is_finite(sum(abs(g)))) then
         exit
     end if
@@ -321,9 +321,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
 
     ! Branch to a new loop if there is a new active constraint.
     ! Powell's code branches back with GET_ACT = .TRUE. only if |S| <= 0.8*DELTA, as mentioned
-    ! at the end of Section 3 of Powell 2014. The motivation seems to avoid small steps that
+    ! at the end of Section 3 of Powell 2015. The motivation seems to avoid small steps that
     ! changes the active set. However, according to a test on 20220820, removing this condition
     ! (essentially replacing it with |S| < DELTA) improves the performance of LINCOA a bit.
+    ! This may lead to small steps, but very tiny steps will lead to tiny reductions and hence
+    ! trigger and exit.
     if (jsav > 0) then
         get_act = .true.
         cycle
@@ -346,18 +348,18 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! N.B.: NACT < 0 is impossible unless GETACT is buggy; NACT = 0 can happen, particularly if
     ! there is no constraint. In theory, the code for the second case below covers the first as well.
     if (nact <= 0) then
-        gw = g
+        pg = g
     else
-        gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
-        !!MATLAB: gw = qfac(:, nact+1:n) * (g' * qfac(:, nact+1:n))';
+        pg = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+        !!MATLAB: pg = qfac(:, nact+1:n) * (g' * qfac(:, nact+1:n))';
     end if
 
     if (icount == nact) then
         beta = ZERO
     else
-        beta = inprod(gw, dw) / dgd
+        beta = inprod(pg, hd) / dgd
     end if
-    d = -gw + beta * d
+    d = -pg + beta * d
     alpbd = ZERO
     get_act = .false.
 end do
@@ -385,16 +387,16 @@ end module trustregion_mod
 
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20220417:
-! For GW, the schemes below work evidently worse than the one above in a test on 20220417. Why?
+! For PG, the schemes below work evidently worse than the one above in a test on 20220417. Why?
 !-----------------------------------------------------------------------!
 ! VERSION 1:
-!!gw = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
+!!pg = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
 !-----------------------------------------------------------------------!
 ! VERSION 2:
 !!if (2 * nact < n) then
-!!    gw = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
+!!    pg = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
 !!else
-!!    gw = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+!!    pg = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
 !!end if
 !-----------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
