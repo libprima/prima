@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM11:37:05
+! Last Modified: Monday, August 22, 2022 AM04:24:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,7 +57,7 @@ integer(IK), intent(out) :: ngetact
 real(RP), intent(out) :: s(:)  ! S(N)
 
 ! Local variables
-logical :: get_act
+logical :: newact
 character(len=*), parameter :: srname = 'TRSTEP'
 real(RP) :: d(size(gq))
 real(RP) :: dproj(size(gq))
@@ -68,9 +68,9 @@ real(RP) :: resact(size(amat, 2))
 real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
 real(RP) :: g(size(gq))
+real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter. 
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpha, alphm, alpht, &
-& beta, ctest, &
-&        dd, dg, dhd, ds, gamma, reduct, resid, scaling, delsq, ss, temp, sold(size(s))
+& beta, dd, dg, dhd, ds, gamma, reduct, resid, scaling, delsq, ss, temp, sold(size(s))
 integer(IK) :: maxiter, iter, itercg, jsav
 integer(IK) :: m
 integer(IK) :: n
@@ -138,7 +138,6 @@ end if
 !
 !     Set some numbers for the conjugate gradient iterations.
 !
-ctest = 0.01_RP
 delsq = delta * delta
 
 ! Set the initial elements of RESNEW, RESACT and S.
@@ -171,7 +170,7 @@ s = ZERO
 ss = ZERO
 reduct = ZERO
 ngetact = 0
-get_act = .true.  ! Better name?
+newact = .true.
 
 ! ITERCG is the number of CG iterations corresponding to the current "active set" obtained by
 ! calling GETACT. These CG iterations are restricted in the orthogonal complement of the active
@@ -182,7 +181,7 @@ itercg = -1_IK
 
 maxiter = min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper bound of ITER?
 do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
-    if (get_act) then
+    if (newact) then
         ! GETACT picks the active set for the current S. It also sets PSD to the vector closest to
         ! -G that is orthogonal to the normals of the active constraints. PSD is scaled to have
         ! length 0.2*DELTA. Then a move of PSD from S is allowed by the linear constraints: PSD
@@ -197,33 +196,34 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         scaling = 0.2_RP * delta / sqrt(dd)
         psd = scaling * psd
 
-        ! If the modulus of the residual of an "active constraint" is substantial (namely, is more
-        ! than 1.0E-4*DELTA), then modify the searching direction PSD by a projection step to the
-        ! boundaries of the active constraint. This modified step will reduce the constraint
+        ! If the modulus of the residual of an "active constraint" is substantial (i.e., more than
+        ! 1.0E-4*DELTA), then modify the searching direction PSD by a projection step to the
+        ! boundaries of the "active constraint". This modified step will reduce the constraint
         ! residuals of the "active constraints" (see the update of RESACT below). The motivation is
         ! that the constraints in the "active set" are presumed to be active, and hence should have
-        ! zero residuals (the method is a feasible method; the active constraints are not violated).
-        ! According to a test on 20220821, this modification is important for the performance of
-        ! LINCOA.
-        gamma = ZERO
+        ! zero residuals (no constraint is violated, as the current method is feasible). According
+        ! to a test on 20220821, this modification is important for the performance of LINCOA.
+        ! N.B.:
+        ! 1. The residual of the constraint A*X <= B is defined as B - A*X. It is not the constraint
+        ! violation. Indeed, the constraint violations of the iterates are 0 in the current method.
+        ! 2. We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify
+        ! MAXVAL(X) when X contains NaN, and MATLAB/Python/R/Julia behave differently in this
+        ! respect. Moreover, MATLAB defines max(X) = [] if X == [], differing from mathematics
+        ! and other languages.
+        gamma = ZERO  ! The steplength of the projection step to be taken.
         if (any(resact(1:nact) > 1.0E-4_RP * delta)) then
             ! Set DPROJ to the shortest move (projection step) from S to the boundaries of the
             ! active constraints. We will use DPROJ to modify PSD.
-            ! N.B.: We prefer `ANY(X > Y)` to `MAXVAL(X) > Y`, as Fortran standards do not specify
-            ! MAXVAL(X) when X contains NaN, and MATLAB/Python/R/Julia behave differently in this
-            ! respect. Moreover, MATLAB defines max(X) = [] if X == [], differing from mathematics
-            ! and other languages.
             dproj = matprod(qfac(:, 1:nact), solve(transpose(rfac(1:nact, 1:nact)), resact(1:nact)))
             !!MATLAB: dproj = qfac(:, 1:nact) * (rfac(1:nact, 1:nact)' \ resact(1:nact))
 
-            ! The vector DPROJ that has just been calculated is also the shortest move from S+PSD
-            ! to the boundaries of the active constraints (this is because PSD is parallel to the
-            ! boundaries of the active constraints). Set GAMMA to the greatest steplength of this
-            ! move that satisfies both the trust region bound and the linear constraints.
+            ! The vector DPROJ is also the shortest move from S + PSD to the boundaries of the
+            ! active constraints (this is because PSD is parallel to the boundaries of the active
+            ! constraints). Set GAMMA to the greatest steplength of this move that satisfies both
+            ! the trust region bound and the linear constraints.
             ds = inprod(dproj, s + psd)
             dd = sum(dproj**2)
-            resid = delsq - sum((s + psd)**2)  ! Calculation changed
-
+            resid = delsq - sum((s + psd)**2)
             if (resid > 0) then
                 ! Set GAMMA to the greatest value so that S + PSD + GAMMA*DPROJ satisfies the trust
                 ! region bound.
@@ -245,12 +245,12 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
 
         ! Set the next direction for seeking a reduction in the model function subject to the trust
         ! region bound and the linear constraints.
+        ! Do NOT write D = PSD + GAMMA*DPROJ, as DPROJ may contain NaN/Inf, in which case GAMMA = 0.
         if (gamma > 0) then
-            d = psd + gamma * dproj  ! Modified direction.
+            d = psd + gamma * dproj  ! Modified searching direction.
             itercg = -1_IK
-            !resact(1:nact) = (ONE - gamma) * resact(1:nact)
         else
-            d = psd
+            d = psd  ! Original searching direction.
             itercg = 0_IK
         end if
     end if
@@ -345,7 +345,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         exit
     end if
 
-    ! Update RESNEW
+    ! Update RESNEW.
     restmp = resnew - alpha * ad  ! Only RESTMP(TRUELOC(RESNEW > 0)) is needed.
     resnew(trueloc(resnew > 0)) = max(TINYCV, restmp(trueloc(resnew > 0)))
     !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
@@ -381,25 +381,15 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     end if
 
     ! Branch to a new loop if there is a new active constraint.
-    ! Powell's code branches back with GET_ACT = .TRUE. only if |S| <= 0.8*DELTA, as mentioned
-    ! at the end of Section 3 of Powell 2015. The motivation seems to avoid small steps that
-    ! changes the active set. However, according to a test on 20220820, removing this condition
-    ! (essentially replacing it with |S| < DELTA) improves the performance of LINCOA a bit.
-    ! This may lead to small steps, but very tiny steps will lead to tiny reductions and hence
-    ! trigger and exit.
-    if (jsav > 0) then
-        get_act = .true.
+    ! When JSAV > 0, Powell's code branches back with NEWACT = .TRUE. only if |S| <= 0.8*DELTA, and
+    ! it exits if |S| > 0.8*DELTA, as mentioned at the end of Section 3 of Powell 2015. The
+    ! motivation seems to avoid small steps that changes the active set, because GETACT is expensive
+    ! in flops. However, according to a test on 20220820, removing this condition (essentially
+    ! replacing it with |S| < DELTA) improves the performance of LINCOA a bit. This may lead to
+    ! small steps, but tiny steps will lead to tiny reductions and trigger an exit.
+    newact = (jsav > 0)
+    if (newact) then
         cycle
-
-        ! Powell's code is as follows.
-        !---------------------------------!
-        !if (ss <= 0.64_RP * delsq) then
-        !    get_act = .true.
-        !    cycle
-        !else
-        !    exit
-        !end if
-        !---------------------------------!
     end if
 
     ! If N-NACT CG iterations has been taken in the current null space (corresponding to the
@@ -409,7 +399,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! However, the "active set" is not precisely the true active set, is it? See (3.5) of Powell
     ! (2015) and the comments at the beginning of the GETACT subroutine. Also, we should take into
     ! account the modification after GETACT is called.
-    if (itercg == n - nact) then
+    if (itercg >= n - nact) then  ! ITERCG > N - NACT is impossible.
         exit
     end if
 
@@ -429,7 +419,6 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         beta = inprod(pg, hd) / dhd
     end if
     d = -pg + beta * d
-    get_act = .false.
 end do
 
 !====================!
