@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM08:22:02
+! Last Modified: Sunday, August 21, 2022 AM10:29:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -62,7 +62,7 @@ real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 real(RP) :: ssq(size(gopt)), tanbd(size(gopt)), sqrtd(size(gopt))
 real(RP) :: gnew(size(gopt))
 real(RP) :: xnew(size(gopt))
-integer(IK) :: iact, iter, maxiter, grid_size, nact, nactsav
+integer(IK) :: iact, iter, itercg, maxiter, grid_size, nact, nactsav
 logical :: twod_search
 
 ! Sizes
@@ -176,7 +176,8 @@ do while (.true.)  ! TODO: prevent infinite cycling
 
     if (beta == 0) then
         gredsq = stepsq
-        maxiter = iter + n - nact
+        !maxiter = itercg + n - nact
+        itercg = 0
     end if
     if (gredsq * delsq <= 1.0E-4_RP * qred * qred) then
         exit
@@ -274,7 +275,7 @@ do while (.true.)  ! TODO: prevent infinite cycling
     ! Update CRVMIN, GNEW and D. Set SDEC to the decrease that occurs in Q.
     sdec = ZERO
     if (stplen > 0) then
-        iter = iter + 1
+        itercg = itercg + 1
         temp = shs / stepsq
         if (iact == 0 .and. temp > 0) then
             crvmin = min(crvmin, temp)
@@ -301,7 +302,7 @@ do while (.true.)  ! TODO: prevent infinite cycling
         beta = ZERO
     elseif (stplen < bstep) then
         ! If STPLEN is less than BSTEP, then either apply another conjugate gradient iteration or RETURN.
-        if (iter == maxiter .or. sdec <= 0.01_RP * qred .or. is_nan(sdec) .or. is_nan(qred)) then
+        if (itercg == n - nact .or. sdec <= 0.01_RP * qred .or. is_nan(sdec) .or. is_nan(qred)) then
             exit
         end if
         beta = gredsq / ggsav
