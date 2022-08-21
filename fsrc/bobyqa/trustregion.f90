@@ -303,8 +303,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         delsq = delsq - d(iact)**2
         if (delsq <= 0) then
             twod_search = .true.
-            ! Why set TWOD_SEARCH to TRUE? Because this just means that D reaches the trust region
-            ! boundary.
+            ! Why set TWOD_SEARCH to TRUE? Because DELSQ <= 0 just means that D reaches the trust 
+            ! region boundary.
             exit
         end if
         beta = ZERO
