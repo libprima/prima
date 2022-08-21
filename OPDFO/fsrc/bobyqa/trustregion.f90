@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, July 05, 2022 AM11:27:02
+! Last Modified: Sunday, August 21, 2022 PM01:20:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -64,6 +64,7 @@ real(RP) :: gnew(size(gopt))
 real(RP) :: xnew(size(gopt))
 integer(IK) :: iact, iter, maxiter, grid_size, nact, nactsav
 logical :: twod_search
+real(RP), parameter :: ctest = 0.01_RP
 
 ! Sizes
 n = int(size(gopt), kind(n))
@@ -178,7 +179,7 @@ do while (.true.)  ! TODO: prevent infinite cycling
         gredsq = stepsq
         maxiter = iter + n - nact
     end if
-    if (gredsq * delsq <= 1.0E-4_RP * qred * qred) then
+    if (gredsq * delsq <= ctest**2 * qred * qred) then
         exit
     end if
 
@@ -301,7 +302,7 @@ do while (.true.)  ! TODO: prevent infinite cycling
         beta = ZERO
     elseif (stplen < bstep) then
         ! If STPLEN is less than BSTEP, then either apply another conjugate gradient iteration or RETURN.
-        if (iter == maxiter .or. sdec <= 0.01_RP * qred .or. is_nan(sdec) .or. is_nan(qred)) then
+        if (iter == maxiter .or. sdec <= ctest * qred .or. is_nan(sdec) .or. is_nan(qred)) then
             exit
         end if
         beta = gredsq / ggsav
@@ -316,6 +317,7 @@ do while (.true.)  ! TODO: prevent infinite cycling
     !----------------------------------------------------------------------!
 end do
 
+!write (17, *) iter
 
 ! In Powell's code, MAXITER is essentially infinity; the loop will exit when NACT >= N - 1 or the
 ! procedure cannot significantly reduce the quadratic model. We impose an explicit but large bound
@@ -375,7 +377,7 @@ do iter = 1, maxiter
     ! Also, should exit if the orthogonality of S and D is damaged, or S is  not finite.
     ! See the corresponding part of TRSAPP.
     temp = gredsq * dredsq - dredg * dredg
-    if (temp <= 1.0E-4_RP * qred * qred) exit
+    if (temp <= ctest**2 * qred * qred) exit
     temp = sqrt(temp)
     s = (dredg * d - dredsq * gnew) / temp
     s(trueloc(xbdi /= 0)) = ZERO
@@ -464,7 +466,7 @@ do iter = 1, maxiter
     qred = qred + sdec
     if (iact >= 1 .and. iact <= n .and. hangt >= hangt_bd) then  ! D(IACT) reaches lower/upper bound.
         xbdi(iact) = int(sign(ONE, d(iact) - diact), IK)  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
-    elseif (.not. sdec > 0.01_RP * qred) then
+    elseif (.not. sdec > ctest * qred) then
         exit
     end if
 end do

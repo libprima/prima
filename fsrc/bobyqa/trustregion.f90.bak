@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 PM01:20:07
+! Last Modified: Sunday, August 21, 2022 PM12:45:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -139,10 +139,11 @@ end if
 !     set for the first iteration. DELSQ is the upper bound on the sum of
 !     squares of the free variables. QRED is the reduction in Q so far.
 !
-iter = 0
+
 !--------------------------------------------------------------------------------------------------!
-iact = 0; maxiter = n  ! Without this, G95 complains that they are used uninitialized.
+iact = 0  ! Without this, G95 complains that they are used uninitialized.
 !--------------------------------------------------------------------------------------------------!
+
 
 xbdi = 0
 xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1
@@ -162,9 +163,11 @@ itercg = 0
 
 twod_search = .false.  ! The default value of TWD_SEARCH is FALSE!
 
-!maxiter = (n - nact)**2
+maxiter = (n - nact)**2
+maxiter = 100 * (n - nact)**2 + 100
 !do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
 do while (.true.)  ! TODO: prevent infinite cycling
+!do while (.true.)  ! TODO: prevent infinite cycling
     ! Set the next search direction of the conjugate gradient method. It is the steepest descent
     ! direction initially and when the iterations are restarted because a variable has just been
     ! fixed by a bound, and of course the components of the fixed variables are zero. MAXITER is an
@@ -298,16 +301,14 @@ do while (.true.)  ! TODO: prevent infinite cycling
     ! Restart the conjugate gradient method if it has hit a new bound.
     if (iact > 0) then
         nact = nact + 1
-        !if (nact >= n) then  ! NACT > N is impossible.
-        ! exit ! This leads to a difference. Why?
-        !end if
+        if (nact >= n) then  ! NACT > N is impossible.
+            exit
+        end if
         call assert(abs(s(iact)) > 0, 'S(IACT) /= 0', srname)
         xbdi(iact) = int(sign(ONE, s(iact)), IK)  !!MATLAB: xbdi(iact) = sign(s(iact))
         delsq = delsq - d(iact)**2
         if (delsq <= 0) then
             twod_search = .true.
-            ! Why set TWOD_SEARCH to TRUE? Because this just means that D reaches the trust region
-            ! boundary.
             exit
         end if
         beta = ZERO
@@ -323,13 +324,9 @@ do while (.true.)  ! TODO: prevent infinite cycling
         twod_search = .true.
         exit
     end if
-    !----------------------------------------------------------------------!
-    !if (is_nan(stplen) .or. iter > 100 * maxiter) then
-    !   exit ! Zaikun 20220401
-    !end if
-    !----------------------------------------------------------------------!
 end do
 
+write (16, *) iter
 
 ! In Powell's code, MAXITER is essentially infinity; the loop will exit when NACT >= N - 1 or the
 ! procedure cannot significantly reduce the quadratic model. We impose an explicit but large bound
