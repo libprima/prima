@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM07:23:28
+! Last Modified: Sunday, August 21, 2022 AM07:24:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -246,7 +246,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         ! Set the next direction for seeking a reduction in the model function subject to the trust
         ! region bound and the linear constraints.
         if (gamma > 0) then
-            d = psd + gamma * dproj
+            d = psd + gamma * dproj  ! Modified direction.
             itercg = -1_IK
             !resact(1:nact) = (ONE - gamma) * resact(1:nact)
         else

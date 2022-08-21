@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, August 18, 2022 AM08:15:23
+! Last Modified: Sunday, August 21, 2022 AM09:21:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,7 +116,7 @@ if (DEBUGGING) then
     call assert(size(c) == m, 'SIZE(C) == M', srname)
     call assert(size(Rdiag) >= min(m, n + 1_IK) .and. size(Rdiag) <= m, 'MIN(M, N+1) <= SIZE(Rdiag) <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(m + 1_IK, RP)))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
     Qsave = Q(:, 1:n)  ! For debugging only
     Rdsave = Rdiag(1:n)  ! For debugging only
@@ -233,7 +233,7 @@ if (DEBUGGING) then
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) = [M, M]', srname)
     call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
     call assert(size(R, 2) >= n + 1 .and. size(R, 2) <= m, 'N+1 <= SIZE(R, 2) <= M', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
     Anew = reshape([matprod(Q, R(:, 1:n)), c], shape(Anew))
@@ -334,7 +334,7 @@ if (DEBUGGING) then
     call assert(size(Rdiag) == n, 'SIZE(Rdiag) == N', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
         & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
     Qsave = Q  ! For debugging only.
     Rdsave = Rdiag(1:i) ! For debugging only.
@@ -455,7 +455,7 @@ if (DEBUGGING) then
     call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
     call assert(size(Q, 2) >= n .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
     call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
     Anew = matprod(Q, R)
