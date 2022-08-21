@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM10:29:16
+! Last Modified: Sunday, August 21, 2022 AM11:01:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -149,13 +149,15 @@ xbdi(trueloc(xopt <= sl .and. gopt >= 0)) = -1
 nact = count(xbdi /= 0)
 d = ZERO
 gnew = gopt
+gredsq = sum(gnew(trueloc(xbdi == 0))**2)
 
 delsq = delta * delta
 qred = ZERO
 crvmin = -ONE
 beta = ZERO
+itercg = 0
 
-twod_search = .false.  ! NEWUOA
+twod_search = .false.  ! The default value of TWD_SEARCH is FALSE!
 
 do while (.true.)  ! TODO: prevent infinite cycling
     ! Set the next search direction of the conjugate gradient method. It is the steepest descent
@@ -163,7 +165,7 @@ do while (.true.)  ! TODO: prevent infinite cycling
     ! fixed by a bound, and of course the components of the fixed variables are zero. MAXITER is an
     ! upper bound on the indices of the conjugate gradient iterations.
 
-    if (beta == 0) then
+    if (itercg == 0) then
         s = -gnew  ! If we are sure that S contain only finite values, we may merge this case into the next.
     else
         s = beta * s - gnew
@@ -174,11 +176,10 @@ do while (.true.)  ! TODO: prevent infinite cycling
         exit
     end if
 
-    if (beta == 0) then
-        gredsq = stepsq
-        !maxiter = itercg + n - nact
-        itercg = 0
-    end if
+    !if (beta == 0) then
+    !gredsq = stepsq
+    !itercg = 0
+    !end if
     if (gredsq * delsq <= 1.0E-4_RP * qred * qred) then
         exit
     end if
@@ -300,6 +301,8 @@ do while (.true.)  ! TODO: prevent infinite cycling
             exit
         end if
         beta = ZERO
+        itercg = 0
+        gredsq = sum(gnew(trueloc(xbdi == 0))**2)
     elseif (stplen < bstep) then
         ! If STPLEN is less than BSTEP, then either apply another conjugate gradient iteration or RETURN.
         if (itercg == n - nact .or. sdec <= 0.01_RP * qred .or. is_nan(sdec) .or. is_nan(qred)) then
