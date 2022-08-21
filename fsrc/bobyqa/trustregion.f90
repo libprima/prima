@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM11:01:37
+! Last Modified: Sunday, August 21, 2022 AM11:11:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -155,6 +155,8 @@ delsq = delta * delta
 qred = ZERO
 crvmin = -ONE
 beta = ZERO
+
+! ITERCG is the number of CG iterations corresponding to the current set of active bounds.
 itercg = 0
 
 twod_search = .false.  ! The default value of TWD_SEARCH is FALSE!
@@ -293,6 +295,9 @@ do while (.true.)  ! TODO: prevent infinite cycling
     ! Restart the conjugate gradient method if it has hit a new bound.
     if (iact > 0) then
         nact = nact + 1
+        if (nact >= n) then  ! NACT > N is impossible.
+            exit
+        end if
         call assert(abs(s(iact)) > 0, 'S(IACT) /= 0', srname)
         xbdi(iact) = int(sign(ONE, s(iact)), IK)  !!MATLAB: xbdi(iact) = sign(s(iact))
         delsq = delsq - d(iact)**2
