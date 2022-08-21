@@ -855,7 +855,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(max(m, n) + 1_IK, RP)))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(max(m, n) + 1_IK, RP)))
     call assert(isorth(Q_loc, tol), 'The columns of Q are orthonormal', srname)
     call assert(istril(T, tol), 'R is upper triangular', srname)
     if (pivote) then
@@ -925,7 +925,7 @@ if (DEBUGGING) then
     if (present(Q)) then
         call assert(size(Q, 1) == m .and. (size(Q, 2) == m .or. size(Q, 2) == min(m, n)), &
             & 'SIZE(Q) == [M, N] .or. SIZE(Q) == [M, MIN(M, N)]', srname)
-        tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(max(m, n) + 1_IK, RP)))
+        tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(max(m, n) + 1_IK, RP)))
         call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     end if
     if (present(Rdiag)) then
@@ -1032,7 +1032,7 @@ if (DEBUGGING) then
     call assert(m >= n .and. n >= 0, 'M >= N >= 0', srname)
     call assert(size(b) == m, 'SIZE(B) == M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == n, 'SIZE(Q) == [M, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(m + 1_IK, RP)))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(size(R, 1) == n .and. size(R, 2) == n, 'SIZE(R) == [N, N]', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
@@ -1300,7 +1300,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     if (is_finite(norm(x)) .and. is_finite(norm(v))) then
-        tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
+        tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
         call assert(norm(y) <= (ONE + tol) * norm(x), 'NORM(Y) <= NORM(X)', srname)
         call assert(norm(x - y) <= (ONE + tol) * norm(x), 'NORM(X - Y) <= NORM(X)', srname)
         ! The following test may not be passed.
@@ -1369,7 +1369,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     if (is_finite(norm(x)) .and. is_finite(sum(V**2))) then
-        tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
+        tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
         call assert(norm(y) <= (ONE + tol) * norm(x), 'NORM(Y) <= NORM(X)', srname)
         call assert(norm(x - y) <= (ONE + tol) * norm(x), 'NORM(X - Y) <= NORM(X)', srname)
         ! The following test may not be passed.
@@ -1544,7 +1544,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(G)), 'G is finite', srname)
     call assert(abs(G(1, 1) - G(2, 2)) + abs(G(1, 2) + G(2, 1)) <= 0, &
         & 'G(1,1) == G(2,2), G(1,2) = -G(2,1)', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
     if (all(is_finite(x) .and. abs(x) < sqrt(HUGENUM / 2.1_RP))) then
         r = sqrt(sum(x**2))

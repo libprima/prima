@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, July 05, 2022 AM11:27:02
+! Last Modified: Sunday, August 21, 2022 AM08:22:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -183,7 +183,7 @@ do while (.true.)  ! TODO: prevent infinite cycling
     end if
 
     ! Multiply the search direction by the second derivative matrix of Q and calculate some scalars
-    ! for the choice of steplength. Then set BSTEP to the length of the the step to the trust region
+    ! for the choice of steplength. Then set BSTEP to the length of the step to the trust region
     ! boundary and STPLEN to the steplength, ignoring the simple bounds.
     hs = hess_mul(s, xpt, pq, hq)
     resid = delsq - sum(d(trueloc(xbdi == 0))**2)
