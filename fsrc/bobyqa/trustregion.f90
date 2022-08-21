@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 PM01:26:28
+! Last Modified: Sunday, August 21, 2022 PM07:33:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -139,9 +139,9 @@ end if
 !     set for the first iteration. DELSQ is the upper bound on the sum of
 !     squares of the free variables. QRED is the reduction in Q so far.
 !
-iter = 0
+
 !--------------------------------------------------------------------------------------------------!
-iact = 0; maxiter = n  ! Without this, G95 complains that they are used uninitialized.
+iact = 0  ! Without this, G95 complains that they are used uninitialized.
 !--------------------------------------------------------------------------------------------------!
 
 xbdi = 0
@@ -164,14 +164,14 @@ twod_search = .false.  ! The default value of TWD_SEARCH is FALSE!
 
 maxiter = (n - nact)**2
 do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
-!do while (.true.)  ! TODO: prevent infinite cycling
     ! Set the next search direction of the conjugate gradient method. It is the steepest descent
     ! direction initially and when the iterations are restarted because a variable has just been
     ! fixed by a bound, and of course the components of the fixed variables are zero. MAXITER is an
     ! upper bound on the indices of the conjugate gradient iterations.
 
     if (itercg == 0) then
-        s = -gnew  ! If we are sure that S contain only finite values, we may merge this case into the next.
+        ! TODO: If we are sure that S contain only finite values, we may merge this case into the next.
+        s = -gnew
     else
         s = beta * s - gnew
     end if
@@ -181,10 +181,6 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         exit
     end if
 
-    !if (beta == 0) then
-    !gredsq = stepsq
-    !itercg = 0
-    !end if
     if (gredsq * delsq <= ctest**2 * qred * qred) then
         exit
     end if
@@ -298,11 +294,12 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ! Restart the conjugate gradient method if it has hit a new bound.
     if (iact > 0) then
         nact = nact + 1
-        !if (nact >= n) then  ! NACT > N is impossible.
-        ! exit ! This leads to a difference. Why?
-        !end if
         call assert(abs(s(iact)) > 0, 'S(IACT) /= 0', srname)
         xbdi(iact) = int(sign(ONE, s(iact)), IK)  !!MATLAB: xbdi(iact) = sign(s(iact))
+        ! Exit when NACT = N (NACT > N is impossible). We must update XBDI before exiting!
+        if (nact >= n) then
+            exit ! This leads to a difference. Why?
+        end if
         delsq = delsq - d(iact)**2
         if (delsq <= 0) then
             twod_search = .true.
@@ -323,11 +320,6 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         twod_search = .true.
         exit
     end if
-    !----------------------------------------------------------------------!
-    !if (is_nan(stplen) .or. iter > 100 * maxiter) then
-    !   exit ! Zaikun 20220401
-    !end if
-    !----------------------------------------------------------------------!
 end do
 
 
