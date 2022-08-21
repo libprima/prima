@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 PM07:33:49
+! Last Modified: Sunday, August 21, 2022 PM08:54:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -311,7 +311,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         itercg = 0
         gredsq = sum(gnew(trueloc(xbdi == 0))**2)
     elseif (stplen < bstep) then
-        ! If STPLEN is less than BSTEP, then either apply another conjugate gradient iteration or RETURN.
+        ! Either apply another conjugate gradient iteration or exit.
         if (itercg == n - nact .or. sdec <= ctest * qred .or. is_nan(sdec) .or. is_nan(qred)) then
             exit
         end if
