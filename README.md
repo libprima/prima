@@ -4,6 +4,7 @@
 [![Verification, small](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_small.yml/badge.svg)](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_small.yml)
 [![Verification, big](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_big.yml/badge.svg)](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_big.yml)
 [![Verification, large](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_large.yml/badge.svg)](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_large.yml)
+[![Verification, base](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_base.yml/badge.svg)](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_base.yml)
 
 
 ### What
