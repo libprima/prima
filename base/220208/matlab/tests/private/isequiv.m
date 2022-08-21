@@ -103,6 +103,7 @@ if isempty(requirements.list)
     switch lower(solvers{1})
     case {'uobyqa', 'uobyqan'}
         blacklist = [blacklist, {'BENNETT5LS', 'HIELOW'}]; % More than 30 minutes to solve.
+        blacklist = [blacklist, {'YFITU'}]; % Takes too long
     case {'newuoa', 'newuoan'}
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM', 'HATFLDFL'}]; % More than 30 minutes to solve.
          %blacklist = [blacklist, {'PENALTY2'}]; % More than 5 minutes to solve.

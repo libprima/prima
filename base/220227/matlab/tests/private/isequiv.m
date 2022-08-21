@@ -102,6 +102,7 @@ if isempty(requirements.list)
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
     switch lower(solvers{1})
     case {'uobyqa', 'uobyqan'}
+        blacklist = [blacklist, {'YFITU'}]; % Takes too long
         blacklist = [blacklist, {'VARDIM', 'HIELOW', 'HATFLDFL', 'BENNETT5LS'}];  % too large for UOBYQA
     case {'newuoa', 'newuoan'}
           blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.

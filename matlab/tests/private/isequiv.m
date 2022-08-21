@@ -108,6 +108,7 @@ else
     switch lower(solvers{1})
     case {'uobyqa', 'uobyqan'}
         blacklist = [blacklist, {'VARDIM', 'HATFLDFL', 'BENNETT5LS', 'HIELOW'}];  % too large for UOBYQA
+        blacklist = [blacklist, {'YFITU'}]; % Takes too long
     case {'newuoa', 'newuoan'}
         blacklist = [blacklist, {'LUKSAN22LS', 'MANCINO', 'LUKSAN11LS'}]; % too long to solve
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.
