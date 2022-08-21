@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 PM01:20:30
+! Last Modified: Sunday, August 21, 2022 PM07:32:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -316,8 +316,6 @@ do while (.true.)  ! TODO: prevent infinite cycling
     !end if
     !----------------------------------------------------------------------!
 end do
-
-!write (17, *) iter
 
 ! In Powell's code, MAXITER is essentially infinity; the loop will exit when NACT >= N - 1 or the
 ! procedure cannot significantly reduce the quadratic model. We impose an explicit but large bound
