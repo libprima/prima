@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 PM07:32:05
+! Last Modified: Sunday, August 21, 2022 PM11:09:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -62,7 +62,7 @@ real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 real(RP) :: ssq(size(gopt)), tanbd(size(gopt)), sqrtd(size(gopt))
 real(RP) :: gnew(size(gopt))
 real(RP) :: xnew(size(gopt))
-integer(IK) :: iact, iter, maxiter, grid_size, nact, nactsav
+integer(IK) :: iact, iter, maxiter, grid_size, nact, nactsav, iterc
 logical :: twod_search
 real(RP), parameter :: ctest = 0.01_RP
 
@@ -158,7 +158,9 @@ beta = ZERO
 
 twod_search = .false.  ! NEWUOA
 
-do while (.true.)  ! TODO: prevent infinite cycling
+maxiter = (n - nact)**2
+do iterc = 1, maxiter
+!do while (.true.)  ! TODO: prevent infinite cycling
     ! Set the next search direction of the conjugate gradient method. It is the steepest descent
     ! direction initially and when the iterations are restarted because a variable has just been
     ! fixed by a bound, and of course the components of the fixed variables are zero. MAXITER is an

@@ -1,4 +1,4 @@
-name: Verify faithfulness of the basis.
+name: Verify faithfulness of the basis
 
 on:
   # Trigger the workflow on push or pull request
