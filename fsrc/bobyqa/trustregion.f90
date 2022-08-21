@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 PM08:54:32
+! Last Modified: Monday, August 22, 2022 AM04:29:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,7 +54,7 @@ real(RP) :: dred(size(gopt))
 real(RP) :: hdred(size(gopt))
 real(RP) :: hs(size(gopt))
 real(RP) :: s(size(gopt))
-real(RP), parameter :: ctest = 0.01_RP
+real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
 real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
@@ -303,7 +303,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         delsq = delsq - d(iact)**2
         if (delsq <= 0) then
             twod_search = .true.
-            ! Why set TWOD_SEARCH to TRUE? Because DELSQ <= 0 just means that D reaches the trust 
+            ! Why set TWOD_SEARCH to TRUE? Because DELSQ <= 0 just means that D reaches the trust
             ! region boundary.
             exit
         end if
@@ -312,7 +312,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         gredsq = sum(gnew(trueloc(xbdi == 0))**2)
     elseif (stplen < bstep) then
         ! Either apply another conjugate gradient iteration or exit.
-        if (itercg == n - nact .or. sdec <= ctest * qred .or. is_nan(sdec) .or. is_nan(qred)) then
+        ! N.B. ITERCG > N - NACT is impossible.
+        if (itercg >= n - nact .or. sdec <= ctest * qred .or. is_nan(sdec) .or. is_nan(qred)) then
             exit
         end if
         beta = gredsq / ggsav
@@ -322,10 +323,9 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     end if
 end do
 
-
-! In Powell's code, MAXITER is essentially infinity; the loop will exit when NACT >= N - 1 or the
-! procedure cannot significantly reduce the quadratic model. We impose an explicit but large bound
-! on the number of iterations as a safeguard.
+! Set MAXITER for the 2D search on the trust region boundary. Powell's code essentially sets MAXITER
+! to infinity; the loop will exit when NACT >= N-1 or the procedure cannot significantly reduce the
+! quadratic model. We impose an explicit but large bound on the number of iterations as a safeguard.
 if (twod_search) then
     crvmin = ZERO
     maxiter = 10_IK * (n - nact)
