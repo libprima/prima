@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 PM01:20:07
+! Last Modified: Sunday, August 21, 2022 PM01:26:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -162,9 +162,9 @@ itercg = 0
 
 twod_search = .false.  ! The default value of TWD_SEARCH is FALSE!
 
-!maxiter = (n - nact)**2
-!do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
-do while (.true.)  ! TODO: prevent infinite cycling
+maxiter = (n - nact)**2
+do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
+!do while (.true.)  ! TODO: prevent infinite cycling
     ! Set the next search direction of the conjugate gradient method. It is the steepest descent
     ! direction initially and when the iterations are restarted because a variable has just been
     ! fixed by a bound, and of course the components of the fixed variables are zero. MAXITER is an
