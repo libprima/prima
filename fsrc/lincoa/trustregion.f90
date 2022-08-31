@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, August 22, 2022 AM04:24:06
+! Last Modified: Wednesday, August 31, 2022 PM10:06:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,7 +68,7 @@ real(RP) :: resact(size(amat, 2))
 real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
 real(RP) :: g(size(gq))
-real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter. 
+real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpha, alphm, alpht, &
 & beta, dd, dg, dhd, ds, gamma, reduct, resid, scaling, delsq, ss, temp, sold(size(s))
 integer(IK) :: maxiter, iter, itercg, jsav
@@ -239,7 +239,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
                 frac = ONE
                 restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(psd, amat(:, trueloc(ad > 0)))
                 frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))
-                gamma = minval([ONE, gamma, frac])  ! GAMMA = MINVAL([ONE, GAMMA, FRAC(TRUELOC(AD>0))])
+                gamma = minval([gamma, ONE, frac])  ! GAMMA = MINVAL([GAMMA, ONE, FRAC(TRUELOC(AD>0))])
             end if
         end if
 
