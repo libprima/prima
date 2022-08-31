@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, August 22, 2022 AM04:29:20
+! Last Modified: Wednesday, August 31, 2022 PM10:19:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -89,6 +89,11 @@ if (DEBUGGING) then
     call assert(size(gnew) == n, 'SIZE(GNEW) == N', srname)
     call assert(size(xnew) == n, 'SIZE(XNEW) == N', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
+
 
 !
 !     The arguments N, NPT, XPT, XOPT, GOPT, HQ, PQ, SL and SU have the same
@@ -480,6 +485,10 @@ xnew = max(min(xopt + d, su), sl)
 xnew(trueloc(xbdi == -1)) = sl(trueloc(xbdi == -1))
 xnew(trueloc(xbdi == 1)) = su(trueloc(xbdi == 1))
 d = xnew - xopt
+
+!====================!
+!  Calculation ends  !
+!====================!
 
 ! Postconditions
 if (DEBUGGING) then
