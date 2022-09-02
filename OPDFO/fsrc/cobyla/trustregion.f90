@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Friday, June 03, 2022 PM05:28:01
+! Last Modified: Friday, September 02, 2022 AM10:34:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -444,10 +444,10 @@ do iter = 1, maxiter
     !----------------------------------------------------------------!
     dd = delta**2 - inprod(d, d)
     ss = inprod(sdirn, sdirn)
-    if (dd <= 0 .or. ss <= 0) then
+    sd = inprod(sdirn, d)
+    if (dd <= 0 .or. ss <= 0 .or. is_nan(dd + ss + sd)) then
         exit
     end if
-    sd = inprod(sdirn, d)
     step = (sqrt(ss * dd + sd**2) - sd) / ss
     !----------------------------------------------------------------!
     ! Powell's approach and comments are as follows.
