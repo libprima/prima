@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, August 13, 2022 AM12:09:54
+! Last Modified: Thursday, September 01, 2022 PM10:18:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -96,6 +96,7 @@ else
     ! Powell's code does not handle this case, leaving KNEW = 0 and leading to a segfault.
     knew = int(maxloc(distsq, dim=1), IK)
 end if
+
 !====================!
 !  Calculation ends  !
 !====================!
