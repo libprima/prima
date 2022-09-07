@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, June 24, 2022 AM01:14:32
+! Last Modified: Wednesday, September 07, 2022 PM12:52:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -317,21 +317,22 @@ do tr = 1, maxtr
         else  ! PREREC == 0 can happen if B <= 0.
             barmu = ZERO
         end if
-        if (cpen < 1.5_RP * barmu) then
-            ! This can happen only if BARMU > 0, and hence PREREC > 0 > PREREF.
-            ! If CPEN == 0 and PREREC > 0 > PREREF, then CPEN will be updated to 2*BARMU > 0.
-            cpen = min(TWO * barmu, HUGENUM)
-            call cpenmsg(solver, iprint, cpen)
-            if (findpole(cpen, cval, fval) <= n) then
-                call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-                ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
-                if (subinfo == DAMAGING_ROUNDING) then
-                    info = subinfo
-                    exit  ! Better action to take? Geometry step, or simply continue?
-                end if
-                cycle  ! Zaikun 20211111: Can this lead to infinite cycling?
+        !if (cpen < 1.5_RP * barmu) then
+        ! This can happen only if BARMU > 0, and hence PREREC > 0 > PREREF.
+        ! If CPEN == 0 and PREREC > 0 > PREREF, then CPEN will be updated to 2*BARMU > 0.
+        !cpen = min(TWO * barmu, HUGENUM)
+        cpen = max(cpen, min(TWO * barmu, HUGENUM))
+        call cpenmsg(solver, iprint, cpen)
+        if (findpole(cpen, cval, fval) <= n) then
+            call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+            ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
+            if (subinfo == DAMAGING_ROUNDING) then
+                info = subinfo
+                exit  ! Better action to take? Geometry step, or simply continue?
             end if
+            cycle  ! Zaikun 20211111: Can this lead to infinite cycling?
         end if
+        !end if
 
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.

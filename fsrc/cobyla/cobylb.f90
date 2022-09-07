@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, September 07, 2022 AM11:49:40
+! Last Modified: Wednesday, September 07, 2022 PM12:53:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -306,26 +306,49 @@ do tr = 1, maxtr
         ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
         ! 1. PREREC >= 0; PREREC == 0 iff B(1:M) <= 0, i.e., the trust-region center 0 satisfies the
         ! linearized constraints.
-        ! 2. PREREF >= 0 when PREREC = 0.
+        ! 2. PREREF > 0 when PREREC == 0 and SHORTD is FALSE.
         ! 3. PREREM >= 0 because of the update of CPEN detailed in the following lines; PREREM == 0
         ! iff PREREF and CPEN are both 0.
         preref = inprod(d, A(:, m + 1))  ! Can be negative.
         prerec = cval(n + 1) - maxval([-matprod(d, A(:, 1:m)) - conmat(:, n + 1), ZERO])
 
-        ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
-        ! See the discussions around equation (9) of the COBYLA paper. This is the first (out of
-        ! two) place where CPEN is updated.
-        if (prerec > 0) then
-            barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
-        else  ! PREREC == 0 can happen if B(1:M) <= 0.
-            barmu = ZERO
-        end if
-        !cpen = max(cpen, min(TWO * barmu, HUGENUM))  ! The 1st (out of 2) update of CPEN.
-        if (cpen < 1.5_RP * barmu) then
-            ! This can happen only if BARMU > 0, and hence PREREC > 0 > PREREF.
-            ! If CPEN == 0 and PREREC > 0 > PREREF, then CPEN will be updated to 2*BARMU > 0.
-            cpen = min(TWO * barmu, HUGENUM)  ! The 1st (out of 2) update of CPEN.
-            call cpenmsg(solver, iprint, cpen)
+        ! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
+        ! optimal vertex. This is the first (out of two) place where CPEN is updated. It can change
+        ! CPEN only if PREREC > 0 > PREREF. If CPEN == 0 and PREREC > 0 > PREREF, then CPEN will be
+        ! become positive. See the discussions around equation (9) of the COBYLA paper.
+
+        !if (prerec > 0) then
+        !    barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
+        !else  ! PREREC == 0 can happen if B(1:M) <= 0.
+        !    barmu = ZERO
+        !end if
+        !if (cpen < 1.5_RP * barmu) then
+        !    ! This can happen only if BARMU > 0, and hence PREREC > 0 > PREREF.
+        !    ! If CPEN == 0 and PREREC > 0 > PREREF, then CPEN will be updated to 2*BARMU > 0.
+        !    cpen = min(TWO * barmu, HUGENUM)  ! The 1st (out of 2) update of CPEN.
+        !    call cpenmsg(solver, iprint, cpen)
+        !    if (findpole(cpen, cval, fval) <= n) then
+        !        call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+        !        ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
+        !        if (subinfo == DAMAGING_ROUNDING) then
+        !            info = subinfo
+        !            exit  ! Better action to take? Geometry step, or simply continue?
+        !        end if
+        !        cycle
+        !        ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
+        !        ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
+        !        ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
+        !        ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
+        !    end if
+        !end if
+
+        ! In Powell's implementation, CPEN is increased to 2*BARMU if and only if it is currently
+        ! less than 1.5*BARMU, a very "Powellful" scheme. Here, we set CPEN directly the maximum
+        ! between its current value and 2*BARMU, while paying attention to possible overflow. This
+        ! simplifies the scheme without worsening the performance of COBYLA.
+        if (prerec > 0) then  ! If PREREC == 0, then PREREM = PREREF > 0.
+            barmu = -preref / prerec  ! PREREF + BARMU * PREREC = 0
+            cpen = max(cpen, min(TWO * barmu, HUGENUM))  ! The 1st (out of 2) update of CPEN.
             if (findpole(cpen, cval, fval) <= n) then
                 call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
                 ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
@@ -334,11 +357,10 @@ do tr = 1, maxtr
                     exit  ! Better action to take? Geometry step, or simply continue?
                 end if
                 cycle
-                ! Zaikun 20220907: The `CYCLE` can be triggered for at most N times before a new
-                ! function evaluation takes place. This is because the update of CPEN does not
-                ! decrease CPEN, and hence it can make vertex J (J <= N) become the new optimal
-                ! vertex only if CVAL(J) < CVAL(N+1), which can occur at most N times. See the
-                ! paragraph below (9) in the COBYLA paper.
+                ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
+                ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
+                ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
+                ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
             end if
         end if
 
