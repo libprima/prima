@@ -26,7 +26,7 @@ jobs:
         solver: [newuoa, cobyla]
         exclude:
             - solver: cobyla  # Takes too long time
-            - dim: all
+              dim: all
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
