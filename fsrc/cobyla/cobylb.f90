@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, September 07, 2022 PM03:50:48
+! Last Modified: Wednesday, September 07, 2022 PM05:50:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -320,32 +320,6 @@ do tr = 1, maxtr
         ! However, as in Powell's implementation, if PREREC > 0 = PREREF = CPEN, then CPEN will
         ! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
         ! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
-
-        !if (prerec > 0) then
-        !    barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
-        !else  ! PREREC == 0 can happen if B(1:M) <= 0.
-        !    barmu = ZERO
-        !end if
-        !if (cpen < 1.5_RP * barmu) then
-        !    ! This can happen only if BARMU > 0, and hence PREREC > 0 > PREREF.
-        !    ! If CPEN == 0 and PREREC > 0 > PREREF, then CPEN will be updated to 2*BARMU > 0.
-        !    cpen = min(TWO * barmu, HUGENUM)  ! The 1st (out of 2) update of CPEN.
-        !    call cpenmsg(solver, iprint, cpen)
-        !    if (findpole(cpen, cval, fval) <= n) then
-        !        call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-        !        ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
-        !        if (subinfo == DAMAGING_ROUNDING) then
-        !            info = subinfo
-        !            exit  ! Better action to take? Geometry step, or simply continue?
-        !        end if
-        !        cycle
-        !        ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
-        !        ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
-        !        ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
-        !        ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
-        !    end if
-        !end if
-
         if (prerec > 0 .and. preref < 0) then
             ! In Powell's code, CPEN is increased to 2*BARMU if and only if it is currently less
             ! than 1.5*BARMU, a very "Powellful" scheme. In our implementation, however, we set CPEN
