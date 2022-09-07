@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, June 24, 2022 AM01:14:32
+! Last Modified: Wednesday, September 07, 2022 AM11:49:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -139,12 +139,12 @@ real(RP) :: delta
 real(RP) :: dnorm
 real(RP) :: ffilt(size(cfilt))
 real(RP) :: fval(size(x) + 1)
-real(RP) :: prerec  ! Predicted reduction in Constraint violation
+real(RP) :: prerec  ! Predicted reduction in constraint violation
 real(RP) :: preref  ! Predicted reduction in objective Function
-real(RP) :: prerem  ! Predicted reduction in Merit function
+real(RP) :: prerem  ! Predicted reduction in merit function
 real(RP) :: rho
-real(RP) :: sim(size(x), size(x) + 1)  ! (n, )
-real(RP) :: simi(size(x), size(x))  ! (n, )
+real(RP) :: sim(size(x), size(x) + 1)
+real(RP) :: simi(size(x), size(x))
 real(RP) :: xfilt(size(x), size(cfilt))
 ! N.B.: FACTOR_ALPHA, FACTOR_BETA, FACTOR_GAMMA, and FACTOR_DELTA are four factors the COBYLB uses
 ! when managing the simplex. Note the following
@@ -304,23 +304,27 @@ do tr = 1, maxtr
     else
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
         ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
-        ! 1. PREREC >= 0; PREREC == 0 iff B <= 0.
-        ! 2. PREREM >= 0 because of the update of CPEN detailed in the following lines; PREREM == 0
+        ! 1. PREREC >= 0; PREREC == 0 iff B(1:M) <= 0, i.e., the trust-region center 0 satisfies the
+        ! linearized constraints.
+        ! 2. PREREF >= 0 when PREREC = 0.
+        ! 3. PREREM >= 0 because of the update of CPEN detailed in the following lines; PREREM == 0
         ! iff PREREF and CPEN are both 0.
         preref = inprod(d, A(:, m + 1))  ! Can be negative.
         prerec = cval(n + 1) - maxval([-matprod(d, A(:, 1:m)) - conmat(:, n + 1), ZERO])
 
         ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
-        ! See the discussions around equation (9) of the COBYLA paper.
+        ! See the discussions around equation (9) of the COBYLA paper. This is the first (out of
+        ! two) place where CPEN is updated.
         if (prerec > 0) then
             barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
-        else  ! PREREC == 0 can happen if B <= 0.
+        else  ! PREREC == 0 can happen if B(1:M) <= 0.
             barmu = ZERO
         end if
+        !cpen = max(cpen, min(TWO * barmu, HUGENUM))  ! The 1st (out of 2) update of CPEN.
         if (cpen < 1.5_RP * barmu) then
             ! This can happen only if BARMU > 0, and hence PREREC > 0 > PREREF.
             ! If CPEN == 0 and PREREC > 0 > PREREF, then CPEN will be updated to 2*BARMU > 0.
-            cpen = min(TWO * barmu, HUGENUM)
+            cpen = min(TWO * barmu, HUGENUM)  ! The 1st (out of 2) update of CPEN.
             call cpenmsg(solver, iprint, cpen)
             if (findpole(cpen, cval, fval) <= n) then
                 call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
@@ -329,7 +333,12 @@ do tr = 1, maxtr
                     info = subinfo
                     exit  ! Better action to take? Geometry step, or simply continue?
                 end if
-                cycle  ! Zaikun 20211111: Can this lead to infinite cycling?
+                cycle
+                ! Zaikun 20220907: The `CYCLE` can be triggered for at most N times before a new
+                ! function evaluation takes place. This is because the update of CPEN does not
+                ! decrease CPEN, and hence it can make vertex J (J <= N) become the new optimal
+                ! vertex only if CVAL(J) < CVAL(N+1), which can occur at most N times. See the
+                ! paragraph below (9) in the COBYLA paper.
             end if
         end if
 
@@ -498,7 +507,7 @@ do tr = 1, maxtr
         delta = HALF * rho
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
-        cpen = min(cpen, fcratio(fval, conmat))  ! It may set CPEN to 0.
+        cpen = min(cpen, fcratio(fval, conmat)) ! The 2nd (out of 2) update of CPEN. It may become 0
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
