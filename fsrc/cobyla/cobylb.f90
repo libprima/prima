@@ -6,7 +6,7 @@
 ! N.B.:
 ! 1.) Do not implement GETMODEL as a function, or it will create an automatic/temporary array of (m+1)*n.
 ! 2.) Do not call GETMODEL after updatexfc: if we do that, we would also need to call it at three other
-! places: after initialization, after CPEN is upadated and we call UPDATEPOLE (two places).
+! places: after initialization, after CPEN is updated and we call UPDATEPOLE (two places).
 
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, September 07, 2022 PM12:53:24
+! Last Modified: Wednesday, September 07, 2022 PM03:50:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -304,18 +304,22 @@ do tr = 1, maxtr
     else
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
         ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
-        ! 1. PREREC >= 0; PREREC == 0 iff B(1:M) <= 0, i.e., the trust-region center 0 satisfies the
+        ! 1. PREREC >= 0; PREREC = 0 iff B(1:M) <= 0, i.e., the trust-region center satisfies the
         ! linearized constraints.
-        ! 2. PREREF > 0 when PREREC == 0 and SHORTD is FALSE.
-        ! 3. PREREM >= 0 because of the update of CPEN detailed in the following lines; PREREM == 0
+        ! 2. PREREF > 0 when PREREC = 0 and SHORTD is FALSE.
+        ! 3. PREREM >= 0 because of the update of CPEN detailed in the following lines; PREREM = 0
         ! iff PREREF and CPEN are both 0.
         preref = inprod(d, A(:, m + 1))  ! Can be negative.
         prerec = cval(n + 1) - maxval([-matprod(d, A(:, 1:m)) - conmat(:, n + 1), ZERO])
 
         ! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
-        ! optimal vertex. This is the first (out of two) place where CPEN is updated. It can change
-        ! CPEN only if PREREC > 0 > PREREF. If CPEN == 0 and PREREC > 0 > PREREF, then CPEN will be
-        ! become positive. See the discussions around equation (9) of the COBYLA paper.
+        ! optimal vertex. See the discussions around equation (9) of the COBYLA paper.
+        ! This is the first (out of two) place where CPEN is updated. It can change CPEN only when
+        ! PREREC > 0 > PREREF, in which case PREREM is guaranteed positive after the update.
+        ! If PREREC <= 0 or PREREF > 0, then PREREM is currently positive, so CPEN needs no update.
+        ! However, as in Powell's implementation, if PREREC > 0 = PREREF = CPEN, then CPEN will
+        ! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
+        ! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
 
         !if (prerec > 0) then
         !    barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
@@ -342,11 +346,11 @@ do tr = 1, maxtr
         !    end if
         !end if
 
-        ! In Powell's implementation, CPEN is increased to 2*BARMU if and only if it is currently
-        ! less than 1.5*BARMU, a very "Powellful" scheme. Here, we set CPEN directly the maximum
-        ! between its current value and 2*BARMU, while paying attention to possible overflow. This
-        ! simplifies the scheme without worsening the performance of COBYLA.
-        if (prerec > 0) then  ! If PREREC == 0, then PREREM = PREREF > 0.
+        if (prerec > 0 .and. preref < 0) then
+            ! In Powell's code, CPEN is increased to 2*BARMU if and only if it is currently less
+            ! than 1.5*BARMU, a very "Powellful" scheme. In our implementation, however, we set CPEN
+            ! directly to the maximum between its current value and 2*BARMU while handling possible
+            ! overflow. This simplifies the scheme without worsening the performance of COBYLA.
             barmu = -preref / prerec  ! PREREF + BARMU * PREREC = 0
             cpen = max(cpen, min(TWO * barmu, HUGENUM))  ! The 1st (out of 2) update of CPEN.
             if (findpole(cpen, cval, fval) <= n) then
