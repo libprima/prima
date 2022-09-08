@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, September 08, 2022 AM11:30:17
+! Last Modified: Thursday, September 08, 2022 AM11:08:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -308,10 +308,8 @@ do tr = 1, maxtr
         ! linearized constraints.
         ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
         preref = inprod(d, A(:, m + 1))  ! Can be negative.
-        prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
-        ! N.B.: 1. B(1:M) = -CONMAT(:, N + 1). 2. CVAL(N+1) = MAXVAL([B(1:M), ZERO]).
-        ! 3. D is supposed to reduce MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]). Hence PREREC
-        ! is nonnegative in theory, but it may fail to be so due to rounding errors.
+        prerec = cval(n + 1) - maxval([-matprod(d, A(:, 1:m)) - conmat(:, n + 1), ZERO])
+        !prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
 
         ! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
         ! optimal vertex. See the discussions around equation (9) of the COBYLA paper.

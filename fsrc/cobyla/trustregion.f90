@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Friday, September 02, 2022 AM10:37:36
+! Last Modified: Thursday, September 08, 2022 AM11:25:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -484,7 +484,6 @@ do iter = 1, maxiter
     ! maximum residual if stage 1 is being done.
     dnew = d + step * sdirn
     if (stage == 1) then
-        !cvold = cviol
         cviol = maxval([b(iact(1:nact)) - matprod(dnew, A(:, iact(1:nact))), ZERO])
         ! N.B.: CVIOL will be used when calculating VMULTD(NACT+1 : MCON).
     end if
@@ -527,6 +526,7 @@ do iter = 1, maxiter
 
     vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
     if (stage == 1) then
+        !cvold = cviol
         !cviol = (ONE - frac) * cvold + frac * cviol  ! Powell's version
         ! In theory, CVIOL = MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]), yet the CVIOL updated
         ! as above can be quite different from this value if A has huge entries (e.g., > 1E20).
