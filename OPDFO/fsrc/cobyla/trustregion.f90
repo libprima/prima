@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, September 08, 2022 PM12:06:31
+! Last Modified: Thursday, September 08, 2022 PM12:10:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -172,7 +172,7 @@ integer(IK) :: nactold
 integer(IK) :: nactsav
 integer(IK) :: nfail
 real(RP) :: cviol
-!real(RP) :: cvold
+real(RP) :: cvold
 real(RP) :: cvsabs(size(b))
 real(RP) :: cvshift(size(b))
 real(RP) :: dd
