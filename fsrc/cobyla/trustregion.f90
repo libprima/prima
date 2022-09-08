@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, September 08, 2022 AM11:25:28
+! Last Modified: Thursday, September 08, 2022 AM11:45:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -172,7 +172,7 @@ integer(IK) :: nactold
 integer(IK) :: nactsav
 integer(IK) :: nfail
 real(RP) :: cviol
-!real(RP) :: cvold
+real(RP) :: cvold
 real(RP) :: cvsabs(size(b))
 real(RP) :: cvshift(size(b))
 real(RP) :: dd
@@ -520,17 +520,22 @@ do iter = 1, maxiter
     d = (ONE - frac) * d + frac * dnew
     ! Exit in case of Inf/NaN in D.
     if (.not. is_finite(sum(abs(d)))) then
-        d = dold
+        d = dold  ! Should we restore also IACT, NACT, VMULTC, and Z?
         exit
     end if
 
     vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
     if (stage == 1) then
-        !cvold = cviol
+        cvold = cviol
         !cviol = (ONE - frac) * cvold + frac * cviol  ! Powell's version
         ! In theory, CVIOL = MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]), yet the CVIOL updated
         ! as above can be quite different from this value if A has huge entries (e.g., > 1E20).
         cviol = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+        ! Powell's code does not handle the following exception.
+        if (cviol >= cvold .or. is_nan(cviol)) then
+            d = dold  ! Should we restore also IACT, NACT, VMULTC, and Z?
+            exit
+        end if
     end if
 
     if (icon < 1 .or. icon > mcon) then
@@ -559,6 +564,8 @@ if (DEBUGGING) then
     call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
     call assert(size(z, 1) == n .and. size(z, 2) == n, 'SIZE(Z) == [N, N]', srname)
     call assert(nact >= 0 .and. nact <= min(mcon, n), '0 <= NACT <= MIN(MCON, N)', srname)
+    call assert(cviol <= maxval([b, ZERO]) .or. stage == 2 .or. any(is_nan(b)), &
+        & 'Stage 1 reduces the constraint violation', srname)
 end if
 
 end subroutine trstlp_sub

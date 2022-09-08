@@ -729,8 +729,13 @@ if options.debug && ~options.classical
                         chistx(k) = get_cstrv(xhist(:, k), Aineq, bineq, Aeq, beq, lb, ub, nlcihistx(:, k), nlcehistx(:, k));
                     end
                 end
+                % Modify chistx according to the moderated extreme barrier if the solver is cobyla.
+                if strcmp(solver, 'cobylan')
+                    chistx(chistx > hugecon | isnan(chistx)) = hugecon;
+                end
                 if any(~(isnan(chist) & isnan(chistx)) & ~((chist == chistx) | abs(chistx-chist) <= lincoan_prec*max(1, abs(chist)) & strcmp(solver, 'lincoan') | (abs(chistx-chist) <= cobylan_prec*max(1, abs(chist)) & strcmp(solver, 'cobylan'))))
                     % Public/unexpected error
+                    keyboard
                     error(sprintf('%s:InvalidFx', invoker), ...
                         '%s: UNEXPECTED ERROR: %s returns an chist that does not match xhist.', invoker, solver);
                 end
