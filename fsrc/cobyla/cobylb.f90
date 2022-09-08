@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, September 08, 2022 AM11:30:17
+! Last Modified: Thursday, September 08, 2022 PM12:05:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -365,8 +365,6 @@ do tr = 1, maxtr
             actrem = cval(n + 1) - cstrv
         end if
 
-        !write (16, *) cpen, preref, prerec, prerem
-        !close (16)
         !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')
         !prerem = max(prerem, tiny(prerem))
 
