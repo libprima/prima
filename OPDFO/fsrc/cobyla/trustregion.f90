@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, September 08, 2022 PM12:17:19
+! Last Modified: Thursday, September 08, 2022 PM01:05:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -531,10 +531,10 @@ do iter = 1, maxiter
         ! In theory, CVIOL = MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]), yet the CVIOL updated
         ! as above can be quite different from this value if A has huge entries (e.g., > 1E20).
         cviol = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
-        if (cviol >= cvold .or. is_nan(cviol)) then
-            d = dold  ! Should we restore also IACT, NACT, VMULTC, and Z?
-            exit
-        end if
+        !if (cviol >= cvold .or. is_nan(cviol)) then
+        !    d = dold  ! Should we restore also IACT, NACT, VMULTC, and Z?
+        !    exit
+        !end if
     end if
 
     if (icon < 1 .or. icon > mcon) then
