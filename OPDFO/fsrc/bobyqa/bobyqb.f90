@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 10, 2022 PM03:39:37
+! Last Modified: Saturday, September 10, 2022 PM09:49:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -257,26 +257,35 @@ do while (.true.)
                 errbig = max(diffa, diffb, diffc)
                 frhosq = 0.125_RP * rho * rho
                 !if (crvmin > ZERO .and. errbig > frhosq * crvmin) then
-                if (crvmin > ZERO .and. errbig > 0.125_RP * crvmin * rho**2) then
-                    improve_geo = .true.
-                else
-                    !bdtol = errbig / rho
-                    bdtol = errbig
-                    bdtest = bdtol
-                    bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
-                    bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
-                    hqdiag = diag(hq)
-                    curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
-                    where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
+                !if (crvmin > ZERO .and. errbig > 0.125_RP * crvmin * rho**2) then
+                !    improve_geo = .true.
+                !else
+                !bdtol = errbig / rho
+                bdtol = errbig
+                bdtest = bdtol
+                bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
+                bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
+                hqdiag = diag(hq)
+                curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
+                where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
                     !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
-                    !if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
-                    !if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho**2 < bdtol)) then
-                    if (any(max(bdtest, bdtest + HALF * curv * rho**2) < bdtol)) then
+                !if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
+                !if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho**2 < bdtol)) then
+                if (crvmin > 0) then
+                    if (any(min(0.125_RP * crvmin * rho**2, minval(max(bdtest, bdtest + HALF * curv * rho**2))) &
+                        & < [diffa, diffb, diffc])) then
+                        improve_geo = .true.
+                    else
+                        improve_geo = .false.
+                    end if
+                else
+                    if (any(minval(max(bdtest, bdtest + HALF * curv * rho**2)) < [diffa, diffb, diffc])) then
                         improve_geo = .true.
                     else
                         improve_geo = .false.
                     end if
                 end if
+                !end if
             end if
         else
             ntrits = ntrits + 1_IK

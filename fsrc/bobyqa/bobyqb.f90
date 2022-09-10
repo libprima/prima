@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 10, 2022 PM02:50:13
+! Last Modified: Saturday, September 10, 2022 PM04:10:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -123,7 +123,7 @@ real(RP) :: gnew(size(x))
 real(RP) :: delbar, alpha, bdtest(size(x)), beta, &
 &        biglsq, crvmin, curv(size(x)), delta,  &
 &        den(npt), denom, densav, diff, diffa, diffb, diffc,     &
-&        dist, dsquare, distsq(npt), dnorm, dsq, errbig, fopt,        &
+&        dist, dsquare, distsq(npt), dnorm, dsq, errbd, fopt,        &
 &        gisq, gqsq, hdiag(npt),      &
 &        ratio, rho, rhosq, scaden, qred, weight(npt), pqinc(npt)
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
@@ -237,28 +237,30 @@ do while (.true.)
 
         xnew = max(min(xopt + d, su), sl)
         gnew = gopt + hess_mul(d, xpt, pq, hq)
+        ntrits = ntrits + 1_IK
 
         dsq = sum(d**2)
         dnorm = min(delta, sqrt(dsq))
         shortd = (dnorm < HALF * rho)
 
-        ! When D is short make a choice between improving the geometry and reducing RHO depends on
-        ! whether or not our work with the current RHO seems to be complete. Either RHO is decreased
-        ! or termination occurs if the errors in the quadratic model at the last three interpolation
-        ! points compare favourably with predictions of likely improvements to the model within
-        ! distance HALF*RHO of XOPT.
-        ntrits = ntrits + 1_IK
+        ! When D is short, make a choice between reducing RHO and improving the geometry depending
+        ! on whether or not our work with the current RHO seems complete. RHO is reduced if the
+        ! errors in the quadratic model at the last three interpolation points compare favourably
+        ! with predictions of likely improvements to the model within distance HALF*RHO of XOPT.
         if (shortd) then
             ntrits = -1
             rhosq = rho**2
             dsquare = 1.0E2_RP * rhosq
-            errbig = max(diffa, diffb, diffc)
-            bdtest = errbig
+
+            bdtest = maxval([diffa, diffb, diffc])
             bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
             bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
             curv = diag(hq) + matprod(xpt**2, pq)
-            improve_geo = (nf <= nfsav + 2) .or. (crvmin > 0 .and. errbig > 0.125_RP * crvmin * rhosq) &
-                & .or. any(errbig > max(bdtest, bdtest + HALF * curv * rhosq))
+            errbd = minval(max(bdtest, bdtest + HALF * curv * rhosq))
+            if (crvmin > 0) then
+                errbd = min(errbd, 0.125_RP * crvmin * rhosq)
+            end if
+            improve_geo = (nf <= nfsav + 2 .or. any([diffa, diffb, diffc] > errbd))
         end if
     end if
 
