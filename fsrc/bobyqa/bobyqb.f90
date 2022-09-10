@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 10, 2022 PM10:10:28
+! Last Modified: Sunday, September 11, 2022 AM07:30:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -198,8 +198,8 @@ call inith(ij, xpt, bmat, zmat)
 ! Set some more initial values and parameters.
 rho = rhobeg
 delta = rho
-moderrsav = ZERO
-dnormsav = ZERO
+moderrsav = HUGENUM
+dnormsav = HUGENUM
 nresc = nf
 ntrits = 0
 itest = 0
@@ -508,7 +508,6 @@ do while (.true.)
         qred = -quadinc(d, xpt, gopt, pq, hq)
         diff = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
-        !if (dnorm > rho) nfsav = nf
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Pick the next value of DELTA after a trust region step.
@@ -682,7 +681,8 @@ do while (.true.)
         end if
         delta = max(delta, rho)
         ntrits = 0
-        nfsav = nf
+        moderrsav = HUGENUM
+        dnormsav = HUGENUM
         cycle
     else
         info = SMALL_TR_RADIUS
