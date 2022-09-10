@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 10, 2022 PM12:05:19
+! Last Modified: Saturday, September 10, 2022 PM12:33:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -250,28 +250,24 @@ do while (.true.)
         if (shortd) then
             ntrits = -1
             dsquare = (TEN * rho)**2
-            if (nf <= nfsav + 2) then
-                improve_geo = .true.
-            else
-                errbig = max(diffa, diffb, diffc)
-                frhosq = 0.125_RP * rho * rho
-                if (crvmin > 0 .and. errbig > frhosq * crvmin) then
-                    improve_geo = .true.
-                else
-                    bdtol = errbig / rho
-                    bdtest = bdtol
-                    !bdtest = ZERO
-                    bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
-                    bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
-                    curv = diag(hq) + matprod(xpt**2, pq)
-                    improve_geo = any(max(bdtest, bdtest + HALF * curv * rho) < bdtol)
-                    !if (any(max(bdtest, bdtest + HALF * curv * rho) < bdtol)) then
-                    !    improve_geo = .true.
-                    !else
-                    !    improve_geo = .false.
-                    !end if
-                end if
-            end if
+            !if (nf <= nfsav + 2) then
+            !improve_geo = .true.
+            !else
+            errbig = max(diffa, diffb, diffc)
+            frhosq = 0.125_RP * rho * rho
+            !if (crvmin > 0 .and. errbig > frhosq * crvmin) then
+            !improve_geo = .true.
+            !else
+            bdtol = errbig / rho
+            bdtest = bdtol
+            bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
+            bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
+            curv = diag(hq) + matprod(xpt**2, pq)
+            !improve_geo = any(max(bdtest, bdtest + HALF * curv * rho) < bdtol)
+            !end if
+            !end if
+            improve_geo = (nf <= nfsav + 2) .or. (crvmin > 0 .and. errbig > frhosq * crvmin) &
+                & .or. any(max(bdtest, bdtest + HALF * curv * rho) < bdtol)
         else
             ntrits = ntrits + 1_IK
         end if
