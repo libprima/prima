@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 10, 2022 PM04:10:50
+! Last Modified: Saturday, September 10, 2022 PM10:10:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -122,10 +122,12 @@ real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
 real(RP) :: delbar, alpha, bdtest(size(x)), beta, &
 &        biglsq, crvmin, curv(size(x)), delta,  &
-&        den(npt), denom, densav, diff, diffa, diffb, diffc,     &
+&        den(npt), denom, densav, diff, &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbd, fopt,        &
 &        gisq, gqsq, hdiag(npt),      &
 &        ratio, rho, rhosq, scaden, qred, weight(npt), pqinc(npt)
+real(RP) :: dnormsav(3)
+real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
@@ -196,10 +198,10 @@ call inith(ij, xpt, bmat, zmat)
 ! Set some more initial values and parameters.
 rho = rhobeg
 delta = rho
+moderrsav = ZERO
+dnormsav = ZERO
 nresc = nf
 ntrits = 0
-diffa = ZERO
-diffb = ZERO
 itest = 0
 nfsav = nf
 
@@ -252,7 +254,7 @@ do while (.true.)
             rhosq = rho**2
             dsquare = 1.0E2_RP * rhosq
 
-            bdtest = maxval([diffa, diffb, diffc])
+            bdtest = maxval(abs(moderrsav))
             bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
             bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
             curv = diag(hq) + matprod(xpt**2, pq)
@@ -260,7 +262,7 @@ do while (.true.)
             if (crvmin > 0) then
                 errbd = min(errbd, 0.125_RP * crvmin * rhosq)
             end if
-            improve_geo = (nf <= nfsav + 2 .or. any([diffa, diffb, diffc] > errbd))
+            improve_geo = (nf <= nfsav + 2 .or. any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
         end if
     end if
 
@@ -505,10 +507,9 @@ do while (.true.)
         fopt = fval(kopt)
         qred = -quadinc(d, xpt, gopt, pq, hq)
         diff = f - fopt + qred
-        diffc = diffb
-        diffb = diffa
-        diffa = abs(diff)
-        if (dnorm > rho) nfsav = nf
+        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
+        !if (dnorm > rho) nfsav = nf
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Pick the next value of DELTA after a trust region step.
         if (ntrits > 0) then
