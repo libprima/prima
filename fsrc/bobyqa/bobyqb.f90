@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 10, 2022 AM11:31:12
+! Last Modified: Saturday, September 10, 2022 PM12:05:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -260,18 +260,16 @@ do while (.true.)
                 else
                     bdtol = errbig / rho
                     bdtest = bdtol
+                    !bdtest = ZERO
                     bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
                     bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
-                    !hqdiag = diag(hq)
-                    !curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
-                    !where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
                     curv = diag(hq) + matprod(xpt**2, pq)
-                    !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
-                    if (any(max(bdtest, bdtest + HALF * curv * rho) < bdtol)) then
-                        improve_geo = .true.
-                    else
-                        improve_geo = .false.
-                    end if
+                    improve_geo = any(max(bdtest, bdtest + HALF * curv * rho) < bdtol)
+                    !if (any(max(bdtest, bdtest + HALF * curv * rho) < bdtol)) then
+                    !    improve_geo = .true.
+                    !else
+                    !    improve_geo = .false.
+                    !end if
                 end if
             end if
         else
@@ -289,7 +287,6 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E3_RP * dsq .and. .not. rescued) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
-            !xnew = xnew - xopt  ! Needed? Will XNEW be used again later?
             xnew = min(max(sl, xnew - xopt), su)  ! Needed? Will XNEW be used again later?
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
             xbase = min(max(xl, xbase), xu)
