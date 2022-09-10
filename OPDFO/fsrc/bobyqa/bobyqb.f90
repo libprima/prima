@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM11:51:17
+! Last Modified: Saturday, September 10, 2022 PM03:39:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -249,24 +249,29 @@ do while (.true.)
         ! distance HALF*RHO of XOPT.
         if (shortd) then
             ntrits = -1
-            dsquare = (TEN * rho)**2
+            !dsquare = (TEN * rho)**2
+            dsquare = 1.0E2_RP * rho**2
             if (nf <= nfsav + 2) then
                 improve_geo = .true.
             else
                 errbig = max(diffa, diffb, diffc)
                 frhosq = 0.125_RP * rho * rho
-                if (crvmin > ZERO .and. errbig > frhosq * crvmin) then
+                !if (crvmin > ZERO .and. errbig > frhosq * crvmin) then
+                if (crvmin > ZERO .and. errbig > 0.125_RP * crvmin * rho**2) then
                     improve_geo = .true.
                 else
-                    bdtol = errbig / rho
+                    !bdtol = errbig / rho
+                    bdtol = errbig
                     bdtest = bdtol
-                    bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
-                    bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
+                    bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
+                    bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
                     hqdiag = diag(hq)
                     curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
                     where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
                     !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
-                    if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
+                    !if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
+                    !if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho**2 < bdtol)) then
+                    if (any(max(bdtest, bdtest + HALF * curv * rho**2) < bdtol)) then
                         improve_geo = .true.
                     else
                         improve_geo = .false.

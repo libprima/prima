@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 10, 2022 PM12:33:43
+! Last Modified: Saturday, September 10, 2022 PM02:50:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -120,12 +120,12 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
-real(RP) :: delbar, alpha, bdtest(size(x)), hqdiag(size(x)), bdtol, beta, &
+real(RP) :: delbar, alpha, bdtest(size(x)), beta, &
 &        biglsq, crvmin, curv(size(x)), delta,  &
 &        den(npt), denom, densav, diff, diffa, diffb, diffc,     &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbig, fopt,        &
-&        frhosq, gisq, gqsq, hdiag(npt),      &
-&        ratio, rho, scaden, qred, weight(npt), pqinc(npt)
+&        gisq, gqsq, hdiag(npt),      &
+&        ratio, rho, rhosq, scaden, qred, weight(npt), pqinc(npt)
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
@@ -247,29 +247,18 @@ do while (.true.)
         ! or termination occurs if the errors in the quadratic model at the last three interpolation
         ! points compare favourably with predictions of likely improvements to the model within
         ! distance HALF*RHO of XOPT.
+        ntrits = ntrits + 1_IK
         if (shortd) then
             ntrits = -1
-            dsquare = (TEN * rho)**2
-            !if (nf <= nfsav + 2) then
-            !improve_geo = .true.
-            !else
+            rhosq = rho**2
+            dsquare = 1.0E2_RP * rhosq
             errbig = max(diffa, diffb, diffc)
-            frhosq = 0.125_RP * rho * rho
-            !if (crvmin > 0 .and. errbig > frhosq * crvmin) then
-            !improve_geo = .true.
-            !else
-            bdtol = errbig / rho
-            bdtest = bdtol
-            bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
-            bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
+            bdtest = errbig
+            bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
+            bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
             curv = diag(hq) + matprod(xpt**2, pq)
-            !improve_geo = any(max(bdtest, bdtest + HALF * curv * rho) < bdtol)
-            !end if
-            !end if
-            improve_geo = (nf <= nfsav + 2) .or. (crvmin > 0 .and. errbig > frhosq * crvmin) &
-                & .or. any(max(bdtest, bdtest + HALF * curv * rho) < bdtol)
-        else
-            ntrits = ntrits + 1_IK
+            improve_geo = (nf <= nfsav + 2) .or. (crvmin > 0 .and. errbig > 0.125_RP * crvmin * rhosq) &
+                & .or. any(errbig > max(bdtest, bdtest + HALF * curv * rhosq))
         end if
     end if
 
