@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM11:51:33
+! Last Modified: Saturday, September 10, 2022 AM11:31:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -255,18 +255,19 @@ do while (.true.)
             else
                 errbig = max(diffa, diffb, diffc)
                 frhosq = 0.125_RP * rho * rho
-                if (crvmin > ZERO .and. errbig > frhosq * crvmin) then
+                if (crvmin > 0 .and. errbig > frhosq * crvmin) then
                     improve_geo = .true.
                 else
                     bdtol = errbig / rho
                     bdtest = bdtol
                     bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl))
                     bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su))
-                    hqdiag = diag(hq)
-                    curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
-                    where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
+                    !hqdiag = diag(hq)
+                    !curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
+                    !where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
+                    curv = diag(hq) + matprod(xpt**2, pq)
                     !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
-                    if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
+                    if (any(max(bdtest, bdtest + HALF * curv * rho) < bdtol)) then
                         improve_geo = .true.
                     else
                         improve_geo = .false.
@@ -393,19 +394,20 @@ do while (.true.)
                 end if
             end if
 
+        else
             ! Alternatively, if NTRITS is positive, then set KNEW to the index of the next
             ! interpolation point to be deleted to make room for a trust region step. Again RESCUE
             ! may be called if rounding errors have damaged the chosen denominator, which is the
             ! reason for attempting to select KNEW before calculating the next value of the
             ! objective function.
-        else
+            !
             ! Calculate VLAG and BETA for the current choice of D.
             vlag = calvlag(kopt, bmat, d, xpt, zmat)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             hdiag = sum(zmat**2, dim=2)
             den = hdiag * beta + vlag(1:npt)**2
             distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-            weight = max(ONE, (distsq / delta**2)**2)
+            weight = max(ONE, (distsq / delta**2)**2)  ! It differs from (6.1) in the BOBYQA paper.
 
             score = weight * den
             score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE

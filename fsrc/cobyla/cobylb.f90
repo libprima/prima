@@ -365,7 +365,8 @@ do tr = 1, maxtr
             actrem = cval(n + 1) - cstrv
         end if
 
-        !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')  ! This can fail due to rounding errors.
+        ! In theory, PREREM >= 0, but this can fail due to rounding errors. 
+        !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')  
 
         ratio = redrat(actrem, prerem, eta1)
         ! Update DELTA. After this, DELTA < DNORM may hold.

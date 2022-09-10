@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, September 08, 2022 PM01:05:34
+! Last Modified: Friday, September 09, 2022 PM02:42:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
