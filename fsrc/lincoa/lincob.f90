@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, September 11, 2022 PM06:55:29
+! Last Modified: Sunday, September 11, 2022 PM07:25:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -302,7 +302,7 @@ do while (.true.)
         !------------------------------------------------------------------------------------------!
 
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-        if (delta > rho .or. .not. shortd) then
+        if (delta > rho) then! .or. .not. shortd) then
             dnormsav = HUGENUM
         end if
 
