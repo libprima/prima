@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, August 18, 2022 AM08:40:04
+! Last Modified: Sunday, September 11, 2022 PM01:00:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -70,7 +70,7 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic models
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, MIN_MAXFILT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, MIN_MAXFILT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -157,9 +157,10 @@ logical :: feasible, shortd, improve_geo, freduced
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: idz, itest, &
 &           knew, kopt, ksave, nact,      &
-&           nvala, nvalb, ngetact, subinfo
+&           ngetact, subinfo
 real(RP) :: fshift(npt)
 real(RP) :: pqalt(npt), galt(size(x))
+real(RP) :: dnormsav(5)
 
 ! Sizes.
 m = int(size(bvec), kind(m))
@@ -255,9 +256,8 @@ improve_geo = .false.
 nact = 0
 itest = 3
 knew = 0
-nvala = 0
-nvalb = 0
 ksave = 0  ! To entertain g95.
+dnormsav = HUGENUM
 info = INFO_DFT
 
 do while (.true.)
@@ -288,6 +288,11 @@ do while (.true.)
         ! In the case KNEW=0, generate the next trust region step by calling TRSTEP.
         call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
         dnorm = sqrt(sum(d**2))
+        if (delta > rho) then
+            dnormsav = [dnormsav(2:size(dnormsav)), rho]
+        else
+            dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+        end if
 
         ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
         ! applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has caused a
@@ -305,19 +310,12 @@ do while (.true.)
             delta = HALF * delta
             if (delta <= 1.4_RP * rho) delta = rho
             !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
-            nvala = nvala + 1
-            nvalb = nvalb + 1
-            temp = dnorm / rho
-            if (delsav > rho) temp = ONE
-            if (temp >= HALF) nvala = 0
-            if (temp >= TENTH) nvalb = 0
-            improve_geo = (delsav > rho .or. (nvala < 5 .and. nvalb < 3))
+            improve_geo = any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
             if (dnorm > 0 .and. .not. improve_geo) then
                 ksave = -1
             end if
         else
-            nvala = 0
-            nvalb = 0
+            dnormsav = HUGENUM
         end if
 
     else
@@ -534,8 +532,7 @@ do while (.true.)
         end if
         delta = max(delta, rho)
         knew = 0
-        nvala = 0
-        nvalb = 0
+        dnormsav = HUGENUM
     else
         info = SMALL_TR_RADIUS
         exit
