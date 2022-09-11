@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, August 18, 2022 AM08:40:04
+! Last Modified: Sunday, September 11, 2022 PM12:39:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -309,8 +309,10 @@ do while (.true.)
             nvalb = nvalb + 1
             temp = dnorm / rho
             if (delsav > rho) temp = ONE
-            if (temp >= HALF) nvala = 0
-            if (temp >= TENTH) nvalb = 0
+            !if (temp >= HALF) nvala = 0
+            !if (temp >= TENTH) nvalb = 0
+            if (delsav > rho .or. dnorm >= HALF * rho) nvala = 0
+            if (delsav > rho .or. dnorm >= TENTH * rho) nvalb = 0
             improve_geo = (delsav > rho .or. (nvala < 5 .and. nvalb < 3))
             if (dnorm > 0 .and. .not. improve_geo) then
                 ksave = -1
