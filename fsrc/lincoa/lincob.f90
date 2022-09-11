@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, September 11, 2022 PM01:00:11
+! Last Modified: Sunday, September 11, 2022 PM06:55:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -288,11 +288,6 @@ do while (.true.)
         ! In the case KNEW=0, generate the next trust region step by calling TRSTEP.
         call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
         dnorm = sqrt(sum(d**2))
-        if (delta > rho) then
-            dnormsav = [dnormsav(2:size(dnormsav)), rho]
-        else
-            dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-        end if
 
         ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
         ! applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has caused a
@@ -306,6 +301,11 @@ do while (.true.)
         !!SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
         !------------------------------------------------------------------------------------------!
 
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+        if (delta > rho .or. .not. shortd) then
+            dnormsav = HUGENUM
+        end if
+
         if (shortd) then
             delta = HALF * delta
             if (delta <= 1.4_RP * rho) delta = rho
@@ -314,8 +314,6 @@ do while (.true.)
             if (dnorm > 0 .and. .not. improve_geo) then
                 ksave = -1
             end if
-        else
-            dnormsav = HUGENUM
         end if
 
     else
@@ -433,8 +431,8 @@ do while (.true.)
                 if (delta <= 1.4_RP * rho) delta = rho
                 !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
                 ! N.B.: The factor in the line above should be smaller than SQRT(2). Imagine a very
-                ! successful step with DENORM = DELTA (un-updated) = RHO. Then the scheme will first
-                ! update DELTA to SQRT(2)*RHO. If this factor were larger than or equal to SQRT(2),
+                ! successful step with DENORM = the un-updated DELTA = RHO. Then the scheme will
+                ! first update DELTA to SQRT(2)*RHO. If this factor were not smaller than SQRT(2),
                 ! then DELTA will be reset to RHO, which is not reasonable as D is very successful.
             end if
 
