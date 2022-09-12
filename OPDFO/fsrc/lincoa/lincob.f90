@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM12:19:23
+! Last Modified: Monday, September 12, 2022 PM12:49:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -287,7 +287,7 @@ do while (.true.)
     if (knew == 0) then
         ! In the case KNEW=0, generate the next trust region step by calling TRSTEP.
         call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
-        dnorm = sqrt(sum(d**2))
+        dnorm = min(delta, sqrt(sum(d**2)))
 
         ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
         ! applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has caused a
@@ -301,36 +301,40 @@ do while (.true.)
         !!SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
         !------------------------------------------------------------------------------------------!
 
-        !write (17, *) nf, delta, rho, dnorm, shortd
-        !if (delta > rho .and. shortd) dnorm = huge(dnorm)
-        !if (delta > rho .and. shortd) dnorm = huge(dnorm)
+        !------------------------------------------------------------------------------------------!
+        ! Powell's implementation:
+        !if (shortd) then
+        !    delta = HALF * delta
+        !    if (delta <= 1.4_RP * rho) delta = rho
+        !    nvala = nvala + 1
+        !    nvalb = nvalb + 1
+        !    if (delsav > rho .or. dnorm >= HALF * rho) nvala = 0
+        !    if (delsav > rho .or. dnorm >= TENTH * rho) nvalb = 0
+        !    improve_geo = (delsav > rho .or. (nvala < 5 .and. nvalb < 3))
+        !    if (dnorm > 0 .and. .not. improve_geo) then
+        !        ksave = -1
+        !    end if
+        !else
+        !    nvala = 0
+        !    nvalb = 0
+        !end if
+        !------------------------------------------------------------------------------------------!
+
+        !------------------------------------------------------------------------------------------!
+        ! Modified:
         nvala = nvala + 1
         nvalb = nvalb + 1
+        if (delsav > rho .or. dnorm >= HALF * rho) nvala = 0
+        if (delsav > rho .or. dnorm >= TENTH * rho) nvalb = 0
         if (shortd) then
             delta = HALF * delta
             if (delta <= 1.4_RP * rho) delta = rho
-            !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
-            !nvala = nvala + 1
-            !nvalb = nvalb + 1
-            temp = dnorm / rho
-            if (delsav > rho) temp = ONE
-            !if (temp >= HALF) nvala = 0
-            !if (temp >= TENTH) nvalb = 0
-            if (delsav > rho .or. dnorm >= HALF * rho) nvala = 0
-            if (delsav > rho .or. dnorm >= TENTH * rho) nvalb = 0
-            !write (17, *) delsav, dnorm, nvala, nvalb
             improve_geo = (delsav > rho .or. (nvala < 5 .and. nvalb < 3))
             if (dnorm > 0 .and. .not. improve_geo) then
                 ksave = -1
             end if
-            !elseif (delta > rho) then
-        elseif (delsav > rho .or. dnorm >= HALF * rho) then
-            nvala = 0
-            nvalb = 0
-        elseif (delsav > rho .or. dnorm >= TENTH * rho) then
-            nvalb = 0
         end if
-        !write (17, *) improve_geo
+        !------------------------------------------------------------------------------------------!
 
     else
         ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
