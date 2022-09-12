@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM08:46:24
+! Last Modified: Monday, September 12, 2022 PM09:30:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -288,20 +288,6 @@ do while (.true.)
         ! function being returned in CAUCHY. The choice between these alternatives is going to be
         ! made when the denominator is calculated.
 
-        !------------------------------------------------------------------------------------------!
-        !  Zaikun 23-07-2019: (STILL NECESSARY???)
-        ! Although very rare, NaN can sometimes occur in BMAT or ZMAT. If it happens, we terminate
-        ! the code. See the comments above line number 60. Indeed, if GEOSTEP is called with such
-        ! matrices, then geostep.f90 will encounter a memory error at lines 173--174. This is
-        ! because the first value of PREDSQ in GEOSTEP (see line 159 of geostep.f90) will be NaN,
-        ! line 164 will not be reached, and hence no value will be assigned to IBDSAV. Such an error
-        ! was observed when BOBYQA was (mistakenly) tested on CUTEst problem CONCON. CONCON is
-        ! a nonlinearly constrained problem with bounds. By mistake, BOBYQA was called to solve this
-        ! problem, neglecting all the constraints other than bounds. With only the bound
-        ! constraints, the objective function turned to be unbounded from below, which led to
-        ! abnormal values in BMAT(indeed, BETA defined in lines 366--389 took NaN/infinite values).
-        !------------------------------------------------------------------------------------------!
-
         if (ntrits == 0) then
             ! Calculate a geometry step.
             d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
@@ -320,25 +306,12 @@ do while (.true.)
                     info = DAMAGING_ROUNDING
                     exit
                 end if
-                ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more
-                ! expensive than the previous shift, because new matrices BMAT and ZMAT are
-                ! generated from scratch, which may include the replacement of interpolation
-                ! points whose positions seem to be causing near linear dependence in the
-                ! interpolation conditions. Therefore RESCUE is called only if rounding errors
-                ! have reduced by at least a factor of TWO the denominator of the formula for
-                ! updating the H matrix. It provides a useful safeguard, but is not invoked in
-                ! most applications of BOBYQA.
                 nfsav = nf
                 call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
-                    & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
+                    & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
 
-                ! Are KOPT, XOPT, FOPT, and GOPT up to date now?
-                if (fopt <= ftarget) then
-                    info = FTARGET_ACHIEVED
-                    exit
-                end if
-                if (nf >= maxfun) then
-                    info = MAXFUN_REACHED
+                if (subinfo /= INFO_DFT) then
+                    info = subinfo
                     exit
                 end if
 
@@ -398,25 +371,11 @@ do while (.true.)
                     info = DAMAGING_ROUNDING
                     exit
                 end if
-                ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more
-                ! expensive than the previous shift, because new matrices BMAT and ZMAT are
-                ! generated from scratch, which may include the replacement of interpolation
-                ! points whose positions seem to be causing near linear dependence in the
-                ! interpolation conditions. Therefore RESCUE is called only if rounding errors
-                ! have reduced by at least a factor of TWO the denominator of the formula for
-                ! updating the H matrix. It provides a useful safeguard, but is not invoked in
-                ! most applications of BOBYQA.
-
                 call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
-                    & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
+                    & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
 
-                ! Are KOPT, XOPT, FOPT, and GOPT up to date now?
-                if (fopt <= ftarget) then
-                    info = FTARGET_ACHIEVED
-                    exit
-                end if
-                if (nf >= maxfun) then
-                    info = MAXFUN_REACHED
+                if (subinfo /= INFO_DFT) then
+                    info = subinfo
                     exit
                 end if
                 nfsav = nf

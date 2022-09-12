@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM08:43:48
+! Last Modified: Monday, September 12, 2022 PM09:32:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -379,18 +379,23 @@ do while (.true.)
 
                     nfsav = nf
                     call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
-                        & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
+                        & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
+                    if (subinfo /= INFO_DFT) then
+                        info = subinfo
+                        exit
+                    end if
 
-                    ! XOPT is updated now in case the loop will exit. {?}
-                    ! Update GOPT?
-                    if (fopt <= ftarget) then
-                        info = FTARGET_ACHIEVED
-                        exit
-                    end if
-                    if (nf >= maxfun) then
-                        info = MAXFUN_REACHED
-                        exit
-                    end if
+
+!                    ! XOPT is updated now in case the loop will exit. {?}
+!                    ! Update GOPT?
+!                    if (fopt <= ftarget) then
+!                        info = FTARGET_ACHIEVED
+!                        exit
+!                    end if
+!                    if (nf >= maxfun) then
+!                        info = MAXFUN_REACHED
+!                        exit
+!                    end if
                     nresc = nf
                     if (nfsav < nf) then
                         nfsav = nf
@@ -473,18 +478,23 @@ do while (.true.)
 
                     nfsav = nf
                     call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
-                        & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
+                        & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
+                    if (subinfo /= INFO_DFT) then
+                        info = subinfo
+                        exit
+                    end if
 
-                    ! XOPT is updated now in case the loop exits. (?)
-                    ! Update GOPT?
-                    if (fopt <= ftarget) then
-                        info = FTARGET_ACHIEVED
-                        exit
-                    end if
-                    if (nf >= maxfun) then
-                        info = MAXFUN_REACHED
-                        exit
-                    end if
+
+!                    ! XOPT is updated now in case the loop exits. (?)
+!                    ! Update GOPT?
+!                    if (fopt <= ftarget) then
+!                        info = FTARGET_ACHIEVED
+!                        exit
+!                    end if
+!                    if (nf >= maxfun) then
+!                        info = MAXFUN_REACHED
+!                        exit
+!                    end if
                     nresc = nf
                     nfsav = max(nfsav, nf)
                     cycle
