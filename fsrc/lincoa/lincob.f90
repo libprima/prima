@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM01:18:58
+! Last Modified: Monday, September 12, 2022 PM03:33:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -308,7 +308,8 @@ do while (.true.)
         ! iterations. This is important for the performance of LINCOA. In Powell's code, this is
         ! done when DELTA > RHO or SHORTD is FALSE. Here, we change the condition to DELTA > RHO,
         ! which slightly improves the performance of LINCOA according to a test in 20220911.
-        if (delta > rho) then  ! Powell's implementation: IF (DELTA > RHO .OR. .NOT. SHORTD) THEN
+        !if (delta > rho) then  ! Powell's implementation: IF (DELTA > RHO .OR. .NOT. SHORTD) THEN
+        if (delta > rho .or. .not. shortd) then
             dnormsav = HUGENUM
         end if
 
@@ -316,8 +317,8 @@ do while (.true.)
         ! interpolation set or to reduce RHO.
         if (shortd) then
             delta = HALF * delta
+            ! The factor 1.4 below aligns with the update of DELTA after a trust-region step.
             if (delta <= 1.4_RP * rho) delta = rho
-            !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
             improve_geo = any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
             if (dnorm > 0 .and. .not. improve_geo) then
                 ksave = -1

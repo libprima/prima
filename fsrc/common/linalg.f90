@@ -2572,7 +2572,7 @@ if (scaling <= 0) then
     tdiag = ZERO
     tsubdiag = ZERO
     return
-elseif (scaling > 1.0E8 .or. scaling < 1.0E-4) then ! The thresholds are empirical
+elseif (scaling > 1.0E8 .or. scaling < 1.0E-4) then ! The thresholds are empirical.
     A = A / scaling
     scaled = .true.
 end if

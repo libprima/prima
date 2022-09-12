@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, September 11, 2022 AM07:30:01
+! Last Modified: Monday, September 12, 2022 PM02:00:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -237,7 +237,7 @@ do while (.true.)
 
         call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
-        xnew = max(min(xopt + d, su), sl)
+        xnew = max(min(xopt + d, su), sl)  ! In precise arithmetic, XNEW = XOPT + D.
         gnew = gopt + hess_mul(d, xpt, pq, hq)
         ntrits = ntrits + 1_IK
 
@@ -467,7 +467,7 @@ do while (.true.)
         end if
 
         ! Put the variables for the next calculation of the objective function in XNEW, with any
-        ! adjustments for the bounds. Calculate the value of the objective function at XBASE+XNEW.
+        ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
         x = min(max(xl, xbase + xnew), xu)
         x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
         x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
@@ -486,6 +486,7 @@ do while (.true.)
             exit
         end if
 
+        ! Calculate the value of the objective function at XBASE+XNEW.
         call evaluate(calfun, x, f)
         call savehist(nf, x, xhist, f, fhist)
 
