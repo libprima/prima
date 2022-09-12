@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM06:17:33
+! Last Modified: Monday, September 12, 2022 PM08:43:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -228,10 +228,10 @@ rescued = .false.
 
 do while (.true.)
     if (.not. geo_step) then
-        if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
-            info = NAN_MODEL
-            exit
-        end if
+        !if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
+        !    info = NAN_MODEL
+        !    exit
+        !end if
 
         call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
@@ -334,10 +334,10 @@ do while (.true.)
         !------------------------------------------------------------------------------------------!
 
         if (ntrits == 0) then
-            if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-                info = NAN_MODEL
-                exit
-            end if
+            !if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+            !    info = NAN_MODEL
+            !    exit
+            !end if
 
             ! Calculate a geometry step.
             d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
@@ -365,17 +365,17 @@ do while (.true.)
                     ! have reduced by at least a factor of TWO the denominator of the formula for
                     ! updating the H matrix. It provides a useful safeguard, but is not invoked in
                     ! most applications of BOBYQA.
-                    !--------------------------------------------------------------------------------------!
-                    ! Zaikun 2019-08-29: STILL NECESSARY?
-                    if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
-                        info = NAN_MODEL
-                        exit
-                    end if
-                    if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-                        info = NAN_MODEL
-                        exit
-                    end if
-                    !--------------------------------------------------------------------------------------!
+                    !!--------------------------------------------------------------------------------------!
+                    !! Zaikun 2019-08-29: STILL NECESSARY?
+                    !if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
+                    !    info = NAN_MODEL
+                    !    exit
+                    !end if
+                    !if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+                    !    info = NAN_MODEL
+                    !    exit
+                    !end if
+                    !!--------------------------------------------------------------------------------------!
 
                     nfsav = nf
                     call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
@@ -459,17 +459,17 @@ do while (.true.)
                     ! updating the H matrix. It provides a useful safeguard, but is not invoked in
                     ! most applications of BOBYQA.
 
-                    !------------------------------------------------------------------------------!
-                    ! Zaikun 2019-08-29: See the comments above line number 60. STILL NECESSARY?
-                    if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
-                        info = NAN_MODEL
-                        exit
-                    end if
-                    if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-                        info = NAN_MODEL
-                        exit
-                    end if
-                    !------------------------------------------------------------------------------!
+                    !!------------------------------------------------------------------------------!
+                    !! Zaikun 2019-08-29: See the comments above line number 60. STILL NECESSARY?
+                    !if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
+                    !    info = NAN_MODEL
+                    !    exit
+                    !end if
+                    !if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+                    !    info = NAN_MODEL
+                    !    exit
+                    !end if
+                    !!------------------------------------------------------------------------------!
 
                     nfsav = nf
                     call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
