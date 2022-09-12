@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM05:09:07
+! Last Modified: Monday, September 12, 2022 PM08:49:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -75,7 +75,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
+use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: output_mod, only : fmsg
@@ -272,15 +272,15 @@ do while (.true.)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
     end if
 
-    if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-        info = NAN_MODEL
-        exit
-    end if
+    !if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+    !    info = NAN_MODEL
+    !    exit
+    !end if
 
-    if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then  ! Still needed?
-        info = NAN_MODEL
-        exit
-    end if
+    !if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then  ! Still needed?
+    !    info = NAN_MODEL
+    !    exit
+    !end if
 
     delsav = delta
     ksave = knew
@@ -329,10 +329,10 @@ do while (.true.)
         ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
         delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
 
-        if (is_nan(sum(abs(bmat(:, knew))))) then  ! Necessary?
-            info = NAN_MODEL
-            exit
-        end if
+        !if (is_nan(sum(abs(bmat(:, knew))))) then  ! Necessary?
+        !    info = NAN_MODEL
+        !    exit
+        !end if
 
         call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
     end if

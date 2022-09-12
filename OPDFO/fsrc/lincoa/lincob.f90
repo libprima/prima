@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM04:53:57
+! Last Modified: Monday, September 12, 2022 PM08:50:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -272,15 +272,15 @@ do while (.true.)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
     end if
 
-    if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-        info = NAN_MODEL
-        exit
-    end if
+    !if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+    !    info = NAN_MODEL
+    !    exit
+    !end if
 
-    if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then  ! Still needed?
-        info = NAN_MODEL
-        exit
-    end if
+    !if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then  ! Still needed?
+    !    info = NAN_MODEL
+    !    exit
+    !end if
 
     delsav = delta
     ksave = knew
@@ -340,10 +340,10 @@ do while (.true.)
         ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
         delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
 
-        if (is_nan(sum(abs(bmat(:, knew))))) then  ! Necessary?
-            info = NAN_MODEL
-            exit
-        end if
+        !if (is_nan(sum(abs(bmat(:, knew))))) then  ! Necessary?
+        !    info = NAN_MODEL
+        !    exit
+        !end if
 
         call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
     end if
