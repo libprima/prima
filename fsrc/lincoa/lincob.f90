@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM08:59:36
+! Last Modified: Monday, September 12, 2022 PM10:06:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -512,7 +512,10 @@ do while (.true.)
 
     ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
     improve_geo = .false.
-    if (rho > rhoend) then
+    if (rho <= rhoend) then
+        info = SMALL_TR_RADIUS
+        exit
+    else
         delta = HALF * rho
         if (rho > 250.0_RP * rhoend) then
             rho = TENTH * rho
@@ -524,9 +527,6 @@ do while (.true.)
         delta = max(delta, rho)
         knew = 0
         dnormsav = HUGENUM
-    else
-        info = SMALL_TR_RADIUS
-        exit
     end if
 
 end do

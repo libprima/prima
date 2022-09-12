@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM09:44:19
+! Last Modified: Monday, September 12, 2022 PM10:06:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -344,8 +344,7 @@ do while (.true.)
             knew = 0
             scaden = ZERO
             if (any(score > 0)) then
-                ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we exclude
-                ! such K.
+                ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
                 knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
                 scaden = score(knew)
                 !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
@@ -360,10 +359,8 @@ do while (.true.)
                 !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
             end if
 
-            ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet we prefer to
-            ! require KNEW > 0 explicitly.
-            !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-            if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
+            !if (.not. scaden > HALF * biglsq) then
+            if (.not. scaden > biglsq) then  ! This is used when verifying RESCUE.
                 if (nf <= nresc) then
                     info = DAMAGING_ROUNDING
                     exit
@@ -468,8 +465,7 @@ do while (.true.)
                 knew = 0
                 scaden = ZERO
                 if (any(score > 0)) then
-                    ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we
-                    ! exclude such K.
+                    ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
                     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
                     scaden = score(knew)
                     !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
@@ -555,8 +551,7 @@ do while (.true.)
         ! If a trust region step has provided a sufficient decrease in F, then branch for another
         ! trust region calculation. The case NTRITS=0 occurs when the new interpolation point was
         ! reached by an alternative step.
-        if (ntrits == 0) cycle
-        if (f <= fopt - TENTH * qred) cycle
+        if (ntrits == 0 .or. f <= fopt - TENTH * qred) cycle
 
         ! Alternatively, find out if the interpolation points are close enough to the best point so far.
         dsquare = max((TWO * delta)**2, (TEN * rho)**2)
@@ -571,7 +566,8 @@ do while (.true.)
         ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
         ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region
         ! iteration, unless the calculations with the current RHO are complete.
-        if (knew > 0) then
+        geo_step = (knew > 0)
+        if (geo_step) then
             dist = sqrt(dsquare)
             if (ntrits == -1) then
                 delta = min(TENTH * delta, HALF * dist)
@@ -580,16 +576,15 @@ do while (.true.)
             ntrits = 0
             delbar = max(min(TENTH * dist, delta), rho)
             dsq = delbar * delbar
-            geo_step = .true.
-            cycle
-        else
-            geo_step = .false.
         end if
-        if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) cycle
+        if (geo_step .or. (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho))) cycle
     end if
 
     ! The calculations with the current value of RHO are complete. Update RHO and DELTA.
-    if (rho > rhoend) then
+    if (rho <= rhoend) then
+        info = SMALL_TR_RADIUS
+        exit
+    else
         delta = HALF * rho
         ratio = rho / rhoend
         if (ratio <= 16.0_RP) then
@@ -603,10 +598,6 @@ do while (.true.)
         ntrits = 0
         moderrsav = HUGENUM
         dnormsav = HUGENUM
-        cycle
-    else
-        info = SMALL_TR_RADIUS
-        exit
     end if
 
 end do
