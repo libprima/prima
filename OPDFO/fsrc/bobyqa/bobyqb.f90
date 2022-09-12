@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM09:44:12
+! Last Modified: Monday, September 12, 2022 PM10:13:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -352,8 +352,8 @@ do while (.true.)
             denom = alpha * beta + vlag(knew)**2
 
             ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-            !if (.not. (denom > HALF * vlag(knew)**2)) then
-            if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
+            if (.not. (denom > HALF * vlag(knew)**2)) then
+                !if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
                 if (nf <= nresc) then
                     info = DAMAGING_ROUNDING
                     exit
@@ -450,8 +450,8 @@ do while (.true.)
 
             ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet we prefer to
             ! require KNEW > 0 explicitly.
-            !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-            if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
+            if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
+                !if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
                 if (nf <= nresc) then
                     info = DAMAGING_ROUNDING
                     exit
