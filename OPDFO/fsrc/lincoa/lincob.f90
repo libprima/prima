@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM03:28:08
+! Last Modified: Monday, September 12, 2022 PM03:37:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -301,39 +301,39 @@ do while (.true.)
         !!SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
         !------------------------------------------------------------------------------------------!
 
-        !------------------------------------------------------------------------------------------!
-        ! Powell's implementation:
-        if (shortd) then
-            delta = HALF * delta
-            if (delta <= 1.4_RP * rho) delta = rho
-            nvala = nvala + 1
-            nvalb = nvalb + 1
-            if (delsav > rho .or. dnorm >= HALF * rho) nvala = 0
-            if (delsav > rho .or. dnorm >= TENTH * rho) nvalb = 0
-            improve_geo = (nvala < 5 .and. nvalb < 3)
-            if (dnorm > 0 .and. .not. improve_geo) then
-                ksave = -1
-            end if
-        else
-            nvala = 0
-            nvalb = 0
-        end if
-        !------------------------------------------------------------------------------------------!
-
-        !------------------------------------------------------------------------------------------!
-        ! Modified:
-        !nvala = nvala + 1
-        !nvalb = nvalb + 1
-        !if (delta > rho .or. dnorm >= HALF * rho) nvala = 0
-        !if (delta > rho .or. dnorm >= TENTH * rho) nvalb = 0
+        !!------------------------------------------------------------------------------------------!
+        !! Powell's implementation:
         !if (shortd) then
         !    delta = HALF * delta
         !    if (delta <= 1.4_RP * rho) delta = rho
+        !    nvala = nvala + 1
+        !    nvalb = nvalb + 1
+        !    if (delsav > rho .or. dnorm >= HALF * rho) nvala = 0
+        !    if (delsav > rho .or. dnorm >= TENTH * rho) nvalb = 0
         !    improve_geo = (nvala < 5 .and. nvalb < 3)
         !    if (dnorm > 0 .and. .not. improve_geo) then
         !        ksave = -1
         !    end if
+        !else
+        !    nvala = 0
+        !    nvalb = 0
         !end if
+        !------------------------------------------------------------------------------------------!
+
+        !------------------------------------------------------------------------------------------!
+        ! Modified:
+        nvala = nvala + 1
+        nvalb = nvalb + 1
+        if (delta > rho .or. dnorm >= HALF * rho) nvala = 0
+        if (delta > rho .or. dnorm >= TENTH * rho) nvalb = 0
+        if (shortd) then
+            delta = HALF * delta
+            if (delta <= 1.4_RP * rho) delta = rho
+            improve_geo = (nvala < 5 .and. nvalb < 3)
+            if (dnorm > 0 .and. .not. improve_geo) then
+                ksave = -1
+            end if
+        end if
         !------------------------------------------------------------------------------------------!
 
     else

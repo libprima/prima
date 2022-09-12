@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM03:33:00
+! Last Modified: Monday, September 12, 2022 PM03:36:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -308,8 +308,7 @@ do while (.true.)
         ! iterations. This is important for the performance of LINCOA. In Powell's code, this is
         ! done when DELTA > RHO or SHORTD is FALSE. Here, we change the condition to DELTA > RHO,
         ! which slightly improves the performance of LINCOA according to a test in 20220911.
-        !if (delta > rho) then  ! Powell's implementation: IF (DELTA > RHO .OR. .NOT. SHORTD) THEN
-        if (delta > rho .or. .not. shortd) then
+        if (delta > rho) then  ! Powell's implementation: IF (DELTA > RHO .OR. .NOT. SHORTD) THEN
             dnormsav = HUGENUM
         end if
 
