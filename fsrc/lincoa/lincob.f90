@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM03:36:36
+! Last Modified: Monday, September 12, 2022 PM04:58:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -305,10 +305,8 @@ do while (.true.)
 
         ! In some cases, we reset DNORMSAV to HUGENUM. This indicates a preference of improving the
         ! geometry of the interpolation set to reducing RHO in the subsequent three or more
-        ! iterations. This is important for the performance of LINCOA. In Powell's code, this is
-        ! done when DELTA > RHO or SHORTD is FALSE. Here, we change the condition to DELTA > RHO,
-        ! which slightly improves the performance of LINCOA according to a test in 20220911.
-        if (delta > rho) then  ! Powell's implementation: IF (DELTA > RHO .OR. .NOT. SHORTD) THEN
+        ! iterations. This is important for the performance of LINCOA.
+        if (delta > rho .or. .not. shortd) then  ! Another possibility: IF (DELTA > RHO) THEN
             dnormsav = HUGENUM
         end if
 
@@ -349,7 +347,7 @@ do while (.true.)
         ! Zaikun 15-08-2019
         ! Although very rarely, with the original code, an infinite loop can occur in the following
         ! scenario. Suppose that, at an certain iteration, KNEW = 0, DNORM > 0.5*DELTA > RHO, QRED
-        ! <= 0, and summ_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2 (i.e., DELTA is large and DNORM
+        ! <= 0, and sum_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2 (i.e., DELTA is large and DNORM
         ! is not small, yet QRED <= 0 due to rounding errors and XPT are not far from XOPT). Then
         ! the program will goto 530 (try whether to improve the geometry) and then cycle, where
         ! XBASE may be shifted to the current best point, in the hope of reducing rounding errors
