@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 10, 2022 PM09:49:20
+! Last Modified: Monday, September 12, 2022 PM06:08:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -444,8 +444,8 @@ do while (.true.)
 
             ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet we prefer to
             ! require KNEW > 0 explicitly.
-            if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-                !if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
+            !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
+            if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
                 if (nf <= nresc) then
                     info = DAMAGING_ROUNDING
                     exit

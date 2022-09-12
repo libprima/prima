@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM02:00:12
+! Last Modified: Monday, September 12, 2022 PM06:13:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -249,6 +249,7 @@ do while (.true.)
         ! on whether or not our work with the current RHO seems complete. RHO is reduced if the
         ! errors in the quadratic model at the last three interpolation points compare favourably
         ! with predictions of likely improvements to the model within distance HALF*RHO of XOPT.
+        ! The BOBYQA paper explains the strategy in the paragraphs between (6.7) and (6.11).
         if (shortd) then
             ntrits = -1
             rhosq = rho**2
@@ -314,7 +315,6 @@ do while (.true.)
 
             ! Calculate a geometry step.
             d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
-            !xnew = xopt + d
             xnew = min(max(sl, xopt + d), su)
 
             ! Calculate VLAG, BETA, and DENOM for the current choice of D.
@@ -354,8 +354,7 @@ do while (.true.)
                     call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
                         & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
 
-                    ! XOPT is updated now in case the loop will exit. {?}
-                    ! Update GOPT?
+                    ! Are XOPT, FOPT, and GOPT up to date now?
                     if (fopt <= ftarget) then
                         info = FTARGET_ACHIEVED
                         exit
@@ -418,8 +417,8 @@ do while (.true.)
 
             ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet we prefer to
             ! require KNEW > 0 explicitly.
-            if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-                !if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
+            !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
+            if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
                 if (nf <= nresc) then
                     info = DAMAGING_ROUNDING
                     exit
@@ -445,12 +444,10 @@ do while (.true.)
                     end if
                     !------------------------------------------------------------------------------!
 
-                    nfsav = nf
                     call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
                         & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
 
-                    ! XOPT is updated now in case the loop exits. (?)
-                    ! Update GOPT?
+                    ! Are XOPT, FOPT, and GOPT up to date now?
                     if (fopt <= ftarget) then
                         info = FTARGET_ACHIEVED
                         exit
@@ -460,7 +457,7 @@ do while (.true.)
                         exit
                     end if
                     nresc = nf
-                    nfsav = max(nfsav, nf)
+                    nfsav = nf
                     cycle
                 end if
             end if
@@ -509,6 +506,10 @@ do while (.true.)
         qred = -quadinc(d, xpt, gopt, pq, hq)
         diff = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
+        ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is
+        ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
+        ! of the BOBYQA paper and the elaboration below it. Is this a bug? Similar thing happened
+        ! in NEWUOA, but we recognized it as a bug and fixed it.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Pick the next value of DELTA after a trust region step.
