@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 AM12:38:41
+! Last Modified: Monday, September 12, 2022 PM09:22:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,7 +24,7 @@ contains
 
 
 subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, fval,&
-    & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
+    & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine implements "the method of RESCUE" introduced in Section 5 of BOBYQA paper. The
 ! purpose of this subroutine is to replace a few interpolation points by new points in order to
@@ -87,11 +87,13 @@ subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
+use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
+use, non_intrinsic :: infos_mod, only : MAXFUN_REACHED, INFO_DFT
 use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update, r2update, trueloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : hess_mul, setij
@@ -130,6 +132,9 @@ real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 ! N.B.: BMAT and ZMAT must be INTENT(INOUT) rather than INTENT(OUT); otherwise, they will be
 ! undefined when the subroutine returns due to NF >= MAXFUN before any calculation starts.
 
+! Outputs
+integer(IK), intent(out) :: info
+
 ! Local variables
 character(len=*), parameter :: srname = 'RESCUE'
 integer(IK) :: ip
@@ -146,6 +151,7 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: nprov
 integer(IK) :: npt
+integer(IK) :: subinfo
 logical :: mask(size(xpt, 1))
 real(RP) :: beta
 real(RP) :: bsum
@@ -210,8 +216,11 @@ if (DEBUGGING) then
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
 end if
 
+info = INFO_DFT
+
 ! Do nothing if NF already reaches it upper bound.
 if (nf >= maxfun) then
+    info = MAXFUN_REACHED
     return
 end if
 
@@ -463,13 +472,11 @@ if (nprov > 0) then
         if (f < fval(kopt)) then
             kopt = kpt
         end if
-        if (is_nan(f) .or. is_posinf(f)) then
-            exit
-        end if
-        if (f <= ftarget) then
-            exit
-        end if
-        if (nf >= maxfun) then
+
+        ! Check whether to exit
+        subinfo = checkexit(maxfun, nf, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
             exit
         end if
 
