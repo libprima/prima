@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM06:27:53
+! Last Modified: Monday, September 12, 2022 PM08:46:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -56,7 +56,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
+use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -230,11 +230,6 @@ rescued = .false.
 
 do while (.true.)
     if (.not. geo_step) then
-        if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
-            info = NAN_MODEL
-            exit
-        end if
-
         call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
         xnew = max(min(xopt + d, su), sl)  ! In precise arithmetic, XNEW = XOPT + D.
@@ -308,11 +303,6 @@ do while (.true.)
         !------------------------------------------------------------------------------------------!
 
         if (ntrits == 0) then
-            if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-                info = NAN_MODEL
-                exit
-            end if
-
             ! Calculate a geometry step.
             d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
             xnew = min(max(sl, xopt + d), su)
@@ -338,18 +328,6 @@ do while (.true.)
                 ! have reduced by at least a factor of TWO the denominator of the formula for
                 ! updating the H matrix. It provides a useful safeguard, but is not invoked in
                 ! most applications of BOBYQA.
-                !--------------------------------------------------------------------------------------!
-                ! Zaikun 2019-08-29: STILL NECESSARY?
-                if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
-                    info = NAN_MODEL
-                    exit
-                end if
-                if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-                    info = NAN_MODEL
-                    exit
-                end if
-                !--------------------------------------------------------------------------------------!
-
                 nfsav = nf
                 call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
                     & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
@@ -363,16 +341,11 @@ do while (.true.)
                     info = MAXFUN_REACHED
                     exit
                 end if
+
                 rescued = (nfsav == nf)  ! What does this mean?
                 geo_step = (nfsav == nf)  ! What does this mean?
                 nfsav = nf
                 nresc = nf
-                !if (nfsav < nf) then
-                !    nfsav = nf
-                !else
-                !    rescued = .true.
-                !    geo_step = .true.
-                !end if
                 cycle
                 !------------------------------------------------------------------------------!
                 ! After RESCUE, Powell's code takes immediately another GEOSTEP. If the geometry
@@ -433,18 +406,6 @@ do while (.true.)
                 ! have reduced by at least a factor of TWO the denominator of the formula for
                 ! updating the H matrix. It provides a useful safeguard, but is not invoked in
                 ! most applications of BOBYQA.
-
-                !------------------------------------------------------------------------------!
-                ! Zaikun 2019-08-29: See the comments above line number 60. STILL NECESSARY?
-                if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
-                    info = NAN_MODEL
-                    exit
-                end if
-                if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-                    info = NAN_MODEL
-                    exit
-                end if
-                !------------------------------------------------------------------------------!
 
                 call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
                     & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
