@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 20, 2022 PM01:57:25
+! Last Modified: Monday, September 12, 2022 PM08:53:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -183,10 +183,10 @@ do while (.true.)
         g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
         h = vec2smat(pq(n + 1:npt - 1))
 
-        if (is_nan(sum(abs(g)) + sum(abs(h)))) then
-            info = NAN_MODEL
-            exit
-        end if
+        !if (is_nan(sum(abs(g)) + sum(abs(h)))) then
+        !    info = NAN_MODEL
+        !    exit
+        !end if
 
         ! Generate the next trust region step and test its length. Set KNEW to -1 if the purpose of
         ! the next F will be to improve conditioning, and also calculate a lower bound on the
@@ -360,7 +360,7 @@ do while (.true.)
             g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
             h = vec2smat(pl(n + 1:npt - 1, knew))
             if (is_nan(sum(abs(g)) + sum(abs(h)))) then
-                info = NAN_MODEL
+                !info = NAN_MODEL
                 reduce_rho = .true.
                 exit
             end if
