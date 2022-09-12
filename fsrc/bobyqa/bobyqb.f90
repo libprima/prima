@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM09:30:49
+! Last Modified: Monday, September 12, 2022 PM09:44:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,7 +132,7 @@ real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, rescued, geo_step
+logical :: shortd, improve_geo, geo_step
 
 
 ! Sizes.
@@ -213,7 +213,6 @@ ratio = -ONE
 shortd = .false.
 improve_geo = .false.
 geo_step = .false.
-rescued = .false.
 
 ! Generate the next point in the trust region that provides a small value of the quadratic model
 ! subject to the constraints on the variables. The integer NTRITS is set to the number "trust
@@ -268,7 +267,7 @@ do while (.true.)
         ! made to BMAT and to the second derivatives of the current model, beginning with the
         ! changes to BMAT that are independent of ZMAT. VLAG is used temporarily for working space.
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-        if (sum(xopt**2) >= 1.0E3_RP * dsq .and. .not. rescued) then
+        if (sum(xopt**2) >= 1.0E3_RP * dsq) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
             xnew = min(max(sl, xnew - xopt), su)  ! Needed? Will XNEW be used again later?
@@ -277,7 +276,6 @@ do while (.true.)
         end if
 
         geo_step = .false.
-        rescued = .false.
 
         ! Pick two alternative vectors of variables, relative to XBASE, that are suitable as new
         ! positions of the KNEW-th interpolation point. Firstly, XNEW is set to the point on a line
@@ -315,7 +313,6 @@ do while (.true.)
                     exit
                 end if
 
-                rescued = (nfsav == nf)  ! What does this mean?
                 geo_step = (nfsav == nf)  ! What does this mean?
                 nfsav = nf
                 nresc = nf
