@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, September 11, 2022 PM12:39:02
+! Last Modified: Monday, September 12, 2022 PM12:19:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -301,26 +301,36 @@ do while (.true.)
         !!SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
         !------------------------------------------------------------------------------------------!
 
+        !write (17, *) nf, delta, rho, dnorm, shortd
+        !if (delta > rho .and. shortd) dnorm = huge(dnorm)
+        !if (delta > rho .and. shortd) dnorm = huge(dnorm)
+        nvala = nvala + 1
+        nvalb = nvalb + 1
         if (shortd) then
             delta = HALF * delta
             if (delta <= 1.4_RP * rho) delta = rho
             !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
-            nvala = nvala + 1
-            nvalb = nvalb + 1
+            !nvala = nvala + 1
+            !nvalb = nvalb + 1
             temp = dnorm / rho
             if (delsav > rho) temp = ONE
             !if (temp >= HALF) nvala = 0
             !if (temp >= TENTH) nvalb = 0
             if (delsav > rho .or. dnorm >= HALF * rho) nvala = 0
             if (delsav > rho .or. dnorm >= TENTH * rho) nvalb = 0
+            !write (17, *) delsav, dnorm, nvala, nvalb
             improve_geo = (delsav > rho .or. (nvala < 5 .and. nvalb < 3))
             if (dnorm > 0 .and. .not. improve_geo) then
                 ksave = -1
             end if
-        else
+            !elseif (delta > rho) then
+        elseif (delsav > rho .or. dnorm >= HALF * rho) then
             nvala = 0
             nvalb = 0
+        elseif (delsav > rho .or. dnorm >= TENTH * rho) then
+            nvalb = 0
         end if
+        !write (17, *) improve_geo
 
     else
         ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
@@ -575,7 +585,7 @@ call rangehist(nf, xhist, fhist, chist)
 
 ! Postconditions
 
-!close (16)
+close (17)
 
 end subroutine lincob
 

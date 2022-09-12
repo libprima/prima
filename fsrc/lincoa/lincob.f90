@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, September 11, 2022 PM07:25:40
+! Last Modified: Monday, September 12, 2022 PM12:24:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -302,10 +302,18 @@ do while (.true.)
         !------------------------------------------------------------------------------------------!
 
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-        if (delta > rho) then! .or. .not. shortd) then
+
+        ! In some cases, we reset DNORMSAV to HUGENUM. This indicates a preference of improving the
+        ! geometry of the interpolation set to reducing RHO in the subsequent three or more
+        ! iterations. This is important for the performance of LINCOA. In Powell's code, this is
+        ! done when DELTA > RHO or SHORTD is FALSE. Here, we change the condition to DELTA > RHO,
+        ! which slightly improves the performance of LINCOA according to a test in 20220911.
+        if (delta > rho) then  ! Powell's implementation: IF (DELTA > RHO .OR. .NOT. SHORTD) THEN
             dnormsav = HUGENUM
         end if
 
+        ! When the trust region step is short, decide whether to improve the geometry of the
+        ! interpolation set or to reduce RHO.
         if (shortd) then
             delta = HALF * delta
             if (delta <= 1.4_RP * rho) delta = rho
@@ -568,7 +576,7 @@ call rangehist(nf, xhist, fhist, chist)
 
 ! Postconditions
 
-!close (16)
+close (16)
 
 end subroutine lincob
 
