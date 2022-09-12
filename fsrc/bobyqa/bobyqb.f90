@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM06:13:27
+! Last Modified: Monday, September 12, 2022 PM06:27:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -268,7 +268,6 @@ do while (.true.)
     end if
 
     if (geo_step .or. .not. shortd) then
-        geo_step = .false.
         ! Severe cancellation is likely to occur if XOPT is too far from XBASE. If the following
         ! test holds, then XBASE is shifted so that XOPT becomes zero. The appropriate changes are
         ! made to BMAT and to the second derivatives of the current model, beginning with the
@@ -282,6 +281,7 @@ do while (.true.)
             xbase = min(max(xl, xbase), xu)
         end if
 
+        geo_step = .false.
         rescued = .false.
 
         ! Pick two alternative vectors of variables, relative to XBASE, that are suitable as new
@@ -324,59 +324,61 @@ do while (.true.)
             denom = alpha * beta + vlag(knew)**2
 
             ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-            if (.not. (denom > HALF * vlag(knew)**2)) then
-                !if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
+            !if (.not. (denom > HALF * vlag(knew)**2)) then
+            if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
                 if (nf <= nresc) then
                     info = DAMAGING_ROUNDING
                     exit
-                else
-                    ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more
-                    ! expensive than the previous shift, because new matrices BMAT and ZMAT are
-                    ! generated from scratch, which may include the replacement of interpolation
-                    ! points whose positions seem to be causing near linear dependence in the
-                    ! interpolation conditions. Therefore RESCUE is called only if rounding errors
-                    ! have reduced by at least a factor of TWO the denominator of the formula for
-                    ! updating the H matrix. It provides a useful safeguard, but is not invoked in
-                    ! most applications of BOBYQA.
-                    !--------------------------------------------------------------------------------------!
-                    ! Zaikun 2019-08-29: STILL NECESSARY?
-                    if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
-                        info = NAN_MODEL
-                        exit
-                    end if
-                    if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-                        info = NAN_MODEL
-                        exit
-                    end if
-                    !--------------------------------------------------------------------------------------!
-
-                    nfsav = nf
-                    call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
-                        & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
-
-                    ! Are XOPT, FOPT, and GOPT up to date now?
-                    if (fopt <= ftarget) then
-                        info = FTARGET_ACHIEVED
-                        exit
-                    end if
-                    if (nf >= maxfun) then
-                        info = MAXFUN_REACHED
-                        exit
-                    end if
-                    nresc = nf
-                    if (nfsav < nf) then
-                        nfsav = nf
-                        cycle
-                    end if
-                    rescued = .true.
-                    geo_step = .true.
-                    cycle
-                    !------------------------------------------------------------------------------!
-                    ! After RESCUE, Powell's code takes immediately another GEOSTEP. If the geometry
-                    ! becomes acceptable (i.e., DENOM > HALF * VLAG(KNEW)**2), then the algorithm
-                    ! will continue.Otherwise, it will exit with INFO set to DAMAGING_ROUNDING.
-                    !------------------------------------------------------------------------------!
                 end if
+                ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more
+                ! expensive than the previous shift, because new matrices BMAT and ZMAT are
+                ! generated from scratch, which may include the replacement of interpolation
+                ! points whose positions seem to be causing near linear dependence in the
+                ! interpolation conditions. Therefore RESCUE is called only if rounding errors
+                ! have reduced by at least a factor of TWO the denominator of the formula for
+                ! updating the H matrix. It provides a useful safeguard, but is not invoked in
+                ! most applications of BOBYQA.
+                !--------------------------------------------------------------------------------------!
+                ! Zaikun 2019-08-29: STILL NECESSARY?
+                if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
+                    info = NAN_MODEL
+                    exit
+                end if
+                if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+                    info = NAN_MODEL
+                    exit
+                end if
+                !--------------------------------------------------------------------------------------!
+
+                nfsav = nf
+                call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
+                    & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
+
+                ! Are KOPT, XOPT, FOPT, and GOPT up to date now?
+                if (fopt <= ftarget) then
+                    info = FTARGET_ACHIEVED
+                    exit
+                end if
+                if (nf >= maxfun) then
+                    info = MAXFUN_REACHED
+                    exit
+                end if
+                rescued = (nfsav == nf)  ! What does this mean?
+                geo_step = (nfsav == nf)  ! What does this mean?
+                nfsav = nf
+                nresc = nf
+                !if (nfsav < nf) then
+                !    nfsav = nf
+                !else
+                !    rescued = .true.
+                !    geo_step = .true.
+                !end if
+                cycle
+                !------------------------------------------------------------------------------!
+                ! After RESCUE, Powell's code takes immediately another GEOSTEP. If the geometry
+                ! becomes acceptable (i.e., DENOM > HALF * VLAG(KNEW)**2), then the algorithm
+                ! will continue. Otherwise, it will exit with INFO set to DAMAGING_ROUNDING.
+                !------------------------------------------------------------------------------!
             end if
 
         else
@@ -422,44 +424,43 @@ do while (.true.)
                 if (nf <= nresc) then
                     info = DAMAGING_ROUNDING
                     exit
-                else
-                    ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more
-                    ! expensive than the previous shift, because new matrices BMAT and ZMAT are
-                    ! generated from scratch, which may include the replacement of interpolation
-                    ! points whose positions seem to be causing near linear dependence in the
-                    ! interpolation conditions. Therefore RESCUE is called only if rounding errors
-                    ! have reduced by at least a factor of TWO the denominator of the formula for
-                    ! updating the H matrix. It provides a useful safeguard, but is not invoked in
-                    ! most applications of BOBYQA.
-
-                    !------------------------------------------------------------------------------!
-                    ! Zaikun 2019-08-29: See the comments above line number 60. STILL NECESSARY?
-                    if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
-                        info = NAN_MODEL
-                        exit
-                    end if
-                    if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-                        info = NAN_MODEL
-                        exit
-                    end if
-                    !------------------------------------------------------------------------------!
-
-                    call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
-                        & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
-
-                    ! Are XOPT, FOPT, and GOPT up to date now?
-                    if (fopt <= ftarget) then
-                        info = FTARGET_ACHIEVED
-                        exit
-                    end if
-                    if (nf >= maxfun) then
-                        info = MAXFUN_REACHED
-                        exit
-                    end if
-                    nresc = nf
-                    nfsav = nf
-                    cycle
                 end if
+                ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more
+                ! expensive than the previous shift, because new matrices BMAT and ZMAT are
+                ! generated from scratch, which may include the replacement of interpolation
+                ! points whose positions seem to be causing near linear dependence in the
+                ! interpolation conditions. Therefore RESCUE is called only if rounding errors
+                ! have reduced by at least a factor of TWO the denominator of the formula for
+                ! updating the H matrix. It provides a useful safeguard, but is not invoked in
+                ! most applications of BOBYQA.
+
+                !------------------------------------------------------------------------------!
+                ! Zaikun 2019-08-29: See the comments above line number 60. STILL NECESSARY?
+                if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
+                    info = NAN_MODEL
+                    exit
+                end if
+                if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+                    info = NAN_MODEL
+                    exit
+                end if
+                !------------------------------------------------------------------------------!
+
+                call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
+                    & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat)
+
+                ! Are KOPT, XOPT, FOPT, and GOPT up to date now?
+                if (fopt <= ftarget) then
+                    info = FTARGET_ACHIEVED
+                    exit
+                end if
+                if (nf >= maxfun) then
+                    info = MAXFUN_REACHED
+                    exit
+                end if
+                nfsav = nf
+                nresc = nf
+                cycle
             end if
         end if
 
