@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, September 12, 2022 PM05:11:38
+! Last Modified: Tuesday, September 13, 2022 PM12:31:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -238,6 +238,13 @@ do tr = 1, maxtr
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
     shortd = (dnorm < HALF * rho)
     ! REDUCE_RHO_1 corresponds to Box 14 of the NEWUOA paper.
+    ! Why do we reduce RHO when SHORTD is true and the entries of MODERRSAV and DNORMSAV are all
+    ! small? The reason is well explained by the BOBYQA paper in the paragraph around (6.9)--(6.10).
+    ! Roughly speaking, in this case, a trust-region step is unlikely to decrease the objective
+    ! function according to some estimations. This suggests that the current trust-region center may
+    ! be an approximate local minimizer. When this occurs, the algorithm takes the view that the
+    ! work for the current RHO is complete, and hence it will reduce RHO, which will enhance the
+    ! resolution of the algorithm in general.
     reduce_rho_1 = shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
     if (shortd .and. (.not. reduce_rho_1)) then
         ! Reduce DELTA. After this, DELTA < DNORM may happen.
@@ -248,7 +255,7 @@ do tr = 1, maxtr
     end if
 
     if (.not. shortd) then  ! D is long enough.
-        ! DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
+        ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Calculate the next value of the objective function.
@@ -267,7 +274,7 @@ do tr = 1, maxtr
 
         qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
-        ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
+        ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
 
         ! Calculate the reduction ratio.
@@ -425,10 +432,10 @@ do tr = 1, maxtr
         ! Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
         ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
         ! the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of DNORM
-        ! saved in DNORMSAVE will be used when defining REDUCE_RHO_1.
+        ! saved in DNORMSAV will be used when defining REDUCE_RHO_1.
         dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
         !------------------------------------------------------------------------------------------!
-        ! DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
+        ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Calculate the next value of the objective function.
@@ -447,7 +454,7 @@ do tr = 1, maxtr
 
         qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
-        ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
+        ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
 
         ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (defining the
@@ -468,7 +475,7 @@ do tr = 1, maxtr
             rho = redrho(rho, rhoend)
             delta = max(delta, rho)
             call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
-            ! DNORMSAVE and MODERRSAVE are corresponding to the latest 3 function evaluations with
+            ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
             ! the current RHO. Update them after reducing RHO.
             dnormsav = HUGENUM
             moderrsav = HUGENUM
