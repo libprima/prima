@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM10:12:32
+! Last Modified: Tuesday, September 13, 2022 PM12:33:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -244,6 +244,13 @@ do while (.true.)
         ! errors in the quadratic model at the last three interpolation points compare favourably
         ! with predictions of likely improvements to the model within distance HALF*RHO of XOPT.
         ! The BOBYQA paper explains the strategy in the paragraphs between (6.7) and (6.11).
+        ! Why do we reduce RHO when SHORTD is true and the entries of MODERRSAV and DNORMSAV are all
+        ! small? The reason is well explained by the BOBYQA paper in the paragraph surrounding
+        ! (6.9)--(6.10). Roughly speaking, in this case, a trust-region step is unlikely to decrease
+        ! the objective function according to some estimations. This suggests that the current
+        ! trust-region center may be an approximate local minimizer. When this occurs, the algorithm
+        ! takes the view that the work for the current RHO is complete, and hence it will reduce
+        ! RHO, which will enhance the resolution of the algorithm in general.
         if (shortd) then
             ntrits = -1
             rhosq = rho**2
