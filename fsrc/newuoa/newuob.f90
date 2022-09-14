@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 14, 2022 PM11:01:11
+! Last Modified: Wednesday, September 14, 2022 PM11:16:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -353,10 +353,9 @@ do tr = 1, maxtr
     ! hold due to the update of DELTA.
     ! 2. If SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
-    ! 3. If SHORTD = TRUE and REDUCE_RHO = TRUE, then the trust-region step D does not invoke
-    ! a function evaluation at the current iteration, but the same D will be generated again at the
-    ! next trust-region iteration after RHO is reduced and DELTA is updated; see the end of
-    ! Section 2 of the NEWUOA paper).
+    ! 3. If SHORTD = TRUE and REDUCE_RHO = TRUE, the trust-region step D does not invoke a function
+    ! evaluation at the current iteration, but the same D will be generated again at the next
+    ! iteration after RHO is reduced and DELTA is updated. See the end of Sec 2 of the NEWUOA paper.
     ! 4. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
     ! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
     ! function value is discarded.
