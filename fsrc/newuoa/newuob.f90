@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 14, 2022 AM11:54:00
+! Last Modified: Wednesday, September 14, 2022 PM12:10:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -112,8 +112,8 @@ integer(IK) :: subinfo
 integer(IK) :: tr
 logical :: bad_trstep
 logical :: improve_geo
-logical :: reduce_rho_1
-logical :: reduce_rho_2
+logical :: reduce_rho
+!logical :: reduce_rho_2
 logical :: shortd
 logical :: tr_success
 real(RP) :: bmat(size(x), npt + size(x))
@@ -245,18 +245,12 @@ do tr = 1, maxtr
     ! be an approximate local minimizer. When this occurs, the algorithm takes the view that the
     ! work for the current RHO is complete, and hence it will reduce RHO, which will enhance the
     ! resolution of the algorithm in general.
-    reduce_rho_1 = shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
-    if (shortd) then
-        !if (shortd .and. (.not. reduce_rho_1)) then
-        ! Reduce DELTA. After this, DELTA < DNORM may happen.
+    if (shortd) then  ! D is short. Do nothing but reducing DELTA. Afterward, DELTA<DNORM may occur.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
-    else
-        !end if
-
-        !if (.not. shortd) then  ! D is long enough.
+    else  ! D is long enough.
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
@@ -378,12 +372,10 @@ do tr = 1, maxtr
     ! 7. If SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
 
+    reduce_rho = shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
+
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-    ! KNEW_TR == 0 implies RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definition
-    ! of BAD_TRSTEP. Nevertheless, we keep it for robustness.
-    bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
-    improve_geo = ((.not. reduce_rho_1) .and. any(distsq > 4.0_RP * delta**2) .and. bad_trstep)
 
     ! If all the interpolation points are close to XOPT and the trust-region is small, but the
     ! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
@@ -398,7 +390,12 @@ do tr = 1, maxtr
     ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
     ! 3. DELTA < DNORM may hold due to the update of DELTA.
     bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO_2
-    reduce_rho_2 = (all(distsq <= 4.0_RP * delta**2) .and. max(delta, dnorm) <= rho .and. bad_trstep)
+    reduce_rho = reduce_rho .or. (all(distsq <= 4.0_RP * delta**2) .and. max(delta, dnorm) <= rho .and. bad_trstep)
+
+    ! KNEW_TR == 0 implies RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definition
+    ! of BAD_TRSTEP. Nevertheless, we keep it for robustness.
+    bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    improve_geo = ((.not. reduce_rho) .and. any(distsq > 4.0_RP * delta**2) .and. bad_trstep)
 
     ! Comments on BAD_TRSTEP:
     ! 1. Powell used different thresholds (<= 0 and < 0.1) for RATIO in the definitions of BAD_TRSTEP
@@ -468,7 +465,7 @@ do tr = 1, maxtr
 
     ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm
     ! by reducing RHO; update DELTA at the same time.
-    if (reduce_rho_1 .or. reduce_rho_2) then
+    if (reduce_rho) then
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
             exit
