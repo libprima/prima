@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM10:06:09
+! Last Modified: Wednesday, September 14, 2022 AM11:55:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -515,19 +515,18 @@ do while (.true.)
     if (rho <= rhoend) then
         info = SMALL_TR_RADIUS
         exit
-    else
-        delta = HALF * rho
-        if (rho > 250.0_RP * rhoend) then
-            rho = TENTH * rho
-        else if (rho <= 16.0_RP * rhoend) then
-            rho = rhoend
-        else
-            rho = sqrt(rho * rhoend)
-        end if
-        delta = max(delta, rho)
-        knew = 0
-        dnormsav = HUGENUM
     end if
+    delta = HALF * rho
+    if (rho > 250.0_RP * rhoend) then
+        rho = TENTH * rho
+    else if (rho <= 16.0_RP * rhoend) then
+        rho = rhoend
+    else
+        rho = sqrt(rho * rhoend)
+    end if
+    delta = max(delta, rho)
+    knew = 0
+    dnormsav = HUGENUM
 
 end do
 
