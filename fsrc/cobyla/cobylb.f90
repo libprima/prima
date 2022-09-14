@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, September 08, 2022 PM01:08:50
+! Last Modified: Wednesday, September 14, 2022 AM11:51:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -365,8 +365,8 @@ do tr = 1, maxtr
             actrem = cval(n + 1) - cstrv
         end if
 
-        ! In theory, PREREM >= 0, but this can fail due to rounding errors. 
-        !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')  
+        ! In theory, PREREM >= 0, but this can fail due to rounding errors.
+        !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')
 
         ratio = redrat(actrem, prerem, eta1)
         ! Update DELTA. After this, DELTA < DNORM may hold.

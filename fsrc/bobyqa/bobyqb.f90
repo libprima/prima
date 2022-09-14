@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, September 13, 2022 PM12:33:33
+! Last Modified: Wednesday, September 14, 2022 AM11:55:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -245,8 +245,8 @@ do while (.true.)
         ! with predictions of likely improvements to the model within distance HALF*RHO of XOPT.
         ! The BOBYQA paper explains the strategy in the paragraphs between (6.7) and (6.11).
         ! Why do we reduce RHO when SHORTD is true and the entries of MODERRSAV and DNORMSAV are all
-        ! small? The reason is well explained by the BOBYQA paper in the paragraph surrounding
-        ! (6.9)--(6.10). Roughly speaking, in this case, a trust-region step is unlikely to decrease
+        ! small? The reason is well explained by the BOBYQA paper in the paragraphs surrounding
+        ! (6.9)--(6.11). Roughly speaking, in this case, a trust-region step is unlikely to decrease
         ! the objective function according to some estimations. This suggests that the current
         ! trust-region center may be an approximate local minimizer. When this occurs, the algorithm
         ! takes the view that the work for the current RHO is complete, and hence it will reduce
@@ -591,21 +591,20 @@ do while (.true.)
     if (rho <= rhoend) then
         info = SMALL_TR_RADIUS
         exit
-    else
-        delta = HALF * rho
-        ratio = rho / rhoend
-        if (ratio <= 16.0_RP) then
-            rho = rhoend
-        else if (ratio <= 250.0_RP) then
-            rho = sqrt(ratio) * rhoend
-        else
-            rho = TENTH * rho
-        end if
-        delta = max(delta, rho)
-        ntrits = 0
-        moderrsav = HUGENUM
-        dnormsav = HUGENUM
     end if
+    delta = HALF * rho
+    ratio = rho / rhoend
+    if (ratio <= 16.0_RP) then
+        rho = rhoend
+    else if (ratio <= 250.0_RP) then
+        rho = sqrt(ratio) * rhoend
+    else
+        rho = TENTH * rho
+    end if
+    delta = max(delta, rho)
+    ntrits = 0
+    moderrsav = HUGENUM
+    dnormsav = HUGENUM
 
 end do
 

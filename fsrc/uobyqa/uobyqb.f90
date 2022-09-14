@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM08:59:13
+! Last Modified: Wednesday, September 14, 2022 AM11:56:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -391,29 +391,26 @@ do while (.true.)
     if (rho <= rhoend) then
         info = SMALL_TR_RADIUS
         exit
-    else
-        ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the
-        ! corresponding changes to the gradients of the Lagrange functions and the quadratic model.
-        xbase = xbase + xopt
-        xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-        pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)  ! Model gradient
-        do k = 1, npt
-            pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)  ! Lagrange fun. gradient
-        end do
-
-
-        ! Pick the next values of RHO and DELTA.
-        delta = HALF * rho
-        ratio = rho / rhoend
-        if (ratio <= 16.0_RP) then
-            rho = rhoend
-        else if (ratio <= 250.0_RP) then
-            rho = sqrt(ratio) * rhoend
-        else
-            rho = TENTH * rho
-        end if
-        delta = max(delta, rho)
     end if
+    ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the
+    ! corresponding changes to the gradients of the Lagrange functions and the quadratic model.
+    xbase = xbase + xopt
+    xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+    pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)  ! Model gradient
+    do k = 1, npt
+        pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)  ! Lagrange fun. gradient
+    end do
+    ! Pick the next values of RHO and DELTA.
+    delta = HALF * rho
+    ratio = rho / rhoend
+    if (ratio <= 16.0_RP) then
+        rho = rhoend
+    else if (ratio <= 250.0_RP) then
+        rho = sqrt(ratio) * rhoend
+    else
+        rho = TENTH * rho
+    end if
+    delta = max(delta, rho)
 end do
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been

@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, September 13, 2022 PM12:31:42
+! Last Modified: Wednesday, September 14, 2022 AM11:54:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -246,15 +246,17 @@ do tr = 1, maxtr
     ! work for the current RHO is complete, and hence it will reduce RHO, which will enhance the
     ! resolution of the algorithm in general.
     reduce_rho_1 = shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
-    if (shortd .and. (.not. reduce_rho_1)) then
+    if (shortd) then
+        !if (shortd .and. (.not. reduce_rho_1)) then
         ! Reduce DELTA. After this, DELTA < DNORM may happen.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
-    end if
+    else
+        !end if
 
-    if (.not. shortd) then  ! D is long enough.
+        !if (.not. shortd) then  ! D is long enough.
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
@@ -470,16 +472,15 @@ do tr = 1, maxtr
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
             exit
-        else
-            delta = HALF * rho
-            rho = redrho(rho, rhoend)
-            delta = max(delta, rho)
-            call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
-            ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
-            ! the current RHO. Update them after reducing RHO.
-            dnormsav = HUGENUM
-            moderrsav = HUGENUM
         end if
+        delta = HALF * rho
+        rho = redrho(rho, rhoend)
+        delta = max(delta, rho)
+        call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
+        ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
+        ! the current RHO. Update them after reducing RHO.
+        dnormsav = HUGENUM
+        moderrsav = HUGENUM
     end if  ! End of IF (REDUCE_RHO_1 .OR. REDUCE_RHO_2). The procedure of reducing RHO ends.
 
     ! Shift XBASE if XOPT may be too far from XBASE.
