@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, September 15, 2022 PM02:39:02
+! Last Modified: Thursday, September 15, 2022 PM02:40:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -400,8 +400,8 @@ do tr = 1, maxtr
     bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     ! The following definitions of IMPROVE_GEO are equivalent.
     !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
-    improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
-    !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((.not. shortd) .and. ratio < TENTH)) .and. (.not. close_itpset)
+    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
+    improve_geo = ((shortd .and. .not. accurate_mod) .or. ((.not. shortd) .and. ratio < TENTH)) .and. (.not. close_itpset)
     call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
 
     ! Comments on BAD_TRSTEP:
