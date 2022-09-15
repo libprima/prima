@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, September 14, 2022 AM11:51:54
+! Last Modified: Wednesday, September 14, 2022 PM11:29:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -460,7 +460,7 @@ do tr = 1, maxtr
         ! JDROP_GEO is between 1 and N unless SIM and SIMI contain NaN, which should not happen
         ! at this point unless there is a bug. Nevertheless, for robustness, we include the
         ! following instruction to exit when JDROP_GEO == 0 (if JDROP_GEO does become 0, then
-        ! memory error will occur if we continue, as JDROP_GEO is used as an index of arrays.)
+        ! memory error will occur if we continue, as JDROP_GEO will be used as an index of arrays.)
         if (jdrop_geo == 0) then
             info = DAMAGING_ROUNDING
             exit

@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 14, 2022 PM11:16:19
+! Last Modified: Thursday, September 15, 2022 AM08:42:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,10 +110,13 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: subinfo
 integer(IK) :: tr
+logical :: accurate_mod
 logical :: bad_trstep
+logical :: close_itpset
 logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
+logical :: small_trrad
 logical :: tr_success
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: crvmin
@@ -326,7 +329,15 @@ do tr = 1, maxtr
 
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
-    ! according to IMPROVE_GEO and REDUCE_RHO. Now we decide these indicators.
+    ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
+    ! ACCURATE_MOD --- Are the recent models sufficiently accurate?
+    accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
+    ! SMALL_TRRAD --- Is the trust-region radius small?
+    small_trrad = (max(delta, dnorm) <= rho)
+    ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
+    close_itpset = all(distsq <= 4.0_RP * delta**2)
     !----------------------------------------------------------------------------------------------!
 
     ! Initialize REDUCE_RHO according to Box 14 of the NEWUOA paper. It will be updated later.
@@ -337,7 +348,7 @@ do tr = 1, maxtr
     ! be an approximate local minimizer. When this occurs, the algorithm takes the view that the
     ! work for the current RHO is complete, and hence it will reduce RHO, which will enhance the
     ! resolution of the algorithm in general.
-    reduce_rho = shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
+    reduce_rho = shortd .and. accurate_mod
 
     ! According to Box 10 of the NEWUOA paper, if all the interpolation points are close to XOPT and
     ! the trust region is small, but the trust-region step is "bad" (SHORTD or RATIO is small), then
@@ -365,14 +376,12 @@ do tr = 1, maxtr
     ! will be invoked to improve the geometry of the interpolation set and update the model again.
     ! 6. RATIO must be set even if SHORTD = TRUE. Otherwise, compilers will raise a run-time error.
     ! 7. We can move this setting of REDUCE_RHO downward below the definition of IMPROVE_GEO and
-    ! change it to REDUCE_RHO = (.NOT. IMPROVE_GEO) .AND. (MAX(DELTA,DNORM) <= RHO) .AND. BAD_TRSTEP
+    ! change it to REDUCE_RHO = (.NOT. IMPROVE_GEO) .AND. BAD_TRSTEP .AND. (MAX(DELTA,DNORM) <= RHO)
     ! It can even be moved below IF (IMPROVE_GEO) ... END IF. Even though DNORM gets a new value
     ! after the geometry step when IMPROVE_GEO = TRUE, this value does not affect REDUCE_RHO,
     ! because DNORM comes into play only if IMPROVE_GEO = FALSE.
-    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
     bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
-    reduce_rho = reduce_rho .or. (bad_trstep .and. all(distsq <= 4.0_RP * delta**2) .and. max(delta, dnorm) <= rho)
+    reduce_rho = reduce_rho .or. (bad_trstep .and. close_itpset .and. small_trrad)
     ! When MAX(DELTA, DNORM) > RHO, as Powell mentioned under (2.3) of the NEWUOA paper, "RHO has
     ! not restricted the most recent choice of D", so it is not reasonable to reduce RHO.
 
@@ -387,7 +396,7 @@ do tr = 1, maxtr
     ! N.B.: If SHORTD = TRUE, then either REDUCE_RHO or IMPROVE_GEO is true unless DELTA > RHO and
     ! all the points are within a ball centered at XOPT with a radius of 2*DELTA.
     bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
-    improve_geo = (.not. reduce_rho) .and. bad_trstep .and. any(distsq > 4.0_RP * delta**2)
+    improve_geo = (.not. reduce_rho) .and. bad_trstep .and. (.not. close_itpset)
 
     ! Comments on BAD_TRSTEP:
     ! 0. KNEW_TR == 0 means that it is impossible to obtain a good XPT by replacing a current point
@@ -400,6 +409,12 @@ do tr = 1, maxtr
     ! 2. Update 20220204: In the current version, unifying the two thresholds to 0 seems to worsen
     ! the performance on noise-free CUTEst problems with at most 200 variables; unifying them to 0.1
     ! worsens it a bit as well.
+
+    !improve_geo = shortd .and. .not. accurate_mod
+    !bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    !improve_geo = improve_geo .or. (bad_trstep .and. .not. close_itpset)
+    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    !reduce_rho = (.not. improve_geo) .and. (bad_trstep .and. small_trrad)
 
     !----------------------------------------------------------------------------------------------!
     ! N.B.: NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously. Thus following two
