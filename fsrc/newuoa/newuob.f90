@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, September 15, 2022 AM10:24:07
+! Last Modified: Thursday, September 15, 2022 PM12:03:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -398,8 +398,9 @@ do tr = 1, maxtr
     ! N.B.: If SHORTD = TRUE, then either REDUCE_RHO or IMPROVE_GEO is true unless DELTA > RHO and
     ! all the points are within a ball centered at XOPT with a radius of 2*DELTA.
     bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
-    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
-    improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
+    ! The following two definitions of IMPROVE_GEO are equivalent.
+    improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
+    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
 
     ! Comments on BAD_TRSTEP:
     ! 0. KNEW_TR == 0 means that it is impossible to obtain a good XPT by replacing a current point
@@ -413,8 +414,20 @@ do tr = 1, maxtr
     ! the performance on noise-free CUTEst problems with at most 200 variables; unifying them to 0.1
     ! worsens it a bit as well.
 
-    improve_geo = ((shortd .and. .not. accurate_mod) .or. ((.not. shortd) .and. ratio < TENTH)) .and. (.not. close_itpset)
-    reduce_rho = (shortd .and. accurate_mod) .or. ((shortd .or. ratio <= 0) .and. close_itpset .and. small_trrad)
+    ! Another way to define IMPROVE_GEO and REDUCE_RHO:
+    !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((.not. shortd) .and. ratio < TENTH)) .and. (.not. close_itpset)
+    !reduce_rho = (shortd .and. accurate_mod) .or. ((shortd .or. ratio <= 0) .and. close_itpset .and. small_trrad)
+    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO and REDUCE_RHO are not simultaneously true', srname)
+
+    ! Another way to define IMPROVE_GEO and REDUCE_RHO:
+    accurate_mod = (shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)) &
+        & .or. ((.not. shortd) .and. ratio >= TENTH)
+    improve_geo = (.not. accurate_mod) .and. (.not. close_itpset)
+    accurate_mod = (shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)) &
+        & .or. ((.not. shortd) .and. ratio > 0)
+    reduce_rho = (shortd .and. accurate_mod) .or. ((.not. accurate_mod) .and. close_itpset .and. small_trrad)
+    call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO and REDUCE_RHO are not simultaneously true', srname)
+
 
     !----------------------------------------------------------------------------------------------!
     ! N.B.: NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously. Thus following two
