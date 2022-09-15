@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, September 15, 2022 PM12:19:47
+! Last Modified: Thursday, September 15, 2022 PM01:15:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -398,9 +398,11 @@ do tr = 1, maxtr
     ! N.B.: If SHORTD = TRUE, then either REDUCE_RHO or IMPROVE_GEO is true unless DELTA > RHO and
     ! all the points are within a ball centered at XOPT with a radius of 2*DELTA.
     bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
-    ! The following two definitions of IMPROVE_GEO are equivalent.
+    ! The following definitions of IMPROVE_GEO are equivalent.
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
     !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
+    !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((.not. shortd) .and. ratio < TENTH)) .and. (.not. close_itpset)
+    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
 
     ! Comments on BAD_TRSTEP:
     ! 0. KNEW_TR == 0 means that it is impossible to obtain a good XPT by replacing a current point
@@ -416,18 +418,11 @@ do tr = 1, maxtr
 
     !----------------------------------------------------------------------------------------------!
     ! Another way to define REDUCE_RHO and IMPROVE_GEO:
-    !reduce_rho = (shortd .and. accurate_mod) .or. ((shortd .or. ratio <= 0) .and. close_itpset .and. small_trrad)
-    ! The following two definitions of IMPROVE_GEO are equivalent.
-    !improve_geo = (.not. (shortd .and. accurate_mod)) .and. (shortd .or. ratio < TENTH) .and. (.not. close_itpset)
-    !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((.not. shortd) .and. ratio < TENTH)) .and. (.not. close_itpset)
-    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
-    !
-    ! Yet another way to define REDUCE_RHO and IMPROVE_GEO:
     !good_mod = (shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)) &
-    !    & .or. ((.not. shortd) .and. ratio > 0)
+    !    & .or. ((.not. shortd) .and. ratio > 0 .and. knew_tr > 0)
     !reduce_rho = (shortd .and. good_mod) .or. ((.not. good_mod) .and. close_itpset .and. small_trrad)
     !good_mod = (shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)) &
-    !    & .or. ((.not. shortd) .and. ratio >= TENTH)
+    !    & .or. ((.not. shortd) .and. ratio >= TENTH .and. knew_tr > 0)
     !improve_geo = (.not. good_mod) .and. (.not. close_itpset)
     !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
     !----------------------------------------------------------------------------------------------!
