@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, September 15, 2022 PM12:03:33
+! Last Modified: Thursday, September 15, 2022 PM12:15:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -414,19 +414,21 @@ do tr = 1, maxtr
     ! the performance on noise-free CUTEst problems with at most 200 variables; unifying them to 0.1
     ! worsens it a bit as well.
 
-    ! Another way to define IMPROVE_GEO and REDUCE_RHO:
+    ! Another way to define REDUCE_RHO and IMPROVE_GEO:
+    reduce_rho = (shortd .and. accurate_mod) .or. ((shortd .or. ratio <= 0) .and. close_itpset .and. small_trrad)
+    ! The following two definitions of IMPROVE_GEO are equivalent.
+    improve_geo = (.not. (shortd .and. accurate_mod)) .and. (shortd .or. ratio < TENTH) .and. (.not. close_itpset)
     !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((.not. shortd) .and. ratio < TENTH)) .and. (.not. close_itpset)
-    !reduce_rho = (shortd .and. accurate_mod) .or. ((shortd .or. ratio <= 0) .and. close_itpset .and. small_trrad)
-    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO and REDUCE_RHO are not simultaneously true', srname)
+    call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
 
-    ! Another way to define IMPROVE_GEO and REDUCE_RHO:
-    accurate_mod = (shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)) &
-        & .or. ((.not. shortd) .and. ratio >= TENTH)
-    improve_geo = (.not. accurate_mod) .and. (.not. close_itpset)
-    accurate_mod = (shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)) &
-        & .or. ((.not. shortd) .and. ratio > 0)
-    reduce_rho = (shortd .and. accurate_mod) .or. ((.not. accurate_mod) .and. close_itpset .and. small_trrad)
-    call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO and REDUCE_RHO are not simultaneously true', srname)
+    ! Another way to define REDUCE_RHO and IMPROVE_GEO:
+    !good_mod = (shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)) &
+    !    & .or. ((.not. shortd) .and. ratio > 0)
+    !reduce_rho = (shortd .and. good_mod) .or. ((.not. good_mod) .and. close_itpset .and. small_trrad)
+    !good_mod = (shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)) &
+    !    & .or. ((.not. shortd) .and. ratio >= TENTH)
+    !improve_geo = (.not. good_mod) .and. (.not. close_itpset)
+    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
 
 
     !----------------------------------------------------------------------------------------------!
