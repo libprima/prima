@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 16, 2022 PM03:14:43
+! Last Modified: Friday, September 16, 2022 PM05:04:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -203,9 +203,9 @@ end if
 !====================!
 
 ! Set the elements of XBASE, XPT, FVAL, XSAV, XOPT, GOPT, HQ, PQ, BMAT, and ZMAT or the first
-! iteration. An important feature is that, if the interpolation point XPT(K,.) is not feasible,
-! where K is any integer from [1,NPT], then a change is made to XPT(K,.) if necessary so that the
-! constraint violation is at least 0.2*RHOBEG. Also KOPT is set so that XPT(KOPT,.) is the initial
+! iteration. An important feature is that, if the interpolation point XPT(K, :) is not feasible,
+! where K is any integer from [1,NPT], then a change is made to XPT(K, :) if necessary so that the
+! constraint violation is at least 0.2*RHOBEG. Also KOPT is set so that XPT(KOPT, :) is the initial
 ! trust region centre.
 b = bvec
 call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
@@ -362,7 +362,6 @@ do while (.true.)
                 xnew = xopt + d
                 x = xbase + xnew
 
-                !feasible = .true.
                 if (is_nan(sum(abs(x)))) then
                     f = sum(x)  ! Set F to NaN
                     if (nf == 1) then
@@ -477,8 +476,13 @@ do while (.true.)
                 ! by an attempt to take a trust region step.
                 knew = 0
                 improve_geo = (.not. ratio > TENTH)
-                if (.not. improve_geo) cycle
+
+                !if (.not. improve_geo) cycle
+
             end if
+
+            if (.not. improve_geo) cycle
+
         end if
 
     else
@@ -526,6 +530,7 @@ do while (.true.)
         ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
         ! XPT are updated.
         if (feasible .and. itest < 3) then
+            !if (itest < 3) then
             fshift = fval - fval(kopt)
             ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
             pqalt = omega_mul(idz, zmat, fshift)
@@ -541,6 +546,7 @@ do while (.true.)
         ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
         ! new model is constructed by the symmetric Broyden method in the usual way.
         if (feasible) then
+            !if (.true.) then
             if (abs(dffalt) >= TENTH * abs(diff)) then
                 itest = 0
             else
