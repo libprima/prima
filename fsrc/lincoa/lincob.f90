@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 16, 2022 PM05:04:49
+! Last Modified: Friday, September 16, 2022 PM05:42:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -476,14 +476,10 @@ do while (.true.)
                 ! by an attempt to take a trust region step.
                 knew = 0
                 improve_geo = (.not. ratio > TENTH)
-
-                !if (.not. improve_geo) cycle
-
             end if
-
-            if (.not. improve_geo) cycle
-
         end if
+
+        !if (.not. (improve_geo .or. shortd)) cycle
 
     else
         ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
@@ -602,8 +598,13 @@ do while (.true.)
         ! by an attempt to take a trust region step.
         knew = 0
         improve_geo = (ksave == -1 .and. .not. ratio > TENTH)
-        if (.not. improve_geo) cycle
+
+        !if (.not. improve_geo) cycle
+
     end if
+
+    if (.not. (ksave == 0 .and. (shortd .or. improve_geo)) .and. .not. (ksave > 0 .and. improve_geo)) cycle
+
 
     if (improve_geo) then
         ! Find out if the interpolation points are close enough to the best point so far.
