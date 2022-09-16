@@ -301,8 +301,8 @@ do while (.true.)
                 denom = alpha * beta + vlag(knew)**2
 
                 ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-                if (.not. (denom > HALF * vlag(knew)**2)) then
-                    !if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
+                !if (.not. (denom > HALF * vlag(knew)**2)) then
+                    if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
                     if (nf <= nresc) then
                         info = DAMAGING_ROUNDING
                         exit
@@ -445,8 +445,8 @@ do while (.true.)
                 !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
                 end if
 
-                if (.not. scaden > HALF * biglsq) then
-                    !if (.not. scaden > biglsq) then  ! This is used when verifying RESCUE.
+                !if (.not. scaden > HALF * biglsq) then
+                    if (.not. scaden > biglsq) then  ! This is used when verifying RESCUE.
                     if (nf <= nresc) then
                         info = DAMAGING_ROUNDING
                         exit
@@ -675,8 +675,8 @@ do while (.true.)
         denom = alpha * beta + vlag(knew)**2
 
         ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-        if (.not. (denom > HALF * vlag(knew)**2)) then
-            !if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
+        !if (.not. (denom > HALF * vlag(knew)**2)) then
+            if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
             if (nf <= nresc) then
                 info = DAMAGING_ROUNDING
                 exit
