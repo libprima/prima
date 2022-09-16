@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 16, 2022 AM10:20:29
+! Last Modified: Friday, September 16, 2022 AM10:31:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -234,6 +234,7 @@ do while (.true.)
         xnew = max(min(xopt + d, su), sl)  ! In precise arithmetic, XNEW = XOPT + D.
         gnew = gopt + hess_mul(d, xpt, pq, hq)
         ntrits = ntrits + 1_IK  ! NTRITS >= 0
+        call assert(ntrits > 0, 'NTRITS > 0', srname)
 
         dsq = sum(d**2)
         dnorm = min(delta, sqrt(dsq))
@@ -289,7 +290,11 @@ do while (.true.)
             ! function being returned in CAUCHY. The choice between these alternatives is going to be
             ! made when the denominator is calculated.
 
+            call assert(ntrits > 0, 'NTRITS > 0', srname)
             if (ntrits == 0) then
+
+                error stop !!!
+
                 ! Calculate a geometry step.
                 d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
                 xnew = min(max(sl, xopt + d), su)
@@ -302,7 +307,7 @@ do while (.true.)
 
                 ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
                 !if (.not. (denom > HALF * vlag(knew)**2)) then
-                    if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
+                if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
                     if (nf <= nresc) then
                         info = DAMAGING_ROUNDING
                         exit
@@ -446,7 +451,7 @@ do while (.true.)
                 end if
 
                 !if (.not. scaden > HALF * biglsq) then
-                    if (.not. scaden > biglsq) then  ! This is used when verifying RESCUE.
+                if (.not. scaden > biglsq) then  ! This is used when verifying RESCUE.
                     if (nf <= nresc) then
                         info = DAMAGING_ROUNDING
                         exit
@@ -676,7 +681,7 @@ do while (.true.)
 
         ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
         !if (.not. (denom > HALF * vlag(knew)**2)) then
-            if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
+        if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
             if (nf <= nresc) then
                 info = DAMAGING_ROUNDING
                 exit
