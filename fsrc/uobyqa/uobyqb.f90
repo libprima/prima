@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 16, 2022 AM11:17:09
+! Last Modified: Friday, September 16, 2022 AM11:43:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,7 +116,7 @@ real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), dsqtest(size(pl, 2)), delb
 &        fsave, ratio, rho, sixthm, summ, &
 &        trtol, vmax,  &
 &        qred, wmult, plknew(size(pl, 1)), fval(size(pl, 2))
-integer(IK) :: k, knew, kopt, ksave, subinfo
+integer(IK) :: k, knew, kopt, subinfo
 logical :: tr_success, shortd, geo_step, improve_geo, reduce_rho
 
 ! Sizes.
@@ -258,9 +258,7 @@ do while (.true.)
                 xopt = xnew
             end if
 
-            !----------------------------------------------------------!
             ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
-            !----------------------------------------------------------!
             ! Pick the next value of DELTA after a trust region step.
             if (.not. (qred > 0)) then
                 info = TRSUBP_FAILED
@@ -303,7 +301,6 @@ do while (.true.)
             end if
 
             if (knew > 0) then
-
                 ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
                 ! the Lagrange functions and the quadratic model.
                 xpt(:, knew) = xnew
@@ -320,20 +317,12 @@ do while (.true.)
                 if (f < fsave) then
                     kopt = knew
                 end if
-
-                if (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2) cycle
             end if
-
-            improve_geo = .true.
-
-
-
+            improve_geo = .not. (knew > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
+            if (.not. improve_geo) cycle
         end if
-
     else
-
         geo_step = .false.
-
         ! Calculate the next value of the objective function.
         xnew = xopt + d
         x = xbase + xnew
@@ -396,55 +385,7 @@ do while (.true.)
             xopt = xnew
         end if
 
-        !ksave = knew
-
-        !----------------------------------------------------------!
         ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
-        !----------------------------------------------------------!
-        !if (knew <= 0) then
-        !    ! Pick the next value of DELTA after a trust region step.
-        !    if (.not. (qred > 0)) then
-        !        info = TRSUBP_FAILED
-        !        exit
-        !    end if
-        !    ratio = (fsave - f) / qred
-        !    if (ratio <= TENTH) then
-        !        delta = HALF * dnorm
-        !    else if (ratio <= 0.7_RP) then
-        !        delta = max(HALF * delta, dnorm)
-        !    else
-        !        delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
-        !    end if
-        !    if (delta <= 1.5_RP * rho) delta = rho
-
-        !    ! Set KNEW to the index of the next interpolation point to be deleted.
-        !    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        !    weight = max(ONE, distsq / rho**2)**1.5_RP
-        !    score = weight * abs(vlag)
-
-        !    tr_success = (f < fsave)
-
-        !    ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
-        !    if (.not. tr_success) then
-        !        score(kopt) = -ONE
-        !    end if
-
-        !    if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
-        !        ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
-        !        ! exclude such K.
-        !        knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-        !        !!MATLAB: [~, knew] = max(score, [], 'omitnan');
-        !        ddknew = distsq(knew)
-        !    elseif (tr_success) then
-        !        ! Powell's code does not include the following instructions. With Powell's code,
-        !        ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
-        !        knew = int(maxloc(distsq, dim=1), IK)
-        !    else
-        !        knew = 0_IK
-        !    end if
-        !end if
-        !if (knew > 0) then
-
         ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
         ! the Lagrange functions and the quadratic model.
         xpt(:, knew) = xnew
@@ -462,11 +403,6 @@ do while (.true.)
             kopt = knew
         end if
         cycle
-
-        !if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2) cycle
-        !end if
-
-        !improve_geo = .true.
     end if
 
 
