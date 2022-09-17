@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 16, 2022 PM05:42:00
+! Last Modified: Saturday, September 17, 2022 PM11:17:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -479,7 +479,7 @@ do while (.true.)
             end if
         end if
 
-        !if (.not. (improve_geo .or. shortd)) cycle
+        if (.not. (improve_geo .or. shortd)) cycle
 
     else
         ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
@@ -599,11 +599,11 @@ do while (.true.)
         knew = 0
         improve_geo = (ksave == -1 .and. .not. ratio > TENTH)
 
-        !if (.not. improve_geo) cycle
+        if (.not. improve_geo) cycle
 
     end if
 
-    if (.not. (ksave == 0 .and. (shortd .or. improve_geo)) .and. .not. (ksave > 0 .and. improve_geo)) cycle
+    !if (.not. (ksave == 0 .and. (shortd .or. improve_geo)) .and. .not. (ksave > 0 .and. improve_geo)) cycle
 
 
     if (improve_geo) then
