@@ -18,7 +18,7 @@ See https://www.pdfo.net for more information.
 0. Prerequisites
 
 PDFO supports MATLAB R2014a and later releases. To use PDFO, you need first
-configure the MEX of your MATLAB so that it can compile Fortran. 
+configure the MEX of your MATLAB so that it can compile Fortran.
 
 0.1. To see whether your MEX is ready, run the following code in MATLAB:
 
@@ -32,10 +32,10 @@ It will require you to install a supported Fortran compiler on your system.
 See https://www.mathworks.com/support/requirements/previous-releases.html .
 Note that MathWorks (rather than PDFO) is quite rigid concerning the version
 of your compiler, which has to be compatible with the release of your MATLAB;
-the latest compiler is NOT necessarily supported by your MATLAB. On Windows, 
-in addition to the Fortran compiler, MathWorks needs you to install the 
-Microsoft Visual Studio and the Microsoft Windows SDK. Follow the official 
-documentation of MathWorks closely. 
+the latest compiler is NOT necessarily supported by your MATLAB. On Windows,
+in addition to the Fortran compiler, MathWorks needs you to install the
+Microsoft Visual Studio and the Microsoft Windows SDK. Follow the official
+documentation of MathWorks closely.
 
 
 1. Installation
@@ -53,7 +53,7 @@ following command in MATLAB to verify the installation:
 testpdfo
 
 
-2. Usage 
+2. Usage
 
 2.1. PDFO provides the following MATLAB functions:
 pdfo, uobyqa, newuoa, bobyqa, lincoa, cobyla.
@@ -61,7 +61,7 @@ pdfo, uobyqa, newuoa, bobyqa, lincoa, cobyla.
 2.2. The "pdfo" function can automatically identify the type of your problem
 and then call one of Powell's solvers. The other five functions call the solver
 indicated by their names. It is highly recommended to use "pdfo" instead of
-"uobyqa", "newuoa", etc. 
+"uobyqa", "newuoa", etc.
 
 2.3. The "pdfo" function is designed to be compatible with the "fmincon"
 function available in the Optimization Toolbox of MATLAB. You can call "pdfo"
