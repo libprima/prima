@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, September 18, 2022 PM10:36:13
+! Last Modified: Tuesday, September 20, 2022 PM04:54:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -371,6 +371,7 @@ do while (.true.)
                     info = NAN_INF_X
                     exit
                 end if
+                !write (16, *) 'tr', nf, x
                 call evaluate(calfun, x, f)
                 ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is
                 ! not usable).
@@ -479,7 +480,7 @@ do while (.true.)
             end if
         end if
 
-        write (*, *) improve_geo, shortd
+        !write (*, *) improve_geo, shortd
         if (.not. (improve_geo .or. shortd)) then
             write (*, *) 483
             cycle
@@ -512,6 +513,7 @@ do while (.true.)
             info = NAN_INF_X
             exit
         end if
+        !write (16, *) 'geo', nf, x
         call evaluate(calfun, x, f)
         ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
         constr = matprod(x, A_orig) - b_orig

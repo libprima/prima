@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 31, 2022 PM05:13:23
+! Last Modified: Tuesday, September 20, 2022 PM05:43:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -430,6 +430,11 @@ if (is_nan(sum(abs(x)))) then
     goto 600
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if (knew > 0) then
+    !write (17, *) nf, 'geo', x
+else
+    !write (17, *) nf, 'tr', x
+end if
 call evaluate(calfun, x, f)
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 nf = nf + 1_IK
@@ -585,8 +590,10 @@ end if
 !       step.
 !
 knew = 0
+!write (17, *) ksave, ratio, ratio > TENTH, ratio >= TENTH, ratio == TENTH
 if (ksave > 0) goto 20
-if (ratio >= TENTH) goto 20
+!if (ratio >= TENTH) goto 20
+if (ratio > TENTH) goto 20
 
 530 continue
 
@@ -596,6 +603,7 @@ xopt = xpt(:, kopt)
 xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 ! MATLAB: xdsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
 knew = maxloc([distsq, xdsq], dim=1) - 1_IK
+!write (17, *) knew, fopt < fsave, delsav < rho
 
 ! If KNEW is positive, then branch back for the next iteration, which will generate a "model step".
 ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound when the

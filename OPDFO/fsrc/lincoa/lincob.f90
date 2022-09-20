@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM08:50:04
+! Last Modified: Tuesday, September 20, 2022 PM04:54:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -406,6 +406,11 @@ do while (.true.)
                 info = NAN_INF_X
                 exit
             end if
+            !if (knew > 0) then
+            !    write (17, *) 'geo', nf, x
+            !else
+            !    write (17, *) 'tr', nf, x
+            !end if
             call evaluate(calfun, x, f)
             ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is
             ! not usable).
