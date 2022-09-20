@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 17, 2022 PM11:17:17
+! Last Modified: Sunday, September 18, 2022 PM10:36:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -479,7 +479,11 @@ do while (.true.)
             end if
         end if
 
-        if (.not. (improve_geo .or. shortd)) cycle
+        write (*, *) improve_geo, shortd
+        if (.not. (improve_geo .or. shortd)) then
+            write (*, *) 483
+            cycle
+        end if
 
     else
         ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
@@ -599,11 +603,16 @@ do while (.true.)
         knew = 0
         improve_geo = (ksave == -1 .and. .not. ratio > TENTH)
 
-        if (.not. improve_geo) cycle
+        if (.not. improve_geo) then
+            write (*, *) 606
+            cycle
+        end if
 
     end if
 
     !if (.not. (ksave == 0 .and. (shortd .or. improve_geo)) .and. .not. (ksave > 0 .and. improve_geo)) cycle
+
+    write (*, *) improve_geo, 615
 
 
     if (improve_geo) then
@@ -617,7 +626,11 @@ do while (.true.)
         ! If KNEW > 0, then branch back for the next iteration, which will generate a geometry step.
         ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
         ! when the last trust region step was calculated, then try a trust region step instead.
-        if (knew > 0 .or. fopt < fsave .or. delsav > rho) cycle
+        if (knew > 0 .or. fopt < fsave .or. delsav > rho) then
+            write (*, *) knew, fopt, fsave, delsav, rho
+            write (*, *) 627
+            cycle
+        end if
     end if
 
     ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
