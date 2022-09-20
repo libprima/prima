@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 01, 2022 PM09:30:09
+! Last Modified: Tuesday, September 20, 2022 PM05:43:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -377,6 +377,11 @@ do while (.true.)
                 info = NAN_INF_X
                 exit
             end if
+            if (knew > 0) then
+                !write (16, *) nf, 'geo', x
+            else
+                !write (16, *) nf, 'tr', x
+            end if
             call evaluate(calfun, x, f)
             cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
             nf = nf + 1_IK
@@ -507,15 +512,18 @@ do while (.true.)
             ! another trust region calculation. Every iteration that takes a model step is followed
             ! by an attempt to take a trust region step.
             knew = 0
+            !write (16, *) 1, ksave, ratio > TENTH, ratio >= TENTH, ratio == TENTH
             improve_geo = (ksave <= 0 .and. .not. ratio > TENTH)
             if (.not. improve_geo) cycle
         else
+            !write (16, *) 2, improve_geo
             improve_geo = (.not. improve_geo)
             ! Here, the old value of IMPROVE_GEO indicates whether a geometry step has been taken
             ! during last iteration. Better implementation?
         end if
     end if
 
+    !write (16, *) improve_geo
     if (improve_geo) then
         ! Find out if the interpolation points are close enough to the best point so far.
         distsq = max(delta * delta, 4.0_RP * rho * rho)
@@ -579,7 +587,7 @@ call rangehist(nf, xhist, fhist, chist)
 
 ! Postconditions
 
-!close (16)
+close (16)
 
 end subroutine lincob
 
