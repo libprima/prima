@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 PM09:29:05
+! Last Modified: Wednesday, September 21, 2022 PM10:05:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,9 +132,9 @@ real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
-integer(IK) :: itest, knew, kopt, ksav, nfsav, nresc, ntrits
+integer(IK) :: itest, knew, kopt, ksav, nfresc, ntrits
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo!, geo_step
+logical :: shortd, improve_geo
 
 
 ! Sizes.
@@ -204,10 +204,9 @@ rho = rhobeg
 delta = rho
 moderrsav = HUGENUM
 dnormsav = HUGENUM
-nresc = nf
+nfresc = nf
 ntrits = 0
 itest = 0
-nfsav = nf
 
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
 ! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
@@ -216,7 +215,6 @@ nfsav = nf
 ratio = -ONE
 shortd = .false.
 improve_geo = .false.
-!geo_step = .false.
 
 ! Generate the next point in the trust region that provides a small value of the quadratic model
 ! subject to the constraints on the variables. The integer NTRITS is set to the number "trust
@@ -260,7 +258,6 @@ do while (.true.)
         ntrits = -1
         rhosq = rho**2
         dsquare = 1.0E2_RP * rhosq
-
         bdtest = maxval(abs(moderrsav))
         bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
         bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
@@ -269,7 +266,8 @@ do while (.true.)
         if (crvmin > 0) then
             errbd = min(errbd, 0.125_RP * crvmin * rhosq)
         end if
-        improve_geo = (nf <= nfsav + 2 .or. any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
+        !improve_geo = (nf <= nfresc + 2 .or. any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
+        improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
     else
 
         ! Severe cancellation is likely to occur if XOPT is too far from XBASE. If the following
@@ -434,7 +432,6 @@ do while (.true.)
             ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
             ! the second derivative terms of the model.
             !------------------------------------------------------------------------------------------!
-            call assert(knew >= 1, 'KNEW >= 1', srname)
             call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
             call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
             call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
@@ -446,8 +443,8 @@ do while (.true.)
             pqinc = matprod(zmat, diff * zmat(knew, :))
             pq = pq + pqinc
             ! Alternatives:
-                !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
-                !!PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
+            !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
+            !!PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
 
             ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
             ! caused by the updating of the quadratic model.
@@ -498,7 +495,7 @@ do while (.true.)
             dsquare = max((TWO * delta)**2, (TEN * rho)**2)
             improve_geo = .true.
         else
-            if (nf <= nresc) then
+            if (nf <= nfresc) then
                 info = DAMAGING_ROUNDING
                 exit
             end if
@@ -509,8 +506,9 @@ do while (.true.)
                 info = subinfo
                 exit
             end if
-            nfsav = nf
-            nresc = nf
+            nfresc = nf
+            moderrsav = HUGENUM
+            dnormsav = HUGENUM
             cycle
         end if
     end if
@@ -620,7 +618,6 @@ do while (.true.)
                 ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
                 ! the second derivative terms of the model.
                 !------------------------------------------------------------------------------------------!
-                call assert(knew >= 1, 'KNEW >= 1', srname)
                 call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
                 call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
                 call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
@@ -649,12 +646,10 @@ do while (.true.)
                 end if
                 cycle
             else
-
-                if (nf <= nresc) then
+                if (nf <= nfresc) then
                     info = DAMAGING_ROUNDING
                     exit
                 end if
-                nfsav = nf
                 call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
                     & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
 
@@ -662,143 +657,14 @@ do while (.true.)
                     info = subinfo
                     exit
                 end if
-
-                !geo_step = (nfsav == nf)  ! What does this mean?
-
-                nfsav = nf
-                nresc = nf
+                nfresc = nf
+                moderrsav = HUGENUM
+                dnormsav = HUGENUM
                 cycle
-
-                !if (.not. geo_step) then
-                !cycle
-                !else
-                !    ! Severe cancellation is likely to occur if XOPT is too far from XBASE. If the following
-                !    ! test holds, then XBASE is shifted so that XOPT becomes zero. The appropriate changes are
-                !    ! made to BMAT and to the second derivatives of the current model, beginning with the
-                !    ! changes to BMAT that are independent of ZMAT. VLAG is used temporarily for working space.
-                !    ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-                !    if (sum(xopt**2) >= 1.0E3_RP * dsq) then
-                !        sl = min(sl - xopt, ZERO)
-                !        su = max(su - xopt, ZERO)
-                !        xnew = min(max(sl, xnew - xopt), su)  ! Needed? Will XNEW be used again later?
-                !        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
-                !        xbase = min(max(xl, xbase), xu)
-                !    end if
-
-                !    ! Pick two alternative vectors of variables, relative to XBASE, that are suitable as new
-                !    ! positions of the KNEW-th interpolation point. Firstly, XNEW is set to the point on a line
-                !    ! through XOPT and another interpolation point that minimizes the predicted value of the
-                !    ! next denominator, subject to ||XNEW - XOPT|| .LEQ. DELBAR and to the SL and SU bounds.
-                !    ! Secondly, XALT is set to the best feasible point on a constrained version of the Cauchy
-                !    ! step of the KNEW-th Lagrange function, the corresponding value of the square of this
-                !    ! function being returned in CAUCHY. The choice between these alternatives is going to be
-                !    ! made when the denominator is calculated.
-
-                !    ! Calculate a geometry step.
-                !    d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
-                !    xnew = min(max(sl, xopt + d), su)
-
-                !    ! Calculate VLAG, BETA, and DENOM for the current choice of D.
-                !    alpha = sum(zmat(knew, :)**2)
-                !    vlag = calvlag(kopt, bmat, d, xpt, zmat)
-                !    beta = calbeta(kopt, bmat, d, xpt, zmat)
-                !    denom = alpha * beta + vlag(knew)**2
-
-                !    ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-                !    !if (denom > HALF * vlag(knew)**2) then  ! The normal condition
-                !    if (denom > vlag(knew)**2) then  ! This is used when verifying RESCUE
-                !        ! Put the variables for the next calculation of the objective function in XNEW, with any
-                !        ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
-                !        x = min(max(xl, xbase + xnew), xu)
-                !        x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
-                !        x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
-                !        if (nf >= maxfun) then
-                !            info = MAXFUN_REACHED
-                !            exit
-                !        end if
-                !        nf = nf + 1
-                !        if (is_nan(abs(sum(x)))) then
-                !            f = sum(x)  ! Set F to NaN
-                !            if (nf == 1) then
-                !                fopt = f
-                !                xopt = ZERO
-                !            end if
-                !            info = NAN_INF_X
-                !            exit
-                !        end if
-
-                !        ! Calculate the value of the objective function at XBASE+XNEW.
-                !        call evaluate(calfun, x, f)
-                !        call savehist(nf, x, xhist, f, fhist)
-
-                !        if (is_nan(f) .or. is_posinf(f)) then
-                !            if (nf == 1) then
-                !                fopt = f
-                !                xopt = ZERO
-                !            end if
-                !            info = NAN_INF_F
-                !            exit
-                !        end if
-                !        if (f <= ftarget) then
-                !            info = FTARGET_ACHIEVED
-                !            exit
-                !        end if
-
-                !        ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the
-                !        ! error of this prediction.
-                !        fopt = fval(kopt)
-                !        qred = -quadinc(d, xpt, gopt, pq, hq)
-                !        diff = f - fopt + qred
-                !        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
-                !        ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is
-                !        ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
-                !        ! of the BOBYQA paper and the elaboration below it. Is this a bug? Similar thing happened
-                !        ! in NEWUOA, but we recognized it as a bug and fixed it.
-                !        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-
-                !        ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
-                !        ! the second derivative terms of the model.
-                !        !------------------------------------------------------------------------------------------!
-                !        call assert(knew >= 1, 'KNEW >= 1', srname)
-                !        call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
-                !        call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
-                !        call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, &
-                !            & 'DENOM = DENOM_TEST', srname)
-                !        !--------------------------------------------------------------------------------------------------!
-                !        call updateh(knew, beta, vlag, bmat, zmat)
-
-                !        call r1update(hq, pq(knew), xpt(:, knew))
-                !        pq(knew) = ZERO
-                !        pqinc = matprod(zmat, diff * zmat(knew, :))
-                !        pq = pq + pqinc
-                !        ! Alternatives:
-                !        !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
-                !        !!PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
-
-                !        ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
-                !        ! caused by the updating of the quadratic model.
-                !        fval(knew) = f
-                !        xpt(:, knew) = xnew
-                !        gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)
-
-                !        ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
-                !        if (f < fopt) then
-                !            kopt = knew
-                !            xopt = xnew
-                !            gopt = gopt + hess_mul(d, xpt, pq, hq)
-                !        end if
-                !        cycle
-                !    else
-                !        info = DAMAGING_ROUNDING
-                !        exit
-                !    end if
-                !end if
             end if
-
         else if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
             cycle
         end if
-
     end if
 
     ! The calculations with the current value of RHO are complete. Update RHO and DELTA.
