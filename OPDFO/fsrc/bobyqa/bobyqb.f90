@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 16, 2022 AM10:25:55
+! Last Modified: Wednesday, September 21, 2022 PM09:30:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -398,7 +398,8 @@ do while (.true.)
 !                        exit
 !                    end if
                     nresc = nf
-                    if (nfsav < nf) then
+                    !if (nfsav < nf) then
+                    if (.true.) then
                         nfsav = nf
                         cycle
                     end if
