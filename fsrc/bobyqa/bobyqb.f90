@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 PM10:05:00
+! Last Modified: Wednesday, September 21, 2022 PM10:39:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -134,7 +134,7 @@ real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfresc, ntrits
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo
+logical :: shortd, improve_geo, to_rescue
 
 
 ! Sizes.
@@ -215,6 +215,7 @@ itest = 0
 ratio = -ONE
 shortd = .false.
 improve_geo = .false.
+to_rescue = .false.
 
 ! Generate the next point in the trust region that provides a small value of the quadratic model
 ! subject to the constraints on the variables. The integer NTRITS is set to the number "trust
@@ -230,6 +231,8 @@ improve_geo = .false.
 !--------------------------------------------------------------------------------------------------!
 
 do while (.true.)
+
+    to_rescue = .false.
 
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
@@ -266,7 +269,6 @@ do while (.true.)
         if (crvmin > 0) then
             errbd = min(errbd, 0.125_RP * crvmin * rhosq)
         end if
-        !improve_geo = (nf <= nfresc + 2 .or. any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
         improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
     else
 
@@ -495,21 +497,8 @@ do while (.true.)
             dsquare = max((TWO * delta)**2, (TEN * rho)**2)
             improve_geo = .true.
         else
-            if (nf <= nfresc) then
-                info = DAMAGING_ROUNDING
-                exit
-            end if
-            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
-                & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
-
-            if (subinfo /= INFO_DFT) then
-                info = subinfo
-                exit
-            end if
-            nfresc = nf
-            moderrsav = HUGENUM
-            dnormsav = HUGENUM
-            cycle
+            improve_geo = .false.
+            to_rescue = .true.
         end if
     end if
 
@@ -646,25 +635,29 @@ do while (.true.)
                 end if
                 cycle
             else
-                if (nf <= nfresc) then
-                    info = DAMAGING_ROUNDING
-                    exit
-                end if
-                call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
-                    & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
-
-                if (subinfo /= INFO_DFT) then
-                    info = subinfo
-                    exit
-                end if
-                nfresc = nf
-                moderrsav = HUGENUM
-                dnormsav = HUGENUM
-                cycle
+                to_rescue = .true.
             end if
         else if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
             cycle
         end if
+    end if
+
+    if (to_rescue) then
+        if (nf <= nfresc) then
+            info = DAMAGING_ROUNDING
+            exit
+        end if
+        call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
+            & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
+
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
+        nfresc = nf
+        moderrsav = HUGENUM
+        dnormsav = HUGENUM
+        cycle
     end if
 
     ! The calculations with the current value of RHO are complete. Update RHO and DELTA.
