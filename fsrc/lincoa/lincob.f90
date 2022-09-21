@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 PM12:40:07
+! Last Modified: Wednesday, September 21, 2022 PM12:44:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -249,6 +249,7 @@ qfac = eye(n)
 rfac = ZERO
 rho = rhobeg
 delta = rho
+qred = ZERO
 ratio = -ONE
 feasible = .false.
 shortd = .false.
