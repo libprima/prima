@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 PM08:26:54
+! Last Modified: Wednesday, September 21, 2022 PM08:31:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -233,7 +233,7 @@ geo_step = .false.
 
 do while (.true.)
 
-    !call assert(.not. geo_step, 'NOT GEO_TEP', srname)
+    call assert(.not. geo_step, 'NOT GEO_TEP', srname)
 
     if (.not. geo_step) then
         call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
@@ -519,7 +519,7 @@ do while (.true.)
         end if
     else
 
-        !error stop
+        error stop
 
         ! Severe cancellation is likely to occur if XOPT is too far from XBASE. If the following
         ! test holds, then XBASE is shifted so that XOPT becomes zero. The appropriate changes are
@@ -968,11 +968,6 @@ do while (.true.)
                         !!------------------------------------------------------------------------------!
                     end if
                 end if
-                !------------------------------------------------------------------------------!
-                ! After RESCUE, Powell's code takes immediately another GEOSTEP. If the geometry
-                ! becomes acceptable (i.e., DENOM > HALF * VLAG(KNEW)**2), then the algorithm
-                ! will continue. Otherwise, it will exit with INFO set to DAMAGING_ROUNDING.
-                !------------------------------------------------------------------------------!
             end if
 
         else if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
