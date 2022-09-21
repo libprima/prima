@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, September 20, 2022 PM04:54:32
+! Last Modified: Wednesday, September 21, 2022 PM12:40:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -350,6 +350,7 @@ do while (.true.)
 
             ! Calculate the next value of the objective function. The difference between the actual new
             ! value of F and the value predicted by the model is recorded in DIFF.
+            !write (*, *) 353, qred, improve_geo
             if (.not. qred > ZERO) then
                 improve_geo = (.not. improve_geo)
                 ! Here, the old value of IMPROVE_GEO indicates whether a geometry step has been taken
@@ -402,6 +403,7 @@ do while (.true.)
 
                 ! Pick the next value of DELTA after a trust region step.
                 ratio = (fopt - f) / qred
+                !write (*, *) 405, delta, ratio, fopt - f, qred
                 if (ratio <= TENTH) then
                     delta = HALF * delta
                 else if (ratio <= 0.7_RP) then
@@ -411,6 +413,7 @@ do while (.true.)
                     delta = max(HALF * delta, dnorm + dnorm)
                     delta = min(delta, temp)  ! This does not exist in NEWUOA/BOBYQA. It works well.
                 end if
+                !write (*, *) 415, delta
                 if (delta <= 1.4_RP * rho) delta = rho
                 !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
                 ! N.B.: The factor in the line above should be smaller than SQRT(2). Imagine a very
@@ -477,12 +480,14 @@ do while (.true.)
                 ! by an attempt to take a trust region step.
                 knew = 0
                 improve_geo = (.not. ratio > TENTH)
+
+                !if (.not. improve_geo) cycle
             end if
         end if
 
         !write (*, *) improve_geo, shortd
-        if (.not. (improve_geo .or. shortd)) then
-            write (*, *) 483
+        if (.not. (shortd .or. qred <= 0 .or. improve_geo)) then
+            !write (*, *) 483
             cycle
         end if
 
@@ -606,7 +611,7 @@ do while (.true.)
         improve_geo = (ksave == -1 .and. .not. ratio > TENTH)
 
         if (.not. improve_geo) then
-            write (*, *) 606
+            !write (*, *) 606
             cycle
         end if
 
@@ -614,7 +619,7 @@ do while (.true.)
 
     !if (.not. (ksave == 0 .and. (shortd .or. improve_geo)) .and. .not. (ksave > 0 .and. improve_geo)) cycle
 
-    write (*, *) improve_geo, 615
+    !write (*, *) improve_geo, 615
 
 
     if (improve_geo) then
@@ -629,8 +634,8 @@ do while (.true.)
         ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
         ! when the last trust region step was calculated, then try a trust region step instead.
         if (knew > 0 .or. fopt < fsave .or. delsav > rho) then
-            write (*, *) knew, fopt, fsave, delsav, rho
-            write (*, *) 627
+            !write (*, *) knew, fopt, fsave, delsav, rho
+            !write (*, *) 627
             cycle
         end if
     end if
