@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 PM11:11:55
+! Last Modified: Wednesday, September 21, 2022 AM10:17:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -329,7 +329,8 @@ do while (.true.)
             ! It may happen that TN(I) == 0 == PIV(I). Without checking TN(I), we will get D(I)=NaN.
             ! Once we encounter a zero TN(I), D(I) is set to zero, and D(1:I-1) will consequently be
             ! zero as well, because D(J) is a multiple of D(J+1) for each J.
-            if (tn(i) /= ZERO) then
+            !if (tn(i) /= ZERO) then
+            if (abs(tn(i)) > ZERO) then
                 d(i) = -tn(i) * d(i + 1) / piv(i)
             else
                 d(1:i) = ZERO

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, August 31, 2022 PM10:19:50
+! Last Modified: Wednesday, September 21, 2022 AM09:54:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,6 +28,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, trueloc, norm
 use, non_intrinsic :: powalg_mod, only : hess_mul
 use, non_intrinsic :: univar_mod, only : interval_max
+use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
 
@@ -102,7 +103,7 @@ end if
 !       seeks a small value of the quadratic model within distance DELTA of
 !       XOPT subject to the bounds on the variables.
 !     XNEW will be set to a new vector of variables that is approximately
-!       the ONE that minimizes the quadratic model within the trust region
+!       the one that minimizes the quadratic model within the trust region
 !       subject to the SL and SU constraints on the variables. It satisfies
 !       as equations the bounds that become active during the calculation.
 !     D is the calculated trial step from XOPT, generated iteratively from an
@@ -122,14 +123,14 @@ end if
 !     CRVMIN is set to zero if D reaches the trust region boundary. Otherwise
 !       it is set to the least curvature of H that occurs in the conjugate
 !       gradient searches that are not restricted by any constraints. The
-!       value CRVMIN=-ONE is set, however, if all of these searches are
+!       value CRVMIN = -HUGENUM is set, however, if all of these searches are
 !       constrained.
 !
 !     A version of the truncated conjugate gradient is applied. If a line
 !     search is restricted by a constraint, then the procedure is restarted,
 !     the values of the variables that are at their bounds being fixed. If
 !     the trust region boundary is reached, then further changes may be made
-!     to D, each ONE being in the two dimensional space that is spanned
+!     to D, each one being in the two dimensional space that is spanned
 !     by the current D and the gradient of Q at XOPT+D, staying on the trust
 !     region boundary. Termination occurs when the reduction in Q seems to
 !     be close to the greatest reduction that can be achieved.
@@ -139,7 +140,7 @@ end if
 !
 !     The sign of GOPT(I) gives the sign of the change to the I-th variable
 !     that will reduce Q from its value at XOPT. Thus XBDI(I) shows whether
-!     or not to fix the I-th variable at ONE of its bounds initially, with
+!     or not to fix the I-th variable at one of its bounds initially, with
 !     NACT being set to the number of fixed variables. D and GNEW are also
 !     set for the first iteration. DELSQ is the upper bound on the sum of
 !     squares of the free variables. QRED is the reduction in Q so far.
@@ -148,6 +149,8 @@ end if
 !--------------------------------------------------------------------------------------------------!
 iact = 0  ! Without this, G95 complains that they are used uninitialized.
 !--------------------------------------------------------------------------------------------------!
+dredsq = ZERO  ! An unused artificial value to entertain Fortran compilers.
+ggsav = ieeenan()
 
 xbdi = 0
 xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1
@@ -159,7 +162,7 @@ gredsq = sum(gnew(trueloc(xbdi == 0))**2)
 
 delsq = delta * delta
 qred = ZERO
-crvmin = -ONE
+crvmin = -HUGENUM
 beta = ZERO
 
 ! ITERCG is the number of CG iterations corresponding to the current set of active bounds.
@@ -286,7 +289,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         temp = shs / stepsq
         if (iact == 0 .and. temp > 0) then
             crvmin = min(crvmin, temp)
-            if (crvmin == -ONE) crvmin = temp
+            if (crvmin <= -HUGENUM) crvmin = temp
         end if
         ggsav = gredsq
         gnew = gnew + stplen * hs
@@ -321,7 +324,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         if (itercg >= n - nact .or. sdec <= ctest * qred .or. is_nan(sdec) .or. is_nan(qred)) then
             exit
         end if
-        beta = gredsq / ggsav
+        beta = gredsq / ggsav  ! Has GGSAV got the correct value yet?
     else
         twod_search = .true.
         exit
@@ -370,7 +373,7 @@ do iter = 1, maxiter
     ! Update GREDSQ, DREDG, DREDSQ, and HRED.
     gredsq = sum(gnew(trueloc(xbdi == 0))**2)
     dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
-    if (nact > nactsav) then
+    if (iter == 1 .or. nact > nactsav) then
         dredsq = sum(d(trueloc(xbdi == 0))**2) ! In theory, DREDSQ changes only when NACT increases.
         dred = d
         dred(trueloc(xbdi /= 0)) = ZERO

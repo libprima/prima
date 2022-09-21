@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 06, 2022 PM11:11:55
+! Last Modified: Wednesday, September 21, 2022 AM10:23:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,6 +53,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc
+use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
 
@@ -115,6 +116,12 @@ if (DEBUGGING) then
     call assert(size(h, 1) == n .and. issymmetric(h), 'H is n-by-n and symmetric', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
 end if
+
+!!!!!!!!!!!!!!!!!!!!
+dsq = ieeenan()
+phiu = ieeenan()
+phil = ieeenan()
+!!!!!!!!!!!!!!!!!!!!
 
 d = ZERO
 crvmin = ZERO
@@ -263,7 +270,7 @@ do while (.true.)
         if (gsq <= 0) then
             paru = par
             paruest = par
-            if (par == ZERO) then  ! A rare case: the trust region center is optimal.
+            if (par <= 0) then  ! PAR == 0. A rare case: the trust region center is optimal.
                 exit
             end if
         end if
@@ -329,7 +336,7 @@ do while (.true.)
             ! It may happen that TN(I) == 0 == PIV(I). Without checking TN(I), we will get D(I)=NaN.
             ! Once we encounter a zero TN(I), D(I) is set to zero, and D(1:I-1) will consequently be
             ! zero as well, because D(J) is a multiple of D(J+1) for each J.
-            if (tn(i) /= ZERO) then
+            if (abs(tn(i)) > 0) then
                 d(i) = -tn(i) * d(i + 1) / piv(i)
             else
                 d(1:i) = ZERO
@@ -369,7 +376,7 @@ do while (.true.)
             !--------------------------------------------------------------------------------------!
 
             dtg = inprod(d, gg)
-            if (dtg > 0) then
+            if (dtg > 0) then  ! Has DSQ got the correct value?
                 d = -(delta / sqrt(dsq)) * d
             else  ! This ELSE covers the unlikely yet possible case where DTG is zero or even NaN.
                 d = (delta / sqrt(dsq)) * d
@@ -405,7 +412,7 @@ do while (.true.)
         dsq = sum(d**2)
 
         ! Return if the Newton-Raphson step is feasible, setting CRVMIN to the least eigenvalue of H.
-        if (par == ZERO .and. dsq <= delsq) then
+        if (par <= 0 .and. dsq <= delsq) then  ! PAR <= 0 indeed means PAR == 0.
             crvmin = eigmin(td, tn, 1.0E-2_RP)
             !!MATLAB:
             !!% It is critical for the efficiency to use `spdiags` to construct `tridh` sparsely.
@@ -429,12 +436,12 @@ do while (.true.)
         if (phi < 0) then
             parlest = par
             if (posdef) then
-                if (phi <= phil) exit
+                if (phi <= phil) exit  ! Has PHIL got the correct value
                 slope = (phi - phil) / (par - parl)
                 parlest = par - phi / slope
             end if
             if (paru > 0) then
-                slope = (phiu - phi) / (paru - par)
+                slope = (phiu - phi) / (paru - par)  ! Has PHIU got the correct value?
             else
                 slope = ONE / gnorm
             end if
@@ -489,13 +496,13 @@ do while (.true.)
             ! Complete the iteration when PHI is positive.
             slope = ONE / gnorm
             if (paru > 0) then
-                if (phi >= phiu) exit
+                if (phi >= phiu) exit  ! Has PHIU got the correct value?
                 slope = (phiu - phi) / (paru - par)
             end if
             parlest = max(parlest, par - phi / slope)
             paruest = par
             if (posdef) then
-                slope = (phi - phil) / (par - parl)
+                slope = (phi - phil) / (par - parl)  ! Has PHIL got the correct value?
                 paruest = par - phi / slope
             end if
             paru = par
@@ -504,7 +511,7 @@ do while (.true.)
     end if
 
     ! Pick the value of PAR for the next iteration.
-    if (paru == ZERO) then
+    if (paru <= 0) then  ! PARU == 0
         par = TWO * parlest + gnorm / delta
     else
         par = HALF * (parl + paru)
