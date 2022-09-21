@@ -1,10 +1,10 @@
 ## Reference Implementation of Powell's Derivative-Free Optimization Solvers
 
-[![license](https://img.shields.io/badge/license-LGPLv3+-blue)](https://github.com/zequipe/pdfo_ref/blob/master/LICENCE.txt)
-[![Verification, small](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_small.yml/badge.svg)](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_small.yml)
-[![Verification, big](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_big.yml/badge.svg)](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_big.yml)
-[![Verification, large](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_large.yml/badge.svg)](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_large.yml)
-[![Verification, base](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_base.yml/badge.svg)](https://github.com/zequipe/pdfo_ref/actions/workflows/verify_base.yml)
+[![license](https://img.shields.io/badge/license-LGPLv3+-blue)](https://github.com/equipez/pdfo_ref/blob/master/LICENCE.txt)
+[![Verification, small](https://github.com/equipez/pdfo_ref/actions/workflows/verify_small.yml/badge.svg)](https://github.com/equipez/pdfo_ref/actions/workflows/verify_small.yml)
+[![Verification, big](https://github.com/equipez/pdfo_ref/actions/workflows/verify_big.yml/badge.svg)](https://github.com/equipez/pdfo_ref/actions/workflows/verify_big.yml)
+[![Verification, large](https://github.com/equipez/pdfo_ref/actions/workflows/verify_large.yml/badge.svg)](https://github.com/equipez/pdfo_ref/actions/workflows/verify_large.yml)
+[![Verification, base](https://github.com/equipez/pdfo_ref/actions/workflows/verify_base.yml/badge.svg)](https://github.com/equipez/pdfo_ref/actions/workflows/verify_base.yml)
 
 
 ### What
@@ -27,7 +27,7 @@ The goal is to implement these solvers in modern languages ---
 first [**modern** Fortran](https://fortran-lang.org) (F2003 or newer), and then MATLAB, Python, and
 probably Julia and R. It will be a faithful implementation, in the sense that the new code will be
 mathematically equivalent to Powell’s, except for the
-[bug fixes](https://github.com/zequipe/pdfo_ref#bug-fixes) and improvements that we make intentionally.
+[bug fixes](#bug-fixes) and improvements that we make intentionally.
 
 The focus is to implement Powell’s solvers in a **structured** and **modularized** way so that they
 are **readable**, **maintainable**, and **extendable**. The new code will have no GOTO (of course)
@@ -37,7 +37,7 @@ and will use matrix-vector procedures instead of loops whenever possible.
 
 The mission is nontrivial due to the delicacy of Powell's algorithms and the unique style of his
 code.  We started the Fortran code by refactoring Powell's code into the free form via a small
-[MATLAB tool](https://github.com/zequipe/pdfo_ref/blob/master/matlab/setup_tools/freeform.m) written
+[MATLAB tool](https://github.com/equipez/pdfo_ref/blob/master/matlab/setup_tools/freeform.m) written
 by ourselves. However, such refactored code is far from what we want, because it inherits completely
 the structure and style of Powell's code except for the layout. Extensive modifications are needed
 to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of our
@@ -49,7 +49,7 @@ are invoked with improper inputs or encounter failures of function evaluations.
 The tests are automated by
 [GitHub Actions](https://en.wikipedia.org/wiki/Explorative_strategies). As of July 2022, more than
 25,000 "workflows" have been successfully run by GitHub Actions
-(see https://github.com/zequipe/gitpersonal/actions and https://github.com/zequipe/pdfo_ref/actions).
+(see https://github.com/equipez/gitpersonal/actions and https://github.com/equipez/pdfo_ref/actions).
 Normally, each workflow consists of \~ 5 **randomized** tests
 that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words, our
