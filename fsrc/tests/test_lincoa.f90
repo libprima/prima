@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, September 18, 2022 PM09:31:06
+! Last Modified: Wednesday, September 21, 2022 PM12:39:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -89,8 +89,7 @@ if (present(probs)) then
     probs_loc(1:nprobs) = probs
 else
     nprobs = 7_IK
-    !probs_loc(1:nprobs) = ['tetrahedron', 'ptinsq     ', 'chebyquad  ', 'chrosen    ', 'trigsabs   ', 'trigssqs   ', 'vardim     ']
-    probs_loc(1:nprobs) = ['vardim     ', 'tetrahedron', 'ptinsq     ', 'chebyquad  ', 'chrosen    ', 'trigsabs   ', 'trigssqs   ']
+    probs_loc(1:nprobs) = ['tetrahedron', 'ptinsq     ', 'chebyquad  ', 'chrosen    ', 'trigsabs   ', 'trigssqs   ', 'vardim     ']
 end if
 fix_dim_probs = '           '   ! Initialization, or compilers complain that the array is not (completely) defined.
 fix_dim_probs(1:1) = ['tetrahedron']
@@ -125,7 +124,7 @@ else
     randseed_loc = RANDSEED_DFT
 end if
 
-do iprob = 1, 1!nprobs
+do iprob = 1, nprobs
     probname = probs_loc(iprob)
     if (any(probname == fix_dim_probs)) then
         call construct(prob, probname)  ! Construct the testing problem.
@@ -138,7 +137,7 @@ do iprob = 1, 1!nprobs
     if (trim(probname) == 'ptinsq') then
         dim_list(1:ndim) = ceiling(real(dim_list(1:ndim)) / 2.0) * 2_IK  ! Must be even
     end if
-    do idim = 1, 1!ndim
+    do idim = 1, ndim
         if (any(probname == fix_dim_probs)) then
             call construct(prob, probname)
         else

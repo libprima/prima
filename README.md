@@ -48,12 +48,12 @@ are invoked with improper inputs or encounter failures of function evaluations.
 
 The tests are automated by
 [GitHub Actions](https://en.wikipedia.org/wiki/Explorative_strategies). As of July 2022, more than
-20,000 "workflows" have been successfully run by GitHub Actions
+25,000 "workflows" have been successfully run by GitHub Actions
 (see https://github.com/zequipe/gitpersonal/actions and https://github.com/zequipe/pdfo_ref/actions).
 Normally, each workflow consists of \~ 5 **randomized** tests
 that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words, our
-implementation has been tested by \~ $10^5$ hours (or \~ $10$ years) of randomized computation.
+implementation has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
 
 ------
 
