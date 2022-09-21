@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM05:06:53
+! Last Modified: Wednesday, September 21, 2022 AM09:01:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -233,7 +233,7 @@ do iter = 1_IK, maxiter
     dd = inprod(psd, psd)
     dnorm = sqrt(dd)
 
-    if (dd == ZERO) then
+    if (dd <= ZERO) then
         exit
     end if
 

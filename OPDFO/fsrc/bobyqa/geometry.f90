@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 29, 2022 AM11:49:29
+! Last Modified: Wednesday, September 21, 2022 AM09:57:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -250,7 +250,8 @@ do k = 1, npt
     stpm = HALF
     if (k == knew) then
         stpm = slbd
-        if (ONE - dderiv(k) /= 0) then
+        !if (ONE - dderiv(k) /= 0) then
+        if (abs(ONE - dderiv(k)) > 0) then
             stpm = -HALF * dderiv(k) / (ONE - dderiv(k))
         end if
     end if

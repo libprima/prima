@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, May 29, 2022 AM11:49:29
+! Last Modified: Wednesday, September 21, 2022 AM10:04:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -250,7 +250,7 @@ do k = 1, npt
     stpm = HALF
     if (k == knew) then
         stpm = slbd
-        if (ONE - dderiv(k) /= 0) then
+        if (abs(ONE - dderiv(k)) > 0) then
             stpm = -HALF * dderiv(k) / (ONE - dderiv(k))
         end if
     end if
@@ -362,15 +362,16 @@ do uphill = 0, 1
     ! loops. Powell's code does not have such a bound. The bound is not a true restriction, because
     ! we can check that (SFIXSQ > SSQSAV .AND. GGFREE > ZERO) must fail within N loops.
     sfixsq = ZERO
+    grdstp = ZERO
     do k = 1, n
         resis = delbar**2 - sfixsq
         if (resis <= 0) exit
         ssqsav = sfixsq
         grdstp = sqrt(resis / ggfree)
         xtemp = xopt - grdstp * glag
-        mask_fixl = (s == bigstp .and. xtemp <= sl)
-        mask_fixu = (s == bigstp .and. xtemp >= su)
-        mask_free = (s == bigstp .and. .not. (mask_fixl .or. mask_fixu))
+        mask_fixl = (s >= bigstp .and. xtemp <= sl)
+        mask_fixu = (s >= bigstp .and. xtemp >= su)
+        mask_free = (s >= bigstp .and. .not. (mask_fixl .or. mask_fixu))
         s(trueloc(mask_fixl)) = sl(trueloc(mask_fixl)) - xopt(trueloc(mask_fixl))
         s(trueloc(mask_fixu)) = su(trueloc(mask_fixu)) - xopt(trueloc(mask_fixu))
         sfixsq = sfixsq + sum(s(trueloc(mask_fixl .or. mask_fixu))**2)
@@ -381,10 +382,10 @@ do uphill = 0, 1
     ! Set the remaining free components of S and all components of XCAUCHY. S may be scaled later.
     x(trueloc(glag > 0)) = sl(trueloc(glag > 0))
     x(trueloc(glag <= 0)) = su(trueloc(glag <= 0))
-    x(trueloc(s == 0)) = xopt(trueloc(s == 0))
+    x(trueloc(abs(s) <= 0)) = xopt(trueloc(abs(s) <= 0))
     xtemp = max(sl, min(su, xopt - grdstp * glag))
-    x(trueloc(s == bigstp)) = xtemp(trueloc(s == bigstp))
-    s(trueloc(s == bigstp)) = -grdstp * glag(trueloc(s == bigstp))
+    x(trueloc(s >= bigstp)) = xtemp(trueloc(s >= bigstp))
+    s(trueloc(s >= bigstp)) = -grdstp * glag(trueloc(s >= bigstp))
     gs = inprod(glag, s)
 
     ! Set CURV to the curvature of the KNEW-th Lagrange function along S. Scale S by a factor less

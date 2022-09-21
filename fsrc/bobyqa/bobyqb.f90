@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 16, 2022 AM10:44:28
+! Last Modified: Wednesday, September 21, 2022 AM10:14:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -62,6 +62,8 @@ use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2up
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calvlag, calbeta, hess_mul
 !!! TODO (Zaikun 20220525): Use CALDEN instead of CALVLAG and CALBETA wherever possible!!!
+
+use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
@@ -164,6 +166,8 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
+
+denom = ieeenan()  ! To be removed.
 
 info = INFO_DFT
 
@@ -694,7 +698,6 @@ do while (.true.)
     ntrits = 0
     moderrsav = HUGENUM
     dnormsav = HUGENUM
-
 end do
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
