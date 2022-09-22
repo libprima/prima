@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 22, 2022 AM11:15:00
+! Last Modified: Thursday, September 22, 2022 AM11:18:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,7 +132,7 @@ real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt), wlagsq(npt)
-integer(IK) :: itest, knew, kopt, ksav, nfresc, ntrits
+integer(IK) :: itest, knew, kopt, ksav, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 logical :: shortd, improve_geo, rescue_geo
 
@@ -205,7 +205,6 @@ delta = rho
 moderrsav = HUGENUM
 dnormsav = HUGENUM
 nfresc = nf
-ntrits = 0
 itest = 0
 
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
@@ -219,8 +218,7 @@ rescue_geo = .false.
 
 do while (.true.)
     ! Generate the next point in the trust region that provides a small value of the quadratic model
-    ! subject to the constraints on the variables. The integer NTRITS is set to the number of
-    ! trust-region iterations that have occurred since the last geometry improvement.
+    ! subject to the constraints on the variables.
 
     rescue_geo = .false.
 
@@ -228,8 +226,6 @@ do while (.true.)
 
     xnew = max(min(xopt + d, su), sl)  ! In precise arithmetic, XNEW = XOPT + D.
     gnew = gopt + hess_mul(d, xpt, pq, hq)
-    ntrits = ntrits + 1_IK  ! NTRITS >= 0
-    call assert(ntrits > 0, 'NTRITS > 0', srname)
 
     dsq = sum(d**2)
     dnorm = min(delta, sqrt(dsq))
@@ -252,7 +248,6 @@ do while (.true.)
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
-        ntrits = -1
         rhosq = rho**2
         dsquare = 1.0E2_RP * rhosq
         bdtest = maxval(abs(moderrsav))
@@ -278,8 +273,6 @@ do while (.true.)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
             xbase = min(max(xl, xbase), xu)
         end if
-
-        call assert(ntrits > 0, 'NTRITS > 0', srname)
 
         ! Calculate VLAG and BETA for the current choice of D.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
@@ -479,8 +472,7 @@ do while (.true.)
             end if
 
             ! If a trust region step has provided a sufficient decrease in F, then branch for another
-            ! trust region calculation. The case NTRITS=0 occurs when the new interpolation point was
-            ! reached by an alternative step.
+            ! trust region calculation.
             if (f <= fopt - TENTH * qred) cycle
 
             ! Alternatively, find out if the interpolation points are close enough to the best point so far.
@@ -502,7 +494,6 @@ do while (.true.)
         ! iteration, unless the calculations with the current RHO are complete.
         if (knew > 0) then
             dist = sqrt(dsquare)
-            ntrits = 0
             delbar = max(min(TENTH * dist, delta), rho)
             dsq = delbar * delbar
 
@@ -622,7 +613,6 @@ do while (.true.)
             else
                 rescue_geo = .true.
             end if
-            !else if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
         else if ((.not. shortd) .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
             cycle
         end if
@@ -662,7 +652,6 @@ do while (.true.)
         rho = TENTH * rho
     end if
     delta = max(delta, rho)
-    ntrits = 0
     moderrsav = HUGENUM
     dnormsav = HUGENUM
 end do
