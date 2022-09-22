@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 22, 2022 AM10:46:58
+! Last Modified: Thursday, September 22, 2022 AM11:15:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -299,7 +299,7 @@ do while (.true.)
             ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
             knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
             scaden = score(knew)
-                !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
+            !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
             denom = den(knew)
         end if
 
@@ -502,10 +502,6 @@ do while (.true.)
         ! iteration, unless the calculations with the current RHO are complete.
         if (knew > 0) then
             dist = sqrt(dsquare)
-            if (ntrits == -1) then
-                !delta = min(TENTH * delta, HALF * dist)
-                !if (delta <= 1.5_RP * rho) delta = rho
-            end if
             ntrits = 0
             delbar = max(min(TENTH * dist, delta), rho)
             dsq = delbar * delbar
@@ -626,7 +622,8 @@ do while (.true.)
             else
                 rescue_geo = .true.
             end if
-        else if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
+            !else if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
+        else if ((.not. shortd) .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
             cycle
         end if
     end if
@@ -672,7 +669,7 @@ end do
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
-if (info == SMALL_TR_RADIUS .and. ntrits == -1 .and. nf < maxfun) then
+if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = min(max(xl, xbase + xnew), xu)  ! XNEW = XOPT + D??? See NEWUOA, LINCOA.
     x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
     x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
