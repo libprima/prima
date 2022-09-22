@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 22, 2022 AM11:57:01
+! Last Modified: Thursday, September 22, 2022 PM03:19:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -263,10 +263,6 @@ do while (.true.)
         improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
     else  ! D is long enough to invoke a function evaluation.
 
-        ! Severe cancellation is likely to occur if XOPT is too far from XBASE. If the following
-        ! test holds, then XBASE is shifted so that XOPT becomes zero. The appropriate changes are
-        ! made to BMAT and to the second derivatives of the current model, beginning with the
-        ! changes to BMAT that are independent of ZMAT. VLAG is used temporarily for working space.
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dsq) then
             sl = min(sl - xopt, ZERO)
@@ -285,6 +281,15 @@ do while (.true.)
         weight = max(ONE, (distsq / delta**2)**2)  ! It differs from (6.1) in the BOBYQA paper.
 
         ! Find the index of the interpolation point to be replaced by the trust-region trial point.
+        ! The strategy here differs from that of NEWUOA: KNEW is decided before the function
+        ! evaluation, and it will be recalculated after the function evaluation if the new function
+        ! value is lower than the current FOPT; in NEWUOA, KNEW is calculated only after function
+        ! evaluation, taking the new function value into consideration (e.g., when evaluating
+        ! DISTSQ). The purpose of finding KNEW before the function evaluation is to decide whether
+        ! to call RESCUE. Is there a better strategy? What about follow the scheme of NEWUOA, and
+        ! call RESCUE if DENOM turns out too small (not more than SQRT(EPS)*max(ONE, VLAG(KNEW)))?
+        ! Note that the condition for calling RESCUE must be very stringent, so that the newly
+        ! evaluated function value is included in the next interpolation system as much as possible.
         score = weight * den
         score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE
         knew = 0
@@ -496,10 +501,6 @@ do while (.true.)
             delbar = max(min(TENTH * dist, delta), rho)
             dsq = delbar * delbar
 
-            ! Severe cancellation is likely to occur if XOPT is too far from XBASE. If the following
-            ! test holds, then XBASE is shifted so that XOPT becomes zero. The appropriate changes are
-            ! made to BMAT and to the second derivatives of the current model, beginning with the
-            ! changes to BMAT that are independent of ZMAT. VLAG is used temporarily for working space.
             ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
             if (sum(xopt**2) >= 1.0E3_RP * dsq) then
                 sl = min(sl - xopt, ZERO)
@@ -508,15 +509,6 @@ do while (.true.)
                 call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
                 xbase = min(max(xl, xbase), xu)
             end if
-
-            ! Pick two alternative vectors of variables, relative to XBASE, that are suitable as new
-            ! positions of the KNEW-th interpolation point. Firstly, XNEW is set to the point on a line
-            ! through XOPT and another interpolation point that minimizes the predicted value of the
-            ! next denominator, subject to ||XNEW - XOPT|| .LEQ. DELBAR and to the SL and SU bounds.
-            ! Secondly, XALT is set to the best feasible point on a constrained version of the Cauchy
-            ! step of the KNEW-th Lagrange function, the corresponding value of the square of this
-            ! function being returned in CAUCHY. The choice between these alternatives is going to be
-            ! made when the denominator is calculated.
 
             ! Calculate a geometry step.
             d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
@@ -617,6 +609,12 @@ do while (.true.)
     end if
 
     ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
+    ! 1. RESCUE is called only if rounding errors have reduced by at least a factor of TWO the
+    ! denominator of the formula for updating the H matrix. It provides a useful safeguard, but is
+    ! not invoked in most applications of BOBYQA.
+    ! 2. In Powell's code, if RESCUE is called after GEO_STEP, but RESCUE invokes no function
+    ! evaluation (so that XPT is not updated, but the model and [BMAT, ZMAT] are recalculated),
+    ! then GEO_STEP is called again immediately. Here, however, we always call TRSTEP after RESCUE.
     if (rescue_geo) then
         if (nf <= nfresc) then
             info = DAMAGING_ROUNDING
@@ -624,7 +622,6 @@ do while (.true.)
         end if
         call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
             & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
-
         if (subinfo /= INFO_DFT) then
             info = subinfo
             exit
