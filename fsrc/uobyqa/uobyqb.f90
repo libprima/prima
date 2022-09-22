@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 16, 2022 AM11:43:18
+! Last Modified: Thursday, September 22, 2022 AM10:33:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -192,6 +192,11 @@ do while (.true.)
         shortd = (dnorm < HALF * rho)
         improve_geo = shortd
         if (shortd) then
+            ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
+            delta = TENTH * delta
+            if (delta <= 1.5_RP * rho) then
+                delta = rho
+            end if
             knew = -1
             errtol = HALF * crvmin * rho * rho
             if (nf <= npt + 9) errtol = ZERO

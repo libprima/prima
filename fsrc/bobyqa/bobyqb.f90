@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 PM10:39:55
+! Last Modified: Thursday, September 22, 2022 AM10:46:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -134,7 +134,7 @@ real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x
 real(RP) :: score(npt), wlagsq(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfresc, ntrits
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, to_rescue
+logical :: shortd, improve_geo, rescue_geo
 
 
 ! Sizes.
@@ -215,24 +215,14 @@ itest = 0
 ratio = -ONE
 shortd = .false.
 improve_geo = .false.
-to_rescue = .false.
-
-! Generate the next point in the trust region that provides a small value of the quadratic model
-! subject to the constraints on the variables. The integer NTRITS is set to the number "trust
-! region" iterations that have occurred since the last "alternative" iteration. If the length of
-! XNEW-XOPT is less than HALF*RHO, however, then there is a branch to label 650 or 680 with
-! NTRITS=-1, instead of calculating F at XNEW.
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the models. In such a case, we
-! terminate the code. Otherwise, the behavior of TRBOX, GEOSTEP, or RESCUE is not predictable, and
-! Segmentation Fault or infinite cycling may happen. This is because any equality/inequality
-! comparison involving NaN returns FALSE, which can lead to unintended  behavior of the code,
-! including uninitialized indices. STILL NECESSARY???
-!--------------------------------------------------------------------------------------------------!
+rescue_geo = .false.
 
 do while (.true.)
+    ! Generate the next point in the trust region that provides a small value of the quadratic model
+    ! subject to the constraints on the variables. The integer NTRITS is set to the number of
+    ! trust-region iterations that have occurred since the last geometry improvement.
 
-    to_rescue = .false.
+    rescue_geo = .false.
 
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
@@ -258,6 +248,10 @@ do while (.true.)
     ! takes the view that the work for the current RHO is complete, and hence it will reduce
     ! RHO, which will enhance the resolution of the algorithm in general.
     if (shortd) then
+        delta = TENTH * delta
+        if (delta <= 1.5_RP * rho) then
+            delta = rho  ! Set DELTA to RHO when it is close.
+        end if
         ntrits = -1
         rhosq = rho**2
         dsquare = 1.0E2_RP * rhosq
@@ -287,12 +281,6 @@ do while (.true.)
 
         call assert(ntrits > 0, 'NTRITS > 0', srname)
 
-        ! Set KNEW to the index of the next
-        ! interpolation point to be deleted to make room for a trust region step. Again RESCUE
-        ! may be called if rounding errors have damaged the chosen denominator, which is the
-        ! reason for attempting to select KNEW before calculating the next value of the
-        ! objective function.
-        !
         ! Calculate VLAG and BETA for the current choice of D.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         beta = calbeta(kopt, bmat, d, xpt, zmat)
@@ -301,6 +289,8 @@ do while (.true.)
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         weight = max(ONE, (distsq / delta**2)**2)  ! It differs from (6.1) in the BOBYQA paper.
 
+        ! Set KNEW to the index of the next interpolation point to be deleted to make room for a
+        ! trust region step.
         score = weight * den
         score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE
         knew = 0
@@ -498,7 +488,7 @@ do while (.true.)
             improve_geo = .true.
         else
             improve_geo = .false.
-            to_rescue = .true.
+            rescue_geo = .true.
         end if
     end if
 
@@ -513,8 +503,8 @@ do while (.true.)
         if (knew > 0) then
             dist = sqrt(dsquare)
             if (ntrits == -1) then
-                delta = min(TENTH * delta, HALF * dist)
-                if (delta <= 1.5_RP * rho) delta = rho
+                !delta = min(TENTH * delta, HALF * dist)
+                !if (delta <= 1.5_RP * rho) delta = rho
             end if
             ntrits = 0
             delbar = max(min(TENTH * dist, delta), rho)
@@ -552,9 +542,8 @@ do while (.true.)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             denom = alpha * beta + vlag(knew)**2
 
-            ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
             !if (denom > HALF * vlag(knew)**2) then  ! This is the normal condition
-            if (denom > vlag(knew)**2) then  ! This is used when verifying RESCUE
+            if (denom > vlag(knew)**2) then  ! This is used when verifying RESCUE.
                 ! Put the variables for the next calculation of the objective function in XNEW, with any
                 ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
                 x = min(max(xl, xbase + xnew), xu)
@@ -635,14 +624,15 @@ do while (.true.)
                 end if
                 cycle
             else
-                to_rescue = .true.
+                rescue_geo = .true.
             end if
         else if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
             cycle
         end if
     end if
 
-    if (to_rescue) then
+    ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
+    if (rescue_geo) then
         if (nf <= nfresc) then
             info = DAMAGING_ROUNDING
             exit
