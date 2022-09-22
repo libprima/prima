@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 PM05:48:54
+! Last Modified: Thursday, September 22, 2022 AM10:27:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -308,7 +308,7 @@ do while (.true.)
     ! When the trust region step is short, decide whether to improve the geometry of the
     ! interpolation set or to reduce RHO.
     if (shortd) then
-        delta = HALF * delta
+        delta = HALF * delta  ! The factor HALF works better than TENTH used in NEWUOA/BOBYQA
         ! The factor 1.4 below aligns with the update of DELTA after a trust-region step.
         if (delta <= 1.4_RP * rho) delta = rho
         improve_geo = any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)

@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 12, 2022 PM08:52:16
+! Last Modified: Thursday, September 22, 2022 AM10:34:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -197,6 +197,7 @@ do while (.true.)
         shortd = (dnorm < HALF * rho)
         improve_geo = shortd
         if (shortd) then
+            delta = TENTH * delta; if (delta <= 1.5_RP * rho) delta = rho
             knew = -1
             errtol = HALF * crvmin * rho * rho
             if (nf <= npt + 9) errtol = ZERO

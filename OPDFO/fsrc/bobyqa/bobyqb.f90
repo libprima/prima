@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 PM09:30:01
+! Last Modified: Thursday, September 22, 2022 AM10:47:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -248,6 +248,7 @@ do while (.true.)
         ! points compare favourably with predictions of likely improvements to the model within
         ! distance HALF*RHO of XOPT.
         if (shortd) then
+            delta = TENTH * delta; if (delta <= 1.5_RP * rho) delta = rho
             ntrits = -1
             !dsquare = (TEN * rho)**2
             dsquare = 1.0E2_RP * rho**2
@@ -694,8 +695,7 @@ do while (.true.)
         if (knew > 0) then
             dist = sqrt(dsquare)
             if (ntrits == -1) then
-                delta = min(TENTH * delta, HALF * dist)
-                if (delta <= 1.5_RP * rho) delta = rho
+                !delta = min(TENTH * delta, HALF * dist); if (delta <= 1.5_RP * rho) delta = rho
             end if
             ntrits = 0
             delbar = max(min(TENTH * dist, delta), rho)

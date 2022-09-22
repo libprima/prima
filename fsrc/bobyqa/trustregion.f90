@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 AM09:54:05
+! Last Modified: Thursday, September 22, 2022 AM06:37:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -289,7 +289,9 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         temp = shs / stepsq
         if (iact == 0 .and. temp > 0) then
             crvmin = min(crvmin, temp)
-            if (crvmin <= -HUGENUM) crvmin = temp
+            if (crvmin <= -HUGENUM) then  ! CRVMIN <= -HUGENUM means CRVMIN has not bee set?
+                crvmin = temp
+            end if
         end if
         ggsav = gredsq
         gnew = gnew + stplen * hs

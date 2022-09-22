@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 AM10:04:14
+! Last Modified: Thursday, September 22, 2022 AM06:36:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -339,7 +339,7 @@ end if
 ! UPHILL = 0, the method calculates the downhill version of XCAUCHY, which intends to minimize the
 ! KNEW-th Lagrange function; when UPHILL = 1, it calculates the uphill version that intends to
 ! maximize the Lagrange function.
-bigstp = delbar + delbar
+bigstp = delbar + delbar  ! N.B.: In the sequel, S <= BIGSTP.
 xcauchy = xopt
 vlagsq_cauchy = ZERO
 do uphill = 0, 1
@@ -369,8 +369,8 @@ do uphill = 0, 1
         ssqsav = sfixsq
         grdstp = sqrt(resis / ggfree)
         xtemp = xopt - grdstp * glag
-        mask_fixl = (s >= bigstp .and. xtemp <= sl)
-        mask_fixu = (s >= bigstp .and. xtemp >= su)
+        mask_fixl = (s >= bigstp .and. xtemp <= sl)  ! S == BIGSTP & XTEMP == SL
+        mask_fixu = (s >= bigstp .and. xtemp >= su)  ! S == BIGSTP & XTEMP == SU
         mask_free = (s >= bigstp .and. .not. (mask_fixl .or. mask_fixu))
         s(trueloc(mask_fixl)) = sl(trueloc(mask_fixl)) - xopt(trueloc(mask_fixl))
         s(trueloc(mask_fixu)) = su(trueloc(mask_fixu)) - xopt(trueloc(mask_fixu))
@@ -384,8 +384,8 @@ do uphill = 0, 1
     x(trueloc(glag <= 0)) = su(trueloc(glag <= 0))
     x(trueloc(abs(s) <= 0)) = xopt(trueloc(abs(s) <= 0))
     xtemp = max(sl, min(su, xopt - grdstp * glag))
-    x(trueloc(s >= bigstp)) = xtemp(trueloc(s >= bigstp))
-    s(trueloc(s >= bigstp)) = -grdstp * glag(trueloc(s >= bigstp))
+    x(trueloc(s >= bigstp)) = xtemp(trueloc(s >= bigstp))  ! S == BIGSTP
+    s(trueloc(s >= bigstp)) = -grdstp * glag(trueloc(s >= bigstp))  ! S == BIGSTP
     gs = inprod(glag, s)
 
     ! Set CURV to the curvature of the KNEW-th Lagrange function along S. Scale S by a factor less
