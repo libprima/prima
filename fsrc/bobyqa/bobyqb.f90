@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 22, 2022 AM11:18:59
+! Last Modified: Thursday, September 22, 2022 AM11:57:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -243,11 +243,13 @@ do while (.true.)
     ! trust-region center may be an approximate local minimizer. When this occurs, the algorithm
     ! takes the view that the work for the current RHO is complete, and hence it will reduce
     ! RHO, which will enhance the resolution of the algorithm in general.
-    if (shortd) then
+    if (shortd) then  ! D is to short to invoke a function evaluation.
+        ! Reduce DELTA.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
+
         rhosq = rho**2
         dsquare = 1.0E2_RP * rhosq
         bdtest = maxval(abs(moderrsav))
@@ -259,7 +261,7 @@ do while (.true.)
             errbd = min(errbd, 0.125_RP * crvmin * rhosq)
         end if
         improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
-    else
+    else  ! D is long enough to invoke a function evaluation.
 
         ! Severe cancellation is likely to occur if XOPT is too far from XBASE. If the following
         ! test holds, then XBASE is shifted so that XOPT becomes zero. The appropriate changes are
@@ -282,8 +284,7 @@ do while (.true.)
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         weight = max(ONE, (distsq / delta**2)**2)  ! It differs from (6.1) in the BOBYQA paper.
 
-        ! Set KNEW to the index of the next interpolation point to be deleted to make room for a
-        ! trust region step.
+        ! Find the index of the interpolation point to be replaced by the trust-region trial point.
         score = weight * den
         score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE
         knew = 0
@@ -304,8 +305,10 @@ do while (.true.)
                 !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
         end if
 
-        !if (scaden > HALF * biglsq) then  ! This is the normal condition
-        if (scaden > biglsq) then  ! This is used when verifying RESCUE.
+        !rescue_geo = .not. (scaden > HALF * biglsq)  ! This is the normal condition.
+        rescue_geo = .not. (scaden > biglsq)  ! This is used when verifying RESCUE.
+        improve_geo = .not. rescue_geo
+        if (.not. rescue_geo) then
             ! Put the variables for the next calculation of the objective function in XNEW, with any
             ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
             x = min(max(xl, xbase + xnew), xu)
@@ -477,10 +480,6 @@ do while (.true.)
 
             ! Alternatively, find out if the interpolation points are close enough to the best point so far.
             dsquare = max((TWO * delta)**2, (TEN * rho)**2)
-            improve_geo = .true.
-        else
-            improve_geo = .false.
-            rescue_geo = .true.
         end if
     end if
 
@@ -529,8 +528,9 @@ do while (.true.)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             denom = alpha * beta + vlag(knew)**2
 
-            !if (denom > HALF * vlag(knew)**2) then  ! This is the normal condition
-            if (denom > vlag(knew)**2) then  ! This is used when verifying RESCUE.
+            !rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
+            rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
+            if (.not. rescue_geo) then
                 ! Put the variables for the next calculation of the objective function in XNEW, with any
                 ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
                 x = min(max(xl, xbase + xnew), xu)
@@ -610,8 +610,6 @@ do while (.true.)
                     gopt = gopt + hess_mul(d, xpt, pq, hq)
                 end if
                 cycle
-            else
-                rescue_geo = .true.
             end if
         else if ((.not. shortd) .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
             cycle
@@ -624,8 +622,8 @@ do while (.true.)
             info = DAMAGING_ROUNDING
             exit
         end if
-        call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
-            & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
+        call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
+            & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
 
         if (subinfo /= INFO_DFT) then
             info = subinfo
