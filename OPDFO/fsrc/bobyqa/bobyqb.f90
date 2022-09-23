@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 22, 2022 AM10:47:21
+! Last Modified: Friday, September 23, 2022 AM10:39:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -427,7 +427,8 @@ do while (.true.)
             hdiag = sum(zmat**2, dim=2)
             den = hdiag * beta + vlag(1:npt)**2
             distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-            weight = max(ONE, (distsq / delta**2)**2)
+            !weight = max(ONE, (distsq / delta**2)**2)
+            weight = max(ONE, (distsq / delta**2))**2
 
             score = weight * den
             score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE
@@ -583,7 +584,8 @@ do while (.true.)
                 hdiag = sum(zmat**2, dim=2)
                 den = hdiag * beta + vlag(1:npt)**2
                 distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
-                weight = max(ONE, (distsq / delta**2)**2)
+                !weight = max(ONE, (distsq / delta**2)**2)
+                weight = max(ONE, (distsq / delta**2))**2
                 score = weight * den
 
                 knew = 0

@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 23, 2022 AM09:38:09
+! Last Modified: Friday, September 23, 2022 PM02:49:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,10 +131,10 @@ real(RP) :: delbar, alpha, bdtest(size(x)), beta, &
 real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
-real(RP) :: score(npt), wlagsq(npt)
+real(RP) :: score(npt)
 integer(IK) :: itest, knew, kopt, ksav, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, rescue_geo
+logical :: shortd, improve_geo, rescue_geo, tr_success
 
 
 ! Sizes.
@@ -366,7 +366,7 @@ do while (.true.)
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Pick the next value of DELTA after a trust region step.
-        if (.not. (qred > ZERO)) then
+        if (.not. (qred > 0)) then
             !----------------------------------------------------------------------------------!
             ! Zaikun 20220405: LINCOA improves the model in this case. Try the same here?
             !----------------------------------------------------------------------------------!
@@ -389,58 +389,45 @@ do while (.true.)
         ! update Delta after taking a geometry step. In the BOBYQA paper, the iteration counter
         ! k is increase by 1 both after a trust region step and after a geometry step.
 
-        ! Recalculate KNEW and DENOM if the new F is less than FOPT.
-        if (f < fopt) then
+        ! Find the index of the interpolation point to be replaced by the trust-region trial point.
+        tr_success = (f < fopt)
+        if (tr_success) then
             distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
         else
             distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         end if
-        !ksav = knew
-        !densav = denom
         hdiag = sum(zmat**2, dim=2)
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         beta = calbeta(kopt, bmat, d, xpt, zmat)
         den = hdiag * beta + vlag(1:npt)**2
-        !distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
-        weight = max(ONE, (distsq / delta**2)**2)
+        !weight = max(ONE, distsq / delta**2)  ! Suggested by (6.1) of the BOBYQA paper. Works poorly!
+        !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code.
+        weight = max(ONE, distsq / delta**2)**3  ! This works better than power 2.
+        !weight = max(ONE, distsq / delta**2)**4  ! This works better and power 1 but not power 2.
         score = weight * den
 
-        if (.not. (f < fopt)) then
+        ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
+        if (.not. tr_success) then
             score(kopt) = -ONE
         end if
 
-        knew = 0
-        scaden = ZERO
+        ! For the first case below, NEWUOA checks ANY(SCORE>1) .OR. (TR_SUCCESS .AND. ANY(SCORE>0))
+        ! instead of ANY(SCORE > 0). Such code does not seem to improve the performance of BOBYQA.
         if (any(score > 0)) then
+            ! See (6.1) of the BOBYQA paper for the definition of KNEW in this case.
             ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
             knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-            scaden = score(knew)
-                    !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
-            denom = den(knew)
+            !!MATLAB: [~, knew] = max(score, [], 'omitnan');
+        elseif (tr_success) then
+            ! Powell's code does not include the following instructions. With Powell's code, if DEN
+            ! consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
+            knew = int(maxloc(distsq, dim=1), IK)
+        else
+            knew = 0_IK  ! We arrive here when TR_SUCCESS = FALSE and no entry of SCORE exceeds one.
         end if
-        !write (16, *) 'knew 1', knew
-
-        if (knew == 0 .and. f < fopt) then
-            knew = maxloc(distsq, dim=1)
-        end if
-        !write (16, *) 'knew 2', knew
-
-        wlagsq = weight * vlag(1:npt)**2
-        biglsq = ZERO
-        if (any(wlagsq > 0)) then
-            biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
-                    !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
-        end if
-
-                !! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet prefer to
-                !! require KNEW > 0 explicitly.
-        !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-        !    knew = ksav
-        !    denom = densav
-        !end if
-        !end if
 
         if (knew > 0) then
+            denom = den(knew)
             ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
             ! the second derivative terms of the model.
             !------------------------------------------------------------------------------------------!
