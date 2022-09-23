@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 23, 2022 AM10:39:14
+! Last Modified: Friday, September 23, 2022 PM06:42:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -421,88 +421,88 @@ do while (.true.)
             ! reason for attempting to select KNEW before calculating the next value of the
             ! objective function.
         else
-            ! Calculate VLAG and BETA for the current choice of D.
-            vlag = calvlag(kopt, bmat, d, xpt, zmat)
-            beta = calbeta(kopt, bmat, d, xpt, zmat)
-            hdiag = sum(zmat**2, dim=2)
-            den = hdiag * beta + vlag(1:npt)**2
-            distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-            weight = max(ONE, (distsq / delta**2))**2
+            !! Calculate VLAG and BETA for the current choice of D.
+            !vlag = calvlag(kopt, bmat, d, xpt, zmat)
+            !beta = calbeta(kopt, bmat, d, xpt, zmat)
+            !hdiag = sum(zmat**2, dim=2)
+            !den = hdiag * beta + vlag(1:npt)**2
+            !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+            !weight = max(ONE, (distsq / delta**2))**3
 
-            score = weight * den
-            score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE
-            knew = 0
-            scaden = ZERO
-            if (any(score > 0)) then
-                ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we exclude
-                ! such K.
-                knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-                scaden = score(knew)
-                !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
-                denom = den(knew)
-            end if
+            !score = weight * den
+            !score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE
+            !knew = 0
+            !scaden = ZERO
+            !if (any(score > 0)) then
+            !    ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we exclude
+            !    ! such K.
+            !    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+            !    scaden = score(knew)
+            !    !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
+            !    denom = den(knew)
+            !end if
 
-            wlagsq = weight * vlag(1:npt)**2
-            wlagsq(kopt) = -ONE  ! Skip KOPT when taking the maximum of WLAGSQ
-            biglsq = ZERO
-            if (any(wlagsq > 0)) then
-                biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
-                !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
-            end if
+            !wlagsq = weight * vlag(1:npt)**2
+            !wlagsq(kopt) = -ONE  ! Skip KOPT when taking the maximum of WLAGSQ
+            !biglsq = ZERO
+            !if (any(wlagsq > 0)) then
+            !    biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
+            !    !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
+            !end if
 
-            ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet we prefer to
-            ! require KNEW > 0 explicitly.
-            !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-            if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
-                if (nf <= nresc) then
-                    info = DAMAGING_ROUNDING
-                    exit
-                else
-                    ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more
-                    ! expensive than the previous shift, because new matrices BMAT and ZMAT are
-                    ! generated from scratch, which may include the replacement of interpolation
-                    ! points whose positions seem to be causing near linear dependence in the
-                    ! interpolation conditions. Therefore RESCUE is called only if rounding errors
-                    ! have reduced by at least a factor of TWO the denominator of the formula for
-                    ! updating the H matrix. It provides a useful safeguard, but is not invoked in
-                    ! most applications of BOBYQA.
+            !! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet we prefer to
+            !! require KNEW > 0 explicitly.
+            !!if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
+            !if (.not. (knew > 0 .and. scaden > biglsq)) then  ! This is used when verifying RESCUE.
+            !    if (nf <= nresc) then
+            !        info = DAMAGING_ROUNDING
+            !        exit
+            !    else
+            !        ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more
+            !        ! expensive than the previous shift, because new matrices BMAT and ZMAT are
+            !        ! generated from scratch, which may include the replacement of interpolation
+            !        ! points whose positions seem to be causing near linear dependence in the
+            !        ! interpolation conditions. Therefore RESCUE is called only if rounding errors
+            !        ! have reduced by at least a factor of TWO the denominator of the formula for
+            !        ! updating the H matrix. It provides a useful safeguard, but is not invoked in
+            !        ! most applications of BOBYQA.
 
-                    !!------------------------------------------------------------------------------!
-                    !! Zaikun 2019-08-29: See the comments above line number 60. STILL NECESSARY?
-                    !if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
-                    !    info = NAN_MODEL
-                    !    exit
-                    !end if
-                    !if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-                    !    info = NAN_MODEL
-                    !    exit
-                    !end if
-                    !!------------------------------------------------------------------------------!
+            !        !!------------------------------------------------------------------------------!
+            !        !! Zaikun 2019-08-29: See the comments above line number 60. STILL NECESSARY?
+            !        !if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then
+            !        !    info = NAN_MODEL
+            !        !    exit
+            !        !end if
+            !        !if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+            !        !    info = NAN_MODEL
+            !        !    exit
+            !        !end if
+            !        !!------------------------------------------------------------------------------!
 
-                    nfsav = nf
-                    call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
-                        & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
-                    if (subinfo /= INFO_DFT) then
-                        info = subinfo
-                        exit
-                    end if
+            !        nfsav = nf
+            !        call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, &
+            !            & fhist, fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
+            !        if (subinfo /= INFO_DFT) then
+            !            info = subinfo
+            !            exit
+            !        end if
 
 
-!                    ! XOPT is updated now in case the loop exits. (?)
-!                    ! Update GOPT?
-!                    if (fopt <= ftarget) then
-!                        info = FTARGET_ACHIEVED
-!                        exit
-!                    end if
-!                    if (nf >= maxfun) then
-!                        info = MAXFUN_REACHED
-!                        exit
-!                    end if
-                    nresc = nf
-                    nfsav = max(nfsav, nf)
-                    cycle
-                end if
-            end if
+!!                    ! XOPT is updated now in case the loop exits. (?)
+!!                    ! Update GOPT?
+!!                    if (fopt <= ftarget) then
+!!                        info = FTARGET_ACHIEVED
+!!                        exit
+!!                    end if
+!!                    if (nf >= maxfun) then
+!!                        info = MAXFUN_REACHED
+!!                        exit
+!!                    end if
+            !        nresc = nf
+            !        nfsav = max(nfsav, nf)
+            !        cycle
+            !    end if
+            !end if
         end if
 
         ! Put the variables for the next calculation of the objective function in XNEW, with any
@@ -578,99 +578,114 @@ do while (.true.)
 
             ! Recalculate KNEW and DENOM if the new F is less than FOPT.
             if (f < fopt) then
-                ksav = knew
-                densav = denom
-                hdiag = sum(zmat**2, dim=2)
-                den = hdiag * beta + vlag(1:npt)**2
                 distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
-                !weight = max(ONE, (distsq / delta**2)**2)
-                weight = max(ONE, (distsq / delta**2))**2
-                score = weight * den
+            else
+                distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+            end if
+            ksav = knew
+            densav = denom
+            vlag = calvlag(kopt, bmat, d, xpt, zmat)
+            beta = calbeta(kopt, bmat, d, xpt, zmat)
+            hdiag = sum(zmat**2, dim=2)
+            den = hdiag * beta + vlag(1:npt)**2
+            !weight = max(ONE, (distsq / delta**2)**2)
+            weight = max(ONE, (distsq / delta**2))**3
+            score = weight * den
+            if (.not. f < fopt) then
+                score(kopt) = -ONE
+            end if
 
-                knew = 0
-                scaden = ZERO
-                if (any(score > 0)) then
-                    ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we
-                    ! exclude such K.
-                    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-                    scaden = score(knew)
+            knew = 0
+            scaden = ZERO
+            if (any(score > 0)) then
+                ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DEN to be big. So we
+                ! exclude such K.
+                knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+                scaden = score(knew)
                     !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
-                    denom = den(knew)
-                end if
+                denom = den(knew)
+            end if
 
-                wlagsq = weight * vlag(1:npt)**2
-                biglsq = ZERO
-                if (any(wlagsq > 0)) then
-                    biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
+            if (knew == 0 .and. f < fopt) then
+                knew = int(maxloc(distsq, dim=1), IK)
+                denom = den(knew)
+            end if
+
+            wlagsq = weight * vlag(1:npt)**2
+            biglsq = ZERO
+            if (any(wlagsq > 0)) then
+                biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
                     !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
-                end if
+            end if
 
-                ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet prefer to
-                ! require KNEW > 0 explicitly.
-                if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-                    knew = ksav
-                    denom = densav
-                end if
+            ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet prefer to
+            ! require KNEW > 0 explicitly.
+            if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
+                !knew = ksav
+                !denom = densav
             end if
         end if
+        !end if
 
-        ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
-        ! the second derivative terms of the model.
-        !------------------------------------------------------------------------------------------!
-        call assert(knew >= 1, 'KNEW >= 1', srname)
-        call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
-        call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
-        call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
-        !--------------------------------------------------------------------------------------------------!
-        call updateh(knew, beta, vlag, bmat, zmat)
+        if (knew > 0) then
+            ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
+            ! the second derivative terms of the model.
+            !------------------------------------------------------------------------------------------!
+            call assert(knew >= 1, 'KNEW >= 1', srname)
+            call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
+            call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
+            call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
+            !--------------------------------------------------------------------------------------------------!
+            call updateh(knew, beta, vlag, bmat, zmat)
 
-        call r1update(hq, pq(knew), xpt(:, knew))
-        pq(knew) = ZERO
-        pqinc = matprod(zmat, diff * zmat(knew, :))
-        pq = pq + pqinc
-        ! Alternatives:
+            call r1update(hq, pq(knew), xpt(:, knew))
+            pq(knew) = ZERO
+            pqinc = matprod(zmat, diff * zmat(knew, :))
+            pq = pq + pqinc
+            ! Alternatives:
         !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
         !!PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
 
-        ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
-        ! caused by the updating of the quadratic model.
-        fval(knew) = f
-        xpt(:, knew) = xnew
-        gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)
+            ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
+            ! caused by the updating of the quadratic model.
+            fval(knew) = f
+            xpt(:, knew) = xnew
+            gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)
 
-        ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
-        if (f < fopt) then
-            kopt = knew
-            xopt = xnew
-            gopt = gopt + hess_mul(d, xpt, pq, hq)
-        end if
+            ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
+            if (f < fopt) then
+                kopt = knew
+                xopt = xnew
+                gopt = gopt + hess_mul(d, xpt, pq, hq)
+            end if
 
-        ! Calculate the parameters of the least Frobenius norm interpolant to the current data, the
-        ! gradient of this interpolant at XOPT being put into VLAG(NPT+I), I=1,2,...,N.
-        if (ntrits > 0) then
-            fshift = fval - fval(kopt)
-            pqalt = matprod(zmat, matprod(fshift, zmat))
-            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+            ! Calculate the parameters of the least Frobenius norm interpolant to the current data, the
+            ! gradient of this interpolant at XOPT being put into VLAG(NPT+I), I=1,2,...,N.
+            if (ntrits > 0) then
+                fshift = fval - fval(kopt)
+                pqalt = matprod(zmat, matprod(fshift, zmat))
+                galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
 
-            pgopt = gopt
-            pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))
-            pgopt(trueloc(xopt <= sl)) = min(ZERO, gopt(trueloc(xopt <= sl)))
-            gqsq = sum(pgopt**2)
+                pgopt = gopt
+                pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))
+                pgopt(trueloc(xopt <= sl)) = min(ZERO, gopt(trueloc(xopt <= sl)))
+                gqsq = sum(pgopt**2)
 
-            pgalt = galt
-            pgalt(trueloc(xopt >= su)) = max(ZERO, galt(trueloc(xopt >= su)))
-            pgalt(trueloc(xopt <= sl)) = min(ZERO, galt(trueloc(xopt <= sl)))
-            gisq = sum(pgalt**2)
+                pgalt = galt
+                pgalt(trueloc(xopt >= su)) = max(ZERO, galt(trueloc(xopt >= su)))
+                pgalt(trueloc(xopt <= sl)) = min(ZERO, galt(trueloc(xopt <= sl)))
+                gisq = sum(pgalt**2)
 
-            ! Test whether to replace the new quadratic model by the least Frobenius norm interpolant,
-            ! making the replacement if the test is satisfied.
-            itest = itest + 1
-            if (gqsq < TEN * gisq) itest = 0
-            if (itest >= 3) then
-                gopt = galt
-                pq = pqalt
-                hq = ZERO
-                itest = 0
+                ! Test whether to replace the new quadratic model by the least Frobenius norm interpolant,
+                ! making the replacement if the test is satisfied.
+                itest = itest + 1
+                if (gqsq < TEN * gisq) itest = 0
+                if (itest >= 3) then
+                    gopt = galt
+                    pq = pqalt
+                    hq = ZERO
+                    itest = 0
+                end if
             end if
         end if
 
@@ -678,7 +693,8 @@ do while (.true.)
         ! trust region calculation. The case NTRITS=0 occurs when the new interpolation point was
         ! reached by an alternative step.
         if (ntrits == 0) cycle
-        if (f <= fopt - TENTH * qred) cycle
+        !if (f <= fopt - TENTH * qred) cycle
+        if (knew > 0 .and. f <= fopt - TENTH * qred) cycle
 
         ! Alternatively, find out if the interpolation points are close enough to the best point so far.
         dsquare = max((TWO * delta)**2, (TEN * rho)**2)

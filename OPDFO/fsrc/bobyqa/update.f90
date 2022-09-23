@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 24, 2022 PM12:32:06
+! Last Modified: Friday, September 23, 2022 PM06:38:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ subroutine updateh(knew, beta, vlag_in, bmat, zmat)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: linalg_mod, only : planerot, matprod, outprod, symmetrize, issymmetric
 implicit none
 
@@ -100,7 +100,8 @@ tau = vlag(knew)
 ! In theory, DENOM can also be calculated after ZMAT is rotated below. However, this worsened the
 ! performance of BOBYQA in a test on 20220413.
 denom = sum(zmat(knew, :)**2) * beta + tau**2
-call assert(denom > 0, 'DENOM > 0', srname)  ! BOBYQA ensures DENOM to be positive.
+!call assert(denom > 0, 'DENOM > 0', srname)  ! BOBYQA ensures DENOM to be positive.
+call wassert(denom > 0, 'DENOM > 0', srname)  ! BOBYQA ensures DENOM to be positive.
 vlag(knew) = vlag(knew) - ONE
 
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT. After this, ZMAT(KNEW, :) contains

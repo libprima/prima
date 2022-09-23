@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 23, 2022 PM05:47:17
+! Last Modified: Friday, September 23, 2022 PM06:18:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -263,7 +263,6 @@ do while (.true.)
         end if
         improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
     else  ! D is long enough to invoke a function evaluation.
-
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dsq) then
             sl = min(sl - xopt, ZERO)
@@ -538,8 +537,8 @@ do while (.true.)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             denom = alpha * beta + vlag(knew)**2
 
-            rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
-            !rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
+            !rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
+            rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
             if (.not. rescue_geo) then
                 ! Put the variables for the next calculation of the objective function in XNEW, with any
                 ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
