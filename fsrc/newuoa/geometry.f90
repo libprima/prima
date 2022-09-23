@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, September 23, 2022 AM10:34:46
+! Last Modified: Friday, September 23, 2022 PM05:53:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,12 +104,19 @@ end if
 
 denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
 weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3
+!--------------------------------------------------------------------------------------------------!
+! Other possible definitions of WEIGHT.
+!weight = max(ONE, distsq / rho**2)**3  ! This is OK, but not better than the above.
+!weight = max(ONE, distsq / delta**2)**3  ! Code from BOBYQA. It does not work as well as the above.
+!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! This works poorly.
+!--------------------------------------------------------------------------------------------------!
 score = weight * denabs
 ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
 if (.not. tr_success) then
     score(kopt) = -ONE
 end if
 
+! Changing the following IF to `IF (ANY(SCORE > 0)) THEN` does not lead to a better performance.
 if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
     ! See (7.5) of the NEWUOA paper for the definition of KNEW in this case.
     ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.

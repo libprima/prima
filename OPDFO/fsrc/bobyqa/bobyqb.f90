@@ -427,7 +427,6 @@ do while (.true.)
             hdiag = sum(zmat**2, dim=2)
             den = hdiag * beta + vlag(1:npt)**2
             distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-            !weight = max(ONE, (distsq / delta**2)**2)
             weight = max(ONE, (distsq / delta**2))**2
 
             score = weight * den
