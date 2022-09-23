@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, June 03, 2022 PM05:29:23
+! Last Modified: Friday, September 23, 2022 AM10:34:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,7 +103,7 @@ else
 end if
 
 denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
-weight = max(distsq / max(TENTH * delta, rho)**2, ONE)**3
+weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3
 score = weight * denabs
 ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
 if (.not. tr_success) then
