@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 22, 2022 PM03:19:00
+! Last Modified: Friday, September 23, 2022 AM09:38:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -187,6 +187,7 @@ if (subinfo /= INFO_DFT) then
     call rangehist(nf, xhist, fhist)
     return
 end if
+!write (16, *) nf, kopt, fopt
 
 ! Initialize GOPT, HQ, and PQ.
 call initq(ij, fval, xpt, gopt, hq, pq)
@@ -272,156 +273,174 @@ do while (.true.)
             xbase = min(max(xl, xbase), xu)
         end if
 
-        ! Calculate VLAG and BETA for the current choice of D.
+        !! Calculate VLAG and BETA for the current choice of D.
+        !hdiag = sum(zmat**2, dim=2)
+        !vlag = calvlag(kopt, bmat, d, xpt, zmat)
+        !beta = calbeta(kopt, bmat, d, xpt, zmat)
+        !den = hdiag * beta + vlag(1:npt)**2
+        !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+        !weight = max(ONE, (distsq / delta**2)**2)  ! It differs from (6.1) in the BOBYQA paper.
+
+        !! Find the index of the interpolation point to be replaced by the trust-region trial point.
+        !! The strategy here differs from that of NEWUOA: KNEW is decided before the function
+        !! evaluation, and it will be recalculated after the function evaluation if the new function
+        !! value is lower than the current FOPT; in NEWUOA, KNEW is calculated only after function
+        !! evaluation, taking the new function value into consideration (e.g., when evaluating
+        !! DISTSQ). The purpose of finding KNEW before the function evaluation is to decide whether
+        !! to call RESCUE. Is there a better strategy? What about follow the scheme of NEWUOA, and
+        !! call RESCUE if DENOM turns out too small (not more than SQRT(EPS)*max(ONE, VLAG(KNEW)))?
+        !! Note that the condition for calling RESCUE must be very stringent, so that the newly
+        !! evaluated function value is included in the next interpolation system as much as possible.
+        !score = weight * den
+        !score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE
+        !knew = 0
+        !scaden = ZERO
+        !if (any(score > 0)) then
+        !    ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
+        !    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+        !    scaden = score(knew)
+        !    !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
+        !    denom = den(knew)
+        !end if
+
+        !wlagsq = weight * vlag(1:npt)**2
+        !wlagsq(kopt) = -ONE  ! Skip KOPT when taking the maximum of WLAGSQ
+        !biglsq = ZERO
+        !if (any(wlagsq > 0)) then
+        !    biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
+        !        !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
+        !end if
+
+        !!rescue_geo = .not. (scaden > HALF * biglsq)  ! This is the normal condition.
+        !rescue_geo = .not. (scaden > biglsq)  ! This is used when verifying RESCUE.
+        !improve_geo = .not. rescue_geo
+        !if (.not. rescue_geo) then
+        ! Put the variables for the next calculation of the objective function in XNEW, with any
+        ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
+        x = min(max(xl, xbase + xnew), xu)
+        x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
+        x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
+        if (nf >= maxfun) then
+            info = MAXFUN_REACHED
+            exit
+        end if
+        nf = nf + 1
+        if (is_nan(abs(sum(x)))) then
+            f = sum(x)  ! Set F to NaN
+            if (nf == 1) then
+                fopt = f
+                xopt = ZERO
+            end if
+            info = NAN_INF_X
+            exit
+        end if
+
+        ! Calculate the value of the objective function at XBASE+XNEW.
+        call evaluate(calfun, x, f)
+        call savehist(nf, x, xhist, f, fhist)
+        !write (16, *) 'tr ', nf, f, fopt, kopt
+
+        if (is_nan(f) .or. is_posinf(f)) then
+            if (nf == 1) then
+                fopt = f
+                xopt = ZERO
+            end if
+            info = NAN_INF_F
+            exit
+        end if
+        if (f <= ftarget) then
+            info = FTARGET_ACHIEVED
+            exit
+        end if
+
+        ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the
+        ! error of this prediction.
+        fopt = fval(kopt)
+        qred = -quadinc(d, xpt, gopt, pq, hq)
+        diff = f - fopt + qred
+        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
+        ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is
+        ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
+        ! of the BOBYQA paper and the elaboration below it. Is this a bug? Similar thing happened
+        ! in NEWUOA, but we recognized it as a bug and fixed it.
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+
+        ! Pick the next value of DELTA after a trust region step.
+        if (.not. (qred > ZERO)) then
+            !----------------------------------------------------------------------------------!
+            ! Zaikun 20220405: LINCOA improves the model in this case. Try the same here?
+            !----------------------------------------------------------------------------------!
+            info = TRSUBP_FAILED
+            exit
+        end if
+        ratio = (fopt - f) / qred
+        if (ratio <= TENTH) then
+            delta = min(HALF * delta, dnorm)
+        else if (ratio <= 0.7_RP) then
+            delta = max(HALF * delta, dnorm)
+        else
+            delta = max(HALF * delta, dnorm + dnorm)
+        end if
+        if (delta <= 1.5_RP * rho) delta = rho
+        ! Zaikun 20220720: On the top of page 29 of the BOBYQA paper, Powell wrote: If the k-th
+        ! iteration is of "alternative" type, then the (k+1)-th iteration always calculates a
+        ! "trust region" step with Delta_{k+1} = Delta_k and rho_{k+1} = rho_k. This is true for
+        ! rho, but isn't it a typo for Delta? NO. It simply means that the algorithm does not
+        ! update Delta after taking a geometry step. In the BOBYQA paper, the iteration counter
+        ! k is increase by 1 both after a trust region step and after a geometry step.
+
+        ! Recalculate KNEW and DENOM if the new F is less than FOPT.
+        if (f < fopt) then
+            distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
+        else
+            distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+        end if
+        !ksav = knew
+        !densav = denom
+        hdiag = sum(zmat**2, dim=2)
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         beta = calbeta(kopt, bmat, d, xpt, zmat)
-        hdiag = sum(zmat**2, dim=2)
         den = hdiag * beta + vlag(1:npt)**2
-        distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        weight = max(ONE, (distsq / delta**2)**2)  ! It differs from (6.1) in the BOBYQA paper.
-
-        ! Find the index of the interpolation point to be replaced by the trust-region trial point.
-        ! The strategy here differs from that of NEWUOA: KNEW is decided before the function
-        ! evaluation, and it will be recalculated after the function evaluation if the new function
-        ! value is lower than the current FOPT; in NEWUOA, KNEW is calculated only after function
-        ! evaluation, taking the new function value into consideration (e.g., when evaluating
-        ! DISTSQ). The purpose of finding KNEW before the function evaluation is to decide whether
-        ! to call RESCUE. Is there a better strategy? What about follow the scheme of NEWUOA, and
-        ! call RESCUE if DENOM turns out too small (not more than SQRT(EPS)*max(ONE, VLAG(KNEW)))?
-        ! Note that the condition for calling RESCUE must be very stringent, so that the newly
-        ! evaluated function value is included in the next interpolation system as much as possible.
+        !distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
+        weight = max(ONE, (distsq / delta**2)**2)
         score = weight * den
-        score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE
+
+        if (.not. (f < fopt)) then
+            score(kopt) = -ONE
+        end if
+
         knew = 0
         scaden = ZERO
         if (any(score > 0)) then
             ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
             knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
             scaden = score(knew)
-            !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
+                    !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
             denom = den(knew)
         end if
+        !write (16, *) 'knew 1', knew
+
+        if (knew == 0 .and. f < fopt) then
+            knew = maxloc(distsq, dim=1)
+        end if
+        !write (16, *) 'knew 2', knew
 
         wlagsq = weight * vlag(1:npt)**2
-        wlagsq(kopt) = -ONE  ! Skip KOPT when taking the maximum of WLAGSQ
         biglsq = ZERO
         if (any(wlagsq > 0)) then
             biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
-                !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
+                    !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
         end if
 
-        !rescue_geo = .not. (scaden > HALF * biglsq)  ! This is the normal condition.
-        rescue_geo = .not. (scaden > biglsq)  ! This is used when verifying RESCUE.
-        improve_geo = .not. rescue_geo
-        if (.not. rescue_geo) then
-            ! Put the variables for the next calculation of the objective function in XNEW, with any
-            ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
-            x = min(max(xl, xbase + xnew), xu)
-            x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
-            x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
-            if (nf >= maxfun) then
-                info = MAXFUN_REACHED
-                exit
-            end if
-            nf = nf + 1
-            if (is_nan(abs(sum(x)))) then
-                f = sum(x)  ! Set F to NaN
-                if (nf == 1) then
-                    fopt = f
-                    xopt = ZERO
-                end if
-                info = NAN_INF_X
-                exit
-            end if
+                !! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet prefer to
+                !! require KNEW > 0 explicitly.
+        !if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
+        !    knew = ksav
+        !    denom = densav
+        !end if
+        !end if
 
-            ! Calculate the value of the objective function at XBASE+XNEW.
-            call evaluate(calfun, x, f)
-            call savehist(nf, x, xhist, f, fhist)
-
-            if (is_nan(f) .or. is_posinf(f)) then
-                if (nf == 1) then
-                    fopt = f
-                    xopt = ZERO
-                end if
-                info = NAN_INF_F
-                exit
-            end if
-            if (f <= ftarget) then
-                info = FTARGET_ACHIEVED
-                exit
-            end if
-
-            ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the
-            ! error of this prediction.
-            fopt = fval(kopt)
-            qred = -quadinc(d, xpt, gopt, pq, hq)
-            diff = f - fopt + qred
-            moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
-            ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is
-            ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
-            ! of the BOBYQA paper and the elaboration below it. Is this a bug? Similar thing happened
-            ! in NEWUOA, but we recognized it as a bug and fixed it.
-            dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-
-            ! Pick the next value of DELTA after a trust region step.
-            if (.not. (qred > ZERO)) then
-                !----------------------------------------------------------------------------------!
-                ! Zaikun 20220405: LINCOA improves the model in this case. Try the same here?
-                !----------------------------------------------------------------------------------!
-                info = TRSUBP_FAILED
-                exit
-            end if
-            ratio = (fopt - f) / qred
-            if (ratio <= TENTH) then
-                delta = min(HALF * delta, dnorm)
-            else if (ratio <= 0.7_RP) then
-                delta = max(HALF * delta, dnorm)
-            else
-                delta = max(HALF * delta, dnorm + dnorm)
-            end if
-            if (delta <= 1.5_RP * rho) delta = rho
-            ! Zaikun 20220720: On the top of page 29 of the BOBYQA paper, Powell wrote: If the k-th
-            ! iteration is of "alternative" type, then the (k+1)-th iteration always calculates a
-            ! "trust region" step with Delta_{k+1} = Delta_k and rho_{k+1} = rho_k. This is true for
-            ! rho, but isn't it a typo for Delta? NO. It simply means that the algorithm does not
-            ! update Delta after taking a geometry step. In the BOBYQA paper, the iteration counter
-            ! k is increase by 1 both after a trust region step and after a geometry step.
-
-            ! Recalculate KNEW and DENOM if the new F is less than FOPT.
-            if (f < fopt) then
-                ksav = knew
-                densav = denom
-                hdiag = sum(zmat**2, dim=2)
-                den = hdiag * beta + vlag(1:npt)**2
-                distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
-                weight = max(ONE, (distsq / delta**2)**2)
-                score = weight * den
-
-                knew = 0
-                scaden = ZERO
-                if (any(score > 0)) then
-                    ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
-                    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-                    scaden = score(knew)
-                    !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
-                    denom = den(knew)
-                end if
-
-                wlagsq = weight * vlag(1:npt)**2
-                biglsq = ZERO
-                if (any(wlagsq > 0)) then
-                    biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
-                    !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
-                end if
-
-                ! KNEW > 0 is implied by SCADEN > HALF*BIGLSQ (but NOT SCADEN >= ...), yet prefer to
-                ! require KNEW > 0 explicitly.
-                if (.not. (knew > 0 .and. scaden > HALF * biglsq)) then
-                    knew = ksav
-                    denom = densav
-                end if
-            end if
-
+        if (knew > 0) then
             ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
             ! the second derivative terms of the model.
             !------------------------------------------------------------------------------------------!
@@ -478,14 +497,17 @@ do while (.true.)
                 hq = ZERO
                 itest = 0
             end if
-
-            ! If a trust region step has provided a sufficient decrease in F, then branch for another
-            ! trust region calculation.
-            if (f <= fopt - TENTH * qred) cycle
-
-            ! Alternatively, find out if the interpolation points are close enough to the best point so far.
-            dsquare = max((TWO * delta)**2, (TEN * rho)**2)
         end if
+
+        ! If a trust region step has provided a sufficient decrease in F, then branch for another
+        ! trust region calculation.
+        !if (f <= fopt - TENTH * qred) cycle
+        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred)
+        if (.not. improve_geo) cycle
+
+        ! Alternatively, find out if the interpolation points are close enough to the best point so far.
+        dsquare = max((TWO * delta)**2, (TEN * rho)**2)
+        !end if
     end if
 
     if (improve_geo) then
@@ -520,8 +542,8 @@ do while (.true.)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             denom = alpha * beta + vlag(knew)**2
 
-            !rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
-            rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
+            rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
+            !rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
             if (.not. rescue_geo) then
                 ! Put the variables for the next calculation of the objective function in XNEW, with any
                 ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
@@ -546,6 +568,7 @@ do while (.true.)
                 ! Calculate the value of the objective function at XBASE+XNEW.
                 call evaluate(calfun, x, f)
                 call savehist(nf, x, xhist, f, fhist)
+                !write (16, *) 'geo', nf, f, fopt, kopt
 
                 if (is_nan(f) .or. is_posinf(f)) then
                     if (nf == 1) then
@@ -607,14 +630,15 @@ do while (.true.)
             cycle
         end if
     end if
+    !write (16, *) nf, kopt, fopt
 
-    ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-    ! 1. RESCUE is called only if rounding errors have reduced by at least a factor of TWO the
-    ! denominator of the formula for updating the H matrix. It provides a useful safeguard, but is
-    ! not invoked in most applications of BOBYQA.
-    ! 2. In Powell's code, if RESCUE is called after GEO_STEP, but RESCUE invokes no function
-    ! evaluation (so that XPT is not updated, but the model and [BMAT, ZMAT] are recalculated),
-    ! then GEO_STEP is called again immediately. Here, however, we always call TRSTEP after RESCUE.
+! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
+! 1. RESCUE is called only if rounding errors have reduced by at least a factor of TWO the
+! denominator of the formula for updating the H matrix. It provides a useful safeguard, but is
+! not invoked in most applications of BOBYQA.
+! 2. In Powell's code, if RESCUE is called after GEO_STEP, but RESCUE invokes no function
+! evaluation (so that XPT is not updated, but the model and [BMAT, ZMAT] are recalculated),
+! then GEO_STEP is called again immediately. Here, however, we always call TRSTEP after RESCUE.
     if (rescue_geo) then
         if (nf <= nfresc) then
             info = DAMAGING_ROUNDING
@@ -632,7 +656,7 @@ do while (.true.)
         cycle
     end if
 
-    ! The calculations with the current value of RHO are complete. Update RHO and DELTA.
+! The calculations with the current value of RHO are complete. Update RHO and DELTA.
     if (rho <= rhoend) then
         info = SMALL_TR_RADIUS
         exit
