@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 23, 2022 PM02:49:39
+! Last Modified: Friday, September 23, 2022 PM05:47:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -124,15 +124,15 @@ real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
 real(RP) :: delbar, alpha, bdtest(size(x)), beta, &
 &        biglsq, crvmin, curv(size(x)), delta,  &
-&        den(npt), denom, densav, diff, &
+&        den(npt), denom, diff, &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbd, fopt,        &
 &        gisq, gqsq, hdiag(npt),      &
-&        ratio, rho, rhosq, scaden, qred, weight(npt), pqinc(npt)
+&        ratio, rho, rhosq, qred, weight(npt), pqinc(npt)
 real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt)
-integer(IK) :: itest, knew, kopt, ksav, nfresc
+integer(IK) :: itest, knew, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 logical :: shortd, improve_geo, rescue_geo, tr_success
 
@@ -400,10 +400,19 @@ do while (.true.)
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         beta = calbeta(kopt, bmat, d, xpt, zmat)
         den = hdiag * beta + vlag(1:npt)**2
-        !weight = max(ONE, distsq / delta**2)  ! Suggested by (6.1) of the BOBYQA paper. Works poorly!
-        !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code.
-        weight = max(ONE, distsq / delta**2)**3  ! This works better than power 2.
-        !weight = max(ONE, distsq / delta**2)**4  ! This works better and power 1 but not power 2.
+
+        weight = max(ONE, distsq / delta**2)**3  ! This works better than Powell's code.
+        !------------------------------------------------------------------------------------------!
+        ! Other possible definitions of WEIGHT.
+        !weight = distsq**4  ! This works well.
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Code from NEWUOA. OK.
+        !weight = max(ONE, distsq / rho**2)**3  ! It performs the same as the code from NEWUOA.
+        !weight = distsq**3  ! Similar to the NEWUOA code. Worse than MAX(ONE, DISTSQ/DELTA**2)**3.
+        !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.
+        !weight = max(ONE, distsq / delta**2)**4  ! OK, but not much better than Powell's code
+        !weight = max(ONE, distsq / delta**2)  ! As per (6.1) of the BOBYQA paper. It works poorly!
+        !------------------------------------------------------------------------------------------!
+
         score = weight * den
 
         ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
