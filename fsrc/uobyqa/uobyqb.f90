@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 24, 2022 PM01:12:00
+! Last Modified: Saturday, September 24, 2022 PM01:14:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -285,12 +285,12 @@ do while (.true.)
         !weight = max(ONE, distsq / rho**2)**2  ! Better than 1.5.
         !weight = max(ONE, distsq / delta**2)**2  ! Not better than RHO**2.
         !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! Almost the same as RHO**2.
-        weight = distsq**2  ! Not better than MAX(ONE, DISTSQ/..)**2
+        !weight = distsq**2  ! Not better than MAX(ONE, DISTSQ/..)**2
         !weight = max(ONE, distsq / rho**2)*3  ! Better than 2.
         !weight = max(ONE, distsq / delta**2)**3  ! Similar to RHO**2; not better than it.
         !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! The same as RHO**2.
         !weight = distsq**3  ! Not better than MAX(ONE, DISTSQ/..)**3
-        !weight = max(ONE, distsq / rho**2)**4  ! Better than 3.
+        weight = max(ONE, distsq / rho**2)**4  ! Better than 3.
         !weight = max(ONE, distsq / delta**2)**4  ! Similar to RHO**2; not better than it.
         !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! The same as RHO**2.
         !weight = distsq**4  ! Not better than MAX(ONE, DISTSQ/..)**4
@@ -303,8 +303,8 @@ do while (.true.)
             score(kopt) = -ONE
         end if
 
-        !if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
-        if (any(score > 0)) then
+        ! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
+        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
             ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
             ! exclude such K.
             knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
