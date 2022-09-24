@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 24, 2022 AM11:22:36
+! Last Modified: Saturday, September 24, 2022 AM11:47:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -284,7 +284,9 @@ do while (.true.)
         !weight = max(ONE, distsq / rho**2)**1.5_RP  ! Powell's code
         !weight = max(ONE, distsq / rho**2)**2  ! Better than 1.5
         !weight = max(ONE, distsq / rho**2)**3  ! Better than 1.5
-        weight = max(ONE, distsq / rho**2)**4
+        !weight = max(ONE, distsq / rho**2)**4  ! Better than 1.5
+        !weight = max(ONE, distsq / delta**2)**4  ! Similar to RHO**2; not better than it.
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! The same as RHO**2.
         score = weight * abs(vlag)
 
         tr_success = (f < fsave)
