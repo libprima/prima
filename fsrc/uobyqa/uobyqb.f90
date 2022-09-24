@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 24, 2022 AM11:11:30
+! Last Modified: Saturday, September 24, 2022 AM11:18:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -281,8 +281,9 @@ do while (.true.)
         ! Set KNEW to the index of the next interpolation point to be deleted.
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         ! TODO: Test other definitions of WEIGHT. See BOBYQA.
-        !weight = max(ONE, distsq / rho**2)**1.5_RP
-        weight = max(ONE, distsq / rho**2)**2
+        !weight = max(ONE, distsq / rho**2)**1.5_RP  ! Powell's code
+        !weight = max(ONE, distsq / rho**2)**2  ! Better than 1.5
+        weight = max(ONE, distsq / rho**2)**3
         score = weight * abs(vlag)
 
         tr_success = (f < fsave)
