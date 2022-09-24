@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 24, 2022 PM01:19:00
+! Last Modified: Saturday, September 24, 2022 PM02:46:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -170,8 +170,6 @@ sixthm = ZERO
 rho = rhobeg
 delta = rho
 shortd = .false.
-geo_step = .false.
-improve_geo = .false.
 reduce_rho = .false.
 trtol = 0.01_RP
 
@@ -280,22 +278,25 @@ do while (.true.)
 
         ! Set KNEW to the index of the next interpolation point to be deleted.
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
-        ! TODO: Test other definitions of WEIGHT. See BOBYQA.
-        !weight = max(ONE, distsq / rho**2)**1.5_RP  ! Powell's code
-        !weight = max(ONE, distsq / rho**2)**2  ! Better than 1.5.
-        !weight = max(ONE, distsq / delta**2)**2  ! Not better than RHO**2.
-        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! Almost the same as RHO**2.
-        !weight = distsq**2  ! Not better than MAX(ONE, DISTSQ/..)**2
-        !weight = max(ONE, distsq / rho**2)*3  ! Better than 2.
-        !weight = max(ONE, distsq / delta**2)**3  ! Similar to RHO**2; not better than it.
-        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! The same as RHO**2.
-        !weight = distsq**3  ! Not better than MAX(ONE, DISTSQ/..)**3
-        !weight = max(ONE, distsq / rho**2)**4  ! Better than 3.
-        !weight = max(ONE, distsq / delta**2)**4  ! Similar to RHO**2; not better than it.
-        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! The same as RHO**2.
-        !weight = distsq**4  ! Not better than MAX(ONE, DISTSQ/..)**4
+        weight = max(ONE, distsq / rho**2)**4
 
-        weight = max(ONE, distsq / rho**2)**3.5_RP
+        !------------------------------------------------------------------------------------------!
+        ! Other possible definitions of WEIGHT.
+        !weight = max(ONE, distsq / rho**2)**3.5_RP ! This works better than power 4 without noise.
+        !weight = max(ONE, distsq / rho**2)**1.5_RP  ! Powell's origin code: power 1.5.
+        !weight = max(ONE, distsq / rho**2)**2  ! Better than power 1.5.
+        !weight = max(ONE, distsq / delta**2)**2  ! Not better than DISTSQ/RHO**2.
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! The same as DISTSQ/RHO**2.
+        !weight = distsq**2  ! Not better than MAX(ONE, DISTSQ/RHO**2)**2
+        !weight = max(ONE, distsq / rho**2)*3  ! Better than power 2.
+        !weight = max(ONE, distsq / delta**2)**3  ! Similar to DISTSQ/RHO**2; not better than it.
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! The same as DISTSQ/RHO**2.
+        !weight = distsq**3  ! Not better than MAX(ONE, DISTSQ/RHO**2)**3
+        !weight = max(ONE, distsq / rho**2)**4  ! Better than power 3.
+        !weight = max(ONE, distsq / delta**2)**4  ! Similar to DISTSQ/RHO**2; not better than it.
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! The same as DISTSQ/RHO**2.
+        !weight = distsq**4  ! Not better than MAX(ONE, DISTSQ/RHO**2)**4
+        !------------------------------------------------------------------------------------------!
 
         score = weight * abs(vlag)
 
@@ -396,7 +397,6 @@ do while (.true.)
 
         reduce_rho = (reduce_rho .or. dnorm <= rho)
         if (geo_step) then
-            geo_step = .false.
             ! Calculate the next value of the objective function.
             xnew = xopt + d
             x = xbase + xnew
