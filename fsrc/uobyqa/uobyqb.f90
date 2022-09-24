@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 24, 2022 PM12:16:41
+! Last Modified: Saturday, September 24, 2022 PM12:25:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -282,8 +282,8 @@ do while (.true.)
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         ! TODO: Test other definitions of WEIGHT. See BOBYQA.
         !weight = max(ONE, distsq / rho**2)**1.5_RP  ! Powell's code
-        !weight = max(ONE, distsq / rho**2)**2  ! Better than 1.5.
-        weight = max(ONE, distsq / delta**2)**2  ! Not better than RHO**2.
+        weight = max(ONE, distsq / rho**2)**2  ! Better than 1.5.
+        !weight = max(ONE, distsq / delta**2)**2  ! Not better than RHO**2.
         !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! Almost the same as RHO**2.
         !weight = max(ONE, distsq / rho**2)**3  ! Better than 2.
         !weight = max(ONE, distsq / delta**2)**3  ! Similar to RHO**2; not better than it.
@@ -300,7 +300,8 @@ do while (.true.)
             score(kopt) = -ONE
         end if
 
-        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
+        !if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
+        if (any(score > 0)) then
             ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
             ! exclude such K.
             knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
