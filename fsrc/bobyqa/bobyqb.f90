@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 23, 2022 PM06:18:05
+! Last Modified: Saturday, September 24, 2022 AM06:29:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -123,7 +123,7 @@ real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
 real(RP) :: delbar, alpha, bdtest(size(x)), beta, &
-&        biglsq, crvmin, curv(size(x)), delta,  &
+&        crvmin, curv(size(x)), delta,  &
 &        den(npt), denom, diff, &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbd, fopt,        &
 &        gisq, gqsq, hdiag(npt),      &
@@ -267,53 +267,10 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E3_RP * dsq) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
-            xnew = min(max(sl, xnew - xopt), su)  ! Needed? Will XNEW be used again later?
+            xnew = min(max(sl, xnew - xopt), su)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
             xbase = min(max(xl, xbase), xu)
         end if
-
-        !! Calculate VLAG and BETA for the current choice of D.
-        !hdiag = sum(zmat**2, dim=2)
-        !vlag = calvlag(kopt, bmat, d, xpt, zmat)
-        !beta = calbeta(kopt, bmat, d, xpt, zmat)
-        !den = hdiag * beta + vlag(1:npt)**2
-        !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        !weight = max(ONE, (distsq / delta**2)**2)  ! It differs from (6.1) in the BOBYQA paper.
-
-        !! Find the index of the interpolation point to be replaced by the trust-region trial point.
-        !! The strategy here differs from that of NEWUOA: KNEW is decided before the function
-        !! evaluation, and it will be recalculated after the function evaluation if the new function
-        !! value is lower than the current FOPT; in NEWUOA, KNEW is calculated only after function
-        !! evaluation, taking the new function value into consideration (e.g., when evaluating
-        !! DISTSQ). The purpose of finding KNEW before the function evaluation is to decide whether
-        !! to call RESCUE. Is there a better strategy? What about follow the scheme of NEWUOA, and
-        !! call RESCUE if DENOM turns out too small (not more than SQRT(EPS)*max(ONE, VLAG(KNEW)))?
-        !! Note that the condition for calling RESCUE must be very stringent, so that the newly
-        !! evaluated function value is included in the next interpolation system as much as possible.
-        !score = weight * den
-        !score(kopt) = -ONE  ! Skip KOPT when taking the maximum of SCORE
-        !knew = 0
-        !scaden = ZERO
-        !if (any(score > 0)) then
-        !    ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
-        !    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-        !    scaden = score(knew)
-        !    !!MATLAB: [scaden, knew] = max(score, [], 'omitnan');
-        !    denom = den(knew)
-        !end if
-
-        !wlagsq = weight * vlag(1:npt)**2
-        !wlagsq(kopt) = -ONE  ! Skip KOPT when taking the maximum of WLAGSQ
-        !biglsq = ZERO
-        !if (any(wlagsq > 0)) then
-        !    biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
-        !        !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
-        !end if
-
-        !!rescue_geo = .not. (scaden > HALF * biglsq)  ! This is the normal condition.
-        !rescue_geo = .not. (scaden > biglsq)  ! This is used when verifying RESCUE.
-        !improve_geo = .not. rescue_geo
-        !if (.not. rescue_geo) then
         ! Put the variables for the next calculation of the objective function in XNEW, with any
         ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
         x = min(max(xl, xbase + xnew), xu)
@@ -381,12 +338,6 @@ do while (.true.)
             delta = max(HALF * delta, dnorm + dnorm)
         end if
         if (delta <= 1.5_RP * rho) delta = rho
-        ! Zaikun 20220720: On the top of page 29 of the BOBYQA paper, Powell wrote: If the k-th
-        ! iteration is of "alternative" type, then the (k+1)-th iteration always calculates a
-        ! "trust region" step with Delta_{k+1} = Delta_k and rho_{k+1} = rho_k. This is true for
-        ! rho, but isn't it a typo for Delta? NO. It simply means that the algorithm does not
-        ! update Delta after taking a geometry step. In the BOBYQA paper, the iteration counter
-        ! k is increase by 1 both after a trust region step and after a geometry step.
 
         ! Find the index of the interpolation point to be replaced by the trust-region trial point.
         tr_success = (f < fopt)
@@ -431,17 +382,26 @@ do while (.true.)
             ! consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
             knew = int(maxloc(distsq, dim=1), IK)
         else
-            knew = 0_IK  ! We arrive here when TR_SUCCESS = FALSE and no entry of SCORE exceeds one.
+            knew = 0_IK  ! We arrive here when TR_SUCCESS = FALSE and no entry of SCORE is positive.
         end if
 
+        ! TODO: If KNEW == 0 (particularly if TR_SUCCESS is TRUE) or DEN(KNEW) is small compared to
+        ! BIGLSQ, then invoke RESCUE.
+        !wlagsq = weight * vlag(1:npt)**2
+        !biglsq = ZERO
+        !if (any(wlagsq > 0)) then
+        !    biglsq = maxval(wlagsq, mask=(.not. is_nan(wlagsq)))
+        !    !!MATLAB: biglsq = max(wlagsq, [], 'omitnan');
+        !end if
+
         if (knew > 0) then
-            denom = den(knew)
+            !denom = den(knew)
             ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
             ! the second derivative terms of the model.
             !------------------------------------------------------------------------------------------!
             call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
             call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
-            call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
+            call assert(.not. abs(den(knew) - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
             !--------------------------------------------------------------------------------------------------!
             call updateh(knew, beta, vlag, bmat, zmat)
 
