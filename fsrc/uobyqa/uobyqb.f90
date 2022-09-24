@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 22, 2022 AM10:33:17
+! Last Modified: Saturday, September 24, 2022 AM10:55:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -177,157 +177,29 @@ trtol = 0.01_RP
 
 ! Form the gradient of the quadratic model at the trust region centre.
 do while (.true.)
-    if (.not. geo_step) then
-        knew = 0
-        xopt = xpt(:, kopt)
-        g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
-        h = vec2smat(pq(n + 1:npt - 1))
+    knew = 0
+    xopt = xpt(:, kopt)
+    g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
+    h = vec2smat(pq(n + 1:npt - 1))
 
-        ! Generate the next trust region step and test its length. Set KNEW to -1 if the purpose of
-        ! the next F will be to improve conditioning, and also calculate a lower bound on the
-        ! Hessian term of the model Q.
-        call trstep(delta, g, h, trtol, d, crvmin)
-        dnorm = min(delta, sqrt(sum(d**2)))
-        errtol = -ONE
-        shortd = (dnorm < HALF * rho)
-        improve_geo = shortd
-        if (shortd) then
-            ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
-            delta = TENTH * delta
-            if (delta <= 1.5_RP * rho) then
-                delta = rho
-            end if
-            knew = -1
-            errtol = HALF * crvmin * rho * rho
-            if (nf <= npt + 9) errtol = ZERO
-        else
-            ! Calculate the next value of the objective function.
-            xnew = xopt + d
-            x = xbase + xnew
-
-            if (nf >= maxfun) then
-                info = MAXFUN_REACHED
-                exit
-            end if
-
-            if (is_nan(sum(abs(x)))) then
-                f = sum(x) ! Set F to NaN
-                if (nf == 1) then
-                    fopt = f
-                    xopt = ZERO
-                end if
-                info = NAN_INF_X
-                exit
-            end if
-            call evaluate(calfun, x, f)
-            nf = nf + 1
-            call savehist(nf, x, xhist, f, fhist)
-
-            if (is_nan(f) .or. is_posinf(f)) then
-                if (nf == 1) then
-                    fopt = f
-                    xopt = ZERO
-                end if
-                info = NAN_INF_F
-                exit
-            end if
-
-            if (f <= ftarget) then
-                info = FTARGET_ACHIEVED
-                xopt = xnew
-                fopt = f
-                exit
-            end if
-
-            ! Use the quadratic model to predict the change in F due to the step D, and find the values
-            ! of the Lagrange functions at the new point.
-            qred = -quadinc(pq, d, xopt)
-            vlag = calvlag(pl, d, xopt, kopt)
-
-            ! Update SIXTHM, which is a lower bound on one sixth of the greatest third derivative of F.
-            ! The lower bound is derived from (3.1) of the UOBYQA paper.
-            diff = f - fopt + qred
-            summ = ZERO
-            distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
-            summ = inprod(distsq, sqrt(distsq) * abs(vlag))
-            ! SUMM may become 0 due to rounding, even in double precision. Detected by ifort.
-            if (abs(diff) > 0 .and. summ > 0) then
-                sixthm = max(sixthm, abs(diff) / summ)
-            end if
-
-            ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
-            ! Then branch if D is not a trust region step.
-            fsave = fopt
-            if (f < fopt) then
-                fopt = f
-                xopt = xnew
-            end if
-
-            ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
-            ! Pick the next value of DELTA after a trust region step.
-            if (.not. (qred > 0)) then
-                info = TRSUBP_FAILED
-                exit
-            end if
-            ratio = (fsave - f) / qred
-            if (ratio <= TENTH) then
-                delta = HALF * dnorm
-            else if (ratio <= 0.7_RP) then
-                delta = max(HALF * delta, dnorm)
-            else
-                delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
-            end if
-            if (delta <= 1.5_RP * rho) delta = rho
-
-            ! Set KNEW to the index of the next interpolation point to be deleted.
-            distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-            weight = max(ONE, distsq / rho**2)**1.5_RP
-            score = weight * abs(vlag)
-
-            tr_success = (f < fsave)
-
-            ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
-            if (.not. tr_success) then
-                score(kopt) = -ONE
-            end if
-
-            if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
-                ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
-                ! exclude such K.
-                knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-                !!MATLAB: [~, knew] = max(score, [], 'omitnan');
-                ddknew = distsq(knew)
-            elseif (tr_success) then
-                ! Powell's code does not include the following instructions. With Powell's code,
-                ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
-                knew = int(maxloc(distsq, dim=1), IK)
-            else
-                knew = 0_IK
-            end if
-
-            if (knew > 0) then
-                ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
-                ! the Lagrange functions and the quadratic model.
-                xpt(:, knew) = xnew
-                ! It can happen that VLAG(KNEW) = 0 due to rounding.
-                pl(:, knew) = pl(:, knew) / vlag(knew)
-                plknew = pl(:, knew)
-                pq = pq + diff * plknew
-                pl = pl - outprod(plknew, vlag)
-                pl(:, knew) = plknew
-
-                ! Update KOPT if F is the least calculated value of the objective function. Then branch
-                ! for another trust region calculation. The case KSAVE>0 indicates that a model step has
-                ! just been taken.
-                if (f < fsave) then
-                    kopt = knew
-                end if
-            end if
-            improve_geo = .not. (knew > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
-            if (.not. improve_geo) cycle
+    ! Generate the next trust region step and test its length. Set KNEW to -1 if the purpose of
+    ! the next F will be to improve conditioning, and also calculate a lower bound on the
+    ! Hessian term of the model Q.
+    call trstep(delta, g, h, trtol, d, crvmin)
+    dnorm = min(delta, sqrt(sum(d**2)))
+    errtol = -ONE
+    shortd = (dnorm < HALF * rho)
+    improve_geo = shortd
+    if (shortd) then
+        ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
+        delta = TENTH * delta
+        if (delta <= 1.5_RP * rho) then
+            delta = rho
         end if
+        knew = -1
+        errtol = HALF * crvmin * rho * rho
+        if (nf <= npt + 9) errtol = ZERO
     else
-        geo_step = .false.
         ! Calculate the next value of the objective function.
         xnew = xopt + d
         x = xbase + xnew
@@ -391,23 +263,68 @@ do while (.true.)
         end if
 
         ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
-        ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
-        ! the Lagrange functions and the quadratic model.
-        xpt(:, knew) = xnew
-        ! It can happen that VLAG(KNEW) = 0 due to rounding.
-        pl(:, knew) = pl(:, knew) / vlag(knew)
-        plknew = pl(:, knew)
-        pq = pq + diff * plknew
-        pl = pl - outprod(plknew, vlag)
-        pl(:, knew) = plknew
-
-        ! Update KOPT if F is the least calculated value of the objective function. Then branch
-        ! for another trust region calculation. The case KSAVE>0 indicates that a model step has
-        ! just been taken.
-        if (f < fsave) then
-            kopt = knew
+        ! Pick the next value of DELTA after a trust region step.
+        if (.not. (qred > 0)) then
+            info = TRSUBP_FAILED
+            exit
         end if
-        cycle
+        ratio = (fsave - f) / qred
+        if (ratio <= TENTH) then
+            delta = HALF * dnorm
+        else if (ratio <= 0.7_RP) then
+            delta = max(HALF * delta, dnorm)
+        else
+            delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
+        end if
+        if (delta <= 1.5_RP * rho) delta = rho
+
+        ! Set KNEW to the index of the next interpolation point to be deleted.
+        distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+        ! TODO: Test other definitions of WEIGHT. See BOBYQA.
+        weight = max(ONE, distsq / rho**2)**1.5_RP
+        score = weight * abs(vlag)
+
+        tr_success = (f < fsave)
+
+        ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
+        if (.not. tr_success) then
+            score(kopt) = -ONE
+        end if
+
+        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
+            ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
+            ! exclude such K.
+            knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+                !!MATLAB: [~, knew] = max(score, [], 'omitnan');
+            ddknew = distsq(knew)
+        elseif (tr_success) then
+            ! Powell's code does not include the following instructions. With Powell's code,
+            ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
+            knew = int(maxloc(distsq, dim=1), IK)
+        else
+            knew = 0_IK
+        end if
+
+        if (knew > 0) then
+            ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
+            ! the Lagrange functions and the quadratic model.
+            xpt(:, knew) = xnew
+            ! It can happen that VLAG(KNEW) = 0 due to rounding.
+            pl(:, knew) = pl(:, knew) / vlag(knew)
+            plknew = pl(:, knew)
+            pq = pq + diff * plknew
+            pl = pl - outprod(plknew, vlag)
+            pl(:, knew) = plknew
+
+            ! Update KOPT if F is the least calculated value of the objective function. Then branch
+            ! for another trust region calculation. The case KSAVE>0 indicates that a model step has
+            ! just been taken.
+            if (f < fsave) then
+                kopt = knew
+            end if
+        end if
+        improve_geo = .not. (knew > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
+        if (.not. improve_geo) cycle
     end if
 
 
@@ -417,6 +334,7 @@ do while (.true.)
         ! Find out if the interpolation points are close enough to the best point so far.
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         dsqtest = distsq
+
         ! The loop counter K does not appear in the loop body. Its purpose is only to impose an
         ! upper bound on the maximal number of loops.
         do k = 1, npt
@@ -461,7 +379,90 @@ do while (.true.)
         end do
 
         reduce_rho = (reduce_rho .or. dnorm <= rho)
-        if (geo_step .or. .not. reduce_rho) cycle
+        if (geo_step) then
+            geo_step = .false.
+            ! Calculate the next value of the objective function.
+            xnew = xopt + d
+            x = xbase + xnew
+
+            if (nf >= maxfun) then
+                info = MAXFUN_REACHED
+                exit
+            end if
+
+            if (is_nan(sum(abs(x)))) then
+                f = sum(x) ! Set F to NaN
+                if (nf == 1) then
+                    fopt = f
+                    xopt = ZERO
+                end if
+                info = NAN_INF_X
+                exit
+            end if
+            call evaluate(calfun, x, f)
+            nf = nf + 1
+            call savehist(nf, x, xhist, f, fhist)
+
+            if (is_nan(f) .or. is_posinf(f)) then
+                if (nf == 1) then
+                    fopt = f
+                    xopt = ZERO
+                end if
+                info = NAN_INF_F
+                exit
+            end if
+
+            if (f <= ftarget) then
+                info = FTARGET_ACHIEVED
+                xopt = xnew
+                fopt = f
+                exit
+            end if
+
+            ! Use the quadratic model to predict the change in F due to the step D, and find the values
+            ! of the Lagrange functions at the new point.
+            qred = -quadinc(pq, d, xopt)
+            vlag = calvlag(pl, d, xopt, kopt)
+
+            ! Update SIXTHM, which is a lower bound on one sixth of the greatest third derivative of F.
+            ! The lower bound is derived from (3.1) of the UOBYQA paper.
+            diff = f - fopt + qred
+            summ = ZERO
+            distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
+            summ = inprod(distsq, sqrt(distsq) * abs(vlag))
+            ! SUMM may become 0 due to rounding, even in double precision. Detected by ifort.
+            if (abs(diff) > 0 .and. summ > 0) then
+                sixthm = max(sixthm, abs(diff) / summ)
+            end if
+
+            ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
+            ! Then branch if D is not a trust region step.
+            fsave = fopt
+            if (f < fopt) then
+                fopt = f
+                xopt = xnew
+            end if
+
+            ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
+            ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
+            ! the Lagrange functions and the quadratic model.
+            xpt(:, knew) = xnew
+            ! It can happen that VLAG(KNEW) = 0 due to rounding.
+            pl(:, knew) = pl(:, knew) / vlag(knew)
+            plknew = pl(:, knew)
+            pq = pq + diff * plknew
+            pl = pl - outprod(plknew, vlag)
+            pl(:, knew) = plknew
+
+            ! Update KOPT if F is the least calculated value of the objective function. Then branch
+            ! for another trust region calculation. The case KSAVE>0 indicates that a model step has
+            ! just been taken.
+            if (f < fsave) then
+                kopt = knew
+            end if
+            cycle
+        end if
+        if (.not. reduce_rho) cycle
     end if
 
     if (rho <= rhoend) then

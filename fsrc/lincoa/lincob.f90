@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 22, 2022 AM10:27:05
+! Last Modified: Saturday, September 24, 2022 AM09:37:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -422,6 +422,8 @@ do while (.true.)
             ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
             ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
             ! by subroutine UPDATE.
+            ! TODO: 1. Take FREDUCED into consideration in SETDROP_TR, particularly DISTSQ.
+            ! 2. Test different definitions of WEGHT in SETDROP_TR. See BOBYQA.
             knew = setdrop_tr(idz, kopt, bmat, d, xpt, zmat)
             call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 
@@ -486,131 +488,6 @@ do while (.true.)
     if (.not. (shortd .or. qred <= 0 .or. improve_geo)) then
         cycle
     end if
-
-    !else
-    !    error stop
-    !    ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
-    !    delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
-    !    call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
-
-    !    ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT.
-    !    qred = -quadinc(d, xpt, gopt, pq, hq)
-
-    !    ! Calculate the next value of the objective function. The difference between the actual new
-    !    ! value of F and the value predicted by the model is recorded in DIFF.
-    !    if (nf >= maxfun) then
-    !        info = MAXFUN_REACHED
-    !        exit
-    !    end if
-    !    xnew = xopt + d
-    !    x = xbase + xnew
-
-    !    feasible = (feasible .or. ksave == -1) ! Consistent with the meaning of FEASIBLE???
-    !    if (is_nan(sum(abs(x)))) then
-    !        f = sum(x)  ! Set F to NaN
-    !        if (nf == 1) then
-    !            fopt = f
-    !            xopt = ZERO
-    !        end if
-    !        info = NAN_INF_X
-    !        exit
-    !    end if
-    !    call evaluate(calfun, x, f)
-    !    ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
-    !    constr = matprod(x, A_orig) - b_orig
-    !    cstrv = maximum([ZERO, constr])
-    !    nf = nf + 1_IK
-
-    !    call fmsg(solver, iprint, nf, f, x, cstrv, constr)
-    !    call savehist(nf, x, xhist, f, fhist, cstrv, chist)
-    !    if (is_nan(f) .or. is_posinf(f)) then
-    !        info = NAN_INF_F
-    !        exit
-    !    end if
-    !    diff = f - fopt + qred
-
-    !    ! If X is feasible, then set DFFALT to the difference between the new value of F and the
-    !    ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
-    !    ! XPT are updated.
-    !    if (feasible .and. itest < 3) then
-    !        !if (itest < 3) then
-    !        fshift = fval - fval(kopt)
-    !        ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
-    !        pqalt = omega_mul(idz, zmat, fshift)
-    !        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-    !        dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
-    !    end if
-    !    if (itest == 3) then
-    !        dffalt = diff
-    !        itest = 0
-    !    end if
-
-    !    ! If ITEST is increased to 3, then the next quadratic model is the one whose second
-    !    ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-    !    ! new model is constructed by the symmetric Broyden method in the usual way.
-    !    if (feasible) then
-    !        !if (.true.) then
-    !        if (abs(dffalt) >= TENTH * abs(diff)) then
-    !            itest = 0
-    !        else
-    !            itest = itest + 1
-    !        end if
-    !    end if
-
-    !    ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
-    !    ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
-    !    ! by subroutine UPDATE.
-    !    call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
-
-    !    ! Update the second derivatives of the model by the symmetric Broyden method, using PQW for
-    !    ! the second derivative parameters of the new KNEW-th Lagrange function. The contribution
-    !    ! from the old parameter PQ(KNEW) is included in the second derivative matrix HQ.
-    !    freduced = (f < fopt .and. feasible)
-    !    call updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
-    !    call updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-    !    if (fopt <= ftarget) then
-    !        info = FTARGET_ACHIEVED
-    !        exit
-    !    end if
-
-    !    ! Update RESCON.
-    !    ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-    !    ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
-    !    if (freduced) then
-    !        dnorm = sqrt(sum(d**2))
-    !        where (abs(rescon) >= dnorm + delta)
-    !            rescon = min(-abs(rescon) + dnorm, -delta)
-    !        elsewhere
-    !            rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-    !        end where
-    !        rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
-    !        !!MATLAB:
-    !        !!mask = (rescon >= delta+dnorm);
-    !        !!rescon(mask) = max(rescon(mask) - dnorm, delta);
-    !        !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
-    !        !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
-    !    end if
-
-    !    ! Replace the current model by the least Frobenius norm interpolant if this interpolant
-    !    ! gives substantial reductions in the predictions of values of F at feasible points.
-    !    if (itest == 3) then
-    !        fshift = fval - fval(kopt)
-    !        pq = omega_mul(idz, zmat, fshift)
-    !        hq = ZERO
-    !        gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
-    !    end if
-
-    !    ! If a trust region step has provided a sufficient decrease in F, then branch for
-    !    ! another trust region calculation. Every iteration that takes a model step is followed
-    !    ! by an attempt to take a trust region step.
-    !    knew = 0
-    !    improve_geo = (ksave == -1 .and. .not. ratio > TENTH)
-
-    !    if (.not. improve_geo) then
-    !        cycle
-    !    end if
-
-    !end if
 
     !if (.not. (ksave == 0 .and. (shortd .or. improve_geo)) .and. .not. (ksave > 0 .and. improve_geo)) cycle
 
