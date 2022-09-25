@@ -45,7 +45,7 @@ jobs:
 
       - name: install epstopdf and ghostscript
         if: startsWith(matrix.os, 'ubuntu')
-        run: sudo apt install texlive-font-utils ghostscript -y
+        run: sudo apt install texlive-font-utils ghostscript -y && sudo bash .github/scripts/install_ghostscript
 
       - name: Check MATLAB
         id: check_matlab
