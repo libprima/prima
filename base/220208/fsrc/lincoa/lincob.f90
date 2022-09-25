@@ -544,7 +544,7 @@ end if
 !       can be moved. If STEP is a trust region step, then KNEW is zero at
 !       present, but a positive value is picked by subroutine UPDATE.
 !
-call update(n, npt, xpt, bmat, zmat, idz, ndim, sp, step, kopt, knew, pqw, w)
+call update(n, npt, xpt, bmat, zmat, idz, ndim, sp, step, kopt, knew, pqw, w, f < fopt)
 if (knew == 0) then
     info = 9
     goto 600
@@ -809,5 +809,6 @@ if (ksave == -1) goto 220
 end if
 616 w(1) = f
 w(2) = dfloat(nf) + half
+!close (16)
 return
 end

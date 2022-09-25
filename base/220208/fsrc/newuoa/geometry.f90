@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 16, 2022 PM05:28:16
+! Last Modified: Sunday, September 25, 2022 PM09:39:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -96,6 +96,7 @@ beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
 
 ! Calculate the distance between the interpolation points and the optimal point up to now.
 if (tr_success) then
+!if (.false.) then
     xdist = sqrt(sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1))
 else
     xdist = sqrt(sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1))

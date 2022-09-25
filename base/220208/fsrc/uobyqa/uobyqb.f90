@@ -4,7 +4,7 @@ implicit real(kind(0.0D0)) (a - h, o - z)
 implicit integer(i - n)
 dimension x(n), xbase(n), xopt(n), xnew(n), xpt(npt, n), pq(npt - 1), &
      &  pl(npt, npt - 1), h(n, n * n), g(n), d(n), vlag(npt), &
-     &  w(max(6 * n, (n**2 + 3 * n + 2) / 2))
+     &  w(max(6 * n, (n**2 + 3 * n + 2) / 2)), xsav(n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     The arguments N, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to
@@ -337,6 +337,7 @@ sixthm = dmax1(sixthm, dabs(diff) / sum)
 !     function so far. Then branch if D is not a trust region step.
 !
 fsave = fopt
+xsav = xopt
 if (f < fopt) then
     fopt = f
     do i = 1, n
@@ -376,6 +377,7 @@ do k = 1, npt
     sum = zero
     do i = 1, n
         sum = sum + (xpt(k, i) - xopt(i))**2
+        !sum = sum + (xpt(k, i) - xsav(i))**2
     end do
     temp = dabs(vlag(k))
     if (sum > rhosq) temp = temp * (sum / rhosq)**1.5D0

@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, February 04, 2022 AM02:56:35
+! Last Modified: Sunday, September 25, 2022 PM09:45:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -152,6 +152,7 @@ if (any(abs(simid) > ONE) .or. (tr_success .and. any(.not. is_nan(simid)))) then
     jdrop = int(maxloc(abs(simid), mask=(.not. is_nan(simid)), dim=1), kind(jdrop))
 end if
 
+!if (.false.) then
 if (tr_success) then
     veta = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
 else
