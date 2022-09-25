@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 24, 2022 PM02:46:17
+! Last Modified: Sunday, September 25, 2022 PM05:58:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -113,7 +113,7 @@ real(RP) :: xpt(size(x), size(pl, 2))
 real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), dsqtest(size(pl, 2)), delbar, &
 & weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, errtol, estim, crvmin, fopt,&
-&        fsave, ratio, rho, sixthm, summ, &
+&        fsave, xsave(size(x)), ratio, rho, sixthm, summ, &
 &        trtol, vmax,  &
 &        qred, wmult, plknew(size(pl, 1)), fval(size(pl, 2))
 integer(IK) :: k, knew, kopt, subinfo
@@ -254,6 +254,7 @@ do while (.true.)
 
         ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
         ! Then branch if D is not a trust region step.
+        xsave = xopt
         fsave = fopt
         if (f < fopt) then
             fopt = f
@@ -277,12 +278,15 @@ do while (.true.)
         if (delta <= 1.5_RP * rho) delta = rho
 
         ! Set KNEW to the index of the next interpolation point to be deleted.
-        distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
-        weight = max(ONE, distsq / rho**2)**4
+        !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
+        distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)  ! XSAVE is the unupdated XOPT
+        weight = max(ONE, distsq / delta**2)**4
 
         !------------------------------------------------------------------------------------------!
         ! Other possible definitions of WEIGHT.
-        !weight = max(ONE, distsq / rho**2)**3.5_RP ! This works better than power 4 without noise.
+        !weight = max(ONE, distsq / rho**2)**4  ! Similar to DISTSQ/DELTA**2; not better than it.
+        !weight = max(ONE, distsq / rho**2)**3.5_RP ! It works better than power 4 on some problems.
+        !weight = max(ONE, distsq / delta**2)**3.5_RP  ! Not better than DISTSQ/RHO**2.
         !weight = max(ONE, distsq / rho**2)**1.5_RP  ! Powell's origin code: power 1.5.
         !weight = max(ONE, distsq / rho**2)**2  ! Better than power 1.5.
         !weight = max(ONE, distsq / delta**2)**2  ! Not better than DISTSQ/RHO**2.
@@ -293,7 +297,6 @@ do while (.true.)
         !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! The same as DISTSQ/RHO**2.
         !weight = distsq**3  ! Not better than MAX(ONE, DISTSQ/RHO**2)**3
         !weight = max(ONE, distsq / rho**2)**4  ! Better than power 3.
-        !weight = max(ONE, distsq / delta**2)**4  ! Similar to DISTSQ/RHO**2; not better than it.
         !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! The same as DISTSQ/RHO**2.
         !weight = distsq**4  ! Not better than MAX(ONE, DISTSQ/RHO**2)**4
         !------------------------------------------------------------------------------------------!

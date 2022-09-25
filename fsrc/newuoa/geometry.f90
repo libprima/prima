@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, September 23, 2022 PM05:53:53
+! Last Modified: Sunday, September 25, 2022 PM04:32:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -94,20 +94,23 @@ end if
 !====================!
 
 ! Calculate the distance squares between the interpolation points and the optimal point up to now.
-if (tr_success) then
-    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
-else
-    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-end if
+!if (.false.) then
+!!if (tr_success) then
+!    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+!    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
+!else
+!    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+!    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+!end if
 
+distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
 weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3
 !--------------------------------------------------------------------------------------------------!
 ! Other possible definitions of WEIGHT.
-!weight = max(ONE, distsq / rho**2)**3  ! This is OK, but not better than the above.
+!weight = max(ONE, distsq / rho**2)**3  ! This works almost the same as the above.
 !weight = max(ONE, distsq / delta**2)**3  ! Code from BOBYQA. It does not work as well as the above.
+!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! It does not work as well as the above.
 !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! This works poorly.
 !--------------------------------------------------------------------------------------------------!
 score = weight * denabs

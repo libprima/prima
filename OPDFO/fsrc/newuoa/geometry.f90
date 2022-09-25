@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, June 03, 2022 PM05:29:23
+! Last Modified: Sunday, September 25, 2022 PM04:29:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -101,6 +101,7 @@ else
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
 end if
+distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 
 denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
 weight = max(distsq / max(TENTH * delta, rho)**2, ONE)**3

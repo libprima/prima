@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 23, 2022 PM12:42:42
+! Last Modified: Sunday, September 25, 2022 AM10:07:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: setdrop_tr, geostep
 contains
 
 
-function setdrop_tr(idz, kopt, bmat, d, xpt, zmat) result(knew)
+function setdrop_tr(idz, kopt, freduced, bmat, d, delta, rho, xpt, zmat) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
@@ -45,8 +45,11 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: kopt
+logical, intent(in) :: freduced
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:)
+real(RP), intent(in) :: delta
+real(RP), intent(in) :: rho
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
@@ -84,11 +87,31 @@ end if
 !====================!
 
 denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
+! Calculate the distance squares between the interpolation points and the optimal point up to now.
+if (freduced) then  ! This does not work well for LINCOA. WHY???
+    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
+else
+    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+end if
 distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 weight = distsq**2
+!weight = distsq**1.5_RP
+!weight = distsq**2.5_RP
+!weight = distsq**4
+!weight = max(1.0_RP, distsq / rho**2)**2
+!weight = max(1.0_RP, distsq / rho**2)**3
+!weight = max(1.0_RP, distsq / rho**2)**4
+!weight = max(1.0_RP, distsq / delta**2)**4
+!weight = max(1.0_RP, distsq / delta**2)**3
 score = weight * denabs
+if (.not. freduced) then
+    score(kopt) = -1.0_RP!ONE
+end if
 
 if (any(score > 0)) then
+!if (any(score > 1) .or. any(score > 0) .and. freduced) then
     ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');

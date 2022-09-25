@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 24, 2022 AM09:37:41
+! Last Modified: Saturday, September 24, 2022 PM09:14:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -150,7 +150,7 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delsav, delta, dffalt, diff, &
-&        distsq, xdsq(npt), fopt, fsave, ratio,     &
+&        dsq, distsq(npt), fopt, fsave, ratio,     &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
 logical :: feasible, shortd, improve_geo, freduced
@@ -419,12 +419,15 @@ do while (.true.)
             ! first update DELTA to SQRT(2)*RHO. If this factor were not smaller than SQRT(2),
             ! then DELTA will be reset to RHO, which is not reasonable as D is very successful.
 
+            freduced = (f < fopt)
+
             ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
             ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
             ! by subroutine UPDATE.
             ! TODO: 1. Take FREDUCED into consideration in SETDROP_TR, particularly DISTSQ.
-            ! 2. Test different definitions of WEGHT in SETDROP_TR. See BOBYQA.
-            knew = setdrop_tr(idz, kopt, bmat, d, xpt, zmat)
+            ! 2. Test different definitions of WEIGHT in SETDROP_TR. See BOBYQA.
+            !knew = setdrop_tr(idz, kopt, bmat, d, xpt, zmat)
+            knew = setdrop_tr(idz, kopt, freduced, bmat, d, delta, rho, xpt, zmat)
             call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 
             ! If ITEST is increased to 3, then the next quadratic model is the one whose second
@@ -440,7 +443,6 @@ do while (.true.)
             ! for the second derivative parameters of the new KNEW-th Lagrange function. The
             ! contribution from the old parameter PQ(KNEW) is included in the second derivative
             ! matrix HQ.
-            freduced = (f < fopt)
             call updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
             call updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
             if (fopt <= ftarget) then
@@ -493,11 +495,11 @@ do while (.true.)
 
     if (improve_geo) then
         ! Find out if the interpolation points are close enough to the best point so far.
-        distsq = max(delta * delta, 4.0_RP * rho * rho)
+        dsq = max(delta * delta, 4.0_RP * rho * rho)
         xopt = xpt(:, kopt)
-        xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        ! MATLAB: xdsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-        knew = maxloc([distsq, xdsq], dim=1) - 1_IK
+        distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+        ! MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
+        knew = maxloc([dsq, distsq], dim=1) - 1_IK
 
         ! If KNEW > 0, then branch back for the next iteration, which will generate a geometry step.
         ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
