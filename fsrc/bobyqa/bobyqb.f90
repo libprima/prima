@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 24, 2022 AM06:29:02
+! Last Modified: Sunday, September 25, 2022 PM02:02:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -341,7 +341,8 @@ do while (.true.)
 
         ! Find the index of the interpolation point to be replaced by the trust-region trial point.
         tr_success = (f < fopt)
-        if (tr_success) then
+        if (.false.) then
+            !if (tr_success) then
             distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
         else
             distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
@@ -354,12 +355,12 @@ do while (.true.)
         weight = max(ONE, distsq / delta**2)**3  ! This works better than Powell's code.
         !------------------------------------------------------------------------------------------!
         ! Other possible definitions of WEIGHT.
-        !weight = distsq**4  ! This works well.
-        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Code from NEWUOA. OK.
-        !weight = max(ONE, distsq / rho**2)**3  ! It performs the same as the code from NEWUOA.
-        !weight = distsq**3  ! Similar to the NEWUOA code. Worse than MAX(ONE, DISTSQ/DELTA**2)**3.
         !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.
-        !weight = max(ONE, distsq / delta**2)**4  ! OK, but not much better than Powell's code
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! NEWUOA. Better than original.
+        !weight = max(ONE, distsq / rho**2)**3  ! It performs the same as the code from NEWUOA.
+        !weight = distsq**3  ! This works better than Powell's code.
+        !weight = distsq**4  ! This works better than Powell's code.
+        !weight = max(ONE, distsq / delta**2)**4  ! This works better than Powell's code.
         !weight = max(ONE, distsq / delta**2)  ! As per (6.1) of the BOBYQA paper. It works poorly!
         !------------------------------------------------------------------------------------------!
 
@@ -497,8 +498,8 @@ do while (.true.)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             denom = alpha * beta + vlag(knew)**2
 
-            !rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
-            rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
+            rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
+            !rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
             if (.not. rescue_geo) then
                 ! Put the variables for the next calculation of the objective function in XNEW, with any
                 ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
