@@ -647,6 +647,7 @@ if (ntrits > 0) then
 !
 !     Recalculate KNEW and DENOM if the new F is less than FOPT.
 !
+    !if (.false.) then
     if (f < fopt) then
         ksav = knew
         densav = denom

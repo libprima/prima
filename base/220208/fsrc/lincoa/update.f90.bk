@@ -1,10 +1,8 @@
-subroutine update(n, npt, xpt, bmat, zmat, idz, ndim, sp, step, kopt, knew, vlag, w, freduced)
+subroutine update(n, npt, xpt, bmat, zmat, idz, ndim, sp, step, kopt, knew, vlag, w)
 
 implicit real(kind(0.0D0)) (a - h, o - z)
 implicit integer(i - n)
 dimension xpt(npt, *), bmat(ndim, *), zmat(npt, *), sp(*), step(*), vlag(*), w(*)
-logical, intent(in), optional :: freduced
-
 !
 !     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
 !       identical to the corresponding arguments in SUBROUTINE LINCOB.
@@ -97,12 +95,7 @@ if (knew == 0) then
         denabs = dabs(beta * hdiag + vlag(k)**2)
         distsq = zero
         do j = 1, n
-            if (.false.) then
-                !if (freduced) then
-                distsq = distsq + (xpt(k, j) - (xpt(kopt, j) + step(j)))**2
-            else
-                distsq = distsq + (xpt(k, j) - xpt(kopt, j))**2
-            end if
+            distsq = distsq + (xpt(k, j) - xpt(kopt, j))**2
         end do
         temp = denabs * distsq * distsq
         if (temp > denmax) then

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+VER=10.0.0
+VER_NO_DOT=${VER//\./}
+URL="https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs$VER_NO_DOT/ghostscript-$VER-linux-x86_64.tgz"
+
+TGZ=gs.tgz
+DIR=$(mktemp -d)
+
+NEWGS="ghostscript-$VER-linux-x86_64/gs-$VER_NO_DOT-linux-x86_64"
+GS="$(command -v gs)"
+if [[ -z "$GS" ]] ; then
+    GS=/usr/bin/gs
+fi
+
+cd "$DIR" || exit 1
+wget "$URL" -O "$TGZ"
+tar zxvf "$TGZ"
+if [[ -f "$GS" ]] ; then
+    mv "$GS" "$GS".bak
+fi
+cp "$NEWGS" "$GS"
+rm -r "$DIR"
