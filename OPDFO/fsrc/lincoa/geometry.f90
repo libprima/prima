@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, August 13, 2022 AM12:09:54
+! Last Modified: Monday, September 26, 2022 PM09:09:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: setdrop_tr, geostep
 contains
 
 
-function setdrop_tr(idz, kopt, bmat, d, xpt, zmat) result(knew)
+function setdrop_tr(idz, kopt, bmat, d, xpt, zmat, freduced) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
@@ -49,6 +49,7 @@ real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+logical, intent(in) :: freduced
 
 ! Outputs
 integer(IK) :: knew
@@ -92,9 +93,11 @@ if (any(score > 0)) then
     ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
-else
+else if (freduced) then
     ! Powell's code does not handle this case, leaving KNEW = 0 and leading to a segfault.
     knew = int(maxloc(distsq, dim=1), IK)
+else
+    knew = 0
 end if
 !====================!
 !  Calculation ends  !

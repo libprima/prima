@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM08:01:01
+! Last Modified: Monday, September 26, 2022 PM08:59:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -426,59 +426,62 @@ do while (.true.)
             ! 2. Test different definitions of WEIGHT in SETDROP_TR. See BOBYQA.
             !knew = setdrop_tr(idz, kopt, bmat, d, xpt, zmat)
             knew = setdrop_tr(idz, kopt, freduced, bmat, d, delta, rho, xpt, zmat)
-            call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
+            if (knew > 0) then
+                call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 
-            ! If ITEST is increased to 3, then the next quadratic model is the one whose second
-            ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-            ! new model is constructed by the symmetric Broyden method in the usual way.
-            if (abs(dffalt) >= TENTH * abs(diff)) then
-                itest = 0
-            else
-                itest = itest + 1
-            end if
+                ! If ITEST is increased to 3, then the next quadratic model is the one whose second
+                ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
+                ! new model is constructed by the symmetric Broyden method in the usual way.
+                if (abs(dffalt) >= TENTH * abs(diff)) then
+                    itest = 0
+                else
+                    itest = itest + 1
+                end if
 
-            ! Update the second derivatives of the model by the symmetric Broyden method, using PQW
-            ! for the second derivative parameters of the new KNEW-th Lagrange function. The
-            ! contribution from the old parameter PQ(KNEW) is included in the second derivative
-            ! matrix HQ.
-            call updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
-            call updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-            if (fopt <= ftarget) then
-                info = FTARGET_ACHIEVED
-                exit
-            end if
+                ! Update the second derivatives of the model by the symmetric Broyden method, using PQW
+                ! for the second derivative parameters of the new KNEW-th Lagrange function. The
+                ! contribution from the old parameter PQ(KNEW) is included in the second derivative
+                ! matrix HQ.
+                call updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
+                call updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+                if (fopt <= ftarget) then
+                    info = FTARGET_ACHIEVED
+                    exit
+                end if
 
-            ! Update RESCON.
-            ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-            ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
-            if (freduced) then
-                dnorm = sqrt(sum(d**2))
-                where (abs(rescon) >= dnorm + delta)
-                    rescon = min(-abs(rescon) + dnorm, -delta)
-                elsewhere
-                    rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-                end where
-                rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
+                ! Update RESCON.
+                ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
+                ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
+                if (freduced) then
+                    dnorm = sqrt(sum(d**2))
+                    where (abs(rescon) >= dnorm + delta)
+                        rescon = min(-abs(rescon) + dnorm, -delta)
+                    elsewhere
+                        rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
+                    end where
+                    rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
                 !!MATLAB:
                 !!mask = (rescon >= delta+dnorm);
                 !!rescon(mask) = max(rescon(mask) - dnorm, delta);
                 !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
                 !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
-            end if
+                end if
 
-            ! Replace the current model by the least Frobenius norm interpolant if this interpolant
-            ! gives substantial reductions in the predictions of values of F at feasible points.
-            if (itest == 3) then
-                fshift = fval - fval(kopt)
-                pq = omega_mul(idz, zmat, fshift)
-                hq = ZERO
-                gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+                ! Replace the current model by the least Frobenius norm interpolant if this interpolant
+                ! gives substantial reductions in the predictions of values of F at feasible points.
+                if (itest == 3) then
+                    fshift = fval - fval(kopt)
+                    pq = omega_mul(idz, zmat, fshift)
+                    hq = ZERO
+                    gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+                end if
             end if
 
             ! If a trust region step has provided a sufficient decrease in F, then branch for
             ! another trust region calculation. Every iteration that takes a model step is followed
             ! by an attempt to take a trust region step.
-            improve_geo = (.not. ratio > TENTH)
+            !improve_geo = (.not. ratio > TENTH)
+            improve_geo = .not. (knew > 0 .and. ratio > TENTH)
 
             !if (.not. improve_geo) cycle
         end if
