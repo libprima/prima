@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM08:59:20
+! Last Modified: Monday, September 26, 2022 PM10:32:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -156,7 +156,7 @@ real(RP) :: delbar, delsav, delta, dffalt, diff, &
 logical :: feasible, shortd, improve_geo, freduced
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: idz, itest, &
-&           knew, kopt, ksave, nact,      &
+&           knew, kopt, nact,      &
 &           ngetact, subinfo
 real(RP) :: fshift(npt)
 real(RP) :: pqalt(npt), galt(size(x))
@@ -257,7 +257,6 @@ improve_geo = .false.
 nact = 0
 itest = 3
 knew = 0
-ksave = 0  ! To entertain g95.
 dnormsav = HUGENUM
 info = INFO_DFT
 
@@ -274,7 +273,6 @@ do while (.true.)
 
     fsave = fopt
     delsav = delta
-    ksave = knew
     ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
     call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
     dnorm = min(delta, sqrt(sum(d**2)))
@@ -310,9 +308,6 @@ do while (.true.)
         ! The factor 1.4 below aligns with the update of DELTA after a trust-region step.
         if (delta <= 1.4_RP * rho) delta = rho
         improve_geo = any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
-        if (dnorm > 0 .and. .not. improve_geo) then
-            ksave = -1
-        end if
     else
         ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. If D
         ! is a trust region step, then QRED should be positive. If it is nonpositive due to rounding
@@ -424,8 +419,7 @@ do while (.true.)
             ! by subroutine UPDATE.
             ! TODO: 1. Take FREDUCED into consideration in SETDROP_TR, particularly DISTSQ.
             ! 2. Test different definitions of WEIGHT in SETDROP_TR. See BOBYQA.
-            !knew = setdrop_tr(idz, kopt, bmat, d, xpt, zmat)
-            knew = setdrop_tr(idz, kopt, freduced, bmat, d, delta, rho, xpt, zmat)
+            knew = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
             if (knew > 0) then
                 call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 
@@ -491,7 +485,6 @@ do while (.true.)
         cycle
     end if
 
-    !if (.not. (ksave == 0 .and. (shortd .or. improve_geo)) .and. .not. (ksave > 0 .and. improve_geo)) cycle
 
     if (improve_geo) then
         ! Find out if the interpolation points are close enough to the best point so far.
@@ -517,7 +510,6 @@ do while (.true.)
 
             fsave = fopt
             delsav = delta
-            ksave = knew
             ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
             delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
             call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
@@ -534,7 +526,6 @@ do while (.true.)
             xnew = xopt + d
             x = xbase + xnew
 
-            feasible = (feasible .or. ksave == -1) ! Consistent with the meaning of FEASIBLE???
             if (is_nan(sum(abs(x)))) then
                 f = sum(x)  ! Set F to NaN
                 if (nf == 1) then
@@ -632,14 +623,12 @@ do while (.true.)
             ! If a trust region step has provided a sufficient decrease in F, then branch for
             ! another trust region calculation. Every iteration that takes a model step is followed
             ! by an attempt to take a trust region step.
-            improve_geo = (ksave == -1 .and. .not. ratio > TENTH)
-
-            if (.not. improve_geo) then
-                cycle
-            end if
-        else if (fopt < fsave .or. delsav > rho) then
-            cycle
+            improve_geo = .false.
+            !cycle
+            !else if (fopt < fsave .or. delsav > rho) then
+            !cycle
         end if
+        if (knew > 0 .or. fopt < fsave .or. delsav > rho) cycle
 
     end if
 
@@ -662,7 +651,8 @@ do while (.true.)
 end do
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried before.
-if (info == SMALL_TR_RADIUS .and. ksave == -1 .and. nf < maxfun) then
+! Zaikun 20220926: Is it possible that XOPT+D has been evaluated?
+if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
     ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).

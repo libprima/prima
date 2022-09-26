@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, September 26, 2022 PM05:05:55
+! Last Modified: Monday, September 26, 2022 PM09:48:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -149,7 +149,7 @@ if (DEBUGGING) then
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
     call assert(knew /= kopt .or. tr_success, 'KNEW /= KOPT unless TR_SUCCESS = TRUE', srname)
     call assert(knew >= 1 .or. .not. tr_success, 'KNEW >= 1 unless TR_SUCCESS = FALSE', srname)
-    ! KNEW >= 1 when TR_SUCCESS = TRUE unless NaN occurs in XDIST, which should not happen if the
+    ! KNEW >= 1 when TR_SUCCESS = TRUE unless NaN occurs in DISTSQ, which should not happen if the
     ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.
 end if
 
