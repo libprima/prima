@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, September 27, 2022 AM06:47:27
+! Last Modified: Tuesday, September 27, 2022 AM07:03:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -61,9 +61,6 @@ use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, 
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul
-!!! TODO (Zaikun 20220525): Use CALDEN instead of CALVLAG and CALBETA wherever possible!!!
-
-use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
@@ -122,11 +119,11 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
-real(RP) :: delbar, alpha, bdtest(size(x)), beta, &
+real(RP) :: delbar, bdtest(size(x)), beta, &
 &        crvmin, curv(size(x)), delta,  &
-&        den(npt), denom, diff, &
+&        den(npt), diff, &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbd, fopt,        &
-&        gisq, gqsq, hdiag(npt),      &
+&        gisq, gqsq,       &
 &        ratio, rho, rhosq, qred, weight(npt), pqinc(npt)
 real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
@@ -166,8 +163,6 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
-
-denom = ieeenan()  ! To be removed.
 
 info = INFO_DFT
 
@@ -357,10 +352,6 @@ do while (.true.)
         end if
         !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 
-        !hdiag = sum(zmat**2, dim=2)
-        !vlag = calvlag(kopt, bmat, d, xpt, zmat)
-        !beta = calbeta(kopt, bmat, d, xpt, zmat)
-        !den = hdiag * beta + vlag(1:npt)**2
         den = calden(kopt, bmat, d, xpt, zmat)
 
         weight = max(ONE, distsq / delta**2)**3  ! This works better than Powell's code.
@@ -409,12 +400,6 @@ do while (.true.)
         if (knew > 0) then
             ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
             ! the second derivative terms of the model.
-            !denom = den(knew)
-            !------------------------------------------------------------------------------------------!
-            !call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
-            !call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
-            !call assert(.not. abs(den(knew) - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
-            !--------------------------------------------------------------------------------------------------!
             vlag = calvlag(kopt, bmat, d, xpt, zmat)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             call updateh(knew, beta, vlag, bmat, zmat)
@@ -506,10 +491,7 @@ do while (.true.)
             xnew = min(max(sl, xopt + d), su)
 
             ! Calculate VLAG, BETA, and DENOM for the current choice of D.
-            !alpha = sum(zmat(knew, :)**2)
             vlag = calvlag(kopt, bmat, d, xpt, zmat)
-            !beta = calbeta(kopt, bmat, d, xpt, zmat)
-            !denom = alpha * beta + vlag(knew)**2
             den = calden(kopt, bmat, d, xpt, zmat)
 
             !rescue_geo = .not. (den(knew) > HALF * vlag(knew)**2) ! This is the normal condition.
@@ -567,11 +549,6 @@ do while (.true.)
 
                 ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
                 ! the second derivative terms of the model.
-                !------------------------------------------------------------------------------------------!
-                !call assert(.not. any(abs(vlag - calvlag(kopt, bmat, d, xpt, zmat)) > 0), 'VLAG == VLAG_TEST', srname)
-                !call assert(.not. abs(beta - calbeta(kopt, bmat, d, xpt, zmat)) > 0, 'BETA == BETA_TEST', srname)
-                !call assert(.not. abs(denom - (sum(zmat(knew, :)**2) * beta + vlag(knew)**2)) > 0, 'DENOM = DENOM_TEST', srname)
-                !--------------------------------------------------------------------------------------------------!
                 vlag = calvlag(kopt, bmat, d, xpt, zmat)
                 beta = calbeta(kopt, bmat, d, xpt, zmat)
                 call updateh(knew, beta, vlag, bmat, zmat)
