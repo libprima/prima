@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM06:11:42
+! Last Modified: Monday, September 26, 2022 PM10:56:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -175,7 +175,6 @@ trtol = 0.01_RP
 
 ! Form the gradient of the quadratic model at the trust region centre.
 do while (.true.)
-    knew = 0
     xopt = xpt(:, kopt)
     g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
     h = vec2smat(pq(n + 1:npt - 1))
@@ -194,7 +193,6 @@ do while (.true.)
         if (delta <= 1.5_RP * rho) then
             delta = rho
         end if
-        knew = -1
         errtol = HALF * crvmin * rho * rho
         if (nf <= npt + 9) errtol = ZERO
     else

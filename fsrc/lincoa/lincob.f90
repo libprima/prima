@@ -474,10 +474,7 @@ do while (.true.)
             ! If a trust region step has provided a sufficient decrease in F, then branch for
             ! another trust region calculation. Every iteration that takes a model step is followed
             ! by an attempt to take a trust region step.
-            !improve_geo = (.not. ratio > TENTH)
             improve_geo = .not. (knew > 0 .and. ratio > TENTH)
-
-            !if (.not. improve_geo) cycle
         end if
     end if
 
@@ -620,16 +617,9 @@ do while (.true.)
                 gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
             end if
 
-            ! If a trust region step has provided a sufficient decrease in F, then branch for
-            ! another trust region calculation. Every iteration that takes a model step is followed
-            ! by an attempt to take a trust region step.
             improve_geo = .false.
-            !cycle
-            !else if (fopt < fsave .or. delsav > rho) then
-            !cycle
         end if
         if (knew > 0 .or. fopt < fsave .or. delsav > rho) cycle
-
     end if
 
     ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
