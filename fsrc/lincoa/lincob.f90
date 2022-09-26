@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 24, 2022 PM09:14:19
+! Last Modified: Monday, September 26, 2022 PM08:01:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -275,8 +275,6 @@ do while (.true.)
     fsave = fopt
     delsav = delta
     ksave = knew
-    call assert(knew == 0, 'KNEW == 0', srname)
-    !if (knew == 0) then
     ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
     call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
     dnorm = min(delta, sqrt(sum(d**2)))
@@ -480,7 +478,6 @@ do while (.true.)
             ! If a trust region step has provided a sufficient decrease in F, then branch for
             ! another trust region calculation. Every iteration that takes a model step is followed
             ! by an attempt to take a trust region step.
-            knew = 0
             improve_geo = (.not. ratio > TENTH)
 
             !if (.not. improve_geo) cycle
@@ -504,9 +501,6 @@ do while (.true.)
         ! If KNEW > 0, then branch back for the next iteration, which will generate a geometry step.
         ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
         ! when the last trust region step was calculated, then try a trust region step instead.
-        !if (knew > 0 .or. fopt < fsave .or. delsav > rho) then
-        !    cycle
-        !end if
         if (knew > 0) then
             ! Shift XBASE if XOPT may be too far from XBASE.
             ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
@@ -635,7 +629,6 @@ do while (.true.)
             ! If a trust region step has provided a sufficient decrease in F, then branch for
             ! another trust region calculation. Every iteration that takes a model step is followed
             ! by an attempt to take a trust region step.
-            knew = 0
             improve_geo = (ksave == -1 .and. .not. ratio > TENTH)
 
             if (.not. improve_geo) then
@@ -662,7 +655,6 @@ do while (.true.)
         rho = sqrt(rho * rhoend)
     end if
     delta = max(delta, rho)
-    knew = 0
     dnormsav = HUGENUM
 end do
 
