@@ -25,7 +25,7 @@ jobs:
         os: [ubuntu-latest]
         solver: [lincoa, bobyqa, uobyqa, cobyla, newuoa]
         dim: [small, big, large]
-        version: [220208, 220227, 220513, 220531,220601,220616,220819]
+        version: [220208, 220227, 220513, 220531,220601,220616,220819,220926]
         exclude:
           - solver: lincoa
             dim: large  # very few problems but takes too much time to run
