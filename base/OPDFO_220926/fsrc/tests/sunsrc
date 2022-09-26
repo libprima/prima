@@ -1,0 +1,55 @@
+#!/bin/bash
+# This script pre-processes the Fortran source code for sunf95. It does not recognize overloaded
+# intrinsic functions (particularly, their returning type/kind) correctly, e.g., INT in LINALG_MOD.
+
+DIR="$(realpath "$1")"
+HISTORYF90="history.f90"
+HISTORY="$DIR/common/$HISTORYF90"
+LINALG90="linalg.f90"
+LINALG="$DIR/common/$LINALG90"
+LINGEO="$DIR/lincoa/geometry.f90"
+LINTR="$DIR/lincoa/trustregion.f90"
+BOBTR="$DIR/bobyqa/trustregion.f90"
+
+if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
+    printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
+    exit 1
+fi
+
+sed -i "s/^\s*public :: int\s*$/public :: logical_to_int/" "$LINALG"
+sed -i '/^\s*interface int\s*$/,+3d' "$LINALG"
+sed -i "s/^\s*use, non_intrinsic :: linalg_mod, only : int\s*$/use, non_intrinsic :: linalg_mod, only : logical_to_int/" "$HISTORY"
+sed -i "s/int(output_/logical_to_int(output_/g" "$HISTORY"
+
+if [[ -f "$LINGEO" ]] ; then
+    #sed -i "s/\(use, non_intrinsic .*\), trueloc/\1/" "$LINGEO"
+    sed -i "s/trueloc(rstat == 1)/:/g" "$LINGEO"
+    sed -i "s/trueloc(rstat >= 0)/:/g" "$LINGEO"
+fi
+
+if [[ -f "$LINTR" ]] ; then
+    sed -i "s|! Local variables|! Local variables\ninteger(IK), allocatable :: ind(:)|" "$LINTR"
+    sed -i "s|ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))|ind = trueloc(resnew > 0)\nad(ind) = matprod(d, amat(:, ind))|" "$LINTR"
+    sed -i "s|restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))|ind = trueloc(ad > 0)\nrestmp(ind) = resnew(ind) - matprod(dw, amat(:, ind))|"  "$LINTR"
+    sed -i "s|frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))|frac(ind) = restmp(ind) / ad(ind)|"  "$LINTR"
+    sed -i "s|ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))|ind = trueloc(resnew > 0)\nad(ind) = matprod(d, amat(:, ind))|"  "$LINTR"
+fi
+
+if [[ -f "$BOBTR" ]] ; then
+    sed -i "s|character(len=\*), parameter :: srname = 'TRSBOX'|integer(IK), allocatable :: ind(:)\ncharacter(len=\*), parameter :: srname = 'TRSBOX'|" "$BOBTR"
+
+    TRUELOC="trueloc(xbdi == 0)"
+    sed -i "s|ds = inprod(d($TRUELOC), s($TRUELOC))|ind = $TRUELOC\nds = inprod(d(ind), s(ind))|" "$BOBTR"
+    sed -i "s|shs = inprod(s($TRUELOC), hs($TRUELOC))|shs = inprod(s(ind), hs(ind))|"  "$BOBTR"
+
+    sed -i "s|d($TRUELOC) = cth * d($TRUELOC) + sth * s($TRUELOC)|ind = $TRUELOC\nd(ind) = cth*d(ind)+ sth*s(ind)|" "$BOBTR"
+    sed -i "s|dredg = inprod(d($TRUELOC), gnew($TRUELOC))|dredg = inprod(d(ind), gnew(ind))|" "$BOBTR"
+
+    sed -i "s|gredsq = sum(gnew(trueloc(xbdi == 0))\*\*2)|ind = $TRUELOC\ngredsq = sum(gnew(ind)\*\*2)|" "$BOBTR"
+    sed -i "s|shs = inprod(s($TRUELOC), hs($TRUELOC))|ind = $TRUELOC\nshs = inprod(s(ind), hs(ind))|" "$BOBTR"
+    sed -i "s|dhs = inprod(d($TRUELOC), hs($TRUELOC))|hs = inprod(d(ind), hs(ind))|" "$BOBTR"
+    sed -i "s|dhd = inprod(d($TRUELOC), hdred($TRUELOC))|hs = inprod(d(ind), hdred(ind))|" "$BOBTR"
+
+fi
+
+exit 0

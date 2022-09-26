@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM06:18:46
+! Last Modified: Monday, September 26, 2022 PM11:12:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -55,7 +55,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: initialize_mod, only : initxf, initq, initl
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, &
+use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
 use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
@@ -116,7 +116,7 @@ real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), dsqtest(size(pl, 2)), delb
 &        fsave, xsave(size(x)), ratio, rho, sixthm, summ, &
 &        trtol, vmax,  &
 &        qred, wmult, plknew(size(pl, 1)), fval(size(pl, 2))
-integer(IK) :: k, knew, kopt, ksave, subinfo
+integer(IK) :: k, knew, kopt, subinfo
 logical :: tr_success, shortd, geo_step, improve_geo, reduce_rho
 
 ! Sizes.
@@ -170,43 +170,32 @@ sixthm = ZERO
 rho = rhobeg
 delta = rho
 shortd = .false.
-geo_step = .false.
-improve_geo = .false.
 reduce_rho = .false.
 trtol = 0.01_RP
 
 ! Form the gradient of the quadratic model at the trust region centre.
 do while (.true.)
-    if (.not. geo_step) then
-        knew = 0
-        xopt = xpt(:, kopt)
-        g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
-        h = vec2smat(pq(n + 1:npt - 1))
+    xopt = xpt(:, kopt)
+    g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
+    h = vec2smat(pq(n + 1:npt - 1))
 
-        !if (is_nan(sum(abs(g)) + sum(abs(h)))) then
-        !    info = NAN_MODEL
-        !    exit
-        !end if
-
-        ! Generate the next trust region step and test its length. Set KNEW to -1 if the purpose of
-        ! the next F will be to improve conditioning, and also calculate a lower bound on the
-        ! Hessian term of the model Q.
-        call trstep(delta, g, h, trtol, d, crvmin)
-        dnorm = min(delta, sqrt(sum(d**2)))
-        errtol = -ONE
-        shortd = (dnorm < HALF * rho)
-        improve_geo = shortd
-        if (shortd) then
-            delta = TENTH * delta; if (delta <= 1.5_RP * rho) delta = rho
-            knew = -1
-            errtol = HALF * crvmin * rho * rho
-            if (nf <= npt + 9) errtol = ZERO
+    ! Generate the next trust region step and test its length. Set KNEW to -1 if the purpose of
+    ! the next F will be to improve conditioning, and also calculate a lower bound on the
+    ! Hessian term of the model Q.
+    call trstep(delta, g, h, trtol, d, crvmin)
+    dnorm = min(delta, sqrt(sum(d**2)))
+    errtol = -ONE
+    shortd = (dnorm < HALF * rho)
+    improve_geo = shortd
+    if (shortd) then
+        ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
+        delta = TENTH * delta
+        if (delta <= 1.5_RP * rho) then
+            delta = rho
         end if
-    end if
-
-    if (geo_step .or. .not. shortd) then
-        geo_step = .false.
-
+        errtol = HALF * crvmin * rho * rho
+        if (nf <= npt + 9) errtol = ZERO
+    else
         ! Calculate the next value of the objective function.
         xnew = xopt + d
         x = xbase + xnew
@@ -263,64 +252,86 @@ do while (.true.)
 
         ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
         ! Then branch if D is not a trust region step.
-        fsave = fopt
         xsave = xopt
+        fsave = fopt
         if (f < fopt) then
             fopt = f
             xopt = xnew
         end if
-        ksave = knew
 
-        !----------------------------------------------------------!
         ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
-        !----------------------------------------------------------!
-        if (knew <= 0) then
-            ! Pick the next value of DELTA after a trust region step.
-            if (.not. (qred > 0)) then
-                info = TRSUBP_FAILED
-                exit
-            end if
-            ratio = (fsave - f) / qred
-            if (ratio <= TENTH) then
-                delta = HALF * dnorm
-            else if (ratio <= 0.7_RP) then
-                delta = max(HALF * delta, dnorm)
-            else
-                delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
-            end if
-            if (delta <= 1.5_RP * rho) delta = rho
-
-            ! Set KNEW to the index of the next interpolation point to be deleted.
-            !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-            distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)
-            !weight = max(ONE, distsq / rho**2)**1.5_RP
-            !weight = max(ONE, distsq / rho**2)**4
-            weight = max(ONE, distsq / delta**2)**4
-            score = weight * abs(vlag)
-
-            tr_success = (f < fsave)
-
-            ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
-            if (.not. tr_success) then
-                score(kopt) = -ONE
-            end if
-
-            if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
-                ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
-                ! exclude such K.
-                knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-                !!MATLAB: [~, knew] = max(score, [], 'omitnan');
-                ddknew = distsq(knew)
-            elseif (tr_success) then
-                ! Powell's code does not include the following instructions. With Powell's code,
-                ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
-                knew = int(maxloc(distsq, dim=1), IK)
-            else
-                knew = 0_IK
-            end if
+        ! Pick the next value of DELTA after a trust region step.
+        if (.not. (qred > 0)) then
+            info = TRSUBP_FAILED
+            exit
         end if
-        if (knew > 0) then
+        ratio = (fsave - f) / qred
+        if (ratio <= TENTH) then
+            delta = HALF * dnorm
+        else if (ratio <= 0.7_RP) then
+            delta = max(HALF * delta, dnorm)
+        else
+            delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
+        end if
+        if (delta <= 1.5_RP * rho) delta = rho
 
+        tr_success = (f < fsave)
+
+        ! Set KNEW to the index of the next interpolation point to be deleted.
+
+        ! Calculate the distance squares between the interpolation points and the "optimal point". When
+        ! identifying the optimal point, as suggested in (7.5) of the UOBYQA paper, it is reasonable to
+        ! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
+        ! point in the next interpolation if TR_SUCCESS is TRUE. Strangely, considering this new point does
+        ! not always lead to a better performance of UOBYQA. Here, we choose not to check TR_SUCCESS, as
+        ! the performance of UOBYQA is better in this way.
+        ! HOWEVER, THIS MAY WELL CHANGE IF THE OTHER PARTS OF UOBYQA ARE IMPLEMENTED DIFFERENTLY.
+        !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
+        distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)  ! XSAVE is the unupdated XOPT
+        weight = max(ONE, distsq / delta**2)**4
+
+        !------------------------------------------------------------------------------------------!
+        ! Other possible definitions of WEIGHT.
+        !weight = max(ONE, distsq / rho**2)**4  ! Similar to DISTSQ/DELTA**2; not better than it.
+        !weight = max(ONE, distsq / rho**2)**3.5_RP ! It works better than power 4 on some problems.
+        !weight = max(ONE, distsq / delta**2)**3.5_RP  ! Not better than DISTSQ/RHO**2.
+        !weight = max(ONE, distsq / rho**2)**1.5_RP  ! Powell's origin code: power 1.5.
+        !weight = max(ONE, distsq / rho**2)**2  ! Better than power 1.5.
+        !weight = max(ONE, distsq / delta**2)**2  ! Not better than DISTSQ/RHO**2.
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! The same as DISTSQ/RHO**2.
+        !weight = distsq**2  ! Not better than MAX(ONE, DISTSQ/RHO**2)**2
+        !weight = max(ONE, distsq / rho**2)*3  ! Better than power 2.
+        !weight = max(ONE, distsq / delta**2)**3  ! Similar to DISTSQ/RHO**2; not better than it.
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! The same as DISTSQ/RHO**2.
+        !weight = distsq**3  ! Not better than MAX(ONE, DISTSQ/RHO**2)**3
+        !weight = max(ONE, distsq / rho**2)**4  ! Better than power 3.
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! The same as DISTSQ/RHO**2.
+        !weight = distsq**4  ! Not better than MAX(ONE, DISTSQ/RHO**2)**4
+        !------------------------------------------------------------------------------------------!
+
+        score = weight * abs(vlag)
+
+        ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
+        if (.not. tr_success) then
+            score(kopt) = -ONE
+        end if
+
+        ! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
+        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
+            ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
+            ! exclude such K.
+            knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+                !!MATLAB: [~, knew] = max(score, [], 'omitnan');
+            ddknew = distsq(knew)
+        elseif (tr_success) then
+            ! Powell's code does not include the following instructions. With Powell's code,
+            ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
+            knew = int(maxloc(distsq, dim=1), IK)
+        else
+            knew = 0_IK
+        end if
+
+        if (knew > 0) then
             ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
             ! the Lagrange functions and the quadratic model.
             xpt(:, knew) = xnew
@@ -337,11 +348,9 @@ do while (.true.)
             if (f < fsave) then
                 kopt = knew
             end if
-
-            if (f < fsave .or. ksave > 0 .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2) cycle
         end if
-
-        improve_geo = .true.
+        improve_geo = .not. (knew > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
+        if (.not. improve_geo) cycle
     end if
 
 
@@ -351,6 +360,7 @@ do while (.true.)
         ! Find out if the interpolation points are close enough to the best point so far.
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         dsqtest = distsq
+
         ! The loop counter K does not appear in the loop body. Its purpose is only to impose an
         ! upper bound on the maximal number of loops.
         do k = 1, npt
@@ -365,7 +375,6 @@ do while (.true.)
             g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
             h = vec2smat(pl(n + 1:npt - 1, knew))
             if (is_nan(sum(abs(g)) + sum(abs(h)))) then
-                !info = NAN_MODEL
                 reduce_rho = .true.
                 exit
             end if
@@ -396,41 +405,120 @@ do while (.true.)
         end do
 
         reduce_rho = (reduce_rho .or. dnorm <= rho)
-        if (geo_step .or. .not. reduce_rho) cycle
+        if (geo_step) then
+            ! Calculate the next value of the objective function.
+            xnew = xopt + d
+            x = xbase + xnew
+
+            if (nf >= maxfun) then
+                info = MAXFUN_REACHED
+                exit
+            end if
+
+            if (is_nan(sum(abs(x)))) then
+                f = sum(x) ! Set F to NaN
+                if (nf == 1) then
+                    fopt = f
+                    xopt = ZERO
+                end if
+                info = NAN_INF_X
+                exit
+            end if
+            call evaluate(calfun, x, f)
+            nf = nf + 1
+            call savehist(nf, x, xhist, f, fhist)
+
+            if (is_nan(f) .or. is_posinf(f)) then
+                if (nf == 1) then
+                    fopt = f
+                    xopt = ZERO
+                end if
+                info = NAN_INF_F
+                exit
+            end if
+
+            if (f <= ftarget) then
+                info = FTARGET_ACHIEVED
+                xopt = xnew
+                fopt = f
+                exit
+            end if
+
+            ! Use the quadratic model to predict the change in F due to the step D, and find the values
+            ! of the Lagrange functions at the new point.
+            qred = -quadinc(pq, d, xopt)
+            vlag = calvlag(pl, d, xopt, kopt)
+
+            ! Update SIXTHM, which is a lower bound on one sixth of the greatest third derivative of F.
+            ! The lower bound is derived from (3.1) of the UOBYQA paper.
+            diff = f - fopt + qred
+            summ = ZERO
+            distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
+            summ = inprod(distsq, sqrt(distsq) * abs(vlag))
+            ! SUMM may become 0 due to rounding, even in double precision. Detected by ifort.
+            if (abs(diff) > 0 .and. summ > 0) then
+                sixthm = max(sixthm, abs(diff) / summ)
+            end if
+
+            ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
+            ! Then branch if D is not a trust region step.
+            fsave = fopt
+            if (f < fopt) then
+                fopt = f
+                xopt = xnew
+            end if
+
+            ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
+            ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
+            ! the Lagrange functions and the quadratic model.
+            xpt(:, knew) = xnew
+            ! It can happen that VLAG(KNEW) = 0 due to rounding.
+            pl(:, knew) = pl(:, knew) / vlag(knew)
+            plknew = pl(:, knew)
+            pq = pq + diff * plknew
+            pl = pl - outprod(plknew, vlag)
+            pl(:, knew) = plknew
+
+            ! Update KOPT if F is the least calculated value of the objective function. Then branch
+            ! for another trust region calculation. The case KSAVE>0 indicates that a model step has
+            ! just been taken.
+            if (f < fsave) then
+                kopt = knew
+            end if
+            cycle
+        end if
+        if (.not. reduce_rho) cycle
     end if
 
     if (rho <= rhoend) then
         info = SMALL_TR_RADIUS
         exit
-    else
-        ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the
-        ! corresponding changes to the gradients of the Lagrange functions and the quadratic model.
-        xbase = xbase + xopt
-        xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-        pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)  ! Model gradient
-        do k = 1, npt
-            pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)  ! Lagrange fun. gradient
-        end do
-
-
-        ! Pick the next values of RHO and DELTA.
-        delta = HALF * rho
-        ratio = rho / rhoend
-        if (ratio <= 16.0_RP) then
-            rho = rhoend
-        else if (ratio <= 250.0_RP) then
-            rho = sqrt(ratio) * rhoend
-        else
-            rho = TENTH * rho
-        end if
-        delta = max(delta, rho)
     end if
+    ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the
+    ! corresponding changes to the gradients of the Lagrange functions and the quadratic model.
+    xbase = xbase + xopt
+    xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+    pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)  ! Model gradient
+    do k = 1, npt
+        pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)  ! Lagrange fun. gradient
+    end do
+    ! Pick the next values of RHO and DELTA.
+    delta = HALF * rho
+    ratio = rho / rhoend
+    if (ratio <= 16.0_RP) then
+        rho = rhoend
+    else if (ratio <= 250.0_RP) then
+        rho = sqrt(ratio) * rhoend
+    else
+        rho = TENTH * rho
+    end if
+    delta = max(delta, rho)
 end do
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
 ! Zaikun 20220531: For the moment, D may contain NaN. Should be avoided later.
-if (info == SMALL_TR_RADIUS .and. errtol >= ZERO .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
+if (info == SMALL_TR_RADIUS .and. errtol >= 0 .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
     nf = nf + 1
@@ -450,7 +538,7 @@ call rangehist(nf, xhist, fhist)
 
 ! Postconditions
 
-close (16)
+!close (17)
 
 
 end subroutine uobyqb
