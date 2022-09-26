@@ -47,7 +47,7 @@ the faithfulness of our implementation, but also check that the solvers behave p
 are invoked with improper inputs or encounter failures of function evaluations.
 
 The tests are automated by
-[GitHub Actions](https://docs.github.com/en/actions). As of July 2022, more than
+[GitHub Actions](https://docs.github.com/en/actions). As of September 2022, more than
 25,000 "workflows" have been successfully run by GitHub Actions
 (see https://github.com/equipez/gitpersonal/actions and https://github.com/equipez/pdfo_ref/actions).
 Normally, each workflow consists of \~ 5 **randomized** tests

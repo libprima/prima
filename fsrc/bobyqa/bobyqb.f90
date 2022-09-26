@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, September 25, 2022 PM02:02:06
+! Last Modified: Monday, September 26, 2022 PM05:49:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -268,7 +268,7 @@ do while (.true.)
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
             xnew = min(max(sl, xnew - xopt), su)
-            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
+            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)  ! XBASE is set to XOPT, XOPT to 0.
             xbase = min(max(xl, xbase), xu)
         end if
         ! Put the variables for the next calculation of the objective function in XNEW, with any
@@ -339,14 +339,24 @@ do while (.true.)
         end if
         if (delta <= 1.5_RP * rho) delta = rho
 
-        ! Find the index of the interpolation point to be replaced by the trust-region trial point.
         tr_success = (f < fopt)
-        if (.false.) then
-            !if (tr_success) then
-            distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
+
+        ! Find the index of the interpolation point to be replaced by the trust-region trial point.
+
+        ! Calculate the distance squares between the interpolation points and the "optimal point". When
+        ! identifying the optimal point, as suggested in (7.5) of the BOBYQA paper, it is reasonable to
+        ! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
+        ! point in the next interpolation if TR_SUCCESS is TRUE. Strangely, considering this new point does
+        ! not always lead to a better performance of BOBYQA. Here, we choose not to check TR_SUCCESS, as
+        ! the performance of BOBYQA is better in this way.
+        ! HOWEVER, THIS MAY WELL CHANGE IF THE OTHER PARTS OF BOBYQA ARE IMPLEMENTED DIFFERENTLY.
+        if (tr_success) then
+            distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
         else
             distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         end if
+        !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+
         hdiag = sum(zmat**2, dim=2)
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         beta = calbeta(kopt, bmat, d, xpt, zmat)
@@ -498,8 +508,8 @@ do while (.true.)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             denom = alpha * beta + vlag(knew)**2
 
-            rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
-            !rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
+            !rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
+            rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
             if (.not. rescue_geo) then
                 ! Put the variables for the next calculation of the objective function in XNEW, with any
                 ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.

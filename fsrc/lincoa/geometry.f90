@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, September 25, 2022 AM10:07:32
+! Last Modified: Monday, September 26, 2022 PM05:05:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,7 +35,7 @@ function setdrop_tr(idz, kopt, freduced, bmat, d, delta, rho, xpt, zmat) result(
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric
@@ -86,28 +86,41 @@ end if
 ! Calculation starts !
 !====================!
 
-denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
-! Calculate the distance squares between the interpolation points and the optimal point up to now.
-if (freduced) then  ! This does not work well for LINCOA. WHY???
-    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
-else
-    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-end if
+! Calculate the distance squares between the interpolation points and the "optimal point". When
+! identifying the optimal point, as suggested in (7.5) of the LINCOA paper, it is reasonable to
+! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
+! point in the next interpolation if FREDUCED is TRUE. Strangely, considering this new point does
+! not always lead to a better performance of LINCOA. Here, we choose not to check FREDUCED, as
+! the performance of LINCOA is better in this way.
+! HOWEVER, THIS MAY WELL CHANGE IF THE OTHER PARTS OF LINCOA ARE IMPLEMENTED DIFFERENTLY.
+!if (freduced) then
+!    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+!    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
+!else
+!    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+!    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+!end if
 distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+
 weight = distsq**2
+!--------------------------------------------------------------------------------------------------!
+! Other possible definitions of WEIGHT.
 !weight = distsq**1.5_RP
 !weight = distsq**2.5_RP
-!weight = distsq**4
 !weight = max(1.0_RP, distsq / rho**2)**2
 !weight = max(1.0_RP, distsq / rho**2)**3
-!weight = max(1.0_RP, distsq / rho**2)**4
-!weight = max(1.0_RP, distsq / delta**2)**4
+!weight = max(1.0_RP, distsq / delta**2)**2
 !weight = max(1.0_RP, distsq / delta**2)**3
+!--------------------------------------------------------------------------------------------------!
+
+denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
 score = weight * denabs
+
+! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
+! This is not really needed if DISTSQ does not take FREDUCED into account and WEIGHT is defined to
+! DISTSQ to some power, in which case SCORE(KOPT) = 0. We keep the code for robustness.
 if (.not. freduced) then
-    score(kopt) = -1.0_RP!ONE
+    score(kopt) = -ONE
 end if
 
 if (any(score > 0)) then
