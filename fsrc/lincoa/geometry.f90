@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM09:35:07
+! Last Modified: Monday, September 26, 2022 PM09:50:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: setdrop_tr, geostep
 contains
 
 
-function setdrop_tr(idz, kopt, freduced, bmat, d, delta, rho, xpt, zmat) result(knew)
+function setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
@@ -48,8 +48,6 @@ integer(IK), intent(in) :: kopt
 logical, intent(in) :: freduced
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:)
-real(RP), intent(in) :: delta
-real(RP), intent(in) :: rho
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
@@ -103,9 +101,9 @@ end if
 distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 
 weight = distsq**2
-!weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
 !--------------------------------------------------------------------------------------------------!
 ! Other possible definitions of WEIGHT.
+!weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
 !weight = distsq**1.5_RP
 !weight = distsq**2.5_RP
 !weight = (distsq / delta**2)**3
@@ -145,6 +143,9 @@ end if
 if (DEBUGGING) then
     call assert(knew >= 1 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
     call assert(knew /= kopt, 'KNEW /= KOPT', srname)
+    call assert(knew >= 1 .or. .not. freduced, 'KNEW >= 1 unless FREDUCED = FALSE', srname)
+    ! KNEW >= 1 when FREDUCED = TRUE unless NaN occurs in DISTSQ, which should not happen if the
+    ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.
 end if
 end function setdrop_tr
 

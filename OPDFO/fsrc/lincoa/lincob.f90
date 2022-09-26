@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM09:07:42
+! Last Modified: Monday, September 26, 2022 PM10:27:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -467,7 +467,7 @@ do while (.true.)
             ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
             ! by subroutine UPDATE.
             if (knew == 0) then
-                knew = setdrop_tr(idz, kopt, bmat, d, xpt, zmat , f< fopt)
+                knew = setdrop_tr(idz, kopt, bmat, d, xpt, zmat, f < fopt)
             end if
             if (knew > 0) then
                 call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
@@ -567,7 +567,8 @@ do while (.true.)
 end do
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried before.
-if (info == SMALL_TR_RADIUS .and. ksave == -1 .and. nf < maxfun) then
+!if (info == SMALL_TR_RADIUS .and. ksave == -1 .and. nf < maxfun) then
+if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
     ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
