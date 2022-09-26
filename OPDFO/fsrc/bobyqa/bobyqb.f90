@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 23, 2022 PM06:42:49
+! Last Modified: Monday, September 26, 2022 PM05:48:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -300,8 +300,8 @@ do while (.true.)
         ! made to BMAT and to the second derivatives of the current model, beginning with the
         ! changes to BMAT that are independent of ZMAT. VLAG is used temporarily for working space.
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-        !if (sum(xopt**2) >= 1.0E3_RP * dsq .and. .not. rescued) then
-        if (sum(xopt**2) >= 1.0E3_RP * dsq) then
+        if (sum(xopt**2) >= 1.0E3_RP * dsq .and. .not. rescued) then
+            !if (sum(xopt**2) >= 1.0E3_RP * dsq) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
             !xnew = xnew - xopt  ! Needed? Will XNEW be used again later?
@@ -578,7 +578,8 @@ do while (.true.)
 
             ! Recalculate KNEW and DENOM if the new F is less than FOPT.
             if (f < fopt) then
-                distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
+                !if (.false.) then
+                distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
             else
                 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
             end if

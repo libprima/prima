@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, September 25, 2022 PM04:32:19
+! Last Modified: Monday, September 26, 2022 PM05:05:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -93,18 +93,22 @@ end if
 ! Calculation starts !
 !====================!
 
-! Calculate the distance squares between the interpolation points and the optimal point up to now.
-!if (.false.) then
-!!if (tr_success) then
+! Calculate the distance squares between the interpolation points and the "optimal point". When
+! identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is reasonable to
+! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
+! point in the next interpolation if TR_SUCCESS is TRUE. Strangely, considering this new point does
+! not always lead to a better performance of NEWUOA. Here, we choose not to check TR_SUCCESS, as
+! the performance of NEWUOA is better in this way.
+! HOWEVER, THIS MAY WELL CHANGE IF THE OTHER PARTS OF NEWUOA ARE IMPLEMENTED DIFFERENTLY.
+!if (tr_success) then
 !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
 !    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
 !else
 !    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 !    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
 !end if
-
 distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
+
 weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3
 !--------------------------------------------------------------------------------------------------!
 ! Other possible definitions of WEIGHT.
@@ -113,7 +117,10 @@ weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3
 !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! It does not work as well as the above.
 !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! This works poorly.
 !--------------------------------------------------------------------------------------------------!
+
+denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
 score = weight * denabs
+
 ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
 if (.not. tr_success) then
     score(kopt) = -ONE

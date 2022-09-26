@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, September 24, 2022 PM01:15:16
+! Last Modified: Monday, September 26, 2022 PM06:18:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -113,7 +113,7 @@ real(RP) :: xpt(size(x), size(pl, 2))
 real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), dsqtest(size(pl, 2)), delbar, &
 & weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, errtol, estim, crvmin, fopt,&
-&        fsave, ratio, rho, sixthm, summ, &
+&        fsave, xsave(size(x)), ratio, rho, sixthm, summ, &
 &        trtol, vmax,  &
 &        qred, wmult, plknew(size(pl, 1)), fval(size(pl, 2))
 integer(IK) :: k, knew, kopt, ksave, subinfo
@@ -264,6 +264,7 @@ do while (.true.)
         ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
         ! Then branch if D is not a trust region step.
         fsave = fopt
+        xsave = xopt
         if (f < fopt) then
             fopt = f
             xopt = xnew
@@ -290,9 +291,11 @@ do while (.true.)
             if (delta <= 1.5_RP * rho) delta = rho
 
             ! Set KNEW to the index of the next interpolation point to be deleted.
-            distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+            !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+            distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)
             !weight = max(ONE, distsq / rho**2)**1.5_RP
-            weight = max(ONE, distsq / rho**2)**4
+            !weight = max(ONE, distsq / rho**2)**4
+            weight = max(ONE, distsq / delta**2)**4
             score = weight * abs(vlag)
 
             tr_success = (f < fsave)

@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, September 25, 2022 PM05:58:10
+! Last Modified: Monday, September 26, 2022 PM06:11:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -277,7 +277,17 @@ do while (.true.)
         end if
         if (delta <= 1.5_RP * rho) delta = rho
 
+        tr_success = (f < fsave)
+
         ! Set KNEW to the index of the next interpolation point to be deleted.
+
+        ! Calculate the distance squares between the interpolation points and the "optimal point". When
+        ! identifying the optimal point, as suggested in (7.5) of the UOBYQA paper, it is reasonable to
+        ! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
+        ! point in the next interpolation if TR_SUCCESS is TRUE. Strangely, considering this new point does
+        ! not always lead to a better performance of UOBYQA. Here, we choose not to check TR_SUCCESS, as
+        ! the performance of UOBYQA is better in this way.
+        ! HOWEVER, THIS MAY WELL CHANGE IF THE OTHER PARTS OF UOBYQA ARE IMPLEMENTED DIFFERENTLY.
         !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
         distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)  ! XSAVE is the unupdated XOPT
         weight = max(ONE, distsq / delta**2)**4
@@ -302,8 +312,6 @@ do while (.true.)
         !------------------------------------------------------------------------------------------!
 
         score = weight * abs(vlag)
-
-        tr_success = (f < fsave)
 
         ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
         if (.not. tr_success) then

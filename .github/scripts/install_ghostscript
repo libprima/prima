@@ -1,11 +1,29 @@
 #!/bin/bash
 
-VER=10.0.0
+# Default version. This is the latest version as of 20220926. This should not matter if the "Find
+# out the latest version" part works properly.
+VER_DFT=10.0.0
+
+# The working directory.
+DIR=$(mktemp -d)
+cd "$DIR" || exit 1
+
+# Find out the latest version.
+RELEASE="https://www.ghostscript.com/releases/index.html"
+WEBPG=index.html
+wget "$RELEASE" -O "$WEBPG"
+VER=$(grep "latest release" "$WEBPG" | grep -oE "([0-9]{1,}\.)+[0-9]{1,}")
+if [[ -z "$VER" ]] ; then
+    printf "\n\n******Fail to find the latest version.******\n******Will install the default version: %s******\n\n" "$VER_DFT"
+    VER=$VER_DFT
+fi
+printf "\n\n******Version to install: %s******\n\n" "$VER"
 VER_NO_DOT=${VER//\./}
+
+# Download URL
 URL="https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs$VER_NO_DOT/ghostscript-$VER-linux-x86_64.tgz"
 
 TGZ=gs.tgz
-DIR=$(mktemp -d)
 
 NEWGS="ghostscript-$VER-linux-x86_64/gs-$VER_NO_DOT-linux-x86_64"
 GS="$(command -v gs)"
@@ -13,7 +31,6 @@ if [[ -z "$GS" ]] ; then
     GS=/usr/bin/gs
 fi
 
-cd "$DIR" || exit 1
 wget "$URL" -O "$TGZ"
 tar zxvf "$TGZ"
 if [[ -f "$GS" ]] ; then
