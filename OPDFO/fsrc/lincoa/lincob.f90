@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM10:27:38
+! Last Modified: Monday, September 26, 2022 PM11:04:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -70,12 +70,12 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic models
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, MIN_MAXFILT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, MIN_MAXFILT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL, FTARGET_ACHIEVED, INFO_DFT, &
+use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: output_mod, only : fmsg
@@ -150,16 +150,17 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delsav, delta, dffalt, diff, &
-&        distsq, xdsq(npt), fopt, fsave, ratio,     &
+&        dsq, distsq(npt), fopt, fsave, ratio,     &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
 logical :: feasible, shortd, improve_geo, freduced
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: idz, itest, &
-&           knew, kopt, ksave, nact,      &
-&           nvala, nvalb, ngetact, subinfo
+&           knew, kopt, nact,      &
+&           ngetact, subinfo
 real(RP) :: fshift(npt)
 real(RP) :: pqalt(npt), galt(size(x))
+real(RP) :: dnormsav(5)
 
 ! Sizes.
 m = int(size(bvec), kind(m))
@@ -202,9 +203,9 @@ end if
 !====================!
 
 ! Set the elements of XBASE, XPT, FVAL, XSAV, XOPT, GOPT, HQ, PQ, BMAT, and ZMAT or the first
-! iteration. An important feature is that, if the interpolation point XPT(K,.) is not feasible,
-! where K is any integer from [1,NPT], then a change is made to XPT(K,.) if necessary so that the
-! constraint violation is at least 0.2*RHOBEG. Also KOPT is set so that XPT(KOPT,.) is the initial
+! iteration. An important feature is that, if the interpolation point XPT(K, :) is not feasible,
+! where K is any integer from [1,NPT], then a change is made to XPT(K, :) if necessary so that the
+! constraint violation is at least 0.2*RHOBEG. Also KOPT is set so that XPT(KOPT, :) is the initial
 ! trust region centre.
 b = bvec
 call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
@@ -248,6 +249,7 @@ qfac = eye(n)
 rfac = ZERO
 rho = rhobeg
 delta = rho
+qred = ZERO
 ratio = -ONE
 feasible = .false.
 shortd = .false.
@@ -255,13 +257,10 @@ improve_geo = .false.
 nact = 0
 itest = 3
 knew = 0
-nvala = 0
-nvalb = 0
-ksave = 0  ! To entertain g95.
+dnormsav = HUGENUM
 info = INFO_DFT
 
 do while (.true.)
-    fsave = fopt
     ! Shift XBASE if XOPT may be too far from XBASE.
     ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
     ! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably
@@ -272,83 +271,44 @@ do while (.true.)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
     end if
 
-    !if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-    !    info = NAN_MODEL
-    !    exit
-    !end if
-
-    !if (is_nan(sum(abs(gopt)) + sum(abs(hq)) + sum(abs(pq)))) then  ! Still needed?
-    !    info = NAN_MODEL
-    !    exit
-    !end if
-
+    fsave = fopt
     delsav = delta
-    ksave = knew
-    if (knew == 0) then
-        ! In the case KNEW=0, generate the next trust region step by calling TRSTEP.
-        call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
-        dnorm = min(delta, sqrt(sum(d**2)))
+    ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
+    call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
+    dnorm = min(delta, sqrt(sum(d**2)))
 
-        ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
-        ! applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has caused a
-        ! change to the active set, indicated by NGETACT >= 2 (note that NGETACT is at least 1).
-        ! Otherwise, the trust region step is considered too short to try.
-        shortd = ((dnorm < HALF * delta .and. ngetact < 2) .or. dnorm < 0.1999_RP * delta)
-        !------------------------------------------------------------------------------------------!
-        ! The SHORTD defined above needs NGETACT, which relies on Powell's trust region subproblem
-        ! solver. If a different subproblem solver is used, we can take the following SHORTD adopted
-        ! from UOBYQA, NEWUOA and BOBYQA. According to a test on 20220620, it works well.
-        !!SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
-        !------------------------------------------------------------------------------------------!
+    ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
+    ! applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has caused a
+    ! change to the active set, indicated by NGETACT >= 2 (note that NGETACT is at least 1).
+    ! Otherwise, the trust region step is considered too short to try.
+    shortd = ((dnorm < HALF * delta .and. ngetact < 2) .or. dnorm < 0.1999_RP * delta)
+    !------------------------------------------------------------------------------------------!
+    ! The SHORTD defined above needs NGETACT, which relies on Powell's trust region subproblem
+    ! solver. If a different subproblem solver is used, we can take the following SHORTD adopted
+    ! from UOBYQA, NEWUOA and BOBYQA. According to a test on 20220620, it works well.
+    !!SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
+    !------------------------------------------------------------------------------------------!
 
-        !------------------------------------------------------------------------------------------!
-        ! Powell's implementation:
-        if (shortd) then
-            delta = HALF * delta
-            if (delta <= 1.4_RP * rho) delta = rho
-            nvala = nvala + 1
-            nvalb = nvalb + 1
-            if (delsav > rho .or. dnorm >= HALF * rho) nvala = 0
-            if (delsav > rho .or. dnorm >= TENTH * rho) nvalb = 0
-            improve_geo = (nvala < 5 .and. nvalb < 3)
-            if (dnorm > 0 .and. .not. improve_geo) then
-                ksave = -1
-            end if
-        else
-            nvala = 0
-            nvalb = 0
-        end if
-        !------------------------------------------------------------------------------------------!
+    ! DNORMSAV saves the DNORM of last few (5) trust-region iterations. It will be used to
+    ! decide whether we should improve the geometry of the interpolation set or reduce RHO when
+    ! SHORTD is TRUE. Note that it does not record the geometry steps.
+    dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
-        !!------------------------------------------------------------------------------------------!
-        !! Modified:
-        !nvala = nvala + 1
-        !nvalb = nvalb + 1
-        !if (delta > rho .or. dnorm >= HALF * rho) nvala = 0
-        !if (delta > rho .or. dnorm >= TENTH * rho) nvalb = 0
-        !if (shortd) then
-        !    delta = HALF * delta
-        !    if (delta <= 1.4_RP * rho) delta = rho
-        !    improve_geo = (nvala < 5 .and. nvalb < 3)
-        !    if (dnorm > 0 .and. .not. improve_geo) then
-        !        ksave = -1
-        !    end if
-        !end if
-        !!------------------------------------------------------------------------------------------!
-
-    else
-        ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
-        delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
-
-        !if (is_nan(sum(abs(bmat(:, knew))))) then  ! Necessary?
-        !    info = NAN_MODEL
-        !    exit
-        !end if
-
-        call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
+    ! In some cases, we reset DNORMSAV to HUGENUM. This indicates a preference of improving the
+    ! geometry of the interpolation set to reducing RHO in the subsequent three or more
+    ! iterations. This is important for the performance of LINCOA.
+    if (delta > rho .or. .not. shortd) then  ! Another possibility: IF (DELTA > RHO) THEN
+        dnormsav = HUGENUM
     end if
 
-    if (knew /= 0 .or. .not. shortd) then
+    ! When the trust region step is short, decide whether to improve the geometry of the
+    ! interpolation set or to reduce RHO.
+    if (shortd) then
+        delta = HALF * delta  ! The factor HALF works better than TENTH used in NEWUOA/BOBYQA
+        ! The factor 1.4 below aligns with the update of DELTA after a trust-region step.
+        if (delta <= 1.4_RP * rho) delta = rho
+        improve_geo = any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
+    else
         ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. If D
         ! is a trust region step, then QRED should be positive. If it is nonpositive due to rounding
         ! errors in this case, there is a branch to try to improve the model.
@@ -361,7 +321,7 @@ do while (.true.)
         ! Zaikun 15-08-2019
         ! Although very rarely, with the original code, an infinite loop can occur in the following
         ! scenario. Suppose that, at an certain iteration, KNEW = 0, DNORM > 0.5*DELTA > RHO, QRED
-        ! <= 0, and summ_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2 (i.e., DELTA is large and DNORM
+        ! <= 0, and sum_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2 (i.e., DELTA is large and DNORM
         ! is not small, yet QRED <= 0 due to rounding errors and XPT are not far from XOPT). Then
         ! the program will goto 530 (try whether to improve the geometry) and then cycle, where
         ! XBASE may be shifted to the current best point, in the hope of reducing rounding errors
@@ -385,17 +345,17 @@ do while (.true.)
 
         ! Calculate the next value of the objective function. The difference between the actual new
         ! value of F and the value predicted by the model is recorded in DIFF.
-        if (ksave /= 0 .or. (qred > ZERO)) then
-            !improve_geo = .false.
+        if (.not. qred > ZERO) then
+            improve_geo = (.not. improve_geo)
+            ! Here, the old value of IMPROVE_GEO indicates whether a geometry step has been taken
+            ! during last iteration. Better implementation?
+        else
             if (nf >= maxfun) then
                 info = MAXFUN_REACHED
                 exit
             end if
             xnew = xopt + d
             x = xbase + xnew
-
-            feasible = (feasible .or. ksave <= 0) ! Consistent with the meaning of FEASIBLE???
-            f = merge(tsource=ONE, fsource=ZERO, mask=feasible)  ! Zaikun 20220415 What does this mean???
 
             if (is_nan(sum(abs(x)))) then
                 f = sum(x)  ! Set F to NaN
@@ -406,17 +366,11 @@ do while (.true.)
                 info = NAN_INF_X
                 exit
             end if
-            !if (knew > 0) then
-            !    write (17, *) 'geo', nf, x
-            !else
-            !    write (17, *) 'tr', nf, x
-            !end if
             call evaluate(calfun, x, f)
             ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is
             ! not usable).
             constr = matprod(x, A_orig) - b_orig
             cstrv = maximum([ZERO, constr])
-            !cstrv = maximum([ZERO, matprod(x, amat(:, trueloc(abs(rescon) <= dnorm))) - b(trueloc(abs(rescon) <= dnorm))])
 
             nf = nf + 1_IK
             call fmsg(solver, iprint, nf, f, x, cstrv, constr)
@@ -427,64 +381,68 @@ do while (.true.)
             end if
             diff = f - fopt + qred
 
-            ! If X is feasible, then set DFFALT to the difference between the new value of F and the
-            ! value predicted by the alternative model.
-            if (feasible .and. itest < 3) then
+            ! Set DFFALT to the difference between the new value of F and the value predicted by
+            ! the alternative model.
+            if (itest < 3) then
                 fshift = fval - fval(kopt)
                 ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
                 pqalt = omega_mul(idz, zmat, fshift)
                 galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
                 dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
-            end if
-            if (itest == 3) then
+            else
                 dffalt = diff
                 itest = 0
             end if
 
             ! Pick the next value of DELTA after a trust region step.
-            if (ksave == 0) then
-                ratio = (fopt - f) / qred
-                if (ratio <= TENTH) then
-                    delta = HALF * delta
-                else if (ratio <= 0.7_RP) then
-                    delta = max(HALF * delta, dnorm)
-                else
-                    temp = sqrt(TWO) * delta
-                    delta = max(HALF * delta, dnorm + dnorm)
-                    delta = min(delta, temp)  ! This does not exist in NEWUOA/BOBYQA. It works well.
-                end if
-                if (delta <= 1.4_RP * rho) delta = rho
-                !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
-                ! N.B.: The factor in the line above should be smaller than SQRT(2). Imagine a very
-                ! successful step with DENORM = DELTA (un-updated) = RHO. Then the scheme will first
-                ! update DELTA to SQRT(2)*RHO. If this factor were larger than or equal to SQRT(2),
-                ! then DELTA will be reset to RHO, which is not reasonable as D is very successful.
+            ratio = (fopt - f) / qred
+            if (ratio <= TENTH) then
+                delta = HALF * delta
+            else if (ratio <= 0.7_RP) then
+                delta = max(HALF * delta, dnorm)
+            else
+                temp = sqrt(TWO) * delta
+                delta = max(HALF * delta, dnorm + dnorm)
+                delta = min(delta, temp)  ! This does not exist in NEWUOA/BOBYQA. It works well.
             end if
+            if (delta <= 1.4_RP * rho) delta = rho
+            !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
+            ! N.B.: The factor in the line above should be smaller than SQRT(2). Imagine a very
+            ! successful step with DENORM = the un-updated DELTA = RHO. Then the scheme will
+            ! first update DELTA to SQRT(2)*RHO. If this factor were not smaller than SQRT(2),
+            ! then DELTA will be reset to RHO, which is not reasonable as D is very successful.
 
-            freduced = (f < fopt .and. feasible)
+            freduced = (f < fopt)
 
             ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
             ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
             ! by subroutine UPDATE.
-            if (knew == 0) then
-                knew = setdrop_tr(idz, kopt, bmat, d, xpt, zmat, f < fopt)
-            end if
+            ! TODO: 1. Take FREDUCED into consideration in SETDROP_TR, particularly DISTSQ.
+            ! 2. Test different definitions of WEIGHT in SETDROP_TR. See BOBYQA.
+            knew = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
             if (knew > 0) then
                 call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 
                 ! If ITEST is increased to 3, then the next quadratic model is the one whose second
                 ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
                 ! new model is constructed by the symmetric Broyden method in the usual way.
-                if (feasible) then
+                if (abs(dffalt) >= TENTH * abs(diff)) then
+                    itest = 0
+                else
                     itest = itest + 1
-                    if (abs(dffalt) >= TENTH * abs(diff)) itest = 0
                 end if
+
                 ! Update the second derivatives of the model by the symmetric Broyden method, using PQW
                 ! for the second derivative parameters of the new KNEW-th Lagrange function. The
                 ! contribution from the old parameter PQ(KNEW) is included in the second derivative
                 ! matrix HQ.
                 call updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
                 call updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+                if (fopt <= ftarget) then
+                    info = FTARGET_ACHIEVED
+                    exit
+                end if
+
                 ! Update RESCON.
                 ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
                 ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
@@ -511,63 +469,179 @@ do while (.true.)
                     hq = ZERO
                     gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
                 end if
-                if (fopt <= ftarget) then
-                    info = FTARGET_ACHIEVED
-                    exit
-                end if
             end if
 
             ! If a trust region step has provided a sufficient decrease in F, then branch for
             ! another trust region calculation. Every iteration that takes a model step is followed
             ! by an attempt to take a trust region step.
-            knew = 0
-            improve_geo = (ksave <= 0 .and. .not. ratio > TENTH)
-            if (.not. improve_geo) cycle
-        else
-            improve_geo = (.not. improve_geo)
-            ! Here, the old value of IMPROVE_GEO indicates whether a geometry step has been taken
-            ! during last iteration. Better implementation?
+            improve_geo = .not. (knew > 0 .and. ratio > TENTH)
         end if
     end if
 
+    if (.not. (shortd .or. qred <= 0 .or. improve_geo)) then
+        cycle
+    end if
+
+
     if (improve_geo) then
         ! Find out if the interpolation points are close enough to the best point so far.
-        distsq = max(delta * delta, 4.0_RP * rho * rho)
+        dsq = max(delta * delta, 4.0_RP * rho * rho)
         xopt = xpt(:, kopt)
-        xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        ! MATLAB: xdsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-        knew = maxloc([distsq, xdsq], dim=1) - 1_IK
+        distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+        ! MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
+        knew = maxloc([dsq, distsq], dim=1) - 1_IK
 
         ! If KNEW > 0, then branch back for the next iteration, which will generate a geometry step.
         ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
         ! when the last trust region step was calculated, then try a trust region step instead.
+        if (knew > 0) then
+            ! Shift XBASE if XOPT may be too far from XBASE.
+            ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
+            ! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably
+            ! to the one here? What about comparing with RHO? What about calling SHIFTBASE only before
+            ! TRSTEP but not GEOSTEP (consider GEOSTEP as a postprocessor).
+            if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
+                b = b - matprod(xopt, amat)
+                call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+            end if
+
+            fsave = fopt
+            delsav = delta
+            ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
+            delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
+            call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
+
+            ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT.
+            qred = -quadinc(d, xpt, gopt, pq, hq)
+
+            ! Calculate the next value of the objective function. The difference between the actual new
+            ! value of F and the value predicted by the model is recorded in DIFF.
+            if (nf >= maxfun) then
+                info = MAXFUN_REACHED
+                exit
+            end if
+            xnew = xopt + d
+            x = xbase + xnew
+
+            if (is_nan(sum(abs(x)))) then
+                f = sum(x)  ! Set F to NaN
+                if (nf == 1) then
+                    fopt = f
+                    xopt = ZERO
+                end if
+                info = NAN_INF_X
+                exit
+            end if
+            call evaluate(calfun, x, f)
+            ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
+            constr = matprod(x, A_orig) - b_orig
+            cstrv = maximum([ZERO, constr])
+            nf = nf + 1_IK
+
+            call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+            call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+            if (is_nan(f) .or. is_posinf(f)) then
+                info = NAN_INF_F
+                exit
+            end if
+            diff = f - fopt + qred
+
+            ! If X is feasible, then set DFFALT to the difference between the new value of F and the
+            ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
+            ! XPT are updated.
+            if (feasible .and. itest < 3) then
+                !if (itest < 3) then
+                fshift = fval - fval(kopt)
+                ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
+                pqalt = omega_mul(idz, zmat, fshift)
+                galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+                dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
+            end if
+            if (itest == 3) then
+                dffalt = diff
+                itest = 0
+            end if
+
+            ! If ITEST is increased to 3, then the next quadratic model is the one whose second
+            ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
+            ! new model is constructed by the symmetric Broyden method in the usual way.
+            if (feasible) then
+                !if (.true.) then
+                if (abs(dffalt) >= TENTH * abs(diff)) then
+                    itest = 0
+                else
+                    itest = itest + 1
+                end if
+            end if
+
+            ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
+            ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
+            ! by subroutine UPDATE.
+            call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
+
+            ! Update the second derivatives of the model by the symmetric Broyden method, using PQW for
+            ! the second derivative parameters of the new KNEW-th Lagrange function. The contribution
+            ! from the old parameter PQ(KNEW) is included in the second derivative matrix HQ.
+            freduced = (f < fopt .and. feasible)
+            call updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
+            call updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+            if (fopt <= ftarget) then
+                info = FTARGET_ACHIEVED
+                exit
+            end if
+
+            ! Update RESCON.
+            ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
+            ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
+            if (freduced) then
+                dnorm = sqrt(sum(d**2))
+                where (abs(rescon) >= dnorm + delta)
+                    rescon = min(-abs(rescon) + dnorm, -delta)
+                elsewhere
+                    rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
+                end where
+                rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
+            !!MATLAB:
+            !!mask = (rescon >= delta+dnorm);
+            !!rescon(mask) = max(rescon(mask) - dnorm, delta);
+            !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
+            !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
+            end if
+
+            ! Replace the current model by the least Frobenius norm interpolant if this interpolant
+            ! gives substantial reductions in the predictions of values of F at feasible points.
+            if (itest == 3) then
+                fshift = fval - fval(kopt)
+                pq = omega_mul(idz, zmat, fshift)
+                hq = ZERO
+                gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+            end if
+
+            improve_geo = .false.
+        end if
         if (knew > 0 .or. fopt < fsave .or. delsav > rho) cycle
     end if
 
     ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
     improve_geo = .false.
-    if (rho > rhoend) then
-        delta = HALF * rho
-        if (rho > 250.0_RP * rhoend) then
-            rho = TENTH * rho
-        else if (rho <= 16.0_RP * rhoend) then
-            rho = rhoend
-        else
-            rho = sqrt(rho * rhoend)
-        end if
-        delta = max(delta, rho)
-        knew = 0
-        nvala = 0
-        nvalb = 0
-    else
+    if (rho <= rhoend) then
         info = SMALL_TR_RADIUS
         exit
     end if
-
+    delta = HALF * rho
+    if (rho > 250.0_RP * rhoend) then
+        rho = TENTH * rho
+    else if (rho <= 16.0_RP * rhoend) then
+        rho = rhoend
+    else
+        rho = sqrt(rho * rhoend)
+    end if
+    delta = max(delta, rho)
+    dnormsav = HUGENUM
 end do
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried before.
-!if (info == SMALL_TR_RADIUS .and. ksave == -1 .and. nf < maxfun) then
+! Zaikun 20220926: Is it possible that XOPT+D has been evaluated?
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
@@ -597,7 +671,7 @@ call rangehist(nf, xhist, fhist, chist)
 
 ! Postconditions
 
-close (17)
+!close (16)
 
 end subroutine lincob
 
