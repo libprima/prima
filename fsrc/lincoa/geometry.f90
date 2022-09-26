@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM07:55:34
+! Last Modified: Monday, September 26, 2022 PM09:35:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,11 +103,12 @@ end if
 distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 
 weight = distsq**2
-!weight = (distsq / delta)**2   ! Works the same as DISTSQ**2 (as it should be)
+!weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
 !--------------------------------------------------------------------------------------------------!
 ! Other possible definitions of WEIGHT.
 !weight = distsq**1.5_RP
 !weight = distsq**2.5_RP
+!weight = (distsq / delta**2)**3
 !weight = max(1.0_RP, distsq / rho**2)**2
 !weight = max(1.0_RP, distsq / rho**2)**3
 !weight = max(1.0_RP, distsq / delta**2)**2
@@ -129,11 +130,11 @@ if (any(score > 0)) then
     ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
-else !if (freduced) then
+else if (freduced) then
     ! Powell's code does not handle this case, leaving KNEW = 0 and leading to a segfault.
     knew = int(maxloc(distsq, dim=1), IK)
-!else
-    !knew = 0_IK
+else
+    knew = 0_IK
 end if
 
 !====================!
