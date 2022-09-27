@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM09:50:59
+! Last Modified: Tuesday, September 27, 2022 AM08:57:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,7 +85,7 @@ end if
 !====================!
 
 ! Calculate the distance squares between the interpolation points and the "optimal point". When
-! identifying the optimal point, as suggested in (7.5) of the LINCOA paper, it is reasonable to
+! identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is reasonable to
 ! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
 ! point in the next interpolation if FREDUCED is TRUE. Strangely, considering this new point does
 ! not always lead to a better performance of LINCOA. Here, we choose not to check FREDUCED, as
