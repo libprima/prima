@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, September 27, 2022 AM07:03:15
+! Last Modified: Tuesday, September 27, 2022 AM08:54:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -339,18 +339,18 @@ do while (.true.)
         ! Find the index of the interpolation point to be replaced by the trust-region trial point.
 
         ! Calculate the distance squares between the interpolation points and the "optimal point". When
-        ! identifying the optimal point, as suggested in (7.5) of the BOBYQA paper, it is reasonable to
+        ! identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is reasonable to
         ! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
         ! point in the next interpolation if TR_SUCCESS is TRUE. Strangely, considering this new point does
         ! not always lead to a better performance of BOBYQA. Here, we choose not to check TR_SUCCESS, as
         ! the performance of BOBYQA is better in this way.
         ! HOWEVER, THIS MAY WELL CHANGE IF THE OTHER PARTS OF BOBYQA ARE IMPLEMENTED DIFFERENTLY.
-        if (tr_success) then
-            distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
-        else
-            distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        end if
-        !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+        !if (tr_success) then
+        !    distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
+        !else
+        !    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+        !end if
+        distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 
         den = calden(kopt, bmat, d, xpt, zmat)
 

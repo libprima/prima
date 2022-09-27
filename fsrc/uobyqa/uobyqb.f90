@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM11:04:30
+! Last Modified: Tuesday, September 27, 2022 AM09:01:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -279,12 +279,13 @@ do while (.true.)
 
         ! Set KNEW to the index of the next interpolation point to be deleted.
 
-        ! Calculate the distance squares between the interpolation points and the "optimal point". When
-        ! identifying the optimal point, as suggested in (7.5) of the UOBYQA paper, it is reasonable to
-        ! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
-        ! point in the next interpolation if TR_SUCCESS is TRUE. Strangely, considering this new point does
-        ! not always lead to a better performance of UOBYQA. Here, we choose not to check TR_SUCCESS, as
-        ! the performance of UOBYQA is better in this way.
+        ! Calculate the distance squares between the interpolation points and the "optimal point".
+        ! When identifying the optimal point, as suggested in (56) of the UOBYQA paper and (7.5) of
+        ! the NEWUOA paper, it is reasonable to take into account the new trust-region trial point
+        ! XPT(:, KOPT) + D, which will become the optimal point in the next interpolation if
+        ! TR_SUCCESS is TRUE. Strangely, considering this new point does not always lead to a better
+        ! performance of UOBYQA. Here, we choose not to check TR_SUCCESS, as the performance of
+        ! UOBYQA is better in this way.
         ! HOWEVER, THIS MAY WELL CHANGE IF THE OTHER PARTS OF UOBYQA ARE IMPLEMENTED DIFFERENTLY.
         !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
         distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)  ! XSAVE is the unupdated XOPT

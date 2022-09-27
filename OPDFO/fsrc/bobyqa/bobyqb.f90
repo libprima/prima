@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM11:11:44
+! Last Modified: Tuesday, September 27, 2022 AM08:55:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -350,7 +350,8 @@ do while (.true.)
         ! not always lead to a better performance of BOBYQA. Here, we choose not to check TR_SUCCESS, as
         ! the performance of BOBYQA is better in this way.
         ! HOWEVER, THIS MAY WELL CHANGE IF THE OTHER PARTS OF BOBYQA ARE IMPLEMENTED DIFFERENTLY.
-        if (tr_success) then
+        !if (tr_success) then
+        if (.false.) then
             distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
         else
             distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
