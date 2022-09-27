@@ -110,12 +110,12 @@ if isempty(requirements.list)
     case {'bobyqa', 'bobyqan'}
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}];  % More than 10 minutes to solve.
-        blacklist = [blacklist, {'ARGLINB'}]; % Takes too long
+        blacklist = [blacklist, {'ARGLINB', 'ARGLINA'}];  % Takes too long
     case {'lincoa', 'lincoan'}
         blacklist = [blacklist, {'LSNNODOC', 'HS55', 'AVGASA', 'AVGASB'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'CHEBYQAD'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
-        blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS', 'LUKSAN21LS'}]; % Too long to solve
+        blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS', 'LUKSAN21LS', 'MINSURF'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE'}];
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails

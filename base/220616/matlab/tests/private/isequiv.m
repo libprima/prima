@@ -120,7 +120,7 @@ else
         blacklist = [blacklist, {'PALMER3A', 'HS4'}];  % bobyqaN returns an fx that does not match x; should test it after the modernization.
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}];  % More than 10 minutes to solve.
-        blacklist = [blacklist, {'ARGLINB'}]; % Takes too long
+        blacklist = [blacklist, {'ARGLINB', 'ARGLINA'}];  % Takes too long
     case {'lincoa', 'lincoan'}
         blacklist = [blacklist, {'LSNNODOC', 'HS55'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
@@ -128,7 +128,7 @@ else
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'DECONVB'}]; % Too long to solve
         blacklist = [blacklist, {'DUAL3', 'SPANHYD'}]; % Too long to solve
-        blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1','SIM2BQP', 'BQP1VAR', 'LUKSAN22LS','LUKSAN21LS'}]; % Too long to solve
+        blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1','SIM2BQP', 'BQP1VAR', 'LUKSAN22LS','LUKSAN21LS','MINSURF'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE', 'VESUVIA', 'MESH'}];
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails
