@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 28, 2022 PM10:11:10
+! Last Modified: Wednesday, September 28, 2022 PM10:49:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -157,7 +157,7 @@ real(RP) :: delbar, delsav, delta, dffalt, diff, &
 logical :: feasible, shortd, improve_geo, freduced
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: idz, itest, &
-&           knew, kopt, nact,      &
+&           knew_tr, knew_geo, kopt, nact,      &
 &           ngetact, subinfo
 real(RP) :: fshift(npt)
 real(RP) :: pqalt(npt), galt(size(x))
@@ -252,12 +252,13 @@ rho = rhobeg
 delta = rho
 qred = ZERO
 ratio = -ONE
+knew_tr = 0
+knew_geo = 0
 feasible = .false.
 shortd = .false.
 improve_geo = .false.
 nact = 0
 itest = 3
-knew = 0
 dnormsav = HUGENUM
 info = INFO_DFT
 
@@ -413,9 +414,9 @@ do while (.true.)
         ! by subroutine UPDATE.
         ! TODO: 1. Take FREDUCED into consideration in SETDROP_TR, particularly DISTSQ.
         ! 2. Test different definitions of WEIGHT in SETDROP_TR. See BOBYQA.
-        knew = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
-        if (knew > 0) then
-            call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
+        knew_tr = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
+        if (knew_tr > 0) then
+            call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
 
             ! If ITEST is increased to 3, then the next quadratic model is the one whose second
             ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
@@ -430,8 +431,8 @@ do while (.true.)
             ! for the second derivative parameters of the new KNEW-th Lagrange function. The
             ! contribution from the old parameter PQ(KNEW) is included in the second derivative
             ! matrix HQ.
-            call updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
-            call updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+            call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
+            call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
             if (fopt <= ftarget) then
                 info = FTARGET_ACHIEVED
                 exit
@@ -470,14 +471,10 @@ do while (.true.)
         ! by an attempt to take a trust region step.
     end if
 
-    if (qred > 0 .and. knew > 0 .and. ratio > TENTH .and. .not. shortd) cycle
+    if (qred > 0 .and. knew_tr > 0 .and. ratio > TENTH .and. .not. shortd) cycle
 
     improve_geo = (shortd .and. any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) .or. &
-        & (.not. shortd .and. .not. (qred > 0 .and. knew > 0 .and. ratio > TENTH))
-
-    !if (.not. (shortd .or. improve_geo .or. .not. qred > 0)) then
-    !    cycle
-    !end if
+        & (.not. shortd .and. .not. (qred > 0 .and. knew_tr > 0 .and. ratio > TENTH))
 
     if (improve_geo) then
         ! Find out if the interpolation points are close enough to the best point so far.
@@ -485,12 +482,12 @@ do while (.true.)
         xopt = xpt(:, kopt)
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         ! MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-        knew = maxloc([dsq, distsq], dim=1) - 1_IK
+        knew_geo = maxloc([dsq, distsq], dim=1) - 1_IK
 
         ! If KNEW > 0, then branch back for the next iteration, which will generate a geometry step.
         ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
         ! when the last trust region step was calculated, then try a trust region step instead.
-        if (knew > 0) then
+        if (knew_geo > 0) then
             ! Shift XBASE if XOPT may be too far from XBASE.
             ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
             ! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably
@@ -503,7 +500,7 @@ do while (.true.)
 
             ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
             delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
-            call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
+            call geostep(iact, idz, knew_geo, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
 
             ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT.
             qred = -quadinc(d, xpt, gopt, pq, hq)
@@ -571,14 +568,14 @@ do while (.true.)
             ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
             ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
             ! by subroutine UPDATE.
-            call updateh(knew, kopt, idz, d, xpt, bmat, zmat)
+            call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
 
             ! Update the second derivatives of the model by the symmetric Broyden method, using PQW for
             ! the second derivative parameters of the new KNEW-th Lagrange function. The contribution
             ! from the old parameter PQ(KNEW) is included in the second derivative matrix HQ.
             freduced = (f < fopt .and. feasible)
-            call updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
-            call updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+            call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
+            call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
             if (fopt <= ftarget) then
                 info = FTARGET_ACHIEVED
                 exit
@@ -613,7 +610,9 @@ do while (.true.)
         end if
     end if
 
-    if (improve_geo .and. (knew > 0 .or. fopt < fsave .or. delsav > rho)) cycle
+    !if (improve_geo .and. (knew_geo > 0 .or. fopt < fsave .or. delsav > rho)) cycle
+    if ((improve_geo .and. knew_geo > 0) .or. (improve_geo .and. delsav > rho) .or. &
+        & ((.not. shortd) .and. (.not. ratio > TENTH) .and. (fopt < fsave))) cycle
 
     ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
     if (rho <= rhoend) then
