@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 23, 2022 PM06:38:22
+! Last Modified: Tuesday, September 27, 2022 PM11:13:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -87,14 +87,12 @@ end if
 ! Calculation starts !
 !====================!
 
-!-------- The following are copied from NEWUOA. Needed here? --------------------------------------!
-! We must not do anything if KNEW is 0. This can only happen sometimes after a trust-region step.
+! We must not do anything if KNEW is 0. This can only happen sometimes after a trust-region step. 
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
-!--------------------------------------------------------------------------------------------------!
 
-! Read VLAG, and calculate parameters for the updating formula (4.9) and (4.14).
+! Read VLAG, and calculate parameters for the updating formula (4.9) and (4.14) of the BOBYQA paper.
 vlag = vlag_in
 tau = vlag(knew)
 ! In theory, DENOM can also be calculated after ZMAT is rotated below. However, this worsened the
@@ -125,7 +123,7 @@ tempa = tau / sqrtdn
 tempb = zmat(knew, 1) / sqrtdn
 zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
 
-! Finally, update the matrix BMAT. It implements the last N rows of (4.9) in the NEWUOA paper.
+! Finally, update the matrix BMAT. It implements the last N rows of (4.9) in the BOBYQA paper.
 w(npt + 1:npt + n) = bmat(:, knew)
 v1 = (alpha * vlag(npt + 1:npt + n) - tau * w(npt + 1:npt + n)) / denom
 v2 = (-beta * w(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
