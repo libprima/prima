@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 28, 2022 PM08:58:06
+! Last Modified: Wednesday, September 28, 2022 PM09:08:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -473,11 +473,12 @@ do while (.true.)
     end if
 
     if (.not. (shortd .or. qred > 0)) then
-        !improve_geo = .true.
-        improve_geo = .not. improve_geo
+        improve_geo = .true.
+        !improve_geo = .not. improve_geo
     end if
 
-    if (qred > 0 .and. .not. shortd .and. .not. improve_geo) then
+    !if (qred > 0 .and. .not. shortd .and. .not. improve_geo) then
+    if (.not. (shortd .or. improve_geo .or. .not. qred > 0)) then
         cycle
     end if
 
@@ -504,8 +505,8 @@ do while (.true.)
                 call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
             end if
 
-            fsave = fopt
-            delsav = delta
+            !fsave = fopt
+            !delsav = delta
             ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
             delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
             call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
