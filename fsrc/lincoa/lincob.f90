@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 28, 2022 PM09:49:50
+! Last Modified: Wednesday, September 28, 2022 PM09:59:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -340,7 +340,6 @@ do while (.true.)
         delta = HALF * delta  ! The factor HALF works better than TENTH used in NEWUOA/BOBYQA
         ! The factor 1.4 below aligns with the update of DELTA after a trust-region step.
         if (delta <= 1.4_RP * rho) delta = rho
-        improve_geo = any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
     else if (qred > 0) then
         ! Calculate the next value of the objective function. The difference between the actual new
         ! value of F and the value predicted by the model is recorded in DIFF.
@@ -469,15 +468,10 @@ do while (.true.)
         ! If a trust region step has provided a sufficient decrease in F, then branch for
         ! another trust region calculation. Every iteration that takes a model step is followed
         ! by an attempt to take a trust region step.
-        improve_geo = .not. (knew > 0 .and. ratio > TENTH)
     end if
 
-    !if (.not. (shortd .or. qred > 0)) then
-    !    improve_geo = .true.
-    !end if
-
     improve_geo = (shortd .and. any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) .or. &
-        & (.not. shortd .and. qred > 0 .and. .not. (knew > 0 .and. ratio > TENTH)) .or. .not. (shortd .or. qred > 0)
+        & (.not. shortd .and. .not. (qred > 0 .and. knew > 0 .and. ratio > TENTH))
 
     if (.not. (shortd .or. improve_geo .or. .not. qred > 0)) then
         cycle
@@ -615,13 +609,11 @@ do while (.true.)
                 hq = ZERO
                 gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
             end if
-            improve_geo = .false.
         end if
         if (knew > 0 .or. fopt < fsave .or. delsav > rho) cycle
     end if
 
     ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
-    improve_geo = .false.
     if (rho <= rhoend) then
         info = SMALL_TR_RADIUS
         exit
