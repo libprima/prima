@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 29, 2022 AM12:03:46
+! Last Modified: Thursday, September 29, 2022 AM12:05:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -506,9 +506,9 @@ do while (.true.)
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     ! The following definitions of IMPROVE_GEO are equivalent.
     !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
-    improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
-    !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((qred > 0 .and. .not. shortd) .and. ratio < TENTH)) &
-    !    & .and. (.not. close_itpset)
+    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
+    improve_geo = ((shortd .and. .not. accurate_mod) .or. ((qred > 0 .and. .not. shortd) .and. ratio <= TENTH)) &
+        & .and. (.not. close_itpset)
     call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
 
     !!----------------------------------------------------------------------------------------------!
