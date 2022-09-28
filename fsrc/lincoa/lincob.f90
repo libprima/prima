@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 29, 2022 AM12:05:53
+! Last Modified: Thursday, September 29, 2022 AM12:08:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -485,10 +485,11 @@ do while (.true.)
     ! If a trust region step has provided a sufficient decrease in F, then branch for
     ! another trust region calculation. Every iteration that takes a model step is followed
     ! by an attempt to take a trust region step.
-
+    !
     ! If KNEW > 0, then branch back for the next iteration, which will generate a geometry step.
     ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
     ! when the last trust region step was calculated, then try a trust region step instead.
+    !
     ! ACCURATE_MOD --- Are the recent models sufficiently accurate?
     accurate_mod = .not. any(dnormsav >= HALF * rho) .or. .not. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
     ! SMALL_TRRAD --- Is the trust-region radius small?
@@ -504,12 +505,12 @@ do while (.true.)
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
-    ! The following definitions of IMPROVE_GEO are equivalent.
-    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
+    improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
+    ! The following definitions of IMPROVE_GEO are equivalent to the one above.
     !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
-    improve_geo = ((shortd .and. .not. accurate_mod) .or. ((qred > 0 .and. .not. shortd) .and. ratio <= TENTH)) &
-        & .and. (.not. close_itpset)
-    call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
+    !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((qred > 0 .and. .not. shortd) .and. ratio <= TENTH)) &
+    !    & .and. (.not. close_itpset)
+    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
 
     !!----------------------------------------------------------------------------------------------!
     !! Another way to define REDUCE_RHO and IMPROVE_GEO:
