@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, September 29, 2022 AM12:08:54
+! Last Modified: Thursday, September 29, 2022 AM07:23:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -240,7 +240,8 @@ do tr = 1, maxtr
     shortd = (dnorm < HALF * rho)
     if (shortd) then  ! D is short.
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
-        ! N.B.: This value of DELTA will be discarded if REDUCE_RHO turns out TRUE later.
+        ! N.B.: 1. This value of DELTA will be discarded if REDUCE_RHO turns out TRUE later.
+        ! 2. Without shrinking DELTA, the algorithm may  be stuck in an infinite cycling.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
