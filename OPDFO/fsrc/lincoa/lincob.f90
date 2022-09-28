@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM11:04:39
+! Last Modified: Thursday, September 29, 2022 AM07:01:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -347,6 +347,9 @@ do while (.true.)
         ! value of F and the value predicted by the model is recorded in DIFF.
         if (.not. qred > ZERO) then
             improve_geo = (.not. improve_geo)
+            delta = HALF * delta  ! The factor HALF works better than TENTH used in NEWUOA/BOBYQA
+            if (delta <= 1.4_RP * rho) delta = rho
+            ! The factor 1.4 below aligns with the update of DELTA after a trust-region step.
             ! Here, the old value of IMPROVE_GEO indicates whether a geometry step has been taken
             ! during last iteration. Better implementation?
         else

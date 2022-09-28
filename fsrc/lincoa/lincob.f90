@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 29, 2022 AM12:14:34
+! Last Modified: Thursday, September 29, 2022 AM07:25:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -151,7 +151,7 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delsav, delta, dffalt, diff, &
-&        dsq, distsq(npt), fopt, fsave, ratio,     &
+&        dsq, distsq(npt), fopt, ratio,     &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
 logical :: accurate_mod
@@ -278,7 +278,6 @@ do while (.true.)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
     end if
 
-    fsave = fopt
     delsav = delta
     ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
     call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
@@ -318,11 +317,17 @@ do while (.true.)
 
     ! When the trust region step is short, decide whether to improve the geometry of the
     ! interpolation set or to reduce RHO.
-    if (shortd) then
-        delta = HALF * delta  ! The factor HALF works better than TENTH used in NEWUOA/BOBYQA
-        ! The factor 1.4 below aligns with the update of DELTA after a trust-region step.
-        if (delta <= 1.4_RP * rho) delta = rho
-    else if (qred > 0) then
+    if (shortd .or. .not. qred > 0) then
+        ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
+        ! N.B.: 1. This value of DELTA will be discarded if REDUCE_RHO turns out TRUE later.
+        ! 2. Without shrinking DELTA, the algorithm may  be stuck in an infinite cycling.
+        ! 3. The factor HALF works better than TENTH used in NEWUOA/BOBYQA.
+        ! 4. The factor 1.4 below aligns with the update of DELTA after a trust-region step.
+        delta = HALF * delta
+        if (delta <= 1.4_RP * rho) then
+            delta = rho
+        end if
+    else
         ! Calculate the next value of the objective function. The difference between the actual new
         ! value of F and the value predicted by the model is recorded in DIFF.
         if (nf >= maxfun) then
@@ -381,7 +386,9 @@ do while (.true.)
             delta = max(HALF * delta, dnorm + dnorm)
             delta = min(delta, temp)  ! This does not exist in NEWUOA/BOBYQA. It works well.
         end if
-        if (delta <= 1.4_RP * rho) delta = rho
+        if (delta <= 1.4_RP * rho) then
+            delta = rho
+        end if
         !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
         ! N.B.: The factor in the line above should be smaller than SQRT(2). Imagine a very
         ! successful step with DENORM = the un-updated DELTA = RHO. Then the scheme will
@@ -498,6 +505,9 @@ do while (.true.)
     !improve_geo = (.not. good_mod) .and. (.not. close_itpset)
     !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
     !----------------------------------------------------------------------------------------------!
+
+    ! N.B.: If SHORTD = TRUE or QRED > 0 is FALSE, then either REDUCE_RHO or IMPROVE_GEO is true
+    ! unless DELTA > RHO and all the points are within a ball centered at XOPT with a radius of DSQ.
 
     if (improve_geo) then
         ! Shift XBASE if XOPT may be too far from XBASE.
