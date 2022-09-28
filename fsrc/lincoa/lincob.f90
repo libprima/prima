@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 28, 2022 PM09:59:25
+! Last Modified: Wednesday, September 28, 2022 PM10:11:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -470,13 +470,14 @@ do while (.true.)
         ! by an attempt to take a trust region step.
     end if
 
+    if (qred > 0 .and. knew > 0 .and. ratio > TENTH .and. .not. shortd) cycle
+
     improve_geo = (shortd .and. any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) .or. &
         & (.not. shortd .and. .not. (qred > 0 .and. knew > 0 .and. ratio > TENTH))
 
-    if (.not. (shortd .or. improve_geo .or. .not. qred > 0)) then
-        cycle
-    end if
-
+    !if (.not. (shortd .or. improve_geo .or. .not. qred > 0)) then
+    !    cycle
+    !end if
 
     if (improve_geo) then
         ! Find out if the interpolation points are close enough to the best point so far.
@@ -610,8 +611,9 @@ do while (.true.)
                 gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
             end if
         end if
-        if (knew > 0 .or. fopt < fsave .or. delsav > rho) cycle
     end if
+
+    if (improve_geo .and. (knew > 0 .or. fopt < fsave .or. delsav > rho)) cycle
 
     ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
     if (rho <= rhoend) then
