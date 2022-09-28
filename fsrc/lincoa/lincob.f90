@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 28, 2022 PM11:26:22
+! Last Modified: Wednesday, September 28, 2022 PM11:47:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -154,6 +154,10 @@ real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        dsq, distsq(npt), fopt, fsave, ratio,     &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
+logical :: accurate_mod
+logical :: bad_trstep
+logical :: close_itpset
+logical :: small_trrad
 logical :: feasible, shortd, improve_geo, reduce_rho, freduced
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: idz, itest, &
@@ -473,18 +477,36 @@ do while (.true.)
     ! MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
     knew_geo = maxloc([dsq, distsq], dim=1) - 1_IK
 
+    !----------------------------------------------------------------------------------------------!
+    ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
+    ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
+    !
     ! If a trust region step has provided a sufficient decrease in F, then branch for
     ! another trust region calculation. Every iteration that takes a model step is followed
     ! by an attempt to take a trust region step.
-    !if (qred > 0 .and. ratio > TENTH .and. .not. shortd) cycle
-    improve_geo = (shortd .and. any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) .or. &
-        & (.not. shortd .and. .not. (qred > 0 .and. ratio > TENTH))
-    improve_geo = improve_geo .and. (knew_geo > 0)
-    reduce_rho = .not. (improve_geo) .and. delsav <= rho .and. .not. ((qred > 0 .and. .not. shortd) .and. (fopt < fsave))
 
     ! If KNEW > 0, then branch back for the next iteration, which will generate a geometry step.
     ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
     ! when the last trust region step was calculated, then try a trust region step instead.
+    ! ACCURATE_MOD --- Are the recent models sufficiently accurate?
+    accurate_mod = .not. any(dnormsav >= HALF * rho) .or. .not. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
+    ! SMALL_TRRAD --- Is the trust-region radius small?
+    small_trrad = (delsav <= rho)
+    ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
+    !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
+    !close_itpset = all(distsq <= 4.0_RP * delta**2)
+    close_itpset = (knew_geo <= 0)
+    !----------------------------------------------------------------------------------------------!
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    ! The following definitions of IMPROVE_GEO are equivalent.
+    improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
+    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
+    call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
+
     if (improve_geo) then
         ! Shift XBASE if XOPT may be too far from XBASE.
         ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
