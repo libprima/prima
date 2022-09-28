@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 28, 2022 PM10:49:49
+! Last Modified: Wednesday, September 28, 2022 PM11:04:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -473,147 +473,143 @@ do while (.true.)
 
     if (qred > 0 .and. knew_tr > 0 .and. ratio > TENTH .and. .not. shortd) cycle
 
+
+    ! Find out if the interpolation points are close enough to the best point so far.
+    dsq = max(delta * delta, 4.0_RP * rho * rho)
+    xopt = xpt(:, kopt)
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    ! MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
+    knew_geo = maxloc([dsq, distsq], dim=1) - 1_IK
     improve_geo = (shortd .and. any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) .or. &
         & (.not. shortd .and. .not. (qred > 0 .and. knew_tr > 0 .and. ratio > TENTH))
+    improve_geo = improve_geo .and. (knew_geo > 0)
 
+    ! If KNEW > 0, then branch back for the next iteration, which will generate a geometry step.
+    ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
+    ! when the last trust region step was calculated, then try a trust region step instead.
     if (improve_geo) then
-        ! Find out if the interpolation points are close enough to the best point so far.
-        dsq = max(delta * delta, 4.0_RP * rho * rho)
-        xopt = xpt(:, kopt)
-        distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        ! MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-        knew_geo = maxloc([dsq, distsq], dim=1) - 1_IK
+        ! Shift XBASE if XOPT may be too far from XBASE.
+        ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
+        ! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably
+        ! to the one here? What about comparing with RHO? What about calling SHIFTBASE only before
+        ! TRSTEP but not GEOSTEP (consider GEOSTEP as a postprocessor).
+        if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
+            b = b - matprod(xopt, amat)
+            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+        end if
 
-        ! If KNEW > 0, then branch back for the next iteration, which will generate a geometry step.
-        ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
-        ! when the last trust region step was calculated, then try a trust region step instead.
-        if (knew_geo > 0) then
-            ! Shift XBASE if XOPT may be too far from XBASE.
-            ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
-            ! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably
-            ! to the one here? What about comparing with RHO? What about calling SHIFTBASE only before
-            ! TRSTEP but not GEOSTEP (consider GEOSTEP as a postprocessor).
-            if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
-                b = b - matprod(xopt, amat)
-                call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+        ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
+        delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
+        call geostep(iact, idz, knew_geo, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
+
+        ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT.
+        qred = -quadinc(d, xpt, gopt, pq, hq)
+
+        ! Calculate the next value of the objective function. The difference between the actual new
+        ! value of F and the value predicted by the model is recorded in DIFF.
+        if (nf >= maxfun) then
+            info = MAXFUN_REACHED
+            exit
+        end if
+        xnew = xopt + d
+        x = xbase + xnew
+
+        if (is_nan(sum(abs(x)))) then
+            f = sum(x)  ! Set F to NaN
+            if (nf == 1) then
+                fopt = f
+                xopt = ZERO
             end if
+            info = NAN_INF_X
+            exit
+        end if
+        call evaluate(calfun, x, f)
+        ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
+        constr = matprod(x, A_orig) - b_orig
+        cstrv = maximum([ZERO, constr])
+        nf = nf + 1_IK
 
-            ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
-            delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
-            call geostep(iact, idz, knew_geo, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
+        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+        if (is_nan(f) .or. is_posinf(f)) then
+            info = NAN_INF_F
+            exit
+        end if
+        diff = f - fopt + qred
 
-            ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT.
-            qred = -quadinc(d, xpt, gopt, pq, hq)
+        ! If X is feasible, then set DFFALT to the difference between the new value of F and the
+        ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
+        ! XPT are updated.
+        if (feasible .and. itest < 3) then
+            !if (itest < 3) then
+            fshift = fval - fval(kopt)
+            ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
+            pqalt = omega_mul(idz, zmat, fshift)
+            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+            dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
+        end if
+        if (itest == 3) then
+            dffalt = diff
+            itest = 0
+        end if
 
-            ! Calculate the next value of the objective function. The difference between the actual new
-            ! value of F and the value predicted by the model is recorded in DIFF.
-            if (nf >= maxfun) then
-                info = MAXFUN_REACHED
-                exit
-            end if
-            xnew = xopt + d
-            x = xbase + xnew
-
-            if (is_nan(sum(abs(x)))) then
-                f = sum(x)  ! Set F to NaN
-                if (nf == 1) then
-                    fopt = f
-                    xopt = ZERO
-                end if
-                info = NAN_INF_X
-                exit
-            end if
-            call evaluate(calfun, x, f)
-            ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
-            constr = matprod(x, A_orig) - b_orig
-            cstrv = maximum([ZERO, constr])
-            nf = nf + 1_IK
-
-            call fmsg(solver, iprint, nf, f, x, cstrv, constr)
-            call savehist(nf, x, xhist, f, fhist, cstrv, chist)
-            if (is_nan(f) .or. is_posinf(f)) then
-                info = NAN_INF_F
-                exit
-            end if
-            diff = f - fopt + qred
-
-            ! If X is feasible, then set DFFALT to the difference between the new value of F and the
-            ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
-            ! XPT are updated.
-            if (feasible .and. itest < 3) then
-                !if (itest < 3) then
-                fshift = fval - fval(kopt)
-                ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
-                pqalt = omega_mul(idz, zmat, fshift)
-                galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-                dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
-            end if
-            if (itest == 3) then
-                dffalt = diff
+        ! If ITEST is increased to 3, then the next quadratic model is the one whose second
+        ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
+        ! new model is constructed by the symmetric Broyden method in the usual way.
+        if (feasible) then
+            !if (.true.) then
+            if (abs(dffalt) >= TENTH * abs(diff)) then
                 itest = 0
+            else
+                itest = itest + 1
             end if
+        end if
 
-            ! If ITEST is increased to 3, then the next quadratic model is the one whose second
-            ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-            ! new model is constructed by the symmetric Broyden method in the usual way.
-            if (feasible) then
-                !if (.true.) then
-                if (abs(dffalt) >= TENTH * abs(diff)) then
-                    itest = 0
-                else
-                    itest = itest + 1
-                end if
-            end if
+        ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
+        ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
+        ! by subroutine UPDATE.
+        call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
 
-            ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
-            ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
-            ! by subroutine UPDATE.
-            call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
+        ! Update the second derivatives of the model by the symmetric Broyden method, using PQW for
+        ! the second derivative parameters of the new KNEW-th Lagrange function. The contribution
+        ! from the old parameter PQ(KNEW) is included in the second derivative matrix HQ.
+        freduced = (f < fopt .and. feasible)
+        call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
+        call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+        if (fopt <= ftarget) then
+            info = FTARGET_ACHIEVED
+            exit
+        end if
 
-            ! Update the second derivatives of the model by the symmetric Broyden method, using PQW for
-            ! the second derivative parameters of the new KNEW-th Lagrange function. The contribution
-            ! from the old parameter PQ(KNEW) is included in the second derivative matrix HQ.
-            freduced = (f < fopt .and. feasible)
-            call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
-            call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-            if (fopt <= ftarget) then
-                info = FTARGET_ACHIEVED
-                exit
-            end if
-
-            ! Update RESCON.
-            ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-            ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
-            if (freduced) then
-                dnorm = sqrt(sum(d**2))
-                where (abs(rescon) >= dnorm + delta)
-                    rescon = min(-abs(rescon) + dnorm, -delta)
-                elsewhere
-                    rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-                end where
-                rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
+        ! Update RESCON.
+        ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
+        ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
+        if (freduced) then
+            dnorm = sqrt(sum(d**2))
+            where (abs(rescon) >= dnorm + delta)
+                rescon = min(-abs(rescon) + dnorm, -delta)
+            elsewhere
+                rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
+            end where
+            rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
             !!MATLAB:
             !!mask = (rescon >= delta+dnorm);
             !!rescon(mask) = max(rescon(mask) - dnorm, delta);
             !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
             !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
-            end if
+        end if
 
-            ! Replace the current model by the least Frobenius norm interpolant if this interpolant
-            ! gives substantial reductions in the predictions of values of F at feasible points.
-            if (itest == 3) then
-                fshift = fval - fval(kopt)
-                pq = omega_mul(idz, zmat, fshift)
-                hq = ZERO
-                gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
-            end if
+        ! Replace the current model by the least Frobenius norm interpolant if this interpolant
+        ! gives substantial reductions in the predictions of values of F at feasible points.
+        if (itest == 3) then
+            fshift = fval - fval(kopt)
+            pq = omega_mul(idz, zmat, fshift)
+            hq = ZERO
+            gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
         end if
     end if
 
-    !if ((improve_geo .and. knew_geo > 0) .or. (improve_geo .and. delsav > rho) .or. &
-    !    & ((.not. shortd) .and. (.not. ratio > TENTH) .and. (fopt < fsave))) cycle
-    if ((improve_geo .and. knew_geo > 0) .or. (delsav > rho) .or. &
-        & ((.not. shortd) .and. (.not. ratio > TENTH) .and. (fopt < fsave))) cycle
+    if (improve_geo .or. delsav > rho .or. ((qred > 0 .and. .not. shortd) .and. (.not. ratio > TENTH) .and. (fopt < fsave))) cycle
 
     ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
     if (rho <= rhoend) then
