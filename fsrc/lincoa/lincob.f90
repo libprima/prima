@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 29, 2022 AM12:00:32
+! Last Modified: Thursday, September 29, 2022 AM12:03:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -158,7 +158,7 @@ logical :: accurate_mod
 logical :: bad_trstep
 logical :: close_itpset
 logical :: small_trrad
-logical :: good_mod
+!logical :: good_mod
 logical :: feasible, shortd, improve_geo, reduce_rho, freduced
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: idz, itest, &
@@ -499,26 +499,27 @@ do while (.true.)
     !close_itpset = all(distsq <= 4.0_RP * delta**2)
     close_itpset = (knew_geo <= 0)
     !----------------------------------------------------------------------------------------------!
+
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     ! The following definitions of IMPROVE_GEO are equivalent.
-    improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
-    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
+    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
+    improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
     !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((qred > 0 .and. .not. shortd) .and. ratio < TENTH)) &
     !    & .and. (.not. close_itpset)
     call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
 
-    !----------------------------------------------------------------------------------------------!
-    ! Another way to define REDUCE_RHO and IMPROVE_GEO:
-    good_mod = (shortd .and. (.not. any(dnormsav >= HALF * rho) .or. .not. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) &
-        & .or. ((qred > 0 .and. .not. shortd) .and. ratio > 0 .and. knew_tr > 0))
-    reduce_rho = (shortd .and. good_mod) .or. ((.not. good_mod) .and. close_itpset .and. small_trrad)
-    good_mod = (shortd .and. (.not. any(dnormsav >= HALF * rho) .or. .not. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) &
-        & .or. ((qred > 0 .and. .not. shortd) .and. ratio > TENTH .and. knew_tr > 0))
-    improve_geo = (.not. good_mod) .and. (.not. close_itpset)
-    call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
+    !!----------------------------------------------------------------------------------------------!
+    !! Another way to define REDUCE_RHO and IMPROVE_GEO:
+    !good_mod = (shortd .and. (.not. any(dnormsav >= HALF * rho) .or. .not. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) &
+    !    & .or. ((qred > 0 .and. .not. shortd) .and. ratio > 0 .and. knew_tr > 0))
+    !reduce_rho = (shortd .and. good_mod) .or. ((.not. good_mod) .and. close_itpset .and. small_trrad)
+    !good_mod = (shortd .and. (.not. any(dnormsav >= HALF * rho) .or. .not. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) &
+    !    & .or. ((qred > 0 .and. .not. shortd) .and. ratio > TENTH .and. knew_tr > 0))
+    !improve_geo = (.not. good_mod) .and. (.not. close_itpset)
+    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
     !----------------------------------------------------------------------------------------------!
 
     if (improve_geo) then
