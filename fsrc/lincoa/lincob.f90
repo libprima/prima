@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM11:04:39
+! Last Modified: Wednesday, September 28, 2022 PM08:22:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -81,6 +81,7 @@ use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul
+use, non_intrinsic :: ratio_mod, only : redrat
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
@@ -301,6 +302,38 @@ do while (.true.)
         dnormsav = HUGENUM
     end if
 
+    ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. If D
+    ! is a trust region step, then QRED should be positive. If it is nonpositive due to rounding
+    ! errors in this case, there is a branch to try to improve the model.
+    !-------------------------------------------------------------------------------------------!
+    ! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should try the same.
+    !-------------------------------------------------------------------------------------------!
+    ! Zaikun 15-08-2019
+    ! Although very rarely, with the original code, an infinite loop can occur in the following
+    ! scenario. Suppose that, at an certain iteration, KNEW = 0, DNORM > 0.5*DELTA > RHO, QRED
+    ! <= 0, and sum_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2 (i.e., DELTA is large and DNORM
+    ! is not small, yet QRED <= 0 due to rounding errors and XPT are not far from XOPT). Then
+    ! the program will goto 530 (try whether to improve the geometry) and then cycle, where
+    ! XBASE may be shifted to the current best point, in the hope of reducing rounding errors
+    ! and 'improve' the model. Afterwards, another trust region step is produced by the
+    ! 'improved' model. Note that DELTA remains unchanged in this process. If the new trust
+    ! region step turns out to satisfy DNORM > 0.5*DELTA and QRED <= 0 again (i.e., the
+    ! 'improved' model still suffers from rounding errors), then the program will goto 530 and
+    ! then cycle, where shifting will not happen because either XBASE was already shifted to the
+    ! current best point in last step, or XBASE is close to the current best point.
+    ! Consequently, the model will remain unchanged, and produce the same trust region step
+    ! again. This leads to an infinite loop. The infinite loop did happen when the MATLAB
+    ! interface was applied to min atan(x+100) s.t. x<=-99 (x0=-99, npt=3, rhobeg=1,
+    ! rhoend=1e-6). The problem does not exist in NEWUOA or BOBYQA, where the program will exit
+    ! immediately when QRED <= 0. To prevent such a loop, here we use IMPROVE_GEO to record
+    ! whether the path 530 --> 20 has already happened for last trust region step. IMPROVE_GEO
+    ! implies that last trust region step satisfies QRED <= 0 and followed 530 --> 20. With
+    ! IMPROVE_GEO = TRUE, if QRED is again nonnegative for the new trust region step, we should
+    ! not goto 530 but goto 560, where IMPROVE_GEO will be set to FALSE and DELTA will be
+    ! reduced. Otherwise, an infinite loop would happen.
+    !------------------------------------------------------------------------------------------!
+    qred = -quadinc(d, xpt, gopt, pq, hq)
+
     ! When the trust region step is short, decide whether to improve the geometry of the
     ! interpolation set or to reduce RHO.
     if (shortd) then
@@ -309,43 +342,11 @@ do while (.true.)
         if (delta <= 1.4_RP * rho) delta = rho
         improve_geo = any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
     else
-        ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. If D
-        ! is a trust region step, then QRED should be positive. If it is nonpositive due to rounding
-        ! errors in this case, there is a branch to try to improve the model.
-        !-------------------------------------------------------------------------------------------!
-        ! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should try the same.
-        !-------------------------------------------------------------------------------------------!
-        qred = -quadinc(d, xpt, gopt, pq, hq)
-
-        !------------------------------------------------------------------------------------------!
-        ! Zaikun 15-08-2019
-        ! Although very rarely, with the original code, an infinite loop can occur in the following
-        ! scenario. Suppose that, at an certain iteration, KNEW = 0, DNORM > 0.5*DELTA > RHO, QRED
-        ! <= 0, and sum_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2 (i.e., DELTA is large and DNORM
-        ! is not small, yet QRED <= 0 due to rounding errors and XPT are not far from XOPT). Then
-        ! the program will goto 530 (try whether to improve the geometry) and then cycle, where
-        ! XBASE may be shifted to the current best point, in the hope of reducing rounding errors
-        ! and 'improve' the model. Afterwards, another trust region step is produced by the
-        ! 'improved' model. Note that DELTA remains unchanged in this process. If the new trust
-        ! region step turns out to satisfy DNORM > 0.5*DELTA and QRED <= 0 again (i.e., the
-        ! 'improved' model still suffers from rounding errors), then the program will goto 530 and
-        ! then cycle, where shifting will not happen because either XBASE was already shifted to the
-        ! current best point in last step, or XBASE is close to the current best point.
-        ! Consequently, the model will remain unchanged, and produce the same trust region step
-        ! again. This leads to an infinite loop. The infinite loop did happen when the MATLAB
-        ! interface was applied to min atan(x+100) s.t. x<=-99 (x0=-99, npt=3, rhobeg=1,
-        ! rhoend=1e-6). The problem does not exist in NEWUOA or BOBYQA, where the program will exit
-        ! immediately when QRED <= 0. To prevent such a loop, here we use IMPROVE_GEO to record
-        ! whether the path 530 --> 20 has already happened for last trust region step. IMPROVE_GEO
-        ! implies that last trust region step satisfies QRED <= 0 and followed 530 --> 20. With
-        ! IMPROVE_GEO = TRUE, if QRED is again nonnegative for the new trust region step, we should
-        ! not goto 530 but goto 560, where IMPROVE_GEO will be set to FALSE and DELTA will be
-        ! reduced. Otherwise, an infinite loop would happen.
-        !------------------------------------------------------------------------------------------!
-
         ! Calculate the next value of the objective function. The difference between the actual new
         ! value of F and the value predicted by the model is recorded in DIFF.
-        if (.not. qred > ZERO) then
+        if (.not. qred > 0) then
+            !if (.not. qred > 1E-16_RP) then
+            !if (.false.) then
             improve_geo = (.not. improve_geo)
             ! Here, the old value of IMPROVE_GEO indicates whether a geometry step has been taken
             ! during last iteration. Better implementation?
@@ -395,7 +396,8 @@ do while (.true.)
             end if
 
             ! Pick the next value of DELTA after a trust region step.
-            ratio = (fopt - f) / qred
+            !ratio = (fopt - f) / qred
+            ratio = redrat(fopt - f, qred, eta1)
             if (ratio <= TENTH) then
                 delta = HALF * delta
             else if (ratio <= 0.7_RP) then
@@ -478,7 +480,8 @@ do while (.true.)
         end if
     end if
 
-    if (.not. (shortd .or. qred <= 0 .or. improve_geo)) then
+    !if (.not. (shortd .or. qred <= 0 .or. improve_geo)) then
+    if (qred > 0 .and. .not. shortd .and. .not. improve_geo) then
         cycle
     end if
 
