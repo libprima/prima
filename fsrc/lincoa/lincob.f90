@@ -610,8 +610,9 @@ do while (.true.)
         end if
     end if
 
-    !if (improve_geo .and. (knew_geo > 0 .or. fopt < fsave .or. delsav > rho)) cycle
-    if ((improve_geo .and. knew_geo > 0) .or. (improve_geo .and. delsav > rho) .or. &
+    !if ((improve_geo .and. knew_geo > 0) .or. (improve_geo .and. delsav > rho) .or. &
+    !    & ((.not. shortd) .and. (.not. ratio > TENTH) .and. (fopt < fsave))) cycle
+    if ((improve_geo .and. knew_geo > 0) .or. (delsav > rho) .or. &
         & ((.not. shortd) .and. (.not. ratio > TENTH) .and. (fopt < fsave))) cycle
 
     ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
