@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 28, 2022 PM09:08:42
+! Last Modified: Wednesday, September 28, 2022 PM09:49:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -472,12 +472,13 @@ do while (.true.)
         improve_geo = .not. (knew > 0 .and. ratio > TENTH)
     end if
 
-    if (.not. (shortd .or. qred > 0)) then
-        improve_geo = .true.
-        !improve_geo = .not. improve_geo
-    end if
+    !if (.not. (shortd .or. qred > 0)) then
+    !    improve_geo = .true.
+    !end if
 
-    !if (qred > 0 .and. .not. shortd .and. .not. improve_geo) then
+    improve_geo = (shortd .and. any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) .or. &
+        & (.not. shortd .and. qred > 0 .and. .not. (knew > 0 .and. ratio > TENTH)) .or. .not. (shortd .or. qred > 0)
+
     if (.not. (shortd .or. improve_geo .or. .not. qred > 0)) then
         cycle
     end if
@@ -505,8 +506,6 @@ do while (.true.)
                 call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
             end if
 
-            !fsave = fopt
-            !delsav = delta
             ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
             delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
             call geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
@@ -616,7 +615,6 @@ do while (.true.)
                 hq = ZERO
                 gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
             end if
-
             improve_geo = .false.
         end if
         if (knew > 0 .or. fopt < fsave .or. delsav > rho) cycle
