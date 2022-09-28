@@ -202,7 +202,7 @@ else
     fprintf('\n');
 end
 
-if ~path_saved  %  `add_save_path` failed to save the path.
+if ~path_saved  % `add_save_path` failed to save the path.
     add_path_string = sprintf('addpath(''%s'');', interfaces);
     fprintf('***** To use the package in other MATLAB sessions, do ONE of the following. *****\n\n');
     fprintf('- run ''savepath'' right now if you have the permission to do so.\n\n');
