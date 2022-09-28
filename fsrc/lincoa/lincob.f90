@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 28, 2022 PM11:18:02
+! Last Modified: Wednesday, September 28, 2022 PM11:26:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -467,22 +467,20 @@ do while (.true.)
         end if
     end if
 
-    ! If a trust region step has provided a sufficient decrease in F, then branch for
-    ! another trust region calculation. Every iteration that takes a model step is followed
-    ! by an attempt to take a trust region step.
-    if (qred > 0 .and. knew_tr > 0 .and. ratio > TENTH .and. .not. shortd) cycle
-
     ! Find out if the interpolation points are close enough to the best point so far.
     dsq = max(delta * delta, 4.0_RP * rho * rho)
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     ! MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
     knew_geo = maxloc([dsq, distsq], dim=1) - 1_IK
 
+    ! If a trust region step has provided a sufficient decrease in F, then branch for
+    ! another trust region calculation. Every iteration that takes a model step is followed
+    ! by an attempt to take a trust region step.
+    !if (qred > 0 .and. ratio > TENTH .and. .not. shortd) cycle
     improve_geo = (shortd .and. any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) .or. &
-        & (.not. shortd .and. .not. (qred > 0 .and. knew_tr > 0 .and. ratio > TENTH))
+        & (.not. shortd .and. .not. (qred > 0 .and. ratio > TENTH))
     improve_geo = improve_geo .and. (knew_geo > 0)
-    reduce_rho = .not. (improve_geo .or. delsav > rho .or. &
-        & ((qred > 0 .and. .not. shortd) .and. (.not. ratio > TENTH) .and. (fopt < fsave)))
+    reduce_rho = .not. (improve_geo) .and. delsav <= rho .and. .not. ((qred > 0 .and. .not. shortd) .and. (fopt < fsave))
 
     ! If KNEW > 0, then branch back for the next iteration, which will generate a geometry step.
     ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
