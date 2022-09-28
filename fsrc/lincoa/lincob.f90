@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 29, 2022 AM07:25:32
+! Last Modified: Thursday, September 29, 2022 AM07:39:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -320,7 +320,9 @@ do while (.true.)
     if (shortd .or. .not. qred > 0) then
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
         ! N.B.: 1. This value of DELTA will be discarded if REDUCE_RHO turns out TRUE later.
-        ! 2. Without shrinking DELTA, the algorithm may  be stuck in an infinite cycling.
+        ! 2. Without shrinking DELTA, the algorithm may  be stuck in an infinite cycling, because
+        ! both REDUCE_RHO and IMPROVE_GEO may end up with FALSE in this case, which did happen in
+        ! Powell's code when QRED > 0 is FALSE (Powell's code: VQUAD >= 0, where VQUAD = -QRED).
         ! 3. The factor HALF works better than TENTH used in NEWUOA/BOBYQA.
         ! 4. The factor 1.4 below aligns with the update of DELTA after a trust-region step.
         delta = HALF * delta
