@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, September 22, 2022 AM10:37:51
+! Last Modified: Thursday, September 29, 2022 AM07:32:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -372,7 +372,7 @@ do tr = 1, maxtr
     ! 4. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
     ! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
     ! function value is discarded.
-    ! 5. If SHORTD = FALSE, KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
+    ! 5. If SHORTD = FALSE, KNEW_TR > 0 and RATIO <= TENTH, then [XPT, FVAL] is updated so that
     ! [XPT(KNEW_TR), FVAL(KNEW_TR)] = [XOPT + D, F(XOPT + D)], and the model is updated accordingly,
     ! but such a model will not be used in the next trust-region iteration, because a geometry step
     ! will be invoked to improve the geometry of the interpolation set and update the model again.
@@ -397,11 +397,11 @@ do tr = 1, maxtr
     ! (see Powell's comment above (7.7) of the NEWUOA paper).
     ! N.B.: If SHORTD = TRUE, then either REDUCE_RHO or IMPROVE_GEO is true unless DELTA > RHO and
     ! all the points are within a ball centered at XOPT with a radius of 2*DELTA.
-    bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     ! The following definitions of IMPROVE_GEO are equivalent.
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
     !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
-    !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((.not. shortd) .and. ratio < TENTH)) .and. (.not. close_itpset)
+    !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((.not. shortd) .and. ratio <= TENTH)) .and. (.not. close_itpset)
     !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
 
     ! Comments on BAD_TRSTEP:
@@ -422,7 +422,7 @@ do tr = 1, maxtr
     !    & .or. ((.not. shortd) .and. ratio > 0 .and. knew_tr > 0)
     !reduce_rho = (shortd .and. good_mod) .or. ((.not. good_mod) .and. close_itpset .and. small_trrad)
     !good_mod = (shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)) &
-    !    & .or. ((.not. shortd) .and. ratio >= TENTH .and. knew_tr > 0)
+    !    & .or. ((.not. shortd) .and. ratio > TENTH .and. knew_tr > 0)
     !improve_geo = (.not. good_mod) .and. (.not. close_itpset)
     !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
     !----------------------------------------------------------------------------------------------!
