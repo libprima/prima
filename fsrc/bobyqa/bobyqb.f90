@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, September 27, 2022 AM08:54:08
+! Last Modified: Thursday, September 29, 2022 PM02:23:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -443,6 +443,9 @@ do while (.true.)
 
             ! Test whether to replace the new quadratic model by the least Frobenius norm interpolant,
             ! making the replacement if the test is satisfied.
+            ! N.B.:
+            ! 1. The replacement is done only after a trust-region step, which differs from LINCOA.
+            ! 2. The replacement is done regardless of DELTA <= RHO or not, which differs from NEWUOA.
             itest = itest + 1
             if (gqsq < TEN * gisq) itest = 0
             if (itest >= 3) then
@@ -494,9 +497,31 @@ do while (.true.)
             vlag = calvlag(kopt, bmat, d, xpt, zmat)
             den = calden(kopt, bmat, d, xpt, zmat)
 
+            ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
+            ! 1. RESCUE is called only if rounding errors have reduced by at least a factor of TWO the
+            ! denominator of the formula for updating the H matrix. It provides a useful safeguard, but is
+            ! not invoked in most applications of BOBYQA.
+            ! 2. In Powell's code, if RESCUE is called after GEO_STEP, but RESCUE invokes no function
+            ! evaluation (so that XPT is not updated, but the model and [BMAT, ZMAT] are recalculated),
+            ! then GEO_STEP is called again immediately. Here, however, we always call TRSTEP after RESCUE.
             !rescue_geo = .not. (den(knew) > HALF * vlag(knew)**2) ! This is the normal condition.
             rescue_geo = .not. (den(knew) > vlag(knew)**2)  ! This is used when verifying RESCUE.
-            if (.not. rescue_geo) then
+            if (rescue_geo) then
+                if (nf <= nfresc) then
+                    info = DAMAGING_ROUNDING
+                    exit
+                end if
+                call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
+                    & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
+                if (subinfo /= INFO_DFT) then
+                    info = subinfo
+                    exit
+                end if
+                nfresc = nf
+                moderrsav = HUGENUM
+                dnormsav = HUGENUM
+                cycle
+            else
                 ! Put the variables for the next calculation of the objective function in XNEW, with any
                 ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
                 x = min(max(xl, xbase + xnew), xu)
@@ -579,33 +604,9 @@ do while (.true.)
             cycle
         end if
     end if
-    !write (16, *) nf, kopt, fopt
 
-! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-! 1. RESCUE is called only if rounding errors have reduced by at least a factor of TWO the
-! denominator of the formula for updating the H matrix. It provides a useful safeguard, but is
-! not invoked in most applications of BOBYQA.
-! 2. In Powell's code, if RESCUE is called after GEO_STEP, but RESCUE invokes no function
-! evaluation (so that XPT is not updated, but the model and [BMAT, ZMAT] are recalculated),
-! then GEO_STEP is called again immediately. Here, however, we always call TRSTEP after RESCUE.
-    if (rescue_geo) then
-        if (nf <= nfresc) then
-            info = DAMAGING_ROUNDING
-            exit
-        end if
-        call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
-            & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
-        if (subinfo /= INFO_DFT) then
-            info = subinfo
-            exit
-        end if
-        nfresc = nf
-        moderrsav = HUGENUM
-        dnormsav = HUGENUM
-        cycle
-    end if
 
-! The calculations with the current value of RHO are complete. Update RHO and DELTA.
+    ! The calculations with the current value of RHO are complete. Update RHO and DELTA.
     if (rho <= rhoend) then
         info = SMALL_TR_RADIUS
         exit
