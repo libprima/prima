@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 29, 2022 AM07:39:10
+! Last Modified: Thursday, September 29, 2022 AM10:33:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -378,7 +378,7 @@ do while (.true.)
 
         ! Pick the next value of DELTA after a trust region step.
         !ratio = (fopt - f) / qred
-        ratio = redrat(fopt - f, qred, eta1)
+        ratio = redrat(fopt - f, qred, eta1)  ! Needed? Or just take the ratio since QRED > 0?
         if (ratio <= TENTH) then
             delta = HALF * delta
         else if (ratio <= 0.7_RP) then
