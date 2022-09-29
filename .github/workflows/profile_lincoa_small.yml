@@ -45,7 +45,7 @@ jobs:
 
       - name: install epstopdf and ghostscript
         if: startsWith(matrix.os, 'ubuntu')
-        run: sudo cp .github/scripts/epstopdf /usr/bin && sudo bash .github/scripts/install_ghostscript
+        run: sudo bash .github/scripts/install_epstopdf && sudo bash .github/scripts/install_ghostscript
 
       - name: Check MATLAB
         id: check_matlab
