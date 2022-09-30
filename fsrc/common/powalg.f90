@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, August 21, 2022 AM09:21:55
+! Last Modified: Friday, September 30, 2022 PM08:18:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -809,13 +809,15 @@ qinc = inprod(ghv, w)
 end function quadinc_ghv
 
 
-function errquad(fval, xpt, gq, pq, hq) result(err)
+function errquad(fval, xpt, gq, pq, hq, kref) result(err)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates the maximal relative error of Q in interpolating FVAL on XPT.
-! Here, Q is the quadratic function defined via (GQ, HQ, PQ) by
-! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
-! with HESSIAN consisting of an explicit part HQ and an implicit part PQ in Powell's way:
-! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
+! Here, Q is the quadratic function defined via [GQ, HQ, PQ] by
+! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y> if KREF is absent,
+! Q(Y) = <Y-XREF, GQ> + 0.5*<Y-XREF, HESSIAN*(Y-XREF)> with XREF = XPT(:, KREF), if KREF is present.
+! Here, HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
+! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
+! N.B.: If KREF is absent, then GQ = nabla Q(0); otherwise, GQ = nabla Q(XREF).
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -828,7 +830,8 @@ real(RP), intent(in) :: fval(:)   ! FVAL(NPT)
 real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
 real(RP), intent(in) :: gq(:)     ! GQ(N)
 real(RP), intent(in) :: pq(:)     ! PQ(NPT)
-real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
+real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
+integer(IK), intent(in), optional :: kref
 
 ! Outputs
 real(RP) :: err
@@ -853,8 +856,9 @@ if (DEBUGGING) then
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
-    if (present(hq)) then
-        call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    if (present(kref)) then
+        call assert(kref >= 1 .and. kref <= npt, '1 <= KREF <= NPT', srname)
     end if
 end if
 
@@ -862,16 +866,17 @@ end if
 ! Calculation starts !
 !====================!
 
-if (present(hq)) then
-    qval = [(quadinc(xpt(:, k), xpt, gq, pq, hq), k=1, npt)]
+if (present(kref)) then
+    qval = [(quadinc(xpt(:, k) - xpt(:, kref), xpt, gq, pq, hq), k=1, npt)]
 else
-    qval = [(quadinc(xpt(:, k), xpt, gq, pq), k=1, npt)]
+    qval = [(quadinc(xpt(:, k), xpt, gq, pq, hq), k=1, npt)]
 end if
 !!MATLAB:
 !!if nargin >= 5
-!!    qval = cellfun(@(x) quadinc(x, xpt, gq, pq, hq), num2cell(xpt, 1));  % Row vector
+!!    qval = cellfun(@(x) quadinc(x, xpt, gq, pq, hq), num2cell(xpt - xpt(:, kref), 1));  % Row vector
+!!    % xpt - xpt(:, kref): Implicit expansion
 !!else
-!!    qval = cellfun(@(x) quadinc(x, xpt, gq, pq), num2cell(xpt, 1));  % Row vector
+!!    qval = cellfun(@(x) quadinc(x, xpt, gq, pq, hq), num2cell(xpt, 1));  % Row vector
 !!end
 if (.not. all(is_finite(qval))) then
     err = HUGENUM
