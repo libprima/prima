@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 30, 2022 PM09:34:41
+! Last Modified: Friday, September 30, 2022 PM10:16:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -121,7 +121,7 @@ real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
 real(RP) :: delbar, bdtest(size(x)), beta, &
 &        crvmin, curv(size(x)), delta,  &
-&        den(npt), diff, ftest, &
+&        den(npt), diff, &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbd, fopt,        &
 &        gisq, gqsq,       &
 &        ratio, rho, rhosq, qred, weight(npt), pqinc(npt)
@@ -345,6 +345,8 @@ do while (.true.)
         !if (.false.) then
         !if (tr_success .and. .not. any(den > 0.5 * maxval(vlag(1:npt)**2))) then
         if (tr_success .and. .not. any(den > maxval(vlag(1:npt)**2))) then
+            !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then
+            !if (.not. any(den > maxval(vlag(1:npt)**2))) then
             !write (16, *) 345
             if (nf <= nfresc) then
                 info = DAMAGING_ROUNDING
@@ -369,8 +371,6 @@ do while (.true.)
             dnormsav = HUGENUM
             xnew = min(max(sl, d), su)
             d = xnew - xopt
-            call evaluate(calfun, xnew + xbase, ftest)
-            !write (16, *) 365, nf, ftest, f
             qred = -quadinc(d, xpt, gopt, pq, hq)
             diff = f - fopt + qred
             tr_success = (f < fopt)
