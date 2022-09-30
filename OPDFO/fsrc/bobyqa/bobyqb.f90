@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, September 27, 2022 AM08:55:19
+! Last Modified: Friday, September 30, 2022 PM10:16:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -342,6 +342,53 @@ do while (.true.)
         tr_success = (f < fopt)
 
         ! Find the index of the interpolation point to be replaced by the trust-region trial point.
+        vlag = calvlag(kopt, bmat, d, xpt, zmat)
+        !den = calden(kopt, bmat, d, xpt, zmat)
+        hdiag = sum(zmat**2, dim=2)
+        vlag = calvlag(kopt, bmat, d, xpt, zmat)
+        beta = calbeta(kopt, bmat, d, xpt, zmat)
+        den = hdiag * beta + vlag(1:npt)**2
+        !call wassert(any(den > maxval(vlag(1:npt)**2)), 'ANY(DEN) > EPS', srname)
+        !if (tr_success .and. .not. any(den > EPS)) then
+        !if (tr_success .and. .not. any(den > 0.25 * maxval(vlag(1:npt)**2))) then
+        !if (.false.) then
+        !if (tr_success .and. .not. any(den > 0.5 * maxval(vlag(1:npt)**2))) then
+        if (tr_success .and. .not. any(den > maxval(vlag(1:npt)**2))) then
+            !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then
+            !if (.not. any(den > maxval(vlag(1:npt)**2))) then
+            !write (16, *) 345
+            if (nf <= nfresc) then
+                info = DAMAGING_ROUNDING
+                exit
+            end if
+            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
+                & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
+            !if (n * npt <= 100) then
+            !    !if (errquad(fval, xpt, gopt, pq, hq, kopt) >= 1E-1) then
+            !    if (errquad(fval, xpt, gopt - hess_mul(xopt, xpt, pq, hq), pq, hq) >= 1E-1) then
+            !        write (16, *) 353
+            !        !close (16)
+            !    end if
+            !    !call validate(errquad(fval, xpt, gopt, pq, hq, kopt) < 1E-1, '1, ERR < 1e-1', srname)
+            !end if
+            if (subinfo /= INFO_DFT) then
+                info = subinfo
+                exit
+            end if
+            nfresc = nf
+            moderrsav = HUGENUM
+            dnormsav = HUGENUM
+            xnew = min(max(sl, d), su)
+            d = xnew - xopt
+            qred = -quadinc(d, xpt, gopt, pq, hq)
+            diff = f - fopt + qred
+            tr_success = (f < fopt)
+            !den = calden(kopt, bmat, d, xpt, zmat)
+            hdiag = sum(zmat**2, dim=2)
+            vlag = calvlag(kopt, bmat, d, xpt, zmat)
+            beta = calbeta(kopt, bmat, d, xpt, zmat)
+            den = hdiag * beta + vlag(1:npt)**2
+        end if
 
         ! Calculate the distance squares between the interpolation points and the "optimal point". When
         ! identifying the optimal point, as suggested in (7.5) of the BOBYQA paper, it is reasonable to
@@ -509,8 +556,8 @@ do while (.true.)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             denom = alpha * beta + vlag(knew)**2
 
-            !rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
-            rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
+            rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
+            !rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
             if (.not. rescue_geo) then
                 ! Put the variables for the next calculation of the objective function in XNEW, with any
                 ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
