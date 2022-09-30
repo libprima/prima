@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 29, 2022 PM02:23:09
+! Last Modified: Friday, September 30, 2022 PM09:34:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,8 +51,8 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, HUGENUM, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, HUGENUM, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert, wassert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
@@ -60,7 +60,7 @@ use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, 
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul
+use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul, errquad
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
@@ -121,7 +121,7 @@ real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
 real(RP) :: delbar, bdtest(size(x)), beta, &
 &        crvmin, curv(size(x)), delta,  &
-&        den(npt), diff, &
+&        den(npt), diff, ftest, &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbd, fopt,        &
 &        gisq, gqsq,       &
 &        ratio, rho, rhosq, qred, weight(npt), pqinc(npt)
@@ -337,6 +337,45 @@ do while (.true.)
         tr_success = (f < fopt)
 
         ! Find the index of the interpolation point to be replaced by the trust-region trial point.
+        vlag = calvlag(kopt, bmat, d, xpt, zmat)
+        den = calden(kopt, bmat, d, xpt, zmat)
+        !call wassert(any(den > maxval(vlag(1:npt)**2)), 'ANY(DEN) > EPS', srname)
+        !if (tr_success .and. .not. any(den > EPS)) then
+        !if (tr_success .and. .not. any(den > 0.25 * maxval(vlag(1:npt)**2))) then
+        !if (.false.) then
+        !if (tr_success .and. .not. any(den > 0.5 * maxval(vlag(1:npt)**2))) then
+        if (tr_success .and. .not. any(den > maxval(vlag(1:npt)**2))) then
+            !write (16, *) 345
+            if (nf <= nfresc) then
+                info = DAMAGING_ROUNDING
+                exit
+            end if
+            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
+                & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
+            !if (n * npt <= 100) then
+            !    !if (errquad(fval, xpt, gopt, pq, hq, kopt) >= 1E-1) then
+            !    if (errquad(fval, xpt, gopt - hess_mul(xopt, xpt, pq, hq), pq, hq) >= 1E-1) then
+            !        write (16, *) 353
+            !        !close (16)
+            !    end if
+            !    !call validate(errquad(fval, xpt, gopt, pq, hq, kopt) < 1E-1, '1, ERR < 1e-1', srname)
+            !end if
+            if (subinfo /= INFO_DFT) then
+                info = subinfo
+                exit
+            end if
+            nfresc = nf
+            moderrsav = HUGENUM
+            dnormsav = HUGENUM
+            xnew = min(max(sl, d), su)
+            d = xnew - xopt
+            call evaluate(calfun, xnew + xbase, ftest)
+            !write (16, *) 365, nf, ftest, f
+            qred = -quadinc(d, xpt, gopt, pq, hq)
+            diff = f - fopt + qred
+            tr_success = (f < fopt)
+            den = calden(kopt, bmat, d, xpt, zmat)
+        end if
 
         ! Calculate the distance squares between the interpolation points and the "optimal point". When
         ! identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is reasonable to
@@ -352,8 +391,6 @@ do while (.true.)
         !end if
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 
-        den = calden(kopt, bmat, d, xpt, zmat)
-
         weight = max(ONE, distsq / delta**2)**3  ! This works better than Powell's code.
         !------------------------------------------------------------------------------------------!
         ! Other possible definitions of WEIGHT.
@@ -366,6 +403,7 @@ do while (.true.)
         !weight = max(ONE, distsq / delta**2)  ! As per (6.1) of the BOBYQA paper. It works poorly!
         !------------------------------------------------------------------------------------------!
 
+        !den = calden(kopt, bmat, d, xpt, zmat)
         score = weight * den
 
         ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
@@ -417,9 +455,20 @@ do while (.true.)
             fval(knew) = f
             xpt(:, knew) = xnew
             gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)
+            !write (16, *) 447, nf
+            !if (n * npt <= 100) then
+            !    !if (errquad(fval, xpt, gopt, pq, hq, kopt) >= 1E-1) then
+            !    if (errquad(fval, xpt, gopt - hess_mul(xopt, xpt, pq, hq), pq, hq) >= 1E-1) then
+            !        write (16, *) 458
+            !        !close (16)
+            !    end if
+            !    !call validate(errquad(fval, xpt, gopt - hess_mul(xopt, xpt, pq, hq), pq, hq) < 1E-1, '3, ERR < 1e-1', srname)
+            !    !call validate(errquad(fval, xpt, gopt, pq, hq, kopt) < 1E-1, '3, ERR < 1e-1', srname)
+            !end if
 
             ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
             if (f < fopt) then
+                !write (16, *) 450
                 kopt = knew
                 xopt = xnew
                 gopt = gopt + hess_mul(d, xpt, pq, hq)
@@ -449,22 +498,42 @@ do while (.true.)
             itest = itest + 1
             if (gqsq < TEN * gisq) itest = 0
             if (itest >= 3) then
+                !write (16, *) 480
                 gopt = galt
                 pq = pqalt
                 hq = ZERO
                 itest = 0
             end if
         end if
+        if (n * npt <= 100) then
+            !if (errquad(fval, xpt, gopt, pq, hq, kopt) >= 1E-1) then
+            !if (errquad(fval, xpt, gopt - hess_mul(xopt, xpt, pq, hq), pq, hq) >= 1E-1) then
+            !    write (16, *) 506
+            !    !close (16)
+            !end if
+            !call validate(errquad(fval, xpt, gopt, pq, hq, kopt) < 1E-1, '4, ERR < 1e-1', srname)
+        end if
 
         ! If a trust region step has provided a sufficient decrease in F, then branch for another
         ! trust region calculation.
         !if (f <= fopt - TENTH * qred) cycle
         improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred)
-        if (.not. improve_geo) cycle
+        if (.not. improve_geo) then
+            !write (16, *) 493
+            cycle
+        end if
 
         ! Alternatively, find out if the interpolation points are close enough to the best point so far.
         dsquare = max((TWO * delta)**2, (TEN * rho)**2)
         !end if
+    end if
+    if (n * npt <= 100) then
+        !!if (errquad(fval, xpt, gopt, pq, hq, kopt) >= 1E-1) then
+        !if (errquad(fval, xpt, gopt - hess_mul(xopt, xpt, pq, hq), pq, hq) >= 1E-1) then
+        !    !write (16, *) 528
+        !    !close (16)
+        !end if
+        !!call validate(errquad(fval, xpt, gopt, pq, hq, kopt) < 1E-1, '2, ERR < 1e-1', srname)
     end if
 
     if (improve_geo) then
@@ -504,8 +573,8 @@ do while (.true.)
             ! 2. In Powell's code, if RESCUE is called after GEO_STEP, but RESCUE invokes no function
             ! evaluation (so that XPT is not updated, but the model and [BMAT, ZMAT] are recalculated),
             ! then GEO_STEP is called again immediately. Here, however, we always call TRSTEP after RESCUE.
-            !rescue_geo = .not. (den(knew) > HALF * vlag(knew)**2) ! This is the normal condition.
-            rescue_geo = .not. (den(knew) > vlag(knew)**2)  ! This is used when verifying RESCUE.
+            rescue_geo = .not. (den(knew) > HALF * vlag(knew)**2) ! This is the normal condition.
+            !rescue_geo = .not. (den(knew) > vlag(knew)**2)  ! This is used when verifying RESCUE.
             if (rescue_geo) then
                 if (nf <= nfresc) then
                     info = DAMAGING_ROUNDING
@@ -650,13 +719,13 @@ end if
 
 call rangehist(nf, xhist, fhist)
 
+close (16)
 !====================!
 !  Calculation ends  !
 !====================!
 
 ! Postconditions
 
-!close (16)
 
 end subroutine bobyqb
 

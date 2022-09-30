@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, September 27, 2022 PM11:13:47
+! Last Modified: Friday, September 30, 2022 AM10:56:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -87,7 +87,7 @@ end if
 ! Calculation starts !
 !====================!
 
-! We must not do anything if KNEW is 0. This can only happen sometimes after a trust-region step. 
+! We must not do anything if KNEW is 0. This can only happen sometimes after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
@@ -141,13 +141,13 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
 
-    ! The following is too expensive to check.
-    !call safealloc(xpt_test, n, npt)
-    !xpt_test = xpt
-    !xpt_test(:, knew) = xpt(:, kopt) + d
-    !call wassert(errh(bmat, zmat, xpt_test) <= tol .or. RP == kind(0.0), &
-    !    & 'H = W^{-1} in (2.7) of the BOBYQA paper', srname)
-    !deallocate (xpt_test)
+    !! The following is too expensive to check.
+    !if (n * npt <= 50) then
+    !    xpt_test = xpt
+    !    xpt_test(:, knew) = xpt(:, kopt) + d
+    !    call assert(errh(bmat, zmat, xpt_test) <= tol .or. RP == kind(0.0), &
+    !        & 'H = W^{-1} in (2.7) of the BOBYQA paper', srname)
+    !end if
 end if
 end subroutine updateh
 
