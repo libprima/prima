@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM02:15:13
+! Last Modified: Saturday, October 01, 2022 PM03:38:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,6 +33,7 @@ subroutine updateh(knew, beta, vlag_in, bmat, zmat)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
+use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : planerot, matprod, outprod, symmetrize, issymmetric
 implicit none
 
