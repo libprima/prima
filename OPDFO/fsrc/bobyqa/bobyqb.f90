@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM05:27:23
+! Last Modified: Saturday, October 01, 2022 PM05:42:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -134,7 +134,7 @@ real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x
 real(RP) :: score(npt)
 integer(IK) :: itest, knew, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, rescue_geo, tr_success
+logical :: shortd, improve_geo, rescue_geo, tr_success, rescued
 
 
 ! Sizes.
@@ -218,6 +218,7 @@ improve_geo = .false.
 rescue_geo = .false.
 
 do while (.true.)
+    rescued = .false.
     ! Generate the next point in the trust region that provides a small value of the quadratic model
     ! subject to the constraints on the variables.
 
@@ -364,6 +365,7 @@ do while (.true.)
             end if
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
+            rescued = .true.
             !if (n * npt <= 100) then
             !    !if (errquad(fval, xpt, gopt, pq, hq, kopt) >= 1E-1) then
             !    if (errquad(fval, xpt, gopt - hess_mul(xopt, xpt, pq, hq), pq, hq) >= 1E-1) then
@@ -517,7 +519,7 @@ do while (.true.)
         ! If a trust region step has provided a sufficient decrease in F, then branch for another
         ! trust region calculation.
         !if (f <= fopt - TENTH * qred) cycle
-        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred)
+        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred .or. rescued)
         if (.not. improve_geo) cycle
 
         ! Alternatively, find out if the interpolation points are close enough to the best point so far.
