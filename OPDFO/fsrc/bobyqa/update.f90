@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 23, 2022 PM06:38:22
+! Last Modified: Saturday, October 01, 2022 PM02:15:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,6 +100,9 @@ tau = vlag(knew)
 ! In theory, DENOM can also be calculated after ZMAT is rotated below. However, this worsened the
 ! performance of BOBYQA in a test on 20220413.
 denom = sum(zmat(knew, :)**2) * beta + tau**2
+if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. denom > 0)) then
+    return
+end if
 !call assert(denom > 0, 'DENOM > 0', srname)  ! BOBYQA ensures DENOM to be positive.
 call wassert(denom > 0, 'DENOM > 0', srname)  ! BOBYQA ensures DENOM to be positive.
 vlag(knew) = vlag(knew) - ONE
