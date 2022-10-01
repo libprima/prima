@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM12:08:39
+! Last Modified: Saturday, October 01, 2022 PM02:38:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,12 +100,10 @@ tau = vlag(knew)
 ! performance of BOBYQA in a test on 20220413.
 denom = sum(zmat(knew, :)**2) * beta + tau**2
 
-! If VLAG or BETA is not finite, or if DENOM is not positive, then [BMAT, ZMAT] would be destroyed
-! by the update. In that case, we would rather not update them at all.
+! Quite rarely, due to rounding errors, VLAG or BETA may not be finite, and DENOM may not be
+! positive. In such cases, [BMAT, ZMAT] would be destroyed by the update, and hence we would rather
+! not update them at all. Or should we simply terminate the algorithm?
 if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. denom > 0)) then
-    call assert(denom > 0, 'DENOM > 0', srname)
-    call assert(is_finite(sum(abs(vlag))), 'VLAG is finite', srname)
-    call assert(is_finite(beta), 'BETA is finite', srname)
     return
 end if
 
