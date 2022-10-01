@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, October 01, 2022 PM02:54:04
+! Last Modified: Saturday, October 01, 2022 PM02:59:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
