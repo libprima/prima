@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM03:36:43
+! Last Modified: Saturday, October 01, 2022 PM04:58:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -353,7 +353,7 @@ do while (.true.)
         !if (tr_success .and. .not. any(den > 0.25 * maxval(vlag(1:npt)**2))) then
         !if (.false.) then
         !if (tr_success .and. .not. any(den > 0.5 * maxval(vlag(1:npt)**2))) then
-        if (tr_success .and. .not. any(den > maxval(vlag(1:npt)**2))) then
+        if (tr_success .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
             !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then
             !if (.not. any(den > maxval(vlag(1:npt)**2))) then
             !write (16, *) 345
@@ -556,8 +556,9 @@ do while (.true.)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             denom = alpha * beta + vlag(knew)**2
 
-            rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
-            !rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
+            !rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
+            rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
+            rescue_geo = rescue_geo .or. .not. is_finite(sum(abs(vlag)))
             if (rescue_geo) then
                 if (nf <= nfresc) then
                     info = DAMAGING_ROUNDING
