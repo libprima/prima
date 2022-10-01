@@ -519,6 +519,7 @@ do while (.true.)
         ! trust region calculation.
         !if (f <= fopt - TENTH * qred) cycle
         improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred) !???
+        ! Should we always take a trust region step after RESCUE? 
         if (.not. improve_geo) then
             !write (16, *) 493
             cycle
