@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM05:39:48
+! Last Modified: Saturday, October 01, 2022 PM06:13:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -243,6 +243,7 @@ do while (.true.)
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
 
+        !dsquare = 1.0E2_RP * rho**2
         gnew = gopt + hess_mul(d, xpt, pq, hq)
         bdtest = maxval(abs(moderrsav))
         bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
@@ -477,7 +478,8 @@ do while (.true.)
 
         ! If a trust region step has provided a sufficient decrease in F, then branch for another
         ! trust region calculation.
-        improve_geo = .not. ((knew > 0 .and. f <= fopt - TENTH * qred) .or. rescued) !???
+        !improve_geo = .not. ((knew > 0 .and. f <= fopt - TENTH * qred) .or. rescued) ! This does not work as well as the following.
+        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred) !???
         ! Should we always take a trust region step after RESCUE?
         if (.not. improve_geo) then
             cycle
