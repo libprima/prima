@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 30, 2022 PM10:16:25
+! Last Modified: Saturday, October 01, 2022 AM11:45:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,7 +52,7 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, HUGENUM, EPS, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, wassert, validate
+use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
@@ -60,7 +60,7 @@ use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, 
     & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul, errquad
+use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul!, errquad
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
@@ -369,6 +369,7 @@ do while (.true.)
             nfresc = nf
             moderrsav = HUGENUM
             dnormsav = HUGENUM
+            ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT.
             xnew = min(max(sl, d), su)
             d = xnew - xopt
             qred = -quadinc(d, xpt, gopt, pq, hq)
@@ -517,7 +518,7 @@ do while (.true.)
         ! If a trust region step has provided a sufficient decrease in F, then branch for another
         ! trust region calculation.
         !if (f <= fopt - TENTH * qred) cycle
-        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred)
+        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred) !???
         if (.not. improve_geo) then
             !write (16, *) 493
             cycle
