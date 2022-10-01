@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM04:58:56
+! Last Modified: Saturday, October 01, 2022 PM05:27:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -252,7 +252,8 @@ do while (.true.)
         end if
 
         rhosq = rho**2
-        dsquare = 1.0E2_RP * rhosq
+        !dsquare = 1.0E2_RP * rhosq
+        dsquare = max((TWO * delta)**2, (TEN * rho)**2)
         bdtest = maxval(abs(moderrsav))
         bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
         bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho

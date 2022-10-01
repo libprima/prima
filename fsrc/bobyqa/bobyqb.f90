@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM05:13:14
+! Last Modified: Saturday, October 01, 2022 PM05:31:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -124,7 +124,7 @@ real(RP) :: delbar, bdtest(size(x)), beta, &
 &        den(npt), diff, &
 &        dist, dsquare, distsq(npt), dnorm, dsq, errbd, fopt,        &
 &        gisq, gqsq,       &
-&        ratio, rho, rhosq, qred, weight(npt), pqinc(npt)
+&        ratio, rho, qred, weight(npt), pqinc(npt)
 real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
@@ -218,7 +218,6 @@ do while (.true.)
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
     xnew = max(min(xopt + d, su), sl)  ! In precise arithmetic, XNEW = XOPT + D.
-    gnew = gopt + hess_mul(d, xpt, pq, hq)
 
     dsq = sum(d**2)
     dnorm = min(delta, sqrt(dsq))
@@ -243,15 +242,14 @@ do while (.true.)
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
 
-        rhosq = rho**2
-        dsquare = 1.0E2_RP * rhosq
+        gnew = gopt + hess_mul(d, xpt, pq, hq)
         bdtest = maxval(abs(moderrsav))
         bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
         bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
         curv = diag(hq) + matprod(xpt**2, pq)
-        errbd = minval(max(bdtest, bdtest + HALF * curv * rhosq))
+        errbd = minval(max(bdtest, bdtest + HALF * curv * rho**2))
         if (crvmin > 0) then
-            errbd = min(errbd, 0.125_RP * crvmin * rhosq)
+            errbd = min(errbd, 0.125_RP * crvmin * rho**2)
         end if
         improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
     else  ! D is long enough to invoke a function evaluation.
@@ -484,11 +482,12 @@ do while (.true.)
         end if
 
         ! Alternatively, find out if the interpolation points are close enough to the best point so far.
-        dsquare = max((TWO * delta)**2, (TEN * rho)**2)
+        !dsquare = max((TWO * delta)**2, (TEN * rho)**2)
         !end if
     end if
 
     if (improve_geo) then
+        dsquare = max((TWO * delta)**2, (TEN * rho)**2)
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
         dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
@@ -512,7 +511,6 @@ do while (.true.)
 
             ! Calculate a geometry step.
             d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
-            !xnew = min(max(sl, xopt + d), su)
 
             ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
             ! It provides a useful safeguard, but is not invoked in most applications of BOBYQA.
@@ -541,7 +539,6 @@ do while (.true.)
                 ! model ans [BMAT, ZMAT]; in this case, we calculate a new geometry step.
                 if (nfresc == nf) then
                     d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
-                    !xnew = min(max(sl, xopt + d), su)
                 else
                     nfresc = nf
                     cycle
