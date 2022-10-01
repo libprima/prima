@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM02:38:25
+! Last Modified: Saturday, October 01, 2022 PM02:53:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: updateh
 contains
 
 
-subroutine updateh(knew, beta, vlag_in, bmat, zmat)
+subroutine updateh(knew, beta, vlag_in, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays BMAT and ZMAT in order to replace the interpolation point
 ! XPT(:, KNEW) by XNEW = XPT(:, KOPT) + D. See Section 4 of the BOBYQA paper. [BMAT, ZMAT] describes
@@ -34,6 +34,7 @@ subroutine updateh(knew, beta, vlag_in, bmat, zmat)
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : planerot, matprod, outprod, symmetrize, issymmetric
 implicit none
 
@@ -45,6 +46,9 @@ real(RP), intent(in) :: vlag_in(:)  ! VLAG(NPT + N)
 ! In-outputs
 real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
+
+! Outputs
+integer(IK), intent(out), optional :: info
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATEH'
@@ -88,6 +92,10 @@ end if
 ! Calculation starts !
 !====================!
 
+if (present(info)) then
+    info = INFO_DFT
+end if
+
 ! We must not do anything if KNEW is 0. This can only happen sometimes after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
@@ -104,9 +112,13 @@ denom = sum(zmat(knew, :)**2) * beta + tau**2
 ! positive. In such cases, [BMAT, ZMAT] would be destroyed by the update, and hence we would rather
 ! not update them at all. Or should we simply terminate the algorithm?
 if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. denom > 0)) then
+    if (present(info)) then
+        info = DAMAGING_ROUNDING
+    end if
     return
 end if
 
+! After the following line, VLAG = H*w - e_KNEW in the NEWUOA paper (where t = KNEW).
 vlag(knew) = vlag(knew) - ONE
 
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT. After this, ZMAT(KNEW, :) contains

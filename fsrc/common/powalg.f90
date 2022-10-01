@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, September 30, 2022 PM08:18:08
+! Last Modified: Saturday, October 01, 2022 PM02:54:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1216,7 +1216,7 @@ subroutine updateh(knew, kref, idz, d, xpt, bmat, zmat, info)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert!, wassert
-use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
+use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, symmetrize, issymmetric, outprod!, r2update
 !use, non_intrinsic :: memory_mod, only : safealloc
@@ -1374,17 +1374,22 @@ end if
 alpha = w(knew)
 tau = vlag(knew)
 denom = alpha * beta + tau**2
-if (abs(denom) <= 0 .or. is_nan(denom)) then
-    ! 1. Up to here, only ZMAT is rotated, which does not change H in precise arithmetic, so it is
-    ! fine if we do not revert ZMAT to the un-updated version.
-    ! 2. After UPDATEH returns, ideally, the algorithm should do something to rectify the damaging
-    ! rounding. However, nothing is done in the current (20220412) version of NEWUOA/LINCOA, while
-    ! Powell's version of LINCOA terminates immediately. Note that H is not updated at all up to here.
+
+! Quite rarely, due to rounding errors, VLAG or BETA may not be finite, and ABS(DENOM) may not be
+! positive. In such cases, [BMAT, ZMAT] would be destroyed by the update, and hence we would rather
+! not update them at all. Or should we simply terminate the algorithm?
+! N.B.: 1. Up to here, only ZMAT is rotated, which does not change H in precise arithmetic, so it is
+! fine if we do not revert ZMAT to the un-updated version.
+! 2. After UPDATEH returns, ideally, the algorithm should do something to rectify the damaging
+! rounding. However, nothing is done in the current (20220412) version of NEWUOA/LINCOA, while
+! Powell's version of LINCOA terminates immediately. Note that H is not updated at all up to here.
+if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. abs(denom) > 0)) then
     if (present(info)) then
         info = DAMAGING_ROUNDING
     end if
     return
 end if
+
 sqrtdn = sqrt(abs(denom))
 ! After the following line, VLAG = H*w - e_KNEW in the NEWUOA paper (where t = KNEW).
 vlag(knew) = vlag(knew) - ONE

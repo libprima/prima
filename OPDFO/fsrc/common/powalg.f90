@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, August 21, 2022 AM09:21:55
+! Last Modified: Saturday, October 01, 2022 PM02:54:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1369,7 +1369,8 @@ end if
 alpha = w(knew)
 tau = vlag(knew)
 denom = alpha * beta + tau**2
-if (abs(denom) <= 0 .or. is_nan(denom)) then
+!if (abs(denom) <= 0 .or. is_nan(denom)) then
+if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. abs(denom) > 0)) then
     ! 1. Up to here, only ZMAT is rotated, which does not change H in precise arithmetic, so it is
     ! fine if we do not revert ZMAT to the un-updated version.
     ! 2. After UPDATEH returns, ideally, the algorithm should do something to rectify the damaging
