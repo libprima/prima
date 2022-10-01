@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM04:58:31
+! Last Modified: Saturday, October 01, 2022 PM05:13:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -512,7 +512,7 @@ do while (.true.)
 
             ! Calculate a geometry step.
             d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
-            xnew = min(max(sl, xopt + d), su)
+            !xnew = min(max(sl, xopt + d), su)
 
             ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
             ! It provides a useful safeguard, but is not invoked in most applications of BOBYQA.
@@ -541,7 +541,7 @@ do while (.true.)
                 ! model ans [BMAT, ZMAT]; in this case, we calculate a new geometry step.
                 if (nfresc == nf) then
                     d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
-                    xnew = min(max(sl, xopt + d), su)
+                    !xnew = min(max(sl, xopt + d), su)
                 else
                     nfresc = nf
                     cycle
@@ -550,7 +550,7 @@ do while (.true.)
 
             ! Put the variables for the next calculation of the objective function in XNEW, with any
             ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
-            !xnew = min(max(sl, xopt + d), su)
+            xnew = min(max(sl, xopt + d), su)
             x = min(max(xl, xbase + xnew), xu)
             x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
             x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
