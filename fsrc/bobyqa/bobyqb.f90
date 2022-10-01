@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM05:31:10
+! Last Modified: Saturday, October 01, 2022 PM05:39:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,7 +131,7 @@ real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x
 real(RP) :: score(npt)
 integer(IK) :: itest, knew, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, tr_success
+logical :: shortd, improve_geo, tr_success, rescued
 
 
 ! Sizes.
@@ -215,6 +215,7 @@ do while (.true.)
     ! Generate the next point in the trust region that provides a small value of the quadratic model
     ! subject to the constraints on the variables.
 
+    rescued = .false.
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
     xnew = max(min(xopt + d, su), sl)  ! In precise arithmetic, XNEW = XOPT + D.
@@ -350,6 +351,7 @@ do while (.true.)
                 info = subinfo
                 exit
             end if
+            rescued = .true.
 
             nfresc = nf
             moderrsav = HUGENUM
@@ -475,7 +477,7 @@ do while (.true.)
 
         ! If a trust region step has provided a sufficient decrease in F, then branch for another
         ! trust region calculation.
-        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred) !???
+        improve_geo = .not. ((knew > 0 .and. f <= fopt - TENTH * qred) .or. rescued) !???
         ! Should we always take a trust region step after RESCUE?
         if (.not. improve_geo) then
             cycle
@@ -607,8 +609,8 @@ do while (.true.)
             pqinc = matprod(zmat, diff * zmat(knew, :))
             pq = pq + pqinc
             ! Alternatives:
-                !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
-                !!PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
+            !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
+            !!PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
 
             ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
             ! caused by the updating of the quadratic model.
