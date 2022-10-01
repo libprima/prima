@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM05:42:07
+! Last Modified: Saturday, October 01, 2022 PM06:11:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -519,7 +519,8 @@ do while (.true.)
         ! If a trust region step has provided a sufficient decrease in F, then branch for another
         ! trust region calculation.
         !if (f <= fopt - TENTH * qred) cycle
-        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred .or. rescued)
+        !improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred .or. rescued)
+        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred)
         if (.not. improve_geo) cycle
 
         ! Alternatively, find out if the interpolation points are close enough to the best point so far.
@@ -528,6 +529,7 @@ do while (.true.)
     end if
 
     if (improve_geo) then
+        !dsquare = max((TWO * delta)**2, (TEN * rho)**2)
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
         dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
