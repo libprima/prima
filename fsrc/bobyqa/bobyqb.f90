@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM03:24:48
+! Last Modified: Saturday, October 01, 2022 PM03:59:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,7 +131,7 @@ real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x
 real(RP) :: score(npt)
 integer(IK) :: itest, knew, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, rescue_geo, tr_success
+logical :: shortd, improve_geo, tr_success
 
 
 ! Sizes.
@@ -210,13 +210,10 @@ itest = 0
 ratio = -ONE
 shortd = .false.
 improve_geo = .false.
-rescue_geo = .false.
 
 do while (.true.)
     ! Generate the next point in the trust region that provides a small value of the quadratic model
     ! subject to the constraints on the variables.
-
-    rescue_geo = .false.
 
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
@@ -336,15 +333,15 @@ do while (.true.)
 
         tr_success = (f < fopt)
 
-        ! Find the index of the interpolation point to be replaced by the trust-region trial point.
+        ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
+        ! It provides a useful safeguard, but is not invoked in most applications of BOBYQA.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         !if (tr_success .and. .not. any(den > 0.25 * maxval(vlag(1:npt)**2))) then
-        !if (.false.) then
         !if (tr_success .and. .not. any(den > 0.5 * maxval(vlag(1:npt)**2))) then
+        !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then
+        !if (.not. any(den > maxval(vlag(1:npt)**2))) then
         if (tr_success .and. .not. any(den > maxval(vlag(1:npt)**2))) then
-            !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then
-            !if (.not. any(den > maxval(vlag(1:npt)**2))) then
             if (nf == nfresc) then  ! This cannot happen.
                 info = DAMAGING_ROUNDING
                 exit
@@ -355,17 +352,20 @@ do while (.true.)
                 info = subinfo
                 exit
             end if
+
             nfresc = nf
             moderrsav = HUGENUM
             dnormsav = HUGENUM
+
             ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT.
             xnew = min(max(sl, d), su)
             d = xnew - xopt
             qred = -quadinc(d, xpt, gopt, pq, hq)
             diff = f - fopt + qred
             tr_success = (f < fopt)
-            den = calden(kopt, bmat, d, xpt, zmat)
         end if
+
+        ! Find the index of the interpolation point to be replaced by the trust-region trial point.
 
         ! Calculate the distance squares between the interpolation points and the "optimal point". When
         ! identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is reasonable to
@@ -393,7 +393,7 @@ do while (.true.)
         !weight = max(ONE, distsq / delta**2)  ! As per (6.1) of the BOBYQA paper. It works poorly!
         !------------------------------------------------------------------------------------------!
 
-        !den = calden(kopt, bmat, d, xpt, zmat)
+        den = calden(kopt, bmat, d, xpt, zmat)
         score = weight * den
 
         ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
@@ -513,22 +513,12 @@ do while (.true.)
 
             ! Calculate a geometry step.
             d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
-            xnew = min(max(sl, xopt + d), su)
-
-            ! Calculate VLAG, BETA, and DENOM for the current choice of D.
-            vlag = calvlag(kopt, bmat, d, xpt, zmat)
-            den = calden(kopt, bmat, d, xpt, zmat)
 
             ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-            ! 1. RESCUE is called only if rounding errors have reduced by at least a factor of TWO the
-            ! denominator of the formula for updating the H matrix. It provides a useful safeguard, but is
-            ! not invoked in most applications of BOBYQA.
-            ! 2. In Powell's code, if RESCUE is called after GEO_STEP, but RESCUE invokes no function
-            ! evaluation (so that XPT is not updated, but the model and [BMAT, ZMAT] are recalculated),
-            ! then GEO_STEP is called again immediately. Here, however, we always call TRSTEP after RESCUE.
-            rescue_geo = .not. (den(knew) > HALF * vlag(knew)**2) ! This is the normal condition.
-            !rescue_geo = .not. (den(knew) > vlag(knew)**2)  ! This is used when verifying RESCUE.
-            if (rescue_geo) then
+            ! It provides a useful safeguard, but is not invoked in most applications of BOBYQA.
+            vlag = calvlag(kopt, bmat, d, xpt, zmat)
+            den = calden(kopt, bmat, d, xpt, zmat)
+            if (den(knew) <= HALF * vlag(knew)**2 .or. is_nan(den(knew))) then
                 if (nf == nfresc) then
                     info = DAMAGING_ROUNDING
                     exit
@@ -540,23 +530,25 @@ do while (.true.)
                     info = subinfo
                     exit
                 end if
+
                 moderrsav = HUGENUM
                 dnormsav = HUGENUM
+
+                ! If NFRESC < NF, then RESCUE has updated XPT (also the model and [BMAT, ZMAT]) to
+                ! improve (rescue) its geometry. Thus no geometry step is needed anymore. If NFRESC
+                ! equals NF, then RESCUE did not make any change to XPT, but only recalculated the
+                ! model ans [BMAT, ZMAT]; in this case, we calculate a new geometry step.
                 if (nfresc == nf) then
-                    !if (.false.) then
-                    ! Calculate a geometry step.
                     d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
-                    xnew = min(max(sl, xopt + d), su)
-                    ! Calculate VLAG, BETA, and DENOM for the current choice of D.
-                    vlag = calvlag(kopt, bmat, d, xpt, zmat)
-                    den = calden(kopt, bmat, d, xpt, zmat)
                 else
                     nfresc = nf
                     cycle
                 end if
             end if
+
             ! Put the variables for the next calculation of the objective function in XNEW, with any
             ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
+            xnew = min(max(sl, xopt + d), su)
             x = min(max(xl, xbase + xnew), xu)
             x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
             x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
