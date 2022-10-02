@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM06:11:14
+! Last Modified: Saturday, October 01, 2022 PM08:01:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -365,7 +365,7 @@ do while (.true.)
             end if
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
-            rescued = .true.
+            rescued = (nfresc < nf)
             !if (n * npt <= 100) then
             !    !if (errquad(fval, xpt, gopt, pq, hq, kopt) >= 1E-1) then
             !    if (errquad(fval, xpt, gopt - hess_mul(xopt, xpt, pq, hq), pq, hq) >= 1E-1) then
