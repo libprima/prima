@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM06:13:23
+! Last Modified: Saturday, October 01, 2022 PM08:13:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -346,19 +346,19 @@ do while (.true.)
                 info = DAMAGING_ROUNDING
                 exit
             end if
+            nfresc = nf
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
                 exit
             end if
-            rescued = .true.
-
+            rescued = (nf > nfresc)
             nfresc = nf
             moderrsav = HUGENUM
             dnormsav = HUGENUM
 
-            ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT.
+            ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT (even if RESCUED is FALSE).
             xnew = min(max(sl, d), su)
             d = xnew - xopt
             qred = -quadinc(d, xpt, gopt, pq, hq)
@@ -479,7 +479,7 @@ do while (.true.)
         ! If a trust region step has provided a sufficient decrease in F, then branch for another
         ! trust region calculation.
         !improve_geo = .not. ((knew > 0 .and. f <= fopt - TENTH * qred) .or. rescued) ! This does not work as well as the following.
-        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred) !???
+        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred) !??? This is wrong if RESCUE has been called.
         ! Should we always take a trust region step after RESCUE?
         if (.not. improve_geo) then
             cycle
