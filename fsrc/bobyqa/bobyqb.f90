@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM08:13:07
+! Last Modified: Sunday, October 02, 2022 PM12:54:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,7 +131,7 @@ real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x
 real(RP) :: score(npt)
 integer(IK) :: itest, knew, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, tr_success, rescued
+logical :: shortd, improve_geo, tr_success!, rescued
 
 
 ! Sizes.
@@ -215,7 +215,7 @@ do while (.true.)
     ! Generate the next point in the trust region that provides a small value of the quadratic model
     ! subject to the constraints on the variables.
 
-    rescued = .false.
+    !rescued = .false.
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
     xnew = max(min(xopt + d, su), sl)  ! In precise arithmetic, XNEW = XOPT + D.
@@ -353,7 +353,7 @@ do while (.true.)
                 info = subinfo
                 exit
             end if
-            rescued = (nf > nfresc)
+            !rescued = (nf > nfresc)
             nfresc = nf
             moderrsav = HUGENUM
             dnormsav = HUGENUM
