@@ -43,8 +43,8 @@ the structure and style of Powell's code except for the layout. Extensive modifi
 to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of our
 implementation, intensive tests are conducted after each and every tiny modification, the test
 problems coming from the [CUTEst set](https://github.com/ralna/CUTEst). The tests do not only verify
-the faithfulness of our implementation, but also check that the solvers behave properly even if they
-are invoked with improper inputs or encounter failures of function evaluations.
+the faithfulness of our implementation, but also check that **the solvers behave properly even if they
+are invoked with improper inputs or encounter failures of function evaluations**.
 
 The tests are automated by
 [GitHub Actions](https://docs.github.com/en/actions). As of September 2022, more than
