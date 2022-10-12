@@ -129,7 +129,7 @@ else
         blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'SPANHYD', 'SPANHYD', 'SPANHYD'}]; % Too long to solve
         blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1', 'HIMMELBI', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS','LUKSAN21LS', 'MINSURF', 'QPCBLEND'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
-        blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE', 'VESUVIA', 'MESH', 'LOADBAL'}];
+        blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE', 'VESUVIA', 'MESH', 'LOADBAL','MIFFLIN1'}];
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails
         blacklist = [blacklist, {'MINMAXRB', 'MAKELA1', 'HS75'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
