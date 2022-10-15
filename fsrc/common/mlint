@@ -15,7 +15,6 @@ CLEAN="N"
 # sunf95 is case sensitive. Put it as the first.
 # ifx encounters internal errors when compiling BOBYQA. Disable xtest for now.
 # Disable ntest for now, since it encounters internal errors randomly
-#COMPILER_LIST=(sunf95 gfortran nagfor g95 af95 ifort nvfortran flang aflang ifx)
 #COMPILER_LIST=(sunf95 gfortran nagfor g95 ifort nvfortran flang aflang ifx)
 #CLIST=(s g n 9 i v f d x)
 printf "\n****** XTEST is disabled ******\n"

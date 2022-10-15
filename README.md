@@ -1,18 +1,18 @@
-## Prima: Reference Implementation of Powell's methods with Modernization and Amelioration
+## PRIMA: Reference Implementation of Powell's methods with Modernization and Amelioration
 
-[![license](https://img.shields.io/badge/license-LGPLv3+-blue)](https://github.com/equipez/prima/blob/master/LICENCE.txt)
-[![Verification, small](https://github.com/equipez/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/verify_small.yml)
-[![Verification, big](https://github.com/equipez/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/verify_big.yml)
-[![Verification, large](https://github.com/equipez/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/verify_large.yml)
-[![Verification, base](https://github.com/equipez/prima/actions/workflows/verify_base.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/verify_base.yml)
+[![license](https://img.shields.io/badge/license-LGPLv3+-blue)](https://github.com/equipez/PRIMA/blob/master/LICENCE.txt)
+[![Verification, small](https://github.com/equipez/PRIMA/actions/workflows/verify_small.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_small.yml)
+[![Verification, big](https://github.com/equipez/PRIMA/actions/workflows/verify_big.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_big.yml)
+[![Verification, large](https://github.com/equipez/PRIMA/actions/workflows/verify_large.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_large.yml)
+[![Verification, base](https://github.com/equipez/PRIMA/actions/workflows/verify_base.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_base.yml)
 
 
 ### What
 
-Prima provides the reference implementation of Powell's derivative-free optimization solvers,
+PRIMA provides the reference implementation of Powell's derivative-free optimization solvers,
 namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 
-This package is part of a research project funded by the
+PRIMA is part of a research project funded by the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and
 the [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
 It is still **under intensive development**, and there is no release yet. If you want to use the
@@ -23,7 +23,7 @@ Dedicated to late Professor [M. J. D. Powell](https://www.zhangzk.net/powell.htm
 
 ### Why
 
-The goal is to implement these solvers in modern languages ---
+The goal of PRIMA is to implement these solvers in modern languages ---
 first [**modern** Fortran](https://fortran-lang.org) (F2003 or newer), and then MATLAB, Python, and
 probably Julia and R. It will be a faithful implementation, in the sense that the new code will be
 mathematically equivalent to Powell’s, except for the
@@ -37,7 +37,7 @@ and will use matrix-vector procedures instead of loops whenever possible.
 
 The mission is nontrivial due to the delicacy of Powell's algorithms and the unique style of his
 code.  We started the Fortran code by refactoring Powell's code into the free form via a small
-[MATLAB tool](https://github.com/equipez/prima/blob/master/matlab/setup_tools/freeform.m) written
+[MATLAB tool](https://github.com/equipez/PRIMA/blob/master/matlab/setup_tools/freeform.m) written
 by ourselves. However, such refactored code is far from what we want, because it inherits completely
 the structure and style of Powell's code except for the layout. Extensive modifications are needed
 to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of our
@@ -49,7 +49,7 @@ are invoked with improper inputs or encounter failures of function evaluations**
 The tests are automated by
 [GitHub Actions](https://docs.github.com/en/actions). As of September 2022, more than
 25,000 "workflows" have been successfully run by GitHub Actions
-(see https://github.com/equipez/gitpersonal/actions and https://github.com/equipez/prima/actions).
+(see https://github.com/equipez/gitpersonal/actions and https://github.com/equipez/PRIMA/actions).
 Normally, each workflow consists of \~ 5 **randomized** tests
 that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words, our
@@ -59,8 +59,7 @@ implementation has been verified by more than $10^5$ hours (or more than $10$ ye
 
 ### Bug fixes
 
-This modernized reference implementation has fixed the following known issues in the **old Fortran
-77 implementation**.
+PRIMA has fixed the following known issues in the **old Fortran 77 implementation** of Powell's methods.
 
 Note that all the issues are problems in the Fortran 77 code rather than flaws in the algorithms.
 The examples given below are bugs or requests sent to [NLopt](https://github.com/stevengj/nlopt), a
