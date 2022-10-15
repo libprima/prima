@@ -1,4 +1,4 @@
-This is the reference implementation of Powell's derivative-free optimization solvers, namely COBYLA,
+This is the reference implementation of Powell's derivative-free optimization methods, namely COBYLA,
 UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 
 Coded by Zaikun ZHANG (www.zhangzk.net) based on the following papers and Powell's code, with
