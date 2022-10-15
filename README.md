@@ -9,27 +9,27 @@
 
 ### What
 
-PRIMA provides the reference implementation of Powell's derivative-free optimization solvers,
+PRIMA provides the reference implementation of Powell's derivative-free optimization methods,
 namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 
 PRIMA is part of a research project funded by the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and
 the [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
 It is still **under intensive development**, and there is no release yet. If you want to use the
-above-mentioned solvers, see the [website](https://www.pdfo.net)
+above-mentioned methods, see the [website](https://www.pdfo.net)
 and [repository](https://github.com/pdfo/pdfo) of PDFO instead.
 
 Dedicated to late Professor [M. J. D. Powell](https://www.zhangzk.net/powell.html) FRS (1936--2015).
 
 ### Why
 
-The goal of PRIMA is to implement these solvers in modern languages ---
+The goal of PRIMA is to implement these methods in modern languages ---
 first [**modern** Fortran](https://fortran-lang.org) (F2003 or newer), and then MATLAB, Python, and
 probably Julia and R. It will be a faithful implementation, in the sense that the new code will be
 mathematically equivalent to Powell’s, except for the
 [bug fixes](#bug-fixes) and improvements that we make intentionally.
 
-The focus is to implement Powell’s solvers in a **structured** and **modularized** way so that they
+The focus is to implement Powell’s methods in a **structured** and **modularized** way so that they
 are **readable**, **maintainable**, and **extendable**. The new code will have no GOTO (of course)
 and will use matrix-vector procedures instead of loops whenever possible.
 
@@ -47,7 +47,7 @@ the faithfulness of our implementation, but also check that **the solvers behave
 are invoked with improper inputs or encounter failures of function evaluations**.
 
 The tests are automated by
-[GitHub Actions](https://docs.github.com/en/actions). As of September 2022, more than
+[GitHub Actions](https://docs.github.com/en/actions). As of October 2022, more than
 25,000 "workflows" have been successfully run by GitHub Actions
 (see https://github.com/equipez/gitpersonal/actions and https://github.com/equipez/PRIMA/actions).
 Normally, each workflow consists of \~ 5 **randomized** tests
