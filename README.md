@@ -1,4 +1,4 @@
-## PRIMA: Reference Implementation of Powell's methods with Modernization and Amelioration
+## PRIMA: Reference Implementation for Powell's methods with Modernization and Amelioration
 
 [![license](https://img.shields.io/badge/license-LGPLv3+-blue)](https://github.com/equipez/PRIMA/blob/master/LICENCE.txt)
 [![Verification, small](https://github.com/equipez/PRIMA/actions/workflows/verify_small.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_small.yml)
@@ -9,7 +9,7 @@
 
 ### What
 
-PRIMA provides the reference implementation of Powell's derivative-free optimization methods,
+PRIMA provides the reference implementation for Powell's derivative-free optimization methods,
 namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 
 PRIMA is part of a research project funded by the
