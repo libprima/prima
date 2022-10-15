@@ -52,8 +52,8 @@ The tests are automated by
 (see https://github.com/equipez/gitpersonal/actions and https://github.com/equipez/PRIMA/actions).
 Normally, each workflow consists of \~ 5 **randomized** tests
 that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum
-is 6 hours, after which the workflow will be canceled automatically). In other words, our
-implementation has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
+is 6 hours, after which the workflow will be canceled automatically). In other words, PRIMA
+has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
 
 ------
 
