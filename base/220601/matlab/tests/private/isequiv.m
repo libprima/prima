@@ -133,12 +133,12 @@ else
         blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE'}];
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails
         blacklist = [blacklist, {'SIPOW3', 'HS55','PRODPL1', 'BQPGASIM','LSNNODOC', 'VESUVIA', 'MESH', 'LOADBAL','MIFFLIN1'}]; % Takes too long
-        blacklist = [blacklist, {'MINMAXRB', 'MAKELA1', 'HS75'}]; % Classical COBYLA encounters SEGFAULT
+        blacklist = [blacklist, {'MINMAXRB', 'MAKELA1', 'HS75', 'GAUSS3'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
         end
-        blacklist = [blacklist, {'PRODPL0', 'DEGENLPB', 'ANTWERP', 'SIPOW3', 'AVION2'}]; % Takes long to solve
+        blacklist = [blacklist, {'PRODPL0', 'DEGENLPB', 'ANTWERP', 'SIPOW3', 'AVION2', 'ACOPR14'}]; % Takes long to solve
         blacklist=[blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Takes more than 5 min to solve
         blacklist = [blacklist, {'KISSING2', 'LUKSAN16', 'QPCBLEND', 'VANDERM4'}]; % Takes more than 20 sec to solve
         %blacklist = [blacklist, {'DUAL2', 'FEEDLOC', 'GROUPING', 'HYDCAR20', 'LINSPANH', 'LUKSAN11', ...
