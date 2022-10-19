@@ -131,5 +131,5 @@ of the PRIMA solvers compared with Powell's implementation, the convergence tole
 - Linearly constrained problems: LINCOA
 <img src="./benchmark/lincoan_lincoan_classical.svg" style="width:26em;"/>
 
--
+- Nonlinearly constrained problems: COBYLA
 <img src="./benchmark/cobylan_cobylan_classical.svg" style="width:26em;"/>
