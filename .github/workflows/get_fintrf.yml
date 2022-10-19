@@ -28,7 +28,7 @@ jobs:
         uses: matlab-actions/setup-matlab@v1.2.1
 
       - name: Run script
-        uses: matlab-actions/run-command@v1.1.0
+        uses: matlab-actions/run-command@v1.1.1
         with:
           command: |
             cd('matlab/setup_tools');
