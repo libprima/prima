@@ -114,11 +114,13 @@ large constraint violation even though the starting point is feasible.
 ### Improvements
 
 Due to the improvements we have introduced into the new implementation, PRIMA outperforms Powell's
-original code (in terms of number of function evaluations, the normal performance indicator in derivative-free optimization).
-Here are the performance profiles of the PRIMA solvers compared with Powell's implementation.
+original code in terms of number of function evaluations, which is the normal performance indicator
+in derivative-free optimization.  Here are the performance profiles of the PRIMA solvers compared
+with Powell's implementation.
 
-![Performance of PRIMA COBYLA](./benchmark/cobylan_cobylan_classical.svg) <img src="./benchmark/cobylan_cobylan_classical.svg">
-![Performance of PRIMA UOBYQA](./benchmark/uobyqan_uobyqan_classical.svg) <img src="./benchmark/uobyqan_uobyqan_classical.svg">
-![Performance of PRIMA NEWUOA](./benchmark/newuoan_newuoan_classical.svg) <img src="./benchmark/newuoan_newuoan_classical.svg">
-![Performance of PRIMA BOBYQA](./benchmark/bobyqan_bobyqan_classical.svg) <img src="./benchmark/bobyqan_bobyqan_classical.svg">
-![Performance of PRIMA LINCOA](./benchmark/lincoan_lincoan_classical.svg) <img src="./benchmark/lincoan_lincoan_classical.svg">
+
+<img src="./benchmark/cobylan_cobylan_classical.svg" style="width:30em;"/>
+<img src="./benchmark/uobyqan_uobyqan_classical.svg" style="width:30em;"/>
+<img src="./benchmark/newuoan_newuoan_classical.svg" style="width:30em;"/>
+<img src="./benchmark/bobyqan_bobyqan_classical.svg" style="width:30em;"/>
+<img src="./benchmark/lincoan_lincoan_classical.svg" style="width:30em;"/>
