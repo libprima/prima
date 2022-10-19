@@ -120,7 +120,7 @@ Below are the [performance profiles](https://arxiv.org/pdf/cs/0102001.pdf)
 of the PRIMA solvers compared with Powell's implementation, the convergence tolerance being $\tau = 10^{-8}$.
 Roughly speaking, performance profiles plot the percentage of test problems solved against the
 budget, which is measured relative to the cost of the most efficient solver in the comparison.
-A higher curve indicates a better solver.
+A **higher** curve indicates a **better** solver.
 See [Benchmarking Derivative-Free Optimization Algorithms](https://www.mcs.anl.gov/~wild/dfo/benchmarking)
 ([J. J. Moré](https://www.anl.gov/profile/jorge-j-more) and [S. M. Wild](https://www.anl.gov/profile/stefan-m-wild))
 for more information.
