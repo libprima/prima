@@ -127,16 +127,16 @@ for more information.
 
 
 - NEWUOA on unconstrained CUTEst problems of at most 50 variables
-<img src="./benchmark/newuoan_newuoan_classical.svg" style="width:26em;"/>
+<img src="./benchmark/newuoa.png" style="width:26em;"/>
 
 - BOBYQA on bound-constrained CUTEst problems of at most 50 variables
-<img src="./benchmark/bobyqan_bobyqan_classical.svg" style="width:26em;"/>
+<img src="./benchmark/bobyqa.png" style="width:26em;"/>
 
 - LINCOA on linearly constrained CUTEst problems of at most 50 variables and 5000 constraints
-<img src="./benchmark/lincoan_lincoan_classical.svg" style="width:26em;"/>
+<img src="./benchmark/lincoa.png" style="width:26em;"/>
 
 - COBYLA on nonlinearly constrained CUTEst problems of at most 20 variables and 2000 constraints
-<img src="./benchmark/cobylan_cobylan_classical.svg" style="width:26em;"/>
+<img src="./benchmark/cobyla.png" style="width:26em;"/>
 
 - UOBYQA on unconstrained CUTEst problems of at most 20 variables
-<img src="./benchmark/uobyqan_uobyqan_classical.svg" style="width:26em;"/>
+<img src="./benchmark/uobyqa.png" style="width:26em;"/>
