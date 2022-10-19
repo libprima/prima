@@ -1,6 +1,6 @@
 ## PRIMA: Reference Implementation for Powell's methods with Modernization and Amelioration
 
-**Dedicated to late Professor [M. J. D. Powell](https://www.zhangzk.net/powell.html) FRS (1936--2015)**
+Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell.html) FRS (1936--2015)
 
 [![license](https://img.shields.io/badge/license-LGPLv3+-blue)](https://github.com/equipez/PRIMA/blob/master/LICENCE.txt)
 [![Verification, small](https://github.com/equipez/PRIMA/actions/workflows/verify_small.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_small.yml)
