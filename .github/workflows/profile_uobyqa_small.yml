@@ -54,7 +54,7 @@ jobs:
 
       - name: Set up MATLAB
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
-        uses: matlab-actions/setup-matlab@v1.2.1
+        uses: matlab-actions/setup-matlab@v1.2.2
         with:
           release: ${{ env.MATLAB_RELEASE }}
 
