@@ -122,7 +122,7 @@ Roughly speaking, performance profiles plot the percentage of test problems solv
 budget, which is measured relative to the cost of the most efficient solver in the comparison.
 A higher curve indicates a better solver.
 See [Benchmarking Derivative-Free Optimization Algorithms](https://www.mcs.anl.gov/~wild/dfo/benchmarking)
-([J. J. Mor\'e](https://www.anl.gov/profile/jorge-j-more) and [S. M. Wild](https://www.anl.gov/profile/stefan-m-wild))
+([J. J. Mor\`e](https://www.anl.gov/profile/jorge-j-more) and [S. M. Wild](https://www.anl.gov/profile/stefan-m-wild))
 for more information.
 
 
