@@ -23,12 +23,11 @@ Dedicated to late Professor [M. J. D. Powell](https://www.zhangzk.net/powell.htm
 
 ### Why
 
-The goal of PRIMA is to provide the reference implementation of Powell's methods in modern
-languages,
+The goal of PRIMA is to provide the reference implementation of Powell's methods in modern languages,
 including [**modern** Fortran](https://fortran-lang.org) (F2003 or newer), MATLAB, Python, C++, and
 probably Julia and R. It will be a faithful implementation, in the sense that the code will be
 mathematically equivalent to Powell’s, except for the
-[bug fixes](#bug-fixes) and improvements that we make intentionally.
+[bug fixes](#bug-fixes) and [improvements](#improvements) that we make intentionally.
 
 The focus is to implement these methods in a **structured** and **modularized** way so that they
 are **readable**, **maintainable**, and **extendable**. The code will have no GOTO (of course)
@@ -38,7 +37,7 @@ and will use matrix-vector procedures instead of loops whenever possible.
 
 The mission of PRIMA is nontrivial due to the delicacy of Powell's algorithms and the unique style
 of his code. To ensure the faithfulness of PRIMA,
-we started the [**modern** Fortran] version by refactoring Powell's code into the free form via a small
+we started the **modern** Fortran version by refactoring Powell's code into the free form via a small
 [MATLAB tool](https://github.com/equipez/PRIMA/blob/master/matlab/setup_tools/freeform.m) written
 by ourselves. However, such refactored code is far from what we want, because it inherits completely
 the structure and style of Powell's code except for the layout. Extensive modifications are needed
@@ -57,16 +56,16 @@ that are conducted in parallel, each test taking from tens of minutes to several
 is 6 hours, after which the workflow will be canceled automatically). In other words, PRIMA
 has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
 
-As of October 2022, we have almost finished the modern Fortran version of PRIMA. More specifically,
+As of October 2022, we have almost finished the **modern** Fortran version of PRIMA. More specifically,
 the implementation of [COBYLA](https://github.com/equipez/PRIMA/tree/master/fsrc/cobyla)
 and [NEWUOA](https://github.com/equipez/PRIMA/tree/master/fsrc/newuoa) is complete, while
 [UOBYQA](https://github.com/equipez/PRIMA/tree/master/fsrc/uobyqa),
 [BOBYQA](https://github.com/equipez/PRIMA/tree/master/fsrc/bobyqa),
 and [LINCOA](https://github.com/equipez/PRIMA/tree/master/fsrc/lincoa) have been implemented in
-modern Fortran without any GOTO.
+**modern** Fortran without any GOTO.
 A [MATLAB interface](https://github.com/equipez/PRIMA/blob/master/setup.m) is also provided for
 using the Fortran implementation under MATLAB.
-Once the modern Fortran version is finished, the implementation in other languages will become much
+Once the **modern** Fortran version is finished, the implementation in other languages will become much
 easier, because we will then have a structured and modularized implementation as a reference.
 
 
