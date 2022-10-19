@@ -120,16 +120,16 @@ with Powell's implementation.
 
 
 - Unconstrained problems: NEWUOA
-<img src="./benchmark/newuoan_newuoan_classical.svg" style="width:20em;"/>
+<img src="./benchmark/newuoan_newuoan_classical.svg" style="width:25em;"/>
 
 - Unconstrained problems: UOBYQA
-<img src="./benchmark/uobyqan_uobyqan_classical.svg" style="width:20em;"/>
+<img src="./benchmark/uobyqan_uobyqan_classical.svg" style="width:25em;"/>
 
 - Bound-constrained problems: BOBYQA
-<img src="./benchmark/bobyqan_bobyqan_classical.svg" style="width:20em;"/>
+<img src="./benchmark/bobyqan_bobyqan_classical.svg" style="width:25em;"/>
 
 - Linearly constrained problems: LINCOA
-<img src="./benchmark/lincoan_lincoan_classical.svg" style="width:20em;"/>
+<img src="./benchmark/lincoan_lincoan_classical.svg" style="width:25em;"/>
 
 -
-<img src="./benchmark/cobylan_cobylan_classical.svg" style="width:20em;"/>
+<img src="./benchmark/cobylan_cobylan_classical.svg" style="width:25em;"/>
