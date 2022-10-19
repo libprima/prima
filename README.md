@@ -124,10 +124,10 @@ of the PRIMA solvers compared with Powell's implementation, the convergence tole
 - BOBYQA on bound-constrained CUTEst problems of at most 50 variables
 <img src="./benchmark/bobyqan_bobyqan_classical.svg" style="width:26em;"/>
 
-- LINCOA on linearly constrained CUTEst problems of at most 50 variables
+- LINCOA on linearly constrained CUTEst problems of at most 50 variables and 5000 constraints
 <img src="./benchmark/lincoan_lincoan_classical.svg" style="width:26em;"/>
 
-- COBYLA on nonlinearly constrained CUTEst problems of at most 20 variables
+- COBYLA on nonlinearly constrained CUTEst problems of at most 20 variables and 2000 constraints
 <img src="./benchmark/cobylan_cobylan_classical.svg" style="width:26em;"/>
 
 - UOBYQA on unconstrained CUTEst problems of at most 20 variables
