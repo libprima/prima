@@ -116,7 +116,7 @@ large constraint violation even though the starting point is feasible.
 Due to the improvements we have introduced into the new implementation, PRIMA outperforms Powell's
 original code in terms of number of function evaluations, which is the normal performance indicator
 in derivative-free optimization.  Here are the [performance profiles](https://arxiv.org/pdf/cs/0102001.pdf)
-of the PRIMA solvers compared with Powell's implementation, the convergence tolerance being~$\tau = 10^{-8}$.
+of the PRIMA solvers compared with Powell's implementation, the convergence tolerance being $\tau = 10^{-8}$.
 
 
 - Unconstrained problems: NEWUOA
