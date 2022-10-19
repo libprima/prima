@@ -118,17 +118,17 @@ in derivative-free optimization.  Here are the [performance profiles](https://ar
 of the PRIMA solvers compared with Powell's implementation, the convergence tolerance being $\tau = 10^{-8}$.
 
 
-- Unconstrained problems: NEWUOA
+- NEWUOA on unconstrained CUTEst problems of at most 50 variables
 <img src="./benchmark/newuoan_newuoan_classical.svg" style="width:26em;"/>
 
-- Unconstrained problems: UOBYQA
-<img src="./benchmark/uobyqan_uobyqan_classical.svg" style="width:26em;"/>
-
-- Bound-constrained problems: BOBYQA
+- BOBYQA on bound-constrained CUTEst problems of at most 50 variables
 <img src="./benchmark/bobyqan_bobyqan_classical.svg" style="width:26em;"/>
 
-- Linearly constrained problems: LINCOA
+- LINCOA on linearly constrained CUTEst problems of at most 50 variables
 <img src="./benchmark/lincoan_lincoan_classical.svg" style="width:26em;"/>
 
-- Nonlinearly constrained problems: COBYLA
+- COBYLA on nonlinearly constrained CUTEst problems of at most 20 variables
 <img src="./benchmark/cobylan_cobylan_classical.svg" style="width:26em;"/>
+
+- UOBYQA on unconstrained CUTEst problems of at most 20 variables
+<img src="./benchmark/uobyqan_uobyqan_classical.svg" style="width:26em;"/>
