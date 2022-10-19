@@ -119,8 +119,17 @@ in derivative-free optimization.  Here are the performance profiles of the PRIMA
 with Powell's implementation.
 
 
-<img src="./benchmark/cobylan_cobylan_classical.svg" style="width:30em;"/>
-<img src="./benchmark/uobyqan_uobyqan_classical.svg" style="width:30em;"/>
+- Unconstrained problems: NEWUOA
 <img src="./benchmark/newuoan_newuoan_classical.svg" style="width:30em;"/>
+
+- Unconstrained problems: UOBYQA
+<img src="./benchmark/uobyqan_uobyqan_classical.svg" style="width:30em;"/>
+
+- Bound-constrained problems: BOBYQA
 <img src="./benchmark/bobyqan_bobyqan_classical.svg" style="width:30em;"/>
+
+- Linearly constrained problems: LINCOA
 <img src="./benchmark/lincoan_lincoan_classical.svg" style="width:30em;"/>
+
+- Nonlinearly constrained problems: COBYLA
+<img src="./benchmark/cobylan_cobylan_classical.svg" style="width:30em;"/>
