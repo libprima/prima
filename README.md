@@ -115,21 +115,21 @@ large constraint violation even though the starting point is feasible.
 
 Due to the improvements we have introduced into the new implementation, PRIMA outperforms Powell's
 original code in terms of number of function evaluations, which is the normal performance indicator
-in derivative-free optimization.  Here are the performance profiles of the PRIMA solvers compared
-with Powell's implementation.
+in derivative-free optimization.  Here are the [performance profiles](https://arxiv.org/pdf/cs/0102001.pdf)
+of the PRIMA solvers compared with Powell's implementation, the convergence tolerance being~$\tau = 10^{-8}$.
 
 
 - Unconstrained problems: NEWUOA
-<img src="./benchmark/newuoan_newuoan_classical.svg" style="width:25em;"/>
+<img src="./benchmark/newuoan_newuoan_classical.svg" style="width:26em;"/>
 
 - Unconstrained problems: UOBYQA
-<img src="./benchmark/uobyqan_uobyqan_classical.svg" style="width:25em;"/>
+<img src="./benchmark/uobyqan_uobyqan_classical.svg" style="width:26em;"/>
 
 - Bound-constrained problems: BOBYQA
-<img src="./benchmark/bobyqan_bobyqan_classical.svg" style="width:25em;"/>
+<img src="./benchmark/bobyqan_bobyqan_classical.svg" style="width:26em;"/>
 
 - Linearly constrained problems: LINCOA
-<img src="./benchmark/lincoan_lincoan_classical.svg" style="width:25em;"/>
+<img src="./benchmark/lincoan_lincoan_classical.svg" style="width:26em;"/>
 
 -
-<img src="./benchmark/cobylan_cobylan_classical.svg" style="width:25em;"/>
+<img src="./benchmark/cobylan_cobylan_classical.svg" style="width:26em;"/>
