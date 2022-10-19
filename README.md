@@ -23,20 +23,22 @@ Dedicated to late Professor [M. J. D. Powell](https://www.zhangzk.net/powell.htm
 
 ### Why
 
-The goal of PRIMA is to implement these methods in modern languages ---
-first [**modern** Fortran](https://fortran-lang.org) (F2003 or newer), and then MATLAB, Python, and
-probably Julia and R. It will be a faithful implementation, in the sense that the new code will be
+The goal of PRIMA is to provide the reference implementation of Powell's methods in modern
+languages,
+including [**modern** Fortran](https://fortran-lang.org) (F2003 or newer), MATLAB, Python, C++, and
+probably Julia and R. It will be a faithful implementation, in the sense that the code will be
 mathematically equivalent to Powell’s, except for the
 [bug fixes](#bug-fixes) and improvements that we make intentionally.
 
-The focus is to implement Powell’s methods in a **structured** and **modularized** way so that they
-are **readable**, **maintainable**, and **extendable**. The new code will have no GOTO (of course)
+The focus is to implement these methods in a **structured** and **modularized** way so that they
+are **readable**, **maintainable**, and **extendable**. The code will have no GOTO (of course)
 and will use matrix-vector procedures instead of loops whenever possible.
 
 ### How
 
-The mission is nontrivial due to the delicacy of Powell's algorithms and the unique style of his
-code.  We started the Fortran code by refactoring Powell's code into the free form via a small
+The mission of PRIMA is nontrivial due to the delicacy of Powell's algorithms and the unique style
+of his code. To ensure the faithfulness of PRIMA,
+we started the [**modern** Fortran] version by refactoring Powell's code into the free form via a small
 [MATLAB tool](https://github.com/equipez/PRIMA/blob/master/matlab/setup_tools/freeform.m) written
 by ourselves. However, such refactored code is far from what we want, because it inherits completely
 the structure and style of Powell's code except for the layout. Extensive modifications are needed
@@ -54,6 +56,19 @@ Normally, each workflow consists of \~ 5 **randomized** tests
 that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words, PRIMA
 has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
+
+As of October 2022, we have almost finished the modern Fortran version of PRIMA. More specifically,
+the implementation of [COBYLA](https://github.com/equipez/PRIMA/tree/master/fsrc/cobyla)
+and [NEWUOA](https://github.com/equipez/PRIMA/tree/master/fsrc/newuoa) is complete, while
+[UOBYQA](https://github.com/equipez/PRIMA/tree/master/fsrc/uobyqa),
+[BOBYQA](https://github.com/equipez/PRIMA/tree/master/fsrc/bobyqa),
+and [LINCOA](https://github.com/equipez/PRIMA/tree/master/fsrc/lincoa) have been implemented in
+modern Fortran without any GOTO.
+A [MATLAB interface](https://github.com/equipez/PRIMA/blob/master/setup.m) is also provided for
+using the Fortran implementation under MATLAB.
+Once the modern Fortran version is finished, the implementation in other languages will become much
+easier, because we will then have a structured and modularized implementation as a reference.
+
 
 ------
 
@@ -92,3 +107,18 @@ large constraint violation even though the starting point is feasible.
 	 - [Last Result Returned Not Optimized Result #110](https://github.com/stevengj/nlopt/issues/110)
 
 	 - [COBYLA returns last evaluated function which might not be minimum #57](https://github.com/stevengj/nlopt/issues/57)
+
+
+------
+
+### Improvements
+
+Due to the improvements we have introduced into the new implementation, PRIMA outperforms Powell's
+original code (in terms of number of function evaluations, the normal performance indicator in derivative-free optimization).
+Here are the performance profiles of the PRIMA solvers compared with Powell's implementation.
+
+![Performance of PRIMA COBYLA](./benchmark/cobylan_cobylan_classical.svg) <img src="./benchmark/cobylan_cobylan_classical.svg">
+![Performance of PRIMA UOBYQA](./benchmark/uobyqan_uobyqan_classical.svg) <img src="./benchmark/uobyqan_uobyqan_classical.svg">
+![Performance of PRIMA NEWUOA](./benchmark/newuoan_newuoan_classical.svg) <img src="./benchmark/newuoan_newuoan_classical.svg">
+![Performance of PRIMA BOBYQA](./benchmark/bobyqan_bobyqan_classical.svg) <img src="./benchmark/bobyqan_bobyqan_classical.svg">
+![Performance of PRIMA LINCOA](./benchmark/lincoan_lincoan_classical.svg) <img src="./benchmark/lincoan_lincoan_classical.svg">
