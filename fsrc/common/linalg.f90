@@ -22,18 +22,18 @@ module linalg_mod
 ! external functions, because the code is usually short using matrix/vector operations, and because
 ! the overhead of function calling can be high in these languages.
 ! 3. In Fortran, we implement the procedures as subroutines/functions here for several reasons.
-! 3.1.) Most of the procedures are not available intrinsically in Fortran.
+! 3.1.) Most of the procedures are not intrinsically available in Fortran.
 ! 3.2.) When using these procedures for the modernization of Powell's derivative-free software, we
-! want to start with an implementation that is verifiably faithful to Powell's original code.
-! To achieve such faithfulness, it is not always possible to use the matrix/vector operations that
-! are intrinsically available in Fortran, the most noticeable examples being DOT_PRODUCT (INPROD) and
-! MATMUL (MATPROD). Powell implemented all matrix/vector operations by loops, which may not be the
-! case for intrinsic procedures such as MATMUL and DOT_PRODUCT. Different implementations lead to
-! slightly different results due to rounding, and hence the verification of faithfulness will fail.
+! want to start with an implementation that is verifiably faithful to Powell's original code. To
+! achieve such faithfulness, it is not always possible to use the intrinsic matrix/vector procedures
+! in Fortran, the most noticeable examples being DOT_PRODUCT (v.s. INPROD) and MATMUL (v.s. MATPROD).
+! Powell implemented all matrix/vector operations by loops, which may not be the case for intrinsic
+! procedures such as MATMUL and DOT_PRODUCT. Different implementations lead to slightly different
+! results due to rounding, and hence the verification of faithfulness will fail.
 ! 3.3.) As of 20220507, with some compilers, the performance of Fortran's intrinsic matrix/vector
 ! procedures may not be as good as naive loops, let alone highly optimized libraries like BLAS.
-! Concentrating all the linear algebra procedures at one place like here, we can optimize them in a
-! relatively easy way when necessary.
+! Concentrating all the linear algebra procedures at one place as we do here, it will be relatively
+! easy to optimize them when necessary.
 !
 ! TODO: To avoid stack overflows, functions that return a potentially large array (e.g., MATPROD)
 ! should declare the array as ALLOCATABLE rather than automatic (20220725: should we?).
@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, July 25, 2022 AM02:47:50
+! Last Modified: Saturday, October 22, 2022 PM03:46:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
