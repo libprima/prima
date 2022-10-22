@@ -16,7 +16,8 @@ namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 
 PRIMA is part of a research project funded by the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and
-the [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
+the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at the
+[Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
 It is still **under intensive development**, and there is no release yet. If you want to use the
 above-mentioned methods, see the [website](https://www.pdfo.net)
 and [repository](https://github.com/pdfo/pdfo) of PDFO instead.
@@ -31,8 +32,8 @@ mathematically equivalent to Powell’s, except for the
 [bug fixes](#bug-fixes) and [improvements](#improvements) that we make intentionally.
 
 The focus is to implement these methods in a **structured** and **modularized** way so that they
-are **readable**, **maintainable**, and **extendable**. The code will have no GOTO (of course)
-and will use matrix-vector procedures instead of loops whenever possible.
+are **readable**, **maintainable**, and **extendable**. The code will **have no GOTO** (of course)
+and will **use matrix-vector procedures instead of loops** whenever possible.
 
 ### How
 
@@ -57,7 +58,8 @@ that are conducted in parallel, each test taking from tens of minutes to several
 is 6 hours, after which the workflow will be canceled automatically). In other words, PRIMA
 has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
 
-As of October 2022, we have almost finished the **modern** Fortran version of PRIMA. More specifically,
+We have almost finished the **modern** Fortran version of PRIMA by October 2022. 
+More specifically,
 the implementation of [COBYLA](https://github.com/equipez/PRIMA/tree/master/fsrc/cobyla)
 and [NEWUOA](https://github.com/equipez/PRIMA/tree/master/fsrc/newuoa) is complete, while
 [UOBYQA](https://github.com/equipez/PRIMA/tree/master/fsrc/uobyqa),
@@ -118,8 +120,8 @@ original code in terms of the **number of function evaluations**, which is the s
 indicator in derivative-free optimization.
 Below are the [performance profiles](https://arxiv.org/pdf/cs/0102001.pdf)
 of the PRIMA solvers compared with Powell's implementation, the convergence tolerance being $\tau = 10^{-8}$.
-Roughly speaking, performance profiles plot the percentage of test problems solved against the
-budget, which is measured relative to the cost of the most efficient solver in the comparison.
+Roughly speaking, performance profiles plot the percentage of test problems solved against the budget, 
+which is measured relative to the cost of the most efficient solver in the comparison.
 A **higher** curve indicates a **better** solver.
 See [Benchmarking Derivative-Free Optimization Algorithms](https://www.mcs.anl.gov/~wild/dfo/benchmarking)
 ([J. J. Moré](https://www.anl.gov/profile/jorge-j-more) and [S. M. Wild](https://www.anl.gov/profile/stefan-m-wild))
