@@ -105,7 +105,7 @@ if isempty(requirements.list)
         blacklist = [blacklist, {'BENNETT5LS', 'HIELOW'}]; % More than 30 minutes to solve.
         blacklist = [blacklist, {'YFITU'}]; % Takes too long
     case {'newuoa', 'newuoan'}
-        blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM', 'HATFLDFL'}]; % More than 30 minutes to solve.
+        blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM', 'HATFLDFL', 'LUKSAN21LS'}]; % More than 30 minutes to solve.
          %blacklist = [blacklist, {'PENALTY2'}]; % More than 5 minutes to solve.
     case {'bobyqa', 'bobyqan'}
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
@@ -123,7 +123,7 @@ if isempty(requirements.list)
         % We did not spend time on finding the mistake, but it returns an Inf in the constraint value, which should not happen.
         blacklist = [blacklist, {'DEGENLPB', 'LSNNODOC', 'AVION2', 'RES', 'SIPOW3', 'HS55','PRODPL1', 'BQPGASIM', 'LSNNODOC', 'VESUVIA', 'MESH', 'LOADBAL','MIFFLIN1', 'ACOPR14','PALMER1NE','PALMER8ENE'}]; % Takes long to solve
         blacklist = [blacklist, {'POLAK6'}]; % Cannot pass  B = A^{-1}!
-        blacklist = [blacklist, {'MINMAXRB', 'MAKELA1', 'HS75', 'GAUSS3'}]; % Classical COBYLA encounters SEGFAULT
+        blacklist = [blacklist, {'MINMAXRB', 'MAKELA1', 'HS75', 'GAUSS3','HATFLDG'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
