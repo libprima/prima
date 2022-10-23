@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM09:09:25
+! Last Modified: Sunday, October 23, 2022 AM09:04:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -105,7 +105,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(knew >= 1 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
+    call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
     call assert(knew /= kopt, 'KNEW /= KOPT', srname)
 end if
 end function setdrop_tr

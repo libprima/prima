@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, September 27, 2022 AM08:57:12
+! Last Modified: Sunday, October 23, 2022 AM09:01:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -141,8 +141,8 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(knew >= 1 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    call assert(knew /= kopt, 'KNEW /= KOPT', srname)
+    call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
+    call assert(knew /= kopt .or. freduced, 'KNEW /= KOPT unless FREDUCED = TRUE', srname)
     call assert(knew >= 1 .or. .not. freduced, 'KNEW >= 1 unless FREDUCED = FALSE', srname)
     ! KNEW >= 1 when FREDUCED = TRUE unless NaN occurs in DISTSQ, which should not happen if the
     ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.

@@ -113,7 +113,7 @@ else
         blacklist = [blacklist, {'LUKSAN22LS', 'MANCINO', 'LUKSAN11LS'}]; % too long to solve
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.
         blacklist = [blacklist, {'PENALTY2', 'HYDC20LS', 'MANCINO'}]; % Too long time
-        blacklist = [blacklist, {'BA-L1LS'}]; % Takes too long to solve
+        blacklist = [blacklist, {'BA-L1LS', 'LUKSAN21LS'}]; % Takes too long to solve
         blacklist = [blacklist, {'ARGLINC'}]; % Takes too long to solve
         blacklist = [blacklist, {'HYDC20LS', 'BA-L1SPLS'}]; % Takes too long to solve
         %blacklist = [blacklist, {'PENALTY2'}]; % More than 5 minutes to solve.
@@ -131,7 +131,7 @@ else
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE','MESH', 'LOADBAL','MIFFLIN1'}];
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails
-        blacklist = [blacklist, {'MINMAXRB', 'MAKELA1', 'HS75', 'GAUSS3'}]; % Classical COBYLA encounters SEGFAULT
+        blacklist = [blacklist, {'MINMAXRB', 'MAKELA1', 'HS75', 'GAUSS3','HATFLDG'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
