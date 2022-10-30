@@ -32,7 +32,8 @@ mathematically equivalent to Powell’s, except for the
 [bug fixes](#bug-fixes) and [improvements](#improvements) that we make intentionally.
 
 The focus is to implement these methods in a **structured** and **modularized** way so that they
-are **readable**, **maintainable**, and **extendable**. The code will **have no GOTO** (of course)
+are **readable**, **maintainable**, **extendable**, and **future-proof**.
+The code will **have no GOTO** (of course)
 and will **use matrix-vector procedures instead of loops** whenever possible.
 
 ### How
@@ -58,7 +59,7 @@ that are conducted in parallel, each test taking from tens of minutes to several
 is 6 hours, after which the workflow will be canceled automatically). In other words, PRIMA
 has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
 
-We have almost finished the **modern** Fortran version of PRIMA by October 2022. 
+We have almost finished the **modern** Fortran version of PRIMA by October 2022.
 More specifically,
 the implementation of [COBYLA](https://github.com/equipez/PRIMA/tree/master/fsrc/cobyla)
 and [NEWUOA](https://github.com/equipez/PRIMA/tree/master/fsrc/newuoa) is complete, while
@@ -120,7 +121,7 @@ original code in terms of the **number of function evaluations**, which is the s
 indicator in derivative-free optimization.
 Below are the [performance profiles](https://arxiv.org/pdf/cs/0102001.pdf)
 of the PRIMA solvers compared with Powell's implementation, the convergence tolerance being $\tau = 10^{-8}$.
-Roughly speaking, performance profiles plot the percentage of test problems solved against the budget, 
+Roughly speaking, performance profiles plot the percentage of test problems solved against the budget,
 which is measured relative to the cost of the most efficient solver in the comparison.
 A **higher** curve indicates a **better** solver.
 See [Benchmarking Derivative-Free Optimization Algorithms](https://www.mcs.anl.gov/~wild/dfo/benchmarking)
