@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM11:49:12
+! Last Modified: Thursday, November 03, 2022 AM12:36:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -476,7 +476,8 @@ do while (.true.)
     ! when the last trust region step was calculated, then try a trust region step instead.
     !
     ! ACCURATE_MOD --- Are the recent models sufficiently accurate?
-    accurate_mod = .not. any(dnormsav >= HALF * rho) .or. .not. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
+    !accurate_mod = .not. any(dnormsav >= HALF * rho) .or. .not. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
+    accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
     ! SMALL_TRRAD --- Is the trust-region radius small?
     small_trrad = (delsav <= rho)
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
