@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 AM10:56:16
+! Last Modified: Wednesday, November 02, 2022 PM12:05:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -253,7 +253,7 @@ do while (.true.)
         if (crvmin > 0) then
             errbd = min(errbd, 0.125_RP * crvmin * rho**2)
         end if
-        improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
+        !improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
     else  ! D is long enough to invoke a function evaluation.
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dsq) then
@@ -479,9 +479,9 @@ do while (.true.)
         ! If a trust region step has provided a sufficient decrease in F, then branch for another
         ! trust region calculation.
         !improve_geo = .not. ((knew > 0 .and. f <= fopt - TENTH * qred) .or. rescued) ! This does not work as well as the following.
-        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred) !??? This is wrong if RESCUE has been called.
+        !improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred) !??? This is wrong if RESCUE has been called.
         ! Should we always take a trust region step after RESCUE?
-        if (.not. improve_geo) then
+        if (knew > 0 .and. f <= fopt - TENTH * qred) then !??? This is wrong if RESCUE has been called.
             cycle
         end if
 
@@ -491,11 +491,14 @@ do while (.true.)
     end if
 
 
+    improve_geo = (shortd .and. (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))) &
+        & .or. (.not. shortd .and. .not. (knew > 0 .and. f <= fopt - TENTH * qred)) !??? This is wrong if RESCUE has been called.
     !if (improve_geo) then
     dsquare = max((TWO * delta)**2, (TEN * rho)**2)
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
     dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
+
     reduce_rho = .not. improve_geo .or. (knew <= 0 .and. (shortd .or. .not. (ratio > 0 .or. max(delta, dnorm) > rho)))
     improve_geo = improve_geo .and. (knew > 0)
 
