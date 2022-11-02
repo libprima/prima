@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 AM12:03:18
+! Last Modified: Thursday, November 03, 2022 AM12:29:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -523,7 +523,8 @@ do while (.true.)
         !if (f <= fopt - TENTH * qred) cycle
         !improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred .or. rescued)
         !improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred)
-        improve_geo = .not. (knew > 0 .and. .not. f >= fopt - TENTH * qred)
+        !improve_geo = .not. (knew > 0 .and. .not. f >= fopt - TENTH * qred)
+        improve_geo = .not. (knew > 0 .and. .not. ratio <= TENTH)
         if (.not. improve_geo) cycle
 
         ! Alternatively, find out if the interpolation points are close enough to the best point so far.
@@ -573,8 +574,8 @@ do while (.true.)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             denom = alpha * beta + vlag(knew)**2
 
-            !rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
-            rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
+            rescue_geo = .not. (denom > HALF * vlag(knew)**2) ! This is the normal condition.
+            !rescue_geo = .not. (denom > vlag(knew)**2)  ! This is used when verifying RESCUE.
             rescue_geo = rescue_geo .or. .not. is_finite(sum(abs(vlag)))
             if (rescue_geo) then
                 if (nf <= nfresc) then
