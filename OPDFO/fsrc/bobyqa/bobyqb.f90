@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM04:19:31
+! Last Modified: Wednesday, November 02, 2022 PM04:30:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -532,8 +532,13 @@ do while (.true.)
     if (improve_geo) then
         !dsquare = max((TWO * delta)**2, (TEN * rho)**2)
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
-        dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
+        !knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
+        !dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
+        knew = 0_IK
+        if (.not. all(distsq <= dsquare)) then
+            knew = maxloc(distsq, dim=1)
+            dsquare = distsq(knew)
+        end if
 
         ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
         ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region

@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM04:19:11
+! Last Modified: Wednesday, November 02, 2022 PM04:29:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -497,8 +497,11 @@ do while (.true.)
     !if (improve_geo) then
     dsquare = max((TWO * delta)**2, (TEN * rho)**2)
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    knew_geo = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
-    dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
+    knew_geo = 0_IK
+    if (.not. all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))) then
+        knew_geo = int(maxloc(distsq, dim=1), IK)  ! This line cannot be exchanged with the next
+        dsquare = distsq(knew_geo) ! This line cannot be exchanged with the last
+    end if
 
     reduce_rho = .not. ((.not. shortd) .and. knew_tr > 0 .and. f <= fopt - TENTH * qred)  &
        & .and. (.not. improve_geo .or. (knew_geo <= 0 .and. (shortd .or. .not. (ratio > 0 .or. .not. max(delta, dnorm) <= rho))))
