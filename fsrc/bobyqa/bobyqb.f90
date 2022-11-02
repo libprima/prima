@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM11:43:11
+! Last Modified: Wednesday, November 02, 2022 PM11:58:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,7 +131,7 @@ real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x
 real(RP) :: score(npt)
 integer(IK) :: itest, knew_tr, knew_geo, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, tr_success, reduce_rho, small_trrad, close_itpset, accurate_mod, bad_trstep
+logical :: shortd, improve_geo, tr_success, reduce_rho, small_trrad, close_itpset, accurate_mod, bad_trstep, rescued
 
 
 ! Sizes.
@@ -526,6 +526,7 @@ do while (.true.)
         ! It provides a useful safeguard, but is not invoked in most applications of BOBYQA.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
+        rescued = .false.
         !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then  ! This is the correct condition
         if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > vlag(knew_geo)**2)) then ! This is for test RESCUE
             if (nf == nfresc) then
@@ -550,87 +551,89 @@ do while (.true.)
             if (nfresc == nf) then
                 d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
             else
+                rescued = .true.
                 nfresc = nf
-                cycle
             end if
         end if
 
         ! Put the variables for the next calculation of the objective function in XNEW, with any
         ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
-        xnew = min(max(sl, xopt + d), su)
-        x = min(max(xl, xbase + xnew), xu)
-        x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
-        x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
-            exit
-        end if
-        nf = nf + 1
-        if (is_nan(abs(sum(x)))) then
-            f = sum(x)  ! Set F to NaN
-            if (nf == 1) then
-                fopt = f
-                xopt = ZERO
+        if (.not. rescued) then
+            xnew = min(max(sl, xopt + d), su)
+            x = min(max(xl, xbase + xnew), xu)
+            x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
+            x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
+            if (nf >= maxfun) then
+                info = MAXFUN_REACHED
+                exit
             end if
-            info = NAN_INF_X
-            exit
-        end if
-
-        ! Calculate the value of the objective function at XBASE+XNEW.
-        call evaluate(calfun, x, f)
-        call savehist(nf, x, xhist, f, fhist)
-        !write (16, *) 'geo', nf, f, fopt, kopt
-
-        if (is_nan(f) .or. is_posinf(f)) then
-            if (nf == 1) then
-                fopt = f
-                xopt = ZERO
+            nf = nf + 1
+            if (is_nan(abs(sum(x)))) then
+                f = sum(x)  ! Set F to NaN
+                if (nf == 1) then
+                    fopt = f
+                    xopt = ZERO
+                end if
+                info = NAN_INF_X
+                exit
             end if
-            info = NAN_INF_F
-            exit
-        end if
-        if (f <= ftarget) then
-            info = FTARGET_ACHIEVED
-            exit
-        end if
 
-        ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the
-        ! error of this prediction.
-        fopt = fval(kopt)
-        qred = -quadinc(d, xpt, gopt, pq, hq)
-        diff = f - fopt + qred
-        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
-        ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is
-        ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
-        ! of the BOBYQA paper and the elaboration below it. Is this a bug? Similar thing happened
-        ! in NEWUOA, but we recognized it as a bug and fixed it.
-        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+            ! Calculate the value of the objective function at XBASE+XNEW.
+            call evaluate(calfun, x, f)
+            call savehist(nf, x, xhist, f, fhist)
+            !write (16, *) 'geo', nf, f, fopt, kopt
 
-        ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
-        ! the second derivative terms of the model.
-        vlag = calvlag(kopt, bmat, d, xpt, zmat)
-        beta = calbeta(kopt, bmat, d, xpt, zmat)
-        call updateh(knew_geo, beta, vlag, bmat, zmat)
+            if (is_nan(f) .or. is_posinf(f)) then
+                if (nf == 1) then
+                    fopt = f
+                    xopt = ZERO
+                end if
+                info = NAN_INF_F
+                exit
+            end if
+            if (f <= ftarget) then
+                info = FTARGET_ACHIEVED
+                exit
+            end if
 
-        call r1update(hq, pq(knew_geo), xpt(:, knew_geo))
-        pq(knew_geo) = ZERO
-        pqinc = matprod(zmat, diff * zmat(knew_geo, :))
-        pq = pq + pqinc
-        ! Alternatives:
+            ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the
+            ! error of this prediction.
+            fopt = fval(kopt)
+            qred = -quadinc(d, xpt, gopt, pq, hq)
+            diff = f - fopt + qred
+            moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
+            ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is
+            ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
+            ! of the BOBYQA paper and the elaboration below it. Is this a bug? Similar thing happened
+            ! in NEWUOA, but we recognized it as a bug and fixed it.
+            dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+
+            ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
+            ! the second derivative terms of the model.
+            vlag = calvlag(kopt, bmat, d, xpt, zmat)
+            beta = calbeta(kopt, bmat, d, xpt, zmat)
+            call updateh(knew_geo, beta, vlag, bmat, zmat)
+
+            call r1update(hq, pq(knew_geo), xpt(:, knew_geo))
+            pq(knew_geo) = ZERO
+            pqinc = matprod(zmat, diff * zmat(knew_geo, :))
+            pq = pq + pqinc
+            ! Alternatives:
             !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
             !!PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
 
-        ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
-        ! caused by the updating of the quadratic model.
-        fval(knew_geo) = f
-        xpt(:, knew_geo) = xnew
-        gopt = gopt + diff * bmat(:, knew_geo) + hess_mul(xopt, xpt, pqinc)
+            ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
+            ! caused by the updating of the quadratic model.
+            fval(knew_geo) = f
+            xpt(:, knew_geo) = xnew
+            gopt = gopt + diff * bmat(:, knew_geo) + hess_mul(xopt, xpt, pqinc)
 
-        ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
-        if (f < fopt) then
-            kopt = knew_geo
-            xopt = xnew
-            gopt = gopt + hess_mul(d, xpt, pq, hq)
+            ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
+            if (f < fopt) then
+                kopt = knew_geo
+                xopt = xnew
+                gopt = gopt + hess_mul(d, xpt, pq, hq)
+            end if
         end if
     end if
 
