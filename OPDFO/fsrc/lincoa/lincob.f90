@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 29, 2022 AM07:01:31
+! Last Modified: Wednesday, November 02, 2022 PM11:52:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -492,7 +492,11 @@ do while (.true.)
         xopt = xpt(:, kopt)
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         ! MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-        knew = maxloc([dsq, distsq], dim=1) - 1_IK
+        !knew = maxloc([dsq, distsq], dim=1) - 1_IK
+        knew = 0_IK
+        if (.not. all(distsq <= dsq)) then
+            knew = maxloc(distsq, dim=1)
+        end if
 
         ! If KNEW > 0, then branch back for the next iteration, which will generate a geometry step.
         ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
