@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM11:41:55
+! Last Modified: Thursday, November 03, 2022 AM12:03:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -362,8 +362,8 @@ do while (.true.)
             !if (.not. any(den > maxval(vlag(1:npt)**2))) then
             !write (16, *) 345
             if (nf <= nfresc) then
-                info = DAMAGING_ROUNDING
-                exit
+                !info = DAMAGING_ROUNDING
+                !exit
             end if
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
@@ -578,8 +578,8 @@ do while (.true.)
             rescue_geo = rescue_geo .or. .not. is_finite(sum(abs(vlag)))
             if (rescue_geo) then
                 if (nf <= nfresc) then
-                    info = DAMAGING_ROUNDING
-                    exit
+                    !info = DAMAGING_ROUNDING
+                    !exit
                 end if
                 nfresc = nf
                 call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
