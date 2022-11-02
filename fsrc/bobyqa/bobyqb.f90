@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM04:40:53
+! Last Modified: Wednesday, November 02, 2022 PM04:50:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -493,7 +493,7 @@ do while (.true.)
 
     ! What if RESCUE has been called? Is it reasonable to use F and FOPT?
     improve_geo = (shortd .and. .not. (all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho))) &
-        & .or. (.not. shortd .and. .not. (knew_tr > 0 .and. f <= fopt - TENTH * qred))
+        & .or. (.not. shortd .and. .not. (knew_tr > 0 .and. .not. f >= fopt - TENTH * qred))
     !if (improve_geo) then
     dsquare = max((TWO * delta)**2, (TEN * rho)**2)
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
@@ -503,15 +503,16 @@ do while (.true.)
         dsquare = distsq(knew_geo) ! This line cannot be exchanged with the last
     end if
 
-    reduce_rho = .not. ((.not. shortd) .and. knew_tr > 0 .and. f <= fopt - TENTH * qred)  &
+    reduce_rho = .not. ((.not. shortd) .and. knew_tr > 0 .and. .not. f >= fopt - TENTH * qred)  &
        & .and. (.not. improve_geo .or. (knew_geo <= 0 .and. (shortd .or. (ratio <= 0 .and. max(delta, dnorm) <= rho))))
     improve_geo = improve_geo .and. (knew_geo > 0) .and. &
-        & .not. ((.not. shortd) .and. knew_tr > 0 .and. f <= fopt - TENTH * qred)
+        & .not. ((.not. shortd) .and. knew_tr > 0 .and. .not. f >= fopt - TENTH * qred)
 
     bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
-    bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    bad_trstep = (shortd .or. f >= fopt - TENTH * qred .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th

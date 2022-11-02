@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM04:40:41
+! Last Modified: Wednesday, November 02, 2022 PM04:51:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -521,7 +521,8 @@ do while (.true.)
         ! trust region calculation.
         !if (f <= fopt - TENTH * qred) cycle
         !improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred .or. rescued)
-        improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred)
+        !improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred)
+        improve_geo = .not. (knew > 0 .and. .not. f >= fopt - TENTH * qred)
         if (.not. improve_geo) cycle
 
         ! Alternatively, find out if the interpolation points are close enough to the best point so far.
