@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM10:16:49
+! Last Modified: Wednesday, November 02, 2022 PM11:22:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -493,10 +493,12 @@ do while (.true.)
 
     ! What if RESCUE has been called? Is it reasonable to use RATIO, F, and FOPT?
 
-    reduce_rho = (shortd .and. accurate_mod) .or. (close_itpset .and. (shortd .or. ratio <= 0) .and. small_trrad)
+    ! Powell's code seems to define REDUCE_RHO in the following way.
     !reduce_rho = (shortd .and. accurate_mod) .or. (close_itpset .and. (shortd .or. (ratio <= 0 .and. small_trrad)))
-    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
-    !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+    ! However, it does not behave differently compared to the following, which is the definition in
+    ! NEWUOA and LINCOA.
+    bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
     !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     bad_trstep = (shortd .or. f >= fopt - TENTH * qred .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
