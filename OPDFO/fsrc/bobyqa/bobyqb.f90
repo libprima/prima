@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM11:21:09
+! Last Modified: Wednesday, November 02, 2022 PM11:41:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -267,7 +267,8 @@ do while (.true.)
         improve_geo = .not. (all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho))
     else  ! D is long enough to invoke a function evaluation.
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-        if (sum(xopt**2) >= 1.0E3_RP * dsq) then
+        !if (sum(xopt**2) >= 1.0E3_RP * dsq) then
+        if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
             xnew = min(max(sl, xnew - xopt), su)
@@ -550,7 +551,8 @@ do while (.true.)
         if (knew > 0) then
             dist = sqrt(dsquare)
             delbar = max(min(TENTH * dist, delta), rho)
-            dsq = delbar * delbar
+            !dsq = delbar * delbar
+            dsq = delbar**2
 
             ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
             if (sum(xopt**2) >= 1.0E3_RP * dsq) then
