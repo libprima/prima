@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 AM12:36:35
+! Last Modified: Thursday, November 03, 2022 AM12:49:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -151,7 +151,7 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delsav, delta, dffalt, diff, &
-&        dsq, distsq(npt), fopt, ratio,     &
+&        distsq(npt), fopt, ratio,     &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
 logical :: accurate_mod
@@ -457,11 +457,6 @@ do while (.true.)
         end if
     end if
 
-    ! Find out if the interpolation points are close enough to the best point so far.
-    !dsq = max(delta * delta, 4.0_RP * rho * rho)
-    !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    ! MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-    !knew_geo = maxloc([dsq, distsq], dim=1) - 1_IK
 
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
