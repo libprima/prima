@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 AM12:32:43
+! Last Modified: Thursday, November 03, 2022 AM12:54:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,7 +57,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, INFO_DFT, &
-    & MAXFUN_REACHED, DAMAGING_ROUNDING, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
+    & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul!, errquad
@@ -122,7 +122,7 @@ real(RP) :: gnew(size(x))
 real(RP) :: delbar, bdtest(size(x)), beta, &
 &        crvmin, curv(size(x)), delta,  &
 &        den(npt), diff, &
-&        dist, distsq(npt), dnorm, errbd, fopt,        &
+&        distsq(npt), dnorm, errbd, fopt,        &
 &        gisq, gqsq,       &
 &        ratio, rho, qred, weight(npt), pqinc(npt)
 real(RP) :: dnormsav(3)
@@ -198,6 +198,7 @@ call inith(ij, xpt, bmat, zmat)
 ! Set some more initial values and parameters.
 rho = rhobeg
 delta = rho
+errbd = ZERO
 moderrsav = HUGENUM
 dnormsav = HUGENUM
 itest = 0
