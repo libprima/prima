@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM12:05:22
+! Last Modified: Wednesday, November 02, 2022 PM03:07:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,7 +129,7 @@ real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt)
-integer(IK) :: itest, knew, kopt, nfresc
+integer(IK) :: itest, knew_tr, knew_geo, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 logical :: shortd, improve_geo, tr_success, reduce_rho!, rescued
 
@@ -253,7 +253,6 @@ do while (.true.)
         if (crvmin > 0) then
             errbd = min(errbd, 0.125_RP * crvmin * rho**2)
         end if
-        !improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
     else  ! D is long enough to invoke a function evaluation.
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dsq) then
@@ -407,26 +406,26 @@ do while (.true.)
         if (any(score > 0)) then
             ! See (6.1) of the BOBYQA paper for the definition of KNEW in this case.
             ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
-            knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-            !!MATLAB: [~, knew] = max(score, [], 'omitnan');
+            knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+            !!MATLAB: [~, knew_tr] = max(score, [], 'omitnan');
         elseif (tr_success) then
             ! Powell's code does not include the following instructions. With Powell's code, if DEN
             ! consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
-            knew = int(maxloc(distsq, dim=1), IK)
+            knew_tr = int(maxloc(distsq, dim=1), IK)
         else
-            knew = 0_IK  ! We arrive here when TR_SUCCESS = FALSE and no entry of SCORE is positive.
+            knew_tr = 0_IK  ! We arrive here when TR_SUCCESS = FALSE and no entry of SCORE is positive.
         end if
 
-        if (knew > 0) then
+        if (knew_tr > 0) then
             ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
             ! the second derivative terms of the model.
             vlag = calvlag(kopt, bmat, d, xpt, zmat)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
-            call updateh(knew, beta, vlag, bmat, zmat)
+            call updateh(knew_tr, beta, vlag, bmat, zmat)
 
-            call r1update(hq, pq(knew), xpt(:, knew))
-            pq(knew) = ZERO
-            pqinc = matprod(zmat, diff * zmat(knew, :))
+            call r1update(hq, pq(knew_tr), xpt(:, knew_tr))
+            pq(knew_tr) = ZERO
+            pqinc = matprod(zmat, diff * zmat(knew_tr, :))
             pq = pq + pqinc
             ! Alternatives:
             !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
@@ -434,13 +433,13 @@ do while (.true.)
 
             ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
             ! caused by the updating of the quadratic model.
-            fval(knew) = f
-            xpt(:, knew) = xnew
-            gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)
+            fval(knew_tr) = f
+            xpt(:, knew_tr) = xnew
+            gopt = gopt + diff * bmat(:, knew_tr) + hess_mul(xopt, xpt, pqinc)
 
             ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
             if (f < fopt) then
-                kopt = knew
+                kopt = knew_tr
                 xopt = xnew
                 gopt = gopt + hess_mul(d, xpt, pq, hq)
             end if
@@ -478,10 +477,10 @@ do while (.true.)
 
         ! If a trust region step has provided a sufficient decrease in F, then branch for another
         ! trust region calculation.
-        !improve_geo = .not. ((knew > 0 .and. f <= fopt - TENTH * qred) .or. rescued) ! This does not work as well as the following.
-        !improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred) !??? This is wrong if RESCUE has been called.
+        !improve_geo = .not. ((knew_tr > 0 .and. f <= fopt - TENTH * qred) .or. rescued) ! This does not work as well as the following.
+        !improve_geo = .not. (knew_tr > 0 .and. f <= fopt - TENTH * qred) !??? This is wrong if RESCUE has been called.
         ! Should we always take a trust region step after RESCUE?
-        if (knew > 0 .and. f <= fopt - TENTH * qred) then !??? This is wrong if RESCUE has been called.
+        if (knew_tr > 0 .and. f <= fopt - TENTH * qred) then !??? This is wrong if RESCUE has been called.
             cycle
         end if
 
@@ -491,16 +490,17 @@ do while (.true.)
     end if
 
 
+    !if ((.not. shortd) .and. knew_tr > 0 .and. f <= TENTH * qred) cycle
     improve_geo = (shortd .and. (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))) &
-        & .or. (.not. shortd .and. .not. (knew > 0 .and. f <= fopt - TENTH * qred)) !??? This is wrong if RESCUE has been called.
+        & .or. (.not. shortd .and. .not. (knew_tr > 0 .and. f <= fopt - TENTH * qred)) !??? This is wrong if RESCUE has been called.
     !if (improve_geo) then
     dsquare = max((TWO * delta)**2, (TEN * rho)**2)
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    knew = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
+    knew_geo = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
     dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
 
-    reduce_rho = .not. improve_geo .or. (knew <= 0 .and. (shortd .or. .not. (ratio > 0 .or. max(delta, dnorm) > rho)))
-    improve_geo = improve_geo .and. (knew > 0)
+    reduce_rho = .not. improve_geo .or. (knew_geo <= 0 .and. (shortd .or. .not. (ratio > 0 .or. max(delta, dnorm) > rho)))
+    improve_geo = improve_geo .and. (knew_geo > 0)
 
     ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
     ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region
@@ -520,14 +520,14 @@ do while (.true.)
         end if
 
         ! Calculate a geometry step.
-        d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
+        d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
 
         ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
         ! It provides a useful safeguard, but is not invoked in most applications of BOBYQA.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
-        !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew) > HALF * vlag(knew)**2)) then
-        if (.not. (is_finite(sum(abs(vlag))) .and. den(knew) > vlag(knew)**2)) then
+        !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
+        if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > vlag(knew_geo)**2)) then
             if (nf == nfresc) then
                 info = DAMAGING_ROUNDING
                 exit
@@ -548,7 +548,7 @@ do while (.true.)
             ! equals NF, then RESCUE did not make any change to XPT, but only recalculated the
             ! model ans [BMAT, ZMAT]; in this case, we calculate a new geometry step.
             if (nfresc == nf) then
-                d = geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat)
+                d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
             else
                 nfresc = nf
                 cycle
@@ -610,11 +610,11 @@ do while (.true.)
         ! the second derivative terms of the model.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         beta = calbeta(kopt, bmat, d, xpt, zmat)
-        call updateh(knew, beta, vlag, bmat, zmat)
+        call updateh(knew_geo, beta, vlag, bmat, zmat)
 
-        call r1update(hq, pq(knew), xpt(:, knew))
-        pq(knew) = ZERO
-        pqinc = matprod(zmat, diff * zmat(knew, :))
+        call r1update(hq, pq(knew_geo), xpt(:, knew_geo))
+        pq(knew_geo) = ZERO
+        pqinc = matprod(zmat, diff * zmat(knew_geo, :))
         pq = pq + pqinc
         ! Alternatives:
             !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
@@ -622,27 +622,17 @@ do while (.true.)
 
         ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
         ! caused by the updating of the quadratic model.
-        fval(knew) = f
-        xpt(:, knew) = xnew
-        gopt = gopt + diff * bmat(:, knew) + hess_mul(xopt, xpt, pqinc)
+        fval(knew_geo) = f
+        xpt(:, knew_geo) = xnew
+        gopt = gopt + diff * bmat(:, knew_geo) + hess_mul(xopt, xpt, pqinc)
 
         ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
         if (f < fopt) then
-            kopt = knew
+            kopt = knew_geo
             xopt = xnew
             gopt = gopt + hess_mul(d, xpt, pq, hq)
         end if
-        cycle
     end if
-    !else if ((.not. shortd) .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
-    !    cycle
-    !end if
-    !end if
-
-    !cycle = improve_geo .and. (knew > 0 .or. (.not. shortd) .and. (ratio > 0 .or. max(delta, dnorm) > rho))
-
-    !reduce_rho = .not. cycle
-    !reduce_rho = .not. improve_geo .or. (knew <=0 .and. (short .or. .not. (ratio > 0 .or. max(delta, dnorm) > rho)))
 
     ! The calculations with the current value of RHO are complete. Update RHO and DELTA.
     if (reduce_rho) then
