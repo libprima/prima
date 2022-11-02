@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM04:54:22
+! Last Modified: Wednesday, November 02, 2022 PM05:05:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -503,10 +503,10 @@ do while (.true.)
         dsquare = distsq(knew_geo) ! This line cannot be exchanged with the last
     end if
 
-    reduce_rho = .not. ((.not. shortd) .and. knew_tr > 0 .and. .not. f >= fopt - TENTH * qred)  &
-       & .and. (.not. improve_geo .or. (knew_geo <= 0 .and. (shortd .or. (ratio <= 0 .and. max(delta, dnorm) <= rho))))
-    improve_geo = improve_geo .and. (knew_geo > 0) .and. &
-        & .not. ((.not. shortd) .and. knew_tr > 0 .and. .not. f >= fopt - TENTH * qred)
+    reduce_rho = (shortd .or. knew_tr <= 0 .or. f >= fopt - TENTH * qred)  &
+       & .and. ((.not. improve_geo) .or. (knew_geo <= 0 .and. (shortd .or. (ratio <= 0 .and. max(delta, dnorm) <= rho))))
+    !improve_geo = improve_geo .and. (knew_geo > 0) .and. &
+    !    & .not. ((.not. shortd) .and. knew_tr > 0 .and. .not. f >= fopt - TENTH * qred)
 
     bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
