@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 AM12:17:06
+! Last Modified: Thursday, November 03, 2022 AM12:32:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -493,7 +493,6 @@ do while (.true.)
     bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
-    !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 

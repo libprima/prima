@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM11:52:01
+! Last Modified: Thursday, November 03, 2022 AM12:38:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -307,7 +307,8 @@ do while (.true.)
         delta = HALF * delta  ! The factor HALF works better than TENTH used in NEWUOA/BOBYQA
         ! The factor 1.4 below aligns with the update of DELTA after a trust-region step.
         if (delta <= 1.4_RP * rho) delta = rho
-        improve_geo = any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
+        !improve_geo = any(dnormsav >= HALF * rho) .and. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
+        improve_geo = .not. (all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho))
     else
         ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. If D
         ! is a trust region step, then QRED should be positive. If it is nonpositive due to rounding
