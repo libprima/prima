@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM05:10:23
+! Last Modified: Wednesday, November 02, 2022 PM05:14:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -492,8 +492,7 @@ do while (.true.)
 
 
     ! What if RESCUE has been called? Is it reasonable to use F and FOPT?
-    improve_geo = ((.not. shortd) .or. (all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho))) &
-        & .and. (shortd .or. (knew_tr > 0 .and. .not. f >= fopt - TENTH * qred))
+    improve_geo = ((.not. shortd) .or. accurate_mod) .and. (shortd .or. (knew_tr > 0 .and. .not. f >= fopt - TENTH * qred))
     !if (improve_geo) then
     dsquare = max((TWO * delta)**2, (TEN * rho)**2)
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
