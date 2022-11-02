@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM11:58:23
+! Last Modified: Thursday, November 03, 2022 AM12:02:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -200,7 +200,6 @@ rho = rhobeg
 delta = rho
 moderrsav = HUGENUM
 dnormsav = HUGENUM
-nfresc = nf
 itest = 0
 
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
@@ -339,18 +338,12 @@ do while (.true.)
         !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then
         !if (.not. any(den > maxval(vlag(1:npt)**2))) then
         if (tr_success .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then  ! This works well
-            if (nf == nfresc) then  ! This cannot happen.
-                info = DAMAGING_ROUNDING
-                exit
-            end if
-            nfresc = nf
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
                 exit
             end if
-            nfresc = nf
             moderrsav = HUGENUM
             dnormsav = HUGENUM
 
@@ -529,10 +522,6 @@ do while (.true.)
         rescued = .false.
         !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then  ! This is the correct condition
         if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > vlag(knew_geo)**2)) then ! This is for test RESCUE
-            if (nf == nfresc) then
-                info = DAMAGING_ROUNDING
-                exit
-            end if
             nfresc = nf
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
@@ -552,7 +541,6 @@ do while (.true.)
                 d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
             else
                 rescued = .true.
-                nfresc = nf
             end if
         end if
 
