@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM11:29:42
+! Last Modified: Wednesday, November 02, 2022 PM11:49:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -458,10 +458,10 @@ do while (.true.)
     end if
 
     ! Find out if the interpolation points are close enough to the best point so far.
-    dsq = max(delta * delta, 4.0_RP * rho * rho)
-    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    !dsq = max(delta * delta, 4.0_RP * rho * rho)
+    !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     ! MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-    knew_geo = maxloc([dsq, distsq], dim=1) - 1_IK
+    !knew_geo = maxloc([dsq, distsq], dim=1) - 1_IK
 
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
@@ -480,10 +480,9 @@ do while (.true.)
     ! SMALL_TRRAD --- Is the trust-region radius small?
     small_trrad = (delsav <= rho)
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
-    !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-    !close_itpset = all(distsq <= 4.0_RP * delta**2)
-    close_itpset = (knew_geo <= 0)
+    close_itpset = all(distsq <= max(delta * delta, 4.0_RP * rho * rho))
     !----------------------------------------------------------------------------------------------!
 
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
@@ -521,6 +520,8 @@ do while (.true.)
             b = b - matprod(xopt, amat)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
         end if
+
+        knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
 
         ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
         delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
