@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM11:29:00
+! Last Modified: Wednesday, November 02, 2022 PM11:43:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -122,7 +122,7 @@ real(RP) :: gnew(size(x))
 real(RP) :: delbar, bdtest(size(x)), beta, &
 &        crvmin, curv(size(x)), delta,  &
 &        den(npt), diff, &
-&        dist, dsquare, distsq(npt), dnorm, dsq, errbd, fopt,        &
+&        dist, distsq(npt), dnorm, errbd, fopt,        &
 &        gisq, gqsq,       &
 &        ratio, rho, qred, weight(npt), pqinc(npt)
 real(RP) :: dnormsav(3)
@@ -220,8 +220,7 @@ do while (.true.)
 
     xnew = max(min(xopt + d, su), sl)  ! In precise arithmetic, XNEW = XOPT + D.
 
-    dsq = sum(d**2)
-    dnorm = min(delta, sqrt(dsq))
+    dnorm = min(delta, sqrt(sum(d**2)))
     shortd = (dnorm < HALF * rho)
 
     ! When D is short, make a choice between reducing RHO and improving the geometry depending
@@ -254,7 +253,7 @@ do while (.true.)
         end if
     else  ! D is long enough to invoke a function evaluation.
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-        if (sum(xopt**2) >= 1.0E3_RP * dsq) then
+        if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
             xnew = min(max(sl, xnew - xopt), su)
@@ -509,15 +508,10 @@ do while (.true.)
     ! iteration, unless the calculations with the current RHO are complete.
     if (improve_geo) then
         knew_geo = int(maxloc(distsq, dim=1), IK)  ! This line cannot be exchanged with the next
-        !dsquare = distsq(knew_geo) ! This line cannot be exchanged with the last
-        !dist = sqrt(dsquare)
-        !delbar = max(min(TENTH * dist, delta), rho)
-        !delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)  ! NEWUOA version.
         delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)
-        dsq = delbar * delbar
 
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-        if (sum(xopt**2) >= 1.0E3_RP * dsq) then
+        if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
             xnew = min(max(sl, xnew - xopt), su)  ! Needed? Will XNEW be used again later?
