@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM11:22:51
+! Last Modified: Wednesday, November 02, 2022 PM11:29:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -509,9 +509,11 @@ do while (.true.)
     ! iteration, unless the calculations with the current RHO are complete.
     if (improve_geo) then
         knew_geo = int(maxloc(distsq, dim=1), IK)  ! This line cannot be exchanged with the next
-        dsquare = distsq(knew_geo) ! This line cannot be exchanged with the last
-        dist = sqrt(dsquare)
-        delbar = max(min(TENTH * dist, delta), rho)
+        !dsquare = distsq(knew_geo) ! This line cannot be exchanged with the last
+        !dist = sqrt(dsquare)
+        !delbar = max(min(TENTH * dist, delta), rho)
+        !delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)  ! NEWUOA version.
+        delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)
         dsq = delbar * delbar
 
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
