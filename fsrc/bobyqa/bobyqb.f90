@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM03:16:46
+! Last Modified: Wednesday, November 02, 2022 PM03:42:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -351,7 +351,6 @@ do while (.true.)
                 info = subinfo
                 exit
             end if
-            !rescued = (nf > nfresc)
             nfresc = nf
             moderrsav = HUGENUM
             dnormsav = HUGENUM
@@ -477,7 +476,6 @@ do while (.true.)
     end if
 
 
-    if ((.not. shortd) .and. knew_tr > 0 .and. f <= fopt - TENTH * qred) cycle
     improve_geo = (shortd .and. (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))) &
         & .or. (.not. shortd .and. .not. (knew_tr > 0 .and. f <= fopt - TENTH * qred)) !??? This is wrong if RESCUE has been called.
     !if (improve_geo) then
@@ -486,8 +484,10 @@ do while (.true.)
     knew_geo = int(maxloc([dsquare, distsq], dim=1), IK) - 1_IK ! This line cannot be exchanged with the next
     dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
 
-    reduce_rho = .not. improve_geo .or. (knew_geo <= 0 .and. (shortd .or. .not. (ratio > 0 .or. max(delta, dnorm) > rho)))
-    improve_geo = improve_geo .and. (knew_geo > 0)
+    reduce_rho = .not. ((.not. shortd) .and. knew_tr > 0 .and. f <= fopt - TENTH * qred)  &
+       & .and. (.not. improve_geo .or. (knew_geo <= 0 .and. (shortd .or. .not. (ratio > 0 .or. max(delta, dnorm) > rho))))
+    improve_geo = improve_geo .and. (knew_geo > 0) .and. &
+        & .not. ((.not. shortd) .and. knew_tr > 0 .and. f <= fopt - TENTH * qred)
 
     ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
     ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region
