@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM04:50:48
+! Last Modified: Wednesday, November 02, 2022 PM04:54:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -513,7 +513,7 @@ do while (.true.)
 
     !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     bad_trstep = (shortd .or. f >= fopt - TENTH * qred .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
-    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
+    improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
     ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region
