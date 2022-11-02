@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM04:30:18
+! Last Modified: Wednesday, November 02, 2022 PM04:40:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -681,7 +681,7 @@ do while (.true.)
             end if
             cycle
             !end if
-        else if ((.not. shortd) .and. (ratio > 0 .or. .not. max(delta, dnorm) <= rho)) then
+        else if ((.not. shortd) .and. ((.not. ratio <= 0) .or. .not. max(delta, dnorm) <= rho)) then
             cycle
         end if
     end if

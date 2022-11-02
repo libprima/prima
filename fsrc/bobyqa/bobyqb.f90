@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM04:29:10
+! Last Modified: Wednesday, November 02, 2022 PM04:40:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,7 +131,7 @@ real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x
 real(RP) :: score(npt)
 integer(IK) :: itest, knew_tr, knew_geo, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, tr_success, reduce_rho, small_trrad, close_itpset, accurate_mod
+logical :: shortd, improve_geo, tr_success, reduce_rho, small_trrad, close_itpset, accurate_mod, bad_trstep
 
 
 ! Sizes.
@@ -504,9 +504,15 @@ do while (.true.)
     end if
 
     reduce_rho = .not. ((.not. shortd) .and. knew_tr > 0 .and. f <= fopt - TENTH * qred)  &
-       & .and. (.not. improve_geo .or. (knew_geo <= 0 .and. (shortd .or. .not. (ratio > 0 .or. .not. max(delta, dnorm) <= rho))))
+       & .and. (.not. improve_geo .or. (knew_geo <= 0 .and. (shortd .or. (ratio <= 0 .and. max(delta, dnorm) <= rho))))
     improve_geo = improve_geo .and. (knew_geo > 0) .and. &
         & .not. ((.not. shortd) .and. knew_tr > 0 .and. f <= fopt - TENTH * qred)
+
+    bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+
+    bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
     ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region
