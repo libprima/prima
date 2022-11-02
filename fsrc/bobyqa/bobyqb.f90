@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM08:45:34
+! Last Modified: Wednesday, November 02, 2022 PM09:17:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -491,18 +491,10 @@ do while (.true.)
     !----------------------------------------------------------------------------------------------!
 
 
-    !! What if RESCUE has been called? Is it reasonable to use F and FOPT?
-    !improve_geo = ((.not. shortd) .or. accurate_mod) .and. (shortd .or. (knew_tr > 0 .and. .not. f >= fopt - TENTH * qred))
-    !!if (improve_geo) then
-    !dsquare = max((TWO * delta)**2, (TEN * rho)**2)
-    !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    !knew_geo = 0_IK
-    !if (.not. all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))) then
-    !    knew_geo = int(maxloc(distsq, dim=1), IK)  ! This line cannot be exchanged with the next
-    !    dsquare = distsq(knew_geo) ! This line cannot be exchanged with the last
-    !end if
+    ! What if RESCUE has been called? Is it reasonable to use RATIO, F, and FOPT?
 
-    reduce_rho = (shortd .and. accurate_mod) .or. (close_itpset .and. (shortd .or. (ratio <= 0 .and. small_trrad)))
+    reduce_rho = (shortd .and. accurate_mod) .or. (close_itpset .and. (shortd .or. ratio <= 0) .and. small_trrad)
+    !reduce_rho = (shortd .and. accurate_mod) .or. (close_itpset .and. (shortd .or. (ratio <= 0 .and. small_trrad)))
     !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 

@@ -530,6 +530,9 @@ do while (.true.)
         !end if
     end if
 
+     improve_geo = improve_geo .or. (shortd .and. .not. max(delta, dnorm) <= rho)
+
+
     if (improve_geo) then
         !dsquare = max((TWO * delta)**2, (TEN * rho)**2)
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
