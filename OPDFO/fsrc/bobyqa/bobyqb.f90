@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM04:51:03
+! Last Modified: Wednesday, November 02, 2022 PM10:11:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -530,7 +530,7 @@ do while (.true.)
         !end if
     end if
 
-     improve_geo = improve_geo .or. (shortd .and. .not. max(delta, dnorm) <= rho)
+    !improve_geo = improve_geo .or. (shortd .and. .not. max(delta, dnorm) <= rho)
 
 
     if (improve_geo) then

@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM09:17:54
+! Last Modified: Wednesday, November 02, 2022 PM10:16:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -339,7 +339,7 @@ do while (.true.)
         !if (tr_success .and. .not. any(den > 0.5 * maxval(vlag(1:npt)**2))) then
         !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then
         !if (.not. any(den > maxval(vlag(1:npt)**2))) then
-        if (tr_success .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
+        if (tr_success .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then  ! This works well
             if (nf == nfresc) then  ! This cannot happen.
                 info = DAMAGING_ROUNDING
                 exit
@@ -528,8 +528,8 @@ do while (.true.)
         ! It provides a useful safeguard, but is not invoked in most applications of BOBYQA.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
-        !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
-        if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > vlag(knew_geo)**2)) then
+        !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then  ! This is the correct condition
+        if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > vlag(knew_geo)**2)) then ! This is for test RESCUE
             if (nf == nfresc) then
                 info = DAMAGING_ROUNDING
                 exit
