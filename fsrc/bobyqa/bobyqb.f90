@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM08:34:16
+! Last Modified: Wednesday, November 02, 2022 PM08:37:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -503,8 +503,7 @@ do while (.true.)
     end if
 
     reduce_rho = (shortd .and. accurate_mod) &
-        & .or. (knew_geo <= 0 .and. &
-        & (shortd .or. (ratio <= 0 .and. max(delta, dnorm) <= rho .and. (knew_tr <= 0 .or. f >= fopt - TENTH * qred))))
+        & .or. (knew_geo <= 0 .and. (shortd .or. (ratio <= 0 .and. max(delta, dnorm) <= rho)))
     !improve_geo = improve_geo .and. (knew_geo > 0) .and. &
     !    & .not. ((.not. shortd) .and. knew_tr > 0 .and. .not. f >= fopt - TENTH * qred)
 
