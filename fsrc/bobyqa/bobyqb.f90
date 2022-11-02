@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM03:42:56
+! Last Modified: Wednesday, November 02, 2022 PM04:19:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,7 +131,7 @@ real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x
 real(RP) :: score(npt)
 integer(IK) :: itest, knew_tr, knew_geo, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, tr_success, reduce_rho!, rescued
+logical :: shortd, improve_geo, tr_success, reduce_rho, small_trrad, close_itpset, accurate_mod
 
 
 ! Sizes.
@@ -476,8 +476,24 @@ do while (.true.)
     end if
 
 
-    improve_geo = (shortd .and. (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))) &
-        & .or. (.not. shortd .and. .not. (knew_tr > 0 .and. f <= fopt - TENTH * qred)) !??? This is wrong if RESCUE has been called.
+    !----------------------------------------------------------------------------------------------!
+    ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
+    ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
+    ! ACCURATE_MOD --- Are the recent models sufficiently accurate?
+    accurate_mod = all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho)
+    ! SMALL_TRRAD --- Is the trust-region radius small?
+    small_trrad = (max(delta, dnorm) <= rho)
+    ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
+    !close_itpset = all(distsq <= 4.0_RP * delta**2)
+    close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))
+    !----------------------------------------------------------------------------------------------!
+
+
+    ! What if RESCUE has been called? Is it reasonable to use F and FOPT?
+    improve_geo = (shortd .and. .not. (all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho))) &
+        & .or. (.not. shortd .and. .not. (knew_tr > 0 .and. f <= fopt - TENTH * qred))
     !if (improve_geo) then
     dsquare = max((TWO * delta)**2, (TEN * rho)**2)
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
@@ -485,7 +501,7 @@ do while (.true.)
     dsquare = maxval([dsquare, distsq]) ! This line cannot be exchanged with the last
 
     reduce_rho = .not. ((.not. shortd) .and. knew_tr > 0 .and. f <= fopt - TENTH * qred)  &
-       & .and. (.not. improve_geo .or. (knew_geo <= 0 .and. (shortd .or. .not. (ratio > 0 .or. max(delta, dnorm) > rho))))
+       & .and. (.not. improve_geo .or. (knew_geo <= 0 .and. (shortd .or. .not. (ratio > 0 .or. .not. max(delta, dnorm) <= rho))))
     improve_geo = improve_geo .and. (knew_geo > 0) .and. &
         & .not. ((.not. shortd) .and. knew_tr > 0 .and. f <= fopt - TENTH * qred)
 

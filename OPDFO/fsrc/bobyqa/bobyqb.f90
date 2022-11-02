@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM08:01:05
+! Last Modified: Wednesday, November 02, 2022 PM04:19:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -263,7 +263,8 @@ do while (.true.)
         if (crvmin > 0) then
             errbd = min(errbd, 0.125_RP * crvmin * rhosq)
         end if
-        improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
+        !improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
+        improve_geo = .not. (all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho))
     else  ! D is long enough to invoke a function evaluation.
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dsq) then
@@ -675,7 +676,7 @@ do while (.true.)
             end if
             cycle
             !end if
-        else if ((.not. shortd) .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
+        else if ((.not. shortd) .and. (ratio > 0 .or. .not. max(delta, dnorm) <= rho)) then
             cycle
         end if
     end if
