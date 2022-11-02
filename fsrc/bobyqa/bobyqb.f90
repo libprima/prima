@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM03:07:08
+! Last Modified: Wednesday, November 02, 2022 PM03:16:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -243,7 +243,6 @@ do while (.true.)
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
 
-        !dsquare = 1.0E2_RP * rho**2
         gnew = gopt + hess_mul(d, xpt, pq, hq)
         bdtest = maxval(abs(moderrsav))
         bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
@@ -475,22 +474,10 @@ do while (.true.)
             end if
         end if
 
-        ! If a trust region step has provided a sufficient decrease in F, then branch for another
-        ! trust region calculation.
-        !improve_geo = .not. ((knew_tr > 0 .and. f <= fopt - TENTH * qred) .or. rescued) ! This does not work as well as the following.
-        !improve_geo = .not. (knew_tr > 0 .and. f <= fopt - TENTH * qred) !??? This is wrong if RESCUE has been called.
-        ! Should we always take a trust region step after RESCUE?
-        if (knew_tr > 0 .and. f <= fopt - TENTH * qred) then !??? This is wrong if RESCUE has been called.
-            cycle
-        end if
-
-        ! Alternatively, find out if the interpolation points are close enough to the best point so far.
-        !dsquare = max((TWO * delta)**2, (TEN * rho)**2)
-        !end if
     end if
 
 
-    !if ((.not. shortd) .and. knew_tr > 0 .and. f <= TENTH * qred) cycle
+    if ((.not. shortd) .and. knew_tr > 0 .and. f <= fopt - TENTH * qred) cycle
     improve_geo = (shortd .and. (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))) &
         & .or. (.not. shortd .and. .not. (knew_tr > 0 .and. f <= fopt - TENTH * qred)) !??? This is wrong if RESCUE has been called.
     !if (improve_geo) then
