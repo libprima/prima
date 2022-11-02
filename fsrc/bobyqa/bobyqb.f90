@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 02, 2022 PM05:05:27
+! Last Modified: Wednesday, November 02, 2022 PM05:10:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -492,8 +492,8 @@ do while (.true.)
 
 
     ! What if RESCUE has been called? Is it reasonable to use F and FOPT?
-    improve_geo = (shortd .and. .not. (all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho))) &
-        & .or. (.not. shortd .and. .not. (knew_tr > 0 .and. .not. f >= fopt - TENTH * qred))
+    improve_geo = ((.not. shortd) .or. (all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho))) &
+        & .and. (shortd .or. (knew_tr > 0 .and. .not. f >= fopt - TENTH * qred))
     !if (improve_geo) then
     dsquare = max((TWO * delta)**2, (TEN * rho)**2)
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
@@ -504,7 +504,7 @@ do while (.true.)
     end if
 
     reduce_rho = (shortd .or. knew_tr <= 0 .or. f >= fopt - TENTH * qred)  &
-       & .and. ((.not. improve_geo) .or. (knew_geo <= 0 .and. (shortd .or. (ratio <= 0 .and. max(delta, dnorm) <= rho))))
+       & .and. (improve_geo .or. (knew_geo <= 0 .and. (shortd .or. (ratio <= 0 .and. max(delta, dnorm) <= rho))))
     !improve_geo = improve_geo .and. (knew_geo > 0) .and. &
     !    & .not. ((.not. shortd) .and. knew_tr > 0 .and. .not. f >= fopt - TENTH * qred)
 
