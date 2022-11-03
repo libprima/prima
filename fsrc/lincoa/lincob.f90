@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 AM12:49:16
+! Last Modified: Thursday, November 03, 2022 AM09:39:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -470,8 +470,7 @@ do while (.true.)
     ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
     ! when the last trust region step was calculated, then try a trust region step instead.
     !
-    ! ACCURATE_MOD --- Are the recent models sufficiently accurate?
-    !accurate_mod = .not. any(dnormsav >= HALF * rho) .or. .not. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)
+    ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
     ! SMALL_TRRAD --- Is the trust-region radius small?
     small_trrad = (delsav <= rho)

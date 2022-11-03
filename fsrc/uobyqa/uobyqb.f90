@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, September 27, 2022 AM09:01:55
+! Last Modified: Thursday, November 03, 2022 PM03:17:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -365,43 +365,42 @@ do while (.true.)
         ! The loop counter K does not appear in the loop body. Its purpose is only to impose an
         ! upper bound on the maximal number of loops.
         do k = 1, npt
-            if (all(dsqtest <= 4.0_RP * rho**2)) then
-                exit
-            end if
-
             ! If a point is sufficiently far away, then set the gradient and Hessian of its Lagrange
             ! function at the centre of the trust region.
             knew = int(maxloc(dsqtest, dim=1), IK)
-            !!MATLAB: [~, knew] = max(dsqtest(1:npt));
+            !!MATLAB: [~, knew] = max(dsqtest);
+            if (dsqtest(knew) <= 4.0_RP * rho**2) then
+                exit
+            end if
+            wmult = sixthm * dsqtest(knew)**1.5_RP
+            dsqtest(knew) = ZERO
             g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
             h = vec2smat(pl(n + 1:npt - 1, knew))
-            if (is_nan(sum(abs(g)) + sum(abs(h)))) then
-                reduce_rho = .true.
-                exit
-            end if
+            !if (is_nan(sum(abs(g)) + sum(abs(h)))) then
+            !    reduce_rho = .true.
+            !    exit
+            !end if
 
-            ! If ERRTOL is positive, test whether to replace the interpolation point with index KNEW,
-            ! using a bound on the maximum modulus of its Lagrange function in the trust region.
-            wmult = sixthm * dsqtest(knew)**1.5_RP
-            if (errtol > 0) then
-                dsqtest(knew) = ZERO
-                estim = rho * (sqrt(sum(g**2)) + rho * HALF * sqrt(sum(h**2)))
-                if (wmult * estim <= errtol) cycle
-            end if
-
-            ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the
-            ! modulus of its Lagrange function within the trust region.
-            ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
-            ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
-            ! improve the performance slightly according to a test on 20220720.
-            delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
-            call geostep(g, h, delbar, d, vmax)
-            ! If MAX(WMULT * VMAX, ZERO) >= ERRTOL, then D will be accepted as the geometry step
-            ! (in case VMAX > 0) or RHO will be reduced; otherwise, we try another KNEW.
-            if (max(wmult * vmax, ZERO) >= errtol) then
-                geo_step = (vmax > 0)
-                reduce_rho = (.not. geo_step)
-                exit
+            ! Test whether to replace the interpolation point with index KNEW, using a bound on the
+            ! maximum modulus of its Lagrange function in the trust region.
+            estim = rho * (sqrt(sum(g**2)) + rho * HALF * sqrt(sum(h**2)))
+            if (.not. wmult * estim < errtol) then
+                ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the
+                ! modulus of its Lagrange function within the trust region.
+                ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
+                ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
+                ! improve the performance slightly according to a test on 20220720.
+                delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
+                g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
+                h = vec2smat(pl(n + 1:npt - 1, knew))
+                call geostep(g, h, delbar, d, vmax)
+                ! If MAX(WMULT * VMAX, ZERO) >= ERRTOL, then D will be accepted as the geometry step
+                ! (in case VMAX > 0) or RHO will be reduced; otherwise, we try the next KNEW.
+                if (.not. max(wmult * vmax, ZERO) < errtol) then
+                    geo_step = (vmax > 0)
+                    reduce_rho = (.not. geo_step)
+                    exit
+                end if
             end if
         end do
 
