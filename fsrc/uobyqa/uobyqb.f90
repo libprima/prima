@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 AM12:11:28
+! Last Modified: Friday, November 04, 2022 AM12:18:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -401,7 +401,6 @@ do while (.true.)
             dsqtest(knew_geo) = ZERO  ! Exclude KNEW from the later loops, if any.
         end do
 
-        reduce_rho = (reduce_rho .or. dnorm <= rho)
         if (geo_step) then
             ! Calculate the next value of the objective function.
             xnew = xopt + d
@@ -484,9 +483,8 @@ do while (.true.)
         end if
     end if
 
-    !improve_geo = shortd .or. .not. (knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
-    reduce_rho = ((.not. shortd) .and. knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2) &
-        & .or. (reduce_rho .and. .not. geo_step)) .and. &
+    reduce_rho = (reduce_rho .or. dnorm <= rho) .and. .not. geo_step
+    reduce_rho = reduce_rho .and. &
      & (shortd .or. knew_tr <= 0 .or. .not. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
 
     if (reduce_rho) then
