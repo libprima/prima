@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 PM11:29:00
+! Last Modified: Thursday, November 03, 2022 PM11:52:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -259,7 +259,6 @@ do while (.true.)
             xopt = xnew
         end if
 
-        ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
         ! Pick the next value of DELTA after a trust region step.
         if (.not. (qred > 0)) then
             info = TRSUBP_FAILED
@@ -317,6 +316,8 @@ do while (.true.)
             score(kopt) = -ONE
         end if
 
+        knew_tr = 0_IK
+        ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
         ! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
         if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
             ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
@@ -328,8 +329,7 @@ do while (.true.)
             ! Powell's code does not include the following instructions. With Powell's code,
             ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
             knew_tr = int(maxloc(distsq, dim=1), IK)
-        else
-            knew_tr = 0_IK
+            ddknew = distsq(knew_tr)
         end if
 
         if (knew_tr > 0) then
@@ -350,9 +350,6 @@ do while (.true.)
                 kopt = knew_tr
             end if
         end if
-        !improve_geo = .not. (knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew_tr > 4.0_RP * rho**2))
-        !if (knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2)) cycle
-        !if (.not. improve_geo) cycle
     end if
 
     if (.not. shortd .and. knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2)) cycle
@@ -471,7 +468,6 @@ do while (.true.)
                 xopt = xnew
             end if
 
-            ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
             ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
             ! the Lagrange functions and the quadratic model.
             xpt(:, knew_geo) = xnew
