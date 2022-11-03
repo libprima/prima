@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM11:12:10
+! Last Modified: Thursday, November 03, 2022 PM02:43:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -374,10 +374,10 @@ do while (.true.)
             !!MATLAB: [~, knew] = max(dsqtest(1:npt));
             g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
             h = vec2smat(pl(n + 1:npt - 1, knew))
-            if (is_nan(sum(abs(g)) + sum(abs(h)))) then
-                reduce_rho = .true.
-                exit
-            end if
+            !if (is_nan(sum(abs(g)) + sum(abs(h)))) then
+            !    reduce_rho = .true.
+            !    exit
+            !end if
 
             ! If ERRTOL is positive, test whether to replace the interpolation point with index KNEW,
             ! using a bound on the maximum modulus of its Lagrange function in the trust region.
@@ -385,7 +385,7 @@ do while (.true.)
             if (errtol > 0) then
                 dsqtest(knew) = ZERO
                 estim = rho * (sqrt(sum(g**2)) + rho * HALF * sqrt(sum(h**2)))
-                if (wmult * estim <= errtol) cycle
+                if (wmult * estim < errtol) cycle
             end if
 
             ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the
@@ -397,7 +397,7 @@ do while (.true.)
             call geostep(g, h, delbar, d, vmax)
             ! If MAX(WMULT * VMAX, ZERO) >= ERRTOL, then D will be accepted as the geometry step
             ! (in case VMAX > 0) or RHO will be reduced; otherwise, we try another KNEW.
-            if (max(wmult * vmax, ZERO) >= errtol) then
+            if (.not. max(wmult * vmax, ZERO) < errtol) then
                 geo_step = (vmax > 0)
                 reduce_rho = (.not. geo_step)
                 exit

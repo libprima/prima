@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, September 29, 2022 AM07:31:32
+! Last Modified: Thursday, November 03, 2022 AM09:38:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -332,7 +332,7 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
-    ! ACCURATE_MOD --- Are the recent models sufficiently accurate?
+    ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
     ! SMALL_TRRAD --- Is the trust-region radius small?
     small_trrad = (max(delta, dnorm) <= rho)

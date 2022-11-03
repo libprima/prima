@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 AM12:54:35
+! Last Modified: Thursday, November 03, 2022 AM11:52:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -227,7 +227,6 @@ do while (.true.)
     ! on whether or not our work with the current RHO seems complete. RHO is reduced if the
     ! errors in the quadratic model at the last three interpolation points compare favourably
     ! with predictions of likely improvements to the model within distance HALF*RHO of XOPT.
-    ! The BOBYQA paper explains the strategy in the paragraphs between (6.7) and (6.11).
     ! Why do we reduce RHO when SHORTD is true and the entries of MODERRSAV and DNORMSAV are all
     ! small? The reason is well explained by the BOBYQA paper in the paragraphs surrounding
     ! (6.9)--(6.11). Roughly speaking, in this case, a trust-region step is unlikely to decrease
@@ -473,7 +472,7 @@ do while (.true.)
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
-    ! ACCURATE_MOD --- Are the recent models sufficiently accurate?
+    ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho)
     ! SMALL_TRRAD --- Is the trust-region radius small?
     small_trrad = (max(delta, dnorm) <= rho)
@@ -485,8 +484,7 @@ do while (.true.)
     !----------------------------------------------------------------------------------------------!
 
 
-    ! What if RESCUE has been called? Is it reasonable to use RATIO, F, and FOPT?
-
+    ! What if RESCUE has been called? Is it reasonable to use RATIO?
     ! Powell's code seems to define REDUCE_RHO in the following way.
     !reduce_rho = (shortd .and. accurate_mod) .or. (close_itpset .and. (shortd .or. (ratio <= 0 .and. small_trrad)))
     ! However, it does not behave differently compared to the following, which is the definition in
@@ -501,7 +499,7 @@ do while (.true.)
     ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region
     ! iteration, unless the calculations with the current RHO are complete.
     if (improve_geo) then
-        knew_geo = int(maxloc(distsq, dim=1), IK)  ! This line cannot be exchanged with the next
+        knew_geo = int(maxloc(distsq, dim=1), IK)
         delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)
 
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
