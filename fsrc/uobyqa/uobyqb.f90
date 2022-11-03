@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 PM03:17:44
+! Last Modified: Thursday, November 03, 2022 PM04:12:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -112,7 +112,7 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
 real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), dsqtest(size(pl, 2)), delbar, &
 & weight(size(pl, 2)), score(size(pl, 2)),    &
-&        dnorm, errtol, estim, crvmin, fopt,&
+&        dnorm, errtol, estvmax, crvmin, fopt,&
 &        fsave, xsave(size(x)), ratio, rho, sixthm, summ, &
 &        trtol, vmax,  &
 &        qred, wmult, plknew(size(pl, 1)), fval(size(pl, 2))
@@ -358,12 +358,16 @@ do while (.true.)
     if (improve_geo) then
         geo_step = .false.
         reduce_rho = .false.
-        ! Find out if the interpolation points are close enough to the best point so far.
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        dsqtest = distsq
+        ! DELBAR is the trust-region radius for the geometry step subproblem.
+        ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
+        ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
+        ! improve the performance slightly according to a test on 20220720.
+        delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
 
         ! The loop counter K does not appear in the loop body. Its purpose is only to impose an
         ! upper bound on the maximal number of loops.
+        dsqtest = distsq
         do k = 1, npt
             ! If a point is sufficiently far away, then set the gradient and Hessian of its Lagrange
             ! function at the centre of the trust region.
@@ -372,36 +376,30 @@ do while (.true.)
             if (dsqtest(knew) <= 4.0_RP * rho**2) then
                 exit
             end if
-            wmult = sixthm * dsqtest(knew)**1.5_RP
-            dsqtest(knew) = ZERO
             g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
             h = vec2smat(pl(n + 1:npt - 1, knew))
-            !if (is_nan(sum(abs(g)) + sum(abs(h)))) then
-            !    reduce_rho = .true.
-            !    exit
-            !end if
 
-            ! Test whether to replace the interpolation point with index KNEW, using a bound on the
-            ! maximum modulus of its Lagrange function in the trust region.
-            estim = rho * (sqrt(sum(g**2)) + rho * HALF * sqrt(sum(h**2)))
-            if (.not. wmult * estim < errtol) then
-                ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the
-                ! modulus of its Lagrange function within the trust region.
-                ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
-                ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
-                ! improve the performance slightly according to a test on 20220720.
-                delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
-                g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
-                h = vec2smat(pl(n + 1:npt - 1, knew))
+            ! Test whether to replace the interpolation point with index KNEW. As explained in
+            ! (35)--(39) of the UOBYQA paper, KNEW is set to the first integer J such that
+            ! ||XPT(:, J) - XOPT|| > 2*RHO, SIXTHM*||XPT(:, J) - XOPT||^3 VMAX >= ERRTOL,
+            ! where VMAX = MAX_{||D|| <= DELBAR} |L_J(XOPT + D)|, evaluated by GEOSTEP. To avoid
+            ! unnecessary invocations of GEOSTEP, we first test whethr the second inequality holds
+            ! using ESTVMAX, which is an upper bound of VMAX.
+            estvmax = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
+            wmult = sixthm * dsqtest(knew)**1.5_RP
+            if (wmult * estvmax >= errtol) then
+                ! If the KNEW-th point may be replaced, then pick a D that gives a large value of
+                ! the modulus of its Lagrange function within the trust region.
                 call geostep(g, h, delbar, d, vmax)
                 ! If MAX(WMULT * VMAX, ZERO) >= ERRTOL, then D will be accepted as the geometry step
                 ! (in case VMAX > 0) or RHO will be reduced; otherwise, we try the next KNEW.
-                if (.not. max(wmult * vmax, ZERO) < errtol) then
+                if (max(wmult * vmax, ZERO) >= errtol) then
                     geo_step = (vmax > 0)
                     reduce_rho = (.not. geo_step)
                     exit
                 end if
             end if
+            dsqtest(knew) = ZERO  ! Exclude KNEW from the later loops, if any.
         end do
 
         reduce_rho = (reduce_rho .or. dnorm <= rho)

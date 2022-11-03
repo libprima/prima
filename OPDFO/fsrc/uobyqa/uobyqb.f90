@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 PM02:43:03
+! Last Modified: Thursday, November 03, 2022 PM04:12:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -363,6 +363,7 @@ do while (.true.)
 
         ! The loop counter K does not appear in the loop body. Its purpose is only to impose an
         ! upper bound on the maximal number of loops.
+        delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
         do k = 1, npt
             if (all(dsqtest <= 4.0_RP * rho**2)) then
                 exit
@@ -382,10 +383,12 @@ do while (.true.)
             ! If ERRTOL is positive, test whether to replace the interpolation point with index KNEW,
             ! using a bound on the maximum modulus of its Lagrange function in the trust region.
             wmult = sixthm * dsqtest(knew)**1.5_RP
-            if (errtol > 0) then
+            !if (errtol > 0) then
+            if (.true.) then
                 dsqtest(knew) = ZERO
-                estim = rho * (sqrt(sum(g**2)) + rho * HALF * sqrt(sum(h**2)))
-                if (wmult * estim < errtol) cycle
+                !estim = rho * (sqrt(sum(g**2)) + rho * HALF * sqrt(sum(h**2)))
+                estim = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
+                if (.not. wmult * estim >= errtol) cycle
             end if
 
             ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the
@@ -393,11 +396,10 @@ do while (.true.)
             ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
             ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
             ! improve the performance slightly according to a test on 20220720.
-            delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
             call geostep(g, h, delbar, d, vmax)
             ! If MAX(WMULT * VMAX, ZERO) >= ERRTOL, then D will be accepted as the geometry step
             ! (in case VMAX > 0) or RHO will be reduced; otherwise, we try another KNEW.
-            if (.not. max(wmult * vmax, ZERO) < errtol) then
+            if (max(wmult * vmax, ZERO) >= errtol) then
                 geo_step = (vmax > 0)
                 reduce_rho = (.not. geo_step)
                 exit
