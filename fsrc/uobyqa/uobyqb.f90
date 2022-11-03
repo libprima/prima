@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 PM09:48:29
+! Last Modified: Thursday, November 03, 2022 PM09:56:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -488,31 +488,34 @@ do while (.true.)
             end if
         end if
     end if
-    if (improve_geo .and. (geo_step .or. .not. reduce_rho)) cycle
+    !if (improve_geo .and. (geo_step .or. .not. reduce_rho)) cycle
+    reduce_rho = (.not. improve_geo .or. (reduce_rho .and. .not. geo_step))
 
-    if (rho <= rhoend) then
-        info = SMALL_TR_RADIUS
-        exit
+    if (reduce_rho) then
+        if (rho <= rhoend) then
+            info = SMALL_TR_RADIUS
+            exit
+        end if
+        ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the
+        ! corresponding changes to the gradients of the Lagrange functions and the quadratic model.
+        xbase = xbase + xopt
+        xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+        pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)  ! Model gradient
+        do k = 1, npt
+            pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)  ! Lagrange fun. gradient
+        end do
+        ! Pick the next values of RHO and DELTA.
+        delta = HALF * rho
+        ratio = rho / rhoend
+        if (ratio <= 16.0_RP) then
+            rho = rhoend
+        else if (ratio <= 250.0_RP) then
+            rho = sqrt(ratio) * rhoend
+        else
+            rho = TENTH * rho
+        end if
+        delta = max(delta, rho)
     end if
-    ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the
-    ! corresponding changes to the gradients of the Lagrange functions and the quadratic model.
-    xbase = xbase + xopt
-    xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-    pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)  ! Model gradient
-    do k = 1, npt
-        pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)  ! Lagrange fun. gradient
-    end do
-    ! Pick the next values of RHO and DELTA.
-    delta = HALF * rho
-    ratio = rho / rhoend
-    if (ratio <= 16.0_RP) then
-        rho = rhoend
-    else if (ratio <= 250.0_RP) then
-        rho = sqrt(ratio) * rhoend
-    else
-        rho = TENTH * rho
-    end if
-    delta = max(delta, rho)
 end do
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
