@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 PM04:12:34
+! Last Modified: Thursday, November 03, 2022 PM11:52:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -327,6 +327,7 @@ do while (.true.)
             ! Powell's code does not include the following instructions. With Powell's code,
             ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
             knew = int(maxloc(distsq, dim=1), IK)
+            ddknew = distsq(knew)
         else
             knew = 0_IK
         end if
