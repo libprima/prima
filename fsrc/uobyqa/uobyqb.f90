@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 PM11:57:52
+! Last Modified: Friday, November 04, 2022 AM12:11:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -352,10 +352,7 @@ do while (.true.)
         end if
     end if
 
-    !if (.not. shortd .and. knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2)) cycle
-
     improve_geo = shortd .or. .not. (knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
-
 
     geo_step = .false.
     reduce_rho = .false.  ! REDUCE_RHO = TRUE ????
@@ -487,7 +484,9 @@ do while (.true.)
         end if
     end if
 
-    reduce_rho = (.not. improve_geo .or. (reduce_rho .and. .not. geo_step)) .and. &
+    !improve_geo = shortd .or. .not. (knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
+    reduce_rho = ((.not. shortd) .and. knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2) &
+        & .or. (reduce_rho .and. .not. geo_step)) .and. &
      & (shortd .or. knew_tr <= 0 .or. .not. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
 
     if (reduce_rho) then
