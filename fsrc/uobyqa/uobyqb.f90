@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 PM09:56:43
+! Last Modified: Thursday, November 03, 2022 PM11:29:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,7 +116,7 @@ real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), dsqtest(size(pl, 2)), delb
 &        fsave, xsave(size(x)), ratio, rho, sixthm, summ, &
 &        trtol, vmax,  &
 &        qred, wmult, plknew(size(pl, 1)), fval(size(pl, 2))
-integer(IK) :: k, knew, kopt, subinfo
+integer(IK) :: k, knew_tr, knew_geo, kopt, subinfo
 logical :: tr_success, shortd, geo_step, improve_geo, reduce_rho
 
 ! Sizes.
@@ -142,7 +142,7 @@ end if
 
 !--------------------------------------------------------------------------------------------------!
 ! Temporary fix for the G95 warning that these variables are used uninitialized.
-knew = 1; kopt = 1
+knew_tr = 1; kopt = 1
 f = ieeenan()
 !--------------------------------------------------------------------------------------------------!
 
@@ -321,46 +321,48 @@ do while (.true.)
         if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
             ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
             ! exclude such K.
-            knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-                !!MATLAB: [~, knew] = max(score, [], 'omitnan');
-            ddknew = distsq(knew)
+            knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+                !!MATLAB: [~, knew_tr] = max(score, [], 'omitnan');
+            ddknew = distsq(knew_tr)
         elseif (tr_success) then
             ! Powell's code does not include the following instructions. With Powell's code,
             ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
-            knew = int(maxloc(distsq, dim=1), IK)
+            knew_tr = int(maxloc(distsq, dim=1), IK)
         else
-            knew = 0_IK
+            knew_tr = 0_IK
         end if
 
-        if (knew > 0) then
+        if (knew_tr > 0) then
             ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
             ! the Lagrange functions and the quadratic model.
-            xpt(:, knew) = xnew
+            xpt(:, knew_tr) = xnew
             ! It can happen that VLAG(KNEW) = 0 due to rounding.
-            pl(:, knew) = pl(:, knew) / vlag(knew)
-            plknew = pl(:, knew)
+            pl(:, knew_tr) = pl(:, knew_tr) / vlag(knew_tr)
+            plknew = pl(:, knew_tr)
             pq = pq + diff * plknew
             pl = pl - outprod(plknew, vlag)
-            pl(:, knew) = plknew
+            pl(:, knew_tr) = plknew
 
             ! Update KOPT if F is the least calculated value of the objective function. Then branch
             ! for another trust region calculation. The case KSAVE>0 indicates that a model step has
             ! just been taken.
             if (f < fsave) then
-                kopt = knew
+                kopt = knew_tr
             end if
         end if
-        !improve_geo = .not. (knew > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
-        if (knew > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2)) cycle
+        !improve_geo = .not. (knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew_tr > 4.0_RP * rho**2))
+        !if (knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2)) cycle
         !if (.not. improve_geo) cycle
     end if
 
-    improve_geo = shortd .or. .not. (knew > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
+    if (.not. shortd .and. knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2)) cycle
+
+    improve_geo = shortd .or. .not. (knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
 
 
+    geo_step = .false.
+    reduce_rho = .false.  ! REDUCE_RHO = TRUE ????
     if (improve_geo) then
-        geo_step = .false.
-        reduce_rho = .false.  ! REDUCE_RHO = TRUE ????
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         ! DELBAR is the trust-region radius for the geometry step subproblem.
         ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
@@ -374,13 +376,13 @@ do while (.true.)
         do k = 1, npt
             ! If a point is sufficiently far away, then set the gradient and Hessian of its Lagrange
             ! function at the centre of the trust region.
-            knew = int(maxloc(dsqtest, dim=1), IK)
-            !!MATLAB: [~, knew] = max(dsqtest);
-            if (dsqtest(knew) <= 4.0_RP * rho**2) then
+            knew_geo = int(maxloc(dsqtest, dim=1), IK)
+            !!MATLAB: [~, knew_geo] = max(dsqtest);
+            if (dsqtest(knew_geo) <= 4.0_RP * rho**2) then
                 exit
             end if
-            g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
-            h = vec2smat(pl(n + 1:npt - 1, knew))
+            g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
+            h = vec2smat(pl(n + 1:npt - 1, knew_geo))
 
             ! Test whether to replace the interpolation point with index KNEW. As explained in
             ! (35)--(39) of the UOBYQA paper, KNEW is set to the first integer J such that
@@ -389,7 +391,7 @@ do while (.true.)
             ! unnecessary invocations of GEOSTEP, we first test whethr the second inequality holds
             ! using ESTVMAX, which is an upper bound of VMAX.
             estvmax = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
-            wmult = sixthm * dsqtest(knew)**1.5_RP
+            wmult = sixthm * dsqtest(knew_geo)**1.5_RP
             if (wmult * estvmax >= errtol) then
                 ! If the KNEW-th point may be replaced, then pick a D that gives a large value of
                 ! the modulus of its Lagrange function within the trust region.
@@ -402,7 +404,7 @@ do while (.true.)
                     exit
                 end if
             end if
-            dsqtest(knew) = ZERO  ! Exclude KNEW from the later loops, if any.
+            dsqtest(knew_geo) = ZERO  ! Exclude KNEW from the later loops, if any.
         end do
 
         reduce_rho = (reduce_rho .or. dnorm <= rho)
@@ -472,23 +474,23 @@ do while (.true.)
             ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
             ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
             ! the Lagrange functions and the quadratic model.
-            xpt(:, knew) = xnew
+            xpt(:, knew_geo) = xnew
             ! It can happen that VLAG(KNEW) = 0 due to rounding.
-            pl(:, knew) = pl(:, knew) / vlag(knew)
-            plknew = pl(:, knew)
+            pl(:, knew_geo) = pl(:, knew_geo) / vlag(knew_geo)
+            plknew = pl(:, knew_geo)
             pq = pq + diff * plknew
             pl = pl - outprod(plknew, vlag)
-            pl(:, knew) = plknew
+            pl(:, knew_geo) = plknew
 
             ! Update KOPT if F is the least calculated value of the objective function. Then branch
             ! for another trust region calculation. The case KSAVE>0 indicates that a model step has
             ! just been taken.
             if (f < fsave) then
-                kopt = knew
+                kopt = knew_geo
             end if
         end if
     end if
-    !if (improve_geo .and. (geo_step .or. .not. reduce_rho)) cycle
+
     reduce_rho = (.not. improve_geo .or. (reduce_rho .and. .not. geo_step))
 
     if (reduce_rho) then
