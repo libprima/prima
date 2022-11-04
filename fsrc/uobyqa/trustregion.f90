@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 PM01:52:25
+! Last Modified: Friday, November 04, 2022 PM04:49:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -542,6 +542,10 @@ end if
 
 if (scaled) then
     crvmin = crvmin * scaling  ! CRVMIN is not invariant under the scaling.
+end if
+
+if (is_nan(crvmin)) then  ! This may happen if the problem is ill-conditioned.
+    crvmin = ZERO
 end if
 
 if (DEBUGGING) then
