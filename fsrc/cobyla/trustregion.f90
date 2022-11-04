@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Friday, September 09, 2022 PM02:42:10
+! Last Modified: Friday, November 04, 2022 PM12:04:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,6 +116,7 @@ call trstlp_sub(iact, nact, 2_IK, A, b, delta, d, vmultc, z)
 if (DEBUGGING) then
     call assert(size(d) == size(A, 1), 'SIZE(D) == SIZE(A, 1)', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
+    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
     call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
 end if
 end function trstlp
