@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 05, 2022 AM12:58:45
+! Last Modified: Saturday, November 05, 2022 AM01:01:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -390,7 +390,7 @@ do while (.true.)
                 dsqtest(knew) = ZERO
                 !estim = rho * (sqrt(sum(g**2)) + rho * HALF * sqrt(sum(h**2)))
                 estim = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
-                if (.not. (wmult * estim >= errtol)) cycle
+                if (.not. (wmult * estim >= errtol .or. is_nan(estim))) cycle
                 !if (.not. (wmult * estim > errtol)) cycle
                 !if (.not. (wmult * estim >= errtol .or. errtol == ZERO)) cycle
             end if

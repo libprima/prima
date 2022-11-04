@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 05, 2022 AM12:58:40
+! Last Modified: Saturday, November 05, 2022 AM01:03:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -386,7 +386,7 @@ do while (.true.)
         ! using ESTVMAX, which is an upper bound of VMAX.
         estvmax = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
         wmult = sixthm * distsq(knew_geo)**1.5_RP
-        if (wmult * estvmax >= errtol) then  ! Seems better than >
+        if (wmult * estvmax >= errtol .or. is_nan(estvmax)) then  ! Seems better than >
             !if (wmult * estvmax > errtol) then
             !if (wmult * estvmax >= errtol .or. errtol == 0) then  ! The same as >=
             ! If the KNEW-th point may be replaced, then pick a D that gives a large value of
@@ -406,6 +406,8 @@ do while (.true.)
     !end if
     !
 
+    call assert(shortd .or. (accurate_mod .eqv. all(distsq <= 4.0_RP * rho**2)), &
+        & 'If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)', srname)
 
     ! If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)
 
