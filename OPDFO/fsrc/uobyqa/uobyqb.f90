@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 AM11:55:12
+! Last Modified: Friday, November 04, 2022 PM02:37:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -390,7 +390,8 @@ do while (.true.)
                 dsqtest(knew) = ZERO
                 !estim = rho * (sqrt(sum(g**2)) + rho * HALF * sqrt(sum(h**2)))
                 estim = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
-                if (.not. (wmult * estim >= errtol .or. errtol == ZERO)) cycle
+                !if (.not. (wmult * estim >= errtol .or. errtol == ZERO)) cycle
+                if (.not. (wmult * estim > errtol)) cycle
             end if
 
             ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the
@@ -401,8 +402,10 @@ do while (.true.)
             call geostep(g, h, delbar, d, vmax)
             ! If MAX(WMULT * VMAX, ZERO) >= ERRTOL, then D will be accepted as the geometry step
             ! (in case VMAX > 0) or RHO will be reduced; otherwise, we try another KNEW.
-            if (max(wmult * vmax, ZERO) >= errtol .or. errtol == ZERO) then
-                geo_step = (vmax > 0)
+            !if (max(wmult * vmax, ZERO) >= errtol .or. errtol == ZERO) then
+            if (max(wmult * vmax, ZERO) > errtol) then
+                !geo_step = (vmax > 0)
+                geo_step = .true.
                 reduce_rho = (.not. geo_step)
                 exit
             end if
