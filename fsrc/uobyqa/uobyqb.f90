@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 PM01:13:42
+! Last Modified: Friday, November 04, 2022 PM02:36:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -376,13 +376,13 @@ do while (.true.)
             !!MATLAB: [~, knew_geo] = max(dsqtest);
             g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
             h = vec2smat(pl(n + 1:npt - 1, knew_geo))
-            !if (errtol <= 0) then
-            if (errtol == 0) then
-                call geostep(g, h, delbar, d, vmax)
-                geo_step = (vmax > 0)
-                reduce_rho = .not. geo_step
-                exit
-            end if
+            !!if (errtol <= 0) then
+            !if (errtol == 0) then
+            !    call geostep(g, h, delbar, d, vmax)
+            !    geo_step = .true. ! (vmax > 0)
+            !    reduce_rho = .false.
+            !    exit
+            !end if
 
             ! Test whether to replace the interpolation point with index KNEW. As explained in
             ! (35)--(39) of the UOBYQA paper, KNEW is set to the first integer J such that
@@ -392,13 +392,13 @@ do while (.true.)
             ! using ESTVMAX, which is an upper bound of VMAX.
             estvmax = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
             wmult = sixthm * dsqtest(knew_geo)**1.5_RP
-            if (wmult * estvmax >= errtol) then
+            if (wmult * estvmax > errtol) then
                 ! If the KNEW-th point may be replaced, then pick a D that gives a large value of
                 ! the modulus of its Lagrange function within the trust region.
                 call geostep(g, h, delbar, d, vmax)
                 ! If MAX(WMULT * VMAX, ZERO) >= ERRTOL, then D will be accepted as the geometry step
                 ! (in case VMAX > 0) or RHO will be reduced; otherwise, we try the next KNEW.
-                if (wmult * vmax >= errtol) then
+                if (wmult * vmax > errtol) then
                     geo_step = .true.
                     reduce_rho = .false.
                     exit
