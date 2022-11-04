@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 AM10:23:35
+! Last Modified: Friday, November 04, 2022 PM01:53:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,7 +52,7 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
-use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc
+use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc, norm
 use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
@@ -525,6 +525,10 @@ do k = n - 1_IK, 1, -1
     d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
 !!MATLAB: d = P*d;
+
+if (norm(d) > delta) then
+    d = (delta / norm(d)) * d
+end if
 
 if (scaled) then
     crvmin = crvmin * scaling  ! CRVMIN is not invariant under the scaling.

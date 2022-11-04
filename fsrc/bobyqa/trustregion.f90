@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 22, 2022 AM06:37:57
+! Last Modified: Friday, November 04, 2022 PM02:10:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -288,9 +288,10 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         itercg = itercg + 1
         temp = shs / stepsq
         if (iact == 0 .and. temp > 0) then
-            crvmin = min(crvmin, temp)
-            if (crvmin <= -HUGENUM) then  ! CRVMIN <= -HUGENUM means CRVMIN has not bee set?
+            if (crvmin <= -HUGENUM) then  ! CRVMIN <= -HUGENUM means CRVMIN has not been set.
                 crvmin = temp
+            else
+                crvmin = min(crvmin, temp)
             end if
         end if
         ggsav = gredsq
@@ -497,10 +498,10 @@ d = xnew - xopt
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(d) == n, 'SIZE(D) == N', srname)
-    call assert(all(is_finite(d)), 'D is finite', srname)
-    ! In theory, |D| <= DELBAR, which may be false due to rounding, but |D| > 2*DELBAR is unlikely.
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
     call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
+    call assert(crvmin <= -HUGENUM .or. crvmin >= 0, 'CRVMIN <= -HUGENUM or CRVMIN >= 0', srname)
     ! D is supposed to satisfy the bound constraints SL <= XOPT + D <= SU.
     call assert(all(xopt + d >= sl - TEN * EPS * max(ONE, abs(sl)) .and. &
         & xopt + d <= su + TEN * EPS * max(ONE, abs(su))), 'SL <= XOPT + D <= SU', srname)

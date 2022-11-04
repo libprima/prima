@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 PM11:52:22
+! Last Modified: Friday, November 04, 2022 AM11:55:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -184,7 +184,7 @@ do while (.true.)
     ! Hessian term of the model Q.
     call trstep(delta, g, h, trtol, d, crvmin)
     dnorm = min(delta, sqrt(sum(d**2)))
-    errtol = -ONE
+    errtol = ZERO
     shortd = (dnorm < HALF * rho)
     improve_geo = shortd
     if (shortd) then
@@ -194,7 +194,7 @@ do while (.true.)
             delta = rho
         end if
         errtol = HALF * crvmin * rho * rho
-        if (nf <= npt + 9) errtol = ZERO
+        if (nf <= npt + 9 .or. is_nan(errtol)) errtol = ZERO
     else
         ! Calculate the next value of the objective function.
         xnew = xopt + d
@@ -366,7 +366,8 @@ do while (.true.)
         ! upper bound on the maximal number of loops.
         delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
         do k = 1, npt
-            if (all(dsqtest <= 4.0_RP * rho**2)) then
+            !if (all(dsqtest <= 4.0_RP * rho**2)) then
+            if (.not. any(dsqtest > 4.0_RP * rho**2)) then
                 exit
             end if
 
@@ -389,7 +390,7 @@ do while (.true.)
                 dsqtest(knew) = ZERO
                 !estim = rho * (sqrt(sum(g**2)) + rho * HALF * sqrt(sum(h**2)))
                 estim = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
-                if (.not. wmult * estim >= errtol) cycle
+                if (.not. (wmult * estim >= errtol .or. errtol == ZERO)) cycle
             end if
 
             ! If the KNEW-th point may be replaced, then pick a D that gives a large value of the
@@ -400,7 +401,7 @@ do while (.true.)
             call geostep(g, h, delbar, d, vmax)
             ! If MAX(WMULT * VMAX, ZERO) >= ERRTOL, then D will be accepted as the geometry step
             ! (in case VMAX > 0) or RHO will be reduced; otherwise, we try another KNEW.
-            if (max(wmult * vmax, ZERO) >= errtol) then
+            if (max(wmult * vmax, ZERO) >= errtol .or. errtol == ZERO) then
                 geo_step = (vmax > 0)
                 reduce_rho = (.not. geo_step)
                 exit
