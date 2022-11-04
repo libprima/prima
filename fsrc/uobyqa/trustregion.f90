@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 AM10:23:35
+! Last Modified: Friday, November 04, 2022 PM01:52:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,7 +52,7 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
-use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc
+use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc, norm
 use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
@@ -214,6 +214,7 @@ iter = 0
 maxiter = min(1000_IK, 100_IK * int(n, IK))  ! What is the theoretical bound of iterations?
 
 do while (.true.)
+
     iter = iter + 1_IK
 
     ! Zaikun 26-06-2019: The original code can encounter infinite cycling, which did happen when
@@ -256,24 +257,23 @@ do while (.true.)
     ! NEGCRV is TRUE iff H + PAR*I has at least one negative eigenvalue (CRV means curvature).
     negcrv = any(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0))
 
+    ! Handle the case where H + PAR*I is positive semidefinite and the gradient at the trust region
+    ! center is zero.
+    if (gsq <= 0 .and. .not. negcrv) then
+        paru = par
+        paruest = par
+        if (par <= 0) then  ! PAR == 0. A rare case: the trust region center is optimal.
+            write (16, *) iter, 271, d
+            exit
+        end if
+    end if
+
     if (negcrv) then
         ! Set K to the first index corresponding to a negative curvature.
         k = minval(trueloc(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0)))
     else
         ! Set K to the last index corresponding to a zero curvature; K = 0 if no such curvature exits.
         k = maxval([0_IK, trueloc(abs(piv) + abs([tn, 0.0_RP]) <= 0)])
-    end if
-
-    ! Handle the case where H + PAR*I is positive semidefinite.
-    if (.not. negcrv) then
-        ! Handle the case where the gradient at the trust region center is zero.
-        if (gsq <= 0) then
-            paru = par
-            paruest = par
-            if (par <= 0) then  ! PAR == 0. A rare case: the trust region center is optimal.
-                exit
-            end if
-        end if
     end if
 
     ! At this point, K == 0 iff H + PAR*I is positive definite.
@@ -429,14 +429,20 @@ do while (.true.)
             d = (delta / dnorm) * d
             exit
         end if
-        if (iter >= 2 .and. par <= parl) exit
-        if (paru > 0 .and. par >= paru) exit
+        if (iter >= 2 .and. par <= parl) then
+            exit
+        end if
+        if (paru > 0 .and. par >= paru) then
+            exit
+        end if
 
         ! Complete the iteration when PHI is negative.
         if (phi < 0) then
             parlest = par
             if (posdef) then
-                if (phi <= phil) exit  ! Has PHIL got the correct value
+                if (phi <= phil) then
+                    exit  ! Has PHIL got the correct value
+                end if
                 slope = (phi - phil) / (par - parl)
                 parlest = par - phi / slope
             end if
@@ -496,7 +502,9 @@ do while (.true.)
             ! Complete the iteration when PHI is positive.
             slope = ONE / gnorm
             if (paru > 0) then
-                if (phi >= phiu) exit  ! Has PHIU got the correct value?
+                if (phi >= phiu) then
+                    exit  ! Has PHIU got the correct value?
+                end if
                 slope = (phiu - phi) / (paru - par)
             end if
             parlest = max(parlest, par - phi / slope)
@@ -520,14 +528,27 @@ do while (.true.)
     if (paruest > 0) par = min(par, paruest)
 end do
 
-! Apply the inverse Householder transformations to D.
+! Apply the inverse Householder transformations to recover D.
 do k = n - 1_IK, 1, -1
     d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
 !!MATLAB: d = P*d;
 
+! If the More-Sorensen algorithm breaks down abnormally (e.g., NaN in the computation), then |D| may
+! be (much) more than DELTA. This is handled in the following naive way.
+if (norm(d) > delta) then
+    d = (delta / norm(d)) * d
+end if
+
 if (scaled) then
     crvmin = crvmin * scaling  ! CRVMIN is not invariant under the scaling.
+end if
+
+if (DEBUGGING) then
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
+    call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
+    call assert(crvmin >= 0, 'CRVMIN >= 0', srname)
 end if
 
 end subroutine trstep

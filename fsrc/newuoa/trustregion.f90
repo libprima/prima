@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, June 03, 2022 PM05:30:00
+! Last Modified: Friday, November 04, 2022 PM12:03:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -366,8 +366,9 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(s) == n .and. all(is_finite(s)), 'SIZE(S) == N, S is finite', srname)
-    call assert(norm(s) <= TWO * delta, '|S| <= 2*DELTA', srname)
     ! Due to rounding, it may happen that |S| > DELTA, but |S| > 2*DELTA is highly improbable.
+    call assert(norm(s) <= TWO * delta, '|S| <= 2*DELTA', srname)
+    call assert(crvmin >= 0, 'CRVMIN >= 0', srname)
 end if
 
 end subroutine trsapp

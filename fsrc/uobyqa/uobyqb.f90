@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 AM12:18:20
+! Last Modified: Friday, November 04, 2022 PM01:13:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -142,7 +142,7 @@ end if
 
 !--------------------------------------------------------------------------------------------------!
 ! Temporary fix for the G95 warning that these variables are used uninitialized.
-knew_tr = 1; kopt = 1
+knew_tr = 1; knew_geo = 1; kopt = 1
 f = ieeenan()
 !--------------------------------------------------------------------------------------------------!
 
@@ -184,7 +184,7 @@ do while (.true.)
     ! Hessian term of the model Q.
     call trstep(delta, g, h, trtol, d, crvmin)
     dnorm = min(delta, sqrt(sum(d**2)))
-    errtol = -ONE
+    errtol = ZERO
     shortd = (dnorm < HALF * rho)
     improve_geo = shortd
     if (shortd) then
@@ -194,7 +194,7 @@ do while (.true.)
             delta = rho
         end if
         errtol = HALF * crvmin * rho * rho
-        if (nf <= npt + 9) errtol = ZERO
+        if (nf <= npt + 9 .or. is_nan(errtol)) errtol = ZERO
     else
         ! Calculate the next value of the objective function.
         xnew = xopt + d
@@ -366,17 +366,23 @@ do while (.true.)
 
         ! The loop counter K does not appear in the loop body. Its purpose is only to impose an
         ! upper bound on the maximal number of loops.
+        vmax = -ONE
+
         dsqtest = distsq
-        do k = 1, npt
+        do while (any(dsqtest > 4.0_RP * rho**2))
             ! If a point is sufficiently far away, then set the gradient and Hessian of its Lagrange
             ! function at the centre of the trust region.
             knew_geo = int(maxloc(dsqtest, dim=1), IK)
             !!MATLAB: [~, knew_geo] = max(dsqtest);
-            if (dsqtest(knew_geo) <= 4.0_RP * rho**2) then
-                exit
-            end if
             g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
             h = vec2smat(pl(n + 1:npt - 1, knew_geo))
+            !if (errtol <= 0) then
+            if (errtol == 0) then
+                call geostep(g, h, delbar, d, vmax)
+                geo_step = (vmax > 0)
+                reduce_rho = .not. geo_step
+                exit
+            end if
 
             ! Test whether to replace the interpolation point with index KNEW. As explained in
             ! (35)--(39) of the UOBYQA paper, KNEW is set to the first integer J such that
@@ -392,14 +398,15 @@ do while (.true.)
                 call geostep(g, h, delbar, d, vmax)
                 ! If MAX(WMULT * VMAX, ZERO) >= ERRTOL, then D will be accepted as the geometry step
                 ! (in case VMAX > 0) or RHO will be reduced; otherwise, we try the next KNEW.
-                if (max(wmult * vmax, ZERO) >= errtol) then
-                    geo_step = (vmax > 0)
-                    reduce_rho = (.not. geo_step)
+                if (wmult * vmax >= errtol) then
+                    geo_step = .true.
+                    reduce_rho = .false.
                     exit
                 end if
             end if
-            dsqtest(knew_geo) = ZERO  ! Exclude KNEW from the later loops, if any.
+            dsqtest(knew_geo) = -ONE  ! Exclude KNEW from the later loops, if any.
         end do
+
 
         if (geo_step) then
             ! Calculate the next value of the objective function.
