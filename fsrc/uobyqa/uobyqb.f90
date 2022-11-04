@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 PM03:33:37
+! Last Modified: Friday, November 04, 2022 PM03:52:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,7 +110,7 @@ real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
-real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), dsqtest(size(pl, 2)), delbar, &
+real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), delbar, &
 & weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, errtol, estvmax, crvmin, fopt,&
 &        fsave, xsave(size(x)), ratio, rho, sixthm, summ, &
@@ -362,17 +362,11 @@ do while (.true.)
         ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
         ! improve the performance slightly according to a test on 20220720.
         delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
-
-        ! The loop counter K does not appear in the loop body. Its purpose is only to impose an
-        ! upper bound on the maximal number of loops.
-        vmax = -ONE
-
-        dsqtest = distsq
-        do while (any(dsqtest > 4.0_RP * rho**2))
+        do while (any(distsq > 4.0_RP * rho**2))
             ! If a point is sufficiently far away, then set the gradient and Hessian of its Lagrange
             ! function at the centre of the trust region.
-            knew_geo = int(maxloc(dsqtest, dim=1), IK)
-            !!MATLAB: [~, knew_geo] = max(dsqtest);
+            knew_geo = int(maxloc(distsq, dim=1), IK)
+            !!MATLAB: [~, knew_geo] = max(distsq);
             g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
             h = vec2smat(pl(n + 1:npt - 1, knew_geo))
 
@@ -383,7 +377,7 @@ do while (.true.)
             ! unnecessary invocations of GEOSTEP, we first test whethr the second inequality holds
             ! using ESTVMAX, which is an upper bound of VMAX.
             estvmax = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
-            wmult = sixthm * dsqtest(knew_geo)**1.5_RP
+            wmult = sixthm * distsq(knew_geo)**1.5_RP
             if (wmult * estvmax > errtol) then
                 ! If the KNEW-th point may be replaced, then pick a D that gives a large value of
                 ! the modulus of its Lagrange function within the trust region.
@@ -395,13 +389,12 @@ do while (.true.)
                     exit
                 end if
             end if
-            dsqtest(knew_geo) = -ONE  ! Exclude KNEW from the later loops, if any.
+            distsq(knew_geo) = -ONE  ! Exclude KNEW from the later loops, if any.
         end do
     end if
 
     improve_geo = bad_trstep .and. .not. accurate_mod
     reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
-
 
     if (improve_geo) then
         ! Calculate the next value of the objective function.
