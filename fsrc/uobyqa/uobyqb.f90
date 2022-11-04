@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 PM02:59:11
+! Last Modified: Friday, November 04, 2022 PM03:33:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -117,7 +117,7 @@ real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), dsqtest(size(pl, 2)), delb
 &        trtol, vmax,  &
 &        qred, wmult, plknew(size(pl, 1)), fval(size(pl, 2))
 integer(IK) :: k, knew_tr, knew_geo, kopt, subinfo
-logical :: tr_success, shortd, improve_geo, reduce_rho, accurate_mod, close_itpset, small_trrad
+logical :: tr_success, shortd, improve_geo, reduce_rho, accurate_mod, close_itpset, small_trrad, bad_trstep
 
 ! Sizes.
 n = int(size(x), kind(n))
@@ -352,11 +352,10 @@ do while (.true.)
         end if
     end if
 
-    improve_geo = shortd .or. .not. (knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
+    bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
 
-    !reduce_rho = .false.  ! REDUCE_RHO = TRUE ????
     accurate_mod = .true.
-    if (improve_geo) then
+    if (bad_trstep) then
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
         ! DELBAR is the trust-region radius for the geometry step subproblem.
         ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
@@ -400,8 +399,9 @@ do while (.true.)
         end do
     end if
 
-    improve_geo = (shortd .or. .not. (knew_tr > 0 .and. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))) &
-        & .and. .not. accurate_mod
+    improve_geo = bad_trstep .and. .not. accurate_mod
+    reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
+
 
     if (improve_geo) then
         ! Calculate the next value of the objective function.
@@ -483,10 +483,6 @@ do while (.true.)
             kopt = knew_geo
         end if
     end if
-
-    reduce_rho = (dnorm <= rho) .and. .not. improve_geo
-    reduce_rho = reduce_rho .and. &
-     & (shortd .or. knew_tr <= 0 .or. .not. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
 
     if (reduce_rho) then
         if (rho <= rhoend) then
