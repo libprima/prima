@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 04, 2022 PM12:03:20
+! Last Modified: Friday, November 04, 2022 PM04:50:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -354,6 +354,10 @@ do iter = 1, maxiter
     hs = cth * hs + sth * hd
     gg = inprod(g + hs, g + hs)
 end do
+
+if (is_nan(crvmin)) then  ! This may happen if the problem is ill-conditioned.
+    crvmin = ZERO
+end if
 
 if (present(info)) then
     info = info_loc
