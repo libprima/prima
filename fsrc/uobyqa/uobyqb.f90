@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 PM05:16:54
+! Last Modified: Saturday, November 05, 2022 AM12:58:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -355,15 +355,16 @@ do while (.true.)
 
     small_trrad = (delsav <= rho)
 
-    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD
+    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! This performs BADLY.
     !bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho))  ! BAD.
-    bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. ddknew > 4.0_RP * rho**2))
+    bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. ddknew > 4.0_RP * rho**2))  ! Seems to perform the same as the original one
     !bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
 
     accurate_mod = .true.
     !if (bad_trstep) then
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     close_itpset = all(distsq <= 4.0_RP * rho**2)
+
     ! DELBAR is the trust-region radius for the geometry step subproblem.
     ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
     ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
@@ -385,13 +386,17 @@ do while (.true.)
         ! using ESTVMAX, which is an upper bound of VMAX.
         estvmax = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
         wmult = sixthm * distsq(knew_geo)**1.5_RP
-        if (wmult * estvmax > errtol) then
+        if (wmult * estvmax >= errtol) then  ! Seems better than >
+            !if (wmult * estvmax > errtol) then
+            !if (wmult * estvmax >= errtol .or. errtol == 0) then  ! The same as >=
             ! If the KNEW-th point may be replaced, then pick a D that gives a large value of
             ! the modulus of its Lagrange function within the trust region.
             call geostep(g, h, delbar, d, vmax)
             ! If WMULT * VMAX > ERRTOL, then D will be accepted as the geometry step; otherwise,
             ! we try the next KNEW.
-            if (wmult * vmax > errtol) then
+            if (wmult * vmax >= errtol) then  ! Seems better than >
+                !if (wmult * vmax > errtol) then
+                !if (wmult * vmax >= errtol .or. errtol == 0) then  ! The same as >=
                 accurate_mod = .false.
                 exit
             end if
@@ -408,9 +413,9 @@ do while (.true.)
     reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
 
 
-    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    !bad_trstep = (shortd .or. (ratio <= 0 .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
-    !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    !bad_trstep = (shortd .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     if (improve_geo) then
@@ -544,7 +549,7 @@ call rangehist(nf, xhist, fhist)
 
 ! Postconditions
 
-!close (16)
+close (16)
 
 
 end subroutine uobyqb
