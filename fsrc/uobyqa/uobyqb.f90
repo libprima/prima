@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 PM03:52:38
+! Last Modified: Friday, November 04, 2022 PM05:16:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,7 +110,7 @@ real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
-real(RP) :: ddknew, delta, diff, distsq(size(pl, 2)), delbar, &
+real(RP) :: ddknew, delta, delsav, diff, distsq(size(pl, 2)), delbar, &
 & weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, errtol, estvmax, crvmin, fopt,&
 &        fsave, xsave(size(x)), ratio, rho, sixthm, summ, &
@@ -175,6 +175,7 @@ trtol = 0.01_RP
 
 ! Form the gradient of the quadratic model at the trust region centre.
 do while (.true.)
+    delsav = delta
     xopt = xpt(:, kopt)
     g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
     h = vec2smat(pq(n + 1:npt - 1))
@@ -352,49 +353,65 @@ do while (.true.)
         end if
     end if
 
-    bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
+    small_trrad = (delsav <= rho)
+
+    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD
+    !bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho))  ! BAD.
+    bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. ddknew > 4.0_RP * rho**2))
+    !bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
 
     accurate_mod = .true.
-    if (bad_trstep) then
-        distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        ! DELBAR is the trust-region radius for the geometry step subproblem.
-        ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
-        ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
-        ! improve the performance slightly according to a test on 20220720.
-        delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
-        do while (any(distsq > 4.0_RP * rho**2))
-            ! If a point is sufficiently far away, then set the gradient and Hessian of its Lagrange
-            ! function at the centre of the trust region.
-            knew_geo = int(maxloc(distsq, dim=1), IK)
+    !if (bad_trstep) then
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+    close_itpset = all(distsq <= 4.0_RP * rho**2)
+    ! DELBAR is the trust-region radius for the geometry step subproblem.
+    ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
+    ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
+    ! improve the performance slightly according to a test on 20220720.
+    delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
+    do while (any(distsq > 4.0_RP * rho**2))
+        ! If a point is sufficiently far away, then set the gradient and Hessian of its Lagrange
+        ! function at the centre of the trust region.
+        knew_geo = int(maxloc(distsq, dim=1), IK)
             !!MATLAB: [~, knew_geo] = max(distsq);
-            g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
-            h = vec2smat(pl(n + 1:npt - 1, knew_geo))
+        g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
+        h = vec2smat(pl(n + 1:npt - 1, knew_geo))
 
-            ! Test whether to replace the interpolation point with index KNEW. As explained in
-            ! (35)--(39) of the UOBYQA paper, KNEW is set to the first integer J such that
-            ! ||XPT(:, J) - XOPT|| > 2*RHO, SIXTHM*||XPT(:, J) - XOPT||^3 VMAX > ERRTOL,
-            ! where VMAX = MAX_{||D|| <= DELBAR} |L_J(XOPT + D)|, evaluated by GEOSTEP. To avoid
-            ! unnecessary invocations of GEOSTEP, we first test whethr the second inequality holds
-            ! using ESTVMAX, which is an upper bound of VMAX.
-            estvmax = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
-            wmult = sixthm * distsq(knew_geo)**1.5_RP
-            if (wmult * estvmax > errtol) then
-                ! If the KNEW-th point may be replaced, then pick a D that gives a large value of
-                ! the modulus of its Lagrange function within the trust region.
-                call geostep(g, h, delbar, d, vmax)
-                ! If WMULT * VMAX > ERRTOL, then D will be accepted as the geometry step; otherwise,
-                ! we try the next KNEW.
-                if (wmult * vmax > errtol) then
-                    accurate_mod = .false.
-                    exit
-                end if
+        ! Test whether to replace the interpolation point with index KNEW. As explained in
+        ! (35)--(39) of the UOBYQA paper, KNEW is set to the first integer J such that
+        ! ||XPT(:, J) - XOPT|| > 2*RHO, SIXTHM*||XPT(:, J) - XOPT||^3 VMAX > ERRTOL,
+        ! where VMAX = MAX_{||D|| <= DELBAR} |L_J(XOPT + D)|, evaluated by GEOSTEP. To avoid
+        ! unnecessary invocations of GEOSTEP, we first test whethr the second inequality holds
+        ! using ESTVMAX, which is an upper bound of VMAX.
+        estvmax = sqrt(sum(g**2)) * delbar + HALF * sqrt(sum(h**2)) * delbar**2
+        wmult = sixthm * distsq(knew_geo)**1.5_RP
+        if (wmult * estvmax > errtol) then
+            ! If the KNEW-th point may be replaced, then pick a D that gives a large value of
+            ! the modulus of its Lagrange function within the trust region.
+            call geostep(g, h, delbar, d, vmax)
+            ! If WMULT * VMAX > ERRTOL, then D will be accepted as the geometry step; otherwise,
+            ! we try the next KNEW.
+            if (wmult * vmax > errtol) then
+                accurate_mod = .false.
+                exit
             end if
-            distsq(knew_geo) = -ONE  ! Exclude KNEW from the later loops, if any.
-        end do
-    end if
+        end if
+        distsq(knew_geo) = -ONE  ! Exclude KNEW from the later loops, if any.
+    end do
+    !end if
+    !
+
+
+    ! If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)
 
     improve_geo = bad_trstep .and. .not. accurate_mod
     reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
+
+
+    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+    !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     if (improve_geo) then
         ! Calculate the next value of the objective function.
