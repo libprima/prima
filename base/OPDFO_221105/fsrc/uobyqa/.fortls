@@ -1,0 +1,6 @@
+{
+    "source_dirs": ["../common/"],
+    "pp_suffixes": [".F90", ".F"],
+    "include_dirs": ["../common/"],
+    "lowercase_intrinsics": true
+}

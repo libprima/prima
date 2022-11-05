@@ -1,0 +1,54 @@
+
+
+    Output from LINCOA with  NPT =  15  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   140
+    Least value of F =  2.761312537755293D+00         The corresponding X is:
+    -1.233791D+00  -1.231348D+00  -8.870616D-01   1.129888D+00  -1.128285D+00
+     1.084034D+00   8.431310D-01   7.535391D-01  -8.461760D-01  -6.585848D-01
+     1.556805D+00   5.853412D-01
+
+
+    Output from LINCOA with  NPT =  20  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   180
+    Least value of F =  2.761312522157491D+00         The corresponding X is:
+    -1.233791D+00  -1.231348D+00  -8.870616D-01   1.129888D+00  -1.128285D+00
+     1.084034D+00   8.431309D-01   7.535397D-01  -8.461758D-01  -6.585848D-01
+     1.556805D+00   5.853412D-01
+
+
+    Output from LINCOA with  NPT =  25  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   150
+    Least value of F =  3.710371548466126D+00         The corresponding X is:
+    -1.197394D+00  -9.482063D-01  -5.671343D-01   1.205120D+00  -1.213184D+00
+     9.459790D-01   8.858493D-01   5.483363D-01  -8.716678D-01  -4.255701D-01
+     1.285815D+00   6.368685D-01
+
+
+    Output from LINCOA with  NPT =  30  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   179
+    Least value of F =  2.761312522702523D+00         The corresponding X is:
+    -8.431307D-01   7.535402D-01   8.461757D-01   1.233791D+00  -1.231348D+00
+     8.870616D-01  -1.129888D+00  -1.128285D+00  -1.084034D+00   6.585848D-01
+     1.556805D+00  -5.853412D-01
+
+
+    Output from LINCOA with  NPT =  35  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   208
+    Least value of F =  2.761312522165146D+00         The corresponding X is:
+    -8.431308D-01   7.535397D-01   8.461758D-01   1.233791D+00  -1.231348D+00
+     8.870616D-01  -1.129888D+00  -1.128285D+00  -1.084034D+00   6.585848D-01
+     1.556805D+00  -5.853412D-01
+
+
+    Output from LINCOA with  NPT =  40  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   176
+    Least value of F =  2.761312527310911D+00         The corresponding X is:
+    -8.431310D-01   7.535391D-01   8.461760D-01   1.233791D+00  -1.231348D+00
+     8.870616D-01  -1.129888D+00  -1.128285D+00  -1.084034D+00   6.585848D-01
+     1.556805D+00  -5.853412D-01
