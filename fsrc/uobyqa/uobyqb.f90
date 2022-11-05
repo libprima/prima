@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 05, 2022 AM01:03:44
+! Last Modified: Saturday, November 05, 2022 PM09:17:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -49,7 +49,7 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -118,6 +118,7 @@ real(RP) :: ddknew, delta, delsav, diff, distsq(size(pl, 2)), delbar, &
 &        qred, wmult, plknew(size(pl, 1)), fval(size(pl, 2))
 integer(IK) :: k, knew_tr, knew_geo, kopt, subinfo
 logical :: tr_success, shortd, improve_geo, reduce_rho, accurate_mod, close_itpset, small_trrad, bad_trstep
+real(RP) :: dnormsav(3), moderrsav(size(dnormsav))
 
 ! Sizes.
 n = int(size(x), kind(n))
@@ -169,6 +170,8 @@ call initl(xpt, pl)
 sixthm = ZERO
 rho = rhobeg
 delta = rho
+moderrsav = HUGENUM
+dnormsav = HUGENUM
 shortd = .false.
 reduce_rho = .false.
 trtol = 0.01_RP
@@ -197,6 +200,7 @@ do while (.true.)
         errtol = HALF * crvmin * rho * rho
         if (nf <= npt + 9 .or. is_nan(errtol)) errtol = ZERO
     else
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! Calculate the next value of the objective function.
         xnew = xopt + d
         x = xbase + xnew
@@ -238,6 +242,7 @@ do while (.true.)
         ! Use the quadratic model to predict the change in F due to the step D, and find the values
         ! of the Lagrange functions at the new point.
         qred = -quadinc(pq, d, xopt)
+        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
         vlag = calvlag(pl, d, xopt, kopt)
 
         ! Update SIXTHM, which is a lower bound on one sixth of the greatest third derivative of F.
@@ -357,7 +362,8 @@ do while (.true.)
 
     !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! This performs BADLY.
     !bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho))  ! BAD.
-    bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. ddknew > 4.0_RP * rho**2))  ! Seems to perform the same as the original one
+    ! The following seems to perform the same as the original one
+    bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. ddknew > 4.0_RP * rho**2))
     !bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
 
     accurate_mod = .true.
@@ -406,21 +412,22 @@ do while (.true.)
     !end if
     !
 
+    ! If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)
     call assert(shortd .or. (accurate_mod .eqv. all(distsq <= 4.0_RP * rho**2)), &
         & 'If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)', srname)
-
-    ! If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)
 
     improve_geo = bad_trstep .and. .not. accurate_mod
     reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
 
-
+    ! REDUCE_RHO and IMPROVE_GEO in NEWUOA/BOBYQA/LINCOA.
+    !accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
     !bad_trstep = (shortd .or. (ratio <= 0 .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
     !bad_trstep = (shortd .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     if (improve_geo) then
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! Calculate the next value of the objective function.
         xnew = xopt + d
         x = xbase + xnew
@@ -462,6 +469,7 @@ do while (.true.)
         ! Use the quadratic model to predict the change in F due to the step D, and find the values
         ! of the Lagrange functions at the new point.
         qred = -quadinc(pq, d, xopt)
+        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
         vlag = calvlag(pl, d, xopt, kopt)
 
         ! Update SIXTHM, which is a lower bound on one sixth of the greatest third derivative of F.
@@ -525,6 +533,8 @@ do while (.true.)
             rho = TENTH * rho
         end if
         delta = max(delta, rho)
+        dnormsav = HUGENUM
+        moderrsav = HUGENUM
     end if
 end do
 
