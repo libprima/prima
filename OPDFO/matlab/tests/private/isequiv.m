@@ -113,30 +113,30 @@ else
         blacklist = [blacklist, {'LUKSAN22LS', 'MANCINO', 'LUKSAN11LS'}]; % too long to solve
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.
         blacklist = [blacklist, {'PENALTY2', 'HYDC20LS', 'MANCINO'}]; % Too long time
-        blacklist = [blacklist, {'BA-L1LS'}]; % Takes too long to solve
+        blacklist = [blacklist, {'BA-L1LS', 'LUKSAN21LS'}]; % Takes too long to solve
         blacklist = [blacklist, {'ARGLINC'}]; % Takes too long to solve
         blacklist = [blacklist, {'HYDC20LS', 'BA-L1SPLS'}]; % Takes too long to solve
         %blacklist = [blacklist, {'PENALTY2'}]; % More than 5 minutes to solve.
     case {'bobyqa', 'bobyqa'}
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}];  % More than 10 minutes to solve.
-        blacklist = [blacklist, {'ARGLINB'}];  % Takes too long
+        blacklist = [blacklist, {'ARGLINB', 'ARGLINA', 'ARGLINC', 'PENALTY2'}];  % Takes too long
     case {'lincoa', 'lincoa'}
         blacklist = [blacklist, {'LSNNODOC', 'HS55', 'HEART6'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
         blacklist = [blacklist, {'CHEBYQAD'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
-        blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'SPANHYD', 'SPANHYD', 'SPANHYD'}]; % Too long to solve
+        blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'SPANHYD', 'SPANHYD', 'SPANHYD', 'MINSURF', 'QPCBLEND'}]; % Too long to solve
         blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1', 'HIMMELBI', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS','LUKSAN21LS'}]; % Too long to solve
     case {'cobyla', 'cobyla'}
-        blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE'}];
+        blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE', 'MESH'}];
         blacklist = [blacklist, {'POLAK6', 'POLAK2'}]; % B = A^{-1} fails
-        blacklist = [blacklist, {'MINMAXRB', 'MAKELA1'}]; % Classical COBYLA encounters SEGFAULT
+        blacklist = [blacklist, {'MINMAXRB', 'MAKELA1', 'HS75', 'GAUSS3','HATFLDG'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
         end
-        blacklist = [blacklist, {'PRODPL0', 'DEGENLPB', 'ANTWERP', 'SIPOW3', 'AVION2', 'HIMMELBI', 'HS55','PRODPL1', 'BQPGASIM', 'POLAK2'}]; % Takes long to solve
+        blacklist = [blacklist, {'PRODPL0', 'DEGENLPB', 'ANTWERP', 'SIPOW3', 'AVION2', 'HIMMELBI', 'HS55','PRODPL1', 'BQPGASIM', 'POLAK2', 'LOADBAL','MIFFLIN1', 'ACOPR14', 'PALMER1NE','PALMER8ENE'}]; % Takes long to solve
         blacklist=[blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Takes more than 5 min to solve
         blacklist = [blacklist, {'KISSING2', 'LUKSAN16', 'QPCBLEND', 'VANDERM4'}]; % Takes more than 20 sec to solve
         %blacklist = [blacklist, {'DUAL2', 'FEEDLOC', 'GROUPING', 'HYDCAR20', 'LINSPANH', 'LUKSAN11', ...
