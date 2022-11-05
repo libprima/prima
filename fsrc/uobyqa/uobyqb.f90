@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 05, 2022 PM10:57:28
+! Last Modified: Saturday, November 05, 2022 PM11:49:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -66,8 +66,6 @@ use, non_intrinsic :: powalg_mod, only : quadinc, calvlag
 use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: trustregion_mod, only : trstep
 
-! Development modules (to be removed)
-use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
 
@@ -112,10 +110,10 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
 real(RP) :: ddknew, delta, delsav, diff, distsq(size(pl, 2)), delbar, &
 & weight(size(pl, 2)), score(size(pl, 2)),    &
-&        dnorm, errtol, estvmax, crvmin, fopt,&
-&        fsave, xsave(size(x)), ratio, rho, sixthm, summ, &
-&        trtol, vmax,  &
-&        qred, wmult, plknew(size(pl, 1)), fval(size(pl, 2))
+&        dnorm, errtol, crvmin, fopt,&
+&        fsave, xsave(size(x)), ratio, rho, &
+&        trtol, &
+&        qred, plknew(size(pl, 1)), fval(size(pl, 2))
 integer(IK) :: k, knew_tr, knew_geo, kopt, subinfo
 logical :: tr_success, shortd, improve_geo, reduce_rho, accurate_mod, close_itpset, small_trrad, bad_trstep
 real(RP) :: dnormsav(3), moderrsav(size(dnormsav))
@@ -143,8 +141,7 @@ end if
 
 !--------------------------------------------------------------------------------------------------!
 ! Temporary fix for the G95 warning that these variables are used uninitialized.
-knew_tr = 1; knew_geo = 1; kopt = 1
-f = ieeenan()
+!knew_tr = 1; kopt = 1
 !--------------------------------------------------------------------------------------------------!
 
 !====================!
@@ -167,11 +164,11 @@ call initq(fval, xpt, pq)
 call initl(xpt, pl)
 
 ! Set parameters to begin the iterations for the current RHO.
-sixthm = ZERO
 rho = rhobeg
 delta = rho
 moderrsav = HUGENUM
 dnormsav = HUGENUM
+knew_tr = 0_IK
 shortd = .false.
 reduce_rho = .false.
 trtol = 0.01_RP
@@ -248,13 +245,13 @@ do while (.true.)
         ! Update SIXTHM, which is a lower bound on one sixth of the greatest third derivative of F.
         ! The lower bound is derived from (3.1) of the UOBYQA paper.
         diff = f - fopt + qred
-        summ = ZERO
         distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
-        summ = inprod(distsq, sqrt(distsq) * abs(vlag))
-        ! SUMM may become 0 due to rounding, even in double precision. Detected by ifort.
-        if (abs(diff) > 0 .and. summ > 0) then
-            sixthm = max(sixthm, abs(diff) / summ)
-        end if
+
+        !summ = inprod(distsq, sqrt(distsq) * abs(vlag))
+        !! SUMM may become 0 due to rounding, even in double precision. Detected by ifort.
+        !if (abs(diff) > 0 .and. summ > 0) then
+        !    sixthm = max(sixthm, abs(diff) / summ)
+        !end if
 
         ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
         ! Then branch if D is not a trust region step.
@@ -436,7 +433,7 @@ do while (.true.)
         ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
         ! improve the performance slightly according to a test on 20220720.
         delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
-        call geostep(g, h, delbar, d, vmax)
+        d = geostep(g, h, delbar)
 
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! Calculate the next value of the objective function.
@@ -486,13 +483,13 @@ do while (.true.)
         ! Update SIXTHM, which is a lower bound on one sixth of the greatest third derivative of F.
         ! The lower bound is derived from (3.1) of the UOBYQA paper.
         diff = f - fopt + qred
-        summ = ZERO
         distsq = sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1)
-        summ = inprod(distsq, sqrt(distsq) * abs(vlag))
-        ! SUMM may become 0 due to rounding, even in double precision. Detected by ifort.
-        if (abs(diff) > 0 .and. summ > 0) then
-            sixthm = max(sixthm, abs(diff) / summ)
-        end if
+
+        !summ = inprod(distsq, sqrt(distsq) * abs(vlag))
+        !! SUMM may become 0 due to rounding, even in double precision. Detected by ifort.
+        !if (abs(diff) > 0 .and. summ > 0) then
+        !    sixthm = max(sixthm, abs(diff) / summ)
+        !end if
 
         ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
         ! Then branch if D is not a trust region step.
