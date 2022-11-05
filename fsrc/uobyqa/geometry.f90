@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 20, 2022 PM01:32:02
+! Last Modified: Saturday, November 05, 2022 PM11:40:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: geostep
 contains
 
 
-subroutine geostep(g, h, delbar, d, vmax)
+function geostep(g, h, delbar) result(d)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
@@ -35,8 +35,7 @@ real(RP), intent(in) :: h(:, :)  ! H(N, N)
 real(RP), intent(in) :: delbar
 
 ! Outputs
-real(RP), intent(out) :: d(:)  ! D(N)
-real(RP), intent(out) :: vmax
+real(RP) :: d(size(g))  ! D(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GEOSTEP'
@@ -81,7 +80,6 @@ end if
 
 if (is_nan(sum(abs(h)) + sum(abs(g)))) then
     d = ZERO
-    vmax = ZERO
     return
 end if
 
@@ -120,7 +118,6 @@ dhd = inprod(d, matprod(h, d))
 ! Zaikun 20220504: GG and DD can become 0 at this point due to rounding. Detected by IFORT.
 if (.not. (gg > 0 .and. dd > 0)) then
     d = ZERO
-    vmax = ZERO
     return
 end if
 
@@ -135,7 +132,6 @@ d = scaling * d
 gnorm = sqrt(gg)
 
 if (.not. (gnorm * dd > 0.5E-2_RP * delbar * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
-    vmax = abs(scaling * (gd + HALF * scaling * dhd))
     return
 end if
 
@@ -205,9 +201,8 @@ else
     end if
 end if
 d = tempd * d + tempv * v
-vmax = delbar * delbar * max(tempa, tempb, tempc)
 
-end subroutine geostep
+end function geostep
 
 
 end module geometry_mod
