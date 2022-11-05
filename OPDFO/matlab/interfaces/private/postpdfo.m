@@ -636,9 +636,10 @@ if options.debug && ~options.classical
             funx = hugefun;
         end
         %if (funx ~= fx) && ~(isnan(fx) && isnan(funx))
-        % it seems that COBYLA can return fx ~= fun(x) due to rounding
-        % errors. Therefore, we cannot use "fx ~= funx" to check COBYLA
+        % It seems that COBYLA can return fx ~= fun(x) due to rounding errors. Therefore, we cannot
+        % use "fx ~= funx" to check COBYLA.
         %if ~(isnan(fx) && isnan(funx)) && ~((fx == funx) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
+        % Zaikun 20220930: It seems that BOBYQA can also return fx ~= fun(x) if RESCUE is invoked.
         if ~(isnan(fx) && isnan(funx)) && ~((fx == funx) || (abs(funx-fx) <= bobyqa_prec*max(1, abs(fx)) && strcmp(solver, 'bobyqa')) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
             % Public/unexpected error
             error(sprintf('%s:InvalidFx', invoker), ...
