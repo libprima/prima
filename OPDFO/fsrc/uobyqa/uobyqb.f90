@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 05, 2022 PM09:17:12
+! Last Modified: Saturday, November 05, 2022 PM11:23:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -144,7 +144,6 @@ end if
 !--------------------------------------------------------------------------------------------------!
 ! Temporary fix for the G95 warning that these variables are used uninitialized.
 knew_tr = 1; knew_geo = 1; kopt = 1
-f = ieeenan()
 !--------------------------------------------------------------------------------------------------!
 
 !====================!
@@ -407,7 +406,7 @@ do while (.true.)
                 exit
             end if
         end if
-        distsq(knew_geo) = -ONE  ! Exclude KNEW from the later loops, if any.
+        !distsq(knew_geo) = -ONE  ! Exclude KNEW from the later loops, if any.
     end do
     !end if
     !
@@ -420,13 +419,19 @@ do while (.true.)
     reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
 
     ! REDUCE_RHO and IMPROVE_GEO in NEWUOA/BOBYQA/LINCOA.
-    !accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
-    !bad_trstep = (shortd .or. (ratio <= 0 .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
-    !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
-    !bad_trstep = (shortd .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
-    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
+    accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
+    bad_trstep = (shortd .or. (ratio <= 0 .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+    bad_trstep = (shortd .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     if (improve_geo) then
+        knew_geo = int(maxloc(distsq, dim=1), IK)
+            !!MATLAB: [~, knew_geo] = max(distsq);
+        g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
+        h = vec2smat(pl(n + 1:npt - 1, knew_geo))
+        call geostep(g, h, delbar, d, vmax)
+
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! Calculate the next value of the objective function.
         xnew = xopt + d
