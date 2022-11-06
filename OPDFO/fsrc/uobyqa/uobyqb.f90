@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 06, 2022 PM09:35:42
+! Last Modified: Sunday, November 06, 2022 PM10:56:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,7 +100,7 @@ integer(IK) :: npt
 integer(IK) :: maxhist
 integer(IK) :: maxfhist
 integer(IK) :: maxxhist
-real(RP) :: d(size(x))
+real(RP) :: d(size(x)), dtmp(size(x))
 real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x))
 real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2 - 1, (size(x) + 1) * (size(x) + 2) / 2)
@@ -396,7 +396,8 @@ do while (.true.)
             !if (wmult * estvmax >= errtol .or. errtol == 0) then  ! The same as >=
             ! If the KNEW-th point may be replaced, then pick a D that gives a large value of
             ! the modulus of its Lagrange function within the trust region.
-            call geostep(g, h, delbar, d, vmax)
+            !call geostep(g, h, delbar, d, vmax)
+            call geostep(g, h, delbar, dtmp, vmax)
             ! If WMULT * VMAX > ERRTOL, then D will be accepted as the geometry step; otherwise,
             ! we try the next KNEW.
             if (wmult * vmax >= errtol) then  ! Seems better than >
@@ -411,14 +412,14 @@ do while (.true.)
     !end if
     !
 
-    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    ! If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)
+    !! If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)
     !call assert(shortd .or. (accurate_mod .eqv. all(distsq <= 4.0_RP * rho**2)), &
     !    & 'If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)', srname)
 
     improve_geo = bad_trstep .and. .not. accurate_mod
     reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
 
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     ! REDUCE_RHO and IMPROVE_GEO in NEWUOA/BOBYQA/LINCOA.
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
     bad_trstep = (shortd .or. (ratio <= 0 .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
@@ -547,7 +548,7 @@ end do
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
 ! Zaikun 20220531: For the moment, D may contain NaN. Should be avoided later.
-if (info == SMALL_TR_RADIUS .and. errtol >= 0 .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
+if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
     nf = nf + 1
