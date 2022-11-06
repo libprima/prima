@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 05, 2022 PM11:49:11
+! Last Modified: Sunday, November 06, 2022 PM10:51:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -549,7 +549,7 @@ end do
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
 ! Zaikun 20220531: For the moment, D may contain NaN. Should be avoided later.
-if (info == SMALL_TR_RADIUS .and. errtol >= 0 .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
+if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
     nf = nf + 1

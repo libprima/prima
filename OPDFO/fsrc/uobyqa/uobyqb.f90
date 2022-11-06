@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 05, 2022 PM11:23:47
+! Last Modified: Sunday, November 06, 2022 PM09:35:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -406,14 +406,15 @@ do while (.true.)
                 exit
             end if
         end if
-        !distsq(knew_geo) = -ONE  ! Exclude KNEW from the later loops, if any.
+        distsq(knew_geo) = -ONE  ! Exclude KNEW from the later loops, if any.
     end do
     !end if
     !
 
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     ! If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)
-    call assert(shortd .or. (accurate_mod .eqv. all(distsq <= 4.0_RP * rho**2)), &
-        & 'If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)', srname)
+    !call assert(shortd .or. (accurate_mod .eqv. all(distsq <= 4.0_RP * rho**2)), &
+    !    & 'If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)', srname)
 
     improve_geo = bad_trstep .and. .not. accurate_mod
     reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
