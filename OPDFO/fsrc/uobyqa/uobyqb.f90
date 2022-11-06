@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 06, 2022 PM10:56:24
+! Last Modified: Sunday, November 06, 2022 PM11:33:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -415,16 +415,16 @@ do while (.true.)
     !! If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)
     !call assert(shortd .or. (accurate_mod .eqv. all(distsq <= 4.0_RP * rho**2)), &
     !    & 'If SHORTD is FALSE, then ACCURATE_MOD = ALL(DISTSQ <= 4.0_RP*RHO**2)', srname)
+    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 
     improve_geo = bad_trstep .and. .not. accurate_mod
     reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
 
-    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     ! REDUCE_RHO and IMPROVE_GEO in NEWUOA/BOBYQA/LINCOA.
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
-    bad_trstep = (shortd .or. (ratio <= 0 .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    bad_trstep = (shortd .or. (ratio <= 0 .and. ddknew <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
-    bad_trstep = (shortd .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    bad_trstep = (shortd .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     if (improve_geo) then
@@ -568,7 +568,7 @@ call rangehist(nf, xhist, fhist)
 
 ! Postconditions
 
-close (16)
+!close (17)
 
 
 end subroutine uobyqb

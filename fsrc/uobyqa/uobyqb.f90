@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 06, 2022 PM10:51:59
+! Last Modified: Sunday, November 06, 2022 PM11:36:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -418,9 +418,9 @@ do while (.true.)
 
     ! REDUCE_RHO and IMPROVE_GEO in NEWUOA/BOBYQA/LINCOA.
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
-    bad_trstep = (shortd .or. (ratio <= 0 .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    bad_trstep = (shortd .or. (ratio <= 0 .and. ddknew <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
-    bad_trstep = (shortd .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    bad_trstep = (shortd .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     if (improve_geo) then
