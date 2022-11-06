@@ -193,13 +193,11 @@ if sequential
         prob = macup(pname);
 
         for ir = minir : maxir
-            fprintf('196')
             fprintf('\n%s Run No. %3d:\n', pname, ir);
             % The following line compares the solvers on `prob`; ir is needed for the random seed, and
             % `prec` is the precision of the comparison (should be 0). The function will raise an error
             % if the solvers behave differently.
             compare(solvers, prob, ir, prec, single_test, options);
-            fprintf('202')
         end
 
         decup(pname);
@@ -490,8 +488,6 @@ else
 end
 
 tested_solver_name = regexprep(solvers{1}, 'n$', '');
-
-%solvers{2} = solvers{1}, solver2 = solver1, package2 = package1
 
 if call_by_package
     if call_by_structure
