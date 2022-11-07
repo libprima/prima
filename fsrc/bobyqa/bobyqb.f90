@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 PM10:47:06
+! Last Modified: Monday, November 07, 2022 PM10:59:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -475,7 +475,7 @@ do while (.true.)
     accurate_mod = all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho)
     ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
     small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code.
-    !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version.
+    !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA.
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion

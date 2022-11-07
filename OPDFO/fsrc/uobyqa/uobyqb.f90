@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 PM02:51:18
+! Last Modified: Monday, November 07, 2022 PM11:16:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -357,7 +357,7 @@ do while (.true.)
         end if
     end if
 
-    small_trrad = (delsav <= rho)
+    small_trrad = (max(dnorm, delta) <= rho)
 
     !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! This performs BADLY.
     !bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho))  ! BAD.
