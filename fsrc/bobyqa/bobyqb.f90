@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 AM11:52:37
+! Last Modified: Monday, November 07, 2022 PM07:59:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -479,20 +479,17 @@ do while (.true.)
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-    !close_itpset = all(distsq <= 4.0_RP * delta**2)
-    close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))
+    close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's code.
+    !close_itpset = all(distsq <= (TEN * rho)**2)  ! Works almost the same as Powell's version.
+    !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Works not as well as Powell's version.
     !----------------------------------------------------------------------------------------------!
 
 
     ! What if RESCUE has been called? Is it reasonable to use RATIO?
-    ! Powell's code seems to define REDUCE_RHO in the following way.
-    !reduce_rho = (shortd .and. accurate_mod) .or. (close_itpset .and. (shortd .or. (ratio <= 0 .and. small_trrad)))
-    ! However, it does not behave differently compared to the following, which is the definition in
-    ! NEWUOA and LINCOA.
-    bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
-    bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
