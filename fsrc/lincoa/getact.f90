@@ -385,7 +385,7 @@ if (DEBUGGING) then
     ! In theory, |PSD|^2 <= GG and -GG <= PSD^T*G <= 0.
     ! N.B. 1. Do not use DD, which may not be up to date. 2. PSD^T*G can be NaN if G is huge.
     call assert(inprod(psd, psd) <= TWO * gg, '|PSD|^2 <= 2*GG', srname)
-    call assert(.not. (inprod(psd, g) > 0 .or. inprod(psd, g) < -TWO * gg), '-2*GG <= PSD^T*G <= 0', srname)
+    call assert(.not. (inprod(psd, g) > 1.0E2_RP * EPS * gg .or. inprod(psd, g) < -TWO * gg), '-2*GG <= PSD^T*G <= 0', srname)
 end if
 
 end subroutine getact
