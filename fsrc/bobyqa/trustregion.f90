@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 PM02:10:10
+! Last Modified: Monday, November 07, 2022 PM04:29:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -309,7 +309,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         xbdi(iact) = int(sign(ONE, s(iact)), IK)  !!MATLAB: xbdi(iact) = sign(s(iact))
         ! Exit when NACT = N (NACT > N is impossible). We must update XBDI before exiting!
         if (nact >= n) then
-            exit ! This leads to a difference. Why?
+            exit  ! This leads to a difference. Why?
         end if
         delsq = delsq - d(iact)**2
         if (delsq <= 0) then
@@ -468,8 +468,8 @@ do iter = 1, maxiter
     sdec = interval_fun_trsbox(hangt, args)
     if (.not. sdec > 0) exit
 
-    ! Update GNEW, D and HRED. If the angle of the alternative iteration is restricted by a bound on
-    ! a free variable, that variable is fixed at the bound.
+    ! Update GNEW, D and HDRED. If the angle of the alternative iteration is restricted by a bound
+    ! on a free variable, that variable is fixed at the bound.
     cth = (ONE - hangt * hangt) / (ONE + hangt * hangt)
     sth = (hangt + hangt) / (ONE + hangt * hangt)
     gnew = gnew + (cth - ONE) * hdred + sth * hs

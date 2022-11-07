@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 06, 2022 PM11:33:37
+! Last Modified: Monday, November 07, 2022 PM02:51:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -433,6 +433,7 @@ do while (.true.)
         g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
         h = vec2smat(pl(n + 1:npt - 1, knew_geo))
         call geostep(g, h, delbar, d, vmax)
+        dnorm = min(delta, sqrt(sum(d**2)))
 
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! Calculate the next value of the objective function.
