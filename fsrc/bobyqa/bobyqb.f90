@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 PM07:59:06
+! Last Modified: Monday, November 07, 2022 PM10:47:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -120,7 +120,7 @@ real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
 real(RP) :: delbar, bdtest(size(x)), beta, &
-&        crvmin, curv(size(x)), delta,  &
+&        crvmin, curv(size(x)), delta, &
 &        den(npt), diff, &
 &        distsq(npt), dnorm, errbd, fopt,        &
 &        gisq, gqsq,       &
@@ -215,7 +215,6 @@ do while (.true.)
     ! Generate the next point in the trust region that provides a small value of the quadratic model
     ! subject to the constraints on the variables.
 
-    !rescued = .false.
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
     xnew = max(min(xopt + d, su), sl)  ! In precise arithmetic, XNEW = XOPT + D.
@@ -474,8 +473,9 @@ do while (.true.)
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
     ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho)
-    ! SMALL_TRRAD --- Is the trust-region radius small?
-    small_trrad = (max(delta, dnorm) <= rho)
+    ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
+    small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code.
+    !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version.
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
