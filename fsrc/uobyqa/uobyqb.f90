@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 PM07:58:43
+! Last Modified: Monday, November 07, 2022 PM10:48:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -108,7 +108,7 @@ real(RP) :: xbase(size(x))
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
-real(RP) :: ddknew, delta, delsav, diff, distsq(size(pl, 2)), delbar, &
+real(RP) :: dmove, delta, diff, distsq(size(pl, 2)), delbar, &
 & weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, errtol, crvmin, fopt,&
 &        fsave, xsave(size(x)), ratio, rho, &
@@ -175,7 +175,6 @@ trtol = 0.01_RP
 
 ! Form the gradient of the quadratic model at the trust region centre.
 do while (.true.)
-    delsav = delta
     xopt = xpt(:, kopt)
     g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
     h = vec2smat(pq(n + 1:npt - 1))
@@ -312,19 +311,19 @@ do while (.true.)
         end if
 
         knew_tr = 0_IK
-        ddknew = ZERO ! Necessary, or DDKNEW is not always defined.
+        dmove = ZERO ! Necessary, or DDKNEW is not always defined.
         ! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
         if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
             ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
             ! exclude such K.
             knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
                 !!MATLAB: [~, knew_tr] = max(score, [], 'omitnan');
-            ddknew = distsq(knew_tr)
+            dmove = distsq(knew_tr)
         elseif (tr_success) then
             ! Powell's code does not include the following instructions. With Powell's code,
             ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
             knew_tr = int(maxloc(distsq, dim=1), IK)
-            ddknew = distsq(knew_tr)
+            dmove = distsq(knew_tr)
         end if
 
         if (knew_tr > 0) then
@@ -353,8 +352,9 @@ do while (.true.)
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
     ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
-    ! SMALL_TRRAD --- Is the trust-region radius small?
-    small_trrad = (delsav <= rho)
+    ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
+    small_trrad = (dnorm <= rho)  ! Powell's code.
+    !small_trrad = (max(delta, dnorm) <= rho)  ! Behaves the same as Powell's version.
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
@@ -362,10 +362,10 @@ do while (.true.)
     !----------------------------------------------------------------------------------------------!
 
     ! REDUCE_RHO and IMPROVE_GEO in NEWUOA/BOBYQA/LINCOA.
-    bad_trstep = (shortd .or. (ratio <= 0 .and. ddknew <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
+    bad_trstep = (shortd .or. (ratio <= 0 .and. dmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
-    bad_trstep = (shortd .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
+    bad_trstep = (shortd .or. (ratio <= TENTH .and. dmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     if (improve_geo) then
