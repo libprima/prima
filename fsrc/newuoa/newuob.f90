@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 07, 2022 PM10:47:33
+! Last Modified: Monday, November 07, 2022 PM10:59:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -336,7 +336,7 @@ do tr = 1, maxtr
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
     ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
     small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code.
-    !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version.
+    !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA.
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion

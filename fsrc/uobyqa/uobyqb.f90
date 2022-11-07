@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 PM10:48:31
+! Last Modified: Monday, November 07, 2022 PM11:14:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -353,8 +353,8 @@ do while (.true.)
     ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
     ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
-    small_trrad = (dnorm <= rho)  ! Powell's code.
-    !small_trrad = (max(delta, dnorm) <= rho)  ! Behaves the same as Powell's version.
+    small_trrad = (max(delta, dnorm) <= rho)  ! Behaves the same as Powell's version.
+    !small_trrad = (dnorm <= rho)  ! Powell's code.
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
