@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 19, 2022 AM08:52:42
+! Last Modified: Monday, November 07, 2022 PM02:13:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -347,11 +347,10 @@ xpt_ref(:, 2 * n + 2:npt) = xpt_ref(:, ij(1, :) + 1) + xpt_ref(:, ij(2, :) + 1)
 ! Update [BMAT, ZMAT, IDZ] so that it corresponds to XPT.
 kbase = 1_IK
 do k = 1, npt
-    if (all(abs(xpt(:, k) - xpt_ref(:, k)) <= 0)) then  ! XPT(:, K) == XPT_REF(:, K)
-        cycle
+    if (any(abs(xpt(:, k) - xpt_ref(:, k)) > 0)) then  ! XPT(:, K) /= XPT_REF(:, K)
+        call updateh(k, kbase, idz, xpt(:, k), xpt_ref, bmat, zmat)
+        xpt_ref(:, k) = xpt(:, k)
     end if
-    call updateh(k, kbase, idz, xpt(:, k), xpt_ref, bmat, zmat)
-    xpt_ref(:, k) = xpt(:, k)
 end do
 
 if (present(info)) then
