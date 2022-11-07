@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, September 26, 2022 PM09:48:13
+! Last Modified: Monday, November 07, 2022 AM09:10:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -483,8 +483,8 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    call assert(norm(d) <= TWO * delbar, '|D| <= 2*DELBAR', srname)
     ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
+    call assert(norm(d) <= TWO * delbar, '|D| <= 2*DELBAR', srname)
 end if
 
 end function biglag
@@ -805,8 +805,8 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    call assert(norm(d) <= TWO * norm(d0), '|D| <= 2*DELBAR', srname)
     ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
+    call assert(norm(d) <= TWO * norm(d0), '|D| <= 2*DELBAR', srname)
 end if
 
 end function bigden
