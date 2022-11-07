@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 05, 2022 PM11:40:52
+! Last Modified: Monday, November 07, 2022 AM09:16:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,10 +22,10 @@ contains
 function geostep(g, h, delbar) result(d)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, norm, trueloc
 
 implicit none
 
@@ -41,7 +41,7 @@ real(RP) :: d(size(g))  ! D(N)
 character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
 real(RP) :: v(size(g))
-real(RP) :: dd, dhd, dlin, gd, gg, ghg, gnorm, &
+real(RP) :: dcauchy(size(g)), dd, dhd, dlin, gd, gg, ghg, gnorm, &
 &        ratio, scaling, temp, &
 &        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhd, &
 &        vlin, vmu, vnorm, vv, wcos, wsin, hv(size(g))
@@ -77,9 +77,17 @@ end if
 !     Preliminary calculations.
 !
 
+! Calculate the Cauchy step as a backup.
+gg = sum(g**2)
+ghg = inprod(g, matprod(h, g))
+dcauchy = (delbar / sqrt(gg)) * g
+if (ghg < 0) then
+    dcauchy = -dcauchy
+end if
+dcauchy(trueloc(is_nan(dcauchy))) = ZERO  ! DCAUCHY may contain NaN if the problem is ill-conditioned.
 
 if (is_nan(sum(abs(h)) + sum(abs(g)))) then
-    d = ZERO
+    d = dcauchy
     return
 end if
 
@@ -110,14 +118,13 @@ end if
 
 ! We now turn our attention to the subspace span{G, D}. A multiple of the current D is returned if
 ! that choice seems to be adequate.
-gg = sum(g**2)
 gd = inprod(g, d)
 dd = sum(d**2)
 dhd = inprod(d, matprod(h, d))
 
 ! Zaikun 20220504: GG and DD can become 0 at this point due to rounding. Detected by IFORT.
 if (.not. (gg > 0 .and. dd > 0)) then
-    d = ZERO
+    d = dcauchy
     return
 end if
 
@@ -137,7 +144,6 @@ end if
 
 ! G and V are now orthogonal in the subspace span{G, D}. Hence we generate an orthonormal basis of
 ! this subspace such that (D, HV) is negligible or 0, where D and V will be the basis vectors.
-ghg = inprod(g, matprod(h, g))
 hv = matprod(h, v)
 vhg = inprod(g, hv)
 vhv = inprod(v, hv)
@@ -201,7 +207,18 @@ else
     end if
 end if
 d = tempd * d + tempv * v
+d(trueloc(is_nan(d))) = ZERO  ! D may contain NaN if the problem is ill-conditioned.
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
+    call assert(norm(d) <= TWO * delbar, '|D| <= 2*DELBAR', srname)
+end if
 end function geostep
 
 

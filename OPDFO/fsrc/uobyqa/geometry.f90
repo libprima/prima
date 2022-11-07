@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 20, 2022 PM01:32:02
+! Last Modified: Monday, November 07, 2022 AM09:13:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,7 +41,7 @@ real(RP), intent(out) :: vmax
 ! Local variables
 character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
-real(RP) :: v(size(g))
+real(RP) :: v(size(g)), dcauchy(size(g))
 real(RP) :: dd, dhd, dlin, gd, gg, ghg, gnorm, &
 &        ratio, scaling, temp, &
 &        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhd, &
@@ -78,9 +78,17 @@ end if
 !     Preliminary calculations.
 !
 
+gg = sum(g**2)
+ghg = inprod(g, matprod(h, g))
+dcauchy = (delbar / sqrt(gg)) * g
+if (ghg < 0) then
+    dcauchy = -dcauchy
+end if
+where (is_nan(dcauchy)) dcauchy = ZERO
 
 if (is_nan(sum(abs(h)) + sum(abs(g)))) then
-    d = ZERO
+    !d = ZERO
+    d = dcauchy
     vmax = ZERO
     return
 end if
@@ -119,7 +127,8 @@ dhd = inprod(d, matprod(h, d))
 
 ! Zaikun 20220504: GG and DD can become 0 at this point due to rounding. Detected by IFORT.
 if (.not. (gg > 0 .and. dd > 0)) then
-    d = ZERO
+    !d = ZERO
+    d = dcauchy
     vmax = ZERO
     return
 end if
@@ -205,6 +214,7 @@ else
     end if
 end if
 d = tempd * d + tempv * v
+where (is_nan(d)) d = ZERO
 vmax = delbar * delbar * max(tempa, tempb, tempc)
 
 end subroutine geostep
