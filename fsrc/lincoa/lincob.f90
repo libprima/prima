@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 PM10:48:49
+! Last Modified: Monday, November 07, 2022 PM11:09:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -150,7 +150,7 @@ real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
-real(RP) :: delbar, delsav, delta, dffalt, diff, &
+real(RP) :: delbar, delta, dffalt, diff, &
 &        distsq(npt), fopt, ratio,     &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
@@ -278,7 +278,6 @@ do while (.true.)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
     end if
 
-    delsav = delta
     ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
     call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
     dnorm = min(delta, sqrt(sum(d**2)))
@@ -473,8 +472,8 @@ do while (.true.)
     ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
     ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
-    small_trrad = (delsav <= rho)  ! Powell's code.
-    !small_trrad = (max(delta, dnorm) <= rho)  ! Behaves the same as Powell's version.
+    small_trrad = (max(delta, dnorm) <= rho)  ! Behaves the same as Powell's version.
+    !small_trrad = (delsav <= rho)  ! Powell's code. DELSAV = unupdated DELTA.
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
