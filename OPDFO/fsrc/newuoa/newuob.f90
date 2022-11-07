@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 04, 2022 PM09:34:23
+! Last Modified: Monday, November 07, 2022 PM04:13:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -339,7 +339,8 @@ do tr = 1, maxtr
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-    close_itpset = all(distsq <= 4.0_RP * delta**2)
+    !close_itpset = all(distsq <= 4.0_RP * delta**2)
+    close_itpset = all(distsq <= 4.0_RP * rho**2)
     !----------------------------------------------------------------------------------------------!
 
     ! REDUCE_RHO corresponds to Boxes 14 and 10 of the NEWUOA paper.
