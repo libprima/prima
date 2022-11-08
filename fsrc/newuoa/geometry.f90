@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 08, 2022 AM09:43:19
+! Last Modified: Tuesday, November 08, 2022 PM05:24:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -98,9 +98,9 @@ end if
 ! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
 ! point in the next interpolation if TR_SUCCESS is TRUE. Strangely, considering this new point does
 ! not always lead to a better performance of NEWUOA. Here, we choose not to check TR_SUCCESS, as
-! the performance of NEWUOA is better in this way.
-! HOWEVER, THIS MAY WELL CHANGE WHEN THE OTHER PARTS OF NEWUOA ARE IMPLEMENTED DIFFERENTLY.
-!if (tr_success) then
+! the performance of NEWUOA is better in this way. THIS DIFFERS FROM POWELL'S CODE.
+! HOWEVER, THINGS MAY WELL CHANGE WHEN THE OTHER PARTS OF NEWUOA ARE IMPLEMENTED DIFFERENTLY.
+!if (tr_success) then  ! This is Powell's version
 !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
 !    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
 !else
