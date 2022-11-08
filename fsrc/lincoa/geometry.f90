@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, October 23, 2022 AM09:01:39
+! Last Modified: Tuesday, November 08, 2022 AM09:43:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -90,7 +90,7 @@ end if
 ! point in the next interpolation if FREDUCED is TRUE. Strangely, considering this new point does
 ! not always lead to a better performance of LINCOA. Here, we choose not to check FREDUCED, as
 ! the performance of LINCOA is better in this way.
-! HOWEVER, THIS MAY WELL CHANGE IF THE OTHER PARTS OF LINCOA ARE IMPLEMENTED DIFFERENTLY.
+! HOWEVER, THIS MAY WELL CHANGE WHEN THE OTHER PARTS OF LINCOA ARE IMPLEMENTED DIFFERENTLY.
 !if (freduced) then
 !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
 !    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion

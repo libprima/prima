@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 PM10:59:03
+! Last Modified: Tuesday, November 08, 2022 AM10:18:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -363,7 +363,7 @@ do while (.true.)
         ! point in the next interpolation if TR_SUCCESS is TRUE. Strangely, considering this new point does
         ! not always lead to a better performance of BOBYQA. Here, we choose not to check TR_SUCCESS, as
         ! the performance of BOBYQA is better in this way.
-        ! HOWEVER, THIS MAY WELL CHANGE IF THE OTHER PARTS OF BOBYQA ARE IMPLEMENTED DIFFERENTLY.
+        ! HOWEVER, THIS MAY WELL CHANGE WHEN THE OTHER PARTS OF BOBYQA ARE IMPLEMENTED DIFFERENTLY.
         !if (tr_success) then
         !    distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
         !else
@@ -421,8 +421,8 @@ do while (.true.)
             !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
             !!PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
 
-            ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
-            ! caused by the updating of the quadratic model.
+            ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that
+            ! are caused by the updating of the quadratic model.
             fval(knew_tr) = f
             xpt(:, knew_tr) = xnew
             gopt = gopt + diff * bmat(:, knew_tr) + hess_mul(xopt, xpt, pqinc)
@@ -434,8 +434,8 @@ do while (.true.)
                 gopt = gopt + hess_mul(d, xpt, pq, hq)
             end if
 
-            ! Calculate the parameters of the least Frobenius norm interpolant to the current data, the
-            ! gradient of this interpolant at XOPT being put into VLAG(NPT+I), I=1,2,...,N.
+            ! Calculate the parameters of the least Frobenius norm interpolant to the current data,
+            ! the gradient of this interpolant at XOPT being put into VLAG(NPT+I), I=1,2,...,N.
             fshift = fval - fval(kopt)
             pqalt = matprod(zmat, matprod(fshift, zmat))
             galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
@@ -516,8 +516,7 @@ do while (.true.)
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         rescued = .false.
-        if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then  ! This is the correct condition
-            !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > vlag(knew_geo)**2)) then ! This is for test RESCUE
+        if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
             nfresc = nf
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
