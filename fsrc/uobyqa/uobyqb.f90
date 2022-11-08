@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 08, 2022 PM02:31:06
+! Last Modified: Tuesday, November 08, 2022 PM04:09:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -111,7 +111,7 @@ real(RP) :: xpt(size(x), size(pl, 2))
 real(RP) :: ddmove, delta, diff, distsq(size(pl, 2)), delbar, &
 & weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, errtol, crvmin, fopt,&
-&        fsave, xsave(size(x)), ratio, rho, &
+&        fsave, ratio, rho, &
 &        trtol, &
 &        qred, plknew(size(pl, 1)), fval(size(pl, 2))
 integer(IK) :: k, knew_tr, knew_geo, kopt, subinfo
@@ -245,7 +245,6 @@ do while (.true.)
 
         ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
         ! Then branch if D is not a trust region step.
-        xsave = xopt
         fsave = fopt
         if (f < fopt) then
             fopt = f
@@ -275,14 +274,10 @@ do while (.true.)
         ! When identifying the optimal point, as suggested in (56) of the UOBYQA paper and (7.5) of
         ! the NEWUOA paper, it is reasonable to take into account the new trust-region trial point
         ! XPT(:, KOPT) + D, which will become the optimal point in the next interpolation if
-        ! TR_SUCCESS is TRUE. Strangely, considering this new point does not always lead to a better
-        ! performance of UOBYQA. Here, we choose not to check TR_SUCCESS, as the performance of
-        ! UOBYQA is better in this way.
-        ! HOWEVER, THIS MAY WELL CHANGE WHEN THE OTHER PARTS OF UOBYQA ARE IMPLEMENTED DIFFERENTLY.
+        ! TR_SUCCESS is TRUE.
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
         !distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)  ! XSAVE is the unupdated XOPT
-        weight = max(ONE, distsq / rho**2)**4  ! Good !Similar to DISTSQ/DELTA**2; not better than it.
-        !weight = max(ONE, distsq / delta**2)**4
+        weight = max(ONE, distsq / rho**2)**4
 
         !------------------------------------------------------------------------------------------!
         ! Other possible definitions of WEIGHT.
@@ -297,7 +292,7 @@ do while (.true.)
         !weight = max(ONE, distsq / delta**2)**3  ! Similar to DISTSQ/RHO**2; not better than it.
         !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! The same as DISTSQ/RHO**2.
         !weight = distsq**3  ! Not better than MAX(ONE, DISTSQ/RHO**2)**3
-        !weight = max(ONE, distsq / rho**2)**4  ! Better than power 3.
+        !weight = max(ONE, distsq / delta**2)**4  ! Not better than DISTSQ/RHO**2.
         !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! The same as DISTSQ/RHO**2.
         !weight = distsq**4  ! Not better than MAX(ONE, DISTSQ/RHO**2)**4
         !------------------------------------------------------------------------------------------!
@@ -310,24 +305,22 @@ do while (.true.)
         end if
 
         knew_tr = 0_IK
-        ddmove = ZERO  ! Norm square of DMOVE in the UOBYQA paper.
         ! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
         if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
             ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
             ! exclude such K.
             knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
             !!MATLAB: [~, knew_tr] = max(score, [], 'omitnan');
-            !ddmove = distsq(knew_tr)
-            ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
         elseif (tr_success) then
             ! Powell's code does not include the following instructions. With Powell's code,
             ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
             knew_tr = int(maxloc(distsq, dim=1), IK)
-            !ddmove = distsq(knew_tr)
-            ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
         end if
 
+        ! DDMOVE is norm square of DMOVE in the UOBYQA paper. See Steps 6--7 in Sec. 5 of the paper.
+        ddmove = ZERO
         if (knew_tr > 0) then
+            ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
             ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
             ! the Lagrange functions and the quadratic model.
             xpt(:, knew_tr) = xnew
@@ -338,9 +331,7 @@ do while (.true.)
             pl = pl - outprod(plknew, vlag)
             pl(:, knew_tr) = plknew
 
-            ! Update KOPT if F is the least calculated value of the objective function. Then branch
-            ! for another trust region calculation. The case KSAVE>0 indicates that a model step has
-            ! just been taken.
+            ! Update KOPT if F is the least calculated value of the objective function.
             if (f < fsave) then
                 kopt = knew_tr
             end if
@@ -364,17 +355,16 @@ do while (.true.)
 
     ! REDUCE_RHO and IMPROVE_GEO in NEWUOA/BOBYQA/LINCOA.
     bad_trstep = (shortd .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
-    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! Behaves the same as the above one.
+    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! OK, but not as good as the above one.
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
     ! It is critical to include DMOVE <= 4.0_RP*RHO**2 in the following definition of BAD_TRSTEP.
     bad_trstep = (shortd .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
-    !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! This does not work well.
+    !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! This does not work at all.
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     if (improve_geo) then
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
-        !!MATLAB: [~, knew_geo] = max(distsq);
         g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
         h = vec2smat(pl(n + 1:npt - 1, knew_geo))
 
@@ -451,9 +441,7 @@ do while (.true.)
         pl = pl - outprod(plknew, vlag)
         pl(:, knew_geo) = plknew
 
-        ! Update KOPT if F is the least calculated value of the objective function. Then branch
-        ! for another trust region calculation. The case KSAVE>0 indicates that a model step has
-        ! just been taken.
+        ! Update KOPT if F is the least calculated value of the objective function.
         if (f < fsave) then
             kopt = knew_geo
         end if

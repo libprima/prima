@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 08, 2022 AM10:19:32
+! Last Modified: Tuesday, November 08, 2022 PM05:10:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -405,7 +405,6 @@ do while (.true.)
         ! 2. Test different definitions of WEIGHT in SETDROP_TR. See BOBYQA.
         knew_tr = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
         if (knew_tr > 0) then
-            ddmove =  
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
 
             ! If ITEST is increased to 3, then the next quadratic model is the one whose second
@@ -485,8 +484,7 @@ do while (.true.)
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
-    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
     ! The following definitions of IMPROVE_GEO are equivalent to the one above.
     !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)

@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 08, 2022 AM10:18:22
+! Last Modified: Tuesday, November 08, 2022 PM06:09:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -364,11 +364,11 @@ do while (.true.)
         ! not always lead to a better performance of BOBYQA. Here, we choose not to check TR_SUCCESS, as
         ! the performance of BOBYQA is better in this way.
         ! HOWEVER, THIS MAY WELL CHANGE WHEN THE OTHER PARTS OF BOBYQA ARE IMPLEMENTED DIFFERENTLY.
-        !if (tr_success) then
-        !    distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
-        !else
-        !    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        !end if
+        if (tr_success) then
+            distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
+        else
+            distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+        end if
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 
         weight = max(ONE, distsq / delta**2)**3  ! This works better than Powell's code.
@@ -376,7 +376,7 @@ do while (.true.)
         ! Other possible definitions of WEIGHT.
         !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.
         !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! NEWUOA. Better than original.
-        !weight = max(ONE, distsq / rho**2)**3  ! It performs the same as the code from NEWUOA.
+        weight = max(ONE, distsq / rho**2)**3  ! It performs the same as the code from NEWUOA.
         !weight = distsq**3  ! This works better than Powell's code.
         !weight = distsq**4  ! This works better than Powell's code.
         !weight = max(ONE, distsq / delta**2)**4  ! This works better than Powell's code.
