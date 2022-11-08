@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 07, 2022 PM10:59:25
+! Last Modified: Tuesday, November 08, 2022 PM05:51:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -419,6 +419,11 @@ do tr = 1, maxtr
     ! 2. Update 20220204: In the current version, unifying the two thresholds to 0 seems to worsen
     ! the performance on noise-free CUTEst problems with at most 200 variables; unifying them to 0.1
     ! worsens it a bit as well.
+    ! 3. Update 20221108: In UOBYQA, the definition of BAD_TRSTEP involves DDMOVE, which is the norm
+    ! square of XPT_OLD(:, KNEW_TR) - XOPT_OLD, where XPT_OLD and XOPT_OLD are the XPT and XOPT
+    ! before UPDATEXF is called. Roughly speaking, BAD_TRSTEP is set to FALSE if KNEW_TR > 0 and
+    ! DDMOVE > 2*RHO. This is critical for the performance of UOBYQA. However, the same strategy
+    ! does not improve the performance of NEWUOA/LINCOA in a test on 20221108.
 
     !----------------------------------------------------------------------------------------------!
     ! Another way to define REDUCE_RHO and IMPROVE_GEO:

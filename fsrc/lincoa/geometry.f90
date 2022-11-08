@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 08, 2022 AM09:43:04
+! Last Modified: Tuesday, November 08, 2022 PM04:25:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -87,10 +87,10 @@ end if
 ! Calculate the distance squares between the interpolation points and the "optimal point". When
 ! identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is reasonable to
 ! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
-! point in the next interpolation if FREDUCED is TRUE. Strangely, considering this new point does
-! not always lead to a better performance of LINCOA. Here, we choose not to check FREDUCED, as
-! the performance of LINCOA is better in this way.
-! HOWEVER, THIS MAY WELL CHANGE WHEN THE OTHER PARTS OF LINCOA ARE IMPLEMENTED DIFFERENTLY.
+! point in the next interpolation if FREDUCED is TRUE. Strangely, considering this new point
+! evidently worsens the performance of LINCOA according to a test on 20221108. Hence we choose not
+! to check FREDUCED. POWELL CODED IN THE SAME WAY.
+! HOWEVER, THINGS MAY WELL CHANGE WHEN THE OTHER PARTS OF LINCOA ARE IMPLEMENTED DIFFERENTLY.
 !if (freduced) then
 !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
 !    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
@@ -98,9 +98,9 @@ end if
 !    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 !    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
 !end if
-distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)  ! Powell's code
 
-weight = distsq**2
+weight = distsq**2  ! Powell's code.
 !--------------------------------------------------------------------------------------------------!
 ! Other possible definitions of WEIGHT.
 !weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
