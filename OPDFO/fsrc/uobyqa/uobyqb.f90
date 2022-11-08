@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 PM11:16:42
+! Last Modified: Tuesday, November 08, 2022 PM02:55:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -291,9 +291,10 @@ do while (.true.)
         ! performance of UOBYQA. Here, we choose not to check TR_SUCCESS, as the performance of
         ! UOBYQA is better in this way.
         ! HOWEVER, THIS MAY WELL CHANGE IF THE OTHER PARTS OF UOBYQA ARE IMPLEMENTED DIFFERENTLY.
-        !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
-        distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)  ! XSAVE is the unupdated XOPT
-        weight = max(ONE, distsq / delta**2)**4
+        distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
+        !distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)  ! XSAVE is the unupdated XOPT
+        weight = max(ONE, distsq / rho**2)**4
+        !weight = max(ONE, distsq / delta**2)**4
 
         !------------------------------------------------------------------------------------------!
         ! Other possible definitions of WEIGHT.
@@ -329,12 +330,14 @@ do while (.true.)
             ! exclude such K.
             knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
                 !!MATLAB: [~, knew_tr] = max(score, [], 'omitnan');
-            ddknew = distsq(knew_tr)
+            !ddknew = distsq(knew_tr)
+            ddknew = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)
         elseif (tr_success) then
             ! Powell's code does not include the following instructions. With Powell's code,
             ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
             knew_tr = int(maxloc(distsq, dim=1), IK)
-            ddknew = distsq(knew_tr)
+            !ddknew = distsq(knew_tr)
+            ddknew = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)
         end if
 
         if (knew_tr > 0) then
@@ -433,9 +436,9 @@ do while (.true.)
         g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
         h = vec2smat(pl(n + 1:npt - 1, knew_geo))
         call geostep(g, h, delbar, d, vmax)
-        dnorm = min(delta, sqrt(sum(d**2)))
-
+        dnorm = min(delbar, sqrt(sum(d**2)))
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+
         ! Calculate the next value of the objective function.
         xnew = xopt + d
         x = xbase + xnew
