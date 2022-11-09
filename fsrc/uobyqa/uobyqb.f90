@@ -1,7 +1,4 @@
 !TODO:
-!0. Transpose PL.
-!1. Take care of N = 1.
-!2. SIZE of d in TRSTEP is N + 1 instead of N, maybe also other arrays and other places.
 !3. THE checks in rangehist cannot pass(xhist does not contain NaN)
 
 module uobyqb_mod
@@ -14,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 09, 2022 PM09:21:18
+! Last Modified: Wednesday, November 09, 2022 PM11:11:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -353,16 +350,33 @@ do while (.true.)
     close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Behaves the same as ALL(DISTSQ <= 4.0_RP * DELTA**2)
     !----------------------------------------------------------------------------------------------!
 
+    ! Comments on ACCURATE_MOD:
+    ! 1. ACCURATE_MOD is needed only when SHORTD is TRUE.
+    ! 2. In Powell's UOBYQA code, ACCURATE_MOD is defined according to (28), (37), and (38) in the
+    ! UOBYQA paper. The idea is to test whether the current model is sufficiently accurate by
+    ! checking whether the interpolation error bound in (28) is (sufficiently) small. If the bound
+    ! is small, then set ACCURATE_MOD to TRUE. Otherwise, it identifies the interpolation point that
+    ! makes a significant contribution to the bound, with a preference to the interpolation points
+    ! that are a far away from the current trust-region center. Such a point will be replaced with
+    ! a new point obtained by the geometry step.
+    ! 3. Our implementation defines ACCURATE_MOD by a method from NEWUOA and BOBYQA, also reflected
+    ! in LINCOA. It sets ACCURATE_MOD to TRUE if recent model errors and step lengths are all small.
+    ! In addition, it identifies a "bad" interpolation point by simply taking the farthest point
+    ! from the current trust region center. This implementation is much simpler and it performs
+    ! almost the same as Powell's original implementation.
+
     !bad_trstep = (shortd .or. knew_tr == 0 .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2))
     !improve_geo = bad_trstep .and. .not. (shortd .and. accurate_mod) .and. .not. close_itpset
     !reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
 
     bad_trstep = (shortd .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
+    !bad_trstep = (shortd .or. (ratio <= TENTH .and. dnorm <= 2.0 * rho .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
     improve_geo = bad_trstep .and. .not. (shortd .and. accurate_mod) .and. .not. close_itpset
     bad_trstep = (shortd .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
+    !bad_trstep = (shortd .or. (ratio <= 0 .and. dnorm <= 2.0 * rho .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
     reduce_rho = bad_trstep .and. small_trrad .and. (.not. improve_geo)
 
- 
+
 
     !! The following REDUCE_RHO and IMPROVE_GEO are adopted from NEWUOA/BOBYQA/LINCOA.
     !bad_trstep = (shortd .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
