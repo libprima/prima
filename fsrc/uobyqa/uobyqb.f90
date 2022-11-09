@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 09, 2022 PM11:11:04
+! Last Modified: Wednesday, November 09, 2022 PM11:16:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -355,17 +355,20 @@ do while (.true.)
     ! 2. In Powell's UOBYQA code, ACCURATE_MOD is defined according to (28), (37), and (38) in the
     ! UOBYQA paper. The idea is to test whether the current model is sufficiently accurate by
     ! checking whether the interpolation error bound in (28) is (sufficiently) small. If the bound
-    ! is small, then set ACCURATE_MOD to TRUE. Otherwise, it identifies the interpolation point that
-    ! makes a significant contribution to the bound, with a preference to the interpolation points
-    ! that are a far away from the current trust-region center. Such a point will be replaced with
-    ! a new point obtained by the geometry step.
-    ! 3. Our implementation defines ACCURATE_MOD by a method from NEWUOA and BOBYQA, also reflected
-    ! in LINCOA. It sets ACCURATE_MOD to TRUE if recent model errors and step lengths are all small.
-    ! In addition, it identifies a "bad" interpolation point by simply taking the farthest point
-    ! from the current trust region center. This implementation is much simpler and it performs
-    ! almost the same as Powell's original implementation.
+    ! is small, then set ACCURATE_MOD to TRUE. Otherwise, it identifies a "bad" interpolation point
+    ! that makes a significant contribution to the bound, with a preference to the interpolation
+    ! points that are a far away from the current trust-region center. Such a point will be replaced
+    ! with a new point obtained by the geometry step. If all the interpolation points are close
+    ! enough to the trust-region center, then they are all considered to be good.
+    ! 3. Our implementation defines ACCURATE_MOD by a method from NEWUOA and BOBYQA, which is also
+    ! reflected in LINCOA. It sets ACCURATE_MOD to TRUE if recent model errors and step lengths are
+    ! all small. In addition, it identifies a "bad" interpolation point by simply taking the
+    ! farthest point from the current trust region center, unless they are all close enough to the
+    ! center. This implementation is much simpler and it performs almost the same as Powell's
+    ! original implementation.
 
-    !bad_trstep = (shortd .or. knew_tr == 0 .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2))
+    ! Powell's original definition of IMPROVE_GEO and REDUCE_RHO:
+    !bad_trstep = (shortd .or. knew_tr == 0 .or. (ratio <= 0 .and. dnorm <= 2.0_RP*rho .and. ddmove <= 4.0_RP * rho**2))
     !improve_geo = bad_trstep .and. .not. (shortd .and. accurate_mod) .and. .not. close_itpset
     !reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
 
