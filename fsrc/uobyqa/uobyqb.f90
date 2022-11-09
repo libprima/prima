@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 09, 2022 PM11:16:28
+! Last Modified: Wednesday, November 09, 2022 PM11:19:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -353,13 +353,14 @@ do while (.true.)
     ! Comments on ACCURATE_MOD:
     ! 1. ACCURATE_MOD is needed only when SHORTD is TRUE.
     ! 2. In Powell's UOBYQA code, ACCURATE_MOD is defined according to (28), (37), and (38) in the
-    ! UOBYQA paper. The idea is to test whether the current model is sufficiently accurate by
-    ! checking whether the interpolation error bound in (28) is (sufficiently) small. If the bound
-    ! is small, then set ACCURATE_MOD to TRUE. Otherwise, it identifies a "bad" interpolation point
-    ! that makes a significant contribution to the bound, with a preference to the interpolation
-    ! points that are a far away from the current trust-region center. Such a point will be replaced
-    ! with a new point obtained by the geometry step. If all the interpolation points are close
-    ! enough to the trust-region center, then they are all considered to be good.
+    ! UOBYQA paper. As elaborated in Sec. 3 of the paper, the idea is to test whether the current
+    ! model is sufficiently accurate by checking whether the interpolation error bound in (28) is
+    ! (sufficiently) small. If the bound is small, then set ACCURATE_MOD to TRUE. Otherwise, it
+    ! identifies a "bad" interpolation point that makes a significant contribution to the bound,
+    ! with a preference to the interpolation points that are a far away from the current
+    ! trust-region center. Such a point will be replaced with a new point obtained by the geometry
+    ! step. If all the interpolation points are close enough to the trust-region center, then they
+    ! are all considered to be good.
     ! 3. Our implementation defines ACCURATE_MOD by a method from NEWUOA and BOBYQA, which is also
     ! reflected in LINCOA. It sets ACCURATE_MOD to TRUE if recent model errors and step lengths are
     ! all small. In addition, it identifies a "bad" interpolation point by simply taking the
