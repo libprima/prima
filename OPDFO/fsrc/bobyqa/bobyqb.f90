@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 09, 2022 PM03:50:38
+! Last Modified: Wednesday, November 09, 2022 PM06:08:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -395,7 +395,8 @@ do while (.true.)
 
         ! For the first case below, NEWUOA checks ANY(SCORE>1) .OR. (TR_SUCCESS .AND. ANY(SCORE>0))
         ! instead of ANY(SCORE > 0). Such code does not seem to improve the performance of BOBYQA.
-        if (any(score > 0)) then
+        !if (any(score > 0)) then
+        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then  ! NEWUOA
             ! See (6.1) of the BOBYQA paper for the definition of KNEW in this case.
             ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
             knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)

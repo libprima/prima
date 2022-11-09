@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 09, 2022 PM03:45:05
+! Last Modified: Wednesday, November 09, 2022 PM06:08:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -376,29 +376,24 @@ do while (.true.)
         !end if
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 
-        weight = max(ONE, distsq / rho**2)**3.5  ! Good!
-        !weight = max(ONE, distsq / rho**2)**3  ! This works better than Powell's code.
-        !weight = max(ONE, distsq / delta**2)**3  ! Good for TR_SUCCESS
-        !weight = max(ONE, distsq / rho**2)**4  ! Good for TR_SUCCESS
-        !weight = max(ONE, distsq / delta**2)**3.5  ! Not as good as DISTSQ/RHO**2
-        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! The same as DISTSQ/RHO**2
-        !weight = max(ONE, distsq / rho**2)**4
-        !weight = max(ONE, distsq / delta**2)**4
-        !weight = max(ONE, distsq / delta**2)**4.5
-        !weight = max(ONE, distsq / rho**2)**4.5
-        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4
-        !weight = max(ONE, distsq / rho**2)**2.5  ! Good, although not as good as power 3.5  ! Good for TR_SUCCESS
-        !weight = max(ONE, distsq / delta**2)**2.5
-        !weight = max(ONE, distsq / rho**2)**2
+        weight = max(ONE, distsq / rho**2)**3.5
+
         !------------------------------------------------------------------------------------------!
         ! Other possible definitions of WEIGHT.
         !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.
-        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! NEWUOA. Better than original.
-        !weight = max(ONE, distsq / rho**2)**3  ! It performs the same as the code from NEWUOA.
-        !weight = distsq**3  ! This works better than Powell's code.
-        !weight = distsq**4  ! This works better than Powell's code.
-        !weight = max(ONE, distsq / delta**2)**4  ! This works better than Powell's code.
+        !weight = max(ONE, distsq / rho**2)**2  ! Worse than Powell's code.
         !weight = max(ONE, distsq / delta**2)  ! As per (6.1) of the BOBYQA paper. It works poorly!
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! The same as DISTSQ/RHO**2.
+        ! The following WEIGHT all perform a bit worse than the above one, but better than Powell's.
+        !weight = max(ONE, distsq / delta**2)**3.5
+        !weight = max(ONE, distsq / delta**2)**2.5
+        !weight = max(ONE, distsq / delta**2)**3
+        !weight = max(ONE, distsq / delta**2)**4
+        !weight = max(ONE, distsq / delta**2)**4.5
+        !weight = max(ONE, distsq / rho**2)**2.5
+        !weight = max(ONE, distsq / rho**2)**3
+        !weight = max(ONE, distsq / rho**2)**4
+        !weight = max(ONE, distsq / rho**2)**4.5
         !------------------------------------------------------------------------------------------!
 
         den = calden(kopt, bmat, d, xpt, zmat)
@@ -410,9 +405,9 @@ do while (.true.)
         end if
 
         ! For the first case below, NEWUOA checks ANY(SCORE>1) .OR. (TR_SUCCESS .AND. ANY(SCORE>0))
-        ! instead of ANY(SCORE > 0). Such code does not seem to improve the performance of BOBYQA.
-        !if (any(SCORE > 1) .or. (TR_SUCCESS .and. any(SCORE > 0))) then
-        if (any(score > 0)) then
+        ! instead of ANY(SCORE > 0). This seems to improve the performance of BOBYQA very slightly.
+        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then  ! NEWUOA
+            !if (any(score > 0)) then  ! BOBYQA
             ! See (6.1) of the BOBYQA paper for the definition of KNEW in this case.
             ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
             knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
