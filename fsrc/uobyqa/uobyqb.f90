@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 08, 2022 PM04:09:31
+! Last Modified: Wednesday, November 09, 2022 PM09:21:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -353,15 +353,26 @@ do while (.true.)
     close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Behaves the same as ALL(DISTSQ <= 4.0_RP * DELTA**2)
     !----------------------------------------------------------------------------------------------!
 
-    ! REDUCE_RHO and IMPROVE_GEO in NEWUOA/BOBYQA/LINCOA.
-    bad_trstep = (shortd .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
-    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! OK, but not as good as the above one.
-    reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+    !bad_trstep = (shortd .or. knew_tr == 0 .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2))
+    !improve_geo = bad_trstep .and. .not. (shortd .and. accurate_mod) .and. .not. close_itpset
+    !reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
 
-    ! It is critical to include DMOVE <= 4.0_RP*RHO**2 in the following definition of BAD_TRSTEP.
     bad_trstep = (shortd .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
-    !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! This does not work at all.
-    improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
+    improve_geo = bad_trstep .and. .not. (shortd .and. accurate_mod) .and. .not. close_itpset
+    bad_trstep = (shortd .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
+    reduce_rho = bad_trstep .and. small_trrad .and. (.not. improve_geo)
+
+ 
+
+    !! The following REDUCE_RHO and IMPROVE_GEO are adopted from NEWUOA/BOBYQA/LINCOA.
+    !bad_trstep = (shortd .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
+    !!bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! OK, but not as good as the above one.
+    !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+
+    !! It is critical to include DMOVE <= 4.0_RP*RHO**2 in the following definition of BAD_TRSTEP.
+    !bad_trstep = (shortd .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
+    !!bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! This works poorly!
+    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     if (improve_geo) then
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
