@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 08, 2022 PM05:51:57
+! Last Modified: Wednesday, November 09, 2022 PM03:23:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -423,7 +423,7 @@ do tr = 1, maxtr
     ! square of XPT_OLD(:, KNEW_TR) - XOPT_OLD, where XPT_OLD and XOPT_OLD are the XPT and XOPT
     ! before UPDATEXF is called. Roughly speaking, BAD_TRSTEP is set to FALSE if KNEW_TR > 0 and
     ! DDMOVE > 2*RHO. This is critical for the performance of UOBYQA. However, the same strategy
-    ! does not improve the performance of NEWUOA/LINCOA in a test on 20221108.
+    ! does not improve the performance of NEWUOA/BOBYQA/LINCOA in a test on 20221108/9.
 
     !----------------------------------------------------------------------------------------------!
     ! Another way to define REDUCE_RHO and IMPROVE_GEO:

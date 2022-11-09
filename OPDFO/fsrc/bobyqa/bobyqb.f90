@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 AM11:52:37
+! Last Modified: Wednesday, November 09, 2022 PM03:50:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -372,7 +372,8 @@ do while (.true.)
         !end if
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 
-        weight = max(ONE, distsq / delta**2)**3  ! This works better than Powell's code.
+        weight = max(ONE, distsq / rho**2)**3.5  ! This works better than Powell's code.
+        !weight = max(ONE, distsq / delta**2)**3  ! This works better than Powell's code.
         !------------------------------------------------------------------------------------------!
         ! Other possible definitions of WEIGHT.
         !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.

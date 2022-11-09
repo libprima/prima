@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 08, 2022 PM11:29:41
+! Last Modified: Wednesday, November 09, 2022 PM03:45:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -357,13 +357,18 @@ do while (.true.)
 
         ! Find the index of the interpolation point to be replaced by the trust-region trial point.
 
-        ! Calculate the distance squares between the interpolation points and the "optimal point". When
-        ! identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is reasonable to
-        ! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
-        ! point in the next interpolation if TR_SUCCESS is TRUE. Strangely, considering this new point does
-        ! not always lead to a better performance of BOBYQA. Here, we choose not to check TR_SUCCESS, as
-        ! the performance of BOBYQA is better in this way.
-        ! HOWEVER, THIS MAY WELL CHANGE WHEN THE OTHER PARTS OF BOBYQA ARE IMPLEMENTED DIFFERENTLY.
+        ! Calculate the distance squares between the interpolation points and the "optimal point".
+        ! When identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is
+        ! reasonable to take into account the new trust-region trial point XPT(:, KOPT) + D, which
+        ! will become the optimal point in the next interpolation if TR_SUCCESS is TRUE. In the
+        ! BOBYQA paper, Powell also mentioned this fact in the last paragraph of page 26, saying
+        ! "A complication arises in the case F(x_k + d_k) < F(x_k), because then the distance from
+        ! y_t to x_{k+1} becomes more important than the distance from y_t to x_k"; in Powell's
+        ! BOBYQA code, this is reflected in lines 435--465 of bobyqb.f.
+        ! Strangely, considering this new point does not always lead to a better performance of
+        ! BOBYQA. Here, we choose not to check TR_SUCCESS, as the performance of BOBYQA is better
+        ! in this way. THIS DIFFERS FROM POWELL'S CODE.
+        ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF BOBYQA ARE IMPLEMENTED DIFFERENTLY.
         !if (tr_success) then
         !    distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
         !else
@@ -371,8 +376,20 @@ do while (.true.)
         !end if
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 
-        !weight = max(ONE, distsq / delta**2)**3  ! This works better than Powell's code.
         weight = max(ONE, distsq / rho**2)**3.5  ! Good!
+        !weight = max(ONE, distsq / rho**2)**3  ! This works better than Powell's code.
+        !weight = max(ONE, distsq / delta**2)**3  ! Good for TR_SUCCESS
+        !weight = max(ONE, distsq / rho**2)**4  ! Good for TR_SUCCESS
+        !weight = max(ONE, distsq / delta**2)**3.5  ! Not as good as DISTSQ/RHO**2
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! The same as DISTSQ/RHO**2
+        !weight = max(ONE, distsq / rho**2)**4
+        !weight = max(ONE, distsq / delta**2)**4
+        !weight = max(ONE, distsq / delta**2)**4.5
+        !weight = max(ONE, distsq / rho**2)**4.5
+        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4
+        !weight = max(ONE, distsq / rho**2)**2.5  ! Good, although not as good as power 3.5  ! Good for TR_SUCCESS
+        !weight = max(ONE, distsq / delta**2)**2.5
+        !weight = max(ONE, distsq / rho**2)**2
         !------------------------------------------------------------------------------------------!
         ! Other possible definitions of WEIGHT.
         !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.
@@ -394,6 +411,7 @@ do while (.true.)
 
         ! For the first case below, NEWUOA checks ANY(SCORE>1) .OR. (TR_SUCCESS .AND. ANY(SCORE>0))
         ! instead of ANY(SCORE > 0). Such code does not seem to improve the performance of BOBYQA.
+        !if (any(SCORE > 1) .or. (TR_SUCCESS .and. any(SCORE > 0))) then
         if (any(score > 0)) then
             ! See (6.1) of the BOBYQA paper for the definition of KNEW in this case.
             ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
