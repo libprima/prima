@@ -494,10 +494,10 @@ do while (.true.)
 
     !!----------------------------------------------------------------------------------------------!
     !! Another way to define REDUCE_RHO and IMPROVE_GEO:
-    !good_mod = (shortd .and. (.not. any(dnormsav >= HALF * rho) .or. .not. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) &
+    !good_mod = (shortd .and. (all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)) &
     !    & .or. ((qred > 0 .and. .not. shortd) .and. ratio > 0 .and. knew_tr > 0))
     !reduce_rho = (shortd .and. good_mod) .or. ((.not. good_mod) .and. close_itpset .and. small_trrad)
-    !good_mod = (shortd .and. (.not. any(dnormsav >= HALF * rho) .or. .not. any(dnormsav(3:size(dnormsav)) >= TENTH * rho)) &
+    !good_mod = (shortd .and. (all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)) &
     !    & .or. ((qred > 0 .and. .not. shortd) .and. ratio > TENTH .and. knew_tr > 0))
     !improve_geo = (.not. good_mod) .and. (.not. close_itpset)
     !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)

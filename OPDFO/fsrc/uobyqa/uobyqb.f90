@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 08, 2022 PM02:55:59
+! Last Modified: Wednesday, November 09, 2022 PM08:56:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -368,7 +368,6 @@ do while (.true.)
     bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. ddknew > 4.0_RP * rho**2))
     !bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
 
-    accurate_mod = .true.
     !if (bad_trstep) then
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     close_itpset = all(distsq <= 4.0_RP * rho**2)
@@ -378,6 +377,7 @@ do while (.true.)
     ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
     ! improve the performance slightly according to a test on 20220720.
     delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
+    accurate_mod = .true.
     do while (any(distsq > 4.0_RP * rho**2))
         ! If a point is sufficiently far away, then set the gradient and Hessian of its Lagrange
         ! function at the centre of the trust region.

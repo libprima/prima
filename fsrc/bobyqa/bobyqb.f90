@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 09, 2022 PM06:08:24
+! Last Modified: Wednesday, November 09, 2022 PM08:08:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -377,7 +377,6 @@ do while (.true.)
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 
         weight = max(ONE, distsq / rho**2)**3.5
-
         !------------------------------------------------------------------------------------------!
         ! Other possible definitions of WEIGHT.
         !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.
@@ -406,8 +405,8 @@ do while (.true.)
 
         ! For the first case below, NEWUOA checks ANY(SCORE>1) .OR. (TR_SUCCESS .AND. ANY(SCORE>0))
         ! instead of ANY(SCORE > 0). This seems to improve the performance of BOBYQA very slightly.
-        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then  ! NEWUOA
-            !if (any(score > 0)) then  ! BOBYQA
+        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then  ! Condition in NEWUOA
+            !if (any(score > 0)) then  ! Condition in BOBYQA
             ! See (6.1) of the BOBYQA paper for the definition of KNEW in this case.
             ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
             knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
