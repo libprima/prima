@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 AM09:13:19
+! Last Modified: Thursday, November 10, 2022 PM04:07:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -142,9 +142,11 @@ else
 end if
 d = scaling * d
 gnorm = sqrt(gg)
+where (is_nan(d)) d = ZERO
 
 if (.not. (gnorm * dd > 0.5E-2_RP * delbar * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
     vmax = abs(scaling * (gd + HALF * scaling * dhd))
+    if (sum(d**2) <= 0) d = dcauchy
     return
 end if
 
@@ -216,6 +218,7 @@ end if
 d = tempd * d + tempv * v
 where (is_nan(d)) d = ZERO
 vmax = delbar * delbar * max(tempa, tempb, tempc)
+if (sum(d**2) <= 0) d = dcauchy
 
 end subroutine geostep
 

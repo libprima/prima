@@ -211,7 +211,7 @@ subroutine initq(fval, xpt, pq, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_MODEL
+use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_MODEL
 
 implicit none
 
@@ -292,7 +292,7 @@ end do
 
 if (present(info)) then
     if (is_nan(sum(abs(pq)))) then
-        info = NAN_MODEL
+        info = NAN_INF_MODEL
     else
         info = INFO_DFT
     end if
@@ -320,7 +320,7 @@ subroutine initl(xpt, pl, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_MODEL
+use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_MODEL
 
 implicit none
 
@@ -416,7 +416,7 @@ end do
 
 if (present(info)) then
     if (is_nan(sum(abs(pl)))) then
-        info = NAN_MODEL
+        info = NAN_INF_MODEL
     else
         info = INFO_DFT
     end if
