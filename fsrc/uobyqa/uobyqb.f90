@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 10, 2022 PM12:09:50
+! Last Modified: Thursday, November 10, 2022 PM01:24:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -183,7 +183,8 @@ do while (.true.)
     dnorm = min(delta, sqrt(sum(d**2)))
     errtol = ZERO
     shortd = (dnorm < HALF * rho)
-    improve_geo = shortd
+    ! Use the quadratic model to predict the change in F due to the step D
+    qred = -quadinc(pq, d, xopt)
     if (shortd) then
         ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
         delta = TENTH * delta
@@ -232,9 +233,6 @@ do while (.true.)
             exit
         end if
 
-        ! Use the quadratic model to predict the change in F due to the step D, and find the values
-        ! of the Lagrange functions at the new point.
-        qred = -quadinc(pq, d, xopt)
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
         vlag = calvlag(pl, d, xopt, kopt)
 

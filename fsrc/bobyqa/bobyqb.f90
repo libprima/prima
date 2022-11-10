@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 10, 2022 PM12:13:33
+! Last Modified: Thursday, November 10, 2022 PM01:55:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -221,6 +221,8 @@ do while (.true.)
 
     dnorm = min(delta, sqrt(sum(d**2)))
     shortd = (dnorm < HALF * rho)
+    ! Use the quadratic model to predict the change in F due to the step D
+    qred = -quadinc(d, xpt, gopt, pq, hq)
 
     ! When D is short, make a choice between reducing RHO and improving the geometry depending
     ! on whether or not our work with the current RHO seems complete. RHO is reduced if the
@@ -258,6 +260,7 @@ do while (.true.)
             xnew = min(max(sl, xnew - xopt), su)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)  ! XBASE is set to XOPT, XOPT to 0.
             xbase = min(max(xl, xbase), xu)
+            qred = -quadinc(d, xpt, gopt, pq, hq)
         end if
         ! Put the variables for the next calculation of the objective function in XNEW, with any
         ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
@@ -297,10 +300,7 @@ do while (.true.)
             exit
         end if
 
-        ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the
-        ! error of this prediction.
         fopt = fval(kopt)
-        qred = -quadinc(d, xpt, gopt, pq, hq)
         diff = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
         ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is

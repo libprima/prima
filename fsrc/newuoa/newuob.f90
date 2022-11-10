@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 10, 2022 PM12:25:54
+! Last Modified: Thursday, November 10, 2022 PM01:24:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -236,13 +236,15 @@ info = MAXTR_REACHED
 do tr = 1, maxtr
     call trsapp(delta, gq, hq, pq, tr_tol, xopt, xpt, crvmin, d)
     dnorm = min(delta, norm(d))
-
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
     shortd = (dnorm < HALF * rho)
+    qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
+
+    !if (shortd .or. .not. qred > 0) then
     if (shortd) then  ! D is short.
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
         ! N.B.: 1. This value of DELTA will be discarded if REDUCE_RHO turns out TRUE later.
-        ! 2. Without shrinking DELTA, the algorithm may  be stuck in an infinite cycling, because
+        ! 2. Without shrinking DELTA, the algorithm may be stuck in an infinite cycling, because
         ! both REDUCE_RHO and IMPROVE_GEO may end up with FALSE in this case.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
@@ -266,7 +268,6 @@ do tr = 1, maxtr
             exit
         end if
 
-        qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
