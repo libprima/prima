@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 10, 2022 PM12:14:59
+! Last Modified: Thursday, November 10, 2022 PM12:43:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -294,7 +294,7 @@ do while (.true.)
     !!SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
     !------------------------------------------------------------------------------------------!
 
-    ! DNORMSAV saves the DNORM of last few (5) trust-region iterations. It will be used to
+    ! DNORMSAV saves the DNORM of last few (five) trust-region iterations. It will be used to
     ! decide whether we should improve the geometry of the interpolation set or reduce RHO when
     ! SHORTD is TRUE. Note that it does not record the geometry steps.
     dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
