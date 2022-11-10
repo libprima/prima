@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 09, 2022 PM06:08:25
+! Last Modified: Thursday, November 10, 2022 PM10:10:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -222,6 +222,7 @@ do while (.true.)
 
     dnorm = min(delta, sqrt(sum(d**2)))
     shortd = (dnorm < HALF * rho)
+    qred = -quadinc(d, xpt, gopt, pq, hq)
 
     ! When D is short, make a choice between reducing RHO and improving the geometry depending
     ! on whether or not our work with the current RHO seems complete. RHO is reduced if the
@@ -234,7 +235,7 @@ do while (.true.)
     ! trust-region center may be an approximate local minimizer. When this occurs, the algorithm
     ! takes the view that the work for the current RHO is complete, and hence it will reduce
     ! RHO, which will enhance the resolution of the algorithm in general.
-    if (shortd) then  ! D is to short to invoke a function evaluation.
+    if (shortd .or. .not. qred > 0) then  ! D is to short to invoke a function evaluation.
         ! Reduce DELTA.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
@@ -491,10 +492,10 @@ do while (.true.)
     !reduce_rho = (shortd .and. accurate_mod) .or. (close_itpset .and. (shortd .or. (ratio <= 0 .and. small_trrad)))
     ! However, it does not behave differently compared to the following, which is the definition in
     ! NEWUOA and LINCOA.
-    bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
-    bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
