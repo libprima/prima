@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 10, 2022 PM08:46:11
+! Last Modified: Thursday, November 10, 2022 PM11:25:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -165,6 +165,7 @@ rho = rhobeg
 delta = rho
 moderrsav = HUGENUM
 dnormsav = HUGENUM
+ratio = -ONE
 knew_tr = 0_IK
 shortd = .false.
 reduce_rho = .false.
