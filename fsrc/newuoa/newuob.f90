@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 10, 2022 PM01:24:56
+! Last Modified: Thursday, November 10, 2022 PM09:30:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -240,8 +240,7 @@ do tr = 1, maxtr
     shortd = (dnorm < HALF * rho)
     qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
 
-    !if (shortd .or. .not. qred > 0) then
-    if (shortd) then  ! D is short.
+    if (shortd .or. .not. qred > 0) then
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
         ! N.B.: 1. This value of DELTA will be discarded if REDUCE_RHO turns out TRUE later.
         ! 2. Without shrinking DELTA, the algorithm may be stuck in an infinite cycling, because
@@ -250,7 +249,7 @@ do tr = 1, maxtr
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
-    else  ! D is long enough.
+    else
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
@@ -328,7 +327,7 @@ do tr = 1, maxtr
         if (knew_tr > 0 .and. delta <= rho) then  ! DELTA = RHO.
             call tryqalt(idz, fval - fopt, ratio, bmat, zmat, itest, gq, hq, pq)
         end if
-    end if  ! End of IF (.NOT. SHORTD). The normal trust-region calculation ends here.
+    end if  ! End of IF (SHORTD .OR. .NOT. QRED > 0). The normal trust-region calculation ends here.
 
 
     !----------------------------------------------------------------------------------------------!
@@ -351,11 +350,11 @@ do tr = 1, maxtr
     adequate_mod = (shortd .and. accurate_mod) .or. close_itpset
 
 
-    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
-    bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
+    !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
     improve_geo = bad_trstep .and. .not. adequate_mod
-    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
-    bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
+    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
     reduce_rho = bad_trstep .and. adequate_mod .and. small_trrad
 
     ! REDUCE_RHO corresponds to Boxes 14 and 10 of the NEWUOA paper.

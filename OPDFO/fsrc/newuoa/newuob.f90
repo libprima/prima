@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 10, 2022 PM12:15:28
+! Last Modified: Thursday, November 10, 2022 PM10:03:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -235,10 +235,11 @@ info = MAXTR_REACHED
 do tr = 1, maxtr
     call trsapp(delta, gq, hq, pq, tr_tol, xopt, xpt, crvmin, d)
     dnorm = min(delta, norm(d))
+    qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
 
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
     shortd = (dnorm < HALF * rho)
-    if (shortd) then  ! D is short.
+    if (shortd .or. .not. qred > 0) then  ! D is short.
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
         ! N.B.: 1. This value of DELTA will be discarded if REDUCE_RHO turns out TRUE later.
         ! 2. Without shrinking DELTA, the algorithm may  be stuck in an infinite cycling, because
@@ -385,7 +386,7 @@ do tr = 1, maxtr
     ! It can even be moved below IF (IMPROVE_GEO) ... END IF. Even though DNORM gets a new value
     ! after the geometry step when IMPROVE_GEO = TRUE, this value does not affect REDUCE_RHO,
     ! because DNORM comes into play only if IMPROVE_GEO = FALSE.
-    bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
     ! When MAX(DELTA, DNORM) > RHO, as Powell mentioned under (2.3) of the NEWUOA paper, "RHO has
     ! not restricted the most recent choice of D", so it is not reasonable to reduce RHO.
@@ -400,7 +401,7 @@ do tr = 1, maxtr
     ! (see Powell's comment above (7.7) of the NEWUOA paper).
     ! N.B.: If SHORTD = TRUE, then either REDUCE_RHO or IMPROVE_GEO is true unless DELTA > RHO and
     ! all the points are within a ball centered at XOPT with a radius of 2*DELTA.
-    bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
     ! The following definitions of IMPROVE_GEO are equivalent to the one above.
     !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
