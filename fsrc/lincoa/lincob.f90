@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 08, 2022 PM05:10:17
+! Last Modified: Thursday, November 10, 2022 PM12:14:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -154,7 +154,7 @@ real(RP) :: delbar, delta, dffalt, diff, &
 &        distsq(npt), fopt, ratio,     &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
-logical :: accurate_mod
+logical :: accurate_mod, adequate_mod
 logical :: bad_trstep
 logical :: close_itpset
 logical :: small_trrad
@@ -477,15 +477,28 @@ do while (.true.)
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-    close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Behaves the same as Powell's version.
-    !close_itpset = all(distsq <= max(delta * delta, 4.0_RP * rho * rho))  ! Powell's origin code.
+    close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
+    !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Behaves the same as Powell's version.
+    !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's code.
+    !close_itpset = all(distsq <= rho**2)  ! Does not work as well as Powell's version.
+    !close_itpset = all(distsq <= 10.0_RP * rho**2)  ! Does not work as well as Powell's version.
+    !close_itpset = all(distsq <= delta**2)  ! Does not work as well as Powell's version.
+    !close_itpset = all(distsq <= 10.0_RP * delta**2)  ! Does not work as well as Powell's version.
+    !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA code.
     !----------------------------------------------------------------------------------------------!
+    adequate_mod = (shortd .and. accurate_mod) .or. close_itpset
 
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
-    reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
-    improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
+    improve_geo = bad_trstep .and. .not. adequate_mod
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
+    reduce_rho = bad_trstep .and. adequate_mod .and. small_trrad
+
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
+    !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
+    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
     ! The following definitions of IMPROVE_GEO are equivalent to the one above.
     !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
     !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((qred > 0 .and. .not. shortd) .and. ratio <= TENTH)) &

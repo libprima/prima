@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 PM11:09:52
+! Last Modified: Thursday, November 10, 2022 AM11:55:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -479,7 +479,8 @@ do while (.true.)
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
     !close_itpset = all(distsq <= max(delta * delta, 4.0_RP * rho * rho))
-    close_itpset = all(distsq <= 4.0_RP * rho**2)
+    !close_itpset = all(distsq <= 4.0_RP * rho**2)
+    close_itpset = all(distsq <= 4.0_RP * delta**2)
     !----------------------------------------------------------------------------------------------!
 
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
