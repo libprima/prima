@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 09, 2022 PM11:19:17
+! Last Modified: Thursday, November 10, 2022 PM12:09:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -112,7 +112,7 @@ real(RP) :: ddmove, delta, diff, distsq(size(pl, 2)), delbar, &
 &        trtol, &
 &        qred, plknew(size(pl, 1)), fval(size(pl, 2))
 integer(IK) :: k, knew_tr, knew_geo, kopt, subinfo
-logical :: tr_success, shortd, improve_geo, reduce_rho, accurate_mod, close_itpset, small_trrad, bad_trstep
+logical :: tr_success, shortd, improve_geo, reduce_rho, accurate_mod, adequate_mod, close_itpset, small_trrad, bad_trstep
 real(RP) :: dnormsav(3), moderrsav(size(dnormsav))
 
 ! Sizes.
@@ -347,8 +347,11 @@ do while (.true.)
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
-    close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Behaves the same as ALL(DISTSQ <= 4.0_RP * DELTA**2)
+    close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
+    !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Powell's code.
+    !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA code.
     !----------------------------------------------------------------------------------------------!
+    adequate_mod = (shortd .and. accurate_mod) .or. close_itpset
 
     ! Comments on ACCURATE_MOD:
     ! 1. ACCURATE_MOD is needed only when SHORTD is TRUE.
@@ -374,11 +377,17 @@ do while (.true.)
     !reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
 
     bad_trstep = (shortd .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
-    !bad_trstep = (shortd .or. (ratio <= TENTH .and. dnorm <= 2.0 * rho .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
-    improve_geo = bad_trstep .and. .not. (shortd .and. accurate_mod) .and. .not. close_itpset
+    improve_geo = bad_trstep .and. .not. adequate_mod
     bad_trstep = (shortd .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
-    !bad_trstep = (shortd .or. (ratio <= 0 .and. dnorm <= 2.0 * rho .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
-    reduce_rho = bad_trstep .and. small_trrad .and. (.not. improve_geo)
+    reduce_rho = bad_trstep .and. adequate_mod .and. small_trrad
+
+
+    !bad_trstep = (shortd .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
+    !!bad_trstep = (shortd .or. (ratio <= TENTH .and. dnorm <= 2.0 * rho .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
+    !improve_geo = bad_trstep .and. .not. (shortd .and. accurate_mod) .and. .not. close_itpset
+    !bad_trstep = (shortd .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
+    !!bad_trstep = (shortd .or. (ratio <= 0 .and. dnorm <= 2.0 * rho .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
+    !reduce_rho = bad_trstep .and. small_trrad .and. (.not. improve_geo)
 
 
 
