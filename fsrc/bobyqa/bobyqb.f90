@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 10, 2022 PM01:55:56
+! Last Modified: Thursday, November 10, 2022 PM10:07:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -235,7 +235,7 @@ do while (.true.)
     ! trust-region center may be an approximate local minimizer. When this occurs, the algorithm
     ! takes the view that the work for the current RHO is complete, and hence it will reduce
     ! RHO, which will enhance the resolution of the algorithm in general.
-    if (shortd) then  ! D is to short to invoke a function evaluation.
+    if (shortd .or. .not. qred > 0) then  ! D is to short to invoke a function evaluation.
         ! Reduce DELTA.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
@@ -501,9 +501,9 @@ do while (.true.)
     adequate_mod = (shortd .and. accurate_mod) .or. close_itpset
 
 
-    bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
     improve_geo = bad_trstep .and. .not. adequate_mod
-    bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
     reduce_rho = bad_trstep .and. adequate_mod .and. small_trrad
 
     !! What if RESCUE has been called? Is it reasonable to use RATIO?
