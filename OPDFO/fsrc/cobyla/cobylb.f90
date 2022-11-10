@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, November 05, 2022 PM10:43:41
+! Last Modified: Thursday, November 10, 2022 PM11:37:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -343,60 +343,62 @@ do tr = 1, maxtr
             end if
         end if
 
-        x = sim(:, n + 1) + d
-        ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evaluate(calcfc, x, f, constr, cstrv)
-        nf = nf + 1_IK
-        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
-        ! Save X, F, CONSTR, CSTRV into the history.
-        call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
-        ! Save X, F, CONSTR, CSTRV into the filter.
-        call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+        if (max(prerec, preref) > 0) then
+            x = sim(:, n + 1) + d
+            ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
+            call evaluate(calcfc, x, f, constr, cstrv)
+            nf = nf + 1_IK
+            call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+            ! Save X, F, CONSTR, CSTRV into the history.
+            call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
+            ! Save X, F, CONSTR, CSTRV into the filter.
+            call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
 
-        ! Begin the operations that decide whether X should replace one of the vertices of the
-        ! current simplex, the change being mandatory if ACTREM is positive. PREREM and ACTREM are
-        ! the predicted and actual reductions in the merit function respectively.
-        prerem = preref + cpen * prerec  ! Theoretically nonnegative; equals 0 if CPEN = 0 = PREREF.
-        actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
-        if (cpen <= 0 .and. abs(f - fval(n + 1)) <= 0) then
-            ! CPEN <= 0 indeed means CPEN == 0, while ABS(A - B) <= 0 indeed means A == B.
-            ! We code in this way to avoid compilers complaining about equality comparison of reals.
-            prerem = prerec
-            actrem = cval(n + 1) - cstrv
-        end if
+            ! Begin the operations that decide whether X should replace one of the vertices of the
+            ! current simplex, the change being mandatory if ACTREM is positive. PREREM and ACTREM are
+            ! the predicted and actual reductions in the merit function respectively.
+            prerem = preref + cpen * prerec  ! Theoretically nonnegative; equals 0 if CPEN = 0 = PREREF.
+            actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
+            if (cpen <= 0 .and. abs(f - fval(n + 1)) <= 0) then
+                ! CPEN <= 0 indeed means CPEN == 0, while ABS(A - B) <= 0 indeed means A == B.
+                ! We code in this way to avoid compilers complaining about equality comparison of reals.
+                prerem = prerec
+                actrem = cval(n + 1) - cstrv
+            end if
 
-        ! In theory, PREREM >= 0, but this can fail due to rounding errors.
-        !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')
+            ! In theory, PREREM >= 0, but this can fail due to rounding errors.
+            !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')
 
-        ratio = redrat(actrem, prerem, eta1)
-        ! Update DELTA. After this, DELTA < DNORM may hold.
-        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
-        if (delta <= 1.5_RP * rho) then
-            delta = rho
-        end if
+            ratio = redrat(actrem, prerem, eta1)
+            ! Update DELTA. After this, DELTA < DNORM may hold.
+            delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+            if (delta <= 1.5_RP * rho) then
+                delta = rho
+            end if
 
-        ! Set JDROP_TR to the index of the vertex that is to be replaced by X. JDROP_TR = 0 means
-        ! there is no good point to replace, and X will not be included into the simplex; in this
-        ! case, the geometry of the simplex likely needs improvement, which will be handled below.
-        ! N.B.: COBYLA never sets JDROP_TR = N + 1.
-        tr_success = (actrem > 0)  ! N.B.: If ACTREM is NaN, then TR_SUCCESS should & will be FALSE.
-        jdrop_tr = setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi)
+            ! Set JDROP_TR to the index of the vertex that is to be replaced by X. JDROP_TR = 0 means
+            ! there is no good point to replace, and X will not be included into the simplex; in this
+            ! case, the geometry of the simplex likely needs improvement, which will be handled below.
+            ! N.B.: COBYLA never sets JDROP_TR = N + 1.
+            tr_success = (actrem > 0)  ! N.B.: If ACTREM is NaN, then TR_SUCCESS should & will be FALSE.
+            jdrop_tr = setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi)
 
-        ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
-        ! N.B.: UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides not to include X
-        ! into the simplex.
-        call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
-        ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
-        if (subinfo == DAMAGING_ROUNDING) then
-            info = subinfo
-            exit  ! Better action to take? Geometry step, or simply continue?
-        end if
+            ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
+            ! N.B.: UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides not to include X
+            ! into the simplex.
+            call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
+            ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
+            if (subinfo == DAMAGING_ROUNDING) then
+                info = subinfo
+                exit  ! Better action to take? Geometry step, or simply continue?
+            end if
 
-        ! Check whether to exit.
-        subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
-        if (subinfo /= INFO_DFT) then
-            info = subinfo
-            exit
+            ! Check whether to exit.
+            subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
+            if (subinfo /= INFO_DFT) then
+                info = subinfo
+                exit
+            end if
         end if
     end if  ! End of IF (SHORTD). The normal trust-region calculation ends here.
 
@@ -419,7 +421,8 @@ do tr = 1, maxtr
     ! need is .NOT. (ACTREM > 0), or equivalently ACTREM <= 0 .OR. IS_NAN(ACTREM). It is attempting
     ! to write .NOT. TR_SUCCESS, but Fortran compilers will complain that TR_SUCCESS is undefined
     ! when SHORTD is TRUE; in addition, doing so would couple the code, which we try to avoid.
-    bad_trstep = (shortd .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
+    !bad_trstep = (shortd .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
+    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
     improve_geo = (bad_trstep .and. .not. good_geo)
