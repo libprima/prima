@@ -300,7 +300,7 @@ subroutine initq(ij, fval, xpt, gopt, hq, pq, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_MODEL
+use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_MODEL
 use, non_intrinsic :: linalg_mod, only : issymmetric, diag, matprod
 
 implicit none
@@ -399,7 +399,7 @@ pq = ZERO
 
 if (present(info)) then
     if (is_nan(sum(abs(gopt)) + sum(abs(hq)))) then
-        info = NAN_MODEL
+        info = NAN_INF_MODEL
     else
         info = INFO_DFT
     end if
@@ -431,7 +431,7 @@ subroutine inith(ij, xpt, bmat, zmat, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_MODEL
+use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_MODEL
 use, non_intrinsic :: linalg_mod, only : issymmetric, diag
 
 implicit none
@@ -516,7 +516,7 @@ end do
 
 if (present(info)) then
     if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
-        info = NAN_MODEL
+        info = NAN_INF_MODEL
     else
         info = INFO_DFT
     end if

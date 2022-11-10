@@ -22,7 +22,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, July 19, 2022 PM10:04:07
+! Last Modified: Thursday, November 10, 2022 PM03:12:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -153,7 +153,7 @@ subroutine newuoa(calfun, x, f, &
 !   !--------------------------------------------------------------------------!
 !   The following case(s) should NEVER occur unless there is a bug.
 !   NAN_INF_F: the objective function returns NaN or +Inf;
-!   NAN_MODEL: NaN occurs in the model;
+!   NAN_INF_MODEL: NaN or Inf occurs in the model;
 !   TRSUBP_FAILED: a trust region step failed to reduce the model;
 !   !--------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!

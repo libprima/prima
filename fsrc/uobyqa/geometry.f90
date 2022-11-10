@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 AM09:16:20
+! Last Modified: Thursday, November 10, 2022 PM04:01:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -74,8 +74,6 @@ end if
 !     subroutine provides such a solution in only of order N**2 operations,
 !     where the claim of accuracy has been tested by numerical experiments.
 !
-!     Preliminary calculations.
-!
 
 ! Calculate the Cauchy step as a backup.
 gg = sum(g**2)
@@ -136,9 +134,13 @@ else
     scaling = delbar / sqrt(dd)
 end if
 d = scaling * d
+d(trueloc(is_nan(d))) = ZERO
 gnorm = sqrt(gg)
 
 if (.not. (gnorm * dd > 0.5E-2_RP * delbar * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
+    if (sum(d**2) <= 0) then
+        d = dcauchy
+    end if
     return
 end if
 
@@ -208,6 +210,9 @@ else
 end if
 d = tempd * d + tempv * v
 d(trueloc(is_nan(d))) = ZERO  ! D may contain NaN if the problem is ill-conditioned.
+if (sum(d**2) <= 0) then
+    d = dcauchy
+end if
 
 !====================!
 !  Calculation ends  !

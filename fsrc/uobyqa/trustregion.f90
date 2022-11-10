@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 PM04:49:50
+! Last Modified: Thursday, November 10, 2022 PM04:03:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,7 +129,7 @@ crvmin = ZERO
 ! Scale the problem if GNORM is large. Otherwise, floating point exceptions may occur. In the sequel,
 ! GG and HH are used instead of G and H, which are INTENT(IN) and hence cannot be changed.
 scaling = maxval(abs(g))
-if (scaling > 1.0E8) then  ! 1.0E6 is empirical.
+if (scaling > 1.0E8) then  ! The threshold is empirical.
     gg = g / scaling
     hh = h / scaling
     scaled = .true.
@@ -175,11 +175,11 @@ end if
 ! In the comments hereafter, H indeed means this tridiagonal matrix.
 call hessenberg(hh, td, tn)  !!MATLAB: [P, hh] = hess(hh); td = diag(hh); tn = diag(hh, 1)
 
-! Form GG by applying the similarity transformation to G.
+! Form GG by applying the similarity transformation.
 do k = 1, n - 1_IK
     gg(k + 1:n) = gg(k + 1:n) - inprod(gg(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
-!!MATLAB: gg = (g'*P)';  % gg = P'*g;
+!!MATLAB: gg = (gg'*P)';  % gg = P'*gg;
 
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20220303: Exit if GG, HH, TD, or TN is not finite. Otherwise, the behavior of this
