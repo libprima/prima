@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, July 23, 2022 PM12:26:09
+! Last Modified: Thursday, November 10, 2022 PM03:11:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -215,7 +215,7 @@ subroutine cobyla(calcfc, m, x, f, &
 !   !--------------------------------------------------------------------------!
 !   The following case(s) should NEVER occur unless there is a bug.
 !   NAN_INF_F: the objective function returns NaN or +Inf;
-!   NAN_MODEL: NaN occurs in the model;
+!   NAN_INF_MODEL: NaN or Inf occurs in the model;
 !   TRSUBP_FAILED: a trust region step failed to reduce the model
 !   !--------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!

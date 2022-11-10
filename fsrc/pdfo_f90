@@ -38,7 +38,7 @@ use, non_intrinsic :: bobyqa_mod, only : bobyqa
 use, non_intrinsic :: lincoa_mod, only : lincoa
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: infos_mod, only : INFO_DFT, INVALID_INPUT, SMALL_TR_RADIUS, FTARGET_ACHIEVED, &
-    & TRSUBP_FAILED, MAXFUN_REACHED, MAXTR_REACHED, NAN_INF_X, NAN_INF_F, NAN_MODEL, &
+    & TRSUBP_FAILED, MAXFUN_REACHED, MAXTR_REACHED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, &
     & DAMAGING_ROUNDING, NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT
 
 implicit none
@@ -48,7 +48,7 @@ private
 public :: cobyla, uobyqa, newuoa, bobyqa, lincoa
 public :: RP, IK
 public :: INFO_DFT, INVALID_INPUT, SMALL_TR_RADIUS, FTARGET_ACHIEVED, &
-    & TRSUBP_FAILED, MAXFUN_REACHED, MAXTR_REACHED, NAN_INF_X, NAN_INF_F, NAN_MODEL, &
+    & TRSUBP_FAILED, MAXFUN_REACHED, MAXTR_REACHED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, &
     & DAMAGING_ROUNDING, NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT
 
 end module pdfo

@@ -8,7 +8,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, January 01, 2022 AM10:42:12
+! Last Modified: Thursday, November 10, 2022 PM03:10:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,7 +57,7 @@ subroutine retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, MSGLEN, FNAMELEN, OUTUNIT, STDOUT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, SMALL_TR_RADIUS
-use, non_intrinsic :: infos_mod, only : TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_MODEL, DAMAGING_ROUNDING
+use, non_intrinsic :: infos_mod, only : TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING
 implicit none
 
 ! Compulsory inputs
@@ -80,7 +80,7 @@ character(len=MSGLEN) :: msg
 integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 integer(IK), parameter :: valid_exit_flags(9) = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
-    & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_MODEL, DAMAGING_ROUNDING]
+    & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_INF_MODEL, DAMAGING_ROUNDING]
 logical :: fexist
 logical :: is_constrained
 real(RP) :: cstrv_loc
@@ -142,8 +142,8 @@ case (NAN_INF_X)
     msg = 'NaN or Inf occurs in x.'
 case (NAN_INF_F)
     msg = 'the objective function returns NaN/+Inf.'
-case (NAN_MODEL)
-    msg = 'NaN occurs in the models.'
+case (NAN_INF_MODEL)
+    msg = 'NaN or Inf occurs in the models.'
 case (DAMAGING_ROUNDING)
     msg = 'rounding errors are becoming damaging.'
 case default
