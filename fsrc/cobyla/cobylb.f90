@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, November 10, 2022 PM11:38:44
+! Last Modified: Friday, November 11, 2022 AM09:14:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -249,7 +249,9 @@ rho = rhobeg
 delta = rhobeg
 cpen = ZERO
 actrem = -HUGENUM
-prerem = HUGENUM
+prerec = -HUGENUM
+preref = -HUGENUM
+prerem = -HUGENUM
 ratio = -ONE
 jdrop_tr = 0_IK
 jdrop_geo = 0_IK
@@ -422,7 +424,7 @@ do tr = 1, maxtr
     ! to write .NOT. TR_SUCCESS, but Fortran compilers will complain that TR_SUCCESS is undefined
     ! when SHORTD is TRUE; in addition, doing so would couple the code, which we try to avoid.
     !bad_trstep = (shortd .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
-    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. (.not. actrem > 0) .or. jdrop_tr == 0)
+    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
     improve_geo = (bad_trstep .and. .not. good_geo)
