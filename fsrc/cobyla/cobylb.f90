@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 11, 2022 PM03:15:06
+! Last Modified: Friday, November 11, 2022 PM10:43:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -137,7 +137,6 @@ real(RP) :: cval(size(x) + 1)
 real(RP) :: d(size(x))
 real(RP) :: delta
 real(RP) :: dnorm
-real(RP) :: dnormsav(3), moderrsav(size(dnormsav)), dmove
 real(RP) :: ffilt(size(cfilt))
 real(RP) :: fval(size(x) + 1)
 real(RP) :: prerec  ! Predicted reduction in constraint violation
@@ -259,8 +258,6 @@ prerem = -HUGENUM
 ratio = -ONE
 jdrop_tr = 0_IK
 jdrop_geo = 0_IK
-dnormsav = HUGENUM
-moderrsav = HUGENUM
 
 ! MAXTR is the maximal number of trust-region iterations. Normally, each trust-region iteration
 ! takes 1 or 2 function evaluations unless the update of CPEN alters the optimal vertex or the
@@ -311,8 +308,6 @@ do tr = 1, maxtr
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
     else
-        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
         ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
         ! 1. PREREC >= 0; PREREC = 0 iff B(1:M) <= 0, i.e., the trust-region center satisfies the
@@ -379,7 +374,8 @@ do tr = 1, maxtr
             ! In theory, PREREM >= 0, but this can fail due to rounding errors.
             !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')
 
-            moderrsav = [moderrsav(2:size(moderrsav)), maxval(abs([f - fval(n + 1) + preref, cstrv - cval(n + 1) + prerec]))]
+            !dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+            !moderrsav = [moderrsav(2:size(moderrsav)), maxval(abs([f - fval(n + 1) + preref, cstrv - cval(n + 1) + prerec]))]
 
             ratio = redrat(actrem, prerem, eta1)
             ! Update DELTA. After this, DELTA < DNORM may hold.
@@ -394,11 +390,6 @@ do tr = 1, maxtr
             ! N.B.: COBYLA never sets JDROP_TR = N + 1.
             tr_success = (actrem > 0)  ! N.B.: If ACTREM is NaN, then TR_SUCCESS should & will be FALSE.
             jdrop_tr = setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi)
-            if (jdrop_tr > 0) then
-                dmove = norm(sim(:, jdrop_tr))
-            else
-                dmove = ZERO
-            end if
 
             ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
             ! N.B.: UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides not to include X
@@ -434,25 +425,31 @@ do tr = 1, maxtr
     ! 2. Powell's definition of BAD_TRSTEP is
     !!bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
     ! But the following one seems to work better, especially for linearly constrained problems.
+    !!bad_trstep = (shortd .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
     ! 3. Note that ACTREM may be NaN. Thus it is not enough to check whether ACTREM <= 0. What we
     ! need is .NOT. (ACTREM > 0), or equivalently ACTREM <= 0 .OR. IS_NAN(ACTREM). It is attempting
     ! to write .NOT. TR_SUCCESS, but Fortran compilers will complain that TR_SUCCESS is undefined
     ! when SHORTD is TRUE; in addition, doing so would couple the code, which we try to avoid.
-    !bad_trstep = (shortd .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
-    !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
-    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)  ! 1048
-    !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. (ratio <= TENTH .and. dmove <= 2.0_RP * delta) &
-    !   & .or. jdrop_tr == 0)  ! 1058
-    !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. (ratio <= TENTH .and. dmove <= factor_beta * delta) &
-    !   & .or. jdrop_tr == 0)  ! 1158
-    !good_geo = (shortd .and. all(abs(moderrsav) <= TENTH * maxval(abs(A)) * rho) .and. all(dnormsav <= rho)) .or. good_geo
+    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
     improve_geo = (bad_trstep .and. .not. good_geo)
 
     ! Should we enhance the resolution by reducing RHO?
     bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
     reduce_rho = (bad_trstep .and. good_geo .and. max(delta, dnorm) <= rho)
+
+    !----------------------------------------------------------------------------------------------!
+    ! Comment on REDUCE_RHO:
+    ! When SHORTD is TRUE, UOBYQA/NEWUOA/BOBYQA/LINCOA all set REDUCE_RHO to TRUE if the recent
+    ! models are sufficiently accurate according to certain criteria. See the paragraph around (37)
+    ! in the UOBYQA paper and the discussions about Box 14 in the NEWUOA. This strategy is crucial
+    ! for the performance of the solvers. However, as of 20221111, we have not managed to make this
+    ! strategy work in COBYLA. As in NEWUOA, we recorded the errors of the recent models, and set
+    ! REDUCE_RHO to true if they are small (e.g., ALL(ABS(MODERRSAV) <= 0.1* MAXVAL(ABS(A))*RHO) or
+    ! ALL(ABS(MODERRSAV) <= RHO**2)) when SHORTD is TRUE, but this strategy made little impact upon
+    ! the performance.
+    !----------------------------------------------------------------------------------------------!
 
     !----------------------------------------------------------------------------------------------!
     ! N.B.: COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously. Thus the following
@@ -543,8 +540,6 @@ do tr = 1, maxtr
             info = subinfo
             exit  ! Better action to take? Geometry step, or simply continue?
         end if
-        dnormsav = HUGENUM
-        moderrsav = HUGENUM
     end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
 
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
