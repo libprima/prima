@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 10, 2022 PM09:01:07
+! Last Modified: Friday, November 11, 2022 PM03:41:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -371,7 +371,8 @@ do while (.true.)
 
     !if (bad_trstep) then
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    close_itpset = all(distsq <= 4.0_RP * rho**2)
+    !close_itpset = all(distsq <= 4.0_RP * rho**2)
+    close_itpset = all(distsq <= 4.0_RP * delta**2)
 
     ! DELBAR is the trust-region radius for the geometry step subproblem.
     ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
@@ -426,9 +427,11 @@ do while (.true.)
 
     ! REDUCE_RHO and IMPROVE_GEO in NEWUOA/BOBYQA/LINCOA.
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddknew <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddknew <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO
     reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddknew <= 4.0_RP * delta**2) .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     if (improve_geo) then
