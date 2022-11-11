@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, September 25, 2022 PM06:27:18
+! Last Modified: Friday, November 11, 2022 PM12:13:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -49,8 +49,6 @@ logical :: good_geo
 ! Local variables
 character(len=*), parameter :: srname = 'GOODGEO'
 integer(IK) :: n
-real(RP) :: pareta
-real(RP) :: parsig
 real(RP) :: veta(size(sim, 1))
 real(RP) :: vsig(size(sim, 1))
 real(RP), parameter :: itol = TENTH
@@ -77,14 +75,12 @@ end if
 !====================!
 
 ! Calculate the values of sigma and eta.
-parsig = factor_alpha * delta
-pareta = factor_beta * delta
 ! VETA(J) (1 <= J <= N) is the distance between vertices J and 0 (the best vertex) of the simplex.
 ! VSIG(J) is the distance from vertex J to the opposite face of the simplex. Thus VSIG <= VETA.
 ! But what about vertex N+1?
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
-good_geo = all(vsig >= parsig) .and. all(veta <= pareta)
+good_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta * delta)
 
 !====================!
 !  Calculation ends  !
@@ -130,7 +126,6 @@ character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 logical :: mask(size(sim, 1))
 real(RP) :: edgmax
-real(RP) :: parsig
 real(RP) :: sigbar(size(sim, 1))
 real(RP) :: simid(size(sim, 1))
 real(RP) :: veta(size(sim, 1))
@@ -150,6 +145,8 @@ if (DEBUGGING) then
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    call assert(factor_alpha > 0 .and. factor_alpha < 1, '0 < FACTOR_ALPHA < 1', srname)
+    call assert(factor_delta > 1, 'FACTOR_DELTA > 1', srname)
 end if
 
 !====================!
@@ -173,11 +170,10 @@ else
     veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
 edgmax = factor_delta * delta
-parsig = factor_alpha * delta
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 sigbar = abs(simid) * vsig
 ! The following JDROP will overwrite the previous one if its premise holds.
-mask = (veta > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig))
+mask = (veta > edgmax .and. (sigbar >= factor_alpha * delta .or. sigbar >= vsig))
 if (any(mask)) then
     jdrop = int(maxloc(veta, mask=mask, dim=1), kind(jdrop))
     !!MATLAB: etamax = max(veta(mask)); jdrop = find(mask & ~(veta < etamax), 1, 'first');
@@ -238,8 +234,6 @@ integer(IK) :: jdrop
 ! Local variables
 character(len=*), parameter :: srname = 'SETDROP_GEO'
 integer(IK) :: n
-real(RP) :: pareta
-real(RP) :: parsig
 real(RP) :: veta(size(sim, 1))
 real(RP) :: vsig(size(sim, 1))
 real(RP), parameter :: itol = TENTH
@@ -256,6 +250,8 @@ if (DEBUGGING) then
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    call assert(factor_alpha > 0 .and. factor_alpha < 1, '0 < FACTOR_ALPHA < 1', srname)
+    call assert(factor_beta > 1, 'FACTOR_BETA > 1', srname)
 end if
 
 !====================!
@@ -263,8 +259,6 @@ end if
 !====================!
 
 ! Calculate the values of sigma and eta.
-parsig = factor_alpha * delta
-pareta = factor_beta * delta
 ! VSIG(J) (J=1, .., N) is The Euclidean distance from vertex J to the opposite face of
 ! the current simplex. But what about vertex N+1?
 vsig = ONE / sqrt(sum(simi**2, dim=2))
@@ -272,10 +266,10 @@ veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 
 ! Decide which vertex to drop from the simplex. It will be replaced by a new point to improve
 ! acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
-if (any(veta > pareta)) then
+if (any(veta > factor_beta * delta)) then
     jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
     !!MATLAB: [~, jdrop] = max(veta, [], 'omitnan');
-elseif (any(vsig < parsig)) then
+elseif (any(vsig < factor_alpha * delta)) then
     jdrop = int(minloc(vsig, mask=(.not. is_nan(vsig)), dim=1), kind(jdrop))
     !!MATLAB: [~, jdrop] = min(vsig, [], 'omitnan');
 else
@@ -354,6 +348,7 @@ if (DEBUGGING) then
     call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
         & 'SIZE(CVAL) == NPT and CVAL does not contain negative NaN/+Inf', srname)
     call assert(jdrop >= 1 .and. jdrop <= n, '1 <= JDROP <= N', srname)
+    call assert(factor_gamma > 0 .and. factor_gamma < 1, '0 < FACTOR_GAMMA < 1', srname)
 end if
 
 !====================!
