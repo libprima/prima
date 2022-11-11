@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 11, 2022 AM09:02:15
+! Last Modified: Friday, November 11, 2022 PM03:06:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -376,10 +376,10 @@ do while (.true.)
     !reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
 
     ! BAD_TRSTEP for IMPROVE_GEO.
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
     improve_geo = bad_trstep .and. .not. adequate_mod
     ! BAD_TRSTEP for REDUCE_RHO.
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
     reduce_rho = bad_trstep .and. adequate_mod .and. small_trrad
 
 
