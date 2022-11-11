@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 11, 2022 AM09:14:52
+! Last Modified: Friday, November 11, 2022 AM09:41:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -423,12 +423,14 @@ do tr = 1, maxtr
     ! when SHORTD is TRUE; in addition, doing so would couple the code, which we try to avoid.
     !bad_trstep = (shortd .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
     !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
-    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
+    !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
+    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
     improve_geo = (bad_trstep .and. .not. good_geo)
 
     ! Should we enhance the resolution by reducing RHO?
+    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
     reduce_rho = (bad_trstep .and. good_geo .and. max(delta, dnorm) <= rho)
 
     !----------------------------------------------------------------------------------------------!
