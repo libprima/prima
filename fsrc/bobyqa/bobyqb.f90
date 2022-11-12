@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 10, 2022 PM10:07:57
+! Last Modified: Saturday, November 12, 2022 PM07:58:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,7 +131,7 @@ real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x
 real(RP) :: score(npt)
 integer(IK) :: itest, knew_tr, knew_geo, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, tr_success, reduce_rho, small_trrad, close_itpset, accurate_mod, adequate_mod, bad_trstep, rescued
+logical :: shortd, improve_geo, tr_success, reduce_rho, small_trrad, close_itpset, accurate_mod, adequate_geo, bad_trstep, rescued
 
 
 ! Sizes.
@@ -498,13 +498,13 @@ do while (.true.)
     !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Does not work as well as Powell's version.
     !close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
     !----------------------------------------------------------------------------------------------!
-    adequate_mod = (shortd .and. accurate_mod) .or. close_itpset
+    adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
 
 
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
-    improve_geo = bad_trstep .and. .not. adequate_mod
+    improve_geo = bad_trstep .and. .not. adequate_geo
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
-    reduce_rho = bad_trstep .and. adequate_mod .and. small_trrad
+    reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
 
     !! What if RESCUE has been called? Is it reasonable to use RATIO?
     !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
