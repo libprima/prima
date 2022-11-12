@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 11, 2022 PM03:15:56
+! Last Modified: Saturday, November 12, 2022 PM05:18:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -112,7 +112,7 @@ real(RP) :: ddmove, delta, diff, distsq(size(pl, 2)), delbar, &
 &        trtol, &
 &        qred, plknew(size(pl, 1)), fval(size(pl, 2))
 integer(IK) :: k, knew_tr, knew_geo, kopt, subinfo
-logical :: tr_success, shortd, improve_geo, reduce_rho, accurate_mod, adequate_mod, close_itpset, small_trrad, bad_trstep
+logical :: tr_success, shortd, improve_geo, reduce_rho, accurate_mod, adequate_geo, close_itpset, small_trrad, bad_trstep
 real(RP) :: dnormsav(3), moderrsav(size(dnormsav))
 
 ! Sizes.
@@ -350,7 +350,7 @@ do while (.true.)
     !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Powell's code.
     !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA code.
     !----------------------------------------------------------------------------------------------!
-    adequate_mod = (shortd .and. accurate_mod) .or. close_itpset
+    adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
 
     ! Comments on ACCURATE_MOD:
     ! 1. ACCURATE_MOD is needed only when SHORTD is TRUE.
@@ -377,10 +377,10 @@ do while (.true.)
 
     ! BAD_TRSTEP for IMPROVE_GEO.
     bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
-    improve_geo = bad_trstep .and. .not. adequate_mod
+    improve_geo = bad_trstep .and. .not. adequate_geo
     ! BAD_TRSTEP for REDUCE_RHO.
     bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
-    reduce_rho = bad_trstep .and. adequate_mod .and. small_trrad
+    reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
 
 
     !bad_trstep = (shortd .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
