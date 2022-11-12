@@ -1,13 +1,3 @@
-! TODO for COBYLA: implement
-!  getmodel(conmat, fval, simi, A)
-! and call it before TR step and GEO step, so that we do not need to calculate A within GEOSTEP,
-! which would necessitate a array of (m+1)*n in GEOSTEP. With the new implementation, change GEOSTEP to
-!  d = geostep(A, cpen, conmat, cval, delta, fval, factor_gamma, simi_jdrop)
-! N.B.:
-! 1.) Do not implement GETMODEL as a function, or it will create an automatic/temporary array of (m+1)*n.
-! 2.) Do not call GETMODEL after updatexfc: if we do that, we would also need to call it at three other
-! places: after initialization, after CPEN is updated and we call UPDATEPOLE (two places).
-
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of COBYLA.
@@ -25,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 11, 2022 PM10:43:29
+! Last Modified: Saturday, November 12, 2022 PM10:48:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -247,17 +237,16 @@ end if
 ! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
 ! run-time error that they are undefined. The values will not be used: when SHORTD = FALSE, they
 ! will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is TRUE
-! regardless of ACTREM or PREREM. Similar for JDROP_TR.
+! regardless of ACTREM or PREREM. Similar for PREREC, PREREF, PREREM, RATIO, and JDROP_TR.
 rho = rhobeg
 delta = rhobeg
 cpen = ZERO
-actrem = -HUGENUM
 prerec = -HUGENUM
 preref = -HUGENUM
 prerem = -HUGENUM
+actrem = -HUGENUM
 ratio = -ONE
 jdrop_tr = 0_IK
-jdrop_geo = 0_IK
 
 ! MAXTR is the maximal number of trust-region iterations. Normally, each trust-region iteration
 ! takes 1 or 2 function evaluations unless the update of CPEN alters the optimal vertex or the
@@ -361,9 +350,9 @@ do tr = 1, maxtr
             call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
 
             ! Begin the operations that decide whether X should replace one of the vertices of the
-            ! current simplex, the change being mandatory if ACTREM is positive. PREREM and ACTREM are
-            ! the predicted and actual reductions in the merit function respectively.
-            prerem = preref + cpen * prerec  ! Theoretically nonnegative; equals 0 if CPEN = 0 = PREREF.
+            ! current simplex, the change being mandatory if ACTREM is positive. PREREM and ACTREM
+            ! are the predicted and actual reductions in the merit function respectively.
+            prerem = preref + cpen * prerec  ! Theoretically nonnegative; is 0 if CPEN = 0 = PREREF.
             actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
             if (cpen <= 0 .and. abs(f - fval(n + 1)) <= 0) then
                 ! CPEN <= 0 indeed means CPEN == 0, while ABS(A - B) <= 0 indeed means A == B.
@@ -377,28 +366,30 @@ do tr = 1, maxtr
             !dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
             !moderrsav = [moderrsav(2:size(moderrsav)), maxval(abs([f - fval(n + 1) + preref, cstrv - cval(n + 1) + prerec]))]
 
+            ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
             ratio = redrat(actrem, prerem, eta1)
+
             ! Update DELTA. After this, DELTA < DNORM may hold.
             delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
             if (delta <= 1.5_RP * rho) then
                 delta = rho
             end if
 
-            ! Set JDROP_TR to the index of the vertex that is to be replaced by X. JDROP_TR = 0 means
-            ! there is no good point to replace, and X will not be included into the simplex; in this
-            ! case, the geometry of the simplex likely needs improvement, which will be handled below.
+            ! Set JDROP_TR to the index of the vertex to be replaced by X. JDROP_TR = 0 means there
+            ! is no good point to replace, and X will not be included into the simplex; in this case,
+            ! the geometry of the simplex likely needs improvement, which will be handled below.
             ! N.B.: COBYLA never sets JDROP_TR = N + 1.
-            tr_success = (actrem > 0)  ! N.B.: If ACTREM is NaN, then TR_SUCCESS should & will be FALSE.
+            tr_success = (actrem > 0)  ! If ACTREM is NaN, then TR_SUCCESS should & will be FALSE.
             jdrop_tr = setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi)
 
             ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
-            ! N.B.: UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides not to include X
-            ! into the simplex.
+            ! N.B.: UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides not to include
+            ! X into the simplex.
             call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
-            ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
+            ! Check whether to exit due to damaging rounding in UPDATEPOLE (called by UPDATEXFC).
             if (subinfo == DAMAGING_ROUNDING) then
                 info = subinfo
-                exit  ! Better action to take? Geometry step, or simply continue?
+                exit  ! Better action to take? Geometry step, or a RESCUE as in BOBYQA?
             end if
 
             ! Check whether to exit.
@@ -418,8 +409,9 @@ do tr = 1, maxtr
 
     ! Is the trust-region step a bad one?
     ! N.B.:
-    ! 1. THEORETICALLY, JDROP_TR > 0 when ACTREM > 0. Yet Powell's code may set JDROP_TR = 0 when
-    ! ACTREM > 0 due to NaN. The modernized code has rectified this in the function SETDROP_TR.
+    ! 1. THEORETICALLY, JDROP_TR > 0 when ACTREM > 0 or RATIO > 0. Yet Powell's code may set
+    ! JDROP_TR = 0 when ACTREM > 0 due to NaN. The modernized code has rectified this in the
+    ! function SETDROP_TR.
     ! After this rectification, we can indeed simplify the definition of BAD_TRSTEP below by
     ! removing (JDROP_TR == 0), but we retain (JDROP_TR == 0) for robustness.
     ! 2. Powell's definition of BAD_TRSTEP is
@@ -432,11 +424,13 @@ do tr = 1, maxtr
     ! when SHORTD is TRUE; in addition, doing so would couple the code, which we try to avoid.
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
-    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
+    !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
+    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH)
     improve_geo = (bad_trstep .and. .not. good_geo)
 
     ! Should we enhance the resolution by reducing RHO?
-    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
+    !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
+    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0)
     reduce_rho = (bad_trstep .and. good_geo .and. max(delta, dnorm) <= rho)
 
     !----------------------------------------------------------------------------------------------!

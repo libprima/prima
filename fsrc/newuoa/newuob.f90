@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, November 12, 2022 PM09:36:08
+! Last Modified: Saturday, November 12, 2022 PM10:56:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -271,12 +271,7 @@ do tr = 1, maxtr
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
 
-        ! Calculate the reduction ratio.
-        !------------------------------------------------------------------------------------------!
-        ! Zaikun 20220405: REDRAT returns a large negative value if QRED is nonpositive or NaN.
-        ! This ratio will lead to a contraction of DELTA and make IMPROVE_GEO or REDUCE_RHO true.
-        ! Is there a better strategy? LINCOA does something to improve the model. Applicable here?
-        !------------------------------------------------------------------------------------------!
+        ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(fopt - f, qred, eta1)
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
@@ -353,10 +348,12 @@ do tr = 1, maxtr
 
     ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
     ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad?
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH)
     improve_geo = bad_trstep .and. .not. adequate_geo
     ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0)
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
     ! Equivalently, REDUCE_RHO can be set as follows. It shows that REDUCE_RHO is TRUE in two cases.
     !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
@@ -408,9 +405,9 @@ do tr = 1, maxtr
     ! will be invoked to improve the geometry of the interpolation set and update the model again.
     ! 6. RATIO must be set even if SHORTD = TRUE. Otherwise, compilers will raise a run-time error.
     ! 7. We can move this setting of REDUCE_RHO downward below the definition of IMPROVE_GEO and
-    ! change it to REDUCE_RHO = (.NOT. IMPROVE_GEO) .AND. BAD_TRSTEP .AND. (MAX(DELTA,DNORM) <= RHO)
-    ! It can even be moved below IF (IMPROVE_GEO) ... END IF. Even though DNORM gets a new value
-    ! after the geometry step when IMPROVE_GEO = TRUE, this value does not affect REDUCE_RHO,
+    ! change it to REDUCE_RHO = BAD_TRSTEP .AND. (.NOT. IMPROVE_GEO) .AND. (MAX(DELTA,DNORM) <= RHO)
+    ! This definition can even be moved below IF (IMPROVE_GEO) ... END IF. Although DNORM gets a new
+    ! value after the geometry step when IMPROVE_GEO = TRUE, this value does not affect REDUCE_RHO,
     ! because DNORM comes into play only if IMPROVE_GEO = FALSE.
 
     ! Comments on IMPROVE_GEO:
