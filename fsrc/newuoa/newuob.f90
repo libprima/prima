@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 10, 2022 PM09:30:11
+! Last Modified: Saturday, November 12, 2022 PM09:10:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -111,7 +111,7 @@ integer(IK) :: n
 integer(IK) :: subinfo
 integer(IK) :: tr
 logical :: accurate_mod
-logical :: adequate_mod
+logical :: adequate_geo
 logical :: bad_trstep
 logical :: close_itpset
 logical :: improve_geo
@@ -214,12 +214,12 @@ call inith(ij, xpt, idz, bmat, zmat)
 ! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
 rho = rhobeg
 delta = rho
-moderrsav = HUGENUM
-dnormsav = HUGENUM
-itest = 0_IK
+shortd = .false.
 ratio = -ONE
 knew_tr = 0_IK
-shortd = .false.
+itest = 0_IK
+dnormsav = HUGENUM
+moderrsav = HUGENUM
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
 ! function evaluations unless the trust-region step is short but the geometry step is not invoked.
@@ -229,9 +229,9 @@ info = MAXTR_REACHED
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
-! SHORTD - Is the trust-region trial step too short to invoke a function evaluation?
-! IMPROVE_GEO - Will we improve the geometry (Box 8 of Fig. 1 in the NEWUOA paper)?
-! REDUCE_RHO - Will we reduce rho (Boxes 14 and 10 of Fig. 1 in the NEWUOA paper)?
+! SHORTD: Is the trust-region trial step too short to invoke a function evaluation?
+! IMPROVE_GEO: Should we improve the geometry (Box 8 of Fig. 1 in the NEWUOA paper)?
+! REDUCE_RHO: Should we reduce rho (Boxes 14 and 10 of Fig. 1 in the NEWUOA paper)?
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     call trsapp(delta, gq, hq, pq, tr_tol, xopt, xpt, crvmin, d)
@@ -250,9 +250,6 @@ do tr = 1, maxtr
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
     else
-        ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
-        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
         call evaluate(calfun, x, f)
@@ -267,6 +264,9 @@ do tr = 1, maxtr
             exit
         end if
 
+        ! Update DNORMSAV and MODERRSAV.
+        ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
@@ -300,7 +300,7 @@ do tr = 1, maxtr
         knew_tr = setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
 
         ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (defining the
-        ! quadratic model), and FVAL, XPT, KOPT, FOPT, XOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
+        ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XOPT+D.
         ! If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
         ! decides not to include XNEW into XPT.
         call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
@@ -333,30 +333,43 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
-    ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
+    ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
-    ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
-    small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code.
-    !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA.
-    ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
+    ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's original code.
     !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Slightly better than Powell's version.
     !close_itpset = all(distsq <= delta**2)  ! This works poorly.
     !close_itpset = all(distsq <= 10.0_RP * delta**2)  ! Does not work as well as Powell's version.
-    !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA code.
+    !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.
+    ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
+    adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
+    ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive.
+    ! When MAX(DELTA, DNORM) > RHO, as Powell mentioned under (2.3) of the NEWUOA paper, "RHO has
+    ! not restricted the most recent choice of D", so it is not reasonable to reduce RHO.
+    small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code.
+    !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA
+
+    ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
+    ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad?
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)
+    improve_geo = bad_trstep .and. .not. adequate_geo
+    ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
+    reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
+    ! Equivalently, REDUCE_RHO can be set as follows, which shows REDUCE_RHO is TRUE in two cases.
+    !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+
+    ! With REDUCE_RHO properly defined, we can also set IMPROVE_GEO as follows.
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)
+    !improve_geo = bad_trstep .and. (.not. reduce_rho) .and. (.not. close_itpset)
+    ! With IMPROVE_GEO properly defined, we can also set REDUCE_RHO as follows.
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
+    !reduce_rho = bad_trstep .and. (.not. improve_geo) .and. small_trrad
     !----------------------------------------------------------------------------------------------!
-    adequate_mod = (shortd .and. accurate_mod) .or. close_itpset
 
-
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
-    !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
-    improve_geo = bad_trstep .and. .not. adequate_mod
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
-    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
-    reduce_rho = bad_trstep .and. adequate_mod .and. small_trrad
-
+    ! Comments on REDUCE_RHO:
     ! REDUCE_RHO corresponds to Boxes 14 and 10 of the NEWUOA paper.
     ! There are two case where REDUCE_RHO will be set to TRUE.
     ! Case 1. The trust-region step is short (SHORTD) and all the recent models are sufficiently
@@ -370,9 +383,9 @@ do tr = 1, maxtr
     ! this strategy is important to efficiency: without this strategy, each value of RHO typically
     ! consumes at least NPT - 1 function evaluations, which is laborious when NPT is (modestly) big.
     ! Case 2. All the interpolation points are close to XOPT (CLOSE_ITPSET) and the trust region is
-    ! small (SMALL_TRRAD), but the trust-region step is "bad" (SHORTD or RATIO is small). In this
-    ! case, the algorithm decides that the work corresponding to the current RHO is complete, and
-    ! hence it shrinks RHO (i.e., update the criterion for the "closeness" and SHORTD). Of course,
+    ! small (SMALL_TRRAD), but the trust-region step is "bad" (SHORTD is TRUE or RATIO is small). In
+    ! this case, the algorithm decides that the work corresponding to the current RHO is complete,
+    ! and hence it shrinks RHO (i.e., update the criterion for the "closeness" and SHORTD). Surely,
     ! one may ask whether this is the best choice --- it may happen that the trust-region step is
     ! bad because the trust-region model is poor. NEWUOA takes the view that, if XPT contains points
     ! far away from XOPT, the model can be substantially improved by replacing the farthest point
@@ -399,11 +412,8 @@ do tr = 1, maxtr
     ! It can even be moved below IF (IMPROVE_GEO) ... END IF. Even though DNORM gets a new value
     ! after the geometry step when IMPROVE_GEO = TRUE, this value does not affect REDUCE_RHO,
     ! because DNORM comes into play only if IMPROVE_GEO = FALSE.
-    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
-    !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
-    ! When MAX(DELTA, DNORM) > RHO, as Powell mentioned under (2.3) of the NEWUOA paper, "RHO has
-    ! not restricted the most recent choice of D", so it is not reasonable to reduce RHO.
 
+    ! Comments on IMPROVE_GEO:
     ! IMPROVE_GEO corresponds to Box 8 of the NEWUOA paper.
     ! The geometry of XPT likely needs improvement if the trust-region step is bad (SHORTD or RATIO
     ! is small). As mentioned above, NEWUOA tries improving the geometry only if some points in XPT
@@ -414,12 +424,6 @@ do tr = 1, maxtr
     ! (see Powell's comment above (7.7) of the NEWUOA paper).
     ! N.B.: If SHORTD = TRUE, then either REDUCE_RHO or IMPROVE_GEO is true unless DELTA > RHO and
     ! all the points are within a ball centered at XOPT with a radius of 2*DELTA.
-    !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
-    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
-    ! The following definitions of IMPROVE_GEO are equivalent to the one above.
-    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. .not. (shortd .and. accurate_mod)
-    !improve_geo = ((shortd .and. .not. accurate_mod) .or. ((.not. shortd) .and. ratio <= TENTH)) .and. (.not. close_itpset)
-    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
 
     ! Comments on BAD_TRSTEP:
     ! 0. KNEW_TR == 0 means that it is impossible to obtain a good XPT by replacing a current point
@@ -439,17 +443,7 @@ do tr = 1, maxtr
     ! does not improve the performance of NEWUOA/BOBYQA/LINCOA in a test on 20221108/9.
 
     !----------------------------------------------------------------------------------------------!
-    ! Another way to define REDUCE_RHO and IMPROVE_GEO:
-    !good_mod = (shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)) &
-    !    & .or. ((.not. shortd) .and. ratio > 0 .and. knew_tr > 0)
-    !reduce_rho = (shortd .and. good_mod) .or. ((.not. good_mod) .and. close_itpset .and. small_trrad)
-    !good_mod = (shortd .and. all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)) &
-    !    & .or. ((.not. shortd) .and. ratio > TENTH .and. knew_tr > 0)
-    !improve_geo = (.not. good_mod) .and. (.not. close_itpset)
-    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO and IMPROVE_GEO are not simultaneously true', srname)
-    !----------------------------------------------------------------------------------------------!
-
-    !----------------------------------------------------------------------------------------------!
+    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO or IMPROVE_GEO is false', srname)
     ! N.B.: NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously. Thus following two
     ! blocks are exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
     !----------------------------------------------------------------------------------------------!
@@ -468,17 +462,6 @@ do tr = 1, maxtr
         ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN.
         d = geostep(idz, knew_geo, kopt, bmat, delbar, xpt, zmat)
 
-        !------------------------------------------------------------------------------------------!
-        ! Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
-        ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
-        ! the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of DNORM
-        ! saved in DNORMSAV will be used when defining REDUCE_RHO.
-        dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
-        !------------------------------------------------------------------------------------------!
-
-        ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
-        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
         call evaluate(calfun, x, f)
@@ -493,13 +476,23 @@ do tr = 1, maxtr
             exit
         end if
 
+        !------------------------------------------------------------------------------------------!
+        ! Update DNORMSAV and MODERRSAV. (Should we?)
+        ! Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
+        ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
+        ! the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of DNORM
+        ! saved in DNORMSAV will be used when defining REDUCE_RHO.
+        dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
+        ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
+        !------------------------------------------------------------------------------------------!
 
         ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (defining the
-        ! quadratic model), and FVAL, XPT, KOPT, FOPT, XOPT so that XPT(:, KNEW_TR) becomes XOPT+D.
+        ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XOPT+D.
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         call updateq(idz, knew_geo, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
         call updatexf(knew_geo, d, f, kopt, fval, xpt, fopt, xopt)
