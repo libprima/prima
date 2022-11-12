@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, November 12, 2022 PM10:48:25
+! Last Modified: Saturday, November 12, 2022 PM11:40:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -409,28 +409,21 @@ do tr = 1, maxtr
 
     ! Is the trust-region step a bad one?
     ! N.B.:
-    ! 1. THEORETICALLY, JDROP_TR > 0 when ACTREM > 0 or RATIO > 0. Yet Powell's code may set
-    ! JDROP_TR = 0 when ACTREM > 0 due to NaN. The modernized code has rectified this in the
-    ! function SETDROP_TR.
+    ! 1. THEORETICALLY, JDROP_TR > 0 when RATIO > 0. Yet Powell's code may set JDROP_TR = 0 when
+    ! RATIO > 0 due to NaN. The modernized code has rectified this in the function SETDROP_TR.
     ! After this rectification, we can indeed simplify the definition of BAD_TRSTEP below by
     ! removing (JDROP_TR == 0), but we retain (JDROP_TR == 0) for robustness.
     ! 2. Powell's definition of BAD_TRSTEP is
     !!bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
     ! But the following one seems to work better, especially for linearly constrained problems.
     !!bad_trstep = (shortd .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
-    ! 3. Note that ACTREM may be NaN. Thus it is not enough to check whether ACTREM <= 0. What we
-    ! need is .NOT. (ACTREM > 0), or equivalently ACTREM <= 0 .OR. IS_NAN(ACTREM). It is attempting
-    ! to write .NOT. TR_SUCCESS, but Fortran compilers will complain that TR_SUCCESS is undefined
-    ! when SHORTD is TRUE; in addition, doing so would couple the code, which we try to avoid.
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
-    !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
-    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH)
+    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
     improve_geo = (bad_trstep .and. .not. good_geo)
 
     ! Should we enhance the resolution by reducing RHO?
-    !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
-    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0)
+    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
     reduce_rho = (bad_trstep .and. good_geo .and. max(delta, dnorm) <= rho)
 
     !----------------------------------------------------------------------------------------------!
@@ -446,10 +439,9 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
 
     !----------------------------------------------------------------------------------------------!
+    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO or IMPROVE_GEO is false', srname)
     ! N.B.: COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously. Thus the following
-    ! two blocks are exchangeable:
-    !!IF (IMPROVE_GEO ...) THEN ... END IF
-    !!IF (REDUCE_RHO) THEN ... END IF
+    ! two blocks are exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
     !----------------------------------------------------------------------------------------------!
 
     ! Improve the geometry of the simplex by removing a point and adding a new one.
