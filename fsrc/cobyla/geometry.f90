@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 11, 2022 PM12:13:01
+! Last Modified: Saturday, November 12, 2022 PM10:03:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,7 +125,6 @@ integer(IK) :: jdrop
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 logical :: mask(size(sim, 1))
-real(RP) :: edgmax
 real(RP) :: sigbar(size(sim, 1))
 real(RP) :: simid(size(sim, 1))
 real(RP) :: veta(size(sim, 1))
@@ -169,11 +168,10 @@ if (tr_success) then
 else
     veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
-edgmax = factor_delta * delta
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 sigbar = abs(simid) * vsig
 ! The following JDROP will overwrite the previous one if its premise holds.
-mask = (veta > edgmax .and. (sigbar >= factor_alpha * delta .or. sigbar >= vsig))
+mask = (veta > factor_delta * delta .and. (sigbar >= factor_alpha * delta .or. sigbar >= vsig))
 if (any(mask)) then
     jdrop = int(maxloc(veta, mask=mask, dim=1), kind(jdrop))
     !!MATLAB: etamax = max(veta(mask)); jdrop = find(mask & ~(veta < etamax), 1, 'first');
