@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM02:10:43
+! Last Modified: Sunday, November 13, 2022 PM03:25:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -367,6 +367,12 @@ do tr = 1, maxtr
 
     ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
     !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO or IMPROVE_GEO is false', srname)
+    !
+    ! If SHORTD is TRUE or QRED > 0 is FALSE, then either REDUCE_RHO or IMPROVE_GEO is TRUE unless
+    ! CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE.
+    call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
+        & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
+        & REDUCE_RHO or IMPROVE_GEO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
     !----------------------------------------------------------------------------------------------!
 
     ! Comments on REDUCE_RHO:
@@ -422,8 +428,6 @@ do tr = 1, maxtr
     ! according to Box 14 of the NEWUOA paper (D is short, and the recent models are sufficiently
     ! accurate), then "trying to improve the accuracy of the model would be a waste of effort"
     ! (see Powell's comment above (7.7) of the NEWUOA paper).
-    ! N.B.: If SHORTD = TRUE, then either REDUCE_RHO or IMPROVE_GEO is true unless DELTA > RHO and
-    ! all the points are within a ball centered at XOPT with a radius of 2*DELTA.
 
     ! Comments on BAD_TRSTEP:
     ! 0. KNEW_TR == 0 means that it is impossible to obtain a good XPT by replacing a current point
@@ -433,9 +437,10 @@ do tr = 1, maxtr
     ! 1. Powell used different thresholds (0 and 0.1) for RATIO in the definitions of BAD_TRSTEP
     ! above. Unifying them to 0 makes little difference to the performance, sometimes worsening,
     ! sometimes improving, never substantially; unifying them to 0.1 makes little difference either.
-    ! 2. Update 20220204: In the current version, unifying the two thresholds to 0 seems to worsen
+    ! Update 20220204: In the current version, unifying the two thresholds to 0 seems to worsen
     ! the performance on noise-free CUTEst problems with at most 200 variables; unifying them to 0.1
     ! worsens it a bit as well.
+    ! 2. Powell's code does not have (.NOT. QRED>0) in BAD_TRSTEP; it terminates if QRED > 0 fails.
     ! 3. Update 20221108: In UOBYQA, the definition of BAD_TRSTEP involves DDMOVE, which is the norm
     ! square of XPT_OLD(:, KNEW_TR) - XOPT_OLD, where XPT_OLD and XOPT_OLD are the XPT and XOPT
     ! before UPDATEXF is called. Roughly speaking, BAD_TRSTEP is set to FALSE if KNEW_TR > 0 and
