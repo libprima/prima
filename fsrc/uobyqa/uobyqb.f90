@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 12, 2022 PM09:21:16
+! Last Modified: Sunday, November 13, 2022 PM04:55:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -339,19 +339,20 @@ do while (.true.)
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
-    ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
+    ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
-    ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
-    small_trrad = (max(delta, dnorm) <= rho)  ! Behaves the same as Powell's version.
-    !small_trrad = (dnorm <= rho)  ! Powell's code.
-    ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
+    ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
-    !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Powell's code.
-    !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA code.
-    !----------------------------------------------------------------------------------------------!
+    ! Below are some alternative definitions of CLOSE_ITPSET.
+    ! !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Powell's code.
+    ! !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.
+    ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
+    ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
+    small_trrad = (max(delta, dnorm) <= rho)  ! Behaves the same as Powell's version.
+    !small_trrad = (dnorm <= rho)  ! Powell's code.
 
     ! Comments on ACCURATE_MOD:
     ! 1. ACCURATE_MOD is needed only when SHORTD is TRUE.
@@ -374,35 +375,47 @@ do while (.true.)
     ! Powell's original definition of IMPROVE_GEO and REDUCE_RHO:
     !bad_trstep = (shortd .or. knew_tr == 0 .or. (ratio <= 0 .and. dnorm <= 2.0_RP*rho .and. ddmove <= 4.0_RP * rho**2))
     !improve_geo = bad_trstep .and. .not. (shortd .and. accurate_mod) .and. .not. close_itpset
-    !reduce_rho = bad_trstep .and. (dnorm <= rho) .and. (.not. improve_geo)
+    !reduce_rho = bad_trstep .and. dnorm <= rho .and. .not. improve_geo
 
-    ! BAD_TRSTEP for IMPROVE_GEO.
+    ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
+    ! Powell's code does not have (.NOT. QRED>0) in BAD_TRSTEP; it terminates if QRED > 0 fails.
+    ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad? It is critical to include
+    ! DMOVE <= 4.0_RP*RHO**2 in the definition of BAD_TRSTEP for IMPROVE_GEO.
     bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! This works poorly!
     improve_geo = bad_trstep .and. .not. adequate_geo
-    ! BAD_TRSTEP for REDUCE_RHO.
+    ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! OK.
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
 
+    ! Equivalently, REDUCE_RHO can be set as follows. It shows that REDUCE_RHO is TRUE in two cases.
+    ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    ! !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
-    !bad_trstep = (shortd .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
-    !!bad_trstep = (shortd .or. (ratio <= TENTH .and. dnorm <= 2.0 * rho .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
-    !improve_geo = bad_trstep .and. .not. (shortd .and. accurate_mod) .and. .not. close_itpset
-    !bad_trstep = (shortd .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
-    !!bad_trstep = (shortd .or. (ratio <= 0 .and. dnorm <= 2.0 * rho .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
-    !reduce_rho = bad_trstep .and. small_trrad .and. (.not. improve_geo)
+    ! With REDUCE_RHO properly defined, we can also set IMPROVE_GEO as follows.
+    ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    ! !improve_geo = bad_trstep .and. (.not. reduce_rho) .and. (.not. close_itpset)
+
+    ! With IMPROVE_GEO properly defined, we can also set REDUCE_RHO as follows.
+    ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    ! !reduce_rho = bad_trstep .and. (.not. improve_geo) .and. small_trrad
+
+    ! UOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
+    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
+    !
+    ! If SHORTD is TRUE or QRED > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO is TRUE unless
+    ! CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE.
+    call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
+        & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
+        & IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
+    !----------------------------------------------------------------------------------------------!
 
 
+    ! Since IMPROVE_GEO and REDUCE_RHO are never TRUE simultaneously, the following two blocks are
+    ! exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
 
-    !! The following REDUCE_RHO and IMPROVE_GEO are adopted from NEWUOA/BOBYQA/LINCOA.
-    !bad_trstep = (shortd .or. (ratio <= 0 .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For REDUCE_RHO
-    !!bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! OK, but not as good as the above one.
-    !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
-
-    !! It is critical to include DMOVE <= 4.0_RP*RHO**2 in the following definition of BAD_TRSTEP.
-    !bad_trstep = (shortd .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * rho**2) .or. knew_tr == 0)  ! For IMPROVE_GEO
-    !!bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! This works poorly!
-    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
-
+    ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
         g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
