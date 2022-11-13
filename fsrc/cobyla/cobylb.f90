@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 13, 2022 PM05:15:01
+! Last Modified: Sunday, November 13, 2022 PM05:20:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -418,7 +418,7 @@ do tr = 1, maxtr
     ! If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO
     ! is TRUE unless GOOD_GEO is TRUE but MAX(DELTA, DNORM) > RHO.
     call assert((.not. shortd .and. max(prerec, preref) > 0) .or. (improve_geo .or. reduce_rho .or. &
-        & (good_geo .and. max(delta, dnorm) > rh0)), 'If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then&
+        & (good_geo .and. max(delta, dnorm) > rho)), 'If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then&
         & either IMPROVE_GEO or REDUCE_RHO is TRUE unless GOOD_GEO is TRUE but MAX(DELTA, DNORM) > RHO', srname)
     !----------------------------------------------------------------------------------------------!
 
@@ -426,7 +426,7 @@ do tr = 1, maxtr
     ! 1. Powell's definition of BAD_TRSTEP is as follows. The one used above seems to work better,
     ! especially for linearly constrained problems due to the factor TENTH.
     ! !bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
-    ! Besides, Powell did not check MAX(PREREC, PREREF) > 0 in BAD_TRSTEP.
+    ! Besides, Powell did not check MAX(PREREC, PREREF) > 0 in BAD_TRSTEP, which has little impact.
     ! 2. NEWUOA/BOBYQA/LINCOA would define BAD_TRSTEP, IMPROVE_GEO, and REDUCE_RHO as follows. Two
     ! different thresholds are used in BAD_TRSTEP. It outperforms Powell's version.
     ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
