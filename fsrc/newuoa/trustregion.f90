@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 04, 2022 PM04:50:03
+! Last Modified: Sunday, November 13, 2022 PM12:49:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -279,23 +279,20 @@ do iter = 1, maxiter
     sg = inprod(s, g)
     shs = inprod(s, hs)
 
-    !----------------------------------------------------------------------------------------------!
-    !!----------------------------------------------!
-    !!sgk = sg + shs
-    !!if (sgk / sqrt(gg * delsq) <= tol - ONE) then
-    !!    info_loc = 0_IK
-    !!    exit
-    !!end if
-    !!t = sqrt(delsq * gg - sgk**2)
-    !!d = (delsq / t) * (g + hs) - (sgk / t) * s
-    !!----------------------------------------------!
-    ! The above is Powell's code. In precise arithmetic, INPROD(D, S) = 0 and |D| = |S|. However,
-    ! when DELSQ*GG - SGK**2 is tiny, the error in D can be large and hence damage these
-    ! equalities significantly. This did happen in tests, especially when using the single
-    ! precision. We calculate D as below. It did improve the performance of NEWUOA in our test.
-    !----------------------------------------------------------------------------------------------!
-
     ! Begin the 2D minimization by calculating D and HD and some scalar products.
+
+    ! Powell's code calculates D as follows. In precise arithmetic, INPROD(D, S) = 0 and |D| = |S|.
+    ! However, when DELSQ*GG - SGK**2 is tiny, the error in D can be large and hence damage these
+    ! equalities significantly. This did happen in tests, especially when using the single precision.
+    ! !sgk = sg + shs
+    ! !if (sgk / sqrt(gg * delsq) <= tol - ONE) then
+    ! !    info_loc = 0_IK
+    ! !    exit
+    ! !end if
+    ! !t = sqrt(delsq * gg - sgk**2)
+    ! !d = (delsq / t) * (g + hs) - (sgk / t) * s
+
+    ! We calculate D as below. It did improve the performance of NEWUOA in our test.
     ! PROJECT(X, V) returns the projection of X to SPAN(V): X'*(V/|V|)*(V/|V|).
     d = (g + hs) - project(g + hs, s)
     ! N.B.:
@@ -474,13 +471,13 @@ else
 end if
 
 ! For noisy problems, the following may work better.
-!!if (ratio <= eta1) then
-!!    delta = gamma1 * dnorm
-!!elseif (ratio <= eta2) then  ! Ensure DELTA >= DELTA_IN
-!!    delta = delta_in
-!!else  ! Ensure DELTA > DELTA_IN with a constant factor
-!!    delta = max(delta_in * (1.0_RP + gamma2) / 2.0_RP, gamma2 * dnorm)
-!!end if
+! !if (ratio <= eta1) then
+! !    delta = gamma1 * dnorm
+! !elseif (ratio <= eta2) then  ! Ensure DELTA >= DELTA_IN
+! !    delta = delta_in
+! !else  ! Ensure DELTA > DELTA_IN with a constant factor
+! !    delta = max(delta_in * (1.0_RP + gamma2) / 2.0_RP, gamma2 * dnorm)
+! !end if
 
 !====================!
 !  Calculation ends  !

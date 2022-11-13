@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM12:13:04
+! Last Modified: Sunday, November 13, 2022 PM12:29:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -353,15 +353,17 @@ do tr = 1, maxtr
     ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
+
     ! Equivalently, REDUCE_RHO can be set as follows. It shows that REDUCE_RHO is TRUE in two cases.
-    !!reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+    ! !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
     ! With REDUCE_RHO properly defined, we can also set IMPROVE_GEO as follows.
-    !!bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)
-    !!improve_geo = bad_trstep .and. (.not. reduce_rho) .and. (.not. close_itpset)
+    ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)
+    ! !improve_geo = bad_trstep .and. (.not. reduce_rho) .and. (.not. close_itpset)
+
     ! With IMPROVE_GEO properly defined, we can also set REDUCE_RHO as follows.
-    !!bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
-    !!reduce_rho = bad_trstep .and. (.not. improve_geo) .and. small_trrad
+    ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
+    ! !reduce_rho = bad_trstep .and. (.not. improve_geo) .and. small_trrad
 
     ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
     !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO or IMPROVE_GEO is false', srname)

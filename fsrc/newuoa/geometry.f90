@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 09, 2022 PM03:44:12
+! Last Modified: Sunday, November 13, 2022 PM12:46:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -401,29 +401,25 @@ else
     maxiter = 0_IK  ! Return immediately to avoid producing a D containing NaN/Inf.
 end if
 
-! Begin the iteration by overwriting S with a vector that has the required length and direction,
-! except that termination occurs if the given D and S are nearly parallel.
-! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
-! tolerance is 1.0D-4. We adapt it to the following value in case single precision is in use.
 tol = min(1.0E-1_RP, max(EPS**QUART, 1.0E-4_RP))
 do iter = 1, maxiter
+    ! Begin the iteration by overwriting S with a vector that has the required length and direction,
+    ! except that termination occurs if the given D and S are nearly parallel.
+    ! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
+    ! tolerance is 1.0D-4. We adapt it to the following value in case single precision is in use.
 
-    !----------------------------------------------------------------------------------------------!
-    !!--------------------------------------------------!
-    !!ds = inprod(d, s)
-    !!ss = inprod(s, s)
-    !!if (dd * ss - ds**2 <= 1.0E-8_RP * dd * ss) then
-    !!    exit
-    !!end if
-    !!denom = sqrt(dd * ss - ds**2)
-    !!s = (dd * s - ds * d) / denom
-    !!--------------------------------------------------!
-    ! The above is Powell's code. In precise arithmetic, INPROD(S, D) = 0 and |S| = |D|. However,
-    ! when DD*SS - DS**2 is tiny, the error in S can be large and hence damage these inequalities
-    ! significantly. This did happen in tests, especially when using the single precision. We
-    ! calculate S as below. It did improve the performance of NEWUOA in our test.
-    !----------------------------------------------------------------------------------------------!
+    ! Powell's code calculates S as follows. In precise arithmetic, INPROD(S, D) = 0 and |S| = |D|.
+    ! However, when DD*SS - DS**2 is tiny, the error in S can be large and hence damage these
+    ! equalities significantly. This did happen in tests, especially when using the single precision.
+    ! !ds = inprod(d, s)
+    ! !ss = inprod(s, s)
+    ! !if (dd * ss - ds**2 <= 1.0E-8_RP * dd * ss) then
+    ! !    exit
+    ! !end if
+    ! !denom = sqrt(dd * ss - ds**2)
+    ! !s = (dd * s - ds * d) / denom
 
+    ! We calculate S as follows. It did improve the performance of NEWUOA in our test.
     ss = inprod(s, s)
     s = s - project(s, d)  ! PROJECT(X, V) returns the projection of X to SPAN(V): X'*(V/|V|)*(V/|V|)
     ! N.B.:
@@ -642,29 +638,24 @@ end if
 
 densav = ZERO
 
-! Begin the iteration by overwriting S with a vector that has the required length and direction.
-
-! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
-! tolerance is 1.0D-4. We adapt it to the following value in case single precision is in use.
 tol = min(1.0E-1_RP, max(EPS**QUART, 1.0E-4_RP))
 do iter = 1, n
+    ! Begin the iteration by overwriting S with a vector that has the required length and direction.
+    ! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
+    ! tolerance is 1.0D-4. We adapt it to the following value in case single precision is in use.
 
-    !----------------------------------------------------------------------------------------------!
-    !!--------------------------------------------!
-    !!ds = inprod(d, s)
-    !!ss = inprod(s, s)
-    !!ssden = dd * ss - ds**2
-    !!if (ssden < 1.0E-8_RP * dd * ss) then
-    !    exit
-    !end if
-    !!s = (ONE / sqrt(ssden)) * (dd * s - ds * d)
-    !!--------------------------------------------!
-    ! The above is Powell's code. In precise arithmetic, INPROD(S, D) = 0 and |S| = |D|. However,
-    ! when DD*SS - DS**2 is tiny, the error in S can be large and hence damage these inequalities
-    ! significantly. This did happen in tests, especially when using the single precision. We
-    ! calculate S as below. It did improve the performance of NEWUOA in our test.
-    !----------------------------------------------------------------------------------------------!
+    ! Powell's code calculates S as follows. In precise arithmetic, INPROD(S, D) = 0 and |S| = |D|.
+    ! However, when DD*SS - DS**2 is tiny, the error in S can be large and hence damage these
+    ! equalities significantly. This did happen in tests, especially when using the single precision.
+    ! !ds = inprod(d, s)
+    ! !ss = inprod(s, s)
+    ! !ssden = dd * ss - ds**2
+    ! !if (ssden < 1.0E-8_RP * dd * ss) then
+    ! !    exit
+    ! !end if
+    ! !s = (ONE / sqrt(ssden)) * (dd * s - ds * d)
 
+    ! We calculate S as below. It did improve the performance of NEWUOA in our test.
     ss = inprod(s, s)
     s = s - project(s, d)  ! PROJECT(X, V) returns the projection of X to SPAN(V): X'*(V/|V|)*(V/|V|)
     ! N.B.:
