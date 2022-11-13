@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 26, 2022 AM12:33:46
+! Last Modified: Sunday, November 13, 2022 PM07:43:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ public :: updateq, updatexf, tryqalt
 contains
 
 
-subroutine updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xnew, xpt_in, zmat, gopt, hq, pq)
+subroutine updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xpt_in, zmat, gopt, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GOPT, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW = XPT(:, KOPT) + D.
 ! See Section 4 of the NEWUOA paper.
@@ -49,7 +49,6 @@ real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:) ! D(N)
 real(RP), intent(in) :: f
 real(RP), intent(in) :: fval(:) ! FVAL(NPT)
-real(RP), intent(in) :: xnew(:)  ! XNEW(N)
 real(RP), intent(in) :: xpt_in(:, :)  ! XPT_IN(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
@@ -86,7 +85,6 @@ if (DEBUGGING) then
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
-    call assert(size(xnew) == n .and. all(is_finite(xnew)), 'SIZE(XNEW) = N, XNEW is finite', srname)
     call assert(all(is_finite(xpt_in)), 'XPT is finite', srname)
     call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
@@ -125,7 +123,7 @@ pqinc = moderr * omega_col(idz, zmat, knew)
 pq = pq + pqinc
 
 ! Update the gradient, which needs the updated XPT.
-xpt(:, knew) = xnew
+xpt(:, knew) = xpt(:, kopt) + d
 gopt = gopt + moderr * bmat(:, knew) + hess_mul(xpt(:, kopt), xpt, pqinc)
 
 ! Further update GOPT if FREDUCED is TRUE, as XOPT will be updated to XOPT + D.
