@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM02:22:42
+! Last Modified: Sunday, November 13, 2022 PM04:10:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -333,11 +333,12 @@ do while (.true.)
         ! It provides a useful safeguard, but is not invoked in most applications of BOBYQA.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
-        !if (tr_success .and. .not. any(den > 0.25 * maxval(vlag(1:npt)**2))) then
-        !if (tr_success .and. .not. any(den > 0.5 * maxval(vlag(1:npt)**2))) then
-        !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then
-        !if (.not. any(den > maxval(vlag(1:npt)**2))) then
-        if (tr_success .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then  ! This works well
+        if (tr_success .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
+            ! Below are some alternatives conditions for calling RESCUE. The do not perform as well.
+            ! !if (tr_success .and. .not. any(den > QUART * maxval(vlag(1:npt)**2))) then
+            ! !if (tr_success .and. .not. any(den > HALF * maxval(vlag(1:npt)**2))) then
+            ! !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then  ! Powell's code.
+            ! !if (.not. any(den > maxval(vlag(1:npt)**2))) then
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
@@ -369,31 +370,29 @@ do while (.true.)
         ! BOBYQA. Here, we choose not to check TR_SUCCESS, as the performance of BOBYQA is better
         ! in this way. THIS DIFFERS FROM POWELL'S CODE.
         ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF BOBYQA ARE IMPLEMENTED DIFFERENTLY.
-        !if (tr_success) then
-        !    distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
-        !else
-        !    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        !end if
+        ! !if (tr_success) then
+        ! !    distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
+        ! !else
+        ! !    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+        ! !end if
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 
         weight = max(ONE, distsq / rho**2)**3.5
-        !------------------------------------------------------------------------------------------!
         ! Other possible definitions of WEIGHT.
-        !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.
-        !weight = max(ONE, distsq / rho**2)**2  ! Worse than Powell's code.
-        !weight = max(ONE, distsq / delta**2)  ! As per (6.1) of the BOBYQA paper. It works poorly!
-        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! The same as DISTSQ/RHO**2.
+        ! !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.
+        ! !weight = max(ONE, distsq / rho**2)**2  ! Worse than Powell's code.
+        ! !weight = max(ONE, distsq / delta**2)  ! As per (6.1) of the BOBYQA paper. It works poorly!
+        ! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! The same as DISTSQ/RHO**2.
         ! The following WEIGHT all perform a bit worse than the above one, but better than Powell's.
-        !weight = max(ONE, distsq / delta**2)**3.5
-        !weight = max(ONE, distsq / delta**2)**2.5
-        !weight = max(ONE, distsq / delta**2)**3
-        !weight = max(ONE, distsq / delta**2)**4
-        !weight = max(ONE, distsq / delta**2)**4.5
-        !weight = max(ONE, distsq / rho**2)**2.5
-        !weight = max(ONE, distsq / rho**2)**3
-        !weight = max(ONE, distsq / rho**2)**4
-        !weight = max(ONE, distsq / rho**2)**4.5
-        !------------------------------------------------------------------------------------------!
+        ! !weight = max(ONE, distsq / delta**2)**3.5
+        ! !weight = max(ONE, distsq / delta**2)**2.5
+        ! !weight = max(ONE, distsq / delta**2)**3
+        ! !weight = max(ONE, distsq / delta**2)**4
+        ! !weight = max(ONE, distsq / delta**2)**4.5
+        ! !weight = max(ONE, distsq / rho**2)**2.5
+        ! !weight = max(ONE, distsq / rho**2)**3
+        ! !weight = max(ONE, distsq / rho**2)**4
+        ! !weight = max(ONE, distsq / rho**2)**4.5
 
         den = calden(kopt, bmat, d, xpt, zmat)
         score = weight * den
@@ -405,8 +404,8 @@ do while (.true.)
 
         ! For the first case below, NEWUOA checks ANY(SCORE>1) .OR. (TR_SUCCESS .AND. ANY(SCORE>0))
         ! instead of ANY(SCORE > 0). This seems to improve the performance of BOBYQA very slightly.
-        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then  ! Condition in NEWUOA
-            !if (any(score > 0)) then  ! Condition in BOBYQA
+        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then  ! Condition in NEWUOA.
+            ! !if (any(score > 0)) then  ! Powell's original condition in BOBYQA.
             ! See (6.1) of the BOBYQA paper for the definition of KNEW in this case.
             ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
             knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
@@ -484,38 +483,58 @@ do while (.true.)
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
-    ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
+    ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho)
-    ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
-    small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code.
-    !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA.
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
     close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's code.
-    !close_itpset = all(distsq <= (TEN * rho)**2)  ! Works almost the same as Powell's version.
-    !close_itpset = all(distsq <= (TEN * delta)**2)  ! Does not work as well as Powell's version.
-    !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Does not work as well as Powell's version.
-    !close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
-    !----------------------------------------------------------------------------------------------!
+    ! Below are some alternative definitions of CLOSE_ITPSET.
+    ! !close_itpset = all(distsq <= (TEN * rho)**2)  ! Works almost the same as Powell's version.
+    ! !close_itpset = all(distsq <= (TEN * delta)**2)  ! Does not work as well as Powell's version.
+    ! !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Does not work as well as Powell's version.
+    ! !close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
+    ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
+    ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
+    small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code.
+    !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA.
 
-
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
+    ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
+    ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad?
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)
     improve_geo = bad_trstep .and. .not. adequate_geo
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
+    ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
+    ! Zaikun 20221111: What if RESCUE has been called? Is it still reasonable to use RATIO?
 
-    ! What if RESCUE has been called? Is it reasonable to use RATIO?
-    ! !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
+    ! Equivalently, REDUCE_RHO can be set as follows. It shows that REDUCE_RHO is TRUE in two cases.
     ! !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
-    ! !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
-    ! !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
+    ! With REDUCE_RHO properly defined, we can also set IMPROVE_GEO as follows.
+    ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)
+    ! !improve_geo = bad_trstep .and. (.not. reduce_rho) .and. (.not. close_itpset)
 
-    ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
-    ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region
-    ! iteration, unless the calculations with the current RHO are complete.
+    ! With IMPROVE_GEO properly defined, we can also set REDUCE_RHO as follows.
+    ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
+    ! !reduce_rho = bad_trstep .and. (.not. improve_geo) .and. small_trrad
+
+    ! BOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
+    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
+    !
+    ! If SHORTD is TRUE or QRED > 0 is FALSE, then either REDUCE_RHO or IMPROVE_GEO is TRUE unless
+    ! CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE.
+    !call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
+    !    & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
+    !    & IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
+    !----------------------------------------------------------------------------------------------!
+
+
+    ! Since IMPROVE_GEO and REDUCE_RHO are never TRUE simultaneously, the following two blocks are
+    ! exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
+
+    ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
         knew_geo = int(maxloc(distsq, dim=1), IK)
         delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)

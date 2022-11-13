@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 09, 2022 PM03:44:42
+! Last Modified: Sunday, November 13, 2022 PM04:00:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -91,27 +91,25 @@ end if
 ! evidently worsens the performance of LINCOA according to a test on 20221108. Hence we choose not
 ! to check FREDUCED. POWELL CODED IN THE SAME WAY.
 ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF LINCOA ARE IMPLEMENTED DIFFERENTLY.
-!if (freduced) then
-!    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-!    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
-!else
-!    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-!    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-!end if
+! !if (freduced) then
+! !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+! !    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
+! !else
+! !    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+! !    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+! !end if
 distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)  ! Powell's code
 
 weight = distsq**2  ! Powell's code.
-!--------------------------------------------------------------------------------------------------!
 ! Other possible definitions of WEIGHT.
-!weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
-!weight = distsq**1.5_RP
-!weight = distsq**2.5_RP
-!weight = (distsq / delta**2)**3
-!weight = max(1.0_RP, distsq / rho**2)**2
-!weight = max(1.0_RP, distsq / rho**2)**3
-!weight = max(1.0_RP, distsq / delta**2)**2
-!weight = max(1.0_RP, distsq / delta**2)**3
-!--------------------------------------------------------------------------------------------------!
+! !weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
+! !weight = distsq**1.5_RP
+! !weight = distsq**2.5_RP
+! !weight = (distsq / delta**2)**3
+! !weight = max(1.0_RP, distsq / rho**2)**2
+! !weight = max(1.0_RP, distsq / rho**2)**3
+! !weight = max(1.0_RP, distsq / delta**2)**2
+! !weight = max(1.0_RP, distsq / delta**2)**3
 
 denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
 score = weight * denabs

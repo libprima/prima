@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM03:36:01
+! Last Modified: Sunday, November 13, 2022 PM04:07:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -334,10 +334,11 @@ do tr = 1, maxtr
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's original code.
-    !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Slightly better than Powell's version.
-    !close_itpset = all(distsq <= delta**2)  ! This works poorly.
-    !close_itpset = all(distsq <= 10.0_RP * delta**2)  ! Does not work as well as Powell's version.
-    !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.
+    ! Below are some alternative definitions of CLOSE_ITPSET.
+    ! !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Slightly better than Powell's version.
+    ! !close_itpset = all(distsq <= delta**2)  ! This works poorly.
+    ! !close_itpset = all(distsq <= 10.0_RP * delta**2)  ! Does not work as well as Powell's version.
+    ! !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
     ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive.

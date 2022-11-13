@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM03:40:00
+! Last Modified: Sunday, November 13, 2022 PM03:58:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -466,13 +466,14 @@ do while (.true.)
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
-    !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Behaves the same as Powell's version.
-    !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's code.
-    !close_itpset = all(distsq <= rho**2)  ! Does not work as well as Powell's version.
-    !close_itpset = all(distsq <= 10.0_RP * rho**2)  ! Does not work as well as Powell's version.
-    !close_itpset = all(distsq <= delta**2)  ! Does not work as well as Powell's version.
-    !close_itpset = all(distsq <= 10.0_RP * delta**2)  ! Does not work as well as Powell's version.
-    !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! BOBYQA code.
+    ! Below are some alternative definitions of CLOSE_ITPSET.
+    ! !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Behaves the same as Powell's version.
+    ! !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's code.
+    ! !close_itpset = all(distsq <= rho**2)  ! Does not work as well as Powell's version.
+    ! !close_itpset = all(distsq <= 10.0_RP * rho**2)  ! Does not work as well as Powell's version.
+    ! !close_itpset = all(distsq <= delta**2)  ! Does not work as well as Powell's version.
+    ! !close_itpset = all(distsq <= 10.0_RP * delta**2)  ! Does not work as well as Powell's version.
+    ! !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
     ! SMALL_TRRAD: Is the trust-region radius small?  This indicator seems not impactive.
@@ -481,10 +482,10 @@ do while (.true.)
 
     ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
     ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad?
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH)
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)
     improve_geo = bad_trstep .and. .not. adequate_geo
     ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0)
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
 
     ! Equivalently, REDUCE_RHO can be set as follows. It shows that REDUCE_RHO is TRUE in two cases.
@@ -503,9 +504,9 @@ do while (.true.)
     !
     ! If SHORTD is TRUE or QRED > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO is TRUE unless
     ! CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE.
-    call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
-        & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
-        & IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
+    !call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
+    !    & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
+    !    & IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
     !----------------------------------------------------------------------------------------------!
 
 
