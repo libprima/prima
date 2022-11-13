@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM05:43:07
+! Last Modified: Sunday, November 13, 2022 PM07:18:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -341,8 +341,9 @@ do while (.true.)
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         if (tr_success .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
-            ! Below are some alternatives conditions for calling RESCUE. The do not perform as well.
-            ! !if (tr_success .and. .not. any(den > QUART * maxval(vlag(1:npt)**2))) then
+            ! Below are some alternatives conditions for calling RESCUE. The perform fairly well.
+            ! !if (.false.) then  ! Do not call RESCUE at all.
+            ! !if (tr_success .and. .not. any(den > 0.25_RP * maxval(vlag(1:npt)**2))) then
             ! !if (tr_success .and. .not. any(den > HALF * maxval(vlag(1:npt)**2))) then
             ! !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then  ! Powell's code.
             ! !if (.not. any(den > maxval(vlag(1:npt)**2))) then
@@ -566,6 +567,8 @@ do while (.true.)
         den = calden(kopt, bmat, d, xpt, zmat)
         rescued = .false.
         if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
+            ! The condition below works the same as the above one, which is used in Powell's code.
+            ! !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > 0.25 * vlag(knew_geo)**2)) then
             nfresc = nf
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
