@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 13, 2022 PM05:40:33
+! Last Modified: Sunday, November 13, 2022 PM09:04:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -347,7 +347,7 @@ do tr = 1, maxtr
             ! Save X, F, CONSTR, CSTRV into the history.
             call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
             ! Save X, F, CONSTR, CSTRV into the filter.
-            call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+            call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
 
             ! Begin the operations that decide whether X should replace one of the vertices of the
             ! current simplex, the change being mandatory if ACTREM is positive. PREREM and ACTREM
@@ -498,7 +498,7 @@ do tr = 1, maxtr
         ! Save X, F, CONSTR, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
         ! Save X, F, CONSTR, CSTRV into the filter.
-        call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+        call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced by D.
         call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).

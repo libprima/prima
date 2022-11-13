@@ -1,8 +1,6 @@
 !TODO:
 ! 1. Check whether it is possible to change the definition of RESCON, RESNEW, RESTMP, RESACT so that
 ! we do not need to encode information into their signs.
-! 2. Use RESCON to evaluate CSTRV.
-! 3. In FMSG, do not print CONSTR, which will not be computed due to 2.
 !
 module lincob_mod
 !--------------------------------------------------------------------------------------------------!
@@ -17,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM08:02:27
+! Last Modified: Sunday, November 13, 2022 PM11:02:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -70,6 +68,7 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic models
+use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, MIN_MAXFILT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
@@ -78,10 +77,11 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
-use, non_intrinsic :: output_mod, only : fmsg
+use, non_intrinsic :: output_mod, only : fmsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul
 use, non_intrinsic :: ratio_mod, only : redrat
+use, non_intrinsic :: selectx_mod, only : savefilt, selectx
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
@@ -137,13 +137,14 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 real(RP) :: b(size(bvec))
 real(RP) :: bmat(size(x), npt + size(x))
-real(RP) :: fval(npt)
+real(RP) :: fval(npt), cval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: rescon(size(bvec))
 real(RP) :: rfac(size(x), size(x))
+real(RP) :: xfilt(size(x), maxfilt), ffilt(maxfilt), cfilt(maxfilt)
 real(RP) :: d(size(x))
 real(RP) :: xbase(size(x))
 real(RP) :: xopt(size(x))
@@ -157,10 +158,10 @@ logical :: accurate_mod, adequate_geo
 logical :: bad_trstep
 logical :: close_itpset
 logical :: small_trrad
-!logical :: good_mod
+logical :: evaluated(npt)
 logical :: feasible, shortd, improve_geo, reduce_rho, freduced
-integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-integer(IK) :: idz, itest, &
+integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK))), k
+integer(IK) :: nfilt, idz, itest, &
 &           knew_tr, knew_geo, kopt, nact,      &
 &           ngetact, subinfo
 real(RP) :: fshift(npt)
@@ -197,12 +198,6 @@ if (DEBUGGING) then
     call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
 end if
 
-!---------------------------------------------------------!
-if (cweight < 0) then
-    write (*, *) cweight  ! Temporary, to be removed.
-end if
-!---------------------------------------------------------!
-
 !====================!
 ! Calculation starts !
 !====================!
@@ -214,7 +209,7 @@ end if
 ! trust region centre.
 b = bvec
 call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
-    & ij, kopt, nf, chist, fhist, fval, xbase, xhist, xpt, subinfo)
+    & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt
@@ -222,9 +217,24 @@ f = fopt
 ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 
+nfilt = 0_IK
+do k = 1, npt
+    if (evaluated(k)) then
+        x = xbase + xpt(:, k)
+        call savefilt(cval(k), ctol, cweight, fval(k), x, nfilt, cfilt, ffilt, xfilt)
+    end if
+end do
+
 if (subinfo /= INFO_DFT) then
     info = subinfo
+    ! Return the best calculated values of the variables.
+    kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
+    x = xfilt(:, kopt)
+    f = ffilt(kopt)
+    cstrv = cfilt(kopt)
+    ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist)
+    call retmsg(solver, info, iprint, nf, f, x, cstrv)
     !close (16)
     return
 end if
@@ -350,14 +360,25 @@ do while (.true.)
         ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (RESCON is unusable).
         constr = matprod(x, A_orig) - b_orig
         cstrv = maximum([ZERO, constr])
-
         nf = nf + 1_IK
         call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        ! Save X, F, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+        ! Save X, F, CSTRV into the filter.
+        call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
+
         if (is_nan(f) .or. is_posinf(f)) then
             info = NAN_INF_F
             exit
         end if
+
+        ! Check whether to exit
+        subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
+
         diff = f - fopt + qred
 
         ! Set DFFALT to the difference between the new value of F and the value predicted by
@@ -426,7 +447,8 @@ do while (.true.)
             ! matrix HQ.
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-            if (fopt <= ftarget) then
+            if (fopt <= ftarget .and. cstrv <= ctol) then  !????
+                !if (fopt <= ftarget) then
                 info = FTARGET_ACHIEVED
                 exit
             end if
@@ -560,13 +582,17 @@ do while (.true.)
         constr = matprod(x, A_orig) - b_orig
         cstrv = maximum([ZERO, constr])
         nf = nf + 1_IK
-
         call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        ! Save X, F, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+        ! Save X, F, CSTRV into the filter.
+        call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
+
         if (is_nan(f) .or. is_posinf(f)) then
             info = NAN_INF_F
             exit
         end if
+
         diff = f - fopt + qred
 
         ! If X is feasible, then set DFFALT to the difference between the new value of F and the
@@ -608,7 +634,8 @@ do while (.true.)
         freduced = (f < fopt .and. feasible)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-        if (fopt <= ftarget) then
+        if (fopt <= ftarget .and. cstrv <= ctol) then  !????
+            !if (fopt <= ftarget) then
             info = FTARGET_ACHIEVED
             exit
         end if
@@ -670,7 +697,10 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     cstrv = maximum([ZERO, constr])
     nf = nf + 1_IK
     call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+    ! Save X, F, CSTRV into the history.
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+    ! Save X, F, CSTRV into the filter.
+    call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
     feasible = .true. ! Why? Consistent with the meaning of FEASIBLE???
 end if
 
@@ -681,8 +711,16 @@ end if
 
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 
+! Return the best calculated values of the variables.
+kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
+x = xfilt(:, kopt)
+f = ffilt(kopt)
+cstrv = cfilt(kopt)
+
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist)
+
+call retmsg(solver, info, iprint, nf, f, x, cstrv)
 
 !====================!
 !  Calculation ends  !

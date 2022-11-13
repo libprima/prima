@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, June 08, 2022 AM06:49:34
+! Last Modified: Sunday, November 13, 2022 PM09:56:43
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -43,8 +43,8 @@ module consts_mod
 !
 !    - Other types of INTEGER/REAL may not be available on all platforms (e.g., nvfortran 20 and
 !    flang 7.1.0 do not support REAL128).
-!    - The standard does not specify the range of the default integer. However, if the default real 
-!    occupies 32 bits, which is normally the case, then the default integer occupies also 32 bits, 
+!    - The standard does not specify the range of the default integer. However, if the default real
+!    occupies 32 bits, which is normally the case, then the default integer occupies also 32 bits,
 !    and hence the range is probably [2^32, 2^31-1], approximately [-2*10^9, 2*10^9].
 !    - The standard does not specify what the range and precision of the default real or the
 !    double-precision real, except that KIND(0.0D0) should have a greater precision than KIND(0.0)

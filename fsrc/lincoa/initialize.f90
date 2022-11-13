@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 PM02:13:22
+! Last Modified: Sunday, November 13, 2022 PM09:36:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ contains
 
 
 subroutine initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x0, b, &
-    & ij, kopt, nf, chist, fhist, fval, xbase, xhist, xpt, info)
+    & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the initialization about the interpolation points & their function values.
 !
@@ -74,7 +74,9 @@ integer(IK), intent(out) :: info
 integer(IK), intent(out) :: ij(:, :)  ! IJ(2, MAX(0_IK, NPT-2*N-1))
 integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
+logical, intent(out) :: evaluated(:)    ! EVALUATED(NPT)
 real(RP), intent(out) :: chist(:)  ! CHIST(MAXCHIST)
+real(RP), intent(out) :: cval(:)  ! CVAL(NPT)
 real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(out) :: xbase(:)  ! XBASE(N)
@@ -94,7 +96,6 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
-logical :: evaluated(size(xpt, 2))
 logical :: feasible(size(xpt, 2))
 real(RP) :: constr(size(b))
 real(RP) :: cstrv
@@ -123,6 +124,8 @@ if (DEBUGGING) then
     call assert(rhobeg > 0, 'RHOBEG > 0', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(size(cval) == npt, 'SIZE(CVAL) == NPT', srname)
+    call assert(size(evaluated) == npt, 'SIZE(EVALUATED) == NPT', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
@@ -146,8 +149,9 @@ xbase = x0
 ! is not fully parallelizable if NPT>2N+1, as the definition XPT(;, 2N+2:end) involves FVAL(1:2N+1).
 evaluated = .false.
 
-! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
-! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+! Initialize CVAL and FVAL to HUGENUM. Otherwise, compilers may complain that CVAL/FVAL is not
+! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+cval = HUGENUM
 fval = HUGENUM
 
 ! Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT], but they may be altered
@@ -195,7 +199,8 @@ do k = 1, npt
     call fmsg(solver, iprint, k, f, x, cstrv, constr)
     call savehist(k, x, xhist, f, fhist, cstrv, chist)
     evaluated(k) = .true.
-    feasible(k) = all(constr <= 0)
+    feasible(k) = (cstrv <= 0)
+    cval(k) = cstrv
     fval(k) = f
     subinfo = checkexit(maxfun, k, cstrv, ctol, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
@@ -226,6 +231,8 @@ if (DEBUGGING) then
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(cval) == npt .and. .not. any(evaluated .and. (is_nan(cval) .or. is_posinf(cval))), &
+        & 'SIZE(CVAL) == NPT and CVAL is not NaN or +Inf', srname)
     call assert(size(fval) == npt .and. .not. any(evaluated .and. (is_nan(fval) .or. is_posinf(fval))), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
     call assert(.not. any(evaluated .and. feasible .and. fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)

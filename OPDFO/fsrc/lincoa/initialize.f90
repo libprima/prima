@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, June 19, 2022 AM08:52:42
+! Last Modified: Sunday, November 13, 2022 PM10:18:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ contains
 
 
 subroutine initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x0, b, &
-    & ij, kopt, nf, chist, fhist, fval, xbase, xhist, xpt, info)
+    & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the initialization about the interpolation points & their function values.
 !
@@ -76,7 +76,7 @@ integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
 real(RP), intent(out) :: chist(:)  ! CHIST(MAXCHIST)
 real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
-real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
+real(RP), intent(out) :: fval(:), cval(:)  ! FVAL(NPT)
 real(RP), intent(out) :: xbase(:)  ! XBASE(N)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
@@ -197,6 +197,7 @@ do k = 1, npt
     evaluated(k) = .true.
     feasible(k) = all(constr <= 0)
     fval(k) = f
+    cval(k) = cstrv
     subinfo = checkexit(maxfun, k, cstrv, ctol, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
         info = subinfo

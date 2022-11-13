@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, July 25, 2022 AM02:02:51
+! Last Modified: Sunday, November 13, 2022 PM09:09:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -306,7 +306,7 @@ do i = 1, n + 1_IK
         else
             x = sim(:, i)  ! I == N+1
         end if
-        call savefilt(conmat(:, i), cval(i), ctol, cweight, fval(i), x, nfilt, cfilt, confilt, ffilt, xfilt)
+        call savefilt(cval(i), ctol, cweight, fval(i), x, nfilt, cfilt, ffilt, xfilt, conmat(:, i), confilt)
     end if
 end do
 

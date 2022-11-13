@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM07:18:41
+! Last Modified: Sunday, November 13, 2022 PM08:06:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -341,7 +341,7 @@ do while (.true.)
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         if (tr_success .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
-            ! Below are some alternatives conditions for calling RESCUE. The perform fairly well.
+            ! Below are some alternatives conditions for calling RESCUE. They perform fairly well.
             ! !if (.false.) then  ! Do not call RESCUE at all.
             ! !if (tr_success .and. .not. any(den > 0.25_RP * maxval(vlag(1:npt)**2))) then
             ! !if (tr_success .and. .not. any(den > HALF * maxval(vlag(1:npt)**2))) then
