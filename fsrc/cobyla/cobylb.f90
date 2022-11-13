@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 13, 2022 PM12:43:32
+! Last Modified: Sunday, November 13, 2022 PM05:15:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -411,14 +411,22 @@ do tr = 1, maxtr
     improve_geo = (bad_trstep .and. .not. good_geo)
     ! REDUCE_RHO: Should we enhance the resolution by reducing RHO?
     reduce_rho = (bad_trstep .and. good_geo .and. max(delta, dnorm) <= rho)
+
     ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
-    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO or IMPROVE_GEO is false', srname)
+    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
+
+    ! If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO
+    ! is TRUE unless GOOD_GEO is TRUE but MAX(DELTA, DNORM) > RHO.
+    call assert((.not. shortd .and. max(prerec, preref) > 0) .or. (improve_geo .or. reduce_rho .or. &
+        & (good_geo .and. max(delta, dnorm) > rh0)), 'If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then&
+        & either IMPROVE_GEO or REDUCE_RHO is TRUE unless GOOD_GEO is TRUE but MAX(DELTA, DNORM) > RHO', srname)
     !----------------------------------------------------------------------------------------------!
 
     ! Comments on BAD_TRSTEP:
     ! 1. Powell's definition of BAD_TRSTEP is as follows. The one used above seems to work better,
-    ! especially for linearly constrained problems.
+    ! especially for linearly constrained problems due to the factor TENTH.
     ! !bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
+    ! Besides, Powell did not check MAX(PREREC, PREREF) > 0 in BAD_TRSTEP.
     ! 2. NEWUOA/BOBYQA/LINCOA would define BAD_TRSTEP, IMPROVE_GEO, and REDUCE_RHO as follows. Two
     ! different thresholds are used in BAD_TRSTEP. It outperforms Powell's version.
     ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
