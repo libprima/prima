@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM03:25:53
+! Last Modified: Sunday, November 13, 2022 PM03:33:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -366,13 +366,13 @@ do tr = 1, maxtr
     ! !reduce_rho = bad_trstep .and. (.not. improve_geo) .and. small_trrad
 
     ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
-    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO or IMPROVE_GEO is false', srname)
+    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
     !
     ! If SHORTD is TRUE or QRED > 0 is FALSE, then either REDUCE_RHO or IMPROVE_GEO is TRUE unless
     ! CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE.
     call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
         & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
-        & REDUCE_RHO or IMPROVE_GEO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
+        & IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
     !----------------------------------------------------------------------------------------------!
 
     ! Comments on REDUCE_RHO:
@@ -448,8 +448,8 @@ do tr = 1, maxtr
     ! does not improve the performance of NEWUOA/BOBYQA/LINCOA in a test on 20221108/9.
 
 
-    ! Since NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously, the following two
-    ! blocks are exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
+    ! Since IMPROVE_GEO and REDUCE_RHO are never TRUE simultaneously, the following two blocks are
+    ! exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
 
     ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
