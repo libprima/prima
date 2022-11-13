@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, April 08, 2022 AM09:35:03
+! Last Modified: Sunday, November 13, 2022 PM02:05:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,7 +132,7 @@ call validate(n >= 0, 'N >= 0', srname)
 ! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
 ! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
+! !if (allocated(x)) deallocate (x)
 ! Allocate memory for X. Initialize X to a compiler-independent strange value.
 allocate (x(1:n), stat=alloc_status)
 x = -huge(x)  ! Costly if X is of a large size.
@@ -168,7 +168,7 @@ character(len=*), parameter :: srname = 'ALLOC_RMATRIX_SP'
 ! Preconditions (checked even not debugging)
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
-!!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
+!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X. Initialize X to a compiler-independent strange value.
 allocate (x(1:m, 1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
 x = -huge(x)  ! Costly if X is of a large size.
@@ -204,7 +204,7 @@ call validate(n >= 0, 'N >= 0', srname)
 ! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
 ! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
+! !if (allocated(x)) deallocate (x)
 ! Allocate memory for X. Initialize X to a compiler-independent strange value.
 allocate (x(1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
 x = -huge(x)  ! Costly if X is of a large size.
@@ -237,7 +237,7 @@ character(len=*), parameter :: srname = 'ALLOC_RMATRIX_DP'
 ! Preconditions (checked even not debugging)
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
-!!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
+!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X. Initialize X to a compiler-independent strange value.
 allocate (x(1:m, 1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
 x = -huge(x)  ! Costly if X is of a large size.
@@ -275,7 +275,7 @@ call validate(n >= 0, 'N >= 0', srname)
 ! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
 ! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
+! !if (allocated(x)) deallocate (x)
 ! Allocate memory for X. Initialize X to a compiler-independent strange value.
 allocate (x(1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
 x = -huge(x)  ! Costly if X is of a large size.
@@ -308,7 +308,7 @@ character(len=*), parameter :: srname = 'ALLOC_RMATRIX_QP'
 ! Preconditions (checked even not debugging)
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
-!!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
+! !if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X. Initialize X to a compiler-independent strange value.
 allocate (x(1:m, 1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
 x = -huge(x)  ! Costly if X is of a large size.
@@ -343,7 +343,7 @@ character(len=*), parameter :: srname = 'ALLOC_LVECTOR'
 ! Preconditions (checked even not debugging)
 call validate(n >= 0, 'N >= 0', srname)
 
-!!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
+! !if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X. Initialize X to a compiler-independent value.
 allocate (x(1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
 x = .false.  ! Costly if X is of a large size.
@@ -376,7 +376,7 @@ character(len=*), parameter :: srname = 'ALLOC_IVECTOR'
 ! Preconditions (checked even not debugging)
 call validate(n >= 0, 'N >= 0', srname)
 
-!!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
+! !if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X. Initialize X to a compiler-independent strange value.
 allocate (x(1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
 x = -huge(x)  ! Costly if X is of a large size.
@@ -409,7 +409,7 @@ character(len=*), parameter :: srname = 'ALLOC_IMATRIX'
 ! Preconditions (checked even not debugging)
 call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
-!!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
+! !if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X. Initialize X to a compiler-independent strange value.
 allocate (x(1:m, 1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
 x = -huge(x)  ! Costly if X is of a large size.

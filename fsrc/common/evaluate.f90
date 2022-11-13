@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Sunday, April 17, 2022 PM03:40:30
+! Last Modified: Sunday, November 13, 2022 PM02:07:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -63,8 +63,8 @@ if (is_nan(f)) then
     y = HUGEFUN
 end if
 y = min(HUGEFUN, y)
-!! We may moderate huge negative function values, but we decide not to.
-!!y = max(-HUGEFUN, min(HUGEFUN, y))
+! We may moderate huge negative function values, but we decide not to.
+!y = max(-HUGEFUN, min(HUGEFUN, y))
 end function moderatef
 
 
@@ -132,8 +132,8 @@ else
     ! finite value. This is naive. Better approaches surely exist.
     f = moderatef(f)
 
-    !! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
-    !!f = max(-HUGEFUN, f)
+    ! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
+    !f = max(-HUGEFUN, f)
 end if
 
 
@@ -199,8 +199,8 @@ else
     ! finite value. This is naive, and better approaches surely exist.
     f = moderatef(f)
     constr = moderatec(constr)
-    !! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
-    !!f = max(-HUGEFUN, f)
+    ! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
+    !f = max(-HUGEFUN, f)
 
     ! Evaluate the constraint violation for constraints CONSTR(X) >= 0.
     cstrv = maxval([-constr, ZERO])

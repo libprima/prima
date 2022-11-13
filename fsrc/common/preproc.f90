@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, May 03, 2022 AM12:19:20
+! Last Modified: Sunday, November 13, 2022 PM02:06:05
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -308,7 +308,7 @@ else
 end if
 
 if (lower(solver) == 'bobyqa') then
-    ! Do NOT merge the IF below into the ELSEIF above!! Otherwise, XU and XL may be accessed even if
+    ! Do NOT merge the IF below into the ELSEIF above! Otherwise, XU and XL may be accessed even if
     ! the solver is not BOBYQA, because the logical evaluation is not short-circuit.
     if (rhobeg > minval(xu - xl) / TWO) then
         ! Do NOT make this revision if RHOBEG not positive or not finite, because otherwise RHOBEG
