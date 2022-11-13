@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, November 12, 2022 PM11:40:00
+! Last Modified: Sunday, November 13, 2022 PM12:13:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -405,44 +405,43 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we possibly improves the geometry of simplex or
     ! reduces RHO according to IMPROVE_GEO and REDUCE_RHO. Now we decide these indicators.
-    !----------------------------------------------------------------------------------------------!
-
-    ! Is the trust-region step a bad one?
-    ! N.B.:
-    ! 1. THEORETICALLY, JDROP_TR > 0 when RATIO > 0. Yet Powell's code may set JDROP_TR = 0 when
-    ! RATIO > 0 due to NaN. The modernized code has rectified this in the function SETDROP_TR.
-    ! After this rectification, we can indeed simplify the definition of BAD_TRSTEP below by
-    ! removing (JDROP_TR == 0), but we retain (JDROP_TR == 0) for robustness.
-    ! 2. Powell's definition of BAD_TRSTEP is
-    !!bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
-    ! But the following one seems to work better, especially for linearly constrained problems.
-    !!bad_trstep = (shortd .or. actrem <= 0 .or. is_nan(actrem) .or. jdrop_tr == 0)
-
-    ! Should we take a geometry step to improve the geometry of the interpolation set?
-    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
-    improve_geo = (bad_trstep .and. .not. good_geo)
-
-    ! Should we enhance the resolution by reducing RHO?
+    ! BAD_TRSTEP: Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
+    ! IMPROVE_GEO: Should we take a geometry step to improve the geometry of the interpolation set?
+    improve_geo = (bad_trstep .and. .not. good_geo)
+    ! REDUCE_RHO: Should we enhance the resolution by reducing RHO?
     reduce_rho = (bad_trstep .and. good_geo .and. max(delta, dnorm) <= rho)
-
+    ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously. Thus the following
+    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO or IMPROVE_GEO is false', srname)
     !----------------------------------------------------------------------------------------------!
-    ! Comment on REDUCE_RHO:
+
+    ! Comments on BAD_TRSTEP:
+    ! 1. Powell's definition of BAD_TRSTEP is as follows. The one above works better, especially for
+    ! linearly constrained problems.
+    !!bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
+    ! 2. NEWUOA/BOBYQA/LINCOA would define BAD_TRSTEP, IMPROVE_GEO, and REDUCE_RHO as follows. Two
+    ! different thresholds are used in BAD_TRSTEP. The performance is similar to Powell's version.
+    !!bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
+    !!improve_geo = (bad_trstep .and. .not. good_geo)
+    !!bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
+    !!reduce_rho = (bad_trstep .and. good_geo .and. max(delta, dnorm) <= rho)
+    ! 3. Theoretically, JDROP_TR > 0 when ACTREM > 0 (guaranteed by RATIO > 0). However, in Powell's
+    ! implementation, JDROP_TR may be 0 even RATIO > 0 due to NaN. The modernized code has rectified
+    ! this in the function SETDROP_TR. After this rectification, we can indeed simplify the
+    ! definition of BAD_TRSTEP by removing the condition JDROP_TR == 0. We retain it for robustness.
+
+    ! Comments on REDUCE_RHO:
     ! When SHORTD is TRUE, UOBYQA/NEWUOA/BOBYQA/LINCOA all set REDUCE_RHO to TRUE if the recent
     ! models are sufficiently accurate according to certain criteria. See the paragraph around (37)
-    ! in the UOBYQA paper and the discussions about Box 14 in the NEWUOA. This strategy is crucial
-    ! for the performance of the solvers. However, as of 20221111, we have not managed to make this
-    ! strategy work in COBYLA. As in NEWUOA, we recorded the errors of the recent models, and set
+    ! in the UOBYQA paper and the discussions about Box 14 in the NEWUOA paper. This strategy is
+    ! crucial for the performance of the solvers. However, as of 20221111, we have not managed to
+    ! make it work in COBYLA. As in NEWUOA, we recorded the errors of the recent models, and set
     ! REDUCE_RHO to true if they are small (e.g., ALL(ABS(MODERRSAV) <= 0.1* MAXVAL(ABS(A))*RHO) or
-    ! ALL(ABS(MODERRSAV) <= RHO**2)) when SHORTD is TRUE, but this strategy made little impact upon
-    ! the performance.
-    !----------------------------------------------------------------------------------------------!
+    ! ALL(ABS(MODERRSAV) <= RHO**2)) when SHORTD is TRUE, but it made little impact on the performance.
 
-    !----------------------------------------------------------------------------------------------!
-    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO or IMPROVE_GEO is false', srname)
-    ! N.B.: COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously. Thus the following
+
+    ! Since COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously, the following
     ! two blocks are exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
-    !----------------------------------------------------------------------------------------------!
 
     ! Improve the geometry of the simplex by removing a point and adding a new one.
     ! If the current interpolation set has good geometry, then we skip the geometry step.
