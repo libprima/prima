@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, September 21, 2022 AM09:01:24
+! Last Modified: Sunday, November 13, 2022 PM02:17:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,12 +24,12 @@ contains
 
 subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 !--------------------------------------------------------------------------------------------------!
-!!!-------------------------------------------------------------!!!
-!!! THE FOLLOWING DESCRIPTION NEEDS VERIFICATION!               !!!
-!!! Note that the set J gets updated within this subroutine,    !!!
-!!! which seems inconsistent with the description below.        !!!
-!!! See the lines below "Pick the next integer L or terminate". !!!
-!!!-------------------------------------------------------------!!!
+!-------------------------------------------------------------!
+! THE FOLLOWING DESCRIPTION NEEDS VERIFICATION!               !
+! Note that the set J gets updated within this subroutine,    !
+! which seems inconsistent with the description below.        !
+! See the lines below "Pick the next integer L or terminate". !
+!-------------------------------------------------------------!
 !
 ! This subroutine solves a linearly constrained projected problem (LCPP)
 !
@@ -219,14 +219,14 @@ do iter = 1_IK, maxiter
     ! Zaikun: The schemes below work evidently worse than the one above in a test on 20220417. Why?
     !-------------------------------------------------------------------------!
     ! VERSION 1:
-    !!psd = matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact))) - g
+    ! !psd = matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact))) - g
     !-------------------------------------------------------------------------!
     ! VERSION 2:
-    !!if (2 * nact < n) then
-    !!    psd = matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact))) - g
-    !!else
-    !!    psd = -matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
-    !!end if
+    ! !if (2 * nact < n) then
+    ! !    psd = matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact))) - g
+    ! !else
+    ! !    psd = -matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+    ! !end if
     !-------------------------------------------------------------------------!
     !----------------------------------------------------------------------------------------------!
 
@@ -250,13 +250,13 @@ do iter = 1_IK, maxiter
         exit
     end if
     ! In our tests, tolerating the following cases seems to render better numerical results.
-    !!if (dd > gg) then
-    !!    psd = (sqrt(gg) / dnorm) * psd
-    !!    exit
-    !!end if
-    !!if (inprod(psd, g) < -gg) then
-    !!    exit
-    !!end if
+    ! !if (dd > gg) then
+    ! !    psd = (sqrt(gg) / dnorm) * psd
+    ! !    exit
+    ! !end if
+    ! !if (inprod(psd, g) < -gg) then
+    ! !    exit
+    ! !end if
     !---------------------------------------------------------------------------------------!
 
     psdsav = psd
@@ -319,8 +319,8 @@ do iter = 1_IK, maxiter
         !!MATLAB: icon = max([0; find(frac(1:nact) <= vmult)]); % find(frac(1:nact)<=vmult) can be empty
 
         ! N.B.: 0. The definition of ICON given above is mathematically equivalent to the following.
-        !!ICON = MAXVAL(TRUELOC([VIOLMX, FRACMULT(1:NACT)] <= VMULT)) - 1_IK, OR
-        !!ICON = INT(MINLOC([VIOLMX, FRACMULT(1:NACT)], DIM=1, BACK=.TRUE.), IK) - 1_IK
+        ! !ICON = MAXVAL(TRUELOC([VIOLMX, FRACMULT(1:NACT)] <= VMULT)) - 1_IK, OR
+        ! !ICON = INT(MINLOC([VIOLMX, FRACMULT(1:NACT)], DIM=1, BACK=.TRUE.), IK) - 1_IK
         ! However, such implementations are problematic in the unlikely case of VMULT = NaN: ICON
         ! will be -Inf in the first and unspecified in the second. The MATLAB counterpart of the
         ! first implementation will render ICON = [] as `find` (the MATLAB version of TRUELOC)
@@ -457,7 +457,7 @@ end if
 ! Is it ensured that C cannot be represented by the gradients of the existing active constraints?
 call qradd(c, qfac, rfac, nact)  ! NACT is increased by 1!
 ! Indeed, it suffices to pass RFAC(:, 1:NACT+1) to QRADD as follows.
-!!call qradd(c, qfac, rfac(:, 1:nact + 1), nact)  ! NACT is increased by 1!
+! !call qradd(c, qfac, rfac(:, 1:nact + 1), nact)  ! NACT is increased by 1!
 
 ! Update IACT, RESACT, RESNEW, and VLAM. N.B.: NACT has been increased by 1 in QRADD.
 iact(nact) = l
@@ -551,7 +551,7 @@ end if
 call qrexc(qfac, rfac(:, 1:nact), icon)  ! QREXC does nothing if ICON == NACT.
 ! Indeed, it suffices to pass QFAC(:, 1:NACT) and RFAC(1:NACT, 1:NACT) to QREXC as follows. However,
 ! compilers may create a temporary copy of RFAC(1:NACT, 1:NACT), which is not contiguous in memory.
-!!call qrexc(qfac(:, 1:nact), rfac(1:nact, 1:nact), icon)
+! !call qrexc(qfac(:, 1:nact), rfac(1:nact, 1:nact), icon)
 
 iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
 resact(icon:nact) = [resact(icon + 1:nact), resact(icon)]

@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 PM12:04:24
+! Last Modified: Sunday, November 13, 2022 PM02:20:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -447,13 +447,13 @@ end module trustregion_mod
 ! For PG, the schemes below work evidently worse than the one above in a test on 20220417. Why?
 !-----------------------------------------------------------------------!
 ! VERSION 1:
-!!pg = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
+! !pg = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
 !-----------------------------------------------------------------------!
 ! VERSION 2:
-!!if (2 * nact < n) then
-!!    pg = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
-!!else
-!!    pg = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
-!!end if
+! !if (2 * nact < n) then
+! !    pg = g - matprod(qfac(:, 1:nact), matprod(g, qfac(:, 1:nact)))
+! !else
+! !    pg = matprod(qfac(:, nact + 1:n), matprod(g, qfac(:, nact + 1:n)))
+! !end if
 !-----------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!

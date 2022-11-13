@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 07, 2022 PM04:29:10
+! Last Modified: Sunday, November 13, 2022 PM02:23:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -387,7 +387,7 @@ do iter = 1, maxiter
     ! Let the search direction S be a linear combination of the reduced D and the reduced G that is
     ! orthogonal to the reduced D.
     ! Zaikun 20210926:
-    !!! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that |S| = |D|??? Namely:
+    ! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that |S| = |D|?? Namely:
     ! S = something, then S = (norm(D)/norm(S))*S
     ! Also, should exit if the orthogonality of S and D is damaged, or S is  not finite.
     ! See the corresponding part of TRSAPP.

@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, October 01, 2022 PM03:00:14
+! Last Modified: Sunday, November 13, 2022 PM02:24:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -146,7 +146,7 @@ zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
 w(npt + 1:npt + n) = bmat(:, knew)
 v1 = (alpha * vlag(npt + 1:npt + n) - tau * w(npt + 1:npt + n)) / denom
 v2 = (-beta * w(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
-bmat = bmat + outprod(v1, vlag) + outprod(v2, w) !!call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
+bmat = bmat + outprod(v1, vlag) + outprod(v2, w) !call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
 ! Numerically, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be symmetric.
 call symmetrize(bmat(:, npt + 1:npt + n))
 
@@ -160,13 +160,13 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
 
-    !! The following is too expensive to check.
-    !if (n * npt <= 50) then
-    !    xpt_test = xpt
-    !    xpt_test(:, knew) = xpt(:, kopt) + d
-    !    call assert(errh(bmat, zmat, xpt_test) <= tol .or. RP == kind(0.0), &
-    !        & 'H = W^{-1} in (2.7) of the BOBYQA paper', srname)
-    !end if
+    ! The following is too expensive to check.
+    ! !if (n * npt <= 50) then
+    ! !    xpt_test = xpt
+    ! !    xpt_test(:, knew) = xpt(:, kopt) + d
+    ! !    call assert(errh(bmat, zmat, xpt_test) <= tol .or. RP == kind(0.0), &
+    ! !        & 'H = W^{-1} in (2.7) of the BOBYQA paper', srname)
+    ! !end if
 end if
 end subroutine updateh
 

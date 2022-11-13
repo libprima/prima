@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, March 07, 2022 AM12:55:12
+! Last Modified: Sunday, November 13, 2022 PM02:27:26
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -136,7 +136,7 @@ real(kind(0.0D0)) :: x0(n), A(n, 4 * np), b(4 * np)
 !--------------------------------------------------------------------------------------------------!
 ! If CALFUN is an external subroutine, then remove the line of  "use calfun_mod, only : calfun", and
 ! uncomment the following line.
-!!external calfun
+!external calfun
 !--------------------------------------------------------------------------------------------------!
 
 ! Set up X0 (starting point), A, and b.
