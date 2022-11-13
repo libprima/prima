@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM05:49:24
+! Last Modified: Sunday, November 13, 2022 PM08:02:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -146,7 +146,6 @@ real(RP) :: rescon(size(bvec))
 real(RP) :: rfac(size(x), size(x))
 real(RP) :: d(size(x))
 real(RP) :: xbase(size(x))
-real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
@@ -323,7 +322,7 @@ do while (.true.)
         ! Powell's code, where VQUAD = -QRED). Consequently, the algorithm may  be stuck in an
         ! infinite cycling, because both REDUCE_RHO and IMPROVE_GEO may end up with FALSE in this
         ! case, which did happen in tests.
-        ! 3. The factor HALF works better than TENTH used in NEWUOA/BOBYQA.
+        ! 3. The factor HALF works better than TENTH (used in NEWUOA/BOBYQA), 0.2, and 0.7.
         ! 4. The factor 1.4 below aligns with the update of DELTA after a trust-region step.
         delta = HALF * delta
         if (delta <= 1.4_RP * rho) then
@@ -336,8 +335,7 @@ do while (.true.)
             info = MAXFUN_REACHED
             exit
         end if
-        xnew = xopt + d
-        x = xbase + xnew
+        x = xbase + (xopt + d)
 
         if (is_nan(sum(abs(x)))) then
             f = sum(x)  ! Set F to NaN
@@ -349,8 +347,7 @@ do while (.true.)
             exit
         end if
         call evaluate(calfun, x, f)
-        ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is
-        ! not usable).
+        ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (RESCON is unusable).
         constr = matprod(x, A_orig) - b_orig
         cstrv = maximum([ZERO, constr])
 
@@ -391,11 +388,17 @@ do while (.true.)
         if (delta <= 1.4_RP * rho) then
             delta = rho
         end if
-        !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
-        ! N.B.: The factor in the line above should be smaller than SQRT(2). Imagine a very
-        ! successful step with DENORM = the un-updated DELTA = RHO. Then the scheme will
-        ! first update DELTA to SQRT(2)*RHO. If this factor were not smaller than SQRT(2),
-        ! then DELTA will be reset to RHO, which is not reasonable as D is very successful.
+        ! N.B.: The following scheme of updating DELTA is WRONG.
+        !---------------------------------!
+        ! !if (delta <= 1.5_RP * rho) then
+        ! !    delta = rho
+        ! !end if
+        !---------------------------------!
+        ! The factor in the scheme above should be smaller than SQRT(2). Imagine a very successful
+        ! step with DENORM = the un-updated DELTA = RHO. Then the scheme will first update DELTA to
+        ! SQRT(2)*RHO. If this factor were not smaller than SQRT(2), then DELTA will be reset to
+        ! RHO, which is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
+        ! T. M. Ragonneau's thesis "Model-Based Derivative-Free Optimization Methods and Software".
 
         freduced = (f < fopt)
 
@@ -421,7 +424,7 @@ do while (.true.)
             ! for the second derivative parameters of the new KNEW-th Lagrange function. The
             ! contribution from the old parameter PQ(KNEW) is included in the second derivative
             ! matrix HQ.
-            call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
+            call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
             if (fopt <= ftarget) then
                 info = FTARGET_ACHIEVED
@@ -541,8 +544,7 @@ do while (.true.)
             info = MAXFUN_REACHED
             exit
         end if
-        xnew = xopt + d
-        x = xbase + xnew
+        x = xbase + (xopt + d)
 
         if (is_nan(sum(abs(x)))) then
             f = sum(x)  ! Set F to NaN
@@ -554,7 +556,7 @@ do while (.true.)
             exit
         end if
         call evaluate(calfun, x, f)
-        ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
+        ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (RESCON is unusable).
         constr = matprod(x, A_orig) - b_orig
         cstrv = maximum([ZERO, constr])
         nf = nf + 1_IK
@@ -604,7 +606,7 @@ do while (.true.)
         ! the second derivative parameters of the new KNEW-th Lagrange function. The contribution
         ! from the old parameter PQ(KNEW) is included in the second derivative matrix HQ.
         freduced = (f < fopt .and. feasible)
-        call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
+        call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
         if (fopt <= ftarget) then
             info = FTARGET_ACHIEVED
