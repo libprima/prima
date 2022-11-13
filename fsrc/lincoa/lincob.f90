@@ -291,7 +291,7 @@ do while (.true.)
     ! The SHORTD defined above needs NGETACT, which relies on Powell's trust region subproblem
     ! solver. If a different subproblem solver is used, we can take the following SHORTD adopted
     ! from UOBYQA, NEWUOA and BOBYQA. According to a test on 20220620, it works well.
-    !!SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
+    ! !SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
     !------------------------------------------------------------------------------------------!
 
     ! DNORMSAV saves the DNORM of last few (five) trust-region iterations. It will be used to
@@ -476,7 +476,7 @@ do while (.true.)
     !small_trrad = (delsav <= rho)  ! Powell's code. DELSAV = unupdated DELTA.
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
+    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
     !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Behaves the same as Powell's version.
     !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's code.

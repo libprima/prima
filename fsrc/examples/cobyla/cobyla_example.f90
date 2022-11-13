@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, July 19, 2022 PM01:54:22
+! Last Modified: Sunday, November 13, 2022 PM02:27:36
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -103,7 +103,7 @@ integer :: m, i
 ! If CALCFC is an external subroutine, then remove the line of  "use calcfc_mod", and uncomment the
 ! following line.
 !--------------------------------------------------------------------------------------------------!
-!!external calcfc_chebyquad, calcfc_hexagon
+!external calcfc_chebyquad, calcfc_hexagon
 !--------------------------------------------------------------------------------------------------!
 
 ! The following lines illustrates how to call the solver to solve the Chebyquad problem.

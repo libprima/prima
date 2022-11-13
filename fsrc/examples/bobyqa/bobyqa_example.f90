@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, March 07, 2022 AM01:03:58
+! Last Modified: Sunday, November 13, 2022 PM02:28:24
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -71,7 +71,7 @@ real(kind(0.0D0)) :: x0(n), lb(n), ub(n), angle
 ! If CALFUN is an external subroutine, then remove the line of  "use calfun_mod, only : calfun", and
 ! uncomment the following line.
 !--------------------------------------------------------------------------------------------------!
-!!external calfun
+!external calfun
 !--------------------------------------------------------------------------------------------------!
 
 ! Define the starting point.

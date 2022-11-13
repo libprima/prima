@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 09, 2022 PM06:23:03
+! Last Modified: Sunday, November 13, 2022 PM02:21:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -265,7 +265,7 @@ end do
 ! (Kroneker delta), and recalling the PHI_K is quadratic, we can find that
 ! PHI_K(t) = t*(1-t)*PHI_K'(0) for K /= KNEW, and PHI_KNEW = t*[t*(1-PHI_K'(0)) + PHI_K'(0)].
 vlag = stplen * (ONE - stplen) * spread(dderiv, dim=1, ncopies=3)
-!!MATLAB: vlag = stplen .* (1 - stplen) .* dderiv; % Implicit expansion; dderiv is a row!!
+!!MATLAB: vlag = stplen .* (1 - stplen) .* dderiv; % Implicit expansion; dderiv is a row!
 vlag(:, knew) = stplen(:, knew) * (stplen(:, knew) * (ONE - dderiv(knew)) + dderiv(knew))
 ! Set NaNs in VLAG to 0 so that the behavior of MAXVAL(ABS(VLAG)) is predictable. VLAG does not have
 ! NaN unless XPT does, which would be a bug. MAXVAL(ABS(VLAG)) appears in Powell's code, not here.
@@ -273,7 +273,7 @@ where (is_nan(vlag)) vlag = ZERO  !!MATLAB: vlag(isnan(vlag)) = 0;
 !
 ! Second, BETABD is the upper bound of BETA given in (3.10) of the BOBYQA paper.
 betabd = HALF * (stplen * (ONE - stplen) * spread(distsq, dim=1, ncopies=3))**2
-!!MATLAB: betabd = 0.5 * (stplen .* (1-stplen) .* distsq).^2 % Implicit expansion; distsq is a row!!
+!!MATLAB: betabd = 0.5 * (stplen .* (1-stplen) .* distsq).^2 % Implicit expansion; distsq is a row!
 !
 ! Finally, PREDSQ is the quantity defined in (3.11) of the BOBYQA paper.
 predsq = vlag * vlag * (vlag * vlag + alpha * betabd)
