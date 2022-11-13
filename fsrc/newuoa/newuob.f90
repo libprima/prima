@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM04:21:19
+! Last Modified: Sunday, November 13, 2022 PM05:40:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -228,7 +228,7 @@ maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which wi
 info = MAXTR_REACHED
 
 ! Begin the iterative procedure.
-! After solving a trust-region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
+! After solving a trust-region subproblem, we use three boolean variables to control the workflow.
 ! SHORTD: Is the trust-region trial step too short to invoke a function evaluation?
 ! IMPROVE_GEO: Should we improve the geometry (Box 8 of Fig. 1 in the NEWUOA paper)?
 ! REDUCE_RHO: Should we reduce rho (Boxes 14 and 10 of Fig. 1 in the NEWUOA paper)?
@@ -238,6 +238,8 @@ do tr = 1, maxtr
     dnorm = min(delta, norm(d))
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
     shortd = (dnorm < HALF * rho)
+    ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
+    ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
 
     if (shortd .or. .not. qred > 0) then

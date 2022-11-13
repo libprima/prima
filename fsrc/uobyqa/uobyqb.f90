@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM05:05:41
+! Last Modified: Sunday, November 13, 2022 PM05:44:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -172,7 +172,12 @@ shortd = .false.
 reduce_rho = .false.
 trtol = 0.01_RP
 
-! Form the gradient of the quadratic model at the trust region centre.
+! Begin the iterative procedure.
+! After solving a trust-region subproblem, we use three boolean variables to control the workflow.
+! SHORTD: Is the trust-region trial step too short to invoke a function evaluation?
+! IMPROVE_GEO: Should we improve the geometry?
+! REDUCE_RHO: Should we reduce rho?
+! UOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do while (.true.)
     xopt = xpt(:, kopt)
     g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
@@ -185,8 +190,9 @@ do while (.true.)
     dnorm = min(delta, sqrt(sum(d**2)))
     errtol = ZERO
     shortd = (dnorm < HALF * rho)
-    ! Use the quadratic model to predict the change in F due to the step D
-    qred = -quadinc(pq, d, xopt)
+    ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
+    ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
+    qred = -quadinc(pq, d, xopt)  ! QRED = Q(XOPT) - Q(XOPT + D)
     if (shortd .or. .not. qred > 0) then
         ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
         delta = TENTH * delta
