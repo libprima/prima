@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 11, 2022 AM10:34:46
+! Last Modified: Sunday, November 13, 2022 PM12:10:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -426,7 +426,8 @@ do tr = 1, maxtr
     !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
-    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
+    !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
+    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
     improve_geo = (bad_trstep .and. .not. good_geo)
 
     ! Should we enhance the resolution by reducing RHO?
