@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM04:10:57
+! Last Modified: Sunday, November 13, 2022 PM04:17:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -523,11 +523,11 @@ do while (.true.)
     ! BOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
     !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
     !
-    ! If SHORTD is TRUE or QRED > 0 is FALSE, then either REDUCE_RHO or IMPROVE_GEO is TRUE unless
+    ! If SHORTD is TRUE or QRED > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO is TRUE unless
     ! CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE.
-    !call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
-    !    & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
-    !    & IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
+    call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
+        & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
+        & IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
     !----------------------------------------------------------------------------------------------!
 
 

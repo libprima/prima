@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM04:07:05
+! Last Modified: Sunday, November 13, 2022 PM04:17:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -369,7 +369,7 @@ do tr = 1, maxtr
     ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
     !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
     !
-    ! If SHORTD is TRUE or QRED > 0 is FALSE, then either REDUCE_RHO or IMPROVE_GEO is TRUE unless
+    ! If SHORTD is TRUE or QRED > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO is TRUE unless
     ! CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE.
     !call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
     !    & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
