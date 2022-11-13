@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 10, 2022 AM11:55:04
+! Last Modified: Sunday, November 13, 2022 PM11:01:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -82,6 +82,7 @@ use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul
 use, non_intrinsic :: ratio_mod, only : redrat
+use, non_intrinsic :: selectx_mod, only : savefilt, selectx
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
@@ -137,7 +138,8 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 real(RP) :: b(size(bvec))
 real(RP) :: bmat(size(x), npt + size(x))
-real(RP) :: fval(npt)
+real(RP) :: fval(npt), cval(npt)
+logical :: evaluated(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: pq(npt)
@@ -154,6 +156,7 @@ real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        distsq(npt), fopt, ratio,     &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
+real(RP) :: xfilt(size(x), maxfilt), ffilt(maxfilt), cfilt(maxfilt)
 logical :: accurate_mod
 logical :: bad_trstep
 logical :: close_itpset
@@ -161,7 +164,7 @@ logical :: small_trrad
 !logical :: good_mod
 logical :: feasible, shortd, improve_geo, reduce_rho, freduced
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-integer(IK) :: idz, itest, &
+integer(IK) :: nfilt, k, idz, itest, &
 &           knew_tr, knew_geo, kopt, nact,      &
 &           ngetact, subinfo
 real(RP) :: fshift(npt)
@@ -215,7 +218,7 @@ end if
 ! trust region centre.
 b = bvec
 call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
-    & ij, kopt, nf, chist, fhist, fval, xbase, xhist, xpt, subinfo)
+    & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt
@@ -223,8 +226,19 @@ f = fopt
 ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 
+nfilt = 0
+do k = 1, npt
+    if (evaluated(k)) call savefilt(cval(k), ctol, cweight, fval(k), xbase + xpt(:, k), nfilt, cfilt, ffilt, xfilt)
+end do
+
 if (subinfo /= INFO_DFT) then
     info = subinfo
+    ! Return the best calculated values of the variables.
+    kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
+    x = xfilt(:, kopt)
+    f = ffilt(kopt)
+    cstrv = cfilt(kopt)
+    ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist)
     !close (16)
     return
@@ -357,6 +371,7 @@ do while (.true.)
         nf = nf + 1_IK
         call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+        call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
         if (is_nan(f) .or. is_posinf(f)) then
             info = NAN_INF_F
             exit
@@ -423,7 +438,8 @@ do while (.true.)
             ! matrix HQ.
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-            if (fopt <= ftarget) then
+            !if (fopt <= ftarget) then
+            if (fopt <= ftarget .and. cstrv <= ctol) then
                 info = FTARGET_ACHIEVED
                 exit
             end if
@@ -554,6 +570,7 @@ do while (.true.)
 
         call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+        call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
         if (is_nan(f) .or. is_posinf(f)) then
             info = NAN_INF_F
             exit
@@ -599,7 +616,8 @@ do while (.true.)
         freduced = (f < fopt .and. feasible)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-        if (fopt <= ftarget) then
+        !if (fopt <= ftarget) then
+        if (fopt <= ftarget .and. cstrv <= ctol) then
             info = FTARGET_ACHIEVED
             exit
         end if
@@ -662,6 +680,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     nf = nf + 1_IK
     call fmsg(solver, iprint, nf, f, x, cstrv, constr)
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+    call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
     feasible = .true. ! Why? Consistent with the meaning of FEASIBLE???
 end if
 
@@ -672,6 +691,10 @@ end if
 
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 
+kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
+x = xfilt(:, kopt)
+f = ffilt(kopt)
+cstrv = cfilt(kopt)
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist)
 

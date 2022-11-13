@@ -8,12 +8,16 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, April 19, 2022 AM12:22:07
+! Last Modified: Sunday, November 13, 2022 PM10:34:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: savefilt, selectx, isbetter
+
+interface savefilt
+    module procedure savefilt_l, savefilt_nl
+end interface savefilt
 
 interface isbetter
     module procedure isbetter10, isbetter01
@@ -21,8 +25,166 @@ end interface isbetter
 
 contains
 
+subroutine savefilt_l(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine saves X, F, and CSTRV in XFILT, FFILT, CONFILT, and CFILT, unless a vector
+! in XFILT(:, 1:NFILT) is better than X. If X is better than some vectors in XFILT(:, 1:NFILT), then
+! these vectors will be removed. If X is not better than any of XFILT(:, 1:NFILT) but NFILT=MAXFILT,
+! then we remove a column from XFILT according to PHI = FFILT + CWEIGHT * MAX(CFILT - CTOL, ZERO).
+! N.B.:
+! 1. Only XFILT(:, 1:NFILT) and FFILT(:, 1:NFILT) etc contains valid information, while
+! XFILT(:, NFILT+1:MAXFILT) and FFILT(:, NFILT+1:MAXFILT) etc are not initialized yet.
+! 2. We decide whether an X is better than another by the ISBETTER function.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
+use, non_intrinsic :: linalg_mod, only : trueloc
 
-subroutine savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+implicit none
+
+! Inputs
+real(RP), intent(in) :: cstrv
+real(RP), intent(in) :: ctol
+real(RP), intent(in) :: cweight
+real(RP), intent(in) :: f
+real(RP), intent(in) :: x(:)  ! N
+
+! In-outputs
+integer(IK), intent(inout) :: nfilt
+real(RP), intent(inout) :: cfilt(:)  ! MAXFILT
+real(RP), intent(inout) :: ffilt(:)  ! MAXFILT
+real(RP), intent(inout) :: xfilt(:, :) ! (N, MAXFILT)
+
+! Local variables
+character(len=*), parameter :: srname = 'SAVEFILT'
+integer(IK) :: index_to_keep(size(ffilt))
+integer(IK) :: m
+integer(IK) :: maxfilt
+integer(IK) :: n
+integer(IK) :: kworst
+logical :: keep(nfilt)
+real(RP) :: cfilt_shifted(size(ffilt))
+real(RP) :: cref
+real(RP) :: fref
+real(RP) :: phi(size(ffilt))
+real(RP) :: phimax
+
+! Sizes
+n = int(size(x), kind(n))
+maxfilt = int(size(ffilt), kind(maxfilt))
+
+! Preconditions
+if (DEBUGGING) then
+    ! Check the size of X.
+    call assert(n >= 1, 'N >= 1', srname)
+    ! Check NFILT
+    call assert(nfilt >= 0 .and. nfilt <= maxfilt, '0 <= NFILT <= MAXFILT', srname)
+    ! Check the sizes of XFILT, FFILT, CONFILT, CFILT.
+    call assert(maxfilt >= 1, 'MAXFILT >= 1', srname)
+    call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
+    call assert(size(cfilt) == maxfilt, 'SIZE(CFILT) == MAXFILT', srname)
+    ! Check the values of XFILT, FFILT, CONFILT, CFILT.
+    call assert(.not. any(is_nan(xfilt(:, 1:nfilt))), 'XFILT does not contain NaN', srname)
+    call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
+        & 'FFILT does not contain NaN/+Inf', srname)
+    call assert(.not. any(cfilt(1:nfilt) < 0 .or. is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
+        & 'CFILT does not contain nonnegative values of NaN/+Inf', srname)
+    ! Check the values of X, F, CSTRV.
+    ! X does not contain NaN if X0 does not and the trust-region/geometry steps are proper.
+    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+    ! F cannot be NaN/+Inf due to the moderated extreme barrier.
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
+    ! CSTRV cannot be NaN/+Inf due to the moderated extreme barrier.
+    call assert(.not. (cstrv < 0 .or. is_nan(cstrv) .or. is_posinf(cstrv)), 'CSTRV is nonnegative and not NaN/+Inf', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Return immediately if any column of XFILT is better than X.
+if (any(isbetter(ffilt(1:nfilt), cfilt(1:nfilt), f, cstrv, ctol))) then
+    return
+end if
+
+! Decide which columns of XFILT to keep.
+keep = (.not. isbetter(f, cstrv, ffilt(1:nfilt), cfilt(1:nfilt), ctol))
+
+! If NFILT == MAXFILT and X is not better than any column of XFILT, then we remove the worst column
+! of XFILT according to the merit function PHI = FFILT + CWEIGHT * MAX(CFILT - CTOL, ZERO).
+if (count(keep) == maxfilt) then  ! In this case, NFILT = SIZE(KEEP) = COUNT(KEEP) = MAXFILT > 0.
+    cfilt_shifted = max(cfilt - ctol, ZERO)
+    if (cweight <= 0) then
+        phi = ffilt
+    elseif (is_posinf(cweight)) then
+        phi = cfilt_shifted
+        ! We should not use CFILT here; if MAX(CFILT_SHIFTED) is attained at multiple indices, then
+        ! we will check FFILT to exhaust the remaining degree of freedom.
+    else
+        phi = max(ffilt, -HUGENUM) + cweight * cfilt_shifted
+        ! MAX(FFILT, -HUGENUM) makes sure that PHI will not contain NaN (unless there is a bug).
+    end if
+    ! We select X to maximize PHI. In case there are multiple maximizers, we take the one with the
+    ! largest CSTRV_SHIFTED; if there are more than one choices, we take the one with the largest F;
+    ! if there are several candidates, we take the one with the largest CSTRV; if the last comparison
+    ! still leads to more than one possibilities, then they are equally bad and we choose the first.
+    ! N.B.:
+    ! 1. This process is the opposite of selecting KOPT in SELECTX.
+    ! 2. In finite-precision arithmetic, PHI_1 == PHI_2 and CSTRV_SHIFTED_1 == CSTRV_SHIFTED_2 do
+    ! not ensure that F_1 == F_2!!!
+    phimax = maxval(phi)
+    cref = maxval(cfilt_shifted, mask=(phi >= phimax))
+    fref = maxval(ffilt, mask=(cfilt_shifted >= cref))
+    kworst = int(maxloc(cfilt, mask=(ffilt >= fref), dim=1), kind(kworst))
+    !!MATLAB: cmax = max(cfilt(ffilt >= fref)); kworst = find(ffilt >= fref & ~(cfilt < cmax), 1,'first');
+    if (kworst < 1 .or. kworst > size(keep)) then  ! For security. Should not happen.
+        kworst = 1_IK
+    end if
+    keep(kworst) = .false.
+end if
+
+nfilt = int(count(keep), kind(nfilt))
+index_to_keep(1:nfilt) = trueloc(keep)
+xfilt(:, 1:nfilt) = xfilt(:, index_to_keep(1:nfilt))
+ffilt(1:nfilt) = ffilt(index_to_keep(1:nfilt))
+cfilt(1:nfilt) = cfilt(index_to_keep(1:nfilt))
+
+nfilt = nfilt + 1_IK
+xfilt(:, nfilt) = x
+ffilt(nfilt) = f
+cfilt(nfilt) = cstrv
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    ! Check NFILT and the sizes of XFILT, FFILT, CONFILT, CFILT.
+    call assert(nfilt >= 1 .and. nfilt <= maxfilt, '1 <= NFILT <= MAXFILT', srname)
+    call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
+    call assert(size(ffilt) == maxfilt, 'SIZE(FFILT) = MAXFILT', srname)
+    call assert(size(cfilt) == maxfilt, 'SIZE(CFILT) = MAXFILT', srname)
+    ! Check the values of XFILT, FFILT, CONFILT, CFILT.
+    call assert(.not. any(is_nan(xfilt(:, 1:nfilt))), 'XFILT does not contain NaN', srname)
+    call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
+        & 'FFILT does not contain NaN/+Inf', srname)
+    call assert(.not. any(cfilt(1:nfilt) < 0 .or. is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
+        & 'CFILT does not contain nonnegative values of NaN/+Inf', srname)
+    ! Check that no point in the filter is better than X, and X is better than no point.
+    call assert(.not. any(isbetter(ffilt(1:nfilt), cfilt(1:nfilt), f, cstrv, ctol)), &
+        & 'No point in the filter is better than X', srname)
+    call assert(.not. any(isbetter(f, cstrv, ffilt(1:nfilt), cfilt(1:nfilt), ctol)), &
+        & 'X is better than no point in the filter', srname)
+end if
+
+end subroutine savefilt_l
+
+
+
+
+subroutine savefilt_nl(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine saves X, F, CONSTR, and CSTRV in XFILT, FFILT, CONFILT, and CFILT, unless a vector
 ! in XFILT(:, 1:NFILT) is better than X. If X is better than some vectors in XFILT(:, 1:NFILT), then
@@ -189,7 +351,7 @@ if (DEBUGGING) then
         & 'X is better than no point in the filter', srname)
 end if
 
-end subroutine savefilt
+end subroutine savefilt_nl
 
 
 function selectx(fhist, chist, cweight, ctol) result(kopt)
