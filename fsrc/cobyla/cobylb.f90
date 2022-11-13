@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 13, 2022 PM05:20:43
+! Last Modified: Sunday, November 13, 2022 PM05:40:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -256,7 +256,7 @@ maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which wi
 info = MAXTR_REACHED
 
 ! Begin the iterative procedure.
-! After solving a trust-region subproblem, COBYLA uses 3 boolean variables to control the work flow.
+! After solving a trust-region subproblem, we use three boolean variables to control the workflow.
 ! SHORTD - Is the trust-region trial step too short to invoke a function evaluation?
 ! IMPROVE_GEO - Will we improve the model after the trust-region iteration? If yes, a geometry step
 ! will be taken, corresponding to the "Branch (Delta)" in the COBYLA paper.
@@ -416,10 +416,10 @@ do tr = 1, maxtr
     !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
 
     ! If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO
-    ! is TRUE unless GOOD_GEO is TRUE but MAX(DELTA, DNORM) > RHO.
-    call assert((.not. shortd .and. max(prerec, preref) > 0) .or. (improve_geo .or. reduce_rho .or. &
-        & (good_geo .and. max(delta, dnorm) > rho)), 'If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then&
-        & either IMPROVE_GEO or REDUCE_RHO is TRUE unless GOOD_GEO is TRUE but MAX(DELTA, DNORM) > RHO', srname)
+    ! is TRUE unless GOOD_GEO is TRUE and MAX(DELTA, DNORM) > RHO.
+    !call assert((.not. shortd .and. max(prerec, preref) > 0) .or. (improve_geo .or. reduce_rho .or. &
+    !    & (good_geo .and. max(delta, dnorm) > rho)), 'If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then&
+    !    & either IMPROVE_GEO or REDUCE_RHO is TRUE unless GOOD_GEO is TRUE and MAX(DELTA, DNORM) > RHO', srname)
     !----------------------------------------------------------------------------------------------!
 
     ! Comments on BAD_TRSTEP:

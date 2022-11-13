@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM04:21:45
+! Last Modified: Sunday, November 13, 2022 PM05:49:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -267,6 +267,12 @@ itest = 3
 dnormsav = HUGENUM
 info = INFO_DFT
 
+! Begin the iterative procedure.
+! After solving a trust-region subproblem, we use three boolean variables to control the workflow.
+! SHORTD: Is the trust-region trial step too short to invoke a function evaluation?
+! IMPROVE_GEO: Should we improve the geometry?
+! REDUCE_RHO: Should we reduce rho?
+! LINCOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do while (.true.)
     ! Shift XBASE if XOPT may be too far from XBASE.
     ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
@@ -290,8 +296,8 @@ do while (.true.)
     !------------------------------------------------------------------------------------------!
     ! The SHORTD defined above needs NGETACT, which relies on Powell's trust region subproblem
     ! solver. If a different subproblem solver is used, we can take the following SHORTD adopted
-    ! from UOBYQA, NEWUOA and BOBYQA. According to a test on 20220620, it works well.
-    ! !SHORTD = (DNORM < HALF * RHO)  ! An alternative definition of SHORTD.
+    ! from UOBYQA, NEWUOA and BOBYQA.
+    ! !SHORTD = (DNORM < HALF * RHO)
     !------------------------------------------------------------------------------------------!
 
     ! DNORMSAV saves the DNORM of last few (five) trust-region iterations. It will be used to
@@ -306,22 +312,17 @@ do while (.true.)
         dnormsav = HUGENUM
     end if
 
-    ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. If D
-    ! is a trust region step, then QRED should be positive. If it is nonpositive due to rounding
-    ! errors in this case, there is a branch to try to improve the model.
-    !-------------------------------------------------------------------------------------------!
-    ! Zaikun 20220405: The improvement does not exist in NEWUOA/BOBYQA, which should try the same.
-    !------------------------------------------------------------------------------------------!
-    qred = -quadinc(d, xpt, gopt, pq, hq)
+    ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
+    ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
+    qred = -quadinc(d, xpt, gopt, pq, hq) ! QRED = Q(XOPT) - Q(XOPT + D)
 
-    ! When the trust region step is short, decide whether to improve the geometry of the
-    ! interpolation set or to reduce RHO.
     if (shortd .or. .not. qred > 0) then
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
         ! N.B.: 1. This value of DELTA will be discarded if REDUCE_RHO turns out TRUE later.
-        ! 2. Without shrinking DELTA, the algorithm may  be stuck in an infinite cycling, because
-        ! both REDUCE_RHO and IMPROVE_GEO may end up with FALSE in this case, which did happen in
-        ! Powell's code when QRED > 0 is FALSE (Powell's code: VQUAD >= 0, where VQUAD = -QRED).
+        ! 2. Powell's code does not shrink DELTA when QRED > 0 is FALSE (i.e., when VQUAD >= 0 in
+        ! Powell's code, where VQUAD = -QRED). Consequently, the algorithm may  be stuck in an
+        ! infinite cycling, because both REDUCE_RHO and IMPROVE_GEO may end up with FALSE in this
+        ! case, which did happen in tests.
         ! 3. The factor HALF works better than TENTH used in NEWUOA/BOBYQA.
         ! 4. The factor 1.4 below aligns with the update of DELTA after a trust-region step.
         delta = HALF * delta
