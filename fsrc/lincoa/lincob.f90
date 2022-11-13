@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM03:24:10
+! Last Modified: Sunday, November 13, 2022 PM03:32:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -478,7 +478,6 @@ do while (.true.)
     ! SMALL_TRRAD: Is the trust-region radius small?  This indicator seems not impactive.
     small_trrad = (max(delta, dnorm) <= rho)  ! Behaves the same as Powell's version.
     !small_trrad = (delsav <= rho)  ! Powell's code. DELSAV = unupdated DELTA.
-    !----------------------------------------------------------------------------------------------!
 
     ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
     ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad?
@@ -489,7 +488,7 @@ do while (.true.)
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
 
     ! Equivalently, REDUCE_RHO can be set as follows. It shows that REDUCE_RHO is TRUE in two cases.
-    ! !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+    reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
     ! With REDUCE_RHO properly defined, we can also set IMPROVE_GEO as follows.
     ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)
@@ -499,19 +498,19 @@ do while (.true.)
     ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
     ! !reduce_rho = bad_trstep .and. (.not. improve_geo) .and. small_trrad
 
-    ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
-    !call assert(.not. (reduce_rho .and. improve_geo), 'REDUCE_RHO or IMPROVE_GEO is false', srname)
+    ! LINCOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
+    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
     !
-    ! If SHORTD is TRUE or QRED > 0 is FALSE, then either REDUCE_RHO or IMPROVE_GEO is TRUE unless
+    ! If SHORTD is TRUE or QRED > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO is TRUE unless
     ! CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE.
     call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
         & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
-        & REDUCE_RHO or IMPROVE_GEO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
+        & IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
     !----------------------------------------------------------------------------------------------!
 
 
-    ! Since NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously, the following two
-    ! blocks are exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
+    ! Since IMPROVE_GEO and REDUCE_RHO are never TRUE simultaneously, the following two blocks are
+    ! exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
 
     if (improve_geo) then
         ! Shift XBASE if XOPT may be too far from XBASE.
