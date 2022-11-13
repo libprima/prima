@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Friday, November 04, 2022 PM12:04:03
+! Last Modified: Sunday, November 13, 2022 PM12:33:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -311,7 +311,7 @@ do iter = 1, maxiter
         nactsav = nact
         call qradd(A(:, iact(icon)), z, zdota, nact)  ! QRADD may update NACT tp NACT + 1.
         ! Indeed, it suffices to pass ZDOTA(1:MIN(N, NACT+_1)) to QRADD as follows.
-        !!call qradd(A(:, iact(icon)), z, zdota(1:min(n, nact + 1_IK)), nact)
+        ! !call qradd(A(:, iact(icon)), z, zdota(1:min(n, nact + 1_IK)), nact)
 
         if (nact == nactsav + 1) then
             ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
@@ -349,16 +349,16 @@ do iter = 1, maxiter
 
             ! Zaikun 20210811: Powell's code includes the following, which is IMPOSSIBLE TO REACH.
             !--------------------------------------------------------------------------------------!
-            !if (icon < nact) then
-            !    do k = icon, nact-1
-            !        hypt = sqrt(zdota(k+1)**2+inprod(z(:, k), A(:, iact(k+1)))**2)
-            !        grot = planerot([zdota(k+1), inprod(z(:, k), A(:, iact(k+1)))])
-            !        z(:, [k, k+1]) = matprod(z(:, [k+1, k]), transpose(grot))
-            !        zdota([k, k+1]) = [hypt, (zdota(k+1) / hypt) * zdota(k)]
-            !    end do
-            !    iact(icon:nact) = [iact(icon+1:nact), iact(icon)]
-            !    vmultc(icon:nact) = [vmultc(icon+1:nact), vmultc(icon)]
-            !end if
+            ! !if (icon < nact) then
+            ! !    do k = icon, nact-1
+            ! !        hypt = sqrt(zdota(k+1)**2+inprod(z(:, k), A(:, iact(k+1)))**2)
+            ! !        grot = planerot([zdota(k+1), inprod(z(:, k), A(:, iact(k+1)))])
+            ! !        z(:, [k, k+1]) = matprod(z(:, [k+1, k]), transpose(grot))
+            ! !        zdota([k, k+1]) = [hypt, (zdota(k+1) / hypt) * zdota(k)]
+            ! !    end do
+            ! !    iact(icon:nact) = [iact(icon+1:nact), iact(icon)]
+            ! !    vmultc(icon:nact) = [vmultc(icon+1:nact), vmultc(icon)]
+            ! !end if
             !--------------------------------------------------------------------------------------!
 
             ! Reorder the active constraints so that the one to be replaced is at the end of the list.
@@ -380,13 +380,13 @@ do iter = 1, maxiter
             call validate(nact > 1, 'NACT > 1', srname)  ! NACT must be at least 2.
             call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), nact - 1_IK)
             ! Indeed, it suffices to pass Z(:, 1:NACT) to QREXC as follows.
-            !!call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), nact - 1_IK)
+            ! !call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), nact - 1_IK)
             iact([nact - 1_IK, nact]) = iact([nact, nact - 1_IK])
             vmultc([nact - 1_IK, nact]) = vmultc([nact, nact - 1_IK])
         end if
         ! Zaikun 20211117: It turns out that the last few lines do not guarantee IACT(NACT) == N in
-        ! stage 2; the following test cannot be passed. IS THIS A BUG??!!
-        !call assert(iact(nact) == mcon .or. stage == 1, 'IACT(NACT) == MCON in stage 2', srname)
+        ! stage 2; the following test cannot be passed. IS THIS A BUG?!
+        ! !call assert(iact(nact) == mcon .or. stage == 1, 'IACT(NACT) == MCON in stage 2', srname)
 
         !------- Powell's code does not include the following ------!
         if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
@@ -412,7 +412,7 @@ do iter = 1, maxiter
         call validate(icon > 0, 'ICON > 0', srname)
         call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), icon)  ! QREXC does nothing if ICON==NACT.
         ! Indeed, it suffices to pass Z(:, 1:NACT) to QREXC as follows.
-        !!call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), icon)
+        ! !call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), icon)
         iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
         vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
         nact = nact - 1_IK
@@ -460,17 +460,17 @@ do iter = 1, maxiter
     ! PRECISION). Further, we skip the step if it could be zero within
     ! a reasonable tolerance for computer rounding errors.
     !
-    !!dd = delta**2 - sum(d**2, mask=(abs(d) >= EPS * delta))
-    !!ss = inprod(sdirn, sdirn)
-    !!if (dd  <= 0) then
-    !!    exit
-    !!end if
-    !!sd = inprod(sdirn, d)
-    !!if (abs(sd) >= EPS * sqrt(ss * dd)) then
-    !!    step = dd / (sqrt(ss * dd + sd**2) + sd)
-    !!else
-    !!    step = dd / (sqrt(ss * dd) + sd)
-    !!end if
+    ! !dd = delta**2 - sum(d**2, mask=(abs(d) >= EPS * delta))
+    ! !ss = inprod(sdirn, sdirn)
+    ! !if (dd  <= 0) then
+    ! !    exit
+    ! !end if
+    ! !sd = inprod(sdirn, d)
+    ! !if (abs(sd) >= EPS * sqrt(ss * dd)) then
+    ! !    step = dd / (sqrt(ss * dd + sd**2) + sd)
+    ! !else
+    ! !    step = dd / (sqrt(ss * dd) + sd)
+    ! !end if
     !----------------------------------------------------------------!
     !----------------------------------------------------------------------------------------------!
 
@@ -621,13 +621,13 @@ else
 end if
 
 ! For noisy problems, the following may work better.
-!!if (ratio <= eta1) then
-!!    delta = gamma1 * dnorm
-!!elseif (ratio <= eta2) then  ! Ensure DELTA >= DELTA_IN
-!!    delta = delta_in
-!!else  ! Ensure DELTA > DELTA_IN with a constant factor
-!!    delta = max(delta_in * (1.0_RP + gamma2) / 2.0_RP, gamma2 * dnorm)
-!!end if
+! !if (ratio <= eta1) then
+! !    delta = gamma1 * dnorm
+! !elseif (ratio <= eta2) then  ! Ensure DELTA >= DELTA_IN
+! !    delta = delta_in
+! !else  ! Ensure DELTA > DELTA_IN with a constant factor
+! !    delta = max(delta_in * (1.0_RP + gamma2) / 2.0_RP, gamma2 * dnorm)
+! !end if
 
 !====================!
 !  Calculation ends  !
