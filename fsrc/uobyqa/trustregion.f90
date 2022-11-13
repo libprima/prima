@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 10, 2022 PM06:44:54
+! Last Modified: Sunday, November 13, 2022 PM02:25:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,7 +77,7 @@ real(RP) :: td(size(g))
 real(RP) :: tn(size(g) - 1)
 !real(RP) :: w(size(g))
 real(RP) :: z(size(g))
-real(RP) :: dold(size(g)) !!!
+real(RP) :: dold(size(g))
 real(RP) :: dnewton(size(g))  ! Newton-Raphson step; only calculated when N = 1.
 real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &

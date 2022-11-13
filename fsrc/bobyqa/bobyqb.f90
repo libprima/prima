@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 12, 2022 PM07:58:04
+! Last Modified: Sunday, November 13, 2022 PM02:22:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -431,8 +431,8 @@ do while (.true.)
             pqinc = matprod(zmat, diff * zmat(knew_tr, :))
             pq = pq + pqinc
             ! Alternatives:
-            !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
-            !!PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
+            ! !PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
+            ! !PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
 
             ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that
             ! are caused by the updating of the quadratic model.
@@ -491,7 +491,7 @@ do while (.true.)
     !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA.
     ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
+    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
     close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's code.
     !close_itpset = all(distsq <= (TEN * rho)**2)  ! Works almost the same as Powell's version.
     !close_itpset = all(distsq <= (TEN * delta)**2)  ! Does not work as well as Powell's version.
@@ -506,12 +506,12 @@ do while (.true.)
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
 
-    !! What if RESCUE has been called? Is it reasonable to use RATIO?
-    !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
-    !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
+    ! What if RESCUE has been called? Is it reasonable to use RATIO?
+    ! !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! For REDUCE_RHO
+    ! !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
-    !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
-    !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
+    ! !bad_trstep = (shortd .or. ratio <= TENTH .or. knew_tr == 0)  ! For IMPROVE_GEO
+    ! !improve_geo = bad_trstep .and. (.not. close_itpset) .and. (.not. reduce_rho)
 
     ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
     ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region
@@ -623,8 +623,8 @@ do while (.true.)
             pqinc = matprod(zmat, diff * zmat(knew_geo, :))
             pq = pq + pqinc
             ! Alternatives:
-            !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
-            !!PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
+            ! !PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
+            ! !PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
 
             ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
             ! caused by the updating of the quadratic model.

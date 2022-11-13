@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 06, 2022 PM11:28:11
+! Last Modified: Sunday, November 13, 2022 PM02:28:16
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -69,7 +69,7 @@ real(kind(0.0D0)) :: f
 ! If CALFUN is an external subroutine, then remove the line of  "use calfun_mod, only : calfun", and
 ! uncomment the following line.
 !--------------------------------------------------------------------------------------------------!
-!!external calfun
+!external calfun
 !--------------------------------------------------------------------------------------------------!
 
 ! The following lines illustrates how to call the solver to solve the Chebyquad problem.
