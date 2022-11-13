@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM04:32:28
+! Last Modified: Sunday, November 13, 2022 PM05:43:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -211,6 +211,12 @@ ratio = -ONE
 shortd = .false.
 improve_geo = .false.
 
+! Begin the iterative procedure.
+! After solving a trust-region subproblem, we use three boolean variables to control the workflow.
+! SHORTD: Is the trust-region trial step too short to invoke a function evaluation?
+! IMPROVE_GEO: Should we improve the geometry?
+! REDUCE_RHO: Should we reduce rho?
+! BOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do while (.true.)
     ! Generate the next point in the trust region that provides a small value of the quadratic model
     ! subject to the constraints on the variables.
@@ -221,8 +227,9 @@ do while (.true.)
 
     dnorm = min(delta, sqrt(sum(d**2)))
     shortd = (dnorm < HALF * rho)
-    ! Use the quadratic model to predict the change in F due to the step D
-    qred = -quadinc(d, xpt, gopt, pq, hq)
+    ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
+    ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
+    qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
 
     ! When D is short, make a choice between reducing RHO and improving the geometry depending
     ! on whether or not our work with the current RHO seems complete. RHO is reduced if the
