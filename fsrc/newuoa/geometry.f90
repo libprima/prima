@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM02:10:29
+! Last Modified: Sunday, November 13, 2022 PM04:01:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,23 +100,21 @@ end if
 ! not always lead to a better performance of NEWUOA. Here, we choose not to check TR_SUCCESS, as
 ! the performance of NEWUOA is better in this way. THIS DIFFERS FROM POWELL'S CODE.
 ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF NEWUOA ARE IMPLEMENTED DIFFERENTLY.
-!if (tr_success) then  ! This is Powell's version
-!    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-!    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
-!else
-!    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-!    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-!end if
+! !if (tr_success) then  ! This is Powell's version
+! !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+! !    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
+! !else
+! !    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+! !    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+! !end if
 distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 
-weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3
-!--------------------------------------------------------------------------------------------------!
+weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's code.
 ! Other possible definitions of WEIGHT.
-!weight = max(ONE, distsq / rho**2)**3  ! This works almost the same as the above.
-!weight = max(ONE, distsq / delta**2)**3  ! Code from BOBYQA. It does not work as well as the above.
-!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! It does not work as well as the above.
-!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! This works poorly.
-!--------------------------------------------------------------------------------------------------!
+! !weight = max(ONE, distsq / rho**2)**3  ! This works almost the same as the above.
+! !weight = max(ONE, distsq / delta**2)**3  ! BOBYQA code. It does not work as well as the above.
+! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! It does not work as well as the above.
+! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! This works poorly.
 
 denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
 score = weight * denabs
