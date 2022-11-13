@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, October 01, 2022 PM02:59:47
+! Last Modified: Sunday, November 13, 2022 PM01:53:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -117,7 +117,7 @@ if (DEBUGGING) then
     call assert(size(Rdiag) >= min(m, n + 1_IK) .and. size(Rdiag) <= m, 'MIN(M, N+1) <= SIZE(Rdiag) <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
-    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
     Qsave = Q(:, 1:n)  ! For debugging only
     Rdsave = Rdiag(1:n)  ! For debugging only
 end if
@@ -171,7 +171,7 @@ if (DEBUGGING) then
     call assert(n >= nsave .and. n <= min(nsave + 1_IK, m), 'NSAV <= N <= MIN(NSAV + 1, M)', srname)
     call assert(size(Rdiag) >= n .and. size(Rdiag) <= m, 'N <= SIZE(Rdiag) <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
-    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
 
     call assert(all(abs(Q(:, 1:nsave) - Qsave(:, 1:nsave)) <= 0), 'Q(:, 1:NSAVE) is unchanged', srname)
     call assert(all(abs(Rdiag(1:n - 1) - Rdsave(1:n - 1)) <= 0), 'Rdiag(1:N-1) is unchanged', srname)
@@ -272,8 +272,8 @@ if (DEBUGGING) then
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
 
-    !!call assert(.not. any(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) > 0), 'Q(:, 1:N-1) is unchanged', srname)
-    !!call assert(.not. any(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) > 0), 'R(:, 1:N-1) is unchanged', srname)
+    ! !call assert(.not. any(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) > 0), 'Q(:, 1:N-1) is unchanged', srname)
+    ! !call assert(.not. any(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) > 0), 'R(:, 1:N-1) is unchanged', srname)
     ! If we can ensure that Q and R do not contain NaN or Inf, use the following lines instead of the last two.
     call assert(all(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) <= 0), 'Q(:, 1:N-1) is unchanged', srname)
     call assert(all(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) <= 0), 'R(:, 1:N-1) is unchanged', srname)
@@ -335,7 +335,7 @@ if (DEBUGGING) then
     call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
         & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
     tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
-    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
     Qsave = Q  ! For debugging only.
     Rdsave = Rdiag(1:i) ! For debugging only.
 end if
@@ -367,9 +367,7 @@ do k = i, n - 1_IK
     Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
 
     ! Powell's code updates RDIAG in the following way.
-    !----------------------------------------------------------------!
-    !!RDIAG([K, K + 1_IK]) = [HYPT, (RDIAG(K + 1) / HYPT) * RDIAG(K)]!
-    !----------------------------------------------------------------!
+    ! !RDIAG([K, K + 1_IK]) = [HYPT, (RDIAG(K + 1) / HYPT) * RDIAG(K)]
     ! Note that RDIAG(N) inherits all rounding in RDIAG(I:N-1) and Q(:, I:N-1) and hence contain
     ! significant errors. Thus we may modify Powell's code to set only RDIAG(K) = HYPT here and then
     ! calculate RDIAG(N) by an inner product after the loop. Nevertheless, we simply calculate RDIAG
@@ -390,7 +388,7 @@ if (DEBUGGING) then
     call assert(size(Rdiag) == n, 'SIZE(Rdiag) == N', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
         & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
-    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
 
     Qsave(:, i:n) = Q(:, i:n)
     call assert(all(abs(Q - Qsave) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
@@ -485,8 +483,8 @@ end if
 do k = i, n - 1_IK
     G = planerot(R([k + 1_IK, k], k + 1))  ! G = [c, -s; s, c]. It improves the performance of LINCOA
     hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)  ! HYPT must be calculated before R is updated
-    !!HYPT = G(1, 1) * R(K + 1, K + 1) + G(1, 2) * R(K, K + 1)  ! Does not perform well on 20220312
-    !!HYPT = HYPOTENUSE(R(K + 1, K + 1), R(K, K + 1))  ! Does not perform well on 20220312
+    ! !HYPT = G(1, 1) * R(K + 1, K + 1) + G(1, 2) * R(K, K + 1)  ! Does not perform well on 20220312
+    ! !HYPT = HYPOTENUSE(R(K + 1, K + 1), R(K, K + 1))  ! Does not perform well on 20220312
 
     ! Update Q(:, [K, K+1]).
     Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
@@ -495,8 +493,8 @@ do k = i, n - 1_IK
     R([k, k + 1_IK], k:n) = matprod(G, R([k + 1_IK, k], k:n))
     R(1:k + 1, [k, k + 1_IK]) = R(1:k + 1, [k + 1_IK, k])
     ! N.B.: The above two lines implement the following while noting that R is upper triangular.
-    !!R([K, K + 1_IK], :) = MATPROD(G, R([K + 1_IK, K], :))  ! No need for R([K, K+1], 1:K-1) = 0
-    !!R(:, [K, K + 1_IK]) = R(:, [K + 1_IK, K])  ! No need for R(K+2:, [K, K+1]) = 0
+    ! !R([K, K + 1_IK], :) = MATPROD(G, R([K + 1_IK, K], :))  ! No need for R([K, K+1], 1:K-1) = 0
+    ! !R(:, [K, K + 1_IK]) = R(:, [K + 1_IK, K])  ! No need for R(K+2:, [K, K+1]) = 0
 
     ! Revise R([K, K+1], K). Changes nothing in theory but seems good for the practical performance.
     R([k, k + 1_IK], k) = [hypt, ZERO]
@@ -506,16 +504,16 @@ do k = i, n - 1_IK
     ! K+1 of R beforehand. If the diagonal entries of the original R are positive, then all the
     ! updated ones become negative.
     !
-    !G = planerot(R([k, k + 1_IK], k + 1))
-    !hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
-    !!HYPT = G(1, 1) * R(K, K + 1) + G(1, 2) * R(K+1, K + 1)  ! Does not perform well on 20220312
-    !!HYPT = HYPOTENUSE(R(K, K + 1), R(K + 1, K + 1))  ! Does not perform well on 20220312
+    ! !G = planerot(R([k, k + 1_IK], k + 1))
+    ! !hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
+    ! !!HYPT = G(1, 1) * R(K, K + 1) + G(1, 2) * R(K+1, K + 1)  ! Does not perform well on 20220312
+    ! !!HYPT = HYPOTENUSE(R(K, K + 1), R(K + 1, K + 1))  ! Does not perform well on 20220312
     !
-    !Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
-    !
-    !R([k, k + 1_IK], k:n) = matprod(G, R([k, k + 1_IK], k:n))
-    !R(1:k + 1, [k, k + 1_IK]) = R(1:k + 1, [k + 1_IK, k])
-    !R([k, k + 1_IK], k) = [hypt, ZERO]
+    ! !Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
+    ! !
+    ! !R([k, k + 1_IK], k:n) = matprod(G, R([k, k + 1_IK], k:n))
+    ! !R(1:k + 1, [k, k + 1_IK]) = R(1:k + 1, [k + 1_IK, k])
+    ! !R([k, k + 1_IK], k) = [hypt, ZERO]
     !----------------------------------------------------------------------------------------------!
 end do
 
@@ -532,8 +530,8 @@ if (DEBUGGING) then
     call assert(istriu(R), 'R is upper triangular', srname)
 
     Qsave(:, i:n) = Q(:, i:n)
-    !!call assert(.not. any(abs(Q - Qsave) > 0), 'Q is unchanged except Q(:, I:N)', srname)
-    !!call assert(.not. any(abs(R(:, 1:i - 1) - Rsave(:, 1:i - 1)) > 0), 'R(:, 1:I-1) is unchanged', srname)
+    ! !call assert(.not. any(abs(Q - Qsave) > 0), 'Q is unchanged except Q(:, I:N)', srname)
+    ! !call assert(.not. any(abs(R(:, 1:i - 1) - Rsave(:, 1:i - 1)) > 0), 'R(:, 1:I-1) is unchanged', srname)
     ! If we can ensure that Q and R do not contain NaN or Inf, use the following lines instead of the last two.
     call assert(all(abs(Q - Qsave) <= 0), 'Q is unchanged except Q(:, I:N)', srname)
     call assert(all(abs(R(:, 1:i - 1) - Rsave(:, 1:i - 1)) <= 0), 'R(:, 1:I-1) is unchanged', srname)
@@ -600,31 +598,31 @@ end if
 ! Calculation starts !
 !====================!
 
-!!-------------------------------------------------------------------------------------------------!
-!!The following is Powell's scheme in NEWUOA.
-!s = x + d
-!qinc = ZERO
-!do j = 1, n
-!    ! First-order term
-!    qinc = qinc + d(j) * gq(j)
-!    ! Explicit second-order term
-!    if (present(hq)) then
-!        do i = 1, j
-!            t = d(i) * s(j) + d(j) * x(i)
-!            if (i == j) then
-!                t = HALF * t
-!            end if
-!            qinc = qinc + t * hq(i, j)
-!        end do
-!    end if
-!end do
-!! Implicit second-order term
-!dxpt = matprod(d, xpt)
-!w = dxpt * (HALF * dxpt + matprod(x, xpt))
-!do i = 1, npt
-!    qinc = qinc + pq(i) * w(i)
-!end do
-!!-------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+! The following is Powell's scheme in NEWUOA.
+! !s = x + d
+! !qinc = ZERO
+! !do j = 1, n
+! !    ! First-order term
+! !    qinc = qinc + d(j) * gq(j)
+! !    ! Explicit second-order term
+! !    if (present(hq)) then
+! !        do i = 1, j
+! !            t = d(i) * s(j) + d(j) * x(i)
+! !            if (i == j) then
+! !                t = HALF * t
+! !            end if
+! !            qinc = qinc + t * hq(i, j)
+! !        end do
+! !    end if
+! !end do
+! !! Implicit second-order term
+! !dxpt = matprod(d, xpt)
+! !w = dxpt * (HALF * dxpt + matprod(x, xpt))
+! !do i = 1, npt
+! !    qinc = qinc + pq(i) * w(i)
+! !end do
+!--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
 ! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
@@ -704,28 +702,28 @@ end if
 ! Calculation starts !
 !====================!
 
-!!-------------------------------------------------------------------------------------------------!
-!! The following is Powell's scheme in LINCOA.
-!! First-order term and explicit second-order term
-!qinc = ZERO
-!do j = 1, n
-!    qinc = qinc + d(j) * gq(j)
-!    do i = 1, j
-!        t = d(i) * d(j)
-!        if (i == j) then
-!            t = HALF * t
-!        end if
-!        if (present(hq)) then
-!            qinc = qinc + t * hq(i, j)
-!        end if
-!    end do
-!end do
-!
-!! Implicit second-order term
-!dxpt = matprod(d, xpt)
-!do i = 1, npt
-!    qinc = qinc + HALF * pq(i) * dxpt(i) * dxpt(i)  ! In BOBYQA, it is QINC - HALF * PQ(I) * DXPT(I)**2.
-!end do
+!--------------------------------------------------------------------------------------------------!
+! The following is Powell's scheme in LINCOA.
+! !! First-order term and explicit second-order term
+! !qinc = ZERO
+! !do j = 1, n
+! !    qinc = qinc + d(j) * gq(j)
+! !    do i = 1, j
+! !        t = d(i) * d(j)
+! !        if (i == j) then
+! !            t = HALF * t
+! !        end if
+! !        if (present(hq)) then
+! !            qinc = qinc + t * hq(i, j)
+! !        end if
+! !    end do
+! !end do
+! !
+! !! Implicit second-order term
+! !dxpt = matprod(d, xpt)
+! !do i = 1, npt
+! !    qinc = qinc + HALF * pq(i) * dxpt(i) * dxpt(i)  ! In BOBYQA, it is QINC - HALF * PQ(I) * DXPT(I)**2.
+! !end do
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -1203,8 +1201,8 @@ subroutine updateh(knew, kref, idz, d, xpt, bmat, zmat, info)
 ! [KNEW, KREF, D]. UPDATEH needs KREF only for calculating VLAG and BETA, where XPT(:, KREF) is used
 ! as a reference point that can be any column of XPT in precise arithmetic. Using XPT(:, KNEW) as
 ! the reference point, VLAG and BETA can be calculated by
-!!VLAG = CALVLAG(KNEW, BMAT, XNEW - XPT(:, KNEW), XPT, ZMAT, IDZ)
-!!BETA = CALBETA(KNEW, BMAT, XNEW - XPT(:, KNEW), XPT, ZMAT, IDZ)
+! !VLAG = CALVLAG(KNEW, BMAT, XNEW - XPT(:, KNEW), XPT, ZMAT, IDZ)
+! !BETA = CALBETA(KNEW, BMAT, XNEW - XPT(:, KNEW), XPT, ZMAT, IDZ)
 ! Theoretically (but not numerically), they should return the same VLAG and BETA as the calls below.
 ! However, as observed on 20220412, such an implementation can lead to significant errors in H!
 !--------------------------------------------------------------------------------------------------!
@@ -1403,7 +1401,7 @@ if (jl == 1) then
     ! update, then IDZ is reduced by 1, and we need to switch ZMAT(:, 1) and ZMAT(:, IDZ) to maintain
     ! that S_J = -1 iff 1 <= J < IDZ, which is done after the END IF together with another case.
 
-    !---------------------------------------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
     ! Up to now, TEMPA = ZMAT(KNEW, 1) if IDZ = 1 and TEMPA = -ZMAT(KNEW, 1) if IDZ >= 2. However,
     ! according to (4.18) of the NEWUOA paper, TEMPB should always be ZMAT(KNEW, 1)/SQRTDN
     ! regardless of IDZ. Therefore, the following definition of TEMPB is inconsistent with (4.18).
@@ -1411,43 +1409,41 @@ if (jl == 1) then
     ! of a KKT matrix". However, the inconsistency is hardly observable in practice, because JL = 1
     ! implies IDZ = 1 in precise arithmetic.
     !--------------------------------------------!
-    !!tempb = tempa/sqrtdn
-    !!tempa = tau/sqrtdn
+    ! !tempb = tempa/sqrtdn
+    ! !tempa = tau/sqrtdn
     !--------------------------------------------!
     ! Here is the corrected version (only TEMPB is changed).
     tempa = tau / sqrtdn
     tempb = zmat(knew, 1) / sqrtdn
-    !---------------------------------------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
 
     ! The following line updates ZMAT(:, 1) according to (4.18) of the NEWUOA paper.
     zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
 
-    !---------------------------------------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
     ! Zaikun 20220411: The update of IDZ is decoupled from the update of ZMAT, located after END IF.
-    !---------------------------------------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
     ! The following six lines from Powell's NEWUOA code are obviously problematic --- SQRTDN is
     ! always nonnegative. According to (4.18) of the NEWUOA paper, "SQRTDN < 0" and "SQRTDN >= 0"
     ! below should be both revised to "DENOM < 0". See also the corresponding part of the LINCOA
     ! code. Note that the NEWUOA paper uses SIGMA to denote DENOM. Check also Lemma 4 and (5.13) of
     ! Powell's paper "On updating the inverse of a KKT matrix". Note that the BOBYQA code does not
     ! have this part, as it does not have IDZ at all.
-    !--------------------------------------------!
-    !!if (idz == 1 .and. sqrtdn < 0) then
-    !!    idz = 2
-    !!end if
-    !!if (idz >= 2 .and. sqrtdn >= 0) then
-    !!    reduce_idz = .true.
-    !!end if
-    !--------------------------------------------!
-    !! This is the corrected version, copied from LINCOA.
-    !if (denom < 0) then
-    !    if (idz == 1) then
-    !        idz = 2_IK
-    !    else
-    !        reduce_idz = .true.
-    !    end if
-    !end if
-    !---------------------------------------------------------------------------------------------!
+    ! !if (idz == 1 .and. sqrtdn < 0) then
+    ! !    idz = 2
+    ! !end if
+    ! !if (idz >= 2 .and. sqrtdn >= 0) then
+    ! !    reduce_idz = .true.
+    ! !end if
+    ! This is the corrected version, copied from LINCOA.
+    ! !if (denom < 0) then
+    ! !    if (idz == 1) then
+    ! !        idz = 2_IK
+    ! !    else
+    ! !        reduce_idz = .true.
+    ! !    end if
+    ! !end if
+    !----------------------------------------------------------------------------------------------!
 else
     ! Complete the updating of ZMAT in the alternative case: ZMAT(KNEW, :) has 2 nonzeros. See (4.19)
     ! and (4.20) of the NEWUOA paper.
@@ -1475,28 +1471,28 @@ else
     !----------------------------------------------------------------------------------------------!
     ! Zaikun 20220411: The update of IDZ is decoupled from the update of ZMAT, located after END IF.
     !----------------------------------------------------------------------------------------------!
-    !! If and only if DENOM < 0, IDZ will be revised according to the sign of BETA.
-    !! See (4.19)--(4.20) of the NEWUOA paper.
-    !if (denom < 0) then
-    !    if (beta < 0) then
-    !        idz = int(idz + 1, kind(idz))
-    !    else
-    !        reduce_idz = .true.
-    !    end if
-    !end if
+    ! If and only if DENOM < 0, IDZ will be revised according to the sign of BETA.
+    ! See (4.19)--(4.20) of the NEWUOA paper.
+    ! !if (denom < 0) then
+    ! !    if (beta < 0) then
+    ! !        idz = int(idz + 1, kind(idz))
+    ! !    else
+    ! !        reduce_idz = .true.
+    ! !    end if
+    ! !end if
     !----------------------------------------------------------------------------------------------!
 end if
 
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20220411: The update of IDZ is decoupled from the update of ZMAT, located right below.
 !--------------------------------------------------------------------------------------------------!
-!! IDZ is reduced in the following case. Then exchange ZMAT(:, 1) and ZMAT(:, IDZ).
-!if (reduce_idz) then
-!    idz = int(idz - 1, kind(idz))
-!    if (idz > 1) then
-!        zmat(:, [1_IK, idz]) = zmat(:, [idz, 1_IK])
-!    end if
-!end if
+! IDZ is reduced in the following case. Then exchange ZMAT(:, 1) and ZMAT(:, IDZ).
+! !if (reduce_idz) then
+! !    idz = int(idz - 1, kind(idz))
+! !    if (idz > 1) then
+! !        zmat(:, [1_IK, idz]) = zmat(:, [idz, 1_IK])
+! !    end if
+! !end if
 !--------------------------------------------------------------------------------------------------!
 
 ! According to (4.18) and (4.19)--(4.20) of the NEWUOA paper, the coefficients {S_J} need update iff
@@ -1523,7 +1519,7 @@ end if
 w(npt + 1:npt + n) = bmat(:, knew)
 v1 = (alpha * vlag(npt + 1:npt + n) - tau * w(npt + 1:npt + n)) / denom
 v2 = (-beta * w(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
-bmat = bmat + outprod(v1, vlag) + outprod(v2, w) !!call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
+bmat = bmat + outprod(v1, vlag) + outprod(v2, w) !call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
 ! Numerically, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be symmetric.
 call symmetrize(bmat(:, npt + 1:npt + n))
 
@@ -1692,7 +1688,7 @@ wcheck = wcheck * (HALF * wcheck + matprod(xref, xpt))
 vlag(1:npt) = omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))
 vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d])
 ! The following line is equivalent to the above one, but handles WCHECK and D separately.
-!!vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
+! !vlag(npt + 1:npt + n) = matprod(bmat(:, 1:npt), wcheck) + matprod(bmat(:, npt + 1:npt + n), d)
 
 ! The following line sets VLAG(KREF) to the correct value.
 vlag(kref) = vlag(kref) + ONE
@@ -1805,7 +1801,7 @@ wmv = [wcheck, d]
 vlag(1:npt) = omega_mul(idz_loc, zmat, wcheck) + matprod(d, bmat(:, 1:npt))
 vlag(npt + 1:npt + n) = matprod(bmat, wmv)
 ! The following line is equivalent to the above one, but handles WCHECK and D separately.
-!!VLAG(NPT + 1:NPT + N) = MATPROD(BMAT(:, 1:NPT), WCHECK) + MATPROD(BMAT(:, NPT + 1:NPT + N), D)
+! !VLAG(NPT + 1:NPT + N) = MATPROD(BMAT(:, 1:NPT), WCHECK) + MATPROD(BMAT(:, NPT + 1:NPT + N), D)
 
 ! Set BETA = HALF*|XREF + D|^4 - (W-V)'*H*(W-V) - [XREF'*(X+XREF)]^2 + HALF*|XREF|^4. See equations
 ! (4.10), (4.12), (4.24), and (4.26) of the NEWUOA paper.
@@ -1817,8 +1813,8 @@ wvlag = inprod(wcheck, vlag(1:npt))
 beta = dxref**2 + dsq * (xrefsq + dxref + dxref + HALF * dsq) - dvlag - wvlag
 !---------------------------------------------------------------------------------------------------!
 ! The last line is equivalent to either of the following lines, but performs better numerically.
-!!BETA = DXREF**2 + DSQ * (XREFSQ + DXREF + DXREF + HALF * DSQ) - INPROD(VLAG, WMV)  ! not good
-!!BETA = DXREF**2 + DSQ * (XREFSQ + DXREF + DXREF + HALF * DSQ) - WVLAG - DVLAG  ! bad
+! !BETA = DXREF**2 + DSQ * (XREFSQ + DXREF + DXREF + HALF * DSQ) - INPROD(VLAG, WMV)  ! not good
+! !BETA = DXREF**2 + DSQ * (XREFSQ + DXREF + DXREF + HALF * DSQ) - WVLAG - DVLAG  ! bad
 !---------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -1834,7 +1830,7 @@ beta = dxref**2 + dsq * (xrefsq + dxref + dxref + HALF * dsq) - dvlag - wvlag
 ! if it is desirable to handle WCHECK and D separately due to their significantly different magnitudes.
 
 ! The following line sets VLAG(KREF) to the correct value if we intend to output VLAG.
-!!VLAG(KREF) = VLAG(KREF) + ONE
+! !VLAG(KREF) = VLAG(KREF) + ONE
 
 !====================!
 !  Calculation ends  !

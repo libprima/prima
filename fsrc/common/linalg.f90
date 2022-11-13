@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, October 22, 2022 PM03:46:34
+! Last Modified: Sunday, November 13, 2022 PM01:06:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1113,9 +1113,9 @@ do i = n, 1, -1
 end do
 !--------------------------------------------------------------------------------------------------!
 ! The following is equivalent to the above, yet the above version works slightly better in LINCOA.
-!!do i = n, 1_IK, -1_IK
-!! x(i) = (inprod(Q(:, i), b) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
-!!end do
+! !do i = n, 1_IK, -1_IK
+! !    x(i) = (inprod(Q(:, i), b) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
+! !end do
 !--------------------------------------------------------------------------------------------------!
 
 !====================!
@@ -1620,12 +1620,12 @@ elseif (abs(x(2)) <= EPS * abs(x(1))) then
     ! N.B.:
     ! 0. With <= instead of <, this case covers X(1) == 0 == X(2), which is treated above separately
     ! to avoid the confusing SIGN(., 0) (see 1).
-    ! 1. SIGN(A, 0) = ABS(A) in Fortran but sign(0) = 0 in MATLAB, Python, Julia, and R!!!
+    ! 1. SIGN(A, 0) = ABS(A) in Fortran but sign(0) = 0 in MATLAB, Python, Julia, and R!
     ! 2. Taking SIGN(X(1)) into account ensures the continuity of G with respect to X except at 0.
     c = sign(ONE, x(1)) !!MATLAB: c = sign(x(1))
     s = ZERO
 elseif (abs(x(1)) <= EPS * abs(x(2))) then
-    ! N.B.: SIGN(A, X) = ABS(A) * sign of X /= A * sign of X !!! Therefore, it is WRONG to define G
+    ! N.B.: SIGN(A, X) = ABS(A) * sign of X /= A * sign of X ! Therefore, it is WRONG to define G
     ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)). This mistake was committed on
     ! 20211206 and took a whole day to debug! NEVER use SIGN on arrays unless you are really sure.
     c = ZERO
@@ -1875,9 +1875,9 @@ if (present(tol)) then
 end if
 
 ! In Fortran, the following instructions cannot be written as the following Boolean expression:
-!!IS_SYMMETRIC = (SIZE(A, 1)==SIZE(A, 2) .AND. &
-!! & ALL(IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A))) .AND. &
-!! & .NOT. ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC * MAX(MAXVAL(ABS(A)), ONE)))
+! !IS_SYMMETRIC = (SIZE(A, 1)==SIZE(A, 2) .AND. &
+! ! & ALL(IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A))) .AND. &
+! ! & .NOT. ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC * MAX(MAXVAL(ABS(A)), ONE)))
 ! This is because Fortran may not perform short-circuit evaluation of this expression. If A is not
 ! square, then IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A)) and A - TRANSPOSE(A) are invalid.
 ! In addition, since Inf - Inf is NaN, we cannot replace ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC ...)
@@ -2594,8 +2594,8 @@ do k = 1, n - 1_IK
     w(k + 1:n) = sqrt(TWO / (colsq + A(k + 1, k)**2)) * A(k + 1:n, k)
     !----------------------------------------------------------------------------------------------!
     ! The two lines above are from Powell. They are equivalent to the following two lines.
-    !!A(K + 1, K) = A(K + 1, K) - ASUBD
-    !!W(K + 1:N) = sqrt(TWO) * A(K + 1:N, K) / NORM(A(K + 1:N, K))
+    ! !A(K + 1, K) = A(K + 1, K) - ASUBD
+    ! !W(K + 1:N) = sqrt(TWO) * A(K + 1:N, K) / NORM(A(K + 1:N, K))
     !----------------------------------------------------------------------------------------------!
     A(k + 1:n, k) = w(k + 1:n)
 
@@ -2709,8 +2709,8 @@ do j = 1, n - 1_IK
     v(j + 1) = -colsq / (v(j + 1) + subd)
     v(j + 1:n) = sqrt(TWO / (colsq + v(j + 1)**2)) * v(j + 1:n)
     ! The two lines above are from Powell. They are equivalent to the following two lines.
-    !!V(J + 1) = V(J + 1) - SUBD
-    !!V(J + 1:N) = sqrt(TWO) * V(J + 1:N) / NORM(V(J + 1:N))
+    ! !V(J + 1) = V(J + 1) - SUBD
+    ! !V(J + 1:N) = sqrt(TWO) * V(J + 1:N) / NORM(V(J + 1:N))
     !----------------------------------------------------------------------------------------------!
 
     do i = j + 1_IK, n
@@ -2781,9 +2781,9 @@ function eigmin_sym_trid(td, tn, tol) result(eig_min)
 !
 ! In MATLAB/Python/Julia/R, to get the smallest eigenvalue, we should use the eigenvalue computation
 ! function built in the languages or standard libraries. For example, in MATLAB, we can do
-!!tridh = spdiags([[tn; 0], td, [0; tn]], -1:1, n, n);
-!!crvmin = eigs(tridh, 1, 'smallestreal');
-!!% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
+! !tridh = spdiags([[tn; 0], td, [0; tn]], -1:1, n, n);
+! !crvmin = eigs(tridh, 1, 'smallestreal');
+! !% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -2901,7 +2901,7 @@ do iter = 1, maxiter ! Powell's code is essentially a DO WHILE loop. We impose a
     !----------------------------------------------------------------------------------------------!
     ! Powell's original code contains the following, why? It seems to cause wrong outputs sometimes.
     ! Zaikun 20220511: Does this affect the adjustment by the rule of false position?
-    !!IF (K < KSAV .OR. (K == KSAV .AND. PIVKSV == 0)) EXIT
+    ! !IF (K < KSAV .OR. (K == KSAV .AND. PIVKSV == 0)) EXIT
     !----------------------------------------------------------------------------------------------!
 end do
 

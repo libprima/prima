@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, June 16, 2022 AM12:17:45
+! Last Modified: Sunday, November 13, 2022 PM02:11:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -95,7 +95,7 @@ end if
 
 ! Do nothing when JDROP is 0. This can only happen after a trust-region step.
 if (jdrop <= 0) then  ! JDROP < 0 is impossible if the input is correct.
-    info = INFO_DFT  ! INFO must be set, as it is an output!!!
+    info = INFO_DFT  ! INFO must be set, as it is an output!
     return
 end if
 
@@ -255,7 +255,7 @@ if (jopt >= 1 .and. jopt <= n) then
     sim_jopt = sim(:, jopt)
     sim(:, jopt) = ZERO
     sim(:, 1:n) = sim(:, 1:n) - spread(sim_jopt, dim=2, ncopies=n)
-    !!MATLAB: sim(:, 1:n) = sim(:, 1:n) - sim_jopt; % sim_jopt should be a column!! Implicit expansion
+    !!MATLAB: sim(:, 1:n) = sim(:, 1:n) - sim_jopt; % sim_jopt should be a column! Implicit expansion
     ! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
     ! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
     ! identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,

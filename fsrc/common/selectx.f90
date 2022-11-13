@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, April 19, 2022 AM12:22:07
+! Last Modified: Sunday, November 13, 2022 PM02:08:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -137,7 +137,7 @@ if (count(keep) == maxfilt) then  ! In this case, NFILT = SIZE(KEEP) = COUNT(KEE
     ! N.B.:
     ! 1. This process is the opposite of selecting KOPT in SELECTX.
     ! 2. In finite-precision arithmetic, PHI_1 == PHI_2 and CSTRV_SHIFTED_1 == CSTRV_SHIFTED_2 do
-    ! not ensure that F_1 == F_2!!!
+    ! not ensure that F_1 == F_2!
     phimax = maxval(phi)
     cref = maxval(cfilt_shifted, mask=(phi >= phimax))
     fref = maxval(ffilt, mask=(cfilt_shifted >= cref))
@@ -245,9 +245,7 @@ end if
 !====================!
 
 ! We select X among the points with F < FREF and CSTRV < CREF.
-!--------------------------------------------------------------------------------------------------!
-!! Do NOT use F <= FREF, because F == FREF (HUGEFUN or HUGENUM) may mean F == INF in practice !!
-!--------------------------------------------------------------------------------------------------!
+! Do NOT use F <= FREF, because F == FREF (HUGEFUN or HUGENUM) may mean F == INF in practice!
 if (any(fhist < HUGEFUN .and. chist < HUGECON)) then
     fref = HUGEFUN
     cref = HUGECON
@@ -291,7 +289,7 @@ else
     ! N.B.:
     ! 1. This process is the opposite of selecting KWORST in SAVEFILT.
     ! 2. In finite-precision arithmetic, PHI_1 == PHI_2 and CSTRV_SHIFTED_1 == CSTRV_SHIFTED_2 do
-    ! not ensure that F_1 == F_2!!!
+    ! not ensure that F_1 == F_2!
     phimin = minval(phi, mask=(fhist < fref .and. chist_shifted <= cref))
     cref = minval(chist_shifted, mask=(fhist < fref .and. phi <= phimin))
     fref = minval(fhist, mask=(chist_shifted <= cref))

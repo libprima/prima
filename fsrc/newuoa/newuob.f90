@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM12:29:12
+! Last Modified: Sunday, November 13, 2022 PM02:10:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -332,7 +332,7 @@ do tr = 1, maxtr
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
+    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's original code.
     !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Slightly better than Powell's version.
     !close_itpset = all(distsq <= delta**2)  ! This works poorly.
