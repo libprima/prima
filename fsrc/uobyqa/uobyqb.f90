@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM04:55:30
+! Last Modified: Sunday, November 13, 2022 PM04:59:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -369,8 +369,8 @@ do while (.true.)
     ! reflected in LINCOA. It sets ACCURATE_MOD to TRUE if recent model errors and step lengths are
     ! all small. In addition, it identifies a "bad" interpolation point by simply taking the
     ! farthest point from the current trust region center, unless they are all close enough to the
-    ! center. This implementation is much simpler and it performs almost the same as Powell's
-    ! original implementation.
+    ! center. This implementation is much simpler and less costly in terms of flops yet it performs
+    ! almost the same as Powell's original implementation.
 
     ! Powell's original definition of IMPROVE_GEO and REDUCE_RHO:
     !bad_trstep = (shortd .or. knew_tr == 0 .or. (ratio <= 0 .and. dnorm <= 2.0_RP*rho .and. ddmove <= 4.0_RP * rho**2))
@@ -382,7 +382,7 @@ do while (.true.)
     ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad? It is critical to include
     ! DMOVE <= 4.0_RP*RHO**2 in the definition of BAD_TRSTEP for IMPROVE_GEO.
     bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
-    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! This works poorly!
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! Works poorly!
     improve_geo = bad_trstep .and. .not. adequate_geo
     ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
@@ -398,8 +398,8 @@ do while (.true.)
     ! !improve_geo = bad_trstep .and. (.not. reduce_rho) .and. (.not. close_itpset)
 
     ! With IMPROVE_GEO properly defined, we can also set REDUCE_RHO as follows.
-    ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
-    ! !reduce_rho = bad_trstep .and. (.not. improve_geo) .and. small_trrad
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    reduce_rho = bad_trstep .and. (.not. improve_geo) .and. small_trrad
 
     ! UOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
     !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
