@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM05:04:20
+! Last Modified: Sunday, November 13, 2022 PM05:05:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -373,19 +373,19 @@ do while (.true.)
     ! almost the same as Powell's original implementation.
 
     ! Powell's original definition of IMPROVE_GEO and REDUCE_RHO:
-    !bad_trstep = (shortd .or. knew_tr == 0 .or. (ratio <= 0 .and. dnorm <= 2.0_RP*rho .and. ddmove <= 4.0_RP * rho**2))
-    !improve_geo = bad_trstep .and. .not. (shortd .and. accurate_mod) .and. .not. close_itpset
-    !reduce_rho = bad_trstep .and. dnorm <= rho .and. .not. improve_geo
+    ! !bad_trstep = (shortd .or. knew_tr == 0 .or. (ratio <= 0 .and. dnorm <= 2.0_RP*rho .and. ddmove <= 4.0_RP * rho**2))
+    ! !improve_geo = bad_trstep .and. .not. (shortd .and. accurate_mod) .and. .not. close_itpset
+    ! !reduce_rho = bad_trstep .and. dnorm <= rho .and. .not. improve_geo
 
     ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
     ! Powell's code does not have (.NOT. QRED>0) in BAD_TRSTEP; it terminates if QRED > 0 fails.
     ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad? It is critical to include
     ! DMOVE <= 4.0_RP*RHO**2 in the definition of BAD_TRSTEP for IMPROVE_GEO.
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * delta**2))! .or. knew_tr == 0)
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= TENTH .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
     !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= TENTH .or. knew_tr == 0)  ! Works poorly!
     improve_geo = bad_trstep .and. .not. adequate_geo
     ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2))! .or. knew_tr == 0)
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
     !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! OK.
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
 
@@ -406,9 +406,9 @@ do while (.true.)
     !
     ! If SHORTD is TRUE or QRED > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO is TRUE unless
     ! CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE.
-    call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
-        & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
-        & IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
+    !call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
+    !    & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
+    !    & IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
     !----------------------------------------------------------------------------------------------!
 
 
