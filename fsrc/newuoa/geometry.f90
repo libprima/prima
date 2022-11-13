@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM12:46:35
+! Last Modified: Sunday, November 13, 2022 PM02:10:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -102,7 +102,7 @@ end if
 ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF NEWUOA ARE IMPLEMENTED DIFFERENTLY.
 !if (tr_success) then  ! This is Powell's version
 !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-!    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
+!    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
 !else
 !    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 !    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
@@ -615,7 +615,7 @@ if (.not. (ds**2 <= 0.99_RP * dd * ss)) then
     ! `.NOT. (A <= B)` differs from `A > B`.  The former holds iff A > B or {A, B} contains NaN.
     dtest = ds**2 / ss
     xptemp = xpt - spread(x, dim=2, ncopies=npt)
-    !!MATLAB: xptemp = xpt - x  % x should be a column!! Implicit expansion
+    !!MATLAB: xptemp = xpt - x  % x should be a column! Implicit expansion
     !----------------------------------------------------------------!
     !---------!dstemp = matprod(d, xpt) - inprod(x, d) !-------------!
     dstemp = matprod(d, xptemp)

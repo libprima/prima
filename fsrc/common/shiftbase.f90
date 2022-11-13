@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 30, 2022 PM09:42:15
+! Last Modified: Sunday, November 13, 2022 PM02:09:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,7 +33,7 @@ subroutine shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: BY(N, N), SXPT(NPT), V(N), VXOPT(N, N), XPTXAV(N, NPT), YMAT(N, NPT),
 ! YZMAT(N, NPT-N-1), YZMAT_C(N, NPT-N-1).
-! Size of local arrays: REAL(RP)*(4*N*NPT+NPT-N), LARGE!!!
+! Size of local arrays: REAL(RP)*(4*N*NPT+NPT-N), LARGE!
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -120,7 +120,7 @@ xoptsq = inprod(xopt, xopt)
 ! Update BMAT. See (7.11)--(7.12) of the NEWUOA paper and the elaborations around.
 ! XPTXAV corresponds to XPT - XAV in the NEWUOA paper, with XAV = (X0 + XOPT)/2.
 xptxav = xpt - HALF * spread(xopt, dim=2, ncopies=npt)
-!!MATLAB: xptxav = xpt - xopt/2  % xopt should be a column!! Implicit expansion
+!!MATLAB: xptxav = xpt - xopt/2  % xopt should be a column! Implicit expansion
 !sxpt = matprod(xopt, xptxav)
 sxpt = matprod(xopt, xpt) - HALF * xoptsq  ! This one seems to work better numerically.
 
@@ -148,12 +148,12 @@ end if
 !v = matprod(xptxav, pq)  ! Vector V in (7.14) of the NEWUOA paper
 v = matprod(xpt, pq) - HALF * sum(pq) * xopt ! This one seems to work better numerically.
 vxopt = outprod(v, xopt)  !!MATLAB: vxopt = v * xopt';  % v and xopt should be both columns
-hq = hq + (vxopt + transpose(vxopt)) !!call r2update(hq, ONE, xopt, v)
+hq = hq + (vxopt + transpose(vxopt)) !call r2update(hq, ONE, xopt, v)
 !call symmetrize(hq)  ! Do this if the update above does not ensure symmetry.
 
 ! The following instructions complete the shift of XBASE.
 xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-!!MATLAB: xpt = xpt - xopt  % xopt should be a column!! Implicit expansion
+!!MATLAB: xpt = xpt - xopt  % xopt should be a column! Implicit expansion
 !xpt(:, kopt) = ZERO  ! This makes no difference according to a test on 20220406
 xbase = xbase + xopt
 xopt = ZERO

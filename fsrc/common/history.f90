@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, March 14, 2022 PM02:23:43
+! Last Modified: Sunday, November 13, 2022 PM02:04:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -200,11 +200,11 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
         & is_posinf(fhist(1:min(nf - 1_IK, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
     !----------------------------------------------------------------------------------------------!
     ! The following test is not applicable to LINCOA.
-    !!if (present(chist)) then
-    !!    call assert(.not. any(chist(1:min(nf - 1_IK, maxchist)) < 0 .or. &
-    !!        & is_nan(chist(1:min(nf - 1_IK, maxchist))) .or. is_posinf(chist(1:min(nf - 1_IK, maxchist)))), &
-    !!        & 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
-    !!end if
+    ! !if (present(chist)) then
+    ! !    call assert(.not. any(chist(1:min(nf - 1_IK, maxchist)) < 0 .or. &
+    ! !        & is_nan(chist(1:min(nf - 1_IK, maxchist))) .or. is_posinf(chist(1:min(nf - 1_IK, maxchist)))), &
+    ! !        & 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
+    ! !end if
     !----------------------------------------------------------------------------------------------!
     if (present(conhist)) then
         call assert(.not. any(is_nan(conhist(:, 1:min(nf - 1_IK, maxconhist))) .or. &
@@ -217,11 +217,11 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
     !----------------------------------------------------------------------------------------------!
     ! The following test is not applicable to LINCOA.
-    !!if (present(cstrv)) then
-    !!    ! CSTRV cannot be NaN/+Inf due to the moderated extreme barrier.
-    !!    call assert(.not. (cstrv < 0 .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
-    !!        & 'CSTRV is nonnegative and not NaN/+Inf', srname)
-    !!end if
+    ! !if (present(cstrv)) then
+    ! !    ! CSTRV cannot be NaN/+Inf due to the moderated extreme barrier.
+    ! !    call assert(.not. (cstrv < 0 .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
+    ! !        & 'CSTRV is nonnegative and not NaN/+Inf', srname)
+    ! !end if
     !----------------------------------------------------------------------------------------------!
     if (present(constr)) then
         ! CONSTR cannot contain NaN/-Inf due to the moderated extreme barrier.
@@ -265,11 +265,11 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
         & 'FHIST does not contain NaN/+Inf', srname)
     !----------------------------------------------------------------------------------------------!
     ! The following test is not applicable to LINCOA.
-    !!if (present(chist)) then
-    !!    call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
-    !!    call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
-    !!        & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
-    !!end if
+    ! !if (present(chist)) then
+    ! !    call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
+    ! !    call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
+    ! !        & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
+    ! !end if
     !----------------------------------------------------------------------------------------------!
     if (present(conhist) .and. present(constr)) then
         call assert(size(conhist, 1) == size(constr) .and. size(conhist, 2) == maxconhist, &
@@ -344,10 +344,10 @@ if (DEBUGGING) then
         & is_posinf(fhist(1:min(nf, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
     !----------------------------------------------------------------------------------------------!
     ! The following test is not applicable to LINCOA
-    !!if (present(chist)) then
-    !!call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
-    !!    & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
-    !!end if
+    ! !if (present(chist)) then
+    ! !call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
+    ! !    & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
+    ! !end if
     !----------------------------------------------------------------------------------------------!
     if (present(conhist)) then
         call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
@@ -404,8 +404,8 @@ if (DEBUGGING) then
         call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
         !------------------------------------------------------------------------------------------!
         ! The following test is not applicable to LINCOA
-        !!call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
-        !!    & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
+        ! !call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
+        ! !    & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
         !------------------------------------------------------------------------------------------!
     end if
     if (present(conhist)) then

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, November 12, 2022 PM10:03:16
+! Last Modified: Sunday, November 13, 2022 PM02:12:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -164,7 +164,7 @@ end if
 
 if (tr_success) then
     veta = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
-    !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2));  % d should be a column!! Implicit expansion
+    !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2));  % d should be a column! Implicit expansion
 else
     veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
