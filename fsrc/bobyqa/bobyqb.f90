@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM08:06:41
+! Last Modified: Monday, November 14, 2022 PM08:08:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -267,7 +267,7 @@ do while (.true.)
             xnew = min(max(sl, xnew - xopt), su)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)  ! XBASE is set to XOPT, XOPT to 0.
             xbase = min(max(xl, xbase), xu)
-            qred = -quadinc(d, xpt, gopt, pq, hq)
+            qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         end if
         ! Put the variables for the next calculation of the objective function in XNEW, with any
         ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
@@ -359,7 +359,7 @@ do while (.true.)
             ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT (even if RESCUED is FALSE).
             xnew = min(max(sl, d), su)
             d = xnew - xopt
-            qred = -quadinc(d, xpt, gopt, pq, hq)
+            qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
             diff = f - fopt + qred
             tr_success = (f < fopt)
         end if
@@ -634,7 +634,7 @@ do while (.true.)
             ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the
             ! error of this prediction.
             fopt = fval(kopt)
-            qred = -quadinc(d, xpt, gopt, pq, hq)
+            qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
             diff = f - fopt + qred
             moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
             ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is

@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM11:01:44
+! Last Modified: Monday, November 14, 2022 PM08:37:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -376,6 +376,14 @@ do while (.true.)
             info = NAN_INF_F
             exit
         end if
+        if (f <= ftarget .and. cstrv <= ctol) then
+            info = FTARGET_ACHIEVED
+            exit
+        end if
+        if (nf >= maxfun) then
+            info = MAXFUN_REACHED
+            exit
+        end if
         diff = f - fopt + qred
 
         ! Set DFFALT to the difference between the new value of F and the value predicted by
@@ -439,6 +447,8 @@ do while (.true.)
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
             !if (fopt <= ftarget) then
+            constr = matprod(xopt, A_orig) - b_orig
+            cstrv = maximum([ZERO, constr])
             if (fopt <= ftarget .and. cstrv <= ctol) then
                 info = FTARGET_ACHIEVED
                 exit
@@ -575,6 +585,14 @@ do while (.true.)
             info = NAN_INF_F
             exit
         end if
+        if (f <= ftarget .and. cstrv <= ctol) then
+            info = FTARGET_ACHIEVED
+            exit
+        end if
+        if (nf >= maxfun) then
+            info = MAXFUN_REACHED
+            exit
+        end if
         diff = f - fopt + qred
 
         ! If X is feasible, then set DFFALT to the difference between the new value of F and the
@@ -617,6 +635,9 @@ do while (.true.)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
         !if (fopt <= ftarget) then
+
+        constr = matprod(xopt, A_orig) - b_orig
+        cstrv = maximum([ZERO, constr])
         if (fopt <= ftarget .and. cstrv <= ctol) then
             info = FTARGET_ACHIEVED
             exit
