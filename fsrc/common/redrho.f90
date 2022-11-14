@@ -6,7 +6,7 @@ module redrho_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, January 31, 2022 AM01:19:56
+! Last Modified: Tuesday, November 15, 2022 AM12:18:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -48,12 +48,13 @@ end if
 !====================!
 
 rho_ratio = rho_in / rhoend
-if (rho_ratio <= 16.0_RP) then
-    rho = rhoend
-elseif (rho_ratio <= 250.0_RP) then
-    rho = sqrt(rho_ratio) * rhoend
-else
+
+if (rho_ratio > 250.0_RP) then
     rho = TENTH * rho_in
+else if (rho_ratio <= 16.0_RP) then
+    rho = rhoend
+else
+    rho = sqrt(rho_ratio) * rhoend  !rho = sqrt(rho_in * rhoend)
 end if
 
 !====================!

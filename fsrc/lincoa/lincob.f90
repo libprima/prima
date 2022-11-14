@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 14, 2022 PM11:10:45
+! Last Modified: Monday, November 14, 2022 PM11:57:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -80,6 +80,7 @@ use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul
 use, non_intrinsic :: ratio_mod, only : redrat
+use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx
 
 ! Solver-specific modules
@@ -406,11 +407,10 @@ do while (.true.)
         ! RHO, which is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
         ! T. M. Ragonneau's thesis "Model-Based Derivative-Free Optimization Methods and Software".
 
-        freduced = (f < fopt)
-
         ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved.
         ! TODO: 1. Take FREDUCED into consideration in SETDROP_TR, particularly DISTSQ.
         ! 2. Test different definitions of WEIGHT in SETDROP_TR. See BOBYQA.
+        freduced = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
         if (knew_tr > 0) then
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
@@ -562,6 +562,7 @@ do while (.true.)
         ! If X is feasible, then set DFFALT to the difference between the new value of F and the
         ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
         ! XPT are updated. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
+        ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
         qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         diff = f - fopt + qred
         if (feasible .and. itest < 3) then !if (itest < 3) then
@@ -633,13 +634,14 @@ do while (.true.)
             exit
         end if
         delta = HALF * rho
-        if (rho > 250.0_RP * rhoend) then
-            rho = TENTH * rho
-        else if (rho <= 16.0_RP * rhoend) then
-            rho = rhoend
-        else
-            rho = sqrt(rho * rhoend)
-        end if
+        !if (rho > 250.0_RP * rhoend) then
+        !    rho = TENTH * rho
+        !else if (rho <= 16.0_RP * rhoend) then
+        !    rho = rhoend
+        !else
+        !    rho = sqrt(rho * rhoend)
+        !end if
+        rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
@@ -654,24 +656,16 @@ end do
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
+    nf = nf + 1_IK
     ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
     constr = matprod(x, A_orig) - b_orig
     cstrv = maximum([ZERO, constr])
-    nf = nf + 1_IK
     call fmsg(solver, iprint, nf, f, x, cstrv, constr)
     ! Save X, F, CSTRV into the history.
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
     ! Save X, F, CSTRV into the filter.
     call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
-    feasible = .true. ! Why? Consistent with the meaning of FEASIBLE???
 end if
-
-if (fopt <= f .or. is_nan(f) .or. .not. feasible) then
-    x = xbase + xopt
-    f = fopt
-end if
-
-cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 
 ! Return the best calculated values of the variables.
 kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
@@ -682,6 +676,7 @@ cstrv = cfilt(kopt)
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist)
 
+! Print a return message according to IPRINT.
 call retmsg(solver, info, iprint, nf, f, x, cstrv)
 
 !====================!
