@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 14, 2022 PM06:29:48
+! Last Modified: Monday, November 14, 2022 PM10:38:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -178,6 +178,7 @@ if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Arrange FHIST and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist)
+    ! Print a return message according to IPRINT.
     call retmsg(solver, info, iprint, nf, f, x)
     ! Postconditions
     if (DEBUGGING) then
@@ -256,7 +257,10 @@ do tr = 1, maxtr
         x = xbase + (xopt + d)
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
+
+        ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, iprint, nf, f, x)
+        ! Save X, F into the history.
         call savehist(nf, x, xhist, f, fhist)
 
         ! Check whether to exit
@@ -473,7 +477,10 @@ do tr = 1, maxtr
         x = xbase + (xopt + d)
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
+
+        ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, iprint, nf, f, x)
+        ! Save X, F into the history.
         call savehist(nf, x, xhist, f, fhist)
 
         ! Check whether to exit
@@ -515,6 +522,7 @@ do tr = 1, maxtr
         delta = HALF * rho
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
+        ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
         ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
         ! the current RHO. Update them after reducing RHO.
@@ -536,6 +544,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
+    ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, iprint, nf, f, x)
     call savehist(nf, x, xhist, f, fhist)
 end if
@@ -549,6 +558,7 @@ end if
 ! Arrange FHIST and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist)
 
+! Print a return message according to IPRINT.
 call retmsg(solver, info, iprint, nf, f, x)
 
 !====================!
