@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 14, 2022 PM09:06:37
+! Last Modified: Monday, November 14, 2022 PM10:56:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -74,10 +74,9 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, INFO_DFT, &
-    & MAXFUN_REACHED, MAXTR_REACHED, SMALL_TR_RADIUS
+use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, INFO_DFT, MAXFUN_REACHED, MAXTR_REACHED, SMALL_TR_RADIUS
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
-use, non_intrinsic :: output_mod, only : fmsg, retmsg
+use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul
 use, non_intrinsic :: ratio_mod, only : redrat
@@ -344,40 +343,20 @@ do while (.true.)
             delta = rho
         end if
     else
-        ! Calculate the next value of the objective function. The difference between the actual new
-        ! value of F and the value predicted by the model is recorded in DIFF.
-        !if (nf >= maxfun) then
-        !    info = MAXFUN_REACHED
-        !    exit
-        !end if
-
+        ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
-
-        !if (is_nan(sum(abs(x)))) then
-        !    f = sum(x)  ! Set F to NaN
-        !    if (nf == 1) then
-        !        fopt = f
-        !        xopt = ZERO
-        !    end if
-        !    info = NAN_INF_X
-        !    exit
-        !end if
-
         call evaluate(calfun, x, f)
+        nf = nf + 1_IK
         ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (RESCON is unusable).
         constr = matprod(x, A_orig) - b_orig
         cstrv = maximum([ZERO, constr])
-        nf = nf + 1_IK
+
+        ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         ! Save X, F, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
         ! Save X, F, CSTRV into the filter.
         call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
-
-        !if (is_nan(f) .or. is_posinf(f)) then
-        !    info = NAN_INF_F
-        !    exit
-        !end if
 
         ! Check whether to exit.
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
@@ -386,13 +365,12 @@ do while (.true.)
             exit
         end if
 
-        diff = f - fopt + qred
-
         ! Set DFFALT to the difference between the new value of F and the value predicted by
         ! the alternative model.
+        ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
+        diff = f - fopt + qred
         if (itest < 3) then
             fshift = fval - fval(kopt)
-            ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
             pqalt = omega_mul(idz, zmat, fshift)
             galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
             dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
@@ -401,9 +379,10 @@ do while (.true.)
             itest = 0
         end if
 
-        ! Pick the next value of DELTA after a trust region step.
-        !ratio = (fopt - f) / qred
-        ratio = redrat(fopt - f, qred, eta1)  ! Needed? Or just take the ratio since QRED > 0?
+        ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
+        ratio = redrat(fopt - f, qred, eta1)
+
+        ! Update DELTA. After this, DELTA < DNORM may hold.
         if (ratio <= TENTH) then
             delta = HALF * delta
         else if (ratio <= 0.7_RP) then
@@ -430,9 +409,7 @@ do while (.true.)
 
         freduced = (f < fopt)
 
-        ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
-        ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
-        ! by subroutine UPDATE.
+        ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved.
         ! TODO: 1. Take FREDUCED into consideration in SETDROP_TR, particularly DISTSQ.
         ! 2. Test different definitions of WEIGHT in SETDROP_TR. See BOBYQA.
         knew_tr = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
@@ -454,14 +431,6 @@ do while (.true.)
             ! matrix HQ.
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-
-            !constr = matprod(xopt, A_orig) - b_orig
-            !cstrv = maximum([ZERO, constr])
-            !if (fopt <= ftarget .and. cstrv <= ctol) then  !????
-            !    !if (fopt <= ftarget) then
-            !    info = FTARGET_ACHIEVED
-            !    exit
-            !end if
 
             ! Update RESCON.
             ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
@@ -563,47 +532,27 @@ do while (.true.)
 
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
 
-        ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
+        ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
+        ! scheme GEOSTEP. Note that DELTA has been updated before arriving here.
         delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
+        ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
+        ! replaced by XOPT + D.
         call geostep(iact, idz, knew_geo, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
 
-        ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT.
-        qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-
-        ! Calculate the next value of the objective function. The difference between the actual new
-        ! value of F and the value predicted by the model is recorded in DIFF.
-        !if (nf >= maxfun) then
-        !    info = MAXFUN_REACHED
-        !    exit
-        !end if
-
+        ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
-
-        !if (is_nan(sum(abs(x)))) then
-        !    f = sum(x)  ! Set F to NaN
-        !    if (nf == 1) then
-        !        fopt = f
-        !        xopt = ZERO
-        !    end if
-        !    info = NAN_INF_X
-        !    exit
-        !end if
-
         call evaluate(calfun, x, f)
+        nf = nf + 1_IK
         ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (RESCON is unusable).
         constr = matprod(x, A_orig) - b_orig
         cstrv = maximum([ZERO, constr])
-        nf = nf + 1_IK
+
+        ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         ! Save X, F, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
         ! Save X, F, CSTRV into the filter.
         call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
-
-        !if (is_nan(f) .or. is_posinf(f)) then
-        !    info = NAN_INF_F
-        !    exit
-        !end if
 
         ! Check whether to exit.
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
@@ -612,11 +561,11 @@ do while (.true.)
             exit
         end if
 
-        diff = f - fopt + qred
-
         ! If X is feasible, then set DFFALT to the difference between the new value of F and the
         ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
         ! XPT are updated.
+        qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
+        diff = f - fopt + qred
         if (feasible .and. itest < 3) then
             !if (itest < 3) then
             fshift = fval - fval(kopt)
@@ -654,14 +603,6 @@ do while (.true.)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
-        !constr = matprod(xopt, A_orig) - b_orig
-        !cstrv = maximum([ZERO, constr])
-        !if (fopt <= ftarget .and. cstrv <= ctol) then  !????
-        !    !if (fopt <= ftarget) then
-        !    info = FTARGET_ACHIEVED
-        !    exit
-        !end if
-
         ! Update RESCON.
         ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
         ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
@@ -690,7 +631,8 @@ do while (.true.)
         end if
     end if
 
-    ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
+    ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm
+    ! by reducing RHO; update DELTA at the same time.
     if (reduce_rho) then
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
@@ -705,6 +647,10 @@ do while (.true.)
             rho = sqrt(rho * rhoend)
         end if
         delta = max(delta, rho)
+        ! Print a message about the reduction of RHO according to IPRINT.
+        call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
+        ! DNORMSAV is corresponding to the latest function evaluations with the current RHO.
+        ! Update it after reducing RHO.
         dnormsav = HUGENUM
     end if
 end do
