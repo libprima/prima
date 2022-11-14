@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 14, 2022 PM10:08:50
+! Last Modified: Tuesday, November 15, 2022 AM12:20:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -678,12 +678,20 @@ do while (.true.)
             exit
         end if
         delta = HALF * rho
-        if (rho > 250.0_RP * rhoend) then
-            rho = TENTH * rho
-        else if (rho <= 16.0_RP * rhoend) then
+        !if (rho > 250.0_RP * rhoend) then
+        !    rho = TENTH * rho
+        !else if (rho <= 16.0_RP * rhoend) then
+        !    rho = rhoend
+        !else
+        !    rho = sqrt(rho * rhoend)
+        !end if
+        ratio = rho / rhoend
+        if (ratio <= 16.0_RP) then
             rho = rhoend
+        elseif (ratio <= 250.0_RP) then
+            rho = sqrt(ratio) * rhoend
         else
-            rho = sqrt(rho * rhoend)
+            rho = TENTH * rho
         end if
         delta = max(delta, rho)
         dnormsav = HUGENUM
