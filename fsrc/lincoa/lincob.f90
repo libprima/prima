@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 14, 2022 PM08:19:24
+! Last Modified: Monday, November 14, 2022 PM09:06:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -346,21 +346,23 @@ do while (.true.)
     else
         ! Calculate the next value of the objective function. The difference between the actual new
         ! value of F and the value predicted by the model is recorded in DIFF.
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
-            exit
-        end if
+        !if (nf >= maxfun) then
+        !    info = MAXFUN_REACHED
+        !    exit
+        !end if
+
         x = xbase + (xopt + d)
 
-        if (is_nan(sum(abs(x)))) then
-            f = sum(x)  ! Set F to NaN
-            if (nf == 1) then
-                fopt = f
-                xopt = ZERO
-            end if
-            info = NAN_INF_X
-            exit
-        end if
+        !if (is_nan(sum(abs(x)))) then
+        !    f = sum(x)  ! Set F to NaN
+        !    if (nf == 1) then
+        !        fopt = f
+        !        xopt = ZERO
+        !    end if
+        !    info = NAN_INF_X
+        !    exit
+        !end if
+
         call evaluate(calfun, x, f)
         ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (RESCON is unusable).
         constr = matprod(x, A_orig) - b_orig
@@ -372,10 +374,10 @@ do while (.true.)
         ! Save X, F, CSTRV into the filter.
         call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
 
-        if (is_nan(f) .or. is_posinf(f)) then
-            info = NAN_INF_F
-            exit
-        end if
+        !if (is_nan(f) .or. is_posinf(f)) then
+        !    info = NAN_INF_F
+        !    exit
+        !end if
 
         ! Check whether to exit.
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
@@ -453,13 +455,13 @@ do while (.true.)
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
-            constr = matprod(xopt, A_orig) - b_orig
-            cstrv = maximum([ZERO, constr])
-            if (fopt <= ftarget .and. cstrv <= ctol) then  !????
-                !if (fopt <= ftarget) then
-                info = FTARGET_ACHIEVED
-                exit
-            end if
+            !constr = matprod(xopt, A_orig) - b_orig
+            !cstrv = maximum([ZERO, constr])
+            !if (fopt <= ftarget .and. cstrv <= ctol) then  !????
+            !    !if (fopt <= ftarget) then
+            !    info = FTARGET_ACHIEVED
+            !    exit
+            !end if
 
             ! Update RESCON.
             ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
@@ -570,21 +572,23 @@ do while (.true.)
 
         ! Calculate the next value of the objective function. The difference between the actual new
         ! value of F and the value predicted by the model is recorded in DIFF.
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
-            exit
-        end if
+        !if (nf >= maxfun) then
+        !    info = MAXFUN_REACHED
+        !    exit
+        !end if
+
         x = xbase + (xopt + d)
 
-        if (is_nan(sum(abs(x)))) then
-            f = sum(x)  ! Set F to NaN
-            if (nf == 1) then
-                fopt = f
-                xopt = ZERO
-            end if
-            info = NAN_INF_X
-            exit
-        end if
+        !if (is_nan(sum(abs(x)))) then
+        !    f = sum(x)  ! Set F to NaN
+        !    if (nf == 1) then
+        !        fopt = f
+        !        xopt = ZERO
+        !    end if
+        !    info = NAN_INF_X
+        !    exit
+        !end if
+
         call evaluate(calfun, x, f)
         ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (RESCON is unusable).
         constr = matprod(x, A_orig) - b_orig
@@ -596,10 +600,10 @@ do while (.true.)
         ! Save X, F, CSTRV into the filter.
         call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt)
 
-        if (is_nan(f) .or. is_posinf(f)) then
-            info = NAN_INF_F
-            exit
-        end if
+        !if (is_nan(f) .or. is_posinf(f)) then
+        !    info = NAN_INF_F
+        !    exit
+        !end if
 
         ! Check whether to exit.
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
@@ -650,13 +654,13 @@ do while (.true.)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
-        constr = matprod(xopt, A_orig) - b_orig
-        cstrv = maximum([ZERO, constr])
-        if (fopt <= ftarget .and. cstrv <= ctol) then  !????
-            !if (fopt <= ftarget) then
-            info = FTARGET_ACHIEVED
-            exit
-        end if
+        !constr = matprod(xopt, A_orig) - b_orig
+        !cstrv = maximum([ZERO, constr])
+        !if (fopt <= ftarget .and. cstrv <= ctol) then  !????
+        !    !if (fopt <= ftarget) then
+        !    info = FTARGET_ACHIEVED
+        !    exit
+        !end if
 
         ! Update RESCON.
         ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.

@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM07:43:34
+! Last Modified: Monday, November 14, 2022 PM09:45:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -209,9 +209,9 @@ end if
 
 ! Do essentially nothing when KNEW is 0. This can only happen after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
-    ! We must set FOPT and XOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
-    fopt = fval(kopt)
+    ! We must set XOPT and FOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
     xopt = xpt(:, kopt)
+    fopt = fval(kopt)
     return
 end if
 
