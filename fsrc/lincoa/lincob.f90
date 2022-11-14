@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 14, 2022 PM10:56:44
+! Last Modified: Monday, November 14, 2022 PM11:10:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -74,7 +74,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, INFO_DFT, MAXFUN_REACHED, MAXTR_REACHED, SMALL_TR_RADIUS
+use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -366,8 +366,7 @@ do while (.true.)
         end if
 
         ! Set DFFALT to the difference between the new value of F and the value predicted by
-        ! the alternative model.
-        ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
+        ! the alternative model. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
         diff = f - fopt + qred
         if (itest < 3) then
             fshift = fval - fval(kopt)
@@ -416,15 +415,6 @@ do while (.true.)
         if (knew_tr > 0) then
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
 
-            ! If ITEST is increased to 3, then the next quadratic model is the one whose second
-            ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-            ! new model is constructed by the symmetric Broyden method in the usual way.
-            if (abs(dffalt) >= TENTH * abs(diff)) then
-                itest = 0
-            else
-                itest = itest + 1
-            end if
-
             ! Update the second derivatives of the model by the symmetric Broyden method, using PQW
             ! for the second derivative parameters of the new KNEW-th Lagrange function. The
             ! contribution from the old parameter PQ(KNEW) is included in the second derivative
@@ -452,6 +442,14 @@ do while (.true.)
 
             ! Replace the current model by the least Frobenius norm interpolant if this interpolant
             ! gives substantial reductions in the predictions of values of F at feasible points.
+            ! If ITEST is increased to 3, then the next quadratic model is the one whose second
+            ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
+            ! new model is constructed by the symmetric Broyden method in the usual way.
+            if (abs(dffalt) >= TENTH * abs(diff)) then
+                itest = 0
+            else
+                itest = itest + 1
+            end if
             if (itest == 3) then
                 fshift = fval - fval(kopt)
                 pq = omega_mul(idz, zmat, fshift)
@@ -563,13 +561,11 @@ do while (.true.)
 
         ! If X is feasible, then set DFFALT to the difference between the new value of F and the
         ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
-        ! XPT are updated.
+        ! XPT are updated. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
         qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         diff = f - fopt + qred
-        if (feasible .and. itest < 3) then
-            !if (itest < 3) then
+        if (feasible .and. itest < 3) then !if (itest < 3) then
             fshift = fval - fval(kopt)
-            ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
             pqalt = omega_mul(idz, zmat, fshift)
             galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
             dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
@@ -577,18 +573,6 @@ do while (.true.)
         if (itest == 3) then
             dffalt = diff
             itest = 0
-        end if
-
-        ! If ITEST is increased to 3, then the next quadratic model is the one whose second
-        ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-        ! new model is constructed by the symmetric Broyden method in the usual way.
-        if (feasible) then
-            !if (.true.) then
-            if (abs(dffalt) >= TENTH * abs(diff)) then
-                itest = 0
-            else
-                itest = itest + 1
-            end if
         end if
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
@@ -623,6 +607,16 @@ do while (.true.)
 
         ! Replace the current model by the least Frobenius norm interpolant if this interpolant
         ! gives substantial reductions in the predictions of values of F at feasible points.
+        ! If ITEST is increased to 3, then the next quadratic model is the one whose second
+        ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
+        ! new model is constructed by the symmetric Broyden method in the usual way.
+        if (feasible) then !if (.true.) then
+            if (abs(dffalt) >= TENTH * abs(diff)) then
+                itest = 0
+            else
+                itest = itest + 1
+            end if
+        end if
         if (itest == 3) then
             fshift = fval - fval(kopt)
             pq = omega_mul(idz, zmat, fshift)
