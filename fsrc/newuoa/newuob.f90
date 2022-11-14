@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM05:40:53
+! Last Modified: Monday, November 14, 2022 PM06:29:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -437,7 +437,7 @@ do tr = 1, maxtr
     ! 0. KNEW_TR == 0 means that it is impossible to obtain a good XPT by replacing a current point
     ! with the one suggested by the trust-region step. According to SETDROP_TR, KNEW_TR is 0 only if
     ! RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definitions of BAD_TRSTEP.
-    ! Nevertheless, we keep it for robustness.
+    ! Nevertheless, we keep it for robustness. Powell's code includes this condition as well.
     ! 1. Powell used different thresholds (0 and 0.1) for RATIO in the definitions of BAD_TRSTEP
     ! above. Unifying them to 0 makes little difference to the performance, sometimes worsening,
     ! sometimes improving, never substantially; unifying them to 0.1 makes little difference either.

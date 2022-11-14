@@ -7,7 +7,7 @@ module checkexit_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, June 15, 2022 AM01:43:04
+! Last Modified: Monday, November 14, 2022 PM07:06:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -154,7 +154,7 @@ if (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)) then
     info = NAN_INF_F
 end if
 
-if (f <= ftarget .and. cstrv <= ctol) then
+if (cstrv <= ctol .and. f <= ftarget) then
     info = FTARGET_ACHIEVED
 end if
 
