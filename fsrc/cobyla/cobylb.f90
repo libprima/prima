@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 13, 2022 PM09:04:29
+! Last Modified: Monday, November 14, 2022 PM10:36:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -207,6 +207,7 @@ if (subinfo /= INFO_DFT) then
     cstrv = cfilt(kopt)
     ! Arrange CHIST, CONHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist, conhist)
+    ! Print a return message according to IPRINT.
     call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
     ! Postconditions
     if (DEBUGGING) then
@@ -343,6 +344,8 @@ do tr = 1, maxtr
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
             call evaluate(calcfc, x, f, constr, cstrv)
             nf = nf + 1_IK
+
+            ! Print a message about the function/constraint evaluation according to IPRINT.
             call fmsg(solver, iprint, nf, f, x, cstrv, constr)
             ! Save X, F, CONSTR, CSTRV into the history.
             call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
@@ -494,11 +497,14 @@ do tr = 1, maxtr
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc, x, f, constr, cstrv)
         nf = nf + 1_IK
+
+        ! Print a message about the function/constraint evaluation according to IPRINT.
         call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         ! Save X, F, CONSTR, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
         ! Save X, F, CONSTR, CSTRV into the filter.
         call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
+
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced by D.
         call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
@@ -526,6 +532,7 @@ do tr = 1, maxtr
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         cpen = min(cpen, fcratio(fval, conmat)) ! The 2nd (out of 2) update of CPEN. It may become 0
+        ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
@@ -548,6 +555,7 @@ cstrv = cfilt(kopt)
 ! Arrange CHIST, CONHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist, conhist)
 
+! Print a return message according to IPRINT.
 call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 
 !====================!
