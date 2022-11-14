@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 14, 2022 PM08:37:26
+! Last Modified: Monday, November 14, 2022 PM10:08:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -202,9 +202,9 @@ if (DEBUGGING) then
 end if
 
 !---------------------------------------------------------!
-if (cweight < 0) then
-    write (*, *) cweight  ! Temporary, to be removed.
-end if
+!if (cweight < 0) then
+!    write (*, *) cweight  ! Temporary, to be removed.
+!end if
 !---------------------------------------------------------!
 
 !====================!
@@ -447,7 +447,7 @@ do while (.true.)
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
             !if (fopt <= ftarget) then
-            constr = matprod(xopt, A_orig) - b_orig
+            constr = matprod(xbase + xopt, A_orig) - b_orig
             cstrv = maximum([ZERO, constr])
             if (fopt <= ftarget .and. cstrv <= ctol) then
                 info = FTARGET_ACHIEVED
@@ -636,7 +636,7 @@ do while (.true.)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
         !if (fopt <= ftarget) then
 
-        constr = matprod(xopt, A_orig) - b_orig
+        constr = matprod(xbase + xopt, A_orig) - b_orig
         cstrv = maximum([ZERO, constr])
         if (fopt <= ftarget .and. cstrv <= ctol) then
             info = FTARGET_ACHIEVED
@@ -725,7 +725,7 @@ call rangehist(nf, xhist, fhist, chist)
 
 ! Postconditions
 
-!close (16)
+close (17)
 
 end subroutine lincob
 
