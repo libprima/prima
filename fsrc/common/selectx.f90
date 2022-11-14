@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, November 13, 2022 PM10:35:53
+! Last Modified: Monday, November 14, 2022 AM08:50:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,10 +24,11 @@ contains
 
 subroutine savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine saves X, F, CONSTR, and CSTRV in XFILT, FFILT, CONFILT, and CFILT, unless a vector
-! in XFILT(:, 1:NFILT) is better than X. If X is better than some vectors in XFILT(:, 1:NFILT), then
-! these vectors will be removed. If X is not better than any of XFILT(:, 1:NFILT) but NFILT=MAXFILT,
-! then we remove a column from XFILT according to PHI = FFILT + CWEIGHT * MAX(CFILT - CTOL, ZERO).
+! This subroutine saves X, F, and CSTRV in XFILT, FFILT, and CFILT (and CONSTR in CONFILT if they
+! are present), unless a vector in XFILT(:, 1:NFILT) is better than X. If X is better than some
+! vectors in XFILT(:, 1:NFILT), then these vectors will be removed. If X is not better than any of X
+! FILT(:, 1:NFILT) but NFILT=MAXFILT, then we remove a column from XFILT according to the merit
+! function PHI = FFILT + CWEIGHT * MAX(CFILT - CTOL, ZERO).
 ! N.B.:
 ! 1. Only XFILT(:, 1:NFILT) and FFILT(:, 1:NFILT) etc contains valid information, while
 ! XFILT(:, NFILT+1:MAXFILT) and FFILT(:, NFILT+1:MAXFILT) etc are not initialized yet.

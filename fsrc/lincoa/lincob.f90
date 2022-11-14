@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM11:02:16
+! Last Modified: Monday, November 14, 2022 PM08:19:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -75,7 +75,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, INFO_DFT, &
-    & MAXFUN_REACHED, SMALL_TR_RADIUS!, MAXTR_REACHED
+    & MAXFUN_REACHED, MAXTR_REACHED, SMALL_TR_RADIUS
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: output_mod, only : fmsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -134,7 +134,7 @@ integer(IK) :: maxchist
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
-integer(IK) :: n
+integer(IK) :: n, maxtr
 real(RP) :: b(size(bvec))
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: fval(npt), cval(npt)
@@ -274,7 +274,12 @@ improve_geo = .false.
 nact = 0
 itest = 3
 dnormsav = HUGENUM
-info = INFO_DFT
+
+! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
+! function evaluations unless the trust-region step is short but the geometry step is not invoked.
+! Thus the following MAXTR is unlikely to be reached.
+maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
+info = MAXTR_REACHED
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, we use three boolean variables to control the workflow.
@@ -323,7 +328,7 @@ do while (.true.)
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
-    qred = -quadinc(d, xpt, gopt, pq, hq) ! QRED = Q(XOPT) - Q(XOPT + D)
+    qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
 
     if (shortd .or. .not. qred > 0) then
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
@@ -372,7 +377,7 @@ do while (.true.)
             exit
         end if
 
-        ! Check whether to exit
+        ! Check whether to exit.
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
         if (subinfo /= INFO_DFT) then
             info = subinfo
@@ -447,6 +452,9 @@ do while (.true.)
             ! matrix HQ.
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+
+            constr = matprod(xopt, A_orig) - b_orig
+            cstrv = maximum([ZERO, constr])
             if (fopt <= ftarget .and. cstrv <= ctol) then  !????
                 !if (fopt <= ftarget) then
                 info = FTARGET_ACHIEVED
@@ -558,7 +566,7 @@ do while (.true.)
         call geostep(iact, idz, knew_geo, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
 
         ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT.
-        qred = -quadinc(d, xpt, gopt, pq, hq)
+        qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
 
         ! Calculate the next value of the objective function. The difference between the actual new
         ! value of F and the value predicted by the model is recorded in DIFF.
@@ -590,6 +598,13 @@ do while (.true.)
 
         if (is_nan(f) .or. is_posinf(f)) then
             info = NAN_INF_F
+            exit
+        end if
+
+        ! Check whether to exit.
+        subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
             exit
         end if
 
@@ -634,6 +649,9 @@ do while (.true.)
         freduced = (f < fopt .and. feasible)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+
+        constr = matprod(xopt, A_orig) - b_orig
+        cstrv = maximum([ZERO, constr])
         if (fopt <= ftarget .and. cstrv <= ctol) then  !????
             !if (fopt <= ftarget) then
             info = FTARGET_ACHIEVED

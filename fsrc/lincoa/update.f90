@@ -3,7 +3,7 @@ module update_mod
 ! This module provides subroutines concerning the update of IDZ, BMAT, ZMAT, GOPT, HQ, PQ, FVAL, XPT,
 ! KOPT, FOPT, and XOPT when XPT(:, KNEW) is replaced by XNEW = XOPT + D.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's LICOA code.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !

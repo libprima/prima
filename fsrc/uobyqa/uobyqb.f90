@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM05:44:53
+! Last Modified: Monday, November 14, 2022 PM08:07:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -476,7 +476,7 @@ do while (.true.)
 
         ! Use the quadratic model to predict the change in F due to the step D, and find the values
         ! of the Lagrange functions at the new point.
-        qred = -quadinc(pq, d, xopt)
+        qred = -quadinc(pq, d, xopt)  ! QRED = Q(XOPT) - Q(XOPT + D)
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
         vlag = calvlag(pl, d, xopt, kopt)
 
