@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 PM03:08:58
+! Last Modified: Tuesday, November 15, 2022 PM03:27:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -340,9 +340,9 @@ do while (.true.)
         ! infinite cycling, because both REDUCE_RHO and IMPROVE_GEO may end up with FALSE in this
         ! case, which did happen in tests.
         ! 3. The factor HALF works better than TENTH (used in NEWUOA/BOBYQA), 0.2, and 0.7.
-        ! 4. The factor 1.4 below aligns with the update of DELTA after a trust-region step.
+        ! 4. The factor 0.99*GAMMA3 aligns with the update of DELTA after a trust-region step.
         delta = HALF * delta
-        if (delta <= 1.4_RP * rho) then
+        if (delta <= 0.99_RP * gamma3 * rho) then
             delta = rho
         end if
     else
@@ -385,20 +385,21 @@ do while (.true.)
         ratio = redrat(fopt - f, qred, eta1)
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
+        ! The new DELTA is in [GAMMA1*DNORM, GAMMA3*DELTA].
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, gamma3, ratio)
-        if (delta <= 1.4_RP * rho) then
+        if (delta <= 0.99_RP * gamma3 * rho) then
             delta = rho
         end if
-        ! N.B.: The following scheme of revising DELTA is WRONG.
+        ! N.B.: The following scheme of revising DELTA is WRONG if 1.5 >= GAMMA3.
         !---------------------------------!
         ! !if (delta <= 1.5_RP * rho) then
         ! !    delta = rho
         ! !end if
         !---------------------------------!
-        ! The factor in the scheme above should be smaller than SQRT(2). Imagine a very successful
-        ! step with DENORM = the un-updated DELTA = RHO. Then the scheme will first update DELTA to
-        ! SQRT(2)*RHO. If this factor were not smaller than SQRT(2), then DELTA will be reset to
-        ! RHO, which is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
+        ! The factor in the scheme above should be smaller than GAMMA3. Imagine a very successful
+        ! step with DENORM = the un-updated DELTA = RHO. Then TRRAD will update DELTA to GAMMA3*RHO.
+        ! If this factor were not smaller than GAMMA3, then DELTA will be reset to RHO, which
+        ! is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
         ! T. M. Ragonneau's thesis "Model-Based Derivative-Free Optimization Methods and Software".
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved.
