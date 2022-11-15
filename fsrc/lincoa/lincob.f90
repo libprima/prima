@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 14, 2022 PM11:57:09
+! Last Modified: Tuesday, November 15, 2022 AM11:23:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -87,7 +87,7 @@ use, non_intrinsic :: selectx_mod, only : savefilt, selectx
 use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, inith
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
-use, non_intrinsic :: trustregion_mod, only : trstep
+use, non_intrinsic :: trustregion_mod, only : trstep, trrad
 use, non_intrinsic :: update_mod, only : updateq, updatexf
 use, non_intrinsic :: powalg_mod, only : updateh
 
@@ -383,19 +383,11 @@ do while (.true.)
         ratio = redrat(fopt - f, qred, eta1)
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
-        if (ratio <= TENTH) then
-            delta = HALF * delta
-        else if (ratio <= 0.7_RP) then
-            delta = max(HALF * delta, dnorm)
-        else
-            temp = sqrt(TWO) * delta
-            delta = max(HALF * delta, dnorm + dnorm)
-            delta = min(delta, temp)  ! This does not exist in NEWUOA/BOBYQA. It works well.
-        end if
+        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.4_RP * rho) then
             delta = rho
         end if
-        ! N.B.: The following scheme of updating DELTA is WRONG.
+        ! N.B.: The following scheme of revising DELTA is WRONG.
         !---------------------------------!
         ! !if (delta <= 1.5_RP * rho) then
         ! !    delta = rho
@@ -445,6 +437,8 @@ do while (.true.)
             ! If ITEST is increased to 3, then the next quadratic model is the one whose second
             ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
             ! new model is constructed by the symmetric Broyden method in the usual way.
+            ! Zaikun 20221114: Why do this only when KNEW_TR > 0? Should we do it before or after
+            ! the update?
             if (abs(dffalt) >= TENTH * abs(diff)) then
                 itest = 0
             else
@@ -634,13 +628,6 @@ do while (.true.)
             exit
         end if
         delta = HALF * rho
-        !if (rho > 250.0_RP * rhoend) then
-        !    rho = TENTH * rho
-        !else if (rho <= 16.0_RP * rhoend) then
-        !    rho = rhoend
-        !else
-        !    rho = sqrt(rho * rhoend)
-        !end if
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
@@ -685,7 +672,7 @@ call retmsg(solver, info, iprint, nf, f, x, cstrv)
 
 ! Postconditions
 
-!close (16)
+close (16)
 
 end subroutine lincob
 
