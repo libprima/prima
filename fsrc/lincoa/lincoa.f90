@@ -30,7 +30,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 14, 2022 PM07:53:02
+! Last Modified: Tuesday, November 15, 2022 PM02:42:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

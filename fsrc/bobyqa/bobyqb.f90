@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 14, 2022 PM08:08:22
+! Last Modified: Tuesday, November 15, 2022 PM02:21:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -242,7 +242,7 @@ do while (.true.)
     ! trust-region center may be an approximate local minimizer. When this occurs, the algorithm
     ! takes the view that the work for the current RHO is complete, and hence it will reduce
     ! RHO, which will enhance the resolution of the algorithm in general.
-    if (shortd .or. .not. qred > 0) then  ! D is to short to invoke a function evaluation.
+    if (shortd .or. .not. qred > 0) then
         ! Reduce DELTA.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
@@ -259,7 +259,7 @@ do while (.true.)
         if (crvmin > 0) then
             errbd = min(errbd, 0.125_RP * crvmin * rho**2)
         end if
-    else  ! D is long enough to invoke a function evaluation.
+    else
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
             sl = min(sl - xopt, ZERO)
