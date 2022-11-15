@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 AM11:23:14
+! Last Modified: Tuesday, November 15, 2022 PM03:08:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,7 +69,7 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 
 ! Generic models
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, MIN_MAXFILT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, HUGENUM, MIN_MAXFILT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -152,7 +152,7 @@ real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delta, dffalt, diff, &
 &        distsq(npt), fopt, ratio,     &
-&        rho, dnorm, temp, &
+&        rho, dnorm, &
 &        qred, constr(size(bvec))
 logical :: accurate_mod, adequate_geo
 logical :: bad_trstep
@@ -167,6 +167,7 @@ integer(IK) :: nfilt, idz, itest, &
 real(RP) :: fshift(npt)
 real(RP) :: pqalt(npt), galt(size(x))
 real(RP) :: dnormsav(5)
+real(RP) :: gamma3
 
 ! Sizes.
 m = int(size(bvec), kind(m))
@@ -260,6 +261,7 @@ rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
 rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
 !!MATLAB: rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
+gamma3 = sqrt(gamma2)  ! Used in TRRAD; 0 < GAMMA1 < 1 < GAMMA3 <= GAMMA2.
 qfac = eye(n)
 rfac = ZERO
 rho = rhobeg
@@ -383,7 +385,7 @@ do while (.true.)
         ratio = redrat(fopt - f, qred, eta1)
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
-        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, gamma3, ratio)
         if (delta <= 1.4_RP * rho) then
             delta = rho
         end if

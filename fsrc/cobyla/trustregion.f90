@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, November 15, 2022 AM11:18:50
+! Last Modified: Tuesday, November 15, 2022 AM11:59:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -612,7 +612,7 @@ end if
 if (ratio <= eta1) then
     delta = gamma1 * dnorm  ! Powell's UOBYQA/NEWUOA.
     !delta = gamma1 * delta_in  ! Powell's COBYLA/LINCOA.
-    !delta = min(gamma1 * delta, dnorm)  ! Powell's BOBYQA.
+    !delta = min(gamma1 * delta_in, dnorm)  ! Powell's BOBYQA.
 elseif (ratio <= eta2) then
     delta = max(gamma1 * delta_in, dnorm)
 else
