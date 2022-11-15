@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 PM02:06:09
+! Last Modified: Tuesday, November 15, 2022 PM03:20:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -340,7 +340,8 @@ do while (.true.)
         ! 3. The factor HALF works better than TENTH used in NEWUOA/BOBYQA.
         ! 4. The factor 1.4 below aligns with the update of DELTA after a trust-region step.
         delta = HALF * delta
-        if (delta <= 1.4_RP * rho) then
+        !if (delta <= 1.4_RP * rho) then
+        if (delta <= 0.99_RP * sqrt(TWO) * rho) then
             delta = rho
         end if
     else
@@ -413,7 +414,8 @@ do while (.true.)
             delta = max(HALF * delta, TWO * dnorm)
             delta = min(delta, temp)  ! This does not exist in NEWUOA/BOBYQA. It works well.
         end if
-        if (delta <= 1.4_RP * rho) then
+        !if (delta <= 1.4_RP * rho) then
+        if (delta <= 0.99_RP * sqrt(TWO) * rho) then
             delta = rho
         end if
         !if (delta <= 1.5_RP * rho) delta = rho  ! This is wrong!
