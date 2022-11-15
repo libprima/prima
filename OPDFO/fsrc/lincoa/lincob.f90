@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 PM03:20:56
+! Last Modified: Tuesday, November 15, 2022 PM05:15:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -463,7 +463,7 @@ do while (.true.)
             ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
             if (freduced) then
                 dnorm = sqrt(sum(d**2))
-                where (abs(rescon) >= dnorm + delta)
+                where (.not. abs(rescon) < dnorm + delta)
                     rescon = min(-abs(rescon) + dnorm, -delta)
                 elsewhere
                     rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
@@ -652,7 +652,7 @@ do while (.true.)
         ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
         if (freduced) then
             dnorm = sqrt(sum(d**2))
-            where (abs(rescon) >= dnorm + delta)
+            where (.not. abs(rescon) < dnorm + delta)
                 rescon = min(-abs(rescon) + dnorm, -delta)
             elsewhere
                 rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed

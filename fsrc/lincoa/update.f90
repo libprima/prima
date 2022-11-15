@@ -1,7 +1,7 @@
 module update_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides subroutines concerning the update of IDZ, BMAT, ZMAT, GOPT, HQ, PQ, FVAL, XPT,
-! KOPT, FOPT, and XOPT when XPT(:, KNEW) is replaced by XNEW = XOPT + D.
+! This module provides subroutines concerning the update of IDZ, BMAT, ZMAT, GOPT, HQ, PQ, FVAL,
+! XPT, KOPT, FOPT, XOPT, and RESCON when XPT(:, KNEW) is replaced by XNEW = XOPT + D.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's LICOA code.
 !
@@ -9,12 +9,12 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 14, 2022 PM09:45:28
+! Last Modified: Tuesday, November 15, 2022 PM05:20:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: updateq, updatexf, tryqalt
+public :: updateq, updatexf, tryqalt, updateres
 
 
 contains
@@ -359,6 +359,90 @@ if (DEBUGGING) then
 end if
 
 end subroutine tryqalt
+
+
+subroutine updateres(amat, b, delta, dnorm, xopt, rescon)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine updates RESCON when XOPT has been updated by a step D.
+! RESCON holds information about the constraint residuals at the current trust region center XOPT.
+! 1. If if B(J) - AMAT(:, J)^T*XOPT <= DELTA, then RESCON(J) = B(J) - AMAT(:, J)^T*XOPT. Note that
+! RESCON >= 0 in this case, because the algorithm keeps XOPT to be feasible.
+! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
+! RESCON can be updated without calculating the constraints that are far from being active, so that
+! we only need to evaluate the constraints that are nearly active.
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, trueloc
+
+implicit none
+
+! Inputs
+real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
+real(RP), intent(in) :: b(:)  ! B(M)
+real(RP), intent(in) :: delta
+real(RP), intent(in) :: dnorm  ! Norm of D
+real(RP), intent(in) :: xopt(:)  ! XOPT(N); the updated value of XOPT
+
+! In-outputs
+real(RP), intent(inout) :: rescon(:)  ! RESCON(M)
+
+! Local variables
+character(len=*), parameter :: srname = 'UPDATERES'
+integer(IK) :: m
+integer(IK) :: n
+logical :: mask(size(b))
+real(RP) :: ax(size(b))
+
+! Sizes
+m = int(size(b), kind(m))
+n = int(size(xopt), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
+    call assert(delta > 0, 'DELTA > 0', srname)
+    call assert(dnorm > 0, 'DNORM > 0', srname)
+    call assert(all(is_finite(xopt)), 'XOPT is finite', srname)
+    call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
+    ! Zaikun 20221115: The following cannot pass?!
+    !call assert(all((rescon >= 0 .and. rescon <= delta) .or. rescon <= -delta), &
+    !    & '0 <= RESCON <= DELTA or RESCON <= -DELTA', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+mask = (abs(rescon) < dnorm + delta)
+ax(trueloc(mask)) = matprod(xopt, amat(:, trueloc(mask)))
+where (mask)
+    rescon = max(b - ax, ZERO)
+elsewhere
+    rescon = min(-abs(rescon) + dnorm, -delta)
+end where
+rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
+
+!!MATLAB:
+!!mask = (abs(rescon) < delta + dnorm);
+!!rescon(mask) = max(b(mask) - (xopt'*amat(:, mask))', 0);
+!!rescon(~mask) = max(rescon(~mask) - dnorm, delta);
+!!rescon(rescon >= delta) = -rescon(rescon >= delta);
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
+    !call assert(all((rescon >= 0 .and. rescon <= delta) .or. rescon <= -delta), &
+    !    & '0 <= RESCON <= DELTA or RESCON <= -DELTA', srname)
+end if
+end subroutine updateres
 
 
 end module update_mod

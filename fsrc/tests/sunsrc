@@ -9,6 +9,7 @@ LINALG90="linalg.f90"
 LINALG="$DIR/common/$LINALG90"
 LINGEO="$DIR/lincoa/geometry.f90"
 LINTR="$DIR/lincoa/trustregion.f90"
+LINUPD="$DIR/lincoa/update.f90"
 BOBTR="$DIR/bobyqa/trustregion.f90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
@@ -36,6 +37,10 @@ if [[ -f "$LINTR" ]] ; then
     sed -i "s|frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))|ind = trueloc(ad > 0)\nfrac(ind) = restmp(ind) / ad(ind)|" "$LINTR"
     sed -i "s|restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(psd, amat(:, trueloc(ad > 0)))|ind = trueloc(ad > 0)\nrestmp(ind) = resnew(ind) - matprod(psd, amat(:, ind))|" "$LINTR"
     sed -i "s|ad(trueloc(resnew > 0)) = matprod(dproj, amat(:, trueloc(resnew > 0)))|ind = trueloc(ad > 0)\nad(ind) = matprod(dproj, amat(:, ind))|" "$LINTR"
+fi
+
+if [[ -f "$LINUPD" ]] ; then
+    sed -i "s/trueloc(mask)/:/g" "$LINUPD"
 fi
 
 if [[ -f "$BOBTR" ]] ; then
