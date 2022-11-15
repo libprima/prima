@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 AM12:20:23
+! Last Modified: Tuesday, November 15, 2022 PM02:06:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -403,12 +403,14 @@ do while (.true.)
         !ratio = (fopt - f) / qred
         ratio = redrat(fopt - f, qred, eta1)  ! Needed? Or just take the ratio since QRED > 0?
         if (ratio <= TENTH) then
-            delta = HALF * delta
+            delta = HALF * dnorm
+            !delta = HALF * delta
         else if (ratio <= 0.7_RP) then
             delta = max(HALF * delta, dnorm)
         else
             temp = sqrt(TWO) * delta
-            delta = max(HALF * delta, dnorm + dnorm)
+            !delta = max(HALF * delta, dnorm + dnorm)
+            delta = max(HALF * delta, TWO * dnorm)
             delta = min(delta, temp)  ! This does not exist in NEWUOA/BOBYQA. It works well.
         end if
         if (delta <= 1.4_RP * rho) then

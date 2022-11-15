@@ -28,7 +28,7 @@ if [[ -f "$LINGEO" ]] ; then
 fi
 
 if [[ -f "$LINTR" ]] ; then
-    sed -i "s|! Local variables|! Local variables\ninteger(IK), allocatable :: ind(:)|" "$LINTR"
+    sed -i '0,/! Local variables/{s/! Local variables/! Local variables\ninteger(IK), allocatable :: ind(:)/}' "$LINTR"
     sed -i "s|ad(trueloc(resnew > 0)) = matprod(d, amat(:, trueloc(resnew > 0)))|ind = trueloc(resnew > 0)\nad(ind) = matprod(d, amat(:, ind))|" "$LINTR"
     sed -i "s|restmp(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) - matprod(dw, amat(:, trueloc(ad > 0)))|ind = trueloc(ad > 0)\nrestmp(ind) = resnew(ind) - matprod(dw, amat(:, ind))|"  "$LINTR"
     sed -i "s|frac(trueloc(ad > 0)) = restmp(trueloc(ad > 0)) / ad(trueloc(ad > 0))|frac(ind) = restmp(ind) / ad(ind)|"  "$LINTR"
