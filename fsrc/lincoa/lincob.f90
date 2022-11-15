@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 PM03:27:25
+! Last Modified: Tuesday, November 15, 2022 PM05:13:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,11 +54,12 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 ! XNEW is the displacement from XBASE of the vector of variables for the current calculation of F,
 ! except that SUBROUTINE TRSTEP uses it for working space.
 ! IACT is an integer array for the indices of the active constraints.
-! RESCON holds useful information about the constraint residuals. Every nonnegative RESCON(J) is the
-! residual of the J-th constraint at the current trust region centre. Otherwise, if RESCON(J) is
-! negative, the J-th constraint holds as a strict inequality at the trust region centre, its
-! residual being at least |RESCON(J)|; further, the value of |RESCON(J)| is at least the current
-! trust region radius DELTA.
+! RESCON holds information about the constraint residuals at the current trust region center XOPT.
+! 1. If if B(J) - AMAT(:, J)^T*XOPT <= DELTA, then RESCON(J) = B(J) - AMAT(:, J)^T*XOPT. Note that
+! RESCON >= 0 in this case, because the algorithm keeps XOPT to be feasible.
+! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
+! RESCON can be updated without calculating the constraints that are far from being active, so that
+! we only need to evaluate the constraints that are nearly active.
 ! QFAC is the orthogonal part of the QR factorization of the matrix of active constraint gradients,
 ! these gradients being ordered in accordance with IACT. When NACT is less than N, columns are added
 ! to QFAC to complete an N by N orthogonal matrix, which is important for keeping calculated steps
@@ -88,7 +89,7 @@ use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, inith
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trstep, trrad
-use, non_intrinsic :: update_mod, only : updateq, updatexf
+use, non_intrinsic :: update_mod, only : updateq, updatexf, updateres
 use, non_intrinsic :: powalg_mod, only : updateh
 
 implicit none
@@ -249,15 +250,7 @@ pq = omega_mul(idz, zmat, fval)
 gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
 
 ! Initialize RESCON.
-! RESCON holds information about the constraint residuals at the current trust region center XOPT.
-! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA. Note
-! that RESCON >= 0 in this case, because the algorithm keeps XOPT to be feasible.
-! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
-! RESCON can be updated without calculating the constraints that are far from being active, so that
-! we only need to evaluate the constraints that are nearly active. RESCON is initialized as follows.
-! 1. Normally, RESCON = B - AMAT^T*XOPT (theoretically, B - AMAT^T*XOPT >= 0 since XOPT is feasible)
-! 2. If RESCON(J) >= RHOBEG (current trust-region radius), its sign is flipped.
-rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
+rescon = max(b - matprod(xopt, amat), ZERO)
 rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
 !!MATLAB: rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
@@ -385,7 +378,7 @@ do while (.true.)
         ratio = redrat(fopt - f, qred, eta1)
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
-        ! The new DELTA is in [GAMMA1*DNORM, GAMMA3*DELTA].
+        ! The new DELTA lies in [GAMMA1*DNORM, GAMMA3*DELTA].
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, gamma3, ratio)
         if (delta <= 0.99_RP * gamma3 * rho) then
             delta = rho
@@ -417,24 +410,6 @@ do while (.true.)
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
-            ! Update RESCON.
-            ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-            ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
-            if (freduced) then
-                dnorm = sqrt(sum(d**2))
-                where (abs(rescon) >= dnorm + delta)
-                    rescon = min(-abs(rescon) + dnorm, -delta)
-                elsewhere
-                    rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-                end where
-                rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
-                !!MATLAB:
-                !!mask = (rescon >= delta+dnorm);
-                !!rescon(mask) = max(rescon(mask) - dnorm, delta);
-                !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
-                !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
-            end if
-
             ! Replace the current model by the least Frobenius norm interpolant if this interpolant
             ! gives substantial reductions in the predictions of values of F at feasible points.
             ! If ITEST is increased to 3, then the next quadratic model is the one whose second
@@ -452,6 +427,12 @@ do while (.true.)
                 pq = omega_mul(idz, zmat, fshift)
                 hq = ZERO
                 gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+            end if
+
+            ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
+            if (freduced) then
+                dnorm = sqrt(sum(d**2))
+                call updateres(amat, b, delta, dnorm, xopt, rescon)
             end if
         end if
     end if
@@ -585,24 +566,6 @@ do while (.true.)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
-        ! Update RESCON.
-        ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
-        ! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
-        if (freduced) then
-            dnorm = sqrt(sum(d**2))
-            where (abs(rescon) >= dnorm + delta)
-                rescon = min(-abs(rescon) + dnorm, -delta)
-            elsewhere
-                rescon = max(b - matprod(xopt, amat), ZERO)  ! Calculation changed
-            end where
-            rescon(trueloc(rescon >= delta)) = -rescon(trueloc(rescon >= delta))
-            !!MATLAB:
-            !!mask = (rescon >= delta+dnorm);
-            !!rescon(mask) = max(rescon(mask) - dnorm, delta);
-            !!rescon(~mask) = max(b(~mask) - (xopt'*amat(:, ~mask))', 0);
-            !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
-        end if
-
         ! Replace the current model by the least Frobenius norm interpolant if this interpolant
         ! gives substantial reductions in the predictions of values of F at feasible points.
         ! If ITEST is increased to 3, then the next quadratic model is the one whose second
@@ -620,6 +583,12 @@ do while (.true.)
             pq = omega_mul(idz, zmat, fshift)
             hq = ZERO
             gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+        end if
+
+        ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
+        if (freduced) then
+            dnorm = sqrt(sum(d**2))
+            call updateres(amat, b, delta, dnorm, xopt, rescon)
         end if
     end if
 
