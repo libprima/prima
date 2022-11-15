@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM12:49:56
+! Last Modified: Tuesday, November 15, 2022 AM10:40:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -423,7 +423,7 @@ function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic module
-use, non_intrinsic :: consts_mod, only : RP, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: debug_mod, only : assert
 
@@ -462,9 +462,9 @@ end if
 if (ratio <= eta1) then
     delta = gamma1 * dnorm
 elseif (ratio <= eta2) then
-    delta = max(HALF * delta_in, dnorm)
+    delta = max(gamma1 * delta_in, dnorm)
 else
-    delta = max(HALF * delta_in, gamma2 * dnorm)  ! Powell's version
+    delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's version
     !delta = max(delta_in, gamma2 * dnorm)  ! Modified version
     ! For noise-free CUTEst problems of <= 200 variables, Powell's version works slightly better
     ! than the modified one.
