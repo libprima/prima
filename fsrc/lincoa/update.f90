@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 PM05:20:21
+! Last Modified: Tuesday, November 15, 2022 PM05:22:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -408,7 +408,7 @@ if (DEBUGGING) then
     call assert(dnorm > 0, 'DNORM > 0', srname)
     call assert(all(is_finite(xopt)), 'XOPT is finite', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
-    ! Zaikun 20221115: The following cannot pass?!
+    ! Zaikun 20221115: The following cannot pass?! Is it due to the update of DELTA?
     !call assert(all((rescon >= 0 .and. rescon <= delta) .or. rescon <= -delta), &
     !    & '0 <= RESCON <= DELTA or RESCON <= -DELTA', srname)
 end if
