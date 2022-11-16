@@ -29,7 +29,7 @@ you intend to solve bound-constrained problems).
 
 Professor Powell carefully implemented his derivative-free optimization methods into publicly available solvers,
 which are genuine masterpieces. They are widely used by engineers and scientists. However, Professor Powell's
-implementation is in [FORTRAN 77](https://github.com/equipez/PRIMA/tree/master/fsrc/original) 
+implementation is in [FORTRAN 77](https://github.com/equipez/PRIMA/tree/master/fsrc/original)
 and the code is nontrivial to understand or maintain, let alone to
 extend. This becomes an obstacle for many practitioners to exploit these solvers in their
 applications and hinders researchers from exploring the wealth left by Professor Powell.
@@ -45,8 +45,8 @@ mathematically equivalent to Powell’s, except for the
 The focus is to implement these methods in a **structured** and **modularized** way so that they
 are easily **understandable**, **maintainable**, **extendable**, and **future-proof**.
 The code will **have no GOTO** (of course)
-and will **use matrix-vector procedures instead of loops** whenever possible. In doing so, we code
-the algorithms in the way that we would write them on a blackboard.
+and will **use matrix-vector procedures instead of loops** whenever possible. In doing so, **we code
+the algorithms in the way that we would present them on a blackboard**.
 
 ### How
 
