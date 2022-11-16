@@ -89,14 +89,14 @@ easier, because we will then have a structured and modularized implementation as
 
 ### Bug fixes
 
-PRIMA has fixed the following known issues in the **old Fortran 77 implementation** of Powell's methods.
+PRIMA has fixed the following known issues in the **original Fortran 77 implementation** of Powell's methods.
 
 Note that all the issues are problems in the Fortran 77 code rather than flaws in the algorithms.
 The examples given below are bugs or requests sent to [NLopt](https://github.com/stevengj/nlopt), a
-package providing a C version of COBYLA, NEWUOA, and BOBYQA based on the **old Fortran 77
+package providing a C version of COBYLA, NEWUOA, and BOBYQA based on the **original Fortran 77
 implementation**. The C code in NLopt is translated from the Fortran 77 code straightforwardly, if
 not automatically by [f2c](https://netlib.org/f2c/f2c.pdf), and hence inherits the style, structure,
-and probably bugs of the old Fortran 77 implementation.
+and probably bugs of the original Fortran 77 implementation.
 
 - The solvers may crash with segmentation faults due to uninitialized variables that are used as indices.
 
