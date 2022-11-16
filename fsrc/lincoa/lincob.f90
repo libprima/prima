@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 PM05:13:20
+! Last Modified: Wednesday, November 16, 2022 PM05:54:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -431,8 +431,7 @@ do while (.true.)
 
             ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
             if (freduced) then
-                dnorm = sqrt(sum(d**2))
-                call updateres(amat, b, delta, dnorm, xopt, rescon)
+                call updateres(amat, b, delta, sqrt(sum(d**2)), xopt, rescon)
             end if
         end if
     end if
@@ -587,8 +586,7 @@ do while (.true.)
 
         ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
         if (freduced) then
-            dnorm = sqrt(sum(d**2))
-            call updateres(amat, b, delta, dnorm, xopt, rescon)
+            call updateres(amat, b, delta, sqrt(sum(d**2)), xopt, rescon)
         end if
     end if
 
