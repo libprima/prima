@@ -20,19 +20,29 @@ the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at t
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
 It is still **under intensive development**, and there is no release yet. If you want to use the
 above-mentioned methods, see the [website](https://www.pdfo.net)
-and [repository](https://github.com/pdfo/pdfo) of PDFO instead.
+and [repository](https://github.com/pdfo/pdfo) of PDFO instead
+([Py-BOBYQA](https://numericalalgorithmsgroup.github.io/pybobyqa/) is also highly recommended if
+you intend to solve bound-constrained problems).
 
 
 ### Why
 
-The goal of PRIMA is to provide the reference implementation of Powell's methods in modern languages,
+Professor Powell carefully implemented his derivative-free optimization methods into publicly available solvers,
+which are genuine masterpieces. They are widely used by engineers and scientists. However, Professor Powell's
+implementation is in FORTRAN 77, and the code is nontrivial to understand or maintain, let alone to
+extend. This becomes an obstacle for many practitioners to exploit these solvers in their
+applications and hinders researchers from exploring the wealth left by Professor Powell.
+
+Professor Powell had asked me to maintain his solvers before he left. This is an honorable mission,
+and I have the responsibility to make the solvers more accessible.
+With PRIMA, I aim to provide the reference implementation of Powell's methods in modern languages,
 including [**modern** Fortran](https://fortran-lang.org) (F2003 or newer), MATLAB, Python, C++, and
 probably Julia and R. It will be a faithful implementation, in the sense that the code will be
 mathematically equivalent to Powell’s, except for the
 [bug fixes](#bug-fixes) and [improvements](#improvements) that we make intentionally.
 
 The focus is to implement these methods in a **structured** and **modularized** way so that they
-are **readable**, **maintainable**, **extendable**, and **future-proof**.
+are easily **understandable**, **maintainable**, **extendable**, and **future-proof**.
 The code will **have no GOTO** (of course)
 and will **use matrix-vector procedures instead of loops** whenever possible.
 
