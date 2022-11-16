@@ -20,7 +20,7 @@ the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at t
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
 It is still **under intensive development**, and there is no release yet. If you want to use the
 above-mentioned methods, see the [website](https://www.pdfo.net)
-and [repository](https://github.com/pdfo/pdfo) of PDFO instead
+and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead
 ([Py-BOBYQA](https://numericalalgorithmsgroup.github.io/pybobyqa/) is also highly recommended if
 you intend to solve bound-constrained problems).
 
