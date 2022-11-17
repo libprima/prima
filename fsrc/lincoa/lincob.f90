@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM03:56:33
+! Last Modified: Thursday, November 17, 2022 PM04:02:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -427,10 +427,13 @@ do while (.true.)
                 itest = itest + 1
             end if
             if (itest == 3) then
-                fshift = fval - fval(kopt)
-                pq = omega_mul(idz, zmat, fshift)
+                !fshift = fval - fval(kopt)
+                !pq = omega_mul(idz, zmat, fshift)
+                !hq = ZERO
+                !gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+                pq = pqalt
                 hq = ZERO
-                gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+                gopt = galt
             end if
 
             ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
@@ -598,10 +601,13 @@ do while (.true.)
             end if
         end if
         if (itest == 3) then
-            fshift = fval - fval(kopt)
-            pq = omega_mul(idz, zmat, fshift)
+            !fshift = fval - fval(kopt)
+            !pq = omega_mul(idz, zmat, fshift)
+            !hq = ZERO
+            !gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+            pq = pqalt
             hq = ZERO
-            gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+            gopt = galt
         end if
 
         ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
