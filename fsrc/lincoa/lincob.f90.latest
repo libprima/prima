@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 16, 2022 PM11:56:09
+! Last Modified: Thursday, November 17, 2022 PM11:17:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -155,6 +155,7 @@ real(RP) :: delbar, delta, dffalt, diff, &
 &        distsq(npt), fopt, ratio,     &
 &        rho, dnorm, &
 &        qred, constr(size(bvec))
+logical :: qalt_better
 logical :: accurate_mod, adequate_geo
 logical :: bad_trstep
 logical :: close_itpset
@@ -168,6 +169,8 @@ integer(IK) :: nfilt, idz, itest, &
 real(RP) :: fshift(npt)
 real(RP) :: pqalt(npt), galt(size(x))
 real(RP) :: dnormsav(5)
+real(RP) :: moderrsav(3)
+real(RP) :: moderrsav_alt(size(moderrsav))
 real(RP) :: gamma3
 
 ! Sizes.
@@ -269,6 +272,8 @@ improve_geo = .false.
 nact = 0
 itest = 3
 dnormsav = HUGENUM
+moderrsav = ZERO
+moderrsav_alt = HUGENUM
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
 ! function evaluations unless the trust-region step is short but the geometry step is not invoked.
@@ -291,6 +296,9 @@ do while (.true.)
     if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
         b = b - matprod(xopt, amat)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+        fshift = fval - fval(kopt)
+        pqalt = omega_mul(idz, zmat, fshift)
+        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
     end if
 
     ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
@@ -363,35 +371,22 @@ do while (.true.)
 
         ! Set DFFALT to the difference between the new value of F and the value predicted by
         ! the alternative model. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
-        diff = f - fopt + qred
-        if (itest < 3) then
-            fshift = fval - fval(kopt)
-            pqalt = omega_mul(idz, zmat, fshift)
-            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-            dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
-        else
-            dffalt = diff
-            itest = 0
-        end if
+        !diff = f - fopt + qred
+        !dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
+        !if (itest == 3) then
+        !    dffalt = diff
+        !    itest = 0
+        !end if
 
-        ! Replace the current model by the least Frobenius norm interpolant if this interpolant
-        ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
-        ! If ITEST is increased to 3, then the next quadratic model is the one whose second
-        ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-        ! new model is constructed by the symmetric Broyden method in the usual way.
-        ! Zaikun 20221114: Why do this only when KNEW_TR > 0? Should we do it before or after
-        ! the update?
-        if (abs(dffalt) >= TENTH * abs(diff)) then
-            itest = 0
-        else
-            itest = itest + 1
+        moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
+        moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
+        !if (itest == 3) then
+        if (qalt_better) then
+            moderrsav = ZERO
+            moderrsav_alt = HUGENUM
+            !itest = 0
         end if
-        if (itest == 3) then
-            fshift = fval - fval(kopt)
-            pq = omega_mul(idz, zmat, fshift)
-            hq = ZERO
-            gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
-        end if
+        qalt_better = all(moderrsav_alt < TENTH * moderrsav)
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(fopt - f, qred, eta1)
@@ -424,32 +419,44 @@ do while (.true.)
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
-            !! Replace the current model by the least Frobenius norm interpolant if this interpolant
-            !! gives substantial reductions in the predictions of values of F at FEASIBLE points.
-            !! If ITEST is increased to 3, then the next quadratic model is the one whose second
-            !! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-            !! new model is constructed by the symmetric Broyden method in the usual way.
-            !! Zaikun 20221114: Why do this only when KNEW_TR > 0? Should we do it before or after
-            !! the update?
-            !if (abs(dffalt) >= TENTH * abs(diff)) then
+            fshift = fval - fval(kopt)
+            pqalt = omega_mul(idz, zmat, fshift)
+            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+
+            ! Replace the current model by the least Frobenius norm interpolant if this interpolant
+            ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
+            ! If ITEST is increased to 3, then the next quadratic model is the one whose second
+            ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
+            ! new model is constructed by the symmetric Broyden method in the usual way.
+            ! Zaikun 20221114: Why do this only when KNEW_TR > 0? Should we do it before or after
+            ! the update?
+            !if (.not. abs(dffalt) < TENTH * abs(diff)) then
+            !if (.not. abs(moderrsav_alt(size(moderrsav_alt))) < TENTH * abs(moderrsav(size(moderrsav)))) then
             !    itest = 0
             !else
             !    itest = itest + 1
             !end if
             !if (itest == 3) then
-            !    fshift = fval - fval(kopt)
-            !    pq = omega_mul(idz, zmat, fshift)
+            !    pq = pqalt
             !    hq = ZERO
-            !    gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+            !    gopt = galt
             !end if
+            !if (all(moderrsav_alt < TENTH * moderrsav)) then
+            if (qalt_better) then
+                !if (.false.) then
+                !itest = 3
+                pq = pqalt
+                hq = ZERO
+                gopt = galt
+            end if
 
             ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
             if (freduced) then
                 call updateres(amat, b, delta, sqrt(sum(d**2)), xopt, rescon)
             end if
         end if
-    end if
 
+    end if
 
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
@@ -518,6 +525,9 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
             b = b - matprod(xopt, amat)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+            fshift = fval - fval(kopt)
+            pqalt = omega_mul(idz, zmat, fshift)
+            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
         end if
 
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
@@ -556,39 +566,23 @@ do while (.true.)
         ! XPT are updated. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
         ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
         qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-        diff = f - fopt + qred
+        !diff = f - fopt + qred
         !if (feasible .and. itest < 3) then
-        if (itest < 3) then
-            fshift = fval - fval(kopt)
-            pqalt = omega_mul(idz, zmat, fshift)
-            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-            dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
-        end if
-        if (itest == 3) then
-            dffalt = diff
-            itest = 0
-        end if
+        !dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
+        !if (itest == 3) then
+        !    dffalt = diff
+        !    itest = 0
+        !end if
 
-        ! Replace the current model by the least Frobenius norm interpolant if this interpolant
-        ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
-        ! If ITEST is increased to 3, then the next quadratic model is the one whose second
-        ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-        ! new model is constructed by the symmetric Broyden method in the usual way.
-        ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
-        !if (feasible) then
-        if (.true.) then
-            if (abs(dffalt) >= TENTH * abs(diff)) then
-                itest = 0
-            else
-                itest = itest + 1
-            end if
+        moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
+        moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
+        !if (itest == 3) then
+        if (qalt_better) then
+            moderrsav = ZERO
+            moderrsav_alt = HUGENUM
+            !itest = 0
         end if
-        if (itest == 3) then
-            fshift = fval - fval(kopt)
-            pq = omega_mul(idz, zmat, fshift)
-            hq = ZERO
-            gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
-        end if
+        qalt_better = all(moderrsav_alt < TENTH * moderrsav)
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
         ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
@@ -602,24 +596,38 @@ do while (.true.)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
-        !! Replace the current model by the least Frobenius norm interpolant if this interpolant
-        !! gives substantial reductions in the predictions of values of F at FEASIBLE points.
-        !! If ITEST is increased to 3, then the next quadratic model is the one whose second
-        !! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-        !! new model is constructed by the symmetric Broyden method in the usual way.
-        !if (feasible) then !if (.true.) then
-        !    if (abs(dffalt) >= TENTH * abs(diff)) then
-        !        itest = 0
-        !    else
-        !        itest = itest + 1
-        !    end if
+        fshift = fval - fval(kopt)
+        pqalt = omega_mul(idz, zmat, fshift)
+        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+
+        ! Replace the current model by the least Frobenius norm interpolant if this interpolant
+        ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
+        ! If ITEST is increased to 3, then the next quadratic model is the one whose second
+        ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
+        ! new model is constructed by the symmetric Broyden method in the usual way.
+        ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
+        !if (feasible) then
+        !if (.true.) then
+        !if (.not. abs(dffalt) < TENTH * abs(diff)) then
+        !if (.not. abs(moderrsav_alt(size(moderrsav_alt))) < TENTH * abs(moderrsav(size(moderrsav)))) then
+        !    itest = 0
+        !else
+        !    itest = itest + 1
         !end if
+        !!end if
         !if (itest == 3) then
-        !    fshift = fval - fval(kopt)
-        !    pq = omega_mul(idz, zmat, fshift)
+        !    pq = pqalt
         !    hq = ZERO
-        !    gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+        !    gopt = galt
         !end if
+        !if (all(moderrsav_alt < TENTH * moderrsav)) then
+        if (qalt_better) then
+            !if (.false.) then
+            !itest = 3
+            pq = pqalt
+            hq = ZERO
+            gopt = galt
+        end if
 
         ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
         if (freduced) then

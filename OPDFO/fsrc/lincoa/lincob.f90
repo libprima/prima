@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM02:54:37
+! Last Modified: Thursday, November 17, 2022 PM07:56:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -438,7 +438,8 @@ do while (.true.)
             ! If ITEST is increased to 3, then the next quadratic model is the one whose second
             ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
             ! new model is constructed by the symmetric Broyden method in the usual way.
-            if (abs(dffalt) >= TENTH * abs(diff)) then
+            !if (abs(dffalt) >= TENTH * abs(diff)) then
+            if (.not. abs(dffalt) < TENTH * abs(diff)) then
                 itest = 0
             else
                 itest = itest + 1
@@ -620,7 +621,8 @@ do while (.true.)
         ! new model is constructed by the symmetric Broyden method in the usual way.
         !if (feasible) then
         if (.true.) then
-            if (abs(dffalt) >= TENTH * abs(diff)) then
+            !if (abs(dffalt) >= TENTH * abs(diff)) then
+            if (.not. abs(dffalt) < TENTH * abs(diff)) then
                 itest = 0
             else
                 itest = itest + 1
