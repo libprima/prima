@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 PM05:15:57
+! Last Modified: Thursday, November 17, 2022 PM02:54:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -602,8 +602,8 @@ do while (.true.)
         ! If X is feasible, then set DFFALT to the difference between the new value of F and the
         ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
         ! XPT are updated.
-        if (feasible .and. itest < 3) then
-            !if (itest < 3) then
+        !if (feasible .and. itest < 3) then
+        if (itest < 3) then
             fshift = fval - fval(kopt)
             ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
             pqalt = omega_mul(idz, zmat, fshift)
@@ -618,8 +618,8 @@ do while (.true.)
         ! If ITEST is increased to 3, then the next quadratic model is the one whose second
         ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
         ! new model is constructed by the symmetric Broyden method in the usual way.
-        if (feasible) then
-            !if (.true.) then
+        !if (feasible) then
+        if (.true.) then
             if (abs(dffalt) >= TENTH * abs(diff)) then
                 itest = 0
             else
