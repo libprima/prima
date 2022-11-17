@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM04:02:58
+! Last Modified: Thursday, November 17, 2022 PM04:08:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -367,11 +367,6 @@ do while (.true.)
         ! Set DFFALT to the difference between the new value of F and the value predicted by
         ! the alternative model. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
         diff = f - fopt + qred
-
-        !fshift = fval - fval(kopt)
-        !pqalt = omega_mul(idz, zmat, fshift)
-        !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-
         if (itest < 3) then
             dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
         else
@@ -427,10 +422,6 @@ do while (.true.)
                 itest = itest + 1
             end if
             if (itest == 3) then
-                !fshift = fval - fval(kopt)
-                !pq = omega_mul(idz, zmat, fshift)
-                !hq = ZERO
-                !gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
                 pq = pqalt
                 hq = ZERO
                 gopt = galt
@@ -442,9 +433,6 @@ do while (.true.)
             end if
         end if
 
-        !fshift = fval - fval(kopt)
-        !pqalt = omega_mul(idz, zmat, fshift)
-        !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
     end if
 
     !----------------------------------------------------------------------------------------------!
@@ -556,11 +544,6 @@ do while (.true.)
         ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
         qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         diff = f - fopt + qred
-
-        !fshift = fval - fval(kopt)
-        !pqalt = omega_mul(idz, zmat, fshift)
-        !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-
         !if (feasible .and. itest < 3) then
         if (itest < 3) then
             dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
@@ -601,10 +584,6 @@ do while (.true.)
             end if
         end if
         if (itest == 3) then
-            !fshift = fval - fval(kopt)
-            !pq = omega_mul(idz, zmat, fshift)
-            !hq = ZERO
-            !gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
             pq = pqalt
             hq = ZERO
             gopt = galt
