@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM04:08:06
+! Last Modified: Thursday, November 17, 2022 PM11:29:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -168,6 +168,8 @@ integer(IK) :: nfilt, idz, itest, &
 real(RP) :: fshift(npt)
 real(RP) :: pqalt(npt), galt(size(x))
 real(RP) :: dnormsav(5)
+real(RP) :: moderrsav(3)
+real(RP) :: moderrsav_alt(size(moderrsav))
 real(RP) :: gamma3
 
 ! Sizes.
@@ -269,6 +271,8 @@ improve_geo = .false.
 nact = 0
 itest = 3
 dnormsav = HUGENUM
+moderrsav = ZERO
+moderrsav_alt = HUGENUM
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
 ! function evaluations unless the trust-region step is short but the geometry step is not invoked.
@@ -366,11 +370,18 @@ do while (.true.)
 
         ! Set DFFALT to the difference between the new value of F and the value predicted by
         ! the alternative model. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
-        diff = f - fopt + qred
-        if (itest < 3) then
-            dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
-        else
-            dffalt = diff
+        !diff = f - fopt + qred
+        !dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
+        !if (itest == 3) then
+        !    dffalt = diff
+        !    itest = 0
+        !end if
+
+        moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
+        moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
+        if (itest == 3) then
+            moderrsav = ZERO
+            moderrsav_alt = HUGENUM
             itest = 0
         end if
 
@@ -416,12 +427,20 @@ do while (.true.)
             ! new model is constructed by the symmetric Broyden method in the usual way.
             ! Zaikun 20221114: Why do this only when KNEW_TR > 0? Should we do it before or after
             ! the update?
-            if (abs(dffalt) >= TENTH * abs(diff)) then
-                itest = 0
-            else
-                itest = itest + 1
-            end if
-            if (itest == 3) then
+            !if (.not. abs(dffalt) < TENTH * abs(diff)) then
+            !if (.not. abs(moderrsav_alt(size(moderrsav_alt))) < TENTH * abs(moderrsav(size(moderrsav)))) then
+            !    itest = 0
+            !else
+            !    itest = itest + 1
+            !end if
+            !if (itest == 3) then
+            !    pq = pqalt
+            !    hq = ZERO
+            !    gopt = galt
+            !end if
+            if (all(moderrsav_alt < TENTH * moderrsav)) then
+                !if (.false.) then
+                itest = 3
                 pq = pqalt
                 hq = ZERO
                 gopt = galt
@@ -543,13 +562,19 @@ do while (.true.)
         ! XPT are updated. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
         ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
         qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-        diff = f - fopt + qred
+        !diff = f - fopt + qred
         !if (feasible .and. itest < 3) then
-        if (itest < 3) then
-            dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
-        end if
+        !dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
+        !if (itest == 3) then
+        !    dffalt = diff
+        !    itest = 0
+        !end if
+
+        moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
+        moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
         if (itest == 3) then
-            dffalt = diff
+            moderrsav = ZERO
+            moderrsav_alt = HUGENUM
             itest = 0
         end if
 
@@ -576,14 +601,22 @@ do while (.true.)
         ! new model is constructed by the symmetric Broyden method in the usual way.
         ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
         !if (feasible) then
-        if (.true.) then
-            if (abs(dffalt) >= TENTH * abs(diff)) then
-                itest = 0
-            else
-                itest = itest + 1
-            end if
-        end if
-        if (itest == 3) then
+        !if (.true.) then
+        !if (.not. abs(dffalt) < TENTH * abs(diff)) then
+        !if (.not. abs(moderrsav_alt(size(moderrsav_alt))) < TENTH * abs(moderrsav(size(moderrsav)))) then
+        !    itest = 0
+        !else
+        !    itest = itest + 1
+        !end if
+        !!end if
+        !if (itest == 3) then
+        !    pq = pqalt
+        !    hq = ZERO
+        !    gopt = galt
+        !end if
+        if (all(moderrsav_alt < TENTH * moderrsav)) then
+            !if (.false.) then
+            itest = 3
             pq = pqalt
             hq = ZERO
             gopt = galt
