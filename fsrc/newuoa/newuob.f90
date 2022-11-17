@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 14, 2022 PM10:38:10
+! Last Modified: Thursday, November 17, 2022 AM10:41:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -334,6 +334,7 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
+
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
@@ -347,11 +348,11 @@ do tr = 1, maxtr
     ! !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
-    ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive.
+    ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive in practice.
     ! When MAX(DELTA, DNORM) > RHO, as Powell mentioned under (2.3) of the NEWUOA paper, "RHO has
     ! not restricted the most recent choice of D", so it is not reasonable to reduce RHO.
     small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code.
-    !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA
+    !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA.
 
     ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
     ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad?

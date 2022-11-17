@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 PM02:21:04
+! Last Modified: Thursday, November 17, 2022 AM10:40:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -492,8 +492,9 @@ do while (.true.)
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
+
     accurate_mod = all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho)
-    ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
+    ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
     close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's code.
@@ -504,7 +505,7 @@ do while (.true.)
     ! !close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
-    ! SMALL_TRRAD --- Is the trust-region radius small?  This indicator seems not impactive.
+    ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive in practice.
     small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code.
     !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA.
 
