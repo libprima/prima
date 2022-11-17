@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM11:46:23
+! Last Modified: Friday, November 18, 2022 AM12:02:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -382,7 +382,8 @@ do while (.true.)
         moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
         moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
         call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
-        if (itest == 3) then
+        !if (itest == 3) then
+        if (qalt_better) then
             moderrsav = ZERO
             moderrsav_alt = HUGENUM
             itest = 0
@@ -579,7 +580,8 @@ do while (.true.)
         moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
         moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
         call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
-        if (itest == 3) then
+        !if (itest == 3) then
+        if (qalt_better) then
             moderrsav = ZERO
             moderrsav_alt = HUGENUM
             itest = 0
