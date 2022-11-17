@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM03:44:35
+! Last Modified: Thursday, November 17, 2022 PM03:50:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -291,6 +291,9 @@ do while (.true.)
     if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
         b = b - matprod(xopt, amat)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+        fshift = fval - fval(kopt)
+        pqalt = omega_mul(idz, zmat, fshift)
+        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
     end if
 
     ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
