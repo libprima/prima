@@ -271,6 +271,7 @@ shortd = .false.
 improve_geo = .false.
 nact = 0
 itest = 3
+qalt_better = .true.
 dnormsav = HUGENUM
 moderrsav = ZERO
 moderrsav_alt = HUGENUM
