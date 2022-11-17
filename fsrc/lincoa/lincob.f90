@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 AM10:51:16
+! Last Modified: Thursday, November 17, 2022 PM12:34:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -380,20 +380,15 @@ do while (.true.)
         ! Update DELTA. After this, DELTA < DNORM may hold.
         ! The new DELTA lies in [GAMMA1*DNORM, GAMMA3*DELTA].
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, gamma3, ratio)
+        ! Set DELTA to RHO when it is close. The multiplicative factor in the scheme below should be
+        ! less than GAMMA3. Imagine a very successful step with DENORM = the un-updated DELTA = RHO.
+        ! Then TRRAD will update DELTA to GAMMA3*RHO. If this factor were not smaller than GAMMA3,
+        ! then DELTA will be reset to RHO, which is not reasonable as D is very successful. See
+        ! paragraph two of Sec. 5.2.5 in T. M. Ragonneau's thesis:
+        ! "Model-Based Derivative-Free Optimization Methods and Software".
         if (delta <= 0.99_RP * gamma3 * rho) then
             delta = rho
         end if
-        ! N.B.: The following scheme of revising DELTA is WRONG if 1.5 >= GAMMA3.
-        !---------------------------------!
-        ! !if (delta <= 1.5_RP * rho) then
-        ! !    delta = rho
-        ! !end if
-        !---------------------------------!
-        ! The factor in the scheme above should be smaller than GAMMA3. Imagine a very successful
-        ! step with DENORM = the un-updated DELTA = RHO. Then TRRAD will update DELTA to GAMMA3*RHO.
-        ! If this factor were not smaller than GAMMA3, then DELTA will be reset to RHO, which
-        ! is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
-        ! T. M. Ragonneau's thesis "Model-Based Derivative-Free Optimization Methods and Software".
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved.
         ! TODO: 1. Take FREDUCED into consideration in SETDROP_TR, particularly DISTSQ.
@@ -411,7 +406,7 @@ do while (.true.)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
             ! Replace the current model by the least Frobenius norm interpolant if this interpolant
-            ! gives substantial reductions in the predictions of values of F at feasible points.
+            ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
             ! If ITEST is increased to 3, then the next quadratic model is the one whose second
             ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
             ! new model is constructed by the symmetric Broyden method in the usual way.
@@ -543,7 +538,8 @@ do while (.true.)
         ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
         qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         diff = f - fopt + qred
-        if (feasible .and. itest < 3) then !if (itest < 3) then
+        !if (feasible .and. itest < 3) then
+        if (itest < 3) then
             fshift = fval - fval(kopt)
             pqalt = omega_mul(idz, zmat, fshift)
             galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
@@ -567,11 +563,13 @@ do while (.true.)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
         ! Replace the current model by the least Frobenius norm interpolant if this interpolant
-        ! gives substantial reductions in the predictions of values of F at feasible points.
+        ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
         ! If ITEST is increased to 3, then the next quadratic model is the one whose second
         ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
         ! new model is constructed by the symmetric Broyden method in the usual way.
-        if (feasible) then !if (.true.) then
+        ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
+        !if (feasible) then
+        if (.true.) then
             if (abs(dffalt) >= TENTH * abs(diff)) then
                 itest = 0
             else

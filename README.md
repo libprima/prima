@@ -8,6 +8,12 @@ Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell
 [![Verification, large](https://github.com/equipez/PRIMA/actions/workflows/verify_large.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_large.yml)
 [![Verification, base](https://github.com/equipez/PRIMA/actions/workflows/verify_base.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_base.yml)
 
+- [What](#what)
+- [Why](#why)
+- [How](#how)
+- [Bug fixes](#bug-fixes)
+- [Improvements](#improvements)
+- [A "fun" fact](#a-fun-fact)
 
 ### What
 
