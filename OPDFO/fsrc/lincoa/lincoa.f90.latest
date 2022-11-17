@@ -508,12 +508,12 @@ do while (.true.)
     ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
     ! when the last trust region step was calculated, then try a trust region step instead.
     !
-    ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
+    ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
-    ! SMALL_TRRAD --- Is the trust-region radius small?
+    ! SMALL_TRRAD: Is the trust-region radius small?
     !small_trrad = (delsav <= rho)
     small_trrad = (max(delta, dnorm) <= rho)
-    ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
+    ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
     !close_itpset = all(distsq <= max(delta * delta, 4.0_RP * rho * rho))
