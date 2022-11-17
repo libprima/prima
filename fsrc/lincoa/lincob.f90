@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM12:34:13
+! Last Modified: Thursday, November 17, 2022 PM03:27:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -364,10 +364,12 @@ do while (.true.)
         ! Set DFFALT to the difference between the new value of F and the value predicted by
         ! the alternative model. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
         diff = f - fopt + qred
+
+        fshift = fval - fval(kopt)
+        pqalt = omega_mul(idz, zmat, fshift)
+        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+
         if (itest < 3) then
-            fshift = fval - fval(kopt)
-            pqalt = omega_mul(idz, zmat, fshift)
-            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
             dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
         else
             dffalt = diff
@@ -405,6 +407,10 @@ do while (.true.)
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
+            !fshift = fval - fval(kopt)
+            !pqalt = omega_mul(idz, zmat, fshift)
+            !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+
             ! Replace the current model by the least Frobenius norm interpolant if this interpolant
             ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
             ! If ITEST is increased to 3, then the next quadratic model is the one whose second
@@ -431,6 +437,9 @@ do while (.true.)
         end if
     end if
 
+    fshift = fval - fval(kopt)
+    pqalt = omega_mul(idz, zmat, fshift)
+    galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
 
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
@@ -499,6 +508,9 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
             b = b - matprod(xopt, amat)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+            fshift = fval - fval(kopt)
+            pqalt = omega_mul(idz, zmat, fshift)
+            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
         end if
 
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
@@ -538,11 +550,13 @@ do while (.true.)
         ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
         qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         diff = f - fopt + qred
+
+        !fshift = fval - fval(kopt)
+        !pqalt = omega_mul(idz, zmat, fshift)
+        !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+
         !if (feasible .and. itest < 3) then
         if (itest < 3) then
-            fshift = fval - fval(kopt)
-            pqalt = omega_mul(idz, zmat, fshift)
-            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
             dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
         end if
         if (itest == 3) then
@@ -561,6 +575,10 @@ do while (.true.)
         freduced = (f < fopt .and. feasible)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+
+        !fshift = fval - fval(kopt)
+        !pqalt = omega_mul(idz, zmat, fshift)
+        !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
 
         ! Replace the current model by the least Frobenius norm interpolant if this interpolant
         ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
