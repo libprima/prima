@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM03:27:42
+! Last Modified: Thursday, November 17, 2022 PM03:36:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -435,11 +435,11 @@ do while (.true.)
                 call updateres(amat, b, delta, sqrt(sum(d**2)), xopt, rescon)
             end if
         end if
-    end if
 
-    fshift = fval - fval(kopt)
-    pqalt = omega_mul(idz, zmat, fshift)
-    galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+        fshift = fval - fval(kopt)
+        pqalt = omega_mul(idz, zmat, fshift)
+        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+    end if
 
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
@@ -576,9 +576,9 @@ do while (.true.)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
-        !fshift = fval - fval(kopt)
-        !pqalt = omega_mul(idz, zmat, fshift)
-        !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+        fshift = fval - fval(kopt)
+        pqalt = omega_mul(idz, zmat, fshift)
+        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
 
         ! Replace the current model by the least Frobenius norm interpolant if this interpolant
         ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
