@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM03:50:15
+! Last Modified: Thursday, November 17, 2022 PM03:56:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -410,9 +410,9 @@ do while (.true.)
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
-            !fshift = fval - fval(kopt)
-            !pqalt = omega_mul(idz, zmat, fshift)
-            !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+            fshift = fval - fval(kopt)
+            pqalt = omega_mul(idz, zmat, fshift)
+            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
 
             ! Replace the current model by the least Frobenius norm interpolant if this interpolant
             ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
@@ -439,9 +439,9 @@ do while (.true.)
             end if
         end if
 
-        fshift = fval - fval(kopt)
-        pqalt = omega_mul(idz, zmat, fshift)
-        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+        !fshift = fval - fval(kopt)
+        !pqalt = omega_mul(idz, zmat, fshift)
+        !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
     end if
 
     !----------------------------------------------------------------------------------------------!
