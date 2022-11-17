@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM03:36:16
+! Last Modified: Thursday, November 17, 2022 PM03:44:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -365,9 +365,9 @@ do while (.true.)
         ! the alternative model. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
         diff = f - fopt + qred
 
-        fshift = fval - fval(kopt)
-        pqalt = omega_mul(idz, zmat, fshift)
-        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+        !fshift = fval - fval(kopt)
+        !pqalt = omega_mul(idz, zmat, fshift)
+        !galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
 
         if (itest < 3) then
             dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
