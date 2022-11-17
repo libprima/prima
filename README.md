@@ -35,7 +35,7 @@ extend. This becomes an obstacle for many practitioners to exploit these solvers
 applications and hinders researchers from exploring the wealth left by Professor Powell to the
 community.
 
-Before he left, Professor Powell had asked me to maintain his solvers. This is an honorable mission,
+Before he passed, Professor Powell had asked me to maintain his solvers. This is an honorable mission,
 and I have the responsibility to make the solvers more accessible.
 PRIMA is a project somehow similar to the translation, interpretation, and annotation of Euclid’s *Elements*.
 It will make Powell's solvers easily accessible to everyone, not only the experts.
