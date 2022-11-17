@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM11:29:33
+! Last Modified: Thursday, November 17, 2022 PM11:39:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -155,6 +155,7 @@ real(RP) :: delbar, delta, dffalt, diff, &
 &        distsq(npt), fopt, ratio,     &
 &        rho, dnorm, &
 &        qred, constr(size(bvec))
+logical :: qalt_better
 logical :: accurate_mod, adequate_geo
 logical :: bad_trstep
 logical :: close_itpset
@@ -270,6 +271,7 @@ shortd = .false.
 improve_geo = .false.
 nact = 0
 itest = 3
+qalt_better = .true.
 dnormsav = HUGENUM
 moderrsav = ZERO
 moderrsav_alt = HUGENUM
@@ -384,6 +386,8 @@ do while (.true.)
             moderrsav_alt = HUGENUM
             itest = 0
         end if
+        qalt_better = all(moderrsav_alt < TENTH * moderrsav)
+        !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(fopt - f, qred, eta1)
@@ -438,7 +442,8 @@ do while (.true.)
             !    hq = ZERO
             !    gopt = galt
             !end if
-            if (all(moderrsav_alt < TENTH * moderrsav)) then
+            !if (all(moderrsav_alt < TENTH * moderrsav)) then
+            if (qalt_better) then
                 !if (.false.) then
                 itest = 3
                 pq = pqalt
@@ -577,6 +582,8 @@ do while (.true.)
             moderrsav_alt = HUGENUM
             itest = 0
         end if
+        qalt_better = all(moderrsav_alt < TENTH * moderrsav)
+        !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
         ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
@@ -614,7 +621,8 @@ do while (.true.)
         !    hq = ZERO
         !    gopt = galt
         !end if
-        if (all(moderrsav_alt < TENTH * moderrsav)) then
+        !if (all(moderrsav_alt < TENTH * moderrsav)) then
+        if (qalt_better) then
             !if (.false.) then
             itest = 3
             pq = pqalt
