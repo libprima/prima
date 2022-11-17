@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 16, 2022 PM05:54:53
+! Last Modified: Thursday, November 17, 2022 AM10:51:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -440,6 +440,7 @@ do while (.true.)
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
+
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
@@ -456,7 +457,7 @@ do while (.true.)
     ! !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
-    ! SMALL_TRRAD: Is the trust-region radius small?  This indicator seems not impactive.
+    ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive in practice.
     small_trrad = (max(delta, dnorm) <= rho)  ! Behaves the same as Powell's version.
     !small_trrad = (delsav <= rho)  ! Powell's code. DELSAV = unupdated DELTA.
 
