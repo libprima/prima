@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 PM05:15:57
+! Last Modified: Thursday, November 17, 2022 AM12:20:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -399,6 +399,14 @@ do while (.true.)
             dffalt = diff
             itest = 0
         end if
+        ! Replace the current model by the least Frobenius norm interpolant if this interpolant
+        ! gives substantial reductions in the predictions of values of F at feasible points.
+        if (itest == 3) then
+            fshift = fval - fval(kopt)
+            pq = omega_mul(idz, zmat, fshift)
+            hq = ZERO
+            gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+        end if
 
         ! Pick the next value of DELTA after a trust region step.
         !ratio = (fopt - f) / qred
@@ -476,14 +484,14 @@ do while (.true.)
                 !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
             end if
 
-            ! Replace the current model by the least Frobenius norm interpolant if this interpolant
-            ! gives substantial reductions in the predictions of values of F at feasible points.
-            if (itest == 3) then
-                fshift = fval - fval(kopt)
-                pq = omega_mul(idz, zmat, fshift)
-                hq = ZERO
-                gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
-            end if
+            !! Replace the current model by the least Frobenius norm interpolant if this interpolant
+            !! gives substantial reductions in the predictions of values of F at feasible points.
+            !if (itest == 3) then
+            !    fshift = fval - fval(kopt)
+            !    pq = omega_mul(idz, zmat, fshift)
+            !    hq = ZERO
+            !    gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+            !end if
         end if
     end if
 
@@ -500,12 +508,12 @@ do while (.true.)
     ! Otherwise, if the current iteration has reduced F, or if DELTA was above its lower bound
     ! when the last trust region step was calculated, then try a trust region step instead.
     !
-    ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
+    ! ACCURATE_MOD --- Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
-    ! SMALL_TRRAD: Is the trust-region radius small?
+    ! SMALL_TRRAD --- Is the trust-region radius small?
     !small_trrad = (delsav <= rho)
     small_trrad = (max(delta, dnorm) <= rho)
-    ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
+    ! CLOSE_ITPSET --- Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
     !close_itpset = all(distsq <= max(delta * delta, 4.0_RP * rho * rho))
@@ -602,8 +610,8 @@ do while (.true.)
         ! If X is feasible, then set DFFALT to the difference between the new value of F and the
         ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
         ! XPT are updated.
-        if (feasible .and. itest < 3) then
-            !if (itest < 3) then
+        !if (feasible .and. itest < 3) then
+        if (itest < 3) then
             fshift = fval - fval(kopt)
             ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
             pqalt = omega_mul(idz, zmat, fshift)
@@ -618,13 +626,21 @@ do while (.true.)
         ! If ITEST is increased to 3, then the next quadratic model is the one whose second
         ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
         ! new model is constructed by the symmetric Broyden method in the usual way.
-        if (feasible) then
-            !if (.true.) then
+        !if (feasible) then
+        if (.true.) then
             if (abs(dffalt) >= TENTH * abs(diff)) then
                 itest = 0
             else
                 itest = itest + 1
             end if
+        end if
+        ! Replace the current model by the least Frobenius norm interpolant if this interpolant
+        ! gives substantial reductions in the predictions of values of F at feasible points.
+        if (itest == 3) then
+            fshift = fval - fval(kopt)
+            pq = omega_mul(idz, zmat, fshift)
+            hq = ZERO
+            gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
         end if
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
@@ -665,14 +681,14 @@ do while (.true.)
             !!rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
         end if
 
-        ! Replace the current model by the least Frobenius norm interpolant if this interpolant
-        ! gives substantial reductions in the predictions of values of F at feasible points.
-        if (itest == 3) then
-            fshift = fval - fval(kopt)
-            pq = omega_mul(idz, zmat, fshift)
-            hq = ZERO
-            gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
-        end if
+        !! Replace the current model by the least Frobenius norm interpolant if this interpolant
+        !! gives substantial reductions in the predictions of values of F at feasible points.
+        !if (itest == 3) then
+        !    fshift = fval - fval(kopt)
+        !    pq = omega_mul(idz, zmat, fshift)
+        !    hq = ZERO
+        !    gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+        !end if
     end if
 
     ! The calculations with the current value of RHO are complete. Pick the next value of RHO.

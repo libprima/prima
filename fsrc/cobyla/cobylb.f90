@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, November 14, 2022 PM10:36:35
+! Last Modified: Thursday, November 17, 2022 AM10:32:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -408,6 +408,7 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we possibly improves the geometry of simplex or
     ! reduces RHO according to IMPROVE_GEO and REDUCE_RHO. Now we decide these indicators.
+
     ! BAD_TRSTEP: Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
     ! IMPROVE_GEO: Should we take a geometry step to improve the geometry of the interpolation set?
@@ -429,7 +430,8 @@ do tr = 1, maxtr
     ! 1. Powell's definition of BAD_TRSTEP is as follows. The one used above seems to work better,
     ! especially for linearly constrained problems due to the factor TENTH.
     ! !bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
-    ! Besides, Powell did not check MAX(PREREC, PREREF) > 0 in BAD_TRSTEP, which has little impact.
+    ! Besides, Powell did not check MAX(PREREC, PREREF) > 0 in BAD_TRSTEP, which is reasonable to do
+    ! has little impact on the performance.
     ! 2. NEWUOA/BOBYQA/LINCOA would define BAD_TRSTEP, IMPROVE_GEO, and REDUCE_RHO as follows. Two
     ! different thresholds are used in BAD_TRSTEP. It outperforms Powell's version.
     ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
