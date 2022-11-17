@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, November 17, 2022 AM10:32:37
+! Last Modified: Thursday, November 17, 2022 AM11:45:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -431,7 +431,7 @@ do tr = 1, maxtr
     ! especially for linearly constrained problems due to the factor TENTH.
     ! !bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
     ! Besides, Powell did not check MAX(PREREC, PREREF) > 0 in BAD_TRSTEP, which is reasonable to do
-    ! has little impact on the performance.
+    ! but has little impact upon the performance.
     ! 2. NEWUOA/BOBYQA/LINCOA would define BAD_TRSTEP, IMPROVE_GEO, and REDUCE_RHO as follows. Two
     ! different thresholds are used in BAD_TRSTEP. It outperforms Powell's version.
     ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
