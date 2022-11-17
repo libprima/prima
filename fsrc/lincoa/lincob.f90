@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 18, 2022 AM12:02:53
+! Last Modified: Friday, November 18, 2022 AM12:09:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -381,12 +381,12 @@ do while (.true.)
 
         moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
         moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
-        call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
+        !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
         !if (itest == 3) then
         if (qalt_better) then
             moderrsav = ZERO
             moderrsav_alt = HUGENUM
-            itest = 0
+            !itest = 0
         end if
         qalt_better = all(moderrsav_alt < TENTH * moderrsav)
         !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
@@ -447,7 +447,7 @@ do while (.true.)
             !if (all(moderrsav_alt < TENTH * moderrsav)) then
             if (qalt_better) then
                 !if (.false.) then
-                itest = 3
+                !itest = 3
                 pq = pqalt
                 hq = ZERO
                 gopt = galt
@@ -579,12 +579,12 @@ do while (.true.)
 
         moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
         moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
-        call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
+        !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
         !if (itest == 3) then
         if (qalt_better) then
             moderrsav = ZERO
             moderrsav_alt = HUGENUM
-            itest = 0
+            !itest = 0
         end if
         qalt_better = all(moderrsav_alt < TENTH * moderrsav)
         !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
@@ -628,7 +628,7 @@ do while (.true.)
         !if (all(moderrsav_alt < TENTH * moderrsav)) then
         if (qalt_better) then
             !if (.false.) then
-            itest = 3
+            !itest = 3
             pq = pqalt
             hq = ZERO
             gopt = galt
