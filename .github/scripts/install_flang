@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo apt install libncurses*
+
 cd /tmp/
 
 git clone https://github.com/zaikunzhang/resources
