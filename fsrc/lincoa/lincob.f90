@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 18, 2022 PM01:28:01
+! Last Modified: Friday, November 18, 2022 PM11:21:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -163,15 +163,13 @@ logical :: small_trrad
 logical :: evaluated(npt)
 logical :: feasible, shortd, improve_geo, reduce_rho, freduced
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK))), k
-integer(IK) :: nfilt, idz, itest, &
+integer(IK) :: nfilt, idz, &
 &           knew_tr, knew_geo, kopt, nact,      &
-&           ngetact, subinfo
+&           ngetact, subinfo, tr
 real(RP) :: fshift(npt)
 real(RP) :: pqalt(npt), galt(size(x))
 real(RP) :: dnormsav(5)
 real(RP) :: moderr, moderr_alt
-real(RP) :: moderrsav(3)
-real(RP) :: moderrsav_alt(size(moderrsav))
 real(RP) :: gamma3
 
 ! Sizes.
@@ -273,11 +271,8 @@ feasible = .false.
 shortd = .false.
 improve_geo = .false.
 nact = 0
-itest = 3
 qalt_better = .false.
 dnormsav = HUGENUM
-moderrsav = ZERO
-moderrsav_alt = HUGENUM
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
 ! function evaluations unless the trust-region step is short but the geometry step is not invoked.
@@ -291,6 +286,7 @@ info = MAXTR_REACHED
 ! IMPROVE_GEO: Should we improve the geometry?
 ! REDUCE_RHO: Should we reduce rho?
 ! LINCOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
+!do tr = 1, maxtr
 do while (.true.)
     ! Shift XBASE if XOPT may be too far from XBASE.
     ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
@@ -300,7 +296,7 @@ do while (.true.)
     if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
         b = b - matprod(xopt, amat)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
-        fshift = fval - fval(kopt)
+        fshift = fval - fopt
         pqalt = omega_mul(idz, zmat, fshift)
         galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
     end if
@@ -373,34 +369,13 @@ do while (.true.)
             exit
         end if
 
-        ! Set DFFALT to the difference between the new value of F and the value predicted by
-        ! the alternative model. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
-        !diff = f - fopt + qred
-        !dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
-        !if (itest == 3) then
-        !    dffalt = diff
-        !    itest = 0
-        !end if
-
+        ! QALT_BETTER is a boolean array indicating whether the recent few (three) alternative
+        ! models are more accurate in predicting the function value at XOPT + D.
+        ! N.B.: Do NOT change the "<" in the comparison to "<="; otherwise, the result will not be
+        ! reasonable if the two values being compared are both ZERO or INF.
         moderr = f - fopt + qred
         moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
         qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
-        ! N.B.: Do NOT change the "<" in the comparison to "<="; otherwise, the result will not be
-        ! reasonable if the two values being compared are both ZERO or INF.
-
-        moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
-        moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
-        !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
-        !if (itest == 3) then
-        !if (qalt_better) then
-        !write (16, *) '0', moderrsav
-        !write (16, *) '1', moderrsav_alt
-        !moderrsav = ZERO
-        !moderrsav_alt = HUGENUM
-        !itest = 0
-        !end if
-        !qalt_better = all(moderrsav_alt < TENTH * moderrsav)
-        !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(fopt - f, qred, eta1)
@@ -418,48 +393,25 @@ do while (.true.)
             delta = rho
         end if
 
-        ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved.
-        ! TODO: 1. Take FREDUCED into consideration in SETDROP_TR, particularly DISTSQ.
-        ! 2. Test different definitions of WEIGHT in SETDROP_TR. See BOBYQA.
         freduced = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
         if (knew_tr > 0) then
+            ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GOPT, HQ, PQ]
+            ! (the quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR)
+            ! becomes XOPT + D.
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
-
-            ! Update the second derivatives of the model by the symmetric Broyden method, using PQW
-            ! for the second derivative parameters of the new KNEW-th Lagrange function. The
-            ! contribution from the old parameter PQ(KNEW) is included in the second derivative
-            ! matrix HQ.
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
-            fshift = fval - fval(kopt)
+            ! Update the alternative model, which is the least Frobenius norm interpolant.
+            ! In theory, FSHIFT can be FVAL + C with any C. Powell chose C = -FOPT.
+            fshift = fval - fopt
             pqalt = omega_mul(idz, zmat, fshift)
             galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
 
-            ! Replace the current model by the least Frobenius norm interpolant if this interpolant
-            ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
-            ! If ITEST is increased to 3, then the next quadratic model is the one whose second
-            ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-            ! new model is constructed by the symmetric Broyden method in the usual way.
-            ! Zaikun 20221114: Why do this only when KNEW_TR > 0? Should we do it before or after
-            ! the update?
-            !if (.not. abs(dffalt) < TENTH * abs(diff)) then
-            !if (.not. abs(moderrsav_alt(size(moderrsav_alt))) < TENTH * abs(moderrsav(size(moderrsav)))) then
-            !    itest = 0
-            !else
-            !    itest = itest + 1
-            !end if
-            !if (itest == 3) then
-            !    pq = pqalt
-            !    hq = ZERO
-            !    gopt = galt
-            !end if
-            !if (all(moderrsav_alt < TENTH * moderrsav)) then
-            !if (qalt_better) then
+            ! Replace the current model with the alternative model if the recent few (three)
+            ! alternative models are more accurate in predicting the function value of XOPT + D.
             if (all(qalt_better)) then
-                !if (.false.) then
-                !itest = 3
                 pq = pqalt
                 hq = ZERO
                 gopt = galt
@@ -471,7 +423,7 @@ do while (.true.)
             end if
         end if
 
-    end if
+    end if  ! End of IF (SHORTD .OR. .NOT. QRED > 0). The normal trust-region calculation ends here.
 
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
@@ -540,18 +492,18 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
             b = b - matprod(xopt, amat)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
-            fshift = fval - fval(kopt)
+            fshift = fval - fopt
             pqalt = omega_mul(idz, zmat, fshift)
             galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
         end if
 
+        ! XPT(:, KNEW_GEO) will become  XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
 
         ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
         ! scheme GEOSTEP. Note that DELTA has been updated before arriving here.
         delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
-        ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
-        ! replaced by XOPT + D.
+        ! Find D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) becomes XOPT + D.
         call geostep(iact, idz, knew_geo, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
 
         ! Calculate the next value of the objective function.
@@ -576,80 +528,31 @@ do while (.true.)
             exit
         end if
 
-        ! If X is feasible, then set DFFALT to the difference between the new value of F and the
-        ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
-        ! XPT are updated. Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
-        ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
-        qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-        !diff = f - fopt + qred
-        !if (feasible .and. itest < 3) then
-        !dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
-        !if (itest == 3) then
-        !    dffalt = diff
-        !    itest = 0
-        !end if
-
-        moderr = f - fopt + qred
-        moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
-        qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
+        ! QALT_BETTER is a boolean array indicating whether the recent few (three) alternative
+        ! models are more accurate in predicting the function value at XOPT + D.
+        ! Powell's code takes XOPT + D into account only if it is feasible.
         ! N.B.: Do NOT change the "<" in the comparison to "<="; otherwise, the result will not be
         ! reasonable if the two values being compared are both ZERO or INF.
+        moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)
+        moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
+        qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
 
-        moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
-        moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
-        !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
-        !if (itest == 3) then
-        !if (qalt_better) then
-        !write (16, *) '3', moderrsav
-        !write (16, *) '4', moderrsav_alt
-        !moderrsav = ZERO
-        !moderrsav_alt = HUGENUM
-        !itest = 0
-        !end if
-        !qalt_better = all(moderrsav_alt < TENTH * moderrsav)
-        !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
-
-        ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
-        ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
-        ! by subroutine UPDATE.
+        ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GOPT, HQ, PQ] (the
+        ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_GEO) becomes
+        ! XOPT + D.
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
-
-        ! Update the second derivatives of the model by the symmetric Broyden method, using PQW for
-        ! the second derivative parameters of the new KNEW-th Lagrange function. The contribution
-        ! from the old parameter PQ(KNEW) is included in the second derivative matrix HQ.
         freduced = (f < fopt .and. feasible)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
-        fshift = fval - fval(kopt)
+        fshift = fval - fopt
         pqalt = omega_mul(idz, zmat, fshift)
         galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
 
-        ! Replace the current model by the least Frobenius norm interpolant if this interpolant
-        ! gives substantial reductions in the predictions of values of F at FEASIBLE points.
-        ! If ITEST is increased to 3, then the next quadratic model is the one whose second
-        ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-        ! new model is constructed by the symmetric Broyden method in the usual way.
-        ! Zaikun 20221114: Why do this only when X is feasible??? What if X is not???
-        !if (feasible) then
-        !if (.true.) then
-        !if (.not. abs(dffalt) < TENTH * abs(diff)) then
-        !if (.not. abs(moderrsav_alt(size(moderrsav_alt))) < TENTH * abs(moderrsav(size(moderrsav)))) then
-        !    itest = 0
-        !else
-        !    itest = itest + 1
-        !end if
-        !!end if
-        !if (itest == 3) then
-        !    pq = pqalt
-        !    hq = ZERO
-        !    gopt = galt
-        !end if
-        !if (all(moderrsav_alt < TENTH * moderrsav)) then
-        !if (qalt_better) then
+        ! Replace the current model with the alternative model if the recent few (three)
+        ! alternative models are more accurate in predicting the function value of XOPT + D.
+        ! N.B.: Powell's code does this only if XOPT + D is feasible.
         if (all(qalt_better)) then
-            !if (.false.) then
-            !itest = 3
             pq = pqalt
             hq = ZERO
             gopt = galt
@@ -659,7 +562,7 @@ do while (.true.)
         if (freduced) then
             call updateres(amat, b, delta, sqrt(sum(d**2)), xopt, rescon)
         end if
-    end if
+    end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
     ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm
     ! by reducing RHO; update DELTA at the same time.
@@ -676,18 +579,17 @@ do while (.true.)
         ! DNORMSAV is corresponding to the latest function evaluations with the current RHO.
         ! Update it after reducing RHO.
         dnormsav = HUGENUM
-    end if
-end do
+    end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
+end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried before.
-! Zaikun 20220926: Is it possible that XOPT+D has been evaluated?
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
-    ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
     constr = matprod(x, A_orig) - b_orig
     cstrv = maximum([ZERO, constr])
+    ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, iprint, nf, f, x, cstrv)
     ! Save X, F, CSTRV into the history.
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
@@ -713,7 +615,7 @@ call retmsg(solver, info, iprint, nf, f, x, cstrv)
 
 ! Postconditions
 
-close (16)
+!close (16)
 
 end subroutine lincob
 

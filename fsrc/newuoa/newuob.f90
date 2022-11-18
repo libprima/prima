@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 18, 2022 AM10:18:26
+! Last Modified: Friday, November 18, 2022 PM11:15:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -301,8 +301,8 @@ do tr = 1, maxtr
         tr_success = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
 
-        ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (defining the
-        ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XOPT+D.
+        ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the quadratic
+        ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XOPT+D.
         ! If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
         ! decides not to include XNEW into XPT.
         call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
@@ -463,7 +463,7 @@ do tr = 1, maxtr
 
     ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
-        ! XPT(:,KNEW_GEO) will be replaced by XOPT+D below. KNEW_GEO /= KOPT unless there is a bug.
+        ! XPT(:,KNEW_GEO) will become XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
 
         ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
@@ -471,8 +471,8 @@ do tr = 1, maxtr
         ! above the definition of IMPROVE_GEO.
         delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
 
-        ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
-        ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN.
+        ! Find D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) becomes XOPT + D.
+        ! The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN.
         d = geostep(idz, knew_geo, kopt, bmat, delbar, xpt, zmat)
 
         ! Calculate the next value of the objective function.
@@ -507,8 +507,8 @@ do tr = 1, maxtr
         ! here. The value of DNORM saved in DNORMSAV will be used when defining REDUCE_RHO.
         !------------------------------------------------------------------------------------------!
 
-        ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (defining the
-        ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XOPT+D.
+        ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the quadratic
+        ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_GEO) becomes XOPT+D.
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         call updateq(idz, knew_geo, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
         call updatexf(knew_geo, d, f, kopt, fval, xpt, fopt, xopt)
@@ -548,6 +548,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, iprint, nf, f, x)
+    ! Save X, F into the history.
     call savehist(nf, x, xhist, f, fhist)
 end if
 
