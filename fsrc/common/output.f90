@@ -8,7 +8,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 10, 2022 PM03:10:57
+! Last Modified: Friday, November 18, 2022 AM11:36:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -121,7 +121,7 @@ end if
 if (present(cstrv)) then
     cstrv_loc = cstrv
 elseif (present(constr)) then
-    cstrv_loc = maxval([ZERO, -constr])  ! Constraints: CONSTR >= 0
+    cstrv_loc = maxval([ZERO, -constr])  ! N.B.: We assume that the constraint is CONSTR >= 0.
 else
     cstrv_loc = ZERO
 end if
@@ -238,7 +238,7 @@ end if
 if (present(cstrv)) then
     cstrv_loc = cstrv
 elseif (present(constr)) then
-    cstrv_loc = maxval([ZERO, -constr])  ! Constraints: CONSTR >= 0
+    cstrv_loc = maxval([ZERO, -constr])  ! N.B.: We assume that the constraint is CONSTR >= 0.
 else
     cstrv_loc = ZERO
 end if
@@ -377,7 +377,7 @@ end if
 if (present(cstrv)) then
     cstrv_loc = cstrv
 elseif (present(constr)) then
-    cstrv_loc = maxval([ZERO, -constr])  ! Constraints: CONSTR >= 0
+    cstrv_loc = maxval([ZERO, -constr])  ! N.B.: We assume that the constraint is CONSTR >= 0.
 else
     cstrv_loc = ZERO
 end if
