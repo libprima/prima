@@ -178,5 +178,5 @@ and two [bugs in MATLAB](https://github.com/zequipe/test_matlab). Each of them r
 that it was not a problem in my code but a flaw in the Fortran compilers or in MATLAB. From a very unusual angle, this reflects how intensive
 the coding has been.
 
-Despite the bitterness behind this "fun" fact, it is exactly why I work on PRIMA: I hope that all
+The bitterness behind this "fun" fact is exactly why I work on PRIMA: I hope that all
 the frustrations that I have experienced will not happen to any user of Powell's methods anymore.
