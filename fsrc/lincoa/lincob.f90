@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 18, 2022 PM11:26:39
+! Last Modified: Friday, November 18, 2022 PM11:29:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -544,6 +544,8 @@ do tr = 1, maxtr
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
 
+        ! Update the alternative model, which is the least Frobenius norm interpolant.
+        ! In theory, FSHIFT can be FVAL + C with any C. Powell chose C = -FOPT.
         fshift = fval - fopt
         pqalt = omega_mul(idz, zmat, fshift)
         galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
