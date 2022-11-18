@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 17, 2022 AM10:41:45
+! Last Modified: Friday, November 18, 2022 AM10:18:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -491,19 +491,19 @@ do tr = 1, maxtr
             exit
         end if
 
-        !------------------------------------------------------------------------------------------!
         ! Update DNORMSAV and MODERRSAV. (Should we?)
-        ! Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
-        ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
-        ! the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of DNORM
-        ! saved in DNORMSAV will be used when defining REDUCE_RHO.
-        dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
+        dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-        qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
+        qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
+        !------------------------------------------------------------------------------------------!
+        ! Zaikun 20200801: Powell's code does not update DNORM. Therefore, DNORM is the length of
+        ! last  trust-region trial step, which seems inconsistent with what is described in Section
+        ! 7 (around (7.7)) of the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do
+        ! here. The value of DNORM saved in DNORMSAV will be used when defining REDUCE_RHO.
         !------------------------------------------------------------------------------------------!
 
         ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (defining the
