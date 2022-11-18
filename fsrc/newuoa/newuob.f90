@@ -236,11 +236,12 @@ info = MAXTR_REACHED
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     call trsapp(delta, gq, hq, pq, tr_tol, xopt, xpt, crvmin, d)
+
     dnorm = min(delta, norm(d))
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
     shortd = (dnorm < HALF * rho)
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
-    ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
+    ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
 
     if (shortd .or. .not. qred > 0) then
