@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 AM10:38:44
+! Last Modified: Friday, November 18, 2022 PM11:44:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,6 +58,7 @@ use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
 use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calvlag
+use, non_intrinsic :: redrho_mod, only : redrho
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
@@ -107,7 +108,7 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
 real(RP) :: ddmove, delta, diff, distsq(size(pl, 2)), delbar, &
 & weight(size(pl, 2)), score(size(pl, 2)),    &
-&        dnorm, errtol, crvmin, fopt,&
+&        dnorm, crvmin, fopt,&
 &        fsave, ratio, rho, &
 &        trtol, &
 &        qred, plknew(size(pl, 1)), fval(size(pl, 2))
@@ -188,7 +189,6 @@ do while (.true.)
     ! Hessian term of the model Q.
     call trstep(delta, g, h, trtol, d, crvmin)
     dnorm = min(delta, sqrt(sum(d**2)))
-    errtol = ZERO
     shortd = (dnorm < HALF * rho)
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
@@ -199,8 +199,6 @@ do while (.true.)
         if (delta <= 1.5_RP * rho) then
             delta = rho
         end if
-        errtol = HALF * crvmin * rho * rho
-        if (nf <= npt + 9 .or. is_nan(errtol)) errtol = ZERO
     else
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! Calculate the next value of the objective function.
@@ -522,14 +520,7 @@ do while (.true.)
         end do
         ! Pick the next values of RHO and DELTA.
         delta = HALF * rho
-        ratio = rho / rhoend
-        if (ratio <= 16.0_RP) then
-            rho = rhoend
-        else if (ratio <= 250.0_RP) then
-            rho = sqrt(ratio) * rhoend
-        else
-            rho = TENTH * rho
-        end if
+        rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         dnormsav = HUGENUM
         moderrsav = HUGENUM

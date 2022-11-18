@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 AM10:40:50
+! Last Modified: Friday, November 18, 2022 PM11:44:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,6 +69,7 @@ use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox
 use, non_intrinsic :: update_mod, only : updateh
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
+use, non_intrinsic :: redrho_mod, only : redrho
 
 implicit none
 
@@ -317,13 +318,6 @@ do while (.true.)
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Pick the next value of DELTA after a trust region step.
-        if (.not. (qred > 0)) then
-            !----------------------------------------------------------------------------------!
-            ! Zaikun 20220405: LINCOA improves the model in this case. Try the same here?
-            !----------------------------------------------------------------------------------!
-            info = TRSUBP_FAILED
-            exit
-        end if
         ratio = (fopt - f) / qred
         if (ratio <= TENTH) then
             delta = min(HALF * delta, dnorm)
@@ -356,7 +350,7 @@ do while (.true.)
             moderrsav = HUGENUM
             dnormsav = HUGENUM
 
-            ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT (even if RESCUED is FALSE).
+            ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT.
             xnew = min(max(sl, d), su)
             d = xnew - xopt
             qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
@@ -680,14 +674,7 @@ do while (.true.)
             exit
         end if
         delta = HALF * rho
-        ratio = rho / rhoend
-        if (ratio <= 16.0_RP) then
-            rho = rhoend
-        else if (ratio <= 250.0_RP) then
-            rho = sqrt(ratio) * rhoend
-        else
-            rho = TENTH * rho
-        end if
+        rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         moderrsav = HUGENUM
         dnormsav = HUGENUM
