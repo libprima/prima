@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 18, 2022 PM11:21:35
+! Last Modified: Friday, November 18, 2022 PM11:26:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -286,8 +286,7 @@ info = MAXTR_REACHED
 ! IMPROVE_GEO: Should we improve the geometry?
 ! REDUCE_RHO: Should we reduce rho?
 ! LINCOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
-!do tr = 1, maxtr
-do while (.true.)
+do tr = 1, maxtr
     ! Shift XBASE if XOPT may be too far from XBASE.
     ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
     ! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably
