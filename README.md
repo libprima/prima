@@ -147,6 +147,8 @@ of Powell's solver. Inevitably, they suffer from the bugs in the Fortran 77 code
 
      - [Optimization freezes #25](https://github.com/astamm/nloptr/issues/25)
 
+     - [BOBYQA gets stuck in infinite loop. #7](https://github.com/cureos/csnumerics/issues/7)
+
      - [Algorithm turns into infinite loop and never finishes #3](https://github.com/xypron/jcobyla/issues/3)
 
 - COBYLA may **not return the best point** that is evaluated; sometimes, the returned point can have a
@@ -158,7 +160,7 @@ large constraint violation even though the starting point is feasible.
 
 	 - [COBYLA returns last evaluated function which might not be minimum #57](https://github.com/stevengj/nlopt/issues/57)
 
-     - [Successful termination when constraints violated #1](https://github.com/xypron/jcobyla/issues/1)
+     - [Successful termination when constraints violated #1](https://github.com/cureos/jcobyla/issues/1)
 
 <!---
 - Thread-safety

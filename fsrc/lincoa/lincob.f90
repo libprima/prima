@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 18, 2022 PM12:52:45
+! Last Modified: Friday, November 18, 2022 PM01:28:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -385,6 +385,8 @@ do while (.true.)
         moderr = f - fopt + qred
         moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
         qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
+        ! N.B.: Do NOT change the "<" in the comparison to "<="; otherwise, the result will not be
+        ! reasonable if the two values being compared are both ZERO or INF.
 
         moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
         moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
@@ -590,6 +592,8 @@ do while (.true.)
         moderr = f - fopt + qred
         moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
         qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
+        ! N.B.: Do NOT change the "<" in the comparison to "<="; otherwise, the result will not be
+        ! reasonable if the two values being compared are both ZERO or INF.
 
         moderrsav = [moderrsav(2:size(moderrsav)), abs(f - fopt + qred)]
         moderrsav_alt = [moderrsav_alt(2:size(moderrsav_alt)), abs(f - fopt - quadinc(d, xpt, galt, pqalt))]
