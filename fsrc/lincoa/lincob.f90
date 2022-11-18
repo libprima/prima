@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 18, 2022 AM12:09:12
+! Last Modified: Friday, November 18, 2022 AM11:31:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -151,7 +151,7 @@ real(RP) :: xbase(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
-real(RP) :: delbar, delta, dffalt, diff, &
+real(RP) :: delbar, delta, &
 &        distsq(npt), fopt, ratio,     &
 &        rho, dnorm, &
 &        qred, constr(size(bvec))
@@ -251,6 +251,8 @@ call inith(ij, rhobeg, xpt, idz, bmat, zmat)
 hq = ZERO
 pq = omega_mul(idz, zmat, fval)
 gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
+pqalt = pq
+galt = gopt
 
 ! Initialize RESCON.
 rescon = max(b - matprod(xopt, amat), ZERO)
@@ -357,7 +359,7 @@ do while (.true.)
         cstrv = maximum([ZERO, constr])
 
         ! Print a message about the function evaluation according to IPRINT.
-        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        call fmsg(solver, iprint, nf, f, x, cstrv)
         ! Save X, F, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
         ! Save X, F, CSTRV into the filter.
@@ -384,8 +386,10 @@ do while (.true.)
         !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
         !if (itest == 3) then
         if (qalt_better) then
-            moderrsav = ZERO
-            moderrsav_alt = HUGENUM
+            !write (16, *) '0', moderrsav
+            !write (16, *) '1', moderrsav_alt
+            !moderrsav = ZERO
+            !moderrsav_alt = HUGENUM
             !itest = 0
         end if
         qalt_better = all(moderrsav_alt < TENTH * moderrsav)
@@ -551,7 +555,7 @@ do while (.true.)
         cstrv = maximum([ZERO, constr])
 
         ! Print a message about the function evaluation according to IPRINT.
-        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        call fmsg(solver, iprint, nf, f, x, cstrv)
         ! Save X, F, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
         ! Save X, F, CSTRV into the filter.
@@ -582,8 +586,10 @@ do while (.true.)
         !call assert(qalt_better .eqv. itest == 3, 'QALT_BETTER = ITEST == 3', srname)
         !if (itest == 3) then
         if (qalt_better) then
-            moderrsav = ZERO
-            moderrsav_alt = HUGENUM
+            !write (16, *) '3', moderrsav
+            !write (16, *) '4', moderrsav_alt
+            !moderrsav = ZERO
+            !moderrsav_alt = HUGENUM
             !itest = 0
         end if
         qalt_better = all(moderrsav_alt < TENTH * moderrsav)
@@ -651,7 +657,7 @@ do while (.true.)
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
-        call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
+        call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt, cstrv)
         ! DNORMSAV is corresponding to the latest function evaluations with the current RHO.
         ! Update it after reducing RHO.
         dnormsav = HUGENUM
@@ -667,7 +673,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (so RESCON is not usable).
     constr = matprod(x, A_orig) - b_orig
     cstrv = maximum([ZERO, constr])
-    call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+    call fmsg(solver, iprint, nf, f, x, cstrv)
     ! Save X, F, CSTRV into the history.
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
     ! Save X, F, CSTRV into the filter.
