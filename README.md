@@ -35,7 +35,7 @@ you intend to solve bound-constrained problems).
 
 Professor Powell carefully implemented his derivative-free optimization methods into publicly available solvers,
 which are genuine masterpieces. They are widely used by engineers and scientists. However, Professor Powell's
-implementation is in [FORTRAN 77](https://github.com/equipez/PRIMA/tree/master/fsrc/original)
+implementation is in [Fortran 77](https://github.com/equipez/PRIMA/tree/master/fsrc/original)
 and the code is nontrivial to understand or maintain, let alone to
 extend. This becomes an obstacle for many practitioners to exploit these solvers in their
 applications and hinders researchers from exploring the wealth left by Professor Powell to the
@@ -59,6 +59,16 @@ are easily **understandable**, **maintainable**, **extendable**, and **future-pr
 The code will **have no GOTO** (of course)
 and will **use matrix-vector procedures instead of loops** whenever possible. In doing so, we code
 the algorithms **in a way that we would present them on a blackboard**.
+
+There do exist "translations" of Powell's Fortran 77 code into other languages. For example,
+[NLopt](https://github.com/stevengj/nlopt) provide a C version of COBYLA, NEWUOA, and BOBYQA,
+but the C code in NLopt is translated from the Fortran 77 code straightforwardly, if
+not automatically by [f2c](https://netlib.org/f2c/f2c.pdf), and hence inherits the style, structure,
+and probably [bugs](#bug-fixes) of the original Fortran 77 implementation.
+Note, however, that
+[Py-BOBYQA](https://numericalalgorithmsgroup.github.io/pybobyqa/) is a **true translation** of BOBYQA
+to Python, with significant improvements.
+
 
 ### How
 
@@ -102,17 +112,20 @@ easier, because we will then have a structured and modularized implementation as
 
 ### Bug fixes
 
-PRIMA has fixed the following known issues in the **original Fortran 77 implementation** of Powell's methods.
-
+PRIMA has fixed the some **serious** issues in the **original Fortran 77 implementation** of Powell's methods.
 Note that all the issues are problems in the Fortran 77 code rather than flaws in the algorithms.
-The examples given below are bugs or requests sent to [NLopt](https://github.com/stevengj/nlopt), a
-popular package providing a C version of COBYLA, NEWUOA, and BOBYQA based on the **original Fortran 77
-implementation**. The C code in NLopt is translated from the Fortran 77 code straightforwardly, if
-not automatically by [f2c](https://netlib.org/f2c/f2c.pdf), and hence inherits the style, structure,
-and probably bugs of the original Fortran 77 implementation.
+
+The examples given below are bugs or requests sent to [SciPy](https://github.com/scipy/scipy),
+[NLopt](https://github.com/stevengj/nlopt),
+[NLopt.jl](https://github.com/JuliaOpt/NLopt.jl),
+[nloptr](https://github.com/astamm/nloptr),
+[OpenTURNS](https://github.com/openturns/openturns),
+etc., which are reputable packages that wrap/interface the **original Fortran 77 implementation**
+of Powell's solver. Inevitably, they suffer from the bugs in the Fortran 77 code.
 
 - The solvers may **crash** with segmentation faults due to uninitialized variables that are used as indices.
 
+     - [segfault when setting equal upper and lower bounds and constraints #81](https://github.com/JuliaOpt/NLopt.jl/issues/81)
      - [Fix all uninitialized variable warnings #134](https://github.com/stevengj/nlopt/issues/134)
 
 	 - [BOBYQA uninitialised variables in rare cases #133](https://github.com/stevengj/nlopt/issues/133)
@@ -121,11 +134,20 @@ and probably bugs of the original Fortran 77 implementation.
 
 - The solvers may get **stuck** in infinite loops.
 
+     - [optimize: COBYLA hangs / infinite loop #8998](https://github.com/scipy/scipy/issues/8998)
+     - [BUG: Scipy.optimize / COBYLA hangs on some CPUs #15527](https://github.com/scipy/scipy/issues/15527)
+
 	 - [COBYLA freezes (though maxeval and maxtime are given) #370](https://github.com/stevengj/nlopt/issues/370)
 
 	 - [COBYLA hangs #118](https://github.com/stevengj/nlopt/issues/118)
 
 	 - [NEWUOA_BOUND stuck in infinite loop inside MMA #117](https://github.com/stevengj/nlopt/issues/117)
+
+     - [Cobyla freezes in 0T1.16rc1 #1651](https://github.com/openturns/openturns/issues/1651)
+
+     - [Optimization freezes #25](https://github.com/astamm/nloptr/issues/25)
+
+     - [Algorithm turns into infinite loop and never finishes #3](https://github.com/xypron/jcobyla/issues/3)
 
 - COBYLA may **not return the best point** that is evaluated; sometimes, the returned point can have a
 large constraint violation even though the starting point is feasible.
@@ -136,6 +158,14 @@ large constraint violation even though the starting point is feasible.
 
 	 - [COBYLA returns last evaluated function which might not be minimum #57](https://github.com/stevengj/nlopt/issues/57)
 
+     - [Successful termination when constraints violated #1](https://github.com/xypron/jcobyla/issues/1)
+
+<!---
+- Thread-safety
+    - [scipy.optimize.minimize(method='COBYLA') not threadsafe #9658](https://github.com/scipy/scipy/issues/9658)
+
+    - [BUG: Make cobyla threadsafe #3](https://github.com/sturlamolden/scipy/pull/3)
+-->
 
 ------
 
