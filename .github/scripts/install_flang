@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo apt install libncurses*
+sudo apt install libncurses*  # Needed for libtinfo.so
 
 cd /tmp/
 
