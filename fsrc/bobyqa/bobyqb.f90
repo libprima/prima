@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM04:51:28
+! Last Modified: Saturday, November 19, 2022 PM04:59:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -62,6 +62,7 @@ use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, 
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul!, errquad
+use, non_intrinsic :: ratio_mod, only : redrat
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
@@ -277,19 +278,6 @@ do while (.true.)
         x = min(max(xl, xbase + xnew), xu)
         x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
         x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
-        !if (nf >= maxfun) then
-        !    info = MAXFUN_REACHED
-        !    exit
-        !end if
-        !if (is_nan(abs(sum(x)))) then
-        !    f = sum(x)  ! Set F to NaN
-        !    if (nf == 1) then
-        !        fopt = f
-        !        xopt = ZERO
-        !    end if
-        !    info = NAN_INF_X
-        !    exit
-        !end if
 
         ! Calculate the value of the objective function at XBASE+XNEW.
         call evaluate(calfun, x, f)
@@ -305,21 +293,6 @@ do while (.true.)
         end if
 
 
-        !write (16, *) 'tr ', nf, f, fopt, kopt
-
-        !if (is_nan(f) .or. is_posinf(f)) then
-        !    if (nf == 1) then
-        !        fopt = f
-        !        xopt = ZERO
-        !    end if
-        !    info = NAN_INF_F
-        !    exit
-        !end if
-        !if (f <= ftarget) then
-        !    info = FTARGET_ACHIEVED
-        !    exit
-        !end if
-
         fopt = fval(kopt)
         diff = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
@@ -329,8 +302,10 @@ do while (.true.)
         ! in NEWUOA, but we recognized it as a bug and fixed it.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
-        ! Pick the next value of DELTA after a trust region step.
-        ratio = (fopt - f) / qred
+        ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
+        ratio = redrat(fopt - f, qred, eta1)
+
+        ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
             delta = rho
@@ -601,41 +576,11 @@ do while (.true.)
             x = min(max(xl, xbase + xnew), xu)
             x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
             x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
-            !if (nf >= maxfun) then
-            !    info = MAXFUN_REACHED
-            !    exit
-            !end if
-            !nf = nf + 1
-            !write (16, *) 611, maxfun, nf
-            !if (is_nan(abs(sum(x)))) then
-            !    f = sum(x)  ! Set F to NaN
-            !    if (nf == 1) then
-            !        fopt = f
-            !        xopt = ZERO
-            !    end if
-            !    info = NAN_INF_X
-            !    exit
-            !end if
 
             ! Calculate the value of the objective function at XBASE+XNEW.
             call evaluate(calfun, x, f)
             nf = nf + 1_IK
             call savehist(nf, x, xhist, f, fhist)
-
-            !write (16, *) 'geo', nf, f, fopt, kopt
-
-            !if (is_nan(f) .or. is_posinf(f)) then
-            !    if (nf == 1) then
-            !        fopt = f
-            !        xopt = ZERO
-            !    end if
-            !    info = NAN_INF_F
-            !    exit
-            !end if
-            !if (f <= ftarget) then
-            !    info = FTARGET_ACHIEVED
-            !    exit
-            !end if
 
             subinfo = checkexit(maxfun, nf, f, ftarget, x)
             if (subinfo /= INFO_DFT) then
