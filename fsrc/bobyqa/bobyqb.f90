@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM04:59:55
+! Last Modified: Saturday, November 19, 2022 PM05:26:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,6 +60,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, INFO_DFT, &
     & MAXFUN_REACHED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
+use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul!, errquad
 use, non_intrinsic :: ratio_mod, only : redrat
@@ -101,6 +102,7 @@ real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
+character(len=*), parameter :: solver = 'BOBYQA'
 character(len=*), parameter :: srname = 'BOBYQB'
 integer(IK) :: subinfo
 integer(IK) :: maxfhist
@@ -169,10 +171,7 @@ end if
 
 info = INFO_DFT
 
-! Initialize XBASE, XPT, FVAL, GOPT, HQ, PQ, BMAT and ZMAT together with the corresponding values of
-! of NF and KOPT, which are the number of calls of CALFUN so far and the index of the interpolation
-! point at the trust region centre. Then the initial XOPT is set too. The branch to label 720 occurs
-! if MAXFUN is less than NPT. GOPT will be updated if KOPT is different from KBASE.
+! Initialize XBASE, XPT, FVAL, and KOPT.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fhist, fval, &
     & sl, su, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
@@ -181,8 +180,13 @@ x = min(max(xl, xbase + xopt), xu)
 x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
 x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
 f = fopt
+
+! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
+    ! Arrange FHIST and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist)
+    ! Print a return message according to IPRINT.
+    call retmsg(solver, info, iprint, nf, f, x)
     return
 end if
 
@@ -279,10 +283,13 @@ do while (.true.)
         x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
         x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
 
-        ! Calculate the value of the objective function at XBASE+XNEW.
+        ! Calculate the next value of the objective function.
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
+        ! Print a message about the function evaluation according to IPRINT.
+        call fmsg(solver, iprint, nf, f, x)
+        ! Save X, F into the history.
         call savehist(nf, x, xhist, f, fhist)
 
         ! Check whether to exit
@@ -341,7 +348,8 @@ do while (.true.)
             tr_success = (f < fopt)
         end if
 
-        ! Find the index of the interpolation point to be replaced by the trust-region trial point.
+        ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW.
+        ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
 
         ! Calculate the distance squares between the interpolation points and the "optimal point".
         ! When identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is
@@ -404,8 +412,11 @@ do while (.true.)
         end if
 
         if (knew_tr > 0) then
-            ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
-            ! the second derivative terms of the model.
+            ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the
+            ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes
+            ! XNEW. If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the
+            ! algorithm decides not to include XNEW into XPT.
+
             vlag = calvlag(kopt, bmat, d, xpt, zmat)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             call updateh(knew_tr, beta, vlag, bmat, zmat)
@@ -577,11 +588,16 @@ do while (.true.)
             x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
             x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
 
-            ! Calculate the value of the objective function at XBASE+XNEW.
+            ! Calculate the next value of the objective function.
             call evaluate(calfun, x, f)
             nf = nf + 1_IK
+
+            ! Print a message about the function evaluation according to IPRINT.
+            call fmsg(solver, iprint, nf, f, x)
+            ! Save X, F into the history.
             call savehist(nf, x, xhist, f, fhist)
 
+            ! Check whether to exit
             subinfo = checkexit(maxfun, nf, f, ftarget, x)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
@@ -601,8 +617,10 @@ do while (.true.)
             ! in NEWUOA, but we recognized it as a bug and fixed it.
             dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
-            ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
-            ! the second derivative terms of the model.
+            ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the
+            ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_GEO) becomes
+            ! XNEW. If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the
+            ! algorithm decides not to include XNEW into XPT.
             vlag = calvlag(kopt, bmat, d, xpt, zmat)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             call updateh(knew_geo, beta, vlag, bmat, zmat)
@@ -639,8 +657,12 @@ do while (.true.)
         delta = HALF * rho
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
-        moderrsav = HUGENUM
+        ! Print a message about the reduction of RHO according to IPRINT.
+        call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
+        ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
+        ! the current RHO. Update them after reducing RHO.
         dnormsav = HUGENUM
+        moderrsav = HUGENUM
     end if
 end do
 
@@ -650,16 +672,15 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = min(max(xl, xbase + xnew), xu)  ! XNEW = XOPT + D??? See NEWUOA, LINCOA.
     x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
     x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
-    nf = nf + 1_IK
     call evaluate(calfun, x, f)
+    nf = nf + 1_IK
+    ! Print a message about the function evaluation according to IPRINT.
+    call fmsg(solver, iprint, nf, f, x)
+    ! Save X, F into the history.
     call savehist(nf, x, xhist, f, fhist)
 end if
 
-!--------------------------------------------------------------------------------------------------!
-!  Powell: IF (FVAL(KOPT) .LE. FSAVE) THEN
-!  Why update X only when FVAL(KOPT) .LE. FSAVE? This seems INCORRECT, because it may lead to
-!  a return with F and X that are not the best available.
-!--------------------------------------------------------------------------------------------------!
+! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
 if (fval(kopt) <= f .or. is_nan(f)) then
     x = min(max(xl, xbase + xopt), xu)
     x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
@@ -667,7 +688,12 @@ if (fval(kopt) <= f .or. is_nan(f)) then
     f = fval(kopt)
 end if
 
+! Arrange FHIST and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist)
+
+! Print a return message according to IPRINT.
+call retmsg(solver, info, iprint, nf, f, x)
+
 
 close (16)
 !====================!
