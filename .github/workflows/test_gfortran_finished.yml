@@ -53,16 +53,12 @@ jobs:
         exclude:
           - os: ubuntu-22.04
             version: 9
-          - os: ubuntu-latest
-            version: 12
+          - os: ubuntu-22.04
+            version: 8
           - os: macos-latest
             bitness: 32
-          - os: macos-latest
-            version: 12
           - os: windows-latest
             bitness: 32
-          - os: windows-latest
-            version: 12
           - os: windows-latest
             version: 9
           - os: windows-latest
