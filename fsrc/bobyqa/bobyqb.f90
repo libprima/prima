@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 18, 2022 PM11:44:21
+! Last Modified: Saturday, November 19, 2022 PM01:04:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,7 +57,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, INFO_DFT, &
-    & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
+    & MAXFUN_REACHED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul!, errquad
@@ -268,6 +268,7 @@ do while (.true.)
             xnew = min(max(sl, xnew - xopt), su)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)  ! XBASE is set to XOPT, XOPT to 0.
             xbase = min(max(xl, xbase), xu)
+            ! It seems important for the performance to recalculate QRED.
             qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         end if
         ! Put the variables for the next calculation of the objective function in XNEW, with any
