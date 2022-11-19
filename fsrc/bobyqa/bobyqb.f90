@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM04:23:02
+! Last Modified: Saturday, November 19, 2022 PM04:51:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,6 +51,7 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
+use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
@@ -183,7 +184,6 @@ if (subinfo /= INFO_DFT) then
     call rangehist(nf, xhist, fhist)
     return
 end if
-!write (16, *) nf, kopt, fopt
 
 ! Initialize GOPT, HQ, and PQ.
 call initq(ij, fval, xpt, gopt, hq, pq)
@@ -277,38 +277,48 @@ do while (.true.)
         x = min(max(xl, xbase + xnew), xu)
         x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
         x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
-            exit
-        end if
-        nf = nf + 1
-        if (is_nan(abs(sum(x)))) then
-            f = sum(x)  ! Set F to NaN
-            if (nf == 1) then
-                fopt = f
-                xopt = ZERO
-            end if
-            info = NAN_INF_X
-            exit
-        end if
+        !if (nf >= maxfun) then
+        !    info = MAXFUN_REACHED
+        !    exit
+        !end if
+        !if (is_nan(abs(sum(x)))) then
+        !    f = sum(x)  ! Set F to NaN
+        !    if (nf == 1) then
+        !        fopt = f
+        !        xopt = ZERO
+        !    end if
+        !    info = NAN_INF_X
+        !    exit
+        !end if
 
         ! Calculate the value of the objective function at XBASE+XNEW.
         call evaluate(calfun, x, f)
+        nf = nf + 1_IK
+
         call savehist(nf, x, xhist, f, fhist)
+
+        ! Check whether to exit
+        subinfo = checkexit(maxfun, nf, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
+
+
         !write (16, *) 'tr ', nf, f, fopt, kopt
 
-        if (is_nan(f) .or. is_posinf(f)) then
-            if (nf == 1) then
-                fopt = f
-                xopt = ZERO
-            end if
-            info = NAN_INF_F
-            exit
-        end if
-        if (f <= ftarget) then
-            info = FTARGET_ACHIEVED
-            exit
-        end if
+        !if (is_nan(f) .or. is_posinf(f)) then
+        !    if (nf == 1) then
+        !        fopt = f
+        !        xopt = ZERO
+        !    end if
+        !    info = NAN_INF_F
+        !    exit
+        !end if
+        !if (f <= ftarget) then
+        !    info = FTARGET_ACHIEVED
+        !    exit
+        !end if
 
         fopt = fval(kopt)
         diff = f - fopt + qred
@@ -322,14 +332,9 @@ do while (.true.)
         ! Pick the next value of DELTA after a trust region step.
         ratio = (fopt - f) / qred
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
-        !if (ratio <= TENTH) then
-        !    delta = min(HALF * delta, dnorm)
-        !else if (ratio <= 0.7_RP) then
-        !    delta = max(HALF * delta, dnorm)
-        !else
-        !    delta = max(HALF * delta, TWO * dnorm)
-        !end if
-        if (delta <= 1.5_RP * rho) delta = rho
+        if (delta <= 1.5_RP * rho) then
+            delta = rho
+        end if
 
         tr_success = (f < fopt)
 
@@ -596,38 +601,48 @@ do while (.true.)
             x = min(max(xl, xbase + xnew), xu)
             x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
             x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
-            if (nf >= maxfun) then
-                info = MAXFUN_REACHED
-                exit
-            end if
-            nf = nf + 1
-            if (is_nan(abs(sum(x)))) then
-                f = sum(x)  ! Set F to NaN
-                if (nf == 1) then
-                    fopt = f
-                    xopt = ZERO
-                end if
-                info = NAN_INF_X
-                exit
-            end if
+            !if (nf >= maxfun) then
+            !    info = MAXFUN_REACHED
+            !    exit
+            !end if
+            !nf = nf + 1
+            !write (16, *) 611, maxfun, nf
+            !if (is_nan(abs(sum(x)))) then
+            !    f = sum(x)  ! Set F to NaN
+            !    if (nf == 1) then
+            !        fopt = f
+            !        xopt = ZERO
+            !    end if
+            !    info = NAN_INF_X
+            !    exit
+            !end if
 
             ! Calculate the value of the objective function at XBASE+XNEW.
             call evaluate(calfun, x, f)
+            nf = nf + 1_IK
             call savehist(nf, x, xhist, f, fhist)
+
             !write (16, *) 'geo', nf, f, fopt, kopt
 
-            if (is_nan(f) .or. is_posinf(f)) then
-                if (nf == 1) then
-                    fopt = f
-                    xopt = ZERO
-                end if
-                info = NAN_INF_F
+            !if (is_nan(f) .or. is_posinf(f)) then
+            !    if (nf == 1) then
+            !        fopt = f
+            !        xopt = ZERO
+            !    end if
+            !    info = NAN_INF_F
+            !    exit
+            !end if
+            !if (f <= ftarget) then
+            !    info = FTARGET_ACHIEVED
+            !    exit
+            !end if
+
+            subinfo = checkexit(maxfun, nf, f, ftarget, x)
+            if (subinfo /= INFO_DFT) then
+                info = subinfo
                 exit
             end if
-            if (f <= ftarget) then
-                info = FTARGET_ACHIEVED
-                exit
-            end if
+
 
             ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the
             ! error of this prediction.
