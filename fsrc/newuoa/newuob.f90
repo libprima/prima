@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 18, 2022 PM11:15:08
+! Last Modified: Saturday, November 19, 2022 PM05:24:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -166,7 +166,7 @@ end if
 ! Calculation starts !
 !====================!
 
-! Initialize FVAL, XBASE, and XPT.
+! Initialize XBASE, XPT, FVAL, and KOPT.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
@@ -302,7 +302,7 @@ do tr = 1, maxtr
         knew_tr = setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
 
         ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the quadratic
-        ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XOPT+D.
+        ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XNEW = XOPT + D.
         ! If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
         ! decides not to include XNEW into XPT.
         call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
@@ -552,7 +552,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     call savehist(nf, x, xhist, f, fhist)
 end if
 
-! Choose the [X, F] to return: either the current [X, F] or [XBASE+XOPT, FOPT].
+! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
 if (is_nan(f) .or. fopt < f) then
     x = xbase + xopt
     f = fopt
