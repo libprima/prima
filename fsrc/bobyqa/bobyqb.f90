@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM05:26:48
+! Last Modified: Saturday, November 19, 2022 PM06:21:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,8 +57,7 @@ use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, INFO_DFT, &
-    & MAXFUN_REACHED, SMALL_TR_RADIUS!, MAXTR_REACHED
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -67,7 +66,7 @@ use, non_intrinsic :: ratio_mod, only : redrat
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
-use, non_intrinsic :: geometry_mod, only : geostep
+use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox, trrad
 use, non_intrinsic :: update_mod, only : updateh
@@ -129,11 +128,10 @@ real(RP) :: delbar, bdtest(size(x)), beta, &
 &        den(npt), diff, &
 &        distsq(npt), dnorm, errbd, fopt,        &
 &        gisq, gqsq,       &
-&        ratio, rho, qred, weight(npt), pqinc(npt)
+&        ratio, rho, qred, pqinc(npt)
 real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
-real(RP) :: score(npt)
 integer(IK) :: itest, knew_tr, knew_geo, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 logical :: shortd, improve_geo, tr_success, reduce_rho, small_trrad, close_itpset, accurate_mod, adequate_geo, bad_trstep, rescued
@@ -299,7 +297,6 @@ do while (.true.)
             exit
         end if
 
-
         fopt = fval(kopt)
         diff = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
@@ -350,72 +347,13 @@ do while (.true.)
 
         ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
-
-        ! Calculate the distance squares between the interpolation points and the "optimal point".
-        ! When identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is
-        ! reasonable to take into account the new trust-region trial point XPT(:, KOPT) + D, which
-        ! will become the optimal point in the next interpolation if TR_SUCCESS is TRUE. In the
-        ! BOBYQA paper, Powell also mentioned this fact in the last paragraph of page 26, saying
-        ! "A complication arises in the case F(x_k + d_k) < F(x_k), because then the distance from
-        ! y_t to x_{k+1} becomes more important than the distance from y_t to x_k"; in Powell's
-        ! BOBYQA code, this is reflected in lines 435--465 of bobyqb.f.
-        ! Strangely, considering this new point does not always lead to a better performance of
-        ! BOBYQA. Here, we choose not to check TR_SUCCESS, as the performance of BOBYQA is better
-        ! in this way. THIS DIFFERS FROM POWELL'S CODE.
-        ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF BOBYQA ARE IMPLEMENTED DIFFERENTLY.
-        ! !if (tr_success) then
-        ! !    distsq = sum((xpt - spread(xopt + d, dim=2, ncopies=npt))**2, dim=1)
-        ! !else
-        ! !    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-        ! !end if
-        distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-
-        weight = max(ONE, distsq / rho**2)**3.5
-        ! Other possible definitions of WEIGHT.
-        ! !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.
-        ! !weight = max(ONE, distsq / rho**2)**2  ! Worse than Powell's code.
-        ! !weight = max(ONE, distsq / delta**2)  ! As per (6.1) of the BOBYQA paper. It works poorly!
-        ! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! The same as DISTSQ/RHO**2.
-        ! The following WEIGHT all perform a bit worse than the above one, but better than Powell's.
-        ! !weight = max(ONE, distsq / delta**2)**3.5
-        ! !weight = max(ONE, distsq / delta**2)**2.5
-        ! !weight = max(ONE, distsq / delta**2)**3
-        ! !weight = max(ONE, distsq / delta**2)**4
-        ! !weight = max(ONE, distsq / delta**2)**4.5
-        ! !weight = max(ONE, distsq / rho**2)**2.5
-        ! !weight = max(ONE, distsq / rho**2)**3
-        ! !weight = max(ONE, distsq / rho**2)**4
-        ! !weight = max(ONE, distsq / rho**2)**4.5
-
-        den = calden(kopt, bmat, d, xpt, zmat)
-        score = weight * den
-
-        ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
-        if (.not. tr_success) then
-            score(kopt) = -ONE
-        end if
-
-        ! For the first case below, NEWUOA checks ANY(SCORE>1) .OR. (TR_SUCCESS .AND. ANY(SCORE>0))
-        ! instead of ANY(SCORE > 0). This seems to improve the performance of BOBYQA very slightly.
-        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then  ! Condition in NEWUOA.
-            ! !if (any(score > 0)) then  ! Powell's original condition in BOBYQA.
-            ! See (6.1) of the BOBYQA paper for the definition of KNEW in this case.
-            ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
-            knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-            !!MATLAB: [~, knew_tr] = max(score, [], 'omitnan');
-        elseif (tr_success) then
-            ! Powell's code does not include the following instructions. With Powell's code, if DEN
-            ! consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
-            knew_tr = int(maxloc(distsq, dim=1), IK)
-        else
-            knew_tr = 0_IK  ! We arrive here when TR_SUCCESS = FALSE and no entry of SCORE is positive.
-        end if
+        knew_tr = setdrop_tr(kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
 
         if (knew_tr > 0) then
-            ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the
-            ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes
-            ! XNEW. If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the
-            ! algorithm decides not to include XNEW into XPT.
+            ! Update [BMAT, ZMAT] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the quadratic
+            ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XNEW. If
+            ! KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
+            ! decides not to include XNEW into XPT.
 
             vlag = calvlag(kopt, bmat, d, xpt, zmat)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
@@ -617,7 +555,7 @@ do while (.true.)
             ! in NEWUOA, but we recognized it as a bug and fixed it.
             dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
-            ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the
+            ! Update [BMAT, ZMAT] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the
             ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_GEO) becomes
             ! XNEW. If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the
             ! algorithm decides not to include XNEW into XPT.
