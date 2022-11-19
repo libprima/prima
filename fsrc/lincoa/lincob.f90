@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 18, 2022 PM11:29:07
+! Last Modified: Saturday, November 19, 2022 PM05:15:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,8 +51,6 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 ! ZMAT holds the factorization of the leading NPT by NPT submatrix of H, this factorization being
 ! ZMAT * Diag(DZ) * ZMAT^T, where the elements of DZ are plus or minus ONE, as specified by IDZ.
 ! D is employed for trial steps from XOPT.
-! XNEW is the displacement from XBASE of the vector of variables for the current calculation of F,
-! except that SUBROUTINE TRSTEP uses it for working space.
 ! IACT is an integer array for the indices of the active constraints.
 ! RESCON holds information about the constraint residuals at the current trust region center XOPT.
 ! 1. If if B(J) - AMAT(:, J)^T*XOPT <= DELTA, then RESCON(J) = B(J) - AMAT(:, J)^T*XOPT. Note that
@@ -206,11 +204,7 @@ end if
 ! Calculation starts !
 !====================!
 
-! Set the elements of XBASE, XPT, FVAL, XSAV, XOPT, GOPT, HQ, PQ, BMAT, and ZMAT or the first
-! iteration. An important feature is that, if the interpolation point XPT(K, :) is not feasible,
-! where K is any integer from [1,NPT], then a change is made to XPT(K, :) if necessary so that the
-! constraint violation is at least 0.2*RHOBEG. Also KOPT is set so that XPT(KOPT, :) is the initial
-! trust region centre.
+! Initialize XBASE, XPT, FVAL, and KOPT.
 b = bvec
 call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
     & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
