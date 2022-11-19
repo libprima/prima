@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, November 17, 2022 AM11:45:09
+! Last Modified: Saturday, November 19, 2022 PM04:09:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
 
 ! Solver-specific modules
-use, non_intrinsic :: geometry_mod, only : goodgeo, setdrop_geo, setdrop_tr, geostep
+use, non_intrinsic :: geometry_mod, only : assess_geo, setdrop_geo, setdrop_tr, geostep
 use, non_intrinsic :: initialize_mod, only : initxfc, initfilt
 use, non_intrinsic :: trustregion_mod, only : trstlp, trrad
 use, non_intrinsic :: update_mod, only : updatexfc, updatepole, findpole
@@ -107,8 +107,8 @@ integer(IK) :: nfilt
 integer(IK) :: subinfo
 integer(IK) :: tr
 logical :: bad_trstep
+logical :: adequate_geo
 logical :: evaluated(size(x) + 1)
-logical :: good_geo
 logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
@@ -267,8 +267,8 @@ do tr = 1, maxtr
     ! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
     ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
-    ! Does the current interpolation set have good geometry? It affects IMPROVE_GEO and REDUCE_RHO.
-    good_geo = goodgeo(delta, factor_alpha, factor_beta, sim, simi)
+    ! Does the interpolation set have acceptable geometry? It affects IMPROVE_GEO and REDUCE_RHO.
+    adequate_geo = assess_geo(delta, factor_alpha, factor_beta, sim, simi)
 
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
@@ -412,18 +412,18 @@ do tr = 1, maxtr
     ! BAD_TRSTEP: Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
     ! IMPROVE_GEO: Should we take a geometry step to improve the geometry of the interpolation set?
-    improve_geo = (bad_trstep .and. .not. good_geo)
+    improve_geo = (bad_trstep .and. .not. adequate_geo)
     ! REDUCE_RHO: Should we enhance the resolution by reducing RHO?
-    reduce_rho = (bad_trstep .and. good_geo .and. max(delta, dnorm) <= rho)
+    reduce_rho = (bad_trstep .and. adequate_geo .and. max(delta, dnorm) <= rho)
 
     ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
     !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
 
     ! If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO
-    ! is TRUE unless GOOD_GEO is TRUE and MAX(DELTA, DNORM) > RHO.
+    ! is TRUE unless ADEQUATE_GEO is TRUE and MAX(DELTA, DNORM) > RHO.
     !call assert((.not. shortd .and. max(prerec, preref) > 0) .or. (improve_geo .or. reduce_rho .or. &
-    !    & (good_geo .and. max(delta, dnorm) > rho)), 'If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then&
-    !    & either IMPROVE_GEO or REDUCE_RHO is TRUE unless GOOD_GEO is TRUE and MAX(DELTA, DNORM) > RHO', srname)
+    !    & (adequate_geo .and. max(delta, dnorm) > rho)), 'If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then&
+    !    & either IMPROVE_GEO or REDUCE_RHO is TRUE unless ADEQUATE_GEO is TRUE and MAX(DELTA, DNORM) > RHO', srname)
     !----------------------------------------------------------------------------------------------!
 
     ! Comments on BAD_TRSTEP:
@@ -435,9 +435,9 @@ do tr = 1, maxtr
     ! 2. NEWUOA/BOBYQA/LINCOA would define BAD_TRSTEP, IMPROVE_GEO, and REDUCE_RHO as follows. Two
     ! different thresholds are used in BAD_TRSTEP. It outperforms Powell's version.
     ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
-    ! !improve_geo = bad_trstep .and. .not. good_geo
+    ! !improve_geo = bad_trstep .and. .not. adequate_geo
     ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
-    ! !reduce_rho = bad_trstep .and. good_geo .and. max(delta, dnorm) <= rho
+    ! !reduce_rho = bad_trstep .and. adequate_geo .and. max(delta, dnorm) <= rho
     ! 3. Theoretically, JDROP_TR > 0 when ACTREM > 0 (guaranteed by RATIO > 0). However, in Powell's
     ! implementation, JDROP_TR may be 0 even RATIO > 0 due to NaN. The modernized code has rectified
     ! this in the function SETDROP_TR. After this rectification, we can indeed simplify the
@@ -457,9 +457,9 @@ do tr = 1, maxtr
     ! two blocks are exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
 
     ! Improve the geometry of the simplex by removing a point and adding a new one.
-    ! If the current interpolation set has good geometry, then we skip the geometry step.
+    ! If the current interpolation set has acceptable geometry, then we skip the geometry step.
     ! The code has a small difference from Powell's original code here: If the current geometry
-    ! is good, then we will continue with a new trust-region iteration; however, at the
+    ! is acceptable, then we will continue with a new trust-region iteration; however, at the
     ! beginning of the iteration, CPEN may be updated, which may alter the pole point SIM(:, N+1)
     ! by UPDATEPOLE; the quality of the interpolation point depends on SIM(:, N + 1), meaning
     ! that the same interpolation set may have good or bad geometry with respect to different
@@ -470,7 +470,7 @@ do tr = 1, maxtr
     ! we take another geometry step in that case? If no, why should we do it here? Indeed, this
     ! distinction makes no practical difference for CUTEst problems with at most 100 variables
     ! and 5000 constraints, while the algorithm framework is simplified.
-    if (improve_geo .and. .not. goodgeo(delta, factor_alpha, factor_beta, sim, simi)) then
+    if (improve_geo .and. .not. assess_geo(delta, factor_alpha, factor_beta, sim, simi)) then
         ! Before the geometry step, UPDATEPOLE has been called either implicitly by UPDATEXFC or
         ! explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 

@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM01:06:04
+! Last Modified: Saturday, November 19, 2022 PM04:23:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -325,7 +325,8 @@ do while (.true.)
         else if (ratio <= 0.7_RP) then
             delta = max(HALF * delta, dnorm)
         else
-            delta = max(HALF * delta, dnorm + dnorm)
+            !delta = max(HALF * delta, dnorm + dnorm)
+            delta = max(HALF * delta, TWO * dnorm)
         end if
         if (delta <= 1.5_RP * rho) delta = rho
 

@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM01:17:24
+! Last Modified: Saturday, November 19, 2022 PM04:23:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -66,7 +66,7 @@ use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: rescue_mod, only : rescue
-use, non_intrinsic :: trustregion_mod, only : trsbox
+use, non_intrinsic :: trustregion_mod, only : trsbox, trrad
 use, non_intrinsic :: update_mod, only : updateh
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: redrho_mod, only : redrho
@@ -321,13 +321,14 @@ do while (.true.)
 
         ! Pick the next value of DELTA after a trust region step.
         ratio = (fopt - f) / qred
-        if (ratio <= TENTH) then
-            delta = min(HALF * delta, dnorm)
-        else if (ratio <= 0.7_RP) then
-            delta = max(HALF * delta, dnorm)
-        else
-            delta = max(HALF * delta, dnorm + dnorm)
-        end if
+        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+        !if (ratio <= TENTH) then
+        !    delta = min(HALF * delta, dnorm)
+        !else if (ratio <= 0.7_RP) then
+        !    delta = max(HALF * delta, dnorm)
+        !else
+        !    delta = max(HALF * delta, TWO * dnorm)
+        !end if
         if (delta <= 1.5_RP * rho) delta = rho
 
         tr_success = (f < fopt)
