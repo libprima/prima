@@ -44,15 +44,13 @@ jobs:
         # The following list should be updated when these latest versions change.
         os: [ubuntu-22.04, ubuntu-latest, macos-latest, windows-latest]
         compiler: [gcc]
-        version: [12, 11, 9, 7]  # Too expensive to test all available compilers from gcc-7 to gcc-11.
+        version: [12, 11, 10, 9, 8]  # Too expensive to test all available compilers from gcc-8 to gcc-11.
         bitness: [32, 64]
         ikind: [i2, i4, i8]
         solver: [newuoa, cobyla]
         # Limit the test on macos to 64-bit.
         # Limit the test on Windows to 64-bit and the latest version of the compiler.
         exclude:
-          - os: ubuntu-22.04
-            version: 7
           - os: ubuntu-22.04
             version: 9
           - os: ubuntu-latest
@@ -68,7 +66,7 @@ jobs:
           - os: windows-latest
             version: 9
           - os: windows-latest
-            version: 7
+            version: 8
 
     steps:
       - name: Checkout repository

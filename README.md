@@ -61,7 +61,7 @@ and will **use matrix-vector procedures instead of loops** whenever possible. In
 the algorithms **in a way that we would present them on a blackboard**.
 
 There do exist "translations" of Powell's Fortran 77 code into other languages. For example,
-[NLopt](https://github.com/stevengj/nlopt) provide a C version of COBYLA, NEWUOA, and BOBYQA,
+[NLopt](https://github.com/stevengj/nlopt) contains a C version of COBYLA, NEWUOA, and BOBYQA,
 but the C code in NLopt is translated from the Fortran 77 code straightforwardly, if
 not automatically by [f2c](https://netlib.org/f2c/f2c.pdf), and hence inherits the style, structure,
 and probably [bugs](#bug-fixes) of the original Fortran 77 implementation.
@@ -101,9 +101,8 @@ and [NEWUOA](https://github.com/equipez/PRIMA/tree/master/fsrc/newuoa) is comple
 [BOBYQA](https://github.com/equipez/PRIMA/tree/master/fsrc/bobyqa),
 and [LINCOA](https://github.com/equipez/PRIMA/tree/master/fsrc/lincoa) have been implemented in
 **modern** Fortran without any GOTO.
-A [MATLAB interface](https://github.com/equipez/PRIMA/blob/master/setup.m) is also provided for
-using the Fortran implementation under MATLAB. Interfaces for other Languages will be available
-later.
+An [interface](https://github.com/equipez/PRIMA/blob/master/setup.m) is also provided for using the
+Fortran implementation under MATLAB. Interfaces for other Languages will be available later.
 Once the **modern** Fortran version is finished, the implementation in other languages will become much
 easier, because we will then have a structured and modularized implementation as a reference.
 
