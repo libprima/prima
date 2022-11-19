@@ -8,20 +8,20 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 13, 2022 PM02:12:04
+! Last Modified: Saturday, November 19, 2022 PM04:07:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: goodgeo, setdrop_geo, setdrop_tr, geostep
+public :: assess_geo, setdrop_geo, setdrop_tr, geostep
 
 
 contains
 
 
-function goodgeo(delta, factor_alpha, factor_beta, sim, simi) result(good_geo)
+function assess_geo(delta, factor_alpha, factor_beta, sim, simi) result(adequate_geo)
 !--------------------------------------------------------------------------------------------------!
-! This function checks whether an interpolation set has good geometry as (14) of the COBYLA paper.
+! This function checks if an interpolation set has acceptable geometry as (14) of the COBYLA paper.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: VETA(N), VSIG(N)
@@ -44,10 +44,10 @@ real(RP), intent(in) :: sim(:, :)   ! SIM(N, N+1)
 real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
 
 ! Outputs
-logical :: good_geo
+logical :: adequate_geo
 
 ! Local variables
-character(len=*), parameter :: srname = 'GOODGEO'
+character(len=*), parameter :: srname = 'ASSESS_GEO'
 integer(IK) :: n
 real(RP) :: veta(size(sim, 1))
 real(RP) :: vsig(size(sim, 1))
@@ -80,12 +80,12 @@ end if
 ! But what about vertex N+1?
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
-good_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta * delta)
+adequate_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta * delta)
 
 !====================!
 !  Calculation ends  !
 !====================!
-end function goodgeo
+end function assess_geo
 
 
 function setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi) result(jdrop)
@@ -358,8 +358,8 @@ end if
 vsigj = ONE / sqrt(sum(simi(jdrop, :)**2))
 
 ! Set D to the vector in the above-mentioned direction and with length FACTOR_GAMMA * DELTA. Since
-! FACTOR_ALPHA < FACTOR_GAMMA < FACTOR_BETA, D improves the geometry of the simplex as per GOODGEO
-! and (14) of the COBYLA paper. This also explains why this subroutine does not replace DELTA with
+! FACTOR_ALPHA < FACTOR_GAMMA < FACTOR_BETA, D improves the geometry of the simplex as per (14) of
+! the COBYLA paper. This also explains why this subroutine does not replace DELTA with
 ! DELBAR = MAX(MIN(TENTH * SQRT(MAXVAL(DISTSQ)), HALF * DELTA), RHO) as in NEWUOA.
 d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 

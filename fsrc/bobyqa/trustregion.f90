@@ -8,12 +8,12 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 AM11:51:59
+! Last Modified: Saturday, November 19, 2022 PM04:14:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: trsbox
+public :: trsbox, trrad
 
 
 contains
@@ -554,6 +554,82 @@ end if
 !  Calculation ends  !
 !====================!
 end function interval_fun_trsbox
+
+
+function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
+!--------------------------------------------------------------------------------------------------!
+! This function updates the trust region radius according to RATIO and DNORM.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
+!--------------------------------------------------------------------------------------------------!
+
+! Generic module
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: debug_mod, only : assert
+
+implicit none
+
+! Input
+real(RP), intent(in) :: delta_in   ! Current trust-region radius
+real(RP), intent(in) :: dnorm   ! Norm of current trust-region step
+real(RP), intent(in) :: eta1    ! Ratio threshold for contraction
+real(RP), intent(in) :: eta2    ! Ratio threshold for expansion
+real(RP), intent(in) :: gamma1  ! Contraction factor
+real(RP), intent(in) :: gamma2  ! Expansion factor
+real(RP), intent(in) :: ratio   ! Reduction ratio
+
+! Outputs
+real(RP) :: delta
+
+! Local variables
+character(len=*), parameter :: srname = 'TRRAD'
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(delta_in >= dnorm .and. dnorm > 0, 'DELTA_IN >= DNORM > 0', srname)
+    call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
+    call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
+    call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
+    ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
+    ! NaN, which should NOT happen due to the moderated extreme barrier.
+    call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (ratio <= eta1) then
+    delta = min(gamma1 * delta_in, dnorm)  ! Powell's BOBYQA.
+    !delta = gamma1 * dnorm  ! Powell's UOBYQA/NEWUOA.
+    !delta = gamma1 * delta_in  ! Powell's COBYLA/LINCOA. Works poorly here.
+elseif (ratio <= eta2) then
+    delta = max(gamma1 * delta_in, dnorm)
+else
+    delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's version
+    !delta = max(delta_in, gamma2 * dnorm)  ! Modified version
+end if
+
+! For noisy problems, the following may work better.
+! !if (ratio <= eta1) then
+! !    delta = gamma1 * dnorm
+! !elseif (ratio <= eta2) then  ! Ensure DELTA >= DELTA_IN
+! !    delta = delta_in
+! !else  ! Ensure DELTA > DELTA_IN with a constant factor
+! !    delta = max(delta_in * (1.0_RP + gamma2) / 2.0_RP, gamma2 * dnorm)
+! !end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(delta > 0, 'DELTA > 0', srname)
+end if
+
+end function trrad
 
 
 end module trustregion_mod
