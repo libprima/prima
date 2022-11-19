@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM06:21:00
+! Last Modified: Saturday, November 19, 2022 PM10:47:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -203,8 +203,8 @@ call inith(ij, xpt, bmat, zmat)
 rho = rhobeg
 delta = rho
 errbd = ZERO
-moderrsav = HUGENUM
 dnormsav = HUGENUM
+moderrsav = HUGENUM
 itest = 0
 
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
@@ -227,7 +227,7 @@ do while (.true.)
 
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
-    xnew = max(min(xopt + d, su), sl)  ! In precise arithmetic, XNEW = XOPT + D.
+    xnew = min(max(sl, xopt + d), su)  ! In precise arithmetic, XNEW = XOPT + D.
 
     dnorm = min(delta, sqrt(sum(d**2)))
     shortd = (dnorm < HALF * rho)
@@ -334,8 +334,9 @@ do while (.true.)
                 info = subinfo
                 exit
             end if
-            moderrsav = HUGENUM
             dnormsav = HUGENUM
+            moderrsav = HUGENUM
+
 
             ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT.
             xnew = min(max(sl, d), su)
@@ -504,8 +505,8 @@ do while (.true.)
                 exit
             end if
 
-            moderrsav = HUGENUM
             dnormsav = HUGENUM
+            moderrsav = HUGENUM
 
             ! If NFRESC < NF, then RESCUE has updated XPT (also the model and [BMAT, ZMAT]) to
             ! improve (rescue) its geometry. Thus no geometry step is needed anymore. If NFRESC

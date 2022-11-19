@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM04:14:36
+! Last Modified: Saturday, November 19, 2022 PM10:41:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -488,7 +488,7 @@ do iter = 1, maxiter
 end do
 
 ! Return after setting XNEW to XOPT+D, giving careful attention to the bounds.
-xnew = max(min(xopt + d, su), sl)
+xnew = min(max(sl, xopt + d), su)
 xnew(trueloc(xbdi == -1)) = sl(trueloc(xbdi == -1))
 xnew(trueloc(xbdi == 1)) = su(trueloc(xbdi == 1))
 d = xnew - xopt
