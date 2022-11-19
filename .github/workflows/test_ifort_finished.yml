@@ -43,16 +43,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]  # windows-latest does not work
         bitness: [32, 64]
         ikind: [i2, i4, i8]
         solver: [cobyla, newuoa]
         exclude:
           - os: macos-latest
             bitness: 32
-          - os: windows-latest
-            bitness: 32
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
