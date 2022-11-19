@@ -43,16 +43,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # As of 20210918, according to https://github.com/actions/virtual-environments ,
-        # ubuntu-latest = ubuntu-20.04,
-        # macos-latest = macos-10.15,
-        # windows-latest = windows-2019
-        os: [ubuntu-latest, macos-latest]  # windows-latest does not work
+        os: [ubuntu-latest, macos-latest, windows-latest] 
         bitness: [32, 64]
         ikind: [i2, i4, i8]
         solver: [lincoa, bobyqa, uobyqa]
         exclude:
           - os: macos-latest
+            bitness: 32
+          - os: windows-latest
             bitness: 32
 
     steps:

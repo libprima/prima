@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM01:04:49
+! Last Modified: Saturday, November 19, 2022 PM01:17:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -269,6 +269,7 @@ do while (.true.)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)  ! XBASE is set to XOPT, XOPT to 0.
             xbase = min(max(xl, xbase), xu)
             ! It seems important for the performance to recalculate QRED.
+            ! What about in other solvers? LINCOA/NEWUOA?
             qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         end if
         ! Put the variables for the next calculation of the objective function in XNEW, with any
