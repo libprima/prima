@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 14, 2022 PM02:11:47
+! Last Modified: Saturday, November 19, 2022 PM01:06:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -312,13 +312,13 @@ do while (.true.)
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Pick the next value of DELTA after a trust region step.
-        if (.not. (qred > 0)) then
-            !----------------------------------------------------------------------------------!
-            ! Zaikun 20220405: LINCOA improves the model in this case. Try the same here?
-            !----------------------------------------------------------------------------------!
-            info = TRSUBP_FAILED
-            exit
-        end if
+        !if (.not. (qred > 0)) then
+        !    !----------------------------------------------------------------------------------!
+        !    ! Zaikun 20220405: LINCOA improves the model in this case. Try the same here?
+        !    !----------------------------------------------------------------------------------!
+        !    info = TRSUBP_FAILED
+        !    exit
+        !end if
         ratio = (fopt - f) / qred
         if (ratio <= TENTH) then
             delta = min(HALF * delta, dnorm)

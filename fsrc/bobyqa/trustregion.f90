@@ -1,6 +1,6 @@
 module trustregion_mod
 !--------------------------------------------------------------------------------------------------!
-! This module performs the major calculations of BOBYQA.
+! This module provides subroutines concerning the trust-region calculations of BOBYQA.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM02:23:59
+! Last Modified: Saturday, November 19, 2022 AM11:51:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -147,10 +147,10 @@ end if
 !
 
 !--------------------------------------------------------------------------------------------------!
-iact = 0  ! Without this, G95 complains that they are used uninitialized.
+iact = 0  ! Without this, G95 complains that it is used uninitialized.
 !--------------------------------------------------------------------------------------------------!
 dredsq = ZERO  ! An unused artificial value to entertain Fortran compilers.
-ggsav = ieeenan()
+ggsav = ieeenan()  ! To be removed.
 
 xbdi = 0
 xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1
@@ -168,10 +168,11 @@ beta = ZERO
 ! ITERCG is the number of CG iterations corresponding to the current set of active bounds.
 itercg = 0
 
-twod_search = .false.  ! The default value of TWD_SEARCH is FALSE!
+twod_search = .false.  ! The default value of TWOD_SEARCH is FALSE!
 
+! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
 maxiter = (n - nact)**2
-do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
+do iter = 1, maxiter
     ! Set the next search direction of the conjugate gradient method. It is the steepest descent
     ! direction initially and when the iterations are restarted because a variable has just been
     ! fixed by a bound, and of course the components of the fixed variables are zero. MAXITER is an
@@ -273,8 +274,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     end if
     !----------------------------------------------------------------------------------------------!
     ! Alternatively, IACT and STPLEN can be calculated as below.
-    !IACT = INT(MINLOC([STPLEN, SBOUND], DIM=1), IK) - 1_IK
-    !STPLEN = MINVAL([STPLEN, SBOUND]) ! This line cannot be exchanged with the last
+    ! !IACT = INT(MINLOC([STPLEN, SBOUND], DIM=1), IK) - 1_IK
+    ! !STPLEN = MINVAL([STPLEN, SBOUND]) ! This line cannot be exchanged with the last
     ! We prefer our implementation, as the code is more explicit; in addition, it is more flexible:
     ! we can change the condition ANY(SBOUND < STPLEN) to ANY(SBOUND < (1 - EPS) * STPLEN) or
     ! ANY(SBOUND < (1 + EPS) * STPLEN), depending on whether we believe a false positive or a false
@@ -410,8 +411,8 @@ do iter = 1, maxiter
     !
     ! Note the following for the calculation of the first SQRTD below (the second is similar).
     ! 0. SQRTD means "square root of discriminant".
-    ! 1. When calculating the first SQRTD, Powell's code checks whether SSQ - (XOPT - SL)**2)
-    ! is positive. However, overflow will occur if SL contains large values that indicate absence of
+    ! 1. When calculating the first SQRTD, Powell's code checks whether SSQ - (XOPT - SL)**2) is
+    ! positive. However, overflow will occur if SL contains large values that indicate absence of
     ! bounds. It is not a problem in MATLAB/Python/Julia/R.
     ! 2. Even if XOPT - SL < SQRT(SSQ), rounding errors may render SSQ - (XOPT - SL)**2) < 0.
     ssq = d**2 + s**2  ! Indeed, only SSQ(TRUELOC(XBDI == 0)) is needed.

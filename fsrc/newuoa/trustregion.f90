@@ -1,5 +1,5 @@
 module trustregion_mod
-!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------! 
 ! This module provides subroutines concerning the trust-region calculations of NEWUOA.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
