@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM05:15:55
+! Last Modified: Monday, November 21, 2022 AM12:05:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -146,8 +146,8 @@ real(RP) :: rfac(size(x), size(x))
 real(RP) :: xfilt(size(x), maxfilt), ffilt(maxfilt), cfilt(maxfilt)
 real(RP) :: d(size(x))
 real(RP) :: xbase(size(x))
-real(RP) :: xopt(size(x))
-real(RP) :: xpt(size(x), npt)
+real(RP) :: xopt(size(x)), xoptsav(size(x))
+real(RP) :: xpt(size(x), npt), xdrop(size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delta, &
 &        distsq(npt), fopt, ratio,     &
@@ -289,6 +289,7 @@ do tr = 1, maxtr
     if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
         b = b - matprod(xopt, amat)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+!write (16, *) '293'
         fshift = fval - fopt
         pqalt = omega_mul(idz, zmat, fshift)
         galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
@@ -326,6 +327,7 @@ do tr = 1, maxtr
     ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
 
+!write (16, *) tr, qred
     if (shortd .or. .not. qred > 0) then
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
         ! N.B.: 1. This value of DELTA will be discarded if REDUCE_RHO turns out TRUE later.
@@ -369,6 +371,7 @@ do tr = 1, maxtr
         moderr = f - fopt + qred
         moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
         qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
+!write (16, *) '401', moderr, moderr_alt
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(fopt - f, qred, eta1)
@@ -388,13 +391,21 @@ do tr = 1, maxtr
 
         freduced = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
+!write (16, *) knew_tr
         if (knew_tr > 0) then
             ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GOPT, HQ, PQ]
             ! (the quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR)
             ! becomes XOPT + D.
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
-            call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
+            xdrop = xpt(:, knew_tr)
+            xoptsav = xpt(:, kopt)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+            call updateq(idz, knew_tr, freduced, bmat, d, moderr, xdrop, xoptsav, xpt, zmat, gopt, hq, pq)
+!write (16, *) 400, nf, gopt
+!write (16, *) 401, nf, hq
+!write (16, *) 402, nf, pq
+
+!write (16, *) qalt_better!, moderr, moderr_alt
 
             ! Update the alternative model, which is the least Frobenius norm interpolant.
             ! In theory, FSHIFT can be FVAL + C with any C. Powell chose C = -FOPT.
@@ -408,6 +419,7 @@ do tr = 1, maxtr
                 pq = pqalt
                 hq = ZERO
                 gopt = galt
+                qalt_better = .false.
             end if
 
             ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
@@ -485,6 +497,7 @@ do tr = 1, maxtr
         if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
             b = b - matprod(xopt, amat)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+!write (16, *) '557'
             fshift = fval - fopt
             pqalt = omega_mul(idz, zmat, fshift)
             galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
@@ -529,14 +542,23 @@ do tr = 1, maxtr
         moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)
         moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
         qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
+!write (16, *) 540, tr, nf, fval(kopt), fval, fval - fval(kopt)
+!write (16, *) 541, d, galt, pqalt, xpt
+!write (16, *) '542', moderr, moderr_alt, f, fopt, quadinc(d, xpt, galt, pqalt)
 
         ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GOPT, HQ, PQ] (the
         ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_GEO) becomes
         ! XOPT + D.
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         freduced = (f < fopt .and. feasible)
-        call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xpt, zmat, gopt, hq, pq)
+        xdrop = xpt(:, knew_geo)
+        xoptsav = xpt(:, kopt)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+        call updateq(idz, knew_geo, freduced, bmat, d, moderr, xdrop, xoptsav, xpt, zmat, gopt, hq, pq)
+!write (16, *) 544, nf, gopt
+!write (16, *) 545, nf, hq
+!write (16, *) 546, nf, pq
+!write (16, *) qalt_better
 
         ! Update the alternative model, which is the least Frobenius norm interpolant.
         ! In theory, FSHIFT can be FVAL + C with any C. Powell chose C = -FOPT.
@@ -551,6 +573,7 @@ do tr = 1, maxtr
             pq = pqalt
             hq = ZERO
             gopt = galt
+            qalt_better = .false.
         end if
 
         ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
@@ -610,7 +633,7 @@ call retmsg(solver, info, iprint, nf, f, x, cstrv)
 
 ! Postconditions
 
-!close (16)
+close (16)
 
 end subroutine lincob
 

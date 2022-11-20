@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 PM05:22:25
+! Last Modified: Sunday, November 20, 2022 PM10:38:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ public :: updateq, updatexf, tryqalt, updateres
 contains
 
 
-subroutine updateq(idz, knew, kopt, freduced, bmat, d, f, fval, xpt_in, zmat, gopt, hq, pq)
+subroutine updateq(idz, knew, freduced, bmat, d, moderr, xdrop, xoptsav, xpt, zmat, gopt, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GOPT, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW = XPT(:, KOPT) + D.
 ! See Section 4 of the NEWUOA paper.
@@ -43,13 +43,14 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
-integer(IK), intent(in) :: kopt
+!integer(IK), intent(in) :: kopt
 logical, intent(in) :: freduced
 real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
-real(RP), intent(in) :: d(:) ! D(N)
-real(RP), intent(in) :: f
-real(RP), intent(in) :: fval(:) ! FVAL(NPT)
-real(RP), intent(in) :: xpt_in(:, :)  ! XPT_IN(N, NPT)
+real(RP), intent(in) :: d(:) ! D(:)
+real(RP), intent(in) :: moderr
+real(RP), intent(in) :: xdrop(:)  ! XDROP(N)
+real(RP), intent(in) :: xoptsav(:)  ! XOPTSAV(N)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
 ! In-outputs
@@ -61,39 +62,26 @@ real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
 character(len=*), parameter :: srname = 'UPDATEQ'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: moderr
 real(RP) :: pqinc(size(pq))
-real(RP) :: xpt(size(xpt_in, 1), size(xpt_in, 2))
-
-! Debugging variables
-!real(RP) :: intp_tol
 
 ! Sizes
-n = int(size(xpt_in, 1), kind(n))
-npt = int(size(xpt_in, 2), kind(npt))
+n = int(size(gopt), kind(n))
+npt = int(size(pq), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
-    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FVAL(KOPT)', srname)
+    !call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    !call assert(knew /= kopt .or. freduced, 'KNEW /= KOPT unless F is reduced', srname)
+    call assert(size(xdrop) == n .and. all(is_finite(xdrop)), 'SIZE(XDROP) == N, XDROP is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
-    call assert(all(is_finite(xpt_in)), 'XPT is finite', srname)
-    call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
-        & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
-    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! The following test fails if FVAL contains extremely large values. Expensive to check.
-    !intp_tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * real(size(pq), RP) * EPS))
-    !call wassert(errquad(fval, xpt_in, gopt, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 !====================!
@@ -105,17 +93,13 @@ if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
 
-! Copy XPT_IN to XPT. XPT_IN cannot be changed since it is INTENT(IN).
-xpt = xpt_in
-
 ! The unupdated model corresponding to [GOPT, HQ, PQ] interpolates F at all points in XPT except for
-! XNEW, which will become XPT(:, KNEW). The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
-! In the following, QUADINC = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT).
-moderr = f - fval(kopt) - quadinc(d, xpt, gopt, pq, hq)
+! XNEW. The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
+!moderr = f - fval(kopt) - quadinc(d, xpt, gopt, pq, hq)
 
-! Absorb PQ(KNEW)*XPT(:, KNEW)*XPT(:, KNEW)^T into the explicit part of the Hessian.
-! Implement R1UPDATE properly so that it ensures HQ is symmetric.
-call r1update(hq, pq(knew), xpt(:, knew))
+! Absorb PQ(KNEW)*XDROP*XDROP^T into the explicit part of the Hessian.
+! Implement R1UPDATE properly so that it ensures that HQ is symmetric.
+call r1update(hq, pq(knew), xdrop)
 pq(knew) = ZERO
 
 ! Update the implicit part of the Hessian.
@@ -123,14 +107,15 @@ pqinc = moderr * omega_col(idz, zmat, knew)
 pq = pq + pqinc
 
 ! Update the gradient, which needs the updated XPT.
-xpt(:, knew) = xpt(:, kopt) + d
-gopt = gopt + moderr * bmat(:, knew) + hess_mul(xpt(:, kopt), xpt, pqinc)
+!xpt(:, knew) = xpt(:, kopt) + d
+!write (16, *) knew, xoptsav, gopt
+!write (16, *) moderr, bmat(:,knew), pqinc, xpt
+gopt = gopt + moderr * bmat(:, knew) + hess_mul(xoptsav, xpt, pqinc)
 
 ! Further update GOPT if FREDUCED is TRUE, as XOPT will be updated to XOPT + D.
 if (freduced) then
     gopt = gopt + hess_mul(d, xpt, pq, hq)
 end if
-
 
 !====================!
 !  Calculation ends  !
@@ -141,8 +126,6 @@ if (DEBUGGING) then
     call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! The following test fails if FVAL contains extremely large values. Expensive to check.
-    !call wassert(errquad(fval, xpt, gopt, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 end subroutine updateq
