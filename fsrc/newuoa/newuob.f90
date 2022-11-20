@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, November 19, 2022 PM05:24:04
+! Last Modified: Sunday, November 20, 2022 PM05:11:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,12 +131,14 @@ real(RP) :: fopt
 real(RP) :: fval(npt)
 real(RP) :: gq(size(x))
 real(RP) :: hq(size(x), size(x))
+real(RP) :: moderr
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pq(npt)
 real(RP) :: qred
 real(RP) :: ratio
 real(RP) :: rho
 real(RP) :: xbase(size(x))
+real(RP) :: xdrop(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
@@ -221,6 +223,7 @@ knew_tr = 0_IK
 itest = 0_IK
 dnormsav = HUGENUM
 moderrsav = HUGENUM
+xdrop = HUGENUM
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
 ! function evaluations unless the trust-region step is short but the geometry step is not invoked.
@@ -276,7 +279,8 @@ do tr = 1, maxtr
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
-        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
+        moderr = f - fopt + qred
+        moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(fopt - f, qred, eta1)
@@ -305,9 +309,12 @@ do tr = 1, maxtr
         ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XNEW = XOPT + D.
         ! If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
         ! decides not to include XNEW into XPT.
+        if (knew_tr > 0) then
+            xdrop = xpt(:, knew_tr)
+        end if
         call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
-        call updateq(idz, knew_tr, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
         call updatexf(knew_tr, d, f, kopt, fval, xpt, fopt, xopt)
+        call updateq(idz, knew_tr, bmat, moderr, xdrop, zmat, gq, hq, pq)
 
         ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
         ! Q_alt. Perform the replacement if certain criteria are satisfied.
@@ -498,8 +505,8 @@ do tr = 1, maxtr
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
-        qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
+        moderr = f - fopt - quadinc(d, xopt, xpt, gq, pq, hq)  ! QUADINC = Q(XOPT + D) - Q(XOPT)
+        moderrsav = [moderrsav(2:size(moderrsav)), moderr]
         !------------------------------------------------------------------------------------------!
         ! Zaikun 20200801: Powell's code does not update DNORM. Therefore, DNORM is the length of
         ! last  trust-region trial step, which seems inconsistent with what is described in Section
@@ -509,9 +516,11 @@ do tr = 1, maxtr
 
         ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the quadratic
         ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_GEO) becomes XOPT+D.
+        xdrop = xpt(:, knew_geo)
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
-        call updateq(idz, knew_geo, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
         call updatexf(knew_geo, d, f, kopt, fval, xpt, fopt, xopt)
+        !call updateq(idz, knew_geo, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
+        call updateq(idz, knew_geo, bmat, moderr, xdrop, zmat, gq, hq, pq)
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
     ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm

@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, November 19, 2022 PM04:09:28
+! Last Modified: Sunday, November 20, 2022 PM04:28:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -386,8 +386,7 @@ do tr = 1, maxtr
             jdrop_tr = setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi)
 
             ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
-            ! N.B.: UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides not to include
-            ! X into the simplex.
+            ! UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides to discard X.
             call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
             ! Check whether to exit due to damaging rounding in UPDATEPOLE (called by UPDATEXFC).
             if (subinfo == DAMAGING_ROUNDING) then
