@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 14, 2022 PM09:46:10
+! Last Modified: Sunday, November 20, 2022 PM04:30:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,11 +20,11 @@ public :: updateq, updatexf, tryqalt
 contains
 
 
-subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
+subroutine updateq(idz, knew, bmat, moderr, xdrop, zmat, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW = XPT(:, KOPT) + D.
+! This subroutine updates GQ, HQ, and PQ when XPT(:, KNEW) is changed from XDROP to XNEW.
 ! See Section 4 of the NEWUOA paper.
-! N.B.: Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
+! N.B.: XNEW is encoded in [BMAT, ZMAT, IDZ]. We only need BMAT(:, KNEW) instead of the full matrix.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
@@ -34,19 +34,16 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
 use, non_intrinsic :: linalg_mod, only : r1update, issymmetric
-use, non_intrinsic :: powalg_mod, only : quadinc, omega_col
+use, non_intrinsic :: powalg_mod, only : omega_col
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
-integer(IK), intent(in) :: kopt
 real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
-real(RP), intent(in) :: d(:) ! D(N)
-real(RP), intent(in) :: f
-real(RP), intent(in) :: fval(:) ! FVAL(NPT)
-real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+real(RP), intent(in) :: moderr
+real(RP), intent(in) :: xdrop(:)  ! XDROP(N)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
 ! In-outputs
@@ -58,39 +55,22 @@ real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
 character(len=*), parameter :: srname = 'UPDATEQ'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: moderr
-
-! Debugging variables
-!real(RP) :: intp_tol
 
 ! Sizes
-n = int(size(xpt, 1), kind(n))
-npt = int(size(xpt, 2), kind(npt))
+n = int(size(gq), kind(n))
+npt = int(size(pq), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FVAL(KOPT)', srname)
-    call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FVAL(KOPT)', srname)
+    call assert(size(xdrop) == n .and. all(is_finite(xdrop)), 'SIZE(XDROP) == N, XDROP is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
-    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
-        & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
-    call assert(.not. any(fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! The following test fails if FVAL contains extremely large values. Expensive to check.
-    !intp_tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * real(size(pq), RP) * EPS))
-    !call wassert(errquad(fval, xpt, gq, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 !====================!
@@ -103,13 +83,11 @@ if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
 end if
 
 ! The unupdated model corresponding to [GQ, HQ, PQ] interpolates F at all points in XPT except for
-! XNEW, which will become XPT(:, KNEW). The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
-! In the following, QUADINC = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT).
-moderr = f - fval(kopt) - quadinc(d, xpt(:, kopt), xpt, gq, pq, hq)
+! XNEW. The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
 
-! Absorb PQ(KNEW)*XPT(:, KNEW)*XPT(:, KNEW)^T into the explicit part of the Hessian.
-! Implement R1UPDATE properly so that it ensures HQ is symmetric.
-call r1update(hq, pq(knew), xpt(:, knew))
+! Absorb PQ(KNEW)*XDROP*XDROP^T into the explicit part of the Hessian.
+! Implement R1UPDATE properly so that it ensures that HQ is symmetric.
+call r1update(hq, pq(knew), xdrop)
 pq(knew) = ZERO
 
 ! Update the implicit part of the Hessian.
@@ -127,8 +105,6 @@ if (DEBUGGING) then
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! The following test fails if FVAL contains extremely large values. Expensive to check.
-    !call wassert(errquad(fval, xpt, gq, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 end subroutine updateq
