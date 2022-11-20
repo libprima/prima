@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 17, 2022 PM07:56:05
+! Last Modified: Monday, November 21, 2022 AM12:05:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -157,7 +157,7 @@ real(RP) :: delbar, delsav, delta, dffalt, diff, &
 &        rho, dnorm, temp, &
 &        qred, constr(size(bvec))
 real(RP) :: xfilt(size(x), maxfilt), ffilt(maxfilt), cfilt(maxfilt)
-logical :: accurate_mod
+logical :: accurate_mod, initial
 logical :: bad_trstep
 logical :: close_itpset
 logical :: small_trrad
@@ -251,6 +251,9 @@ call inith(ij, rhobeg, xpt, idz, bmat, zmat)
 hq = ZERO
 pq = omega_mul(idz, zmat, fval)
 gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
+galt = gopt
+pqalt = pq
+initial = .true.
 
 ! Initialize RESCON.
 ! RESCON holds information about the constraint residuals at the current trust region center XOPT.
@@ -290,6 +293,7 @@ do while (.true.)
     if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
         b = b - matprod(xopt, amat)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+!write (17, *) '293'
     end if
 
     delsav = delta
@@ -389,14 +393,23 @@ do while (.true.)
 
         ! Set DFFALT to the difference between the new value of F and the value predicted by
         ! the alternative model.
-        if (itest < 3) then
-            fshift = fval - fval(kopt)
-            ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
+        !if (itest < 3) then
+        fshift = fval - fval(kopt)
+        ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
+        if (initial) then
+            pqalt = pq
+            galt = gopt
+            initial = .false.
+        else
             pqalt = omega_mul(idz, zmat, fshift)
             galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-            dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
-        else
-            dffalt = diff
+        end if
+        dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
+        !else
+        !write (17, *) 'dffalt', f - fopt - quadinc(d, xpt, galt, pqalt)
+!write (17, *) 401, diff, dffalt
+        if (itest >= 3) then
+            !dffalt = diff
             itest = 0
         end if
 
@@ -450,6 +463,9 @@ do while (.true.)
             ! contribution from the old parameter PQ(KNEW) is included in the second derivative
             ! matrix HQ.
             call updateq(idz, knew_tr, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
+!write (17, *) 400, nf, gopt
+!write (17, *) 401, nf, hq
+!write (17, *) 402, nf, pq
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
             !if (fopt <= ftarget) then
             constr = matprod(xbase + xopt, A_orig) - b_orig
@@ -458,6 +474,8 @@ do while (.true.)
                 info = FTARGET_ACHIEVED
                 exit
             end if
+
+!write (17, *) itest!, diff, dffalt
 
             ! Update RESCON.
             ! 1. RESCON(J) = B(J) - AMAT(:, J)^T*XOPT if and only if B(J) - AMAT(:, J)^T*XOPT <= DELTA.
@@ -548,6 +566,7 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
             b = b - matprod(xopt, amat)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+!write (17, *) '557'
         end if
 
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
@@ -604,15 +623,25 @@ do while (.true.)
         ! value predicted by the alternative model. This must be done before IDZ, ZMAT, XOPT, and
         ! XPT are updated.
         !if (feasible .and. itest < 3) then
-        if (itest < 3) then
-            fshift = fval - fval(kopt)
-            ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
+        !if (itest < 3) then
+        fshift = fval - fval(kopt)
+        ! Zaikun 20220418: Can we reuse PQALT and GALT in TRYQALT?
+        if (initial) then
+            pqalt = pq
+            galt = gopt
+            initial = .false.
+        else
             pqalt = omega_mul(idz, zmat, fshift)
             galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-            dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
         end if
+        dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
+        !end if
+        !dffalt = f - fopt - quadinc(d, xpt, galt, pqalt)
+!write (17, *) 540, nf, fval(kopt), fval, fshift
+!write (17, *) 541, d, galt, pqalt, xpt
+!write (17, *) 542, diff, dffalt, f, fopt, quadinc(d, xpt, galt, pqalt)
         if (itest == 3) then
-            dffalt = diff
+            !dffalt = diff
             itest = 0
         end if
 
@@ -639,8 +668,12 @@ do while (.true.)
         ! from the old parameter PQ(KNEW) is included in the second derivative matrix HQ.
         freduced = (f < fopt .and. feasible)
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
+!write (17, *) 544, nf, gopt
+!write (17, *) 545, nf, hq
+!write (17, *) 546, nf, pq
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
         !if (fopt <= ftarget) then
+!write (17, *) itest!, diff, dffalt
 
         constr = matprod(xbase + xopt, A_orig) - b_orig
         cstrv = maximum([ZERO, constr])
@@ -677,7 +710,7 @@ do while (.true.)
         end if
     end if
 
-    ! The calculations with the current value of RHO are complete. Pick the next value of RHO.
+! The calculations with the current value of RHO are complete. Pick the next value of RHO.
     if (reduce_rho) then
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
