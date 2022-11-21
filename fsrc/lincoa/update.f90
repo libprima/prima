@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 20, 2022 PM10:38:26
+! Last Modified: Monday, November 21, 2022 AM09:46:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -107,10 +107,10 @@ pqinc = moderr * omega_col(idz, zmat, knew)
 pq = pq + pqinc
 
 ! Update the gradient, which needs the updated XPT.
-!xpt(:, knew) = xpt(:, kopt) + d
-!write (16, *) knew, xoptsav, gopt
-!write (16, *) moderr, bmat(:,knew), pqinc, xpt
-gopt = gopt + moderr * bmat(:, knew) + hess_mul(xoptsav, xpt, pqinc)
+!gopt = gopt + moderr * bmat(:, knew) + hess_mul(xoptsav, xpt, pqinc)
+gopt = gopt + moderr * bmat(:, knew) + hess_mul(xpt(:, knew) - d, xpt, pqinc)
+call assert(sqrt(sum((xpt(:, knew) - d - xoptsav)**2)) <= &
+    & 1.0E1_RP * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xoptsav**2))), 'XOPTSAV + D = XNEW', srname)
 
 ! Further update GOPT if FREDUCED is TRUE, as XOPT will be updated to XOPT + D.
 if (freduced) then
