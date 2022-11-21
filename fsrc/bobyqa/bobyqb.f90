@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM09:35:45
+! Last Modified: Monday, November 21, 2022 PM09:52:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -290,7 +290,7 @@ do while (.true.)
         ! Update DNORMSAV and MODERRSAV.
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-        ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
+        ! MODERR is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
         moderr = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
@@ -526,16 +526,19 @@ do while (.true.)
 
             fopt = fval(kopt)
 
-            ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is
-            ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
-            ! of the BOBYQA paper and the elaboration below it. Is this a bug? Similar thing happened
-            ! in NEWUOA, but we recognized it as a bug and fixed it.
+            ! Update DNORMSAV and MODERRSAV.
+            ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
+            dnorm = min(delbar, sqrt(sum(d**2)))
             dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-            ! Use the quadratic model to predict the change in F due to the step D, and set
-            ! MODERR to the error of this prediction.
-            !qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
+            ! MODERR is the error of the current model in predicting the change in F due to D.
+            ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
             moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
             moderrsav = [moderrsav(2:size(moderrsav)), moderr]
+            !------------------------------------------------------------------------------------------!
+            ! Zaikun 20220912: Powell's code does not update DNORM. Therefore, DNORM is the length
+            ! of the last  trust-region trial step, which is inconsistent with MODERRSAV. The same
+            ! problem exists in NEWUOA.
+            !------------------------------------------------------------------------------------------!
 
             ! Update [BMAT, ZMAT] (represents H in the BOBYQA paper), [FVAL, XPT, KOPT, FOPT, XOPT],
             ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes XOPT + D.

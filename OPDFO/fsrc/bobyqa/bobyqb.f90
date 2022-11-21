@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM07:59:44
+! Last Modified: Monday, November 21, 2022 PM09:50:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -604,6 +604,10 @@ do while (.true.)
             ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
             ! of the BOBYQA paper and the elaboration below it. Is this a bug? Similar thing happened
             ! in NEWUOA, but we recognized it as a bug and fixed it.
+
+
+            dnorm = min(delbar, sqrt(sum(d**2)))
+
             dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
             ! Update BMAT and ZMAT, so that the KNEW-th interpolation point can be moved. Also update
