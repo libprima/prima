@@ -337,7 +337,7 @@ do tr = 1, maxtr
         ! 4. The factor 0.99*GAMMA3 aligns with the update of DELTA after a trust-region step.
         delta = HALF * delta
         if (delta <= 0.99_RP * gamma3 * rho) then
-            delta = rho
+            delta = rho  ! Set DELTA to RHO when it is close.
         end if
     else
         ! Calculate the next value of the objective function.

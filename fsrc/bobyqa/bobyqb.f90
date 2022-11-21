@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM09:07:01
+! Last Modified: Monday, November 21, 2022 PM09:35:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -218,13 +218,12 @@ improve_geo = .false.
 ! REDUCE_RHO: Should we reduce rho?
 ! BOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do while (.true.)
-    ! Generate the next point in the trust region that provides a small value of the quadratic model
-    ! subject to the constraints on the variables.
-
+    ! Generate the next trust region step D.
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
-
     dnorm = min(delta, sqrt(sum(d**2)))
+
     shortd = (dnorm < HALF * rho)
+
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
@@ -287,13 +286,14 @@ do while (.true.)
         end if
 
         fopt = fval(kopt)
-        moderr = f - fopt + qred
-        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
-        ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is
-        ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
-        ! of the BOBYQA paper and the elaboration below it. Is this a bug? Similar thing happened
-        ! in NEWUOA, but we recognized it as a bug and fixed it.
+
+        ! Update DNORMSAV and MODERRSAV.
+        ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+        ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
+        ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
+        moderr = f - fopt + qred
+        moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(fopt - f, qred, eta1)
@@ -326,7 +326,7 @@ do while (.true.)
             dnormsav = HUGENUM
             moderrsav = HUGENUM
 
-            ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT. Update D, QRED, DIFF, TR_SUCCESS.
+            ! RESCUE shifts XBASE to XBASE + XOPT. Update D, QRED, MODERR, and TR_SUCCESS.
             d = max(sl, min(su, d)) - xopt
             qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
             moderr = f - fopt + qred
@@ -338,7 +338,7 @@ do while (.true.)
         knew_tr = setdrop_tr(kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
 
         if (knew_tr > 0) then
-            ! Update [BMAT, ZMAT] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the quadratic
+            ! Update [BMAT, ZMAT] (representing H in the BOBYQA paper), [GQ, HQ, PQ] (the quadratic
             ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XOPT + D. If
             ! KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
             ! decides not to include XOPT + D into XPT.
@@ -352,8 +352,8 @@ do while (.true.)
             pqinc = matprod(zmat, moderr * zmat(knew_tr, :))
             pq = pq + pqinc
             ! Alternatives:
-            ! !PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
-            ! !PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
+            ! !PQ = PQ + MATPROD(ZMAT, MODERR * ZMAT(KNEW, :))
+            ! !PQ = PQ + MODERR * MATPROD(ZMAT, ZMAT(KNEW, :))
 
             ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that
             ! are caused by the updating of the quadratic model.
@@ -473,7 +473,7 @@ do while (.true.)
             xbase = max(xl, min(xu, xbase))
         end if
 
-        ! Calculate a geometry step.
+        ! Find D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) becomes XOPT + D.
         d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
 
         ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
@@ -524,18 +524,18 @@ do while (.true.)
                 exit
             end if
 
-
-            ! Use the quadratic model to predict the change in F due to the step D, and set DIFF to the
-            ! error of this prediction.
             fopt = fval(kopt)
-            qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-            moderr = f - fopt + qred
-            moderrsav = [moderrsav(2:size(moderrsav)), moderr]
+
             ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is
             ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
             ! of the BOBYQA paper and the elaboration below it. Is this a bug? Similar thing happened
             ! in NEWUOA, but we recognized it as a bug and fixed it.
             dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+            ! Use the quadratic model to predict the change in F due to the step D, and set
+            ! MODERR to the error of this prediction.
+            !qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
+            moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
+            moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
             ! Update [BMAT, ZMAT] (represents H in the BOBYQA paper), [FVAL, XPT, KOPT, FOPT, XOPT],
             ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes XOPT + D.
@@ -549,8 +549,8 @@ do while (.true.)
             pqinc = matprod(zmat, moderr * zmat(knew_geo, :))
             pq = pq + pqinc
             ! Alternatives:
-            ! !PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
-            ! !PQ = PQ + DIFF * MATPROD(ZMAT, ZMAT(KNEW, :))
+            ! !PQ = PQ + MATPROD(ZMAT, MODERR * ZMAT(KNEW, :))
+            ! !PQ = PQ + MODERR * MATPROD(ZMAT, ZMAT(KNEW, :))
 
             ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
             ! caused by the updating of the quadratic model.
