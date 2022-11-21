@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 AM10:00:12
+! Last Modified: Monday, November 21, 2022 PM04:57:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -174,7 +174,7 @@ call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fh
     & sl, su, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
-x = min(max(xl, xbase + xopt), xu)
+x = max(xl, min(xu, xbase + xopt))
 x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
 x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
 f = fopt
@@ -227,7 +227,7 @@ do while (.true.)
 
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
-    xnew = min(max(sl, xopt + d), su)  ! In precise arithmetic, XNEW = XOPT + D.
+    xnew = max(sl, min(su, xopt + d))  ! In precise arithmetic, XNEW = XOPT + D.
 
     dnorm = min(delta, sqrt(sum(d**2)))
     shortd = (dnorm < HALF * rho)
@@ -247,7 +247,6 @@ do while (.true.)
     ! takes the view that the work for the current RHO is complete, and hence it will reduce
     ! RHO, which will enhance the resolution of the algorithm in general.
     if (shortd .or. .not. qred > 0) then
-        ! Reduce DELTA.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
@@ -268,16 +267,16 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
-            xnew = min(max(sl, xnew - xopt), su)
-            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)  ! XBASE is set to XOPT, XOPT to 0.
-            xbase = min(max(xl, xbase), xu)
+            xnew = max(sl, min(su, xnew - xopt))
+            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
+            ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
+            xbase = max(xl, min(xu, xbase))
             ! It seems important for the performance to recalculate QRED.
-            ! What about in other solvers? LINCOA/NEWUOA?
             qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         end if
         ! Put the variables for the next calculation of the objective function in XNEW, with any
         ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
-        x = min(max(xl, xbase + xnew), xu)
+        x = max(xl, min(xu, xbase + xnew))
         x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
         x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
 
@@ -337,9 +336,8 @@ do while (.true.)
             dnormsav = HUGENUM
             moderrsav = HUGENUM
 
-
             ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT.
-            xnew = min(max(sl, d), su)
+            xnew = max(sl, min(su, d))
             d = xnew - xopt
             qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
             diff = f - fopt + qred
@@ -372,12 +370,8 @@ do while (.true.)
             ! are caused by the updating of the quadratic model.
             fval(knew_tr) = f
             xpt(:, knew_tr) = xnew
-!write (16, *) 375, n, sqrt(sum((xnew - d - xopt)**2)), sqrt(sum(xopt**2))
-!write (16, *) 375, sqrt(sum((xnew - d - xopt)**2)) <= &
-!            & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2)))
-            !close (16)
-            call assert(sqrt(sum((xnew - d - xopt)**2)) <= &
-            & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2))), 'XOPT + D = XNEW', srname)
+!            call assert(sqrt(sum((xnew - d - xopt)**2)) <= &
+!            & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2))), 'XOPT + D = XNEW', srname)
             gopt = gopt + diff * bmat(:, knew_tr) + hess_mul(xopt, xpt, pqinc)
 
             ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
@@ -487,9 +481,10 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
-            xnew = min(max(sl, xnew - xopt), su)  ! Needed? Will XNEW be used again later?
+            xnew = max(sl, min(su, xnew - xopt))  ! Needed? Will XNEW be used again later?
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
-            xbase = min(max(xl, xbase), xu)
+            ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
+            xbase = max(xl, min(xu, xbase))
         end if
 
         ! Calculate a geometry step.
@@ -528,8 +523,8 @@ do while (.true.)
         ! Put the variables for the next calculation of the objective function in XNEW, with any
         ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
         if (.not. rescued) then
-            xnew = min(max(sl, xopt + d), su)
-            x = min(max(xl, xbase + xnew), xu)
+            xnew = max(sl, min(su, xopt + d))
+            x = max(xl, min(xu, xbase + xnew))
             x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
             x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
 
@@ -583,12 +578,8 @@ do while (.true.)
             fval(knew_geo) = f
             xpt(:, knew_geo) = xnew
 
-!write (16, *) 584, n, sqrt(sum((xnew - d - xopt)**2)), sqrt(sum(xopt**2))
-!write (16, *) 584, sqrt(sum((xnew - d - xopt)**2)) <= &
-!            & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2)))
-            !close (16)
-            call assert(sqrt(sum((xnew - d - xopt)**2)) <= &
-            & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2))), 'XOPT + D = XNEW', srname)
+            !call assert(sqrt(sum((xnew - d - xopt)**2)) <= &
+            !& 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2))), 'XOPT + D = XNEW', srname)
             gopt = gopt + diff * bmat(:, knew_geo) + hess_mul(xopt, xpt, pqinc)
 
             ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
@@ -621,7 +612,7 @@ end do
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
-    x = min(max(xl, xbase + xnew), xu)  ! XNEW = XOPT + D??? See NEWUOA, LINCOA.
+    x = max(xl, min(xu, xbase + xnew))  ! XNEW = XOPT + D??? See NEWUOA, LINCOA.
     x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
     x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
     call evaluate(calfun, x, f)
@@ -634,7 +625,7 @@ end if
 
 ! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
 if (fval(kopt) <= f .or. is_nan(f)) then
-    x = min(max(xl, xbase + xopt), xu)
+    x = max(xl, min(xu, xbase + xopt))
     x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
     x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
     f = fval(kopt)

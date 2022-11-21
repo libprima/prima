@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM02:26:56
+! Last Modified: Monday, November 21, 2022 PM03:00:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -344,7 +344,8 @@ do tr = 1, maxtr
         x = xbase + (xopt + d)
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
-        ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (RESCON is unusable).
+
+        ! Evaluate the constraints using A_ORIG and B_ORIG.
         constr = matprod(x, A_orig) - b_orig
         cstrv = maximum([ZERO, constr])
 
@@ -386,6 +387,8 @@ do tr = 1, maxtr
             delta = rho
         end if
 
+        ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW = XOPT + D.
+        ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
         freduced = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
         if (knew_tr > 0) then
@@ -398,9 +401,9 @@ do tr = 1, maxtr
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
             call updateq(idz, knew_tr, freduced, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
-            ! Establish the alternative model, namely the least Frobenius norm interpolant.
-            ! Replace the current model with the alternative model if the recent few (three)
-            ! alternative models are more accurate in predicting the function value of XOPT + D.
+            ! Establish the alternative model, namely the least Frobenius norm interpolant. Replace
+            ! the current model with the alternative model if the recent few (three) alternative
+            ! models are more accurate in predicting the function value of XOPT + D.
             call tryqalt(idz, bmat, fval - fopt, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
 
             ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
@@ -496,7 +499,8 @@ do tr = 1, maxtr
         x = xbase + (xopt + d)
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
-        ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints (RESCON is unusable).
+
+        ! Evaluate the constraints using A_ORIG and B_ORIG.
         constr = matprod(x, A_orig) - b_orig
         cstrv = maximum([ZERO, constr])
 
@@ -532,12 +536,11 @@ do tr = 1, maxtr
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
         call updateq(idz, knew_geo, freduced, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
-        ! Establish the alternative model, namely the least Frobenius norm interpolant.
-        ! Replace the current model with the alternative model if the recent few (three) alternative
-        ! models are more accurate in predicting the function value of XOPT + D.
+        ! Establish the alternative model, namely the least Frobenius norm interpolant. Replace the
+        ! current model with the alternative model if the recent few (three) alternative models are
+        ! more accurate in predicting the function value of XOPT + D.
         ! N.B.: Powell's code does this only if XOPT + D is feasible.
         call tryqalt(idz, bmat, fval - fopt, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
-
 
         ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
         if (freduced) then
