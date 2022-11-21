@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 21, 2022 PM12:46:41
+! Last Modified: Monday, November 21, 2022 PM02:23:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -67,7 +67,7 @@ use, non_intrinsic :: geometry_mod, only : setdrop_tr, geostep
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trsapp, trrad
-use, non_intrinsic :: update_mod, only : updateq, updatexf, tryqalt
+use, non_intrinsic :: update_mod, only : updatexf, updateq, tryqalt
 
 implicit none
 

@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM12:49:49
+! Last Modified: Monday, November 21, 2022 PM02:26:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -87,7 +87,7 @@ use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, inith
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trstep, trrad
-use, non_intrinsic :: update_mod, only : updateq, updatexf, updateres
+use, non_intrinsic :: update_mod, only : updatexf, updateq, tryqalt, updateres
 use, non_intrinsic :: powalg_mod, only : updateh
 
 implicit none
@@ -398,21 +398,10 @@ do tr = 1, maxtr
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
             call updateq(idz, knew_tr, freduced, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
-
-            ! Update the alternative model, which is the least Frobenius norm interpolant.
-            ! In theory, FSHIFT can be FVAL + C with any C. Powell chose C = -FOPT.
-            fshift = fval - fopt
-            pqalt = omega_mul(idz, zmat, fshift)
-            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-
+            ! Establish the alternative model, namely the least Frobenius norm interpolant.
             ! Replace the current model with the alternative model if the recent few (three)
             ! alternative models are more accurate in predicting the function value of XOPT + D.
-            if (all(qalt_better)) then
-                pq = pqalt
-                hq = ZERO
-                gopt = galt
-                qalt_better = .false.
-            end if
+            call tryqalt(idz, bmat, fval - fopt, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
 
             ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
             if (freduced) then
@@ -543,21 +532,12 @@ do tr = 1, maxtr
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
         call updateq(idz, knew_geo, freduced, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
-        ! Update the alternative model, which is the least Frobenius norm interpolant.
-        ! In theory, FSHIFT can be FVAL + C with any C. Powell chose C = -FOPT.
-        fshift = fval - fopt
-        pqalt = omega_mul(idz, zmat, fshift)
-        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-
-        ! Replace the current model with the alternative model if the recent few (three)
-        ! alternative models are more accurate in predicting the function value of XOPT + D.
+        ! Establish the alternative model, namely the least Frobenius norm interpolant.
+        ! Replace the current model with the alternative model if the recent few (three) alternative
+        ! models are more accurate in predicting the function value of XOPT + D.
         ! N.B.: Powell's code does this only if XOPT + D is feasible.
-        if (all(qalt_better)) then
-            pq = pqalt
-            hq = ZERO
-            gopt = galt
-            qalt_better = .false.
-        end if
+        call tryqalt(idz, bmat, fval - fopt, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
+
 
         ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
         if (freduced) then
