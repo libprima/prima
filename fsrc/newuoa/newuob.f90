@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 21, 2022 PM09:13:37
+! Last Modified: Monday, November 21, 2022 PM09:52:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -244,7 +244,7 @@ do tr = 1, maxtr
 
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
     shortd = (dnorm < HALF * rho)
-    
+
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
@@ -279,7 +279,7 @@ do tr = 1, maxtr
         ! Update DNORMSAV and MODERRSAV.
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-        ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
+        ! MODERR is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
         moderr = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
@@ -505,15 +505,15 @@ do tr = 1, maxtr
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-        ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
+        ! MODERR is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
         moderr = f - fopt - quadinc(d, xopt, xpt, gq, pq, hq)  ! QUADINC = Q(XOPT + D) - Q(XOPT)
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
         !------------------------------------------------------------------------------------------!
         ! Zaikun 20200801: Powell's code does not update DNORM. Therefore, DNORM is the length of
-        ! last  trust-region trial step, which seems inconsistent with what is described in Section
-        ! 7 (around (7.7)) of the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do
-        ! here. The value of DNORM saved in DNORMSAV will be used when defining REDUCE_RHO.
+        ! the last trust-region trial step, which seems inconsistent with what is described in
+        ! Section 7 (around (7.7)) of the NEWUOA paper. Seemingly we should keep DNORM = ||D||
+        ! as we do here. The same problem exists in BOBYQA.
         !------------------------------------------------------------------------------------------!
 
         ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
