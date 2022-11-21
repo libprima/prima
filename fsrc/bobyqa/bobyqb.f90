@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM10:47:33
+! Last Modified: Monday, November 21, 2022 AM10:13:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -372,6 +372,12 @@ do while (.true.)
             ! are caused by the updating of the quadratic model.
             fval(knew_tr) = f
             xpt(:, knew_tr) = xnew
+!write (16, *) 375, n, sqrt(sum((xnew - d - xopt)**2)), sqrt(sum(xopt**2))
+!write (16, *) 375, sqrt(sum((xnew - d - xopt)**2)) <= &
+!            & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2)))
+            !close (16)
+            call assert(sqrt(sum((xnew - d - xopt)**2)) <= &
+            & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2))), 'XOPT + D = XNEW', srname)
             gopt = gopt + diff * bmat(:, knew_tr) + hess_mul(xopt, xpt, pqinc)
 
             ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
@@ -576,6 +582,13 @@ do while (.true.)
             ! caused by the updating of the quadratic model.
             fval(knew_geo) = f
             xpt(:, knew_geo) = xnew
+
+!write (16, *) 584, n, sqrt(sum((xnew - d - xopt)**2)), sqrt(sum(xopt**2))
+!write (16, *) 584, sqrt(sum((xnew - d - xopt)**2)) <= &
+!            & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2)))
+            !close (16)
+            call assert(sqrt(sum((xnew - d - xopt)**2)) <= &
+            & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2))), 'XOPT + D = XNEW', srname)
             gopt = gopt + diff * bmat(:, knew_geo) + hess_mul(xopt, xpt, pqinc)
 
             ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
