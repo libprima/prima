@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 21, 2022 PM05:28:33
+! Last Modified: Monday, November 21, 2022 PM09:13:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -238,11 +238,13 @@ info = MAXTR_REACHED
 ! REDUCE_RHO: Should we reduce rho (Boxes 14 and 10 of Fig. 1 in the NEWUOA paper)?
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
+    ! Generate the next trust region step D.
     call trsapp(delta, gq, hq, pq, tr_tol, xopt, xpt, crvmin, d)
-
     dnorm = min(delta, norm(d))
+
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
     shortd = (dnorm < HALF * rho)
+    
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
