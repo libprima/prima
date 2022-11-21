@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM07:52:57
+! Last Modified: Monday, November 21, 2022 PM08:36:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -228,7 +228,7 @@ do while (.true.)
 
     ! Put the variables for the next calculation of the objective function in XNEW,
     ! with any adjustments for the bounds.
-    xnew = max(sl, min(su, xopt + d))  ! In precise arithmetic, XNEW = XOPT + D.
+    !xnew = max(sl, min(su, xopt + d))  ! In precise arithmetic, XNEW = XOPT + D.
 
     dnorm = min(delta, sqrt(sum(d**2)))
     shortd = (dnorm < HALF * rho)
@@ -256,6 +256,7 @@ do while (.true.)
         ! Define ERRBD, which will be used in the definition of REDUCE_RHO and IMPROVE_GEO.
         gnew = gopt + hess_mul(d, xpt, pq, hq)
         bdtest = maxval(abs(moderrsav))
+        xnew = max(sl, min(su, xopt + d))  ! In precise arithmetic, XNEW = XOPT + D.
         bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
         bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
         curv = diag(hq) + matprod(xpt**2, pq)
@@ -266,6 +267,7 @@ do while (.true.)
     else
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
+            xnew = max(sl, min(su, xopt + d))  ! In precise arithmetic, XNEW = XOPT + D.
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
             xnew = max(sl, min(su, xnew - xopt))  ! XNEW = D????
@@ -277,7 +279,8 @@ do while (.true.)
         end if
 
         ! Calculate the next value of the objective function.
-        x = xinbd(xbase, xnew, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XNEW.
+        !x = xinbd(xbase, xnew, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XNEW.
+        x = xinbd(xbase, xopt + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
