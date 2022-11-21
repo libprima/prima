@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM04:01:07
+! Last Modified: Monday, November 21, 2022 PM07:08:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -546,9 +546,8 @@ real(RP) :: dold(size(xpt, 1))
 real(RP) :: ds
 real(RP) :: dstemp(size(xpt, 2))
 real(RP) :: dtest
-real(RP) :: dxn
-real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: par(5)
+real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: prod(size(xpt, 1) + size(xpt, 2), 5)
 real(RP) :: s(size(xpt, 1))
 real(RP) :: ss
@@ -563,11 +562,12 @@ real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: w(size(xpt, 1) + size(xpt, 2), 5)
 real(RP) :: x(size(xpt, 1))
 real(RP) :: xd
-real(RP) :: xnew(size(xpt, 1))
-real(RP) :: xnsq
 real(RP) :: xptemp(size(xpt, 1), size(xpt, 2))
 real(RP) :: xs
 real(RP) :: xsq
+real(RP) :: y(size(xpt, 1))
+real(RP) :: yd
+real(RP) :: ysq
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -779,11 +779,11 @@ do iter = 1, n
     par = [ONE, cos(angle), sin(angle), cos(2.0_RP * angle), sin(2.0_RP * angle)]
     vlag = matprod(prod, par)
     tau = vlag(knew)
-    xnew = x + d
-    dxn = inprod(d, xnew)
-    xnsq = inprod(xnew, xnew)
-    v = (tau * pqlag - alpha * vlag(1:npt)) * matprod(xnew, xpt)
-    s = tau * bmat(:, knew) + alpha * (dxn * x + xnsq * d - vlag(npt + 1:npt + n))
+    y = x + d
+    yd = inprod(y, d)
+    ysq = inprod(y, y)
+    v = (tau * pqlag - alpha * vlag(1:npt)) * matprod(y, xpt)
+    s = tau * bmat(:, knew) + alpha * (yd * x + ysq * d - vlag(npt + 1:npt + n))
     s = s + matprod(xpt, v)
 end do
 
