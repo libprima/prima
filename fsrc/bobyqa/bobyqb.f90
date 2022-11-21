@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM08:36:33
+! Last Modified: Monday, November 21, 2022 PM08:55:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -226,10 +226,6 @@ do while (.true.)
 
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
-    ! Put the variables for the next calculation of the objective function in XNEW,
-    ! with any adjustments for the bounds.
-    !xnew = max(sl, min(su, xopt + d))  ! In precise arithmetic, XNEW = XOPT + D.
-
     dnorm = min(delta, sqrt(sum(d**2)))
     shortd = (dnorm < HALF * rho)
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
@@ -267,10 +263,10 @@ do while (.true.)
     else
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
-            xnew = max(sl, min(su, xopt + d))  ! In precise arithmetic, XNEW = XOPT + D.
+            !xnew = max(sl, min(su, xopt + d))  ! In precise arithmetic, XNEW = XOPT + D.
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
-            xnew = max(sl, min(su, xnew - xopt))  ! XNEW = D????
+            !xnew = max(sl, min(su, xnew - xopt))  ! XNEW = D????
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
             ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
             xbase = max(xl, min(xu, xbase))
@@ -337,8 +333,9 @@ do while (.true.)
             moderrsav = HUGENUM
 
             ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT.
-            xnew = max(sl, min(su, d))
-            d = xnew - xopt
+            !xnew = max(sl, min(su, d))
+            !d = xnew - xopt
+            d = max(sl, min(su, d)) - xopt
             qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
             diff = f - fopt + qred
             tr_success = (f < fopt)
@@ -369,7 +366,6 @@ do while (.true.)
             ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that
             ! are caused by the updating of the quadratic model.
             fval(knew_tr) = f
-            !xpt(:, knew_tr) = xnew
             !xpt(:, knew_tr) = xnew
             xpt(:, knew_tr) = max(sl, min(su, xopt + d))
             gopt = gopt + diff * bmat(:, knew_tr) + hess_mul(xopt, xpt, pqinc)
