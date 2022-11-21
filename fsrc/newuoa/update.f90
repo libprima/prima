@@ -1,7 +1,8 @@
 module update_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides subroutines concerning the update of IDZ, BMAT, ZMAT, GQ, HQ, PQ, FVAL, XPT,
-! KOPT, FOPT, and XOPT when XPT(:, KNEW) is replaced by XNEW = XOPT + D.
+! This module provides subroutines concerning the update of [BMAT, ZMAT, IDZ] (represents H in the
+! NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT], and [GQ, HQ, PQ] (the quadratic model) when
+! XPT(:, KNEW) is updated to XNEW = XOPT + D.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
 !
@@ -9,110 +10,20 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 20, 2022 PM04:30:27
+! Last Modified: Monday, November 21, 2022 PM12:38:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: updateq, updatexf, tryqalt
+public :: updatexf, updateq, tryqalt
 
 
 contains
 
 
-subroutine updateq(idz, knew, bmat, moderr, xdrop, zmat, gq, hq, pq)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine updates GQ, HQ, and PQ when XPT(:, KNEW) is changed from XDROP to XNEW.
-! See Section 4 of the NEWUOA paper.
-! N.B.: XNEW is encoded in [BMAT, ZMAT, IDZ]. We only need BMAT(:, KNEW) instead of the full matrix.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
-!--------------------------------------------------------------------------------------------------!
-
-! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
-use, non_intrinsic :: linalg_mod, only : r1update, issymmetric
-use, non_intrinsic :: powalg_mod, only : omega_col
-
-implicit none
-
-! Inputs
-integer(IK), intent(in) :: idz
-integer(IK), intent(in) :: knew
-real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
-real(RP), intent(in) :: moderr
-real(RP), intent(in) :: xdrop(:)  ! XDROP(N)
-real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-
-! In-outputs
-real(RP), intent(inout) :: gq(:)    ! GQ(N)
-real(RP), intent(inout) :: hq(:, :) ! HQ(N, N)
-real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
-
-! Local variables
-character(len=*), parameter :: srname = 'UPDATEQ'
-integer(IK) :: n
-integer(IK) :: npt
-
-! Sizes
-n = int(size(gq), kind(n))
-npt = int(size(pq), kind(npt))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
-    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
-    call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    call assert(size(xdrop) == n .and. all(is_finite(xdrop)), 'SIZE(XDROP) == N, XDROP is finite', srname)
-    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
-    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
-        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-! Do nothing when KNEW is 0. This can only happen after a trust-region step.
-if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
-    return
-end if
-
-! The unupdated model corresponding to [GQ, HQ, PQ] interpolates F at all points in XPT except for
-! XNEW. The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
-
-! Absorb PQ(KNEW)*XDROP*XDROP^T into the explicit part of the Hessian.
-! Implement R1UPDATE properly so that it ensures that HQ is symmetric.
-call r1update(hq, pq(knew), xdrop)
-pq(knew) = ZERO
-
-! Update the implicit part of the Hessian.
-pq = pq + moderr * omega_col(idz, zmat, knew)
-
-! Update the gradient.
-gq = gq + moderr * bmat(:, knew)
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-end if
-
-end subroutine updateq
-
-
 subroutine updatexf(knew, d, f, kopt, fval, xpt, fopt, xopt)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates XPT, FVAL, KOPT, XOPT, and FOPT so that X(:, KNEW) is replaced by XOPT+D.
+! This subroutine updates [XPT, FVAL, KOPT, XOPT, FOPT] so that X(:, KNEW) is updated to XOPT + D.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
@@ -206,6 +117,96 @@ if (DEBUGGING) then
 end if
 
 end subroutine updatexf
+
+
+subroutine updateq(idz, knew, bmat, moderr, xdrop, zmat, gq, hq, pq)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine updates [GQ, HQ, PQ] when XPT(:, KNEW) changes from XDROP to XNEW.
+! See Section 4 of the NEWUOA paper.
+! N.B.: XNEW is encoded in [BMAT, ZMAT, IDZ]. We only need BMAT(:, KNEW) instead of the full matrix.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
+use, non_intrinsic :: linalg_mod, only : r1update, issymmetric
+use, non_intrinsic :: powalg_mod, only : omega_col
+
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+integer(IK), intent(in) :: knew
+real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
+real(RP), intent(in) :: moderr
+real(RP), intent(in) :: xdrop(:)  ! XDROP(N)
+real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+
+! In-outputs
+real(RP), intent(inout) :: gq(:)    ! GQ(N)
+real(RP), intent(inout) :: hq(:, :) ! HQ(N, N)
+real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
+
+! Local variables
+character(len=*), parameter :: srname = 'UPDATEQ'
+integer(IK) :: n
+integer(IK) :: npt
+
+! Sizes
+n = int(size(gq), kind(n))
+npt = int(size(pq), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
+    call assert(size(xdrop) == n .and. all(is_finite(xdrop)), 'SIZE(XDROP) == N, XDROP is finite', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
+        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Do nothing when KNEW is 0. This can only happen after a trust-region step.
+if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
+    return
+end if
+
+! The unupdated model corresponding to [GQ, HQ, PQ] interpolates F at all points in XPT except for
+! XNEW. The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
+
+! Absorb PQ(KNEW)*XDROP*XDROP^T into the explicit part of the Hessian.
+! Implement R1UPDATE properly so that it ensures that HQ is symmetric.
+call r1update(hq, pq(knew), xdrop)
+pq(knew) = ZERO
+
+! Update the implicit part of the Hessian.
+pq = pq + moderr * omega_col(idz, zmat, knew)
+
+! Update the gradient.
+gq = gq + moderr * bmat(:, knew)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+end if
+
+end subroutine updateq
 
 
 subroutine tryqalt(idz, fval, ratio, bmat, zmat, itest, gq, hq, pq)

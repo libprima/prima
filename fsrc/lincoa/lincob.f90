@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 AM08:51:19
+! Last Modified: Monday, November 21, 2022 PM12:49:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -146,7 +146,7 @@ real(RP) :: rfac(size(x), size(x))
 real(RP) :: xfilt(size(x), maxfilt), ffilt(maxfilt), cfilt(maxfilt)
 real(RP) :: d(size(x))
 real(RP) :: xbase(size(x))
-real(RP) :: xopt(size(x)), xoptsav(size(x))
+real(RP) :: xopt(size(x)), xosav(size(x))
 real(RP) :: xpt(size(x), npt), xdrop(size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, delta, &
@@ -240,7 +240,7 @@ end if
 ! Initialize BMAT, ZMAT, and IDZ.
 call inith(ij, rhobeg, xpt, idz, bmat, zmat)
 
-! Initialize the quadratic model.
+! Initialize GQ, HQ, and PQ.
 hq = ZERO
 pq = omega_mul(idz, zmat, fval)
 gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
@@ -289,7 +289,6 @@ do tr = 1, maxtr
     if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
         b = b - matprod(xopt, amat)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
-!write (16, *) '293'
         fshift = fval - fopt
         pqalt = omega_mul(idz, zmat, fshift)
         galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
@@ -327,7 +326,6 @@ do tr = 1, maxtr
     ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
 
-!write (16, *) tr, qred
     if (shortd .or. .not. qred > 0) then
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
         ! N.B.: 1. This value of DELTA will be discarded if REDUCE_RHO turns out TRUE later.
@@ -371,7 +369,6 @@ do tr = 1, maxtr
         moderr = f - fopt + qred
         moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
         qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
-!write (16, *) '401', moderr, moderr_alt
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(fopt - f, qred, eta1)
@@ -391,21 +388,16 @@ do tr = 1, maxtr
 
         freduced = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
-!write (16, *) knew_tr
         if (knew_tr > 0) then
-            ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GOPT, HQ, PQ]
-            ! (the quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR)
-            ! becomes XOPT + D.
-            call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
+            ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT,
+            ! FOPT] and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes
+            ! XNEW = XOPT + D.
             xdrop = xpt(:, knew_tr)
-            xoptsav = xpt(:, kopt)
+            xosav = xpt(:, kopt)
+            call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
             call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-            call updateq(idz, knew_tr, freduced, bmat, d, moderr, xdrop, xoptsav, xpt, zmat, gopt, hq, pq)
-!write (16, *) 400, nf, gopt
-!write (16, *) 401, nf, hq
-!write (16, *) 402, nf, pq
+            call updateq(idz, knew_tr, freduced, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
-!write (16, *) qalt_better!, moderr, moderr_alt
 
             ! Update the alternative model, which is the least Frobenius norm interpolant.
             ! In theory, FSHIFT can be FVAL + C with any C. Powell chose C = -FOPT.
@@ -497,7 +489,6 @@ do tr = 1, maxtr
         if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
             b = b - matprod(xopt, amat)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
-!write (16, *) '557'
             fshift = fval - fopt
             pqalt = omega_mul(idz, zmat, fshift)
             galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
@@ -542,23 +533,15 @@ do tr = 1, maxtr
         moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)
         moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
         qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
-!write (16, *) 540, tr, nf, fval(kopt), fval, fval - fval(kopt)
-!write (16, *) 541, d, galt, pqalt, xpt
-!write (16, *) '542', moderr, moderr_alt, f, fopt, quadinc(d, xpt, galt, pqalt)
 
-        ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GOPT, HQ, PQ] (the
-        ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_GEO) becomes
-        ! XOPT + D.
-        call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
+        ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
+        ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
         freduced = (f < fopt .and. feasible)
         xdrop = xpt(:, knew_geo)
-        xoptsav = xpt(:, kopt)
+        xosav = xpt(:, kopt)
+        call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-        call updateq(idz, knew_geo, freduced, bmat, d, moderr, xdrop, xoptsav, xpt, zmat, gopt, hq, pq)
-!write (16, *) 544, nf, gopt
-!write (16, *) 545, nf, hq
-!write (16, *) 546, nf, pq
-!write (16, *) qalt_better
+        call updateq(idz, knew_geo, freduced, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
         ! Update the alternative model, which is the least Frobenius norm interpolant.
         ! In theory, FSHIFT can be FVAL + C with any C. Powell chose C = -FOPT.
@@ -633,7 +616,7 @@ call retmsg(solver, info, iprint, nf, f, x, cstrv)
 
 ! Postconditions
 
-close (16)
+!close (16)
 
 end subroutine lincob
 
