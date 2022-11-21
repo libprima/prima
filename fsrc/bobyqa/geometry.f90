@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM06:17:22
+! Last Modified: Monday, November 21, 2022 PM04:51:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -402,7 +402,7 @@ do k = 1, npt
             stpm = -HALF * dderiv(k) / (ONE - dderiv(k))
         end if
     end if
-    stpm = min(max(slbd, stpm), subd)
+    stpm = max(slbd, min(subd, stpm))
 
     stplen(:, k) = [slbd, subd, stpm]
     isbd(:, k) = [ilbd, iubd, 0_IK]
