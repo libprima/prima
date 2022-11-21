@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 18, 2022 PM11:44:35
+! Last Modified: Monday, November 21, 2022 PM05:29:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -50,7 +50,6 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, HUGENUM
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: initialize_mod, only : initxf, initq, initl
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, NAN_INF_MODEL!, MAXTR_REACHED
@@ -62,6 +61,7 @@ use, non_intrinsic :: redrho_mod, only : redrho
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
+use, non_intrinsic :: initialize_mod, only : initxf, initq, initl
 use, non_intrinsic :: trustregion_mod, only : trstep
 
 
