@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM06:35:47
+! Last Modified: Monday, November 21, 2022 PM07:31:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -367,14 +367,12 @@ do while (.true.)
             ! are caused by the updating of the quadratic model.
             fval(knew_tr) = f
             xpt(:, knew_tr) = xnew
-!            call assert(sqrt(sum((xnew - d - xopt)**2)) <= &
-!            & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2))), 'XOPT + D = XNEW', srname)
             gopt = gopt + diff * bmat(:, knew_tr) + hess_mul(xopt, xpt, pqinc)
 
             ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
             if (f < fopt) then
                 kopt = knew_tr
-                xopt = xnew
+                xopt = xpt(:, kopt)
                 gopt = gopt + hess_mul(d, xpt, pq, hq)
             end if
 
@@ -478,7 +476,7 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
-            xnew = max(sl, min(su, xnew - xopt))  ! Needed? Will XNEW be used again later? XNEW = D???
+            !xnew = max(sl, min(su, xnew - xopt))  ! Needed? Will XNEW be used again later? XNEW = D???
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
             ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
             xbase = max(xl, min(xu, xbase))
@@ -520,10 +518,11 @@ do while (.true.)
         if (.not. rescued) then
             ! Put the variables for the next calculation of the objective function in XNEW,
             ! with any adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
-            xnew = max(sl, min(su, xopt + d))
+            !xnew = max(sl, min(su, xopt + d))
 
             ! Calculate the next value of the objective function.
-            x = xinbd(xbase, xnew, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XNEW.
+            !x = xinbd(xbase, xnew, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XNEW.
+            x = xinbd(xbase, xopt + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
             call evaluate(calfun, x, f)
             nf = nf + 1_IK
 
@@ -571,16 +570,14 @@ do while (.true.)
             ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
             ! caused by the updating of the quadratic model.
             fval(knew_geo) = f
-            xpt(:, knew_geo) = xnew
+            xpt(:, knew_geo) = max(sl, min(su, xopt + d))
 
-            !call assert(sqrt(sum((xnew - d - xopt)**2)) <= &
-            !& 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2))), 'XOPT + D = XNEW', srname)
             gopt = gopt + diff * bmat(:, knew_geo) + hess_mul(xopt, xpt, pqinc)
 
             ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
             if (f < fopt) then
                 kopt = knew_geo
-                xopt = xnew
+                xopt = xpt(:, kopt)
                 gopt = gopt + hess_mul(d, xpt, pq, hq)
             end if
         end if
