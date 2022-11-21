@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM02:24:34
+! Last Modified: Monday, November 21, 2022 PM10:14:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: updateh
 contains
 
 
-subroutine updateh(knew, beta, vlag_in, bmat, zmat, info)
+subroutine updateh(knew, kopt, d, xpt, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays BMAT and ZMAT in order to replace the interpolation point
 ! XPT(:, KNEW) by XNEW = XPT(:, KOPT) + D. See Section 4 of the BOBYQA paper. [BMAT, ZMAT] describes
@@ -36,12 +36,14 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : planerot, matprod, outprod, symmetrize, issymmetric
+use, non_intrinsic :: powalg_mod, only : calbeta, calvlag
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: knew
-real(RP), intent(in) :: beta
-real(RP), intent(in) :: vlag_in(:)  ! VLAG(NPT + N)
+integer(IK), intent(in) :: kopt
+real(RP), intent(in) :: d(:)  ! D(N)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! In-outputs
 real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
@@ -56,6 +58,7 @@ integer(IK) :: j
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: alpha
+real(RP) :: beta
 real(RP) :: denom
 real(RP) :: grot(2, 2)
 real(RP) :: sqrtdn
@@ -64,23 +67,26 @@ real(RP) :: tempa
 real(RP) :: tempb
 real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
-real(RP) :: vlag(size(vlag_in))
-real(RP) :: w(size(vlag))
+real(RP) :: vlag(size(bmat, 2))
+real(RP) :: w(size(bmat, 2))
 real(RP) :: ztest
 
 ! Sizes.
-n = int(size(bmat, 1), kind(n))
-npt = int(size(bmat, 2) - size(bmat, 1), kind(npt))
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
-    call assert(size(vlag_in) == npt + n, 'SIZE(VLAG) == NPT + N', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, &
+        & 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 
     ! The following is too expensive to check.
     !tol = 1.0E-2_RP
@@ -101,14 +107,15 @@ if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
 
-! Read VLAG, and calculate parameters for the updating formula (4.9) and (4.14) of the BOBYQA paper.
-vlag = vlag_in
+! Calculate parameters for the updating formula (4.9) and (4.14) of the BOBYQA paper.
+beta = calbeta(kopt, bmat, d, xpt, zmat)
+vlag = calvlag(kopt, bmat, d, xpt, zmat)
 tau = vlag(knew)
 ! In theory, DENOM can also be calculated after ZMAT is rotated below. However, this worsened the
 ! performance of BOBYQA in a test on 20220413.
 denom = sum(zmat(knew, :)**2) * beta + tau**2
 
-! Quite rarely, due to rounding errors, VLAG or BETA may not be finite, and DENOM may not be
+! Quite rarely, due to rounding errors, VLAG or BETA may not be finite, or DENOM may not be
 ! positive. In such cases, [BMAT, ZMAT] would be destroyed by the update, and hence we would rather
 ! not update them at all. Or should we simply terminate the algorithm?
 if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. denom > 0)) then
