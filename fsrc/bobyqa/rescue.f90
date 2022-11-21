@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM10:21:08
+! Last Modified: Monday, November 21, 2022 PM10:43:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -99,7 +99,6 @@ use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : hess_mul, setij
 
 ! Solver-specif modules
-!use, non_intrinsic :: update_mod, only : updateh
 use, non_intrinsic :: xinbd_mod, only : xinbd
 
 implicit none
@@ -416,7 +415,7 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
 
     ! Update the BMAT and ZMAT matrices so that the KORIG-th original point replaces the KORIG-th
     ! provisional point.
-    call updateh(korig, beta, vlag, bmat, zmat)
+    call updateh_rsc(korig, beta, vlag, bmat, zmat)
 
     ! NPROV is the number of provisional points that has not yet been replaced by original points.
     nprov = nprov - 1_IK
@@ -562,7 +561,7 @@ end if
 end subroutine rescue
 
 
-subroutine updateh(knew, beta, vlag_in, bmat, zmat, info)
+subroutine updateh_rsc(knew, beta, vlag_in, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays BMAT and ZMAT in order to replace the interpolation point
 ! XPT(:, KNEW) by XNEW = XPT(:, KOPT) + D. See Section 4 of the BOBYQA paper. [BMAT, ZMAT] describes
@@ -571,6 +570,7 @@ subroutine updateh(knew, beta, vlag_in, bmat, zmat, info)
 ! leading NPT*NPT submatrix OMEGA of H, the factorization being OMEGA = ZMAT*ZMAT^T; BMAT holds the
 ! last N ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th
 ! column of H are not stored as they are unnecessary for the calculation.
+! N.B.: UPDATEH_RSC is only used by RESCUE. To be merged with UPDATEH.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -594,7 +594,7 @@ real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 integer(IK), intent(out), optional :: info
 
 ! Local variables
-character(len=*), parameter :: srname = 'UPDATEH'
+character(len=*), parameter :: srname = 'UPDATEH_RSC'
 integer(IK) :: j
 integer(IK) :: n
 integer(IK) :: npt
@@ -711,7 +711,7 @@ if (DEBUGGING) then
     ! !        & 'H = W^{-1} in (2.7) of the BOBYQA paper', srname)
     ! !end if
 end if
-end subroutine updateh
+end subroutine updateh_rsc
 
 
 end module rescue_mod
