@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM10:12:35
+! Last Modified: Monday, November 21, 2022 PM10:56:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,7 +58,7 @@ use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHE
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul!, errquad
+use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, hess_mul!, errquad
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
@@ -121,7 +121,7 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
-real(RP) :: delbar, bdtest(size(x)), beta, &
+real(RP) :: delbar, bdtest(size(x)), &
 &        crvmin, curv(size(x)), delta, &
 &        den(npt), moderr, &
 &        distsq(npt), dnorm, errbd, fopt,        &
@@ -541,7 +541,6 @@ do while (.true.)
             ! Update [BMAT, ZMAT] (represents H in the BOBYQA paper), [FVAL, XPT, KOPT, FOPT, XOPT],
             ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XOPT + D.
             !vlag = calvlag(kopt, bmat, d, xpt, zmat)
-            !beta = calbeta(kopt, bmat, d, xpt, zmat)
             call updateh(knew_geo, kopt, d, xpt, bmat, zmat)
 
             call r1update(hq, pq(knew_geo), xpt(:, knew_geo))
