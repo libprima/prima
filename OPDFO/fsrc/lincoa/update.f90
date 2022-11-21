@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 AM09:41:18
+! Last Modified: Monday, November 21, 2022 PM12:53:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,10 +125,10 @@ pqinc = moderr * omega_col(idz, zmat, knew)
 pq = pq + pqinc
 
 ! Update the gradient, which needs the updated XPT.
-!xopt = xpt_in(:, kopt)
-xopt = xnew - d
-call assert(sqrt(sum((xopt - xpt_in(:, kopt))**2)) <= &
-    & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2))), 'XOPT + D = XNEW', srname)
+xopt = xpt_in(:, kopt)
+!xopt = xnew - d
+!call assert(sqrt(sum((xopt - xpt_in(:, kopt))**2)) <= &
+!    & 5.0_RP * sqrt(real(size(xopt), RP)) * epsilon(0.0_RP) * max(1.0_RP, sqrt(sum(xopt**2))), 'XOPT + D = XNEW', srname)
 
 xpt(:, knew) = xnew
 !write (17, *) knew, xpt(:, kopt), gopt
