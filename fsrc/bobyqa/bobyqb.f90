@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM09:52:28
+! Last Modified: Monday, November 21, 2022 PM10:12:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -343,9 +343,7 @@ do while (.true.)
             ! KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
             ! decides not to include XOPT + D into XPT.
 
-            vlag = calvlag(kopt, bmat, d, xpt, zmat)
-            beta = calbeta(kopt, bmat, d, xpt, zmat)
-            call updateh(knew_tr, beta, vlag, bmat, zmat)
+            call updateh(knew_tr, kopt, d, xpt, bmat, zmat)
 
             call r1update(hq, pq(knew_tr), xpt(:, knew_tr))
             pq(knew_tr) = ZERO
@@ -541,11 +539,10 @@ do while (.true.)
             !------------------------------------------------------------------------------------------!
 
             ! Update [BMAT, ZMAT] (represents H in the BOBYQA paper), [FVAL, XPT, KOPT, FOPT, XOPT],
-            ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes XOPT + D.
-            ! If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
-            vlag = calvlag(kopt, bmat, d, xpt, zmat)
-            beta = calbeta(kopt, bmat, d, xpt, zmat)
-            call updateh(knew_geo, beta, vlag, bmat, zmat)
+            ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XOPT + D.
+            !vlag = calvlag(kopt, bmat, d, xpt, zmat)
+            !beta = calbeta(kopt, bmat, d, xpt, zmat)
+            call updateh(knew_geo, kopt, d, xpt, bmat, zmat)
 
             call r1update(hq, pq(knew_geo), xpt(:, knew_geo))
             pq(knew_geo) = ZERO
