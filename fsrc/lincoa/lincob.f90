@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM03:00:13
+! Last Modified: Monday, November 21, 2022 PM05:28:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -78,17 +78,17 @@ use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul
+use, non_intrinsic :: powalg_mod, only : updateh
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx
+use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, inith
-use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trstep, trrad
 use, non_intrinsic :: update_mod, only : updatexf, updateq, tryqalt, updateres
-use, non_intrinsic :: powalg_mod, only : updateh
 
 implicit none
 

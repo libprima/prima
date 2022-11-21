@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM04:57:57
+! Last Modified: Monday, November 21, 2022 PM05:33:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -63,15 +63,16 @@ use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul!, errquad
 use, non_intrinsic :: ratio_mod, only : redrat
+use, non_intrinsic :: redrho_mod, only : redrho
+use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 ! Solver-specific modules
-use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
+use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox, trrad
 use, non_intrinsic :: update_mod, only : updateh
-use, non_intrinsic :: shiftbase_mod, only : shiftbase
-use, non_intrinsic :: redrho_mod, only : redrho
+use, non_intrinsic :: xinbd_mod, only : xinbd
 
 implicit none
 
@@ -276,11 +277,12 @@ do while (.true.)
         end if
         ! Put the variables for the next calculation of the objective function in XNEW, with any
         ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
-        x = max(xl, min(xu, xbase + xnew))
-        x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
-        x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
+        !x = max(xl, min(xu, xbase + xnew))
+        !x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
+        !x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
 
         ! Calculate the next value of the objective function.
+        x = xinbd(xbase, xnew, xl, xu, sl, su)
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
@@ -524,11 +526,12 @@ do while (.true.)
         ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
         if (.not. rescued) then
             xnew = max(sl, min(su, xopt + d))
-            x = max(xl, min(xu, xbase + xnew))
-            x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
-            x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
+            !x = max(xl, min(xu, xbase + xnew))
+            !x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
+            !x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
 
             ! Calculate the next value of the objective function.
+            x = xinbd(xbase, xnew, xl, xu, sl, su)
             call evaluate(calfun, x, f)
             nf = nf + 1_IK
 
@@ -612,9 +615,10 @@ end do
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
-    x = max(xl, min(xu, xbase + xnew))  ! XNEW = XOPT + D??? See NEWUOA, LINCOA.
-    x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
-    x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
+    !x = max(xl, min(xu, xbase + xnew))  ! XNEW = XOPT + D??? See NEWUOA, LINCOA.
+    !x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
+    !x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
+    x = xinbd(xbase, xnew, xl, xu, sl, su)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
@@ -625,9 +629,10 @@ end if
 
 ! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
 if (fval(kopt) <= f .or. is_nan(f)) then
-    x = max(xl, min(xu, xbase + xopt))
-    x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
-    x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
+    !x = max(xl, min(xu, xbase + xopt))
+    !x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
+    !x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
+    x = xinbd(xbase, xopt, xl, xu, sl, su)
     f = fval(kopt)
 end if
 

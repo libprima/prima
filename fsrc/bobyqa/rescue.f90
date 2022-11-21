@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 30, 2022 PM08:21:06
+! Last Modified: Monday, November 21, 2022 PM05:42:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,6 +100,7 @@ use, non_intrinsic :: powalg_mod, only : hess_mul, setij
 
 ! Solver-specif modules
 use, non_intrinsic :: update_mod, only : updateh
+use, non_intrinsic :: xinbd_mod, only : xinbd
 
 implicit none
 
@@ -462,11 +463,12 @@ if (nprov > 0) then
         ! Calculate F at the new interpolation point, and set MODERR to the factor that is going to
         ! multiply the KPT-th Lagrange function when the model is updated to provide interpolation
         ! to the new function value.
-        x = min(max(xl, xbase + xpt(:, kpt)), xu)
-        x(trueloc(xpt(:, kpt) <= sl)) = xl(trueloc(xpt(:, kpt) <= sl))
-        x(trueloc(xpt(:, kpt) >= su)) = xu(trueloc(xpt(:, kpt) >= su))
-        nf = nf + 1
+        !x = min(max(xl, xbase + xpt(:, kpt)), xu)
+        !x(trueloc(xpt(:, kpt) <= sl)) = xl(trueloc(xpt(:, kpt) <= sl))
+        !x(trueloc(xpt(:, kpt) >= su)) = xu(trueloc(xpt(:, kpt) >= su))
+        x = xinbd(xbase, xpt(:, kpt), xl, xu, sl, su)
         call evaluate(calfun, x, f)
+        nf = nf + 1
         call savehist(nf, x, xhist, f, fhist)
         fval(kpt) = f
         if (f < fval(kopt)) then
