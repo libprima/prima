@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 19, 2022 PM04:23:11
+! Last Modified: Monday, November 21, 2022 PM07:59:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -260,6 +260,10 @@ do while (.true.)
             xnew = min(max(sl, xnew - xopt), su)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)  ! XBASE is set to XOPT, XOPT to 0.
             xbase = min(max(xl, xbase), xu)
+
+            !d = xnew - xopt
+            xnew = max(sl, min(su, xopt + d))
+
         end if
         ! Put the variables for the next calculation of the objective function in XNEW, with any
         ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
@@ -353,6 +357,9 @@ do while (.true.)
             ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT (even if RESCUED is FALSE).
             xnew = min(max(sl, d), su)
             d = xnew - xopt
+
+            xnew = min(max(sl, xopt + d), su)
+
             qred = -quadinc(d, xpt, gopt, pq, hq)
             diff = f - fopt + qred
             tr_success = (f < fopt)

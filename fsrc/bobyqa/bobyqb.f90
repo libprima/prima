@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM07:31:51
+! Last Modified: Monday, November 21, 2022 PM07:52:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -366,7 +366,9 @@ do while (.true.)
             ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that
             ! are caused by the updating of the quadratic model.
             fval(knew_tr) = f
-            xpt(:, knew_tr) = xnew
+            !xpt(:, knew_tr) = xnew
+            !xpt(:, knew_tr) = xnew
+            xpt(:, knew_tr) = max(sl, min(su, xopt + d))
             gopt = gopt + diff * bmat(:, knew_tr) + hess_mul(xopt, xpt, pqinc)
 
             ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
