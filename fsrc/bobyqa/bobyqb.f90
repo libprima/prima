@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM08:55:59
+! Last Modified: Monday, November 21, 2022 PM09:07:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,20 +33,17 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! XPT is a 2D array that holds the coordinates of the interpolation points relative to XBASE.
 ! FVAL holds the values of F at the interpolation points.
 ! XOPT is set to the displacement from XBASE of the trust region centre.
-! GOPT holds the gradient of the quadratic model at XBASE+XOPT.
+! GOPT holds the gradient of the quadratic model at XBASE + XOPT.
 ! HQ holds the explicit second derivatives of the quadratic model.
 ! PQ contains the parameters of the implicit second derivatives of the quadratic model.
 ! BMAT holds the last N columns of H.
 ! ZMAT holds the factorization of the leading NPT by NPT submatrix of H, this factorization being
 ! ZMAT * ZMAT^T, which provides both the correct rank and positive semi-definiteness.
-! SL and SU hold the differences XL-XBASE and XU-XBASE, respectively. All the components of every
+! SL and SU hold XL - XBASE and XU - XBASE, respectively. All the components of every
 ! XOPT are going to satisfy the bounds SL(I) <= XOPT(I) <= SU(I), with appropriate equalities when
 ! XOPT is on a constraint boundary.
-! XNEW is chosen by subroutine TRSBOX or GEOSTEP. Usually XBASE+XNEW is the vector of variables for
-! the next call of CALFUN. XNEW also satisfies the SL and SU constraints in the way above-mentioned.
-! XALT is an alternative to XNEW, chosen by GEOSTEP, that may replace XNEW in order to increase the
-! denominator in the updating of UPDATE.
-! D is reserved for a trial step from XOPT, which is usually XNEW-XOPT.
+! D is chosen by subroutine TRSBOX or GEOSTEP. Usually XBASE + XOPT + D is the vector of variables
+! for the next call of CALFUN.
 ! VLAG contains the values of the Lagrange functions at a new point X.
 !--------------------------------------------------------------------------------------------------!
 
@@ -126,7 +123,7 @@ real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: gnew(size(x))
 real(RP) :: delbar, bdtest(size(x)), beta, &
 &        crvmin, curv(size(x)), delta, &
-&        den(npt), diff, &
+&        den(npt), moderr, &
 &        distsq(npt), dnorm, errbd, fopt,        &
 &        gisq, gqsq,       &
 &        ratio, rho, qred, pqinc(npt)
@@ -263,10 +260,8 @@ do while (.true.)
     else
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
-            !xnew = max(sl, min(su, xopt + d))  ! In precise arithmetic, XNEW = XOPT + D.
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
-            !xnew = max(sl, min(su, xnew - xopt))  ! XNEW = D????
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
             ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
             xbase = max(xl, min(xu, xbase))
@@ -275,7 +270,6 @@ do while (.true.)
         end if
 
         ! Calculate the next value of the objective function.
-        !x = xinbd(xbase, xnew, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XNEW.
         x = xinbd(xbase, xopt + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
@@ -293,7 +287,7 @@ do while (.true.)
         end if
 
         fopt = fval(kopt)
-        diff = f - fopt + qred
+        moderr = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
         ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is
         ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
@@ -332,24 +326,22 @@ do while (.true.)
             dnormsav = HUGENUM
             moderrsav = HUGENUM
 
-            ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT.
-            !xnew = max(sl, min(su, d))
-            !d = xnew - xopt
+            ! RESCUE shifts XBASE to the pre-RESCUE value of XOPT. Update D, QRED, DIFF, TR_SUCCESS.
             d = max(sl, min(su, d)) - xopt
             qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-            diff = f - fopt + qred
+            moderr = f - fopt + qred
             tr_success = (f < fopt)
         end if
 
-        ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW.
+        ! Set KNEW_TR to the index of the interpolation point to be replaced by XOPT + D.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
         knew_tr = setdrop_tr(kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
 
         if (knew_tr > 0) then
             ! Update [BMAT, ZMAT] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the quadratic
-            ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XNEW. If
+            ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XOPT + D. If
             ! KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
-            ! decides not to include XNEW into XPT.
+            ! decides not to include XOPT + D into XPT.
 
             vlag = calvlag(kopt, bmat, d, xpt, zmat)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
@@ -357,7 +349,7 @@ do while (.true.)
 
             call r1update(hq, pq(knew_tr), xpt(:, knew_tr))
             pq(knew_tr) = ZERO
-            pqinc = matprod(zmat, diff * zmat(knew_tr, :))
+            pqinc = matprod(zmat, moderr * zmat(knew_tr, :))
             pq = pq + pqinc
             ! Alternatives:
             ! !PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
@@ -366,9 +358,8 @@ do while (.true.)
             ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that
             ! are caused by the updating of the quadratic model.
             fval(knew_tr) = f
-            !xpt(:, knew_tr) = xnew
             xpt(:, knew_tr) = max(sl, min(su, xopt + d))
-            gopt = gopt + diff * bmat(:, knew_tr) + hess_mul(xopt, xpt, pqinc)
+            gopt = gopt + moderr * bmat(:, knew_tr) + hess_mul(xopt, xpt, pqinc)
 
             ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
             if (f < fopt) then
@@ -477,7 +468,6 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
-            !xnew = max(sl, min(su, xnew - xopt))  ! Needed? Will XNEW be used again later? XNEW = D???
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
             ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
             xbase = max(xl, min(xu, xbase))
@@ -517,12 +507,7 @@ do while (.true.)
         end if
 
         if (.not. rescued) then
-            ! Put the variables for the next calculation of the objective function in XNEW,
-            ! with any adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
-            !xnew = max(sl, min(su, xopt + d))
-
             ! Calculate the next value of the objective function.
-            !x = xinbd(xbase, xnew, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XNEW.
             x = xinbd(xbase, xopt + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
             call evaluate(calfun, x, f)
             nf = nf + 1_IK
@@ -544,25 +529,24 @@ do while (.true.)
             ! error of this prediction.
             fopt = fval(kopt)
             qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-            diff = f - fopt + qred
-            moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
+            moderr = f - fopt + qred
+            moderrsav = [moderrsav(2:size(moderrsav)), moderr]
             ! Zaikun 20220912: If the current D is a geometry step, then DNORM is not updated. It is
             ! still the value corresponding to last trust-region step. It seems inconsistent with (6.8)
             ! of the BOBYQA paper and the elaboration below it. Is this a bug? Similar thing happened
             ! in NEWUOA, but we recognized it as a bug and fixed it.
             dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
-            ! Update [BMAT, ZMAT] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the
-            ! quadratic model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_GEO) becomes
-            ! XNEW. If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the
-            ! algorithm decides not to include XNEW into XPT.
+            ! Update [BMAT, ZMAT] (represents H in the BOBYQA paper), [FVAL, XPT, KOPT, FOPT, XOPT],
+            ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes XOPT + D.
+            ! If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
             vlag = calvlag(kopt, bmat, d, xpt, zmat)
             beta = calbeta(kopt, bmat, d, xpt, zmat)
             call updateh(knew_geo, beta, vlag, bmat, zmat)
 
             call r1update(hq, pq(knew_geo), xpt(:, knew_geo))
             pq(knew_geo) = ZERO
-            pqinc = matprod(zmat, diff * zmat(knew_geo, :))
+            pqinc = matprod(zmat, moderr * zmat(knew_geo, :))
             pq = pq + pqinc
             ! Alternatives:
             ! !PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
@@ -573,7 +557,7 @@ do while (.true.)
             fval(knew_geo) = f
             xpt(:, knew_geo) = max(sl, min(su, xopt + d))
 
-            gopt = gopt + diff * bmat(:, knew_geo) + hess_mul(xopt, xpt, pqinc)
+            gopt = gopt + moderr * bmat(:, knew_geo) + hess_mul(xopt, xpt, pqinc)
 
             ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
             if (f < fopt) then
