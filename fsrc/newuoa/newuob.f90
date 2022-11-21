@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 21, 2022 PM02:23:05
+! Last Modified: Monday, November 21, 2022 PM05:28:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -61,11 +61,11 @@ use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, updateh
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
+use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : setdrop_tr, geostep
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
-use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trsapp, trrad
 use, non_intrinsic :: update_mod, only : updatexf, updateq, tryqalt
 
