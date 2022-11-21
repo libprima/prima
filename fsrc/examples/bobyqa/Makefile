@@ -82,7 +82,7 @@ xtest: FC := ifx -warn all -stand f$(FS)
 	consts.o infos.o debug.o memory.o infnan.o ieee_4dev.o string.o linalg.o powalg.o \
 	univar.o ratio.o redrho.o history.o checkexit.o output.o preproc.o pintrf.o evaluate.o \
 	shiftbase.o \
-	update.o initialize.o rescue.o trustregion.o geometry.o bobyqb.o bobyqa.o
+	xinbd.o update.o initialize.o rescue.o trustregion.o geometry.o bobyqb.o bobyqa.o
 	$(FC) $(FFLAGS) -o $@ $(SOLVER)_example.f90 *.o
 	./$@
 	@$(MAKE) clean
