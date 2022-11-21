@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM05:33:24
+! Last Modified: Monday, November 21, 2022 PM06:35:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -175,9 +175,7 @@ call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fh
     & sl, su, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
-x = max(xl, min(xu, xbase + xopt))
-x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
-x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
+x = xinbd(xbase, xopt, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
 f = fopt
 
 ! Check whether to return due to abnormal cases that may occur during the initialization.
@@ -228,6 +226,8 @@ do while (.true.)
 
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
 
+    ! Put the variables for the next calculation of the objective function in XNEW,
+    ! with any adjustments for the bounds.
     xnew = max(sl, min(su, xopt + d))  ! In precise arithmetic, XNEW = XOPT + D.
 
     dnorm = min(delta, sqrt(sum(d**2)))
@@ -268,21 +268,16 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
-            xnew = max(sl, min(su, xnew - xopt))
+            xnew = max(sl, min(su, xnew - xopt))  ! XNEW = D????
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
             ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
             xbase = max(xl, min(xu, xbase))
             ! It seems important for the performance to recalculate QRED.
             qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
         end if
-        ! Put the variables for the next calculation of the objective function in XNEW, with any
-        ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
-        !x = max(xl, min(xu, xbase + xnew))
-        !x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
-        !x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
 
         ! Calculate the next value of the objective function.
-        x = xinbd(xbase, xnew, xl, xu, sl, su)
+        x = xinbd(xbase, xnew, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XNEW.
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
@@ -483,7 +478,7 @@ do while (.true.)
         if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
-            xnew = max(sl, min(su, xnew - xopt))  ! Needed? Will XNEW be used again later?
+            xnew = max(sl, min(su, xnew - xopt))  ! Needed? Will XNEW be used again later? XNEW = D???
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
             ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
             xbase = max(xl, min(xu, xbase))
@@ -522,16 +517,13 @@ do while (.true.)
             end if
         end if
 
-        ! Put the variables for the next calculation of the objective function in XNEW, with any
-        ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
         if (.not. rescued) then
+            ! Put the variables for the next calculation of the objective function in XNEW,
+            ! with any adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
             xnew = max(sl, min(su, xopt + d))
-            !x = max(xl, min(xu, xbase + xnew))
-            !x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
-            !x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
 
             ! Calculate the next value of the objective function.
-            x = xinbd(xbase, xnew, xl, xu, sl, su)
+            x = xinbd(xbase, xnew, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XNEW.
             call evaluate(calfun, x, f)
             nf = nf + 1_IK
 
@@ -615,10 +607,7 @@ end do
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
-    !x = max(xl, min(xu, xbase + xnew))  ! XNEW = XOPT + D??? See NEWUOA, LINCOA.
-    !x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
-    !x(trueloc(xnew >= su)) = xu(trueloc(xnew >= su))
-    x = xinbd(xbase, xnew, xl, xu, sl, su)
+    x = xinbd(xbase, xopt + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
@@ -629,10 +618,7 @@ end if
 
 ! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
 if (fval(kopt) <= f .or. is_nan(f)) then
-    !x = max(xl, min(xu, xbase + xopt))
-    !x(trueloc(xopt <= sl)) = xl(trueloc(xopt <= sl))
-    !x(trueloc(xopt >= su)) = xu(trueloc(xopt >= su))
-    x = xinbd(xbase, xopt, xl, xu, sl, su)
+    x = xinbd(xbase, xopt, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
     f = fval(kopt)
 end if
 
@@ -641,7 +627,6 @@ call rangehist(nf, xhist, fhist)
 
 ! Print a return message according to IPRINT.
 call retmsg(solver, info, iprint, nf, f, x)
-
 
 close (16)
 !====================!

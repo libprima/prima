@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM05:40:18
+! Last Modified: Monday, November 21, 2022 PM06:25:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -194,10 +194,7 @@ end do
 
 ! Set FVAL(1 : MIN(2*N + 1, NPT)) by evaluating F. Totally parallelizable except for FMSG.
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
-    !x = min(max(xl, xbase + xpt(:, k)), xu)
-    !x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
-    !x(trueloc(xpt(:, k) >= su)) = xu(trueloc(xpt(:, k) >= su))
-    x = xinbd(xbase, xpt(:, k), xl, xu, sl, su)
+    x = xinbd(xbase, xpt(:, k), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XPT(:, K).
     call evaluate(calfun, x, f)
     evaluated(k) = .true.
     fval(k) = f
@@ -244,10 +241,7 @@ xpt(:, 2 * n + 2:npt) = xpt(:, ij(1, :) + 1) + xpt(:, ij(2, :) + 1)
 ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSG.
 if (info == INFO_DFT) then
     do k = int(2 * n + 2, kind(k)), npt
-        !x = min(max(xl, xbase + xpt(:, k)), xu)
-        !x(trueloc(xpt(:, k) <= sl)) = xl(trueloc(xpt(:, k) <= sl))
-        !x(trueloc(xpt(:, k) >= su)) = xu(trueloc(xpt(:, k) >= su))
-        x = xinbd(xbase, xpt(:, k), xl, xu, sl, su)
+        x = xinbd(xbase, xpt(:, k), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XPT(:, K).
         call evaluate(calfun, x, f)
         evaluated(k) = .true.
         fval(k) = f
