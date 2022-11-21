@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 21, 2022 PM12:38:44
+! Last Modified: Monday, November 21, 2022 PM02:13:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -211,9 +211,9 @@ end subroutine updateq
 
 subroutine tryqalt(idz, fval, ratio, bmat, zmat, itest, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
-! TRYQALT tests whether to replace Q by the alternative model, namely the model that minimizes
-! the F-norm of the Hessian subject to the interpolation conditions. It does the replacement
-! when certain criteria are satisfied (i.e., when ITEST = 3). See Section 8 of the NEWUOA paper.
+! This subroutine tests whether to replace Q by the alternative model, namely the model that
+! minimizes the F-norm of the Hessian subject to the interpolation conditions. It does the
+! replacement if certain criteria are met (i.e., when ITEST = 3). See Section 8 of the NEWUOA paper.
 ! N.B.: Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):

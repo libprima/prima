@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM12:43:59
+! Last Modified: Monday, November 21, 2022 PM02:28:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -222,106 +222,84 @@ end if
 end subroutine updateq
 
 
-subroutine tryqalt(idz, fval, ratio, bmat, zmat, itest, gq, hq, pq)
+subroutine tryqalt(idz, bmat, fval, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
 !--------------------------------------------------------------------------------------------------!
-! TRYQALT tests whether to replace Q by the alternative model, namely the model that minimizes
-! the F-norm of the Hessian subject to the interpolation conditions. It does the replacement
-! when certain criteria are satisfied (i.e., when ITEST = 3). See Section 8 of the NEWUOA paper.
-! N.B.: Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
+! This subroutine tests whether to replace Q by the alternative model, namely the model that
+! minimizes the F-norm of the Hessian subject to the interpolation conditions. It first calculates
+! the alternative model represented by [GALT, PQALT], and sets [GOPT, PQ, HQ] = [GALT, PQALT, 0]
+! if the recent few (three) alternative models are more accurate in predicting the function value of
+! XOPT + D, i.e., if ALL(QALT_BETTER) = TRUE.
 !--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: GALT(N)
-! Size of local arrays: REAL(RP)*(N)
-!--------------------------------------------------------------------------------------------------!
-
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
-use, non_intrinsic :: powalg_mod, only : omega_mul
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
+use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
+use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: idz
-real(RP), intent(in) :: fval(:)     ! FVAL(NPT)
-real(RP), intent(in) :: ratio
-real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
-real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
+real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
+real(RP), intent(in) :: fval(:)  ! FVAL(NPT)
+real(RP), intent(in) :: xopt(:)  ! XOPT(N)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
-! In-output
-integer(IK), intent(inout) :: itest
-real(RP), intent(inout) :: gq(:)    ! GQ(N)
-real(RP), intent(inout) :: hq(:, :) ! HQ(N, N)
-real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
-! N.B.:
-! GQ, HQ, and PQ should be INTENT(INOUT) instead of INTENT(OUT). According to the Fortran 2018
-! standard, an INTENT(OUT) dummy argument becomes undefined on invocation of the procedure.
-! Therefore, if the procedure does not define such an argument, its value becomes undefined,
-! which is the case for HQ and PQ when ITEST < 3 at exit. In addition, the information in GQ is
-! needed for definining ITEST, so it must be INTENT(INOUT).
+! In-outptuts
+logical, intent(inout) :: qalt_better(:)  ! QALT_BETTER(3)
+real(RP), intent(inout) :: gopt(:)  ! GOPT(N)
+real(RP), intent(inout) :: pq(:)  ! PQ(NPT)
+real(RP), intent(inout) :: hq(:, :)  ! HQ(N, N)
+
+! Outputs
+real(RP), intent(out) :: galt(:)  ! GALT(N)
+real(RP), intent(out) :: pqalt(:)  ! PQALT(NPT)
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRYQALT'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: galt(size(gq))
-
-! Debugging variables
-!real(RP) :: intp_tol
 
 ! Sizes
-n = int(size(gq), kind(n))
-npt = int(size(pq), kind(npt))
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
-    ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
-    ! NaN, which should NOT happen due to the moderated extreme barrier.
-    call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
+    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! [GQ, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
-    !intp_tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * real(size(pq), RP) * EPS))
-    !call wassert(errquad(fval, xpt, gq, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
+    call assert(size(galt) == n, 'SIZE(GALT) = N', srname)
+    call assert(size(pqalt) == npt, 'SIZE(PQALT) = NPT', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
 
-! In the NEWUOA paper, Powell replaces Q with Q_alt when RATIO <= 0.01 and ||G_alt|| <= 0.1||GQ||
-! hold for 3 consecutive times (eq(8.4)). But Powell's code compares ABS(RATIO) instead of RATIO
-! with 0.01. Here we use RATIO, which is more efficient as observed in Zaikun ZHANG's PhD thesis
-! (Section 3.3.2).
-!if (abs(ratio) > 1.0e-2_RP) then
-if (ratio > 1.0E-2_RP) then
-    itest = 0_IK
-else
-    galt = matprod(bmat(:, 1:npt), fval)
-    if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
-        itest = 0_IK
-    else
-        itest = itest + 1_IK
-    end if
-end if
+! Establish the alternative model, which is the least Frobenius norm interpolant.
+pqalt = omega_mul(idz, zmat, fval)
+galt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pqalt)
 
-! Replace Q with Q_alt when ITEST >= 3.
-if (itest >= 3) then
-    gq = galt
+! Replace the current model with the alternative model if ALL(QALT_BETTER) = TRUE, i.e., the
+! recent few alternative models are more accurate in predicting the function value of XOPT + D.
+if (all(qalt_better)) then
+    pq = pqalt
     hq = ZERO
-    pq = omega_mul(idz, zmat, fval)
-    itest = 0_IK
+    gopt = galt
+    qalt_better = .false.
 end if
 
 !====================!
@@ -330,11 +308,11 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! [GQ, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
-    !call wassert(errquad(fval, xpt, gq, pq, hq) <= intp_tol, 'QALT interpolates FVAL at XPT', srname)
+    call assert(size(galt) == n, 'SIZE(GALT) = N', srname)
+    call assert(size(pqalt) == npt, 'SIZE(PQALT) = NPT', srname)
 end if
 
 end subroutine tryqalt
