@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 20, 2022 PM05:11:15
+! Last Modified: Monday, November 21, 2022 PM12:46:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -198,13 +198,13 @@ if (subinfo /= INFO_DFT) then
     return
 end if
 
-! Initialize GQ, HQ, and PQ.
-call initq(ij, fval, xpt, gq, hq, pq)
-
 ! Initialize BMAT, ZMAT, and IDZ.
 call inith(ij, xpt, idz, bmat, zmat)
 
-! After initializing GQ, HQ, PQ, BMAT, ZMAT, one can also choose to return if these arrays contain
+! Initialize GQ, HQ, and PQ.
+call initq(ij, fval, xpt, gq, hq, pq)
+
+! After initializing BMAT, ZMAT, GQ, HQ, PQ, one can also choose to return if these arrays contain
 ! NaN. We do not do it here. If such a model is harmful, then it will probably lead to other returns
 ! (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the code will continue to run
 ! and possibly recovers by geometry steps.
@@ -305,8 +305,8 @@ do tr = 1, maxtr
         tr_success = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
 
-        ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the quadratic
-        ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XNEW = XOPT + D.
+        ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
+        ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes XNEW = XOPT + D.
         ! If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
         ! decides not to include XNEW into XPT.
         if (knew_tr > 0) then
@@ -514,12 +514,11 @@ do tr = 1, maxtr
         ! here. The value of DNORM saved in DNORMSAV will be used when defining REDUCE_RHO.
         !------------------------------------------------------------------------------------------!
 
-        ! Update [BMAT, ZMAT, IDZ] (representing H in the NEWUOA paper), [GQ, HQ, PQ] (the quadratic
-        ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_GEO) becomes XOPT+D.
+        ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
+        ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
         xdrop = xpt(:, knew_geo)
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         call updatexf(knew_geo, d, f, kopt, fval, xpt, fopt, xopt)
-        !call updateq(idz, knew_geo, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
         call updateq(idz, knew_geo, bmat, moderr, xdrop, zmat, gq, hq, pq)
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
