@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM10:43:23
+! Last Modified: Tuesday, November 22, 2022 AM11:14:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -570,7 +570,7 @@ subroutine updateh_rsc(knew, beta, vlag_in, bmat, zmat, info)
 ! leading NPT*NPT submatrix OMEGA of H, the factorization being OMEGA = ZMAT*ZMAT^T; BMAT holds the
 ! last N ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th
 ! column of H are not stored as they are unnecessary for the calculation.
-! N.B.: UPDATEH_RSC is only used by RESCUE. To be merged with UPDATEH.
+! N.B.: UPDATEH_RSC is only used by RESCUE. Is it possible to merge UPDATEH_RSC with UPDATEH?
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

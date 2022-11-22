@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 21, 2022 PM02:13:28
+! Last Modified: Tuesday, November 22, 2022 PM12:24:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,9 +21,9 @@ public :: updatexf, updateq, tryqalt
 contains
 
 
-subroutine updatexf(knew, d, f, kopt, fval, xpt, fopt, xopt)
+subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt, fopt, xopt)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates [XPT, FVAL, KOPT, XOPT, FOPT] so that X(:, KNEW) is updated to XOPT + D.
+! This subroutine updates [XPT, FVAL, KOPT, XOPT, FOPT] so that XPT(:, KNEW) is updated to XNEW.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
@@ -38,11 +38,12 @@ implicit none
 
 ! Inputs
 integer(IK), intent(in) :: knew
-real(RP), intent(in) :: d(:)     ! D(N)
 real(RP), intent(in) :: f
+real(RP), intent(in) :: xnew(:)  ! XNEW(N)
 
 ! In-outputs
 integer(IK), intent(inout) :: kopt
+logical, intent(in) :: ximproved
 real(RP), intent(inout) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(inout) :: xpt(:, :)! XPT(N, NPT)
 
@@ -66,7 +67,7 @@ if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FVAL(KOPT)', srname)
     call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FVAL(KOPT)', srname)
-    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(size(xnew) == n .and. all(is_finite(xnew)), 'SIZE(XNEW) == N, XNEW is finite', srname)
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
@@ -88,17 +89,17 @@ if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
 
-xpt(:, knew) = xpt(:, kopt) + d
+xpt(:, knew) = xnew
 fval(knew) = f
 
 ! KOPT is NOT identical to MINLOC(FVAL). Indeed, if FVAL(KNEW) = FVAL(KOPT) and KNEW < KOPT, then
 ! MINLOC(FVAL) = KNEW /= KOPT. Do not change KOPT in this case.
-if (fval(knew) < fval(kopt)) then
+if (ximproved) then
     kopt = knew
 end if
 
 ! Even if FVAL(KNEW) >= FVAL(KOPT) and KOPT remains unchanged, we still need to update XOPT and FOPT,
-! because it may happen that KNEW = KOPT, so that XPT(:, KOPT) has been updated to XNEW = XOPT + D.
+! because it may happen that KNEW = KOPT, so that XPT(:, KOPT) has been updated to XNEW.
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 
@@ -109,7 +110,6 @@ fopt = fval(kopt)
 ! Postconditions
 if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(abs(f - fval(knew)) <= 0, 'F == FVAL(KNEW)', srname)
     call assert(abs(fopt - fval(kopt)) <= 0, 'FOPT == FVAL(KOPT)', srname)
     call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
     call assert(norm(xopt - xpt(:, kopt)) <= 0, 'XOPT == XPT(:, KOPT)', srname)
