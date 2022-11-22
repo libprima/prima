@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 22, 2022 PM03:11:33
+! Last Modified: Tuesday, November 22, 2022 PM11:54:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,7 +58,7 @@ use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHE
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, hess_mul!, errquad
+use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag!, errquad
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
@@ -68,7 +68,7 @@ use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox, trrad
-use, non_intrinsic :: update_mod, only : updateh, updatexf, updateq
+use, non_intrinsic :: update_mod, only : updateh, updatexf, updateq, tryqalt
 use, non_intrinsic :: xinbd_mod, only : xinbd
 
 implicit none
@@ -123,11 +123,10 @@ real(RP) :: delbar, &
 &        crvmin, delta, &
 &        den(npt), moderr, &
 &        distsq(npt), dnorm, ebound, fopt,        &
-&        gisq, gqsq,       &
 &        ratio, rho, qred
 real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
-real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
+!real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x)), gqsq, gisq
 integer(IK) :: itest, knew_tr, knew_geo, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 logical :: shortd, improve_geo, ximproved, reduce_rho, small_trrad, close_itpset, accurate_mod, adequate_geo, bad_trstep, rescued
@@ -333,38 +332,8 @@ do while (.true.)
             call updateh(knew_tr, kopt, d, xpt, bmat, zmat)
             call updatexf(knew_tr, ximproved, f, max(sl, min(su, xopt + d)), kopt, fval, xpt, fopt, xopt)
             call updateq(1_IK, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
-
-            ! Calculate the parameters of the least Frobenius norm interpolant to the current data,
-            ! the gradient of this interpolant at XOPT being put into VLAG(NPT+I), I=1,2,...,N.
-            fshift = fval - fval(kopt)
-            pqalt = matprod(zmat, matprod(fshift, zmat))
-            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-
-            pgopt = gopt
-            pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))
-            pgopt(trueloc(xopt <= sl)) = min(ZERO, gopt(trueloc(xopt <= sl)))
-            gqsq = sum(pgopt**2)
-
-            pgalt = galt
-            pgalt(trueloc(xopt >= su)) = max(ZERO, galt(trueloc(xopt >= su)))
-            pgalt(trueloc(xopt <= sl)) = min(ZERO, galt(trueloc(xopt <= sl)))
-            gisq = sum(pgalt**2)
-
-            ! Test whether to replace the new quadratic model by the least Frobenius norm interpolant,
-            ! making the replacement if the test is satisfied.
-            ! N.B.:
-            ! 1. The replacement is done only after a trust-region step, which differs from LINCOA.
-            ! 2. The replacement is done regardless of DELTA <= RHO or not, which differs from NEWUOA.
-            itest = itest + 1
-            if (gqsq < TEN * gisq) itest = 0
-            if (itest >= 3) then
-                gopt = galt
-                pq = pqalt
-                hq = ZERO
-                itest = 0
-            end if
+            call tryqalt(bmat, fval - fopt, ratio, sl, su, xopt, xpt, zmat, itest, gopt, hq, pq)
         end if
-
     end if
 
 
