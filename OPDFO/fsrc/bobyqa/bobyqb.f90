@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM09:50:04
+! Last Modified: Tuesday, November 22, 2022 AM09:55:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -360,8 +360,8 @@ do while (.true.)
 
             xnew = min(max(sl, xopt + d), su)
 
-            qred = -quadinc(d, xpt, gopt, pq, hq)
-            diff = f - fopt + qred
+            !qred = -quadinc(d, xpt, gopt, pq, hq)
+            diff = f - fopt - quadinc(d, xpt, gopt, pq, hq)
             tr_success = (f < fopt)
         end if
 

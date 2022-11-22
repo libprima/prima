@@ -19,14 +19,14 @@ public :: setdrop_tr, geostep
 contains
 
 
-function setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat) result(knew)
+function setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
 ! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.
 ! N.B.:
-! 1. If TR_SUCCESS = TRUE, then KNEW > 0 so that XNEW is included into XPT. Otherwise, it is a bug.
-! 2. If TR_SUCCESS = FALSE, then KNEW /= KOPT so that XPT(:, KOPT) stays. Otherwise, it is a bug.
+! 1. If XIMPROVED = TRUE, then KNEW > 0 so that XNEW is included into XPT. Otherwise, it is a bug.
+! 2. If XIMPROVED = FALSE, then KNEW /= KOPT so that XPT(:, KOPT) stays. Otherwise, it is a bug.
 ! 3. It is tempting to take the function value into consideration when defining KNEW, for example,
 ! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL), unless there is a better
 ! choice. However, this is not a good idea, because the definition of KNEW should benefit the
@@ -51,7 +51,7 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: kopt
-logical, intent(in) :: tr_success
+logical, intent(in) :: ximproved
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:)
 real(RP), intent(in) :: delta
@@ -96,11 +96,11 @@ end if
 ! Calculate the distance squares between the interpolation points and the "optimal point". When
 ! identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is reasonable to
 ! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
-! point in the next interpolation if TR_SUCCESS is TRUE. Strangely, considering this new point does
-! not always lead to a better performance of NEWUOA. Here, we choose not to check TR_SUCCESS, as
+! point in the next interpolation if XIMPROVED is TRUE. Strangely, considering this new point does
+! not always lead to a better performance of NEWUOA. Here, we choose not to check XIMPROVED, as
 ! the performance of NEWUOA is better in this way. THIS DIFFERS FROM POWELL'S CODE.
 ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF NEWUOA ARE IMPLEMENTED DIFFERENTLY.
-! !if (tr_success) then  ! This is Powell's version
+! !if (ximproved) then  ! This is Powell's version
 ! !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
 ! !    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
 ! !else
@@ -120,22 +120,22 @@ denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
 score = weight * denabs
 
 ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
-if (.not. tr_success) then
+if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
 ! Changing the following IF to `IF (ANY(SCORE > 0)) THEN` does not lead to a better performance.
-if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
+if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
     ! See (7.5) of the NEWUOA paper for the definition of KNEW in this case.
     ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
-elseif (tr_success) then
+elseif (ximproved) then
     ! Powell's code does not include the following instructions. With Powell's code, if DENABS
-    ! consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
+    ! consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
     knew = int(maxloc(distsq, dim=1), IK)
 else
-    knew = 0_IK  ! We arrive here when TR_SUCCESS = FALSE and no entry of SCORE exceeds one.
+    knew = 0_IK  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE exceeds one.
 end if
 
 !====================!
@@ -145,9 +145,9 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    call assert(knew /= kopt .or. tr_success, 'KNEW /= KOPT unless TR_SUCCESS = TRUE', srname)
-    call assert(knew >= 1 .or. .not. tr_success, 'KNEW >= 1 unless TR_SUCCESS = FALSE', srname)
-    ! KNEW >= 1 when TR_SUCCESS = TRUE unless NaN occurs in DISTSQ, which should not happen if the
+    call assert(knew /= kopt .or. ximproved, 'KNEW /= KOPT unless XIMPROVED = TRUE', srname)
+    call assert(knew >= 1 .or. .not. ximproved, 'KNEW >= 1 unless XIMPROVED = FALSE', srname)
+    ! KNEW >= 1 when XIMPROVED = TRUE unless NaN occurs in DISTSQ, which should not happen if the
     ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.
 end if
 

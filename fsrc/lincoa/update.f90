@@ -21,7 +21,7 @@ public :: updatexf, updateq, tryqalt, updateres
 contains
 
 
-subroutine updatexf(knew, freduced, d, f, kopt, fval, xpt, fopt, xopt)
+subroutine updatexf(knew, ximproved, d, f, kopt, fval, xpt, fopt, xopt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates [XPT, FVAL, KOPT, XOPT, FOPT] so that X(:, KNEW) is updated to XOPT + D.
 !--------------------------------------------------------------------------------------------------!
@@ -43,7 +43,7 @@ real(RP), intent(in) :: f
 
 ! In-outputs
 integer(IK), intent(inout) :: kopt
-logical, intent(in) :: freduced
+logical, intent(in) :: ximproved
 real(RP), intent(inout) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(inout) :: xpt(:, :)! XPT(N, NPT)
 
@@ -91,7 +91,7 @@ end if
 xpt(:, knew) = xpt(:, kopt) + d
 fval(knew) = f
 
-if (freduced) then
+if (ximproved) then
     kopt = knew
 end if
 
@@ -116,7 +116,7 @@ end if
 end subroutine updatexf
 
 
-subroutine updateq(idz, knew, freduced, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
+subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GOPT, HQ, and PQ when XPT(:, KNEW) changes from XDROP to XNEW = XOSAV + D,
 ! where XOSAV is the upupdated XOPT, namedly the XOPT before UPDATEXF is called.
@@ -140,7 +140,7 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
-logical, intent(in) :: freduced
+logical, intent(in) :: ximproved
 real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:) ! D(:)
 real(RP), intent(in) :: moderr
@@ -203,8 +203,8 @@ pq = pq + pqinc
 ! Update the gradient, which needs the updated XPT.
 gopt = gopt + moderr * bmat(:, knew) + hess_mul(xosav, xpt, pqinc)
 
-! Further update GOPT if FREDUCED is TRUE, as XOPT changes from XOSAV to XNEW = XOSAV + D.
-if (freduced) then
+! Further update GOPT if XIMPROVED is TRUE, as XOPT changes from XOSAV to XNEW = XOSAV + D.
+if (ximproved) then
     gopt = gopt + hess_mul(d, xpt, pq, hq)
 end if
 

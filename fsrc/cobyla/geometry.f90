@@ -88,12 +88,12 @@ adequate_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta *
 end function assess_geo
 
 
-function setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi) result(jdrop)
+function setdrop_tr(ximproved, d, delta, factor_alpha, factor_delta, sim, simi) result(jdrop)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds (the index) of a current interpolation point to be replaced by the
 ! trust-region trial point. See (19)--(22) of the COBYLA paper.
 ! N.B.:
-! 1. If TR_SUCCESS == TRUE, then JDROP > 0 so that D is included into XPT. Otherwise, it is a bug.
+! 1. If XIMPROVED == TRUE, then JDROP > 0 so that D is included into XPT. Otherwise, it is a bug.
 ! 2. COBYLA never sets JDROP = N + 1.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
@@ -110,7 +110,7 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-logical, intent(in) :: tr_success
+logical, intent(in) :: ximproved
 real(RP), intent(in) :: d(:)    ! D(N)
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: factor_alpha
@@ -153,16 +153,16 @@ end if
 !====================!
 
 ! JDROP = 0 by default. It cannot be removed, as JDROP may not be set below in some cases (e.g.,
-! when TR_SUCCESS == FALSE, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(VETA) <= EDGMAX).
+! when XIMPROVED == FALSE, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(VETA) <= EDGMAX).
 jdrop = 0_IK
 
 simid = matprod(simi, d)
-if (any(abs(simid) > ONE) .or. (tr_success .and. any(.not. is_nan(simid)))) then
+if (any(abs(simid) > ONE) .or. (ximproved .and. any(.not. is_nan(simid)))) then
     jdrop = int(maxloc(abs(simid), mask=(.not. is_nan(simid)), dim=1), kind(jdrop))
     !!MATLAB: [~, jdrop] = max(simid, [], 'omitnan');
 end if
 
-if (tr_success) then
+if (ximproved) then
     veta = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
     !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2));  % d should be a column! Implicit expansion
 else
@@ -178,11 +178,11 @@ if (any(mask)) then
 end if
 
 ! Powell's code does not include the following instructions. With Powell's code, if SIMID consists
-! of only NaN, then JDROP can be 0 even when TR_SUCCESS == TRUE (i.e., D reduces the merit function).
-! With the following code, JDROP cannot be 0 when TR_SUCCESS == TRUE, unless VETA is all NaN, which
+! of only NaN, then JDROP can be 0 even when XIMPROVED == TRUE (i.e., D reduces the merit function).
+! With the following code, JDROP cannot be 0 when XIMPROVED == TRUE, unless VETA is all NaN, which
 ! should not happen if X0 does not contain NaN, the trust-region/geometry steps never contain NaN,
 ! and we exit once encountering an iterate containing Inf (due to overflow).
-if (tr_success .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP == 0 for robustness.
+if (ximproved .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP == 0 for robustness.
     jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
     !!MATLAB: [~, jdrop] = max(veta, [], 'omitnan');
 end if
@@ -194,7 +194,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(jdrop >= 0 .and. jdrop <= n, '0 <= JDROP <= N', srname)
-    call assert(jdrop >= 1 .or. .not. tr_success, 'JDROP >= 1 unless the trust-region step failed', srname)
+    call assert(jdrop >= 1 .or. .not. ximproved, 'JDROP >= 1 unless the trust-region step failed', srname)
 end if
 
 end function setdrop_tr
