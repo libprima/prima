@@ -112,7 +112,7 @@ logical :: evaluated(size(x) + 1)
 logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
-logical :: tr_success
+logical :: ximproved
 real(RP) :: A(size(x), size(constr) + 1)
 ! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is minus the
 ! approximate gradient for the objective function.
@@ -382,8 +382,8 @@ do tr = 1, maxtr
             ! is no good point to replace, and X will not be included into the simplex; in this case,
             ! the geometry of the simplex likely needs improvement, which will be handled below.
             ! N.B.: COBYLA never sets JDROP_TR = N + 1.
-            tr_success = (actrem > 0)  ! If ACTREM is NaN, then TR_SUCCESS should & will be FALSE.
-            jdrop_tr = setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi)
+            ximproved = (actrem > 0)  ! If ACTREM is NaN, then XIMPROVED should & will be FALSE.
+            jdrop_tr = setdrop_tr(ximproved, d, delta, factor_alpha, factor_delta, sim, simi)
 
             ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
             ! UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides to discard X.

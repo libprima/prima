@@ -118,7 +118,7 @@ logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
 logical :: small_trrad
-logical :: tr_success
+logical :: ximproved
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: crvmin
 real(RP) :: d(size(x))
@@ -299,13 +299,13 @@ do tr = 1, maxtr
         ! 1. KNEW_TR = 0 means it is impossible to obtain a good interpolation set by replacing any
         ! current interpolation point with XNEW. Then XNEW and its function value will be discarded.
         ! In this case, the geometry of XPT likely needs improvement, which will be handled below.
-        ! 2. If TR_SUCCESS = TRUE (i.e., RATIO > 0), then SETDROP_TR ensures KNEW_TR > 0 so that
-        ! XNEW is included into XPT. Otherwise, SETDROP_TR is buggy; moreover, if TR_SUCCESS = TRUE
+        ! 2. If XIMPROVED = TRUE (i.e., RATIO > 0), then SETDROP_TR ensures KNEW_TR > 0 so that
+        ! XNEW is included into XPT. Otherwise, SETDROP_TR is buggy; moreover, if XIMPROVED = TRUE
         ! but KNEW_TR = 0, XOPT will differ from XPT(:, KOPT), because the former is set to XNEW but
         ! XNEW is discarded. Such a difference can lead to unexpected behaviors; for example,
         ! KNEW_GEO may equal KOPT, with which GEOSTEP will not work.
-        tr_success = (f < fopt)
-        knew_tr = setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
+        ximproved = (f < fopt)
+        knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat)
 
         ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
         ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes XNEW = XOPT + D.
