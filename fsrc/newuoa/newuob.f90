@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 21, 2022 PM09:52:25
+! Last Modified: Tuesday, November 22, 2022 PM12:54:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -315,7 +315,7 @@ do tr = 1, maxtr
             xdrop = xpt(:, knew_tr)
         end if
         call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
-        call updatexf(knew_tr, d, f, kopt, fval, xpt, fopt, xopt)
+        call updatexf(knew_tr, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
         call updateq(idz, knew_tr, bmat, moderr, xdrop, zmat, gq, hq, pq)
 
         ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
@@ -501,6 +501,7 @@ do tr = 1, maxtr
             exit
         end if
 
+
         ! Update DNORMSAV and MODERRSAV. (Should we?)
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
@@ -518,9 +519,10 @@ do tr = 1, maxtr
 
         ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
         ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
+        ximproved = (f < fopt)
         xdrop = xpt(:, knew_geo)
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
-        call updatexf(knew_geo, d, f, kopt, fval, xpt, fopt, xopt)
+        call updatexf(knew_geo, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
         call updateq(idz, knew_geo, bmat, moderr, xdrop, zmat, gq, hq, pq)
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 

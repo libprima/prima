@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 22, 2022 AM10:51:07
+! Last Modified: Tuesday, November 22, 2022 PM01:29:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,7 +68,7 @@ use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox, trrad
-use, non_intrinsic :: update_mod, only : updateh
+use, non_intrinsic :: update_mod, only : updateh, updatexf, updateq
 use, non_intrinsic :: xinbd_mod, only : xinbd
 
 implicit none
@@ -116,7 +116,7 @@ real(RP) :: vlag(npt + size(x))
 real(RP) :: sl(size(x))
 real(RP) :: su(size(x))
 real(RP) :: xbase(size(x))
-real(RP) :: xopt(size(x))
+real(RP) :: xopt(size(x)), xosav(size(x)), xdrop(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: delbar, &
@@ -232,17 +232,17 @@ do while (.true.)
     ! with predictions of likely improvements to the model within distance HALF*RHO of XOPT.
     ! Why do we reduce RHO when SHORTD is true and the entries of MODERRSAV and DNORMSAV are all
     ! small? The reason is well explained by the BOBYQA paper in the paragraphs surrounding
-    ! (6.9)--(6.11). Roughly speaking, in this case, a trust-region step is unlikely to decrease
-    ! the objective function according to some estimations. This suggests that the current
-    ! trust-region center may be an approximate local minimizer. When this occurs, the algorithm
-    ! takes the view that the work for the current RHO is complete, and hence it will reduce
-    ! RHO, which will enhance the resolution of the algorithm in general.
+    ! (6.8)--(6.11). Roughly speaking, in this case, a trust-region step is unlikely to decrease the
+    ! objective function according to some estimations. This suggests that the current trust-region
+    ! center may be an approximate local minimizer up to the current "resolution" of the algorithm.
+    ! When this occurs, the algorithm takes the view that the work for the current RHO is complete,
+    ! and hence it will reduce RHO, which will enhance the resolution of the algorithm in general.
     if (shortd .or. .not. qred > 0) then
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
-        ! Evaluate EBOUND, which will be used in the definition of REDUCE_RHO and IMPROVE_GEO.
+        ! Evaluate EBOUND. It will be used as a bound to test if the entries of MODERRSAV are small.
         ebound = errbd(crvmin, d, gopt, hq, moderrsav, pq, rho, sl, su, xopt, xpt)
     else
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
@@ -305,7 +305,7 @@ do while (.true.)
             ! !if (ximproved .and. .not. any(den > HALF * maxval(vlag(1:npt)**2))) then
             ! !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then  ! Powell's code.
             ! !if (.not. any(den > maxval(vlag(1:npt)**2))) then
-            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
+            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt,&
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
@@ -330,29 +330,11 @@ do while (.true.)
             ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XOPT + D. If
             ! KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
             ! decides not to include XOPT + D into XPT.
-
+            xdrop = xpt(:, knew_tr)
+            xosav = xpt(:, kopt)
             call updateh(knew_tr, kopt, d, xpt, bmat, zmat)
-
-            call r1update(hq, pq(knew_tr), xpt(:, knew_tr))
-            pq(knew_tr) = ZERO
-            pqinc = matprod(zmat, moderr * zmat(knew_tr, :))
-            pq = pq + pqinc
-            ! Alternatives:
-            ! !PQ = PQ + MATPROD(ZMAT, MODERR * ZMAT(KNEW, :))
-            ! !PQ = PQ + MODERR * MATPROD(ZMAT, ZMAT(KNEW, :))
-
-            ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that
-            ! are caused by the updating of the quadratic model.
-            fval(knew_tr) = f
-            xpt(:, knew_tr) = max(sl, min(su, xopt + d))
-            gopt = gopt + moderr * bmat(:, knew_tr) + hess_mul(xopt, xpt, pqinc)
-
-            ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
-            if (f < fopt) then
-                kopt = knew_tr
-                xopt = xpt(:, kopt)
-                gopt = gopt + hess_mul(d, xpt, pq, hq)
-            end if
+            call updatexf(knew_tr, ximproved, f, max(sl, min(su, xopt + d)), kopt, fval, xpt, fopt, xopt)
+            call updateq(1_IK, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
             ! Calculate the parameters of the least Frobenius norm interpolant to the current data,
             ! the gradient of this interpolant at XOPT being put into VLAG(NPT+I), I=1,2,...,N.
@@ -471,7 +453,7 @@ do while (.true.)
             ! The condition below works the same as the above one, which is used in Powell's code.
             ! !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > 0.25 * vlag(knew_geo)**2)) then
             nfresc = nf
-            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
+            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt,&
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
@@ -522,36 +504,18 @@ do while (.true.)
             moderrsav = [moderrsav(2:size(moderrsav)), moderr]
             !------------------------------------------------------------------------------------------!
             ! Zaikun 20220912: Powell's code does not update DNORM. Therefore, DNORM is the length
-            ! of the last  trust-region trial step, which is inconsistent with MODERRSAV. The same
+            ! of the last trust-region trial step, which is inconsistent with MODERRSAV. The same
             ! problem exists in NEWUOA.
             !------------------------------------------------------------------------------------------!
 
             ! Update [BMAT, ZMAT] (represents H in the BOBYQA paper), [FVAL, XPT, KOPT, FOPT, XOPT],
             ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XOPT + D.
-            !vlag = calvlag(kopt, bmat, d, xpt, zmat)
+            ximproved = (f < fopt)
+            xdrop = xpt(:, knew_geo)
+            xosav = xpt(:, kopt)
             call updateh(knew_geo, kopt, d, xpt, bmat, zmat)
-
-            call r1update(hq, pq(knew_geo), xpt(:, knew_geo))
-            pq(knew_geo) = ZERO
-            pqinc = matprod(zmat, moderr * zmat(knew_geo, :))
-            pq = pq + pqinc
-            ! Alternatives:
-            ! !PQ = PQ + MATPROD(ZMAT, MODERR * ZMAT(KNEW, :))
-            ! !PQ = PQ + MODERR * MATPROD(ZMAT, ZMAT(KNEW, :))
-
-            ! Include the new interpolation point, and make the changes to GOPT at the old XOPT that are
-            ! caused by the updating of the quadratic model.
-            fval(knew_geo) = f
-            xpt(:, knew_geo) = max(sl, min(su, xopt + d))
-
-            gopt = gopt + moderr * bmat(:, knew_geo) + hess_mul(xopt, xpt, pqinc)
-
-            ! Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
-            if (f < fopt) then
-                kopt = knew_geo
-                xopt = xpt(:, kopt)
-                gopt = gopt + hess_mul(d, xpt, pq, hq)
-            end if
+            call updatexf(knew_geo, ximproved, f, max(sl, min(su, xopt + d)), kopt, fval, xpt, fopt, xopt)
+            call updateq(1_IK, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
         end if
     end if
 
@@ -610,7 +574,9 @@ end subroutine bobyqb
 
 function errbd(crvmin, d, gopt, hq, moderrsav, pq, rho, sl, su, xopt, xpt) result(ebound)
 !--------------------------------------------------------------------------------------------------!
-! This function defines EBOUND, which will be used in the definition of REDUCE_RHO and IMPROVE_GEO.
+! This function defines EBOUND, which will be used as a bound to test whether the errors in recent
+! models are sufficiently small. See the elaboration on pages 30--31 of the BOBYQA paper, in the
+! paragraphs surrounding (6.8)--(6.11).
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

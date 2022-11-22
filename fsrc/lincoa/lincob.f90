@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM05:28:06
+! Last Modified: Tuesday, November 22, 2022 AM11:39:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -398,7 +398,7 @@ do tr = 1, maxtr
             xdrop = xpt(:, knew_tr)
             xosav = xpt(:, kopt)
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
-            call updatexf(knew_tr, ximproved, d, f, kopt, fval, xpt, fopt, xopt)
+            call updatexf(knew_tr, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
             call updateq(idz, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
             ! Establish the alternative model, namely the least Frobenius norm interpolant. Replace
@@ -533,7 +533,7 @@ do tr = 1, maxtr
         xdrop = xpt(:, knew_geo)
         xosav = xpt(:, kopt)
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
-        call updatexf(knew_geo, ximproved, d, f, kopt, fval, xpt, fopt, xopt)
+        call updatexf(knew_geo, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
         call updateq(idz, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
         ! Establish the alternative model, namely the least Frobenius norm interpolant. Replace the
