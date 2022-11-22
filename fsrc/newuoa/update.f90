@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 22, 2022 PM04:18:30
+! Last Modified: Wednesday, November 23, 2022 AM12:13:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -222,7 +222,7 @@ subroutine tryqalt(idz, fval, ratio, bmat, zmat, itest, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
@@ -294,7 +294,7 @@ end if
 !if (abs(ratio) > 1.0E-2_RP) then
 !if (ratio > 1.0E-2_RP) then
 !if (.false.) then
-if (ratio > 1.0E-1_RP) then
+if (ratio > TENTH) then
     itest = 0_IK
 else
     galt = matprod(bmat(:, 1:npt), fval)
