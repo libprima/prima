@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM04:42:29
+! Last Modified: Tuesday, November 22, 2022 AM10:57:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -487,11 +487,16 @@ do iter = 1, maxiter
     end if
 end do
 
-! Return after setting XNEW to XOPT+D, giving careful attention to the bounds.
+! Set D, giving careful attention to the bounds.
 xnew = max(sl, min(su, xopt + d))
 xnew(trueloc(xbdi == -1)) = sl(trueloc(xbdi == -1))
 xnew(trueloc(xbdi == 1)) = su(trueloc(xbdi == 1))
 d = xnew - xopt
+
+! Set CRVMIN to ZERO if it has never been set.
+if (crvmin <= -HUGENUM) then
+    crvmin = ZERO
+end if
 
 !====================!
 !  Calculation ends  !
@@ -502,7 +507,7 @@ if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
     call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
-    call assert(crvmin <= -HUGENUM .or. crvmin >= 0, 'CRVMIN <= -HUGENUM or CRVMIN >= 0', srname)
+    call assert(crvmin >= 0, 'CRVMIN >= 0', srname)
     ! D is supposed to satisfy the bound constraints SL <= XOPT + D <= SU.
     call assert(all(xopt + d >= sl - TEN * EPS * max(ONE, abs(sl)) .and. &
         & xopt + d <= su + TEN * EPS * max(ONE, abs(su))), 'SL <= XOPT + D <= SU', srname)
