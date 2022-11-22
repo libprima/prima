@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, June 25, 2022 PM06:35:37
+! Last Modified: Tuesday, November 22, 2022 PM04:22:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -315,7 +315,8 @@ end if
 ! with 0.01. Here we use RATIO, which is more efficient as observed in Zaikun ZHANG's PhD thesis
 ! (Section 3.3.2).
 !if (abs(ratio) > 1.0e-2_RP) then
-if (ratio > 1.0E-2_RP) then
+!if (ratio > 1.0E-2_RP) then
+if (ratio > 1.0E-1_RP) then
     itest = 0_IK
 else
     galt = matprod(bmat(:, 1:npt), fval)
