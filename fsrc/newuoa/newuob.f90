@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 22, 2022 PM12:54:22
+! Last Modified: Tuesday, November 22, 2022 PM04:21:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -333,9 +333,8 @@ do tr = 1, maxtr
         ! although there is no difference theoretically. Note that FVAL(KOPT_OLD) may not equal
         ! FOPT_OLD --- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD) has been revised
         ! after the last function evaluation.
-        ! 5. Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
-        ! reset ITEST to 0 when RHO is reduced?
-        if (knew_tr > 0 .and. delta <= rho) then  ! DELTA = RHO.
+        !if (knew_tr > 0 .and. delta <= rho) then  ! Powell's code: try Q_alt only when DELT == RHO.
+        if (knew_tr > 0) then  ! This seems to work slightly better.
             call tryqalt(idz, fval - fopt, ratio, bmat, zmat, itest, gq, hq, pq)
         end if
     end if  ! End of IF (SHORTD .OR. .NOT. QRED > 0). The normal trust-region calculation ends here.
