@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 22, 2022 PM01:29:20
+! Last Modified: Tuesday, November 22, 2022 PM03:11:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -124,7 +124,7 @@ real(RP) :: delbar, &
 &        den(npt), moderr, &
 &        distsq(npt), dnorm, ebound, fopt,        &
 &        gisq, gqsq,       &
-&        ratio, rho, qred, pqinc(npt)
+&        ratio, rho, qred
 real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
@@ -272,8 +272,6 @@ do while (.true.)
             info = subinfo
             exit
         end if
-
-        fopt = fval(kopt)
 
         ! Update DNORMSAV and MODERRSAV.
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
@@ -491,8 +489,6 @@ do while (.true.)
                 info = subinfo
                 exit
             end if
-
-            fopt = fval(kopt)
 
             ! Update DNORMSAV and MODERRSAV.
             ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
