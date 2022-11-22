@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 22, 2022 AM10:03:20
+! Last Modified: Tuesday, November 22, 2022 AM10:51:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,15 +116,13 @@ real(RP) :: vlag(npt + size(x))
 real(RP) :: sl(size(x))
 real(RP) :: su(size(x))
 real(RP) :: xbase(size(x))
-real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
-real(RP) :: gnew(size(x))
-real(RP) :: delbar, bdtest(size(x)), &
-&        crvmin, curv(size(x)), delta, &
+real(RP) :: delbar, &
+&        crvmin, delta, &
 &        den(npt), moderr, &
-&        distsq(npt), dnorm, errbd, fopt,        &
+&        distsq(npt), dnorm, ebound, fopt,        &
 &        gisq, gqsq,       &
 &        ratio, rho, qred, pqinc(npt)
 real(RP) :: dnormsav(3)
@@ -198,7 +196,7 @@ call inith(ij, xpt, bmat, zmat)
 ! Set some more initial values and parameters.
 rho = rhobeg
 delta = rho
-errbd = ZERO
+ebound = ZERO
 dnormsav = HUGENUM
 moderrsav = HUGENUM
 itest = 0
@@ -244,18 +242,8 @@ do while (.true.)
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
-
-        ! Define ERRBD, which will be used in the definition of REDUCE_RHO and IMPROVE_GEO.
-        xnew = xopt + d
-        gnew = gopt + hess_mul(d, xpt, pq, hq)
-        bdtest = maxval(abs(moderrsav))
-        bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
-        bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
-        curv = diag(hq) + matprod(xpt**2, pq)
-        errbd = minval(max(bdtest, bdtest + HALF * curv * rho**2))
-        if (crvmin > 0) then
-            errbd = min(errbd, 0.125_RP * crvmin * rho**2)
-        end if
+        ! Evaluate EBOUND, which will be used in the definition of REDUCE_RHO and IMPROVE_GEO.
+        ebound = errbd(crvmin, d, gopt, hq, moderrsav, pq, rho, sl, su, xopt, xpt)
     else
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
@@ -403,9 +391,9 @@ do while (.true.)
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
-    ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
 
-    accurate_mod = all(abs(moderrsav) <= errbd) .and. all(dnormsav <= rho)
+    ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
+    accurate_mod = all(abs(moderrsav) <= ebound) .and. all(dnormsav <= rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
@@ -618,6 +606,88 @@ close (16)
 
 
 end subroutine bobyqb
+
+
+function errbd(crvmin, d, gopt, hq, moderrsav, pq, rho, sl, su, xopt, xpt) result(ebound)
+!--------------------------------------------------------------------------------------------------!
+! This function defines EBOUND, which will be used in the definition of REDUCE_RHO and IMPROVE_GEO.
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, diag, issymmetric, trueloc
+use, non_intrinsic :: powalg_mod, only : hess_mul
+
+implicit none
+
+! Inputs
+real(RP), intent(in) :: crvmin
+real(RP), intent(in) :: d(:)
+real(RP), intent(in) :: gopt(:)
+real(RP), intent(in) :: hq(:, :)
+real(RP), intent(in) :: moderrsav(:)
+real(RP), intent(in) :: pq(:)
+real(RP), intent(in) :: rho
+real(RP), intent(in) :: sl(:)
+real(RP), intent(in) :: su(:)
+real(RP), intent(in) :: xopt(:)
+real(RP), intent(in) :: xpt(:, :)
+
+! Outputs
+real(RP) :: ebound
+
+! Local variables
+character(len=*), parameter :: srname = 'ERRBD'
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: bfirst(size(d))
+real(RP) :: bsecond(size(d))
+real(RP) :: gnew(size(d))
+real(RP) :: xnew(size(d))
+
+! Sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(crvmin >= 0, 'CRVMIN >= 0', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) == N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(rho > 0, 'RHO > 0', srname)
+    call assert(size(sl) == n .and. size(su) == n, 'SIZE(SL) == N == SIZE(SU)', srname)
+    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(all(xopt >= sl .and. xopt <= su), 'SL <= XOPT <= SU', srname)
+    call assert(all(xpt >= spread(sl, dim=2, ncopies=npt) .and. &
+        & xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+xnew = xopt + d
+gnew = gopt + hess_mul(d, xpt, pq, hq)
+bfirst = maxval(abs(moderrsav))
+bfirst(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
+bfirst(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
+bsecond = HALF * (diag(hq) + matprod(xpt**2, pq)) * rho**2
+ebound = minval(max(bfirst, bfirst + bsecond))
+if (crvmin > 0) then
+    ebound = min(ebound, 0.125_RP * crvmin * rho**2)
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function errbd
 
 
 end module bobyqb_mod
