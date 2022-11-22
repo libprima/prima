@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 22, 2022 PM12:04:05
+! Last Modified: Tuesday, November 22, 2022 PM02:54:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ contains
 
 subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt, fopt, xopt)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates [XPT, FVAL, KOPT, XOPT, FOPT] so that XPT(:, KNEW) is updated to XNEW.
+! This subroutine updates [XPT, FVAL, KOPT, XOPT, FOPT] so that X(:, KNEW) is updated to XNEW.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!

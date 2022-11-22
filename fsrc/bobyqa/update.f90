@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 22, 2022 PM01:29:56
+! Last Modified: Tuesday, November 22, 2022 PM02:57:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -292,7 +292,7 @@ subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zma
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
-use, non_intrinsic :: linalg_mod, only : r1update, matprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : r1update, issymmetric
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_col, hess_mul
 
 implicit none
@@ -357,8 +357,7 @@ call r1update(hq, pq(knew), xdrop)
 pq(knew) = ZERO
 
 ! Update the implicit part of the Hessian.
-!pqinc = moderr * omega_col(idz, zmat, knew)
-pqinc = matprod(zmat, moderr * zmat(knew, :))
+pqinc = moderr * omega_col(idz, zmat, knew)
 pq = pq + pqinc
 
 ! Update the gradient, which needs the updated XPT.

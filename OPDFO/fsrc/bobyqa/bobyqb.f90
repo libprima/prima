@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 22, 2022 AM09:55:24
+! Last Modified: Tuesday, November 22, 2022 PM03:03:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,7 +60,7 @@ use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, 
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, hess_mul!, errquad
+use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, omega_col, hess_mul!, errquad
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
@@ -427,7 +427,8 @@ do while (.true.)
 
             call r1update(hq, pq(knew_tr), xpt(:, knew_tr))
             pq(knew_tr) = ZERO
-            pqinc = matprod(zmat, diff * zmat(knew_tr, :))
+            !pqinc = matprod(zmat, diff * zmat(knew_tr, :))
+            pqinc = diff * omega_col(1_IK, zmat, knew_tr)
             pq = pq + pqinc
             ! Alternatives:
             !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
@@ -618,7 +619,8 @@ do while (.true.)
 
             call r1update(hq, pq(knew_geo), xpt(:, knew_geo))
             pq(knew_geo) = ZERO
-            pqinc = matprod(zmat, diff * zmat(knew_geo, :))
+            !pqinc = matprod(zmat, diff * zmat(knew_geo, :))
+            pqinc = diff * omega_col(1_IK, zmat, knew_geo)
             pq = pq + pqinc
             ! Alternatives:
             !!PQ = PQ + MATPROD(ZMAT, DIFF * ZMAT(KNEW, :))
