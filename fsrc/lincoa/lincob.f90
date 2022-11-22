@@ -159,7 +159,7 @@ logical :: bad_trstep
 logical :: close_itpset
 logical :: small_trrad
 logical :: evaluated(npt)
-logical :: feasible, shortd, improve_geo, reduce_rho, freduced
+logical :: feasible, shortd, improve_geo, reduce_rho, ximproved
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK))), k
 integer(IK) :: nfilt, idz, &
 &           knew_tr, knew_geo, kopt, nact,      &
@@ -389,8 +389,8 @@ do tr = 1, maxtr
 
         ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW = XOPT + D.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
-        freduced = (f < fopt)
-        knew_tr = setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat)
+        ximproved = (f < fopt)
+        knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat)
         if (knew_tr > 0) then
             ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT,
             ! FOPT] and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes
@@ -398,8 +398,8 @@ do tr = 1, maxtr
             xdrop = xpt(:, knew_tr)
             xosav = xpt(:, kopt)
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
-            call updatexf(knew_tr, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-            call updateq(idz, knew_tr, freduced, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
+            call updatexf(knew_tr, ximproved, d, f, kopt, fval, xpt, fopt, xopt)
+            call updateq(idz, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
             ! Establish the alternative model, namely the least Frobenius norm interpolant. Replace
             ! the current model with the alternative model if the recent few (three) alternative
@@ -407,7 +407,7 @@ do tr = 1, maxtr
             call tryqalt(idz, bmat, fval - fopt, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
 
             ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
-            if (freduced) then
+            if (ximproved) then
                 call updateres(amat, b, delta, sqrt(sum(d**2)), xopt, rescon)
             end if
         end if
@@ -529,12 +529,12 @@ do tr = 1, maxtr
 
         ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
         ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
-        freduced = (f < fopt .and. feasible)
+        ximproved = (f < fopt .and. feasible)
         xdrop = xpt(:, knew_geo)
         xosav = xpt(:, kopt)
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
-        call updatexf(knew_geo, freduced, d, f, kopt, fval, xpt, fopt, xopt)
-        call updateq(idz, knew_geo, freduced, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
+        call updatexf(knew_geo, ximproved, d, f, kopt, fval, xpt, fopt, xopt)
+        call updateq(idz, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
         ! Establish the alternative model, namely the least Frobenius norm interpolant. Replace the
         ! current model with the alternative model if the recent few (three) alternative models are
@@ -543,7 +543,7 @@ do tr = 1, maxtr
         call tryqalt(idz, bmat, fval - fopt, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
 
         ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
-        if (freduced) then
+        if (ximproved) then
             call updateres(amat, b, delta, sqrt(sum(d**2)), xopt, rescon)
         end if
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.

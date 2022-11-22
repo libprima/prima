@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM10:56:48
+! Last Modified: Tuesday, November 22, 2022 AM10:03:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,7 +132,7 @@ real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 integer(IK) :: itest, knew_tr, knew_geo, kopt, nfresc
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, tr_success, reduce_rho, small_trrad, close_itpset, accurate_mod, adequate_geo, bad_trstep, rescued
+logical :: shortd, improve_geo, ximproved, reduce_rho, small_trrad, close_itpset, accurate_mod, adequate_geo, bad_trstep, rescued
 
 
 ! Sizes.
@@ -246,9 +246,9 @@ do while (.true.)
         end if
 
         ! Define ERRBD, which will be used in the definition of REDUCE_RHO and IMPROVE_GEO.
+        xnew = xopt + d
         gnew = gopt + hess_mul(d, xpt, pq, hq)
         bdtest = maxval(abs(moderrsav))
-        xnew = max(sl, min(su, xopt + d))  ! In precise arithmetic, XNEW = XOPT + D.
         bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
         bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
         curv = diag(hq) + matprod(xpt**2, pq)
@@ -304,17 +304,17 @@ do while (.true.)
             delta = rho
         end if
 
-        tr_success = (f < fopt)
+        ximproved = (f < fopt)
 
         ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
         ! It provides a useful safeguard, but is not invoked in most applications of BOBYQA.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
-        if (tr_success .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
+        if (ximproved .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
             ! Below are some alternatives conditions for calling RESCUE. They perform fairly well.
             ! !if (.false.) then  ! Do not call RESCUE at all.
-            ! !if (tr_success .and. .not. any(den > 0.25_RP * maxval(vlag(1:npt)**2))) then
-            ! !if (tr_success .and. .not. any(den > HALF * maxval(vlag(1:npt)**2))) then
+            ! !if (ximproved .and. .not. any(den > 0.25_RP * maxval(vlag(1:npt)**2))) then
+            ! !if (ximproved .and. .not. any(den > HALF * maxval(vlag(1:npt)**2))) then
             ! !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then  ! Powell's code.
             ! !if (.not. any(den > maxval(vlag(1:npt)**2))) then
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
@@ -326,16 +326,16 @@ do while (.true.)
             dnormsav = HUGENUM
             moderrsav = HUGENUM
 
-            ! RESCUE shifts XBASE to XBASE + XOPT. Update D, QRED, MODERR, and TR_SUCCESS.
+            ! RESCUE shifts XBASE to XBASE + XOPT. Update D, MODERR, and XIMPROVED.
+            ! Do NOT calculate QRED according to this D, as it is not really a trust region step.
             d = max(sl, min(su, d)) - xopt
-            qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-            moderr = f - fopt + qred
-            tr_success = (f < fopt)
+            moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)
+            ximproved = (f < fopt)
         end if
 
         ! Set KNEW_TR to the index of the interpolation point to be replaced by XOPT + D.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
-        knew_tr = setdrop_tr(kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
+        knew_tr = setdrop_tr(kopt, ximproved, bmat, d, delta, rho, xpt, zmat)
 
         if (knew_tr > 0) then
             ! Update [BMAT, ZMAT] (representing H in the BOBYQA paper), [GQ, HQ, PQ] (the quadratic

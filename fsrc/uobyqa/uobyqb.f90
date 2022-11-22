@@ -113,7 +113,7 @@ real(RP) :: ddmove, delta, diff, distsq(size(pl, 2)), delbar, &
 &        trtol, &
 &        qred, plknew(size(pl, 1)), fval(size(pl, 2))
 integer(IK) :: k, knew_tr, knew_geo, kopt, subinfo
-logical :: tr_success, shortd, improve_geo, reduce_rho, accurate_mod, adequate_geo, close_itpset, small_trrad, bad_trstep
+logical :: ximproved, shortd, improve_geo, reduce_rho, accurate_mod, adequate_geo, close_itpset, small_trrad, bad_trstep
 real(RP) :: dnormsav(3), moderrsav(size(dnormsav))
 
 ! Sizes.
@@ -267,7 +267,7 @@ do while (.true.)
         end if
         if (delta <= 1.5_RP * rho) delta = rho
 
-        tr_success = (f < fsave)
+        ximproved = (f < fsave)
 
         ! Set KNEW to the index of the next interpolation point to be deleted.
 
@@ -275,7 +275,7 @@ do while (.true.)
         ! When identifying the optimal point, as suggested in (56) of the UOBYQA paper and (7.5) of
         ! the NEWUOA paper, it is reasonable to take into account the new trust-region trial point
         ! XPT(:, KOPT) + D, which will become the optimal point in the next interpolation if
-        ! TR_SUCCESS is TRUE.
+        ! XIMPROVED is TRUE.
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
         !distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)  ! XSAVE is the unupdated XOPT
         weight = max(ONE, distsq / rho**2)**4
@@ -301,20 +301,20 @@ do while (.true.)
         score = weight * abs(vlag)
 
         ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
-        if (.not. tr_success) then
+        if (.not. ximproved) then
             score(kopt) = -ONE
         end if
 
         knew_tr = 0_IK
         ! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
-        if (any(score > 1) .or. (tr_success .and. any(score > 0))) then
+        if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
             ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
             ! exclude such K.
             knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
             !!MATLAB: [~, knew_tr] = max(score, [], 'omitnan');
-        elseif (tr_success) then
+        elseif (ximproved) then
             ! Powell's code does not include the following instructions. With Powell's code,
-            ! if DENABS consists of only NaN, then KNEW can be 0 even when TR_SUCCESS is TRUE.
+            ! if DENABS consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
             knew_tr = int(maxloc(distsq, dim=1), IK)
         end if
 

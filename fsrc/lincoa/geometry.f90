@@ -19,7 +19,7 @@ public :: setdrop_tr, geostep
 contains
 
 
-function setdrop_tr(idz, kopt, freduced, bmat, d, xpt, zmat) result(knew)
+function setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
@@ -45,7 +45,7 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: kopt
-logical, intent(in) :: freduced
+logical, intent(in) :: ximproved
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
@@ -87,11 +87,11 @@ end if
 ! Calculate the distance squares between the interpolation points and the "optimal point". When
 ! identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is reasonable to
 ! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
-! point in the next interpolation if FREDUCED is TRUE. Strangely, considering this new point
+! point in the next interpolation if XIMPROVED is TRUE. Strangely, considering this new point
 ! evidently worsens the performance of LINCOA according to a test on 20221108. Hence we choose not
-! to check FREDUCED. POWELL CODED IN THE SAME WAY.
+! to check XIMPROVED. POWELL CODED IN THE SAME WAY.
 ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF LINCOA ARE IMPLEMENTED DIFFERENTLY.
-! !if (freduced) then
+! !if (ximproved) then
 ! !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
 ! !    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
 ! !else
@@ -115,18 +115,18 @@ denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
 score = weight * denabs
 
 ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
-! This is not really needed if DISTSQ does not take FREDUCED into account and WEIGHT is defined to
+! This is not really needed if DISTSQ does not take XIMPROVED into account and WEIGHT is defined to
 ! DISTSQ to some power, in which case SCORE(KOPT) = 0. We keep the code for robustness.
-if (.not. freduced) then
+if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
 if (any(score > 0)) then
-!if (any(score > 1) .or. any(score > 0) .and. freduced) then
+!if (any(score > 1) .or. any(score > 0) .and. ximproved) then
     ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
-else if (freduced) then
+else if (ximproved) then
     ! Powell's code does not handle this case, leaving KNEW = 0 and leading to a segfault.
     knew = int(maxloc(distsq, dim=1), IK)
 else
@@ -140,9 +140,9 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    call assert(knew /= kopt .or. freduced, 'KNEW /= KOPT unless FREDUCED = TRUE', srname)
-    call assert(knew >= 1 .or. .not. freduced, 'KNEW >= 1 unless FREDUCED = FALSE', srname)
-    ! KNEW >= 1 when FREDUCED = TRUE unless NaN occurs in DISTSQ, which should not happen if the
+    call assert(knew /= kopt .or. ximproved, 'KNEW /= KOPT unless XIMPROVED = TRUE', srname)
+    call assert(knew >= 1 .or. .not. ximproved, 'KNEW >= 1 unless XIMPROVED = FALSE', srname)
+    ! KNEW >= 1 when XIMPROVED = TRUE unless NaN occurs in DISTSQ, which should not happen if the
     ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.
 end if
 end function setdrop_tr
