@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 22, 2022 PM02:57:45
+! Last Modified: Wednesday, November 23, 2022 AM12:11:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -382,7 +382,7 @@ end if
 end subroutine updateq
 
 
-subroutine tryqalt(idz, fval, ratio, bmat, zmat, itest, gq, hq, pq)
+subroutine tryqalt(bmat, fval, ratio, sl, su, xopt, xpt, zmat, itest, gopt, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine tests whether to replace Q by the alternative model, namely the model that
 ! minimizes the F-norm of the Hessian subject to the interpolation conditions. It does the
@@ -395,50 +395,57 @@ subroutine tryqalt(idz, fval, ratio, bmat, zmat, itest, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
-use, non_intrinsic :: powalg_mod, only : omega_mul
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, trueloc
+use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul
 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: idz
+real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
 real(RP), intent(in) :: fval(:)     ! FVAL(NPT)
 real(RP), intent(in) :: ratio
-real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
+real(RP), intent(in) :: sl(:)       ! SL(N)
+real(RP), intent(in) :: su(:)       ! SU(N)
+real(RP), intent(in) :: xopt(:)     ! XOPT(N)
+real(RP), intent(in) :: xpt(:, :)   ! XOPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! In-output
 integer(IK), intent(inout) :: itest
-real(RP), intent(inout) :: gq(:)    ! GQ(N)
+real(RP), intent(inout) :: gopt(:)    ! GOPT(N)
 real(RP), intent(inout) :: hq(:, :) ! HQ(N, N)
 real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
 ! N.B.:
-! GQ, HQ, and PQ should be INTENT(INOUT) instead of INTENT(OUT). According to the Fortran 2018
+! GOPT, HQ, and PQ should be INTENT(INOUT) instead of INTENT(OUT). According to the Fortran 2018
 ! standard, an INTENT(OUT) dummy argument becomes undefined on invocation of the procedure.
 ! Therefore, if the procedure does not define such an argument, its value becomes undefined,
-! which is the case for HQ and PQ when ITEST < 3 at exit. In addition, the information in GQ is
+! which is the case for HQ and PQ when ITEST < 3 at exit. In addition, the information in GOPT is
 ! needed for definining ITEST, so it must be INTENT(INOUT).
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRYQALT'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: galt(size(gq))
+real(RP) :: galt(size(gopt))
+real(RP) :: pgopt(size(gopt))
+real(RP) :: pgalt(size(gopt))
+real(RP) :: pqalt(size(pq))
+real(RP) :: gqsq
+real(RP) :: gisq
 
 ! Debugging variables
 !real(RP) :: intp_tol
 
 ! Sizes
-n = int(size(gq), kind(n))
+n = int(size(gopt), kind(n))
 npt = int(size(pq), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
-    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
     ! NaN, which should NOT happen due to the moderated extreme barrier.
     call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
@@ -448,12 +455,12 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! [GQ, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
+    ! [GOPT, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
     !intp_tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * real(size(pq), RP) * EPS))
-    !call wassert(errquad(fval, xpt, gq, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
+    !call wassert(errquad(fval, xpt, gopt, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 !====================!
@@ -465,36 +472,57 @@ end if
 ! with 0.01. Here we use RATIO, which is more efficient as observed in Zaikun ZHANG's PhD thesis
 ! (Section 3.3.2).
 !if (abs(ratio) > 1.0e-2_RP) then
-if (ratio > 1.0E-2_RP) then
-    itest = 0_IK
-else
-    galt = matprod(bmat(:, 1:npt), fval)
-    if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
-        itest = 0_IK
-    else
-        itest = itest + 1_IK
-    end if
-end if
+!if (ratio > 1.0E-2_RP) then
+!if (ratio > 1.0E-1_RP) then
+!    itest = 0_IK
+!else
+!    galt = matprod(bmat(:, 1:npt), fval)
+!    if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
+!        itest = 0_IK
+!    else
+!        itest = itest + 1_IK
+!    end if
+!end if
 
-! Replace Q with Q_alt when ITEST >= 3.
+pgopt = gopt
+pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))
+pgopt(trueloc(xopt <= sl)) = min(ZERO, gopt(trueloc(xopt <= sl)))
+gqsq = sum(pgopt**2)
+
+! Calculate the parameters of the least Frobenius norm interpolant to the current data.
+pqalt = matprod(zmat, matprod(fval, zmat))
+galt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pqalt)
+
+pgalt = galt
+pgalt(trueloc(xopt >= su)) = max(ZERO, galt(trueloc(xopt >= su)))
+pgalt(trueloc(xopt <= sl)) = min(ZERO, galt(trueloc(xopt <= sl)))
+gisq = sum(pgalt**2)
+
+! Test whether to replace the new quadratic model by the least Frobenius norm interpolant,
+! making the replacement if the test is satisfied.
+! N.B.:
+! 1. The replacement is done only after a trust-region step, which differs from LINCOA.
+! 2. The replacement is done regardless of DELTA <= RHO or not, which differs from NEWUOA.
+itest = itest + 1
+if (ratio > TENTH) itest = 0  ! This seems to improve the performance.
+if (gqsq < TEN * gisq) itest = 0
 if (itest >= 3) then
-    gq = galt
+    gopt = galt
+    pq = pqalt
     hq = ZERO
-    pq = omega_mul(idz, zmat, fval)
-    itest = 0_IK
+    itest = 0
 end if
-
 !====================!
 !  Calculation ends  !
 !====================!
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! [GQ, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
-    !call wassert(errquad(fval, xpt, gq, pq, hq) <= intp_tol, 'QALT interpolates FVAL at XPT', srname)
+    ! [GOPT, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
+    !call wassert(errquad(fval, xpt, gopt, pq, hq) <= intp_tol, 'QALT interpolates FVAL at XPT', srname)
 end if
 
 end subroutine tryqalt

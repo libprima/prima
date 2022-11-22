@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 22, 2022 PM03:03:12
+! Last Modified: Wednesday, November 23, 2022 AM12:12:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -469,6 +469,7 @@ do while (.true.)
             ! 1. The replacement is done only after a trust-region step, which differs from LINCOA.
             ! 2. The replacement is done regardless of DELTA <= RHO or not, which differs from NEWUOA.
             itest = itest + 1
+            if (ratio > TENTH) itest = 0
             if (gqsq < TEN * gisq) itest = 0
             if (itest >= 3) then
                 gopt = galt
