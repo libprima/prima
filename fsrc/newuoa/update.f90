@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 22, 2022 PM02:54:23
+! Last Modified: Tuesday, November 22, 2022 PM04:18:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -290,9 +290,11 @@ end if
 ! In the NEWUOA paper, Powell replaces Q with Q_alt when RATIO <= 0.01 and ||G_alt|| <= 0.1||GQ||
 ! hold for 3 consecutive times (eq(8.4)). But Powell's code compares ABS(RATIO) instead of RATIO
 ! with 0.01. Here we use RATIO, which is more efficient as observed in Zaikun ZHANG's PhD thesis
-! (Section 3.3.2).
-!if (abs(ratio) > 1.0e-2_RP) then
-if (ratio > 1.0E-2_RP) then
+! (Section 3.3.2). Update (20221121): RATIO > 0.1 seems to work better.
+!if (abs(ratio) > 1.0E-2_RP) then
+!if (ratio > 1.0E-2_RP) then
+!if (.false.) then
+if (ratio > 1.0E-1_RP) then
     itest = 0_IK
 else
     galt = matprod(bmat(:, 1:npt), fval)
