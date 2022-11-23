@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM02:11:53
+! Last Modified: Thursday, November 24, 2022 AM12:13:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -533,7 +533,7 @@ do while (.true.)
         den = calden(kopt, bmat, d, xpt, zmat)
         rescued = .false.
         !if (.true.) then
-            if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then  ! This is the correct condition
+        if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then  ! This is the correct condition
             !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > vlag(knew_geo)**2)) then ! This is for test RESCUE
             nfresc = nf
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
@@ -550,16 +550,17 @@ do while (.true.)
             ! improve (rescue) its geometry. Thus no geometry step is needed anymore. If NFRESC
             ! equals NF, then RESCUE did not make any change to XPT, but only recalculated the
             ! model ans [BMAT, ZMAT]; in this case, we calculate a new geometry step.
-            if (nfresc == nf) then
-                d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
-            else
-                rescued = .true.
-            end if
-        end if
+            !if (nfresc == nf) then
+            !d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
+            !else
+            !    rescued = .true.
+            !end if
+            !end if
 
-        ! Put the variables for the next calculation of the objective function in XNEW, with any
-        ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
-        if (.not. rescued) then
+            ! Put the variables for the next calculation of the objective function in XNEW, with any
+            ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
+            !if (.not. rescued) then
+        else
             xnew = min(max(sl, xopt + d), su)
             x = min(max(xl, xbase + xnew), xu)
             x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
