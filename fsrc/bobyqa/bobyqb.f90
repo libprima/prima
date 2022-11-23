@@ -4,13 +4,13 @@ module bobyqb_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
-! TODO: verify that the iterates/steps respect bounds in the pre/postconditions.
+! TODO: Verify that the iterates/steps respect bounds in the pre/postconditions.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM08:28:41
+! Last Modified: Wednesday, November 23, 2022 PM09:42:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -468,11 +468,11 @@ do while (.true.)
             ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
             moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
             moderrsav = [moderrsav(2:size(moderrsav)), moderr]
-            !------------------------------------------------------------------------------------------!
+            !--------------------------------------------------------------------------------------!
             ! Zaikun 20220912: Powell's code does not update DNORM. Therefore, DNORM is the length
             ! of the last trust-region trial step, which is inconsistent with MODERRSAV. The same
             ! problem exists in NEWUOA.
-            !------------------------------------------------------------------------------------------!
+            !--------------------------------------------------------------------------------------!
 
             ! Update [BMAT, ZMAT] (represents H in the BOBYQA paper), [FVAL, XPT, KOPT, FOPT, XOPT],
             ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XOPT + D.
@@ -533,7 +533,6 @@ close (16)
 !====================!
 
 ! Postconditions
-
 
 end subroutine bobyqb
 
