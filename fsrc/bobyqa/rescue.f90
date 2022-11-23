@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 AM10:56:06
+! Last Modified: Wednesday, November 23, 2022 PM01:18:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -320,10 +320,10 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
     ! 2. For each K /= KOPT, if PTSID(K) == 0, then XPT_PROV(:, K) = XPT(:, K); if PTSID(K) > 0,
     ! then XPT_PROV(:, K) has nonzeros only at IP (if IP > 0), IQ (if IQ > 0) positions, where IP
     ! and IQ are the P(J) and Q(J) defined in and below (2.4) of the BOBYQA paper.
-    !
+
     ! First, form the (W - V) vector for XPT(:, KORIG).
     ! In the code below, WMV = W - V = w(XNEW) - w(XOPT) without the (NPT+1)th entry, where
-    ! XNEW = XPT(:,KORIG), XOPT = XPT_PROV = 0, and w(.) is defined by (6.3) of the NEWUOA paper
+    ! XNEW = XPT(:, KORIG), XOPT = XPT_PROV = 0, and w(.) is defined by (6.3) of the NEWUOA paper
     ! (as well as (4.10) of the BOBYQA paper). Since XOPT = 0, we see from (6.3) that w(XOPT)(K) = 0
     ! for all K except that w(XOPT)(NPT+1) = 1. Thus WMV is the same at w(XNEW) without the
     ! (NPT+1)-th entry. Therefore, WMV= [HALF*MATPROD(XNEW, XPT_PROV)**2, XNEW].
@@ -333,7 +333,7 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
         else if (ptsid(k) <= 0) then  ! Indeed, PTSID >= 0. So PTSID(K) <= 0 means PTSID(K) = 0.
             wmv(k) = inprod(xpt(:, korig), xpt(:, k))
         else
-            ip = int(ptsid(k))  ! IP = 0 if 0 < PTSID(K) < 1. INT(X) = [X], i.e., it rounds X towards 0.
+            ip = int(ptsid(k))  ! IP = 0 if 0 < PTSID(K) < 1. INT(X) = [X], rounding X towards 0.
             iq = int(real(n + 1, RP) * ptsid(k) - real(ip * (n + 1), RP))
             call assert(ip >= 0 .and. ip <= npt .and. iq >= 0 .and. iq <= npt, '0 <= IP, IQ <= NPT', srname)
             if (ip > 0 .and. iq > 0) then
@@ -349,9 +349,11 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
         wmv(k) = HALF * wmv(k) * wmv(k)
     end do
     wmv(npt + 1:npt + n) = xpt(:, korig)
+
     ! Now calculate VLAG = H*WMV + e_KOPT according to (4.26) of the NEWUOA paper, except VLAG(KOPT).
     vlag(1:npt) = matprod(zmat, matprod(wmv(1:npt), zmat)) + matprod(wmv(npt + 1:npt + n), bmat(:, 1:npt))
     vlag(npt + 1:npt + n) = matprod(bmat, wmv(1:npt + n))
+
     ! Now calculate BETA. According to (4.12) of the NEWUOA paper (also (4.10) of the BOBYQA paper),
     ! BETA = HALF*|XNEW - XOPT|^4 - WMV'*H*WMV. To calculate WMX'*H*WMV, note that
     ! WMV'*H*WMV = WMV' * [Z*Z', B2^T; B1, B2] * WMV with Z = ZMAT, B1 = BMAT(:, 1:NPT), and
@@ -359,6 +361,7 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
     ! WMV'*H*WMV = |W1*Z|^2 + 2*W1'*B1*W2 + W1'*B2*W2 = |W1*Z|^2 + W1'(B1*W2 + [B1, B2]*WMV).
     bsum = inprod(wmv(1:n), matprod(bmat(:, 1:npt), wmv(1:npt)) + matprod(bmat, wmv))
     beta = HALF * sum(xpt(:, korig)**2)**2 - sum(matprod(wmv(1:npt), zmat)**2) - bsum
+
     ! Finally, set VLAG(KOPT) to the correct value.
     vlag(kopt) = vlag(kopt) + ONE
 
@@ -383,14 +386,13 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
         vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
         !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
     end if
-    if (kopt == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
-        ! Indeed, KOPT == 0 can be removed from the above condition, because KOPT == 0 implies that
-        ! DENOM == 0 <= 1.0E-2*VLMXSQ. However, we prefer to mention KOPT == 0 explicitly.
-        ! Until finding the next KORIG that renders DENOM > 1.0E-2*VLMXSQ, we will skip the original
-        ! interpolation points with a negative or zero score when looking for KORIG (see the
-        ! definition of KORIG). When the KORIG satisfying the aforesaid inequality is found, all the
-        ! scores will be reset to their absolute values, so that all the original
-        ! points with nonzero scores will be considered again.
+    if (kprov == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
+        ! Indeed, KPROV == 0 can be removed from the above condition, as KPROV == 0 implies that
+        ! DENOM == 0 <= 1.0E-2*VLMXSQ, yet we prefer to mention KPROV == 0 explicitly. Until finding
+        ! the next KORIG that renders DENOM > 1.0E-2*VLMXSQ, we will skip the original interpolation
+        ! points with a nonpositive score when looking for KORIG (see the definition of KORIG). When
+        ! the KORIG validating the aforesaid inequality is found, the scores will be reset to their
+        ! absolute values, so that all the original points with nonzero scores will be checked again.
         score(korig) = -score(korig) - scoreinc
         cycle
     end if
@@ -409,7 +411,7 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
     ptsid(korig) = ZERO
     ! Set SCORE(KORIG) = 0 so that the KORIG-th original point will be skipped in later loops.
     score(korig) = ZERO
-    ! Reset SCORE to ABS(SCORE) so that all the origin points with a nonzero score will be checked
+    ! Reset SCORE to ABS(SCORE) so that all the original points with a nonzero score will be checked
     ! in later loops.
     score = abs(score)
 
