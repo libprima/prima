@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM02:12:37
+! Last Modified: Wednesday, November 23, 2022 PM08:28:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -296,8 +296,7 @@ do while (.true.)
         ! improve the performance, especially when pursing high-precision solutions..
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
-        if (.true.) then
-            !if (ximproved .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
+        if (ximproved .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
             ! Below are some alternatives conditions for calling RESCUE. They perform fairly well.
             ! !if (.false.) then  ! Do not call RESCUE at all.
             ! !if (ximproved .and. .not. any(den > 0.25_RP * maxval(vlag(1:npt)**2))) then
@@ -418,8 +417,7 @@ do while (.true.)
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         rescued = .false.
-        if (.true.) then
-            !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
+        if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
             ! The condition below works the same as the above one, which is used in Powell's code.
             ! !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > 0.25 * vlag(knew_geo)**2)) then
             nfresc = nf
