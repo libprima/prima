@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM09:30:18
+! Last Modified: Wednesday, November 23, 2022 PM10:16:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,8 +23,8 @@ public :: rescue
 contains
 
 
-subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, fval,&
-    & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, info)
+subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval, &
+    & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine implements "the method of RESCUE" introduced in Section 5 of BOBYQA paper. The
 ! purpose of this subroutine is to replace a few interpolation points by new points in order to
@@ -115,7 +115,6 @@ real(RP), intent(in) :: xu(:)  ! XU(N)
 ! In-outputs
 integer(IK), intent(inout) :: kopt
 integer(IK), intent(inout) :: nf
-real(RP), intent(inout) :: bmat(:, :)  !  BMAT(N, NPT + N)
 real(RP), intent(inout) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(inout) :: fopt
 real(RP), intent(inout) :: fval(:)  ! FVAL(NPT)
@@ -128,12 +127,11 @@ real(RP), intent(inout) :: xbase(:)  ! XBASE(N)
 real(RP), intent(inout) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(inout) :: xopt(:)  ! XOPT(N)
 real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
-real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
-! N.B.: BMAT and ZMAT must be INTENT(INOUT) rather than INTENT(OUT); otherwise, they will be
-! undefined when the subroutine returns due to NF >= MAXFUN before any calculation starts.
 
 ! Outputs
 integer(IK), intent(out) :: info
+real(RP), intent(out) :: bmat(:, :)  !  BMAT(N, NPT + N)
+real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! Local variables
 character(len=*), parameter :: srname = 'RESCUE'
@@ -209,7 +207,6 @@ if (DEBUGGING) then
     call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
         & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
-    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
 end if
@@ -217,7 +214,10 @@ end if
 info = INFO_DFT
 
 ! Do nothing if NF already reaches it upper bound.
+! To please Fortran compilers, set BMAT and ZMAT before returning, though they will not be used.
 if (nf >= maxfun) then
+    bmat = ZERO
+    zmat = ZERO
     info = MAXFUN_REACHED
     return
 end if
