@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 30, 2022 PM08:21:06
+! Last Modified: Wednesday, November 23, 2022 PM02:10:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -379,7 +379,8 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
         !!MATLAB: [denom, kprov] = max(den, [], 'omitnan');
     end if
     vlmxsq = HUGENUM
-    if (any(.not. is_nan(vlag(1:npt)))) then
+    !if (any(.not. is_nan(vlag(1:npt)))) then
+    if (all(.not. is_nan(vlag(1:npt)))) then
         vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
         !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
     end if
