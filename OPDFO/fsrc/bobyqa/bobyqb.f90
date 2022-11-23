@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 AM12:12:26
+! Last Modified: Wednesday, November 23, 2022 PM02:11:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -344,7 +344,8 @@ do while (.true.)
         !if (tr_success .and. .not. any(den > 0.5 * maxval(vlag(1:npt)**2))) then
         !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then
         !if (.not. any(den > maxval(vlag(1:npt)**2))) then
-        if (tr_success .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then  ! This works well
+        !if (tr_success .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then  ! This works well
+        if (.true.) then
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
@@ -532,7 +533,8 @@ do while (.true.)
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         rescued = .false.
-        if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then  ! This is the correct condition
+        if (.true.) then
+            !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then  ! This is the correct condition
             !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > vlag(knew_geo)**2)) then ! This is for test RESCUE
             nfresc = nf
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat, fhist, fopt, &
@@ -642,7 +644,7 @@ do while (.true.)
         end if
     end if
 
-    ! The calculations with the current value of RHO are complete. Update RHO and DELTA.
+! The calculations with the current value of RHO are complete. Update RHO and DELTA.
     if (reduce_rho) then
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
