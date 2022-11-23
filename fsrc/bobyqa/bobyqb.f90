@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM10:12:08
+! Last Modified: Thursday, November 24, 2022 AM12:07:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -127,9 +127,9 @@ real(RP) :: delbar, &
 real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
 !real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x)), gqsq, gisq
-integer(IK) :: itest, knew_tr, knew_geo, kopt, nfresc
+integer(IK) :: itest, knew_tr, knew_geo, kopt
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, ximproved, reduce_rho, small_trrad, close_itpset, accurate_mod, adequate_geo, bad_trstep, rescued
+logical :: shortd, improve_geo, ximproved, reduce_rho, small_trrad, close_itpset, accurate_mod, adequate_geo, bad_trstep
 
 
 ! Sizes.
@@ -291,7 +291,7 @@ do while (.true.)
 
         ximproved = (f < fopt)
 
-        ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
+        ! Call RESCUE f rounding errors have damaged the denominator corresponding to D.
         ! RESCUE is invoked sometimes though not often after a trust-region step, and it does
         ! improve the performance, especially when pursing high-precision solutions..
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
@@ -323,16 +323,18 @@ do while (.true.)
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
         knew_tr = setdrop_tr(kopt, ximproved, bmat, d, delta, rho, xpt, zmat)
 
+        ! Update [BMAT, ZMAT] (representing H in the BOBYQA paper), [GQ, HQ, PQ] (the quadratic
+        ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XOPT + D. If
+        ! KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
+        ! decides not to include XOPT + D into XPT.
         if (knew_tr > 0) then
-            ! Update [BMAT, ZMAT] (representing H in the BOBYQA paper), [GQ, HQ, PQ] (the quadratic
-            ! model), and [FVAL, XPT, KOPT, FOPT, XOPT] so that XPT(:, KNEW_TR) becomes XOPT + D. If
-            ! KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
-            ! decides not to include XOPT + D into XPT.
             xdrop = xpt(:, knew_tr)
             xosav = xpt(:, kopt)
             call updateh(knew_tr, kopt, d, xpt, bmat, zmat)
             call updatexf(knew_tr, ximproved, f, max(sl, min(su, xopt + d)), kopt, fval, xpt, fopt, xopt)
             call updateq(1_IK, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
+            ! Try whether to replace the new quadratic model with the alternative model, namely the
+            ! least Frobenius norm interpolant.
             call tryqalt(bmat, fval - fopt, ratio, sl, su, xopt, xpt, zmat, itest, gopt, hq, pq)
         end if
     end if
@@ -412,15 +414,13 @@ do while (.true.)
         ! Find D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) becomes XOPT + D.
         d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
 
-        ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
+        ! Call RESCUE if rounding errors have damaged the denominator corresponding to D.
         ! It seems that RESCUE is not invoked often after a geometry step.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
-        rescued = .false.
         if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
             ! The condition below works the same as the above one, which is used in Powell's code.
             ! !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > 0.25 * vlag(knew_geo)**2)) then
-            nfresc = nf
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
@@ -430,19 +430,16 @@ do while (.true.)
 
             dnormsav = HUGENUM
             moderrsav = HUGENUM
-
-            ! If NFRESC < NF, then RESCUE has updated XPT (also the model and [BMAT, ZMAT]) to
-            ! improve (rescue) its geometry. Thus no geometry step is needed anymore. If NFRESC
-            ! equals NF, then RESCUE did not make any change to XPT, but only recalculated the
-            ! model ans [BMAT, ZMAT]; in this case, we calculate a new geometry step.
-            if (nfresc == nf) then
-                d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
-            else
-                rescued = .true.
-            end if
-        end if
-
-        if (.not. rescued) then
+            ! The geometry step calculated previously is not usable due to damaging rounding errors.
+            ! Powell's code calculates a new geometry step if RESCUE did not introduce any new point
+            ! into XPT (but only recalculated [BMAT, ZMAT]). However, we do not do this, because
+            ! RESCUE would have introduced new points to rescue (improve) XPT if its geometry were
+            ! bad. Since REDUCE did not do so, it is a certificate that its geometry is acceptable,
+            ! so we continue with the next trust-region step without taking a geometry step. In this
+            ! way, the structure of the code is simpler, and there is almost no difference in the
+            ! performance. N.B.: make sure that DELTA is reduced when IMPROVE_GEO is TRUE;
+            ! otherwise, an infinite loop may occur if the geometry step is skipped.
+        else
             ! Calculate the next value of the objective function.
             x = xinbd(xbase, xopt + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
             call evaluate(calfun, x, f)
@@ -462,17 +459,14 @@ do while (.true.)
 
             ! Update DNORMSAV and MODERRSAV.
             ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
+            ! Powell's code does not update DNORM. Therefore, DNORM is the length of the last
+            ! trust-region trial step, inconsistent with MODERRSAV. The same problem exists in NEWUOA.
             dnorm = min(delbar, sqrt(sum(d**2)))
             dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
             ! MODERR is the error of the current model in predicting the change in F due to D.
             ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
             moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
             moderrsav = [moderrsav(2:size(moderrsav)), moderr]
-            !--------------------------------------------------------------------------------------!
-            ! Zaikun 20220912: Powell's code does not update DNORM. Therefore, DNORM is the length
-            ! of the last trust-region trial step, which is inconsistent with MODERRSAV. The same
-            ! problem exists in NEWUOA.
-            !--------------------------------------------------------------------------------------!
 
             ! Update [BMAT, ZMAT] (represents H in the BOBYQA paper), [FVAL, XPT, KOPT, FOPT, XOPT],
             ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XOPT + D.
