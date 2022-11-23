@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 AM12:11:33
+! Last Modified: Wednesday, November 23, 2022 AM10:38:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -61,14 +61,12 @@ real(RP) :: alpha
 real(RP) :: beta
 real(RP) :: denom
 real(RP) :: grot(2, 2)
+real(RP) :: hcol(size(bmat, 2))
 real(RP) :: sqrtdn
 real(RP) :: tau
-real(RP) :: tempa
-real(RP) :: tempb
 real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(bmat, 2))
-real(RP) :: w(size(bmat, 2))
 real(RP) :: ztest
 
 ! Sizes.
@@ -139,21 +137,19 @@ do j = 2, npt - n - 1_IK
     zmat(knew, j) = ZERO
 end do
 
-! Put the first NPT components of the KNEW-th column of H into W(1:NPT).
-w(1:npt) = zmat(knew, 1) * zmat(:, 1)
-alpha = w(knew)
+! Put the KNEW-th column of the unupdated H (except for the (NPT+1)th entry) into HCOL.
+hcol(1:npt) = zmat(knew, 1) * zmat(:, 1)
+hcol(npt + 1:npt + n) = bmat(:, knew)
 
 ! Complete the updating of ZMAT. See (4.14) of the BOBYQA paper.
 sqrtdn = sqrt(denom)
-tempa = tau / sqrtdn
-tempb = zmat(knew, 1) / sqrtdn
-zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
+zmat(:, 1) = (tau / sqrtdn) * zmat(:, 1) - (zmat(knew, 1) / sqrtdn) * vlag(1:npt)
 
 ! Finally, update the matrix BMAT. It implements the last N rows of (4.9) in the BOBYQA paper.
-w(npt + 1:npt + n) = bmat(:, knew)
-v1 = (alpha * vlag(npt + 1:npt + n) - tau * w(npt + 1:npt + n)) / denom
-v2 = (-beta * w(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
-bmat = bmat + outprod(v1, vlag) + outprod(v2, w) !call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
+alpha = hcol(knew)
+v1 = (alpha * vlag(npt + 1:npt + n) - tau * hcol(npt + 1:npt + n)) / denom
+v2 = (-beta * hcol(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
+bmat = bmat + outprod(v1, vlag) + outprod(v2, hcol) !call r2update(bmat, ONE, v1, vlag, ONE, v2, hcol)
 ! Numerically, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be symmetric.
 call symmetrize(bmat(:, npt + 1:npt + n))
 
