@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 AM09:59:50
+! Last Modified: Wednesday, November 23, 2022 PM01:27:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -292,7 +292,8 @@ do while (.true.)
         ximproved = (f < fopt)
 
         ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-        ! It provides a useful safeguard, but is not invoked in most applications of BOBYQA.
+        ! RESCUE is invoked sometimes though not often after a trust-region step, and it does
+        ! improve the performance, especially when pursing high-precision solutions..
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         if (ximproved .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
@@ -412,7 +413,7 @@ do while (.true.)
         d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
 
         ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
-        ! It provides a useful safeguard, but is not invoked in most applications of BOBYQA.
+        ! It seems that RESCUE is not invoked often after a geometry step.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         rescued = .false.
