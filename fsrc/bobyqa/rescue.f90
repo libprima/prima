@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM01:18:01
+! Last Modified: Wednesday, November 23, 2022 PM02:10:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -381,12 +381,14 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
         denom = den(kprov)
         !!MATLAB: [denom, kprov] = max(den, [], 'omitnan');
     end if
-    vlmxsq = HUGENUM
-    if (any(.not. is_nan(vlag(1:npt)))) then
-        vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
-        !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
-    end if
-    if (kprov == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
+    !vlmxsq = HUGENUM
+    !!if (any(.not. is_nan(vlag(1:npt)))) then
+    !if (.not. any(is_nan(vlag(1:npt)))) then
+    !    vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
+    !    !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
+    !end if
+    !if (kprov == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
+    if (is_nan(sum(abs(vlag))) .or. denom <= 1.0E-2_RP * maxval(vlag(1:npt)**2)) then
         ! Indeed, KPROV == 0 can be removed from the above condition, as KPROV == 0 implies that
         ! DENOM == 0 <= 1.0E-2*VLMXSQ, yet we prefer to mention KPROV == 0 explicitly. Until finding
         ! the next KORIG that renders DENOM > 1.0E-2*VLMXSQ, we will skip the original interpolation
