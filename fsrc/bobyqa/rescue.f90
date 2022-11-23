@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM10:16:44
+! Last Modified: Wednesday, November 23, 2022 PM10:41:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -525,6 +525,13 @@ if (kopt /= kbase) then
     xopt = xpt(:, kopt)
     gopt = gopt + hess_mul(xopt, xpt, pq, hq)
 end if
+
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20221123: What if we rebuild the model? It seems to worsen the performance of BOBYQA.
+! !hq = ZERO
+! !pq = omega_mul(1_IK, zmat, fval - fopt)
+! !gopt = matprod(bmat(:, 1:npt), fval - fopt) + hess_mul(xopt, xpt, pq)
+!--------------------------------------------------------------------------------------------------!
 
 ! Postconditions
 if (DEBUGGING) then
