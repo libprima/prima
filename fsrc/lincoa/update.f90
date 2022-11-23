@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 22, 2022 PM02:54:51
+! Last Modified: Thursday, November 24, 2022 AM12:31:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -317,7 +317,7 @@ end if
 end subroutine tryqalt
 
 
-subroutine updateres(amat, b, delta, dnorm, xopt, rescon)
+subroutine updateres(ximproved, amat, b, delta, dnorm, xopt, rescon)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates RESCON when XOPT has been updated by a step D.
 ! RESCON holds information about the constraint residuals at the current trust region center XOPT.
@@ -337,6 +337,7 @@ use, non_intrinsic :: linalg_mod, only : matprod, trueloc
 implicit none
 
 ! Inputs
+logical, intent(in) :: ximproved
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: b(:)  ! B(M)
 real(RP), intent(in) :: delta
@@ -372,6 +373,12 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
+
+! Zaikun 20221115: Currently, UPDATERES does not update RESCON unless XIMPROVED is TRUE. Shouldn't
+! we do it whenever DELTA is updated? Have we MISUNDERSTOOD RESCON?
+if (.not. ximproved) then
+    return
+end if
 
 mask = (abs(rescon) < dnorm + delta)
 ax(trueloc(mask)) = matprod(xopt, amat(:, trueloc(mask)))
