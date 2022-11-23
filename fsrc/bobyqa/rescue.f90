@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM06:20:48
+! Last Modified: Wednesday, November 23, 2022 PM07:32:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -88,7 +88,7 @@ subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
@@ -156,7 +156,6 @@ logical :: mask(size(xpt, 1))
 real(RP) :: beta
 real(RP) :: bsum
 real(RP) :: den(size(xpt, 2))
-real(RP) :: denom
 real(RP) :: f
 real(RP) :: fbase
 real(RP) :: hdiag(size(xpt, 2))
@@ -169,7 +168,6 @@ real(RP) :: scoreinc
 real(RP) :: sfrac
 real(RP) :: temp
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
-real(RP) :: vlmxsq
 real(RP) :: vquad
 real(RP) :: wmv(size(xpt, 1) + size(xpt, 2))
 real(RP) :: x(size(xpt, 1))
@@ -308,10 +306,10 @@ nprov = npt - 1_IK
 ! loops to find an original point that can safely replace a provisional point; if such
 ! a pair of origin and provisional points are found, then NPROV will de reduced by 1; otherwise,
 ! SCORE will become all zero or negative, and the loop will exit.
-do while (any(score(1:npt) > 0) .and. nprov > 0)
+do while (any(score > 0) .and. nprov > 0)
     ! Pick the index KORIG of an original point that has not yet replaced one of the provisional
     ! points, giving attention to the closeness to XOPT and to previous tries with KORIG.
-    korig = int(minloc(score(1:npt), mask=(score(1:npt) > 0), dim=1), IK)
+    korig = int(minloc(score, mask=(score > 0), dim=1), IK)
 
     ! Calculate VLAG and BETA for the required updating of the H matrix if XPT(:, KORIG) is
     ! reinstated in the set of interpolation points, which means to replace a point in the
@@ -367,40 +365,23 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
 
     ! For all K with PTSID(K) > 0, calculate the denominator DEN(K) = SIGMA in the updating formula
     ! of H for XPT(:, KORIG) to replace XPT_PROV(:, K).
-    hdiag(trueloc(ptsid > 0)) = sum(zmat(trueloc(ptsid > 0), :)**2, dim=2)
     den = ZERO
+    hdiag(trueloc(ptsid > 0)) = sum(zmat(trueloc(ptsid > 0), :)**2, dim=2)
     den(trueloc(ptsid > 0)) = hdiag(trueloc(ptsid > 0)) * beta + vlag(trueloc(ptsid > 0))**2
 
     ! KPROV is set to the index of the provisional point that is going to be deleted to make way for
     ! the KORIG-th original point. The choice of KPROV is governed by the avoidance of a small value
-    ! of the denominator evaluated above.
-    !kprov = 0_IK
-    !denom = ZERO
-    !if (any(den > 0)) then
-    !    kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
-    !    denom = den(kprov)
-    !    !!MATLAB: [denom, kprov] = max(den, [], 'omitnan');
-    !end if
-    !!vlmxsq = HUGENUM
-    !!!if (any(.not. is_nan(vlag(1:npt)))) then
-    !!if (.not. any(is_nan(vlag(1:npt)))) then
-    !!    vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
-    !!    !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
-    !!end if
-    !!if (kprov == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
-    !if (is_nan(sum(abs(vlag))) .or. denom <= 1.0E-2_RP * maxval(vlag(1:npt)**2)) then
-    !    ! Indeed, KPROV == 0 can be removed from the above condition, as KPROV == 0 implies that
-    !    ! DENOM == 0 <= 1.0E-2*VLMXSQ, yet we prefer to mention KPROV == 0 explicitly. Until finding
-    !    ! the next KORIG that renders DENOM > 1.0E-2*VLMXSQ, we will skip the original interpolation
-    !    ! points with a nonpositive score when looking for KORIG (see the definition of KORIG). When
-    !    ! the KORIG validating the aforesaid inequality is found, the scores will be reset to their
-    !    ! absolute values, so that all the original points with nonzero scores will be checked again.
-    !    score(korig) = -score(korig) - scoreinc
-    !    cycle
-    !end if
-
-    if (.not. is_nan(sum(abs(vlag))) .and. any(den > 1.0E-2_RP * maxval(vlag(1:npt)**2))) then
+    ! of the denominator evaluated above, namely to maximize DEN(KPROV). However, we consider it is
+    ! proper to replace the KPROV-th provisional point with the KORIG-th original point only if
+    ! DEN(KPROV) > 1.0E-2*VLMXSQ, where VLMXSQ = MAXVAL(VLAG(1:NPT)**2). If this inequality is not
+    ! achievable for the current KORIG, then we will set SCORE(KORIG) to a negative value, and then
+    ! look for the next KORIG, skipping the original interpolation points with a nonpositive score
+    ! (see the definition of KORIG). When the KORIG validating the aforesaid inequality is found,
+    ! all the scores will be reset to their absolute values, so that all the original points with
+    ! nonzero scores will be checked again.
+    if (is_finite(sum(abs(vlag))) .and. any(den > 1.0E-2_RP * maxval(vlag(1:npt)**2))) then
         kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
+        !!MATLAB: [~, kprov] = max(den, [], 'omitnan');
     else
         score(korig) = -score(korig) - scoreinc
         cycle
