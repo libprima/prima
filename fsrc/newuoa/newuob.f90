@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 24, 2022 AM12:17:37
+! Last Modified: Thursday, November 24, 2022 AM12:25:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -313,28 +313,26 @@ do tr = 1, maxtr
         ! decides not to include XNEW into XPT.
         if (knew_tr > 0) then
             xdrop = xpt(:, knew_tr)
-        end if
-        call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
-        call updatexf(knew_tr, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
-        call updateq(idz, knew_tr, bmat, moderr, xdrop, zmat, gq, hq, pq)
+            call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
+            call updatexf(knew_tr, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
+            call updateq(idz, knew_tr, bmat, moderr, xdrop, zmat, gq, hq, pq)
 
-        ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
-        ! Q_alt. Perform the replacement if certain criteria are satisfied.
-        ! N.B.: 1. This part is OPTIONAL, but it is crucial for the performance on some problems.
-        ! See Section 8 of the NEWUOA paper.
-        ! 2. TRYQALT is called only after a trust-region step but not after a geometry step, maybe
-        ! because the model is expected to be good after a geometry step.
-        ! 3. If KNEW_TR = 0 after a trust-region step, TRYQALT is not invoked. In this case, the
-        ! interpolation set is unchanged, so it seems reasonable to keep the model unchanged.
-        ! 4. In theory, FVAL - FOPT in the call of TRYQALT can be replaced by FVAL + C with any
-        ! constant C. This constant will not affect the result in precise arithmetic. Powell chose
-        ! C = - FVAL(KOPT_OLD), where KOPT_OLD is the KOPT before the update above (Powell updated
-        ! KOPT after TRYQALT). Here we use C = -FOPT, as it worked slightly better on CUTEst,
-        ! although there is no difference theoretically. Note that FVAL(KOPT_OLD) may not equal
-        ! FOPT_OLD --- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD) has been revised
-        ! after the last function evaluation.
-        !if (knew_tr > 0 .and. delta <= rho) then  ! Powell's code: try Q_alt only when DELT == RHO.
-        if (knew_tr > 0) then  ! This seems to work slightly better.
+            ! Test whether to replace the new quadratic model Q by the least-Frobenius norm
+            ! interpolant Q_alt. Perform the replacement if certain criteria are satisfied.
+            ! N.B.: 1. This part is OPTIONAL, but it is crucial for the performance on some
+            ! problems. See Section 8 of the NEWUOA paper.
+            ! 2. TRYQALT is called only after a trust-region step but not after a geometry step,
+            ! maybe because the model is expected to be good after a geometry step.
+            ! 3. If KNEW_TR = 0 after a trust-region step, TRYQALT is not invoked. In this case, the
+            ! interpolation set is unchanged, so it seems reasonable to keep the model unchanged.
+            ! 4. In theory, FVAL - FOPT in the call of TRYQALT can be replaced by FVAL + C with any
+            ! constant C. This constant will not affect the result in precise arithmetic. Powell
+            ! chose C = - FVAL(KOPT_OLD), where KOPT_OLD is the KOPT before the update above (Powell
+            ! updated KOPT after TRYQALT). Here we use C = -FOPT, as it worked slightly better on
+            ! CUTEst, although there is no difference theoretically. Note that FVAL(KOPT_OLD) may
+            ! not equal FOPT_OLD --- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD)
+            ! has been revised after the last function evaluation.
+            ! 5. Powell's code tries Q_alt only when DELT == RHO.
             call tryqalt(idz, fval - fopt, ratio, bmat, zmat, itest, gq, hq, pq)
         end if
     end if  ! End of IF (SHORTD .OR. .NOT. QRED > 0). The normal trust-region calculation ends here.

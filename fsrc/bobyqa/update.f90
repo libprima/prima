@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 AM10:38:25
+! Last Modified: Thursday, November 24, 2022 AM12:27:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,7 +100,7 @@ if (present(info)) then
     info = INFO_DFT
 end if
 
-! We must not do anything if KNEW is 0. This can only happen sometimes after a trust-region step.
+! Do anything if KNEW is 0. This can only happen sometimes after a trust-region step.
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
