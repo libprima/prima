@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM01:53:24
+! Last Modified: Wednesday, November 23, 2022 AM11:38:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1207,7 +1207,7 @@ subroutine updateh(knew, kref, idz, d, xpt, bmat, zmat, info)
 ! However, as observed on 20220412, such an implementation can lead to significant errors in H!
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: GROT(2, 2), V1(N), V2(N), VLAG(NPT+N), W(NPT+N)
+! REAL(RP) :: GROT(2, 2), V1(N), V2(N), VLAG(NPT+N), HCOL(NPT+N)
 ! Size of local arrays: REAL(RP)*(4+4*N+2*NPT)
 !--------------------------------------------------------------------------------------------------!
 
@@ -1246,6 +1246,7 @@ real(RP) :: alpha
 real(RP) :: beta
 real(RP) :: denom
 real(RP) :: grot(2, 2)
+real(RP) :: hcol(size(bmat, 2))
 real(RP) :: scala
 real(RP) :: scalb
 real(RP) :: sqrtdn
@@ -1256,7 +1257,6 @@ real(RP) :: tempb
 real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(bmat, 2))
-real(RP) :: w(size(bmat, 2))
 real(RP) :: ztest
 
 ! Debugging variables
@@ -1351,25 +1351,25 @@ do j = 2_IK, npt - n - 1_IK
     zmat(knew, j) = ZERO
 end do
 
-! Set W(1:NPT) to the first NPT components of the KNEW-th column of H.
+! Set HCOL(1:NPT) to the first NPT components of the KNEW-th column of H.
 ! Here, Powell's code calculates this column by the ZMAT that has been updated by the rotation as
-! above. Theoretically, W(1:NPT) can also be calculated before the rotation by calling OMEGA_COL,
+! above. Theoretically, HCOL(1:NPT) can also be calculated before the rotation by calling OMEGA_COL,
 ! which is tempting to do because the rotation may introduce some rounding errors to ZMAT. However,
 ! according to a test on 20220411, this alternative does not improve the performance. We can also
 ! calculate VLAG and BETA using the updated ZMAT here, which does not lead to improvements either.
 if (idz <= 1) then  ! IDZ <= 0 is impossible unless there is a bug.
     !tempa = zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
-    w(1:npt) = zmat(knew, 1) * zmat(:, 1)
+    hcol(1:npt) = zmat(knew, 1) * zmat(:, 1)
 else
     !tempa = -zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
-    w(1:npt) = -zmat(knew, 1) * zmat(:, 1)
+    hcol(1:npt) = -zmat(knew, 1) * zmat(:, 1)
 end if
 if (jl > 1) then  ! In this case, 1 < JL == IDZ < NPT - N.
-    w(1:npt) = w(1:npt) + zmat(knew, jl) * zmat(:, jl)
+    hcol(1:npt) = hcol(1:npt) + zmat(knew, jl) * zmat(:, jl)
 end if
 
 ! Calculate the parameters of the updating formula (4.18)--(4.20) in the NEWUOA paper.
-alpha = w(knew)
+alpha = hcol(knew)
 tau = vlag(knew)
 denom = alpha * beta + tau**2
 
@@ -1466,7 +1466,7 @@ else
     scala = ONE / sqrt(abs(beta) * temp**2 + tau**2)  ! 1/SQRT(ZETA) in (4.19)-(4.20) of NEWUOA paper
     scalb = scala * sqrtdn
     zmat(:, ja) = scala * (tau * zmat(:, ja) - temp * vlag(1:npt))
-    zmat(:, jb) = scalb * (zmat(:, jb) - tempa * w(1:npt) - tempb * vlag(1:npt))
+    zmat(:, jb) = scalb * (zmat(:, jb) - tempa * hcol(1:npt) - tempb * vlag(1:npt))
 
     !----------------------------------------------------------------------------------------------!
     ! Zaikun 20220411: The update of IDZ is decoupled from the update of ZMAT, located after END IF.
@@ -1516,10 +1516,10 @@ if (denom < 0) then
 end if
 
 ! Finally, update the matrix BMAT. It implements the last N rows of (4.11) in the NEWUOA paper.
-w(npt + 1:npt + n) = bmat(:, knew)
-v1 = (alpha * vlag(npt + 1:npt + n) - tau * w(npt + 1:npt + n)) / denom
-v2 = (-beta * w(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
-bmat = bmat + outprod(v1, vlag) + outprod(v2, w) !call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
+hcol(npt + 1:npt + n) = bmat(:, knew)
+v1 = (alpha * vlag(npt + 1:npt + n) - tau * hcol(npt + 1:npt + n)) / denom
+v2 = (-beta * hcol(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
+bmat = bmat + outprod(v1, vlag) + outprod(v2, hcol) !call r2update(bmat, ONE, v1, vlag, ONE, v2, hcol)
 ! Numerically, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be symmetric.
 call symmetrize(bmat(:, npt + 1:npt + n))
 
