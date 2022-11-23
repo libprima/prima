@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM02:10:40
+! Last Modified: Wednesday, November 23, 2022 PM06:20:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -374,27 +374,34 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
     ! KPROV is set to the index of the provisional point that is going to be deleted to make way for
     ! the KORIG-th original point. The choice of KPROV is governed by the avoidance of a small value
     ! of the denominator evaluated above.
-    kprov = 0_IK
-    denom = ZERO
-    if (any(den > 0)) then
-        kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
-        denom = den(kprov)
-        !!MATLAB: [denom, kprov] = max(den, [], 'omitnan');
-    end if
-    !vlmxsq = HUGENUM
-    !!if (any(.not. is_nan(vlag(1:npt)))) then
-    !if (.not. any(is_nan(vlag(1:npt)))) then
-    !    vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
-    !    !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
+    !kprov = 0_IK
+    !denom = ZERO
+    !if (any(den > 0)) then
+    !    kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
+    !    denom = den(kprov)
+    !    !!MATLAB: [denom, kprov] = max(den, [], 'omitnan');
     !end if
-    !if (kprov == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
-    if (is_nan(sum(abs(vlag))) .or. denom <= 1.0E-2_RP * maxval(vlag(1:npt)**2)) then
-        ! Indeed, KPROV == 0 can be removed from the above condition, as KPROV == 0 implies that
-        ! DENOM == 0 <= 1.0E-2*VLMXSQ, yet we prefer to mention KPROV == 0 explicitly. Until finding
-        ! the next KORIG that renders DENOM > 1.0E-2*VLMXSQ, we will skip the original interpolation
-        ! points with a nonpositive score when looking for KORIG (see the definition of KORIG). When
-        ! the KORIG validating the aforesaid inequality is found, the scores will be reset to their
-        ! absolute values, so that all the original points with nonzero scores will be checked again.
+    !!vlmxsq = HUGENUM
+    !!!if (any(.not. is_nan(vlag(1:npt)))) then
+    !!if (.not. any(is_nan(vlag(1:npt)))) then
+    !!    vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
+    !!    !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
+    !!end if
+    !!if (kprov == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
+    !if (is_nan(sum(abs(vlag))) .or. denom <= 1.0E-2_RP * maxval(vlag(1:npt)**2)) then
+    !    ! Indeed, KPROV == 0 can be removed from the above condition, as KPROV == 0 implies that
+    !    ! DENOM == 0 <= 1.0E-2*VLMXSQ, yet we prefer to mention KPROV == 0 explicitly. Until finding
+    !    ! the next KORIG that renders DENOM > 1.0E-2*VLMXSQ, we will skip the original interpolation
+    !    ! points with a nonpositive score when looking for KORIG (see the definition of KORIG). When
+    !    ! the KORIG validating the aforesaid inequality is found, the scores will be reset to their
+    !    ! absolute values, so that all the original points with nonzero scores will be checked again.
+    !    score(korig) = -score(korig) - scoreinc
+    !    cycle
+    !end if
+
+    if (.not. is_nan(sum(abs(vlag))) .and. any(den > 1.0E-2_RP * maxval(vlag(1:npt)**2))) then
+        kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
+    else
         score(korig) = -score(korig) - scoreinc
         cycle
     end if
