@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 24, 2022 AM12:17:10
+! Last Modified: Thursday, November 24, 2022 AM12:32:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -407,9 +407,7 @@ do tr = 1, maxtr
             call tryqalt(idz, bmat, fval - fopt, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
 
             ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
-            if (ximproved) then
-                call updateres(amat, b, delta, sqrt(sum(d**2)), xopt, rescon)
-            end if
+            call updateres(ximproved, amat, b, delta, sqrt(sum(d**2)), xopt, rescon)
         end if
 
     end if  ! End of IF (SHORTD .OR. .NOT. QRED > 0). The normal trust-region calculation ends here.
@@ -542,10 +540,10 @@ do tr = 1, maxtr
         ! N.B.: Powell's code does this only if XOPT + D is feasible.
         call tryqalt(idz, bmat, fval - fopt, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
 
-        ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
-        if (ximproved) then
-            call updateres(amat, b, delta, sqrt(sum(d**2)), xopt, rescon)
-        end if
+        ! Update RESCON. Zaikun 20221115: Currently, UPDATERES does not update RESCON unless
+        ! XIMPROVED is TRUE. Shouldn't we do it whenever DELTA is updated? Have we MISUNDERSTOOD
+        ! RESCON?
+        call updateres(ximproved, amat, b, delta, sqrt(sum(d**2)), xopt, rescon)
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
     ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm
