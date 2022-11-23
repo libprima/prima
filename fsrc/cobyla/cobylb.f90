@@ -427,13 +427,13 @@ do tr = 1, maxtr
 
     ! Comments on BAD_TRSTEP:
     ! 1. Powell's definition of BAD_TRSTEP is as follows. The one used above seems to work better,
-    ! especially for linearly constrained problems due to the factor TENTH.
+    ! especially for linearly constrained problems due to the factor TENTH (= ETA1).
     ! !bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
     ! Besides, Powell did not check MAX(PREREC, PREREF) > 0 in BAD_TRSTEP, which is reasonable to do
     ! but has little impact upon the performance.
     ! 2. NEWUOA/BOBYQA/LINCOA would define BAD_TRSTEP, IMPROVE_GEO, and REDUCE_RHO as follows. Two
     ! different thresholds are used in BAD_TRSTEP. It outperforms Powell's version.
-    ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= TENTH .or. jdrop_tr == 0)
+    ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= eta1 .or. jdrop_tr == 0)
     ! !improve_geo = bad_trstep .and. .not. adequate_geo
     ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
     ! !reduce_rho = bad_trstep .and. adequate_geo .and. max(delta, dnorm) <= rho
