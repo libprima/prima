@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM08:16:45
+! Last Modified: Wednesday, November 23, 2022 PM09:30:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,7 +53,7 @@ subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, bmat
 ! 2.2. After XOPT is reinstated, the original points are ranked according the scores saved in SCORE.
 ! SCORE is initialized to the squares of the distances from between the original point and XOPT.
 ! The KORIG is set to the index of the point with the smallest positive score. If XPT(:, KORIG)
-! cannot replace any provisional point safely, then set SCORE(KORIG) to -SCORE(KORIG)-SCOREINC;
+! cannot replace any provisional point safely, then set SCORE(KORIG) to -SCORE(KORIG) - SCOREINC;
 ! otherwise, set SCORE(KORIG) to 0 and all the other scores to their absolute values. In this way,
 ! an original point that fails to replace any provisional point during the current attempt will be
 ! skipped until another original point succeeds in doing so; moreover, the failing point will get
@@ -137,9 +137,9 @@ integer(IK), intent(out) :: info
 
 ! Local variables
 character(len=*), parameter :: srname = 'RESCUE'
+integer(IK) :: ij(2, max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1))
 integer(IK) :: ip
 integer(IK) :: iq
-integer(IK) :: ij(2, max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1))
 integer(IK) :: k
 integer(IK) :: kbase
 integer(IK) :: korig
@@ -167,12 +167,12 @@ real(RP) :: score(size(xpt, 2))
 real(RP) :: scoreinc
 real(RP) :: sfrac
 real(RP) :: temp
+real(RP) :: v(size(xpt, 1))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: vquad
 real(RP) :: wmv(size(xpt, 1) + size(xpt, 2))
 real(RP) :: x(size(xpt, 1))
 real(RP) :: xp
-real(RP) :: v(size(xpt, 1))
 real(RP) :: xq
 real(RP) :: xxpt(size(xpt, 2))
 
@@ -369,16 +369,21 @@ do while (any(score > 0) .and. nprov > 0)
     hdiag(trueloc(ptsid > 0)) = sum(zmat(trueloc(ptsid > 0), :)**2, dim=2)
     den(trueloc(ptsid > 0)) = hdiag(trueloc(ptsid > 0)) * beta + vlag(trueloc(ptsid > 0))**2
 
-    ! KPROV is set to the index of the provisional point that is going to be deleted to make way for
-    ! the KORIG-th original point. The choice of KPROV is governed by the avoidance of a small value
-    ! of the denominator evaluated above, namely to maximize DEN(KPROV). However, we consider it is
-    ! proper to replace the KPROV-th provisional point with the KORIG-th original point only if
-    ! DEN(KPROV) > 1.0E-2*VLMXSQ, where VLMXSQ = MAXVAL(VLAG(1:NPT)**2). If this inequality is not
-    ! achievable for the current KORIG, then we will set SCORE(KORIG) to a negative value, and then
-    ! look for the next KORIG, skipping the original interpolation points with a nonpositive score
-    ! (see the definition of KORIG). When the KORIG validating the aforesaid inequality is found,
-    ! all the scores will be reset to their absolute values, so that all the original points with
-    ! nonzero scores will be checked again.
+    ! Attempt setting KPROV to the index of the provisional point to be replaced with the KORIG-th
+    ! original interpolation point. We choose KPROV by maximizing DEN(KPROV), which will be the
+    ! denominator SIGMA in the updating formula (4.9). In order to avoid a small denominator, we
+    ! consider it proper to replace the KPROV-th provisional point with the KORIG-th original point
+    ! only if DEN(KPROV) = MAXVAL(DEN) > 1.0E-2*MAXVAL(VLAG(1:NPT)**2). If this inequality is not
+    ! achievable for the current KORIG, then we will update SCORE(KORIG) to a negative value and
+    ! continue the loop with the next KORIG, which is set to MINLOC(SCORE, MASK=(SCORE > 0)) at the
+    ! beginning of the loop, skipping the original interpolation points with a nonpositive score.
+    ! When a KORIG rendering the aforesaid inequality is found, SCORE(KORIG) will be set to zero,
+    ! and all the scores will be reset to their absolute values, so that future attempts will try
+    ! the original points that have not succeeded in replacing a provisional point. The update of
+    ! SCORE reflects an adaptive ranking of the original points: at the beginning, points that are
+    ! closer to XOPT have higher priority, and a point will be ranked lower if fails to fulfill
+    ! MAXVAL(DEN) > 1.0E-2*MAXVAL(VLAG(1:NPT)**2). Even if KORIG cannot satisfy this condition now,
+    ! it may validate the inequality in future attempts, as BMAT and ZMAT will be updated.
     if (is_finite(sum(abs(vlag))) .and. any(den > 1.0E-2_RP * maxval(vlag(1:npt)**2))) then
         kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
         !!MATLAB: [~, kprov] = max(den, [], 'omitnan');
