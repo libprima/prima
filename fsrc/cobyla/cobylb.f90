@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, November 24, 2022 PM03:01:49
+! Last Modified: Friday, November 25, 2022 PM05:26:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -407,6 +407,12 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we possibly improves the geometry of simplex or
     ! reduces RHO according to IMPROVE_GEO and REDUCE_RHO. Now we decide these indicators.
+    ! N.B.: We must ensure that the algorithm does not set IMPROVE_GEO = TRUE at infinitely many
+    ! consecutive iterations without moving SIM(:, N+1) or reducing RHO. Otherwise, the algorithm
+    ! will get stuck in repetitive invocations of GEOSTEP. This is ensured by the following facts.
+    ! 1. If an iteration sets IMPROVE_GEO = TRUE, it must also reduce DELTA or set DELTA to RHO.
+    ! 2. If SIM(:, N+1) and RHO remain unchanged, then ADEQUATE_GEO will become TRUE after at most
+    ! N invocations of GEOSTEP.
 
     ! BAD_TRSTEP: Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)

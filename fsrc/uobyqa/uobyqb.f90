@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 25, 2022 PM01:33:26
+! Last Modified: Friday, November 25, 2022 PM05:31:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -344,8 +344,8 @@ do while (.true.)
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
     ! N.B.: We must ensure that the algorithm does not set IMPROVE_GEO = TRUE at infinitely many
-    ! consecutive iterations without moving XOPT. Otherwise, the algorithm will get stuck in
-    ! repeative invocations of GEOSTEP. To this end, make sure the following.
+    ! consecutive iterations without moving XOPT or reducing RHO. Otherwise, the algorithm will get
+    ! stuck in repetitive invocations of GEOSTEP. To this end, make sure the following.
     ! 1. The threshold for CLOSE_ITPSET is at least DELBAR, the trust region radius for GEOSTEP.
     ! Normally, DELBAR <= DELTA <= the threshold (In Powell's UOBYQA, DELBAR = RHO < the threshold.)
     ! 2. If an iteration sets IMPROVE_GEO = TRUE, it must also reduce DELTA or set DELTA to RHO.
