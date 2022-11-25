@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 25, 2022 PM12:41:24
+! Last Modified: Friday, November 25, 2022 AM10:37:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -127,9 +127,9 @@ real(RP) :: delbar, &
 real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
 !real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x)), gqsq, gisq
-integer(IK) :: itest, knew_tr, knew_geo, kopt, nfresc
+integer(IK) :: itest, knew_tr, knew_geo, kopt
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, ximproved, reduce_rho, small_trrad, close_itpset, accurate_mod, adequate_geo, bad_trstep, rescued
+logical :: shortd, improve_geo, ximproved, reduce_rho, small_trrad, close_itpset, accurate_mod, adequate_geo, bad_trstep
 
 
 ! Sizes.
@@ -418,11 +418,9 @@ do while (.true.)
         ! It seems that RESCUE is not invoked often after a geometry step.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
-        rescued = .false.
         if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
             ! The condition below works the same as the above one, which is used in Powell's code.
             ! !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > 0.25 * vlag(knew_geo)**2)) then
-            nfresc = nf
             call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
@@ -432,19 +430,16 @@ do while (.true.)
 
             dnormsav = HUGENUM
             moderrsav = HUGENUM
-
-            ! If NFRESC < NF, then RESCUE has updated XPT (also the model and [BMAT, ZMAT]) to
-            ! improve (rescue) its geometry. Thus no geometry step is needed anymore. If NFRESC
-            ! equals NF, then RESCUE did not make any change to XPT, but only recalculated the
-            ! model ans [BMAT, ZMAT]; in this case, we calculate a new geometry step.
-            if (nfresc == nf) then
-                d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
-            else
-                rescued = .true.
-            end if
-        end if
-
-        if (.not. rescued) then
+            ! The geometry step calculated previously is not usable due to damaging rounding errors.
+            ! Powell's code calculates a new geometry step if RESCUE did not introduce any new point
+            ! into XPT (but only recalculated [BMAT, ZMAT]). However, we do not do this, because
+            ! RESCUE would have introduced new points to rescue (improve) XPT if its geometry were
+            ! bad. Since REDUCE did not do so, it is a certificate that its geometry is acceptable,
+            ! so we continue with the next trust-region step without taking a geometry step. In this
+            ! way, the structure of the code is simpler, and there is almost no difference in the
+            ! performance. N.B.: make sure that DELTA is reduced when IMPROVE_GEO is TRUE;
+            ! otherwise, an infinite loop may occur if the geometry step is skipped.
+        else
             ! Calculate the next value of the objective function.
             x = xinbd(xbase, xopt + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
             call evaluate(calfun, x, f)
@@ -532,7 +527,6 @@ close (16)
 !====================!
 
 ! Postconditions
-
 
 end subroutine bobyqb
 
