@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 24, 2022 AM12:27:17
+! Last Modified: Friday, November 25, 2022 PM09:41:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -382,12 +382,8 @@ subroutine tryqalt(bmat, fval, ratio, sl, su, xopt, xpt, zmat, itest, gopt, hq, 
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine tests whether to replace Q by the alternative model, namely the model that
 ! minimizes the F-norm of the Hessian subject to the interpolation conditions. It does the
-! replacement if certain criteria are met (i.e., when ITEST = 3). See Section 8 of the NEWUOA paper.
-! N.B.: Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: GALT(N)
-! Size of local arrays: REAL(RP)*(N)
+! replacement if certain criteria are met (i.e., when ITEST = 3). See the paragraph around (6.12) of
+! the BOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -426,11 +422,11 @@ character(len=*), parameter :: srname = 'TRYQALT'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: galt(size(gopt))
-real(RP) :: pgopt(size(gopt))
-real(RP) :: pgalt(size(gopt))
-real(RP) :: pqalt(size(pq))
-real(RP) :: gqsq
 real(RP) :: gisq
+real(RP) :: gqsq
+real(RP) :: pgalt(size(gopt))
+real(RP) :: pgopt(size(gopt))
+real(RP) :: pqalt(size(pq))
 
 ! Debugging variables
 !real(RP) :: intp_tol
@@ -463,23 +459,7 @@ end if
 ! Calculation starts !
 !====================!
 
-! In the NEWUOA paper, Powell replaces Q with Q_alt when RATIO <= 0.01 and ||G_alt|| <= 0.1||GQ||
-! hold for 3 consecutive times (eq(8.4)). But Powell's code compares ABS(RATIO) instead of RATIO
-! with 0.01. Here we use RATIO, which is more efficient as observed in Zaikun ZHANG's PhD thesis
-! (Section 3.3.2).
-!if (abs(ratio) > 1.0e-2_RP) then
-!if (ratio > 1.0E-2_RP) then
-!if (ratio > 1.0E-1_RP) then
-!    itest = 0_IK
-!else
-!    galt = matprod(bmat(:, 1:npt), fval)
-!    if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
-!        itest = 0_IK
-!    else
-!        itest = itest + 1_IK
-!    end if
-!end if
-
+! Calculate the norm square of the projected gradient.
 pgopt = gopt
 pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))
 pgopt(trueloc(xopt <= sl)) = min(ZERO, gopt(trueloc(xopt <= sl)))
@@ -489,6 +469,7 @@ gqsq = sum(pgopt**2)
 pqalt = matprod(zmat, matprod(fval, zmat))
 galt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pqalt)
 
+! Calculate the norm square of the projected alternative gradient.
 pgalt = galt
 pgalt(trueloc(xopt >= su)) = max(ZERO, galt(trueloc(xopt >= su)))
 pgalt(trueloc(xopt <= sl)) = min(ZERO, galt(trueloc(xopt <= sl)))
@@ -496,18 +477,20 @@ gisq = sum(pgalt**2)
 
 ! Test whether to replace the new quadratic model by the least Frobenius norm interpolant,
 ! making the replacement if the test is satisfied.
-! N.B.:
-! 1. The replacement is done only after a trust-region step, which differs from LINCOA.
-! 2. The replacement is done regardless of DELTA <= RHO or not, which differs from NEWUOA.
-itest = itest + 1
-if (ratio > TENTH) itest = 0  ! This seems to improve the performance.
-if (gqsq < TEN * gisq) itest = 0
+! N.B.: In the following IF, Powell's condition is GQSQ < TEN *GISQ. The condition here is adopted
+! and adapted from NEWUOA, and it seems to improve the performance.
+if (ratio > TENTH .or. gqsq < TEN * gisq) then
+    itest = 0
+else
+    itest = itest + 1
+end if
 if (itest >= 3) then
     gopt = galt
     pq = pqalt
     hq = ZERO
     itest = 0
 end if
+
 !====================!
 !  Calculation ends  !
 !====================!
