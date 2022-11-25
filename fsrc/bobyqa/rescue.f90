@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 24, 2022 PM03:10:21
+! Last Modified: Friday, November 25, 2022 AM10:46:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -293,11 +293,10 @@ ptsid(kopt) = ZERO
 ! The squares of the distances from XOPT to the other interpolation points are set at SCORE, which
 ! will be used to define the index KORIG in the loop below.  Increments of SCOREINC may be added
 ! later to these scores to balance the consideration of the choice of point that is going to become
-! current. Note that, in the BOBYQA paper, the scores are the distances rather than their
+! current. Note that, in the BOBYQA paper, the initial scores are the distances rather than their
 ! squares. See the paragraph between (5.9) and (5.10) of the BOBYQA paper.
 score = sum((xpt)**2, dim=1)
 score(kopt) = ZERO  ! Set SCORE(KOPT) to 0 so that KOPT will be skipped when we choose KORIG below.
-score(maxloc(score)) = ZERO
 scoreinc = maxval(score)
 
 ! NPROV is the number of provisional points that has not yet been replaced by original points.
