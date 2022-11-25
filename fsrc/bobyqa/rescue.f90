@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 25, 2022 AM10:46:07
+! Last Modified: Friday, November 25, 2022 PM11:14:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -173,6 +173,7 @@ real(RP) :: x(size(xpt, 1))
 real(RP) :: xp
 real(RP) :: xq
 real(RP) :: xxpt(size(xpt, 2))
+real(RP) :: qval(size(xpt, 2))
 
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
@@ -293,9 +294,11 @@ ptsid(kopt) = ZERO
 ! The squares of the distances from XOPT to the other interpolation points are set at SCORE, which
 ! will be used to define the index KORIG in the loop below.  Increments of SCOREINC may be added
 ! later to these scores to balance the consideration of the choice of point that is going to become
-! current. Note that, in the BOBYQA paper, the initial scores are the distances rather than their
-! squares. See the paragraph between (5.9) and (5.10) of the BOBYQA paper.
-score = sum((xpt)**2, dim=1)
+! current. Note that, in Powell's BOBYQA code, the initial scores are the squares of the distances,
+! but there is no square in the BOBYQA paper (see the paragraph between (5.9) and (5.10) of the
+! BOBYQA paper). The latter seem to work better in a test on 20221125.
+!score = sum((xpt)**2, dim=1)  ! Powell's BOBYQA code
+score = sqrt(sum((xpt)**2, dim=1))  ! Powell's BOBYQA paper
 score(kopt) = ZERO  ! Set SCORE(KOPT) to 0 so that KOPT will be skipped when we choose KORIG below.
 scoreinc = maxval(score)
 
@@ -536,8 +539,9 @@ end if
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20221123: Shouldn't we correct the models using the new [BMAT, ZMAT]?!
 ! In this way, we do not even need the quadratic model received by RESCUE is an interpolant.
-! pq = pq + omega_mul(1_IK, zmat, fval - qval)
-! gopt = gopt + matprod(bmat(:, 1:npt), fval - qval) + hess_mul(xopt, xpt, pq)
+!qval = [(quadinc(xpt(:, k) - xopt, xpt, gopt, pq, hq), k=1, npt)]
+!pq = pq + omega_mul(1_IK, zmat, fval - qval - fopt)
+!gopt = gopt + matprod(bmat(:, 1:npt), fval - qval - fopt) + hess_mul(xopt, xpt, pq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Postconditions
