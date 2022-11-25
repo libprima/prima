@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 20, 2022 PM03:10:47
+! Last Modified: Friday, November 25, 2022 PM05:07:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -76,8 +76,12 @@ end if
 
 ! Calculate the values of sigma and eta.
 ! VETA(J) (1 <= J <= N) is the distance between vertices J and 0 (the best vertex) of the simplex.
-! VSIG(J) is the distance from vertex J to the opposite face of the simplex. Thus VSIG <= VETA.
-! But what about vertex N+1?
+! VSIG(J) is the distance from vertex J to its opposite face of the simplex. Thus VSIG <= VETA.
+! N.B.: What about the distance from vertex N+1 to the its opposite face? Consider the simplex
+! {V_{N+1}, V_{N+1} + L*e_1, ..., V_{N+1} + L*e_N}, where V_{N+1} is vertex N+1, namely the current
+! "best" point, [e_1, ..., e_n] is an orthogonal matrix, and L is a constant in the order of DELTA.
+! This simplex is optimal in the sense that the interpolation system has the minimal condition
+! number, i.e., one. For this simplex, the distance from V_{N+1} to its opposite face is L/SQRT{N}.
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 adequate_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta * delta)
@@ -257,8 +261,7 @@ end if
 !====================!
 
 ! Calculate the values of sigma and eta.
-! VSIG(J) (J=1, .., N) is The Euclidean distance from vertex J to the opposite face of
-! the current simplex. But what about vertex N+1?
+! VSIG(J) (J=1, .., N) is the Euclidean distance from vertex J to the opposite face of the simplex.
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 
