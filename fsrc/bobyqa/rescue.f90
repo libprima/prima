@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM10:41:23
+! Last Modified: Thursday, November 24, 2022 PM03:10:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -297,6 +297,7 @@ ptsid(kopt) = ZERO
 ! squares. See the paragraph between (5.9) and (5.10) of the BOBYQA paper.
 score = sum((xpt)**2, dim=1)
 score(kopt) = ZERO  ! Set SCORE(KOPT) to 0 so that KOPT will be skipped when we choose KORIG below.
+score(maxloc(score)) = ZERO
 scoreinc = maxval(score)
 
 ! NPROV is the number of provisional points that has not yet been replaced by original points.
@@ -531,6 +532,13 @@ end if
 ! !hq = ZERO
 ! !pq = omega_mul(1_IK, zmat, fval - fopt)
 ! !gopt = matprod(bmat(:, 1:npt), fval - fopt) + hess_mul(xopt, xpt, pq)
+!--------------------------------------------------------------------------------------------------!
+
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20221123: Shouldn't we correct the models using the new [BMAT, ZMAT]?!
+! In this way, we do not even need the quadratic model received by RESCUE is an interpolant.
+! pq = pq + omega_mul(1_IK, zmat, fval - qval)
+! gopt = gopt + matprod(bmat(:, 1:npt), fval - qval) + hess_mul(xopt, xpt, pq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Postconditions
