@@ -45,7 +45,6 @@ jobs:
         os: [ubuntu-latest]
         bitness: [32, 64]
         ikind: [i2, i4, i8]
-        #solver: [newuoa]  # Flang fails on COBYLA
         solver: [newuoa, cobyla]
 
     steps:
