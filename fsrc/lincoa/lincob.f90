@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 24, 2022 PM03:01:15
+! Last Modified: Friday, November 25, 2022 PM01:32:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -415,6 +415,12 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
     ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
     ! according to IMPROVE_GEO and REDUCE_RHO, which in turn depend on the following indicators.
+    ! N.B.: We must ensure that the algorithm does not set IMPROVE_GEO = TRUE at infinitely many
+    ! consecutive iterations without moving XOPT. Otherwise, the algorithm will get stuck in
+    ! repeative invocations of GEOSTEP. To this end, make sure the following.
+    ! 1. The threshold for CLOSE_ITPSET is at least DELBAR, the trust region radius for GEOSTEP.
+    ! Normally, DELBAR <= DELTA <= the threshold (In Powell's UOBYQA, DELBAR = RHO < the threshold.)
+    ! 2. If an iteration sets IMPROVE_GEO = TRUE, it must also reduce DELTA or set DELTA to RHO.
 
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
@@ -423,10 +429,7 @@ do tr = 1, maxtr
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
     ! Below are some alternative definitions of CLOSE_ITPSET.
-    ! !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Behaves the same as Powell's version.
     ! !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's code.
-    ! !close_itpset = all(distsq <= rho**2)  ! Does not work as well as Powell's version.
-    ! !close_itpset = all(distsq <= 10.0_RP * rho**2)  ! Does not work as well as Powell's version.
     ! !close_itpset = all(distsq <= delta**2)  ! Does not work as well as Powell's version.
     ! !close_itpset = all(distsq <= 10.0_RP * delta**2)  ! Does not work as well as Powell's version.
     ! !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.
