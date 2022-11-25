@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 23, 2022 PM07:13:54
+! Last Modified: Friday, November 25, 2022 PM11:15:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -297,7 +297,7 @@ ptsid(kopt) = ZERO
 ! later to these scores to balance the consideration of the choice of point that is going to become
 ! current. Note that, in the BOBYQA paper, the scores are the distances rather than their
 ! squares. See the paragraph between (5.9) and (5.10) of the BOBYQA paper.
-score = sum((xpt)**2, dim=1)
+score = sqrt(sum((xpt)**2, dim=1))
 score(kopt) = ZERO  ! Set SCORE(KOPT) to 0 so that KOPT will be skipped when we choose KORIG below.
 scoreinc = maxval(score)
 
