@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 24, 2022 AM12:13:27
+! Last Modified: Friday, November 25, 2022 PM12:36:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -550,17 +550,16 @@ do while (.true.)
             ! improve (rescue) its geometry. Thus no geometry step is needed anymore. If NFRESC
             ! equals NF, then RESCUE did not make any change to XPT, but only recalculated the
             ! model ans [BMAT, ZMAT]; in this case, we calculate a new geometry step.
-            !if (nfresc == nf) then
-            !d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
-            !else
-            !    rescued = .true.
-            !end if
-            !end if
+            if (nfresc == nf) then
+                d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
+            else
+                rescued = .true.
+            end if
+        end if
 
-            ! Put the variables for the next calculation of the objective function in XNEW, with any
-            ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
-            !if (.not. rescued) then
-        else
+        ! Put the variables for the next calculation of the objective function in XNEW, with any
+        ! adjustments for the bounds. In precise arithmetic, X = XBASE + XNEW.
+        if (.not. rescued) then
             xnew = min(max(sl, xopt + d), su)
             x = min(max(xl, xbase + xnew), xu)
             x(trueloc(xnew <= sl)) = xl(trueloc(xnew <= sl))
