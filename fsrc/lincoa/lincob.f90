@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 24, 2022 AM12:32:27
+! Last Modified: Thursday, November 24, 2022 PM03:01:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -457,7 +457,7 @@ do tr = 1, maxtr
     ! !reduce_rho = bad_trstep .and. (.not. improve_geo) .and. small_trrad
 
     ! LINCOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
-    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
+    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO and REDUCE_RHO are not both TRUE', srname)
     !
     ! If SHORTD is TRUE or QRED > 0 is FALSE, then either REDUCE_RHO or IMPROVE_GEO is TRUE unless
     ! CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE.

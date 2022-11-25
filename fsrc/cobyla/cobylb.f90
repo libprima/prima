@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 20, 2022 PM04:28:20
+! Last Modified: Thursday, November 24, 2022 PM03:01:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -416,7 +416,7 @@ do tr = 1, maxtr
     reduce_rho = (bad_trstep .and. adequate_geo .and. max(delta, dnorm) <= rho)
 
     ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
-    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO is false', srname)
+    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO are not both TRUE', srname)
 
     ! If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO
     ! is TRUE unless ADEQUATE_GEO is TRUE and MAX(DELTA, DNORM) > RHO.
