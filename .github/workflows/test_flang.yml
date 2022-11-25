@@ -45,12 +45,7 @@ jobs:
         os: [ubuntu-latest]
         bitness: [32, 64]
         ikind: [i2, i4, i8]
-        solver: [lincoa, bobyqa, uobyqa]
-        exclude:
-          - solver: lincoa  # FLANG encounters an allocation error for no reason. Check later.
-            ikind: i8
-          - solver: lincoa  # FLANG encounters an error that cannot be located. Check later.
-            ikind: i2
+        solver: [bobyqa, uobyqa]  # Flang encounters an allocation error for no reason. Check later.
 
     steps:
       - name: Checkout repository
