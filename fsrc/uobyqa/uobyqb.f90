@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 25, 2022 PM05:31:33
+! Last Modified: Friday, November 25, 2022 PM11:46:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -347,7 +347,7 @@ do while (.true.)
     ! consecutive iterations without moving XOPT or reducing RHO. Otherwise, the algorithm will get
     ! stuck in repetitive invocations of GEOSTEP. To this end, make sure the following.
     ! 1. The threshold for CLOSE_ITPSET is at least DELBAR, the trust region radius for GEOSTEP.
-    ! Normally, DELBAR <= DELTA <= the threshold (In Powell's UOBYQA, DELBAR = RHO < the threshold.)
+    ! Normally, DELBAR <= DELTA <= the threshold (In Powell's UOBYQA, DELBAR = RHO < the threshold).
     ! 2. If an iteration sets IMPROVE_GEO = TRUE, it must also reduce DELTA or set DELTA to RHO.
 
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.

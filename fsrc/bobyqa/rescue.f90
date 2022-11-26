@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 25, 2022 PM11:14:29
+! Last Modified: Saturday, November 26, 2022 PM02:30:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -161,6 +161,7 @@ real(RP) :: moderr
 real(RP) :: pqinc(size(xpt, 2))
 real(RP) :: ptsaux(2, size(xpt, 1))
 real(RP) :: ptsid(size(xpt, 2))
+!real(RP) :: qval(size(xpt, 2))
 real(RP) :: score(size(xpt, 2))
 real(RP) :: scoreinc
 real(RP) :: sfrac
@@ -173,7 +174,6 @@ real(RP) :: x(size(xpt, 1))
 real(RP) :: xp
 real(RP) :: xq
 real(RP) :: xxpt(size(xpt, 2))
-real(RP) :: qval(size(xpt, 2))
 
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
@@ -306,10 +306,12 @@ scoreinc = maxval(score)
 nprov = npt - 1_IK
 
 ! The following loop runs for at most NPT^2 times: for each value of NPROV, we need at most NPT
-! loops to find an original point that can safely replace a provisional point; if such
-! a pair of origin and provisional points are found, then NPROV will de reduced by 1; otherwise,
-! SCORE will become all zero or negative, and the loop will exit.
-do while (any(score > 0) .and. nprov > 0)
+! loops to find an original point that can safely replace a provisional point; if such a pair of
+! origin and provisional points are found, then NPROV will de reduced by 1; otherwise, SCORE will
+! become all zero or negative, and the loop will exit.
+do while (any(score > 0) .and. nprov > 1)   ! Retain at least one provisional point.
+! !do while (any(score > 0) .and. nprov > 0)  ! Powell's code. It may not keep any provisional point.
+! !do while (any(score > 0) .and. nprov > 2)  ! Retain at least two provisional point.
     ! Pick the index KORIG of an original point that has not yet replaced one of the provisional
     ! points, giving attention to the closeness to XOPT and to previous tries with KORIG.
     korig = int(minloc(score, mask=(score > 0), dim=1), IK)
@@ -351,7 +353,7 @@ do while (any(score > 0) .and. nprov > 0)
     end do
     wmv(npt + 1:npt + n) = xpt(:, korig)
 
-    ! Now calculate VLAG = H*WMV + e_KOPT according to (4.26) of the NEWUOA paper, except VLAG(KOPT).
+    ! Now calculate VLAG = H*WMV + e_KOPT according to (4.26) of the NEWUOA paper except VLAG(KOPT).
     vlag(1:npt) = matprod(zmat, matprod(wmv(1:npt), zmat)) + matprod(wmv(npt + 1:npt + n), bmat(:, 1:npt))
     vlag(npt + 1:npt + n) = matprod(bmat, wmv(1:npt + n))
 
@@ -376,18 +378,24 @@ do while (any(score > 0) .and. nprov > 0)
     ! original interpolation point. We choose KPROV by maximizing DEN(KPROV), which will be the
     ! denominator SIGMA in the updating formula (4.9). In order to avoid a small denominator, we
     ! consider it proper to replace the KPROV-th provisional point with the KORIG-th original point
-    ! only if DEN(KPROV) = MAXVAL(DEN) > 1.0E-2*MAXVAL(VLAG(1:NPT)**2). If this inequality is not
-    ! achievable for the current KORIG, then we will update SCORE(KORIG) to a negative value and
-    ! continue the loop with the next KORIG, which is set to MINLOC(SCORE, MASK=(SCORE > 0)) at the
-    ! beginning of the loop, skipping the original interpolation points with a nonpositive score.
-    ! When a KORIG rendering the aforesaid inequality is found, SCORE(KORIG) will be set to zero,
-    ! and all the scores will be reset to their absolute values, so that future attempts will try
-    ! the original points that have not succeeded in replacing a provisional point. The update of
-    ! SCORE reflects an adaptive ranking of the original points: at the beginning, points that are
-    ! closer to XOPT have higher priority, and a point will be ranked lower if fails to fulfill
-    ! MAXVAL(DEN) > 1.0E-2*MAXVAL(VLAG(1:NPT)**2). Even if KORIG cannot satisfy this condition now,
-    ! it may validate the inequality in future attempts, as BMAT and ZMAT will be updated.
+    ! only if DEN(KPROV) = MAXVAL(DEN) > C*MAXVAL(VLAG(1:NPT)**2), where C is a relatively small
+    ! positive constant --- C = 1 is achievable if the rounding errors were not severe; Powell took
+    ! C = 0.01, which prefers strongly the original point to the provisional (new) point, as the
+    ! latter necessitate new function evaluations. If this inequality is not achievable for the
+    ! current KORIG, then we will update SCORE(KORIG) to a negative value and continue the loop with
+    ! the next KORIG, which is set to MINLOC(SCORE, MASK=(SCORE > 0)) at the beginning of the loop,
+    ! skipping the original interpolation points with a nonpositive score. When a KORIG rendering
+    ! the aforesaid inequality is found, SCORE(KORIG) will be set to zero, and all the scores will
+    ! be reset to their absolute values, so that future attempts will try the original points that
+    ! have not succeeded in replacing a provisional point. The update of SCORE reflects an adaptive
+    ! ranking of the original points: points that are closer to XOPT have higher priority, and a
+    ! point will be ranked lower if it fails to fulfill MAXVAL(DEN) > C*MAXVAL(VLAG(1:NPT)**2).
+    ! Even if KORIG cannot satisfy this condition for now, it may validate the inequality in future
+    ! attempts, as BMAT and ZMAT will be updated.
+    !if (is_finite(sum(abs(vlag))) .and. any(den > 5.0E-2_RP * maxval(vlag(1:npt)**2))) then
     if (is_finite(sum(abs(vlag))) .and. any(den > 1.0E-2_RP * maxval(vlag(1:npt)**2))) then
+        ! The above condition works a bit better than Powell's version below due to the factor 0.05.
+        ! !if (any(den > 1.0E-2_RP * maxval(vlag(1:npt)**2))) then  ! Powell' code
         kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
         !!MATLAB: [~, kprov] = max(den, [], 'omitnan');
     else
@@ -464,7 +472,7 @@ if (nprov > 0) then
         ! to the new function value.
         x = xinbd(xbase, xpt(:, kpt), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XPT(:, KPT).
         call evaluate(calfun, x, f)
-        nf = nf + 1
+        nf = nf + 1_IK
         call savehist(nf, x, xhist, f, fhist)
         fval(kpt) = f
         if (f < fval(kopt)) then
