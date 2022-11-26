@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 25, 2022 PM05:25:59
+! Last Modified: Saturday, November 26, 2022 AM12:40:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -243,7 +243,7 @@ do tr = 1, maxtr
     dnorm = min(delta, norm(d))
 
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
-    shortd = (dnorm < HALF * rho)
+    shortd = (dnorm < HALF * rho)  ! HALF seems to work better than TENTH or QUART.
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
@@ -345,7 +345,7 @@ do tr = 1, maxtr
     ! consecutive iterations without moving XOPT or reducing RHO. Otherwise, the algorithm will get
     ! stuck in repetitive invocations of GEOSTEP. To this end, make sure the following.
     ! 1. The threshold for CLOSE_ITPSET is at least DELBAR, the trust region radius for GEOSTEP.
-    ! Normally, DELBAR <= DELTA <= the threshold (In Powell's UOBYQA, DELBAR = RHO < the threshold.)
+    ! Normally, DELBAR <= DELTA <= the threshold (In Powell's UOBYQA, DELBAR = RHO < the threshold).
     ! 2. If an iteration sets IMPROVE_GEO = TRUE, it must also reduce DELTA or set DELTA to RHO.
 
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.

@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 25, 2022 PM11:15:14
+! Last Modified: Saturday, November 26, 2022 PM02:23:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -308,7 +308,8 @@ nprov = npt - 1_IK
 ! loops to find an original point that can safely replace a provisional point; if such
 ! a pair of origin and provisional points are found, then NPROV will de reduced by 1; otherwise,
 ! SCORE will become all zero or negative, and the loop will exit.
-do while (any(score(1:npt) > 0) .and. nprov > 0)
+!do while (any(score(1:npt) > 0) .and. nprov > 0)
+do while (any(score(1:npt) > 0) .and. nprov > 1)
     ! Pick the index KORIG of an original point that has not yet replaced one of the provisional
     ! points, giving attention to the closeness to XOPT and to previous tries with KORIG.
     korig = int(minloc(score(1:npt), mask=(score(1:npt) > 0), dim=1), IK)
@@ -381,11 +382,13 @@ do while (any(score(1:npt) > 0) .and. nprov > 0)
     vlmxsq = HUGENUM
     !if (any(.not. is_nan(vlag(1:npt)))) then
     !if (all(.not. is_nan(vlag))) then
-    if (is_finite(sum(vlag))) then
+    !if (is_finite(sum(vlag))) then
+    if (is_finite(sum(abs(vlag)))) then
         vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
         !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
     end if
-    if (kopt == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
+    if (kprov == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
+        !if (kprov == 0 .or. denom <= 5.0E-2_RP * vlmxsq) then
         ! Indeed, KOPT == 0 can be removed from the above condition, because KOPT == 0 implies that
         ! DENOM == 0 <= 1.0E-2*VLMXSQ. However, we prefer to mention KOPT == 0 explicitly.
         ! Until finding the next KORIG that renders DENOM > 1.0E-2*VLMXSQ, we will skip the original
