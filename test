@@ -1,0 +1,1 @@
+opt.seed=1; verify('bobyqa', opt,'luksan14ls', 23, 'seq', 'ncp')

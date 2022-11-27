@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 25, 2022 PM12:36:35
+! Last Modified: Sunday, November 27, 2022 PM08:52:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -248,7 +248,8 @@ do while (.true.)
         bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
         bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
         curv = diag(hq) + matprod(xpt**2, pq)
-        errbd = minval(max(bdtest, bdtest + HALF * curv * rho**2))
+        !errbd = minval(max(bdtest, bdtest + HALF * curv * rho**2))
+        curv = HALF * curv * rho**2; errbd = minval(max(bdtest, bdtest + curv))
         if (crvmin > 0) then
             errbd = min(errbd, 0.125_RP * crvmin * rho**2)
         end if
@@ -689,7 +690,7 @@ end if
 
 call rangehist(nf, xhist, fhist)
 
-close (16)
+close (17)
 !====================!
 !  Calculation ends  !
 !====================!
