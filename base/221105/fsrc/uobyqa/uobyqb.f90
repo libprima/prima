@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 05, 2022 PM09:17:12
+! Last Modified: Sunday, November 27, 2022 PM11:15:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -363,8 +363,8 @@ do while (.true.)
     !bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! This performs BADLY.
     !bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho))  ! BAD.
     ! The following seems to perform the same as the original one
-    bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. ddknew > 4.0_RP * rho**2))
-    !bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > TWO * rho .or. ddknew > 4.0_RP * rho**2))
+    !bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. ddknew > 4.0_RP * rho**2))
+    bad_trstep = (shortd .or. knew_tr == 0 .or. .not. (f < fsave .or. dnorm > 2.0_RP * rho .or. ddknew > 4.0_RP * rho**2))
 
     accurate_mod = .true.
     !if (bad_trstep) then

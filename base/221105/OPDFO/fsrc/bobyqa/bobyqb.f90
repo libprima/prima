@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 03, 2022 AM12:29:43
+! Last Modified: Sunday, November 27, 2022 PM10:42:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,7 +132,7 @@ real(RP) :: dnormsav(3)
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x))
 real(RP) :: score(npt)
-integer(IK) :: itest, knew, kopt, nfresc
+integer(IK) :: itest, knew, kopt, nfresc, knew_tr
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 logical :: shortd, improve_geo, rescue_geo, tr_success, rescued
 
@@ -448,6 +448,7 @@ do while (.true.)
         else
             knew = 0_IK  ! We arrive here when TR_SUCCESS = FALSE and no entry of SCORE is positive.
         end if
+        knew_tr = knew
 
         ! TODO: If KNEW == 0 (particularly if TR_SUCCESS is TRUE) or DEN(KNEW) is small compared to
         ! BIGLSQ, then invoke RESCUE.
@@ -524,7 +525,8 @@ do while (.true.)
         !improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred .or. rescued)
         !improve_geo = .not. (knew > 0 .and. f <= fopt - TENTH * qred)
         !improve_geo = .not. (knew > 0 .and. .not. f >= fopt - TENTH * qred)
-        improve_geo = .not. (knew > 0 .and. .not. ratio <= TENTH)
+        !improve_geo = .not. (knew > 0 .and. .not. ratio <= TENTH)
+        improve_geo = .not. (knew_tr > 0 .and. .not. ratio <= TENTH)
         if (.not. improve_geo) cycle
 
         ! Alternatively, find out if the interpolation points are close enough to the best point so far.
@@ -688,7 +690,8 @@ do while (.true.)
             end if
             cycle
             !end if
-        else if ((.not. shortd) .and. ((.not. ratio <= 0) .or. .not. max(delta, dnorm) <= rho)) then
+            !else if ((.not. shortd) .and. ((.not. ratio <= 0) .or. .not. max(delta, dnorm) <= rho)) then
+        else if ((.not. shortd) .and. ((knew_tr > 0 .and. .not. ratio <= 0) .or. .not. max(delta, dnorm) <= rho)) then
             cycle
         end if
     end if
