@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 27, 2022 PM08:52:43
+! Last Modified: Monday, November 28, 2022 AM12:00:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -61,6 +61,7 @@ use, non_intrinsic :: infos_mod, only : NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, 
 use, non_intrinsic :: linalg_mod, only : matprod, diag, trueloc, r1update!, r2update!, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag, calbeta, omega_col, hess_mul!, errquad
+use, non_intrinsic :: ratio_mod, only : redrat
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
@@ -324,7 +325,8 @@ do while (.true.)
         !    info = TRSUBP_FAILED
         !    exit
         !end if
-        ratio = (fopt - f) / qred
+        !ratio = (fopt - f) / qred
+        ratio = redrat(fopt - f, qred, eta1)
         if (ratio <= TENTH) then
             delta = min(HALF * delta, dnorm)
         else if (ratio <= 0.7_RP) then
