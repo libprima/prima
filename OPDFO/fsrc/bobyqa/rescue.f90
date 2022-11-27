@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 27, 2022 PM07:19:10
+! Last Modified: Monday, November 28, 2022 AM12:04:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -389,8 +389,8 @@ do while (any(score(1:npt) > 0) .and. nprov > 1)
     end if
     !write (17, *) 390, kprov, denom, vlmxsq,.not. (denom <= 1.0E-2_RP * vlmxsq)
     !if (kprov == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
-    if (kprov == 0 .or. .not. is_finite(sum(abs(vlag))) .or. .not. denom > 1.0E-2_RP * maxval(vlag(1:npt)**2)) then
-        !if (kprov == 0 .or. denom <= 5.0E-2_RP * vlmxsq) then
+    !if (kprov == 0 .or. .not. is_finite(sum(abs(vlag))) .or. .not. denom > 1.0E-2_RP * maxval(vlag(1:npt)**2)) then
+    if (kprov == 0 .or. .not. is_finite(sum(abs(vlag))) .or. .not. denom > 5.0E-2_RP * maxval(vlag(1:npt)**2)) then
         ! Indeed, KOPT == 0 can be removed from the above condition, because KOPT == 0 implies that
         ! DENOM == 0 <= 1.0E-2*VLMXSQ. However, we prefer to mention KOPT == 0 explicitly.
         ! Until finding the next KORIG that renders DENOM > 1.0E-2*VLMXSQ, we will skip the original

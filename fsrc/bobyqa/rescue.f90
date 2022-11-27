@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 27, 2022 PM07:13:16
+! Last Modified: Monday, November 28, 2022 AM12:05:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -392,8 +392,7 @@ do while (any(score > 0) .and. nprov > 1)   ! Retain at least one provisional po
     ! point will be ranked lower if it fails to fulfill MAXVAL(DEN) > C*MAXVAL(VLAG(1:NPT)**2).
     ! Even if KORIG cannot satisfy this condition for now, it may validate the inequality in future
     ! attempts, as BMAT and ZMAT will be updated.
-    !if (is_finite(sum(abs(vlag))) .and. any(den > 5.0E-2_RP * maxval(vlag(1:npt)**2))) then
-    if (is_finite(sum(abs(vlag))) .and. any(den > 1.0E-2_RP * maxval(vlag(1:npt)**2))) then
+    if (is_finite(sum(abs(vlag))) .and. any(den > 5.0E-2_RP * maxval(vlag(1:npt)**2))) then
         ! The above condition works a bit better than Powell's version below due to the factor 0.05.
         ! !if (any(den > 1.0E-2_RP * maxval(vlag(1:npt)**2))) then  ! Powell' code
         kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
