@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 27, 2022 PM08:55:03
+! Last Modified: Sunday, November 27, 2022 PM10:45:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -374,6 +374,7 @@ do while (.true.)
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
     ! Zaikun 20221111: What if RESCUE has been called? Is it still reasonable to use RATIO?
+    ! Zaikun 20221127: If RESCUE has been called, then KNEW_TR may be 0 even if RATIO > 0.
 
     ! Equivalently, REDUCE_RHO can be set as follows. It shows that REDUCE_RHO is TRUE in two cases.
     ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
