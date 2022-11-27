@@ -114,10 +114,9 @@ easier, because we will then have a structured and modularized implementation as
 PRIMA has fixed the some **serious** issues in the **original Fortran 77 implementation** of Powell's methods.
 Note that all the issues are problems in the Fortran 77 code rather than flaws in the algorithms.
 
+<!---[NLopt.jl](https://github.com/JuliaOpt/NLopt.jl), -->
 The examples given below are bugs or requests sent to [SciPy](https://github.com/scipy/scipy),
 [NLopt](https://github.com/stevengj/nlopt),
-<!---[NLopt.jl](https://github.com/JuliaOpt/NLopt.jl),
--->
 [nloptr](https://github.com/astamm/nloptr),
 [OpenTURNS](https://github.com/openturns/openturns),
 etc., which are reputable packages that wrap/interface the **original Fortran 77 implementation**

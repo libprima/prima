@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, November 26, 2022 PM02:23:11
+! Last Modified: Sunday, November 27, 2022 PM07:19:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -387,7 +387,9 @@ do while (any(score(1:npt) > 0) .and. nprov > 1)
         vlmxsq = maxval(vlag(1:npt)**2, mask=(.not. is_nan(vlag(1:npt))))
         !!MATLAB: vlmxsq =  max(vlag(1:npt)**2, [], 'omitnan');
     end if
-    if (kprov == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
+    !write (17, *) 390, kprov, denom, vlmxsq,.not. (denom <= 1.0E-2_RP * vlmxsq)
+    !if (kprov == 0 .or. denom <= 1.0E-2_RP * vlmxsq) then
+    if (kprov == 0 .or. .not. is_finite(sum(abs(vlag))) .or. .not. denom > 1.0E-2_RP * maxval(vlag(1:npt)**2)) then
         !if (kprov == 0 .or. denom <= 5.0E-2_RP * vlmxsq) then
         ! Indeed, KOPT == 0 can be removed from the above condition, because KOPT == 0 implies that
         ! DENOM == 0 <= 1.0E-2*VLMXSQ. However, we prefer to mention KOPT == 0 explicitly.
@@ -397,6 +399,7 @@ do while (any(score(1:npt) > 0) .and. nprov > 1)
         ! scores will be reset to their absolute values, so that all the original
         ! points with nonzero scores will be considered again.
         score(korig) = -score(korig) - scoreinc
+        !write (17, *) 400, korig, score(korig)
         cycle
     end if
 

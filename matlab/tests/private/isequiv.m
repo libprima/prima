@@ -364,10 +364,9 @@ test_options = struct();
 test_options.rhobeg = 1 + 0.5*(2*rand-1);
 test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
 test_options.npt = max(min(floor(6*rand*n), (n+2)*(n+1)/2), n+2);
+test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);  % For reproducibility, do not remove this even if `options` contains `maxfun`.
 if isfield(options, 'maxfun')
     test_options.maxfun = options.maxfun;
-else
-    test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
 end
 test_options.ftarget = objective(x0) - 10*abs(randn)*max(1, objective(x0));
 test_options.fortran = (rand > 0.5);
