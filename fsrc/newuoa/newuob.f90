@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM03:02:36
+! Last Modified: Monday, November 28, 2022 PM05:04:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -293,6 +293,7 @@ do tr = 1, maxtr
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
+        ! Is the newly generated X better than current best point?
         ximproved = (f < fopt)
 
         ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW = XOPT + D.
@@ -504,7 +505,6 @@ do tr = 1, maxtr
             exit
         end if
 
-
         ! Update DNORMSAV and MODERRSAV. (Should we?)
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
@@ -520,9 +520,11 @@ do tr = 1, maxtr
         ! as we do here. The same problem exists in BOBYQA.
         !------------------------------------------------------------------------------------------!
 
+        ! Is the newly generated X better than current best point?
+        ximproved = (f < fopt)
+
         ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
         ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
-        ximproved = (f < fopt)
         xdrop = xpt(:, knew_geo)
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         call updatexf(knew_geo, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)

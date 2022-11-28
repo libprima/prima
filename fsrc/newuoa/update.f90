@@ -2,7 +2,7 @@ module update_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the update of [BMAT, ZMAT, IDZ] (represents H in the
 ! NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT], and [GQ, HQ, PQ] (the quadratic model) when
-! XPT(:, KNEW) is updated to XNEW = XOPT + D.
+! XPT(:, KNEW) becomes XNEW = XOPT + D.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
 !
@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 23, 2022 AM12:13:05
+! Last Modified: Monday, November 28, 2022 PM05:39:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

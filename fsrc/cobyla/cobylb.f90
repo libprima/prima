@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, November 28, 2022 AM10:10:41
+! Last Modified: Monday, November 28, 2022 PM05:07:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -378,11 +378,13 @@ do tr = 1, maxtr
                 delta = rho  ! Set DELTA to RHO when it is close to or below.
             end if
 
+            ! Is the newly generated X better than current best point?
+            ximproved = (actrem > 0)  ! If ACTREM is NaN, then XIMPROVED should & will be FALSE.
+
             ! Set JDROP_TR to the index of the vertex to be replaced by X. JDROP_TR = 0 means there
             ! is no good point to replace, and X will not be included into the simplex; in this case,
             ! the geometry of the simplex likely needs improvement, which will be handled below.
             ! N.B.: COBYLA never sets JDROP_TR = N + 1.
-            ximproved = (actrem > 0)  ! If ACTREM is NaN, then XIMPROVED should & will be FALSE.
             jdrop_tr = setdrop_tr(ximproved, d, delta, factor_alpha, factor_delta, sim, simi)
 
             ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
