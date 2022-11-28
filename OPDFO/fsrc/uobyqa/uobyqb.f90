@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 11, 2022 PM03:41:39
+! Last Modified: Monday, November 28, 2022 PM12:05:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,6 +60,7 @@ use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_X, NAN_INF_F, FTARGET_
 use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
 use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
 use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: powalg_mod, only : quadinc, calvlag
 
 ! Solver-specific modules
@@ -270,7 +271,8 @@ do while (.true.)
             info = TRSUBP_FAILED
             exit
         end if
-        ratio = (fsave - f) / qred
+        !ratio = (fsave - f) / qred
+        ratio = redrat(fsave - f, qred, eta1)
         if (ratio <= TENTH) then
             delta = HALF * dnorm
         else if (ratio <= 0.7_RP) then

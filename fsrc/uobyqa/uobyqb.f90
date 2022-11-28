@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 AM11:34:27
+! Last Modified: Monday, November 28, 2022 PM12:27:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,13 +58,14 @@ use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calvlag
+use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: initialize_mod, only : initxf, initq, initl
-use, non_intrinsic :: trustregion_mod, only : trstep
+use, non_intrinsic :: trustregion_mod, only : trstep, trrad
 
 
 implicit none
@@ -223,14 +224,9 @@ do while (.true.)
         moderr = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
-        ratio = (fopt - f) / qred
-        if (ratio <= TENTH) then
-            delta = HALF * dnorm
-        else if (ratio <= 0.7_RP) then
-            delta = max(HALF * delta, dnorm)
-        else
-            delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
-        end if
+        ratio = redrat(fopt - f, qred, eta1)
+        ! Update DELTA. After this, DELTA < DNORM may hold.
+        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio, rho)
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
@@ -244,15 +240,14 @@ do while (.true.)
         ! the NEWUOA paper, it is reasonable to take into account the new trust-region trial point
         ! XPT(:, KOPT) + D, which will become the optimal point in the next interpolation if
         ! XIMPROVED is TRUE.
-        !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
-        !distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)  ! XSAVE is the unupdated XOPT
         if (ximproved) then  ! This is Powell's version
             distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
+            !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
         else
             distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+            !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
         end if
+
         weight = max(ONE, distsq / rho**2)**4
 
         !------------------------------------------------------------------------------------------!
