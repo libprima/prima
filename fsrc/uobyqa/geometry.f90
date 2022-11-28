@@ -8,15 +8,147 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 10, 2022 PM04:01:48
+! Last Modified: Monday, November 28, 2022 PM02:55:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: geostep
+public :: setdrop_tr, geostep
 
 
 contains
+
+
+function setdrop_tr(kopt, ximproved, d, pl, rho, xpt) result(knew)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
+! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
+! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.
+! N.B.:
+! 1. If XIMPROVED = TRUE, then KNEW > 0 so that XNEW is included into XPT. Otherwise, it is a bug.
+! 2. If XIMPROVED = FALSE, then KNEW /= KOPT so that XPT(:, KOPT) stays. Otherwise, it is a bug.
+! 3. It is tempting to take the function value into consideration when defining KNEW, for example,
+! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL), unless there is a better
+! choice. However, this is not a good idea, because the definition of KNEW should benefit the
+! quality of the model that interpolates f at XPT. A set of points with low function values is not
+! necessarily a good interpolation set. In contrast, a good interpolation set needs to include
+! points with relatively high function values; otherwise, the interpolant will unlikely reflect the
+! landscape of the function sufficiently.
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : issymmetric
+use, non_intrinsic :: powalg_mod, only : calvlag
+
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: kopt
+logical, intent(in) :: ximproved
+real(RP), intent(in) :: d(:)  ! D(N)
+real(RP), intent(in) :: pl(:, :)  ! PL(NPT-1, NPT)
+real(RP), intent(in) :: rho
+real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
+
+! Outputs
+integer(IK) :: knew
+
+! Local variables
+character(len=*), parameter :: srname = 'SETDROP_TR'
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: distsq(size(xpt, 2))
+real(RP) :: score(size(xpt, 2))
+real(RP) :: vlag(size(xpt, 2))
+real(RP) :: weight(size(xpt, 2))
+
+! Sizes
+n = int(size(xpt, 1), kind(npt))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(pl, 1) == npt - 1 .and. size(pl, 2) == npt, 'SIZE(PL)==[NPT - 1, NPT]', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Calculate the distance squares between the interpolation points and the "optimal point". When
+! identifying the optimal point, as suggested in (56) of the UOBYQA paper and (7.5) of the NEWUOA
+! paper, it is reasonable to take into account the new trust-region trial point XPT(:, KOPT) + D,
+! which will become the optimal point in the next interpolation if XIMPROVED is TRUE.
+if (ximproved) then
+    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
+else
+    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+end if
+
+weight = max(ONE, distsq / rho**2)**4
+
+!------------------------------------------------------------------------------------------!
+! Other possible definitions of WEIGHT.
+!weight = max(ONE, distsq / rho**2)**3.5_RP ! ! No better than power 4.
+!weight = max(ONE, distsq / delta**2)**3.5_RP  ! Not better than DISTSQ/RHO**2.
+!weight = max(ONE, distsq / rho**2)**1.5_RP  ! Powell's origin code: power 1.5.
+!weight = max(ONE, distsq / rho**2)**2  ! Better than power 1.5.
+!weight = max(ONE, distsq / delta**2)**2  ! Not better than DISTSQ/RHO**2.
+!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! The same as DISTSQ/RHO**2.
+!weight = distsq**2  ! Not better than MAX(ONE, DISTSQ/RHO**2)**2
+!weight = max(ONE, distsq / rho**2)**3  ! Better than power 2.
+!weight = max(ONE, distsq / delta**2)**3  ! Similar to DISTSQ/RHO**2; not better than it.
+!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! The same as DISTSQ/RHO**2.
+!weight = distsq**3  ! Not better than MAX(ONE, DISTSQ/RHO**2)**3
+!weight = max(ONE, distsq / delta**2)**4  ! Not better than DISTSQ/RHO**2.
+!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! The same as DISTSQ/RHO**2.
+!weight = distsq**4  ! Not better than MAX(ONE, DISTSQ/RHO**2)**4
+!------------------------------------------------------------------------------------------!
+
+vlag = calvlag(pl, d, xpt(:, kopt), kopt)
+score = weight * abs(vlag)
+
+! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
+if (.not. ximproved) then
+    score(kopt) = -ONE
+end if
+
+knew = 0_IK
+! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
+if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
+    ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
+    ! exclude such K.
+    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+            !!MATLAB: [~, knew] = max(score, [], 'omitnan');
+elseif (ximproved) then
+    ! Powell's code does not include the following instructions. With Powell's code,
+    ! if DENABS consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
+    knew = int(maxloc(distsq, dim=1), IK)
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
+    call assert(knew /= kopt .or. ximproved, 'KNEW /= KOPT unless XIMPROVED = TRUE', srname)
+    call assert(knew >= 1 .or. .not. ximproved, 'KNEW >= 1 unless XIMPROVED = FALSE', srname)
+    ! KNEW >= 1 when XIMPROVED = TRUE unless NaN occurs in DISTSQ, which should not happen if the
+    ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.
+end if
+
+end function setdrop_tr
 
 
 function geostep(g, h, delbar) result(d)

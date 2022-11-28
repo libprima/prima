@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM01:59:40
+! Last Modified: Monday, November 28, 2022 PM02:58:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -62,7 +62,7 @@ use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
 
 ! Solver-specific modules
-use, non_intrinsic :: geometry_mod, only : geostep
+use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, initq, initl
 use, non_intrinsic :: trustregion_mod, only : trstep, trrad
 
@@ -236,60 +236,7 @@ do while (.true.)
         ximproved = (f < fopt)
 
         ! Set KNEW to the index of the next interpolation point to be deleted.
-
-        ! Calculate the distance squares between the interpolation points and the "optimal point".
-        ! When identifying the optimal point, as suggested in (56) of the UOBYQA paper and (7.5) of
-        ! the NEWUOA paper, it is reasonable to take into account the new trust-region trial point
-        ! XPT(:, KOPT) + D, which will become the optimal point in the next interpolation if
-        ! XIMPROVED is TRUE.
-        if (ximproved) then  ! This is Powell's version
-            distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-            !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
-        else
-            distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-            !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-        end if
-
-        weight = max(ONE, distsq / rho**2)**4
-
-        !------------------------------------------------------------------------------------------!
-        ! Other possible definitions of WEIGHT.
-        !weight = max(ONE, distsq / rho**2)**3.5_RP ! ! No better than power 4.
-        !weight = max(ONE, distsq / delta**2)**3.5_RP  ! Not better than DISTSQ/RHO**2.
-        !weight = max(ONE, distsq / rho**2)**1.5_RP  ! Powell's origin code: power 1.5.
-        !weight = max(ONE, distsq / rho**2)**2  ! Better than power 1.5.
-        !weight = max(ONE, distsq / delta**2)**2  ! Not better than DISTSQ/RHO**2.
-        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! The same as DISTSQ/RHO**2.
-        !weight = distsq**2  ! Not better than MAX(ONE, DISTSQ/RHO**2)**2
-        !weight = max(ONE, distsq / rho**2)**3  ! Better than power 2.
-        !weight = max(ONE, distsq / delta**2)**3  ! Similar to DISTSQ/RHO**2; not better than it.
-        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! The same as DISTSQ/RHO**2.
-        !weight = distsq**3  ! Not better than MAX(ONE, DISTSQ/RHO**2)**3
-        !weight = max(ONE, distsq / delta**2)**4  ! Not better than DISTSQ/RHO**2.
-        !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! The same as DISTSQ/RHO**2.
-        !weight = distsq**4  ! Not better than MAX(ONE, DISTSQ/RHO**2)**4
-        !------------------------------------------------------------------------------------------!
-
-        vlag = calvlag(pl, d, xopt, kopt)
-        score = weight * abs(vlag)
-
-        ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
-        if (.not. ximproved) then
-            score(kopt) = -ONE
-        end if
-
-        knew_tr = 0_IK
-        ! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
-        if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
-            ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
-            ! exclude such K.
-            knew_tr = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
-            !!MATLAB: [~, knew_tr] = max(score, [], 'omitnan');
-        elseif (ximproved) then
-            ! Powell's code does not include the following instructions. With Powell's code,
-            ! if DENABS consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
-            knew_tr = int(maxloc(distsq, dim=1), IK)
-        end if
+        knew_tr = setdrop_tr(kopt, ximproved, d, pl, rho, xpt)
 
         ! DDMOVE is norm square of DMOVE in the UOBYQA paper. See Steps 6--7 in Sec. 5 of the paper.
         ddmove = ZERO
