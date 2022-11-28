@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM12:27:08
+! Last Modified: Monday, November 28, 2022 PM01:59:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,8 +52,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
-use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, &
-    & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, NAN_INF_MODEL!, MAXTR_REACHED
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -157,7 +156,10 @@ f = fopt
 
 if (subinfo /= INFO_DFT) then
     info = subinfo
+    ! Arrange FHIST and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist)
+    ! Print a return message according to IPRINT.
+    call retmsg(solver, info, iprint, nf, f, x)
     return
 end if
 
@@ -226,7 +228,7 @@ do while (.true.)
 
         ratio = redrat(fopt - f, qred, eta1)
         ! Update DELTA. After this, DELTA < DNORM may hold.
-        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio, rho)
+        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
@@ -472,6 +474,10 @@ do while (.true.)
         delta = HALF * rho
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
+        ! Print a message about the reduction of RHO according to IPRINT.
+        call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
+        ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
+        ! the current RHO. Update them after reducing RHO.
         dnormsav = HUGENUM
         moderrsav = HUGENUM
     end if
@@ -487,12 +493,17 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun .and. is_finite(sum(a
     call savehist(nf, x, xhist, f, fhist)
 end if
 
+! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
 if (fopt <= f .or. is_nan(f)) then
     x = xbase + xopt
     f = fopt
 end if
 
+! Arrange FHIST and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist)
+
+! Print a return message according to IPRINT.
+call retmsg(solver, info, iprint, nf, f, x)
 
 !====================!
 !  Calculation ends  !
