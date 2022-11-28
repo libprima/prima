@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM07:11:44
+! Last Modified: Monday, November 28, 2022 PM09:33:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -195,7 +195,7 @@ subroutine shiftbase_qint(xopt, pl, pq, xbase, xpt)
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric, smat_mul_vec
+use, non_intrinsic :: linalg_mod, only : smat_mul_vec
 
 implicit none
 

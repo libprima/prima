@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM05:06:48
+! Last Modified: Monday, November 28, 2022 PM09:41:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -72,7 +72,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, HUGENUM
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+!use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
@@ -336,7 +336,7 @@ do tr = 1, maxtr
         ! 3. The factor HALF works better than TENTH (used in NEWUOA/BOBYQA), 0.2, and 0.7.
         ! 4. The factor 0.99*GAMMA3 aligns with the update of DELTA after a trust-region step.
         delta = HALF * delta
-        if (delta <= 0.99_RP * gamma3 * rho) then
+        if (delta <= min(0.99_RP * gamma3, 1.5_RP) * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
@@ -383,7 +383,7 @@ do tr = 1, maxtr
         ! not smaller than GAMMA3, then DELTA will be reset to RHO, which is not reasonable as D is
         ! very successful. See paragraph two of Sec. 5.2.5 in T. M. Ragonneau's thesis: "Model-Based
         ! Derivative-Free Optimization Methods and Software".
-        if (delta <= 0.99_RP * gamma3 * rho) then
+        if (delta <= min(0.99_RP * gamma3, 1.5_RP) * rho) then
             delta = rho
         end if
 
