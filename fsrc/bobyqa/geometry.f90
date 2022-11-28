@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM04:51:22
+! Last Modified: Monday, November 28, 2022 PM02:48:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,13 +46,14 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric
 use, non_intrinsic :: powalg_mod, only : calden
+
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: kopt
 logical, intent(in) :: ximproved
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
-real(RP), intent(in) :: d(:)
+real(RP), intent(in) :: d(:)        ! D(N)
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: rho
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
