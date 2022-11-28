@@ -635,6 +635,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "bin/ld.*bisheng.*unsupported GNU_PROPERTY_TYPE (5) type: 0xc0000000" \
 	| grep -v "all warnings being treated as errors" \
 	| grep -v "Value of real or complex expression being compared by relational operator" \
+	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[SQRT\]" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
