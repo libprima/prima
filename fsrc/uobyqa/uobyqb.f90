@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM06:34:41
+! Last Modified: Monday, November 28, 2022 PM07:02:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,13 +53,13 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
+use, non_intrinsic :: linalg_mod, only : inprod, outprod, vec2smat, smat_mul_vec !, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
-use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
+use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
@@ -112,7 +112,7 @@ real(RP) :: ddmove, delta, moderr, distsq(size(pl, 2)), delbar, &
 &        ratio, rho, &
 &        trtol, &
 &        qred, fval(size(pl, 2))
-integer(IK) :: k, knew_tr, knew_geo, kopt, subinfo
+integer(IK) :: knew_tr, knew_geo, kopt, subinfo
 logical :: ximproved, shortd, improve_geo, reduce_rho, accurate_mod, adequate_geo, close_itpset, small_trrad, bad_trstep
 real(RP) :: dnormsav(3), moderrsav(size(dnormsav))
 
@@ -242,7 +242,7 @@ do while (.true.)
         ddmove = ZERO
         if (knew_tr > 0) then
             ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
-            ! Update PL, PQ, XPT, KOPT, XOPT, and FOPT.
+            ! Update PL, PQ, XPT, KOPT, XOPT, and FOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
             call update(knew_tr, d, f, moderr, kopt, fopt, pl, pq, xpt, xopt)
         end if
     end if
@@ -345,6 +345,7 @@ do while (.true.)
         ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
         ! improve the performance slightly according to a test on 20220720.
         delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
+
         d = geostep(g, h, delbar)
 
         ! Calculate the next value of the objective function.
@@ -373,7 +374,7 @@ do while (.true.)
         moderr = f - fopt - quadinc(pq, d, xopt)  ! QUADINC = Q(XOPT + D) - Q(XOPT)
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
-        ! Update PL, PQ, XPT, KOPT, XOPT, and FOPT.
+        ! Update PL, PQ, XPT, KOPT, XOPT, and FOPT so that XPT(:, KNEW_GEO) becomes XOPT + D.
         call update(knew_geo, d, f, moderr, kopt, fopt, pl, pq, xpt, xopt)
     end if
 
@@ -382,15 +383,18 @@ do while (.true.)
             info = SMALL_TR_RADIUS
             exit
         end if
-        ! Prepare to reduce RHO by shifting XBASE to the best point so far, and make the
-        ! corresponding changes to the gradients of the Lagrange functions and the quadratic model.
-        xbase = xbase + xopt
-        xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-        ! Update the gradients of the model and the Lagrange functions.
-        pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
-        do k = 1, npt
-            pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)
-        end do
+        ! Shifting XBASE to the best point so far, and make the corresponding changes to the
+        ! gradients of the Lagrange functions and the quadratic model.
+        call shiftbase(xopt, pl, pq, xbase, xpt)
+
+!        xbase = xbase + xopt
+!        xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+!        ! Update the gradients of the model and the Lagrange functions.
+!        pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
+!        do k = 1, npt
+!            pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)
+!        end do
+
         ! Pick the next values of RHO and DELTA.
         delta = HALF * rho
         rho = redrho(rho, rhoend)
