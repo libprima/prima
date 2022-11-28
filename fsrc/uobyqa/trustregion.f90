@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM12:21:42
+! Last Modified: Monday, November 28, 2022 PM12:58:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -602,25 +602,17 @@ end if
 ! Calculation starts !
 !====================!
 
-!if (ratio <= eta1) then
-!    delta = gamma1 * dnorm  ! Powell's UOBYQA/NEWUOA.
-!    !delta = gamma1 * delta_in  ! Powell's COBYLA/LINCOA. Works poorly here.
-!    !delta = min(gamma1 * delta_in, dnorm)  ! Powell's BOBYQA.
-!elseif (ratio <= eta2) then
-!    delta = max(gamma1 * delta_in, dnorm)
-!else
-!    delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's version
-!    !delta = max(delta_in, gamma2 * dnorm)  ! Modified version
-!    ! For noise-free CUTEst problems of <= 200 variables, Powell's version works slightly better
-!    ! than the modified one.
-!end if
-
 if (ratio <= eta1) then
-    delta = gamma1 * dnorm
+    delta = gamma1 * dnorm  ! Powell's UOBYQA/NEWUOA
+    !delta = gamma1 * delta_in  ! Powell's COBYLA/LINCOA.
+    !delta = min(gamma1 * delta_in, dnorm)  ! Powell's BOBYQA.
 else if (ratio <= eta2) then
-    delta = max(gamma1 * delta_in, dnorm)
+    delta = max(gamma1 * delta_in, dnorm)  ! Powell's UOBYQA/NEWUOA/BOBYQA/LINCOA
 else
-    delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)
+    delta = max(delta_in, gamma2 * dnorm)  ! This works evidently better than Powell's version.
+    !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's original code.
+    !delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's NEWUOA/BOBYQA.
+    !delta = min(max(gamma1 * delta_in, gamma2* dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
 end if
 
 ! For noisy problems, the following may work better.

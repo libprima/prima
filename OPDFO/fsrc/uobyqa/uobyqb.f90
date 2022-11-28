@@ -14,7 +14,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM12:05:43
+! Last Modified: Monday, November 28, 2022 PM01:00:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -278,7 +278,8 @@ do while (.true.)
         else if (ratio <= 0.7_RP) then
             delta = max(HALF * delta, dnorm)
         else
-            delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
+            !delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
+            delta = max(delta, 2.0_RP * dnorm)
         end if
         if (delta <= 1.5_RP * rho) delta = rho
 
