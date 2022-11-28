@@ -4,13 +4,16 @@ module bobyqb_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
-! TODO: Verify that the iterates/steps respect bounds in the pre/postconditions.
+! TODO:
+! 1. Verify that the iterates/steps respect bounds in the pre/postconditions.
+! 2. Improve RESCUE so that it accepts an [XNEW, FNEW] that is not interpolated yet, or even accepts
+! [XRESERVE, FRESERVE], which contains points that have been evaluated.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 27, 2022 PM10:45:29
+! Last Modified: Monday, November 28, 2022 AM10:13:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -239,7 +242,7 @@ do while (.true.)
     if (shortd .or. .not. qred > 0) then
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
-            delta = rho  ! Set DELTA to RHO when it is close.
+            delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
         ! Evaluate EBOUND. It will be used as a bound to test if the entries of MODERRSAV are small.
         ebound = errbd(crvmin, d, gopt, hq, moderrsav, pq, rho, sl, su, xopt, xpt)
@@ -286,7 +289,7 @@ do while (.true.)
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
-            delta = rho
+            delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
         ximproved = (f < fopt)

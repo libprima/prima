@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 25, 2022 PM05:26:44
+! Last Modified: Monday, November 28, 2022 AM10:10:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -295,7 +295,7 @@ do tr = 1, maxtr
         ! Reduce DELTA if D is short. This seems quite important for performance.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
-            delta = rho  ! Set DELTA to RHO when it is close.
+            delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
@@ -375,7 +375,7 @@ do tr = 1, maxtr
             ! Update DELTA. After this, DELTA < DNORM may hold.
             delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
             if (delta <= 1.5_RP * rho) then
-                delta = rho
+                delta = rho  ! Set DELTA to RHO when it is close to or below.
             end if
 
             ! Set JDROP_TR to the index of the vertex to be replaced by X. JDROP_TR = 0 means there
