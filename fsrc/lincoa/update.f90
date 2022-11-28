@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM06:21:39
+! Last Modified: Monday, November 28, 2022 PM09:41:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,9 +132,9 @@ subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zma
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
+use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : r1update, issymmetric
-use, non_intrinsic :: powalg_mod, only : quadinc, omega_col, hess_mul
+use, non_intrinsic :: powalg_mod, only : omega_col, hess_mul
 
 implicit none
 

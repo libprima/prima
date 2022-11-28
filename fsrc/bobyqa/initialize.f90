@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM06:25:52
+! Last Modified: Monday, November 28, 2022 PM09:34:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,6 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT
-use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: powalg_mod, only : setij
 use, non_intrinsic :: pintrf_mod, only : OBJ

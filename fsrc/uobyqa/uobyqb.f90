@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM07:02:59
+! Last Modified: Monday, November 28, 2022 PM09:46:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,9 +51,9 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, HUGENUM
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
+use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : inprod, outprod, vec2smat, smat_mul_vec !, norm
+use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec !, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc
@@ -383,17 +383,10 @@ do while (.true.)
             info = SMALL_TR_RADIUS
             exit
         end if
+
         ! Shifting XBASE to the best point so far, and make the corresponding changes to the
         ! gradients of the Lagrange functions and the quadratic model.
         call shiftbase(xopt, pl, pq, xbase, xpt)
-
-!        xbase = xbase + xopt
-!        xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-!        ! Update the gradients of the model and the Lagrange functions.
-!        pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
-!        do k = 1, npt
-!            pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)
-!        end do
 
         ! Pick the next values of RHO and DELTA.
         delta = HALF * rho
@@ -408,13 +401,14 @@ do while (.true.)
     end if
 end do
 
-! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
-! tried before.
-! Zaikun 20220531: For the moment, D may contain NaN. Should be avoided later.
-if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun .and. is_finite(sum(abs(d)))) then
+! Return, possibly after another Newton-Raphson step, if it is too short to have been tried before.
+if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
     nf = nf + 1
+    ! Print a message about the function evaluation according to IPRINT.
+    call fmsg(solver, iprint, nf, f, x)
+    ! Save X, F into the history.
     call savehist(nf, x, xhist, f, fhist)
 end if
 
