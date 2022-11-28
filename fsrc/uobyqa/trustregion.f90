@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM12:58:57
+! Last Modified: Monday, November 28, 2022 PM01:40:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -609,9 +609,9 @@ if (ratio <= eta1) then
 else if (ratio <= eta2) then
     delta = max(gamma1 * delta_in, dnorm)  ! Powell's UOBYQA/NEWUOA/BOBYQA/LINCOA
 else
-    delta = max(delta_in, gamma2 * dnorm)  ! This works evidently better than Powell's version.
-    !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's original code.
-    !delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's NEWUOA/BOBYQA.
+    delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's NEWUOA/BOBYQA. Works well for UOBYQA.
+    !delta = max(delta_in, gamma2 * dnorm)  ! This works evidently better than Powell's version.
+    !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's original UOBYQA code.
     !delta = min(max(gamma1 * delta_in, gamma2* dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
 end if
 
