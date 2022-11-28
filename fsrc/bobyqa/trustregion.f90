@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM01:39:45
+! Last Modified: Monday, November 28, 2022 PM11:40:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,6 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, trueloc, norm
 use, non_intrinsic :: powalg_mod, only : hess_mul
 use, non_intrinsic :: univar_mod, only : interval_max
-use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
 
@@ -146,11 +145,11 @@ end if
 !     squares of the free variables. QRED is the reduction in Q so far.
 !
 
-!--------------------------------------------------------------------------------------------------!
-iact = 0  ! Without this, G95 complains that it is used uninitialized.
-!--------------------------------------------------------------------------------------------------!
-dredsq = ZERO  ! An unused artificial value to entertain Fortran compilers.
-ggsav = ieeenan()  ! To be removed.
+! The initial values of IACT, DREDSQ, and GGSAV are unused but to entertain Fortran compilers.
+! TODO: Check that GGSAV has been initialized before used. 
+iact = 0
+dredsq = ZERO
+ggsav = ZERO
 
 xbdi = 0
 xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1

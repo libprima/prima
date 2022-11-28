@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM02:27:26
+! Last Modified: Monday, November 28, 2022 PM10:04:36
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -151,8 +151,5 @@ call lincoa(calfun, x, f, A=A, b=b, nf=nf)  ! This call will not print anything.
 ! take their default values coded in the solver.
 x = x0
 call lincoa(calfun, x, f, A=A, b=b, rhobeg=0.5D0, iprint=1, nf=nf)
-write (*, *) 'nf = ', nf
-write (*, *) 'f = ', f
-write (*, *) 'x = ', x
 
 end program lincoa_exmp

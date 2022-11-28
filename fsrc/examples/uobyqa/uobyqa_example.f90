@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM02:28:51
+! Last Modified: Monday, November 28, 2022 PM09:59:51
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -76,17 +76,11 @@ integer :: nf
 ! The following lines illustrates how to call the solver to solve the Chebyquad problem.
 x = [(real(i, kind(0.0D0)) / real(n + 1, kind(0.0D0)), i=1, n)]  ! Starting point
 call uobyqa(calfun, x, f, nf=nf)  ! This call will not print anything.
-write (*, *) 'nf = ', nf
-write (*, *) 'f = ', f
-write (*, *) 'x = ', x
 
 ! In addition to the compulsory argument, the following illustration specifies also RHOBEG and IPRINT,
 ! which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will take their
 ! default values coded in the solver.
 x = [(real(i, kind(0.0D0)) / real(n + 1, kind(0.0D0)), i=1, n)]  ! Starting point
 call uobyqa(calfun, x, f, rhobeg=0.2D0 * x(1), iprint=1, nf=nf)
-write (*, *) 'nf = ', nf
-write (*, *) 'f = ', f
-write (*, *) 'x = ', x
 
 end program uobyqa_exmp
