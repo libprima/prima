@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM03:37:28
+! Last Modified: Monday, November 28, 2022 PM05:36:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -56,7 +56,7 @@ use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHE
 use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : quadinc, calvlag
+use, non_intrinsic :: powalg_mod, only : quadinc
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
@@ -65,6 +65,7 @@ use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
 use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, initq, initl
 use, non_intrinsic :: trustregion_mod, only : trstep, trrad
+use, non_intrinsic :: update_mod, only : update
 
 
 implicit none
@@ -104,7 +105,6 @@ real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x))
 real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2 - 1, (size(x) + 1) * (size(x) + 2) / 2)
 real(RP) :: pq(size(pl, 1))
-real(RP) :: vlag(size(pl, 2))
 real(RP) :: xbase(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
@@ -112,7 +112,7 @@ real(RP) :: ddmove, delta, moderr, distsq(size(pl, 2)), delbar, &
 &        dnorm, crvmin, fopt,&
 &        ratio, rho, &
 &        trtol, &
-&        qred, plknew(size(pl, 1)), fval(size(pl, 2))
+&        qred, fval(size(pl, 2))
 integer(IK) :: k, knew_tr, knew_geo, kopt, subinfo
 logical :: ximproved, shortd, improve_geo, reduce_rho, accurate_mod, adequate_geo, close_itpset, small_trrad, bad_trstep
 real(RP) :: dnormsav(3), moderrsav(size(dnormsav))
@@ -191,6 +191,7 @@ do while (.true.)
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(pq, d, xopt)  ! QRED = Q(XOPT) - Q(XOPT + D)
+
     if (shortd .or. .not. qred > 0) then
         ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
         delta = TENTH * delta
@@ -215,7 +216,11 @@ do while (.true.)
             exit
         end if
 
+        ! Update DNORMSAV and MODERRSAV.
+        ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+        ! MODERR is the error of the current model in predicting the change in F due to D.
+        ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
         moderr = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
@@ -228,6 +233,7 @@ do while (.true.)
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
+        ! Is the newly generated X better than current best point?
         ximproved = (f < fopt)
 
         ! Set KNEW to the index of the next interpolation point to be deleted.
@@ -237,24 +243,25 @@ do while (.true.)
         ddmove = ZERO
         if (knew_tr > 0) then
             ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
+            call update(knew_tr, d, f, moderr, kopt, fopt, pl, pq, xopt, xpt)
 
-            ! Update the Lagrange functions and the quadratic model.
-            ! It can happen that VLAG(KNEW) = 0 due to rounding.
-            vlag = calvlag(pl, d, xopt, kopt)
-            pl(:, knew_tr) = pl(:, knew_tr) / vlag(knew_tr)
-            plknew = pl(:, knew_tr)
-            pl = pl - outprod(plknew, vlag)
-            pl(:, knew_tr) = plknew
-            pq = pq + moderr * plknew
+            !! Update the Lagrange functions and the quadratic model.
+            !! It can happen that VLAG(KNEW) = 0 due to rounding.
+            !vlag = calvlag(pl, d, xopt, kopt)
+            !pl(:, knew_tr) = pl(:, knew_tr) / vlag(knew_tr)
+            !plknew = pl(:, knew_tr)
+            !pl = pl - outprod(plknew, vlag)
+            !pl(:, knew_tr) = plknew
+            !pq = pq + moderr * plknew
 
-            ! Replace the interpolation point that has index KNEW by the point XNEW.
-            ! Update KOPT if F is the least calculated value of the objective function.
-            xpt(:, knew_tr) = xopt + d
-            if (f < fopt) then
-                fopt = f
-                xopt = xopt + d
-                kopt = knew_tr
-            end if
+            !! Replace the interpolation point that has index KNEW by the point XNEW.
+            !! Update KOPT if F is the least calculated value of the objective function.
+            !xpt(:, knew_tr) = xopt + d
+            !if (f < fopt) then
+            !    fopt = f
+            !    xopt = xopt + d
+            !    kopt = knew_tr
+            !end if
         end if
     end if
 
@@ -360,7 +367,6 @@ do while (.true.)
 
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
-
         call evaluate(calfun, x, f)
         nf = nf + 1
 
@@ -376,28 +382,34 @@ do while (.true.)
             exit
         end if
 
-        dnorm = min(delbar, sqrt(sum(d**2)))
+        ! Update DNORMSAV and MODERRSAV.
+        ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
+        dnorm = min(delbar, sqrt(sum(d**2)))   ! In theory, DNORM = DELBAR in this case.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-        moderr = f - fopt - quadinc(pq, d, xopt)
+        ! MODERR is the error of the current model in predicting the change in F due to D.
+        ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
+        moderr = f - fopt - quadinc(pq, d, xopt)  ! QUADINC = Q(XOPT + D) - Q(XOPT)
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
-        ! Update the Lagrange functions and the quadratic model.
-        ! It can happen that VLAG(KNEW) = 0 due to rounding.
-        vlag = calvlag(pl, d, xopt, kopt)
-        pl(:, knew_geo) = pl(:, knew_geo) / vlag(knew_geo)
-        plknew = pl(:, knew_geo)
-        pl = pl - outprod(plknew, vlag)
-        pl(:, knew_geo) = plknew
-        pq = pq + moderr * plknew
+        call update(knew_geo, d, f, moderr, kopt, fopt, pl, pq, xopt, xpt)
 
-        ! Replace the interpolation point that has index KNEW by the point XNEW, and also
-        ! Update KOPT if F is the least calculated value of the objective function.
-        xpt(:, knew_geo) = xopt + d
-        if (f < fopt) then
-            fopt = f
-            xopt = xopt + d
-            kopt = knew_geo
-        end if
+        !! Update the Lagrange functions and the quadratic model.
+        !! It can happen that VLAG(KNEW) = 0 due to rounding.
+        !vlag = calvlag(pl, d, xopt, kopt)
+        !pl(:, knew_geo) = pl(:, knew_geo) / vlag(knew_geo)
+        !plknew = pl(:, knew_geo)
+        !pl = pl - outprod(plknew, vlag)
+        !pl(:, knew_geo) = plknew
+        !pq = pq + moderr * plknew
+
+        !! Replace the interpolation point that has index KNEW by the point XNEW, and also
+        !! Update KOPT if F is the least calculated value of the objective function.
+        !xpt(:, knew_geo) = xopt + d
+        !if (f < fopt) then
+        !    fopt = f
+        !    xopt = xopt + d
+        !    kopt = knew_geo
+        !end if
     end if
 
     if (reduce_rho) then

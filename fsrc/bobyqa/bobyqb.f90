@@ -13,7 +13,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 AM10:13:21
+! Last Modified: Monday, November 28, 2022 PM05:05:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -292,6 +292,7 @@ do while (.true.)
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
+        ! Is the newly generated X better than current best point?
         ximproved = (f < fopt)
 
         ! Call RESCUE if rounding errors have damaged the denominator corresponding to D.
@@ -472,9 +473,11 @@ do while (.true.)
             moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
             moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
+            ! Is the newly generated X better than current best point?
+            ximproved = (f < fopt)
+
             ! Update [BMAT, ZMAT] (represents H in the BOBYQA paper), [FVAL, XPT, KOPT, FOPT, XOPT],
             ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XOPT + D.
-            ximproved = (f < fopt)
             xdrop = xpt(:, knew_geo)
             xosav = xpt(:, kopt)
             call updateh(knew_geo, kopt, d, xpt, bmat, zmat)
