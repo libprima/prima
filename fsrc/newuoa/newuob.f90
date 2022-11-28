@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 AM10:09:05
+! Last Modified: Monday, November 28, 2022 PM03:02:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -293,6 +293,8 @@ do tr = 1, maxtr
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
+        ximproved = (f < fopt)
+
         ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW = XOPT + D.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
         ! N.B.:
@@ -304,7 +306,6 @@ do tr = 1, maxtr
         ! but KNEW_TR = 0, XOPT will differ from XPT(:, KOPT), because the former is set to XNEW but
         ! XNEW is discarded. Such a difference can lead to unexpected behaviors; for example,
         ! KNEW_GEO may equal KOPT, with which GEOSTEP will not work.
-        ximproved = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat)
 
         ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]

@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM02:58:13
+! Last Modified: Monday, November 28, 2022 PM03:37:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -109,7 +109,6 @@ real(RP) :: xbase(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
 real(RP) :: ddmove, delta, moderr, distsq(size(pl, 2)), delbar, &
-& weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, crvmin, fopt,&
 &        ratio, rho, &
 &        trtol, &
@@ -137,12 +136,6 @@ if (DEBUGGING) then
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
 end if
-
-
-!--------------------------------------------------------------------------------------------------!
-! Temporary fix for the G95 warning that these variables are used uninitialized.
-!knew_tr = 1; kopt = 1
-!--------------------------------------------------------------------------------------------------!
 
 !====================!
 ! Calculation starts !
@@ -226,7 +219,9 @@ do while (.true.)
         moderr = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
+        ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(fopt - f, qred, eta1)
+
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
@@ -242,18 +237,19 @@ do while (.true.)
         ddmove = ZERO
         if (knew_tr > 0) then
             ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
-            ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
-            ! the Lagrange functions and the quadratic model.
-            xpt(:, knew_tr) = xopt + d
+
+            ! Update the Lagrange functions and the quadratic model.
             ! It can happen that VLAG(KNEW) = 0 due to rounding.
             vlag = calvlag(pl, d, xopt, kopt)
             pl(:, knew_tr) = pl(:, knew_tr) / vlag(knew_tr)
             plknew = pl(:, knew_tr)
-            pq = pq + moderr * plknew
             pl = pl - outprod(plknew, vlag)
             pl(:, knew_tr) = plknew
+            pq = pq + moderr * plknew
 
+            ! Replace the interpolation point that has index KNEW by the point XNEW.
             ! Update KOPT if F is the least calculated value of the objective function.
+            xpt(:, knew_tr) = xopt + d
             if (f < fopt) then
                 fopt = f
                 xopt = xopt + d
@@ -385,18 +381,18 @@ do while (.true.)
         moderr = f - fopt - quadinc(pq, d, xopt)
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
-        ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
-        ! the Lagrange functions and the quadratic model.
-        xpt(:, knew_geo) = xopt + d
+        ! Update the Lagrange functions and the quadratic model.
         ! It can happen that VLAG(KNEW) = 0 due to rounding.
         vlag = calvlag(pl, d, xopt, kopt)
         pl(:, knew_geo) = pl(:, knew_geo) / vlag(knew_geo)
         plknew = pl(:, knew_geo)
-        pq = pq + moderr * plknew
         pl = pl - outprod(plknew, vlag)
         pl(:, knew_geo) = plknew
+        pq = pq + moderr * plknew
 
+        ! Replace the interpolation point that has index KNEW by the point XNEW, and also
         ! Update KOPT if F is the least calculated value of the objective function.
+        xpt(:, knew_geo) = xopt + d
         if (f < fopt) then
             fopt = f
             xopt = xopt + d
@@ -413,9 +409,10 @@ do while (.true.)
         ! corresponding changes to the gradients of the Lagrange functions and the quadratic model.
         xbase = xbase + xopt
         xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-        pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)  ! Model gradient
+        ! Update the gradients of the model and the Lagrange functions.
+        pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
         do k = 1, npt
-            pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)  ! Lagrange fun. gradient
+            pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)
         end do
         ! Pick the next values of RHO and DELTA.
         delta = HALF * rho

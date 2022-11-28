@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 AM10:10:17
+! Last Modified: Monday, November 28, 2022 PM03:03:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -387,9 +387,10 @@ do tr = 1, maxtr
             delta = rho
         end if
 
+        ximproved = (f < fopt)
+
         ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW = XOPT + D.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
-        ximproved = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat)
         if (knew_tr > 0) then
             ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT,
