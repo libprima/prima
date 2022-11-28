@@ -9,7 +9,7 @@ module symmat_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, May 05, 2022 PM09:28:56
+! Last Modified: Monday, November 28, 2022 PM03:21:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
