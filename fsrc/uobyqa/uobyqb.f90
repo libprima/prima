@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM05:36:00
+! Last Modified: Monday, November 28, 2022 PM06:24:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -66,7 +66,6 @@ use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, initq, initl
 use, non_intrinsic :: trustregion_mod, only : trstep, trrad
 use, non_intrinsic :: update_mod, only : update
-
 
 implicit none
 
@@ -243,7 +242,7 @@ do while (.true.)
         ddmove = ZERO
         if (knew_tr > 0) then
             ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
-            call update(knew_tr, d, f, moderr, kopt, fopt, pl, pq, xopt, xpt)
+            call update(knew_tr, d, f, moderr, kopt, fopt, pl, pq, xpt, xopt)
 
             !! Update the Lagrange functions and the quadratic model.
             !! It can happen that VLAG(KNEW) = 0 due to rounding.
@@ -391,7 +390,7 @@ do while (.true.)
         moderr = f - fopt - quadinc(pq, d, xopt)  ! QUADINC = Q(XOPT + D) - Q(XOPT)
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
-        call update(knew_geo, d, f, moderr, kopt, fopt, pl, pq, xopt, xpt)
+        call update(knew_geo, d, f, moderr, kopt, fopt, pl, pq, xpt, xopt)
 
         !! Update the Lagrange functions and the quadratic model.
         !! It can happen that VLAG(KNEW) = 0 due to rounding.
