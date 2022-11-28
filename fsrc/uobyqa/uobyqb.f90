@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 AM11:17:41
+! Last Modified: Monday, November 28, 2022 AM11:26:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -111,7 +111,7 @@ real(RP) :: xpt(size(x), size(pl, 2))
 real(RP) :: ddmove, delta, moderr, distsq(size(pl, 2)), delbar, &
 & weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, crvmin, fopt,&
-&        fsave, ratio, rho, &
+&        ratio, rho, &
 &        trtol, &
 &        qred, plknew(size(pl, 1)), fval(size(pl, 2))
 integer(IK) :: k, knew_tr, knew_geo, kopt, subinfo
@@ -222,23 +222,23 @@ do while (.true.)
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         moderr = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
-        vlag = calvlag(pl, d, xopt, kopt)
 
 
-        ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
-        ! Then branch if D is not a trust region step.
-        fsave = fopt
-        if (f < fopt) then
-            !fopt = f
-            !xopt = xopt + d
-        end if
+        !! Update FOPT and XOPT if the new F is the least value of the objective function so far.
+        !! Then branch if D is not a trust region step.
+        !fsave = fopt
+        !if (f < fopt) then
+        !    !fopt = f
+        !    !xopt = xopt + d
+        !end if
 
         ! Pick the next value of DELTA after a trust region step.
         if (.not. (qred > 0)) then
             info = TRSUBP_FAILED
             exit
         end if
-        ratio = (fsave - f) / qred
+        !ratio = (fsave - f) / qred
+        ratio = (fopt - f) / qred
         if (ratio <= TENTH) then
             delta = HALF * dnorm
         else if (ratio <= 0.7_RP) then
@@ -250,7 +250,8 @@ do while (.true.)
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
-        ximproved = (f < fsave)
+        !ximproved = (f < fsave)
+        ximproved = (f < fopt)
 
         ! Set KNEW to the index of the next interpolation point to be deleted.
 
@@ -288,6 +289,7 @@ do while (.true.)
         !weight = distsq**4  ! Not better than MAX(ONE, DISTSQ/RHO**2)**4
         !------------------------------------------------------------------------------------------!
 
+        vlag = calvlag(pl, d, xopt, kopt)
         score = weight * abs(vlag)
 
         ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
@@ -316,6 +318,7 @@ do while (.true.)
             ! the Lagrange functions and the quadratic model.
             xpt(:, knew_tr) = xopt + d
             ! It can happen that VLAG(KNEW) = 0 due to rounding.
+            vlag = calvlag(pl, d, xopt, kopt)
             pl(:, knew_tr) = pl(:, knew_tr) / vlag(knew_tr)
             plknew = pl(:, knew_tr)
             pq = pq + moderr * plknew
@@ -323,7 +326,8 @@ do while (.true.)
             pl(:, knew_tr) = plknew
 
             ! Update KOPT if F is the least calculated value of the objective function.
-            if (f < fsave) then
+            !if (f < fsave) then
+            if (f < fopt) then
                 fopt = f
                 xopt = xopt + d
                 kopt = knew_tr
@@ -456,21 +460,21 @@ do while (.true.)
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         moderr = f - fopt - quadinc(pq, d, xopt)
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
-        vlag = calvlag(pl, d, xopt, kopt)
 
 
-        ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
-        ! Then branch if D is not a trust region step.
-        fsave = fopt
-        if (f < fopt) then
-            !fopt = f
-            !xopt = xopt + d
-        end if
+        !! Update FOPT and XOPT if the new F is the least value of the objective function so far.
+        !! Then branch if D is not a trust region step.
+        !fsave = fopt
+        !if (f < fopt) then
+        !    !fopt = f
+        !    !xopt = xopt + d
+        !end if
 
         ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
         ! the Lagrange functions and the quadratic model.
         xpt(:, knew_geo) = xopt + d
         ! It can happen that VLAG(KNEW) = 0 due to rounding.
+        vlag = calvlag(pl, d, xopt, kopt)
         pl(:, knew_geo) = pl(:, knew_geo) / vlag(knew_geo)
         plknew = pl(:, knew_geo)
         pq = pq + moderr * plknew
@@ -478,7 +482,8 @@ do while (.true.)
         pl(:, knew_geo) = plknew
 
         ! Update KOPT if F is the least calculated value of the objective function.
-        if (f < fsave) then
+        !if (f < fsave) then
+        if (f < fopt) then
             fopt = f
             xopt = xopt + d
             kopt = knew_geo
