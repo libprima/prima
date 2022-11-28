@@ -504,10 +504,11 @@ if (ratio <= eta1) then
     !delta = gamma1 * delta_in  ! Powell's COBYLA/LINCOA.
     !delta = min(gamma1 * delta_in, dnorm)  ! Powell's BOBYQA.
 elseif (ratio <= eta2) then
-    delta = max(gamma1 * delta_in, dnorm)
+    delta = max(gamma1 * delta_in, dnorm)   ! Powell's UOBYQA/NEWUOA/BOBYQA/LINCOA  
 else
     delta = min(max(gamma1 * delta_in, gamma2* dnorm), gamma3 * delta_in)
     !delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's NEWUOA/BOBYQA.
+    !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's UOBYQA
 end if
 
 ! For noisy problems, the following may work better.

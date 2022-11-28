@@ -1,5 +1,5 @@
 module trustregion_mod
-!--------------------------------------------------------------------------------------------------! 
+!--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region calculations of NEWUOA.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 15, 2022 PM12:20:52
+! Last Modified: Monday, November 28, 2022 PM12:45:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -464,12 +464,14 @@ if (ratio <= eta1) then
     !delta = gamma1 * delta_in  ! Powell's COBYLA/LINCOA. Works poorly here.
     !delta = min(gamma1 * delta_in, dnorm)  ! Powell's BOBYQA.
 elseif (ratio <= eta2) then
-    delta = max(gamma1 * delta_in, dnorm)
+    delta = max(gamma1 * delta_in, dnorm)  ! Powell's UOBYQA/NEWUOA/BOBYQA/LINCOA
 else
     delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's version
     !delta = max(delta_in, gamma2 * dnorm)  ! Modified version
     ! For noise-free CUTEst problems of <= 200 variables, Powell's version works slightly better
     ! than the modified one.
+    !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's UOBYQA
+    !delta = min(max(gamma1 * delta_in, gamma2* dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
 end if
 
 ! For noisy problems, the following may work better.
