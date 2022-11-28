@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 AM11:26:50
+! Last Modified: Monday, November 28, 2022 AM11:34:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -223,21 +223,6 @@ do while (.true.)
         moderr = f - fopt + qred
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
-
-        !! Update FOPT and XOPT if the new F is the least value of the objective function so far.
-        !! Then branch if D is not a trust region step.
-        !fsave = fopt
-        !if (f < fopt) then
-        !    !fopt = f
-        !    !xopt = xopt + d
-        !end if
-
-        ! Pick the next value of DELTA after a trust region step.
-        if (.not. (qred > 0)) then
-            info = TRSUBP_FAILED
-            exit
-        end if
-        !ratio = (fsave - f) / qred
         ratio = (fopt - f) / qred
         if (ratio <= TENTH) then
             delta = HALF * dnorm
@@ -250,7 +235,6 @@ do while (.true.)
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
-        !ximproved = (f < fsave)
         ximproved = (f < fopt)
 
         ! Set KNEW to the index of the next interpolation point to be deleted.
@@ -326,7 +310,6 @@ do while (.true.)
             pl(:, knew_tr) = plknew
 
             ! Update KOPT if F is the least calculated value of the objective function.
-            !if (f < fsave) then
             if (f < fopt) then
                 fopt = f
                 xopt = xopt + d
@@ -453,22 +436,10 @@ do while (.true.)
             exit
         end if
 
-        ! Use the quadratic model to predict the change in F due to the step D, and find the values
-        ! of the Lagrange functions at the new point.
-        !qred = -quadinc(pq, d, xopt)  ! QRED = Q(XOPT) - Q(XOPT + D)
         dnorm = min(delbar, sqrt(sum(d**2)))
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         moderr = f - fopt - quadinc(pq, d, xopt)
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
-
-
-        !! Update FOPT and XOPT if the new F is the least value of the objective function so far.
-        !! Then branch if D is not a trust region step.
-        !fsave = fopt
-        !if (f < fopt) then
-        !    !fopt = f
-        !    !xopt = xopt + d
-        !end if
 
         ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
         ! the Lagrange functions and the quadratic model.
@@ -482,7 +453,6 @@ do while (.true.)
         pl(:, knew_geo) = plknew
 
         ! Update KOPT if F is the least calculated value of the objective function.
-        !if (f < fsave) then
         if (f < fopt) then
             fopt = f
             xopt = xopt + d
