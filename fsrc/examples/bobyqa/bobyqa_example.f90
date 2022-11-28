@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM02:28:24
+! Last Modified: Monday, November 28, 2022 PM10:02:06
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -92,9 +92,6 @@ call bobyqa(calfun, x, f, lb, ub)  ! This call will not print anything.
 ! take their default values coded in the solver.
 x = x0
 call bobyqa(calfun, x, f, lb, ub, rhobeg=1.0D0, iprint=1, nf=nf)
-write (*, *) 'nf = ', nf
-write (*, *) 'f = ', f
-write (*, *) 'x = ', x
 
 
 end program bobyqa_exmp

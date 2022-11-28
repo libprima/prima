@@ -18,4 +18,3 @@ pintrf.f90
 evaluate.f90
 powalg.f90
 shiftbase.f90
-ieee_4dev.f90
