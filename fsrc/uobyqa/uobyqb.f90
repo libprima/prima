@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 25, 2022 PM11:46:06
+! Last Modified: Monday, November 28, 2022 AM10:43:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,6 +46,7 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
+use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
@@ -54,10 +55,11 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, &
     & MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS!, NAN_INF_MODEL!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : inprod, outprod!, norm
-use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
+use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calvlag
 use, non_intrinsic :: redrho_mod, only : redrho
+use, non_intrinsic :: symmat_mod, only : vec2smat, smat_mul_vec
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep
@@ -90,6 +92,7 @@ real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
+character(len=*), parameter :: solver = 'UOBYQA'
 character(len=*), parameter :: srname = 'UOBYQB'
 integer(IK) :: n
 integer(IK) :: npt
@@ -103,7 +106,7 @@ real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2 - 1, (size(x) + 1) * (size(x) +
 real(RP) :: pq(size(pl, 1))
 real(RP) :: vlag(size(pl, 2))
 real(RP) :: xbase(size(x))
-real(RP) :: xnew(size(x))
+!real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
 real(RP) :: ddmove, delta, diff, distsq(size(pl, 2)), delbar, &
@@ -180,16 +183,16 @@ trtol = 0.01_RP
 ! REDUCE_RHO: Should we reduce rho?
 ! UOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do while (.true.)
+    ! Generate trust region step D, and also calculate a lower bound on the Hessian of Q.
     xopt = xpt(:, kopt)
     g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
     h = vec2smat(pq(n + 1:npt - 1))
-
-    ! Generate the next trust region step and test its length. Set KNEW to -1 if the purpose of
-    ! the next F will be to improve conditioning, and also calculate a lower bound on the
-    ! Hessian term of the model Q.
     call trstep(delta, g, h, trtol, d, crvmin)
+
+    ! Check whether D is too short to invoke a function evaluation.
     dnorm = min(delta, sqrt(sum(d**2)))
     shortd = (dnorm < HALF * rho)
+
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(pq, d, xopt)  ! QRED = Q(XOPT) - Q(XOPT + D)
@@ -197,48 +200,28 @@ do while (.true.)
         ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
-            delta = rho
+            delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
-        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! Calculate the next value of the objective function.
-        xnew = xopt + d
-        x = xbase + xnew
-
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
-            exit
-        end if
-
-        if (is_nan(sum(abs(x)))) then
-            f = sum(x) ! Set F to NaN
-            if (nf == 1) then
-                fopt = f
-                xopt = ZERO
-            end if
-            info = NAN_INF_X
-            exit
-        end if
+        x = xbase + (xopt + d)
+        !xnew = xopt + d
         call evaluate(calfun, x, f)
         nf = nf + 1
+
+        ! Print a message about the function evaluation according to IPRINT.
+        call fmsg(solver, iprint, nf, f, x)
+        ! Save X, F into the history.
         call savehist(nf, x, xhist, f, fhist)
 
-        if (is_nan(f) .or. is_posinf(f)) then
-            if (nf == 1) then
-                fopt = f
-                xopt = ZERO
-            end if
-            info = NAN_INF_F
+        ! Check whether to exit
+        subinfo = checkexit(maxfun, nf, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
             exit
         end if
 
-        if (f <= ftarget) then
-            info = FTARGET_ACHIEVED
-            xopt = xnew
-            fopt = f
-            exit
-        end if
-
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
         vlag = calvlag(pl, d, xopt, kopt)
 
@@ -248,8 +231,8 @@ do while (.true.)
         ! Then branch if D is not a trust region step.
         fsave = fopt
         if (f < fopt) then
-            fopt = f
-            xopt = xnew
+            !fopt = f
+            !xopt = xopt + d
         end if
 
         ! Pick the next value of DELTA after a trust region step.
@@ -265,7 +248,9 @@ do while (.true.)
         else
             delta = max(delta, 1.25_RP * dnorm, dnorm + rho)
         end if
-        if (delta <= 1.5_RP * rho) delta = rho
+        if (delta <= 1.5_RP * rho) then
+            delta = rho  ! Set DELTA to RHO when it is close to or below.
+        end if
 
         ximproved = (f < fsave)
 
@@ -276,8 +261,15 @@ do while (.true.)
         ! the NEWUOA paper, it is reasonable to take into account the new trust-region trial point
         ! XPT(:, KOPT) + D, which will become the optimal point in the next interpolation if
         ! XIMPROVED is TRUE.
-        distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
+        !distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)  ! XOPT has been updated.
         !distsq = sum((xpt - spread(xsave, dim=2, ncopies=npt))**2, dim=1)  ! XSAVE is the unupdated XOPT
+        if (ximproved) then  ! This is Powell's version
+            distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
+        else
+            distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+        end if
         weight = max(ONE, distsq / rho**2)**4
 
         !------------------------------------------------------------------------------------------!
@@ -324,7 +316,7 @@ do while (.true.)
             ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
             ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
             ! the Lagrange functions and the quadratic model.
-            xpt(:, knew_tr) = xnew
+            xpt(:, knew_tr) = xopt + d
             ! It can happen that VLAG(KNEW) = 0 due to rounding.
             pl(:, knew_tr) = pl(:, knew_tr) / vlag(knew_tr)
             plknew = pl(:, knew_tr)
@@ -334,6 +326,8 @@ do while (.true.)
 
             ! Update KOPT if F is the least calculated value of the objective function.
             if (f < fsave) then
+                fopt = f
+                xopt = xopt + d
                 kopt = knew_tr
             end if
         end if
@@ -442,40 +436,21 @@ do while (.true.)
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Calculate the next value of the objective function.
-        xnew = xopt + d
-        x = xbase + xnew
+        !xnew = xopt + d
+        x = xbase + (xopt + d)
 
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
-            exit
-        end if
-
-        if (is_nan(sum(abs(x)))) then
-            f = sum(x) ! Set F to NaN
-            if (nf == 1) then
-                fopt = f
-                xopt = ZERO
-            end if
-            info = NAN_INF_X
-            exit
-        end if
         call evaluate(calfun, x, f)
         nf = nf + 1
+
+        ! Print a message about the function evaluation according to IPRINT.
+        call fmsg(solver, iprint, nf, f, x)
+        ! Save X, F into the history.
         call savehist(nf, x, xhist, f, fhist)
 
-        if (is_nan(f) .or. is_posinf(f)) then
-            if (nf == 1) then
-                fopt = f
-                xopt = ZERO
-            end if
-            info = NAN_INF_F
-            exit
-        end if
-
-        if (f <= ftarget) then
-            info = FTARGET_ACHIEVED
-            xopt = xnew
-            fopt = f
+        ! Check whether to exit
+        subinfo = checkexit(maxfun, nf, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
             exit
         end if
 
@@ -491,13 +466,13 @@ do while (.true.)
         ! Then branch if D is not a trust region step.
         fsave = fopt
         if (f < fopt) then
-            fopt = f
-            xopt = xnew
+            !fopt = f
+            !xopt = xopt + d
         end if
 
         ! Replace the interpolation point that has index KNEW by the point XNEW, and also update
         ! the Lagrange functions and the quadratic model.
-        xpt(:, knew_geo) = xnew
+        xpt(:, knew_geo) = xopt + d
         ! It can happen that VLAG(KNEW) = 0 due to rounding.
         pl(:, knew_geo) = pl(:, knew_geo) / vlag(knew_geo)
         plknew = pl(:, knew_geo)
@@ -507,6 +482,8 @@ do while (.true.)
 
         ! Update KOPT if F is the least calculated value of the objective function.
         if (f < fsave) then
+            fopt = f
+            xopt = xopt + d
             kopt = knew_geo
         end if
     end if
