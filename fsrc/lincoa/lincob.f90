@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM03:03:07
+! Last Modified: Monday, November 28, 2022 PM05:06:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -387,6 +387,7 @@ do tr = 1, maxtr
             delta = rho
         end if
 
+        ! Is the newly generated X better than current best point?
         ximproved = (f < fopt)
 
         ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW = XOPT + D.
@@ -529,9 +530,11 @@ do tr = 1, maxtr
         moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
         qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
 
+        ! Is the newly generated X better than current best point?
+        ximproved = (f < fopt .and. feasible)
+
         ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
         ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
-        ximproved = (f < fopt .and. feasible)
         xdrop = xpt(:, knew_geo)
         xosav = xpt(:, kopt)
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
