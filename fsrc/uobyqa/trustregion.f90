@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM01:53:55
+! Last Modified: Monday, November 28, 2022 PM11:46:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,7 +53,6 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc, norm
-use, non_intrinsic :: ieee_4dev_mod, only : ieeenan
 
 implicit none
 
@@ -117,9 +116,11 @@ if (DEBUGGING) then
 end if
 
 !!!!!!!!!!!!!!!!!!!!
-dsq = ieeenan()
-phiu = ieeenan()
-phil = ieeenan()
+! The initial values of DSQ, PHIU, and PHIL are unused but to entertain Fortran compilers.
+! TODO: Check that DSQ, PHIU, PHIL have been initialized before used. Maybe remove DSQ?
+dsq = ZERO
+phiu = ZERO
+phil = ZERO
 !!!!!!!!!!!!!!!!!!!!
 
 d = ZERO
