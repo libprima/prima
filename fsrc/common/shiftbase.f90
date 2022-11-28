@@ -9,20 +9,23 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM02:09:31
+! Last Modified: Monday, November 28, 2022 PM07:11:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: shiftbase
 
+interface shiftbase
+    module procedure shiftbase_lfqint, shiftbase_qint
+end interface shiftbase
 
 contains
 
 
-subroutine shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
+subroutine shiftbase_lfqint(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
 !--------------------------------------------------------------------------------------------------!
-! SHIFTBASE shifts the base point from XBASE to XBASE + XOPT and updates BMAT, HQ, and GQ
+! This subroutine shifts the base point from XBASE to XBASE + XOPT and updates BMAT, HQ, and GQ
 ! accordingly. PQ and ZMAT remain the same after the shifting. See Section 7 of the NEWUOA paper.
 ! N.B.: [IDZ, ZMAT] provides the factorization of Omega in (3.17) of the NEWUOA paper; in specific,
 ! Omega = sum_{i=1}^{NPT-N-1} s_i*ZMAT(:,i)*ZMAT(:,i)^T, s_i = -1 if i < IDZ, and si = 1 if i >= IDZ.
@@ -61,7 +64,7 @@ real(RP), intent(inout), optional :: gq(:)    ! GQ(N)
 ! do not use GQ but always use GOPT, namely the gradient at XBASE+XOPT. Shouldn't NEWUOA do the same?
 
 ! Local variables
-character(len=*), parameter :: srname = 'SHIFTBASE'
+character(len=*), parameter :: srname = 'SHIFTBASE_LFQINT'
 integer(IK) :: idz_loc
 integer(IK) :: k
 integer(IK) :: n
@@ -179,7 +182,83 @@ if (DEBUGGING) then
     !call assert(errh(idz_loc, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
-end subroutine shiftbase
+end subroutine shiftbase_lfqint
+
+
+subroutine shiftbase_qint(xopt, pl, pq, xbase, xpt)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine shifts the base point from XBASE to XBASE + XOPT, and make the corresponding
+! changes to the gradients of the Lagrange functions and the quadratic model.
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric, smat_mul_vec
+
+implicit none
+
+! Inputs
+real(RP), intent(in) :: xopt(:)  ! XOPT(N)
+
+! In-outputs
+real(RP), intent(inout) :: xbase(:)  ! XBASE(N)
+real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
+real(RP), intent(inout) :: pl(:, :)  ! PL(NPT-1, NPT)
+real(RP), intent(inout) :: pq(:)  ! PQ(NPT-1)
+
+! Local variables
+character(len=*), parameter :: srname = 'SHIFTBASE_QINT'
+integer(IK) :: k
+integer(IK) :: n
+integer(IK) :: npt
+
+! Sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(npt == (n + 1) * (n + 2) / 2, 'NPT = (N+1)(N+2)/2', srname)
+    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(size(pl, 1) == npt - 1 .and. size(pl, 2) == npt, 'SIZE(PL) == [NPT-1, NPT]', srname)
+    call assert(size(pq) == npt - 1, 'SIZE(PQ) == NPT-1', srname)
+    call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt .and. all(is_finite(xpt)), &
+        & 'SIZE(XPT) == [N, NPT], XPT is finite', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Shift the base point from XBASE to XBASE + XOPT.
+xbase = xbase + xopt
+xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+
+! Update the gradient of the model
+pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
+
+! Upda the gradient of the Lagrange functions.
+do k = 1, npt
+    pl(1:n, k) = pl(1:n, k) + smat_mul_vec(pl(n + 1:npt - 1, k), xopt)
+end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(pl, 1) == npt - 1 .and. size(pl, 2) == npt, 'SIZE(PL) == [NPT-1, NPT]', srname)
+    call assert(size(pq) == npt - 1, 'SIZE(PQ) == NPT-1', srname)
+    call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt .and. all(is_finite(xpt)), &
+        & 'SIZE(XPT) == [N, NPT], XPT is finite', srname)
+end if
+
+end subroutine shiftbase_qint
 
 
 end module shiftbase_mod
