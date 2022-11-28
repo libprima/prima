@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 AM10:43:11
+! Last Modified: Monday, November 28, 2022 AM11:17:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -106,10 +106,9 @@ real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2 - 1, (size(x) + 1) * (size(x) +
 real(RP) :: pq(size(pl, 1))
 real(RP) :: vlag(size(pl, 2))
 real(RP) :: xbase(size(x))
-!real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(pl, 2))
-real(RP) :: ddmove, delta, diff, distsq(size(pl, 2)), delbar, &
+real(RP) :: ddmove, delta, moderr, distsq(size(pl, 2)), delbar, &
 & weight(size(pl, 2)), score(size(pl, 2)),    &
 &        dnorm, crvmin, fopt,&
 &        fsave, ratio, rho, &
@@ -205,7 +204,6 @@ do while (.true.)
     else
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
-        !xnew = xopt + d
         call evaluate(calfun, x, f)
         nf = nf + 1
 
@@ -222,10 +220,10 @@ do while (.true.)
         end if
 
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
+        moderr = f - fopt + qred
+        moderrsav = [moderrsav(2:size(moderrsav)), moderr]
         vlag = calvlag(pl, d, xopt, kopt)
 
-        diff = f - fopt + qred
 
         ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
         ! Then branch if D is not a trust region step.
@@ -320,7 +318,7 @@ do while (.true.)
             ! It can happen that VLAG(KNEW) = 0 due to rounding.
             pl(:, knew_tr) = pl(:, knew_tr) / vlag(knew_tr)
             plknew = pl(:, knew_tr)
-            pq = pq + diff * plknew
+            pq = pq + moderr * plknew
             pl = pl - outprod(plknew, vlag)
             pl(:, knew_tr) = plknew
 
@@ -432,11 +430,8 @@ do while (.true.)
         ! improve the performance slightly according to a test on 20220720.
         delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
         d = geostep(g, h, delbar)
-        dnorm = min(delbar, sqrt(sum(d**2)))
-        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Calculate the next value of the objective function.
-        !xnew = xopt + d
         x = xbase + (xopt + d)
 
         call evaluate(calfun, x, f)
@@ -456,11 +451,13 @@ do while (.true.)
 
         ! Use the quadratic model to predict the change in F due to the step D, and find the values
         ! of the Lagrange functions at the new point.
-        qred = -quadinc(pq, d, xopt)  ! QRED = Q(XOPT) - Q(XOPT + D)
-        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
+        !qred = -quadinc(pq, d, xopt)  ! QRED = Q(XOPT) - Q(XOPT + D)
+        dnorm = min(delbar, sqrt(sum(d**2)))
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+        moderr = f - fopt - quadinc(pq, d, xopt)
+        moderrsav = [moderrsav(2:size(moderrsav)), moderr]
         vlag = calvlag(pl, d, xopt, kopt)
 
-        diff = f - fopt + qred
 
         ! Update FOPT and XOPT if the new F is the least value of the objective function so far.
         ! Then branch if D is not a trust region step.
@@ -476,7 +473,7 @@ do while (.true.)
         ! It can happen that VLAG(KNEW) = 0 due to rounding.
         pl(:, knew_geo) = pl(:, knew_geo) / vlag(knew_geo)
         plknew = pl(:, knew_geo)
-        pq = pq + diff * plknew
+        pq = pq + moderr * plknew
         pl = pl - outprod(plknew, vlag)
         pl(:, knew_geo) = plknew
 
