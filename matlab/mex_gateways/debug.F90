@@ -17,7 +17,7 @@ module debug_mod
 !
 ! Started in March 2020
 !
-! Last Modified: Thursday, June 23, 2022 PM04:11:18
+! Last Modified: Monday, November 28, 2022 PM08:41:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,10 +51,10 @@ subroutine assert(condition, description, srname)
 ! Python analogue: assert condition, srname + ': Assertion failed: ' + description
 ! C analogue: assert(condition)  /* An error message will be produced by the compiler */
 !--------------------------------------------------------------------------------------------------!
-!! N.B.: As in C, we design ASSERT to operate only in the debug mode, i.e., when __DEBUGGING__ == 1;
-!! when __DEBUGGING__ == 0, ASSERT does nothing. For the checking that should take effect in both
-!! the debug and release modes, use VALIDATE (see below) instead. In the optimized mode of Python
-!! (python -O), the Python `assert` will also be ignored. MATLAB does not behave in this way.
+! N.B.: As in C, we design ASSERT to operate only in the debug mode, i.e., when __DEBUGGING__ == 1;
+! when __DEBUGGING__ == 0, ASSERT does nothing. For the checking that should take effect in both
+! the debug and release modes, use VALIDATE (see below) instead. In the optimized mode of Python
+! (python -O), the Python `assert` will also be ignored. MATLAB does not behave in this way.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 implicit none
@@ -92,9 +92,9 @@ subroutine wassert(condition, description, srname)
 ! If no but DEBUGGING is true, print the following message to STDERR (but do not stop the program):
 ! SRNAME // 'Assertion failed: ' // DESCRIPTION
 ! MATLAB analogue:
-!!if ~condition
-!!    warning(sprintf('%s: Assertion failed: %s', srname, description))
-!!end
+! !if ~condition
+! !    warning(sprintf('%s: Assertion failed: %s', srname, description))
+! !end
 ! In Python or C, WASSERT can be implemented following the Fortran implementation below.
 ! N.B.: When DEBUGGING is true, ASSERT stops the program with an error if the condition is false,
 ! but WASSERT only raises a warning.
