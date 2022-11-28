@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM01:40:24
+! Last Modified: Monday, November 28, 2022 PM01:53:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -557,7 +557,7 @@ end if
 end subroutine trstep
 
 
-function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio, rho) result(delta)
+function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
 !--------------------------------------------------------------------------------------------------!
 ! This function updates the trust region radius according to RATIO and DNORM.
 !--------------------------------------------------------------------------------------------------!
@@ -579,7 +579,6 @@ real(RP), intent(in) :: eta2    ! Ratio threshold for expansion
 real(RP), intent(in) :: gamma1  ! Contraction factor
 real(RP), intent(in) :: gamma2  ! Expansion factor
 real(RP), intent(in) :: ratio   ! Reduction ratio
-real(RP), intent(in) :: rho     ! Current lower bound of the trust region radius
 
 ! Outputs
 real(RP) :: delta
@@ -610,8 +609,8 @@ else if (ratio <= eta2) then
     delta = max(gamma1 * delta_in, dnorm)  ! Powell's UOBYQA/NEWUOA/BOBYQA/LINCOA
 else
     delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's NEWUOA/BOBYQA. Works well for UOBYQA.
-    !delta = max(delta_in, gamma2 * dnorm)  ! This works evidently better than Powell's version.
     !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's original UOBYQA code.
+    !delta = max(delta_in, gamma2 * dnorm)  ! This works evidently better than Powell's version.
     !delta = min(max(gamma1 * delta_in, gamma2* dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
 end if
 
