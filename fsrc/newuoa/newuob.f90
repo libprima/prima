@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, November 26, 2022 AM12:40:28
+! Last Modified: Monday, November 28, 2022 AM10:09:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -256,7 +256,7 @@ do tr = 1, maxtr
         ! both REDUCE_RHO and IMPROVE_GEO may end up with FALSE in this case.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
-            delta = rho  ! Set DELTA to RHO when it is close.
+            delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
         ! Calculate the next value of the objective function.
@@ -290,7 +290,7 @@ do tr = 1, maxtr
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
-            delta = rho
+            delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
         ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW = XOPT + D.

@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 25, 2022 PM11:45:30
+! Last Modified: Monday, November 28, 2022 AM10:10:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -337,7 +337,7 @@ do tr = 1, maxtr
         ! 4. The factor 0.99*GAMMA3 aligns with the update of DELTA after a trust-region step.
         delta = HALF * delta
         if (delta <= 0.99_RP * gamma3 * rho) then
-            delta = rho  ! Set DELTA to RHO when it is close.
+            delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
         ! Calculate the next value of the objective function.
@@ -377,12 +377,12 @@ do tr = 1, maxtr
         ! Update DELTA. After this, DELTA < DNORM may hold.
         ! The new DELTA lies in [GAMMA1*DNORM, GAMMA3*DELTA].
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, gamma3, ratio)
-        ! Set DELTA to RHO when it is close. The multiplicative factor in the scheme below should be
-        ! less than GAMMA3. Imagine a very successful step with DENORM = the un-updated DELTA = RHO.
-        ! Then TRRAD will update DELTA to GAMMA3*RHO. If this factor were not smaller than GAMMA3,
-        ! then DELTA will be reset to RHO, which is not reasonable as D is very successful. See
-        ! paragraph two of Sec. 5.2.5 in T. M. Ragonneau's thesis:
-        ! "Model-Based Derivative-Free Optimization Methods and Software".
+        ! Set DELTA to RHO when it is close to or below. The multiplicative factor in the scheme
+        ! below should be less than GAMMA3. Imagine a very successful step with DENORM = the
+        ! un-updated DELTA = RHO. Then TRRAD will update DELTA to GAMMA3*RHO. If this factor were
+        ! not smaller than GAMMA3, then DELTA will be reset to RHO, which is not reasonable as D is
+        ! very successful. See paragraph two of Sec. 5.2.5 in T. M. Ragonneau's thesis: "Model-Based
+        ! Derivative-Free Optimization Methods and Software".
         if (delta <= 0.99_RP * gamma3 * rho) then
             delta = rho
         end if
