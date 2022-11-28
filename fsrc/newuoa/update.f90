@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM05:39:14
+! Last Modified: Monday, November 28, 2022 PM06:12:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -65,8 +65,8 @@ if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FVAL(KOPT)', srname)
-    call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FVAL(KOPT)', srname)
+    call assert(knew >= 1 .or. .not. ximproved, 'KNEW >= 1 unless X is not improved', srname)
+    call assert(knew /= kopt .or. ximproved, 'KNEW /= KOPT unless X is improved', srname)
     call assert(size(xnew) == n .and. all(is_finite(xnew)), 'SIZE(XNEW) == N, XNEW is finite', srname)
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
@@ -82,8 +82,8 @@ end if
 !====================!
 
 ! Do essentially nothing when KNEW is 0. This can only happen after a trust-region step.
+! We must set XOPT and FOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
-    ! We must set XOPT and FOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
     xopt = xpt(:, kopt)
     fopt = fval(kopt)
     return
@@ -109,6 +109,8 @@ fopt = fval(kopt)
 
 ! Postconditions
 if (DEBUGGING) then
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt .and. all(is_finite(xpt)), &
+        & 'SIZE(XPT) == [N, NPT], XPT is finite', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(abs(fopt - fval(kopt)) <= 0, 'FOPT == FVAL(KOPT)', srname)
     call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
