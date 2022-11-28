@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM06:24:18
+! Last Modified: Monday, November 28, 2022 PM06:34:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -242,25 +242,8 @@ do while (.true.)
         ddmove = ZERO
         if (knew_tr > 0) then
             ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
+            ! Update PL, PQ, XPT, KOPT, XOPT, and FOPT.
             call update(knew_tr, d, f, moderr, kopt, fopt, pl, pq, xpt, xopt)
-
-            !! Update the Lagrange functions and the quadratic model.
-            !! It can happen that VLAG(KNEW) = 0 due to rounding.
-            !vlag = calvlag(pl, d, xopt, kopt)
-            !pl(:, knew_tr) = pl(:, knew_tr) / vlag(knew_tr)
-            !plknew = pl(:, knew_tr)
-            !pl = pl - outprod(plknew, vlag)
-            !pl(:, knew_tr) = plknew
-            !pq = pq + moderr * plknew
-
-            !! Replace the interpolation point that has index KNEW by the point XNEW.
-            !! Update KOPT if F is the least calculated value of the objective function.
-            !xpt(:, knew_tr) = xopt + d
-            !if (f < fopt) then
-            !    fopt = f
-            !    xopt = xopt + d
-            !    kopt = knew_tr
-            !end if
         end if
     end if
 
@@ -390,25 +373,8 @@ do while (.true.)
         moderr = f - fopt - quadinc(pq, d, xopt)  ! QUADINC = Q(XOPT + D) - Q(XOPT)
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
+        ! Update PL, PQ, XPT, KOPT, XOPT, and FOPT.
         call update(knew_geo, d, f, moderr, kopt, fopt, pl, pq, xpt, xopt)
-
-        !! Update the Lagrange functions and the quadratic model.
-        !! It can happen that VLAG(KNEW) = 0 due to rounding.
-        !vlag = calvlag(pl, d, xopt, kopt)
-        !pl(:, knew_geo) = pl(:, knew_geo) / vlag(knew_geo)
-        !plknew = pl(:, knew_geo)
-        !pl = pl - outprod(plknew, vlag)
-        !pl(:, knew_geo) = plknew
-        !pq = pq + moderr * plknew
-
-        !! Replace the interpolation point that has index KNEW by the point XNEW, and also
-        !! Update KOPT if F is the least calculated value of the objective function.
-        !xpt(:, knew_geo) = xopt + d
-        !if (f < fopt) then
-        !    fopt = f
-        !    xopt = xopt + d
-        !    kopt = knew_geo
-        !end if
     end if
 
     if (reduce_rho) then
