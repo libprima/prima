@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM09:46:48
+! Last Modified: Tuesday, November 29, 2022 PM06:32:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,7 +53,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec !, norm
+use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec, linspace !, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc
@@ -112,7 +112,7 @@ real(RP) :: ddmove, delta, moderr, distsq(size(pl, 2)), delbar, &
 &        ratio, rho, &
 &        trtol, &
 &        qred, fval(size(pl, 2))
-integer(IK) :: knew_tr, knew_geo, kopt, subinfo
+integer(IK) :: knew_tr, knew_geo, kopt, subinfo, kk(size(x))
 logical :: ximproved, shortd, improve_geo, reduce_rho, accurate_mod, adequate_geo, close_itpset, small_trrad, bad_trstep
 real(RP) :: dnormsav(3), moderrsav(size(dnormsav))
 
@@ -157,6 +157,26 @@ end if
 
 call initq(fval, xpt, pq)
 call initl(xpt, pl)
+
+kk = linspace(2_IK, 2_IK * n, n)
+xpt(:, 2:2 * n + 1) = xpt(:, [kk, kk + 1])
+fval(2:2 * n + 1) = fval([kk, kk + 1])
+!if (kopt <= 2 * n + 1 .and. kopt >= 3 .and. modulo(kopt, 2) == 1) then
+!    kopt = (kopt + 1) / 2 + n
+!else if (kopt <= 2 * n + 1 .and. modulo(kopt, 2) == 0) then
+!    kopt = kopt / 2 + 1
+!end if
+pl(:, 2:2 * n + 1) = pl(:, [kk, kk + 1])
+kopt = minloc(fval, dim=1)
+
+!write (17, *) fval
+!write (17, *) xpt
+!write (17, *) kopt
+!write (17, *) xopt
+!write (17, *) fopt
+!write (17, *) pq
+!write (17, *) pl
+
 
 ! Set parameters to begin the iterations for the current RHO.
 rho = rhobeg
@@ -430,7 +450,7 @@ call retmsg(solver, info, iprint, nf, f, x)
 
 ! Postconditions
 
-close (16)
+close (17)
 
 
 end subroutine uobyqb

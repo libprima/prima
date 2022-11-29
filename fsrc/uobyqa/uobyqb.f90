@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM09:46:48
+! Last Modified: Tuesday, November 29, 2022 PM06:22:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -157,6 +157,14 @@ end if
 
 call initq(fval, xpt, pq)
 call initl(xpt, pl)
+
+!write (16, *) fval
+!write (16, *) xpt
+!write (16, *) kopt
+!write (16, *) xopt
+!write (16, *) fopt
+!write (16, *) pq
+!write (16, *) pl
 
 ! Set parameters to begin the iterations for the current RHO.
 rho = rhobeg
