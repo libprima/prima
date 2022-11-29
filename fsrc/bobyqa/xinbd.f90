@@ -11,7 +11,7 @@ contains
 
 function xinbd(xbase, step, xl, xu, sl, su) result(x)
 !--------------------------------------------------------------------------------------------------!
-! This function sets X to XBASE + STEP, giving careful attention to the following bounds.
+! This function sets X to XBASE + STEP, paying careful attention to the following bounds.
 ! 1. XBASE is a point between XL and XU (guaranteed);
 ! 2. STEP is a step between SL and SU (may be with rounding errors);
 ! 3. SL = XL - XBASE, SU = XU - XBASE;

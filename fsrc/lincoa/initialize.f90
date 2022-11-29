@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 AM09:57:05
+! Last Modified: Tuesday, November 29, 2022 AM11:46:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -198,9 +198,9 @@ do k = 1, npt
     cstrv = maximum([ZERO, constr])
 
     ! Print a message about the function evaluation according to IPRINT.
-    call fmsg(solver, iprint, nf, f, x, cstrv)
+    call fmsg(solver, iprint, k, f, x, cstrv)
     ! Save X, F, CSTRV into the history.
-    call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+    call savehist(k, x, xhist, f, fhist, cstrv, chist)
 
     evaluated(k) = .true.
     feasible(k) = (cstrv <= 0)

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM09:39:24
+! Last Modified: Tuesday, November 29, 2022 AM11:11:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,8 @@ function setdrop_tr(kopt, ximproved, d, pl, rho, xpt) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
-! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.
+! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step. See the discussions
+! around (56) of the UOBYQA paper.
 ! N.B.:
 ! 1. If XIMPROVED = TRUE, then KNEW > 0 so that XNEW is included into XPT. Otherwise, it is a bug.
 ! 2. If XIMPROVED = FALSE, then KNEW /= KOPT so that XPT(:, KOPT) stays. Otherwise, it is a bug.
@@ -151,6 +152,14 @@ end function setdrop_tr
 
 
 function geostep(g, h, delbar) result(d)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates a step D that approximately solves
+! maximize |LFUNC(XOPT + D) subject to ||D|| <= DELBAR,
+! so that the geometry of the interpolation step is improved when XPT(:, KNEW) becomes XOPT + D.
+! Here, LFUNC is the Lagrange polynomial at the KNEW-th interpolation point, G is the gradient of
+! LFUNC at XOPT, and H is its Hessian. See (8) and Section 2 of the UOBYQA paper.
+! N.B.: In Powell's UOBYQA code, DELBAR = RHO. We take the DELBAR of NEWUOA, which works better.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, DEBUGGING

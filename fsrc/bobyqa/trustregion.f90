@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM11:40:55
+! Last Modified: Tuesday, November 29, 2022 AM11:39:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,6 +20,25 @@ contains
 
 
 subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine approximately solves
+! minimize Q(XOPT + D) subject to ||D|| <= DELTA, SL <= D <= SU.
+! See Section 3 of the BOBYQA paper.
+!
+! A version of the truncated conjugate gradient is applied. If a line search is restricted by
+! a constraint, then the procedure is restarted, the values of the variables that are at their
+! bounds being fixed. If the trust region boundary is reached, then further changes may be made to
+! D, each one being in the two dimensional space that is spanned by the current D and the gradient
+! of Q at XOPT+D, staying on the trust  region boundary. Termination occurs when the reduction in
+! Q seems to be close to the greatest reduction that can be achieved.
+!
+! CRVMIN is set to zero if D reaches the trust region boundary. Otherwise it is set to the least
+! curvature of H that occurs in the conjugate gradient searches that are not restricted by any
+! constraints. In Powell's BOBYQA code, a negative value (-1) is assigned to CRVMIN if all of
+! the conjugate gradient searches are constrained. However, we set CRVMIN = 0 in this case, which
+! makes no difference to the algorithm, because CRVMIN is only used to tell whether the recent
+! models are sufficiently accurate, where both CRVMIN = 0 and CRVMIN < 0 provide a negative answer.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, HALF, EPS, HUGENUM, DEBUGGING
@@ -119,54 +138,39 @@ end if
 !       and the reduced D, respectively, where the reduced D is the same as D,
 !       except that the components of the fixed variables are zero.
 !     DSQ will be set to the square of the length of XNEW-XOPT.
-!     CRVMIN is set to zero if D reaches the trust region boundary. Otherwise
-!       it is set to the least curvature of H that occurs in the conjugate
-!       gradient searches that are not restricted by any constraints. The
-!       value CRVMIN = -HUGENUM is set, however, if all of these searches are
-!       constrained.
-!
-!     A version of the truncated conjugate gradient is applied. If a line
-!     search is restricted by a constraint, then the procedure is restarted,
-!     the values of the variables that are at their bounds being fixed. If
-!     the trust region boundary is reached, then further changes may be made
-!     to D, each one being in the two dimensional space that is spanned
-!     by the current D and the gradient of Q at XOPT+D, staying on the trust
-!     region boundary. Termination occurs when the reduction in Q seems to
-!     be close to the greatest reduction that can be achieved.
-!
-!     Set some constants.
-!
-!
-!     The sign of GOPT(I) gives the sign of the change to the I-th variable
-!     that will reduce Q from its value at XOPT. Thus XBDI(I) shows whether
-!     or not to fix the I-th variable at one of its bounds initially, with
-!     NACT being set to the number of fixed variables. D and GNEW are also
-!     set for the first iteration. DELSQ is the upper bound on the sum of
-!     squares of the free variables. QRED is the reduction in Q so far.
 !
 
 ! The initial values of IACT, DREDSQ, and GGSAV are unused but to entertain Fortran compilers.
-! TODO: Check that GGSAV has been initialized before used. 
+! TODO: Check that GGSAV has been initialized before used.
 iact = 0
 dredsq = ZERO
 ggsav = ZERO
 
+! The sign of GOPT(I) gives the sign of the change to the I-th variable that will reduce Q from its
+! value at XOPT. Thus XBDI(I) shows whether or not to fix the I-th variable at one of its bounds
+! initially, with NACT being set to the number of fixed variables.
 xbdi = 0
 xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1
 xbdi(trueloc(xopt <= sl .and. gopt >= 0)) = -1
 nact = count(xbdi /= 0)
+
+! Initialized D and CRVMIN.
 d = ZERO
+crvmin = -HUGENUM
+! GNEW is the gradient at the current iterate.
 gnew = gopt
 gredsq = sum(gnew(trueloc(xbdi == 0))**2)
-
+! DELSQ is the upper bound on the sum of squares of the free variables.
 delsq = delta * delta
+! QRED is the reduction in Q so far.
 qred = ZERO
-crvmin = -HUGENUM
+! BETA is the coefficient for the previous searching direction in the conjugate gradient method.
 beta = ZERO
 
 ! ITERCG is the number of CG iterations corresponding to the current set of active bounds.
 itercg = 0
 
+! TWOD_SEARCH: whether to perform a 2D search after the truncated conjugate gradient method.
 twod_search = .false.  ! The default value of TWOD_SEARCH is FALSE!
 
 ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.

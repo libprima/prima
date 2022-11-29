@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM02:48:55
+! Last Modified: Tuesday, November 29, 2022 AM11:22:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,8 @@ function setdrop_tr(kopt, ximproved, bmat, d, delta, rho, xpt, zmat) result(knew
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
-! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.
+! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step. See discussions
+! around (6.1) of the BOBYQA paper.
 ! N.B.:
 ! 1. If XIMPROVED = TRUE, then KNEW > 0 so that XNEW is included into XPT. Otherwise, it is a bug.
 ! 2. If XIMPROVED = FALSE, then KNEW /= KOPT so that XPT(:, KOPT) stays. Otherwise, it is a bug.
@@ -171,7 +172,8 @@ end function setdrop_tr
 function geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds a step D that intends to improve the geometry of the interpolation set
-! when XPT(:, KNEW) is changed to XOPT + D, where XOPT = XPT(:, KOPT).
+! when XPT(:, KNEW) is changed to XOPT + D, where XOPT = XPT(:, KOPT). See Section 3 of the BOBYQA
+! paper, particularly the discussions starting from (3.7).
 !
 ! The arguments XPT, BMAT, ZMAT, SL and SU all have the same meanings as in BOBYQB.
 ! KOPT is the index of the optimal interpolation point.

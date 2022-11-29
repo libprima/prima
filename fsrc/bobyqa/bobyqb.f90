@@ -13,7 +13,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 AM10:37:40
+! Last Modified: Tuesday, November 29, 2022 AM11:51:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -307,8 +307,8 @@ do while (.true.)
             ! !if (ximproved .and. .not. any(den > HALF * maxval(vlag(1:npt)**2))) then
             ! !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then  ! Powell's code.
             ! !if (.not. any(den > maxval(vlag(1:npt)**2))) then
-            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, &
-                & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, subinfo)
+            call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
+                & fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
                 exit
@@ -435,8 +435,8 @@ do while (.true.)
         if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
             ! The condition below works the same as the above one, which is used in Powell's code.
             ! !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > 0.25 * vlag(knew_geo)**2)) then
-            call rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, &
-                & fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, subinfo)
+            call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
+                & fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
                 exit

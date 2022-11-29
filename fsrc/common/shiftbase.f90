@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM09:33:51
+! Last Modified: Tuesday, November 29, 2022 AM11:16:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -188,7 +188,8 @@ end subroutine shiftbase_lfqint
 subroutine shiftbase_qint(xopt, pl, pq, xbase, xpt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine shifts the base point from XBASE to XBASE + XOPT, and make the corresponding
-! changes to the gradients of the Lagrange functions and the quadratic model.
+! changes to the gradients of the Lagrange functions and the quadratic model. See the discussion
+! below (40) of the UOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

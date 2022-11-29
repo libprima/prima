@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 AM10:06:53
+! Last Modified: Tuesday, November 29, 2022 AM11:50:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ public :: rescue
 contains
 
 
-subroutine rescue(calfun, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval, &
+subroutine rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval, &
     & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine implements "the method of RESCUE" introduced in Section 5 of BOBYQA paper. The
@@ -106,6 +106,7 @@ implicit none
 
 ! Inputs
 procedure(OBJ) :: calfun
+character(len=*), intent(in) :: solver
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: delta
