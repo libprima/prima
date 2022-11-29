@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, November 10, 2022 PM03:11:33
+! Last Modified: Tuesday, November 29, 2022 AM10:36:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -333,6 +333,8 @@ else
     ! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
     x = moderatex(x)
     call evaluate(calcfc, x, f, constr_loc, cstrv_loc) ! Indeed, CSTRV_LOC needs not to be evaluated.
+    ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
+    ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default

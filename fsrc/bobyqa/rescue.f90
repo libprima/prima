@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 AM12:27:25
+! Last Modified: Tuesday, November 29, 2022 AM10:06:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -95,6 +95,7 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : MAXFUN_REACHED, INFO_DFT
 use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update, r2update, trueloc
+use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : hess_mul, setij
 
@@ -472,7 +473,13 @@ if (nprov > 0) then
         x = xinbd(xbase, xpt(:, kpt), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XPT(:, KPT).
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
+
+        ! Print a message about the function evaluation according to IPRINT.
+        call fmsg(solver, iprint, nf, f, x)
+        ! Save X, F into the history.
         call savehist(nf, x, xhist, f, fhist)
+
+        ! Update FVAL and KOPT.
         fval(kpt) = f
         if (f < fval(kopt)) then
             kopt = kpt

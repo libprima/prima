@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM09:34:41
+! Last Modified: Tuesday, November 29, 2022 AM10:04:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -195,10 +195,16 @@ end do
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     x = xinbd(xbase, xpt(:, k), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XPT(:, K).
     call evaluate(calfun, x, f)
+
+    ! Print a message about the function evaluation according to IPRINT.
+    call fmsg(solver, iprint, k, f, x)
+    ! Save X, F into the history.
+    call savehist(k, x, xhist, f, fhist)
+
     evaluated(k) = .true.
     fval(k) = f
-    call savehist(k, x, xhist, f, fhist)
-    call fmsg(solver, iprint, k, f, x)
+
+    ! Check whether to exit
     subinfo = checkexit(maxfun, k, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
         info = subinfo
@@ -242,10 +248,16 @@ if (info == INFO_DFT) then
     do k = int(2 * n + 2, kind(k)), npt
         x = xinbd(xbase, xpt(:, k), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XPT(:, K).
         call evaluate(calfun, x, f)
+
+        ! Print a message about the function evaluation according to IPRINT.
+        call fmsg(solver, iprint, k, f, x)
+        ! Save X, F into the history.
+        call savehist(k, x, xhist, f, fhist)
+
         evaluated(k) = .true.
         fval(k) = f
-        call savehist(k, x, xhist, f, fhist)
-        call fmsg(solver, iprint, k, f, x)
+
+        ! Check whether to exit
         subinfo = checkexit(maxfun, k, f, ftarget, x)
         if (subinfo /= INFO_DFT) then
             info = subinfo

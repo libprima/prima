@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM09:36:29
+! Last Modified: Tuesday, November 29, 2022 AM09:57:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -196,19 +196,25 @@ do k = 1, npt
     ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
     constr = matprod(x, A_orig) - b_orig
     cstrv = maximum([ZERO, constr])
-    call fmsg(solver, iprint, k, f, x, cstrv, constr)
-    call savehist(k, x, xhist, f, fhist, cstrv, chist)
+
+    ! Print a message about the function evaluation according to IPRINT.
+    call fmsg(solver, iprint, nf, f, x, cstrv)
+    ! Save X, F, CSTRV into the history.
+    call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+
     evaluated(k) = .true.
     feasible(k) = (cstrv <= 0)
     cval(k) = cstrv
     fval(k) = f
+
+    ! Check whether to exit.
     subinfo = checkexit(maxfun, k, cstrv, ctol, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
         info = subinfo
         exit
     end if
 end do
-feasible(1) = .true.  ! LINCOA always start with a feasible point.
+feasible(1) = .true.  ! LINCOA always starts with a feasible point.
 
 nf = int(count(evaluated), kind(nf))
 kopt = int(minloc(fval, mask=(evaluated .and. feasible), dim=1), kind(kopt))
