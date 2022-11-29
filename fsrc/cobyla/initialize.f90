@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, November 29, 2022 AM09:59:12
+! Last Modified: Tuesday, November 29, 2022 PM01:12:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -124,21 +124,31 @@ end if
 ! Calculation starts !
 !====================!
 
+! Initialize INFO to the default value. At return, an INFO different from this value will indicate
+! an abnormal return.
+info = INFO_DFT
+
+! Initialize the simplex. It will be revised during the initialization.
 sim = eye(n, n + 1_IK) * rhobeg
 sim(:, n + 1) = x0
-! The following line is mathematically unnecessary, yet compilers may complain if we return due to
-! CHECKEXIT before SIMI is set to INV(SIM(:, 1:N)).
+
+! Initialize the matrix SIMI. This initial value will be discarded at the end of the initialization.
+! If we do not do this, compilers may complain if we return due to CHECKEXIT before SIMI is set.
 simi = eye(n) / rhobeg
 
 ! EVALUATED(J) = TRUE iff the function/constraint of SIM(:, J) has been evaluated.
 evaluated = .false.
 
-! Initialize FVAL, CVAL, and CONMAT. Otherwise, compilers may complain that they are not (completely)
-! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+! Initialize XHIST, FHIST, CHIST, CONHIST, FVAL, CVAL, and CONMAT. Otherwise, compilers may complain
+!that they are not (completely) initialized if the initialization aborts due to abnormality (see
+!CHECKEXIT). Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+xhist = -HUGENUM
+fhist = HUGENUM
+chist = HUGENUM
+conhist = -HUGENUM
 fval = HUGENUM
 cval = HUGENUM
 conmat = -HUGENUM
-info = INFO_DFT
 
 do k = 1, n + 1_IK
     x = sim(:, n + 1)

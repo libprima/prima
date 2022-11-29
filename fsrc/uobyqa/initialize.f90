@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Tuesday, November 29, 2022 AM11:00:24
+! Last Modified: Tuesday, November 29, 2022 PM01:13:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -115,8 +115,11 @@ xbase = x0
 ! is not fully parallelizable if NPT>2N+1, as the definition XPT(:, 2N+2:end) involves FVAL(1:2N+1).
 evaluated = .false.
 
-! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
-! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+! Initialize XHIST, FHIST, and FVAL. Otherwise, compilers may complain that they are not
+! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+! Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+xhist = -HUGENUM
+fhist = HUGENUM
 fval = HUGENUM
 
 ! Set XPT(:, 1 : 2*N+1) and FVAL(:, 1 : 2*N+1).
@@ -124,36 +127,67 @@ xpt = ZERO
 kk = linspace(2_IK, 2_IK * n, n)
 xpt(:, kk) = rhobeg * eye(n)
 do k = 1, 2_IK * n + 1_IK
-    if (k >= 3 .and. modulo(k, 2_IK) == 1) then
-        if (fval(k - 1) < fval(1)) then
-            xpt((k - 1) / 2, k) = TWO * rhobeg
-        else
-            xpt((k - 1) / 2, k) = -rhobeg
-        end if
-    end if
+    if (k >= 3 .and. modulo(k, 2_IK) == 1) cycle
 
     x = xpt(:, k) + xbase
     call evaluate(calfun, x, f)
 
+    nf = k / 2 + 1
+
     ! Print a message about the function evaluation according to IPRINT.
-    call fmsg(solver, iprint, k, f, x)
+    call fmsg(solver, iprint, nf, f, x)
     ! Save X and F into the history.
-    call savehist(k, x, xhist, f, fhist)
+    call savehist(nf, x, xhist, f, fhist)
 
     evaluated(k) = .true.
     fval(k) = f
 
     ! Check whether to exit.
-    subinfo = checkexit(maxfun, k, f, ftarget, x)
+    subinfo = checkexit(maxfun, nf, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
         info = subinfo
         exit
     end if
 end do
 
+do k = 1, n
+    if (fval(2 * k) < fval(1)) then
+        xpt(k, 2 * k + 1) = TWO * rhobeg
+    else
+        xpt(k, 2 * k + 1) = -rhobeg
+    end if
+end do
+
+if (info == INFO_DFT) then
+    do k = 1, 2_IK * n + 1_IK
+        if (k == 1 .or. modulo(k, 2_IK) == 0) cycle
+
+        x = xpt(:, k) + xbase
+        call evaluate(calfun, x, f)
+
+        nf = (k + 1) / 2 + n
+
+        ! Print a message about the function evaluation according to IPRINT.
+        call fmsg(solver, iprint, nf, f, x)
+        ! Save X and F into the history.
+        call savehist(nf, x, xhist, f, fhist)
+
+        evaluated(k) = .true.
+        fval(k) = f
+
+        ! Check whether to exit.
+        subinfo = checkexit(maxfun, nf, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
+    end do
+end if
+
 if (info == INFO_DFT) then
     xw = -rhobeg
     xw(trueloc(fval(kk) < fval(1))) = rhobeg
+    ! See (42)--(43) of the UOBYQA paper for IP and IQ.
     ip = 0
     iq = 2
     do k = 2_IK * n + 2_IK, npt
