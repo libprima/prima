@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM06:26:54
+! Last Modified: Tuesday, November 29, 2022 AM11:12:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,7 @@ contains
 subroutine update(knew, d, f, moderr, kopt, fopt, pl, pq, xpt, xopt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates PL, PQ, XPT, KOPT, XOPT, and FOPT when XPT(:, KNEW) becomes XNEW = XOPT+D.
+! See Section 4 of the UOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
