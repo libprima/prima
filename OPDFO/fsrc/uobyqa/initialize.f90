@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Tuesday, November 29, 2022 PM12:54:24
+! Last Modified: Tuesday, November 29, 2022 PM06:40:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -204,6 +204,9 @@ if (info == INFO_DFT) then
     end do
 end if
 
+!write (17, *) fval
+!write (17, *) xpt
+
 nf = int(count(evaluated), kind(nf))  !!MATLAB: nf = sum(evaluated);
 kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 !!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first')
@@ -326,6 +329,7 @@ if (present(info)) then
         info = INFO_DFT
     end if
 end if
+!write (17, *) 'PQ', pq
 
 !====================!
 !  Calculation ends  !
@@ -442,6 +446,9 @@ do k = 2_IK * n + 2_IK, npt
         pl(ih, 2 * iq) = -temp
     end if
 end do
+!do k = 1, npt
+!    write (17, *) 'PL', k, pl(:, k)
+!end do
 
 if (present(info)) then
     if (is_nan(sum(abs(pl)))) then

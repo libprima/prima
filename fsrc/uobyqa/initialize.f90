@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Tuesday, November 29, 2022 PM01:13:23
+! Last Modified: Tuesday, November 29, 2022 PM06:40:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -124,15 +124,18 @@ fval = HUGENUM
 
 ! Set XPT(:, 1 : 2*N+1) and FVAL(:, 1 : 2*N+1).
 xpt = ZERO
-kk = linspace(2_IK, 2_IK * n, n)
+!kk = linspace(2_IK, 2_IK * n, n)
+kk = linspace(2_IK, n + 1_IK, n)
 xpt(:, kk) = rhobeg * eye(n)
-do k = 1, 2_IK * n + 1_IK
-    if (k >= 3 .and. modulo(k, 2_IK) == 1) cycle
+!do k = 1, 2_IK * n + 1_IK
+do k = 1, n + 1_IK
+    !if (k >= 3 .and. modulo(k, 2_IK) == 1) cycle
 
     x = xpt(:, k) + xbase
     call evaluate(calfun, x, f)
 
-    nf = k / 2 + 1
+    !nf = k / 2 + 1
+    nf = k
 
     ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, iprint, nf, f, x)
@@ -150,22 +153,31 @@ do k = 1, 2_IK * n + 1_IK
     end if
 end do
 
+!do k = 1, n
+!    if (fval(2 * k) < fval(1)) then
+!        xpt(k, 2 * k + 1) = TWO * rhobeg
+!    else
+!        xpt(k, 2 * k + 1) = -rhobeg
+!    end if
+!end do
 do k = 1, n
-    if (fval(2 * k) < fval(1)) then
-        xpt(k, 2 * k + 1) = TWO * rhobeg
+    if (fval(k + 1) < fval(1)) then
+        xpt(k, k + n + 1) = TWO * rhobeg
     else
-        xpt(k, 2 * k + 1) = -rhobeg
+        xpt(k, k + n + 1) = -rhobeg
     end if
 end do
 
 if (info == INFO_DFT) then
-    do k = 1, 2_IK * n + 1_IK
-        if (k == 1 .or. modulo(k, 2_IK) == 0) cycle
+    !do k = 1, 2_IK * n + 1_IK
+    !    if (k == 1 .or. modulo(k, 2_IK) == 0) cycle
+    do k = n + 2_IK, 2_IK * n + 1_IK
 
         x = xpt(:, k) + xbase
         call evaluate(calfun, x, f)
 
-        nf = (k + 1) / 2 + n
+        !nf = (k + 1) / 2 + n
+        nf = k
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, iprint, nf, f, x)
@@ -219,6 +231,9 @@ if (info == INFO_DFT) then
     end do
 end if
 
+!write (16, *) fval
+!write (16, *) xpt
+
 nf = int(count(evaluated), kind(nf))  !!MATLAB: nf = sum(evaluated);
 kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 !!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first')
@@ -268,7 +283,7 @@ integer(IK), intent(out), optional :: info
 real(RP), intent(out) :: pq(:)  ! PQ((N + 1) * (N + 2) / 2 - 1)
 
 ! Local variables
-character(len=*), parameter :: srname = 'INITL'
+character(len=*), parameter :: srname = 'INITQ'
 integer(IK) :: k1
 integer(IK) :: ih
 integer(IK) :: ip
@@ -305,8 +320,10 @@ fbase = fval(1)
 
 ! Form the gradient and diagonal second derivatives of the quadratic model.
 do k = 1, n
-    k0 = 2_IK * k
-    k1 = 2_IK * k + 1_IK
+    !k0 = 2_IK * k
+    !k1 = 2_IK * k + 1_IK
+    k0 = k + 1
+    k1 = k + n + 1
     ! Find the (K, K) element of the Hessian.
     ih = n + k * (k + 1_IK) / 2_IK
     if (xpt(k, k1) > 0) then  ! XPT(K, K1) = 2*RHO
@@ -333,6 +350,8 @@ do k = 2_IK * n + 2_IK, npt
     pq(ih) = (fval(k) - fbase - xpt(ip, k) * pq(ip) - xpt(iq, k) * pq(iq) &
         & - HALF * rhosq * (deriv(ip) + deriv(iq))) / (xpt(ip, k) * xpt(iq, k))
 end do
+
+!write (16, *) 'PQ', pq
 
 if (present(info)) then
     if (is_nan(sum(abs(pq)))) then
@@ -412,8 +431,10 @@ pl = ZERO
 
 ! Form the gradient and diagonal second derivatives of the Lagrange functions.
 do k = 1, n
-    k0 = 2_IK * k
-    k1 = 2_IK * k + 1_IK
+    !k0 = 2_IK * k
+    !k1 = 2_IK * k + 1_IK
+    k0 = k + 1
+    k1 = k + n + 1
     ih = n + k * (k + 1_IK) / 2_IK  ! The (K, K) entry of the Hessian
     if (xpt(k, k1) > 0) then  ! XPT(K, K1) = 2*RHO
         pl(k, 1) = -1.5_RP / rhobeg
@@ -447,15 +468,19 @@ do k = 2_IK * n + 2_IK, npt
     pl(ih, k) = temp
 
     if (xpt(ip, k) < 0) then
-        pl(ih, 2 * ip + 1) = -temp
+        !pl(ih, 2 * ip + 1) = -temp
+        pl(ih, ip + n + 1) = -temp
     else
-        pl(ih, 2 * ip) = -temp
+        !pl(ih, 2 * ip) = -temp
+        pl(ih, ip + 1) = -temp
     end if
 
     if (xpt(iq, k) < 0) then
-        pl(ih, 2 * iq + 1) = -temp
+        !pl(ih, 2 * iq + 1) = -temp
+        pl(ih, iq + n + 1) = -temp
     else
-        pl(ih, 2 * iq) = -temp
+        !pl(ih, 2 * iq) = -temp
+        pl(ih, iq + 1) = -temp
     end if
 end do
 
@@ -466,6 +491,9 @@ if (present(info)) then
         info = INFO_DFT
     end if
 end if
+!do k = 1, npt
+!    write (16, *) 'PL', k, pl(:, k)
+!end do
 
 !====================!
 !  Calculation ends  !
