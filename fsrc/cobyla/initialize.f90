@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 13, 2022 PM09:09:12
+! Last Modified: Tuesday, November 29, 2022 AM09:59:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -153,16 +153,20 @@ do k = 1, n + 1_IK
         x(j) = x(j) + rhobeg
         call evaluate(calcfc, x, f, constr, cstrv)
     end if
+
+    ! Print a message about the function/constraint evaluation according to IPRINT.
     call fmsg(solver, iprint, k, f, x, cstrv, constr)
-    evaluated(j) = .true.
     ! Save X, F, CONSTR, CSTRV into the history.
     call savehist(k, x, xhist, f, fhist, cstrv, chist, constr, conhist)
+
     ! Save F, CONSTR, and CSTRV to FVAL, CONMAT, and CVAL respectively. This must be done before
     ! checking whether to exit. If exit, FVAL, CONMAT, and CVAL will define FFILT, CONFILT, and
     ! CFILT, which will define the returned X, F, CONSTR, and CSTRV.
+    evaluated(j) = .true.
     fval(j) = f
     conmat(:, j) = constr
     cval(j) = cstrv
+
     ! Check whether to exit.
     subinfo = checkexit(maxfun, k, cstrv, ctol, f, ftarget, x)
     if (subinfo /= INFO_DFT) then

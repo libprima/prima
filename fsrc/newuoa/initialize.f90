@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 15, 2022 PM11:00:45
+! Last Modified: Tuesday, November 29, 2022 AM10:04:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -151,11 +151,15 @@ xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)
 do k = 1, min(npt, 2_IK * n + 1_IK)
     x = xpt(:, k) + xbase
     call evaluate(calfun, x, f)
-    evaluated(k) = .true.
-    fval(k) = f
+
+    ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, iprint, k, f, x)
     ! Save X and F into the history.
     call savehist(k, x, xhist, f, fhist)
+
+    evaluated(k) = .true.
+    fval(k) = f
+
     ! Check whether to exit.
     subinfo = checkexit(maxfun, k, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
@@ -199,11 +203,15 @@ if (info == INFO_DFT) then
     do k = 2_IK * n + 2_IK, npt
         x = xpt(:, k) + xbase
         call evaluate(calfun, x, f)
+
+        ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, iprint, k, f, x)
-        evaluated(k) = .true.
-        fval(k) = f
         ! Save X and F into the history.
         call savehist(k, x, xhist, f, fhist)
+
+        evaluated(k) = .true.
+        fval(k) = f
+
         ! Check whether to exit.
         subinfo = checkexit(maxfun, k, f, ftarget, x)
         if (subinfo /= INFO_DFT) then

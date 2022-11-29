@@ -13,7 +13,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM09:38:55
+! Last Modified: Tuesday, November 29, 2022 AM10:37:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -169,6 +169,7 @@ info = INFO_DFT
 ! Initialize XBASE, XPT, FVAL, and KOPT.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fhist, fval, &
     & sl, su, xbase, xhist, xpt, subinfo)
+
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xinbd(xbase, xopt, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.

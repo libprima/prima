@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 15, 2022 PM11:28:52
+! Last Modified: Tuesday, November 29, 2022 AM10:41:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -130,13 +130,18 @@ do k = 1, 2_IK * n + 1_IK
             xpt((k - 1) / 2, k) = -rhobeg
         end if
     end if
+
     x = xpt(:, k) + xbase
     call evaluate(calfun, x, f)
-    evaluated(k) = .true.
-    fval(k) = f
+
+    ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, iprint, k, f, x)
     ! Save X and F into the history.
     call savehist(k, x, xhist, f, fhist)
+
+    evaluated(k) = .true.
+    fval(k) = f
+
     ! Check whether to exit.
     subinfo = checkexit(maxfun, k, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
@@ -153,7 +158,7 @@ if (info == INFO_DFT) then
     do k = 2_IK * n + 2_IK, npt
         ! Pick the shift from XBASE to the next initial interpolation point that provides the
         ! off-diagonal second derivatives of the quadratic interpolant.
-        ip = ip + 1
+        ip = ip + 1_IK
         if (ip == iq) then
             iq = iq + 1_IK
             ip = 1
@@ -161,11 +166,15 @@ if (info == INFO_DFT) then
         xpt([ip, iq], k) = xw([ip, iq])
         x = xpt(:, k) + xbase
         call evaluate(calfun, x, f)
-        evaluated(k) = .true.
-        fval(k) = f
+
+        ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, iprint, k, f, x)
         ! Save X and F into the history.
         call savehist(k, x, xhist, f, fhist)
+
+        evaluated(k) = .true.
+        fval(k) = f
+
         ! Check whether to exit.
         subinfo = checkexit(maxfun, k, f, ftarget, x)
         if (subinfo /= INFO_DFT) then

@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM09:41:10
+! Last Modified: Tuesday, November 29, 2022 AM10:37:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -208,21 +208,26 @@ end if
 b = bvec
 call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
     & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
+
+!--------------------------------------------------------------------------------------------------!
+! Zaikun 20221129: Are the following needed?
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt
 f = fopt
 ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+!--------------------------------------------------------------------------------------------------!
 
+! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
 nfilt = 0_IK
 do k = 1, npt
     if (evaluated(k)) then
-        x = xbase + xpt(:, k)
-        call savefilt(cval(k), ctol, cweight, fval(k), x, nfilt, cfilt, ffilt, xfilt)
+        call savefilt(cval(k), ctol, cweight, fval(k), xbase + xpt(:, k), nfilt, cfilt, ffilt, xfilt)
     end if
 end do
 
+! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Return the best calculated values of the variables.
