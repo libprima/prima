@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Tuesday, November 29, 2022 PM11:08:38
+! Last Modified: Wednesday, November 30, 2022 AM12:32:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -128,14 +128,6 @@ kk = linspace(2_IK, 2_IK * n, n)
 xpt(:, kk) = rhobeg * eye(n)
 !do k = 1, n + 1_IK
 do k = 1, 2_IK * n + 1_IK
-    if (k >= 3 .and. modulo(k, 2_IK) == 1) then
-        if (fval(k - 1) < fval(1)) then
-            xpt((k - 1) / 2, k) = TWO * rhobeg
-        else
-            xpt((k - 1) / 2, k) = -rhobeg
-        end if
-    end if
-
     x = xpt(:, k) + xbase
     call evaluate(calfun, x, f)
 
@@ -147,6 +139,15 @@ do k = 1, 2_IK * n + 1_IK
     evaluated(k) = .true.
     fval(k) = f
 
+    ! When K is even, determine XPT(:, K+1) according to F(K).
+    if (modulo(k, 2_IK) == 0) then
+        if (fval(k) < fval(1)) then
+            xpt(:, k + 1) = TWO * xpt(:, k)  ! XPT(K / 2, K + 1) = TWO * RHOBEG
+        else
+            xpt(:, k + 1) = -xpt(:, k)  ! XPT(K / 2, K + 1) = -RHOBEG
+        end if
+    end if
+
     ! Check whether to exit.
     subinfo = checkexit(maxfun, k, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
@@ -154,7 +155,6 @@ do k = 1, 2_IK * n + 1_IK
         exit
     end if
 end do
-
 
 if (info == INFO_DFT) then
     xw = -rhobeg
