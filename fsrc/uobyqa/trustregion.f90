@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM11:46:17
+! Last Modified: Tuesday, November 29, 2022 PM06:39:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -263,7 +263,6 @@ do while (.true.)
         paru = par
         paruest = par
         if (par <= 0) then  ! PAR == 0. A rare case: the trust region center is optimal.
-            write (16, *) iter, 271, d
             exit
         end if
     end if
