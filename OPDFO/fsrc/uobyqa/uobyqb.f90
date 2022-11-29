@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 PM06:32:33
+! Last Modified: Tuesday, November 29, 2022 PM10:08:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -158,16 +158,11 @@ end if
 call initq(fval, xpt, pq)
 call initl(xpt, pl)
 
-kk = linspace(2_IK, 2_IK * n, n)
-xpt(:, 2:2 * n + 1) = xpt(:, [kk, kk + 1])
-fval(2:2 * n + 1) = fval([kk, kk + 1])
-!if (kopt <= 2 * n + 1 .and. kopt >= 3 .and. modulo(kopt, 2) == 1) then
-!    kopt = (kopt + 1) / 2 + n
-!else if (kopt <= 2 * n + 1 .and. modulo(kopt, 2) == 0) then
-!    kopt = kopt / 2 + 1
-!end if
-pl(:, 2:2 * n + 1) = pl(:, [kk, kk + 1])
-kopt = minloc(fval, dim=1)
+!kk = linspace(2_IK, 2_IK * n, n)
+!xpt(:, 2:2 * n + 1) = xpt(:, [kk, kk + 1])
+!fval(2:2 * n + 1) = fval([kk, kk + 1])
+!pl(:, 2:2 * n + 1) = pl(:, [kk, kk + 1])
+!kopt = minloc(fval, dim=1)
 
 !write (17, *) fval
 !write (17, *) xpt
