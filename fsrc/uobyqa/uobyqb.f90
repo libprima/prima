@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 PM06:22:01
+! Last Modified: Tuesday, November 29, 2022 PM10:26:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,7 +53,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec !, norm
+use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec, linspace !, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc
@@ -99,6 +99,7 @@ integer(IK) :: npt
 integer(IK) :: maxhist
 integer(IK) :: maxfhist
 integer(IK) :: maxxhist
+integer(IK) :: kk(size(x))
 real(RP) :: d(size(x))
 real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x))
@@ -165,6 +166,18 @@ call initl(xpt, pl)
 !write (16, *) fopt
 !write (16, *) pq
 !write (16, *) pl
+
+!kk = linspace(2_IK, 2_IK * n, n)
+!xpt(:, 2:2 * n + 1) = xpt(:, [kk, kk + 1])
+!fval(2:2 * n + 1) = fval([kk, kk + 1])
+!pl(:, 2:2 * n + 1) = pl(:, [kk, kk + 1])
+!kopt = minloc(fval, dim=1)
+
+!kk = linspace(2_IK, 2_IK * n, n)
+!xpt(:, [kk, kk + 1]) = xpt(:, 2:2 * n + 1)
+!fval([kk, kk + 1]) = fval(2:2 * n + 1)
+!pl(:, [kk, kk + 1]) = pl(:, 2:2 * n + 1)
+!kopt = minloc(fval, dim=1)
 
 ! Set parameters to begin the iterations for the current RHO.
 rho = rhobeg
