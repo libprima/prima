@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, November 28, 2022 PM05:07:26
+! Last Modified: Tuesday, November 29, 2022 AM10:23:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -352,9 +352,8 @@ do tr = 1, maxtr
             ! Save X, F, CONSTR, CSTRV into the filter.
             call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
 
-            ! Begin the operations that decide whether X should replace one of the vertices of the
-            ! current simplex, the change being mandatory if ACTREM is positive. PREREM and ACTREM
-            ! are the predicted and actual reductions in the merit function respectively.
+            ! Evaluate PREREM and ACTREM, which are the predicted and actual reductions in the merit
+            ! function respectively.
             prerem = preref + cpen * prerec  ! Theoretically nonnegative; is 0 if CPEN = 0 = PREREF.
             actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
             if (cpen <= 0 .and. abs(f - fval(n + 1)) <= 0) then
@@ -396,7 +395,7 @@ do tr = 1, maxtr
                 exit  ! Better action to take? Geometry step, or a RESCUE as in BOBYQA?
             end if
 
-            ! Check whether to exit.
+            ! Check whether to exit due to MAXFUN, FTARGET, etc.
             subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
@@ -522,7 +521,7 @@ do tr = 1, maxtr
             exit  ! Better action to take? Geometry step, or simply continue?
         end if
 
-        ! Check whether to exit.
+        ! Check whether to exit due to MAXFUN, FTARGET, etc.
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
         if (subinfo /= INFO_DFT) then
             info = subinfo
