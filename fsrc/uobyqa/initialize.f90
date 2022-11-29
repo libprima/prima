@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Tuesday, November 29, 2022 AM10:41:27
+! Last Modified: Tuesday, November 29, 2022 AM11:00:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,7 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, kopt, nf, fhist, 
     & xhist, xpt, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the initialization about the interpolation points & their function values.
+! See Section 4 of the UOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -213,7 +214,7 @@ subroutine initq(fval, xpt, pq, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine initializes the quadratic model, whose coefficients are stored in PQ, where
 ! PQ(1 : N) containing the gradient of the model at XBASE, and PQ(N+1 : NPT-1) containing the upper
-! triangular part of the Hessian, column by column.
+! triangular part of the Hessian, column by column. See Section 4 of the UOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -324,6 +325,7 @@ subroutine initl(xpt, pl, info)
 ! This subroutine initializes the Lagrange functions. The coefficients of the K-th Lagrange function
 ! is stored in PL(:, K), with PL(1 : N, K) containing the gradient of the function at XBASE, and
 ! PL(N+1 : NPT-1, K) containing the upper triangular part of the Hessian, column by column.
+! See Section 4 of the UOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
