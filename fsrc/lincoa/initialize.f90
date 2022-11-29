@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 AM11:46:29
+! Last Modified: Tuesday, November 29, 2022 PM01:07:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -149,10 +149,14 @@ xbase = x0
 ! is not fully parallelizable if NPT>2N+1, as the definition XPT(;, 2N+2:end) involves FVAL(1:2N+1).
 evaluated = .false.
 
-! Initialize CVAL and FVAL to HUGENUM. Otherwise, compilers may complain that CVAL/FVAL is not
-! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
-cval = HUGENUM
+! Initialize XHIST, FHIST, CHIST, FVAL, and CVAL. Otherwise, compilers may complain that they are
+! not (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+! Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+xhist = -HUGENUM
+fhist = HUGENUM
+chist = HUGENUM
 fval = HUGENUM
+cval = HUGENUM
 
 ! Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT], but they may be altered
 ! later to make a constraint violation sufficiently large.
