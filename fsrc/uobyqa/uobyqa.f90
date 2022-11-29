@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, November 10, 2022 PM03:12:07
+! Last Modified: Tuesday, November 29, 2022 PM12:58:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

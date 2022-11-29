@@ -136,8 +136,11 @@ xbase = x0
 ! is not fully parallelizable if NPT>2N+1, as the definition XPT(;, 2N+2:end) involves FVAL(1:2N+1).
 evaluated = .false.
 
-! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
-! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+! Initialize XHIST, FHIST, and FVAL. Otherwise, compilers may complain that they are not 
+! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+! Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+xhist = -HUGENUM
+fhist = HUGENUM
 fval = HUGENUM
 
 ! Initialize XPT(:, 1: MIN(2*N + 1, NPT)).

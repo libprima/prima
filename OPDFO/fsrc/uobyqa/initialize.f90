@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, June 15, 2022 PM11:28:52
+! Last Modified: Tuesday, November 29, 2022 PM12:54:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -122,28 +122,57 @@ fval = HUGENUM
 xpt = ZERO
 kk = linspace(2_IK, 2_IK * n, n)
 xpt(:, kk) = rhobeg * eye(n)
+nf = 0
 do k = 1, 2_IK * n + 1_IK
     if (k >= 3 .and. modulo(k, 2_IK) == 1) then
-        if (fval(k - 1) < fval(1)) then
-            xpt((k - 1) / 2, k) = TWO * rhobeg
-        else
-            xpt((k - 1) / 2, k) = -rhobeg
-        end if
+        cycle
+        !if (fval(k - 1) < fval(1)) then
+        !    xpt((k - 1) / 2, k) = TWO * rhobeg
+        !else
+        !    xpt((k - 1) / 2, k) = -rhobeg
+        !end if
     end if
     x = xpt(:, k) + xbase
     call evaluate(calfun, x, f)
     evaluated(k) = .true.
+    nf = nf + 1
     fval(k) = f
-    call fmsg(solver, iprint, k, f, x)
+    call fmsg(solver, iprint, nf, f, x)
     ! Save X and F into the history.
-    call savehist(k, x, xhist, f, fhist)
+    call savehist(nf, x, xhist, f, fhist)
     ! Check whether to exit.
-    subinfo = checkexit(maxfun, k, f, ftarget, x)
+    subinfo = checkexit(maxfun, nf, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
         info = subinfo
         exit
     end if
 end do
+
+if (info == INFO_DFT) then
+    do k = 1, 2_IK * n + 1_IK
+        if (k >= 3 .and. modulo(k, 2_IK) == 1) then
+            if (fval(k - 1) < fval(1)) then
+                xpt((k - 1) / 2, k) = TWO * rhobeg
+            else
+                xpt((k - 1) / 2, k) = -rhobeg
+            end if
+            x = xpt(:, k) + xbase
+            call evaluate(calfun, x, f)
+            nf = nf + 1
+            evaluated(k) = .true.
+            fval(k) = f
+            call fmsg(solver, iprint, nf, f, x)
+            ! Save X and F into the history.
+            call savehist(nf, x, xhist, f, fhist)
+            ! Check whether to exit.
+            subinfo = checkexit(maxfun, nf, f, ftarget, x)
+            if (subinfo /= INFO_DFT) then
+                info = subinfo
+                exit
+            end if
+        end if
+    end do
+end if
 
 if (info == INFO_DFT) then
     xw = -rhobeg

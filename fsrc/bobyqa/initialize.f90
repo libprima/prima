@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 AM10:04:54
+! Last Modified: Tuesday, November 29, 2022 PM01:05:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -168,8 +168,11 @@ xbase = x0
 ! function evaluations, especially if the loop is conducted asynchronously.
 evaluated = .false.
 
-! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
-! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+! Initialize XHIST, FHIST, and FVAL. Otherwise, compilers may complain that they are not
+! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+! Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+xhist = -HUGENUM
+fhist = HUGENUM
 fval = HUGENUM
 
 ! Set XPT(:, 2 : N+1)
