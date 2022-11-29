@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, November 30, 2022 AM12:32:32
+! Last Modified: Wednesday, November 30, 2022 AM12:41:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -126,7 +126,6 @@ fval = HUGENUM
 xpt = ZERO
 kk = linspace(2_IK, 2_IK * n, n)
 xpt(:, kk) = rhobeg * eye(n)
-!do k = 1, n + 1_IK
 do k = 1, 2_IK * n + 1_IK
     x = xpt(:, k) + xbase
     call evaluate(calfun, x, f)
@@ -140,6 +139,12 @@ do k = 1, 2_IK * n + 1_IK
     fval(k) = f
 
     ! When K is even, determine XPT(:, K+1) according to F(K).
+    ! N.B.: This heuristic strategy does increase the performance. In addition, it is a GOOD idea to
+    ! evaluate F at XBASE + 2*XPT(:, K) or XBASE - XPT(:, K) IMMEDIATELY after XBASE + XPT(:, K).
+    ! This increases the probability of finding a smaller function value earlier in the sampling
+    ! process for the first model. This process itself can be regarded as a simple direct search. It
+    ! is important for the performance of the algorithm during the early stage, even before the
+    ! first model is built.
     if (modulo(k, 2_IK) == 0) then
         if (fval(k) < fval(1)) then
             xpt(:, k + 1) = TWO * xpt(:, k)  ! XPT(K / 2, K + 1) = TWO * RHOBEG
