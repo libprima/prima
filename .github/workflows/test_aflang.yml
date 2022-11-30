@@ -1,4 +1,4 @@
-name: Test Flang in AMD AOCC for the solvers
+name: Test Flang in AMD AOCC
 
 on:
   # Trigger the workflow on push or pull request
