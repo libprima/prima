@@ -13,7 +13,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:19:49
+! Last Modified: Wednesday, November 30, 2022 PM07:17:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -201,6 +201,8 @@ delta = rho
 ebound = ZERO
 dnormsav = HUGENUM
 moderrsav = HUGENUM
+knew_tr = 0
+knew_geo = 0
 itest = 0
 
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that

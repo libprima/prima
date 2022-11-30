@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, November 29, 2022 AM10:23:49
+! Last Modified: Wednesday, November 30, 2022 PM07:19:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -248,6 +248,7 @@ prerem = -HUGENUM
 actrem = -HUGENUM
 ratio = -ONE
 jdrop_tr = 0
+jdrop_geo = 0
 
 ! MAXTR is the maximal number of trust-region iterations. Normally, each trust-region iteration
 ! takes 1 or 2 function evaluations unless the update of CPEN alters the optimal vertex or the
