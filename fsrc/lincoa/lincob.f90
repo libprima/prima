@@ -220,7 +220,7 @@ cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 !--------------------------------------------------------------------------------------------------!
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
-nfilt = 0_IK
+nfilt = 0
 do k = 1, npt
     if (evaluated(k)) then
         call savefilt(cval(k), ctol, cweight, fval(k), xbase + xpt(:, k), nfilt, cfilt, ffilt, xfilt)

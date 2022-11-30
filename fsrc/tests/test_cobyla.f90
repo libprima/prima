@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, March 23, 2022 AM02:07:42
+! Last Modified: Wednesday, November 30, 2022 PM01:25:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 10
 character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed dimensions
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 500_IK
+integer(IK), parameter :: bign = 500
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -85,7 +85,7 @@ if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))
     probs_loc(1:nprobs) = probs
 else
-    nprobs = 12_IK
+    nprobs = 12
     probs_loc(1:nprobs) = ['circle   ', 'ellipsoid', 'fletcheq1', 'fletcheq2', 'hs100    ', 'hexagon  ', 'rsnszk   ', &
         & 'chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
 end if
@@ -126,7 +126,7 @@ do iprob = 1, nprobs
     probname = probs_loc(iprob)
     if (any(probname == fix_dim_probs)) then
         call construct(prob, probname)  ! Construct the testing problem.
-        ndim = 1_IK
+        ndim = 1
         dim_list(1) = prob % n
     else
         ndim = (maxdim_loc - mindim_loc) / dimstride_loc + 1_IK
@@ -217,10 +217,10 @@ if (test_bigprob) then
     n = bign
     call construct(prob, probname, n)
     m = prob % m
-    nrand_loc = 2_IK
+    nrand_loc = 2
     do irand = 1, nrand_loc
         rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
-        iprint = 2_IK
+        iprint = 2
         maxfun = int(minval([10**min(range(0), range(0_IK)), 10 * int(n), int(n) + 1000]), IK)
         maxhist = maxfun
         ftarget = -HUGENUM

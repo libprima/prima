@@ -297,11 +297,11 @@ end if
 !if (ratio > 1.0E-2_RP) then
 !if (.false.) then
 if (ratio > TENTH) then
-    itest = 0_IK
+    itest = 0
 else
     galt = matprod(bmat(:, 1:npt), fval)
     if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
-        itest = 0_IK
+        itest = 0
     else
         itest = itest + 1_IK
     end if
@@ -312,7 +312,7 @@ if (itest >= 3) then
     gq = galt
     hq = ZERO
     pq = omega_mul(idz, zmat, fval)
-    itest = 0_IK
+    itest = 0
 end if
 
 !====================!

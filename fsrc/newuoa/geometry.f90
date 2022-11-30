@@ -136,7 +136,7 @@ elseif (ximproved) then
     ! consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
     knew = int(maxloc(distsq, dim=1), kind(knew))
 else
-    knew = 0_IK  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE exceeds one.
+    knew = 0  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE exceeds one.
 end if
 
 !====================!
@@ -397,7 +397,7 @@ if (is_finite(sum(abs(scaling * d)))) then
     s = gc + t * gd
     maxiter = n
 else
-    maxiter = 0_IK  ! Return immediately to avoid producing a D containing NaN/Inf.
+    maxiter = 0  ! Return immediately to avoid producing a D containing NaN/Inf.
 end if
 
 tol = min(1.0E-1_RP, max(EPS**QUART, 1.0E-4_RP))

@@ -177,7 +177,7 @@ newact = .true.
 ! gradients (i.e., null space of the active constraints).
 ! The following initial value of ITERCG is an artificial value that is not used. It is to entertain
 ! Fortran compilers (can it be be removed?).
-itercg = -1_IK
+itercg = -1
 
 maxiter = min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper bound of ITER?
 do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
@@ -248,10 +248,10 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         ! Do NOT write D = PSD + GAMMA*DPROJ, as DPROJ may contain NaN/Inf, in which case GAMMA = 0.
         if (gamma > 0) then
             d = psd + gamma * dproj  ! Modified searching direction.
-            itercg = -1_IK
+            itercg = -1
         else
             d = psd  ! Original searching direction.
-            itercg = 0_IK
+            itercg = 0
         end if
     end if
 
@@ -297,7 +297,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     frac = alpha
     frac(trueloc(ad > 0)) = resnew(trueloc(ad > 0)) / ad(trueloc(ad > 0))
     frac(trueloc(is_nan(frac))) = alpha
-    jsav = 0_IK
+    jsav = 0
     if (any(frac < alpha)) then
         jsav = int(minloc(frac, dim=1), kind(jsav))
         alpha = frac(jsav)

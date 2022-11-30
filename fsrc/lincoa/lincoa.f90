@@ -207,7 +207,7 @@ real(RP) :: temp
 if (present(b)) then
     m = int(size(b), kind(m))
 else
-    m = 0_IK
+    m = 0
 end if
 n = int(size(x), kind(n))
 

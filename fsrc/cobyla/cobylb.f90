@@ -247,7 +247,7 @@ preref = -HUGENUM
 prerem = -HUGENUM
 actrem = -HUGENUM
 ratio = -ONE
-jdrop_tr = 0_IK
+jdrop_tr = 0
 
 ! MAXTR is the maximal number of trust-region iterations. Normally, each trust-region iteration
 ! takes 1 or 2 function evaluations unless the update of CPEN alters the optimal vertex or the

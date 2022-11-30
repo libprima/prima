@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM01:40:00
+! Last Modified: Wednesday, November 30, 2022 PM01:11:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,7 +132,7 @@ end if
 s = ZERO
 crvmin = ZERO
 qred = ZERO
-info_loc = 2_IK  ! Default exit flag is 2, i.e., MAXITER is attained
+info_loc = 2  ! Default exit flag is 2, i.e., MAXITER is attained
 
 ! Prepare for the first line search.
 hx = hess_mul(x, xpt, pq, hq)
@@ -170,7 +170,7 @@ do iter = 1, maxiter
     ! Exit if GG is small. This must be done first; otherwise, DD can be 0 and BSTEP is not well
     ! defined. The inequality below must be non-strict so that GG = 0 will trigger the exit.
     if (gg <= (tol**2) * gg0) then
-        info_loc = 0_IK
+        info_loc = 0
         exit
     end if
 
@@ -224,7 +224,7 @@ do iter = 1, maxiter
     ! contains NaN and fulfills other exit conditions.
     if (.not. is_finite(sum(abs(s)))) then
         s = sold
-        info_loc = -1_IK
+        info_loc = -1
         exit
     end if
 
@@ -238,7 +238,7 @@ do iter = 1, maxiter
 
     ! Exit due to small QADD.
     if (qadd <= tol * qred) then
-        info_loc = 1_IK
+        info_loc = 1
         exit
     end if
 
@@ -248,14 +248,14 @@ do iter = 1, maxiter
     ds = inprod(d, s)
     if (ds <= 0) then
         ! DS is positive in theory.
-        info_loc = -1_IK
+        info_loc = -1
         exit
     end if
 end do
 
 if (ss <= 0 .or. is_nan(ss)) then
     ! This may occur for ill-conditioned problems due to rounding.
-    info_loc = -1_IK
+    info_loc = -1
     twod_search = .false.
 end if
 
@@ -263,7 +263,7 @@ if (twod_search) then
     ! At least 1 iteration of 2D minimization
     maxiter = max(int(1, kind(maxiter)), maxiter - iter)
 else
-    maxiter = 0_IK
+    maxiter = 0
 end if
 
 ! The 2D minimization
@@ -273,7 +273,7 @@ end if
 do iter = 1, maxiter
     ! Exit if GG is small. The inequality must be non-strict so that GG = 0 can trigger the exit.
     if (gg <= (tol**2) * gg0) then
-        info_loc = 0_IK
+        info_loc = 0
         exit
     end if
     sg = inprod(s, g)
@@ -286,7 +286,7 @@ do iter = 1, maxiter
     ! equalities significantly. This did happen in tests, especially when using the single precision.
     ! !sgk = sg + shs
     ! !if (sgk / sqrt(gg * delsq) <= tol - ONE) then
-    ! !    info_loc = 0_IK
+    ! !    info_loc = 0
     ! !    exit
     ! !end if
     ! !t = sqrt(delsq * gg - sgk**2)
@@ -304,13 +304,13 @@ do iter = 1, maxiter
     ! 2. SQRT(TOL)*SQRT(GG) is less likely to encounter underflow than SQRT(TOL*GG).
     ! 3. The condition below should be non-strict so that |D| = 0 can trigger the exit.
     if (norm(d) <= sqrt(tol) * sqrt(gg)) then
-        info_loc = 0_IK
+        info_loc = 0
         exit
     end if
     d = (norm(s) / norm(d)) * d
     ! In precise arithmetic, INPROD(D, S) = 0 and |D| = |S| = DELTA.
     if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(d) >= TWO * delta) then
-        info_loc = -1_IK
+        info_loc = -1
         exit
     end if
 
@@ -335,7 +335,7 @@ do iter = 1, maxiter
     ! Exit in case of Inf/NaN in S.
     if (.not. is_finite(sum(abs(s)))) then
         s = sold
-        info_loc = -1_IK
+        info_loc = -1
         exit
     end if
 
@@ -343,7 +343,7 @@ do iter = 1, maxiter
     reduc = circle_fun_trsapp(ZERO, args) - circle_fun_trsapp(angle, args)
     qred = qred + reduc
     if (reduc / qred <= tol) then
-        info_loc = 1_IK
+        info_loc = 1
         exit
     end if
 

@@ -131,7 +131,7 @@ else if (ximproved) then
     ! Powell's code does not handle this case, leaving KNEW = 0 and leading to a segfault.
     knew = int(maxloc(distsq, dim=1), kind(knew))
 else
-    knew = 0_IK
+    knew = 0
 end if
 
 !====================!
@@ -355,9 +355,9 @@ end if
 ! Set FEASIBLE for the calculated S. RSTAT identifies the constraints that need evaluation. RSTAT(J)
 ! is -1, 0, or 1 respectively means constraint J is irrelevant, active, or inactive and relevant.
 ! Do NOT change the order of the lines that set RSTAT, as the later lines override the earlier.
-rstat = 1_IK
-rstat(trueloc(abs(rescon) >= delbar)) = -1_IK
-rstat(iact(1:nact)) = 0_IK
+rstat = 1
+rstat(trueloc(abs(rescon) >= delbar)) = -1
+rstat(iact(1:nact)) = 0
 cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
 feasible = (cstrv <= 0)
 

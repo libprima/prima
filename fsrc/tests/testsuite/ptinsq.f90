@@ -36,7 +36,7 @@ prob % probtype = 'b'
 prob % n = n
 
 call safealloc(prob % x0, n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
-do j = 1_IK, n / 2_IK
+do j = 1, n / 2_IK
     angle = real(j, RP) * TWO * PI / real(n / 2_IK, RP)
     prob % x0(2 * j - 1) = cos(angle)
     prob % x0(2 * j) = sin(angle)
@@ -81,8 +81,8 @@ n = int(size(x), kind(n))
 call assert(modulo(n, 2_IK) == 0, 'N is even', srname)
 
 f = 0.0_RP
-do i = 4_IK, n, 2_IK
-    do j = 2_IK, i - 2_IK, 2_IK
+do i = 4, n, 2_IK
+    do j = 2, i - 2_IK, 2_IK
         temp = (x(i - 1) - x(j - 1))**2 + (x(i) - x(j))**2
         temp = max(temp, 1.0E-6_RP)
         f = f + 1.0_RP / sqrt(temp)

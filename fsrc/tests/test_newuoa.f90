@@ -42,7 +42,7 @@ character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 1000_IK
+integer(IK), parameter :: bign = 1000
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -74,7 +74,7 @@ if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))
     probs_loc(1:nprobs) = probs
 else
-    nprobs = 5_IK
+    nprobs = 5
     probs_loc(1:nprobs) = ['chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
 end if
 
@@ -118,7 +118,7 @@ do iprob = 1, nprobs
         call construct(prob, probname, n)  ! Construct the testing problem.
 
         ! NPT_LIST defines some extreme values of NPT.
-        nnpt = 10_IK
+        nnpt = 10
         npt_list(1:nnpt) = [1_IK, &
             & n + 1_IK, n + 2_IK, n + 3_IK, &
             & 2_IK * n, 2_IK * n + 1_IK, 2_IK * n + 2_IK, &
@@ -184,13 +184,13 @@ if (test_bigprob) then
     probname = bigprob
     n = bign
     call construct(prob, probname, n)
-    nnpt = 2_IK
+    nnpt = 2
     npt_list(1:nnpt) = [2_IK * n + 1_IK, &
         & int(min(floor(real(10_IK**min(range(0), range(0_IK))) / 2.0), (int(n) + 1) * (int(n) + 2) / 2), IK)]
     do irand = 1, nnpt
         rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
         npt = npt_list(irand)
-        iprint = 2_IK
+        iprint = 2
         maxfun = int(minval([10**min(range(0), range(0_IK)), 10 * int(npt), int(npt) + 1000]), IK)
         maxhist = maxfun
         ftarget = -HUGENUM
