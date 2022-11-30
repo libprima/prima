@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM01:39:41
+! Last Modified: Wednesday, November 30, 2022 AM09:22:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -187,7 +187,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         ! length 0.2*DELTA. Then a move of PSD from S is allowed by the linear constraints: PSD
         ! reduces the values of the nearly active constraints; it changes the inactive constraints
         ! by at most 0.2*DELTA, but the residuals of these constraints at no less than 0.2*DELTA.
-        ngetact = ngetact + 1
+        ngetact = ngetact + 1_IK
         call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
         dd = inprod(psd, psd)
         if (dd <= 0 .or. is_nan(dd)) then
@@ -257,7 +257,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
 
     ! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
     ! derivative term of this step is sufficiently small or if no further progress is possible.
-    itercg = itercg + 1
+    itercg = itercg + 1_IK
     ! After the above line, ITERCG = 0 iff GETACT has been just called, and D is not PSD but a
     ! modified step.
     resid = delsq - ss

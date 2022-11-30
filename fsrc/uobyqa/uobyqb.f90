@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 AM12:22:12
+! Last Modified: Wednesday, November 30, 2022 AM09:46:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -201,7 +201,7 @@ do while (.true.)
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
         call evaluate(calfun, x, f)
-        nf = nf + 1
+        nf = nf + 1_IK
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, iprint, nf, f, x)
@@ -351,7 +351,7 @@ do while (.true.)
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
         call evaluate(calfun, x, f)
-        nf = nf + 1
+        nf = nf + 1_IK
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, iprint, nf, f, x)
@@ -405,7 +405,7 @@ end do
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evaluate(calfun, x, f)
-    nf = nf + 1
+    nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, iprint, nf, f, x)
     ! Save X, F into the history.

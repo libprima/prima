@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 AM11:50:30
+! Last Modified: Wednesday, November 30, 2022 AM09:41:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -338,8 +338,8 @@ do while (any(score > 0) .and. nprov > 1)   ! Retain at least one provisional po
         else if (ptsid(k) <= 0) then  ! Indeed, PTSID >= 0. So PTSID(K) <= 0 means PTSID(K) = 0.
             wmv(k) = inprod(xpt(:, korig), xpt(:, k))
         else
-            ip = int(ptsid(k))  ! IP = 0 if 0 < PTSID(K) < 1. INT(X) = [X], rounding X towards 0.
-            iq = int(real(n + 1, RP) * ptsid(k) - real(ip * (n + 1), RP))
+            ip = int(ptsid(k), kind(ip))  ! IP = 0 if 0 < PTSID(K) < 1. INT(X) = [X], rounding X towards 0.
+            iq = int(real(n + 1, RP) * ptsid(k) - real(ip * (n + 1), RP), kind(iq))
             call assert(ip >= 0 .and. ip <= npt .and. iq >= 0 .and. iq <= npt, '0 <= IP, IQ <= NPT', srname)
             if (ip > 0 .and. iq > 0) then
                 wmv(k) = xpt(ip, korig) * ptsaux(1, ip) + xpt(iq, korig) * ptsaux(1, iq)
@@ -449,8 +449,8 @@ if (nprov > 0) then
         call r1update(hq, pq(kpt), xpt(:, kpt))
         pq(kpt) = ZERO
 
-        ip = int(ptsid(kpt))
-        iq = int(real(n + 1, RP) * ptsid(kpt) - real(ip * (n + 1), RP))
+        ip = int(ptsid(kpt), kind(ip))
+        iq = int(real(n + 1, RP) * ptsid(kpt) - real(ip * (n + 1), RP), kind(iq))
 
         ! Update XPT(:, KPT) to the new point. It contains at most two nonzeros XP and XQ at the IP
         ! and IQ entries.
@@ -520,8 +520,8 @@ if (nprov > 0) then
             if (ptsid(k) <= 0) then
                 cycle
             end if
-            ip = int(ptsid(k))
-            iq = int(real(n + 1, RP) * ptsid(k) - real(ip * (n + 1), RP))
+            ip = int(ptsid(k), kind(ip))
+            iq = int(real(n + 1, RP) * ptsid(k) - real(ip * (n + 1), RP), kind(iq))
             if (ip > 0 .and. iq > 0) then
                 hq(ip, ip) = hq(ip, ip) + pqinc(k) * ptsaux(1, ip)**2
                 hq(iq, iq) = hq(iq, iq) + pqinc(k) * ptsaux(1, iq)**2

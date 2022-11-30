@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, June 03, 2022 AM10:57:57
+! Last Modified: Wednesday, November 30, 2022 AM09:42:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -120,7 +120,7 @@ do iprob = 1, nprobs
     ndim = (maxdim_loc - mindim_loc) / dimstride_loc + 1_IK
     dim_list(1:ndim) = mindim_loc + dimstride_loc*[(idim - 1_IK, idim=1_IK, ndim)]
     if (trim(probname) == 'ptinsq') then
-        dim_list(1:ndim) = ceiling(real(dim_list(1:ndim)) / 2.0) * 2_IK  ! Must be even
+        dim_list(1:ndim) = int(ceiling(real(dim_list(1:ndim)) / 2.0) * 2, IK)  ! Must be even
     end if
     do idim = 1, ndim
         n = dim_list(idim)

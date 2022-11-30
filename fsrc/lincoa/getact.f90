@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, November 13, 2022 PM02:17:13
+! Last Modified: Wednesday, November 30, 2022 AM09:21:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -425,8 +425,8 @@ integer(IK) :: nsave
 real(RP) :: tol
 
 ! Sizes
-m = size(iact)
-n = size(vlam)
+m = int(size(iact), kind(m))
+n = int(size(vlam), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -518,8 +518,8 @@ integer(IK) :: nsave
 real(RP) :: tol
 
 ! Sizes
-m = size(iact)
-n = size(vlam)
+m = int(size(iact), kind(m))
+n = int(size(vlam), kind(n))
 
 ! Preconditions
 ! Preconditions
