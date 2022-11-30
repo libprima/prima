@@ -65,7 +65,11 @@ jobs:
             ver;
             root_dir = pwd();
             cd('matlab/tests');
-            prof('${{ matrix.solver }}', '${{ matrix.dim }}');
+            if strcmp('${{ matrix.solver }}', 'cobyla') && ~strcmp('${{ matrix.dim }}', 'small')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'ln');
+            else
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}');
+            end
             delete(fullfile(cd(), 'testdata', '*.mat'));
             cd(fullfile(root_dir)); setup path  % Test that `setup path` works properly.
 

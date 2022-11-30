@@ -1,12 +1,12 @@
-name: Verify faithfulness, large
+name: Plot performance profiles for newuoa, small (put only 1 job to see the profile ASAP)
 
 on:
   # Trigger the workflow on push or pull request
   push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
-  schedule:
-    - cron: '0 5,17 * * *'
+  # schedule:
+  #   - cron: '0 2,6,10,14,18,22 * * *'
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
@@ -16,15 +16,14 @@ env:
 
 jobs:
   test:
-    name: Verify the faithfulness of the modernized solvers.
+    name: Plot the performance profiles of the modernized solvers.
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        #dim: [small, big, large]
-        dim: [large]
+        dim: [small]
+        solver: [newuoa]
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -44,6 +43,10 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: sudo bash .github/scripts/link_gfortran_for_matlab ${{ env.GFORTRAN_VERSION }}
 
+      - name: install epstopdf and ghostscript
+        if: startsWith(matrix.os, 'ubuntu')
+        run: sudo bash .github/scripts/install_epstopdf && sudo bash .github/scripts/install_ghostscript
+
       - name: Check MATLAB
         id: check_matlab
         run: |
@@ -62,6 +65,25 @@ jobs:
             ver;
             root_dir = pwd();
             cd('matlab/tests');
-            options.nr = 5;
-            verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
+            if strcmp('${{ matrix.solver }}', 'cobyla') && ~strcmp('${{ matrix.dim }}', 'small')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'ln');
+            else
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}');
+            end
+            delete(fullfile(cd(), 'testdata', '*.mat'));
             cd(fullfile(root_dir)); setup path  % Test that `setup path` works properly.
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: |
+            matlab/tests/testdata
+            !matlab/tests/testdata/*.mat
+            !matlab/tests/testdata/**/*.mat
+            !matlab/tests/testdata/*perf*.pdf
+            !matlab/tests/testdata/*perf*.eps
+            !matlab/tests/testdata/*problems.txt
+
+      - name: Remove the test data
+        run:
+          rm -rf ./matlab/tests/testdata
