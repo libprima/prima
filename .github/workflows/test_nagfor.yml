@@ -1,4 +1,4 @@
-name: Test ifx
+name: Test nagfor
 
 on:
   # Trigger the workflow on push or pull request
@@ -6,10 +6,9 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 22 * * *'
+    - cron: '0 9 * * *'
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
-
 
 jobs:
   # check_date:
@@ -26,37 +25,23 @@ jobs:
   #       continue-on-error: true
   #       name: check whether the last commit is sufficiently recent
   #       if: ${{ github.event_name == 'schedule' }}
-  #       run: if [[ -n $(git rev-list  --after="6 hours"  ${{ github.sha }}) ]] ; then echo "::set-output name=has_recent_commit::true"; fi
+  #       run: if [[ -n $(git rev-list --after="6 hours" ${{ github.sha }}) ]] ; then echo "::set-output name=has_recent_commit::true"; fi
 
 
   test:
-    name: Run ifx tests
+    name: Run nagfor tests
     #needs: check_date
     #if: ${{ github.event_name != 'schedule' || needs.check_date.outputs.has_recent_commit == 'true' }}
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, nagfor]
     strategy:
       fail-fast: false
       matrix:
-        # As of 20210918, according to https://github.com/actions/virtual-environments ,
-        # ubuntu-latest = ubuntu-20.04,
-        # macos-latest = macos-10.15,
-        # windows-latest = windows-2019
-        #os: [ubuntu-latest, ubuntu-18.04]
-        os: [ubuntu-latest]
-        bitness: [32, 64]
-        ikind: [i2, i4, i8]
+        ikind: [i2, i8]  # [i2, i4, i8] fails frequently due to unavailability of license servers.
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Install ifort/ifx
-        run: |
-          sudo .github/scripts/install_oneapi_linux.sh
-      - name: Make sed available on Windows
-        if: runner.os == 'Windows'
-        run: $env:Path += ";C:\Program Files\Git\usr\bin"
 
       - name: Set environment variables
         run: |
@@ -65,13 +50,13 @@ jobs:
           echo "$TEST_DIR"
 
       - name: Conduct the test
-        shell: bash
         run: |
-          source /opt/intel/oneapi/setvars.sh
-          ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"
-          cd $ROOT/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          cd $ROOT/fsrc/tests && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
-          cd $ROOT/fsrc/examples/${{ matrix.solver }} && make xtest
+          export PATH=$PATH:"~/local/bin"
+          source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
+          ROOT=$(realpath ./)
+          cd $ROOT/fsrc/tests && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd $ROOT/fsrc/examples/${{ matrix.solver }} && make ntest
+
       - name: Store artifacts
         uses: actions/upload-artifact@v3
         with:

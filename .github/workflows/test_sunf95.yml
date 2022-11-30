@@ -72,9 +72,9 @@ jobs:
           cd $ROOT/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           cd $ROOT/fsrc/tests && make stest_${{ matrix.ikind }}.${{ matrix.solver }}
           # sunf95 cannot handle matrix indexing with TRUELOC
-          #if [[ ! ${{ matrix.solver }}=='lincoa' && ! ${{ matrix.solver }}=='bobyqa' ]] ; then
+          if [[ ! ${{ matrix.solver }}=='lincoa' && ! ${{ matrix.solver }}=='bobyqa' ]] ; then
               cd $ROOT/fsrc/examples/${{ matrix.solver }} && make stest
-              #fi
+          fi
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
