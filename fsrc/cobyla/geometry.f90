@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 25, 2022 PM05:07:22
+! Last Modified: Wednesday, November 30, 2022 PM12:38:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -161,7 +161,7 @@ end if
 jdrop = 0_IK
 
 simid = matprod(simi, d)
-if (any(abs(simid) > ONE) .or. (ximproved .and. any(.not. is_nan(simid)))) then
+if (any(abs(simid) > 1) .or. (ximproved .and. any(.not. is_nan(simid)))) then
     jdrop = int(maxloc(abs(simid), mask=(.not. is_nan(simid)), dim=1), kind(jdrop))
     !!MATLAB: [~, jdrop] = max(simid, [], 'omitnan');
 end if

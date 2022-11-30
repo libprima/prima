@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:31:02
+! Last Modified: Wednesday, November 30, 2022 PM12:42:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -231,7 +231,7 @@ if (stage == 1) then
     cviol = maxval([b, ZERO])
     vmultc = cviol - b
     z = eye(n)
-    if (mcon == 0 .or. cviol <= ZERO) then
+    if (mcon == 0 .or. cviol <= 0) then
         ! Check whether a quick return is possible. Make sure the In-outputs have been initialized.
         return
     end if
@@ -330,7 +330,7 @@ do iter = 1, maxiter
             ! same before and after QRADD). Therefore, if we supply ZDOTA to LSQR (as Rdiag) as
             ! Powell did, we should use the UNUPDATED version, namely ZDASAV.
             vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact), zdasav(1:nact))
-            if (.not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
+            if (.not. any(vmultd(1:nact) > 0 .and. iact(1:nact) <= m)) then
                 ! N.B.: This can be triggered by NACT == 0 (among other possibilities)! This is
                 ! important, because NACT will be used as an index in the sequel.
                 exit
