@@ -27,8 +27,8 @@ type(PROB_T), intent(out) :: prob
 ! Local variables
 integer(IK) :: i
 integer(IK) :: j
-integer(IK), parameter :: n = 12_IK
-integer(IK), parameter :: np = 50_IK
+integer(IK), parameter :: n = 12
+integer(IK), parameter :: np = 50
 real(RP) :: Aineq(n, 4 * np)
 real(RP) :: ss
 real(RP) :: theta(np)
@@ -77,8 +77,8 @@ call safealloc(prob % Aineq, n, 4_IK * np)
 call safealloc(prob % bineq, 4_IK * np)
 
 Aineq = ZERO
-do j = 1_IK, np
-    do i = 1_IK, 4_IK
+do j = 1, np
+    do i = 1, 4_IK
         Aineq(3_IK * i - 2_IK, 4_IK * j + i - 4_IK) = xp(j)
         Aineq(3_IK * i - 1_IK, 4_IK * j + i - 4_IK) = yp(j)
         Aineq(3_IK * i, 4_IK * j + i - 4_IK) = zp(j)
@@ -104,7 +104,7 @@ real(RP), intent(out) :: f
 ! Local variables
 character(len=*), parameter :: srname = 'CALFUN_TETRAHEDRON'
 integer(IK) :: j
-integer(IK), parameter :: np = 50_IK
+integer(IK), parameter :: np = 50
 real(RP) :: ss
 real(RP) :: theta(np)
 real(RP) :: v12, v13, v14, v23, v24, v34, del1, del2, del3, del4, temp

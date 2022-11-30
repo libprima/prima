@@ -85,7 +85,7 @@ if (present(m) .and. present(output_conhist) .and. present(conhist)) then
 end if
 unit_memo = unit_memo * cstyle_sizeof(0.0_RP)
 if (unit_memo <= 0) then  ! No output of history is requested
-    maxhist = 0_IK
+    maxhist = 0
 elseif (maxhist > MAXMEMORY / unit_memo) then
     maxhist = int(MAXMEMORY / unit_memo, kind(maxhist))
     ! We cannot simply set MAXHIST = MIN(MAXHIST, MAXMEMORY/UNIT_MEMO), as they may not have
@@ -168,12 +168,12 @@ maxfhist = int(size(fhist), kind(maxfhist))
 if (present(chist) .and. present(cstrv)) then
     maxchist = int(size(chist), kind(maxchist))
 else
-    maxchist = 0_IK
+    maxchist = 0
 end if
 if (present(conhist) .and. present(constr)) then
     maxconhist = int(size(conhist, 2), kind(maxconhist))
 else
-    maxconhist = 0_IK
+    maxconhist = 0
 end if
 maxhist = max(maxxhist, maxfhist, maxchist, maxconhist)
 
@@ -318,14 +318,14 @@ maxfhist = int(size(fhist), kind(maxfhist))
 if (present(chist)) then
     maxchist = int(size(chist), kind(maxchist))
 else
-    maxchist = 0_IK
+    maxchist = 0
 end if
 if (present(conhist)) then
     m = int(size(conhist, 1), kind(m))
     maxconhist = int(size(conhist, 2), kind(maxconhist))
 else
-    m = 0_IK
-    maxconhist = 0_IK
+    m = 0
+    maxconhist = 0
 end if
 maxhist = max(maxxhist, maxfhist, maxconhist, maxchist)
 

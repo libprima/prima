@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Tuesday, November 29, 2022 AM10:04:04
+! Last Modified: Wednesday, November 30, 2022 PM01:10:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -136,7 +136,7 @@ xbase = x0
 ! is not fully parallelizable if NPT>2N+1, as the definition XPT(;, 2N+2:end) involves FVAL(1:2N+1).
 evaluated = .false.
 
-! Initialize XHIST, FHIST, and FVAL. Otherwise, compilers may complain that they are not 
+! Initialize XHIST, FHIST, and FVAL. Otherwise, compilers may complain that they are not
 ! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
 ! Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
 xhist = -HUGENUM
@@ -487,7 +487,7 @@ else
 end if
 
 ! Set IDZ = 1.
-idz = 1_IK
+idz = 1
 
 if (present(info)) then
     if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then

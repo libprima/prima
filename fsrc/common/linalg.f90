@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:44:08
+! Last Modified: Wednesday, November 30, 2022 PM01:22:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1154,7 +1154,7 @@ integer(IK) :: k_loc
 if (present(k)) then
     k_loc = k
 else
-    k_loc = 0_IK
+    k_loc = 0
 end if
 
 dlen = int(min(size(A, 1), size(A, 2)), IK)
@@ -2825,7 +2825,7 @@ end if
 ! Calculation starts !
 !====================!
 
-maxiter = 100_IK
+maxiter = 100
 tol_loc = 1.0E-6_RP
 if (present(tol)) then
     tol_loc = tol
@@ -2944,7 +2944,7 @@ end if
 ! Calculation starts !
 !====================!
 
-do j = 1_IK, n
+do j = 1, n
     ih = (j - 1_IK) * j / 2_IK
     smat(1:j, j) = vec(ih + 1:ih + j)
     smat(j, 1:j - 1) = smat(1:j - 1, j)
@@ -2989,7 +2989,7 @@ end if
 !====================!
 
 n = int(size(smat, 1), kind(n))
-do j = 1_IK, n
+do j = 1, n
     ih = (j - 1_IK) * j / 2_IK
     vec(ih + 1:ih + j) = smat(1:j, j)
 end do

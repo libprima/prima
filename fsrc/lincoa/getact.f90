@@ -152,7 +152,7 @@ end if
 
 ! Quick return when M = 0.
 if (m <= 0) then
-    nact = 0_IK
+    nact = 0
     qfac = eye(n)
     psd = -g
     return
@@ -204,7 +204,7 @@ ddsav = TWO * gg  ! By Powell. This value is used at iteration 1 to test whether
 ! The iteration counter ITER never appears in the code of the iterations, as its purpose is merely
 ! to impose an upper bound on the number of iterations.
 maxiter = 2_IK * (m + n)
-do iter = 1_IK, maxiter
+do iter = 1, maxiter
     ! When NACT == N, exit with PSD = 0. Indeed, with a correctly implemented matrix product, the
     ! lines below this IF should render DD = 0 and trigger an exit. We make it explicit for clarity.
     if (nact >= n) then  ! Indeed, NACT > N should never happen.
@@ -273,7 +273,7 @@ do iter = 1_IK, maxiter
         l = int(maxloc(apsd, mask=mask, dim=1), kind(l))
         violmx = apsd(l)
     else
-        l = 0_IK
+        l = 0
         violmx = -HUGENUM
     end if
     !!MATLAB: apsd(mask) = -Inf; [violmx , l] = max(apsd);

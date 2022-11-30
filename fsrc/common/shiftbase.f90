@@ -86,7 +86,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 ! Read IDZ, which is absent from BOBYQA, being equivalent to IDZ = 1.
-idz_loc = 1_IK
+idz_loc = 1
 if (present(idz)) then
     idz_loc = idz
 end if

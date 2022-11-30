@@ -312,7 +312,7 @@ end if
 ! Calculation starts !
 !====================!
 
-nfilt = 0_IK
+nfilt = 0
 do i = 1, n + 1_IK
     if (evaluated(i)) then
         if (i <= n) then

@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, November 30, 2022 AM09:42:46
+! Last Modified: Wednesday, November 30, 2022 PM01:25:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,7 +45,7 @@ character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 1000_IK
+integer(IK), parameter :: bign = 1000
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -80,7 +80,7 @@ if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))
     probs_loc(1:nprobs) = probs
 else
-    nprobs = 6_IK
+    nprobs = 6
     probs_loc(1:nprobs) = ['ptinsq   ', 'chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
 end if
 
@@ -127,7 +127,7 @@ do iprob = 1, nprobs
         call construct(prob, probname, n)  ! Construct the testing problem.
 
         ! NPT_LIST defines some extreme values of NPT.
-        nnpt = 10_IK
+        nnpt = 10
         npt_list(1:nnpt) = [1_IK, &
             & n + 1_IK, n + 2_IK, n + 3_IK, &
             & 2_IK * n, 2_IK * n + 1_IK, 2_IK * n + 2_IK, &
@@ -147,7 +147,7 @@ do iprob = 1, nprobs
                 npt = 0
             end if
             !iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
-            iprint = 3_IK
+            iprint = 3
             maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
             if (rand() <= 0.2_RP) then
                 maxfun = 0
@@ -211,13 +211,13 @@ if (test_bigprob) then
     probname = bigprob
     n = bign
     call construct(prob, probname, n)
-    nnpt = 2_IK
+    nnpt = 2
     npt_list(1:nnpt) = [2_IK * n + 1_IK, &
         & int(min(floor(real(10_IK**min(range(0), range(0_IK))) / 2.0), (int(n) + 1) * (int(n) + 2) / 2), IK)]
     do irand = 1, nnpt
         rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
         npt = npt_list(irand)
-        iprint = 2_IK
+        iprint = 2
         maxfun = int(minval([10**min(range(0), range(0_IK)), 10 * int(npt), int(npt) + 1000]), IK)
         maxhist = maxfun
         ftarget = -HUGENUM

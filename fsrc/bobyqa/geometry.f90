@@ -150,7 +150,7 @@ elseif (ximproved) then
     ! consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
     knew = int(maxloc(distsq, dim=1), kind(knew))
 else
-    knew = 0_IK  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE is positive.
+    knew = 0  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE is positive.
 end if
 
 !====================!
@@ -334,7 +334,7 @@ do k = 1, npt
     if (k == kopt .or. is_nan(dderiv(k))) then
         dderiv(k) = ZERO
         stplen(:, k) = ZERO
-        isbd(:, k) = 0_IK
+        isbd(:, k) = 0
         cycle
     end if
 

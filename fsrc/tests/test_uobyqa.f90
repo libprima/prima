@@ -69,7 +69,7 @@ if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))
     probs_loc(1:nprobs) = probs
 else
-    nprobs = 5_IK
+    nprobs = 5
     probs_loc(1:nprobs) = ['chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
 end if
 
@@ -161,10 +161,10 @@ if (test_bigprob) then
     probname = bigprob
     n = bign
     call construct(prob, probname, n)
-    nrand_loc = 2_IK
+    nrand_loc = 2
     do irand = 1, nrand_loc
         rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
-        iprint = 2_IK
+        iprint = 2
         npt = (n + 2_IK) * (n + 1_IK) / 2_IK
         maxfun = int(minval([10**min(range(0), range(0_IK)), 10 * int(npt), int(npt) + 1000]), IK)
         maxhist = maxfun
