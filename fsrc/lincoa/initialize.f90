@@ -353,7 +353,7 @@ else
 end if
 
 ! Set IDZ = 1.
-idz = 1_IK
+idz = 1
 
 ! Up to now, [BMAT, ZMAT, IDZ] corresponds to the XPT_REF defined below.
 xpt_ref(:, 1) = ZERO
@@ -362,7 +362,7 @@ xpt_ref(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)
 xpt_ref(:, 2 * n + 2:npt) = xpt_ref(:, ij(1, :) + 1) + xpt_ref(:, ij(2, :) + 1)
 
 ! Update [BMAT, ZMAT, IDZ] so that it corresponds to XPT.
-kbase = 1_IK
+kbase = 1
 do k = 1, npt
     if (any(abs(xpt(:, k) - xpt_ref(:, k)) > 0)) then  ! XPT(:, K) /= XPT_REF(:, K)
         call updateh(k, kbase, idz, xpt(:, k), xpt_ref, bmat, zmat)

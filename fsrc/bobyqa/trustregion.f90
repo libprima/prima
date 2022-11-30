@@ -345,7 +345,7 @@ if (twod_search) then
     crvmin = ZERO
     maxiter = 10_IK * (n - nact)
 else
-    maxiter = 0_IK
+    maxiter = 0
 end if
 
 ! Improve D by a sequential 2D search on the boundary of the trust region for the variables that

@@ -113,7 +113,7 @@ end if
 if (lower(solver) == 'cobyla' .and. present(m)) then
     m_loc = m
 else
-    m_loc = 0_IK
+    m_loc = 0
 end if
 
 ! Decide whether the problem is truly constrained
@@ -190,7 +190,7 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     case ('cobyla')
         unit_memo = (m_loc + n + 2_IK) * cstyle_sizeof(0.0_RP)
     case default
-        unit_memo = 1_IK
+        unit_memo = 1
     end select
     ! We cannot simply set MAXFILT = MIN(MAXFILT, MAXMEMORY/...), as they may not have
     ! the same kind, and compilers may complain. We may convert them, but overflow may occur.

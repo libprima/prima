@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM06:05:36
+! Last Modified: Wednesday, November 30, 2022 PM01:22:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1334,8 +1334,8 @@ beta = calbeta(kref, bmat, d, xpt, zmat, idz)
 ! while ZMAT(KNEW, JL) is L2 norm of ZMAT(KNEW, IDZ : NPT-N-1).
 ! See (4.15)--(4.17) of the NEWUOA paper and the elaboration around them.
 ztest = 1.0E-20_RP * maxval(abs(zmat))  ! Taken from BOBYQA. It is implicitly zero in NEWUOA/LINCOA.
-jl = 1_IK  ! In the loop below, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT-N-1, then JL = IDZ.
-do j = 2_IK, npt - n - 1_IK
+jl = 1  ! In the loop below, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT-N-1, then JL = IDZ.
+do j = 2, npt - n - 1_IK
     if (j == idz) then
         jl = idz  ! Do nothing but changing JL from 1 to IDZ. It occurs at most once along the loop.
         cycle
@@ -1438,7 +1438,7 @@ if (jl == 1) then
     ! This is the corrected version, copied from LINCOA.
     ! !if (denom < 0) then
     ! !    if (idz == 1) then
-    ! !        idz = 2_IK
+    ! !        idz = 2
     ! !    else
     ! !        reduce_idz = .true.
     ! !    end if
@@ -1453,9 +1453,9 @@ else
     ! as elaborated above the equations, ZMAT(:, [1, JL]) always correspond to [Z_2, Z_1].
     if (beta >= 0) then  ! ZMAT(:, [JA, JB]) corresponds to [Z_1, Z_2] in (4.19)
         ja = jl
-        jb = 1_IK
+        jb = 1
     else  ! ZMAT(:, [JA, JB]) corresponds to [Z_2, Z_1] in (4.20)
-        ja = 1_IK
+        ja = 1
         jb = jl
     end if
     ! Now update ZMAT(:, [ja, jb]) according to (4.19)--(4.20) of the NEWUOA paper.
@@ -1651,7 +1651,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 ! Read IDZ, which is not present in BOBYQA, being equivalent to IDZ = 1.
-idz_loc = 1_IK
+idz_loc = 1
 if (present(idz)) then
     idz_loc = idz
 end if
@@ -1758,7 +1758,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 ! Read IDZ, which is absent from BOBYQA, being equivalent to IDZ = 1.
-idz_loc = 1_IK
+idz_loc = 1
 if (present(idz)) then
     idz_loc = idz
 end if
@@ -1882,7 +1882,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 ! Read IDZ, which is absent from BOBYQA, being equivalent to IDZ = 1.
-idz_loc = 1_IK
+idz_loc = 1
 if (present(idz)) then
     idz_loc = idz
 end if

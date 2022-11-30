@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM09:56:43
+! Last Modified: Wednesday, November 30, 2022 PM01:20:36
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -215,8 +215,8 @@ real(RP), parameter :: ETA1_DFT = TENTH
 real(RP), parameter :: ETA2_DFT = 0.7_RP
 real(RP), parameter :: GAMMA1_DFT = HALF
 real(RP), parameter :: GAMMA2_DFT = TWO
-integer(IK), parameter :: IPRINT_DFT = 0_IK
-integer(IK), parameter :: MAXFUN_DIM_DFT = 500_IK
+integer(IK), parameter :: IPRINT_DFT = 0
+integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
 ! Maximal amount of memory (Byte) allowed for XHIST, FHIST, CONHIST, CHIST, and the filters.
 integer, parameter :: MXMMY = 21 * (10**8)   ! 21*10**8 = 2G.
@@ -224,7 +224,7 @@ integer, parameter :: MXMMY = 21 * (10**8)   ! 21*10**8 = 2G.
 integer, parameter :: MAXMEMORY = min(MXMMY, huge(0))
 
 ! Maximal length of the filter used in constrained solvers.
-integer(IK), parameter :: MIN_MAXFILT = 200_IK  ! Should be positive; < 200 is not recommended.
+integer(IK), parameter :: MIN_MAXFILT = 200  ! Should be positive; < 200 is not recommended.
 integer(IK), parameter :: MAXFILT_DFT = 10_IK * MIN_MAXFILT
 
 end module consts_mod

@@ -158,7 +158,7 @@ end if
 
 ! JDROP = 0 by default. It cannot be removed, as JDROP may not be set below in some cases (e.g.,
 ! when XIMPROVED == FALSE, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(VETA) <= EDGMAX).
-jdrop = 0_IK
+jdrop = 0
 
 simid = matprod(simi, d)
 if (any(abs(simid) > 1) .or. (ximproved .and. any(.not. is_nan(simid)))) then
@@ -276,7 +276,7 @@ elseif (any(vsig < factor_alpha * delta)) then
 else
     ! We arrive here if VSIG and VETA are all NaN, which can happen due to NaN in SIM and SIMI,
     ! which should not happen unless there is a bug.
-    jdrop = 0_IK
+    jdrop = 0
 end if
 
 !====================!

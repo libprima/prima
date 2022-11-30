@@ -153,7 +153,7 @@ if (count(keep) == maxfilt) then  ! In this case, NFILT = SIZE(KEEP) = COUNT(KEE
     kworst = int(maxloc(cfilt, mask=(ffilt >= fref), dim=1), kind(kworst))
     !!MATLAB: cmax = max(cfilt(ffilt >= fref)); kworst = find(ffilt >= fref & ~(cfilt < cmax), 1,'first');
     if (kworst < 1 .or. kworst > size(keep)) then  ! For security. Should not happen.
-        kworst = 1_IK
+        kworst = 1
     end if
     keep(kworst) = .false.
 end if

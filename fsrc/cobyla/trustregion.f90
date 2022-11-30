@@ -226,7 +226,7 @@ if (stage == 1) then
     iact = linspace(1_IK, mcon, mcon)  !!MATLAB: iact = (1:mcon);  % Row vector
     ! N.B.: 1. The MATLAB version of LINSPACE returns a row vector. Take a transpose if needed.
     ! 2. In MATLAB, linspace(1, mcon, mcon) can also be written as (1:mcon).
-    nact = 0_IK
+    nact = 0
     d = ZERO
     cviol = maxval([b, ZERO])
     vmultc = cviol - b
@@ -265,7 +265,7 @@ zdota(1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=1, nact)]
 ! More initialization.
 optold = HUGENUM
 nactold = nact
-nfail = 0_IK
+nfail = 0
 
 !----------------------------------------------------------------------------------------------!
 ! Zaikun 20211011: VMULTD is computed from scratch at each iteration, but VMULTC is inherited.
@@ -293,7 +293,7 @@ do iter = 1, maxiter
     ! a remote possibility that it will cause premature termination.
     if (optnew < optold .or. nact > nactold) then
         nactold = nact
-        nfail = 0_IK
+        nfail = 0
     else
         nfail = nfail + 1_IK
     end if
