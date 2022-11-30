@@ -1,4 +1,4 @@
-name: Verify faithfulness of the basis
+name: Verification of the basis
 
 on:
   # Trigger the workflow on push or pull request
@@ -17,7 +17,7 @@ env:
 
 jobs:
   test:
-    name: Verify the faithfulness of the modernized solvers.
+    name: Verify the modernized solvers.
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

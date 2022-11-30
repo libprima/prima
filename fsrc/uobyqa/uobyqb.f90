@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 AM09:46:18
+! Last Modified: Wednesday, November 30, 2022 PM07:19:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -166,6 +166,7 @@ dnormsav = HUGENUM
 ratio = -ONE
 ddmove = -ONE
 knew_tr = 0
+knew_geo = 0
 shortd = .false.
 reduce_rho = .false.
 trtol = 0.01_RP

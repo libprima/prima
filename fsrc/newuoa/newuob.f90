@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM05:04:07
+! Last Modified: Wednesday, November 30, 2022 PM07:18:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -220,6 +220,7 @@ delta = rho
 shortd = .false.
 ratio = -ONE
 knew_tr = 0
+knew_geo = 0
 itest = 0
 dnormsav = HUGENUM
 moderrsav = HUGENUM
