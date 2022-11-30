@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM02:49:06
+! Last Modified: Wednesday, November 30, 2022 AM09:23:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -330,7 +330,7 @@ vlagabs(kopt) = -ONE
 ! 2. If VLAGABS(KNEW) = MAXVAL(VLAGABS) = VLAGABS(K) and K < KNEW, Powell's code does not set K=KNEW.
 k = knew
 if (any(vlagabs > vlagabs(knew))) then
-    k = maxloc(vlagabs, mask=(.not. is_nan(vlagabs)), dim=1)
+    k = int(maxloc(vlagabs, mask=(.not. is_nan(vlagabs)), dim=1), kind(k))
     !!MATLAB: [~, k] = max(vlagabs, [], 'omitnan');
 end if
 ! Set S to the step corresponding to VLAGABS(K), and calculate DENABS for it.

@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM09:36:55
+! Last Modified: Wednesday, November 30, 2022 AM09:32:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -484,7 +484,7 @@ gisq = sum(pgalt**2)
 if (ratio > TENTH .or. gqsq < TEN * gisq) then
     itest = 0
 else
-    itest = itest + 1
+    itest = itest + 1_IK
 end if
 if (itest >= 3) then
     gopt = galt

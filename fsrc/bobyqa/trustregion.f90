@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 AM11:39:33
+! Last Modified: Wednesday, November 30, 2022 AM09:38:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -152,7 +152,7 @@ ggsav = ZERO
 xbdi = 0
 xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1
 xbdi(trueloc(xopt <= sl .and. gopt >= 0)) = -1
-nact = count(xbdi /= 0)
+nact = int(count(xbdi /= 0), kind(nact))
 
 ! Initialized D and CRVMIN.
 d = ZERO
@@ -174,7 +174,7 @@ itercg = 0
 twod_search = .false.  ! The default value of TWOD_SEARCH is FALSE!
 
 ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
-maxiter = (n - nact)**2
+maxiter = (n - nact)**2_IK
 do iter = 1, maxiter
     ! Set the next search direction of the conjugate gradient method. It is the steepest descent
     ! direction initially and when the iterations are restarted because a variable has just been
@@ -289,7 +289,7 @@ do iter = 1, maxiter
     ! Update CRVMIN, GNEW and D. Set SDEC to the decrease that occurs in Q.
     sdec = ZERO
     if (stplen > 0) then
-        itercg = itercg + 1
+        itercg = itercg + 1_IK
         temp = shs / stepsq
         if (iact == 0 .and. temp > 0) then
             if (crvmin <= -HUGENUM) then  ! CRVMIN <= -HUGENUM means CRVMIN has not been set.
@@ -308,7 +308,7 @@ do iter = 1, maxiter
 
     ! Restart the conjugate gradient method if it has hit a new bound.
     if (iact > 0) then
-        nact = nact + 1
+        nact = nact + 1_IK
         call assert(abs(s(iact)) > 0, 'S(IACT) /= 0', srname)
         xbdi(iact) = int(sign(ONE, s(iact)), IK)  !!MATLAB: xbdi(iact) = sign(s(iact))
         ! Exit when NACT = N (NACT > N is impossible). We must update XBDI before exiting!
@@ -365,14 +365,14 @@ end if
 ! be the reason for the apparent typo mentioned above.
 ! Question (Zaikun 20220424): Shouldn't we try something similar in GEOSTEP?
 
-nactsav = nact - 1
+nactsav = nact - 1_IK
 do iter = 1, maxiter
     xnew = xopt + d
 
     ! Update XBDI. It indicates whether the lower (-1) or upper bound (+1) is reached or not (0).
     xbdi(trueloc(xbdi == 0 .and. (xnew >= su))) = 1
     xbdi(trueloc(xbdi == 0 .and. (xnew <= sl))) = -1
-    nact = count(xbdi /= 0)
+    nact = int(count(xbdi /= 0), kind(nact))
     if (nact >= n - 1) then
         exit
     end if
