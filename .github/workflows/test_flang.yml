@@ -45,7 +45,7 @@ jobs:
         os: [ubuntu-latest]
         bitness: [32, 64]
         ikind: [i2, i4, i8]
-        solver: [bobyqa, uobyqa]  # Flang encounters an allocation error for no reason. Check later.
+        solver: [newuoa, cobyla, bobyqa, uobyqa]  # Flang encounters an allocation error for no reason on LINCOA. Check later.
 
     steps:
       - name: Checkout repository

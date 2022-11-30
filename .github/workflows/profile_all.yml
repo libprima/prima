@@ -1,4 +1,4 @@
-name: Plot performance profiles for big, large, and all
+name: Plot performance profiles for all problems
 
 on:
   # Trigger the workflow on push or pull request
@@ -6,7 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 11,23 * * *'
+    - cron: '0 8,16,24 * * *'
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
@@ -22,18 +22,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        dim: [big, large, all]
-        #solver: [lincoa, bobyqa, uobyqa]  ! There is no big/large problems left for uobyqa after the blacklist
-        solver: [lincoa, bobyqa]
-        exclude:
-          - dim: big
-            solver: lincoa
-          - dim: big
-            solver: bobyqa
-          - dim: large
-            solver: lincoa
-          - dim: large
-            solver: bobyqa
+        dim: [all]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -75,16 +65,14 @@ jobs:
             ver;
             root_dir = pwd();
             cd('matlab/tests');
-            if strcmp('${{ matrix.solver }}', 'uobyqa')
-                profile('${{ matrix.solver }}', '${{ matrix.dim }}');
+            if  strcmp('${{ matrix.solver }}', 'cobyla')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'ln');
+            elseif  strcmp('${{ matrix.solver }}', 'lincoa')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l');
+            elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b');
             else
-                if  strcmp('${{ matrix.solver }}', 'lincoa')
-                    prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l');
-                elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
-                    prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b');
-                else
-                    prof('${{ matrix.solver }}', '${{ matrix.dim }}');
-                end
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}');
             end
             delete(fullfile(cd(), 'testdata', '*.mat'));
             cd(fullfile(root_dir)); setup path  % Test that `setup path` works properly.
