@@ -55,7 +55,12 @@ else
     requirements.type = options.type;
     requirements.blacklist = {};
     if startsWith(solvers{1}, 'cobyla') || startsWith(solvers{2}, 'cobyla')
-        requirements.blacklist = [requirements.blacklist, {'CHEBYQADNE','HAIFAM','HIMMELBI','HYDCAR20','LUKSAN12','LUKSAN13','MSS1','SPANHYD','VANDERM1','VANDERM2','VANDERM3', 'TAX13322', 'TAXR13322'}]; % Takes more than 2 min to solve
+        %requirements.blacklist = [requirements.blacklist, {'CHEBYQADNE','HAIFAM','HIMMELBI','HYDCAR20','LUKSAN12','LUKSAN13','MSS1','SPANHYD','VANDERM1','VANDERM2','VANDERM3', 'TAX13322', 'TAXR13322'}]; % Takes more than 2 min to solve
+        requirements.blacklist = [requirements.blacklist, {'ACOPP30', 'ACOPR30', 'AIRPORT', 'CHANDHEQ', ...
+            'CHEBYQAD', 'CHEBYQADNE', 'CORE1', 'DECONVB', 'DECONVC', 'DUAL1', 'DUAL2', 'FEEDLOC', ...
+            'GROUPING', 'HAIFAM', 'HIMMELBI', 'HYDC20LS', 'HYDCAR20', 'KISSING2', 'LAKES', 'LINSPANH', ...
+            'LUKSAN11', 'LUKSAN11LS', 'LUKSAN12', 'LUKSAN12LS', 'LUKSAN13', 'LUKSAN13LS', 'LUKSAN14', ...
+            'LUKSAN14LS', 'LUKSAN15', 'MSS1', 'VANDERM1', 'VANDERM2', 'VANDERM3', 'TAX13322', 'TAXR13322'}];  % Takes more than 100 seconds
         requirements.blacklist = [requirements.blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Time-consuming
         requirements.blacklist = [requirements.blacklist, {'GMNCASE2'}];
         requirements.blacklist = [requirements.blacklist, {'VANDERM4', 'LAKES'}]; % The classical COBYLA encounters SIGFAULT

@@ -1,4 +1,4 @@
-name: Verification of the basis
+name: Verification, basis
 
 on:
   # Trigger the workflow on push or pull request

@@ -85,8 +85,8 @@ the faithfulness of our implementation, but also check that **the solvers behave
 are invoked with improper inputs or encounter failures of function evaluations**.
 
 The tests are automated by
-[GitHub Actions](https://docs.github.com/en/actions). As of October 2022, more than
-25,000 "workflows" have been successfully run by GitHub Actions
+[GitHub Actions](https://docs.github.com/en/actions). As of November 2022, more than
+30,000 "workflows" have been successfully run by GitHub Actions
 (see https://github.com/equipez/gitpersonal/actions and https://github.com/equipez/PRIMA/actions).
 Normally, each workflow consists of \~ 5 **randomized** tests
 that are conducted in parallel, each test taking from tens of minutes to several hours (the maximum
