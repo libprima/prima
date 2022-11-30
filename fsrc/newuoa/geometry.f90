@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM02:48:43
+! Last Modified: Wednesday, November 30, 2022 PM12:29:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,12 +129,12 @@ end if
 if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
     ! See (7.5) of the NEWUOA paper for the definition of KNEW in this case.
     ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
-    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
 elseif (ximproved) then
     ! Powell's code does not include the following instructions. With Powell's code, if DENABS
     ! consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
-    knew = int(maxloc(distsq, dim=1), IK)
+    knew = int(maxloc(distsq, dim=1), kind(knew))
 else
     knew = 0_IK  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE exceeds one.
 end if

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 AM09:38:36
+! Last Modified: Wednesday, November 30, 2022 PM12:24:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -271,13 +271,13 @@ do iter = 1, maxiter
     sbound(trueloc(is_nan(sbound))) = stplen  ! Needed? No if we are sure that D and S are finite.
     iact = 0
     if (any(sbound < stplen)) then
-        iact = int(minloc(sbound, dim=1), IK)
+        iact = int(minloc(sbound, dim=1), kind(iact))
         stplen = sbound(iact)
         !!MATLAB: [stplen, iact] = min(sbound);
     end if
     !----------------------------------------------------------------------------------------------!
     ! Alternatively, IACT and STPLEN can be calculated as below.
-    ! !IACT = INT(MINLOC([STPLEN, SBOUND], DIM=1), IK) - 1_IK
+    ! !IACT = INT(MINLOC([STPLEN, SBOUND], DIM=1), KIND(IACT)) - 1_IK
     ! !STPLEN = MINVAL([STPLEN, SBOUND]) ! This line cannot be exchanged with the last
     ! We prefer our implementation, as the code is more explicit; in addition, it is more flexible:
     ! we can change the condition ANY(SBOUND < STPLEN) to ANY(SBOUND < (1 - EPS) * STPLEN) or
@@ -310,7 +310,7 @@ do iter = 1, maxiter
     if (iact > 0) then
         nact = nact + 1_IK
         call assert(abs(s(iact)) > 0, 'S(IACT) /= 0', srname)
-        xbdi(iact) = int(sign(ONE, s(iact)), IK)  !!MATLAB: xbdi(iact) = sign(s(iact))
+        xbdi(iact) = int(sign(ONE, s(iact)), kind(xbdi))  !!MATLAB: xbdi(iact) = sign(s(iact))
         ! Exit when NACT = N (NACT > N is impossible). We must update XBDI before exiting!
         if (nact >= n) then
             exit  ! This leads to a difference. Why?
@@ -446,7 +446,7 @@ do iter = 1, maxiter
     iact = 0
     hangt_bd = ONE
     if (any(tanbd < 1)) then
-        iact = int(minloc(tanbd, dim=1), IK)
+        iact = int(minloc(tanbd, dim=1), kind(iact))
         hangt_bd = tanbd(iact)
         !!MATLAB: [hangt_bd, iact] = min(tanbd);
     end if
@@ -466,8 +466,8 @@ do iter = 1, maxiter
     if (any(is_nan(args))) then
         exit
     end if
-    !grid_size = int(17.0_RP * hangt_bd + 4.1_RP, IK)  ! Powell's version
-    grid_size = 2_IK * int(17.0_RP * hangt_bd + 4.1_RP, IK)  ! It doubles the value in Powell's code
+    !grid_size = int(17.0_RP * hangt_bd + 4.1_RP, kind(grid_size))  ! Powell's version
+    grid_size = 2_IK * int(17.0_RP * hangt_bd + 4.1_RP, kind(grid_size))  ! It doubles the value in Powell's code
     hangt = interval_max(interval_fun_trsbox, ZERO, hangt_bd, args, grid_size)
     sdec = interval_fun_trsbox(hangt, args)
     if (.not. sdec > 0) exit
@@ -484,7 +484,7 @@ do iter = 1, maxiter
     hdred = cth * hdred + sth * hs
     qred = qred + sdec
     if (iact >= 1 .and. iact <= n .and. hangt >= hangt_bd) then  ! D(IACT) reaches lower/upper bound.
-        xbdi(iact) = int(sign(ONE, d(iact) - diact), IK)  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
+        xbdi(iact) = int(sign(ONE, d(iact) - diact), kind(xbdi))  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
     elseif (.not. sdec > ctest * qred) then
         exit
     end if
