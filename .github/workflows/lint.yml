@@ -1,4 +1,4 @@
-name: Lint the Fortran code and the MEX gateways for the solvers
+name: Lint the Fortran code and the MEX gateways
 
 on:
   # Trigger the workflow on push or pull request
