@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 30, 2022 PM01:22:11
+! Last Modified: Wednesday, November 30, 2022 PM11:15:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,7 +116,7 @@ if (DEBUGGING) then
     call assert(size(c) == m, 'SIZE(C) == M', srname)
     call assert(size(Rdiag) >= min(m, n + 1_IK) .and. size(Rdiag) <= m, 'MIN(M, N+1) <= SIZE(Rdiag) <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E12_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
     Qsave = Q(:, 1:n)  ! For debugging only
     Rdsave = Rdiag(1:n)  ! For debugging only
