@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 PM01:07:06
+! Last Modified: Wednesday, November 30, 2022 PM12:25:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -187,7 +187,7 @@ do k = 2, npt  ! LINCOA always starts with a feasible point. So we do this only 
     ! Internally, we use AMAT and B to evaluate the constraints.
     constr = matprod(xpt(:, k), amat) - b
     if (all(constr < mincv) .and. any(constr > 0)) then
-        j = int(maxloc(constr, dim=1), IK)
+        j = int(maxloc(constr, dim=1), kind(j))
         xpt(:, k) = xpt(:, k) + (mincv - constr(j)) * amat(:, j)
     end if
 end do

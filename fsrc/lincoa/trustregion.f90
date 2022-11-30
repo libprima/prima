@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 AM09:22:57
+! Last Modified: Wednesday, November 30, 2022 PM12:26:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -299,12 +299,12 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     frac(trueloc(is_nan(frac))) = alpha
     jsav = 0_IK
     if (any(frac < alpha)) then
-        jsav = int(minloc(frac, dim=1), IK)
+        jsav = int(minloc(frac, dim=1), kind(jsav))
         alpha = frac(jsav)
     end if
     !----------------------------------------------------------------------------------------------!
     ! Alternatively, JSAV and ALPHA can be calculated as below.
-    !JSAV = INT(MINLOC([ALPHA, FRAC], DIM=1), IK) - 1_IK
+    !JSAV = INT(MINLOC([ALPHA, FRAC], DIM=1), KIND(JSAV)) - 1_IK
     !ALPHA = MINVAL([ALPHA, FRAC])  ! This line cannot be exchanged with the last.
     ! We prefer our implementation as the code is more explicit; in addition, it is more flexible:
     ! we can change the condition ANY(FRAC < ALPHA) to ANY(FRAC < (1 - EPS) * ALPHA) or

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 AM09:32:09
+! Last Modified: Wednesday, November 30, 2022 PM12:22:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -143,12 +143,12 @@ if (any(score > 1) .or. (ximproved .and. any(score > 0))) then  ! Condition in N
     ! !if (any(score > 0)) then  ! Powell's original condition in BOBYQA.
     ! See (6.1) of the BOBYQA paper for the definition of KNEW in this case.
     ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
-    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
 elseif (ximproved) then
     ! Powell's code does not include the following instructions. With Powell's code, if DEN
     ! consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
-    knew = int(maxloc(distsq, dim=1), IK)
+    knew = int(maxloc(distsq, dim=1), kind(knew))
 else
     knew = 0_IK  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE is positive.
 end if
@@ -369,7 +369,7 @@ do k = 1, npt
     if (any(slbd_test > slbd)) then
         ilbd = int(maxloc(slbd_test, mask=(.not. is_nan(slbd_test)), dim=1), kind(ilbd))
         slbd = slbd_test(ilbd)
-        ilbd = -ilbd * int(sign(ONE, xdiff(ilbd)), IK)
+        ilbd = -ilbd * int(sign(ONE, xdiff(ilbd)), kind(ilbd))
         !!MATLAB:
         !![slbd, ilbd] = max(slbd_test, [], 'omitnan');
         !!ilbd = -ilbd * sign(xdiff(ilbd));
@@ -382,7 +382,7 @@ do k = 1, npt
     if (any(subd_test < subd)) then
         iubd = int(minloc(subd_test, mask=(.not. is_nan(subd_test)), dim=1), kind(iubd))
         subd = max(sumin, subd_test(iubd))
-        iubd = iubd * int(sign(ONE, xdiff(iubd)), IK)
+        iubd = iubd * int(sign(ONE, xdiff(iubd)), kind(iubd))
         !!MATLAB:
         !![subd, iubd] = min(subd_test, [], 'omitnan');
         !!subd = max(sumin, subd);
@@ -439,15 +439,15 @@ where (is_nan(predsq)) predsq = ZERO  !!MATLAB: predsq(isnan(predsq)) = 0
 ! straight line, and then maximize PREDSQ among the (NPT-1) selected points. Here we maximize PREDSQ
 ! among all the trial points. It works slightly better than Powell's version in a test on 20220428.
 ! Powell's version is as follows.
-!--------------------------------------------------------------!
-!isqs = int(maxloc(abs(vlag), dim=1), IK)  ! SIZE(ISQS) = NPT
-!ksq = int(maxloc([(predsq(isqs(k), k), k=1, npt)], dim=1), IK)
+!---------------------------------------------------------------------!
+!isqs = int(maxloc(abs(vlag), dim=1), kind(isqs))  ! SIZE(ISQS) = NPT
+!ksq = int(maxloc([(predsq(isqs(k), k), k=1, npt)], dim=1), kind(ksq))
 !isq = isqs(ksq)
-!--------------------------------------------------------------!
+!---------------------------------------------------------------------!
 ! 2. Recall that we have set the NaN entries of PREDSQ to zero, if there is any. Thus the KSQS below
 ! is a well defined integer array, all the three entries lying between 1 and NPT.
-ksqs = int(maxloc(predsq, dim=2), IK)
-isq = int(maxloc([predsq(1, ksqs(1)), predsq(2, ksqs(2)), predsq(3, ksqs(3))], dim=1), IK)
+ksqs = int(maxloc(predsq, dim=2), kind(ksqs))
+isq = int(maxloc([predsq(1, ksqs(1)), predsq(2, ksqs(2)), predsq(3, ksqs(3))], dim=1), kind(isq))
 ksq = ksqs(isq)
 !!MATLAB:
 !![~, ksqs] = max(predsq, [], 'omitnan');

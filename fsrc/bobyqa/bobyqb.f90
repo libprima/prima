@@ -13,7 +13,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 AM11:51:26
+! Last Modified: Wednesday, November 30, 2022 PM12:19:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -408,7 +408,7 @@ do while (.true.)
 
     ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
-        knew_geo = int(maxloc(distsq, dim=1), IK)
+        knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
         delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)
 
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.

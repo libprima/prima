@@ -30,7 +30,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 15, 2022 PM02:42:10
+! Last Modified: Wednesday, November 30, 2022 PM12:25:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -361,7 +361,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 ! Normalize the constraints, and copy the resultant constraint matrix and right hand sides into
 ! working space, after increasing the right hand sides if necessary so that the starting point
 ! is feasible.
-constr_modified = .false.;
+constr_modified = .false.; 
 smallx = 1.0E-6_RP * rhoend_loc
 call safealloc(A_normalized, n, m)
 call safealloc(b_normalized, m)
@@ -412,7 +412,7 @@ end if
 
 ! Copy XHIST_LOC to XHIST if needed.
 if (present(xhist)) then
-    nhist = min(nf_loc, int(size(xhist_loc, 2), IK))
+    nhist = min(nf_loc, int(size(xhist_loc, 2), kind(nhist)))
     !----------------------------------------------------!
     call safealloc(xhist, n, nhist)  ! Removable in F2003.
     !----------------------------------------------------!
@@ -435,7 +435,7 @@ deallocate (xhist_loc)
 
 ! Copy FHIST_LOC to FHIST if needed.
 if (present(fhist)) then
-    nhist = min(nf_loc, int(size(fhist_loc), IK))
+    nhist = min(nf_loc, int(size(fhist_loc), kind(nhist)))
     !--------------------------------------------------!
     call safealloc(fhist, nhist)  ! Removable in F2003.
     !--------------------------------------------------!
@@ -445,7 +445,7 @@ deallocate (fhist_loc)
 
 ! Copy CHIST_LOC to CHIST if needed.
 if (present(chist)) then
-    nhist = min(nf_loc, int(size(chist_loc), IK))
+    nhist = min(nf_loc, int(size(chist_loc), kind(nhist)))
     !--------------------------------------------------!
     call safealloc(chist, nhist)  ! Removable in F2003.
     !--------------------------------------------------!

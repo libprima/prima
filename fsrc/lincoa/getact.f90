@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 AM09:21:43
+! Last Modified: Wednesday, November 30, 2022 PM12:25:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -270,7 +270,7 @@ do iter = 1_IK, maxiter
     !L = INT(MAXLOC(APSD, MASK=MASK, DIM=1), IK) ! MAXLOC(...) = 0 if MASK is all FALSE.
     !VIOLMX = MAXVAL(APSD, MASK=MASK)  ! MAXVAL(...) = -HUGE(APSD) if MASK is all FALSE.
     if (any(mask)) then
-        l = int(maxloc(apsd, mask=mask, dim=1), IK)
+        l = int(maxloc(apsd, mask=mask, dim=1), kind(l))
         violmx = apsd(l)
     else
         l = 0_IK

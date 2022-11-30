@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Monday, November 28, 2022 PM01:40:17
+! Last Modified: Wednesday, November 30, 2022 PM12:31:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -276,7 +276,7 @@ nfail = 0_IK
 ! these cases, Inf/NaN appear in D due to extremely large values in A (up to 10^219). To resolve
 ! this, we set the maximal number of iterations to MAXITER, and terminate if Inf/NaN occurs in D.
 ! In MATLAB or Python: MAXITER = MIN(10000, 100*MAX(M, N))
-maxiter = int(min(int(10_IK**min(4, range(0_IK)), IK), 100_IK * max(m, n)), kind(maxiter))
+maxiter = int(min(int(10_IK**min(4, range(0_IK)), IK), 100_IK * max(m, n)), IK)
 do iter = 1, maxiter
     if (DEBUGGING) then
         call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)
@@ -513,7 +513,7 @@ do iter = 1, maxiter
     where (vmultd < 0) fracmult = vmultc / (vmultc - vmultd)
     !!MATLAB: mask = (vmultd < 0); fracmult(mask) = vmultc(mask) / (vmultc(mask) - vmultd(mask));
     ! Only the places with VMULTD < 0 is relevant below, if any.
-    icon = int(minloc([ONE, fracmult], dim=1), IK) - 1_IK
+    icon = int(minloc([ONE, fracmult], dim=1) - 1, kind(icon))
     frac = minval([ONE, fracmult])
     !!MATLAB: [frac, icon] = min([1, fracmult]); icon = icon - 1
 
