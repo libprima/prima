@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM06:55:06
+! Last Modified: Wednesday, November 30, 2022 PM12:44:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1402,7 +1402,7 @@ end if
 ! Calculation starts !
 !====================!
 
-if (all(abs(x) <= ZERO) .or. all(abs(v) <= ZERO)) then
+if (all(abs(x) <= 0) .or. all(abs(v) <= 0)) then
     y = ZERO
 elseif (any(is_nan(x)) .or. any(is_nan(v))) then
     y = sum(x) + sum(v) ! Set Y to NaN
@@ -1470,7 +1470,7 @@ end if
 
 if (size(V, 2) == 1) then
     y = project1(x, V(:, 1))
-elseif (all(abs(x) <= ZERO) .or. all(abs(V) <= ZERO)) then
+elseif (all(abs(x) <= 0) .or. all(abs(V) <= 0)) then
     y = ZERO
 elseif (any(is_nan(x)) .or. any(is_nan(V))) then
     y = sum(x) + sum(V) ! Set Y to NaN
@@ -1954,7 +1954,7 @@ else
         scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
         y = scaling * sqrt(sum((x / scaling)**2))
     else
-        !scaling = max(REALMIN, sqrt(maxval(abs(x)) * minval(abs(x), mask=(abs(x) > ZERO))))
+        !scaling = max(REALMIN, sqrt(maxval(abs(x)) * minval(abs(x), mask=(abs(x) > 0))))
         scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
         y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
     end if

@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, November 29, 2022 AM10:36:31
+! Last Modified: Wednesday, November 30, 2022 PM12:50:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -224,7 +224,7 @@ subroutine cobyla(calcfc, m, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
 use, non_intrinsic :: history_mod, only : prehist
@@ -347,7 +347,7 @@ elseif (present(rhoend)) then
     ! combine the evaluation of PRESENT(RHOEND) and the evaluation of IS_FINITE(RHOEND) as
     ! "IF (PRESENT(RHOEND) .AND. IS_FINITE(RHOEND))". The compiler may choose to evaluate the
     ! IS_FINITE(RHOEND) even if PRESENT(RHOEND) is false!
-    if (is_finite(rhoend) .and. rhoend > ZERO) then
+    if (is_finite(rhoend) .and. rhoend > 0) then
         rhobeg_loc = max(TEN * rhoend, RHOBEG_DFT)
     else
         rhobeg_loc = RHOBEG_DFT
@@ -397,7 +397,7 @@ end if
 if (present(eta1)) then
     eta1_loc = eta1
 elseif (present(eta2)) then
-    if (eta2 > ZERO .and. eta2 < ONE) then
+    if (eta2 > 0 .and. eta2 < 1) then
         eta1_loc = max(EPS, eta2 / 7.0_RP)
     end if
 else
@@ -406,7 +406,7 @@ end if
 
 if (present(eta2)) then
     eta2_loc = eta2
-elseif (eta1_loc > ZERO .and. eta1_loc < ONE) then
+elseif (eta1_loc > 0 .and. eta1_loc < 1) then
     eta2_loc = (eta1_loc + TWO) / 3.0_RP
 else
     eta2_loc = 0.7_RP

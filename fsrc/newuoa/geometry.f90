@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:29:37
+! Last Modified: Wednesday, November 30, 2022 PM12:43:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -380,7 +380,7 @@ gg = inprod(gc, gc)
 sp = inprod(d, gc)
 dhd = inprod(d, gd)
 scaling = delbar / sqrt(dd)
-if (sp * dhd < ZERO) then
+if (sp * dhd < 0) then
     scaling = -scaling
 end if
 t = ZERO
