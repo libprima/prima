@@ -1,4 +1,4 @@
-name: Test Oracle sunf95 for the solvers
+name: Test Oracle sunf95
 
 on:
   # Trigger the workflow on push or pull request
@@ -45,7 +45,7 @@ jobs:
         os: [ubuntu-latest]
         bitness: [32, 64]
         ikind: [i2, i4, i8]
-        solver: [uobyqa, bobyqa]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
     steps:
       - name: Checkout repository
@@ -72,9 +72,9 @@ jobs:
           cd $ROOT/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           cd $ROOT/fsrc/tests && make stest_${{ matrix.ikind }}.${{ matrix.solver }}
           # sunf95 cannot handle matrix indexing with TRUELOC
-          if [[ ! ${{ matrix.solver }}=='lincoa' && ! ${{ matrix.solver }}=='bobyqa' ]] ; then
-              cd $ROOT/fsrc/examples/${{ matrix.solver }} && make ntest
-          fi
+          #if [[ ! ${{ matrix.solver }}=='lincoa' && ! ${{ matrix.solver }}=='bobyqa' ]] ; then
+              cd $ROOT/fsrc/examples/${{ matrix.solver }} && make stest
+              #fi
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3

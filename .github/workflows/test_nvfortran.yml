@@ -45,8 +45,7 @@ jobs:
         os: [ubuntu-latest]
         bitness: [32, 64]
         ikind: [i2, i4, i8]
-        #solver: [lincoa, bobyqa, uobyqa]
-        solver: [lincoa, uobyqa]  # Exclude vtest for BOBYQA for the moment, as it will encounter `DENOM_TEST /= DENOM`.
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
     steps:
       - name: Checkout repository

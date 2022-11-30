@@ -1,4 +1,4 @@
-name: Test gfortran for the solvers
+name: Test gfortran
 
 on:
   # Trigger the workflow on push or pull request
@@ -41,10 +41,10 @@ jobs:
         # ubuntu-latest = ubuntu-20.04,
         os: [ubuntu-22.04, ubuntu-latest, macos-latest, windows-latest]
         compiler: [gcc]
-        version: [11, 12]  # Too expensive to test all available compilers from gcc-7 to gcc-12.
+        version: [9, 10, 11, 12]
         bitness: [32, 64]
         ikind: [i2, i4, i8]
-        solver: [lincoa, bobyqa, uobyqa]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         # Limit the test on macos to 64-bit.
         # Limit the test on Windows to 64-bit and the latest version of the compiler.
         exclude:
@@ -52,6 +52,10 @@ jobs:
             bitness: 32
           - os: windows-latest
             bitness: 32
+          - os: ubuntu-22.04
+            version: 9
+          - os: windows-latest
+            version: 9
 
     steps:
       - name: Checkout repository

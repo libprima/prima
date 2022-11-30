@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        solver: [lincoa, bobyqa, uobyqa]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         #dim: [small, big]
         dim: [big]
     steps:
