@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Sunday, November 13, 2022 PM02:07:41
+! Last Modified: Wednesday, November 30, 2022 PM12:41:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -217,7 +217,7 @@ if (DEBUGGING) then
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
     call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), &
         & 'CONSTR does not containt NaN/-Inf', srname)
-    call assert(.not. (cstrv < ZERO .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
+    call assert(.not. (cstrv < 0 .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
         & 'CSTRV is nonnegative and not NaN/+Inf', srname)
 end if
 

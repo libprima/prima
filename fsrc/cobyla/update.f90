@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 13, 2022 PM02:11:17
+! Last Modified: Wednesday, November 30, 2022 PM12:50:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -325,7 +325,7 @@ function findpole(cpen, cval, fval) result(jopt)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 
@@ -368,8 +368,8 @@ phimin = minval(phi)
 if (phimin < phi(jopt)) then  ! We keep JOPT = N + 1 unless there is a strictly better choice.
     jopt = int(minloc(phi, dim=1), kind(jopt))
 end if
-if (cpen <= ZERO .and. any(cval < cval(jopt) .and. phi <= phimin)) then
-    ! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN).
+if (cpen <= 0 .and. any(cval < cval(jopt) .and. phi <= phimin)) then
+    ! (CPEN <= 0) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN).
     ! We code in this way to avoid equality comparison of real numbers.
     jopt = int(minloc(cval, mask=(phi <= phimin), dim=1), kind(jopt))
     !!MATLAB: cmin = min(cval(phi <= phimin)); jopt = find(phi <= phimin & ~(cval > cmin), 1, 'first');

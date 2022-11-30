@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:22:50
+! Last Modified: Wednesday, November 30, 2022 PM12:43:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -505,14 +505,14 @@ do uphill = 0, 1
     ! In Powell's code, the subroutine returns immediately if GGFREE is 0. However, GGFREE depends
     ! on GLAG, which in turn depends on UPHILL. It can happen that GGFREE is 0 when UPHILL = 0 but
     ! not so when UPHILL= 1. Thus we skip the iteration for the current UPHILL but do not return.
-    if (ggfree <= ZERO) then
+    if (ggfree <= 0) then
         cycle
     end if
 
     ! Investigate whether more components of S can be fixed. Note that the loop counter K does not
     ! appear in the loop body. The purpose of K is only to impose an explicit bound on the number of
     ! loops. Powell's code does not have such a bound. The bound is not a true restriction, because
-    ! we can check that (SFIXSQ > SSQSAV .AND. GGFREE > ZERO) must fail within N loops.
+    ! we can check that (SFIXSQ > SSQSAV .AND. GGFREE > 0) must fail within N loops.
     sfixsq = ZERO
     grdstp = ZERO
     do k = 1, n
@@ -528,7 +528,7 @@ do uphill = 0, 1
         s(trueloc(mask_fixu)) = su(trueloc(mask_fixu)) - xopt(trueloc(mask_fixu))
         sfixsq = sfixsq + sum(s(trueloc(mask_fixl .or. mask_fixu))**2)
         ggfree = sum(glag(trueloc(mask_free))**2)
-        if (.not. (sfixsq > ssqsav .and. ggfree > ZERO)) exit
+        if (.not. (sfixsq > ssqsav .and. ggfree > 0)) exit
     end do
 
     ! Set the remaining free components of S and all components of XCAUCHY. S may be scaled later.

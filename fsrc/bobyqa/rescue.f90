@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:23:18
+! Last Modified: Wednesday, November 30, 2022 PM12:43:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -440,7 +440,7 @@ kbase = kopt
 fbase = fval(kopt)
 if (nprov > 0) then
     do kpt = 1, npt
-        if (ptsid(kpt) <= ZERO) then
+        if (ptsid(kpt) <= 0) then
             cycle
         end if
 
