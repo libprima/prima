@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 AM09:23:35
+! Last Modified: Wednesday, November 30, 2022 PM12:24:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,11 +125,11 @@ end if
 if (any(score > 0)) then
 !if (any(score > 1) .or. any(score > 0) .and. ximproved) then
     ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
-    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
 else if (ximproved) then
     ! Powell's code does not handle this case, leaving KNEW = 0 and leading to a segfault.
-    knew = int(maxloc(distsq, dim=1), IK)
+    knew = int(maxloc(distsq, dim=1), kind(knew))
 else
     knew = 0_IK
 end if

@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 AM09:41:10
+! Last Modified: Wednesday, November 30, 2022 PM12:23:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -316,7 +316,7 @@ do while (any(score > 0) .and. nprov > 1)   ! Retain at least one provisional po
 ! !do while (any(score > 0) .and. nprov > 2)  ! Retain at least two provisional point.
     ! Pick the index KORIG of an original point that has not yet replaced one of the provisional
     ! points, giving attention to the closeness to XOPT and to previous tries with KORIG.
-    korig = int(minloc(score, mask=(score > 0), dim=1), IK)
+    korig = int(minloc(score, mask=(score > 0), dim=1), kind(korig))
 
     ! Calculate VLAG and BETA for the required updating of the H matrix if XPT(:, KORIG) is
     ! reinstated in the set of interpolation points, which means to replace a point in the
@@ -397,7 +397,7 @@ do while (any(score > 0) .and. nprov > 1)   ! Retain at least one provisional po
     if (is_finite(sum(abs(vlag))) .and. any(den > 5.0E-2_RP * maxval(vlag(1:npt)**2))) then
         ! The above condition works a bit better than Powell's version below due to the factor 0.05.
         ! !if (any(den > 1.0E-2_RP * maxval(vlag(1:npt)**2))) then  ! Powell' code
-        kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), IK)
+        kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), kind(kprov))
         !!MATLAB: [~, kprov] = max(den, [], 'omitnan');
     else
         score(korig) = -score(korig) - scoreinc

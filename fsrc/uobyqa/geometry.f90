@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 AM11:11:40
+! Last Modified: Wednesday, November 30, 2022 PM12:28:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -127,12 +127,12 @@ knew = 0_IK
 if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
     ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
     ! exclude such K.
-    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), IK)
+    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
             !!MATLAB: [~, knew] = max(score, [], 'omitnan');
 elseif (ximproved) then
     ! Powell's code does not include the following instructions. With Powell's code,
     ! if DENABS consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
-    knew = int(maxloc(distsq, dim=1), IK)
+    knew = int(maxloc(distsq, dim=1), kind(knew))
 end if
 
 !====================!
@@ -185,7 +185,6 @@ real(RP) :: dcauchy(size(g)), dd, dhd, dlin, gd, gg, ghg, gnorm, &
 &        ratio, scaling, temp, &
 &        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhd, &
 &        vlin, vmu, vnorm, vv, wcos, wsin, hv(size(g))
-integer(IK) :: k
 
 
 ! Sizes.
@@ -230,8 +229,7 @@ if (is_nan(sum(abs(h)) + sum(abs(g)))) then
 end if
 
 ! Pick V such that ||HV|| / ||V|| is large.
-k = int(maxloc(sum(h**2, dim=1), dim=1), IK)
-v = h(:, k)
+v = h(:, maxloc(sum(h**2, dim=1), dim=1))
 
 ! Set D to a vector in the subspace span{V, HV} that maximizes |(D, HD)|/(D, D), except that we set
 ! D = HV if V and HV are nearly parallel.
