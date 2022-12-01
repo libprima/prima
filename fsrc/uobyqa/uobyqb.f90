@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 AM11:08:43
+! Last Modified: Thursday, December 01, 2022 PM09:49:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -298,7 +298,9 @@ do while (.true.)
     ! !reduce_rho = bad_trstep .and. dnorm <= rho .and. .not. improve_geo
 
     ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
+    ! N.B.: If SHORTD is TRUE at the very first iteration, then REDUCE_RHO will be set to TRUE.
     ! Powell's code does not have (.NOT. QRED>0) in BAD_TRSTEP; it terminates if QRED > 0 fails.
+
     ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad? It is critical to include
     ! DMOVE <= 4.0_RP*RHO**2 in the definition of BAD_TRSTEP for IMPROVE_GEO.
     bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= eta1 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)

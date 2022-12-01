@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 01, 2022 PM10:21:19
+! Last Modified: Thursday, December 01, 2022 PM09:52:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -55,7 +55,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
-use, non_intrinsic :: linalg_mod, only : norm
+use, non_intrinsic :: linalg_mod, only : norm, matprod
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, updateh
@@ -67,7 +67,7 @@ use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: geometry_mod, only : setdrop_tr, geostep
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: trustregion_mod, only : trsapp, trrad
-use, non_intrinsic :: update_mod, only : updatexf, updateq, tryqalt
+use, non_intrinsic :: update_mod, only : updatexf!, updateq, tryqalt
 
 implicit none
 
@@ -129,7 +129,7 @@ real(RP) :: dnorm
 real(RP) :: dnormsav(3)
 real(RP) :: fopt
 real(RP) :: fval(npt)
-real(RP) :: gq(size(x))
+real(RP) :: gq(size(x)), gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: moderr
 real(RP) :: moderrsav(size(dnormsav))
@@ -139,7 +139,7 @@ real(RP) :: ratio
 real(RP) :: rho
 real(RP) :: xbase(size(x))
 real(RP) :: xdrop(size(x))
-real(RP) :: xopt(size(x))
+real(RP) :: xopt(size(x)), xosav(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP), parameter :: tr_tol = 1.0E-2_RP  ! Tolerance used in TRSAPP.
@@ -204,6 +204,11 @@ call inith(ij, xpt, idz, bmat, zmat)
 ! Initialize GQ, HQ, and PQ.
 call initq(ij, fval, xpt, gq, hq, pq)
 
+gopt = gq
+if (kopt /= 1) then
+    gopt = gopt + matprod(hq, xpt(:, kopt))
+end if
+
 ! After initializing BMAT, ZMAT, GQ, HQ, PQ, one can also choose to return if these arrays contain
 ! NaN. We do not do it here. If such a model is harmful, then it will probably lead to other returns
 ! (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the code will continue to run
@@ -240,7 +245,8 @@ info = MAXTR_REACHED
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Generate the next trust region step D.
-    call trsapp(delta, gq, hq, pq, tr_tol, xopt, xpt, crvmin, d)
+    !call trsapp(delta, gq, hq, pq, tr_tol, xopt, xpt, crvmin, d)
+    call trsapp(delta, gopt, hq, pq, tr_tol, xopt, xpt, crvmin, d)
     dnorm = min(delta, norm(d))
 
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
@@ -248,7 +254,8 @@ do tr = 1, maxtr
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
-    qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
+    !qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
+    qred = -quadinc(d, xpt, gopt, pq, hq)
 
     if (shortd .or. .not. qred > 0) then
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
@@ -316,9 +323,12 @@ do tr = 1, maxtr
         ! decides not to include XNEW into XPT.
         if (knew_tr > 0) then
             xdrop = xpt(:, knew_tr)
+            xosav = xopt
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
             call updatexf(knew_tr, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
-            call updateq(idz, knew_tr, bmat, moderr, xdrop, zmat, gq, hq, pq)
+            !call updateq(idz, knew_tr, bmat, moderr, xdrop, zmat, gq, hq, pq)
+
+            call updateq(idz, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
             ! Test whether to replace the new quadratic model Q by the least-Frobenius norm
             ! interpolant Q_alt. Perform the replacement if certain criteria are satisfied.
@@ -336,7 +346,8 @@ do tr = 1, maxtr
             ! not equal FOPT_OLD --- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD)
             ! has been revised after the last function evaluation.
             ! 5. Powell's code tries Q_alt only when DELT == RHO.
-            call tryqalt(idz, fval - fopt, ratio, bmat, zmat, itest, gq, hq, pq)
+            !call tryqalt(idz, fval - fopt, ratio, bmat, zmat, itest, gq, hq, pq)
+            call tryqalt(bmat, fval - fopt, ratio, xopt, xpt, zmat, itest, gopt, hq, pq)
         end if
     end if  ! End of IF (SHORTD .OR. .NOT. QRED > 0). The normal trust-region calculation ends here.
 
@@ -514,7 +525,11 @@ do tr = 1, maxtr
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! MODERR is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
-        moderr = f - fopt - quadinc(d, xopt, xpt, gq, pq, hq)  ! QUADINC = Q(XOPT + D) - Q(XOPT)
+        !moderr = f - fopt - quadinc(d, xopt, xpt, gq, pq, hq)  ! QUADINC = Q(XOPT + D) - Q(XOPT)
+
+        qred = -quadinc(d, xpt, gopt, pq, hq)
+        moderr = f - fopt + qred
+
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
         !------------------------------------------------------------------------------------------!
         ! Zaikun 20200801: Powell's code does not update DNORM. Therefore, DNORM is the length of
@@ -529,9 +544,12 @@ do tr = 1, maxtr
         ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
         ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
         xdrop = xpt(:, knew_geo)
+        xosav = xopt
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         call updatexf(knew_geo, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
-        call updateq(idz, knew_geo, bmat, moderr, xdrop, zmat, gq, hq, pq)
+        !call updateq(idz, knew_geo, bmat, moderr, xdrop, zmat, gq, hq, pq)
+
+        call updateq(idz, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
     ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm
@@ -557,7 +575,8 @@ do tr = 1, maxtr
     ! 1. After a trust region step that is not short, shift XBASE if SUM(XOPT**2) >= 1.0E3*DNORM**2.
     ! 2. Before a geometry step, shift XBASE if SUM(XOPT**2) >= 1.0E3*DELBAR**2.
     if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
-        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
+        !call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
+        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
     end if
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
@@ -603,6 +622,241 @@ if (DEBUGGING) then
 end if
 
 end subroutine newuob
+
+
+subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine updates GOPT, HQ, and PQ when XPT(:, KNEW) changes from XDROP to XNEW = XOSAV + D,
+! where XOSAV is the upupdated XOPT, namedly the XOPT before UPDATEXF is called.
+! See Section 4 of the NEWUOA paper (there is no LINCOA paper).
+! N.B.:
+! XNEW is encoded in [BMAT, ZMAT, IDZ] after UPDATEH being called, and it also equals XPT(:, KNEW)
+! after UPDATEXF being called. Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
+!--------------------------------------------------------------------------------------------------!
+! List of local arrays (including function-output arrays; likely to be stored on the stack): PQINC
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : r1update, issymmetric
+use, non_intrinsic :: powalg_mod, only : omega_col, hess_mul
+
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+integer(IK), intent(in) :: knew
+logical, intent(in) :: ximproved
+real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
+real(RP), intent(in) :: d(:) ! D(:)
+real(RP), intent(in) :: moderr
+real(RP), intent(in) :: xdrop(:)  ! XDROP(N)
+real(RP), intent(in) :: xosav(:)  ! XOSAV(N)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+
+! In-outputs
+real(RP), intent(inout) :: gopt(:)  ! GOPT(N)
+real(RP), intent(inout) :: hq(:, :) ! HQ(N, N)
+real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
+
+! Local variables
+character(len=*), parameter :: srname = 'UPDATEQ'
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: pqinc(size(pq))
+
+! Sizes
+n = int(size(gopt), kind(n))
+npt = int(size(pq), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
+    call assert(knew >= 1 .or. .not. ximproved, 'KNEW >= 1 unless X is not improved', srname)
+    call assert(size(xdrop) == n .and. all(is_finite(xdrop)), 'SIZE(XDROP) == N, XDROP is finite', srname)
+    call assert(size(xosav) == n .and. all(is_finite(xosav)), 'SIZE(XOSAV) == N, XOSAV is finite', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
+        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Do nothing when KNEW is 0. This can only happen after a trust-region step.
+if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
+    return
+end if
+
+! The unupdated model corresponding to [GOPT, HQ, PQ] interpolates F at all points in XPT except for
+! XNEW. The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
+
+! Absorb PQ(KNEW)*XDROP*XDROP^T into the explicit part of the Hessian.
+! Implement R1UPDATE properly so that it ensures that HQ is symmetric.
+call r1update(hq, pq(knew), xdrop)
+pq(knew) = ZERO
+
+! Update the implicit part of the Hessian.
+pqinc = moderr * omega_col(idz, zmat, knew)
+pq = pq + pqinc
+
+! Update the gradient, which needs the updated XPT.
+gopt = gopt + moderr * bmat(:, knew) + hess_mul(xosav, xpt, pqinc)
+
+! Further update GOPT if XIMPROVED is TRUE, as XOPT changes from XOSAV to XNEW = XOSAV + D.
+if (ximproved) then
+    gopt = gopt + hess_mul(d, xpt, pq, hq)
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+end if
+
+end subroutine updateq
+
+subroutine tryqalt(bmat, fval, ratio, xopt, xpt, zmat, itest, gopt, hq, pq)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine tests whether to replace Q by the alternative model, namely the model that
+! minimizes the F-norm of the Hessian subject to the interpolation conditions. It does the
+! replacement if certain criteria are met (i.e., when ITEST = 3). See the paragraph around (6.12) of
+! the BOBYQA paper.
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: linalg_mod, only : matprod, issymmetric, trueloc
+use, non_intrinsic :: powalg_mod, only : hess_mul
+
+implicit none
+
+! Inputs
+real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
+real(RP), intent(in) :: fval(:)     ! FVAL(NPT)
+real(RP), intent(in) :: ratio
+!real(RP), intent(in) :: sl(:)       ! SL(N)
+!real(RP), intent(in) :: su(:)       ! SU(N)
+real(RP), intent(in) :: xopt(:)     ! XOPT(N)
+real(RP), intent(in) :: xpt(:, :)   ! XOPT(N, NPT)
+real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
+
+! In-output
+integer(IK), intent(inout) :: itest
+real(RP), intent(inout) :: gopt(:)    ! GOPT(N)
+real(RP), intent(inout) :: hq(:, :) ! HQ(N, N)
+real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
+! N.B.:
+! GOPT, HQ, and PQ should be INTENT(INOUT) instead of INTENT(OUT). According to the Fortran 2018
+! standard, an INTENT(OUT) dummy argument becomes undefined on invocation of the procedure.
+! Therefore, if the procedure does not define such an argument, its value becomes undefined,
+! which is the case for HQ and PQ when ITEST < 3 at exit. In addition, the information in GOPT is
+! needed for definining ITEST, so it must be INTENT(INOUT).
+
+! Local variables
+character(len=*), parameter :: srname = 'TRYQALT'
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: galt(size(gopt))
+real(RP) :: gisq
+real(RP) :: gqsq
+real(RP) :: pgalt(size(gopt))
+real(RP) :: pgopt(size(gopt))
+real(RP) :: pqalt(size(pq))
+
+! Debugging variables
+!real(RP) :: intp_tol
+
+! Sizes
+n = int(size(gopt), kind(n))
+npt = int(size(pq), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
+    ! NaN, which should NOT happen due to the moderated extreme barrier.
+    call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
+    call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
+        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    ! [GOPT, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
+    !intp_tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * real(size(pq), RP) * EPS))
+    !call wassert(errquad(fval, xpt, gopt, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Calculate the norm square of the projected gradient.
+pgopt = gopt
+!pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))
+!pgopt(trueloc(xopt <= sl)) = min(ZERO, gopt(trueloc(xopt <= sl)))
+gqsq = sum(pgopt**2)
+
+! Calculate the parameters of the least Frobenius norm interpolant to the current data.
+pqalt = matprod(zmat, matprod(fval, zmat))
+galt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pqalt)
+
+! Calculate the norm square of the projected alternative gradient.
+pgalt = galt
+!pgalt(trueloc(xopt >= su)) = max(ZERO, galt(trueloc(xopt >= su)))
+!pgalt(trueloc(xopt <= sl)) = min(ZERO, galt(trueloc(xopt <= sl)))
+gisq = sum(pgalt**2)
+
+! Test whether to replace the new quadratic model by the least Frobenius norm interpolant,
+! making the replacement if the test is satisfied.
+! N.B.: In the following IF, Powell's condition is GQSQ < TEN *GISQ. The condition here is adopted
+! and adapted from NEWUOA, and it seems to improve the performance.
+if (ratio > TENTH .or. gqsq < TEN * gisq) then
+    itest = 0
+else
+    itest = itest + 1_IK
+end if
+if (itest >= 3) then
+    gopt = galt
+    pq = pqalt
+    hq = ZERO
+    itest = 0
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    ! [GOPT, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
+    !call wassert(errquad(fval, xpt, gopt, pq, hq) <= intp_tol, 'QALT interpolates FVAL at XPT', srname)
+end if
+
+end subroutine tryqalt
 
 
 end module newuob_mod
