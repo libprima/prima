@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM12:30:50
+! Last Modified: Thursday, December 01, 2022 PM01:18:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -185,7 +185,7 @@ real(RP) :: g(size(xpt, 1)), h(size(xpt, 1), size(xpt, 1)), v(size(xpt, 1))
 real(RP) :: dcauchy(size(xpt, 1)), dd, dhd, dlin, gd, gg, ghg, gnorm, &
 &        ratio, scaling, temp, &
 &        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhd, &
-&        vlin, vmu, vnorm, vv, wcos, wsin, hv(size(xpt, 1))
+&        vlin, vmu, vnorm, vv, wcos, wsin, hv(size(xpt, 1)), xopt(size(xpt, 1))
 
 
 ! Sizes.
@@ -220,8 +220,11 @@ end if
 !     where the claim of accuracy has been tested by numerical experiments.
 !
 
+! Read XOPT.
+xopt = XPT(:, kopt)
+
 ! For the KNEW-th Lagrange function, evaluate the gradient at XOPT and the Hessian.
-g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xpt(:, kopt))
+g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
 h = vec2smat(pl(n + 1:npt - 1, knew))
 
 ! Evaluate GG = G^T*G and GHG = G^T*H*G. They will be used later.
@@ -238,10 +241,13 @@ if (gg > 0) then  ! Due to rounding errors, GG can be 0 or NaN, which did happen
 end if
 dcauchy(trueloc(is_nan(dcauchy))) = ZERO  ! DCAUCHY may contain NaN for ill-conditioned problems.
 
-! If DCAUCHY = 0 due to rounding errors, set it to a displacement from XPT(:, KOPT) to XPT(:, KNEW).
+! If DCAUCHY = 0 due to rounding errors, set it to a displacement from XOPT to XPT(:, KNEW).
 if (sum(abs(dcauchy)) <= 0) then
-    dcauchy = xpt(:, knew) - xpt(:, kopt)
+    dcauchy = xpt(:, knew) - xopt
     dcauchy = min(HALF, delbar / sqrt(sum(dcauchy**2))) * dcauchy
+    if (inprod(g, dcauchy) * inprod(dcauchy, matprod(h, dcauchy)) < 0) then
+        dcauchy = -dcauchy
+    end if
 end if
 
 if (is_nan(sum(abs(h)) + sum(abs(g)))) then
