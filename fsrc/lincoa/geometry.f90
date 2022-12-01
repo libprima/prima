@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM01:43:19
+! Last Modified: Thursday, December 01, 2022 PM05:03:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -211,7 +211,7 @@ subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, TENTH, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc, norm
@@ -257,6 +257,7 @@ real(RP) :: normg
 real(RP) :: pglag(size(xpt, 1))
 real(RP) :: pgstp(size(xpt, 1))
 real(RP) :: pqlag(size(xpt, 2))
+real(RP) :: scaling
 real(RP) :: stplen(size(xpt, 2))
 real(RP) :: tol
 real(RP) :: vlagabs(size(xpt, 2))
@@ -352,12 +353,14 @@ if (normg > 0) then
     end if
 end if
 
-! Set FEASIBLE for the calculated S. RSTAT identifies the constraints that need evaluation. RSTAT(J)
-! is -1, 0, or 1 respectively means constraint J is irrelevant, active, or inactive and relevant.
-! Do NOT change the order of the lines that set RSTAT, as the later lines override the earlier.
+! RSTAT identifies the constraints that need evaluation. RSTAT(J) is -1, 0, or 1 respectively means
+! constraint J is irrelevant, active, or inactive and relevant. Do NOT change the order of the lines
+! that set RSTAT, as the later lines override the earlier.
 rstat = 1
 rstat(trueloc(abs(rescon) >= delbar)) = -1
 rstat(iact(1:nact)) = 0
+
+! Set FEASIBLE for the calculated S.
 cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
 feasible = (cstrv <= 0)
 
@@ -392,8 +395,15 @@ if (nact > 0 .and. nact < n .and. normg > 0) then
     end if
 end if
 
-! In case S contains NaN entries, set them to zero.
-s(trueloc(is_nan(s))) = ZERO
+! In case S contains NaN, replace it with a displacement from XPT(:, KNEW) to XOPT. Powell's code
+! does not have this.
+if (is_nan(sum(abs(s)))) then
+    s = xpt(:, knew) - xopt
+    scaling = delbar / sqrt(sum(s**2))
+    s = max(0.6_RP * scaling, min(HALF, scaling)) * s
+    cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
+    feasible = (cstrv <= 0)
+end if
 
 !====================!
 !  Calculation ends  !
@@ -403,9 +413,9 @@ s(trueloc(is_nan(s))) = ZERO
 if (DEBUGGING) then
     call assert(size(s) == n, 'SIZE(S) == N', srname)
     call assert(all(is_finite(s)), 'S is finite', srname)
-    ! In theory, |S| <= DELBAR, which may be false due to rounding, but |S| > 2*DELBAR is unlikely.
-    ! It is crucial to ensure that the geometry step is nonzero, which holds in theory.
-    call assert(norm(s) > 0 .and. norm(s) <= TWO * delbar, '0 < |S| <= 2*DELBAR', srname)
+    ! In theory, |S| = DELBAR. Considering rounding errors, we check that DELBAR/2 < |S| < 2*DELBAR.
+    ! It is crucial to ensure that the geometry step is nonzero.
+    call assert(norm(s) > HALF * delbar .and. norm(s) < TWO * delbar, 'DELBAR/2 < |S| < 2*DELBAR', srname)
 end if
 
 end subroutine geostep

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM02:48:55
+! Last Modified: Thursday, December 01, 2022 PM04:33:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -301,7 +301,11 @@ xopt = xpt(:, kopt)
 ! Calculate the gradient GLAG of the KNEW-th Lagrange function at XOPT.
 glag = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
 if (any(is_nan(glag)) .or. is_nan(delbar)) then  ! DELBAR is not NaN if the input is correct.
-    d = ZERO
+    !d = ZERO
+    d = xpt(:, knew) - xopt
+    scaling = delbar / sqrt(sum(d**2))
+    scaling = min(HALF, scaling)  ! Since XPT lies within the bounds, so does XOPT + SCALING*D.
+    d = scaling * d
     return
 end if
 
