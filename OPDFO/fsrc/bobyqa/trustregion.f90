@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 AM09:07:08
+! Last Modified: Thursday, December 01, 2022 AM10:03:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -189,7 +189,7 @@ do iter = 1, maxiter
         exit
     end if
 
-    if (.not. (gredsq * delsq <= ctest**2 * qred * qred)) then
+    if (.not. (gredsq * delsq > ctest**2 * qred * qred)) then
         exit
     end if
 

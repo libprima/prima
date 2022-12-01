@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM09:39:24
+! Last Modified: Thursday, December 01, 2022 PM12:06:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -150,7 +150,7 @@ end if
 end function setdrop_tr
 
 
-function geostep(g, h, delbar) result(d)
+function geostep(g, h, delbar, xopt, xpt, knew) result(d)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, DEBUGGING
@@ -164,6 +164,8 @@ implicit none
 real(RP), intent(in) :: g(:)  ! G(N)
 real(RP), intent(in) :: h(:, :)  ! H(N, N)
 real(RP), intent(in) :: delbar
+real(RP) :: xpt(:, :), xopt(:)
+integer(IK) :: knew
 
 ! Outputs
 real(RP) :: d(size(g))  ! D(N)
@@ -209,11 +211,21 @@ end if
 ! Calculate the Cauchy step as a backup.
 gg = sum(g**2)
 ghg = inprod(g, matprod(h, g))
-dcauchy = (delbar / sqrt(gg)) * g
-if (ghg < 0) then
-    dcauchy = -dcauchy
+dcauchy = ZERO
+if (gg > 0) then
+    dcauchy = (delbar / sqrt(gg)) * g
+    if (ghg < 0) then
+        dcauchy = -dcauchy
+    end if
+    dcauchy(trueloc(is_nan(dcauchy))) = ZERO  ! DCAUCHY may contain NaN if the problem is ill-conditioned.
 end if
-dcauchy(trueloc(is_nan(dcauchy))) = ZERO  ! DCAUCHY may contain NaN if the problem is ill-conditioned.
+
+if (.not. any(abs(dcauchy) > 0)) then
+!if (sum(dcauchy**2) <= 0) then
+    dcauchy = xpt(:, knew) - xopt
+    dd = sum(dcauchy**2)
+    dcauchy = min(HALF, delbar / sqrt(dd)) * dcauchy
+end if
 
 if (is_nan(sum(abs(h)) + sum(abs(g)))) then
     d = dcauchy

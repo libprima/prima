@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:28:07
+! Last Modified: Thursday, December 01, 2022 PM12:14:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,13 +125,12 @@ end if
 knew = 0
 ! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
 if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
-    ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we
-    ! exclude such K.
+    ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
-            !!MATLAB: [~, knew] = max(score, [], 'omitnan');
+    !!MATLAB: [~, knew] = max(score, [], 'omitnan');
 elseif (ximproved) then
-    ! Powell's code does not include the following instructions. With Powell's code,
-    ! if DENABS consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
+    ! Powell's code does not include the following instructions. With Powell's code, if DENABS
+    ! consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
     knew = int(maxloc(distsq, dim=1), kind(knew))
 end if
 
@@ -151,13 +150,13 @@ end if
 end function setdrop_tr
 
 
-function geostep(g, h, delbar) result(d)
+function geostep(knew, kopt, delbar, pl, xpt) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates a step D that approximately solves
 ! maximize |LFUNC(XOPT + D) subject to ||D|| <= DELBAR,
 ! so that the geometry of the interpolation step is improved when XPT(:, KNEW) becomes XOPT + D.
-! Here, LFUNC is the Lagrange polynomial at the KNEW-th interpolation point, G is the gradient of
-! LFUNC at XOPT, and H is its Hessian. See (8) and Section 2 of the UOBYQA paper.
+! Here, LFUNC is the Lagrange polynomial at the KNEW-th interpolation point. See (8) and Section 2
+! of the UOBYQA paper.
 ! N.B.: In Powell's UOBYQA code, DELBAR = RHO. We take the DELBAR of NEWUOA, which works better.
 !--------------------------------------------------------------------------------------------------!
 
@@ -165,36 +164,43 @@ function geostep(g, h, delbar) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, norm, trueloc
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, trueloc, vec2smat, smat_mul_vec
 
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: g(:)  ! G(N)
-real(RP), intent(in) :: h(:, :)  ! H(N, N)
+integer(IK), intent(in) :: knew
+integer(IK), intent(in) :: kopt
 real(RP), intent(in) :: delbar
+real(RP), intent(in) :: pl(:, :)  ! PL(NPT-1, NPT)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! Outputs
-real(RP) :: d(size(g))  ! D(N)
+real(RP) :: d(size(xpt, 1))  ! D(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GEOSTEP'
-integer(IK) :: n
-real(RP) :: v(size(g))
-real(RP) :: dcauchy(size(g)), dd, dhd, dlin, gd, gg, ghg, gnorm, &
+integer(IK) :: n, npt
+real(RP) :: g(size(xpt, 1)), h(size(xpt, 1), size(xpt, 1)), v(size(xpt, 1))
+real(RP) :: dcauchy(size(xpt, 1)), dd, dhd, dlin, gd, gg, ghg, gnorm, &
 &        ratio, scaling, temp, &
 &        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhd, &
-&        vlin, vmu, vnorm, vv, wcos, wsin, hv(size(g))
+&        vlin, vmu, vnorm, vv, wcos, wsin, hv(size(xpt, 1))
 
 
 ! Sizes.
-n = int(size(g), kind(n))
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt == (n + 1) * (n + 2) / 2, 'NPT = (N+1)(N+2)/2', srname)
+    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(knew /= kopt, 'KNEW /= KOPT', srname)
     call assert(delbar > 0, 'DELBAR > 0', srname)
-    call assert(size(h, 1) == n .and. issymmetric(h), 'H is n-by-n and symmetric', srname)
-    call assert(size(d) == n, 'SIZE(D) == N', srname)
+    call assert(size(pl, 1) == npt - 1 .and. size(pl, 2) == npt, 'SIZE(PL) == [NPT-1, NPT]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 end if
 
 !
@@ -214,14 +220,29 @@ end if
 !     where the claim of accuracy has been tested by numerical experiments.
 !
 
-! Calculate the Cauchy step as a backup.
+! For the KNEW-th Lagrange function, evaluate the gradient at XOPT and the Hessian.
+g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xpt(:, kopt))
+h = vec2smat(pl(n + 1:npt - 1, knew))
+
+! Evaluate GG = G^T*G and GHG = G^T*H*G. They will be used later.
 gg = sum(g**2)
 ghg = inprod(g, matprod(h, g))
-dcauchy = (delbar / sqrt(gg)) * g
-if (ghg < 0) then
-    dcauchy = -dcauchy
+
+! Calculate the Cauchy step as a backup.  This does not exist in Powell's code.
+dcauchy = ZERO
+if (gg > 0) then  ! Due to rounding errors, GG can be 0 or NaN, which did happen in tests.
+    dcauchy = (delbar / sqrt(gg)) * g
+    if (ghg < 0) then
+        dcauchy = -dcauchy
+    end if
 end if
-dcauchy(trueloc(is_nan(dcauchy))) = ZERO  ! DCAUCHY may contain NaN if the problem is ill-conditioned.
+dcauchy(trueloc(is_nan(dcauchy))) = ZERO  ! DCAUCHY may contain NaN for ill-conditioned problems.
+
+! If DCAUCHY = 0 due to rounding errors, set it to a displacement from XPT(:, KOPT) to XPT(:, KNEW).
+if (sum(abs(dcauchy)) <= 0) then
+    dcauchy = xpt(:, knew) - xpt(:, kopt)
+    dcauchy = min(HALF, delbar / sqrt(sum(dcauchy**2))) * dcauchy
+end if
 
 if (is_nan(sum(abs(h)) + sum(abs(g)))) then
     d = dcauchy
@@ -276,7 +297,7 @@ d(trueloc(is_nan(d))) = ZERO
 gnorm = sqrt(gg)
 
 if (.not. (gnorm * dd > 0.5E-2_RP * delbar * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
-    if (sum(d**2) <= 0) then
+    if (sum(abs(d)) <= 0) then
         d = dcauchy
     end if
     return
@@ -348,7 +369,7 @@ else
 end if
 d = tempd * d + tempv * v
 d(trueloc(is_nan(d))) = ZERO  ! D may contain NaN if the problem is ill-conditioned.
-if (sum(d**2) <= 0) then
+if (sum(abs(d)) <= 0) then
     d = dcauchy
 end if
 
@@ -360,7 +381,7 @@ end if
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
-    call assert(norm(d) <= TWO * delbar, '|D| <= 2*DELBAR', srname)
+    call assert(norm(d) > 0 .and. norm(d) <= TWO * delbar, '0 < |D| <= 2*DELBAR', srname)
 end if
 end function geostep
 
