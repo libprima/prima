@@ -13,7 +13,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM07:17:55
+! Last Modified: Thursday, December 01, 2022 PM09:50:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -372,7 +372,9 @@ do while (.true.)
     !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA.
 
     ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
+    ! N.B.: If SHORTD is TRUE at the very first iteration, then REDUCE_RHO will be set to TRUE.
     ! Powell's code does not have (.NOT. QRED>0) in BAD_TRSTEP; it terminates if QRED > 0 fails.
+
     ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= eta1 .or. knew_tr == 0)
     improve_geo = bad_trstep .and. .not. adequate_geo
