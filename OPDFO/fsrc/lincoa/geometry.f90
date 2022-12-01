@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM02:49:06
+! Last Modified: Thursday, December 01, 2022 PM05:00:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -393,7 +393,13 @@ if (nact > 0 .and. nact < n .and. normg > 0) then
 end if
 
 ! In case S contains NaN entries, set them to zero.
-s(trueloc(is_nan(s))) = ZERO
+!s(trueloc(is_nan(s))) = ZERO
+if (any(is_nan(s))) then
+    s = xpt(:, knew) - xopt
+    s = max(0.6_RP * (delbar / sqrt(sum(s**2))), min(0.5_RP, delbar / sqrt(sum(s**2)))) * s
+    cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
+    feasible = (cstrv <= 0)
+end if
 
 !====================!
 !  Calculation ends  !

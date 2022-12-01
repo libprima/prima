@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM01:14:39
+! Last Modified: Thursday, December 01, 2022 PM03:38:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -217,14 +217,16 @@ if (gg > 0) then
     if (ghg < 0) then
         dcauchy = -dcauchy
     end if
-    dcauchy(trueloc(is_nan(dcauchy))) = ZERO  ! DCAUCHY may contain NaN if the problem is ill-conditioned.
+    !dcauchy(trueloc(is_nan(dcauchy))) = ZERO  ! DCAUCHY may contain NaN if the problem is ill-conditioned.
 end if
 
-if (.not. any(abs(dcauchy) > 0)) then
+!if (.not. any(abs(dcauchy) > 0)) then
 !if (sum(dcauchy**2) <= 0) then
+if (any(is_nan(dcauchy)) .or. .not. any(abs(dcauchy) > 0)) then
     dcauchy = xpt(:, knew) - xopt
     dd = sum(dcauchy**2)
-    dcauchy = min(HALF, delbar / sqrt(dd)) * dcauchy
+    !dcauchy = min(HALF, delbar / sqrt(dd)) * dcauchy
+    dcauchy = max(HALF * (delbar / sqrt(dd)), min(HALF, delbar / sqrt(dd))) * dcauchy
     if (inprod(g, dcauchy) * inprod(dcauchy, matprod(h, dcauchy)) < 0) then
         dcauchy = -dcauchy
     end if
@@ -280,11 +282,12 @@ else
     scaling = delbar / sqrt(dd)
 end if
 d = scaling * d
-d(trueloc(is_nan(d))) = ZERO
+!d(trueloc(is_nan(d))) = ZERO
 gnorm = sqrt(gg)
 
 if (.not. (gnorm * dd > 0.5E-2_RP * delbar * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
-    if (sum(d**2) <= 0) then
+    !if (sum(d**2) <= 0) then
+    if (any(is_nan(d))) then
         d = dcauchy
     end if
     return
@@ -355,8 +358,9 @@ else
     end if
 end if
 d = tempd * d + tempv * v
-d(trueloc(is_nan(d))) = ZERO  ! D may contain NaN if the problem is ill-conditioned.
-if (sum(d**2) <= 0) then
+!d(trueloc(is_nan(d))) = ZERO  ! D may contain NaN if the problem is ill-conditioned.
+!if (sum(d**2) <= 0) then
+if (any(is_nan(d))) then
     d = dcauchy
 end if
 

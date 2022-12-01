@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 01, 2022 PM12:48:19
+! Last Modified: Thursday, December 01, 2022 PM04:50:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -173,7 +173,7 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : issymmetric, norm
@@ -270,9 +270,9 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
-    ! It is crucial to ensure that the geometry step is nonzero, which holds in theory.
-    call assert(norm(d) > 0 .and. norm(d) <= TWO * delbar, '0 < |D| <= 2*DELBAR', srname)
+    ! In theory, |D| = DELBAR. Considering rounding errors, we check that DELBAR/2 < |D| < 2*DELBAR.
+    ! It is crucial to ensure that the geometry step is nonzero.
+    call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < |D| < 2*DELBAR', srname)
 end if
 
 end function geostep
@@ -479,9 +479,9 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
-    ! It is crucial to ensure that the geometry step is nonzero, which holds in theory.
-    call assert(norm(d) > 0 .and. norm(d) <= TWO * delbar, '0 < |D| <= 2*DELBAR', srname)
+    ! In theory, |D| = DELBAR. Considering rounding errors, we check that DELBAR/2 < |D| < 2*DELBAR.
+    ! It is crucial to ensure that the geometry step is nonzero.
+    call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < |D| < 2*DELBAR', srname)
 end if
 
 end function biglag
@@ -541,6 +541,7 @@ integer(IK) :: nw
 real(RP) :: alpha
 real(RP) :: angle
 real(RP) :: dd
+real(RP) :: delbar
 real(RP) :: den(9)
 real(RP) :: denex(9)
 real(RP) :: denmax
@@ -596,6 +597,8 @@ end if
 !====================!
 
 x = xpt(:, kopt) ! For simplicity, we use X to denote XOPT.
+
+delbar = norm(d0)  ! In theory, |D0| = DELBAR.
 
 ! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
 ! derivative parameters of LFUNC.
@@ -669,7 +672,7 @@ do iter = 1, n
     end if
     s = (s / norm(s)) * norm(d)
     ! In precise arithmetic, INPROD(S, D) = 0 and |S| = |D| = DELBAR = |D0|.
-    if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(s) >= TWO * norm(d0)) then
+    if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(s) >= TWO * delbar) then
         exit
     end if
 
@@ -797,9 +800,9 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
-    ! It is crucial to ensure that the geometry step is nonzero, which holds in theory.
-    call assert(norm(d) > 0 .and. norm(d) <= TWO * norm(d0), '0 < |D| <= 2*DELBAR', srname)
+    ! In theory, |D| = DELBAR. Considering rounding errors, we check that DELBAR/2 < |D| < 2*DELBAR.
+    ! It is crucial to ensure that the geometry step is nonzero.
+    call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < |D| < 2*DELBAR', srname)
 end if
 
 end function bigden
