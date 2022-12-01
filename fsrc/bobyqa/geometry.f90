@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM12:27:48
+! Last Modified: Thursday, December 01, 2022 PM04:45:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -302,8 +302,13 @@ xopt = xpt(:, kopt)
 
 ! Calculate the gradient GLAG of the KNEW-th Lagrange function at XOPT.
 glag = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
-if (any(is_nan(glag)) .or. is_nan(delbar)) then  ! DELBAR is not NaN if the input is correct.
-    d = ZERO
+
+! In case GLAG contains NaN, set D to a displacement from XOPT to XPT(:, KNEW) and return. Powell's
+! code does not have this, and D may be NaN in the end. Note that it is crucial to ensure that a
+! geometry step is nonzero.
+if (is_nan(sum(abs(glag)))) then
+    d = xpt(:, knew) - xopt
+    d = min(HALF, delbar / sqrt(sum(d**2))) * d  ! Since XPT respects the bounds, so does XOPT + D.
     return
 end if
 
@@ -517,7 +522,9 @@ do uphill = 0, 1
     grdstp = ZERO
     do k = 1, n
         resis = delbar**2 - sfixsq
-        if (resis <= 0) exit
+        if (resis <= 0) then
+            exit
+        end if
         ssqsav = sfixsq
         grdstp = sqrt(resis / ggfree)
         xtemp = xopt - grdstp * glag
@@ -528,7 +535,9 @@ do uphill = 0, 1
         s(trueloc(mask_fixu)) = su(trueloc(mask_fixu)) - xopt(trueloc(mask_fixu))
         sfixsq = sfixsq + sum(s(trueloc(mask_fixl .or. mask_fixu))**2)
         ggfree = sum(glag(trueloc(mask_free))**2)
-        if (.not. (sfixsq > ssqsav .and. ggfree > 0)) exit
+        if (.not. (sfixsq > ssqsav .and. ggfree > 0)) then
+            exit
+        end if
     end do
 
     ! Set the remaining free components of S and all components of XCAUCHY. S may be scaled later.
@@ -580,9 +589,10 @@ end if
 if (DEBUGGING) then
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
-    ! In theory, |D| <= DELBAR, which may be false due to rounding, but |D| > 2*DELBAR is unlikely.
-    ! It is crucial to ensure that the geometry step is nonzero, which holds in theory.
-    call assert(norm(d) > 0 .and. norm(d) <= TWO * delbar, '0 < |D| <= 2*DELBAR', srname)
+    ! In theory, |D| <= DELBAR, which may be false due to rounding, but |D| >= 2*DELBAR is unlikely.
+    ! It is crucial to ensure that the geometry step is nonzero, which holds in theory. However, due
+    ! to the bound constraints, |D| may be much smaller than DELBAR.
+    call assert(norm(d) > 0 .and. norm(d) < TWO * delbar, '0 < |D| < 2*DELBAR', srname)
     ! D is supposed to satisfy the bound constraints SL <= XOPT + D <= SU.
     call assert(all(xopt + d >= sl - TEN * EPS * max(ONE, abs(sl)) .and. &
         & xopt + d <= su + TEN * EPS * max(ONE, abs(su))), 'SL <= XOPT + D <= SU', srname)

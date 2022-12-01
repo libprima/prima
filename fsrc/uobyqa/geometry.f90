@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM01:26:57
+! Last Modified: Thursday, December 01, 2022 PM04:48:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -164,7 +164,7 @@ function geostep(knew, kopt, delbar, pl, xpt) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, trueloc, vec2smat, smat_mul_vec
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, vec2smat, smat_mul_vec
 
 implicit none
 
@@ -183,7 +183,7 @@ character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n, npt
 real(RP) :: g(size(xpt, 1)), h(size(xpt, 1), size(xpt, 1)), v(size(xpt, 1))
 real(RP) :: dcauchy(size(xpt, 1)), dd, dhd, dlin, gd, gg, ghg, gnorm, &
-&        ratio, scaling, temp, &
+&        scaling, temp, &
 &        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhd, &
 &        vlin, vmu, vnorm, vv, wcos, wsin, hv(size(xpt, 1)), xopt(size(xpt, 1))
 
@@ -239,10 +239,8 @@ if (gg > 0) then
     end if
 else ! GG is 0 or NaN due to rounding errors. Set DCAUCHY to a displacement from XOPT to XPT(:, KNEW).
     dcauchy = xpt(:, knew) - xopt
-    dcauchy = min(HALF, delbar / sqrt(sum(dcauchy**2))) * dcauchy
-    if (inprod(g, dcauchy) * inprod(dcauchy, matprod(h, dcauchy)) < 0) then
-        dcauchy = -dcauchy
-    end if
+    scaling = delbar / sqrt(sum(dcauchy**2))
+    dcauchy = max(0.6_RP * scaling, min(HALF, scaling)) * dcauchy
 end if
 
 ! Return if H or G contains NaN.
@@ -262,11 +260,11 @@ vhv = inprod(v, d)
 if (vhv * vhv <= 0.9999_RP * sum(d**2) * vv) then
     d = d - (vhv / vv) * v
     dd = sum(d**2)
-    ratio = sqrt(dd / vv)
+    scaling = sqrt(dd / vv)
     dhd = inprod(d, matprod(h, d))
-    v = ratio * v
-    vhv = ratio * ratio * vhv
-    vhd = ratio * dd
+    v = scaling * v
+    vhv = scaling * scaling * vhv
+    vhd = scaling * dd
     temp = HALF * (dhd - vhv)
     if (dhd + vhv < 0) then
         d = vhd * v + (temp - sqrt(temp**2 + vhd**2)) * d
@@ -295,11 +293,10 @@ else
     scaling = delbar / sqrt(dd)
 end if
 d = scaling * d
-d(trueloc(is_nan(d))) = ZERO
 gnorm = sqrt(gg)
 
 if (.not. (gnorm * dd > 0.5E-2_RP * delbar * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
-    if (sum(abs(d)) <= 0) then
+    if (is_nan(sum(abs(d)))) then
         d = dcauchy
     end if
     return
@@ -370,8 +367,7 @@ else
     end if
 end if
 d = tempd * d + tempv * v
-d(trueloc(is_nan(d))) = ZERO  ! D may contain NaN if the problem is ill-conditioned.
-if (sum(abs(d)) <= 0) then
+if (is_nan(sum(abs(d)))) then
     d = dcauchy
 end if
 
@@ -382,9 +378,9 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
-    ! It is crucial to ensure that the geometry step is nonzero, which holds in theory.
-    call assert(norm(d) > 0 .and. norm(d) <= TWO * delbar, '0 < |D| <= 2*DELBAR', srname)
+    ! In theory, |D| = DELBAR. Considering rounding errors, we check that DELBAR/2 < |D| < 2*DELBAR.
+    ! It is crucial to ensure that the geometry step is nonzero.
+    call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < |D| < 2*DELBAR', srname)
 end if
 end function geostep
 
