@@ -16,7 +16,7 @@ env:
 
 jobs:
   test:
-    name: Verify the modernized solvers.
+    name: Verify PRIMA.
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 AM10:37:05
+! Last Modified: Thursday, December 01, 2022 AM09:44:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -237,7 +237,7 @@ if (subinfo /= INFO_DFT) then
     cstrv = cfilt(kopt)
     ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist)
-    call retmsg(solver, info, iprint, nf, f, x, cstrv)
+    call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
     !close (16)
     return
 end if
@@ -355,7 +355,7 @@ do tr = 1, maxtr
         cstrv = maximum([ZERO, constr])
 
         ! Print a message about the function evaluation according to IPRINT.
-        call fmsg(solver, iprint, nf, f, x, cstrv)
+        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         ! Save X, F, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
         ! Save X, F, CSTRV into the filter.
@@ -513,7 +513,7 @@ do tr = 1, maxtr
         cstrv = maximum([ZERO, constr])
 
         ! Print a message about the function evaluation according to IPRINT.
-        call fmsg(solver, iprint, nf, f, x, cstrv)
+        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         ! Save X, F, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
         ! Save X, F, CSTRV into the filter.
@@ -569,7 +569,7 @@ do tr = 1, maxtr
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
-        call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt, cstrv)
+        call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt, cstrv, constr)
         ! DNORMSAV is corresponding to the latest function evaluations with the current RHO.
         ! Update it after reducing RHO.
         dnormsav = HUGENUM
@@ -584,7 +584,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     constr = matprod(x, A_orig) - b_orig
     cstrv = maximum([ZERO, constr])
     ! Print a message about the function evaluation according to IPRINT.
-    call fmsg(solver, iprint, nf, f, x, cstrv)
+    call fmsg(solver, iprint, nf, f, x, cstrv, constr)
     ! Save X, F, CSTRV into the history.
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
     ! Save X, F, CSTRV into the filter.
@@ -601,7 +601,7 @@ cstrv = cfilt(kopt)
 call rangehist(nf, xhist, fhist, chist)
 
 ! Print a return message according to IPRINT.
-call retmsg(solver, info, iprint, nf, f, x, cstrv)
+call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 
 !====================!
 !  Calculation ends  !
