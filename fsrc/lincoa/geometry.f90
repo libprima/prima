@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:24:46
+! Last Modified: Thursday, December 01, 2022 PM12:27:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -404,7 +404,8 @@ if (DEBUGGING) then
     call assert(size(s) == n, 'SIZE(S) == N', srname)
     call assert(all(is_finite(s)), 'S is finite', srname)
     ! In theory, |S| <= DELBAR, which may be false due to rounding, but |S| > 2*DELBAR is unlikely.
-    call assert(norm(s) <= TWO * delbar, '|S| <= 2*DELBAR', srname)
+    ! It is crucial to ensure that the geometry step is nonzero, which holds in theory.
+    call assert(norm(s) > 0 .and. norm(s) <= TWO * delbar, '0 < |S| <= 2*DELBAR', srname)
 end if
 
 end subroutine geostep

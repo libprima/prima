@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 AM10:03:49
+! Last Modified: Thursday, December 01, 2022 PM12:46:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -185,13 +185,15 @@ do iter = 1, maxiter
     end if
     s(trueloc(xbdi /= 0)) = ZERO
     stepsq = sum(s**2)
-    if (stepsq <= 0) then
-        exit
-    end if
 
-    if (.not. (gredsq * delsq > ctest**2 * qred * qred)) then
+    !--------------------------------------------------------------------------------------!
+    if (stepsq <= 0 .or. is_nan(stepsq)) then
         exit
     end if
+    if ((gredsq * delsq <= ctest**2 * qred * qred) .or. any(is_nan([gredsq, qred]))) then
+        exit
+    end if
+    !--------------------------------------------------------------------------------------!
 
     ! Multiply the search direction by the second derivative matrix of Q and calculate some scalars
     ! for the choice of steplength. Then set BSTEP to the length of the step to the trust region
@@ -392,7 +394,8 @@ do iter = 1, maxiter
     ! Also, should exit if the orthogonality of S and D is damaged, or S is  not finite.
     ! See the corresponding part of TRSAPP.
     temp = gredsq * dredsq - dredg * dredg
-    if (temp <= ctest**2 * qred * qred) exit
+    !if (temp <= ctest**2 * qred * qred) exit
+    if (.not. temp > ctest**2 * qred * qred) exit
     temp = sqrt(temp)
     s = (dredg * d - dredsq * gnew) / temp
     s(trueloc(xbdi /= 0)) = ZERO
