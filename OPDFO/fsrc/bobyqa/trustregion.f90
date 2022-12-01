@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM11:40:55
+! Last Modified: Thursday, December 01, 2022 AM09:07:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -146,7 +146,7 @@ end if
 !
 
 ! The initial values of IACT, DREDSQ, and GGSAV are unused but to entertain Fortran compilers.
-! TODO: Check that GGSAV has been initialized before used. 
+! TODO: Check that GGSAV has been initialized before used.
 iact = 0
 dredsq = ZERO
 ggsav = ZERO
@@ -189,7 +189,7 @@ do iter = 1, maxiter
         exit
     end if
 
-    if (gredsq * delsq <= ctest**2 * qred * qred) then
+    if (.not. (gredsq * delsq <= ctest**2 * qred * qred)) then
         exit
     end if
 
