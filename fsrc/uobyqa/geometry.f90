@@ -221,7 +221,7 @@ end if
 !
 
 ! Read XOPT.
-xopt = XPT(:, kopt)
+xopt = xpt(:, kopt)
 
 ! For the KNEW-th Lagrange function, evaluate the gradient at XOPT and the Hessian.
 g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
