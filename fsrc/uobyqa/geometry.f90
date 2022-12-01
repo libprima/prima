@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM01:18:16
+! Last Modified: Thursday, December 01, 2022 PM01:26:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -231,18 +231,13 @@ h = vec2smat(pl(n + 1:npt - 1, knew))
 gg = sum(g**2)
 ghg = inprod(g, matprod(h, g))
 
-! Calculate the Cauchy step as a backup.  This does not exist in Powell's code.
-dcauchy = ZERO
-if (gg > 0) then  ! Due to rounding errors, GG can be 0 or NaN, which did happen in tests.
+! Calculate the Cauchy step as a backup. Powell's code does not have this, and D may be 0 or NaN.
+if (gg > 0) then
     dcauchy = (delbar / sqrt(gg)) * g
     if (ghg < 0) then
         dcauchy = -dcauchy
     end if
-end if
-dcauchy(trueloc(is_nan(dcauchy))) = ZERO  ! DCAUCHY may contain NaN for ill-conditioned problems.
-
-! If DCAUCHY = 0 due to rounding errors, set it to a displacement from XOPT to XPT(:, KNEW).
-if (sum(abs(dcauchy)) <= 0) then
+else ! GG is 0 or NaN due to rounding errors. Set DCAUCHY to a displacement from XOPT to XPT(:, KNEW).
     dcauchy = xpt(:, knew) - xopt
     dcauchy = min(HALF, delbar / sqrt(sum(dcauchy**2))) * dcauchy
     if (inprod(g, dcauchy) * inprod(dcauchy, matprod(h, dcauchy)) < 0) then
@@ -250,6 +245,7 @@ if (sum(abs(dcauchy)) <= 0) then
     end if
 end if
 
+! Return if H or G contains NaN.
 if (is_nan(sum(abs(h)) + sum(abs(g)))) then
     d = dcauchy
     return
