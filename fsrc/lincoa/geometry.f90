@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM12:27:15
+! Last Modified: Thursday, December 01, 2022 PM01:43:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -211,7 +211,7 @@ subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, TENTH, HUGENUM, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc, norm
@@ -309,8 +309,8 @@ glag = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
 dderiv = matprod(glag, xpt) - inprod(glag, xopt) ! The derivatives PHI_K'(0).
 distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 ! Set DISTSQ(KOPT) to a positive artificial value. Otherwise, the calculation of STPLEN will raise a
-! floating point exception. This artificial value will not be used.
-distsq(kopt) = HUGENUM
+! floating point exception. This artificial value will NOT be used.
+distsq(kopt) = ONE
 ! For each K /= KNEW, |PHI_K(t)| is maximized by STPLEN(K), the maximum being VLAGABS(K). Note that
 ! PHI_K(t) is a quadratic function with PHI_K'(0) = DDERIV(K) and PHI_K(0) = 0 = PHI_K(1).
 stplen = -delbar / sqrt(distsq)
