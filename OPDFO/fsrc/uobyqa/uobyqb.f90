@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 PM10:08:58
+! Last Modified: Thursday, December 01, 2022 AM11:55:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -361,7 +361,7 @@ do while (.true.)
         ! improve the performance slightly according to a test on 20220720.
         delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
 
-        d = geostep(g, h, delbar)
+        d = geostep(g, h, delbar, xopt, xpt, knew_geo)
 
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
