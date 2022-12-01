@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 AM09:44:45
+! Last Modified: Thursday, December 01, 2022 PM09:50:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -215,9 +215,13 @@ xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt
 f = fopt
-! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
-cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 !--------------------------------------------------------------------------------------------------!
+
+! Evaluate the constraints using A_ORIG and B_ORIG. Should we do this in INITXF?
+! N.B.: We must initialize CONSTR and CSTRV. Otherwise, if REDUCE_RHO is TRUE after the very first
+! iteration due to SHORTD, then RHOMSG will be called with CONSTR and CSTRV uninitialized.
+constr = matprod(x, A_orig) - b_orig
+cstrv = maximum([ZERO, constr])
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
 nfilt = 0
@@ -230,11 +234,13 @@ end do
 ! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
-    ! Return the best calculated values of the variables.
+    ! Return the best calculated values of the variables. If CTOL > 0, the KOPT decided by SELECTX
+    ! may not be the same as the one by INITXF.
     kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
     x = xfilt(:, kopt)
     f = ffilt(kopt)
-    cstrv = cfilt(kopt)
+    constr = matprod(x, A_orig) - b_orig
+    cstrv = maximum([ZERO, constr])
     ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist)
     call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
@@ -447,6 +453,8 @@ do tr = 1, maxtr
     !small_trrad = (delsav <= rho)  ! Powell's code. DELSAV = unupdated DELTA.
 
     ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
+    ! N.B.: If SHORTD is TRUE at the very first iteration, then REDUCE_RHO will be set to TRUE.
+
     ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= eta1 .or. knew_tr == 0)
     improve_geo = bad_trstep .and. .not. adequate_geo
@@ -595,7 +603,8 @@ end if
 kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
 x = xfilt(:, kopt)
 f = ffilt(kopt)
-cstrv = cfilt(kopt)
+constr = matprod(x, A_orig) - b_orig
+cstrv = maximum([ZERO, constr])
 
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist)
