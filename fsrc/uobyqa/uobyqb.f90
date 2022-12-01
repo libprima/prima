@@ -11,7 +11,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM07:19:02
+! Last Modified: Thursday, December 01, 2022 AM11:08:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -338,8 +338,6 @@ do while (.true.)
     ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
-        g = pl(1:n, knew_geo) + smat_mul_vec(pl(n + 1:npt - 1, knew_geo), xopt)
-        h = vec2smat(pl(n + 1:npt - 1, knew_geo))
 
         ! DELBAR is the trust-region radius for the geometry improvement subproblem.
         ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
@@ -347,7 +345,7 @@ do while (.true.)
         ! improve the performance slightly according to a test on 20220720.
         delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
 
-        d = geostep(g, h, delbar)
+        d = geostep(knew_geo, kopt, delbar, pl, xpt)
 
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
