@@ -16,7 +16,7 @@ env:
 
 jobs:
   test:
-    name: Plot the performance profiles of the modernized solvers.
+    name: Profile PRIMA.
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
