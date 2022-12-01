@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM03:38:02
+! Last Modified: Thursday, December 01, 2022 PM05:08:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -226,7 +226,7 @@ if (any(is_nan(dcauchy)) .or. .not. any(abs(dcauchy) > 0)) then
     dcauchy = xpt(:, knew) - xopt
     dd = sum(dcauchy**2)
     !dcauchy = min(HALF, delbar / sqrt(dd)) * dcauchy
-    dcauchy = max(HALF * (delbar / sqrt(dd)), min(HALF, delbar / sqrt(dd))) * dcauchy
+    dcauchy = max(0.6_RP * (delbar / sqrt(dd)), min(HALF, delbar / sqrt(dd))) * dcauchy
     if (inprod(g, dcauchy) * inprod(dcauchy, matprod(h, dcauchy)) < 0) then
         dcauchy = -dcauchy
     end if
