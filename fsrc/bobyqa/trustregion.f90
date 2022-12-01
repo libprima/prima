@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 AM09:07:23
+! Last Modified: Thursday, December 01, 2022 PM12:49:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -189,11 +189,8 @@ do iter = 1, maxiter
     end if
     s(trueloc(xbdi /= 0)) = ZERO
     stepsq = sum(s**2)
-    if (stepsq <= 0) then
-        exit
-    end if
 
-    if (gredsq * delsq <= ctest**2 * qred * qred) then
+    if (.not. (stepsq > 0 .and. gredsq * delsq > ctest**2 * qred * qred)) then
         exit
     end if
 
