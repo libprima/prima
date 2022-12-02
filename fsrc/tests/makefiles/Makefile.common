@@ -583,7 +583,9 @@ $(TESTS_C) $(TESTS_INT_C):
 		./$@_c_g 2>&1 \
 		| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
-		if ! echo $@ | grep -q "ftest\|vtest\|dtest" || ! [[ $(SOLVER) == "lincoa" ]] ; then \
+		if echo $@ | grep -q "ftest\|vtest\|dtest" && [[ $(SOLVER) == "lincoa" ]] ; then \
+			printf "\n$@_o is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
+		else \
 			printf "\n$@_o starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
 			./$@_c_o 2>&1 \
 			| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
