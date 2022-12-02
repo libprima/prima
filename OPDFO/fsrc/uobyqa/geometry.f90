@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM05:08:10
+! Last Modified: Friday, December 02, 2022 AM09:32:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -287,7 +287,8 @@ gnorm = sqrt(gg)
 
 if (.not. (gnorm * dd > 0.5E-2_RP * delbar * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
     !if (sum(d**2) <= 0) then
-    if (any(is_nan(d))) then
+    !if (any(is_nan(d))) then
+    if (.not. (is_nan(sum(abs(d))))) then
         d = dcauchy
     end if
     return
