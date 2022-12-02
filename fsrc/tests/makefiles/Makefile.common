@@ -421,7 +421,7 @@ ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d
 ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d0_tst_c ntest_i4_r16_d0_tst_c ntest_i8_r16_d0_tst_c: \
 	FC2 := $(NFORT) $(FFLAGS2) -nan -ieee=stop
 
-# NVIDIA nvfortran (aka, pgfortran)
+# NVIDIA nvfortran
 VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
 VFORT := $(VFORT) -Werror
 VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr
@@ -576,7 +576,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	@if echo $@ | grep -q "9test\|ltest" ; then \
 		printf "\n$@ is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 	elif [[ -x $@_c ]] ; then \
-		set -o pipefail && ./$@_c 2>&1 \
+		export NVCOMPILER_TERM=trace && set -o pipefail && ./$@_c 2>&1 \
 		| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	else \

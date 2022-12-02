@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 PM08:05:22
+! Last Modified: Friday, December 02, 2022 AM11:38:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -128,6 +128,7 @@ crvmin = ZERO
 
 ! Scale the problem if GNORM is large. Otherwise, floating point exceptions may occur. In the sequel,
 ! GG and HH are used instead of G and H, which are INTENT(IN) and hence cannot be changed.
+! Note that CRVMIN must be scaled back if it is nonzero, but D is scale invariant.
 scaling = maxval(abs(g))
 if (scaling > 1.0E8) then  ! The threshold is empirical.
     gg = g / scaling
@@ -152,18 +153,17 @@ if (.not. any(abs(hh) > 0)) then
     return
 end if
 
-! Zaikun 20220301, 20220305:
+! Handle the case with N = 1. This should be done after the case where GSQ is NaN.
 ! Powell's original code requires that N >= 2.  When N = 1, the code does not work (sometimes even
 ! encounters memory errors). This is indeed why the original UOBYQA code constantly terminates with
 ! "a trust region step has failed to reduce the quadratic model" when applied to univariate problems.
-! This special case should be handled after the case where GSQ is NaN.
 if (n == 1) then
     d = sign(delta, -g)  !!MATLAB: d = -delta * sign(g)
     if (h(1, 1) > 0) then
         dnewton = -g / h(1, 1)
         if (abs(dnewton(1)) <= delta) then
             d = dnewton
-            crvmin = h(1, 1)  ! If we use HH(1, 1) here, then we need to scale it back.
+            crvmin = h(1, 1)  ! If we use HH(1, 1) here, then we need to scale it back!
         end if
     end if
     return
@@ -539,6 +539,7 @@ if (norm(d) > delta) then
     d = (delta / norm(d)) * d
 end if
 
+! Scale CRVMIN back before return. Note that D is scale invariant.
 if (scaled) then
     crvmin = crvmin * scaling  ! CRVMIN is not invariant under the scaling.
 end if
@@ -547,6 +548,14 @@ if (is_nan(crvmin)) then  ! This may happen if the problem is ill-conditioned.
     crvmin = ZERO
 end if
 
+if (DEBUGGING) then
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
+    call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
+    call assert(crvmin >= 0, 'CRVMIN >= 0', srname)
+end if
+
+! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.

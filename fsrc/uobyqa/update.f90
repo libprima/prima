@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 02, 2022 AM09:29:32
+! Last Modified: Friday, December 02, 2022 AM09:37:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -90,7 +90,7 @@ end if
 
 ! Update the Lagrange functions.
 vlag = calvlag(pl, d, xopt, kopt)
-pl(:, knew) = pl(:, knew) / vlag(knew)  ! It can happen that VLAG(KNEW) = 0 due to rounding.
+pl(:, knew) = pl(:, knew) / vlag(knew)
 plnew = pl(:, knew)
 pl = pl - outprod(plnew, vlag)
 pl(:, knew) = plnew
