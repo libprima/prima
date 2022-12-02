@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, December 02, 2022 AM11:38:58
+! Last Modified: Friday, December 02, 2022 PM09:58:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -130,6 +130,7 @@ crvmin = ZERO
 ! GG and HH are used instead of G and H, which are INTENT(IN) and hence cannot be changed.
 ! Note that CRVMIN must be scaled back if it is nonzero, but D is scale invariant.
 scaling = maxval(abs(g))
+call assert(issymmetric(h), 'H is symmetric', srname)
 if (scaling > 1.0E8) then  ! The threshold is empirical.
     gg = g / scaling
     hh = h / scaling
@@ -139,6 +140,7 @@ else
     hh = h
     scaled = .false.
 end if
+call assert(issymmetric(hh), 'HH is symmetric', srname)
 
 gsq = sum(gg**2)
 gnorm = sqrt(gsq)
