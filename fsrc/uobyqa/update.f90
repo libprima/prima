@@ -9,7 +9,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 29, 2022 AM11:12:46
+! Last Modified: Friday, December 02, 2022 AM09:29:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -89,8 +89,8 @@ if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
 end if
 
 ! Update the Lagrange functions.
-vlag = calvlag(pl, d, xopt, kopt)  ! It can happen that VLAG(KNEW) = 0 due to rounding.
-pl(:, knew) = pl(:, knew) / vlag(knew)
+vlag = calvlag(pl, d, xopt, kopt)
+pl(:, knew) = pl(:, knew) / vlag(knew)  ! It can happen that VLAG(KNEW) = 0 due to rounding.
 plnew = pl(:, knew)
 pl = pl - outprod(plnew, vlag)
 pl(:, knew) = plnew
