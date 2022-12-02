@@ -23,7 +23,7 @@
 #
 # Started: September 2021
 #
-# Last Modified: February 2022
+# Last Modified: December 2022
 ####################################################################################################
 
 #$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
@@ -562,8 +562,11 @@ $(TESTS_C) $(TESTS_INT_C):
 	@$(MAKE) cleanmisc
 
 # Make a compiler-specific subtest.
-# N.B.: The prerequisite should NOT include files that may not exist, e.g., $(SRC), because
+# N.B.:
+# 1. The prerequisite should NOT include files that may not exist, e.g., $(SRC), because
 # Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
+# 2. We do not test the lincoa code with -O option for ftest, vtest, or dtest, as the compilers have
+# bugs in memory allocation or subscript bound checking when in invoked with -O (as of 20221202).
 #%_tst: %_tst_c
 %_tst:
 	@if [[ ! -f $@_c ]] ; then \
@@ -572,15 +575,22 @@ $(TESTS_C) $(TESTS_INT_C):
 		printf "\n$@_c exists!\n\n" ; \
 	fi
 	@mkdir -p $(LOG_DIR)
-	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	@if echo $@ | grep -q "9test\|ltest" ; then \
 		printf "\n$@ is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
-	elif [[ -x $@_c ]] ; then \
-		export NVCOMPILER_TERM=trace && set -o pipefail && ./$@_c 2>&1 \
+	elif [[ -x $@_c_g && -x $@_c_o ]] ; then \
+		export NVCOMPILER_TERM=trace && set -o pipefail && \
+		printf "\n$@_g starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
+		./$@_c_g 2>&1 \
 		| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
+		if ! echo $@ | grep -q "ftest\|vtest\|dtest" || ! [[ $(SOLVER) == "lincoa" ]] ; then \
+			printf "\n$@_o starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
+			./$@_c_o 2>&1 \
+			| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
+			| tee -a "$(LOG_DIR)/$@.log" ; \
+		fi ; \
 	else \
-		printf "\n$@_c is not executable!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
+		printf "\n$@_c_g or $@_c_o is not executable!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 		exit 126 ; \
 	fi
 	@set +o pipefail  # Restore the original pipe setting
@@ -601,7 +611,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	@(if echo $@ | grep -q "9test\|ltest"; then \
 		$(FC1) -c $(SRC) && $(FC2) -c $(SRC) ; \
 	else \
-		$(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC) ; \
+		$(FC1) -o $@_o $(SRC) && $(FC2) -o $@_g $(SRC) ; \
 	fi) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
 	| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
