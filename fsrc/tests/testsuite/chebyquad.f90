@@ -73,7 +73,8 @@ end do
 f = ZERO
 do i = 1, n + 1_IK
     tmp = sum(y(1:n, i)) / real(n, RP)
-    if (modulo(i, 2_IK) /= 0) then
+    if (i /= 2 .and. modulo(i, 2_IK) /= 0) then
+        ! Mathematically, I /= 2 is not needed. However sunf95 is buggy and evaluates MODULO(2, 2) as 1.
         tmp = tmp + ONE / real(i * i - 2 * i, RP)
     end if
     f = f + tmp**2

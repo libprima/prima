@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM12:49:13
+! Last Modified: Saturday, December 03, 2022 PM10:35:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -206,6 +206,7 @@ do iter = 1, maxiter
         twod_search = .true.
         exit
     end if
+
     temp = sqrt(stepsq * resid + ds * ds)
 
     ! Zaikun 20220210: For the IF ... ELSE ... END IF below, Powell's condition for the IF is DS<0.
@@ -469,7 +470,9 @@ do iter = 1, maxiter
     grid_size = 2_IK * int(17.0_RP * hangt_bd + 4.1_RP, kind(grid_size))  ! It doubles the value in Powell's code
     hangt = interval_max(interval_fun_trsbox, ZERO, hangt_bd, args, grid_size)
     sdec = interval_fun_trsbox(hangt, args)
-    if (.not. sdec > 0) exit
+    if (.not. sdec > 0) then
+        exit
+    end if
 
     ! Update GNEW, D and HDRED. If the angle of the alternative iteration is restricted by a bound
     ! on a free variable, that variable is fixed at the bound.

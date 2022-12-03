@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM06:55:06
+! Last Modified: Saturday, December 03, 2022 PM08:00:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1544,7 +1544,7 @@ else
     !end if
     ! Scaling seems to improve the precision in general.
     if (y(2) > 0) then
-        r = y(2) * sqrt((y(1) / y(2))**2 + ONE)
+        r = min(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
     else
         r = ZERO
     end if
