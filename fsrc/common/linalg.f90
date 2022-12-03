@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 02, 2022 PM09:58:25
+! Last Modified: Saturday, December 03, 2022 PM07:40:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1538,13 +1538,15 @@ else
     !if (y(1) > sqrt(REALMIN) .and. y(2) < sqrt(HUGENUM / 2.1_RP)) then
     ! r = sqrt(sum(y**2))
     !elseif (y(2) > 0) then
-    ! r = y(2) * sqrt((y(1) / y(2))**2 + ONE)
+    ! r = max(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
+    ! ! Without MAX, R < Y(2) may happen due to rounding errors.
     !else
     ! r = ZERO
     !end if
     ! Scaling seems to improve the precision in general.
     if (y(2) > 0) then
-        r = y(2) * sqrt((y(1) / y(2))**2 + ONE)
+        r = max(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
+        ! Without MAX, R < Y(2) may happen due to rounding errors.
     else
         r = ZERO
     end if

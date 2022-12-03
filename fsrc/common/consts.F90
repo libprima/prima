@@ -188,9 +188,9 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 ! Update 20221202: for REAL32, ifort 2021.7.1 20221019 does not ensure that a symmetric matrix
 ! remains symmetric after divided by a scalar.
 #if __RELEASED__ == 1 || (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64)
-real(RP), parameter :: SYMTOL_DFT = max(EPS, 1.0E-10_RP)
+real(RP), parameter :: SYMTOL_DFT = max(1.0E2*EPS, 1.0E-10_RP)
 #elif defined __INTEL_COMPILER && __REAL_PRECISION__ < 64
-real(RP), parameter :: SYMTOL_DFT = 1.0E1_RP * EPS
+real(RP), parameter :: SYMTOL_DFT = 1.0E2_RP * EPS
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO
 #endif
