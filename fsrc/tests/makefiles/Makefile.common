@@ -424,7 +424,7 @@ ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d
 # NVIDIA nvfortran
 VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
 VFORT := $(VFORT) -Werror
-VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr
+VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr -Mchkstk -traceback
 
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
 	FC1 := $(VFORT) $(FFLAGS1) -Kieee -Ktrap=divz
