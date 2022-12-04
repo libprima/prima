@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, November 29, 2022 PM06:41:01
+! Last Modified: Sunday, December 04, 2022 PM06:19:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -540,7 +540,7 @@ if (norm(d) > delta) then
     d = (delta / norm(d)) * d
 end if
 
-if (scaled) then
+if (scaled .and. crvmin > 0) then
     crvmin = crvmin * scaling  ! CRVMIN is not invariant under the scaling.
 end if
 

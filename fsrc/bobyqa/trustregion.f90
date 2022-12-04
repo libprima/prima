@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, December 03, 2022 PM10:35:23
+! Last Modified: Sunday, December 04, 2022 PM04:44:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: trsbox, trrad
 contains
 
 
-subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
+subroutine trsbox(delta, gopt_in, hq_in, pq_in, sl, su, xopt, xpt, crvmin, d)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine approximately solves
 ! minimize Q(XOPT + D) subject to ||D|| <= DELTA, SL <= D <= SU.
@@ -52,9 +52,9 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: delta
-real(RP), intent(in) :: gopt(:)  ! GOPT(N)
-real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(in) :: pq(:)  ! PQ(NPT)
+real(RP), intent(in) :: gopt_in(:)  ! GOPT_IN(N)
+real(RP), intent(in) :: hq_in(:, :)  ! HQ_IN(N, N)
+real(RP), intent(in) :: pq_in(:)  ! PQ_IN(NPT)
 real(RP), intent(in) :: sl(:)  ! SL(N)
 real(RP), intent(in) :: su(:)  ! SU(N)
 real(RP), intent(in) :: xopt(:)  ! XOPT(N)
@@ -68,34 +68,36 @@ real(RP), intent(out) :: d(:)  ! D(N)
 character(len=*), parameter :: srname = 'TRSBOX'
 integer(IK) :: n
 integer(IK) :: npt
-integer(IK) :: xbdi(size(gopt))
-real(RP) :: dred(size(gopt))
-real(RP) :: hdred(size(gopt))
-real(RP) :: hs(size(gopt))
-real(RP) :: s(size(gopt))
+integer(IK) :: xbdi(size(gopt_in))
+real(RP) :: dred(size(gopt_in))
+real(RP) :: hdred(size(gopt_in))
+real(RP) :: hs(size(gopt_in))
+real(RP) :: s(size(gopt_in))
 real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
+real(RP) :: gopt(size(gopt_in)), pq(size(pq_in)), hq(size(hq_in, 1), size(hq_in, 2))
 real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
-&        stplen, sbound(size(gopt)), temp, &
+&        stplen, sbound(size(gopt_in)), temp, &
 &        xtest(size(xopt)), diact
-real(RP) :: ssq(size(gopt)), tanbd(size(gopt)), sqrtd(size(gopt))
-real(RP) :: gnew(size(gopt))
-real(RP) :: xnew(size(gopt))
+real(RP) :: ssq(size(gopt_in)), tanbd(size(gopt_in)), sqrtd(size(gopt_in))
+real(RP) :: gnew(size(gopt_in))
+real(RP) :: xnew(size(gopt_in))
 integer(IK) :: iact, iter, itercg, maxiter, grid_size, nact, nactsav
-logical :: twod_search
+logical :: twod_search, scaled
+real(RP) :: modscal
 
 ! Sizes
-n = int(size(gopt), kind(n))
-npt = int(size(pq), kind(npt))
+n = int(size(gopt_in), kind(n))
+npt = int(size(pq_in), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(delta > 0, 'DELTA > 0', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(size(hq_in, 1) == n .and. issymmetric(hq_in), 'HQ is n-by-n and symmetric', srname)
+    call assert(size(pq_in) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(size(sl) == n .and. all(sl <= 0), 'SIZE(SL) == N, SL <= 0', srname)
     call assert(size(su) == n .and. all(su >= 0), 'SIZE(SU) == N, SU >= 0', srname)
     call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
@@ -140,6 +142,21 @@ end if
 !     DSQ will be set to the square of the length of XNEW-XOPT.
 !
 
+! Scale the problem if GOPT contains large values. Otherwise, floating point exceptions may occur.
+! Note that CRVMIN must be scaled back if it is nonzero, but step is scale invariant.
+modscal = maxval(abs(gopt_in))
+if (modscal > 1.0E12) then   ! The threshold is empirical.
+    gopt = gopt_in / modscal
+    pq = pq_in / modscal
+    hq = hq_in / modscal
+    scaled = .true.
+else
+    gopt = gopt_in
+    pq = pq_in
+    hq = hq_in
+    scaled = .false.
+end if
+
 ! The initial values of IACT, DREDSQ, and GGSAV are unused but to entertain Fortran compilers.
 ! TODO: Check that GGSAV has been initialized before used.
 iact = 0
@@ -157,6 +174,7 @@ nact = int(count(xbdi /= 0), kind(nact))
 ! Initialized D and CRVMIN.
 d = ZERO
 crvmin = -HUGENUM
+
 ! GNEW is the gradient at the current iterate.
 gnew = gopt
 gredsq = sum(gnew(trueloc(xbdi == 0))**2)
@@ -498,9 +516,14 @@ xnew(trueloc(xbdi == -1)) = sl(trueloc(xbdi == -1))
 xnew(trueloc(xbdi == 1)) = su(trueloc(xbdi == 1))
 d = xnew - xopt
 
-! Set CRVMIN to ZERO if it has never been set.
-if (crvmin <= -HUGENUM) then
+! Set CRVMIN to ZERO if it has never been set or becomes NaN due to ill conditioning.
+if (crvmin <= -HUGENUM .or. is_nan(crvmin)) then
     crvmin = ZERO
+end if
+
+! Scale CRVMIN back before return. Note that the trust-region step is scale invariant.
+if (scaled .and. crvmin > 0) then
+    crvmin = crvmin * modscal
 end if
 
 !====================!

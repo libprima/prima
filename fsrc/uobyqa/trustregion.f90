@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, December 03, 2022 AM12:30:10
+! Last Modified: Sunday, December 04, 2022 PM06:15:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -81,7 +81,7 @@ real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
 &        gsq, hnorm, par, parl, parlest, paru,         &
 &        paruest, phi, phil, phiu, &
 &        slope, partmp, &
-&        tnz, tempa, tempb, wsq, wwsq, zsq, scaling
+&        tnz, tempa, tempb, wsq, wwsq, zsq, modscal
 integer(IK) :: i, iter, k, maxiter
 logical :: posdef, negcrv, scaled
 logical :: d_initialized  ! TO BE REMOVED.
@@ -123,23 +123,23 @@ phiu = ZERO
 phil = ZERO
 !!!!!!!!!!!!!!!!!!!!
 
-d = ZERO
-crvmin = ZERO
-
-! Scale the problem if GNORM is large. Otherwise, floating point exceptions may occur. In the sequel,
-! GG and HH are used instead of G and H, which are INTENT(IN) and hence cannot be changed.
-! Note that CRVMIN must be scaled back if it is nonzero, but D is scale invariant.
-scaling = maxval(abs(g))
-if (scaling > 1.0E8) then  ! The threshold is empirical.
-    gg = g / scaling
-    hh = h / scaling
+! Scale the problem if G contains large values. Otherwise, floating point exceptions may occur. In
+! the sequel, GG and HH are used instead of G and H, which are INTENT(IN) and hence cannot be
+! changed. Note that CRVMIN must be scaled back if it is nonzero, but the step is scale invariant.
+modscal = maxval(abs(g))
+if (modscal > 1.0E8) then  ! The threshold is empirical.
+    gg = g / modscal
+    hh = h / modscal
     scaled = .true.
 else
     gg = g
     hh = h
     scaled = .false.
 end if
-call assert(issymmetric(hh), 'HH is symmetric', srname)
+
+! Initialize D and CRVMIN.
+d = ZERO
+crvmin = ZERO
 
 gsq = sum(gg**2)
 gnorm = sqrt(gsq)
@@ -540,13 +540,14 @@ if (norm(d) > delta) then
     d = (delta / norm(d)) * d
 end if
 
-! Scale CRVMIN back before return. Note that D is scale invariant.
-if (scaled) then
-    crvmin = crvmin * scaling  ! CRVMIN is not invariant under the scaling.
+! Set CRVMIN to zero if it is NaN, which may happen if the problem is ill-conditioned.
+if (is_nan(crvmin)) then
+    crvmin = ZERO
 end if
 
-if (is_nan(crvmin)) then  ! This may happen if the problem is ill-conditioned.
-    crvmin = ZERO
+! Scale CRVMIN back before return. Note that the trust-region step is scale invariant.
+if (scaled .and. crvmin > 0) then
+    crvmin = crvmin * modscal
 end if
 
 if (DEBUGGING) then

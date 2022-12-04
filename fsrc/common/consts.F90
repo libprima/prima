@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 02, 2022 PM11:02:32
+! Last Modified: Sunday, December 04, 2022 PM05:01:13
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -187,10 +187,9 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 ! intend to test symmetry in production.
 ! Update 20221202: for REAL32, ifort 2021.7.1 20221019 does not ensure that a symmetric matrix
 ! remains symmetric after divided by a scalar.
-#if __RELEASED__ == 1 || (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64)
-real(RP), parameter :: SYMTOL_DFT = max(1.0E2*EPS, 1.0E-10_RP)
-#elif defined __INTEL_COMPILER && __REAL_PRECISION__ < 64
-real(RP), parameter :: SYMTOL_DFT = 1.0E2_RP * EPS
+#if (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64) || (defined __INTEL_COMPILER && __REAL_PRECISION__ < 64) \
+|| (__RELEASED__ == 1)
+real(RP), parameter :: SYMTOL_DFT = max(1.0E2 * EPS, 1.0E-10_RP)
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO
 #endif

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Monday, November 28, 2022 PM01:40:17
+! Last Modified: Sunday, December 04, 2022 PM05:56:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ public :: trrad
 contains
 
 
-function trstlp(A, b, delta) result(d)
+function trstlp(A_in, b_in, delta) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
 ! stage, D is set to the shortest vector that minimizes the greatest violation of the constraints
@@ -76,30 +76,45 @@ use, non_intrinsic :: linalg_mod, only : norm
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: A(:, :) ! A(N, M+1)
-real(RP), intent(in) :: b(:)    ! B(M+1)
+real(RP), intent(in) :: A_in(:, :) ! A(N, M+1)
+real(RP), intent(in) :: b_in(:)    ! B(M+1)
 real(RP), intent(in) :: delta
 
 ! Outputs
-real(RP) :: d(size(A, 1))   ! D(N)
+real(RP) :: d(size(A_in, 1))   ! D(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTLP'
-integer(IK) :: iact(size(b))
+integer(IK) :: iact(size(b_in))
 integer(IK) :: m
 integer(IK) :: nact
-real(RP) :: vmultc(size(b))
+real(RP) :: vmultc(size(b_in))
 real(RP) :: z(size(d), size(d))
+integer(IK) :: i
+real(RP) :: A(size(A_in, 1), size(A_in, 2)), b(size(A_in, 2)), scaling
 
 ! Sizes
-m = int(size(A, 2) - 1, kind(m))
+m = int(size(A_in, 2) - 1, kind(m))
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
-    call assert(size(A, 1) >= 1 .and. size(A, 2) >= 1, 'SIZE(A) >= [1, 1]', srname)
-    call assert(size(b) == size(A, 2), 'SIZE(B) == size(A, 2)', srname)
+    call assert(size(A_in, 1) >= 1 .and. size(A_in, 2) >= 1, 'SIZE(A) >= [1, 1]', srname)
+    call assert(size(b_in) == size(A_in, 2), 'SIZE(B) == size(A, 2)', srname)
 end if
+
+do i = 1, m + 1
+
+    scaling = maxval(abs(A_in(:, i)))
+    if (scaling > 1.0E12) then
+        A(:, i) = A_in(:, i) / scaling
+        b(i) = b_in(i) / scaling
+    else
+        A(:, i) = A_in(:, i)
+        b(i) = b_in(i)
+    end if
+
+end do
 
 !====================!
 ! Calculation starts !
