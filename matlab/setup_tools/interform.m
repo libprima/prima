@@ -206,9 +206,10 @@ fprintf(fid, '! Generated using the %s.m script by Zaikun ZHANG (www.zhangzk.net
 fprintf(fid, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n');
 
 for i = 1 : length(strs)
-    if startsWith(strs{i}, '!!MATLAB:')  % The comments after '!!MATLAB:' may contain '\' for linear problem solving, which will raise a warning.
-        continue
-    end
+    % The comments after '!!MATLAB:' or the directives after "#" may contain '\', which will cause a warning.
+%    if startsWith(strs{i}, '!!MATLAB:') || startsWith(strs{i}, '#')
+%        continue
+%    end
     fprintf(fid, strs{i});
     if i < length(strs)
         fprintf(fid, '\n');

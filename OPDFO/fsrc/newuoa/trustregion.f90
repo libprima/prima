@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM01:40:00
+! Last Modified: Sunday, December 04, 2022 PM04:57:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -18,7 +18,7 @@ public :: trsapp, trrad
 contains
 
 
-subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
+subroutine trsapp(delta, gq_in, hq_in, pq_in, tol, x, xpt, crvmin, s, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds an approximate solution to the N-dimensional trust region subproblem
 !
@@ -61,9 +61,9 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: delta
-real(RP), intent(in) :: gq(:)   ! GQ(N)
-real(RP), intent(in) :: hq(:, :)    ! HQ(N, N)
-real(RP), intent(in) :: pq(:)   ! PQ(NPT)
+real(RP), intent(in) :: gq_in(:)   ! GQ(N)
+real(RP), intent(in) :: hq_in(:, :)    ! HQ(N, N)
+real(RP), intent(in) :: pq_in(:)   ! PQ(NPT)
 real(RP), intent(in) :: tol
 real(RP), intent(in) :: x(:)    ! X(N)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
@@ -109,6 +109,8 @@ real(RP) :: shs
 real(RP) :: sold(size(x))
 real(RP) :: ss
 real(RP) :: sth
+real(RP) :: scaling, gq(size(gq_in)), hq(size(hq_in, 1), size(hq_in, 2)), pq(size(pq_in))
+logical :: scaled
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -117,9 +119,9 @@ npt = int(size(xpt, 2), kind(npt))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    call assert(size(gq_in) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(hq_in, 1) == n .and. issymmetric(hq_in), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq_in) == npt, 'SIZE(PQ) = NPT', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(x) == n .and. all(is_finite(x)), 'SIZE(X) == N, X is finite', srname)
     call assert(size(s) == n, 'SIZE(S) == N', srname)
@@ -128,6 +130,20 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
+
+scaling = maxval(abs(gq_in))
+if (scaling > 1.0E12) then
+    gq = gq_in / scaling
+    hq = hq_in / scaling
+    pq = pq_in / scaling
+    scaled = .true.
+else
+    gq = gq_in
+    hq = hq_in
+    pq = pq_in
+    scaled = .false.
+end if
+
 
 s = ZERO
 crvmin = ZERO
@@ -354,6 +370,10 @@ end do
 
 if (is_nan(crvmin)) then  ! This may happen if the problem is ill-conditioned.
     crvmin = ZERO
+end if
+
+if (crvmin > 0 .and. scaled) then
+    crvmin = crvmin * scaling
 end if
 
 if (present(info)) then

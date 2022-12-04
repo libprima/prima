@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM01:39:41
+! Last Modified: Sunday, December 04, 2022 PM05:10:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: trstep, trrad
 contains
 
 
-subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, s)
+subroutine trstep(amat, delta, gq_in, hq_in, pq_in, rescon, xpt, iact, nact, qfac, rfac, ngetact, s)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TWO, HALF, EPS, TINYCV, DEBUGGING
@@ -40,9 +40,9 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: delta
-real(RP), intent(in) :: gq(:)  ! GQ(N)
-real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(in) :: pq(:)  ! PQ(NPT)
+real(RP), intent(in) :: gq_in(:)  ! GQ(N)
+real(RP), intent(in) :: hq_in(:, :)  ! HQ(N, N)
+real(RP), intent(in) :: pq_in(:)  ! PQ(NPT)
 real(RP), intent(in) :: rescon(:)  ! RESCON(M)
 real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
@@ -59,15 +59,15 @@ real(RP), intent(out) :: s(:)  ! S(N)
 ! Local variables
 logical :: newact
 character(len=*), parameter :: srname = 'TRSTEP'
-real(RP) :: d(size(gq))
-real(RP) :: dproj(size(gq))
-real(RP) :: psd(size(gq))
-real(RP) :: hd(size(gq))
-real(RP) :: pg(size(gq))
+real(RP) :: d(size(gq_in))
+real(RP) :: dproj(size(gq_in))
+real(RP) :: psd(size(gq_in))
+real(RP) :: hd(size(gq_in))
+real(RP) :: pg(size(gq_in))
 real(RP) :: resact(size(amat, 2))
 real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
-real(RP) :: g(size(gq))
+real(RP) :: g(size(gq_in))
 real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpha, alphm, alpht, &
 & beta, dd, dg, dhd, ds, gamma, reduct, resid, scaling, delsq, ss, temp, sold(size(s))
@@ -75,11 +75,23 @@ integer(IK) :: maxiter, iter, itercg, jsav
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: pq(size(pq_in)), gq(size(gq_in)), hq(size(hq_in, 1), size(hq_in, 2))
+
+scaling = maxval(abs(gq_in))
+if (scaling > 1.0E12) then
+    gq = gq_in / scaling
+    pq = pq_in / scaling
+    hq = hq_in / scaling
+else
+    gq = gq_in
+    pq = pq_in
+    hq = hq_in
+end if
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
-n = int(size(gq), kind(n))
-npt = int(size(pq), kind(npt))
+n = int(size(gq_in), kind(n))
+npt = int(size(pq_in), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -87,7 +99,7 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
+    call assert(size(hq_in, 1) == n .and. issymmetric(hq_in), 'HQ is n-by-n and symmetric', srname)
 
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)

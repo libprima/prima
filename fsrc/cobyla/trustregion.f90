@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:42:35
+! Last Modified: Sunday, December 04, 2022 PM05:42:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ public :: trrad
 contains
 
 
-function trstlp(A, b, delta) result(d)
+function trstlp(A_in, b_in, delta) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
 ! stage, D is set to the shortest vector that minimizes the greatest violation of the constraints
@@ -76,36 +76,55 @@ use, non_intrinsic :: linalg_mod, only : norm
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: A(:, :) ! A(N, M+1)
-real(RP), intent(in) :: b(:)    ! B(M+1)
+real(RP), intent(in) :: A_in(:, :) ! A_IN(N, M+1)
+real(RP), intent(in) :: b_in(:)    ! B_IN(M+1)
 real(RP), intent(in) :: delta
 
 ! Outputs
-real(RP) :: d(size(A, 1))   ! D(N)
+real(RP) :: d(size(A_in, 1))   ! D(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTLP'
-integer(IK) :: iact(size(b))
+integer(IK) :: i
+integer(IK) :: iact(size(b_in))
 integer(IK) :: m
 integer(IK) :: nact
-real(RP) :: vmultc(size(b))
+real(RP) :: A(size(A_in, 1), size(A_in, 2))
+real(RP) :: b(size(b_in))
+real(RP) :: modscal(size(A_in, 2))
+real(RP) :: vmultc(size(b_in))
 real(RP) :: z(size(d), size(d))
 
 ! Sizes
-m = int(size(A, 2) - 1, kind(m))
+m = int(size(A_in, 2) - 1, kind(m))
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
-    call assert(size(A, 1) >= 1 .and. size(A, 2) >= 1, 'SIZE(A) >= [1, 1]', srname)
-    call assert(size(b) == size(A, 2), 'SIZE(B) == size(A, 2)', srname)
+    call assert(size(A_in, 1) >= 1 .and. size(A_in, 2) >= 1, 'SIZE(A) >= [1, 1]', srname)
+    call assert(size(b_in) == size(A_in, 2), 'SIZE(B) == size(A, 2)', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
 
+! Scale the problem if A contains large values. Otherwise, floating point exceptions may occur.
+! Note that the trust-region step is scale invariant.
+modscal = maxval(abs(A_in), dim=1)
+A = A_in
+b = b_in
+do i = 1, size(A_in, 2)  ! Note that SIZE(A_IN, 2) = M + 1 /= M!
+    if (modscal(i) > 1.0E12) then
+        A(:, i) = A(:, i) / modscal(i)
+        b(i) = b(i) / modscal(i)
+    end if
+end do
+
+! Stage 1: minimize the l_infinity constraint violation of the linearized constraints.
 call trstlp_sub(iact(1:m), nact, 1_IK, A(:, 1:m), b(1:m), delta, d, vmultc(1:m), z)
+
+! Stage 2: minimize the linearized objective without increasing the l_infinity constraint violation.
 call trstlp_sub(iact, nact, 2_IK, A, b, delta, d, vmultc, z)
 
 !====================!

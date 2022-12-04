@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM09:50:04
+! Last Modified: Sunday, December 04, 2022 PM04:21:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -306,7 +306,7 @@ do tr = 1, maxtr
     end if
 
     ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
-    call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
+    call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, d, ngetact)
     dnorm = min(delta, sqrt(sum(d**2)))
 
     ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
