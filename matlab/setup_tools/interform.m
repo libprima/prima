@@ -137,6 +137,10 @@ function refactor_file(filename)
 % the new file has the same name as the original one, then the original
 % file will be backed up in "ORIGINAL_FILE_NAME.bak".
 
+% The comments or preprocessing directives may contain '\', which triggers warnings. Turn them off.
+orig_warning_state = warning;
+%warning('off', 'MATLAB:printf:BadEscapeSequenceInFormat');
+
 time_stamp = datestr(datetime(), 'yymmdd.HH:MM:SS');
 
 fid = fopen(filename, 'r');  % Open file for reading.
@@ -206,10 +210,10 @@ fprintf(fid, '! Generated using the %s.m script by Zaikun ZHANG (www.zhangzk.net
 fprintf(fid, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n');
 
 for i = 1 : length(strs)
-    % The comments after '!!MATLAB:' or the directives after "#" may contain '\', which will cause a warning.
-%    if startsWith(strs{i}, '!!MATLAB:') || startsWith(strs{i}, '#')
-%        continue
-%    end
+    % The character '\' causes a warning. It needs to be replaced with '\\' before passing to
+    % fprintf. We have to be careful here to not mess up the '\n' etc.
+    strs{i} = regexprep(strs{i}, '\ \\$', ' \\\\');  % Replace the trailing '\' by '\\'.
+    strs{i} = regexprep(strs{i}, '\ \\\ ', ' \ \\\\\ ');  % Replace ' \ ' by ' \\ '.
     fprintf(fid, strs{i});
     if i < length(strs)
         fprintf(fid, '\n');
@@ -217,6 +221,8 @@ for i = 1 : length(strs)
 end
 fclose(fid);
 evalc('system([''dos2unix -q '', refactored_filename])');  % Without this, sunf95 will complain. Supress the error message if dos2unix is unavailable.
+
+warning(orig_warning_state); % Restore the behavior of displaying warnings
 
 
 function str = refactor_str(str, first, last)
