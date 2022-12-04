@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, December 04, 2022 PM05:42:36
+! Last Modified: Sunday, December 04, 2022 PM06:34:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -114,7 +114,7 @@ end if
 modscal = maxval(abs(A_in), dim=1)
 A = A_in
 b = b_in
-do i = 1, size(A_in, 2)  ! Note that SIZE(A_IN, 2) = M + 1 /= M!
+do i = 1, m + 1_IK  ! Note that SIZE(A, 2) = SIZE(B) = M + 1 /= M.
     if (modscal(i) > 1.0E12) then
         A(:, i) = A(:, i) / modscal(i)
         b(i) = b(i) / modscal(i)
