@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 03, 2022 PM07:40:49
+! Last Modified: Sunday, December 04, 2022 PM06:38:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2552,8 +2552,8 @@ n = int(size(A, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
-    ! Even though we only need the lower triangular part of A, we assume that something is wrong if
-    ! this subroutine is invoked with a non-symmetric matrix A.
+    ! Even though we only need the lower triangular part of A, we assume that, in our project,
+    ! something is wrong if this subroutine is invoked with a non-symmetric matrix A.
     call assert(issymmetric(A), 'A is symmetric', srname)
     call assert(size(tdiag) == n, 'SIZE(TDIAG) == N', srname)
     call assert(size(tsubdiag) == max(0_IK, n - 1_IK), 'SIZE(TDIAG) == MAX(0, N-1)', srname)
