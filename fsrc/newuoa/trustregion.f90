@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 30, 2022 PM01:11:41
+! Last Modified: Sunday, December 04, 2022 PM04:45:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -18,7 +18,7 @@ public :: trsapp, trrad
 contains
 
 
-subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
+subroutine trsapp(delta, gq_in, hq_in, pq_in, tol, x, xpt, crvmin, s, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds an approximate solution to the N-dimensional trust region subproblem
 !
@@ -61,9 +61,9 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: delta
-real(RP), intent(in) :: gq(:)   ! GQ(N)
-real(RP), intent(in) :: hq(:, :)    ! HQ(N, N)
-real(RP), intent(in) :: pq(:)   ! PQ(NPT)
+real(RP), intent(in) :: gq_in(:)   ! GQ_IN(N)
+real(RP), intent(in) :: hq_in(:, :)    ! HQ_IN(N, N)
+real(RP), intent(in) :: pq_in(:)   ! PQ_IN(NPT)
 real(RP), intent(in) :: tol
 real(RP), intent(in) :: x(:)    ! X(N)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
@@ -80,6 +80,7 @@ integer(IK) :: iter
 integer(IK) :: maxiter
 integer(IK) :: n
 integer(IK) :: npt
+logical :: scaled
 logical :: twod_search
 real(RP) :: alpha
 real(RP) :: angle
@@ -97,13 +98,17 @@ real(RP) :: g(size(x))
 real(RP) :: gg
 real(RP) :: gg0
 real(RP) :: ggsav
+real(RP) :: gq(size(gq_in))
 real(RP) :: hd(size(x))
+real(RP) :: hq(size(hq_in, 1), size(hq_in, 2))
 real(RP) :: hs(size(x))
 real(RP) :: hx(size(x))
 real(RP) :: hypt
+real(RP) :: pq(size(pq_in))
 real(RP) :: qadd
 real(RP) :: qred
 real(RP) :: reduc
+real(RP) :: modscal
 real(RP) :: sg
 real(RP) :: shs
 real(RP) :: sold(size(x))
@@ -117,9 +122,9 @@ npt = int(size(xpt, 2), kind(npt))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    call assert(size(gq_in) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(hq_in, 1) == n .and. issymmetric(hq_in), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq_in) == npt, 'SIZE(PQ) = NPT', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(x) == n .and. all(is_finite(x)), 'SIZE(X) == N, X is finite', srname)
     call assert(size(s) == n, 'SIZE(S) == N', srname)
@@ -128,6 +133,21 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
+
+! Scale the problem if GQ contains large values. Otherwise, floating point exceptions may occur.
+! Note that CRVMIN must be scaled back if it is nonzero, but the step is scale invariant.
+modscal = maxval(abs(gq_in))
+if (modscal > 1.0E12) then   ! The threshold is empirical.
+    gq = gq_in / modscal
+    pq = pq_in / modscal
+    hq = hq_in / modscal
+    scaled = .true.
+else
+    gq = gq_in
+    pq = pq_in
+    hq = hq_in
+    scaled = .false.
+end if
 
 s = ZERO
 crvmin = ZERO
@@ -352,8 +372,14 @@ do iter = 1, maxiter
     gg = inprod(g + hs, g + hs)
 end do
 
-if (is_nan(crvmin)) then  ! This may happen if the problem is ill-conditioned.
+! Set CRVMIN to zero if it is NaN, which may happen if the problem is ill-conditioned.
+if (is_nan(crvmin)) then
     crvmin = ZERO
+end if
+
+! Scale CRVMIN back before return. Note that the trust-region step is scale invariant.
+if (scaled .and. crvmin > 0) then
+    crvmin = crvmin * modscal
 end if
 
 if (present(info)) then

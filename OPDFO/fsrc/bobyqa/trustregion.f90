@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM12:46:18
+! Last Modified: Sunday, December 04, 2022 PM04:06:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: trsbox, trrad
 contains
 
 
-subroutine trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
+subroutine trsbox(delta, gopt_in, hq_in, pq_in, sl, su, xopt, xpt, crvmin, d)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, HALF, EPS, HUGENUM, DEBUGGING
@@ -33,9 +33,9 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: delta
-real(RP), intent(in) :: gopt(:)  ! GOPT(N)
-real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(in) :: pq(:)  ! PQ(NPT)
+real(RP), intent(in) :: gopt_in(:)  ! GOPT(N)
+real(RP), intent(in) :: hq_in(:, :)  ! HQ(N, N)
+real(RP), intent(in) :: pq_in(:)  ! PQ(NPT)
 real(RP), intent(in) :: sl(:)  ! SL(N)
 real(RP), intent(in) :: su(:)  ! SU(N)
 real(RP), intent(in) :: xopt(:)  ! XOPT(N)
@@ -49,34 +49,35 @@ real(RP), intent(out) :: d(:)  ! D(N)
 character(len=*), parameter :: srname = 'TRSBOX'
 integer(IK) :: n
 integer(IK) :: npt
-integer(IK) :: xbdi(size(gopt))
-real(RP) :: dred(size(gopt))
-real(RP) :: hdred(size(gopt))
-real(RP) :: hs(size(gopt))
-real(RP) :: s(size(gopt))
+integer(IK) :: xbdi(size(gopt_in))
+real(RP) :: dred(size(gopt_in))
+real(RP) :: hdred(size(gopt_in))
+real(RP) :: hs(size(gopt_in))
+real(RP) :: s(size(gopt_in))
 real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
 real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
-&        stplen, sbound(size(gopt)), temp, &
+&        stplen, sbound(size(gopt_in)), temp, &
 &        xtest(size(xopt)), diact
-real(RP) :: ssq(size(gopt)), tanbd(size(gopt)), sqrtd(size(gopt))
-real(RP) :: gnew(size(gopt))
-real(RP) :: xnew(size(gopt))
+real(RP) :: ssq(size(gopt_in)), tanbd(size(gopt_in)), sqrtd(size(gopt_in))
+real(RP) :: gnew(size(gopt_in))
+real(RP) :: xnew(size(gopt_in))
 integer(IK) :: iact, iter, itercg, maxiter, grid_size, nact, nactsav
-logical :: twod_search
+logical :: twod_search, scaled
+real(RP) :: scaling, gopt(size(gopt_in)), hq(size(hq_in, 1), size(hq_in, 2)), pq(size(pq_in))
 
 ! Sizes
-n = int(size(gopt), kind(n))
-npt = int(size(pq), kind(npt))
+n = int(size(gopt_in), kind(n))
+npt = int(size(pq_in), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(delta > 0, 'DELTA > 0', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(size(hq_in, 1) == n .and. issymmetric(hq_in), 'HQ is n-by-n and symmetric', srname)
+    call assert(size(pq_in) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(size(sl) == n .and. all(sl <= 0), 'SIZE(SL) == N, SL <= 0', srname)
     call assert(size(su) == n .and. all(su >= 0), 'SIZE(SU) == N, SU >= 0', srname)
     call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
@@ -150,6 +151,18 @@ end if
 iact = 0
 dredsq = ZERO
 ggsav = ZERO
+
+gopt = gopt_in
+hq = hq_in
+pq = pq_in
+scaled = .false.
+scaling = maxval(abs(gopt))
+if (scaling > 1.0E12) then
+    gopt = gopt / scaling
+    hq = hq / scaling
+    pq = pq / scaling
+    scaled = .true.
+end if
 
 xbdi = 0
 xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1
@@ -498,6 +511,10 @@ d = xnew - xopt
 ! Set CRVMIN to ZERO if it has never been set.
 if (crvmin <= -HUGENUM) then
     crvmin = ZERO
+end if
+
+if (scaled .and. crvmin > 0) then
+    crvmin = crvmin * scaling
 end if
 
 !====================!

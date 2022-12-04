@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:26:11
+! Last Modified: Sunday, December 04, 2022 PM04:43:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: trstep, trrad
 contains
 
 
-subroutine trstep(amat, delta, gq, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, s)
+subroutine trstep(amat, delta, gopt_in, hq_in, pq_in, rescon, xpt, iact, nact, qfac, rfac, s, ngetact)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TWO, HALF, EPS, TINYCV, DEBUGGING
@@ -40,9 +40,9 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
 real(RP), intent(in) :: delta
-real(RP), intent(in) :: gq(:)  ! GQ(N)
-real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-real(RP), intent(in) :: pq(:)  ! PQ(NPT)
+real(RP), intent(in) :: gopt_in(:)  ! GOPT_IN(N)
+real(RP), intent(in) :: hq_in(:, :)  ! HQ_IN(N, N)
+real(RP), intent(in) :: pq_in(:)  ! PQ_IN(NPT)
 real(RP), intent(in) :: rescon(:)  ! RESCON(M)
 real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
@@ -53,33 +53,35 @@ real(RP), intent(inout) :: qfac(:, :)  ! QFAC(N, N); Will be updated in GETACT
 real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N); Will be updated in GETACT
 
 ! Outputs
-integer(IK), intent(out) :: ngetact
 real(RP), intent(out) :: s(:)  ! S(N)
+integer(IK), intent(out), optional :: ngetact
 
 ! Local variables
 logical :: newact
 character(len=*), parameter :: srname = 'TRSTEP'
-real(RP) :: d(size(gq))
-real(RP) :: dproj(size(gq))
-real(RP) :: psd(size(gq))
-real(RP) :: hd(size(gq))
-real(RP) :: pg(size(gq))
+real(RP) :: d(size(gopt_in))
+real(RP) :: dproj(size(gopt_in))
+real(RP) :: psd(size(gopt_in))
+real(RP) :: hd(size(gopt_in))
+real(RP) :: pg(size(gopt_in))
 real(RP) :: resact(size(amat, 2))
 real(RP) :: resnew(size(amat, 2))
 real(RP) :: tol
-real(RP) :: g(size(gq))
+real(RP) :: g(size(gopt_in))
 real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpha, alphm, alpht, &
-& beta, dd, dg, dhd, ds, gamma, reduct, resid, scaling, delsq, ss, temp, sold(size(s))
+& beta, dd, dg, dhd, ds, gamma, reduct, resid, delsq, ss, temp, sold(size(s))
+real(RP) :: gopt(size(gopt_in)), pq(size(pq_in)), hq(size(hq_in, 1), size(hq_in, 2)), modscal
 integer(IK) :: maxiter, iter, itercg, jsav
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: npt
+integer(IK) :: ngetact_loc
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
-n = int(size(gq), kind(n))
-npt = int(size(pq), kind(npt))
+n = int(size(gopt_in), kind(n))
+npt = int(size(pq_in), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -87,7 +89,7 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
-    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is n-by-n and symmetric', srname)
+    call assert(size(hq_in, 1) == n .and. issymmetric(hq_in), 'HQ is n-by-n and symmetric', srname)
 
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
@@ -107,12 +109,27 @@ end if
 ! Calculation starts !
 !====================!
 
-g = gq
+! Scale the problem if GOPT contains large values. Otherwise, floating point exceptions may occur.
+! Note that the trust-region step is scale invariant.
+modscal = maxval(abs(gopt_in))
+if (modscal > 1.0E12) then   ! The threshold is empirical.
+    gopt = gopt_in / modscal
+    pq = pq_in / modscal
+    hq = hq_in / modscal
+else
+    gopt = gopt_in
+    pq = pq_in
+    hq = hq_in
+end if
+
+g = gopt
 
 ! Return if G is not finite. Otherwise, GETACT will fail in the debugging mode.
 if (.not. is_finite(sum(abs(g)))) then
-    ngetact = 0
     s = ZERO
+    if (present(ngetact)) then
+        ngetact = 0
+    end if
     return
 end if
 
@@ -169,7 +186,7 @@ resact(1:nact) = rescon(iact(1:nact))
 s = ZERO
 ss = ZERO
 reduct = ZERO
-ngetact = 0
+ngetact_loc = 0
 newact = .true.
 
 ! ITERCG is the number of CG iterations corresponding to the current "active set" obtained by
@@ -187,14 +204,13 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         ! length 0.2*DELTA. Then a move of PSD from S is allowed by the linear constraints: PSD
         ! reduces the values of the nearly active constraints; it changes the inactive constraints
         ! by at most 0.2*DELTA, but the residuals of these constraints at no less than 0.2*DELTA.
-        ngetact = ngetact + 1_IK
+        ngetact_loc = ngetact_loc + 1_IK
         call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
         dd = inprod(psd, psd)
         if (dd <= 0 .or. is_nan(dd)) then
             exit
         end if
-        scaling = 0.2_RP * delta / sqrt(dd)
-        psd = scaling * psd
+        psd = (0.2_RP * delta / sqrt(dd)) * psd
 
         ! If the modulus of the residual of an "active constraint" is substantial (i.e., more than
         ! 1.0E-4*DELTA), then modify the searching direction PSD by a projection step to the
@@ -322,7 +338,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         ! linear and trust region constraints.
         alpha = ONE
     elseif (itercg == 1 .and. gamma <= 0) then  ! Iff GETACT has been called, and D is not modified.
-        ! Due to the scaling of PSD, S+D satisfies the linear and trust region constraints.
+        ! Due to the scaling of PSD, S + D satisfies the linear and trust region constraints.
         alpha = max(alpha, ONE)
     else
         alpha = max(alpha, ZERO)
@@ -420,6 +436,10 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     end if
     d = -pg + beta * d
 end do
+
+if (present(ngetact)) then
+    ngetact = ngetact_loc
+end if
 
 !====================!
 !  Calculation ends  !
