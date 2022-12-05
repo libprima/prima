@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, December 04, 2022 PM04:44:00
+! Last Modified: Monday, December 05, 2022 PM10:56:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -78,9 +78,9 @@ real(RP) :: gopt(size(gopt_in)), pq(size(pq_in)), hq(size(hq_in, 1), size(hq_in,
 real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, resid, sdec, shs, sredg, stepsq, sth,&
-&        stplen, sbound(size(gopt_in)), temp, &
+&        stplen, sbound(size(gopt_in)), temp, rayleighq, sqrtd, &
 &        xtest(size(xopt)), diact
-real(RP) :: ssq(size(gopt_in)), tanbd(size(gopt_in)), sqrtd(size(gopt_in))
+real(RP) :: ssq(size(gopt_in)), tanbd(size(gopt_in)), sqdscr(size(gopt_in))
 real(RP) :: gnew(size(gopt_in))
 real(RP) :: xnew(size(gopt_in))
 integer(IK) :: iact, iter, itercg, maxiter, grid_size, nact, nactsav
@@ -225,7 +225,8 @@ do iter = 1, maxiter
         exit
     end if
 
-    temp = sqrt(stepsq * resid + ds * ds)
+    ! SQRTD: square root of a discriminant.
+    sqrtd = sqrt(stepsq * resid + ds * ds)
 
     ! Zaikun 20220210: For the IF ... ELSE ... END IF below, Powell's condition for the IF is DS<0.
     ! In theory, switching the condition to DS <= 0 changes nothing; indeed, the two formulations
@@ -235,9 +236,9 @@ do iter = 1, maxiter
     ! See TRSAPP.F90 of NEWUOA.
     !if (ds <= 0) then  ! Zaikun 20210925
     if (ds < 0) then
-        bstep = (temp - ds) / stepsq
+        bstep = (sqrtd - ds) / stepsq
     else
-        bstep = resid / (temp + ds)
+        bstep = resid / (sqrtd + ds)
     end if
     stplen = bstep
     if (shs > 0) then
@@ -306,12 +307,12 @@ do iter = 1, maxiter
     sdec = ZERO
     if (stplen > 0) then
         itercg = itercg + 1_IK
-        temp = shs / stepsq
-        if (iact == 0 .and. temp > 0) then
+        rayleighq = shs / stepsq
+        if (iact == 0 .and. rayleighq > 0) then
             if (crvmin <= -HUGENUM) then  ! CRVMIN <= -HUGENUM means CRVMIN has not been set.
-                crvmin = temp
+                crvmin = rayleighq
             else
-                crvmin = min(crvmin, temp)
+                crvmin = min(crvmin, rayleighq)
             end if
         end if
         ggsav = gredsq
@@ -430,20 +431,20 @@ do iter = 1, maxiter
     ! namely TANBD; the final bound for HANGT is the minimum of TANBD, which is HANGT_BD.
     ! When solving the system, note that SL < XOPT < SU and SL < XOPT + D < SU if XBDI = 0.
     !
-    ! Note the following for the calculation of the first SQRTD below (the second is similar).
-    ! 0. SQRTD means "square root of discriminant".
-    ! 1. When calculating the first SQRTD, Powell's code checks whether SSQ - (XOPT - SL)**2) is
+    ! Note the following for the calculation of the first SQDSCR below (the second is similar).
+    ! 0. SQDSCR means "square root of discriminant".
+    ! 1. When calculating the first SQDSCR, Powell's code checks whether SSQ - (XOPT - SL)**2) is
     ! positive. However, overflow will occur if SL contains large values that indicate absence of
     ! bounds. It is not a problem in MATLAB/Python/Julia/R.
     ! 2. Even if XOPT - SL < SQRT(SSQ), rounding errors may render SSQ - (XOPT - SL)**2) < 0.
     ssq = d**2 + s**2  ! Indeed, only SSQ(TRUELOC(XBDI == 0)) is needed.
     tanbd = ONE
-    sqrtd = -HUGENUM
-    where (xbdi == 0 .and. xopt - sl < sqrt(ssq)) sqrtd = sqrt(max(ZERO, ssq - (xopt - sl)**2))
-    where (sqrtd - s > 0) tanbd = min(tanbd, (xnew - sl) / (sqrtd - s))
-    sqrtd = -HUGENUM
-    where (xbdi == 0 .and. su - xopt < sqrt(ssq)) sqrtd = sqrt(max(ZERO, ssq - (su - xopt)**2))
-    where (sqrtd + s > 0) tanbd = min(tanbd, (su - xnew) / (sqrtd + s))
+    sqdscr = -HUGENUM
+    where (xbdi == 0 .and. xopt - sl < sqrt(ssq)) sqdscr = sqrt(max(ZERO, ssq - (xopt - sl)**2))
+    where (sqdscr - s > 0) tanbd = min(tanbd, (xnew - sl) / (sqdscr - s))
+    sqdscr = -HUGENUM
+    where (xbdi == 0 .and. su - xopt < sqrt(ssq)) sqdscr = sqrt(max(ZERO, ssq - (su - xopt)**2))
+    where (sqdscr + s > 0) tanbd = min(tanbd, (su - xnew) / (sqdscr + s))
     tanbd(trueloc(is_nan(tanbd))) = ZERO
     !----------------------------------------------------------------------------------------------!
     !!MATLAB code for defining TANBD:
