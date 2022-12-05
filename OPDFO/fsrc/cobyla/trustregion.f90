@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, December 04, 2022 PM05:56:07
+! Last Modified: Tuesday, December 06, 2022 AM12:29:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -155,7 +155,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HUGENUM, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, norm, linspace, trueloc
@@ -380,7 +380,8 @@ do iter = 1, maxiter
             ! Exit if the new value of ZDOTA(NACT) is not acceptable. Note that the opposite of
             ! 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)', as ZDOTA(NACT) can be NaN.
             ! N.B.: We cannot arrive here with NACT == 0, which should have triggered an exit above.
-            if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
+            !if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
+            if (abs(zdota(nact)) <= EPS**2 .or. is_nan(zdota(nact))) then
                 exit
             end if
             vmultc([icon, nact]) = [ZERO, frac]  ! VMULTC([ICON, NACT]) is valid as ICON > NACT.
@@ -404,7 +405,8 @@ do iter = 1, maxiter
         ! !call assert(iact(nact) == mcon .or. stage == 1, 'IACT(NACT) == MCON in stage 2', srname)
 
         !------- Powell's code does not include the following ------!
-        if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
+        !if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
+        if (abs(zdota(nact)) <= EPS**2 .or. is_nan(zdota(nact))) then
             exit
         end if
         !-----------------------------------------------------------!
@@ -433,7 +435,8 @@ do iter = 1, maxiter
         nact = nact - 1_IK
 
         !------- Powell's code does not include the following ------!
-        if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
+        !if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
+        if (abs(zdota(nact)) <= EPS**2 .or. is_nan(zdota(nact))) then
             exit
         end if
         !-----------------------------------------------------------!
@@ -558,7 +561,7 @@ end do
 
 ! Due to rounding errors, it can happen that |D| > DELTA. We brutally scale D down if |D| > 2*DELTA.
 if (norm(d) > TWO * delta) then
-    d = (delta / norm(d)) * d
+    !d = (delta / norm(d)) * d
 end if
 
 !====================!

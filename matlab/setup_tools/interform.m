@@ -88,6 +88,7 @@ for i = 1 : length(subdir)
 end
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function refactor_dir(inputdir, outputdir, ignorefiles)
 %REFACTOR_DIR refactors the files in inputdir and save them in outputdir.
 
@@ -129,6 +130,7 @@ for j = 1 : length(mkfiles)
 end
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function refactor_file(filename)
 %REFACTOR_FILE refactors a given Fortran file into the "intersection form".
 % See http://fortranwiki.org/fortran/show/Continuation+lines for details.
@@ -136,10 +138,6 @@ function refactor_file(filename)
 % ".f90" will be changed to ".f", and ".F90" will be changed to ".F". If
 % the new file has the same name as the original one, then the original
 % file will be backed up in "ORIGINAL_FILE_NAME.bak".
-
-% The comments or preprocessing directives may contain '\', which triggers warnings. Turn them off.
-orig_warning_state = warning;
-%warning('off', 'MATLAB:printf:BadEscapeSequenceInFormat');
 
 time_stamp = datestr(datetime(), 'yymmdd.HH:MM:SS');
 
@@ -222,9 +220,8 @@ end
 fclose(fid);
 evalc('system([''dos2unix -q '', refactored_filename])');  % Without this, sunf95 will complain. Supress the error message if dos2unix is unavailable.
 
-warning(orig_warning_state); % Restore the behavior of displaying warnings
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function str = refactor_str(str, first, last)
 %REFACTOR_STR refactors a given string into the "intersection form".
 % See http://fortranwiki.org/fortran/show/Continuation+lines for details.
@@ -278,10 +275,12 @@ if ~isempty(comment)
     str = [str, '\n', leading_spaces, comment];  % Put the comment back
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function isd = isdigit(c)
 isd = ischar(c) & (double(c) >= double('0')) & (double(c) <= double('9'));
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function refactor_filelist(filename)
 
 fid = fopen(filename, 'r');  % Open file for reading.

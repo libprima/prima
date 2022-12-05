@@ -30,7 +30,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:51:44
+! Last Modified: Monday, December 05, 2022 PM11:08:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -178,6 +178,8 @@ integer(IK) :: nf_loc
 integer(IK) :: nhist
 integer(IK) :: npt_loc
 logical :: constr_modified
+real(RP) :: anorm
+real(RP) :: ax
 real(RP) :: cstrv_loc
 real(RP) :: ctol_loc
 real(RP) :: cweight_loc
@@ -189,7 +191,6 @@ real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP) :: smallx
-real(RP) :: summ
 real(RP), allocatable :: A_loc(:, :)  ! A_LOC(N, M)
 real(RP), allocatable :: A_normalized(:, :)  ! A_NORMALIZED(N, M)
 real(RP), allocatable :: b_loc(:)  ! B_LOC(M)
@@ -198,10 +199,6 @@ real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
 real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Working variables (to be removed)
-real(RP) :: temp
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Sizes
 if (present(b)) then
@@ -367,18 +364,17 @@ call safealloc(A_normalized, n, m)
 call safealloc(b_normalized, m)
 if (m > 0) then
     do j = 1, m
-        summ = inprod(x, A_loc(:, j))
-        temp = sum(A_loc(:, j)**2)
-        if (temp <= 0) then
+        ax = inprod(x, A_loc(:, j))
+        anorm = sqrt(sum(A_loc(:, j)**2))
+        if (anorm <= 0) then
             if (present(info)) then
                 info = ZERO_LINEAR_CONSTRAINT
             end if
             return
         end if
-        temp = sqrt(temp)
-        constr_modified = constr_modified .or. (summ - b_loc(j) > smallx * temp)
-        b_normalized(j) = max(b_loc(j), summ) / temp
-        A_normalized(:, j) = A_loc(:, j) / temp
+        constr_modified = constr_modified .or. (ax - b_loc(j) > smallx * anorm)
+        b_normalized(j) = max(b_loc(j), ax) / anorm
+        A_normalized(:, j) = A_loc(:, j) / anorm
     end do
 end if
 
