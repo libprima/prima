@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, December 04, 2022 PM04:43:30
+! Last Modified: Monday, December 05, 2022 PM11:44:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -70,7 +70,7 @@ real(RP) :: tol
 real(RP) :: g(size(gopt_in))
 real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
 real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpha, alphm, alpht, &
-& beta, dd, dg, dhd, ds, gamma, reduct, resid, delsq, ss, temp, sold(size(s))
+& beta, dd, dg, dhd, ds, gamma, reduct, resid, delsq, ss, sqrtd, sold(size(s))
 real(RP) :: gopt(size(gopt_in)), pq(size(pq_in)), hq(size(hq_in, 1), size(hq_in, 2)), modscal
 integer(IK) :: maxiter, iter, itercg, jsav
 integer(IK) :: m
@@ -207,7 +207,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         ngetact_loc = ngetact_loc + 1_IK
         call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
         dd = inprod(psd, psd)
-        if (dd <= 0 .or. is_nan(dd)) then
+        if (dd <= EPS**2 .or. is_nan(dd)) then  ! Powell's code: IF (DD <= 0) THEN
             exit
         end if
         psd = (0.2_RP * delta / sqrt(dd)) * psd
@@ -242,12 +242,13 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
             resid = delsq - sum((s + psd)**2)
             if (resid > 0) then
                 ! Set GAMMA to the greatest value so that S + PSD + GAMMA*DPROJ satisfies the trust
-                ! region bound.
-                temp = sqrt(ds * ds + dd * resid)
+                ! region bound. SQRTD: square root of a discriminant. Powell's code for SQRTD is
+                ! SQRT(DS * DS + DD * RESID), which may be below ABS(DS) due to underflow in DS*DS.
+                sqrtd = maxval([abs(ds), sqrt(dd * resid), sqrt(ds * ds + dd * resid)])
                 if (ds <= 0) then
-                    gamma = (temp - ds) / dd
+                    gamma = (sqrtd - ds) / dd
                 else
-                    gamma = resid / (temp + ds)
+                    gamma = resid / (sqrtd + ds)
                 end if
                 ! Reduce GAMMA so that the move along DPROJ also satisfies the linear constraints.
                 ad = -ONE
@@ -283,14 +284,18 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     dg = inprod(d, g)
     ds = inprod(d, s)
     dd = inprod(d, d)
-    if (dg >= 0 .or. is_nan(dg)) then
+    ! Powell's condition for the following IF: DG >= 0. When DD is tiny (so is DS), ALPHA may be
+    ! mistakenly calculated as a huge value due to rounding errors, as observed on 20221205.
+    if (dg >= -EPS * sqrt(dd) * sqrt(sum(g**2)) .or. is_nan(dg) .or. dd <= EPS**2 .or. is_nan(dd)) then
         exit
     end if
-    temp = sqrt(ds * ds + dd * resid)
+    ! SQRTD: square root of a discriminant. Powell's code for SQRTD is SQRT(DS * DS + DD * RESID),
+    ! which may be below ABS(DS) due to underflow in DS*DS.
+    sqrtd = maxval([abs(ds), sqrt(dd * resid), sqrt(ds * ds + dd * resid)])
     if (ds <= 0) then
-        alpha = (temp - ds) / dd
+        alpha = (sqrtd - ds) / dd
     else
-        alpha = resid / (temp + ds)
+        alpha = resid / (sqrtd + ds)
     end if
     if (-alpha * dg <= ctest * reduct) then
         exit

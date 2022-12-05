@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, December 04, 2022 PM05:10:45
+! Last Modified: Monday, December 05, 2022 PM11:42:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -202,7 +202,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         ngetact = ngetact + 1
         call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
         dd = inprod(psd, psd)
-        if (dd <= 0 .or. is_nan(dd)) then
+        !if (dd <= 0 .or. is_nan(dd)) then
+        if (dd <= EPS**2 .or. is_nan(dd)) then
             exit
         end if
         scaling = 0.2_RP * delta / sqrt(dd)
@@ -239,7 +240,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
             if (resid > 0) then
                 ! Set GAMMA to the greatest value so that S + PSD + GAMMA*DPROJ satisfies the trust
                 ! region bound.
-                temp = sqrt(ds * ds + dd * resid)
+                !temp = sqrt(ds * ds + dd * resid)
+                temp = maxval([abs(ds), sqrt(dd * resid), sqrt(ds * ds + dd * resid)])
                 if (ds <= 0) then
                     gamma = (temp - ds) / dd
                 else
@@ -279,10 +281,12 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     dg = inprod(d, g)
     ds = inprod(d, s)
     dd = inprod(d, d)
-    if (dg >= 0 .or. is_nan(dg)) then
+    !if (dg >= 0 .or. is_nan(dg)) then
+    if (dg >= -EPS * sqrt(dd) * sqrt(sum(g**2)) .or. is_nan(dg) .or. dd <= EPS**2 .or. is_nan(dd)) then
         exit
     end if
-    temp = sqrt(ds * ds + dd * resid)
+    !temp = sqrt(ds * ds + dd * resid)
+    temp = maxval([abs(ds), sqrt(dd * resid), sqrt(ds * ds + dd * resid)])
     if (ds <= 0) then
         alpha = (temp - ds) / dd
     else

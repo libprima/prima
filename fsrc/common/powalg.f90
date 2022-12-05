@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 30, 2022 PM11:15:04
+! Last Modified: Tuesday, December 06, 2022 AM12:54:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -151,8 +151,8 @@ end do
 ! Augment N by 1 if C is not in range(A).
 ! The two IFs cannot be merged as Fortran may evaluate CQ(N+1) even if N>=M, leading to a SEGFAULT.
 if (n < m) then
-    if (abs(cq(n + 1)) > 0) then  ! C is not in range(A).
-        ! Powell wrote CQ(N+1) /= 0 instead of ABS(CQ(N+1)) > 0. The two differ if CQ(N+1) is NaN.
+    ! Powell's condition for the following IF: CQ(N+1) /= 0.
+    if (abs(cq(n + 1)) > EPS**2 .and. .not. isminor(cq(n + 1), cqa(n + 1))) then
         n = n + 1_IK
     end if
 end if

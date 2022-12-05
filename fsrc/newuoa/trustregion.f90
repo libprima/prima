@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 04, 2022 PM04:45:54
+! Last Modified: Monday, December 05, 2022 PM11:00:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,15 +103,15 @@ real(RP) :: hd(size(x))
 real(RP) :: hq(size(hq_in, 1), size(hq_in, 2))
 real(RP) :: hs(size(x))
 real(RP) :: hx(size(x))
-real(RP) :: hypt
+real(RP) :: modscal
 real(RP) :: pq(size(pq_in))
 real(RP) :: qadd
 real(RP) :: qred
 real(RP) :: reduc
-real(RP) :: modscal
 real(RP) :: sg
 real(RP) :: shs
 real(RP) :: sold(size(x))
+real(RP) :: sqrtd
 real(RP) :: ss
 real(RP) :: sth
 
@@ -198,13 +198,13 @@ do iter = 1, maxiter
     if (iter == 1) then
         bstep = delta / sqrt(dd)
     else
-        hypt = sqrt(ds**2 + dd * (delsq - ss))
+        sqrtd = sqrt(ds**2 + dd * (delsq - ss))  ! SQRTD: square root of a discriminant
         ! Powell's code does not distinguish the following two cases, which have no difference in
         ! precise arithmetic. The following scheme stabilizes the calculation. Copied from LINCOA.
         if (ds <= 0) then
-            bstep = (hypt - ds) / dd
+            bstep = (sqrtd - ds) / dd
         else
-            bstep = (delsq - ss) / (ds + hypt)
+            bstep = (delsq - ss) / (ds + sqrtd)
         end if
     end if
     hd = hess_mul(d, xpt, pq, hq)
