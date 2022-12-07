@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, December 07, 2022 PM03:40:25
+! Last Modified: Wednesday, December 07, 2022 PM07:03:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -409,11 +409,11 @@ do iter = 1, maxiter
         ! stage 2; the following test cannot be passed. IS THIS A BUG?!
         ! !call assert(iact(nact) == mcon .or. stage == 1, 'IACT(NACT) == MCON in stage 2', srname)
 
-        !------- Powell's code does not include the following ------!
+        !------- Powell's code does not include the following -------!
         if (is_nan(zdota(nact)) .or. abs(zdota(nact)) <= EPS**2) then
             exit
         end if
-        !-----------------------------------------------------------!
+        !------------------------------------------------------------!
 
         ! Set SDIRN to the direction of the next change to the current vector of variables.
         ! Usually during stage 1 the vector SDIRN gives a search direction that reduces all the
@@ -438,12 +438,12 @@ do iter = 1, maxiter
         vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
         nact = nact - 1_IK
 
-        !------- Powell's code does not include the following ------!
+        !------- Powell's code does not include the following -------!
         call validate(nact > 0, 'NACT > 0', srname)  ! Why is this true?
         if (is_nan(zdota(nact)) .or. abs(zdota(nact)) <= EPS**2) then
             exit
         end if
-        !-----------------------------------------------------------!
+        !------------------------------------------------------------!
 
         ! Set SDIRN to the direction of the next change to the current vector of variables.
         if (stage == 1) then
