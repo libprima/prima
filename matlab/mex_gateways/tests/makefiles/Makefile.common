@@ -525,6 +525,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "warning #6009: Fortran [0-9]* specifies that an elemental intrinsic function here be of type integer or character" \
 	| grep -v "warning #5268: Extension to standard: The text exceeds right hand column allowed on the line" \
 	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[SQRT\]" \
+	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[NINT\]" \
 	| grep -v "all warnings being treated as errors" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
