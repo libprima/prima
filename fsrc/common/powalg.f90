@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, December 06, 2022 AM12:54:27
+! Last Modified: Tuesday, December 06, 2022 PM01:59:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1475,7 +1475,7 @@ else
     ! See (4.19)--(4.20) of the NEWUOA paper.
     ! !if (denom < 0) then
     ! !    if (beta < 0) then
-    ! !        idz = int(idz + 1, kind(idz))
+    ! !        idz = idz + 1_IK
     ! !    else
     ! !        reduce_idz = .true.
     ! !    end if
@@ -1488,7 +1488,7 @@ end if
 !--------------------------------------------------------------------------------------------------!
 ! IDZ is reduced in the following case. Then exchange ZMAT(:, 1) and ZMAT(:, IDZ).
 ! !if (reduce_idz) then
-! !    idz = int(idz - 1, kind(idz))
+! !    idz = idz - 1_IK
 ! !    if (idz > 1) then
 ! !        zmat(:, [1_IK, idz]) = zmat(:, [idz, 1_IK])
 ! !    end if

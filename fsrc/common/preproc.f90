@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM02:06:05
+! Last Modified: Tuesday, December 06, 2022 PM02:15:06
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -195,7 +195,7 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     ! We cannot simply set MAXFILT = MIN(MAXFILT, MAXMEMORY/...), as they may not have
     ! the same kind, and compilers may complain. We may convert them, but overflow may occur.
     if (maxfilt > MAXMEMORY / unit_memo) then
-        maxfilt = int(MAXMEMORY / unit_memo, kind(maxfilt))
+        maxfilt = int(MAXMEMORY / unit_memo, kind(maxfilt))  ! Integer division.
     end if
     maxfilt = min(maxfun, max(MIN_MAXFILT, maxfilt))
     if (is_constrained_loc) then

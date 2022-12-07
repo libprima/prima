@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM04:45:03
+! Last Modified: Tuesday, December 06, 2022 PM12:48:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -374,7 +374,7 @@ do k = 1, npt
     if (any(slbd_test > slbd)) then
         ilbd = int(maxloc(slbd_test, mask=(.not. is_nan(slbd_test)), dim=1), kind(ilbd))
         slbd = slbd_test(ilbd)
-        ilbd = -ilbd * int(sign(ONE, xdiff(ilbd)), kind(ilbd))
+        ilbd = -ilbd * nint(sign(ONE, xdiff(ilbd)), kind(ilbd))
         !!MATLAB:
         !![slbd, ilbd] = max(slbd_test, [], 'omitnan');
         !!ilbd = -ilbd * sign(xdiff(ilbd));
@@ -387,7 +387,7 @@ do k = 1, npt
     if (any(subd_test < subd)) then
         iubd = int(minloc(subd_test, mask=(.not. is_nan(subd_test)), dim=1), kind(iubd))
         subd = max(sumin, subd_test(iubd))
-        iubd = iubd * int(sign(ONE, xdiff(iubd)), kind(iubd))
+        iubd = iubd * nint(sign(ONE, xdiff(iubd)), kind(iubd))
         !!MATLAB:
         !![subd, iubd] = min(subd_test, [], 'omitnan');
         !!subd = max(sumin, subd);

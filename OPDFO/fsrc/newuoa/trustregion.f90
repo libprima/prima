@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 04, 2022 PM04:57:54
+! Last Modified: Wednesday, December 07, 2022 PM04:06:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -183,6 +183,10 @@ twod_search = .false.
 ! In the 4th case, twod_search will be set to true, meaning that S will be improved by a sequence of
 ! two-dimensional search, the two-dimensional subspace at each iteration being span(S, -G).
 do iter = 1, maxiter
+    if (is_nan(gg)) then
+        info_loc = -1
+        exit
+    end if
     ! Exit if GG is small. This must be done first; otherwise, DD can be 0 and BSTEP is not well
     ! defined. The inequality below must be non-strict so that GG = 0 will trigger the exit.
     if (gg <= (tol**2) * gg0) then
@@ -194,7 +198,14 @@ do iter = 1, maxiter
     if (iter == 1) then
         bstep = delta / sqrt(dd)
     else
-        hypt = sqrt(ds**2 + dd * (delsq - ss))
+        if (delsq - ss <= 0) then
+            exit
+            twod_search = .true.
+        end if
+        if (dd <= epsilon(dd) * delsq .or. is_nan(ds)) exit
+
+        !hypt = sqrt(ds**2 + dd * (delsq - ss))
+        hypt = maxval([sqrt(ds**2 + dd * (delsq - ss)), abs(ds), sqrt(dd * (delsq - ss))])
         ! Powell's code does not distinguish the following two cases, which have no difference in
         ! precise arithmetic. The following scheme stabilizes the calculation. Copied from LINCOA.
         if (ds <= 0) then
@@ -287,6 +298,10 @@ end if
 ! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
 ! which is the norm square of the gradient at the current iterate.
 do iter = 1, maxiter
+    if (is_nan(gg)) then
+        info_loc = -1
+        exit
+    end if
     ! Exit if GG is small. The inequality must be non-strict so that GG = 0 can trigger the exit.
     if (gg <= (tol**2) * gg0) then
         info_loc = 0_IK

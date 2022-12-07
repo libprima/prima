@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, December 04, 2022 PM04:06:09
+! Last Modified: Wednesday, December 07, 2022 PM01:28:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -200,10 +200,12 @@ do iter = 1, maxiter
     stepsq = sum(s**2)
 
     !--------------------------------------------------------------------------------------!
-    if (stepsq <= 0 .or. is_nan(stepsq)) then
+    !if (stepsq <= 0 .or. is_nan(stepsq)) then
+    if (stepsq <= EPS * delsq .or. is_nan(stepsq)) then
         exit
     end if
-    if ((gredsq * delsq <= ctest**2 * qred * qred) .or. any(is_nan([gredsq, qred]))) then
+    !if ((gredsq * delsq <= ctest**2 * qred * qred) .or. any(is_nan([gredsq, qred]))) then
+    if ((gredsq * delsq <= (ctest * qred)**2) .or. any(is_nan([gredsq, qred]))) then
         exit
     end if
     !--------------------------------------------------------------------------------------!
@@ -220,7 +222,8 @@ do iter = 1, maxiter
         twod_search = .true.
         exit
     end if
-    temp = sqrt(stepsq * resid + ds * ds)
+    !temp = sqrt(stepsq * resid + ds * ds)
+    temp = maxval([sqrt(stepsq * resid + ds * ds), abs(ds), sqrt(stepsq * resid)])
 
     ! Zaikun 20220210: For the IF ... ELSE ... END IF below, Powell's condition for the IF is DS<0.
     ! In theory, switching the condition to DS <= 0 changes nothing; indeed, the two formulations
@@ -479,7 +482,7 @@ do iter = 1, maxiter
         exit
     end if
     !grid_size = int(17.0_RP * hangt_bd + 4.1_RP, IK)  ! Powell's version
-    grid_size = 2_IK * int(17.0_RP * hangt_bd + 4.1_RP, IK)  ! It doubles the value in Powell's code
+    grid_size = 2_IK * nint(17.0_RP * hangt_bd + 4.1_RP, IK)  ! It doubles the value in Powell's code
     hangt = interval_max(interval_fun_trsbox, ZERO, hangt_bd, args, grid_size)
     sdec = interval_fun_trsbox(hangt, args)
     if (.not. sdec > 0) exit
