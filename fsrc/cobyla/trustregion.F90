@@ -10,7 +10,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, December 07, 2022 PM10:38:20
+! Last Modified: Wednesday, December 07, 2022 PM10:50:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -216,7 +216,7 @@ real(RP) :: zdota(size(z, 2))
 integer*4, external :: mexPrintf
 integer*4 :: kk
 character(len=8000) :: d_str, sdirn_str
-character(len=80) :: sqrtd_str, step_str, sd_str, dd_str, ss_str, iter_str
+character(len=80) :: sqrtd_str, step_str, sd_str, dd_str, ss_str, iter_str, delta_str, normd_str, norms_str
 
 ! Sizes
 n = int(size(A, 1), kind(n))
@@ -491,9 +491,13 @@ do iter = 1, maxiter
     write (sqrtd_str, *) sqrtd
     write (d_str, *) d
     write (sdirn_str, *) sdirn
+    write (delta_str, *) delta
+    write (normd_str, *) norm(d)
+    write (norms_str, *) norm(sdirn)
 
-    kk = mexPrintf('iter, step, dd, sd, sqrtd')
-    kk = mexPrintf(iter_str//','//step_str//','//dd_str//','//sd_str//','//sqrtd_str)
+    kk = mexPrintf('iter, step, dd, sd, sqrtd,delta, normd,norms')
+    kk = mexPrintf(iter_str//','//step_str//','//dd_str//','//sd_str//','&
+        & //sqrtd_str//','//delta_str//','//normd_str//','//norms_str)
     kk = mexPrintf('d:'//d_str)
     kk = mexPrintf('sdirn:'//sdirn_str)
 
