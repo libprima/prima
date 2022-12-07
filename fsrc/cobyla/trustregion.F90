@@ -1,3 +1,5 @@
+#include "fintrf.h"
+
 module trustregion_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region calculations of COBYLA.
@@ -8,7 +10,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, December 07, 2022 PM07:03:53
+! Last Modified: Wednesday, December 07, 2022 PM10:38:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -210,6 +212,11 @@ real(RP) :: step
 real(RP) :: vmultd(size(vmultc))
 real(RP) :: zdasav(size(z, 2))
 real(RP) :: zdota(size(z, 2))
+
+integer*4, external :: mexPrintf
+integer*4 :: kk
+character(len=8000) :: d_str, sdirn_str
+character(len=80) :: sqrtd_str, step_str, sd_str, dd_str, ss_str, iter_str
 
 ! Sizes
 n = int(size(A, 1), kind(n))
@@ -475,6 +482,21 @@ do iter = 1, maxiter
     else
         step = (sqrtd - sd) / ss
     end if
+
+    write (iter_str, *) iter
+    write (step_str, *) step
+    write (dd_str, *) dd
+    write (sd_str, *) sd
+    write (ss_str, *) ss
+    write (sqrtd_str, *) sqrtd
+    write (d_str, *) d
+    write (sdirn_str, *) sdirn
+
+    kk = mexPrintf('iter, step, dd, sd, sqrtd')
+    kk = mexPrintf(iter_str//','//step_str//','//dd_str//','//sd_str//','//sqrtd_str)
+    kk = mexPrintf('d:'//d_str)
+    kk = mexPrintf('sdirn:'//sdirn_str)
+
     call assert(step >= 0 .and. step < TWO * (delta + norm(d)) / norm(sdirn), &
         & '0 <= STEP < 2*(DELTA + |D|)/|SDIRN|', srname)
     !
