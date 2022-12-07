@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, December 07, 2022 PM03:01:47
+! Last Modified: Wednesday, December 07, 2022 PM05:26:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -207,7 +207,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         ngetact_loc = ngetact_loc + 1_IK
         call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
         dd = inprod(psd, psd)
-        if (dd <= EPS**2 .or. is_nan(dd)) then  ! Powell's code: IF (DD <= 0) THEN
+        if (dd <= EPS*delsq .or. is_nan(dd)) then  ! Powell's code: IF (DD <= 0) THEN
             exit
         end if
         psd = (0.2_RP * delta / sqrt(dd)) * psd
@@ -251,8 +251,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
                 else
                     gamma = resid / (sqrtd + ds)
                 end if
-                call assert(gamma > 0 .and. gamma < TWO * (delta + norm(s + psd)) / norm(dproj), &
-                    & '0 < GAMMA < 2 (DELTA + |S + PSD|) / |DPROJ|', srname)
+                call assert(gamma >= 0 .and. gamma < TWO * (delta + norm(s + psd)) / norm(dproj), &
+                    & '0 <= GAMMA < 2 (DELTA + |S + PSD|) / |DPROJ|', srname)
 
                 ! Reduce GAMMA so that the move along DPROJ also satisfies the linear constraints.
                 ad = -ONE
@@ -300,7 +300,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     else
         alpha = resid / (sqrtd + ds)
     end if
-    call assert(alpha >= 0 .and. alpha < TWO * (delta + norm(s)) / norm(d), & 
+    call assert(alpha >= 0 .and. alpha < TWO * (delta + norm(s)) / norm(d), &
         & '0 <= ALPHA < 2*(DELTA + |S|)/|D|', srname)
 
     ! Powell's condition for the following IF: -ALPHA * DG <= CTEST * REDUCT. Note that the EXIT
@@ -311,8 +311,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
 
     ! Set DHD to the curvature of the model along D. Then reduce ALPHA if necessary to the value
     ! that minimizes the model.
-    dhd = inprod(d, hd)
     hd = hess_mul(d, xpt, pq, hq)
+    dhd = inprod(d, hd)
     alpht = alpha
     if (dg + alpha * dhd > 0) then
         alpha = -dg / dhd

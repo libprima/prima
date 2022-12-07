@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 07, 2022 PM04:24:08
+! Last Modified: Wednesday, December 07, 2022 PM04:36:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -209,11 +209,19 @@ do iter = 1, maxiter
             twod_search = .true.
             exit
         end if
-        ! Powell's code does not have the following IF.
-        if (dd <= EPS * delsq .or. is_nan(ds)) then
+
+        ! Powell's code does not have the following two IFs.
+        !--------------------------------------------------!
+        if (dd <= EPS * delsq) then
+            info_loc = 0
+            exit
+        end if
+        if (is_nan(ds)) then
             info_loc = -1
             exit
         end if
+        !--------------------------------------------------!
+
         ! SQRTD: square root of a discriminant. The MAXVAL avoids SQRTD < ABS(DS) due to underflow.
         sqrtd = maxval([sqrt(ds**2 + dd * resid), abs(ds), sqrt(dd * resid)])
         ! Powell's code does not distinguish the following two cases, which have no difference in

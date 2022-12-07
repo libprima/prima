@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, December 07, 2022 PM12:09:31
+! Last Modified: Wednesday, December 07, 2022 PM05:32:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -203,7 +203,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
         dd = inprod(psd, psd)
         !if (dd <= 0 .or. is_nan(dd)) then
-        if (dd <= EPS**2 .or. is_nan(dd)) then
+        if (dd <= EPS * delsq .or. is_nan(dd)) then
             exit
         end if
         scaling = 0.2_RP * delta / sqrt(dd)
