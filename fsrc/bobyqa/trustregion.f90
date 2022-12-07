@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 05, 2022 PM10:56:52
+! Last Modified: Wednesday, December 07, 2022 PM04:23:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -194,11 +194,16 @@ twod_search = .false.  ! The default value of TWOD_SEARCH is FALSE!
 ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
 maxiter = (n - nact)**2_IK
 do iter = 1, maxiter
+    resid = delsq - sum(d(trueloc(xbdi == 0))**2)
+    if (resid <= 0) then
+        twod_search = .true.
+        exit
+    end if
+
     ! Set the next search direction of the conjugate gradient method. It is the steepest descent
     ! direction initially and when the iterations are restarted because a variable has just been
     ! fixed by a bound, and of course the components of the fixed variables are zero. MAXITER is an
     ! upper bound on the indices of the conjugate gradient iterations.
-
     if (itercg == 0) then
         ! TODO: If we are sure that S contain only finite values, we may merge this case into the next.
         s = -gnew
@@ -207,39 +212,35 @@ do iter = 1, maxiter
     end if
     s(trueloc(xbdi /= 0)) = ZERO
     stepsq = sum(s**2)
-
-    if (.not. (stepsq > 0 .and. gredsq * delsq > ctest**2 * qred * qred)) then
-        exit
-    end if
-
-    ! Multiply the search direction by the second derivative matrix of Q and calculate some scalars
-    ! for the choice of steplength. Then set BSTEP to the length of the step to the trust region
-    ! boundary and STPLEN to the steplength, ignoring the simple bounds.
-    hs = hess_mul(s, xpt, pq, hq)
-    resid = delsq - sum(d(trueloc(xbdi == 0))**2)
     ds = inprod(d(trueloc(xbdi == 0)), s(trueloc(xbdi == 0)))
-    shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
 
-    if (resid <= 0) then
-        twod_search = .true.
+    if (.not. (stepsq > EPS * delsq .and. gredsq * delsq > (ctest * qred)**2 .and. .not. is_nan(ds))) then
         exit
     end if
 
-    ! SQRTD: square root of a discriminant.
-    sqrtd = sqrt(stepsq * resid + ds * ds)
+    ! Set BSTEP to the length of the step to the trust region boundary and STPLEN to the steplength,
+    ! ignoring the simple bounds.
 
-    ! Zaikun 20220210: For the IF ... ELSE ... END IF below, Powell's condition for the IF is DS<0.
-    ! In theory, switching the condition to DS <= 0 changes nothing; indeed, the two formulations
-    ! of BSTEP are equivalent. However, surprisingly, DS <= 0 clearly worsens the performance of
-    ! BOBYQA in a test on 20220210. Why? When DS = 0, what should be the simplest (and potentially
-    ! the stablest) formulation? What if we are at the first iteration? BSTEP = DELTA/|D|?
+    ! SQRTD: square root of a discriminant. The MAXVAL avoids SQRTD < ABS(DS) due to underflow.
+    sqrtd = maxval([sqrt(stepsq * resid + ds * ds), sqrt(stepsq * resid), abs(ds)])
+
+    ! Zaikun 20220210: For the IF ... ELSE ... END IF below, Powell's condition for the IF is DS>=0.
+    ! In theory, switching the condition to DS > 0 changes nothing; indeed, the two formulations
+    ! of BSTEP are equivalent. However, surprisingly, DS > 0 clearly worsens the performance of
+    ! BOBYQA in tests on 20220210, 20221206. Why? When DS = 0, what should be the best formulation?
+    ! What if we are at the first iteration? BSTEP = DELTA/|D|?
     ! See TRSAPP.F90 of NEWUOA.
-    !if (ds <= 0) then  ! Zaikun 20210925
-    if (ds < 0) then
-        bstep = (sqrtd - ds) / stepsq
-    else
+    !if (ds > 0) then  ! Zaikun 20210925
+    if (ds >= 0) then
         bstep = resid / (sqrtd + ds)
+    else
+        bstep = (sqrtd - ds) / stepsq
     end if
+    call assert(bstep >= 0 .and. bstep < TWO * (delta + norm(d)) / norm(s), &
+        & '0 <= BSTEP < 2*(DELTA + |D|)/|S|', srname)
+
+    hs = hess_mul(s, xpt, pq, hq)
+    shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))
     stplen = bstep
     if (shs > 0) then
         stplen = min(bstep, gredsq / shs)
@@ -327,7 +328,7 @@ do iter = 1, maxiter
     if (iact > 0) then
         nact = nact + 1_IK
         call assert(abs(s(iact)) > 0, 'S(IACT) /= 0', srname)
-        xbdi(iact) = int(sign(ONE, s(iact)), kind(xbdi))  !!MATLAB: xbdi(iact) = sign(s(iact))
+        xbdi(iact) = nint(sign(ONE, s(iact)), kind(xbdi))  !!MATLAB: xbdi(iact) = sign(s(iact))
         ! Exit when NACT = N (NACT > N is impossible). We must update XBDI before exiting!
         if (nact >= n) then
             exit  ! This leads to a difference. Why?
@@ -485,8 +486,9 @@ do iter = 1, maxiter
     if (any(is_nan(args))) then
         exit
     end if
-    !grid_size = int(17.0_RP * hangt_bd + 4.1_RP, kind(grid_size))  ! Powell's version
-    grid_size = 2_IK * int(17.0_RP * hangt_bd + 4.1_RP, kind(grid_size))  ! It doubles the value in Powell's code
+    !grid_size = nint(17.0_RP * hangt_bd + 4.1_RP, kind(grid_size))  ! Powell's version
+    grid_size = 2_IK * nint(17.0_RP * hangt_bd + 4.1_RP, kind(grid_size))  ! It doubles the value in Powell's code
+    !!MATLAB: grid_size = 2 * round(17 * hangt_bd + 4.1_RP)
     hangt = interval_max(interval_fun_trsbox, ZERO, hangt_bd, args, grid_size)
     sdec = interval_fun_trsbox(hangt, args)
     if (.not. sdec > 0) then
@@ -505,7 +507,7 @@ do iter = 1, maxiter
     hdred = cth * hdred + sth * hs
     qred = qred + sdec
     if (iact >= 1 .and. iact <= n .and. hangt >= hangt_bd) then  ! D(IACT) reaches lower/upper bound.
-        xbdi(iact) = int(sign(ONE, d(iact) - diact), kind(xbdi))  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
+        xbdi(iact) = nint(sign(ONE, d(iact) - diact), kind(xbdi))  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
     elseif (.not. sdec > ctest * qred) then
         exit
     end if

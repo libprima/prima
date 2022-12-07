@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, December 04, 2022 PM06:15:44
+! Last Modified: Tuesday, December 06, 2022 PM02:04:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -212,7 +212,7 @@ paru = ZERO  ! Upper bound for the optimal PAR ??? The initial value is less tha
 paruest = ZERO  ! Estimation for PARU
 posdef = .false.
 iter = 0
-maxiter = min(1000_IK, 100_IK * int(n, IK))  ! What is the theoretical bound of iterations?
+maxiter = min(1000_IK, 100_IK * n)  ! What is the theoretical bound of iterations?
 
 do while (.true.)
 

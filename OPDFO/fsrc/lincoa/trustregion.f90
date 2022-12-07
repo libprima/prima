@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 05, 2022 PM11:42:09
+! Last Modified: Wednesday, December 07, 2022 PM12:09:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -237,7 +237,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
             ds = inprod(dproj, s + psd)
             dd = sum(dproj**2)
             resid = delsq - sum((s + psd)**2)
-            if (resid > 0) then
+            !if (resid > 0) then
+            if (resid > 0 .and. dd > EPS * delsq .and. .not. is_nan(ds)) then
                 ! Set GAMMA to the greatest value so that S + PSD + GAMMA*DPROJ satisfies the trust
                 ! region bound.
                 !temp = sqrt(ds * ds + dd * resid)
@@ -282,7 +283,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     ds = inprod(d, s)
     dd = inprod(d, d)
     !if (dg >= 0 .or. is_nan(dg)) then
-    if (dg >= -EPS * sqrt(dd) * sqrt(sum(g**2)) .or. is_nan(dg) .or. dd <= EPS**2 .or. is_nan(dd)) then
+    !if (dg >= -EPS * sqrt(dd) * sqrt(sum(g**2)) .or. is_nan(dg) .or. dd <= EPS**2 .or. is_nan(dd)) then
+    if (dd <= EPS * delsq .or. is_nan(ds)) then
         exit
     end if
     !temp = sqrt(ds * ds + dd * resid)
@@ -292,7 +294,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     else
         alpha = resid / (temp + ds)
     end if
-    if (-alpha * dg <= ctest * reduct) then
+    !if (-alpha * dg <= ctest * reduct) then
+    if (-alpha * dg <= ctest * reduct .or. is_nan(alpha * dg)) then
         exit
     end if
 

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, December 06, 2022 AM01:00:17
+! Last Modified: Wednesday, December 07, 2022 PM03:40:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -204,6 +204,7 @@ real(RP) :: optnew
 real(RP) :: optold
 real(RP) :: sd
 real(RP) :: sdirn(size(d))
+real(RP) :: sqrtd
 real(RP) :: ss
 real(RP) :: step
 real(RP) :: vmultd(size(vmultc))
@@ -458,20 +459,25 @@ do iter = 1, maxiter
 
     ! Calculate the step to the trust region boundary or take the step that reduces CVIOL to 0.
     !----------------------------------------------------------------------------------------------!
-    ! The following calculation of STEP is simpler than Powell's approach and seems to improve the
-    ! performance of COBYLA. In our test, SQRT(SS * DD + SD**2) + SD can become 0 due to a tiny SS
-    ! or DD or due to a negative SD; hence we reformulated STEP as below and exit when SS becomes 0.
-    ! We also found that removing the precaution about underflows is beneficial to the overall
-    ! performance of COBYLA --- the underflows are harmless anyway.
-    !----------------------------------------------------------------!
+    ! The following calculation of STEP is adopted from NEWUOA/BOBYQA/LINCOA. It seems to improve
+    ! the performance of COBYLA. We also found that removing the precaution about underflows is
+    ! beneficial to the overall performance of COBYLA --- the underflows are harmless anyway.
     dd = delta**2 - inprod(d, d)
     ss = inprod(sdirn, sdirn)
     sd = inprod(sdirn, d)
-    if (dd <= 0 .or. ss <= 0 .or. is_nan(dd + ss + sd)) then
+    if (dd <= 0 .or. ss <= EPS * delta**2 .or. is_nan(sd)) then
         exit
     end if
-    step = (sqrt(ss * dd + sd**2) - sd) / ss
-    !----------------------------------------------------------------!
+    ! SQRTD: square root of a discriminant. The MAXVAL avoids SQRTD < ABS(SD) due to underflow.
+    sqrtd = maxval([sqrt(ss * dd + sd**2), abs(sd), sqrt(ss * dd)])
+    if (sd > 0) then
+        step = dd / (sqrtd + sd)
+    else
+        step = (sqrtd - sd) / ss
+    end if
+    call assert(step >= 0 .and. step < TWO * (delta + norm(d)) / norm(sdirn), &
+        & '0 <= STEP < 2*(DELTA + |D|)/|SDIRN|', srname)
+    !
     ! Powell's approach and comments are as follows.
     !----------------------------------------------------------------!
     ! The two statements below that include the factor EPS prevent

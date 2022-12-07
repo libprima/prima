@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 05, 2022 PM11:44:32
+! Last Modified: Wednesday, December 07, 2022 PM03:01:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -240,16 +240,20 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
             ds = inprod(dproj, s + psd)
             dd = sum(dproj**2)
             resid = delsq - sum((s + psd)**2)
-            if (resid > 0) then
+            ! Powell's condition for the following IF: RESID > 0.
+            if (resid > 0 .and. dd > EPS * delsq .and. .not. is_nan(ds)) then
                 ! Set GAMMA to the greatest value so that S + PSD + GAMMA*DPROJ satisfies the trust
                 ! region bound. SQRTD: square root of a discriminant. Powell's code for SQRTD is
                 ! SQRT(DS * DS + DD * RESID), which may be below ABS(DS) due to underflow in DS*DS.
-                sqrtd = maxval([abs(ds), sqrt(dd * resid), sqrt(ds * ds + dd * resid)])
+                sqrtd = maxval([sqrt(ds * ds + dd * resid), abs(ds), sqrt(dd * resid)])
                 if (ds <= 0) then
                     gamma = (sqrtd - ds) / dd
                 else
                     gamma = resid / (sqrtd + ds)
                 end if
+                call assert(gamma > 0 .and. gamma < TWO * (delta + norm(s + psd)) / norm(dproj), &
+                    & '0 < GAMMA < 2 (DELTA + |S + PSD|) / |DPROJ|', srname)
+
                 ! Reduce GAMMA so that the move along DPROJ also satisfies the linear constraints.
                 ad = -ONE
                 ad(trueloc(resnew > 0)) = matprod(dproj, amat(:, trueloc(resnew > 0)))
@@ -271,41 +275,44 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
             itercg = 0
         end if
     end if
-
-    ! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
-    ! derivative term of this step is sufficiently small or if no further progress is possible.
     itercg = itercg + 1_IK
     ! After the above line, ITERCG = 0 iff GETACT has been just called, and D is not PSD but a
     ! modified step.
+
+    ! Set ALPHA to the steplength from S along D to the trust region boundary. Return if the first
+    ! derivative term of this step is sufficiently small or if no further progress is possible.
     resid = delsq - ss
-    if (resid <= 0) then
-        exit
-    end if
     dg = inprod(d, g)
     ds = inprod(d, s)
     dd = inprod(d, d)
-    ! Powell's condition for the following IF: DG >= 0. When DD is tiny (so is DS), ALPHA may be
-    ! mistakenly calculated as a huge value due to rounding errors, as observed on 20221205.
-    if (dg >= -EPS * sqrt(dd) * sqrt(sum(g**2)) .or. is_nan(dg) .or. dd <= EPS**2 .or. is_nan(dd)) then
+    ! Powell's condition for the following IF: (RESID <= 0 .OR. DG >= 0). If DD is tiny (so is DS),
+    ! ALPHA may be mistakenly calculated as a huge value due to rounding errors, as observed on
+    ! 20221205. Therefore, we exit when DD is small. The test for DG is covered by the IF after the
+    ! calculation of ALPHA.
+    if (resid <= 0 .or. dd <= EPS * delsq .or. is_nan(ds)) then
         exit
     end if
     ! SQRTD: square root of a discriminant. Powell's code for SQRTD is SQRT(DS * DS + DD * RESID),
     ! which may be below ABS(DS) due to underflow in DS*DS.
-    sqrtd = maxval([abs(ds), sqrt(dd * resid), sqrt(ds * ds + dd * resid)])
+    sqrtd = maxval([sqrt(ds * ds + dd * resid), abs(ds), sqrt(dd * resid)])
     if (ds <= 0) then
         alpha = (sqrtd - ds) / dd
     else
         alpha = resid / (sqrtd + ds)
     end if
-    if (-alpha * dg <= ctest * reduct) then
+    call assert(alpha >= 0 .and. alpha < TWO * (delta + norm(s)) / norm(d), & 
+        & '0 <= ALPHA < 2*(DELTA + |S|)/|D|', srname)
+
+    ! Powell's condition for the following IF: -ALPHA * DG <= CTEST * REDUCT. Note that the EXIT
+    ! will be triggered if DG >= 0, as ALPHA >= 0.
+    if (-alpha * dg <= ctest * reduct .or. is_nan(alpha * dg)) then
         exit
     end if
-
-    hd = hess_mul(d, xpt, pq, hq)
 
     ! Set DHD to the curvature of the model along D. Then reduce ALPHA if necessary to the value
     ! that minimizes the model.
     dhd = inprod(d, hd)
+    hd = hess_mul(d, xpt, pq, hq)
     alpht = alpha
     if (dg + alpha * dhd > 0) then
         alpha = -dg / dhd
@@ -325,8 +332,8 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     end if
     !----------------------------------------------------------------------------------------------!
     ! Alternatively, JSAV and ALPHA can be calculated as below.
-    !JSAV = INT(MINLOC([ALPHA, FRAC], DIM=1), KIND(JSAV)) - 1_IK
-    !ALPHA = MINVAL([ALPHA, FRAC])  ! This line cannot be exchanged with the last.
+    ! !JSAV = INT(MINLOC([ALPHA, FRAC], DIM=1), KIND(JSAV)) - 1_IK
+    ! !ALPHA = MINVAL([ALPHA, FRAC])  ! This line cannot be exchanged with the last.
     ! We prefer our implementation as the code is more explicit; in addition, it is more flexible:
     ! we can change the condition ANY(FRAC < ALPHA) to ANY(FRAC < (1 - EPS) * ALPHA) or
     ! ANY(FRAC < (1 + EPS) * ALPHA), depending on whether we believe a false positive or a false
