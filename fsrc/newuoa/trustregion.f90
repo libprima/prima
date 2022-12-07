@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 05, 2022 PM11:00:51
+! Last Modified: Wednesday, December 07, 2022 PM04:24:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -50,7 +50,7 @@ subroutine trsapp(delta, gq_in, hq_in, pq_in, tol, x, xpt, crvmin, s, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, project
@@ -108,6 +108,7 @@ real(RP) :: pq(size(pq_in))
 real(RP) :: qadd
 real(RP) :: qred
 real(RP) :: reduc
+real(RP) :: resid
 real(RP) :: sg
 real(RP) :: shs
 real(RP) :: sold(size(x))
@@ -187,8 +188,13 @@ twod_search = .false.
 ! In the 4th case, twod_search will be set to true, meaning that S will be improved by a sequence of
 ! two-dimensional search, the two-dimensional subspace at each iteration being span(S, -G).
 do iter = 1, maxiter
+    ! Exit if G contains NaN.
+    if (is_nan(gg)) then
+        info_loc = -1
+        exit
+    end if
     ! Exit if GG is small. This must be done first; otherwise, DD can be 0 and BSTEP is not well
-    ! defined. The inequality below must be non-strict so that GG = 0 will trigger the exit.
+    ! defined. The inequality below must be non-strict so that GG = GG0 = 0 will trigger the exit.
     if (gg <= (tol**2) * gg0) then
         info_loc = 0
         exit
@@ -198,15 +204,29 @@ do iter = 1, maxiter
     if (iter == 1) then
         bstep = delta / sqrt(dd)
     else
-        sqrtd = sqrt(ds**2 + dd * (delsq - ss))  ! SQRTD: square root of a discriminant
+        resid = delsq - ss
+        if (resid <= 0) then
+            twod_search = .true.
+            exit
+        end if
+        ! Powell's code does not have the following IF.
+        if (dd <= EPS * delsq .or. is_nan(ds)) then
+            info_loc = -1
+            exit
+        end if
+        ! SQRTD: square root of a discriminant. The MAXVAL avoids SQRTD < ABS(DS) due to underflow.
+        sqrtd = maxval([sqrt(ds**2 + dd * resid), abs(ds), sqrt(dd * resid)])
         ! Powell's code does not distinguish the following two cases, which have no difference in
         ! precise arithmetic. The following scheme stabilizes the calculation. Copied from LINCOA.
         if (ds <= 0) then
             bstep = (sqrtd - ds) / dd
         else
-            bstep = (delsq - ss) / (ds + sqrtd)
+            bstep = resid / (sqrtd + ds)
         end if
     end if
+    call assert(bstep >= 0 .and. bstep < TWO * (delta + norm(s)) / norm(d), &
+        & '0 <= BSTEP < 2*(DELTA + |S|)/|D|', srname)
+
     hd = hess_mul(d, xpt, pq, hq)
     dhd = inprod(d, hd)
 
@@ -251,7 +271,6 @@ do iter = 1, maxiter
     ! Exit if CG path cuts the boundary. It is the only possibility that TWOD_SEARCH is true.
     if (alpha >= bstep .or. ss >= delsq) then
         crvmin = ZERO
-        !twod_search = (n >= 2)  ! TWOD_SEARCH should be FALSE if N = 1.
         twod_search = (n >= 2 .and. gg > (tol**2) * gg0)  ! TWOD_SEARCH should be FALSE if N = 1.
         exit
     end if
@@ -281,7 +300,7 @@ end if
 
 if (twod_search) then
     ! At least 1 iteration of 2D minimization
-    maxiter = max(int(1, kind(maxiter)), maxiter - iter)
+    maxiter = max(1_IK, maxiter - iter)
 else
     maxiter = 0
 end if
@@ -291,7 +310,12 @@ end if
 ! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
 ! which is the norm square of the gradient at the current iterate.
 do iter = 1, maxiter
-    ! Exit if GG is small. The inequality must be non-strict so that GG = 0 can trigger the exit.
+    ! Exit if G contains NaN.
+    if (is_nan(gg)) then
+        info_loc = -1
+        exit
+    end if
+    ! Exit if GG is small. The inequality must be non-strict so that GG = GG0 = 0 triggers the exit.
     if (gg <= (tol**2) * gg0) then
         info_loc = 0
         exit

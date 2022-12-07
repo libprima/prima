@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, November 13, 2022 PM02:08:06
+! Last Modified: Tuesday, December 06, 2022 PM02:52:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -97,7 +97,7 @@ if (.not. (alloc_status == 0 .and. allocated(cos_seed))) then
     call errstop(srname, 'Memory allocation fails.')
 end if
 
-! Some compilers cannot guarantee ABS(COS) <= 1 when the variable if huge. This may cause overflow.
+! Some compilers cannot guarantee ABS(COS) <= 1 when the variable is huge. This may cause overflow.
 ! Note that 1.0_DP cannot be written as ONE, because KIND(ONE) = RP, which may not be DP.
 cos_seed = min(max(cos(real([(i, i=seed - n + 1, seed)], DP)), -1.0_DP), 1.0_DP)
 seed_to_put = ceiling(0.9_DP * real(huge(0), DP) * cos_seed)

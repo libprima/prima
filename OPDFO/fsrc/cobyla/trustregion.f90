@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, December 06, 2022 AM12:29:04
+! Last Modified: Wednesday, December 07, 2022 PM12:47:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -464,10 +464,17 @@ do iter = 1, maxiter
     dd = delta**2 - inprod(d, d)
     ss = inprod(sdirn, sdirn)
     sd = inprod(sdirn, d)
-    if (dd <= 0 .or. ss <= 0 .or. is_nan(dd + ss + sd)) then
+    !if (dd <= 0 .or. ss <= 0 .or. is_nan(dd + ss + sd)) then
+    if (dd <= 0 .or. ss <= EPS * delta**2 .or. any(is_nan([dd, ss, sd]))) then
         exit
     end if
-    step = (sqrt(ss * dd + sd**2) - sd) / ss
+    !step = (sqrt(ss * dd + sd**2) - sd) / ss
+    step = maxval([sqrt(ss * dd), abs(sd), sqrt(ss * dd + sd**2)])
+    if (sd > 0) then
+        step = dd / (step + sd)
+    else
+        step = (step - sd) / ss
+    end if
     !----------------------------------------------------------------!
     ! Powell's approach and comments are as follows.
     !----------------------------------------------------------------!

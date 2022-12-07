@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM02:04:10
+! Last Modified: Tuesday, December 06, 2022 PM02:13:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -87,7 +87,7 @@ unit_memo = unit_memo * cstyle_sizeof(0.0_RP)
 if (unit_memo <= 0) then  ! No output of history is requested
     maxhist = 0
 elseif (maxhist > MAXMEMORY / unit_memo) then
-    maxhist = int(MAXMEMORY / unit_memo, kind(maxhist))
+    maxhist = int(MAXMEMORY / unit_memo, kind(maxhist))  ! Integer division.
     ! We cannot simply set MAXHIST = MIN(MAXHIST, MAXMEMORY/UNIT_MEMO), as they may not have
     ! the same kind, and compilers may complain. We may convert them, but overflow may occur.
 end if

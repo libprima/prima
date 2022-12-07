@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 04, 2022 PM10:09:50
+! Last Modified: Tuesday, December 06, 2022 PM01:42:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2503,7 +2503,7 @@ character(len=*), parameter :: srname = 'LINSPACE_I'
 !====================!
 
 call safealloc(x, max(n, 0_IK))
-x = int(linspace_r(real(xstart, RP), real(xstop, RP), n), IK)
+x = nint(linspace_r(real(xstart, RP), real(xstop, RP), n), IK)  ! Rounded to the closest integer.
 
 !====================!
 !  Calculation ends  !
@@ -2927,7 +2927,7 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: vec(:)
 ! Outputs
-real(RP) :: smat((floor(sqrt(real(8 * size(vec) + 1))) - 1) / 2, (floor(sqrt(real(8 * size(vec) + 1))) - 1) / 2)
+real(RP) :: smat((nint(sqrt(real(8 * size(vec) + 1))) - 1) / 2, (nint(sqrt(real(8 * size(vec) + 1))) - 1) / 2)
 ! Local variables
 character(len=*), parameter :: srname = 'SMAT2VEC'
 integer(IK) :: ih
