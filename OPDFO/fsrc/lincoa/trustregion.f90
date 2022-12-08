@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, December 07, 2022 PM05:32:22
+! Last Modified: Thursday, December 08, 2022 AM11:55:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -248,6 +248,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
                 else
                     gamma = resid / (temp + ds)
                 end if
+                if (gamma <= 0 .or. .not. is_finite(gamma)) gamma = ZERO
                 ! Reduce GAMMA so that the move along DPROJ also satisfies the linear constraints.
                 ad = -ONE
                 ad(trueloc(resnew > 0)) = matprod(dproj, amat(:, trueloc(resnew > 0)))
@@ -294,6 +295,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     else
         alpha = resid / (temp + ds)
     end if
+    if (alpha <= 0 .or. .not. is_finite(alpha)) exit
     !if (-alpha * dg <= ctest * reduct) then
     if (-alpha * dg <= ctest * reduct .or. is_nan(alpha * dg)) then
         exit

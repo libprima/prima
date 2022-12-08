@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 04, 2022 PM05:01:13
+! Last Modified: Thursday, December 08, 2022 AM10:19:53
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -181,14 +181,16 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 
 ! SYMTOL_DFT is the default tolerance for testing symmetry of matrices. It can be set to 0 if the
 ! IEEE Standard for Floating-Point Arithmetic (IEEE 754) is respected, particularly if addition and
-! multiplication are commutative. However, as of 20220408, NAG nagfor do not ensure commutativity
+! multiplication are commutative. However, as of 20220408, NAG nagfor does not ensure commutativity
 ! for REAL128. Indeed, Fortran standards do not enforce IEEE 754, so compilers are not guaranteed to
 ! respect it. Hence we set SYMTOL_DFT to a nonzero number when __RELEASED__ is 1, although we do not
-! intend to test symmetry in production.
-! Update 20221202: for REAL32, ifort 2021.7.1 20221019 does not ensure that a symmetric matrix
-! remains symmetric after divided by a scalar.
+! intend to test symmetry in production. We set SYMTOL_DFT in the same way when __DEBUGGING__ is 0.
+! Update 20221202: for REAL32, ifort does not ensure that a symmetric matrix remains symmetric after
+! divided by a scalar. In brief, this is because different parts of the matrix may not be handled in
+! the same way due to vectorization. It will be no surprise if the same thing happens to other
+! compilers. See https://fortran-lang.discourse.group/t/strange-behavior-of-ifort.
 #if (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64) || (defined __INTEL_COMPILER && __REAL_PRECISION__ < 64) \
-|| (__RELEASED__ == 1)
+|| (__RELEASED__ == 1) || (__DEBUGGING__ == 0)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E2 * EPS, 1.0E-10_RP)
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO

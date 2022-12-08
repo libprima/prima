@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, December 07, 2022 PM12:47:15
+! Last Modified: Thursday, December 08, 2022 AM11:16:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -475,6 +475,7 @@ do iter = 1, maxiter
     else
         step = (step - sd) / ss
     end if
+    if (.not. (step > 0 .and. is_finite(step))) exit
     !----------------------------------------------------------------!
     ! Powell's approach and comments are as follows.
     !----------------------------------------------------------------!
