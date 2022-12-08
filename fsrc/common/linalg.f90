@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, December 06, 2022 PM01:42:49
+! Last Modified: Thursday, December 08, 2022 PM06:06:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1847,7 +1847,7 @@ function issymmetric(A, tol) result(is_symmetric)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether A is symmetric up to TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, SYMTOL_DFT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, HUGENUM, SYMTOL_DFT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
@@ -1877,20 +1877,28 @@ if (present(tol)) then
     tol_loc = tol
 end if
 
-! In Fortran, the following instructions cannot be written as the following Boolean expression:
+! N.B.:
+! 1. In Fortran, the following instructions cannot be written as the following Boolean expression:
 ! !IS_SYMMETRIC = (SIZE(A, 1)==SIZE(A, 2) .AND. &
 ! ! & ALL(IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A))) .AND. &
 ! ! & .NOT. ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC * MAX(MAXVAL(ABS(A)), ONE)))
 ! This is because Fortran may not perform short-circuit evaluation of this expression. If A is not
 ! square, then IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A)) and A - TRANSPOSE(A) are invalid.
-! In addition, since Inf - Inf is NaN, we cannot replace ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC ...)
+! 2. In addition, since Inf - Inf is NaN, we cannot replace ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC ...)
 ! with .NOT. ALL(ABS(A - TRANSPOSE(A)) <= TOL_LOC ...).
+! 3. Some compilers (i.e., ifort 2021.7.1) sometimes evaluates 1/Inf to NaN, but sometimes to zero.
+! See https://fortran-lang.discourse.group/t/ifort-question-1-inf . We signify this strange case by
+! setting SYMTOL_DFT to HUGENUM.
+! 4. It may be expensive to take TRANSPOSE(A), let alone doing it multiple times, but this is not an
+! issue in our project. We call ISSYMMETRIC only in the debugging mode, but never in production.
 is_symmetric = .true.
 if (size(A, 1) /= size(A, 2)) then
     is_symmetric = .false.
-elseif (.not. all(is_nan(A) .eqv. is_nan(transpose(A)))) then
-    is_symmetric = .false.
 elseif (any(abs(A - transpose(A)) > tol_loc * max(maxval(abs(A)), ONE))) then
+    is_symmetric = .false.
+elseif (SYMTOL_DFT < HUGENUM .and. .not. all(is_nan(A) .eqv. is_nan(transpose(A)))) then
+    is_symmetric = .false.
+elseif (.not. all(abs(A) > 0 .eqv. abs(transpose(A)) > 0)) then
     is_symmetric = .false.
 end if
 
