@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 08, 2022 AM11:42:11
+! Last Modified: Thursday, December 08, 2022 PM06:23:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -50,7 +50,7 @@ subroutine trsapp(delta, gq_in, hq_in, pq_in, tol, x, xpt, crvmin, s, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, EPS, DEBUGGING, SYMTOL_DFT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, project
