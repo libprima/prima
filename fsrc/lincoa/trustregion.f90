@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, December 07, 2022 PM05:26:16
+! Last Modified: Thursday, December 08, 2022 AM11:53:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -207,7 +207,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         ngetact_loc = ngetact_loc + 1_IK
         call getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
         dd = inprod(psd, psd)
-        if (dd <= EPS*delsq .or. is_nan(dd)) then  ! Powell's code: IF (DD <= 0) THEN
+        if (dd <= EPS * delsq .or. is_nan(dd)) then  ! Powell's code: IF (DD <= 0) THEN
             exit
         end if
         psd = (0.2_RP * delta / sqrt(dd)) * psd
@@ -251,8 +251,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
                 else
                     gamma = resid / (sqrtd + ds)
                 end if
-                call assert(gamma >= 0 .and. gamma < TWO * (delta + norm(s + psd)) / norm(dproj), &
-                    & '0 <= GAMMA < 2 (DELTA + |S + PSD|) / |DPROJ|', srname)
+                ! GAMMA < 0 should not happen. GAMMA can be 0 or NaN when, e.g., DS or DD becomes
+                ! Inf. Powell's code does not handle this.
+                if (gamma < 0 .or. .not. is_finite(gamma)) then
+                    gamma = 0
+                end if
 
                 ! Reduce GAMMA so that the move along DPROJ also satisfies the linear constraints.
                 ad = -ONE
@@ -300,8 +303,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     else
         alpha = resid / (sqrtd + ds)
     end if
-    call assert(alpha >= 0 .and. alpha < TWO * (delta + norm(s)) / norm(d), &
-        & '0 <= ALPHA < 2*(DELTA + |S|)/|D|', srname)
+    ! ALPHA < 0 should not happen. ALPHA can be 0 or NaN when, e.g., DS or DD becomes Inf. Powell's
+    ! code does not handle this.
+    if (alpha <= 0 .or. .not. is_finite(alpha)) then
+        exit
+    end if
 
     ! Powell's condition for the following IF: -ALPHA * DG <= CTEST * REDUCT. Note that the EXIT
     ! will be triggered if DG >= 0, as ALPHA >= 0.

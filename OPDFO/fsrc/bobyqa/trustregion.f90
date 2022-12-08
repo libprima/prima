@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, December 07, 2022 PM01:28:05
+! Last Modified: Thursday, December 08, 2022 AM11:49:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -237,6 +237,7 @@ do iter = 1, maxiter
     else
         bstep = resid / (temp + ds)
     end if
+    if (.not. (bstep > 0 .and. is_finite(bstep))) exit
     stplen = bstep
     if (shs > 0) then
         stplen = min(bstep, gredsq / shs)

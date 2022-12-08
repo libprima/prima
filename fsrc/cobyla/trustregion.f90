@@ -1,5 +1,3 @@
-#include "fintrf.h"
-
 module trustregion_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region calculations of COBYLA.
@@ -10,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, December 07, 2022 PM10:50:54
+! Last Modified: Thursday, December 08, 2022 AM11:43:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -213,11 +211,6 @@ real(RP) :: vmultd(size(vmultc))
 real(RP) :: zdasav(size(z, 2))
 real(RP) :: zdota(size(z, 2))
 
-integer*4, external :: mexPrintf
-integer*4 :: kk
-character(len=8000) :: d_str, sdirn_str
-character(len=80) :: sqrtd_str, step_str, sd_str, dd_str, ss_str, iter_str, delta_str, normd_str, norms_str
-
 ! Sizes
 n = int(size(A, 1), kind(n))
 mcon = int(size(A, 2), kind(mcon))
@@ -416,11 +409,12 @@ do iter = 1, maxiter
         ! stage 2; the following test cannot be passed. IS THIS A BUG?!
         ! !call assert(iact(nact) == mcon .or. stage == 1, 'IACT(NACT) == MCON in stage 2', srname)
 
-        !------- Powell's code does not include the following -------!
+        ! Powell's code does not have the following. It avoids subsequent floating point exceptions.
+        !------------------------------------------------------------------------------------------!
         if (is_nan(zdota(nact)) .or. abs(zdota(nact)) <= EPS**2) then
             exit
         end if
-        !------------------------------------------------------------!
+        !------------------------------------------------------------------------------------------!
 
         ! Set SDIRN to the direction of the next change to the current vector of variables.
         ! Usually during stage 1 the vector SDIRN gives a search direction that reduces all the
@@ -436,7 +430,7 @@ do iter = 1, maxiter
     else  ! ICON <= NACT
         ! Delete the constraint with the index IACT(ICON) from the active set, which is done by
         ! reordering IACT(ICONT:NACT) into [IACT(ICON+1:NACT), IACT(ICON)] and then reduce NACT to
-        ! NACT-1. In theory, ICON > 0.
+        ! NACT - 1. In theory, ICON > 0.
         call validate(icon > 0, 'ICON > 0', srname)
         call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), icon)  ! QREXC does nothing if ICON==NACT.
         ! Indeed, it suffices to pass Z(:, 1:NACT) to QREXC as follows.
@@ -445,12 +439,13 @@ do iter = 1, maxiter
         vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
         nact = nact - 1_IK
 
-        !------- Powell's code does not include the following -------!
+        ! Powell's code does not have the following. It avoids subsequent floating point exceptions.
+        !------------------------------------------------------------------------------------------!
         call validate(nact > 0, 'NACT > 0', srname)  ! Why is this true?
         if (is_nan(zdota(nact)) .or. abs(zdota(nact)) <= EPS**2) then
             exit
         end if
-        !------------------------------------------------------------!
+        !------------------------------------------------------------------------------------------!
 
         ! Set SDIRN to the direction of the next change to the current vector of variables.
         if (stage == 1) then
@@ -482,28 +477,10 @@ do iter = 1, maxiter
     else
         step = (sqrtd - sd) / ss
     end if
-
-    write (iter_str, *) iter
-    write (step_str, *) step
-    write (dd_str, *) dd
-    write (sd_str, *) sd
-    write (ss_str, *) ss
-    write (sqrtd_str, *) sqrtd
-    write (d_str, *) d
-    write (sdirn_str, *) sdirn
-    write (delta_str, *) delta
-    write (normd_str, *) norm(d)
-    write (norms_str, *) norm(sdirn)
-
-    kk = mexPrintf('iter, step, dd, sd, sqrtd,delta, normd,norms')
-    kk = mexPrintf(iter_str//','//step_str//','//dd_str//','//sd_str//','&
-        & //sqrtd_str//','//delta_str//','//normd_str//','//norms_str)
-    kk = mexPrintf('d:'//d_str)
-    kk = mexPrintf('sdirn:'//sdirn_str)
-
-    call assert(step >= 0 .and. step < TWO * (delta + norm(d)) / norm(sdirn), &
-        & '0 <= STEP < 2*(DELTA + |D|)/|SDIRN|', srname)
-    !
+    ! STEP < 0 should not happen. STEP can be 0 or NaN when, e.g., SD or SS becomes Inf.
+    if (step <= 0 .or. .not. is_finite(step)) then
+        exit
+    end if
     ! Powell's approach and comments are as follows.
     !----------------------------------------------------------------!
     ! The two statements below that include the factor EPS prevent
