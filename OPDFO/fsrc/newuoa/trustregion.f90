@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 07, 2022 PM04:06:51
+! Last Modified: Thursday, December 08, 2022 AM11:54:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -214,6 +214,9 @@ do iter = 1, maxiter
             bstep = (delsq - ss) / (ds + hypt)
         end if
     end if
+
+    if (.not. (bstep > 0 .and. is_finite(bstep))) exit
+
     hd = hess_mul(d, xpt, pq, hq)
     dhd = inprod(d, hd)
 

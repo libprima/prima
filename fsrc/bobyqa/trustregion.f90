@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, December 07, 2022 PM04:23:52
+! Last Modified: Thursday, December 08, 2022 AM11:34:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -236,8 +236,11 @@ do iter = 1, maxiter
     else
         bstep = (sqrtd - ds) / stepsq
     end if
-    call assert(bstep >= 0 .and. bstep < TWO * (delta + norm(d)) / norm(s), &
-        & '0 <= BSTEP < 2*(DELTA + |D|)/|S|', srname)
+    ! BSTEP < 0 should not happen. BSTEP can be 0 or NaN when, e.g., DS or STEPSQ becomes Inf.
+    ! Powell's code does not handle this.
+    if (bstep <= 0 .or. .not. is_finite(bstep)) then
+        exit
+    end if
 
     hs = hess_mul(s, xpt, pq, hq)
     shs = inprod(s(trueloc(xbdi == 0)), hs(trueloc(xbdi == 0)))

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 07, 2022 PM04:36:18
+! Last Modified: Thursday, December 08, 2022 AM11:42:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -232,8 +232,15 @@ do iter = 1, maxiter
             bstep = resid / (sqrtd + ds)
         end if
     end if
-    call assert(bstep >= 0 .and. bstep < TWO * (delta + norm(s)) / norm(d), &
-        & '0 <= BSTEP < 2*(DELTA + |S|)/|D|', srname)
+
+    ! BSTEP < 0 should not happen. BSTEP may be 0 or NaN if, e.g., DS or DD becomes Inf.
+    if (bstep <= 0) then
+        exit
+    end if
+    if (.not. is_finite(bstep)) then
+        info_loc = -1
+        exit
+    end if
 
     hd = hess_mul(d, xpt, pq, hq)
     dhd = inprod(d, hd)
