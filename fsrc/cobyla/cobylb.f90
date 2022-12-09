@@ -29,9 +29,11 @@ contains
 subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ftarget, &
     & gamma1, gamma2, rhobeg, rhoend, constr, f, x, nf, chist, conhist, cstrv, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine performs the actual calculations of COBYLA. The arguments IPRINT, MAXFILT, MAXFUN,
-! MAXHIST, CTOL, CWEIGHT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, XHIST, FHIST,
-! CHIST, CONHIST, CSTRV and INFO are identical to the corresponding arguments in subroutine COBYLA.
+! This subroutine performs the actual calculations of COBYLA. 
+!
+! IPRINT, MAXFILT, MAXFUN, MAXHIST, CTOL, CWEIGHT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG,
+! RHOEND, X, NF, F, XHIST, FHIST, CHIST, CONHIST, CSTRV and INFO are identical to the corresponding
+! arguments in subroutine COBYLA.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

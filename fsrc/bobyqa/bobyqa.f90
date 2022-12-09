@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:48:27
+! Last Modified: Friday, December 09, 2022 PM11:00:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -38,69 +38,145 @@ contains
 
 subroutine bobyqa(calfun, x, f, &
     & xl, xu, &
-    & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
-    & xhist, fhist, maxhist, honour_x0, info)
+    & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
+    & eta1, eta2, gamma1, gamma2, xhist, fhist, maxhist, honour_x0, info)
 !--------------------------------------------------------------------------------------------------!
-!     SUBROUTINE CALFUN (N,X,F) has to be provided by the user. It must set
-!     F to the value of the objective function for the current values of the
-!     variables X(1),X(2),...,X(N), which are generated automatically in a
-!     way that satisfies the bounds given in XL and XU.
+! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
+! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
+! the default value detailed below. For instance, we may invoke the solver by
 !
-!     N must be set to the number of variables and must be at least two.
-!     NPT is the number of interpolation conditions. Its value must be in
-!       the interval [N+2,(N+1)(N+2)/2]. Choices that exceed 2*N+1 are not
-!       recommended.
-!     Initial values of the variables must be set in X(1),X(2),...,X(N). They
-!       will be changed to the values that give the least calculated F.
-!     For I=1,2,...,N, XL(I) and XU(I) must provide the lower and upper
-!       bounds, respectively, on X(I). The construction of quadratic models
-!       requires XL(I) to be strictly less than XU(I) for each I. Further,
-!       the contribution to a model from changes to the I-th variable is
-!       damaged severely by rounding errors if XU(I)-XL(I) is too small.
-!     RHOBEG and RHOEND must be set to the initial and final values of a trust
-!       region radius, so both must be positive with RHOEND no greater than
-!       RHOBEG. Typically, RHOBEG should be about one tenth of the greatest
-!       expected change to a variable, while RHOEND should indicate the
-!       accuracy that is required in the final values of the variables. An
-!       error return occurs if any of the differences XU(I)-XL(I), I=1,...,N,
-!       is less than 2*RHOBEG.
-!     The value of IPRINT should be set to 0, 1, 2 or 3, which controls the
-!       amount of printing. Specifically, there is no output if IPRINT=0 and
-!       there is output only at the return if IPRINT=1. Otherwise, each new
-!       value of RHO is printed, with the best vector of variables so far and
-!       the corresponding value of the objective function. Further, each new
-!       value of F with its variables are output if IPRINT=3.
-!     MAXFUN must be set to an upper bound on the number of calls of CALFUN.
-!     The array W will be used for working space. Its length must be at least
-!       (NPT+5)*(NPT+N)+3*N*(N+5)/2.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     F is the objective function value when the algorithm exit.
-!     INFO is the exit flag, which can be set to:
-!       0: the lower bound for the trust region radius is reached.
-!       1: the target function value is reached.
-!       2: a trust region step has failed to reduce the quadratic model.
-!       3: the objective function has been evaluated MAXFUN times.
-!       4: much cancellation in a denominator.
-!       5: NPT is not in the required interval.
-!       6: one of the difference XU(I)-XL(I) is less than 2*RHOBEG.
-!       7: rounding errors are becoming damaging.
-!       8: rounding errors prevent reasonable changes to X.
-!       9: the denominator of the updating formula is ZERO.
-!       10: N should not be less than 2.
-!       11: MAXFUN is less than NPT+1.
-!       12: the gradient of constraint is ZERO.
-!       -1: NaN occurs in x.
-!       -2: the objective function returns a NaN or nearly infinite value.
-!       -3: NaN occurs in BMAT or ZMAT.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! call bobyqa(calfun, x, f)
+!
+! or
+!
+! call bobyqa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+!
+! See examples/bobyqa_exmp.f90 for a concrete example.
+!
+! A detailed introduction to the arguments is as follows.
+! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory named
+! "common". By default, RP = kind(0.0D0) and IK = kind(0), with REAL(RP) being the double-precision
+! real, and INTEGER(IK) being the default integer. For ADVANCED USERS, RP and IK can be defined by
+! setting __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if unsure.
+!
+! CALFUN
+!   Input, subroutine.
+!   CALFUN(X, F) should evaluate the objective function at the given REAL(RP) vector X and set the
+!   value to the REAL(RP) scalar F. It must be provided by the user, and its definition must conform
+!   to the following interface:
+!   !-------------------------------------------------------------------------!
+!    subroutine calfun(x, f)
+!    real(RP), intent(in) :: x(:)
+!    real(RP), intent(out) :: f
+!    end subroutine calfun
+!   !-------------------------------------------------------------------------!
+!
+! X
+!   Input and output, REAL(RP) vector.
+!   As an input, X should be an N dimensional vector that contains the starting point, N being the
+!   dimension of the problem. As an output, X will be set to an approximate minimizer.
+!
+! F
+!   Output, REAL(RP) scalar.
+!   F will be set to the objective function value of X at exit.
+!
+! XL, XU
+!   Input, REAL(RP) vectors, default: XL = [], XU = [].
+!   XL is the lower bound for X. Its size is either N or 0, the latter signifying that XL has no
+!   lower bound. Any entry of XL that is NaN or below -HUGEBOUND will be taken as -HUGEBOUND, which
+!   effectively means there is no lower bound for the corresponding entry of X. The value of
+!   HUGEBOUND is  0.25*HUGE(X), which is about 8.6E37 for single precision and 4.5E307 for double
+!   precision. XU is similar.
+!   N.B.: It is required that XU - XL > 2*EPSILON(X), which is about 2.4E-7 for single precision and
+!   4.5E-16 for double precision. Otherwise, the solver will return after printing a warning.
+!
+! NF
+!   Output, INTEGER(IK) scalar.
+!   NF will be set to the number of calls of CALFUN at exit.
+!
+! RHOBEG, RHOEND
+!   Inputs, REAL(RP) scalars, default: RHOBEG = 1, RHOEND = 10^-6. RHOBEG and RHOEND must be set to
+!   the initial and final values of a trust-region radius, both being positive and RHOEND <= RHOBEG.
+!   Typically RHOBEG should be about one tenth of the greatest expected change to a variable, and
+!   RHOEND should indicate the accuracy that is required in the final values of the variables.
+!
+! FTARGET
+!   Input, REAL(RP) scalar, default: -Inf.
+!   FTARGET is the target function value. The algorithm will terminate when a point with a function
+!   value <= FTARGET is found.
+!
+! MAXFUN
+!   Input, INTEGER(IK) scalar, default: MAXFUN_DIM_DFT*N with MAXFUN_DIM_DFT defined in the module
+!   CONSTS_MOD (see common/consts.F90). MAXFUN is the maximal number of calls of CALFUN.
+!
+! NPT
+!   Input, INTEGER(IK) scalar, default: 2N + 1.
+!   NPT is the number of interpolation conditions for each trust region model. Its value must be in
+!   the interval [N+2, (N+1)(N+2)/2]. As per Powell, "choices that exceed 2*N+1 are not recommended."
+!
+! IPRINT
+!   Input, INTEGER(IK) scalar, default: 0.
+!   The value of IPRINT should be set to 0, 1, -1, 2, -2, 3, or -3, which controls how much
+!   information will be printed during the computation:
+!   0: there will be no printing;
+!   1: a message will be printed to the screen at the return, showing the best vector of variables
+!      found and its objective function value;
+!   2: in addition to 1, each new value of RHO is printed to the screen, with the best vector of
+!      variables so far and its objective function value;
+!   3: in addition to 2, each function evaluation with its variables will be printed to the screen;
+!   -1, -2, -3: the same information as 1, 2, 3 will be printed, not to the screen but to a file
+!      named BOBYQA_output.txt; the file will be created if it does not exist; the new output will
+!      be appended to the end of this file if it already exists. Note that IPRINT = -3 can be costly
+!      in terms of time and space.
+!
+! ETA1, ETA2, GAMMA1, GAMMA2
+!   Input, REAL(RP) scalars, default: ETA1 = 0.1, ETA2 = 0.7, GAMMA1 = 0.5, and GAMMA2 = 2.
+!   ETA1, ETA2, GAMMA1, and GAMMA2 are parameters in the updating scheme of the trust-region radius
+!   detailed in the subroutine TRRAD in trustregion.f90. Roughly speaking, the trust-region radius
+!   is contracted by a factor of GAMMA1 when the reduction ratio is below ETA1, and enlarged by a
+!   factor of GAMMA2 when the reduction ratio is above ETA2. It is required that 0 < ETA1 <= ETA2
+!   < 1 and 0 < GAMMA1 < 1 < GAMMA2. Normally, ETA1 <= 0.25. It is NOT advised to set ETA1 >= 0.5.
+!
+! XHIST, FHIST, MAXHIST
+!   XHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
+!   FHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
+!   MAXHIST: Input, INTEGER(IK) scalar, default: MAXFUN
+!   XHIST, if present, will output the history of iterates, while FHIST, if present, will output the
+!   history function values. MAXHIST should be a nonnegative integer, and XHIST/FHIST will output
+!   only the history of the last MAXHIST iterations. Therefore, MAXHIST = 0 means XHIST/FHIST will
+!   output nothing, while setting MAXHIST = MAXFUN requests XHIST/FHIST to output all the history.
+!   If XHIST is present, its size at exit will be [N, min(NF, MAXHIST)]; if FHIST is present, its
+!   size at exit will be min(NF, MAXHIST).
+!
+!   Important Notice:
+!   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
+!   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take up to 1 GB if we use double
+!   precision. MAXHIST will be reset to a smaller value if the memory needed exceeds MAXMEMORY
+!   defined in CONSTS_MOD (see consts.F90 under the directory named "common"; default: 2GB).
+!   Use *HIST with caution! (N.B.: the algorithm is NOT designed for large problems).
+!
+! INFO
+!   Output, INTEGER(IK) scalar.
+!   INFO is the exit flag. It will be set to one of the following values defined in the module
+!   INFOS_MOD (see common/infos.f90):
+!   SMALL_TR_RADIUS: the lower bound for the trust region radius is reached;
+!   FTARGET_ACHIEVED: the target function value is reached;
+!   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
+!   MAXTR_REACHED: the trust region iteration has been performed MAXTR times (MAXTR = 2*MAXFUN);
+!   NAN_INF_MODEL: NaN or Inf occurs in the model;
+!   NAN_INF_X: NaN or Inf occurs in X;
+!   DAMAGING_ROUNDING: the rounding error becomes damaging.
+!   NO_SPACE_BETWEEN_BOUNDS: there is not enough space between some lower and upper bounds.
+!   !--------------------------------------------------------------------------!
+!   The following case(s) should NEVER occur unless there is a bug.
+!   NAN_INF_F: the objective function returns NaN or +Inf;
+!   TRSUBP_FAILED: a trust region step failed to reduce the model.
+!   !--------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, IPRINT_DFT
-use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH
-use, non_intrinsic :: consts_mod, only : EPS, HUGEBOUND, MSGLEN
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, HUGEBOUND, MSGLEN, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, MAXFUN_DIM_DFT, IPRINT_DFT
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
@@ -150,6 +226,7 @@ character(len=*), parameter :: srname = 'BOBYQA'
 character(len=MSGLEN) :: wmsg
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
+integer(IK) :: k
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
 integer(IK) :: n
@@ -209,8 +286,8 @@ if (any(xu_loc - xl_loc < TWO * EPS)) then
         info = NO_SPACE_BETWEEN_BOUNDS
     end if
     write (wmsg, ifmt) minval(trueloc(xu_loc - xl_loc < TWO * EPS))
-    call warning(solver, 'There is no space between the lower and upper bounds of variable '// &
-        & '. The solver cannot continue')
+    call warning(solver, 'There is no space between the lower and upper bounds of variable. '// &
+        & 'The solver cannot continue')
     return
 end if
 
@@ -388,6 +465,29 @@ if (DEBUGGING) then
         call assert(size(xhist, 1) == n .and. size(xhist, 2) == nhist, 'SIZE(XHIST) == [N, NHIST]', srname)
         call assert(.not. any(is_nan(xhist)), 'XHIST does not contain NaN', srname)
     end if
+
+    if (present(xl)) then
+        if (size(xl) == size(x)) then
+            call assert(.not. any(x < xl), 'X >= XL', srname)
+            if (present(xhist)) then
+                do k = 1, nhist
+                    call assert(.not. any(xhist(:, k) < xl), 'XHIST >= XL', srname)
+                end do
+            end if
+        end if
+    end if
+
+    if (present(xu)) then
+        if (size(xu) == size(x)) then
+            call assert(.not. any(x > xu), 'X <= XU', srname)
+            if (present(xhist)) then
+                do k = 1, nhist
+                    call assert(.not. any(xhist(:, k) > xu), 'XHIST <= XU', srname)
+                end do
+            end if
+        end if
+    end if
+
     if (present(fhist)) then
         call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
         call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)

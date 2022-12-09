@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 01, 2022 PM10:21:19
+! Last Modified: Friday, December 09, 2022 PM11:39:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,9 +22,10 @@ contains
 subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, &
     & rhoend, x, nf, f, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine performs the actual calculations of NEWUOA. The arguments IPRINT, MAXFUN, MAXHIST,
-! NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, FHIST, XHIST, and INFO are
-! identical to the corresponding arguments in subroutine NEWUOA.
+! This subroutine performs the actual calculations of NEWUOA.
+!
+! IPRINT, MAXFUN, MAXHIST, NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F,
+! FHIST, XHIST, and INFO are identical to the corresponding arguments in subroutine NEWUOA.
 !
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
 ! of the model and Lagrange functions.
@@ -41,7 +42,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
 ! ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
 ! ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
-! except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th are not saved as
+! except for the (NPT+1)th column. Note that the (NPT + 1)th row and column of H are not saved as
 ! they are unnecessary for the calculation.
 !
 ! See Section 2 of the NEWUOA paper for more information about these variables.

@@ -192,7 +192,7 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 ! Update 20221208: ifort 2021.7.1 sometimes evaluates 1/Inf to NaN, but sometimes to zero.
 ! See https://fortran-lang.discourse.group/t/ifort-question-1-inf. We signify this strange case by
 ! setting SYMTOL_DFT to HUGENUM.
-#if (defined __INTEL_COMPILER && __REAL_PRECISION__ < 64)
+#if (defined __INTEL_COMPILER && __REAL_PRECISION__ < 64)  
 real(RP), parameter :: SYMTOL_DFT = HUGENUM
 #elif (__RELEASED__ == 1) || (__DEBUGGING__ == 0) || (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)

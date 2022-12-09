@@ -1,13 +1,13 @@
-! INFO_MOD is a module defining exit flags.
+module infos_mod
+!--------------------------------------------------------------------------------------------------!
+! This is a module defining exit flags.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020.
 !
-! Last Modified: Wednesday, November 30, 2022 PM01:00:30
-
-
-module infos_mod
+! Last Modified: Friday, December 09, 2022 PM08:18:42
+!--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : IK
 

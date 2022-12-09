@@ -9,6 +9,7 @@ univar.f90
 rand.f90
 ratio.f90
 redrho.f90
+xinbd.f90
 history.f90
 selectx.f90
 checkexit.f90

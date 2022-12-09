@@ -205,7 +205,7 @@ subroutine cobyla(calcfc, m, x, f, &
 ! INFO
 !   Output, INTEGER(IK) scalar.
 !   INFO is the exit flag. It will be set to one of the following values defined in the module
-!   INFO_MOD (see common/info.F90):
+!   INFOS_MOD (see common/infos.f90):
 !   SMALL_TR_RADIUS: the lower bound for the trust region radius is reached;
 !   FTARGET_ACHIEVED: the target function value is reached;
 !   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;

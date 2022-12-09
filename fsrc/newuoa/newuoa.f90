@@ -22,7 +22,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:49:25
+! Last Modified: Saturday, December 10, 2022 AM12:16:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -38,7 +38,7 @@ subroutine newuoa(calfun, x, f, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, maxhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
-! neglect them unless you are familiar with the algorithm.  Any unspecified optional input will take
+! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
 ! the default value detailed below. For instance, we may invoke the solver by
 !
 ! call newuoa(calfun, x, f)
@@ -131,7 +131,7 @@ subroutine newuoa(calfun, x, f, &
 !   history function values. MAXHIST should be a nonnegative integer, and XHIST/FHIST will output
 !   only the history of the last MAXHIST iterations. Therefore, MAXHIST = 0 means XHIST/FHIST will
 !   output nothing, while setting MAXHIST = MAXFUN requests XHIST/FHIST to output all the history.
-!   If XHIST is present, its size at exit will be (N, min(NF, MAXHIST)); if FHIST is present, its
+!   If XHIST is present, its size at exit will be [N, min(NF, MAXHIST)]; if FHIST is present, its
 !   size at exit will be min(NF, MAXHIST).
 !
 !   Important Notice:
@@ -144,17 +144,17 @@ subroutine newuoa(calfun, x, f, &
 ! INFO
 !   Output, INTEGER(IK) scalar.
 !   INFO is the exit flag. It will be set to one of the following values defined in the module
-!   INFO_MOD (see common/info.F90):
+!   INFOS_MOD (see common/infos.f90):
 !   SMALL_TR_RADIUS: the lower bound for the trust region radius is reached;
 !   FTARGET_ACHIEVED: the target function value is reached;
 !   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
 !   MAXTR_REACHED: the trust region iteration has been performed MAXTR times (MAXTR = 2*MAXFUN);
+!   NAN_INF_MODEL: NaN or Inf occurs in the model;
 !   NAN_INF_X: NaN or Inf occurs in X.
 !   !--------------------------------------------------------------------------!
 !   The following case(s) should NEVER occur unless there is a bug.
 !   NAN_INF_F: the objective function returns NaN or +Inf;
-!   NAN_INF_MODEL: NaN or Inf occurs in the model;
-!   TRSUBP_FAILED: a trust region step failed to reduce the model;
+!   TRSUBP_FAILED: a trust region step failed to reduce the model.
 !   !--------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
@@ -166,7 +166,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, MSG
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
@@ -393,6 +393,7 @@ if (DEBUGGING) then
     end if
     if (present(fhist)) then
         call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
+        call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)
         call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
     end if
 end if
