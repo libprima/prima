@@ -37,7 +37,7 @@ SHELL = /bin/bash
 FS ?= 03
 FSTD := 20$(FS)
 
-# Default options for all the compilers.
+# Default options for all the compilers, and corresponding suffixes for the executable.
 FFLAGS := $(shell echo $$FFLAGS)
 FFLAGSO := -O3  # Optimization
 FFLAGSG := -g -O0  # Debugging
@@ -650,7 +650,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
 	$(eval SRC := $(shell if echo $@ | grep -q "ltest"; then echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||' ; else echo $(SRC) ; fi))
-	(if echo $@ | grep -q "9test\|ltest"; then \
+	@(if echo $@ | grep -q "9test\|ltest"; then \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
 			$(FCO) -c $(SRC) ; \
 		fi ; \
