@@ -98,6 +98,9 @@ jobs:
             export DYLD_FALLBACK_LIBRARY_PATH=$DYLD_FALLBACK_LIBRARY_PATH:$(dirname $(find  / -name gcrt1.o  -print 2> /dev/null | sort | tail -n 1))  # Needed by macOS
             ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"  # `realpath` is unavailable on macOS
             cd "$ROOT"/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+            export FFLAGS='-O1'
+            cd "$ROOT"/fsrc/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
+            export FFLAGS='-O2'
             cd "$ROOT"/fsrc/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             if (( ${{ matrix.version }} < 8 )) ; then export FS=08; else export FS=18; fi  # Needed by the next line; `-f2018` is not implemented until gcc-8
             cd "$ROOT"/fsrc/examples/${{ matrix.solver }} && make gtest
