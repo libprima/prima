@@ -1,4 +1,4 @@
-name: Test gfortran, -g, -O3
+name: Test gfortran, -fast
 
 on:
   # Trigger the workflow on push or pull request
@@ -97,6 +97,7 @@ jobs:
         run: |
             ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"  # `realpath` is unavailable on macOS
             cd "$ROOT"/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+            export FFLAGS='-fast'
             cd "$ROOT"/fsrc/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             if (( ${{ matrix.version }} < 8 )) ; then export FS=08; else export FS=18; fi  # Needed by the next line; `-f2018` is not implemented until gcc-8
             cd "$ROOT"/fsrc/examples/${{ matrix.solver }} && make gtest

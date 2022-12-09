@@ -67,12 +67,29 @@ ifeq ($(FFLAGS),-O3)
 	SUFFIXO := o3
 	SUFFIXG :=
 endif
-ifeq ($(FFLAGS),'-g')
+ifeq ($(FFLAGS),-fast)
+	FFLAGSO := $(FFLAGS)
+	FFLAGSG :=
+	SUFFIXO := fast
+	SUFFIXG :=
+endif
+ifeq ($(FFLAGS),-g)
 	FFLAGSO :=
-	FFLAGSG := '-g -O0'
+	FFLAGSG := -g -O0
 	SUFFIXO :=
 	SUFFIXG := g
 endif
+
+# Define the compiler-dependent "fast flags", which will be used when FFLAGS is -fast.
+AFF := -O4
+DFF := -O4 -Ofast -ffast-math -flto
+FFF := -ffast-math -Ofast
+GFF := -O3 -ffast-math -Ofast -flto
+IFF := -O3 -fast
+NFF := -O4
+VFF := -O4 -fast
+SFF := -O5 -fast
+XFF := -O3 -fast
 
 # Log file stamp.
 RANDNUM := $(shell awk 'BEGIN{srand();printf("%d", 65536*rand())}')
@@ -268,6 +285,8 @@ atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_ts
 	FCO := $(AFORT) $(FFLAGSO) -TENV:simd_zmask=off
 atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
 	FCG := $(AFORT) $(FFLAGSG) -TENV:simd_zmask=off
+atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
+	FCF := $(AFORT) $(AFF) -TENV:simd_zmask=off
 
 atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
 	FCO := $(AFORT) $(FFLAGSO) \
@@ -275,11 +294,16 @@ atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_ts
 atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
 	FCG := $(AFORT) $(FFLAGSG) \
 	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
+atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
+	FCF := $(AFORT) $(AFF) \
+	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
 
 atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d0_tst_c atest_i4_r16_d0_tst_c atest_i8_r16_d0_tst_c: \
 	FCO := $(AFORT) $(FFLAGSO) -TENV:simd_zmask=off
 atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d0_tst_c atest_i4_r16_d0_tst_c atest_i8_r16_d0_tst_c: \
 	FCG := $(AFORT) $(FFLAGSG) -TENV:simd_zmask=off
+atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d0_tst_c atest_i4_r16_d0_tst_c atest_i8_r16_d0_tst_c: \
+	FCF := $(AFORT) $(AFF) -TENV:simd_zmask=off
 
 # AMD AOCC Flang
 AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2> /dev/null | sort | tail -n 1)
@@ -291,16 +315,22 @@ dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_ts
 	FCO := $(DFORT) $(FFLAGSO)
 dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
 	FCG := $(DFORT) $(FFLAGSG)
+dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
+	FCF := $(DFORT) $(DFF)
 
 dtest_i2_r8_d1_tst_c dtest_i4_r8_d1_tst_c dtest_i8_r8_d1_tst_c dtest_i2_r8_d0_tst_c dtest_i4_r8_d0_tst_c dtest_i8_r8_d0_tst_c: \
 	FCO := $(DFORT) $(FFLAGSO) -ffp-exception-behavior=strict
 dtest_i2_r8_d1_tst_c dtest_i4_r8_d1_tst_c dtest_i8_r8_d1_tst_c dtest_i2_r8_d0_tst_c dtest_i4_r8_d0_tst_c dtest_i8_r8_d0_tst_c: \
 	FCG := $(DFORT) $(FFLAGSG) -ffp-exception-behavior=strict
+dtest_i2_r8_d1_tst_c dtest_i4_r8_d1_tst_c dtest_i8_r8_d1_tst_c dtest_i2_r8_d0_tst_c dtest_i4_r8_d0_tst_c dtest_i8_r8_d0_tst_c: \
+	FCF := $(DFORT) $(DFF) -ffp-exception-behavior=strict
 
 dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d0_tst_c dtest_i4_r16_d0_tst_c dtest_i8_r16_d0_tst_c: \
 	FCO := $(DFORT) $(FFLAGSO) -ffp-exception-behavior=strict
 dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d0_tst_c dtest_i4_r16_d0_tst_c dtest_i8_r16_d0_tst_c: \
 	FCG := $(DFORT) $(FFLAGSG) -ffp-exception-behavior=strict
+dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d0_tst_c dtest_i4_r16_d0_tst_c dtest_i8_r16_d0_tst_c: \
+	FCF := $(DFORT) $(DFF) -ffp-exception-behavior=strict
 
 # Classic Flang
 FFORT := flang
@@ -311,16 +341,22 @@ ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_ts
 	FCO := $(FFORT) $(FFLAGSO)
 ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
 	FCG := $(FFORT) $(FFLAGSG)
+ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
+	FCF := $(FFORT) $(FFF)
 
 ftest_i2_r8_d1_tst_c ftest_i4_r8_d1_tst_c ftest_i8_r8_d1_tst_c ftest_i2_r8_d0_tst_c ftest_i4_r8_d0_tst_c ftest_i8_r8_d0_tst_c: \
 	FCO := $(FFORT) $(FFLAGSO)
 ftest_i2_r8_d1_tst_c ftest_i4_r8_d1_tst_c ftest_i8_r8_d1_tst_c ftest_i2_r8_d0_tst_c ftest_i4_r8_d0_tst_c ftest_i8_r8_d0_tst_c: \
 	FCG := $(FFORT) $(FFLAGSG)
+ftest_i2_r8_d1_tst_c ftest_i4_r8_d1_tst_c ftest_i8_r8_d1_tst_c ftest_i2_r8_d0_tst_c ftest_i4_r8_d0_tst_c ftest_i8_r8_d0_tst_c: \
+	FCF := $(FFORT) $(FFF)
 
 ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d0_tst_c ftest_i4_r16_d0_tst_c ftest_i8_r16_d0_tst_c: \
 	FCO := $(FFORT) $(FFLAGSO)
 ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d0_tst_c ftest_i4_r16_d0_tst_c ftest_i8_r16_d0_tst_c: \
 	FCG := $(FFORT) $(FFLAGSG)
+ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d0_tst_c ftest_i4_r16_d0_tst_c ftest_i8_r16_d0_tst_c: \
+	FCF := $(FFORT) $(FFF)
 
 # GNU gfortran
 # In the debug mode, our code includes the BACKTRACE function if the compiler is gfortran. This
@@ -347,16 +383,22 @@ gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_ts
 	FCO := $(GFORT) $(FFLAGSO) -Wno-function-elimination -ffpe-trap=zero
 gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
 	FCG := $(GFORT) $(FFLAGSG) -ffpe-trap=zero
+gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
+	FCF := $(GFORT) $(GFF) -Wno-function-elimination -ffpe-trap=zero
 
 gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
 	FCO := $(GFORT) $(FFLAGSO) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
 	FCG := $(GFORT) $(FFLAGSG) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
+gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
+	FCF := $(GFORT) $(GFF) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 
 gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
 	FCO := $(GFORT) $(FFLAGSO) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
 	FCG := $(GFORT) $(FFLAGSG) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
+gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
+	FCF := $(GFORT) $(GFF) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 
 # Intel ifort
 # -standard-semantics: enforce the compiler to behave according to the current standard (F2018 as of Dec 2021).
@@ -386,6 +428,8 @@ itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_ts
 	FCO := $(IFORT) $(FFLAGSO) -fp-trap=divzero
 itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
 	FCG := $(IFORT) $(FFLAGSG) -check all -fp-trap=divzero
+itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
+	FCF := $(IFORT)  $(IFF) -fp-trap=divzero
 
 itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
 	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
@@ -395,6 +439,10 @@ itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_ts
 	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
+itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
+	FCF := $(IFORT)  $(IFF) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
 
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
 	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
@@ -402,6 +450,10 @@ itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d
 	#-no-ftz -fp-model strict
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
 	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
+	FCF := $(IFORT) $(IFF) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
 
@@ -443,16 +495,22 @@ ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_ts
 	FCO := $(NFORT) $(FFLAGSO) -nan -ieee=full
 ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
 	FCG := $(NFORT) $(FFLAGSG) -nan -ieee=full
+ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
+	FCF := $(NFORT) $(NFF) -nan -ieee=full
 
 ntest_i2_r8_d1_tst_c ntest_i4_r8_d1_tst_c ntest_i8_r8_d1_tst_c ntest_i2_r8_d0_tst_c ntest_i4_r8_d0_tst_c ntest_i8_r8_d0_tst_c: \
 	FCO := $(NFORT) $(FFLAGSO) -nan -ieee=stop
 ntest_i2_r8_d1_tst_c ntest_i4_r8_d1_tst_c ntest_i8_r8_d1_tst_c ntest_i2_r8_d0_tst_c ntest_i4_r8_d0_tst_c ntest_i8_r8_d0_tst_c: \
 	FCG := $(NFORT) $(FFLAGSG) -nan -ieee=stop
+ntest_i2_r8_d1_tst_c ntest_i4_r8_d1_tst_c ntest_i8_r8_d1_tst_c ntest_i2_r8_d0_tst_c ntest_i4_r8_d0_tst_c ntest_i8_r8_d0_tst_c: \
+	FCF := $(NFORT) $(NFF) -nan -ieee=stop
 
 ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d0_tst_c ntest_i4_r16_d0_tst_c ntest_i8_r16_d0_tst_c: \
 	FCO := $(NFORT) $(FFLAGSO) -nan -ieee=stop
 ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d0_tst_c ntest_i4_r16_d0_tst_c ntest_i8_r16_d0_tst_c: \
 	FCG := $(NFORT) $(FFLAGSG) -nan -ieee=stop
+ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d0_tst_c ntest_i4_r16_d0_tst_c ntest_i8_r16_d0_tst_c: \
+	FCF := $(NFORT) $(NFF) -nan -ieee=stop
 
 # NVIDIA nvfortran
 VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
@@ -463,16 +521,22 @@ vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_ts
 	FCO := $(VFORT) $(FFLAGSO) -Kieee -Ktrap=divz
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
 	FCG := $(VFORT) $(FFLAGSG) -Kieee -Ktrap=divz
+vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
+	FCF := $(VFORT)  $(VFF) -Kieee -Ktrap=divz
 
 vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
 	FCO := $(VFORT) $(FFLAGSO) -Kieee -Ktrap=divz,inv#,ovf,unf,denorm
 vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
 	FCG := $(VFORT) $(FFLAGSG) -Kieee -Ktrap=divz,inv#,ovf,unf,denorm
+vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
+	FCF := $(VFORT) $(VFF) -Kieee -Ktrap=divz,inv#,ovf,unf,denorm
 
 vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d0_tst_c vtest_i4_r16_d0_tst_c vtest_i8_r16_d0_tst_c: \
 	FCO := $(VFORT) $(FFLAGSO) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
 vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d0_tst_c vtest_i4_r16_d0_tst_c vtest_i8_r16_d0_tst_c: \
 	FCG := $(VFORT) $(FFLAGSG) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
+vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d0_tst_c vtest_i4_r16_d0_tst_c vtest_i8_r16_d0_tst_c: \
+	FCF := $(VFORT) $(VFF) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
 
 # Oracle sunf95
 SFORT := sunf95
@@ -483,16 +547,22 @@ stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_ts
 	FCO := $(SFORT) $(FFLAGSO) -fnonstd -ftrap=division
 stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
 	FCG := $(SFORT) $(FFLAGSG) -fnonstd -ftrap=division
+stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
+	FCF := $(SFORT) $(SFF) -fnonstd -ftrap=division
 
 stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
 	FCO := $(SFORT) $(FFLAGSO) -fnonstd -ftrap=overflow,division#,invalid#,underflow
 stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
 	FCG := $(SFORT) $(FFLAGSG) -fnonstd -ftrap=overflow,division#,invalid#,underflow
+stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
+	FCF := $(SFORT) $(SFF) -fnonstd -ftrap=overflow,division#,invalid#,underflow
 
 stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
 	FCO := $(SFORT) $(FFLAGSO) -fnonstd -ftrap=overflow,division#,invalid#,underflow
 stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
 	FCG := $(SFORT) $(FFLAGSG) -fnonstd -ftrap=overflow,division#,invalid#,underflow
+stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
+	FCF := $(SFORT) $(SFF) -fnonstd -ftrap=overflow,division#,invalid#,underflow
 
 # Intel ifx
 XFORT := ifx
@@ -511,6 +581,8 @@ xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_ts
 	FCO := $(XFORT) $(FFLAGSO) -fp-trap=divzero
 xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
 	FCG := $(XFORT) $(FFLAGSG) -check all -fp-trap=divzero
+xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
+	FCF := $(XFORT) $(XFF) -fp-trap=divzero
 
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
 	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
@@ -520,6 +592,10 @@ xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_ts
 	FCG := $(XFORT) $(FFLAGSG) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
+xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
+	FCF := $(XFORT) $(XFF) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
 
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
 	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
@@ -527,6 +603,10 @@ xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d
 	#-no-ftz -fp-model strict
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
 	FCG := $(XFORT) $(FFLAGSG) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
+	FCF := $(XFORT) $(XFF) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
 
@@ -652,14 +732,22 @@ $(TESTS_C) $(TESTS_INT_C):
 	$(eval SRC := $(shell if echo $@ | grep -q "ltest"; then echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||' ; else echo $(SRC) ; fi))
 	@(if echo $@ | grep -q "9test\|ltest"; then \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
-			$(FCO) -c $(SRC) ; \
+			if [[ '$(FFLAGSO)'=='-fast' ]] ; then \
+				$(FCF) -c $(SRC) ; \
+			else \
+				$(FCO) -c $(SRC) ; \
+			fi ; \
 		fi ; \
 		if [[ -n '$(FFLAGSG)' ]] ; then \
 			$(FCG) -c $(SRC) ; \
 		fi ; \
 	else \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
-			$(FCO) -o $@_$(SUFFIXO) $(SRC) ; \
+			if [[ '$(FFLAGSO)'=='-fast' ]] ; then \
+				$(FCF) -o $@_$(SUFFIXO) $(SRC) ; \
+			else \
+				$(FCO) -o $@_$(SUFFIXO) $(SRC) ; \
+			fi ; \
 		fi ; \
 		if [[ -n '$(FFLAGSG)' ]] ; then \
 			$(FCG) -o $@_$(SUFFIXG) $(SRC) ; \
