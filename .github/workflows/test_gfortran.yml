@@ -1,4 +1,4 @@
-name: Test gfortran
+name: Test gfortran -g, -O3
 
 on:
   # Trigger the workflow on push or pull request

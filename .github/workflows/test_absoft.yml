@@ -38,6 +38,7 @@ jobs:
       matrix:
         ikind: [i2]  # [i2, i4, i8] fails due to unavailability of license servers
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        fflags: [-O1, -O2, -O3, -g]
 
     steps:
       - name: Checkout repository
@@ -56,7 +57,7 @@ jobs:
           source "$AFDIR"/bin/absvars.sh
           export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
           ROOT=$(realpath ./)
-          cd $ROOT/fsrc/tests && make atest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd $ROOT/fsrc/tests && export FFLAGS=${{ matrix.fflags }} && make atest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd $ROOT/fsrc/examples/${{ matrix.solver }} && make atest
 
       - name: Store artifacts

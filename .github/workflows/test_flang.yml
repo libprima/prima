@@ -46,6 +46,7 @@ jobs:
         bitness: [32, 64]
         ikind: [i2, i4, i8]
         solver: [newuoa, cobyla, bobyqa, uobyqa]  # Flang encounters an allocation error for no reason on LINCOA. Check later.
+        fflags: [-O1, -O2, -O3, -g]
 
     steps:
       - name: Checkout repository
@@ -70,7 +71,7 @@ jobs:
           source /tmp/setenv.sh
           ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"  # `realpath` is unavailable on macOS
           cd $ROOT/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          cd $ROOT/fsrc/tests && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd $ROOT/fsrc/tests && export FFLAGS=${{ matrix.fflags }} && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
           #cd $ROOT/fsrc/examples/${{ matrix.solver }} && make ftest  # Flang cannot resolve `evaluate`
 
       - name: Store artifacts

@@ -67,9 +67,9 @@ ifeq ($(FFLAGS),-O3)
 	SUFFIXO := o3
 	SUFFIXG :=
 endif
-ifeq ($(FFLAGS),'-g -O0')
+ifeq ($(FFLAGS),'-g')
 	FFLAGSO :=
-	FFLAGSG := $(FFLAGS)
+	FFLAGSG := '-g -O0'
 	SUFFIXO :=
 	SUFFIXG := g
 endif
