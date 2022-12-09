@@ -8,7 +8,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 18, 2022 AM11:36:47
+! Last Modified: Friday, December 09, 2022 PM08:27:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -56,8 +56,9 @@ subroutine retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, MSGLEN, FNAMELEN, OUTUNIT, STDOUT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, warning
-use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, SMALL_TR_RADIUS
-use, non_intrinsic :: infos_mod, only : TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING
+use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
+    & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING, &
+    & NO_SPACE_BETWEEN_BOUNDS
 implicit none
 
 ! Compulsory inputs
@@ -79,8 +80,9 @@ character(len=FNAMELEN) :: fout
 character(len=MSGLEN) :: msg
 integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
-integer(IK), parameter :: valid_exit_flags(9) = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
-    & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_INF_MODEL, DAMAGING_ROUNDING]
+integer(IK), parameter :: valid_exit_flags(10) = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
+    & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_INF_MODEL, DAMAGING_ROUNDING, &
+    & NO_SPACE_BETWEEN_BOUNDS]
 logical :: fexist
 logical :: is_constrained
 real(RP) :: cstrv_loc
@@ -146,6 +148,8 @@ case (NAN_INF_MODEL)
     msg = 'NaN or Inf occurs in the models.'
 case (DAMAGING_ROUNDING)
     msg = 'rounding errors are becoming damaging.'
+case (NO_SPACE_BETWEEN_BOUNDS)
+    msg = 'there is no space between the lower and upper bounds of variable.'
 case default
     msg = 'UNKNOWN EXIT FLAG'
 end select

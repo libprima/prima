@@ -13,7 +13,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM09:50:27
+! Last Modified: Friday, December 09, 2022 PM11:43:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,25 +29,29 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the major calculations of BOBYQA.
 !
-! The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to the
-! corresponding arguments in SUBROUTINE BOBYQA.
+! IPRINT, MAXFUN, MAXHIST, NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, XL, XU, X, NF,
+! F, FHIST, XHIST, and INFO are identical to the corresponding arguments in subroutine BOBYQA.
+!
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
 ! of the model and Lagrange functions.
-! XPT is a 2D array that holds the coordinates of the interpolation points relative to XBASE.
-! FVAL holds the values of F at the interpolation points.
-! XOPT is set to the displacement from XBASE of the trust region centre.
-! GOPT holds the gradient of the quadratic model at XBASE + XOPT.
-! HQ holds the explicit second derivatives of the quadratic model.
-! PQ contains the parameters of the implicit second derivatives of the quadratic model.
-! BMAT holds the last N columns of H.
-! ZMAT holds the factorization of the leading NPT by NPT submatrix of H, this factorization being
-! ZMAT * ZMAT^T, which provides both the correct rank and positive semi-definiteness.
-! SL and SU hold XL - XBASE and XU - XBASE, respectively. All the components of every
-! XOPT are going to satisfy the bounds SL(I) <= XOPT(I) <= SU(I), with appropriate equalities when
-! XOPT is on a constraint boundary.
-! D is chosen by subroutine TRSBOX or GEOSTEP. Usually XBASE + XOPT + D is the vector of variables
-! for the next call of CALFUN.
-! VLAG contains the values of the Lagrange functions at a new point X.
+! SL and SU hold XL - XBASE and XU - XBASE, respectively.
+! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
+! the least calculated F so far). XOPT satisfies SL(I) <= XOPT(I) <= SU(I), with appropriate
+! equalities when XOPT is on a constraint boundary. FOPT = F(XOPT + XBASE).
+! D is reserved for trial steps from XOPT. It is chosen by subroutine TRSBOX or GEOSTEP. Usually
+! XBASE + XOPT + D is the vector of variables for the next call of CALFUN.
+! [XPT, FVAL, KOPT] describes the interpolation set:
+! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
+! values of F at the interpolation points; KOPT is the index of XOPT in XPT.
+! [GOPT, HQ, PQ] describes the quadratic model: GOPT will hold the gradient of the quadratic model
+! at XBASE + XOPT; HQ will hold the explicit second order derivatives of the quadratic model; PQ
+! will contain the parameters of the implicit second order derivatives of the quadratic model.
+! [BMAT, ZMAT] describes the matrix H in the BOBYQA paper (eq. 2.7), which is the inverse of
+! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
+! ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
+! OMEGA = ZMAT*ZMAT^T, which provides both the correct rank and positive semi-definiteness. BMAT
+! will hold the last N ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and
+! column of H are not saved as they are unnecessary for the calculation.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -56,7 +60,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENT
 use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -64,6 +68,7 @@ use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag!, errquad
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
+use, non_intrinsic :: xinbd_mod, only : xinbd
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
@@ -71,7 +76,6 @@ use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox, trrad
 use, non_intrinsic :: update_mod, only : updateh, updatexf, updateq, tryqalt
-use, non_intrinsic :: xinbd_mod, only : xinbd
 
 implicit none
 
@@ -103,36 +107,55 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 ! Local variables
 character(len=*), parameter :: solver = 'BOBYQA'
 character(len=*), parameter :: srname = 'BOBYQB'
-integer(IK) :: subinfo
+integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
+integer(IK) :: itest
+integer(IK) :: k
+integer(IK) :: knew_geo
+integer(IK) :: knew_tr
+integer(IK) :: kopt
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
+integer(IK) :: subinfo
+logical :: accurate_mod
+logical :: adequate_geo
+logical :: bad_trstep
+logical :: close_itpset
+logical :: improve_geo
+logical :: reduce_rho
+logical :: shortd
+logical :: small_trrad
+logical :: ximproved
 real(RP) :: bmat(size(x), npt + size(x))
+real(RP) :: crvmin
 real(RP) :: d(size(x))
+real(RP) :: delbar
+real(RP) :: delta
+real(RP) :: den(npt)
+real(RP) :: distsq(npt)
+real(RP) :: dnorm
+real(RP) :: dnormsav(3)
+real(RP) :: ebound
+real(RP) :: fopt
 real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
+real(RP) :: moderr
+real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pq(npt)
-real(RP) :: vlag(npt + size(x))
+real(RP) :: qred
+real(RP) :: ratio
+real(RP) :: rho
 real(RP) :: sl(size(x))
 real(RP) :: su(size(x))
+real(RP) :: vlag(npt + size(x))
 real(RP) :: xbase(size(x))
-real(RP) :: xopt(size(x)), xosav(size(x)), xdrop(size(x))
+real(RP) :: xdrop(size(x))
+real(RP) :: xopt(size(x))
+real(RP) :: xosav(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
-real(RP) :: delbar, &
-&        crvmin, delta, &
-&        den(npt), moderr, &
-&        distsq(npt), dnorm, ebound, fopt,        &
-&        ratio, rho, qred
-real(RP) :: dnormsav(3)
-real(RP) :: moderrsav(size(dnormsav))
-!real(RP) :: pqalt(npt), galt(size(x)), fshift(npt), pgalt(size(x)), pgopt(size(x)), gqsq, gisq
-integer(IK) :: itest, knew_tr, knew_geo, kopt
-integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
-logical :: shortd, improve_geo, ximproved, reduce_rho, small_trrad, close_itpset, accurate_mod, adequate_geo, bad_trstep
-
 
 ! Sizes.
 n = int(size(x), kind(n))
@@ -538,7 +561,22 @@ close (16)
 !====================!
 
 ! Postconditions
-
+if (DEBUGGING) then
+    call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
+    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+    call assert(all(x >= xl) .and. all(x <= xu), 'XL <= X <= XU', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+    do k = 1, min(nf, maxxhist)
+        call assert(all(xhist(:, k) >= xl) .and. all(xhist(:, k) <= xu), 'XL <= XHIST <= XU', srname)
+    end do
+    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
+        & 'FHIST does not contain NaN/+Inf', srname)
+    call assert(.not. any(fhist(1:min(nf, maxfhist)) < f), 'F is the smallest in FHIST', srname)
+end if
 
 end subroutine bobyqb
 

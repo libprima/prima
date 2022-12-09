@@ -91,8 +91,7 @@ The tests are automated by
 (see https://github.com/equipez/gitpersonal/actions and https://github.com/equipez/PRIMA/actions).
 Normally, each workflow consists of \~ 5
 ([sometimes up to 200](https://github.com/equipez/PRIMA/actions/workflows/test_gfortran.yml))
-**randomized** tests
-that are conducted in parallel (some of them contain up to 200 tests),
+**randomized** tests that are conducted in parallel,
 each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words, PRIMA
 has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.

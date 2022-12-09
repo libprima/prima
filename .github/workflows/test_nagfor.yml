@@ -38,7 +38,7 @@ jobs:
       matrix:
         ikind: [i2, i8]  # [i2, i4, i8] fails frequently due to unavailability of license servers.
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-O1, -O2, -O3, -g]
+        fflags: [-O1, -O2, -O3, -g, -fast]
 
     steps:
       - name: Checkout repository
