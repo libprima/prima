@@ -117,6 +117,19 @@
 
 
 /******************************************************************************/
+/* Will we compile the code with aggressive options (e.g., -Ofast for gfortran)?
+ * Some debugging will be disabled if yes (1). Note:
+ * 1. It is VALID to set __AGRESSIVE_OPTIONS__ to 0 and __DEBUGGING__ to 1 at
+ * the same time.
+ * 2. When compiled with aggressive options, the code may behave unexpectedly */
+#if defined __AGRESSIVE_OPTIONS__
+#undef __AGRESSIVE_OPTIONS__
+#endif
+#define __AGRESSIVE_OPTIONS__ 0
+/******************************************************************************/
+
+
+/******************************************************************************/
 /* Do we use the STORAGE_SIZE intrinsic? (Fortran 2008) */
 /* We prefer STORAGE_SIZE to C_SIZEOF, because the former is intrinsic while the
  * later requires the intrinsic module ISO_C_BINDING.
