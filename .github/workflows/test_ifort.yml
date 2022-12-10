@@ -45,7 +45,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]  # windows-latest does not work
         bitness: [32, 64]
-        ikind: [i2, i4, i8]
+        ikind: [i2] # , i4, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         exclude:

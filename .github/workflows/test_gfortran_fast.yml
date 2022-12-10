@@ -41,9 +41,9 @@ jobs:
         # ubuntu-latest = ubuntu-20.04,
         os: [ubuntu-latest, macos-latest, windows-latest]
         compiler: [gcc]
-        version: [9, 10, 11, 12]
+        version: [10, 11, 12] # gfortran 9 is buggy wit logical variables when invoked with -Ofast
         bitness: [32, 64]
-        ikind: [i2, i4, i8]
+        ikind: [i2] #, i4, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         # Limit the test on macos to 64-bit.
         # Limit the test on Windows to 64-bit and the latest version of the compiler.
@@ -52,10 +52,6 @@ jobs:
             bitness: 32
           - os: windows-latest
             bitness: 32
-          - os: ubuntu-22.04
-            version: 9
-          - os: windows-latest
-            version: 9
 
     steps:
       - name: Checkout repository

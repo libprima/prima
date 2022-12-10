@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 10, 2022 AM01:37:57
+! Last Modified: Saturday, December 10, 2022 PM07:45:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1878,6 +1878,8 @@ if (present(tol)) then
 end if
 
 ! N.B.:
+! 0. It may be expensive to take TRANSPOSE(A), let alone doing it multiple times, but this is not an
+! issue in our project. We call ISSYMMETRIC only in the debugging mode, but never in production.
 ! 1. In Fortran, the following instructions cannot be written as the following Boolean expression:
 ! !IS_SYMMETRIC = (SIZE(A, 1)==SIZE(A, 2) .AND. &
 ! ! & ALL(IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A))) .AND. &
@@ -1889,8 +1891,9 @@ end if
 ! 3. Some compilers (i.e., ifort 2021.7.1) sometimes evaluates 1/Inf to NaN, but sometimes to zero.
 ! See https://fortran-lang.discourse.group/t/ifort-question-1-inf . We signify this strange case by
 ! setting SYMTOL_DFT to HUGENUM.
-! 4. It may be expensive to take TRANSPOSE(A), let alone doing it multiple times, but this is not an
-! issue in our project. We call ISSYMMETRIC only in the debugging mode, but never in production.
+! 4. When invoked with aggressive optimization options (e.g., -fast-math), gfortran 11 is buggy with
+! ALL and ANY: ALL returns .FALSE. on a vector of .TRUE., while ANY returns .TRUE. on a vector of
+! .FALSE.. In that case, we cannot test ALL(IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A))).
 is_symmetric = .true.
 if (size(A, 1) /= size(A, 2)) then
     is_symmetric = .false.

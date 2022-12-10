@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 08, 2022 PM06:17:17
+! Last Modified: Saturday, December 10, 2022 PM07:35:16
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -189,10 +189,13 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 ! divided by a scalar. In brief, this is because different parts of the matrix may not be handled in
 ! the same way due to vectorization. It will be no surprise if the same thing happens to other
 ! compilers. See https://fortran-lang.discourse.group/t/strange-behavior-of-ifort.
-! Update 20221208: ifort 2021.7.1 sometimes evaluates 1/Inf to NaN, but sometimes to zero.
-! See https://fortran-lang.discourse.group/t/ifort-question-1-inf. We signify this strange case by
-! setting SYMTOL_DFT to HUGENUM.
-#if (defined __INTEL_COMPILER && __REAL_PRECISION__ < 64)  
+! Update 20221210: In the following cases, we set SYMTOL_DFT to HUGENUM, which signifies to weaken
+! the criteria for symmetry.
+! 1. When the compiler is ifort and the floating point numbers are in the single precision. As of
+! ifort 2021.7.1, for single precision, 1/Inf is sometimes evaluated to NaN, but sometimes to zero.
+! See https://fortran-lang.discourse.group/t/ifort-question-1-inf.
+! 2. When gfortran is invoked with aggressive optimization options.
+#if (defined __GFORTRAN__ && __AGRESSIVE_OPTIONS__ == 1) || (defined __INTEL_COMPILER && __REAL_PRECISION__ < 64)
 real(RP), parameter :: SYMTOL_DFT = HUGENUM
 #elif (__RELEASED__ == 1) || (__DEBUGGING__ == 0) || (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
