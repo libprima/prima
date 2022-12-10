@@ -44,12 +44,12 @@ FSTD := 20$(FS)
 
 # Default options for all the compilers, and corresponding suffixes for the executable. In general,
 # "O" indicates optimization, and "G" means debugging.
-#FFLAGS := $(shell echo $$FFLAGS)
 FFLAGS ?= ""
 FFLAGSO := -O3
 FFLAGSG := -g -O0
 SUFFIXO := o3
 SUFFIXG := g
+AGRESSIVE := 0
 ifeq ($(FFLAGS),-O)
 	FFLAGSO := $(FFLAGS)
 	FFLAGSG :=
@@ -79,6 +79,7 @@ ifeq ($(FFLAGS),-fast)
 	FFLAGSG :=
 	SUFFIXO := fast
 	SUFFIXG :=
+	AGRESSIVE := 1
 endif
 ifeq ($(FFLAGS),-g)
 	FFLAGSO :=
@@ -89,14 +90,27 @@ endif
 
 # Define the compiler-dependent "fast flags", which will be used when FFLAGS is -fast.
 AFF := -O4
-DFF := -O4 -Ofast -ffast-math -flto
-FFF := -ffast-math -Ofast
-GFF := -O3 -ffast-math -Ofast -flto
-IFF := -O3 -fast
+DFF := -O4 -Ofast -ffast-math  # As of AMD clang version 13.0., -Ofast implies -O3, but it is not clear whether it implies -ffast-math
+FFF := -O3 -Ofast -ffast-math  # No documentation found about the relation between -Ofast, -O3, and -ffast-math
+GFF := -Ofast  # -Ofast implies -O3 and -ffast-math
 NFF := -O4
-VFF := -O4 -fast
-SFF := -O5 -fast
-XFF := -O3 -fast
+SFF := -fast  # -fast implies -O5
+SFF16 := -O5  # -fast leads to a mistakenly failure of assertion in BOBYQA: RHOBEG <= MINVAL(XU-XL)/2
+VFF := -O4 -fast  # nvfortran -fast implies -O2, but the highest optimization level is -O4
+
+# Define fast flags for Intel compilers according to the CPU brand.
+# As of ifx (IFORT) 2022.2.1, -fast will lead to the following error on AMD CPUs:
+# "LLVM ERROR: 64-bit code requested on a subtarget that doesn't support it!"
+# For ifort (IFORT) 2021.7.1, -fast will lead to the following error on AMAD CPUs:
+# catastrophic error: Function return parameter requires SSE register while SSE is disabled.
+# In the following, we assume that there is only one type of CPU on the current platform.
+ifneq (,$(findstring intel,$(shell lscpu | tr '[:upper:]' '[:lower:]')))  # Intel CPU.
+	IFF := -fast  # -fast is "A combination of -Ofast, -ipo, -static (for static linking),  and -xHost."
+	XFF := -Ofast -xHost # As of ifx (IFORT) 2022.2.1, IS_NAN does not work with -fast and leads to exceptions
+else  # Non-Intel CPU, especially AMD.
+	IFF := -Ofast # -Ofast implies -O3
+	XFF := -Ofast -xHost
+endif
 
 # Log file stamp.
 RANDNUM := $(shell awk 'BEGIN{srand();printf("%d", 65536*rand())}')
@@ -404,14 +418,14 @@ gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_ts
 gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
 	FCG := $(GFORT) $(FFLAGSG) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
-	FCF := $(GFORT) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow $(GFF)
+	FCF := $(GFORT) -Wno-function-elimination -ffpe-trap=zero,invalid $(GFF)
 
 gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
 	FCO := $(GFORT) $(FFLAGSO) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
 	FCG := $(GFORT) $(FFLAGSG) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
-	FCF := $(GFORT) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow $(GFF)
+	FCF := $(GFORT) -Wno-function-elimination -ffpe-trap=zero,invalid $(GFF)
 
 # Intel ifort
 # -standard-semantics: enforce the compiler to behave according to the current standard (F2018 as of Dec 2021).
@@ -557,7 +571,7 @@ stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_ts
 stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
 	FCG := $(SFORT) $(FFLAGSG) -fnonstd -ftrap=division
 stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
-	FCF := $(SFORT) -fnonstd -ftrap=division $(SFF)
+	FCF := $(SFORT) $(SFF)
 
 stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
 	FCO := $(SFORT) $(FFLAGSO) -fnonstd -ftrap=overflow,division#,invalid#,underflow
@@ -571,7 +585,7 @@ stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d
 stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
 	FCG := $(SFORT) $(FFLAGSG) -fnonstd -ftrap=overflow,division#,invalid#,underflow
 stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
-	FCF := $(SFORT) -fnonstd -ftrap=overflow,division $(SFF)
+	FCF := $(SFORT) -fnonstd -ftrap=overflow,division $(SFF16)
 
 # Intel ifx
 XFORT := ifx
@@ -790,6 +804,8 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "Info: Licence received, continuing" \
 	| grep -v "Loading..." \
 	| grep -v "Linking:" \
+	| grep -v "function circle_maxabs(fun, args, grid_size) result(angle)" \
+	| grep -v "function circle_min(fun, args, grid_size) result(angle)" \
 	| grep -v "univar\.f90([0-9]*): remark #7712: This variable has not been used\.\s*\[ANGLE\]" \
 	| grep -v "f90comp: [0-9]* SOURCE LINES" \
 	| grep -v "f90comp: [0-9]* ERRORS, [0-9]* WARNINGS" \
@@ -804,6 +820,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "bin/ld.*bisheng.*unsupported GNU_PROPERTY_TYPE (5) type: 0xc0000000" \
 	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[SQRT\]" \
 	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[NINT\]" \
+	| grep -v "f90: Warning: -xcache=native detection failed, falling back to -xcache=generic" \
 	| grep -v "all warnings being treated as errors" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
@@ -867,6 +884,7 @@ header_%: source_%
 	$(SEDI) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
 	$(SEDI) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
 	$(SEDI) "0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/" $(HEADERS)
+	$(SEDI) "0,/^#define __AGRESSIVE_OPTIONS__ [0-9]*/s//#define __AGRESSIVE_OPTIONS__ $(AGRESSIVE)/" $(HEADERS)
 	@printf "Done.\n"
 
 

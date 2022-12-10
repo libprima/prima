@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 06, 2022 PM02:04:00
+! Last Modified: Saturday, December 10, 2022 PM09:16:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,6 +104,8 @@ logical :: d_initialized  ! TO BE REMOVED.
 !     We take the view that any D is acceptable if it has the properties
 !
 !             ||D|| <= DELTA  and  ACTRED <= (1-TOL)*MAXRED.
+
+d_initialized = .false.  ! TO BE REMOVED
 
 ! Sizes.
 n = int(size(g), kind(n))
