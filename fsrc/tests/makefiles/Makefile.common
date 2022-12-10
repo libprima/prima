@@ -1,6 +1,6 @@
 # This Makefile tests the modern-Fortran version of Powell's solvers on multiple compilers.
 #
-# The following compilers are tested:
+# 1.  The following compilers are tested:
 # 9: G95 (compilation only; no compilation of the testing code, which contains F03 constructs unsupported by G95)
 # a: Absoft af95
 # d: AOCC flang
@@ -13,11 +13,16 @@
 # v: NVIDIA nvfortran
 # x: Intel ifx
 #
-# The following tests are available, where C = 9, a, d, f, g, l, n, i, s, v, x, and N = 2, 4, 8:
+# 2. The following tests are available, where C = 9, a, d, f, g, l, n, i, s, v, x, and N = 2, 4, 8:
 # Ctest: test with compiler C
 # Ctest_c: test with compiler C; compilation only (do not run the binary)
 # Ctest_iN: test with compiler C and integer kind INT(N*8)
 # Ctest_iN_c: test with compiler C and integer kind INT(N*8); compilation only
+#
+# 3. The compilation flags concerning optimization / debugging can be controlled by the environment
+# variable FFLAGS, which may be set to empty, -g, -O, -Oi (i = 1, 2, 3), or -fast. If FFLAGS is
+# empty, then we will test both an optimized version (compiled with -O3) and a debugging version
+# (compiled with -g -O0); otherwise, a version indicated by FFLAGS will be tested.
 #
 # Coded by Zaikun ZHANG (www.zhangzk.net).
 #
@@ -37,10 +42,12 @@ SHELL = /bin/bash
 FS ?= 03
 FSTD := 20$(FS)
 
-# Default options for all the compilers, and corresponding suffixes for the executable.
-FFLAGS := $(shell echo $$FFLAGS)
-FFLAGSO := -O3  # Optimization
-FFLAGSG := -g -O0  # Debugging
+# Default options for all the compilers, and corresponding suffixes for the executable. In general,
+# "O" indicates optimization, and "G" means debugging.
+#FFLAGS := $(shell echo $$FFLAGS)
+FFLAGS ?= ""
+FFLAGSO := -O3
+FFLAGSG := -g -O0
 SUFFIXO := o3
 SUFFIXG := g
 ifeq ($(FFLAGS),-O)
@@ -691,9 +698,9 @@ $(TESTS_C) $(TESTS_INT_C):
 	@if echo $@ | grep -q "9test\|ltest" ; then \
 		printf "\n$@ is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 	else  \
-		if [[ -n '$(FFLAGSO)' ]] ; then \
+		if [[ -n "$(FFLAGSO)" ]] ; then \
 			if [[ -x $@_c_$(SUFFIXO) ]] ; then \
-				if echo $@ | grep -q "ftest\|vtest\|dtest" && [[ $(SOLVER) == "lincoa" ]] ; then \
+				if echo $@ | grep -q "ftest\|vtest\|dtest" && [[ $(SOLVER) = "lincoa" ]] ; then \
 					printf "\n$@_$(SUFFIXO) is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 				else \
 					export NVCOMPILER_TERM=trace && set -o pipefail && \
@@ -707,7 +714,7 @@ $(TESTS_C) $(TESTS_INT_C):
 				exit 126 ; \
 			fi ; \
 		fi ; \
-		if [[ -n '$(FFLAGSG)' ]] ; then \
+		if [[ -n "$(FFLAGSG)" ]] ; then \
 			export NVCOMPILER_TERM=trace && set -o pipefail && \
 			printf "\n$@_$(SUFFIXG) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
 			./$@_c_$(SUFFIXG) 2>&1 \
@@ -731,25 +738,25 @@ $(TESTS_C) $(TESTS_INT_C):
 	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
 	$(eval SRC := $(shell if echo $@ | grep -q "ltest"; then echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||' ; else echo $(SRC) ; fi))
 	@(if echo $@ | grep -q "9test\|ltest"; then \
-		if [[ -n '$(FFLAGSO)' ]] ; then \
-			if [[ '$(FFLAGSO)'=='-fast' ]] ; then \
+		if [[ -n "$(FFLAGSO)" ]] ; then \
+			if [[ "$(FFLAGSO)" = "-fast" ]] ; then \
 				$(FCF) -c $(SRC) ; \
 			else \
 				$(FCO) -c $(SRC) ; \
 			fi ; \
 		fi ; \
-		if [[ -n '$(FFLAGSG)' ]] ; then \
+		if [[ -n "$(FFLAGSG)" ]] ; then \
 			$(FCG) -c $(SRC) ; \
 		fi ; \
 	else \
-		if [[ -n '$(FFLAGSO)' ]] ; then \
-			if [[ '$(FFLAGSO)'=='-fast' ]] ; then \
+		if [[ -n "$(FFLAGSO)" ]] ; then \
+			if [[ "$(FFLAGSO)" = "-fast" ]] ; then \
 				$(FCF) -o $@_$(SUFFIXO) $(SRC) ; \
 			else \
 				$(FCO) -o $@_$(SUFFIXO) $(SRC) ; \
 			fi ; \
 		fi ; \
-		if [[ -n '$(FFLAGSG)' ]] ; then \
+		if [[ -n "$(FFLAGSG)" ]] ; then \
 			$(FCG) -o $@_$(SUFFIXG) $(SRC) ; \
 		fi ; \
 	fi) 2>&1 \
