@@ -753,26 +753,26 @@ $(TESTS_C) $(TESTS_INT_C):
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
 	$(eval SRC := $(shell if echo $@ | grep -q "ltest"; then echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||' ; else echo $(SRC) ; fi))
-	@(if echo $@ | grep -q "9test\|ltest"; then \
-		if [[ -n $(FFLAGSO) ]] ; then \
-			if [[ $(FFLAGSO) = "-fast" ]] ; then \
+	(if echo $@ | grep -q '9test\|ltest'; then \
+		if [[ -n '$(FFLAGSO)' ]] ; then \
+			if [[ '$(FFLAGSO)' = '-fast' ]] ; then \
 				$(FCF) -c $(SRC) ; \
 			else \
 				$(FCO) -c $(SRC) ; \
 			fi ; \
 		fi ; \
-		if [[ -n $(FFLAGSG) ]] ; then \
+		if [[ -n '$(FFLAGSG)' ]] ; then \
 			$(FCG) -c $(SRC) ; \
 		fi ; \
 	else \
-		if [[ -n $(FFLAGSO) ]] ; then \
-			if [[ $(FFLAGSO)= "-fast" ]] ; then \
+		if [[ -n '$(FFLAGSO)' ]] ; then \
+			if [[ '$(FFLAGSO)' = '-fast' ]] ; then \
 				$(FCF) -o $@_$(SUFFIXO) $(SRC) ; \
 			else \
 				$(FCO) -o $@_$(SUFFIXO) $(SRC) ; \
 			fi ; \
 		fi ; \
-		if [[ -n $(FFLAGSG) ]] ; then \
+		if [[ -n '$(FFLAGSG)' ]] ; then \
 			$(FCG) -o $@_$(SUFFIXG) $(SRC) ; \
 		fi ; \
 	fi) 2>&1 \
