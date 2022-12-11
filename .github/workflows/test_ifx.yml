@@ -68,9 +68,18 @@ jobs:
       - name: Conduct the test
         shell: bash
         run: |
-          source /opt/intel/oneapi/setvars.sh
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+              "C:\Program Files (x86)\Intel\oneAPI\compiler\latest\env\vars.bat"
+          else
+              source /opt/intel/oneapi/setvars.sh
+          fi
           ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"
-          cd $ROOT/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+                # Windows does not support the symlink of Windows, leading to errors when copying them. Thus we remove *lint and skip the test.
+                rm -f "$ROOT"/fsrc/${{ matrix.solver }}/flint && rm -f "$ROOT"/fsrc/${{ matrix.solver }}/mlint
+          else
+                cd "$ROOT"/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          fi
           cd $ROOT/fsrc/tests && export FFLAGS=${{ matrix.fflags }} && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd $ROOT/fsrc/examples/${{ matrix.solver }} && make xtest
       - name: Store artifacts
