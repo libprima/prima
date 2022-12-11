@@ -2,7 +2,7 @@ name: Test Flang in AMD AOCC
 
 on:
   # Trigger the workflow on push or pull request
-  #push:
+  ##PPUUSSHH:
   #pull_request:
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
