@@ -40,6 +40,7 @@ jobs:
         # As of 20221119, according to https://github.com/actions/virtual-environments ,
         # ubuntu-latest = ubuntu-20.04,
         os: [windows-latest]
+        bitness: [64]
         compiler: [gcc]
         version: [11]
         ikind: [i2]
