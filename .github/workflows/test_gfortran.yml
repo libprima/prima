@@ -2,7 +2,7 @@ name: Test gfortran, -g, -O3
 
 on:
   # Trigger the workflow on push or pull request
-  ##PPUUSSHH:
+  #push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -39,18 +39,12 @@ jobs:
       matrix:
         # As of 20221119, according to https://github.com/actions/virtual-environments ,
         # ubuntu-latest = ubuntu-20.04,
-        os: [windows-latest]
-        bitness: [64]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         compiler: [gcc]
-        version: [11]
-        ikind: [i2]
-        solver: [uobyqa]
-        # os: [ubuntu-latest, macos-latest, windows-latest]
-        # compiler: [gcc]
-        # version: [9, 11, 12]  # Too expensive to test all versions
-        # bitness: [32, 64]
-        # ikind: [i2, i4]
-        # solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        version: [9, 11, 12]  # Too expensive to test all versions
+        bitness: [32, 64]
+        ikind: [i2, i4]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         # Limit the test on macos to 64-bit.
         # Limit the test on Windows to 64-bit and the latest version of the compiler.
         exclude:
