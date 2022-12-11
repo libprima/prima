@@ -1,6 +1,6 @@
 update.f90
 initialize.f90
-trustregion.f90
+trustregion.F90
 geometry.f90
 cobylb.f90
 cobyla.f90
