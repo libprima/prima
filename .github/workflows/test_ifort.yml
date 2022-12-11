@@ -2,7 +2,7 @@ name: Test ifort
 
 on:
   # Trigger the workflow on push or pull request
-  #push:
+  ##PPUUSSHH:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -90,13 +90,13 @@ jobs:
       - name: Conduct the test
         shell: bash
         run: |
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
+          if [[ "$RUNNER_OS" = "Windows" ]]; then
               "C:\Program Files (x86)\Intel\oneAPI\compiler\latest\env\vars.bat"
           else
               source /opt/intel/oneapi/setvars.sh
           fi
           ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
+          if [[ "$RUNNER_OS" = "Windows" ]]; then
                 # Windows does not support the symlink of Windows, leading to errors when copying them. Thus we remove *lint and skip the test.
                 rm -f "$ROOT"/fsrc/${{ matrix.solver }}/flint && rm -f "$ROOT"/fsrc/${{ matrix.solver }}/mlint
           else

@@ -2,7 +2,7 @@ name: Test gfortran, -O1, -O2
 
 on:
   # Trigger the workflow on push or pull request
-  #push:
+  ##PPUUSSHH:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -96,7 +96,7 @@ jobs:
         # may lead to errors due to parallel making. To avoid this, we make gtest_c first.
         run: |
             ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"  # `realpath` is unavailable on macOS
-            if [[ "$RUNNER_OS" == "Windows" ]] ; then
+            if [[ "$RUNNER_OS" = "Windows" ]] ; then
                 # Windows does not support the symlink of Windows, leading to errors when copying them. Thus we remove *lint and skip the test.
                 rm -f "$ROOT"/fsrc/${{ matrix.solver }}/flint && rm -f "$ROOT"/fsrc/${{ matrix.solver }}/mlint
             else
