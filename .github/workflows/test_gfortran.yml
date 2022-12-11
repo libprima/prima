@@ -85,9 +85,7 @@ jobs:
       - name: Make gcrt1.o available on macOS
         if: runner.os == 'macOS'
         run: |
-          sudo find / -name '*crt1*'
-          locate gcrt1.o
-          locate crt1.o
+          sudo find / -name 'gcrt1.o'
 
 
       - name: Set environment variables
