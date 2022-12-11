@@ -2,7 +2,7 @@ name: Plot performance profiles for bobyqa, small (put only 1 job to see the pro
 
 on:
   # Trigger the workflow on push or pull request
-  push:
+  #PPUUSSHH:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   # schedule:

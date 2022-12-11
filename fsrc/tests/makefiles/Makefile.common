@@ -104,9 +104,10 @@ VFF := -O4 -fast  # nvfortran -fast implies -O2, but the highest optimization le
 # For ifort (IFORT) 2021.7.1, -fast will lead to the following error on AMAD CPUs:
 # catastrophic error: Function return parameter requires SSE register while SSE is disabled.
 # In the following, we assume that there is only one type of CPU on the current platform.
-ifneq (,$(findstring intel,$(shell lscpu | tr '[:upper:]' '[:lower:]')))  # Intel CPU.
+ifneq (,$(findstring intel,$(shell lscpu 2> /dev/null | tr '[:upper:]' '[:lower:]')))  # Intel CPU.
 	IFF := -fast  # -fast is "A combination of -Ofast, -ipo, -static (for static linking),  and -xHost."
-	XFF := -Ofast -xHost # As of ifx (IFORT) 2022.2.1, IS_NAN does not work with -fast and leads to exceptions
+	#XFF := -fast  # As of ifx (IFORT) 2022.2.1, IS_NAN does not work with -fast and leads to exceptions
+	XFF := -Ofast -xHost
 else  # Non-Intel CPU, especially AMD.
 	IFF := -Ofast # -Ofast implies -O3
 	XFF := -Ofast -xHost
