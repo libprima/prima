@@ -102,13 +102,10 @@ jobs:
         # may lead to errors due to parallel making. To avoid this, we make gtest_c first.
         run: |
             ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"  # `realpath` is unavailable on macOS
-            if [[ "$RUNNER_OS" = "Windows" ]] ; then
-                # Windows does not support the symlink of linux, leading to errors when copying them. Thus we remove *lint and skip the test.
-                rm -f "$ROOT"/fsrc/${{ matrix.solver }}/flint && cp "$ROOT"/fsrc/common/flint  "$ROOT"/fsrc/${{ matrix.solver }}/
-                rm -f "$ROOT"/fsrc/${{ matrix.solver }}/mlint && cp "$ROOT"/fsrc/common/mlint  "$ROOT"/fsrc/${{ matrix.solver }}/
+            if [[ "$RUNNER_OS" != "Windows" ]] ; then
+                cd "$ROOT"/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+                cd "$ROOT"/fsrc/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
-            cd "$ROOT"/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-            cd "$ROOT"/fsrc/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             if (( ${{ matrix.version }} < 8 )) ; then export FS=08; else export FS=18; fi  # Needed by the next line; `-f2018` is not implemented until gcc-8
             cd "$ROOT"/fsrc/examples/${{ matrix.solver }} && make gtest
 
