@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, December 11, 2022 PM01:59:11
+! Last Modified: Sunday, December 11, 2022 PM02:03:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,7 +26,7 @@ function trstlp(A_in, b_in, delta) result(d)
 ! stage, D is set to the shortest vector that minimizes the greatest violation of the constraints
 !       dot_product(A(1:N, K), D) >= B(K),  K = 1, 2, 3, ..., M,
 ! subject to the Euclidean length of D being at most DELTA. If its length is strictly less than
-! DELTA, then the second stage use the resultant freedom in D to minimize the objective function
+! DELTA, then the second stage uses the resultant freedom in D to minimize the objective function
 !       dot_product(-A(1:N, M+1), D)
 ! subject to no increase in any greatest constraint violation. This notation allows the gradient of
 ! the objective function to be regarded as the gradient of a constraint. Therefore the two stages
@@ -441,15 +441,15 @@ do iter = 1, maxiter
 
         ! Powell's code does not have the following. It avoids subsequent exceptions.
         !------------------------------------------------------------------------------------------!
-        ! In theory, NACT > 0 in stage 2, as the objective function should be considered as an
-        ! "active constraint" --- more precisely, IACT(NACT) = MCON. However, it is not clear to my
-        ! why in stage 2 NACT must be positive after the reduction above. It did happen in stage 1
-        ! that NACT becomes 0 after the reduction --- this is extremely rare, and it was never
-        ! observed until 20221212, after almost a year of randomized tests. Maybe NACT is
-        ! theoretically positive even in stage 1?
+        ! Zaikun 20221212: In theory, NACT > 0 in stage 2, as the objective function should always
+        ! be considered as an "active constraint" --- more precisely, IACT(NACT) = MCON. However,
+        ! looking at the code, I cannot see why in stage 2 NACT must be positive after the reduction
+        ! above. It did happen in stage 1 that NACT became 0 after the reduction --- this is
+        ! extremely rare, and it was never observed until 20221212, after almost one year of
+        ! random tests. Maybe NACT is theoretically positive even in stage 1?
         call validate(stage == 1 .or. nact > 0, 'NACT > 0 in stage 2', srname)
         if (stage == 2 .and. nact <= 0) then
-            exit
+            exit  ! If this case ever occurs, we have to exit, as NACT is used as an index below.
         end if
         if (nact > 0) then
             if (is_nan(zdota(nact)) .or. abs(zdota(nact)) <= EPS**2) then
