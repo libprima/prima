@@ -1,3 +1,5 @@
+#include "fintrf.h"
+
 module trustregion_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region calculations of COBYLA.
@@ -8,7 +10,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, December 11, 2022 AM01:47:24
+! Last Modified: Sunday, December 11, 2022 PM01:10:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -16,6 +18,14 @@ private
 public :: trstlp
 public :: trrad
 
+
+integer*4 :: kk
+character(len=1000) :: str
+interface
+    integer * 4 function mexPrintf(message)
+    character*(*) :: message
+    end function mexPrintf
+end interface
 
 contains
 
@@ -441,6 +451,9 @@ do iter = 1, maxiter
 
         ! Powell's code does not have the following. It avoids subsequent floating point exceptions.
         !------------------------------------------------------------------------------------------!
+        kk = mexPrintf('stage, iter, icon, nact')
+        write (str, *) stage, iter, icon, nact
+        kk = mexPrintf(str)
         call validate(nact > 0, 'NACT > 0', srname)  ! Why is this true?
         if (is_nan(zdota(nact)) .or. abs(zdota(nact)) <= EPS**2) then
             exit

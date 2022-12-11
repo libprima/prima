@@ -545,14 +545,14 @@ vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_ts
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
 	FCG := $(VFORT) $(FFLAGSG) -Ktrap=divz #-Kieee
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
-	FCF := $(VFORT) -Ktrap=divz $(VFF)
+	FCF := $(VFORT) $(VFF)
 
 vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
 	FCO := $(VFORT) $(FFLAGSO) -Ktrap=divz,inv#,ovf,unf,denorm -Kieee
 vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
 	FCG := $(VFORT) $(FFLAGSG) -Ktrap=divz,inv#,ovf,unf,denorm -Kieee
 vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
-	FCF := $(VFORT) -Ktrap=divz,inv $(VFF)
+	FCF := $(VFORT) -Ktrap=inv $(VFF)
 
 vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d0_tst_c vtest_i4_r16_d0_tst_c vtest_i8_r16_d0_tst_c: \
 	FCO := $(VFORT) $(FFLAGSO) -Ktrap=divz,ovf,inv#,unf,denorm -Kieee

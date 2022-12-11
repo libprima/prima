@@ -90,7 +90,7 @@ The tests are automated by
 30,000 "workflows" have been successfully run by GitHub Actions
 (see https://github.com/equipez/gitpersonal/actions and https://github.com/equipez/PRIMA/actions).
 Normally, each workflow consists of \~ 5
-([sometimes up to 200](https://github.com/equipez/PRIMA/actions/workflows/test_gfortran.yml))
+([sometimes more than 100](https://github.com/equipez/PRIMA/actions/workflows/test_gfortran.yml))
 **randomized** tests that are conducted in parallel,
 each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words, PRIMA
