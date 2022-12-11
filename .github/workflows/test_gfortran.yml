@@ -102,6 +102,10 @@ jobs:
         # may lead to errors due to parallel making. To avoid this, we make gtest_c first.
         run: |
             ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"  # `realpath` is unavailable on macOS
+            # 20221212: We skip the linting and extensive test on Windows due to the following
+            # reasons. The example will still be tested on Windows.
+            # 1. Windows does not support the symlink of linux, and hence mlint and flint do not work.
+            # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
                 cd "$ROOT"/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
                 cd "$ROOT"/fsrc/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
