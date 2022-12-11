@@ -1,5 +1,3 @@
-#include "fintrf.h"
-
 module trustregion_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region calculations of COBYLA.
@@ -10,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, December 11, 2022 PM01:10:42
+! Last Modified: Sunday, December 11, 2022 PM01:59:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -18,14 +16,6 @@ private
 public :: trstlp
 public :: trrad
 
-
-integer*4 :: kk
-character(len=1000) :: str
-interface
-    integer * 4 function mexPrintf(message)
-    character*(*) :: message
-    end function mexPrintf
-end interface
 
 contains
 
@@ -35,8 +25,8 @@ function trstlp(A_in, b_in, delta) result(d)
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
 ! stage, D is set to the shortest vector that minimizes the greatest violation of the constraints
 !       dot_product(A(1:N, K), D) >= B(K),  K = 1, 2, 3, ..., M,
-! subject to the Euclidean length of D being at most DELTA. If its length is strictly less than DELTA,
-! then we use the resultant freedom in D to minimize the objective function
+! subject to the Euclidean length of D being at most DELTA. If its length is strictly less than
+! DELTA, then the second stage use the resultant freedom in D to minimize the objective function
 !       dot_product(-A(1:N, M+1), D)
 ! subject to no increase in any greatest constraint violation. This notation allows the gradient of
 ! the objective function to be regarded as the gradient of a constraint. Therefore the two stages
@@ -449,14 +439,22 @@ do iter = 1, maxiter
         vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
         nact = nact - 1_IK
 
-        ! Powell's code does not have the following. It avoids subsequent floating point exceptions.
+        ! Powell's code does not have the following. It avoids subsequent exceptions.
         !------------------------------------------------------------------------------------------!
-        kk = mexPrintf('stage, iter, icon, nact')
-        write (str, *) stage, iter, icon, nact
-        kk = mexPrintf(str)
-        call validate(nact > 0, 'NACT > 0', srname)  ! Why is this true?
-        if (is_nan(zdota(nact)) .or. abs(zdota(nact)) <= EPS**2) then
+        ! In theory, NACT > 0 in stage 2, as the objective function should be considered as an
+        ! "active constraint" --- more precisely, IACT(NACT) = MCON. However, it is not clear to my
+        ! why in stage 2 NACT must be positive after the reduction above. It did happen in stage 1
+        ! that NACT becomes 0 after the reduction --- this is extremely rare, and it was never
+        ! observed until 20221212, after almost a year of randomized tests. Maybe NACT is
+        ! theoretically positive even in stage 1?
+        call validate(stage == 1 .or. nact > 0, 'NACT > 0 in stage 2', srname)
+        if (stage == 2 .and. nact <= 0) then
             exit
+        end if
+        if (nact > 0) then
+            if (is_nan(zdota(nact)) .or. abs(zdota(nact)) <= EPS**2) then
+                exit
+            end if
         end if
         !------------------------------------------------------------------------------------------!
 
