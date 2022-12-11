@@ -97,7 +97,7 @@ jobs:
           fi
           ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"
           if [[ "$RUNNER_OS" = "Windows" ]]; then
-                # Windows does not support the symlink of Windows, leading to errors when copying them. Thus we remove *lint and skip the test.
+                # Windows does not support the symlink of linux, leading to errors when copying them. Thus we remove *lint and skip the test.
                 rm -f "$ROOT"/fsrc/${{ matrix.solver }}/flint && rm -f "$ROOT"/fsrc/${{ matrix.solver }}/mlint
           else
                 cd "$ROOT"/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
