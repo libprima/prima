@@ -84,7 +84,11 @@ jobs:
 
       - name: Make gcrt1.o available on macOS
         if: runner.os == 'macOS'
-        run: xcode-select --install
+        run: |
+          sudo find / -name '*crt1*'
+          locate gcrt1.o
+          locate crt1.o
+
 
       - name: Set environment variables
         shell: bash  # Important; otherwise, the following statements do not work on Windows.
