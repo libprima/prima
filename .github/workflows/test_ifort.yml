@@ -96,7 +96,12 @@ jobs:
               source /opt/intel/oneapi/setvars.sh
           fi
           ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"
-          cd $ROOT/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+                # Windows does not support the symlink of Windows, leading to errors when copying them. Thus we remove *lint and skip the test.
+                rm -f "$ROOT"/fsrc/${{ matrix.solver }}/flint && rm -f "$ROOT"/fsrc/${{ matrix.solver }}/mlint
+          else
+                cd "$ROOT"/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          fi
           cd $ROOT/fsrc/tests && export FFLAGS=${{ matrix.fflags }} && make itest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd $ROOT/fsrc/examples/${{ matrix.solver }} && make itest
 
