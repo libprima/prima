@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, November 30, 2022 PM07:19:46
+! Last Modified: Monday, December 12, 2022 PM03:42:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,7 +29,7 @@ contains
 subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ftarget, &
     & gamma1, gamma2, rhobeg, rhoend, constr, f, x, nf, chist, conhist, cstrv, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine performs the actual calculations of COBYLA. 
+! This subroutine performs the actual calculations of COBYLA.
 !
 ! IPRINT, MAXFILT, MAXFUN, MAXHIST, CTOL, CWEIGHT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG,
 ! RHOEND, X, NF, F, XHIST, FHIST, CHIST, CONHIST, CSTRV and INFO are identical to the corresponding
@@ -95,7 +95,6 @@ character(len=*), parameter :: solver = 'COBYLA'
 character(len=*), parameter :: srname = 'COBYLB'
 integer(IK) :: jdrop_geo
 integer(IK) :: jdrop_tr
-integer(IK) :: k
 integer(IK) :: kopt
 integer(IK) :: m
 integer(IK) :: maxchist
@@ -106,6 +105,7 @@ integer(IK) :: maxtr
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: nfilt
+integer(IK) :: nhist
 integer(IK) :: subinfo
 integer(IK) :: tr
 logical :: bad_trstep
@@ -229,8 +229,8 @@ if (subinfo /= INFO_DFT) then
         call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
         call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) &
             & .or. is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain negative values or NaN/+Inf', srname)
-        k = minval([nf, maxfhist, maxchist])
-        call assert(.not. any(isbetter(fhist(1:k), chist(1:k), f, cstrv, ctol)), &
+        nhist = minval([nf, maxfhist, maxchist])
+        call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv, ctol)), &
             & 'No point in the history is better than X', srname)
     end if
     return

@@ -43,7 +43,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 !   ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
 !   ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
 !   except for the (NPT+1)th column. Note that the (NPT + 1)th row and column of H are not saved as
-!  they are unnecessary for the calculation.
+!   they are unnecessary for the calculation.
 !
 ! See Section 2 of the NEWUOA paper for more information about these variables.
 !--------------------------------------------------------------------------------------------------!

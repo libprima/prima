@@ -1,19 +1,18 @@
+! TODO:
+! 1. Improve RESCUE so that it accepts an [XNEW, FNEW] that is not interpolated yet, or even accepts
+! [XRESERVE, FRESERVE], which contains points that have been evaluated.
+!
 module bobyqb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of BOBYQA.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
-! TODO:
-! 1. Verify that the iterates/steps respect bounds in the pre/postconditions.
-! 2. Improve RESCUE so that it accepts an [XNEW, FNEW] that is not interpolated yet, or even accepts
-! [XRESERVE, FRESERVE], which contains points that have been evaluated.
-!
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM02:43:30
+! Last Modified: Monday, December 12, 2022 PM04:11:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -187,8 +186,6 @@ end if
 ! Calculation starts !
 !====================!
 
-info = INFO_DFT
-
 ! Initialize XBASE, XPT, FVAL, and KOPT.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fhist, fval, &
     & sl, su, xbase, xhist, xpt, subinfo)
@@ -200,6 +197,7 @@ f = fopt
 
 ! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
+    info = subinfo
     ! Arrange FHIST and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist)
     ! Print a return message according to IPRINT.
@@ -240,6 +238,7 @@ itest = 0
 ! IMPROVE_GEO: Should we improve the geometry?
 ! REDUCE_RHO: Should we reduce rho?
 ! BOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
+info = INFO_DFT
 do while (.true.)
     ! Generate the next trust region step D.
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)

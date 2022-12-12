@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 AM09:51:43
+! Last Modified: Monday, December 12, 2022 PM03:23:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -352,7 +352,7 @@ else
     end do
 end if
 
-! Set IDZ = 1.
+! Set IDZ.
 idz = 1
 
 ! Up to now, [BMAT, ZMAT, IDZ] corresponds to the XPT_REF defined below.
