@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, November 30, 2022 PM01:10:21
+! Last Modified: Monday, December 12, 2022 PM03:23:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -486,7 +486,7 @@ else
     end do
 end if
 
-! Set IDZ = 1.
+! Set IDZ.
 idz = 1
 
 if (present(info)) then

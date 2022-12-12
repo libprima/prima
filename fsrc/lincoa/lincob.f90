@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, December 04, 2022 PM04:21:24
+! Last Modified: Monday, December 12, 2022 PM04:11:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,34 +36,37 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 ! corresponding arguments in subroutine LINCOA.
 ! AMAT is a matrix whose columns are the constraint gradients, scaled so that they have unit length.
 ! B contains on entry the right hand sides of the constraints, scaled as above, but later B is
-! modified for variables relative to XBASE.
+!   modified for variables relative to XBASE.
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
-! of the model and Lagrange functions.
-! XPT contains the interpolation point coordinates relative to XBASE.
-! FVAL holds the values of F at the interpolation points.
-! XSAV holds the best feasible vector of variables so far, without any shift of origin.
-! XOPT is set to XSAV-XBASE, which is the displacement from XBASE of the feasible vector of variables
-! that provides the least calculated F so far, this vector being the current trust region centre.
-! GOPT holds the gradient of the quadratic model at XSAV = XBASE+XOPT.
-! HQ holds the explicit second derivatives of the quadratic model.
-! PQ contains the parameters of the implicit second derivatives of the quadratic model.
-! BMAT holds the last N columns of the big inverse matrix H.
-! ZMAT holds the factorization of the leading NPT by NPT submatrix of H, this factorization being
-! ZMAT * Diag(DZ) * ZMAT^T, where the elements of DZ are plus or minus ONE, as specified by IDZ.
-! D is employed for trial steps from XOPT.
+!   of the model and Lagrange functions.
+! XOPT is the displacement from XBASE of the feasible vector of variables
+!   that provides the least calculated F so far, this vector being the current trust region centre.
+! D is reserved for trial steps from XOPT. It is chosen by subroutine TRSTEP or GEOSTEP. Usually
+!   XBASE + XOPT + D is the vector of variables for the next call of CALFUN.
+! [XPT, FVAL, KOPT] describes the interpolation set:
+! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
+!   values of F at the interpolation points; KOPT is the index of XOPT in XPT.
+! [GOPT, HQ, PQ] describes the quadratic model: GOPT will hold the gradient of the quadratic model
+!   at XBASE + XOPT; HQ will hold the explicit second order derivatives of the quadratic model; PQ
+!   will contain the parameters of the implicit second order derivatives of the quadratic model.
+! [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12), which is the inverse of
+!   the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
+!   ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
+!   ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
+!   except for the (NPT+1)th column. Note that the (NPT + 1)th row and column of H are not saved as
+!   they are unnecessary for the calculation.
 ! IACT is an integer array for the indices of the active constraints.
 ! RESCON holds information about the constraint residuals at the current trust region center XOPT.
-! 1. If if B(J) - AMAT(:, J)^T*XOPT <= DELTA, then RESCON(J) = B(J) - AMAT(:, J)^T*XOPT. Note that
-! RESCON >= 0 in this case, because the algorithm keeps XOPT to be feasible.
-! 2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:, J)^T*XOPT >= |RESCON(J)| >= DELTA.
-! RESCON can be updated without calculating the constraints that are far from being active, so that
-! we only need to evaluate the constraints that are nearly active.
+!   1. If if B(J) - AMAT(:, J)^T*XOPT <= DELTA, then RESCON(J) = B(J) - AMAT(:, J)^T*XOPT. Note that
+!   RESCON >= 0 in this case, because the algorithm keeps XOPT to be feasible.
+!   2. Otherwise, RESCON(J) is a negative value that B(J) - AMAT(:,J)^T*XOPT >= |RESCON(J)| >= DELTA.
+!   RESCON can be updated without calculating the constraints that are far from being active, so
+!   that we only need to evaluate the constraints that are nearly active.
 ! QFAC is the orthogonal part of the QR factorization of the matrix of active constraint gradients,
-! these gradients being ordered in accordance with IACT. When NACT is less than N, columns are added
-! to QFAC to complete an N by N orthogonal matrix, which is important for keeping calculated steps
-! sufficiently close to the boundaries of the active constraints.
-! RFAC is the upper triangular part of this QR factorization, beginning with the first diagonal
-! element, followed by the two elements in the upper triangular part of the second column and so on.
+!   these gradients being ordered in accordance with IACT. When NACT is less than N, columns are
+!   addedto QFAC to complete an N by N orthogonal matrix, which is important for keeping calculated
+!   steps sufficiently close to the boundaries of the active constraints.
+! RFAC is the upper triangular part of this QR factorization.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic models
@@ -72,16 +75,16 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, HUGENUM
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-!use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, linspace
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul
 use, non_intrinsic :: powalg_mod, only : updateh
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
-use, non_intrinsic :: selectx_mod, only : savefilt, selectx
+use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 ! Solver-specific modules
@@ -127,51 +130,76 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 ! Local variables
 character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'LINCOB'
-integer(IK) :: iact(size(bvec))
+integer(IK) :: iact(size(b_orig))
+integer(IK) :: idz
+integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
+integer(IK) :: k
+integer(IK) :: knew_geo
+integer(IK) :: knew_tr
+integer(IK) :: kopt
 integer(IK) :: m
 integer(IK) :: maxchist
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
+integer(IK) :: maxtr
 integer(IK) :: maxxhist
-integer(IK) :: n, maxtr
-real(RP) :: b(size(bvec))
-real(RP) :: bmat(size(x), npt + size(x))
-real(RP) :: fval(npt), cval(npt)
-real(RP) :: gopt(size(x))
-real(RP) :: hq(size(x), size(x))
-real(RP) :: pq(npt)
-real(RP) :: qfac(size(x), size(x))
-real(RP) :: rescon(size(bvec))
-real(RP) :: rfac(size(x), size(x))
-real(RP) :: xfilt(size(x), maxfilt), ffilt(maxfilt), cfilt(maxfilt)
-real(RP) :: d(size(x))
-real(RP) :: xbase(size(x))
-real(RP) :: xopt(size(x)), xosav(size(x))
-real(RP) :: xpt(size(x), npt), xdrop(size(x))
-real(RP) :: zmat(npt, npt - size(x) - 1)
-real(RP) :: delbar, delta, &
-&        distsq(npt), fopt, ratio,     &
-&        rho, dnorm, &
-&        qred, constr(size(bvec))
-logical :: qalt_better(3)
-logical :: accurate_mod, adequate_geo
+integer(IK) :: n
+integer(IK) :: nact
+integer(IK) :: nfilt
+integer(IK) :: ngetact
+integer(IK) :: nhist
+integer(IK) :: subinfo
+integer(IK) :: tr
+logical :: accurate_mod
+logical :: adequate_geo
 logical :: bad_trstep
 logical :: close_itpset
-logical :: small_trrad
 logical :: evaluated(npt)
-logical :: feasible, shortd, improve_geo, reduce_rho, ximproved
-integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK))), k
-integer(IK) :: nfilt, idz, &
-&           knew_tr, knew_geo, kopt, nact,      &
-&           ngetact, subinfo, tr
-real(RP) :: fshift(npt)
-real(RP) :: pqalt(npt), galt(size(x))
+logical :: feasible
+logical :: improve_geo
+logical :: qalt_better(3)
+logical :: reduce_rho
+logical :: shortd
+logical :: small_trrad
+logical :: ximproved
+real(RP) :: b(size(b_orig))
+real(RP) :: bmat(size(x), npt + size(x))
+real(RP) :: cfilt(maxfilt)
+real(RP) :: constr(size(b_orig))
+real(RP) :: d(size(x))
+real(RP) :: delbar
+real(RP) :: delta
+real(RP) :: distsq(npt)
+real(RP) :: dnorm
 real(RP) :: dnormsav(5)
-real(RP) :: moderr, moderr_alt
+real(RP) :: ffilt(maxfilt)
+real(RP) :: fopt
+real(RP) :: fshift(npt)
+real(RP) :: fval(npt), cval(npt)
+real(RP) :: galt(size(x))
 real(RP) :: gamma3
+real(RP) :: gopt(size(x))
+real(RP) :: hq(size(x), size(x))
+real(RP) :: moderr
+real(RP) :: moderr_alt
+real(RP) :: pq(npt)
+real(RP) :: pqalt(npt)
+real(RP) :: qfac(size(x), size(x))
+real(RP) :: qred
+real(RP) :: ratio
+real(RP) :: rescon(size(b_orig))
+real(RP) :: rfac(size(x), size(x))
+real(RP) :: rho
+real(RP) :: xbase(size(x))
+real(RP) :: xdrop(size(x))
+real(RP) :: xfilt(size(x), maxfilt)
+real(RP) :: xopt(size(x))
+real(RP) :: xosav(size(x))
+real(RP) :: xpt(size(x), npt)
+real(RP) :: zmat(npt, npt - size(x) - 1)
 
 ! Sizes.
-m = int(size(bvec), kind(m))
+m = int(size(b_orig), kind(m))
 n = int(size(x), kind(n))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
@@ -186,7 +214,7 @@ if (DEBUGGING) then
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(maxfun >= npt + 1, 'MAXFUN >= NPT+1', srname)
     call assert(size(A_orig, 1) == n .and. size(A_orig, 2) == m, 'SIZE(A_ORIG) == [N, M]', srname)
-    call assert(size(b_orig) == m, 'SIZE(B_ORIG) == M', srname)
+    call assert(size(bvec) == m, 'SIZE(BVEC) == M', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
     call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
@@ -263,21 +291,27 @@ rescon = max(b - matprod(xopt, amat), ZERO)
 rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
 !!MATLAB: rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
-gamma3 = sqrt(gamma2)  ! Used in TRRAD; 0 < GAMMA1 < 1 < GAMMA3 <= GAMMA2.
-qfac = eye(n)
-rfac = ZERO
+! GAMMA3 is a parameter for updating the trust-region radius; 0 < GAMMA1 < 1 < GAMMA3 <= GAMMA2.
+gamma3 = sqrt(gamma2)
+
+! Set some more initial values.
+! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
+! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
+! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
+! Similar for KNEW_TR.
+! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
 rho = rhobeg
 delta = rho
-qred = ZERO
 ratio = -ONE
+dnormsav = HUGENUM
 knew_tr = 0
 knew_geo = 0
-feasible = .false.
 shortd = .false.
-improve_geo = .false.
-nact = 0
 qalt_better = .false.
-dnormsav = HUGENUM
+qfac = eye(n)
+rfac = ZERO
+nact = 0
+iact = linspace(1_IK, m, m)
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
 ! function evaluations unless the trust-region step is short but the geometry step is not invoked.
@@ -617,6 +651,23 @@ call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 !====================!
 
 ! Postconditions
+if (DEBUGGING) then
+    call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
+    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
+        & 'FHIST does not contain NaN/+Inf', srname)
+    call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
+    call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) &
+        & .or. is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain negative values or NaN/+Inf', srname)
+    nhist = minval([nf, maxfhist, maxchist])
+    call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv, ctol)),&
+        & 'No point in the history is better than X', srname)
+end if
 
 !close (16)
 
