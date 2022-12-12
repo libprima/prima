@@ -8,7 +8,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 09, 2022 PM08:27:50
+! Last Modified: Monday, December 12, 2022 PM03:18:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,7 +58,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, MSGLEN, FNAMELEN, OUTUNIT
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING, &
-    & NO_SPACE_BETWEEN_BOUNDS
+    & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT
 implicit none
 
 ! Compulsory inputs
@@ -80,9 +80,9 @@ character(len=FNAMELEN) :: fout
 character(len=MSGLEN) :: msg
 integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
-integer(IK), parameter :: valid_exit_flags(10) = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
+integer(IK), parameter :: valid_exit_flags(11) = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_INF_MODEL, DAMAGING_ROUNDING, &
-    & NO_SPACE_BETWEEN_BOUNDS]
+    & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT]
 logical :: fexist
 logical :: is_constrained
 real(RP) :: cstrv_loc
@@ -150,6 +150,8 @@ case (DAMAGING_ROUNDING)
     msg = 'rounding errors are becoming damaging.'
 case (NO_SPACE_BETWEEN_BOUNDS)
     msg = 'there is no space between the lower and upper bounds of variable.'
+case (ZERO_LINEAR_CONSTRAINT)
+    msg = 'one of the linear constraints has a zero gradient'
 case default
     msg = 'UNKNOWN EXIT FLAG'
 end select

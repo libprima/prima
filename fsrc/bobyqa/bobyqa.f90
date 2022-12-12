@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, December 09, 2022 PM11:00:16
+! Last Modified: Monday, December 12, 2022 PM03:14:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -165,8 +165,9 @@ subroutine bobyqa(calfun, x, f, &
 !   MAXTR_REACHED: the trust region iteration has been performed MAXTR times (MAXTR = 2*MAXFUN);
 !   NAN_INF_MODEL: NaN or Inf occurs in the model;
 !   NAN_INF_X: NaN or Inf occurs in X;
-!   DAMAGING_ROUNDING: the rounding error becomes damaging.
-!   NO_SPACE_BETWEEN_BOUNDS: there is not enough space between some lower and upper bounds.
+!   DAMAGING_ROUNDING: the rounding error becomes damaging;
+!   NO_SPACE_BETWEEN_BOUNDS: there is not enough space between some lower and upper bounds, namely
+!   one of the difference XU(I)-XL(I) is less than 2*RHOBEG.
 !   !--------------------------------------------------------------------------!
 !   The following case(s) should NEVER occur unless there is a bug.
 !   NAN_INF_F: the objective function returns NaN or +Inf;

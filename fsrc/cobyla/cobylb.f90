@@ -236,7 +236,7 @@ if (subinfo /= INFO_DFT) then
     return
 end if
 
-! Set some more initial values and parameters.
+! Set some more initial values.
 ! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
 ! run-time error that they are undefined. The values will not be used: when SHORTD = FALSE, they
 ! will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is TRUE
