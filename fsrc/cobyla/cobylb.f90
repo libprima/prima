@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, December 12, 2022 PM03:42:25
+! Last Modified: Monday, December 12, 2022 PM06:21:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -591,8 +591,8 @@ if (DEBUGGING) then
     call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
     call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) &
         & .or. is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain negative values or NaN/+Inf', srname)
-    k = minval([nf, maxfhist, maxchist])
-    call assert(.not. any(isbetter(fhist(1:k), chist(1:k), f, cstrv, ctol)), &
+    nhist = minval([nf, maxfhist, maxchist])
+    call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv, ctol)), &
         & 'No point in the history is better than X', srname)
 end if
 
