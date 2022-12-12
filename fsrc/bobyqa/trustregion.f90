@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM02:14:47
+! Last Modified: Monday, December 12, 2022 PM10:42:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine trsbox(delta, gopt_in, hq_in, pq_in, sl, su, xopt, xpt, crvmin, d)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine approximately solves
-! minimize Q(XOPT + D) subject to ||D|| <= DELTA, SL <= D <= SU.
+! minimize Q(XOPT + D) subject to |D| <= DELTA, SL <= D <= SU.
 ! See Section 3 of the BOBYQA paper.
 !
 ! A version of the truncated conjugate gradient is applied. If a line search is restricted by
