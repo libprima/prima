@@ -765,6 +765,9 @@ $(TESTS_C) $(TESTS_INT_C):
 			$(FCG) -c $(SRC) ; \
 		fi ; \
 	else \
+		if echo $@ | grep -q 'itest\|xtest' ; then \
+			printf "Initialize Intel OneAPI." && source /opt/intel/oneapi/setvars.sh ; \
+		fi ; \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
 			if [[ '$(FFLAGSO)' = '-fast' ]] ; then \
 				$(FCF) -o $@_$(SUFFIXO) $(SRC) ; \
