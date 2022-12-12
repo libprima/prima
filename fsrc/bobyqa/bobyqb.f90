@@ -13,7 +13,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 AM11:10:57
+! Last Modified: Monday, December 12, 2022 PM02:30:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,25 +33,25 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! F, FHIST, XHIST, and INFO are identical to the corresponding arguments in subroutine BOBYQA.
 !
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
-! of the model and Lagrange functions.
+!   of the model and Lagrange functions.
 ! SL and SU hold XL - XBASE and XU - XBASE, respectively.
 ! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
-! the least calculated F so far). XOPT satisfies SL(I) <= XOPT(I) <= SU(I), with appropriate
+!   the least calculated F so far). XOPT satisfies SL(I) <= XOPT(I) <= SU(I), with appropriate
 ! equalities when XOPT is on a constraint boundary. FOPT = F(XOPT + XBASE).
 ! D is reserved for trial steps from XOPT. It is chosen by subroutine TRSBOX or GEOSTEP. Usually
-! XBASE + XOPT + D is the vector of variables for the next call of CALFUN.
+!   XBASE + XOPT + D is the vector of variables for the next call of CALFUN.
 ! [XPT, FVAL, KOPT] describes the interpolation set:
 ! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
-! values of F at the interpolation points; KOPT is the index of XOPT in XPT.
+!   values of F at the interpolation points; KOPT is the index of XOPT in XPT.
 ! [GOPT, HQ, PQ] describes the quadratic model: GOPT will hold the gradient of the quadratic model
-! at XBASE + XOPT; HQ will hold the explicit second order derivatives of the quadratic model; PQ
-! will contain the parameters of the implicit second order derivatives of the quadratic model.
+!   at XBASE + XOPT; HQ will hold the explicit second order derivatives of the quadratic model; PQ
+!   will contain the parameters of the implicit second order derivatives of the quadratic model.
 ! [BMAT, ZMAT] describes the matrix H in the BOBYQA paper (eq. 2.7), which is the inverse of
-! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
+!   the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
 ! ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
-! OMEGA = ZMAT*ZMAT^T, which provides both the correct rank and positive semi-definiteness. BMAT
-! will hold the last N ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and
-! column of H are not saved as they are unnecessary for the calculation.
+!   OMEGA = ZMAT*ZMAT^T, which provides both the correct rank and positive semi-definiteness. BMAT
+!   will hold the last N ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row
+!   and column of H are not saved as they are unnecessary for the calculation.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

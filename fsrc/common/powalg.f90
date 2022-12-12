@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 08, 2022 AM12:04:25
+! Last Modified: Monday, December 12, 2022 PM02:18:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1213,7 +1213,7 @@ subroutine updateh(knew, kref, idz, d, xpt, bmat, zmat, info)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert!, wassert
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, symmetrize, issymmetric, outprod!, r2update
@@ -1665,12 +1665,7 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-
-    !--------------------------------------------------------------------------------------!
-    ! Disable the test for the moment, as it cannot pass in BOBYQA.!!!!!!!!!!!!!!!!!!!!!!!!!
-    call wassert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    !--------------------------------------------------------------------------------------!
-
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 end if
 
@@ -1721,7 +1716,7 @@ function calbeta(kref, bmat, d, xpt, zmat, idz) result(beta)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, wassert
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
 
@@ -1772,12 +1767,7 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-
-    !--------------------------------------------------------------------------------------!
-    ! Disable the test for the moment, as it cannot pass in BOBYQA.!!!!!!!!!!!!!!!!!!!!!!!!!
-    call wassert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    !--------------------------------------------------------------------------------------!
-
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 end if
 
@@ -1851,7 +1841,7 @@ function calden(kref, bmat, d, xpt, zmat, idz) result(den)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, wassert
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric
 
@@ -1896,12 +1886,7 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-
-    !--------------------------------------------------------------------------------------!
-    ! Disable the test for the moment, as it cannot pass in BOBYQA.!!!!!!!!!!!!!!!!!!!!!!!!!
-    call wassert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    !--------------------------------------------------------------------------------------!
-
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 end if
 

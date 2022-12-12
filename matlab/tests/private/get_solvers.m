@@ -16,16 +16,16 @@ test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Directories.
-neupdfo_dir = test_dir;  % `test_dir` is the root directly of a copy of the package made for the test.
+prima_dir = test_dir;  % `test_dir` is the root directly of a copy of the package made for the test.
 callstack = dbstack;
 invoker = callstack(2).name;  % The function that calls this function.
 isverify = strcmp(invoker, 'verify');  % Are we conduction verification?
 isprofile = strcmp(invoker, 'profile');  % Are we profiling the solvers?
 
 % Get the solver paths.
-pdfo_dir = fullfile(neupdfo_dir, 'OPDFO');
+pdfo_dir = fullfile(prima_dir, 'OPDFO');
 solver_dir = fullfile(pdfo_dir, 'matlab', 'interfaces');
-solvern_dir = fullfile(neupdfo_dir, 'matlab', 'interfaces');
+solvern_dir = fullfile(prima_dir, 'matlab', 'interfaces');
 spaths={solver_dir, solvern_dir};
 
 % Set up the solvers, taking particularly `compile_flag` and `debug_flag` (true/false) into account.
@@ -73,7 +73,7 @@ try
             % Include the single precision into the verification.
             mexopt.single = isverify;
 
-            cd(neupdfo_dir);
+            cd(prima_dir);
             clear('setup');  % Without this, the next line may not call the latest version of `setup`
             setup([tested_solver_name, 'n'], mexopt);
 
@@ -85,7 +85,7 @@ try
 
         else  % No compilation. Set up the path only.
 
-            cd(neupdfo_dir);
+            cd(prima_dir);
             clear('setup');  % Without this, the next line may not call the latest version of `setup`
             setup('path');
 

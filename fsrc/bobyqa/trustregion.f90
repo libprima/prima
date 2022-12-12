@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, December 11, 2022 PM12:05:26
+! Last Modified: Monday, December 12, 2022 PM02:14:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -38,6 +38,18 @@ subroutine trsbox(delta, gopt_in, hq_in, pq_in, sl, su, xopt, xpt, crvmin, d)
 ! the conjugate gradient searches are constrained. However, we set CRVMIN = 0 in this case, which
 ! makes no difference to the algorithm, because CRVMIN is only used to tell whether the recent
 ! models are sufficiently accurate, where both CRVMIN = 0 and CRVMIN < 0 provide a negative answer.
+!
+! XPT, XOPT, GOPT, HQ, PQ, SL and SU have the same meanings as the corresponding arguments of BOBYQB.
+! DELTA is the trust region radius for the present calculation
+! XNEW will be set to a new vector of variables that is approximately the one that minimizes the
+!   quadratic model within the trust region subject to the SL and SU constraints on the variables.
+!   It satisfies as equations the bounds that become active during the calculation.
+! GNEW holds the gradient of the quadratic model at XOPT+D. It is updated when D is updated.
+! XBDI is a working space vector. For I=1,2,...,N, the element XBDI(I) is set to -1.0, 0.0, or 1.0,
+!   the value being nonzero if and only if the I-th variable has become fixed at a bound, the bound
+!   being SL(I) or SU(I) in the case XBDI(I)=-1.0 or XBDI(I)=1.0, respectively. This information is
+!   accumulated during the construction of XNEW.
+! The arrays S and HS hold the current search direction and the change in the gradient of Q along S.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -66,26 +78,60 @@ real(RP), intent(out) :: d(:)  ! D(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSBOX'
+integer(IK) :: iact
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: xbdi(size(gopt_in))
+integer(IK) :: grid_size
+integer(IK) :: iter
+integer(IK) :: itercg
+integer(IK) :: maxiter
+integer(IK) :: nact
+integer(IK) :: nactsav
+logical :: scaled
+logical :: twod_search
+real(RP) :: beta
+real(RP) :: bstep
+real(RP) :: cth
+real(RP) :: delsq
+real(RP) :: dhd
+real(RP) :: dhs
+real(RP) :: diact
+real(RP) :: dredg
+real(RP) :: dredsq
+real(RP) :: ds
+real(RP) :: ggsav
+real(RP) :: gredsq
+real(RP) :: hangt
+real(RP) :: hangt_bd
+real(RP) :: hq(size(hq_in, 1), size(hq_in, 2))
+real(RP) :: pq(size(pq_in))
+real(RP) :: qred
+real(RP) :: rayleighq
+real(RP) :: resid
+real(RP) :: sbound(size(gopt_in))
+real(RP) :: sdec
+real(RP) :: shs
+real(RP) :: sqrtd
+real(RP) :: sredg
+real(RP) :: stepsq
+real(RP) :: sth
+real(RP) :: stplen
+real(RP) :: temp
+real(RP) :: xtest(size(xopt))
+real(RP) :: args(5)
 real(RP) :: dred(size(gopt_in))
+real(RP) :: gnew(size(gopt_in))
+real(RP) :: gopt(size(gopt_in))
 real(RP) :: hdred(size(gopt_in))
 real(RP) :: hs(size(gopt_in))
-real(RP) :: s(size(gopt_in))
-real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
-real(RP) :: gopt(size(gopt_in)), pq(size(pq_in)), hq(size(hq_in, 1), size(hq_in, 2))
-real(RP) :: args(5), hangt_bd, hangt, beta, bstep, cth, delsq, dhd, dhs,    &
-&        dredg, dredsq, ds, ggsav, gredsq,       &
-&        qred, resid, sdec, shs, sredg, stepsq, sth,&
-&        stplen, sbound(size(gopt_in)), temp, rayleighq, sqrtd, &
-&        xtest(size(xopt)), diact
-real(RP) :: ssq(size(gopt_in)), tanbd(size(gopt_in)), sqdscr(size(gopt_in))
-real(RP) :: gnew(size(gopt_in))
-real(RP) :: xnew(size(gopt_in))
-integer(IK) :: iact, iter, itercg, maxiter, grid_size, nact, nactsav
-logical :: twod_search, scaled
 real(RP) :: modscal
+real(RP) :: s(size(gopt_in))
+real(RP) :: sqdscr(size(gopt_in))
+real(RP) :: ssq(size(gopt_in))
+real(RP) :: tanbd(size(gopt_in))
+real(RP) :: xnew(size(gopt_in))
+real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
 
 ! Sizes
 n = int(size(gopt_in), kind(n))
@@ -114,33 +160,6 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
-
-
-!
-!     The arguments N, NPT, XPT, XOPT, GOPT, HQ, PQ, SL and SU have the same
-!       meanings as the corresponding arguments of BOBYQB.
-!     DELTA is the trust region radius for the present calculation, which
-!       seeks a small value of the quadratic model within distance DELTA of
-!       XOPT subject to the bounds on the variables.
-!     XNEW will be set to a new vector of variables that is approximately
-!       the one that minimizes the quadratic model within the trust region
-!       subject to the SL and SU constraints on the variables. It satisfies
-!       as equations the bounds that become active during the calculation.
-!     D is the calculated trial step from XOPT, generated iteratively from an
-!       initial value of zero. Thus XNEW is XOPT+D after the final iteration.
-!     GNEW holds the gradient of the quadratic model at XOPT+D. It is updated
-!       when D is updated.
-!     XBDI is a working space vector. For I=1,2,...,N, the element XBDI(I) is
-!       set to -1.0, 0.0, or 1.0, the value being nonzero if and only if the
-!       I-th variable has become fixed at a bound, the bound being SL(I) or
-!       SU(I) in the case XBDI(I)=-1.0 or XBDI(I)=1.0, respectively. This
-!       information is accumulated during the construction of XNEW.
-!     The arrays S, HS and HRED are also used for working space. They hold the
-!       current search direction, and the changes in the gradient of Q along S
-!       and the reduced D, respectively, where the reduced D is the same as D,
-!       except that the components of the fixed variables are zero.
-!     DSQ will be set to the square of the length of XNEW-XOPT.
-!
 
 ! Scale the problem if GOPT contains large values. Otherwise, floating point exceptions may occur.
 ! Note that CRVMIN must be scaled back if it is nonzero, but step is scale invariant.
@@ -398,7 +417,7 @@ do iter = 1, maxiter
         exit
     end if
 
-    ! Update GREDSQ, DREDG, DREDSQ, and HRED.
+    ! Update GREDSQ, DREDG, DREDSQ.
     gredsq = sum(gnew(trueloc(xbdi == 0))**2)
     dredg = inprod(d(trueloc(xbdi == 0)), gnew(trueloc(xbdi == 0)))
     if (iter == 1 .or. nact > nactsav) then

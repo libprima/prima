@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 06, 2022 PM12:48:43
+! Last Modified: Monday, December 12, 2022 PM02:31:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -180,12 +180,12 @@ function geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat) result(d)
 ! KNEW is the index of the interpolation point that is going to be moved.
 ! DELBAR is the trust region bound for the geometry step.
 ! XLINE will be a suitable new position for the interpolation point XPT(:, KNEW). Specifically, it
-! satisfies the SL, SU and trust region bounds and it should provide a large denominator in the next
-! call of UPDATE. The step XLINE-XOPT from XOPT is restricted to moves along the straight lines
-! through XOPT and another interpolation point.
+!   satisfies the SL, SU and trust region bounds and it should provide a large denominator in the
+!   next call of UPDATE. The step XLINE-XOPT from XOPT is restricted to moves along the straight
+!   lines through XOPT and another interpolation point.
 ! XCAUCHY also provides a large value of the modulus of the KNEW-th Lagrange function subject to
-! the constraints that have been mentioned, its main difference from XLINE being that XCAUCHY-XOPT
-! is a bound-constrained version of the Cauchy step within the trust region.
+!   the constraints that have been mentioned, its main difference from XLINE being that XCAUCHY-XOPT
+!   is a bound-constrained version of the Cauchy step within the trust region.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
