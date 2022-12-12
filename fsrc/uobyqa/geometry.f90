@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, December 10, 2022 PM11:56:48
+! Last Modified: Monday, December 12, 2022 PM11:52:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -153,10 +153,21 @@ end function setdrop_tr
 function geostep(knew, kopt, delbar, pl, xpt) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates a step D that approximately solves
+!
 ! maximize |LFUNC(XOPT + D) subject to ||D|| <= DELBAR,
+!
 ! so that the geometry of the interpolation step is improved when XPT(:, KNEW) becomes XOPT + D.
 ! Here, LFUNC is the Lagrange polynomial at the KNEW-th interpolation point. See (8) and Section 2
 ! of the UOBYQA paper.
+!
+! PL contains the parameters of the Lagrange functions. PL(KNEW) defines LFUNC.
+!
+! Powell's comments on the cost of linear algebra is as follows.
+! Calculating the D that maximizes |Q(0)-Q(D)| subject to ||D|| <= DELBAR requires of order N**3
+! operations, but sometimes it is adequate if |Q(0)-Q(D)| is within about 0.9 of its greatest
+! possible value. This subroutine provides such a solution in only of order N**2 operations, where
+! the claim of accuracy has been tested by numerical experiments.
+!
 ! N.B.: In Powell's UOBYQA code, DELBAR = RHO. We take the DELBAR of NEWUOA, which works better.
 !--------------------------------------------------------------------------------------------------!
 
@@ -181,17 +192,41 @@ real(RP) :: d(size(xpt, 1))  ! D(N)
 ! Local variables
 character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n, npt
-real(RP) :: g(size(xpt, 1)), h(size(xpt, 1), size(xpt, 1)), v(size(xpt, 1))
-real(RP) :: dcauchy(size(xpt, 1)), dd, dhd, dlin, gd, gg, ghg, gnorm, &
-&        scaling, temp, &
-&        tempa, tempb, tempc, tempd, tempv, vhg, vhv, vhd, &
-&        vlin, vmu, vnorm, vv, wcos, wsin, hv(size(xpt, 1)), xopt(size(xpt, 1))
-
+real(RP) :: dcauchy(size(xpt, 1))
+real(RP) :: dd
+real(RP) :: dhd
+real(RP) :: dlin
+real(RP) :: g(size(xpt, 1))
+real(RP) :: gd
+real(RP) :: gg
+real(RP) :: ghg
+real(RP) :: gnorm
+real(RP) :: h(size(xpt, 1), size(xpt, 1))
+real(RP) :: hv(size(xpt, 1))
+real(RP) :: scaling
+real(RP) :: temp
+real(RP) :: tempa
+real(RP) :: tempb
+real(RP) :: tempc
+real(RP) :: tempd
+real(RP) :: tempv
+real(RP) :: v(size(xpt, 1))
+real(RP) :: vhd
+real(RP) :: vhg
+real(RP) :: vhv
+real(RP) :: vlin
+real(RP) :: vmu
+real(RP) :: vnorm
+real(RP) :: vv
+real(RP) :: wcos
+real(RP) :: wsin
+real(RP) :: xopt(size(xpt, 1))
 
 ! Sizes.
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
+! Preconditions.
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt == (n + 1) * (n + 2) / 2, 'NPT = (N+1)(N+2)/2', srname)
@@ -203,22 +238,9 @@ if (DEBUGGING) then
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 end if
 
-!
-!     N is the number of variables of a quadratic objective function, Q say.
-!     G is the gradient of Q at the origin.
-!     H is the symmetric Hessian matrix of Q. Only the upper triangular and
-!       diagonal parts need be set.
-!     DELBAR is the trust region radius, and has to be positive.
-!     D will be set to the calculated vector of variables.
-!     The array V will be used for working space.
-!     VMAX will be set to |Q(0)-Q(D)|.
-!
-!     Calculating the D that maximizes |Q(0)-Q(D)| subject to ||D|| .LEQ. DELBAR
-!     requires of order N**3 operations, but sometimes it is adequate if
-!     |Q(0)-Q(D)| is within about 0.9 of its greatest possible value. This
-!     subroutine provides such a solution in only of order N**2 operations,
-!     where the claim of accuracy has been tested by numerical experiments.
-!
+!====================!
+! Calculation starts !
+!====================!
 
 ! Read XOPT.
 xopt = xpt(:, kopt)

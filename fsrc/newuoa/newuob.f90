@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 12, 2022 PM02:43:54
+! Last Modified: Monday, December 12, 2022 PM11:09:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -143,7 +143,7 @@ real(RP) :: xdrop(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
-real(RP), parameter :: tr_tol = 1.0E-2_RP  ! Tolerance used in TRSAPP.
+real(RP), parameter :: trtol = 1.0E-2_RP  ! Tolerance used in TRSAPP.
 
 ! Sizes
 n = int(size(x), kind(n))
@@ -240,7 +240,7 @@ info = MAXTR_REACHED
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Generate the next trust region step D.
-    call trsapp(delta, gq, hq, pq, tr_tol, xopt, xpt, crvmin, d)
+    call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, d)
     dnorm = min(delta, norm(d))
 
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
