@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:50:49
+! Last Modified: Monday, December 12, 2022 PM03:05:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -135,7 +135,7 @@ subroutine cobyla(calcfc, m, x, f, &
 ! CTOL
 !   Input, REAL(RP) scalar, default: machine epsilon.
 !   CTOL is the tolerance of constraint violation. Any X with MAXVAL(-CONSTR(X)) <= CTOL is
-!   considered as feasible.
+!   considered feasible.
 !
 ! CWEIGHT
 !   Input, REAL(RP) scalar, default: CWEIGHT_DFT defined in the module CONSTS_MOD in common/consts.F90.
