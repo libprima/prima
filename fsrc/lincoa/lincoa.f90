@@ -30,7 +30,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 05, 2022 PM11:08:25
+! Last Modified: Monday, December 12, 2022 PM03:16:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,66 +47,152 @@ subroutine lincoa(calfun, x, f, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, chist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
+! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
+! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
+! the default value detailed below. For instance, we may invoke the solver by
 !
-!     SUBROUTINE CALFUN (N,X,F) has to be provided by the user. It must set
-!       F to the value of the objective function for the variables X(1),
-!       X(2),...,X(N).
+! call lincoa(calfun, x, f)
 !
-!     N must be set to the number of variables and must be at least two.
-!     NPT must be set to the number of interpolation conditions, which is
-!       required to be in the interval [N+2,(N+1)(N+2)/2]. Typical choices
-!       of the author are NPT=N+6 and NPT=2*N+1. Larger values tend to be
-!       highly inefficent when the number of variables is substantial, due
-!       to the amount of work and extra difficulty of adjusting more points.
-!     M must be set to the number of linear inequality constraints.
-!     A is a matrix whose columns are the constraint gradients, which are
-!       required to be nonzero.
-!     B is the vector of right hand sides of the constraints, the J-th
-!       constraint being that the scalar product of A(:,J) with X is at
-!       most B(J). The initial vector X(.) is made feasible by increasing
-!       the value of B(J) if necessary.
-!     X is the vector of variables. Initial values of X(1),X(2),...,X(N)
-!       must be supplied. If X does not satisfy the constraints, then B
-!       is increased as mentioned above. X contains on return the variables
-!       that have given the least calculated F subject to the constraints.
-!     RHOBEG and RHOEND must be set to the initial and final values of a
-!       trust region radius, so both must be positive with RHOEND<=RHOBEG.
-!       Typically, RHOBEG should be about one tenth of the greatest expected
-!       change to a variable, and RHOEND should indicate the accuracy that
-!       is required in the final values of the variables.
-!     The value of IPRINT should be set to 0, 1, 2 or 3, which controls the
-!       amount of printing. Specifically, there is no output if IPRINT=0 and
-!       there is output only at the return if IPRINT=1. Otherwise, the best
-!       feasible vector of variables so far and the corresponding value of
-!       the objective function are printed whenever RHO is reduced, where
-!       RHO is the current lower bound on the trust region radius. Further,
-!       each new value of F with its variables are output if IPRINT=3.
-!     MAXFUN must be set to an upper bound on the number of calls of CALFUN,
-!       its value being at least NPT+1.
-!     W is an array used for working space. Its length must be at least
-!       M*(2+N) + NPT*(4+N+NPT) + N*(9+3*N) + MAX [ M+3*N, 2*M+N, 2*NPT ].
-!       On return, W(1) is set to the final value of F, and W(2) is set to
-!       the total number of function evaluations plus 0.5.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     F is the objective function value when the algorithm exit.
-!     INFO is the exit flag, which can be set to:
-!       0: the lower bound for the trust region radius is reached.
-!       1: the target function value is reached.
-!       2: a trust region step has failed to reduce the quadratic model.
-!       3: the objective function has been evaluated MAXFUN times.
-!       4: much cancellation in a denominator.
-!       5: NPT is not in the required interval.
-!       6: one of the difference XU(I)-XL(I) is less than 2*RHOBEG.
-!       7: rounding errors are becoming damaging.
-!       8: rounding errors prevent reasonable changes to X.
-!       9: the denominator of the updating formula is zero.
-!       10: N should not be less than 2.
-!       11: MAXFUN is less than NPT+1.
-!       12: the gradient of constraint is zero.
-!       -1: NaN occurs in x.
-!       -2: the objective function returns a NaN or nearly infinite
-!           value.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! or
+!
+! call lincoa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+!
+! See examples/lincoa_exmp.f90 for a concrete example.
+!
+! A detailed introduction to the arguments is as follows.
+! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory named
+! "common". By default, RP = kind(0.0D0) and IK = kind(0), with REAL(RP) being the double-precision
+! real, and INTEGER(IK) being the default integer. For ADVANCED USERS, RP and IK can be defined by
+! setting __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if unsure.
+!
+! CALFUN
+!   Input, subroutine.
+!   CALFUN(X, F) should evaluate the objective function at the given REAL(RP) vector X and set the
+!   value to the REAL(RP) scalar F. It must be provided by the user, and its definition must conform
+!   to the following interface:
+!   !-------------------------------------------------------------------------!
+!    subroutine calfun(x, f)
+!    real(RP), intent(in) :: x(:)
+!    real(RP), intent(out) :: f
+!    end subroutine calfun
+!   !-------------------------------------------------------------------------!
+!
+! X
+!   Input and output, REAL(RP) vector.
+!   As an input, X should be an N dimensional vector that contains the starting point, N being the
+!   dimension of the problem. As an output, X will be set to an approximate minimizer.
+!
+! F
+!   Output, REAL(RP) scalar.
+!   F will be set to the objective function value of X at exit.
+!
+! CSTRV
+!   Output, REAL(RP) scalar.
+!   CSTRV will be set to the L-infinity constraint violation of X at exit, namely MAXVAL([0, A*X-B])
+!   N.B.: Even though A and B are scaled during the computation, we use the original A and B to
+!   evaluate CSTRV.
+!
+! A, B
+!   Input, REAL(RP) matrix of size [N, M] and REAL vector of size M unless they are both empty,
+!   default: [] and [].
+!   A and B represent the linear inequality constraints: A^T*X <= B.
+!
+! NF
+!   Output, INTEGER(IK) scalar.
+!   NF will be set to the number of calls of CALFUN at exit.
+!
+! RHOBEG, RHOEND
+!   Inputs, REAL(RP) scalars, default: RHOBEG = 1, RHOEND = 10^-6. RHOBEG and RHOEND must be set to
+!   the initial and final values of a trust-region radius, both being positive and RHOEND <= RHOBEG.
+!   Typically RHOBEG should be about one tenth of the greatest expected change to a variable, and
+!   RHOEND should indicate the accuracy that is required in the final values of the variables.
+!
+! FTARGET
+!   Input, REAL(RP) scalar, default: -Inf.
+!   FTARGET is the target function value. The algorithm will terminate when a point with a function
+!   value <= FTARGET is found.
+!
+! CTOL
+!   Input, REAL(RP) scalar, default: machine epsilon.
+!   CTOL is the tolerance of constraint violation. Any X with MAXVAL(A^T*X-B) <= CTOL is
+!   considered feasible.
+!
+! CWEIGHT
+!   Input, REAL(RP) scalar, default: CWEIGHT_DFT defined in the module CONSTS_MOD in common/consts.F90.
+!   CWEIGHT is the weight that the constraint violation takes in the selection of the returned X.
+!
+! MAXFUN
+!   Input, INTEGER(IK) scalar, default: MAXFUN_DIM_DFT*N with MAXFUN_DIM_DFT defined in the module
+!   CONSTS_MOD (see common/consts.F90). MAXFUN is the maximal number of calls of CALFUN.
+!
+! NPT
+!   Input, INTEGER(IK) scalar, default: 2N + 1.
+!   NPT is the number of interpolation conditions for each trust region model. Its value must be in
+!   the interval [N+2, (N+1)(N+2)/2]. Typical choices of Powell were NPT=N+6 and NPT=2*N+1. Powell
+!   commented in his code that "larger values tend to be highly inefficent when the number of
+!   variables is substantial, due to the amount of work and extra difficulty of adjusting more
+!   points."
+!
+! IPRINT
+!   Input, INTEGER(IK) scalar, default: 0.
+!   The value of IPRINT should be set to 0, 1, -1, 2, -2, 3, or -3, which controls how much
+!   information will be printed during the computation:
+!   0: there will be no printing;
+!   1: a message will be printed to the screen at the return, showing the best vector of variables
+!      found and its objective function value;
+!   2: in addition to 1, each new value of RHO is printed to the screen, with the best vector of
+!      variables so far and its objective function value;
+!   3: in addition to 2, each function evaluation with its variables will be printed to the screen;
+!   -1, -2, -3: the same information as 1, 2, 3 will be printed, not to the screen but to a file
+!      named LINCOA_output.txt; the file will be created if it does not exist; the new output will
+!      be appended to the end of this file if it already exists. Note that IPRINT = -3 can be costly
+!      in terms of time and space.
+!
+! ETA1, ETA2, GAMMA1, GAMMA2
+!   Input, REAL(RP) scalars, default: ETA1 = 0.1, ETA2 = 0.7, GAMMA1 = 0.5, and GAMMA2 = 2.
+!   ETA1, ETA2, GAMMA1, and GAMMA2 are parameters in the updating scheme of the trust-region radius
+!   detailed in the subroutine TRRAD in trustregion.f90. Roughly speaking, the trust-region radius
+!   is contracted by a factor of GAMMA1 when the reduction ratio is below ETA1, and enlarged by a
+!   factor of GAMMA2 when the reduction ratio is above ETA2. It is required that 0 < ETA1 <= ETA2
+!   < 1 and 0 < GAMMA1 < 1 < GAMMA2. Normally, ETA1 <= 0.25. It is NOT advised to set ETA1 >= 0.5.
+!
+! XHIST, FHIST, CHIST, MAXHIST
+!   XHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
+!   FHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
+!   CHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
+!   MAXHIST: Input, INTEGER(IK) scalar, default: MAXFUN
+!   XHIST, if present, will output the history of iterates, while FHIST/CHIST, if present, will output
+!   the history function values/constraint violations. MAXHIST should be a nonnegative integer, and
+!   XHIST/FHIST/CHIST will output only the history of the last MAXHIST iterations. Therefore,
+!   MAXHIST = 0 means XHIST/FHIST/CHIST will output nothing, while setting MAXHIST = MAXFUN requests
+!   XHIST/FHIST/CHIST to output all the history.
+!   If XHIST is present, its size at exit will be [N, min(NF, MAXHIST)]; if FHIST/CHIST is present,
+!   its size at exit will be min(NF, MAXHIST).
+!
+!   Important Notice:
+!   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
+!   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take up to 1 GB if we use double
+!   precision. MAXHIST will be reset to a smaller value if the memory needed exceeds MAXMEMORY
+!   defined in CONSTS_MOD (see consts.F90 under the directory named "common"; default: 2GB).
+!   Use *HIST with caution! (N.B.: the algorithm is NOT designed for large problems).
+!
+! INFO
+!   Output, INTEGER(IK) scalar.
+!   INFO is the exit flag. It will be set to one of the following values defined in the module
+!   INFOS_MOD (see common/infos.f90):
+!   SMALL_TR_RADIUS: the lower bound for the trust region radius is reached;
+!   FTARGET_ACHIEVED: the target function value is reached;
+!   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
+!   MAXTR_REACHED: the trust region iteration has been performed MAXTR times (MAXTR = 2*MAXFUN);
+!   NAN_INF_MODEL: NaN or Inf occurs in the model;
+!   NAN_INF_X: NaN or Inf occurs in X;
+!   DAMAGING_ROUNDING: the rounding error becomes damaging;
+!   ZERO_LINEAR_CONSTRAINT: one of the linear constraint has a zero gradient
+!   !--------------------------------------------------------------------------!
+!   The following case(s) should NEVER occur unless there is a bug.
+!   NAN_INF_F: the objective function returns NaN or +Inf;
+!   TRSUBP_FAILED: a trust region step failed to reduce the model.
+!   !--------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -122,8 +208,8 @@ use, non_intrinsic :: infos_mod, only : ZERO_LINEAR_CONSTRAINT
 use, non_intrinsic :: linalg_mod, only : inprod
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
-!use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
+use, non_intrinsic :: selectx_mod, only : isbetter
 
 ! Solver-specific modules
 use, non_intrinsic :: lincob_mod, only : lincob
@@ -472,11 +558,10 @@ if (DEBUGGING) then
         call assert(size(chist) == nhist, 'SIZE(CHIST) == NHIST', srname)
         call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
     end if
-! The following test cannot be passed YET.
-!!!    if (present(fhist) .and. present(chist)) then
-!!!        call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv_loc, ctol_loc)),&
-!!!            & 'No point in the history is better than X', srname)
-!!!    end if
+    if (present(fhist) .and. present(chist)) then
+        call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv_loc, ctol_loc)),&
+            & 'No point in the history is better than X', srname)
+    end if
 end if
 
 end subroutine lincoa

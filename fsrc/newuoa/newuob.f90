@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 12, 2022 PM02:35:29
+! Last Modified: Monday, December 12, 2022 PM02:43:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -210,7 +210,7 @@ call initq(ij, fval, xpt, gq, hq, pq)
 ! (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the code will continue to run
 ! and possibly recovers by geometry steps.
 
-! Set some more initial values and parameters.
+! Set some more initial values.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
 ! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
 ! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
@@ -220,12 +220,11 @@ rho = rhobeg
 delta = rho
 shortd = .false.
 ratio = -ONE
+dnormsav = HUGENUM
+moderrsav = HUGENUM
 knew_tr = 0
 knew_geo = 0
 itest = 0
-dnormsav = HUGENUM
-moderrsav = HUGENUM
-xdrop = HUGENUM
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
 ! function evaluations unless the trust-region step is short but the geometry step is not invoked.

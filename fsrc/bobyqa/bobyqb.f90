@@ -13,7 +13,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM02:30:38
+! Last Modified: Monday, December 12, 2022 PM02:43:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -218,23 +218,21 @@ call inith(ij, xpt, bmat, zmat)
 ! (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the code will continue to run
 ! and possibly recovers by geometry steps.
 
-! Set some more initial values and parameters.
+! Set some more initial values.
+! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
+! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
+! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
+! Similar for KNEW_TR.
 rho = rhobeg
 delta = rho
 ebound = ZERO
+shortd = .false.
+ratio = -ONE
 dnormsav = HUGENUM
 moderrsav = HUGENUM
 knew_tr = 0
 knew_geo = 0
 itest = 0
-
-! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
-! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
-! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
-! Similar for KNEW_TR.
-ratio = -ONE
-shortd = .false.
-improve_geo = .false.
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, we use three boolean variables to control the workflow.
