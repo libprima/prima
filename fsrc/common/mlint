@@ -97,7 +97,7 @@ TEST_DIR=/tmp/"$(basename -- "$0")"_"$TIME"_"$RANDNUM"
 printf  "Test directory:\n\n%s\n" "$TEST_DIR"
 # We export TEST_DIR, which will be referred to by the Makefiles.
 export TEST_DIR
-TEST_ROOT="$TEST_DIR"/neupdfo
+TEST_ROOT="$TEST_DIR"/prima
 MTEST_DIR="$TEST_ROOT"/matlab/mex_gateways/tests
 MTEST_SOLVER_DIR="$MTEST_DIR"/test."$SOLVER"
 
