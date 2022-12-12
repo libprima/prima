@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, December 10, 2022 PM09:16:15
+! Last Modified: Monday, December 12, 2022 PM11:53:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,15 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine solves the trust-region subproblem
 !
-!     minimize <G, D> + 0.5 * <D, H*D> subject to ||D|| <= DELTA.
+!     minimize <G, D> + 0.5 * <D, H*D> subject to |D| <= DELTA.
+!
+! D will be set to the calculated vector of variables. CRVMIN will be the least eigenvalue of H iff
+! D is a Newton-Raphson step. Then CRVMIN will be positive, but otherwise it will be set to zero.
+! TOL is the value of a tolerance from the open interval (0,1). Let MAXRED be the maximum of
+!   Q(0)-Q(D) subject to |D| <= DELTA, and let ACTRED be the value of Q(0)-Q(D) that is actually
+!   calculated. We take the view that any D is acceptable if it has the properties
+!
+!             |D| <= DELTA  and  ACTRED <= (1-TOL)*MAXRED.
 !
 ! The algorithm first tridiagonalizes H and then applies the More-Sorensen method in
 ! More and Sorensen, "Computing a trust region step", SIAM J. Sci. Stat. Comput. 4: 553-572, 1983.
@@ -68,48 +76,55 @@ real(RP), intent(out) :: crvmin
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTEP'
+integer(IK) :: i
+integer(IK) :: iter
+integer(IK) :: k
+integer(IK) :: maxiter
 integer(IK) :: n
-real(RP) :: gg(size(g))
-real(RP) :: hh(size(g), size(g))
-real(RP) :: piv(size(g))
-real(RP) :: td(size(g))
-real(RP) :: tn(size(g) - 1)
-real(RP) :: z(size(g))
-real(RP) :: dold(size(g))
-real(RP) :: dnewton(size(g))  ! Newton-Raphson step; only calculated when N = 1.
-real(RP) :: delsq, dhd, dnorm, dsq, dtg, dtz, gam, gnorm,     &
-&        gsq, hnorm, par, parl, parlest, paru,         &
-&        paruest, phi, phil, phiu, &
-&        slope, partmp, &
-&        tnz, tempa, tempb, wsq, wwsq, zsq, modscal
-integer(IK) :: i, iter, k, maxiter
-logical :: posdef, negcrv, scaled
 logical :: d_initialized  ! TO BE REMOVED.
-
-!     N is the number of variables of a quadratic objective function, Q say.
-!     G is the gradient of Q at the origin.
-!     H is the Hessian matrix of Q. Only the upper triangular and diagonal
-!       parts need be set. The lower triangular part is used to store the
-!       elements of a Householder similarity transformation.
-!     DELTA is the trust region radius, and has to be positive.
-!     TOL is the value of a tolerance from the open interval (0,1).
-!     D will be set to the calculated vector of variables.
-!     The arrays GG, TD, TN, W, PIV and Z will be used for working space.
-!     CRVMIN will be set to the least eigenvalue of H if and only if D is a
-!     Newton-Raphson step. Then CRVMIN will be positive, but otherwise it
-!     will be set to ZERO.
-!
-!     Let MAXRED be the maximum of Q(0)-Q(D) subject to ||D|| <= DELTA,
-!     and let ACTRED be the value of Q(0)-Q(D) that is actually calculated.
-!     We take the view that any D is acceptable if it has the properties
-!
-!             ||D|| <= DELTA  and  ACTRED <= (1-TOL)*MAXRED.
-
-d_initialized = .false.  ! TO BE REMOVED
+logical :: negcrv
+logical :: posdef
+logical :: scaled
+real(RP) :: delsq
+real(RP) :: dhd
+real(RP) :: dnewton(size(g))  ! Newton-Raphson step; only calculated when N = 1.
+real(RP) :: dnorm
+real(RP) :: dold(size(g))
+real(RP) :: dsq
+real(RP) :: dtg
+real(RP) :: dtz
+real(RP) :: gam
+real(RP) :: gg(size(g))
+real(RP) :: gnorm
+real(RP) :: gsq
+real(RP) :: hh(size(g), size(g))
+real(RP) :: hnorm
+real(RP) :: modscal
+real(RP) :: par
+real(RP) :: parl
+real(RP) :: parlest
+real(RP) :: partmp
+real(RP) :: paru
+real(RP) :: paruest
+real(RP) :: phi
+real(RP) :: phil
+real(RP) :: phiu
+real(RP) :: piv(size(g))
+real(RP) :: slope
+real(RP) :: td(size(g))
+real(RP) :: tempa
+real(RP) :: tempb
+real(RP) :: tn(size(g) - 1)
+real(RP) :: tnz
+real(RP) :: wsq
+real(RP) :: wwsq
+real(RP) :: z(size(g))
+real(RP) :: zsq
 
 ! Sizes.
 n = int(size(g), kind(n))
 
+! Preconditions.
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(delta > 0, 'DELTA > 0', srname)
@@ -117,13 +132,21 @@ if (DEBUGGING) then
     call assert(size(d) == n, 'SIZE(D) == N', srname)
 end if
 
-!!!!!!!!!!!!!!!!!!!!
+!====================!
+! Calculation starts !
+!====================!
+
+!------------------------------------------------------------------------------------------!
+!------------------------------------------------------------------------------------------!
+d_initialized = .false.  ! For development and debugging. TO BE REMOVED
+
 ! The initial values of DSQ, PHIU, and PHIL are unused but to entertain Fortran compilers.
 ! TODO: Check that DSQ, PHIU, PHIL have been initialized before used. Maybe remove DSQ?
 dsq = ZERO
 phiu = ZERO
 phil = ZERO
-!!!!!!!!!!!!!!!!!!!!
+!------------------------------------------------------------------------------------------!
+!------------------------------------------------------------------------------------------!
 
 ! Scale the problem if G contains large values. Otherwise, floating point exceptions may occur. In
 ! the sequel, GG and HH are used instead of G and H, which are INTENT(IN) and hence cannot be
@@ -195,8 +218,6 @@ end do
 if (.not. is_finite(sum(abs(gg)) + sum(abs(hh)) + sum(abs(td)) + sum(abs(tn)))) then
     return
 end if
-
-
 
 ! Begin the trust region calculation with a tridiagonal matrix by calculating the L_1-norm of the
 ! Hessenberg form of H, which is an upper bound for the spectral norm of H.
@@ -552,12 +573,9 @@ if (scaled .and. crvmin > 0) then
     crvmin = crvmin * modscal
 end if
 
-if (DEBUGGING) then
-    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
-    call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
-    call assert(crvmin >= 0, 'CRVMIN >= 0', srname)
-end if
+!====================!
+!  Calculation ends  !
+!====================!
 
 ! Postconditions
 if (DEBUGGING) then

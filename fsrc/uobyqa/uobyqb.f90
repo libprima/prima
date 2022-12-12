@@ -1,6 +1,3 @@
-!TODO:
-!3. THE checks in rangehist cannot pass(xhist does not contain NaN)
-
 module uobyqb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of UOBYQA.
@@ -11,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 AM10:44:47
+! Last Modified: Monday, December 12, 2022 PM11:52:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,20 +26,16 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
 !
 ! The arguments N, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to the corresponding arguments
 ! in subroutine UOBYQA.
+!
 ! XBASE will contain a shift of origin that reduces the contributions from rounding errors to values
-! of the model and Lagrange functions.
+!   of the model and Lagrange functions.
 ! XOPT will be set to the displacement from XBASE of the vector of variables that provides the least
-! calculated F so far.
-! XNEW will be set to the displacement from XBASE of the vector of variables for the current
-! calculation of F.
+!   calculated F so far.
+! D is reserved for trial steps from XOPT, except that it will contain diagonal second derivatives
+!   during the initialization procedure.
 ! XPT will contain the interpolation point coordinates relative to XBASE.
 ! PQ will contain the parameters of the quadratic model.
 ! PL will contain the parameters of the Lagrange functions.
-! H will provide the second derivatives that TRSTEP and LAGMAX require.
-! G will provide the first derivatives that TRSTEP and LAGMAX require.
-! D is reserved for trial steps from XOPT, except that it will contain diagonal second derivatives
-! during the initialization procedure.
-! VLAG will contain the values of the Lagrange functions at a new point X.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -51,7 +44,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, HUGENUM
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec !, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
@@ -94,27 +87,47 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 ! Local variables
 character(len=*), parameter :: solver = 'UOBYQA'
 character(len=*), parameter :: srname = 'UOBYQB'
+integer(IK) :: knew_geo
+integer(IK) :: knew_tr
+integer(IK) :: kopt
+integer(IK) :: maxfhist
+integer(IK) :: maxhist
+integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
-integer(IK) :: maxhist
-integer(IK) :: maxfhist
-integer(IK) :: maxxhist
+integer(IK) :: subinfo
+logical :: accurate_mod
+logical :: adequate_geo
+logical :: bad_trstep
+logical :: close_itpset
+logical :: improve_geo
+logical :: reduce_rho
+logical :: shortd
+logical :: small_trrad
+logical :: ximproved
+real(RP) :: crvmin
 real(RP) :: d(size(x))
+real(RP) :: ddmove
+real(RP) :: delbar
+real(RP) :: delta
+real(RP) :: distsq((size(x) + 1) * (size(x) + 2) / 2)
+real(RP) :: dnorm
+real(RP) :: dnormsav(3)
+real(RP) :: fopt
+real(RP) :: fval(size(distsq))
 real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x))
-real(RP) :: pl((size(x) + 1) * (size(x) + 2) / 2 - 1, (size(x) + 1) * (size(x) + 2) / 2)
-real(RP) :: pq(size(pl, 1))
+real(RP) :: moderr
+real(RP) :: moderrsav(size(dnormsav))
+real(RP) :: pl(size(distsq) - 1, size(distsq))
+real(RP) :: pq(size(distsq) - 1)
+real(RP) :: qred
+real(RP) :: ratio
+real(RP) :: rho
 real(RP) :: xbase(size(x))
 real(RP) :: xopt(size(x))
-real(RP) :: xpt(size(x), size(pl, 2))
-real(RP) :: ddmove, delta, moderr, distsq(size(pl, 2)), delbar, &
-&        dnorm, crvmin, fopt,&
-&        ratio, rho, &
-&        trtol, &
-&        qred, fval(size(pl, 2))
-integer(IK) :: knew_tr, knew_geo, kopt, subinfo
-logical :: ximproved, shortd, improve_geo, reduce_rho, accurate_mod, adequate_geo, close_itpset, small_trrad, bad_trstep
-real(RP) :: dnormsav(3), moderrsav(size(dnormsav))
+real(RP) :: xpt(size(x), size(distsq))
+real(RP), parameter :: trtol = 1.0E-2_RP  ! Tolerance used in TRSAPP.
 
 ! Sizes.
 n = int(size(x), kind(n))
@@ -123,6 +136,7 @@ maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = max(maxxhist, maxfhist)
 
+! Preconditions.
 if (DEBUGGING) then
     call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
     call assert(n >= 1, 'N >= 1', srname)
@@ -158,18 +172,21 @@ end if
 call initq(fval, xpt, pq)
 call initl(xpt, pl)
 
-! Set parameters to begin the iterations for the current RHO.
+! Set some more initial values.
+! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
+! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
+! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
+! Similar for KNEW_TR.
+! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
 rho = rhobeg
 delta = rho
-moderrsav = HUGENUM
-dnormsav = HUGENUM
+shortd = .false.
 ratio = -ONE
 ddmove = -ONE
+dnormsav = HUGENUM
+moderrsav = HUGENUM
 knew_tr = 0
 knew_geo = 0
-shortd = .false.
-reduce_rho = .false.
-trtol = 0.01_RP
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, we use three boolean variables to control the workflow.
@@ -430,9 +447,20 @@ call retmsg(solver, info, iprint, nf, f, x)
 !====================!
 
 ! Postconditions
+if (DEBUGGING) then
+    call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
+    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
+        & 'FHIST does not contain NaN/+Inf', srname)
+    call assert(.not. any(fhist(1:min(nf, maxfhist)) < f), 'F is the smallest in FHIST', srname)
+end if
 
 close (16)
-
 
 end subroutine uobyqb
 

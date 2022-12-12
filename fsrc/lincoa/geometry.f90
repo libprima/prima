@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 01, 2022 PM05:33:00
+! Last Modified: Monday, December 12, 2022 PM10:59:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -212,7 +212,7 @@ subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, wassert
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc, norm
 use, non_intrinsic :: powalg_mod, only : hess_mul, omega_col, calden
@@ -288,7 +288,7 @@ if (DEBUGGING) then
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
-    call wassert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT- N-1]', srname)
 end if
 
