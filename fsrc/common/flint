@@ -109,7 +109,7 @@ TEST_DIR=/tmp/"$(basename -- "$0")"_"$TIME"_"$RANDNUM"
 printf  "Test directory:\n\n%s\n" "$TEST_DIR"
 # We export TEST_DIR, which will be referred to by the Makefiles.
 export TEST_DIR
-TEST_ROOT="$TEST_DIR"/neupdfo
+TEST_ROOT="$TEST_DIR"/prima
 FTEST_DIR="$TEST_ROOT"/fsrc/tests
 FTEST_SOLVER_DIR="$FTEST_DIR"/test."$SOLVER"
 
