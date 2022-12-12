@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, December 11, 2022 AM01:20:57
+! Last Modified: Monday, December 12, 2022 PM10:47:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,27 @@ contains
 
 
 subroutine trstep(amat, delta, gopt_in, hq_in, pq_in, rescon, xpt, iact, nact, qfac, rfac, s, ngetact)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine solves
+!       minimize Q(XOPT + D)  s.t. |D| <= DELTA, AMAT^T*D <= B.
+! It is assumed that D = 0 is feasible, namely B >= 0 except for rounding errors. See Powell 2015
+! for details.
+!
+! AMAT, B, XPT, GOPT, HQ, PQ, NACT, IACT, RESCON, QFAC and RFAC are the same as the terms with these
+! names in LINCOB.
+!
+! S is the total calculated step so far from the trust region centre, its final value being given by
+!   the sequence of CG iterations, which terminate if the trust region boundary is reached.
+! G is always the gradient of the model at the current S.
+! D is the search direction of each line search.
+! RESCON: If RESCON(J) is negative, then |RESCON(J)| must be no less than the trust region radius,
+!   so that the J-th constraint can be ignored.
+! RESNEW: A negative value of RESNEW(J) indicates that the J-th constraint does not restrict the CG
+!   steps of the current trust region calculation, a zero value of RESNEW(J) indicates that the J-th
+!   constraint is active, and otherwise RESNEW(J) is set to the greater of TINYCV and the actual
+!   residual of the J-th constraint for the current S.
+! RESACT holds the residuals of the active constraints, which may be positive.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TWO, HALF, EPS, TINYCV, DEBUGGING
@@ -57,26 +78,48 @@ real(RP), intent(out) :: s(:)  ! S(N)
 integer(IK), intent(out), optional :: ngetact
 
 ! Local variables
-logical :: newact
 character(len=*), parameter :: srname = 'TRSTEP'
-real(RP) :: d(size(gopt_in))
-real(RP) :: dproj(size(gopt_in))
-real(RP) :: psd(size(gopt_in))
-real(RP) :: hd(size(gopt_in))
-real(RP) :: pg(size(gopt_in))
-real(RP) :: resact(size(amat, 2))
-real(RP) :: resnew(size(amat, 2))
-real(RP) :: tol
-real(RP) :: g(size(gopt_in))
-real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
-real(RP) :: frac(size(amat, 2)), ad(size(amat, 2)), restmp(size(amat, 2)), alpha, alphm, alpht, &
-& beta, dd, dg, dhd, ds, gamma, reduct, resid, delsq, ss, sqrtd, sold(size(s))
-real(RP) :: gopt(size(gopt_in)), pq(size(pq_in)), hq(size(hq_in, 1), size(hq_in, 2)), modscal
-integer(IK) :: maxiter, iter, itercg, jsav
+integer(IK) :: iter
+integer(IK) :: itercg
+integer(IK) :: jsav
 integer(IK) :: m
+integer(IK) :: maxiter
 integer(IK) :: n
-integer(IK) :: npt
 integer(IK) :: ngetact_loc
+integer(IK) :: npt
+logical :: newact
+real(RP) :: ad(size(amat, 2))
+real(RP) :: alpha
+real(RP) :: alphm
+real(RP) :: alpht
+real(RP) :: beta
+real(RP) :: d(size(gopt_in))
+real(RP) :: dd
+real(RP) :: delsq
+real(RP) :: dg
+real(RP) :: dhd
+real(RP) :: dproj(size(gopt_in))
+real(RP) :: ds
+real(RP) :: frac(size(amat, 2))
+real(RP) :: g(size(gopt_in))
+real(RP) :: gamma
+real(RP) :: gopt(size(gopt_in))
+real(RP) :: hd(size(gopt_in))
+real(RP) :: hq(size(hq_in, 1), size(hq_in, 2))
+real(RP) :: modscal
+real(RP) :: pg(size(gopt_in))
+real(RP) :: pq(size(pq_in))
+real(RP) :: psd(size(gopt_in))
+real(RP) :: reduct
+real(RP) :: resact(size(amat, 2))
+real(RP) :: resid
+real(RP) :: resnew(size(amat, 2))
+real(RP) :: restmp(size(amat, 2))
+real(RP) :: sold(size(s))
+real(RP) :: sqrtd
+real(RP) :: ss
+real(RP) :: tol
+real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -90,7 +133,6 @@ if (DEBUGGING) then
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
     call assert(size(hq_in, 1) == n .and. issymmetric(hq_in), 'HQ is n-by-n and symmetric', srname)
-
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
     call wassert(all(is_finite(xpt)), 'XPT is finite', srname)
@@ -122,40 +164,14 @@ else
     hq = hq_in
 end if
 
-g = gopt
-
 ! Return if G is not finite. Otherwise, GETACT will fail in the debugging mode.
-if (.not. is_finite(sum(abs(g)))) then
+if (.not. is_finite(sum(abs(gopt)))) then
     s = ZERO
     if (present(ngetact)) then
         ngetact = 0
     end if
     return
 end if
-
-!
-!     N, NPT, M, AMAT, B, XPT, HQ, PQ, NACT, IACT, RESCON, QFAC and RFAC
-!       are the same as the terms with these names in LINCOB. If RESCON(J)
-!       is negative, then |RESCON(J)| must be no less than the trust region
-!       radius, so that the J-th constraint can be ignored.
-!     S is the total calculated step so far from the trust region centre,
-!       its final value being given by the sequence of CG iterations, which
-!       terminate if the trust region boundary is reached.
-!     G must be set on entry to the gradient of the quadratic model at the
-!       trust region centre. It is used as working space, however, and is
-!       always the gradient of the model at the current S.
-!     RESNEW, RESACT, D, PG are used for working space. A negative
-!       value of RESNEW(J) indicates that the J-th constraint does not
-!       restrict the CG steps of the current trust region calculation, a
-!       zero value of RESNEW(J) indicates that the J-th constraint is active,
-!       and otherwise RESNEW(J) is set to the greater of TINYCV and the actual
-!       residual of the J-th constraint for the current S. RESACT holds
-!       the residuals of the active constraints, which may be positive.
-!       D is the search direction of each line search.
-!
-!     Set some numbers for the conjugate gradient iterations.
-!
-delsq = delta * delta
 
 ! Set the initial elements of RESNEW, RESACT and S.
 
@@ -183,6 +199,8 @@ resnew(iact(1:nact)) = ZERO
 ! but PSD + GAMMA * DPROJ.
 resact(1:nact) = rescon(iact(1:nact))
 
+g = gopt
+delsq = delta * delta
 s = ZERO
 ss = ZERO
 reduct = ZERO
@@ -473,6 +491,9 @@ if (DEBUGGING) then
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
+    if (present(ngetact)) then
+        call assert(ngetact >= 1, 'NGETACT >= 1', srname)
+    end if
 end if
 
 end subroutine trstep
