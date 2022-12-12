@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM10:47:12
+! Last Modified: Monday, December 12, 2022 PM10:58:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,7 @@ subroutine trstep(amat, delta, gopt_in, hq_in, pq_in, rescon, xpt, iact, nact, q
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TWO, HALF, EPS, TINYCV, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, wassert
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, solve, isorth, istriu, &
     & issymmetric, trueloc
@@ -135,7 +135,7 @@ if (DEBUGGING) then
     call assert(size(hq_in, 1) == n .and. issymmetric(hq_in), 'HQ is n-by-n and symmetric', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
-    call wassert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)

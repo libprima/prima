@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:51:21
+! Last Modified: Monday, December 12, 2022 PM10:49:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,7 +35,7 @@ subroutine uobyqa(calfun, x, f, &
     & xhist, fhist, maxhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
-! neglect them unless you are familiar with the algorithm.  Any unspecified optional input will take
+! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
 ! the default value detailed below. For instance, we may invoke the solver by
 !
 ! call uobyqa(calfun, x, f)
@@ -146,11 +146,11 @@ subroutine uobyqa(calfun, x, f, &
 !   FTARGET_ACHIEVED: the target function value is reached;
 !   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
 !   MAXTR_REACHED: the trust region iteration has been performed MAXTR times (MAXTR = 2*MAXFUN);
+!   NAN_INF_MODEL: NaN or Inf occurs in the model;
 !   NAN_INF_X: NaN or Inf occurs in X.
 !   !--------------------------------------------------------------------------!
 !   The following case(s) should NEVER occur unless there is a bug.
 !   NAN_INF_F: the objective function returns NaN or +Inf;
-!   NAN_INF_MODEL: NaN or Inf occurs in the model;
 !   TRSUBP_FAILED: a trust region step failed to reduce the model;
 !   !--------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
