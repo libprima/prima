@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 09, 2022 PM11:39:21
+! Last Modified: Monday, December 12, 2022 PM02:35:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,22 +28,22 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! FHIST, XHIST, and INFO are identical to the corresponding arguments in subroutine NEWUOA.
 !
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
-! of the model and Lagrange functions.
+!   of the model and Lagrange functions.
 ! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
-! the least calculated F so far). FOPT = F(XOPT + XBASE).
+!   the least calculated F so far). FOPT = F(XOPT + XBASE).
 ! D is reserved for trial steps from XOPT.
 ! [XPT, FVAL, KOPT] describes the interpolation set:
 ! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
-! values of F at the interpolation points; KOPT is the index of XOPT in XPT.
+!   values of F at the interpolation points; KOPT is the index of XOPT in XPT.
 ! [GQ, HQ, PQ] describes the quadratic model: GQ will hold the gradient of the quadratic model at
-! XBASE; HQ will hold the explicit second order derivatives of the quadratic model; PQ will contain
-! the parameters of the implicit second order derivatives of the quadratic model.
+!   XBASE; HQ will hold the explicit second order derivatives of the quadratic model; PQ will
+!   contain the parameters of the implicit second order derivatives of the quadratic model.
 ! [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12), which is the inverse of
-! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
-! ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
-! ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
-! except for the (NPT+1)th column. Note that the (NPT + 1)th row and column of H are not saved as
-! they are unnecessary for the calculation.
+!   the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
+!   ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
+!   ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
+!   except for the (NPT+1)th column. Note that the (NPT + 1)th row and column of H are not saved as
+!  they are unnecessary for the calculation.
 !
 ! See Section 2 of the NEWUOA paper for more information about these variables.
 !--------------------------------------------------------------------------------------------------!

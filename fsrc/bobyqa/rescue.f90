@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 06, 2022 PM01:53:45
+! Last Modified: Monday, December 12, 2022 PM02:32:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -72,18 +72,16 @@ subroutine rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, 
 ! The arguments NF, KOPT, XL, XU, IPRINT, MAXFUN, XBASE, XPT, FVAL GOPT, HQ, PQ, BMAT, ZMAT, SL
 ! and, SU have the same meanings as the corresponding arguments of BOBYQB on the entry to RESCUE.
 ! DELTA is the current trust region radius.
-!
 ! PTSAUX is a 2-by-N real array. For J = 1, 2, ..., N, PTSAUX(1, J) and PTSAUX(2, J) specify the two
-! positions of provisional interpolation points when a nonzero step is taken along e_J (the J-th
-! coordinate direction) through XBASE + XOPT, as specified below. Usually these steps have length
-! DELTA, but other lengths are chosen if necessary in order to satisfy the bound constraints.
-!
+!   positions of provisional interpolation points when a nonzero step is taken along e_J (the J-th
+!   coordinate direction) through XBASE + XOPT, as specified below. Usually these steps have length
+!   DELTA, but other lengths are chosen if necessary in order to satisfy the bound constraints.
 ! PTSID is an integer array of length NPT. Its components denote provisional new positions of the
-! interpolation points. The K-th point is a candidate for change if and only if PTSID(K) is nonzero.
-! In this case let IP and IQ be the integer parts of PTSID(K) and (PTSID(K)-IP)*(N+1). If IP and IQ
-! are both positive, the step from XBASE + XOPT to the new K-th interpolation point is
-! PTSAUX(1, IP)*e_IP + PTSAUX(1, IQ)*e_IQ. Otherwise the step is either PTSAUX(1, IP)*e_IP or
-! PTSAUX(2, IQ)*e_IQ in the cases IQ=0 or  IP=0, respectively.
+!   interpolation points. The K-th point is a candidate for change if and only if PTSID(K) is
+!   nonzero. In this case let IP and IQ be the integer parts of PTSID(K) and (PTSID(K)-IP)*(N+1). If
+!   IP and IQ are both positive, the step from XBASE + XOPT to the new K-th interpolation point is
+!   PTSAUX(1, IP)*e_IP + PTSAUX(1, IQ)*e_IQ. Otherwise the step is either PTSAUX(1, IP)*e_IP or
+!   PTSAUX(2, IQ)*e_IQ in the cases IQ=0 or  IP=0, respectively.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -98,8 +96,6 @@ use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update,
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : hess_mul, setij
-
-! Solver-specif modules
 use, non_intrinsic :: xinbd_mod, only : xinbd
 
 implicit none
@@ -163,7 +159,6 @@ real(RP) :: moderr
 real(RP) :: pqinc(size(xpt, 2))
 real(RP) :: ptsaux(2, size(xpt, 1))
 real(RP) :: ptsid(size(xpt, 2))
-!real(RP) :: qval(size(xpt, 2))
 real(RP) :: score(size(xpt, 2))
 real(RP) :: scoreinc
 real(RP) :: sfrac
@@ -213,6 +208,10 @@ if (DEBUGGING) then
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 info = INFO_DFT
 
@@ -554,6 +553,7 @@ end if
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20221123: Shouldn't we correct the models using the new [BMAT, ZMAT]?!
 ! In this way, we do not even need the quadratic model received by RESCUE is an interpolant.
+!real(RP) :: qval(size(xpt, 2))
 !qval = [(quadinc(xpt(:, k) - xopt, xpt, gopt, pq, hq), k=1, npt)]
 !pq = pq + omega_mul(1_IK, zmat, fval - qval - fopt)
 !gopt = gopt + matprod(bmat(:, 1:npt), fval - qval - fopt) + hess_mul(xopt, xpt, pq)
@@ -592,6 +592,7 @@ end subroutine rescue
 
 
 subroutine updateh_rsc(knew, beta, vlag_in, bmat, zmat, info)
+! !!! N.B.: UPDATEH_RSC is only used by RESCUE. Is it possible to merge UPDATEH_RSC with UPDATEH?!!!
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays BMAT and ZMAT in order to replace the interpolation point
 ! XPT(:, KNEW) by XNEW = XPT(:, KOPT) + D. See Section 4 of the BOBYQA paper. [BMAT, ZMAT] describes
@@ -600,7 +601,6 @@ subroutine updateh_rsc(knew, beta, vlag_in, bmat, zmat, info)
 ! leading NPT*NPT submatrix OMEGA of H, the factorization being OMEGA = ZMAT*ZMAT^T; BMAT holds the
 ! last N ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th
 ! column of H are not stored as they are unnecessary for the calculation.
-! N.B.: UPDATEH_RSC is only used by RESCUE. Is it possible to merge UPDATEH_RSC with UPDATEH?
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

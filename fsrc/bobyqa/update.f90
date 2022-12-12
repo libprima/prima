@@ -37,6 +37,7 @@ use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : planerot, matprod, outprod, symmetrize, issymmetric
 use, non_intrinsic :: powalg_mod, only : calbeta, calvlag
+
 implicit none
 
 ! Inputs

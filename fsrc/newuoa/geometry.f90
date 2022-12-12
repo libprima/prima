@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 01, 2022 PM05:15:07
+! Last Modified: Monday, December 12, 2022 PM02:34:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -859,7 +859,9 @@ function circle_fun_bigden(theta, args) result(f)
 use, non_intrinsic :: consts_mod, only : RP, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : inprod
+
 implicit none
+
 ! Inputs
 real(RP), intent(in) :: theta
 real(RP), intent(in) :: args(:)
