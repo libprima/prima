@@ -812,6 +812,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "f90comp: [0-9]* SOURCE LINES" \
 	| grep -v "f90comp: [0-9]* ERRORS, [0-9]* WARNINGS" \
 	| grep -v "ANSI: PROCEDURE is a Fortran 2003 feature" \
+	| grep -v "ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions" \
 	| grep -v "remark #5415: Feature not yet implemented" \
 	| grep -v "interpolation error" \
 	| grep -v "In file ./common/evaluate.f90:134" \
