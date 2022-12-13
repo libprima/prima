@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, December 12, 2022 PM03:05:55
+! Last Modified: Tuesday, December 13, 2022 AM11:35:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -50,13 +50,17 @@ subroutine cobyla(calcfc, m, x, f, &
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALCFC, M, X, and F are obligatory. The others are OPTIONAL and you
 ! can neglect them unless you are familiar with the algorithm. Any unspecified optional input will
-! take the default value detailed below. For instance, we may invoke the solver by
+! take the default value detailed below. For instance, we may invoke the solver as follows.
 !
+! ! First define CALCFC, M, and X, and then do the following.
 ! call cobyla(calcfc, m, x, f)
 !
 ! or
 !
-! call cobyla(calcfc, x, m, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! ! First define CALCFC, M, and X, and then do the following.
+! ! N.B.: The user must set M correctly to the number of constraints, namely the size of CONSTR
+! ! introduced below. Set M to 0 if there is no constraint.
+! call cobyla(calcfc, m, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! See examples/cobyla_exmp.f90 for a concrete example.
 !

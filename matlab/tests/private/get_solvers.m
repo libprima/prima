@@ -8,15 +8,8 @@ if isa(solvers, 'char') || isa(solvers, 'string')
     solvers = {solvers};
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ready_solvers = {'newuoa', 'cobyla'};  % Solvers whose development is (almost) finished.
-test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % Directories.
-prima_dir = test_dir;  % `test_dir` is the root directly of a copy of the package made for the test.
+prima_dir = test_dir;  % `test_dir` is the root directory of a copy of the package made for the test.
 callstack = dbstack;
 invoker = callstack(2).name;  % The function that calls this function.
 isverify = strcmp(invoker, 'verify');  % Are we conduction verification?
@@ -62,16 +55,11 @@ try
             mexopt.debug_only = false;
             mexopt.debug = debug_flag;
 
-            % Save compilation time during the verification of non-ready solvers by not compiling
-            % the classical variant; focus on the verification of the modernized variant.
-            mexopt.classical = (isverify && test_ready_solvers) || isprofile;
+            mexopt.classical = true;
 
-            % Save compilation time during the verification of non-ready solvers by not compiling
-            % the quadruple precision; focus on the verification of the double/single precision.
-            mexopt.quadruple = isverify && test_ready_solvers;
-
-            % Include the single precision into the verification.
+            % Include the single and quadruple precisions into the verification.
             mexopt.single = isverify;
+            mexopt.quadruple = isverify;
 
             cd(prima_dir);
             clear('setup');  % Without this, the next line may not call the latest version of `setup`

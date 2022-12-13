@@ -22,7 +22,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 12, 2022 PM03:27:20
+! Last Modified: Tuesday, December 13, 2022 AM11:37:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,12 +39,14 @@ subroutine newuoa(calfun, x, f, &
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
-! the default value detailed below. For instance, we may invoke the solver by
+! the default value detailed below. For instance, we may invoke the solver as follows.
 !
+! ! First define CALFUN and X, and then do the following.
 ! call newuoa(calfun, x, f)
 !
 ! or
 !
+! ! First define CALFUN and X, and then do the following.
 ! call newuoa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! See examples/newuoa_exmp.f90 for a concrete example.

@@ -12,16 +12,16 @@ module infnan_mod
 ! precisions (e.g., the Fortran code may use single, but the MEX gateway uses double by default).
 !
 ! 2. We decide not to use IEEE_IS_NAN and IEEE_IS_FINITE provided by the intrinsic IEEE_ARITHMETIC
-! available since Fortran 2003. The reason is as follows. These two procedures are supposed to
-! return default logical values. However, if the code is compiled by gfortran 9.3.0 with the option
-! -fdefault-integer-8 (which is adopted by MEX as the default), then compiler will enforce the
-! default logical value to be 64-bit, but the returned kinds of IEEE_IS_NAN and IEEE_IS_FINITE will
-! not be changed accordingly, and they will remain 32-bit if that is the default logical kind
-! without -fdefault-integer-8. Consequently, the returned kinds of IEEE_IS_NAN and IEEE_IS_FINITE
+! available since Fortran 2003. The reason is as follows. The Fortran standards require these two
+! procedures to return default logical values. However, if the code is compiled by gfortran 9.3.0
+! with the option -fdefault-integer-8 (which is adopted by MEX and cannot be changed easily), then
+! the compiler will enforce the default logical value to be 64-bit, but the returned kinds of
+! IEEE_IS_NAN and IEEE_IS_FINITE will not be changed accordingly, and they will remain 32-bit if
+! that is the default logical kind. Therefore, the returned kinds of IEEE_IS_NAN and IEEE_IS_FINITE
 ! may actually differ from the default logical kind due to this compiler option and hence violate
-! the Fortran standard! This is fatal, because a ! piece of perfectly standard-compliant may fail to
-! be compiled due to type mismatches. It is similar with ifort 2021.2.0 and nagfor 7.0. See the
-! following address for more discussions: https://stackoverflow.com/questions/69060408 .
+! the Fortran standard! This is fatal, because a piece of perfectly standard-compliant code may fail
+! to be compiled due to type mismatches. It is similar with ifort 2021.2.0 and nagfor 7.0. See more
+! discussions at https://stackoverflow.com/questions/69060408.
 !
 ! 3. The functions aim to work even when compilers are invoked with aggressive optimization flags,
 ! such as `gfortran -Ofast`.
@@ -41,10 +41,10 @@ module infnan_mod
 ! what the aggressive optimization flags really do, but only made some tests and found the
 ! implementation that worked correctly. The story may change when compilers are changed/updated.
 !
-! 7. N.B.: Do NOT change the functions without thorough testing. Their implementation is delicate.
+! 7. N.B.: Do NOT change the functions without thorough testing. Their implementations are delicate.
 ! For example, when compilers are invoked with aggressive optimization flags,
 ! (X <= HUGE(X) .AND. X >= -HUGE(X)) may differ from (ABS(X) <= HUGE(X)) ,
-! (X > HUGE(X) .OR. X < -HUGE(X)) may differ from (ABS(X) > HUGE(X)) ,
+! (X > HUGE(X) .OR. X < -HUGE(X)) may differ from (ABS(X) > HUGE(X)) , and
 ! (ABS(X) > HUGE(X) .AND. X > 0) may differ from (X > HUGE(X)) .
 !
 ! 8. Even though the functions involve invocation of ABS and HUGE, their performance (in terms of
@@ -54,7 +54,7 @@ module infnan_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Saturday, December 18, 2021 PM02:59:59
+! Last Modified: Tuesday, December 13, 2022 AM10:47:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
