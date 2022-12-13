@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM03:14:38
+! Last Modified: Tuesday, December 13, 2022 AM09:55:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -82,10 +82,10 @@ subroutine bobyqa(calfun, x, f, &
 !
 ! XL, XU
 !   Input, REAL(RP) vectors, default: XL = [], XU = [].
-!   XL is the lower bound for X. Its size is either N or 0, the latter signifying that XL has no
+!   XL is the lower bound for X. Its size is either N or 0, the latter signifying that X has no
 !   lower bound. Any entry of XL that is NaN or below -HUGEBOUND will be taken as -HUGEBOUND, which
 !   effectively means there is no lower bound for the corresponding entry of X. The value of
-!   HUGEBOUND is  0.25*HUGE(X), which is about 8.6E37 for single precision and 4.5E307 for double
+!   HUGEBOUND is 0.25*HUGE(X), which is about 8.6E37 for single precision and 4.5E307 for double
 !   precision. XU is similar.
 !   N.B.: It is required that XU - XL > 2*EPSILON(X), which is about 2.4E-7 for single precision and
 !   4.5E-16 for double precision. Otherwise, the solver will return after printing a warning.
@@ -112,7 +112,7 @@ subroutine bobyqa(calfun, x, f, &
 ! NPT
 !   Input, INTEGER(IK) scalar, default: 2N + 1.
 !   NPT is the number of interpolation conditions for each trust region model. Its value must be in
-!   the interval [N+2, (N+1)(N+2)/2]. As per Powell, "choices that exceed 2*N+1 are not recommended."
+!   the interval [N+2, (N+1)(N+2)/2]. Powell wrote "choices that exceed 2*N+1 are not recommended."
 !
 ! IPRINT
 !   Input, INTEGER(IK) scalar, default: 0.

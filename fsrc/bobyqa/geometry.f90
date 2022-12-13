@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM02:31:29
+! Last Modified: Tuesday, December 13, 2022 AM10:06:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,7 +116,7 @@ weight = max(ONE, distsq / rho**2)**3.5
 ! Other possible definitions of WEIGHT.
 ! !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.
 ! !weight = max(ONE, distsq / rho**2)**2  ! Worse than Powell's code.
-! !weight = max(ONE, distsq / delta**2)  ! As per (6.1) of the BOBYQA paper. It works poorly!
+! !weight = max(ONE, distsq / delta**2)  ! Defined in (6.1) of the BOBYQA paper. It works poorly!
 ! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! The same as DISTSQ/RHO**2.
 ! The following WEIGHT all perform a bit worse than the above one, but better than Powell's.
 ! !weight = max(ONE, distsq / delta**2)**3.5

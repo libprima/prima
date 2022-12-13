@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:43:23
+! Last Modified: Tuesday, December 13, 2022 AM10:04:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,14 +26,14 @@ subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 !--------------------------------------------------------------------------------------------------!
 !-------------------------------------------------------------!
 ! THE FOLLOWING DESCRIPTION NEEDS VERIFICATION!               !
-! Note that the set J gets updated within this subroutine,    !
+! Note that the set JJ gets updated within this subroutine,   !
 ! which seems inconsistent with the description below.        !
 ! See the lines below "Pick the next integer L or terminate". !
 !-------------------------------------------------------------!
 !
 ! This subroutine solves a linearly constrained projected problem (LCPP)
 !
-! min ||D + G|| subject to AMAT(:, j)^T * D <= 0 for j in J.
+! min ||D + G|| subject to AMAT(:, j)^T * D <= 0 for j in JJ.
 !
 ! The solution is PSD, which is a projected steepest descent direction PSD for a linearly
 ! constrained trust-region subproblem (LCTRS)
@@ -42,25 +42,25 @@ subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 !
 ! where X_k is in R^N, B is in R^M, and AMAT is in R^{NxM}.
 !
-! In (LCPP), J is the index set defined in (3.3) of Powell (2015) as
+! In (LCPP), JJ is the index set defined in (3.3) of Powell (2015) as
 !
-! J = {j : B_j - A_j^T*Y <= 0.2*Delta_k*||A_j||, 1 <= j <= M} with A_j = AMAT(:, j),
+! JJ = {j : B_j - A_j^T*Y <= 0.2*Delta_k*||A_j||, 1 <= j <= M} with A_j = AMAT(:, j),
 !
-! i.e., the index set of the nearly active constraints of (LCTRS) (as per Powell, j is in J if
+! i.e., the index set of the nearly active constraints of (LCTRS) (Powell wrote that j is in JJ if
 ! and only if the distance from Y to the boundary of the j-th constraint is at most 0.2*Delta_k).
-! Here, Y is the point where G is taken, namely G = grad Q(Y). Y is not necessarily X_k, but an
+! Here, Y is the point where G is taken, namely G = nabla Q(Y). Y is not necessarily X_k, but an
 ! iterate of the algorithm (e.g., truncated conjugate gradient) that solves (LCTRS). In LINCOA,
 ! ||A_j|| is 1 as the gradients of the linear constraints are normalized before LINCOA starts.
 !
 ! The subroutine solves (LCPP) by the active set method of Goldfarb-Idnani (1983). It does not only
 ! calculate PSD, but also identify the active set of (LCPP) at the solution PSD, namely
 !
-! I = {j in J : AMAT(:, j)^T*PSD = 0} (see (3.5) of Powell (2015)),
+! II = {j in JJ : AMAT(:, j)^T*PSD = 0} (see (3.5) of Powell (2015)),
 !
 ! and maintains a QR factorization of A corresponding to the active set. More specifically,
 ! IACT(1:NACT) is a set of indices such that the columns of AMAT(:, IACT(1:NACT)) constitute a basis
-! of the "active constraint" gradients (i.e., those corresponding to the set I mentioned above, but
-! not J!), and QFAC*RFAC(:, 1:NACT) is the QR factorization of! AMAT(:, IACT(1:NACT)) such that
+! of the "active constraint" gradients (i.e., those corresponding to the set II mentioned above, but
+! not JJ!), and QFAC*RFAC(:, 1:NACT) is the QR factorization of! AMAT(:, IACT(1:NACT)) such that
 !
 ! SIZE(QFAC) = [N, N], SIZE(RFAC, 1) = N, diag(RFAC(:, 1:NACT)) > 0.
 !

@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:50:25
+! Last Modified: Tuesday, December 13, 2022 AM10:00:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -136,8 +136,8 @@ end subroutine updatexfc
 subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine identifies the best vertex of the current simplex with respect to the merit
-! function PHI = F + CPEN * CSTRV, and then switch this vertex to SIM(:, N + 1), namely the
-! "Pole Position" as per Powell. CONMAT, CVAL, FVAL, and SIMI are updated accordingly.
+! function PHI = F + CPEN * CSTRV, and then switch this vertex to SIM(:, N + 1), which Powell called
+! the "pole position" in his comments. CONMAT, CVAL, FVAL, and SIMI are updated accordingly.
 !
 ! N.B. 1: In precise arithmetic, the following two procedures produce the same results:
 ! 1) apply UPDATEPOLE to SIM twice, first with CPEN = CPEN1 and then with CPEN = CPEN2;
