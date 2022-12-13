@@ -6,7 +6,6 @@
 # d: AOCC flang
 # f: Classic flang
 # g: GNU gfortran
-# l: Lahey lf95 (compilation only; no compilation of the testing code, which contains F03 constructs unsupported by lf95)
 # n: NAG nagfor
 # i: Intel ifort
 # s: Oracle sunf95
@@ -160,7 +159,7 @@ CHCKTST := $(TEST_DIR)/checktest
 # Flang and nvfortran do not support REAL128;
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # ifx encounters an internal error when compiling with REAL128.
-TESTS_QP = atest gtest ltest ntest itest stest 9test
+TESTS_QP = atest gtest ntest itest stest 9test
 TESTS_NO_QP = dtest ftest vtest xtest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
 # When listing the tests, we first put the ones that are more likely to raise errors.
@@ -184,7 +183,7 @@ $(foreach TST, $(TESTS), $(eval $(TST): TST_C := $(TST)_c))
 
 # The following tests compile the code but do not run the binary. This is useful if we want to
 # check whether the code can compile.
-TESTS_C_QP = atest_c gtest_c ltest_c ntest_c itest_c stest_c 9test_c
+TESTS_C_QP = atest_c gtest_c ntest_c itest_c stest_c 9test_c
 TESTS_C_NO_QP = dtest_c ftest_c vtest_c xtest_c
 TESTS_C = $(TESTS_C_QP) $(TESTS_C_NO_QP)
 $(foreach TST, $(TESTS_C_QP), $(eval $(TST): SUBTESTS_C := \
@@ -209,7 +208,6 @@ $(foreach TST, $(TESTS_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 # surely) to be OK, because the only difference in the code is the integer kind. Similar for others.
 TESTS_INT_QP = atest_i2 atest_i4 atest_i8 \
 			   gtest_i2 gtest_i4 gtest_i8 \
-			   ltest_i2 ltest_i4 ltest_i8 \
 			   ntest_i2 ntest_i4 ntest_i8 \
 			   itest_i2 itest_i4 itest_i8 \
 			   stest_i2 stest_i4 stest_i8 \
@@ -233,7 +231,6 @@ $(foreach TST, $(TESTS_INT), $(eval $(TST): TST_C := $(TST)_c))
 # check whether the code can compile.
 TESTS_INT_C_QP = atest_i2_c atest_i4_c atest_i8_c \
 				 gtest_i2_c gtest_i4_c gtest_i8_c \
-				 ltest_i2_c ltest_i4_c ltest_i8_c \
 				 ntest_i2_c ntest_i4_c ntest_i8_c \
 				 itest_i2_c itest_i4_c itest_i8_c \
 				 stest_i2_c stest_i4_c stest_i8_c \
@@ -482,31 +479,6 @@ itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
 	FCF := $(IFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags -fp-trap=divzero,invalid,overflow $(IFF)
 
-# Lahey lf95
-# The compiler encounters the following internal error randomly. In that case, rerun the test.
-# ```
-# double free or corruption (!prev)
-# f95: /usr/local/lf6481/bin/../bin/jwd_fort: SIGABRT signal received.
-# ```
-LFORT := lf95
-LFORT := $(LFORT) --f95 -v95s -v95o -AU --ap --chkglobal --lst --sav --xref --in --info --nswm --trace \
-		-w --warn --wo --chk a,e,f,o,s,u,x
-
-ltest_i2_r4_d1_tst_c ltest_i4_r4_d1_tst_c ltest_i8_r4_d1_tst_c ltest_i2_r4_d0_tst_c ltest_i4_r4_d0_tst_c ltest_i8_r4_d0_tst_c: \
-	FCO := $(LFORT) $(FFLAGSO) #--trap
-ltest_i2_r4_d1_tst_c ltest_i4_r4_d1_tst_c ltest_i8_r4_d1_tst_c ltest_i2_r4_d0_tst_c ltest_i4_r4_d0_tst_c ltest_i8_r4_d0_tst_c: \
-	FCG := $(LFORT) $(FFLAGSG) #--trap
-
-ltest_i2_r8_d1_tst_c ltest_i4_r8_d1_tst_c ltest_i8_r8_d1_tst_c ltest_i2_r8_d0_tst_c ltest_i4_r8_d0_tst_c ltest_i8_r8_d0_tst_c: \
-	FCO := $(LFORT) $(FFLAGSO) --trap
-ltest_i2_r8_d1_tst_c ltest_i4_r8_d1_tst_c ltest_i8_r8_d1_tst_c ltest_i2_r8_d0_tst_c ltest_i4_r8_d0_tst_c ltest_i8_r8_d0_tst_c: \
-	FCG := $(LFORT) $(FFLAGSG) --trap
-
-ltest_i2_r16_d1_tst_c ltest_i4_r16_d1_tst_c ltest_i8_r16_d1_tst_c ltest_i2_r16_d0_tst_c ltest_i4_r16_d0_tst_c ltest_i8_r16_d0_tst_c: \
-	FCO := $(LFORT) $(FFLAGSO) --trap
-ltest_i2_r16_d1_tst_c ltest_i4_r16_d1_tst_c ltest_i8_r16_d1_tst_c ltest_i2_r16_d0_tst_c ltest_i4_r16_d0_tst_c ltest_i8_r16_d0_tst_c: \
-	FCG := $(LFORT) $(FFLAGSG) --trap
-
 # NAG nagfor
 # In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.
 # It is necessary to use "-I $(TESTSUITE_DIR)"; otherwise, the INCLUDE lines in the test suite will not work.
@@ -711,7 +683,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		printf "\n$@_c exists!\n\n" ; \
 	fi
 	@mkdir -p $(LOG_DIR)
-	@if echo $@ | grep -q "9test\|ltest" ; then \
+	@if echo $@ | grep -q "9test" ; then \
 		printf "\n$@ is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 	else  \
 		if [[ -n "$(FFLAGSO)" ]] ; then \
@@ -752,8 +724,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
-	$(eval SRC := $(shell if echo $@ | grep -q "ltest"; then echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||' ; else echo $(SRC) ; fi))
-	(if echo $@ | grep -q '9test\|ltest'; then \
+	(if echo $@ | grep -q '9test'; then \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
 			if [[ '$(FFLAGSO)' = '-fast' ]] ; then \
 				$(FCF) -c $(SRC) ; \
@@ -865,10 +836,6 @@ source_%: $(SRC_DIRS)
 		-o -name "*.out" \
 		-o -name "*__genmod.f90" \
 		\) -exec rm {} \;  # Cleaning up; important!!!
-	@if echo $@ | grep -q "ltest"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
-		bash ../lfsrc ./ ; \
-	fi
 	@if echo $@ | grep -q "ftest\|vtest\|dtest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../fvdsrc ./ ; \

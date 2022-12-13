@@ -31,6 +31,9 @@ and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) i
 ([Py-BOBYQA](https://numericalalgorithmsgroup.github.io/pybobyqa/) is also highly recommended if
 you intend to solve bound-constrained problems).
 
+The PRIMA project was initiated by [Zaikun Zhang](https://www.zhangzk.net) in July 2020, based on
+the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonneau.com/) and
+Zaikun Zhang.
 
 ### Why
 
@@ -100,11 +103,12 @@ has been verified by more than $10^5$ hours (or more than $10$ years) of randomi
 
 ### Current status
 
-**We have finished the modern Fortran version of PRIMA by December 2022.**
-An [interface](https://github.com/equipez/PRIMA/blob/master/setup.m) is also provided for using the
-Fortran implementation under MATLAB. Interfaces for other Languages will be available later.
-Given the **modern** Fortran version, the implementation in other languages becomes **much
-easier**, because we now have a structured and modularized implementation as a reference.
+After almost **three** years of intensive coding, **we have finished the
+[modern Fortran version](https://github.com/equipez/PRIMA/tree/master/fsrc) of
+PRIMA by December 2022.** An [interface](https://github.com/equipez/PRIMA/blob/master/setup.m) is
+also provided for using the Fortran implementation under MATLAB. Interfaces for other languages will
+be available later. Given the **modern** Fortran version, the implementation in other languages
+becomes **much easier**, because we now have a structured and modularized implementation as a reference.
 
 
 ------
