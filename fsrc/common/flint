@@ -29,10 +29,6 @@ for i in "${!COMPILER_LIST[@]}"; do
    fi
 done
 
-if lf95 --version &> /dev/null; then  # `lf95` may not work even if `type lf95` succeeds, as a license is needed.
-    COMP_LIST="$COMP_LIST l"
-fi
-
 # Parse the arguments
 while [[ -n "$1" ]]; do
     case "$1" in
@@ -71,9 +67,6 @@ while [[ -n "$1" ]]; do
             ;;
         -x|--ifx)
             COMP_LIST=" x"
-            ;;
-        -l|--lf95)
-            COMP_LIST=" l"
             ;;
         *)
             printf "Usage: flint [--compiler_name [--all]] or flint -c|--clean\n"
