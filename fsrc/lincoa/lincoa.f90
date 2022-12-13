@@ -30,7 +30,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM03:16:24
+! Last Modified: Tuesday, December 13, 2022 AM11:34:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -49,13 +49,15 @@ subroutine lincoa(calfun, x, f, &
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
-! the default value detailed below. For instance, we may invoke the solver by
+! the default value detailed below. For instance, we may invoke the solver as follows.
 !
+! ! First define CALFUN and X, and then do the following.
 ! call lincoa(calfun, x, f)
 !
 ! or
 !
-! call lincoa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! ! First define CALFUN, X, A, and B, and then do the following.
+! call lincoa(calfun, x, f, A = A, b = b, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! See examples/lincoa_exmp.f90 for a concrete example.
 !
