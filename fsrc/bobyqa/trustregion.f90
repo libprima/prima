@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM10:42:35
+! Last Modified: Tuesday, December 13, 2022 AM10:05:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -401,8 +401,8 @@ end if
 ! 2. In (3.6) of the BOBYQA paper, Powell wrote that 0 <= THETA <= PI/4, which seems a typo.
 ! 3. The search on the arch is done by calling INTERVAL_MAX, which maximizes INTERVAL_FUN_TRSBOX.
 ! INTERVAL_FUN_TRSBOX is essentially Q(XOPT + D) - Q(XOPT + D(THETA)), but its independent variable
-! is not THETA but TAN(THETA/2), namely "tangent of the half angle" as per Powell. This "half" may
-! be the reason for the apparent typo mentioned above.
+! is not THETA but TAN(THETA/2), namely "tangent of the half angle" in Powell's code/comments. This
+! "half" may be the reason for the apparent typo mentioned above.
 ! Question (Zaikun 20220424): Shouldn't we try something similar in GEOSTEP?
 
 nactsav = nact - 1_IK
