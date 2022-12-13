@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Wednesday, November 30, 2022 PM12:41:27
+! Last Modified: Tuesday, December 13, 2022 PM12:54:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -123,7 +123,7 @@ end if
 !====================!
 
 if (any(is_nan(x))) then
-    ! Although this should not happen unless there is a bug, we include this case for security.
+    ! Although this should not happen unless there is a bug, we include this case for robustness.
     f = sum(x)  ! Set F to NaN
 else
     call calfun(moderatex(x), f)  ! Evaluate F; We moderate X before doing so.
@@ -187,7 +187,7 @@ end if
 !====================!
 
 if (any(is_nan(x))) then
-    ! Although this should not happen unless there is a bug, we include this case for security.
+    ! Although this should not happen unless there is a bug, we include this case for robustness.
     ! Set F, CONSTR, and CSTRV to NaN.
     f = sum(x)
     constr = f
