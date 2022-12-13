@@ -50,4 +50,4 @@ jobs:
           export PATH=$PATH:"~/local/bin"
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
           ROOT=$(realpath ./)
-          cd $ROOT/fsrc/${{ matrix.solver }} && bash ./${{ matrix.linter }} --all
+          cd $ROOT/fortran/${{ matrix.solver }} && bash ./${{ matrix.linter }} --all

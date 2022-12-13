@@ -69,13 +69,13 @@ jobs:
         run: |
           source /opt/intel/oneapi/setvars.sh
           ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"
-          cd $ROOT/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          cd $ROOT/fsrc/tests && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
-          cd $ROOT/fsrc/examples/${{ matrix.solver }} && make xtest
+          cd $ROOT/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd $ROOT/fortran/tests && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd $ROOT/fortran/examples/${{ matrix.solver }} && make xtest
       - name: Store artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: ${{ env.TEST_DIR }}/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+          path: ${{ env.TEST_DIR }}/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
         run:

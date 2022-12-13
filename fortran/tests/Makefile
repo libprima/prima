@@ -38,11 +38,11 @@
 ROOT_DIR := $(CURDIR)/../..
 # Temporary directory. It should not be a subdirectory of $(ROOT_DIR). The ?= assignment assigns the
 # value to TEST_DIR if TEST_DIR is not an exported environment variable of the shell.
-TEST_DIR ?= /tmp/fsrc_test
+TEST_DIR ?= /tmp/fortran_test
 # Root directory of this test. It is a subdirectory of $(TEST_DIR) and a partial copy of $(ROOT_DIR).
 TEST_ROOT := $(TEST_DIR)/prima
 # The test directory
-FTEST_DIR := $(TEST_ROOT)/fsrc/tests
+FTEST_DIR := $(TEST_ROOT)/fortran/tests
 # The makefile directory
 MAKEFILE_DIR := $(FTEST_DIR)/makefiles
 
@@ -57,7 +57,7 @@ MAKEFILE_DIR := $(FTEST_DIR)/makefiles
 %.cobyla %.uobyqa %.newuoa %.bobyqa %.lincoa:
 	@$(eval SOLVER_FTEST_DIR := $(FTEST_DIR)/test.$(SOLVER))  # The test directory for the tested solver
 	@mkdir -p $(TEST_ROOT)
-	@cp -r $(ROOT_DIR)/fsrc $(TEST_ROOT)/
+	@cp -r $(ROOT_DIR)/fortran $(TEST_ROOT)/
 	@mkdir -p $(SOLVER_FTEST_DIR)
 	@cp $(MAKEFILE_DIR)/Makefile.* $(SOLVER_FTEST_DIR)/
 	@cp $(MAKEFILE_DIR)/Makefile.$(SOLVER) $(SOLVER_FTEST_DIR)/Makefile

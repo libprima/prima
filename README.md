@@ -39,7 +39,7 @@ Zaikun Zhang.
 
 Professor Powell carefully implemented his derivative-free optimization methods into publicly available solvers,
 which are genuine masterpieces. They are widely used by engineers and scientists. However, Professor Powell's
-implementation is in [Fortran 77](https://github.com/equipez/PRIMA/tree/master/fsrc/original)
+implementation is in [Fortran 77](https://github.com/equipez/PRIMA/tree/master/fortran/original)
 and the code is nontrivial to understand or maintain, let alone to
 extend. This becomes an obstacle for many practitioners to exploit these solvers in their
 applications and hinders researchers from exploring the wealth left by Professor Powell to the
@@ -104,7 +104,7 @@ has been verified by more than $10^5$ hours (or more than $10$ years) of randomi
 ### Current status
 
 After almost **three** years of intensive coding, **we have finished the
-[modern Fortran version](https://github.com/equipez/PRIMA/tree/master/fsrc) of
+[modern Fortran version](https://github.com/equipez/PRIMA/tree/master/fortran) of
 PRIMA by December 2022.** An [interface](https://github.com/equipez/PRIMA/blob/master/setup.m) is
 also provided for using the Fortran implementation under MATLAB. Interfaces for other languages will
 be available later. Given the **modern** Fortran version, the implementation in other languages

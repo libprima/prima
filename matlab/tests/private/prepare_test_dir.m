@@ -57,9 +57,9 @@ rmpath(setup_tools);  % Remove `setup_tools` from path since it has finishes its
 % Remove the interform Fortran source code under `s_root_dir`. This is needed if we would like to
 % repeat a debugging test without recompiling the solvers; without doing this, the interform Fortran
 % code in the destination directory would be overwritten, which makes debugging impossible.
-s_fsrc_interform = fullfile(s_root_dir, 'fsrc', '.interform');
-if exist(s_fsrc_interform, 'dir')
-    rmdir(s_fsrc_interform, 's');
+s_fortran_interform = fullfile(s_root_dir, 'fortran', '.interform');
+if exist(s_fortran_interform, 'dir')
+    rmdir(s_fortran_interform, 's');
 end
 s_mex_interform = fullfile(s_root_dir, 'matlab', 'mex_gateways', '.interform');
 if exist(s_mex_interform, 'dir')
@@ -67,7 +67,7 @@ if exist(s_mex_interform, 'dir')
 end
 
 % `root_sub_list: directories/files to be copied under `root_dir`
-root_sub_list = {'fsrc', 'OPDFO', 'setup.m'};
+root_sub_list = {'fortran', 'OPDFO', 'setup.m'};
 for il = 1 : length(root_sub_list)
     copyfile(fullfile(s_root_dir, root_sub_list{il}), fullfile(d_root_dir, root_sub_list{il}));
 end

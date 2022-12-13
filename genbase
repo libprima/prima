@@ -2,28 +2,28 @@
 # This script generates a "base" version of the code.
 
 # The directory where this scrip resides
-NEUPDFODIR="$(realpath "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")"
+PRIMADIR="$(realpath "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")"
 
 # Prepare the base
-BASEDIR="$NEUPDFODIR"/base
+BASEDIR="$PRIMADIR"/base
 VERSION=$(date +%y%m%d)
 BDIR="$BASEDIR"/"$VERSION"
 mkdir -p "$BDIR"
-cp -r "$NEUPDFODIR"/fsrc "$BDIR"
-cp "$NEUPDFODIR"/setup.m "$BDIR"
-cp -r "$NEUPDFODIR"/OPDFO "$BDIR"
-cp -r "$NEUPDFODIR"/matlab "$BDIR"
+cp -r "$PRIMADIR"/fortran "$BDIR"
+cp "$PRIMADIR"/setup.m "$BDIR"
+cp -r "$PRIMADIR"/OPDFO "$BDIR"
+cp -r "$PRIMADIR"/matlab "$BDIR"
 rm -r "$BDIR"/matlab/tests/testdata
 
 # Update the OPDFO to the current version of PDFO
 mv OPDFO OPDFO_"$VERSION"
 mkdir OPDFO
-cp -r "$NEUPDFODIR"/fsrc OPDFO
+cp -r "$PRIMADIR"/fortran OPDFO
 
-cp "$NEUPDFODIR"/setup.m OPDFO
+cp "$PRIMADIR"/setup.m OPDFO
 sed -i "s/ALLn/ALL/g" OPDFO/setup.m
 
-cp -r "$NEUPDFODIR"/matlab OPDFO
+cp -r "$PRIMADIR"/matlab OPDFO
 sed -i 's/solver(1:end-1)/solver/' OPDFO/matlab/setup_tools/compile.m
 
 rm -r OPDFO/matlab/tests/testdata

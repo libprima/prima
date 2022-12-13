@@ -57,13 +57,13 @@ jobs:
           source "$AFDIR"/bin/absvars.sh
           export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
           ROOT=$(realpath ./)
-          cd $ROOT/fsrc/tests && export FFLAGS=${{ matrix.fflags }} && make atest_${{ matrix.ikind }}.${{ matrix.solver }}
-          cd $ROOT/fsrc/examples/${{ matrix.solver }} && make atest
+          cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && make atest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd $ROOT/fortran/examples/${{ matrix.solver }} && make atest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: ${{ env.TEST_DIR }}/neupdfo/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+          path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
         run:

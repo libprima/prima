@@ -71,14 +71,14 @@ jobs:
         run: |
           source /tmp/setenv.sh
           ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"  # `realpath` is unavailable on macOS
-          cd $ROOT/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          cd $ROOT/fsrc/tests && export FFLAGS=${{ matrix.fflags }} && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
-          #cd $ROOT/fsrc/examples/${{ matrix.solver }} && make ftest  # Flang cannot resolve `evaluate`
+          cd $ROOT/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
+          #cd $ROOT/fortran/examples/${{ matrix.solver }} && make ftest  # Flang cannot resolve `evaluate`
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: ${{ env.TEST_DIR }}/neupdfo/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+          path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
         run:

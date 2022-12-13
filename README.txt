@@ -23,7 +23,7 @@ To use the Python version of PDFO on Linux or Mac, see README_py_unix.txt.
 To use the Python version of PDFO on Windows, see README_py_win.txt.
 
 This package makes use of a modified version of Powell's Fortran code. See
-folder "original" in "fsrc" for Powell's original code.
+folder "original" in "fortran" for Powell's original code.
 
 The development of this package is funded by the Hong Kong RGC Early Career
 Scheme (PolyU 253012/17P), the Hong Kong Ph.D. Fellowship Scheme (PF18-24698),
