@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 13, 2022 AM09:55:10
+! Last Modified: Tuesday, December 13, 2022 AM11:40:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -43,13 +43,15 @@ subroutine bobyqa(calfun, x, f, &
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
-! the default value detailed below. For instance, we may invoke the solver by
+! the default value detailed below. For instance, we may invoke the solver as follows.
 !
+! ! First define CALFUN and X, and then do the following.
 ! call bobyqa(calfun, x, f)
 !
 ! or
 !
-! call bobyqa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! ! First define CALFUN, X, and XL, then do the following.
+! call bobyqa(calfun, x, f, xl = xl, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! See examples/bobyqa_exmp.f90 for a concrete example.
 !

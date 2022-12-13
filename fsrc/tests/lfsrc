@@ -16,9 +16,9 @@ DIR="$(realpath "$1")"
 TMP="/tmp/tmp.$(date +%s)"
 
 # The files that contain abstract interfaces.
-CIRCLEF90="circle.f90"
-CIRCLE="$DIR/common/$CIRCLEF90"
-INTRF_CIRCLE="$DIR/common/intrf_$CIRCLEF90"
+UNIVARF90="univar.f90"
+UNIVAR="$DIR/common/$UNIVARF90"
+INTRF_UNIVAR="$DIR/common/intrf_$UNIVARF90"
 PINTRFF90="pintrf.f90"
 PINTRF="$DIR/common/$PINTRFF90"
 
@@ -28,15 +28,15 @@ if ! basename "$DIR" | grep -q "\.test\|test\.\|\.tst\|tst\." || ! [[ -d "$DIR" 
     exit 1
 fi
 
-# For CIRCLE, first print the interface into a file
-sed -n '/abstract interface/,/end interface/p' "$CIRCLE" \
+# For UNIVAR, first print the interface into a file
+sed -n '/abstract interface/,/end interface/p' "$UNIVAR" \
     | sed 's/abstract interface/interface/' \
     | sed 's/FUNC_WITH_ARGS/fun/g' \
-    > "$INTRF_CIRCLE"
-# Remove the interface from CIRCLE
-sed -n '/abstract interface/,/end interface/!p' "$CIRCLE" > "$TMP" && cat "$TMP" > "$CIRCLE"
-# Replace "^procedure(FUNC_WITH_ARGS) :: fun$" with "include \"$INTRF_CIRCLE\""
-sed -i "s|^procedure(FUNC_WITH_ARGS) :: fun$|include \"$INTRF_CIRCLE\"|" "$CIRCLE"
+    > "$INTRF_UNIVAR"
+# Remove the interface from UNIVAR
+sed -n '/abstract interface/,/end interface/!p' "$UNIVAR" > "$TMP" && cat "$TMP" > "$UNIVAR"
+# Replace "^procedure(FUNC_WITH_ARGS) :: fun$" with "include \"$INTRF_UNIVAR\""
+sed -i "s|^procedure(FUNC_WITH_ARGS) :: fun$|include \"$INTRF_UNIVAR\"|" "$UNIVAR"
 
 # For PINTRF, remove the lines before "public :: " (included) and the line "end module"; then
 # replace "abstract interface" with "interface", "OBJCON" with "calcfc", and "OBJ" with "calfun".

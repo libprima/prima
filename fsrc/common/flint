@@ -29,11 +29,9 @@ for i in "${!COMPILER_LIST[@]}"; do
    fi
 done
 
-# lf95 does not recognize IEEE_ARITHMETIC, which is needed in the development (but not in the
-# production) for generating NaN. So it is disabled until the development is finished.
-#if lf95 --version &> /dev/null; then  # `lf95` may not work even if `type lf95` succeeds, as a license is needed.
-#    COMP_LIST="$COMP_LIST l"
-#fi
+if lf95 --version &> /dev/null; then  # `lf95` may not work even if `type lf95` succeeds, as a license is needed.
+    COMP_LIST="$COMP_LIST l"
+fi
 
 # Parse the arguments
 while [[ -n "$1" ]]; do

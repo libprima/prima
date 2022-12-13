@@ -11,6 +11,7 @@ Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell
 - [What](#what)
 - [Why](#why)
 - [How](#how)
+- [Current status](#current-status)
 - [Bug fixes](#bug-fixes)
 - [Improvements](#improvements)
 - [A "fun" fact](#a-fun-fact)
@@ -96,18 +97,14 @@ each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words, PRIMA
 has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
 
-We have almost finished the **modern** Fortran version of PRIMA by October 2022.
-More specifically,
-the implementation of [COBYLA](https://github.com/equipez/PRIMA/tree/master/fsrc/cobyla)
-and [NEWUOA](https://github.com/equipez/PRIMA/tree/master/fsrc/newuoa) is complete, while
-[UOBYQA](https://github.com/equipez/PRIMA/tree/master/fsrc/uobyqa),
-[BOBYQA](https://github.com/equipez/PRIMA/tree/master/fsrc/bobyqa),
-and [LINCOA](https://github.com/equipez/PRIMA/tree/master/fsrc/lincoa) have been implemented in
-**modern** Fortran without any GOTO.
+
+### Current status
+
+**We have finished the modern Fortran version of PRIMA by December 2022.**
 An [interface](https://github.com/equipez/PRIMA/blob/master/setup.m) is also provided for using the
 Fortran implementation under MATLAB. Interfaces for other Languages will be available later.
-Once the **modern** Fortran version is finished, the implementation in other languages will become much
-easier, because we will then have a structured and modularized implementation as a reference.
+Given the **modern** Fortran version, the implementation in other languages becomes **much
+easier**, because we now have a structured and modularized implementation as a reference.
 
 
 ------
