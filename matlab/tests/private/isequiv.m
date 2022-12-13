@@ -388,9 +388,9 @@ test_options.quiet = (rand < 0.9);
 % Test all precisions. For unavailable precisions, the double-precision version will be called.
 if rand < 0.6  % Prob = 0.6
     test_options.precision = 'double';
-elseif rand < 0.8  % Prob = 0.32
+elseif rand < 0.9  % Prob = 0.36
     test_options.precision = 'single';
-else  % Prob = 0.08
+else  % Prob = 0.04
     test_options.precision = 'quadruple';
 end
 
