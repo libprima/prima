@@ -57,7 +57,7 @@ MAKEFILE_DIR := $(MTEST_DIR)/makefiles
 %.cobyla %.uobyqa %.newuoa %.bobyqa %.lincoa:
 	@$(eval SOLVER_MTEST_DIR := $(MTEST_DIR)/test.$(SOLVER))  # The test directory for the tested solver
 	@mkdir -p $(TEST_ROOT)
-	@cp -r $(ROOT_DIR)/fsrc $(TEST_ROOT)/
+	@cp -r $(ROOT_DIR)/fortran $(TEST_ROOT)/
 	@mkdir -p $(TEST_ROOT)/matlab/
 	@cp -r $(ROOT_DIR)/matlab/mex_gateways $(TEST_ROOT)/matlab/
 	@mkdir -p $(SOLVER_MTEST_DIR)

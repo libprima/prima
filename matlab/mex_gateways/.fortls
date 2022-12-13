@@ -1,6 +1,6 @@
 {
-    "source_dirs": ["../../fsrc/common", "../../fsrc/newuoa", "../../fsrc/uobyqa", "../../fsrc/bobyqa", "../../fsrc/lincoa", "../../fsrc/cobyla"],
+    "source_dirs": ["../../fortran/common", "../../fortran/newuoa", "../../fortran/uobyqa", "../../fortran/bobyqa", "../../fortran/lincoa", "../../fortran/cobyla"],
     "pp_suffixes": [".F90", ".F"],
-    "include_dirs": ["../../fsrc/common", "./tests"],
+    "include_dirs": ["../../fortran/common", "./tests"],
     "lowercase_intrinsics": true
 }
