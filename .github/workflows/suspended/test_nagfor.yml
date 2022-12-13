@@ -55,19 +55,19 @@ jobs:
           export PATH=$PATH:"~/local/bin"
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
           ROOT=$(realpath ./)
-          cd $ROOT/fsrc/tests && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd $ROOT/fortran/tests && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
           ##########################################################################################
           # NAG Fortran Compiler Release 7.0(Yurakucho) Build 7066 cannot handle matrix indexing
           # with TRUELOC
           if [[ ! ${{ matrix.solver }}=='lincoa' ]] ; then
-              cd $ROOT/fsrc/examples/${{ matrix.solver }} && make ntest
+              cd $ROOT/fortran/examples/${{ matrix.solver }} && make ntest
           fi
           ##########################################################################################
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: ${{ env.TEST_DIR }}/neupdfo/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+          path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
         run:

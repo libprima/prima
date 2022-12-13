@@ -65,14 +65,14 @@ jobs:
           export LD_LIBRARY_PATH="$BFDIR"/lib:$LD_LIBRARY_PATH
           NVFORTRAN="$(find /opt/nvidia -type f -executable -name nvfortran -print | sort | tail -n 1)"
           export PATH=$PATH:$(dirname $NVFORTRAN)
-          cd ./fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd ./fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           cd ../tests && make ${{ matrix.compiler }}test_${{ matrix.ikind }}_c.${{ matrix.solver }} && make ${{ matrix.compiler }}test_${{ matrix.ikind }}.${{ matrix.solver }}
           cd ../examples/${{ matrix.solver }} && make ${{ matrix.compiler }}test
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: ${{ env.TEST_DIR }}/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+          path: ${{ env.TEST_DIR }}/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
         run:

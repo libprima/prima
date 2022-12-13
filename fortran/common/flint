@@ -101,7 +101,7 @@ printf  "Test directory:\n\n%s\n" "$TEST_DIR"
 # We export TEST_DIR, which will be referred to by the Makefiles.
 export TEST_DIR
 TEST_ROOT="$TEST_DIR"/prima
-FTEST_DIR="$TEST_ROOT"/fsrc/tests
+FTEST_DIR="$TEST_ROOT"/fortran/tests
 FTEST_SOLVER_DIR="$FTEST_DIR"/test."$SOLVER"
 
 # The log directory in the testing directory.
@@ -115,7 +115,7 @@ mkdir -p "$SOLVER_LOG_DIR"
 rm -f "$SOLVER_LOG_DIR"/*test*.log
 
 # Conduct the test.
-cd "$ROOT_DIR"/fsrc/tests || exit 1
+cd "$ROOT_DIR"/fortran/tests || exit 1
 
 # Make clean (old logs in $SOLVER_LOG_DIR have been cleaned up in the above).
 printf "\nCleaning up ... "

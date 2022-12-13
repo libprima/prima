@@ -97,19 +97,19 @@ jobs:
             # 1. Windows does not support the symlink of linux, and hence mlint and flint do not work.
             # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
-                cd "$ROOT"/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+                cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
                 export FFLAGS='-fast'
-                cd "$ROOT"/fsrc/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
+                cd "$ROOT"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
             if (( ${{ matrix.version }} < 8 )) ; then export FS=08; else export FS=18; fi  # Needed by the next line; `-f2018` is not implemented until gcc-8
-            cd "$ROOT"/fsrc/examples/${{ matrix.solver }} && make gtest
+            cd "$ROOT"/fortran/examples/${{ matrix.solver }} && make gtest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
         # Note that `$TEST_DIR` does not work on Windows, where its equivalent is `$env:TEST_DIR`.
         # In the following, we enquire `$TEST_DIR` by using the `env` context, which is platform independent.
         with:
-          path: ${{ env.TEST_DIR }}/neupdfo/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+          path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
         shell: bash  # Important; otherwise, `rm -rf` will not work on Windows.

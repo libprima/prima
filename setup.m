@@ -1,5 +1,5 @@
 function setup(varargin)
-%SETUP compiles the package and try adding the package into the search path.
+%SETUP sets the package up for MATLAB.
 %
 %   This script can be called in the following ways.
 %
@@ -59,7 +59,7 @@ end
 % The full paths to several directories needed for the setup.
 cpwd = pwd();  % Current directory, which may not be the directory containing this setup script
 setup_dir = fileparts(mfilename('fullpath')); % The directory containing this setup script
-fsrc = fullfile(setup_dir, 'fsrc'); % Directory of the Fortran source code
+fortd = fullfile(setup_dir, 'fortran'); % Directory of the Fortran source code
 matd = fullfile(setup_dir, 'matlab'); % Matlab directory
 gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
@@ -156,8 +156,8 @@ end
 % We need to do this because MEX accepts only the (obsolescent) fixed-form Fortran code on Windows.
 % Intersection-form Fortran code can be compiled both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
-interform(fsrc);
-fsrc_interform = fullfile(fsrc, '.interform'); % Directory of the intersection-form Fortran code
+interform(fortd);
+fortd_interform = fullfile(fortd, '.interform'); % Directory of the intersection-form Fortran code
 interform(gateways);
 gateways_interform = fullfile(gateways, '.interform'); % Directory of the intersection-form MEX gateways
 fprintf('Done.\n\n');
@@ -169,14 +169,14 @@ fprintf('Compilation starts. It may take some time ...\n');
 cd(mexdir);
 exception = [];
 try
-    compile(solver_list, mexdir, fsrc_interform, gateways_interform, options);
+    compile(solver_list, mexdir, fortd_interform, gateways_interform, options);
 catch exception
     % Do nothing for the moment.
 end
 
 %% Remove the intersection-form Fortran files unless we are debugging.
 %if ~debug_flag
-%    rmdir(fsrc_interform, 's');
+%    rmdir(fortd_interform, 's');
 %    rmdir(gateways_interform, 's');
 %end
 

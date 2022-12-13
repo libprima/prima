@@ -1,8 +1,8 @@
-function compile(solvers, mexdir, fsrc, gateways, options)
+function compile(solvers, mexdir, fortd, gateways, options)
 %COMPILE mexifies the Fortran solvers.
 % solvers: list of the solvers to mexify
 % mexdir: the directory that will contain the mexified solvers
-% fsrc: the directory containing the source files of the Fortran solvers
+% fortd: the directory containing the source files of the Fortran solvers
 % gateways: the directory containing the MEX gateways of the Fortran solvers
 % options: some options
 
@@ -31,12 +31,12 @@ function compile(solvers, mexdir, fsrc, gateways, options)
 
 % Directories
 cpwd = pwd();  % The current directory, which may not be the directory containing this m file.
-% `modern_src`: the directory containing the modernized source files of the Fortran solvers
-modern_src = fsrc;
-% `classical_src`: the directory containing the classical source files of the Fortran solvers
-classical_src = fullfile(fsrc, 'classical');
+% `modern_fortd`: the directory containing the modernized source files of the Fortran solvers
+modern_fortd = fortd;
+% `classical_fortd`: the directory containing the classical source files of the Fortran solvers
+classical_fortd = fullfile(fortd, 'classical');
 % `common`: the directory that contains some common source files shared by all the Fortran solvers
-common = fullfile(fsrc, 'common');
+common = fullfile(fortd, 'common');
 
 % `options.debug_only` and `options.debug` indicate whether to compile the debugging version of the
 % solvers. `debug_only` prevails if both of them are present (e.g., debug_only = true, debug = false).
@@ -119,9 +119,9 @@ for isol = 1 : length(solvers)
     gateway = fullfile(gateways, [solver(1:end-1), '_mex.F']);
     for ivar = 1 : length(variants)
         if strcmp(variants{ivar}, 'classical')
-            soldir = fullfile(classical_src, solver(1:end-1));
+            soldir = fullfile(classical_fortd, solver(1:end-1));
         else
-            soldir = fullfile(modern_src, solver(1:end-1));
+            soldir = fullfile(modern_fortd, solver(1:end-1));
         end
         for idbg = 1 : length(debug_flags)
             if strcmp(variants{ivar}, 'classical') && debug_flags{idbg}

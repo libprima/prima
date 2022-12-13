@@ -52,12 +52,12 @@ LOG_DIR := $(TEST_SOLVER_DIR)/log
 # Trash directory.
 TRASH_DIR := $(TEST_SOLVER_DIR)/trash
 # Fortran source directory.
-FSRC_DIR := $(TEST_DIR)/../../../fsrc
+FORTRAN_DIR := $(TEST_DIR)/../../../fortran
 # Common directory.
 COMMON := common
-COMMON_DIR := $(FSRC_DIR)/$(COMMON)
+COMMON_DIR := $(FORTRAN_DIR)/$(COMMON)
 # Solver directory.
-SOLVER_DIR := $(FSRC_DIR)/$(SOLVER)
+SOLVER_DIR := $(FORTRAN_DIR)/$(SOLVER)
 # Mex gateway directory.
 MEXGATE_DIR := $(TEST_DIR)/..
 # Source directories.

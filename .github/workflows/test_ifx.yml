@@ -80,14 +80,14 @@ jobs:
           # 1. Windows does not support the symlink of linux, and hence mlint and flint do not work.
           # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
           if [[ "$RUNNER_OS" != "Windows" ]]; then
-               cd "$ROOT"/fsrc/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-               cd $ROOT/fsrc/tests && export FFLAGS=${{ matrix.fflags }} && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
+               cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+               cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
           fi
-          cd $ROOT/fsrc/examples/${{ matrix.solver }} && make xtest
+          cd $ROOT/fortran/examples/${{ matrix.solver }} && make xtest
       - name: Store artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: ${{ env.TEST_DIR }}/neupdfo/fsrc/tests/test.${{ matrix.solver }}/log/*.log
+          path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
         run:
