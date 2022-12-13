@@ -105,8 +105,8 @@ has been verified by more than $10^5$ hours (or more than $10$ years) of randomi
 
 After almost **three** years of intensive coding, **we have finished the
 [modern Fortran version](https://github.com/equipez/PRIMA/tree/master/fortran) of
-PRIMA by December 2022.** An [interface](https://github.com/equipez/PRIMA/blob/master/setup.m) is
-also provided for using the Fortran implementation under MATLAB. Interfaces for other languages will
+PRIMA by December 2022.** An [interface](https://github.com/equipez/PRIMA/tree/master/matlab/interfaces)
+is also provided for using the Fortran implementation under MATLAB. Interfaces for other languages will
 be available later. Given the **modern** Fortran version, the implementation in other languages
 becomes **much easier**, because we now have a structured and modularized implementation as a reference.
 
