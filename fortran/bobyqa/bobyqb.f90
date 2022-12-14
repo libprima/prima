@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 13, 2022 PM10:47:19
+! Last Modified: Wednesday, December 14, 2022 AM12:28:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -242,7 +242,6 @@ info = INFO_DFT
 do while (.true.)
     ! Generate the next trust region step D.
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
-    write (16, *) 'tr', nf, d
     dnorm = min(delta, sqrt(sum(d**2)))
 
     shortd = (dnorm < HALF * rho)
@@ -447,7 +446,6 @@ do while (.true.)
 
         ! Find D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) becomes XOPT + D.
         d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
-        write (16, *) 'geo', nf, d
 
         ! Call RESCUE if rounding errors have damaged the denominator corresponding to D.
         ! 1. This does make a difference, yet RESCUE seems not invoked often after a geometry step.
