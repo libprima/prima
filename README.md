@@ -38,7 +38,11 @@ Zaikun Zhang.
 ### Why
 
 Professor Powell carefully implemented his derivative-free optimization methods into publicly available solvers,
-which are genuine masterpieces. They are widely used by engineers and scientists. However, Professor Powell's
+which are genuine masterpieces. They are widely used by engineers and scientists (for instance,
+see the citations of [COBYLA](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=A+Direct+Search+Optimization+Method+That+Models+the+Objective+and+Constraint+Functions+by+Linear+Interpolation&btnG=)
+and [BOBYQA](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=The+BOBYQA+algorithm+for+bound+constrained+optimization+without+derivatives&btnG=)).
+
+However, Professor Powell's
 implementation is in [Fortran 77](https://github.com/equipez/PRIMA/tree/master/fortran/original)
 and the code is nontrivial to understand or maintain, let alone to
 extend. This becomes an obstacle for many practitioners to exploit these solvers in their
@@ -56,14 +60,14 @@ With PRIMA, I aim to provide the reference implementation of Powell's methods in
 including [**modern** Fortran](https://fortran-lang.org) (F2008 or newer), MATLAB, Python, C++, and
 probably Julia and R. It will be a faithful implementation, in the sense that the code will be
 mathematically equivalent to Powell’s, except for the
-[bug fixes](#bug-fixes) and [improvements](#improvements) that we make intentionally.
+[bug fixes](#bug-fixes) and [improvements](#improvements) made intentionally.
 
 The focus is to implement these methods in a **structured** and **modularized** way so that they
 are easily **understandable**, **maintainable**, **extendable**,
 **fault tolerant**, and **future-proof**.
 The code will **have no GOTO** (of course)
-and will **use matrix-vector procedures instead of loops** whenever possible. In doing so, we code
-the algorithms **in a way that we would present them on a blackboard**.
+and will **use matrix-vector procedures instead of loops** whenever possible. In doing so,
+the algorithms are coded **in a way that we would present them on a blackboard**.
 
 There do exist "translations" of Powell's Fortran 77 code into other languages. For example,
 [NLopt](https://github.com/stevengj/nlopt) contains a C version of COBYLA, NEWUOA, and BOBYQA,
@@ -79,9 +83,9 @@ to Python, with significant improvements.
 
 The mission of PRIMA is nontrivial due to the delicacy of Powell's algorithms and the unique style
 of his code. To ensure the faithfulness of PRIMA,
-we started the **modern** Fortran version by refactoring Powell's code into the free form via a small
-[MATLAB tool](https://github.com/equipez/PRIMA/blob/master/matlab/setup_tools/freeform.m) written
-by ourselves. However, such refactored code is far from what we want, because it inherits completely
+the **modern** Fortran version was started by refactoring Powell's code into the free form via a small
+[MATLAB tool](https://github.com/equipez/PRIMA/blob/master/matlab/setup_tools/freeform.m).
+However, such refactored code is far from what we want, because it inherits completely
 the structure and style of Powell's code except for the layout. Extensive modifications are needed
 to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of our
 implementation, extensive tests are conducted after each and every tiny modification, the test
@@ -103,10 +107,10 @@ has been verified by more than $10^5$ hours (or more than $10$ years) of randomi
 
 ### Current status
 
-After almost **three** years of intensive coding, **we have finished the
+After almost **three** years of intensive coding, **the
 [modern Fortran version](https://github.com/equipez/PRIMA/tree/master/fortran) of
-PRIMA by December 2022.** An [interface](https://github.com/equipez/PRIMA/tree/master/matlab/interfaces)
-is also provided for using the Fortran implementation under MATLAB. Interfaces for other languages will
+PRIMA has been finished by December 2022.** An [interface](./matlab/interfaces)
+is also provided for [using the Fortran implementation under MATLAB](./README_mat.txt). Interfaces for other languages will
 be available later. Given the **modern** Fortran version, the implementation in other languages
 becomes **much easier**, because we now have a structured and modularized implementation as a reference.
 
@@ -175,7 +179,7 @@ large constraint violation even though the starting point is feasible.
 
 ### Improvements
 
-Due to the improvements we have introduced into the new implementation, PRIMA outperforms Powell's
+Due to the improvements introduced into the new implementation, PRIMA outperforms Powell's
 original code in terms of the **number of function evaluations**, which is the standard performance
 indicator in derivative-free optimization.
 Below are the [performance profiles](https://arxiv.org/pdf/cs/0102001.pdf)
