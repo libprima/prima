@@ -31,7 +31,7 @@ and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) i
 ([Py-BOBYQA](https://numericalalgorithmsgroup.github.io/pybobyqa/) is also highly recommended if
 you intend to solve bound-constrained problems).
 
-The PRIMA project was initiated by [Zaikun Zhang](https://www.zhangzk.net) in July 2020, based on
+PRIMA  was initiated by [Zaikun Zhang](https://www.zhangzk.net) in July 2020, based on
 the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonneau.com/) and
 Zaikun Zhang.
 
@@ -49,14 +49,15 @@ extend. This becomes an obstacle for many practitioners to exploit these solvers
 applications and hinders researchers from exploring the wealth left by Professor Powell to the
 community.
 
-Before he passed, Professor Powell had asked me to maintain his solvers. This is an honorable mission,
-and I have the responsibility to make the solvers more accessible.
-PRIMA is a project somehow similar to the translation, interpretation, and annotation of Euclid’s *Elements*.
+Before he passed, Professor Powell had asked me to maintain his solvers. This is an honorable
+mission, and I have the responsibility to make the solvers more accessible.
+PRIMA is a project somehow similar to the translation, interpretation, and annotation of
+Euclid’s *Elements*.
 It will make Powell's solvers easily accessible to everyone, not only the experts.
 Few people remember [who translated *Elements*](https://en.wikipedia.org/wiki/Euclid%27s_Elements#Translations),
 but it is a job that must be done.
 
-With PRIMA, I aim to provide the reference implementation of Powell's methods in modern languages,
+PRIMA aims to provide the reference implementation of Powell's methods in modern languages,
 including [**modern** Fortran](https://fortran-lang.org) (F2008 or newer), MATLAB, Python, C++, and
 probably Julia and R. It will be a faithful implementation, in the sense that the code will be
 mathematically equivalent to Powell’s, except for the
@@ -66,8 +67,8 @@ The focus is to implement these methods in a **structured** and **modularized** 
 are easily **understandable**, **maintainable**, **extendable**,
 **fault tolerant**, and **future-proof**.
 The code will **have no GOTO** (of course)
-and will **use matrix-vector procedures instead of loops** whenever possible. In doing so,
-the algorithms are coded **in a way that we would present them on a blackboard**.
+and will **use matrix-vector procedures instead of loops** whenever possible.
+In doing so, PRIMA codes the algorithms **in a way that we would present them on a blackboard**.
 
 There do exist "translations" of Powell's Fortran 77 code into other languages. For example,
 [NLopt](https://github.com/stevengj/nlopt) contains a C version of COBYLA, NEWUOA, and BOBYQA,
@@ -101,8 +102,8 @@ Normally, each workflow consists of \~ 5
 ([sometimes more than 100](https://github.com/equipez/PRIMA/actions/workflows/test_gfortran.yml))
 **randomized** tests that are conducted in parallel,
 each test taking from tens of minutes to several hours (the maximum
-is 6 hours, after which the workflow will be canceled automatically). In other words, PRIMA
-has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
+is 6 hours, after which the workflow will be canceled automatically). In other words,
+PRIMA has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
 
 
 ### Current status
