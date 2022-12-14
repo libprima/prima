@@ -133,7 +133,7 @@ subroutine uobyqa(calfun, x, f, &
 !   If XHIST is present, its size at exit will be (N, min(NF, MAXHIST)); if FHIST is present, its
 !   size at exit will be min(NF, MAXHIST).
 !
-!   Important Notice:
+!   IMPORTANT NOTICE:
 !   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
 !   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take up to 1 GB if we use double
 !   precision. MAXHIST will be reset to a smaller value if the memory needed exceeds MAXMEMORY

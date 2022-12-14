@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, December 13, 2022 AM11:35:41
+! Last Modified: Wednesday, December 14, 2022 PM03:56:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,8 +58,10 @@ subroutine cobyla(calcfc, m, x, f, &
 ! or
 !
 ! ! First define CALCFC, M, and X, and then do the following.
-! ! N.B.: The user must set M correctly to the number of constraints, namely the size of CONSTR
-! ! introduced below. Set M to 0 if there is no constraint.
+! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! ! IMPORTANT NOTICE: The user must set M correctly to the number of constraints, namely the size of
+! ! CONSTR introduced below. Set M to 0 if there is no constraint.
+! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! call cobyla(calcfc, m, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! See examples/cobyla_exmp.f90 for a concrete example.
@@ -193,7 +195,7 @@ subroutine cobyla(calcfc, m, x, f, &
 !   size at exit will be min(NF, MAXHIST); if CHIST is present, its size at exit will be
 !   min(NF, MAXHIST); if CONHIST is present, its size at exit will be (M, min(NF, MAXHIST)).
 !
-!   Important Notice:
+!   IMPORTANT NOTICE:
 !   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
 !   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take up to 1 GB if we use double
 !   precision. MAXHIST will be reset to a smaller value if the memory needed exceeds MAXMEMORY
