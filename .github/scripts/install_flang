@@ -1,19 +1,16 @@
 #!/bin/bash
 
-sudo apt install libncurses*  # Needed for libtinfo.so
+sudo apt install libncurses* p7zip-full # Needed for libtinfo.so
 
 cd /tmp/
 
-git clone https://github.com/zaikunzhang/resources
-
-cd resources/
-
-tar zvxf  flang*.tgz
+wget "https://www.dropbox.com/s/myhdi239myw1tsi/flang.7z"
+7za x flang.7z
 
 SETENV="/tmp/setenv.sh"
 cat > "$SETENV" <<EOF
-export PATH=$PATH:/tmp/resources/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/tmp/resources/lib
+export PATH=$PATH:/tmp/flang/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/tmp/flang/lib
 EOF
 
 source "$SETENV"
