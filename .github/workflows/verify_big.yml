@@ -55,6 +55,8 @@ jobs:
         with:
           release: ${{ env.MATLAB_RELEASE }}
 
+      # BOBYQA often takes too much time for the big problems due to the quadruple precision. So we
+      # set nr to 5 (default is 10).
       - name: Run script
         uses: matlab-actions/run-command@v1.1.2
         with:
@@ -62,5 +64,6 @@ jobs:
             ver;
             root_dir = pwd();
             cd('matlab/tests');
-            verify('${{ matrix.solver }}', '${{ matrix.dim }}');
+            options = struct(); if strcmp('${{ matrix.dim }}', 'big') && strcmp('${{ matrix.solver }}', 'bobyqa'), options.nr = 5; end; options
+            verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             cd(fullfile(root_dir)); setup path  % Test that `setup path` works properly.
