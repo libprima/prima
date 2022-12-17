@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04]  # As of 20221217, the flang installed by ../scripts/install_flang may only work with ubuntu-22.04
+        os: [ubuntu-latest]  # As of 20221217, the flang installed by ../scripts/install_flang may only work with ubuntu-22.04
         #bitness: [32, 64]  # Expensive
         bitness: [64]
         ikind: [i2] #, i4, i8]
