@@ -689,15 +689,11 @@ $(TESTS_C) $(TESTS_INT_C):
 	else  \
 		if [[ -n "$(FFLAGSO)" ]] ; then \
 			if [[ -x $@_c_$(SUFFIXO) ]] ; then \
-				if echo $@ | grep -q "vtest\|dtest" && [[ $(SOLVER) = "lincoa" ]] ; then \
-					printf "\n$@_$(SUFFIXO) is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
-				else \
-					export NVCOMPILER_TERM=trace && set -o pipefail && \
-					printf "\n$@_$(SUFFIXO) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
-					./$@_c_$(SUFFIXO) 2>&1 \
-					| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
-					| tee -a "$(LOG_DIR)/$@.log" ; \
-				fi ; \
+				export NVCOMPILER_TERM=trace && set -o pipefail && \
+				printf "\n$@_$(SUFFIXO) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
+				./$@_c_$(SUFFIXO) 2>&1 \
+				| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
+				| tee -a "$(LOG_DIR)/$@.log" ; \
 			else \
 				printf "\n$@_c_$(SUFFIXO) is not executable!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 				exit 126 ; \
@@ -837,6 +833,9 @@ source_%: $(SRC_DIRS)
 		-o -name "*.out" \
 		-o -name "*__genmod.f90" \
 		\) -exec rm {} \;  # Cleaning up; important!!!
+	# Flang 15.0.3, nvfortran 22.11, and AOCC 3.2.0 are buggy concerning 0-dimensional arrays, and
+	# they report false positive errors of out-bound indices. Thus preprocessing by fvdsrc is needed.
+	# Check it again when new versions are available.
 	@if echo $@ | grep -q "ftest\|vtest\|dtest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../fvdsrc ./ ; \
@@ -849,11 +848,11 @@ source_%: $(SRC_DIRS)
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../a9src ./ ; \
 	fi
-	# flsrc is not needed for flang 15.0
-	@if echo $@ | grep -q "ftest" && ! type flang | grep -iq "bisheng\|AMD" ; then \
-		printf "\nPreparing the source code for $@.\n" ; \
-		bash ../flsrc ./ ; \
-	fi
+	## flsrc is not needed for flang 15.0
+	#@if echo $@ | grep -q "ftest" && ! type flang | grep -iq "bisheng\|AMD" ; then \
+	#	printf "\nPreparing the source code for $@.\n" ; \
+	#	bash ../flsrc ./ ; \
+	#fi
 	@printf "Done.\n"
 
 # Adapt the header file for the test.

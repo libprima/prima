@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo apt install libncurses* p7zip-full # Needed for libtinfo.so
+sudo apt install p7zip-full libncurses* # libncurses* needed for libtinfo.so
 
 cd /tmp/
 
