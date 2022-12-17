@@ -675,6 +675,7 @@ $(TESTS_C) $(TESTS_INT_C):
 # Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
 # 2. We do not test the lincoa code with -O option for vtest or dtest, as the compilers have
 # bugs in memory allocation or subscript bound checking when in invoked with -O (as of 20221202).
+# To be tested later.
 #%_tst: %_tst_c
 %_tst:
 	@if [[ ! -f $@_c ]] ; then \
@@ -848,6 +849,7 @@ source_%: $(SRC_DIRS)
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../a9src ./ ; \
 	fi
+	# flsrc is not needed for flang 15.0
 	@if echo $@ | grep -q "ftest" && ! type flang | grep -iq "bisheng\|AMD" ; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../flsrc ./ ; \
