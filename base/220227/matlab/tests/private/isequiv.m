@@ -117,6 +117,7 @@ if isempty(requirements.list)
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2', 'EXTRASIM', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS','LUKSAN21LS', 'MINSURF', 'QPCBLEND'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
+        blacklist = [blacklist, {'HS80'}];  % QRADD_RDIAG: Assertion failed: C^T*Q(:, N) == Rdiag(N).
         blacklist = [blacklist, {'POLAK6', 'SPIRAL', 'POLAK2'}]; % B = A^{-1} fails
         blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE'}];
         blacklist = [blacklist, {'LSNNODOC', 'DEGENLPB', 'RES', 'AVION2', 'SIPOW3', 'HS55','PRODPL1','BQPGASIM','LSNNODOC', 'VESUVIA', 'MESH', 'LOADBAL','MIFFLIN1', 'ACOPR14', 'PALMER1NE','PALMER8ENE'}];  % Takes long to solve
