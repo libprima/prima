@@ -835,7 +835,7 @@ source_%: $(SRC_DIRS)
 		\) -exec rm {} \;  # Cleaning up; important!!!
 	# Flang 15.0.3, nvfortran 22.11, and AOCC 3.2.0 are buggy concerning 0-dimensional arrays, and
 	# they report false positive errors of out-bound indices. Thus preprocessing by fvdsrc is needed.
-	# Check it again when new versions are available.
+	# Check it again when new versions are available!
 	@if echo $@ | grep -q "ftest\|vtest\|dtest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../fvdsrc ./ ; \
@@ -848,7 +848,7 @@ source_%: $(SRC_DIRS)
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../a9src ./ ; \
 	fi
-	## flsrc is not needed for flang 15.0
+	## flsrc is not needed for flang >= 15.0
 	#@if echo $@ | grep -q "ftest" && ! type flang | grep -iq "bisheng\|AMD" ; then \
 	#	printf "\nPreparing the source code for $@.\n" ; \
 	#	bash ../flsrc ./ ; \
