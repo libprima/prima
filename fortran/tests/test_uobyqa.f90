@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, July 05, 2022 PM01:05:45
+! Last Modified: Sunday, December 18, 2022 PM11:08:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,7 +42,7 @@ character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = int(min(500, int(10**ceiling(real(range(0_IK)) / 2.0))), IK)
+integer(IK), parameter :: bign = 150_IK
 integer(IK) :: dimstride_loc
 integer(IK) :: iprint
 integer(IK) :: iprob
@@ -103,58 +103,6 @@ else
     randseed_loc = RANDSEED_DFT
 end if
 
-!do iprob = 1, nprobs
-do iprob = 5, nprobs
-    probname = probs_loc(iprob)
-    do n = mindim_loc, maxdim_loc, dimstride_loc
-        call construct(prob, probname, n)  ! Construct the testing problem.
-
-        do irand = 1, nrand_loc
-            ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
-            ! that the results for different IK are the same.
-            rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
-            call setseed(rseed)
-            iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
-            maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
-            if (rand() <= 0.2_RP) then
-                maxfun = 0
-            end if
-            maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
-            if (rand() <= 0.2_RP) then
-                maxhist = 0
-            end if
-            if (rand() <= 0.2_RP) then
-                ftarget = -TEN**abs(TWO * randn())
-            elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
-                ftarget = HUGENUM
-            else
-                ftarget = -HUGENUM
-            end if
-
-            rhobeg = noisy(prob % Delta0)
-            rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
-            if (rand() <= 0.2_RP) then
-                rhoend = rhobeg
-            elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
-                rhobeg = ZERO
-            end if
-            call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
-            x = noisy(prob % x0)
-            orig_calfun => prob % calfun
-
-            print '(/1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', Random test ', irand
-            call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
-                & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
-
-            deallocate (x)
-            nullify (orig_calfun)
-        end do
-
-        ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
-        call destruct(prob)  ! Destruct the testing problem.
-    end do
-end do
-
 
 ! Test the big problem
 if (test_bigprob) then
@@ -162,11 +110,11 @@ if (test_bigprob) then
     n = bign
     call construct(prob, probname, n)
     nrand_loc = 2
-    do irand = 1, nrand_loc
+    do irand = 1, max(1_IK, nrand_loc)
         rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
         iprint = 2
         npt = (n + 2_IK) * (n + 1_IK) / 2_IK
-        maxfun = int(minval([10**min(range(0), range(0_IK)), 10 * int(npt), int(npt) + 1000]), IK)
+        maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + 1000]), IK)
         maxhist = maxfun
         ftarget = -HUGENUM
         rhobeg = noisy(prob % Delta0)
@@ -184,6 +132,57 @@ if (test_bigprob) then
     end do
     ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
     call destruct(prob)  ! Destruct the testing problem.
+else
+    do iprob = 1, nprobs
+        probname = probs_loc(iprob)
+        do n = mindim_loc, maxdim_loc, dimstride_loc
+            call construct(prob, probname, n)  ! Construct the testing problem.
+
+            do irand = 1, nrand_loc
+                ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
+                ! that the results for different IK are the same.
+                rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
+                call setseed(rseed)
+                iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
+                maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
+                if (rand() <= 0.2_RP) then
+                    maxfun = 0
+                end if
+                maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
+                if (rand() <= 0.2_RP) then
+                    maxhist = 0
+                end if
+                if (rand() <= 0.2_RP) then
+                    ftarget = -TEN**abs(TWO * randn())
+                elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
+                    ftarget = HUGENUM
+                else
+                    ftarget = -HUGENUM
+                end if
+
+                rhobeg = noisy(prob % Delta0)
+                rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
+                if (rand() <= 0.2_RP) then
+                    rhoend = rhobeg
+                elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
+                    rhobeg = ZERO
+                end if
+                call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
+                x = noisy(prob % x0)
+                orig_calfun => prob % calfun
+
+                print '(/1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', Random test ', irand
+                call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+                    & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
+
+                deallocate (x)
+                nullify (orig_calfun)
+            end do
+
+            ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
+            call destruct(prob)  ! Destruct the testing problem.
+        end do
+    end do
 end if
 
 

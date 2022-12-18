@@ -48,6 +48,7 @@ jobs:
         ikind: [i2] # , i4, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
+        testdim: [small, big]
         exclude:
           - os: macos-latest
             bitness: 32
@@ -102,7 +103,7 @@ jobs:
           # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
           if [[ "$RUNNER_OS" != "Windows" ]]; then
               cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-              cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && make itest_${{ matrix.ikind }}.${{ matrix.solver }}
+              cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make itest_${{ matrix.ikind }}.${{ matrix.solver }}
           fi
           cd $ROOT/fortran/examples/${{ matrix.solver }} && make itest
 

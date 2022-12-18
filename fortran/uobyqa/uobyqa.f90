@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 13, 2022 AM11:39:33
+! Last Modified: Sunday, December 18, 2022 PM10:48:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -261,7 +261,7 @@ end if
 if (present(maxfun)) then
     maxfun_loc = maxfun
 else
-    maxfun_loc = MAXFUN_DIM_DFT * n
+    maxfun_loc = max(MAXFUN_DIM_DFT * n, (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK)
 end if
 
 if (present(iprint)) then

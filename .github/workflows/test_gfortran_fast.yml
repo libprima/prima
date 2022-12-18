@@ -45,6 +45,7 @@ jobs:
         bitness: [32, 64]
         ikind: [i2] #, i4, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        testdim: [small, big]
         # Limit the test on macos to 64-bit.
         # Limit the test on Windows to 64-bit and the latest version of the compiler.
         exclude:
@@ -98,6 +99,7 @@ jobs:
             # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
                 cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+                export TESTDIM=${{ matrix.testdim }}
                 export FFLAGS='-fast'
                 cd "$ROOT"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
