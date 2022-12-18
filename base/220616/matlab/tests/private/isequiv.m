@@ -130,6 +130,7 @@ else
         blacklist = [blacklist, {'DUAL3', 'SPANHYD'}]; % Too long to solve
         blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1','SIM2BQP', 'BQP1VAR', 'LUKSAN22LS','LUKSAN21LS','MINSURF', 'QPCBLEND'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
+        blacklist = [blacklist, {'HS80'}];  % QRADD_RDIAG: Assertion failed: C^T*Q(:, N) == Rdiag(N).
         blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE', 'VESUVIA', 'MESH', 'LOADBAL','MIFFLIN1'}];
         blacklist = [blacklist, {'POLAK6', 'SPIRAL', 'POLAK2'}]; % B = A^{-1} fails
         blacklist = [blacklist, {'MINMAXRB', 'MAKELA1', 'HS75', 'GAUSS3','HATFLDG'}]; % Classical COBYLA encounters SEGFAULT
