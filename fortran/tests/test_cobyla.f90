@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, November 30, 2022 PM01:25:08
+! Last Modified: Monday, December 19, 2022 AM12:06:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 10
 character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed dimensions
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 500
+integer(IK), parameter :: bign = 500_IK
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -122,94 +122,6 @@ else
     randseed_loc = RANDSEED_DFT
 end if
 
-do iprob = 1, nprobs
-    probname = probs_loc(iprob)
-    if (any(probname == fix_dim_probs)) then
-        call construct(prob, probname)  ! Construct the testing problem.
-        ndim = 1
-        dim_list(1) = prob % n
-    else
-        ndim = (maxdim_loc - mindim_loc) / dimstride_loc + 1_IK
-        dim_list(1:ndim) = mindim_loc + dimstride_loc*[(idim - 1_IK, idim=1_IK, ndim)]
-    end if
-    do idim = 1, ndim
-        if (any(probname == fix_dim_probs)) then
-            call construct(prob, probname)
-        else
-            call construct(prob, probname, n=dim_list(idim))
-        end if
-        m = prob % m
-        n = prob % n
-        do irand = 1, max(1_IK, nrand_loc)
-            ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
-            ! that the results for different IK are the same.
-            rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
-            call setseed(rseed)
-            iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
-            maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
-            if (rand() <= 0.2_RP) then
-                maxfun = 0
-            end if
-            maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
-            if (rand() <= 0.2_RP) then
-                maxhist = -maxhist
-            end if
-            maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
-            if (rand() <= 0.2_RP) then
-                maxfilt = 0
-            end if
-            if (rand() <= 0.2_RP) then
-                ctol = randn() * TEN**(-abs(TWO * randn()))
-            elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
-                ctol = HUGENUM
-            else
-                ctol = ZERO
-            end if
-            if (rand() <= 0.2_RP) then
-                ftarget = -TEN**abs(TWO * randn())
-            elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
-                ftarget = HUGENUM
-            else
-                ftarget = -HUGENUM
-            end if
-
-            rhobeg = noisy(prob % Delta0)
-            rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
-            if (rand() <= 0.2_RP) then
-                rhoend = rhobeg
-            elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
-                rhobeg = ZERO
-            end if
-            call safealloc(x0, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
-            x0 = noisy(prob % x0)
-            orig_calcfc => prob % calcfc
-
-            print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' M = ', m, ', Random test ', irand
-
-            call safealloc(x, n)
-            x = x0
-            call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
-                & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
-                & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
-
-            if (prob % probtype == 'u') then  ! Run the test without constraints
-                call safealloc(x_unc, n)
-                x_unc = x0
-                call cobyla(noisy_calcfc, m, x_unc, f_unc, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
-                    & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
-                call validate(all(abs(x - x_unc) <= 0), 'X == X_UNC', srname)
-                call validate(abs(f - f_unc) <= 0 .or. (is_neginf(f) .and. is_neginf(f_unc)), 'F == F_UNC', srname)
-            end if
-
-            deallocate (x)
-            nullify (orig_calcfc)
-        end do
-
-        ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
-        call destruct(prob)  ! Destruct the testing problem.
-    end do
-end do
-
 
 ! Test the big problem
 if (test_bigprob) then
@@ -218,10 +130,10 @@ if (test_bigprob) then
     call construct(prob, probname, n)
     m = prob % m
     nrand_loc = 2
-    do irand = 1, nrand_loc
+    do irand = 1, max(nrand_loc, 1_IK)
         rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
         iprint = 2
-        maxfun = int(minval([10**min(range(0), range(0_IK)), 10 * int(n), int(n) + 1000]), IK)
+        maxfun = int(minval([10**min(range(0), range(0_IK)), int(n) + 1000]), IK)
         maxhist = maxfun
         ftarget = -HUGENUM
         rhobeg = noisy(prob % Delta0)
@@ -238,8 +150,98 @@ if (test_bigprob) then
         deallocate (x)
         nullify (orig_calcfc)
     end do
-! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
+    ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
     call destruct(prob)  ! Destruct the testing problem.
+
+else
+
+    do iprob = 1, nprobs
+        probname = probs_loc(iprob)
+        if (any(probname == fix_dim_probs)) then
+            call construct(prob, probname)  ! Construct the testing problem.
+            ndim = 1
+            dim_list(1) = prob % n
+        else
+            ndim = (maxdim_loc - mindim_loc) / dimstride_loc + 1_IK
+            dim_list(1:ndim) = mindim_loc + dimstride_loc*[(idim - 1_IK, idim=1_IK, ndim)]
+        end if
+        do idim = 1, ndim
+            if (any(probname == fix_dim_probs)) then
+                call construct(prob, probname)
+            else
+                call construct(prob, probname, n=dim_list(idim))
+            end if
+            m = prob % m
+            n = prob % n
+            do irand = 1, max(1_IK, nrand_loc)
+                ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
+                ! that the results for different IK are the same.
+                rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
+                call setseed(rseed)
+                iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
+                maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
+                if (rand() <= 0.2_RP) then
+                    maxfun = 0
+                end if
+                maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
+                if (rand() <= 0.2_RP) then
+                    maxhist = -maxhist
+                end if
+                maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
+                if (rand() <= 0.2_RP) then
+                    maxfilt = 0
+                end if
+                if (rand() <= 0.2_RP) then
+                    ctol = randn() * TEN**(-abs(TWO * randn()))
+                elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
+                    ctol = HUGENUM
+                else
+                    ctol = ZERO
+                end if
+                if (rand() <= 0.2_RP) then
+                    ftarget = -TEN**abs(TWO * randn())
+                elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
+                    ftarget = HUGENUM
+                else
+                    ftarget = -HUGENUM
+                end if
+
+                rhobeg = noisy(prob % Delta0)
+                rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
+                if (rand() <= 0.2_RP) then
+                    rhoend = rhobeg
+                elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
+                    rhobeg = ZERO
+                end if
+                call safealloc(x0, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
+                x0 = noisy(prob % x0)
+                orig_calcfc => prob % calcfc
+
+                print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' M = ', m, ', Random test ', irand
+
+                call safealloc(x, n)
+                x = x0
+                call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
+                    & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
+                    & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
+
+                if (prob % probtype == 'u') then  ! Run the test without constraints
+                    call safealloc(x_unc, n)
+                    x_unc = x0
+                    call cobyla(noisy_calcfc, m, x_unc, f_unc, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
+                        & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
+                    call validate(all(abs(x - x_unc) <= 0), 'X == X_UNC', srname)
+                    call validate(abs(f - f_unc) <= 0 .or. (is_neginf(f) .and. is_neginf(f_unc)), 'F == F_UNC', srname)
+                end if
+
+                deallocate (x)
+                nullify (orig_calcfc)
+            end do
+
+            ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
+            call destruct(prob)  ! Destruct the testing problem.
+        end do
+    end do
 end if
 
 

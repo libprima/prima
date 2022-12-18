@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 10, 2022 PM07:45:54
+! Last Modified: Sunday, December 18, 2022 PM06:34:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1157,8 +1157,8 @@ else
     k_loc = 0
 end if
 
-dlen = int(min(size(A, 1), size(A, 2)), IK)
-dlen = max(0_IK, dlen - abs(k_loc))  ! We allow |K| to exceed the number of rows/columns in A.
+! DLEN is the length of D. We allow |K| to exceed the number of rows/columns in A.
+dlen = max(0_IK, int(min(size(A, 1), size(A, 2)) - abs(k_loc), IK))
 call safealloc(D, dlen)
 if (k_loc >= 0) then
     D = [(A(i, i + k_loc), i=1, dlen)]
@@ -2436,7 +2436,6 @@ function linspace_r(xstart, xstop, n) result(x)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Inputs
@@ -2444,7 +2443,7 @@ real(RP), intent(in) :: xstart
 real(RP), intent(in) :: xstop
 integer(IK), intent(in) :: n
 ! Outputs
-real(RP), allocatable :: x(:)
+real(RP) :: x(max(n, 0_IK))
 ! Local variables
 character(len=*), parameter :: srname = 'LINSPACE_R'
 integer(IK) :: i
@@ -2454,8 +2453,6 @@ real(RP) :: xunit
 !====================!
 ! Calculation starts !
 !====================!
-
-call safealloc(x, max(n, 0_IK))
 
 if (n <= 0) then ! Quick return when N <= 0.
     return
@@ -2497,7 +2494,6 @@ function linspace_i(xstart, xstop, n) result(x)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Inputs
@@ -2505,7 +2501,7 @@ integer(IK), intent(in) :: xstart
 integer(IK), intent(in) :: xstop
 integer(IK), intent(in) :: n
 ! Outputs
-integer(IK), allocatable :: x(:)
+integer(IK) :: x(max(n, 0_IK))
 ! Local variables
 character(len=*), parameter :: srname = 'LINSPACE_I'
 
@@ -2513,7 +2509,6 @@ character(len=*), parameter :: srname = 'LINSPACE_I'
 ! Calculation starts !
 !====================!
 
-call safealloc(x, max(n, 0_IK))
 x = nint(linspace_r(real(xstart, RP), real(xstop, RP), n), IK)  ! Rounded to the closest integer.
 
 !====================!
