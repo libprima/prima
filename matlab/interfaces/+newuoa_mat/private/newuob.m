@@ -29,10 +29,6 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
     %
     % See Section 2 of the NEWUOA paper for more information about these variables.
 
-    % Solver-specific modules
-
-    % In-output
-
     % Local variables
     d = NaN(length(x), 1);
     dnormsav = NaN(3, 1);

@@ -3,10 +3,8 @@ function [gq, hq, pq] = updateq(idz, knew, bmatknew, fqdiff, zmat, xptknew, gq, 
     npt = length(pq);
     % UPDATEQ updates GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW.
     % See Section 4 of the NEWUOA paper.
-
+    %
     % FQDIFF = [F(XNEW) - F(XOPT)] - [Q(XNEW) - Q(XOPT)] = MODERR
-
-    % In-outputs
 
     % Local variables
     funname = 'UPDATEQ';
