@@ -306,6 +306,8 @@ endif
 ####################################################################################################
 
 # Absoft af95
+# N.B.: According to Absoft support: With the Absoft compiler, automatic arrays are always allocated
+# on the stack. There is no option to move the allocation to the heap.
 AFORT := af95 -m1 -en -et -Rb -Rc -Rs -Rp
 
 atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
@@ -400,9 +402,7 @@ GFORT := gfortran
 GFORT := $(GFORT) -Werror -pedantic-errors
 # `-fautomatic` (the default) tell `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.
-# We enable them to verify that we will not have stack overflows even in the worst case.
-# Zaikun 20220323: Not sure how it will work when __DEBUGGING__ is 1, as the debugging facilities
-# involve many automatic arrays.
+# We enable them for small problems to verify that we will not have stack overflows.
 ifeq ($(TESTDIM),small)
 	GFORT := $(GFORT) -fautomatic -fstack-arrays -fstack-check
 else
@@ -425,11 +425,11 @@ gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_ts
 	FCF := $(GFORT) -Wno-function-elimination -ffpe-trap=zero $(GFF)
 
 gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
-	FCO := $(GFORT) $(FFLAGSO) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
+	FCO := $(GFORT) $(FFLAGSO) -Wno-function-elimination -ffpe-trap=zero,overflow#,invalid,underflow,denorm
 gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
-	FCG := $(GFORT) $(FFLAGSG) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
+	FCG := $(GFORT) $(FFLAGSG) -ffpe-trap=zero,overflow#,invalid,underflow,denorm
 gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
-	FCF := $(GFORT) -Wno-function-elimination -ffpe-trap=zero,invalid $(GFF)
+	FCF := $(GFORT) -Wno-function-elimination -ffpe-trap=zero $(GFF)
 
 gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
 	FCO := $(GFORT) $(FFLAGSO) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
@@ -454,10 +454,8 @@ IFORT := ifort
 IFORT := $(IFORT) -warn errors #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
-# and temporary arrays in the stack storage area. We enable them to verify that we will not have
-# stack overflows even in the worst case.
-# Zaikun 20220323: Not sure how it will work when __DEBUGGING__ is 1, as the debugging facilities
-# involve many automatic arrays.
+# and temporary arrays in the stack storage area. We enable them for small problems to verify that
+# we will not have stack overflows even in the worst case.
 ifeq ($(TESTDIM),small)
 	IFORT := $(IFORT) -auto -no-heap-arrays
 else
@@ -528,6 +526,8 @@ ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d
 # NVIDIA nvfortran
 VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
 VFORT := $(VFORT) -Werror
+# For nvfortran, -Mstack_arrays places automatic arrays on the stack. -Mnostack_arrays allocates
+# automatic arrays on the heap. -Mnostack_arrays is the default.
 ifeq ($(TESTDIM),small)
 	VFORT := $(VFORT) -Mstack_arrays
 else
@@ -589,8 +589,8 @@ XFORT := ifx
 XFORT := $(XFORT) -warn errors
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
-# and temporary arrays in the stack storage area. We enable them to verify that we will not have
-# stack overflows even in the worst case.
+# and temporary arrays in the stack storage area. We enable them for small problems to verify that
+# we will not have stack overflows even in the worst case.
 # Zaikun 20220323: Not sure how it will work when __DEBUGGING__ is 1, as the debugging facilities
 # involve many automatic arrays.
 ifeq ($(TESTDIM),small)
@@ -700,9 +700,7 @@ $(TESTS_C) $(TESTS_INT_C):
 # N.B.:
 # 1. The prerequisite should NOT include files that may not exist, e.g., $(SRC), because
 # Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
-# 2. We do not test the lincoa code with -O option for vtest or dtest, as the compilers have
-# bugs in memory allocation or subscript bound checking when in invoked with -O (as of 20221202).
-# To be tested later.
+# 2. `set -eu -o pipefail` instructs bash to fail loudly when anything goes wrong in the piped commands.
 #%_tst: %_tst_c
 %_tst:
 	@if [[ ! -f $@_c ]] ; then \
@@ -716,10 +714,9 @@ $(TESTS_C) $(TESTS_INT_C):
 	else  \
 		if [[ -n "$(FFLAGSO)" ]] ; then \
 			if [[ -x $@_c_$(SUFFIXO) ]] ; then \
-				export NVCOMPILER_TERM=trace && set -o pipefail && \
+				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 				printf "\n$@_$(SUFFIXO) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
 				./$@_c_$(SUFFIXO) 2>&1 \
-				| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
 				| tee -a "$(LOG_DIR)/$@.log" ; \
 			else \
 				printf "\n$@_c_$(SUFFIXO) is not executable!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
@@ -727,10 +724,9 @@ $(TESTS_C) $(TESTS_INT_C):
 			fi ; \
 		fi ; \
 		if [[ -n "$(FFLAGSG)" ]] ; then \
-			export NVCOMPILER_TERM=trace && set -o pipefail && \
+			export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 			printf "\n$@_$(SUFFIXG) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
 			./$@_c_$(SUFFIXG) 2>&1 \
-			| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
 			| tee -a "$(LOG_DIR)/$@.log" ; \
 		fi ; \
 	fi
@@ -869,7 +865,7 @@ source_%: $(SRC_DIRS)
 		-o -name "*__genmod.f90" \
 		\) -exec rm {} \;  # Cleaning up; important!!!
 	# Flang 15.0.3, nvfortran 22.11, and AOCC 3.2.0 are buggy concerning 0-dimensional arrays, and
-	# they report false positive errors of out-bound indices. Thus preprocessing by fvdsrc is needed.
+	# they report false positive out-bound indices. Thus preprocessing by fvdsrc is needed.
 	# Check it again when new versions are available!
 	@if echo $@ | grep -q "ftest\|vtest\|dtest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
