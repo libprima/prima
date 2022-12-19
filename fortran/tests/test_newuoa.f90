@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, December 18, 2022 PM11:08:01
+! Last Modified: Monday, December 19, 2022 AM07:42:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -114,9 +114,8 @@ if (test_bigprob) then
     probname = bigprob
     n = bign
     call construct(prob, probname, n)
-    nnpt = 2
-    npt_list(1:nnpt) = [2_IK * n + 1_IK, &
-        & int(min(floor(real(10_IK**min(range(0), range(0_IK))) / 2.0), (int(n) + 1) * (int(n) + 2) / 4), IK)]
+    nnpt = 1
+    npt_list(1:nnpt) = [2_IK * n + 1_IK]
     do irand = 1, nnpt + max(1_IK, nrand_loc)
         rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
         if (irand <= nnpt) then
@@ -136,7 +135,7 @@ if (test_bigprob) then
 
         print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' NPT = ', npt, ', Random test ', irand
         call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
-            & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
+            & maxhist=maxhist, fhist=fhist, ftarget=ftarget, iprint=iprint)
 
         deallocate (x)
         nullify (orig_calfun)

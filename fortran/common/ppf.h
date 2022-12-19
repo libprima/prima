@@ -13,6 +13,8 @@
  * __FORTRAN_STANDARD__        which Fortran standard to follow: 2003, 2008, 2018
  * __INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16
  * __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0
+ * __MAXHISTMEM__         maximal MB memory for computation history: 100
+ * __AGRESSIVE_OPTIONS__       compile the code with aggressive options: 0, 1
  * __USE_STORAGE_SIZE__        use the STORAGE_SIZE intrinsic or not: 0, 1
  * __USE_ISO_FORTRAN_ENV_INTREAL__ use INT32 etc in ISO_FORTRAN_ENV or not: 0, 1
  *
@@ -20,17 +22,19 @@
  *
  * 0. USE THE DEFAULT IF UNSURE.
  *
- * 1. If you change these flags, make sure that your compiler is supportive
+ * 1. Setting __MAXHISTMEM__ to a big value may lead failures due to large arrays.
+ *
+ * 2. If you change these flags, make sure that your compiler is supportive
  * when changing __INTEGER_KIND__, __REAL_PRECISION__, __FORTRAN_STANDARD__,
  * __USE_STORAGE_SIZE__ (Fortran 2008),
  * __USE_ISO_FORTRAN_ENV_INTREAL__ (Fortran 2008).
  *
- * 2. Later, when Fortran 2008 is more widely supported by the compilers (e.g.,
+ * 3. Later, when Fortran 2008 is more widely supported by the compilers (e.g.,
  * in 2025?), we will default __FORTRAN_STANDARD__ to 2008. In addition, we will
  * remove __USE_STORAGE_SIZE__ and __USE_ISO_FORTRAN_ENV_INTREAL__ and modify
  * the package so that everything behaves as if the flags are both 1.
  *
- * 3. Why not define these flags as parameters in the Fortran code, e.g.,
+ * 4. Why not define these flags as parameters in the Fortran code, e.g.,
  *
  * logical, parameter :: __DEBUGGING__ == .false. ?
  *
@@ -113,6 +117,17 @@
 #undef __REAL_PRECISION__
 #define __REAL_PRECISION__ 64
 #endif
+/******************************************************************************/
+
+
+/******************************************************************************/
+/* The maximal memory for recording the computation history (MB).
+ * N.B.: Setting it to a big value may lead to SEGFAULTs due to large arrays.
+ * The maximal supported value is 2000, as 2000 M = 2*10^9 = maximum of INT32.*/
+#if defined __MAXHISTMEM__
+#undef __MAXHISTMEM__
+#endif
+#define __MAXHISTMEM__ 100  /* 100 MB > 10^7 * REAL64. */
 /******************************************************************************/
 
 
