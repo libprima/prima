@@ -278,19 +278,27 @@ if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 else
-    % Call the Fortran code
-    mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
-    mexdir = fullfile(mfiledir, 'private');
-    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant, mexdir));
-    % The mexified Fortran Function is a private function generating only private errors;
-    % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
-        [x, fx, exitflag, nf, xhist, fhist] = ...
-            fsolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
-            iprint, maxhist, double(output_xhist));
-        % Fortran MEX does not provide an API for reading Boolean variables. So we convert
-        % output_xhist to a double (0 or 1) before passing it to the MEX gateway.
-        % In C MEX, however, we have mxGetLogicals.
+        if options.fortran
+            % Call the Fortran code
+            mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
+            mexdir = fullfile(mfiledir, 'private');
+            fsolver = str2func(get_mexname(solver, precision, debug_flag, variant, mexdir));
+            % The mexified Fortran Function is a private function generating only private errors;
+            % however, public errors can occur due to, e.g., evalobj; error handling needed.
+            [x, fx, exitflag, nf, xhist, fhist] = ...
+                fsolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
+                iprint, maxhist, double(output_xhist));
+            % Fortran MEX does not provide an API for reading Boolean variables. So we convert
+            % output_xhist to a double (0 or 1) before passing it to the MEX gateway.
+            % In C MEX, however, we have mxGetLogicals.
+        else
+            % Call the Matlab code
+            msolver = @newuoa_mat.newuoam;
+            [x, fx, exitflag, nf, xhist, fhist] = ...
+                msolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
+                iprint, maxhist, double(output_xhist), debug_flag);
+        end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);

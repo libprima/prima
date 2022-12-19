@@ -1246,7 +1246,7 @@ if isfield(options, 'fortran')
     elseif ~options.fortran && options.classical
         wid = sprintf('%s:FortranContradictClassical', invoker);
         wmsg = sprintf('%s: fortran = false but classical = true; fortran is reset to true.', invoker);
-        options.fortran = false;
+        options.fortran = true;
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
         validated = true;
@@ -1256,7 +1256,7 @@ if isfield(options, 'fortran')
         wid = sprintf('%s:FortranContradictPrecision', invoker);
         wmsg = sprintf('%s: fortran = false but precision = %s; fortran is reset to true.', ...
             invoker, options.precision);
-        options.fortran = false;
+        options.fortran = true;
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
         validated = true;
