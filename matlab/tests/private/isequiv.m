@@ -370,7 +370,8 @@ if isfield(options, 'maxfun')
     test_options.maxfun = options.maxfun;
 end
 test_options.ftarget = objective(x0) - 10*abs(randn)*max(1, objective(x0));
-test_options.fortran = (rand > 0.5);
+%test_options.fortran = (rand > 0.5);
+test_options.fortran = true;
 %test_options.output_xhist = (rand > 0.5);
 test_options.output_xhist = 1;
 test_options.output_nlchist = (rand > 0.5);

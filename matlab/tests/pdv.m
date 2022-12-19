@@ -6,6 +6,8 @@ restoredefaultpath;  % Restore the "right out of the box" path of MATLAB
 
 olddir = pwd();  % Record the current directory.
 
+matlab_implemented = {'newuoan'};  % Solvers that has a MATLAB implementation.
+
 % Prepare the test directory, i.e., `test_dir`.
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
@@ -58,6 +60,11 @@ try
                     options
                     format long
                     [x, f, exitflag, output] = solver(fun, x0, options)
+                    if (ismember(solvers{isol}, matlab_implemented))
+                        options_mat = options;
+                        options_mat.fortran = false;
+                        [x, f, exitflag, output] = solver(fun, x0, options_mat)
+                    end
                 end
             end
         end
