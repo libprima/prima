@@ -22,7 +22,6 @@ if (present(m)) then
 else
     m_loc = min(10_IK * n, 10_IK**floor(0.8 * real(range(0_IK)), IK))
 end if
-m_loc = 10_IK * n
 
 prob % probtype = 'n'
 prob % n = n
