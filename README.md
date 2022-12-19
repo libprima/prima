@@ -19,7 +19,8 @@ Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell
 ### What
 
 PRIMA provides the reference implementation for Powell's derivative-free optimization methods,
-namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
+namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA. The "P" in the name stands for **P**owell, and
+"RIMA" is an acronym for "Reference Implementation with Modernization and Amelioration".
 
 PRIMA is part of a research project funded by the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and
@@ -31,7 +32,7 @@ and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) i
 ([Py-BOBYQA](https://numericalalgorithmsgroup.github.io/pybobyqa/) is also highly recommended if
 you intend to solve bound-constrained problems).
 
-PRIMA  was initiated by [Zaikun Zhang](https://www.zhangzk.net) in July 2020, based on
+PRIMA was initiated by [Zaikun Zhang](https://www.zhangzk.net) in July 2020, based on
 the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonneau.com/) and
 Zaikun Zhang.
 
