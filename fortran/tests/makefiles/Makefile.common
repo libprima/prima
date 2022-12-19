@@ -400,7 +400,7 @@ ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d
 #GFORT := gfortran -pg  # Compile for profiling with the gprof profiler. Does not work with macOS on GitHub Actions due to missing gcrt1.o
 GFORT := gfortran
 GFORT := $(GFORT) -Werror -pedantic-errors
-# `-fautomatic` (the default) tell `gfortran` to use the stack for local variables smaller than the
+# `-fautomatic` (the default) tells `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.
 # We enable them for small problems to verify that we will not have stack overflows.
 ifeq ($(TESTDIM),small)
@@ -700,7 +700,8 @@ $(TESTS_C) $(TESTS_INT_C):
 # N.B.:
 # 1. The prerequisite should NOT include files that may not exist, e.g., $(SRC), because
 # Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
-# 2. `set -eu -o pipefail` instructs bash to fail loudly when anything goes wrong in the piped commands.
+# 2. `set -eu -o pipefail` instructs Bash to fail immediately and loudly when anything goes wrong
+# in the piped commands.
 #%_tst: %_tst_c
 %_tst:
 	@if [[ ! -f $@_c ]] ; then \
