@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 19, 2022 PM01:36:51
+! Last Modified: Monday, December 19, 2022 PM04:59:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,7 +129,7 @@ end if
 if (test_bigprob) then
     probname = bigprob
     n = bign
-    call construct(prob, probname, n)
+    call construct(prob, probname, n, 0_IK)
     nnpt = 1
     npt_list(1:nnpt) = [2_IK * n + 1_IK]
     do irand = 1, nnpt + 2_IK
