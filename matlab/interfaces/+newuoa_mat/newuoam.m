@@ -1,4 +1,5 @@
-% N.B.: This version is implemented based on an earlier version of the modern Fortran implementation.
+% N.B.: This version was implemented based on an earlier version of the modern Fortran
+% implementation, with the help of Mr. Galann Pannec.
 %
 % NEWUOAM provides the MATLAB implementation of M. J. D. Powell's NEWUOA algorithm described in
 %
@@ -17,7 +18,8 @@
 %
 % Last Modified: Thursday, July 22, 2021 AM10:56:17
 
-function [x, f, exitflag, nf, xhist, fhist] = newuoam(calfun, x, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, output_xhist, debugflag)
+function [x, f, exitflag, nf, xhist, fhist] = newuoam(calfun, x, rhobeg, rhoend, eta1, eta2, ...
+        gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, output_xhist, debugflag)
 	% A detailed introduction to the arguments is as follows.
     %
 	% CALFUN
@@ -126,15 +128,13 @@ function [x, f, exitflag, nf, xhist, fhist] = newuoam(calfun, x, rhobeg, rhoend,
     % Replace any NaN or Inf in X by 0.
     x(isnan(x) | isinf(x)) = 0;
 
-	%-------------------- Call NEWUOB, which performs the real calculations. --------------------------%
     maxfhist = maxhist;
-    if output_xhist == 0
-        maxxhist = 0;
-    else
-        maxxhist = maxhist;
-    end
-	[x, nf, f, fhist, xhist, exitflag] = newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, x, maxfhist, maxxhist, debugflag);
-	%--------------------------------------------------------------------------------------------------%
+    maxxhist = double(output_xhist)*maxhist;
+
+	%-------------------- Call NEWUOB, which performs the real calculations. ----------------------%
+	[x, nf, f, fhist, xhist, exitflag] = newuob(calfun, iprint, maxfun, npt, eta1, eta2, ...
+        ftarget, gamma1, gamma2, rhobeg, rhoend, x, maxfhist, maxxhist, debugflag);
+	%----------------------------------------------------------------------------------------------%
 
     xhist = xhist(:, 1:min(nf, maxxhist));
     fhist = fhist(1:min(nf, maxfhist));

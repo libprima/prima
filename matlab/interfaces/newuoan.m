@@ -297,7 +297,7 @@ else
             msolver = @newuoa_mat.newuoam;
             [x, fx, exitflag, nf, xhist, fhist] = ...
                 msolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
-                iprint, maxhist, double(output_xhist), debug_flag);
+                iprint, maxhist, output_xhist, debug_flag);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
