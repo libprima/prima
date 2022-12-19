@@ -273,9 +273,9 @@ endif
 # specified, then an error will be raised, saying "invalid command code".
 SEDI :=
 ifeq ($(OSTYPE), MAC)
-	SEDI := @sed -i ""
+	SEDI := sed -i ""
 else
-	SEDI := @sed -i
+	SEDI := sed -i
 endif
 
 # Define NPROCS to be the number of processors available to make tests in parallel.
@@ -766,10 +766,10 @@ $(TESTS_C) $(TESTS_INT_C):
 		fi ; \
 		printf "\nPreparing the source code according to the testing dimension $(TESTDIM).\n" ; \
 		if [[ '$(TESTDIM)' = 'small' ]] ; then \
-			sed 's|logical :: test_bigprob = .true.|logical :: test_bigprob = .false.|g' -i test_*.f90 ; \
+			$(SEDI) 's|logical :: test_bigprob = .true.|logical :: test_bigprob = .false.|g' test_*.f90 ; \
 		fi ; \
 		if [[ '$(TESTDIM)' = 'big' ]] ; then \
-			sed 's|logical :: test_bigprob = .false.|logical :: test_bigprob = .true.|g' -i test_*.f90; \
+			$(SEDI) 's|logical :: test_bigprob = .false.|logical :: test_bigprob = .true.|g' test_*.f90; \
 		fi ; \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
 			if [[ '$(FFLAGSO)' = '-fast' ]] ; then \

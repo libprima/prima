@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 19, 2022 AM12:06:23
+! Last Modified: Monday, December 19, 2022 AM07:42:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -144,7 +144,7 @@ if (test_bigprob) then
 
         print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' M = ', m, ', Random test ', irand
         call cobyla(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
-            & maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
+            & maxhist=maxhist, fhist=fhist, chist=chist, &
             & ftarget=ftarget, iprint=iprint)
 
         deallocate (x)

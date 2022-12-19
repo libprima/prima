@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 19, 2022 AM12:17:18
+! Last Modified: Monday, December 19, 2022 AM07:42:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -130,14 +130,17 @@ if (test_bigprob) then
     probname = bigprob
     n = bign
     call construct(prob, probname, n)
-    nnpt = 2
-    npt_list(1:nnpt) = [2_IK * n + 1_IK, &
-        & int(min(floor(real(10_IK**min(range(0), range(0_IK))) / 2.0), (int(n) + 1) * (int(n) + 2) / 4), IK)]
+    nnpt = 1
+    npt_list(1:nnpt) = [2_IK * n + 1_IK]
     do irand = 1, nnpt + max(1_IK, nrand_loc)
         rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
-        npt = npt_list(irand)
+        if (irand <= nnpt) then
+            npt = npt_list(irand)
+        else
+            npt = int(TEN * rand() * real(n, RP), kind(npt))
+        end if
         iprint = 2
-        maxfun = int(minval([10**min(range(0), range(0_IK)), 10 * int(npt), int(npt) + 1000]), IK)
+        maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + 1000]), IK)
         maxhist = maxfun
         ftarget = -HUGENUM
         rhobeg = noisy(prob % Delta0)
@@ -155,7 +158,7 @@ if (test_bigprob) then
 
         call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=Aineq, b=bineq, &
             & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
-            & xhist=xhist, chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
+            & chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
         deallocate (x)
         nullify (orig_calfun)

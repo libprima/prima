@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 10, 2022 PM07:35:16
+! Last Modified: Monday, December 19, 2022 AM09:06:19
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -90,7 +90,7 @@ public :: MSGLEN, FNAMELEN
 public :: OUTUNIT, STDIN, STDOUT, STDERR
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, CWEIGHT_DFT
 public :: ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
-public :: MAXFUN_DIM_DFT, MAXMEMORY, MIN_MAXFILT, MAXFILT_DFT, IPRINT_DFT
+public :: MAXFUN_DIM_DFT, MAXHISTMEM, MIN_MAXFILT, MAXFILT_DFT, IPRINT_DFT
 
 
 #if __DEBUGGING__ == 1
@@ -231,9 +231,9 @@ integer(IK), parameter :: IPRINT_DFT = 0
 integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
 ! Maximal amount of memory (Byte) allowed for XHIST, FHIST, CONHIST, CHIST, and the filters.
-integer, parameter :: MXMMY = 21 * (10**8)   ! 21*10**8 = 2G.
-! Make sure that MAXMEMORY does not exceed HUGE(0) to avoid overflow and memory errors.
-integer, parameter :: MAXMEMORY = min(MXMMY, huge(0))
+integer, parameter :: MHM = __MAXHISTMEM__ * 10**6
+! Make sure that MAXHISTMEM does not exceed HUGE(0) to avoid overflow and memory errors.
+integer, parameter :: MAXHISTMEM = min(MHM, huge(0))
 
 ! Maximal length of the filter used in constrained solvers.
 integer(IK), parameter :: MIN_MAXFILT = 200  ! Should be positive; < 200 is not recommended.
