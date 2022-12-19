@@ -1,4 +1,4 @@
-% INFO_MOD is a module defining exit flags.
+% This is a function defining exit flags.
 %
 % Coded by Zaikun Zhang in July 2020.
 %
@@ -31,4 +31,3 @@ function info = infos(name)
             error('Error (info.m): unknown info %s', name);
     end
 end
-

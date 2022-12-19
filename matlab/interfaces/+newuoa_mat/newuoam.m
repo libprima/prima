@@ -56,8 +56,7 @@ function [x, f, exitflag, nf, xhist, fhist] = newuoam(calfun, x, rhobeg, rhoend,
 	%
 	% MAXFUN
 	%   Input, scalar, default: consts(maxfun_dim_dft)*N with
-	%   consts(maxfun_dim_dft) defined in the module CONSTS_MOD (see consts.F90 in
-	%   the directory named "common").
+	%   consts(maxfun_dim_dft) defined in the consts.m.
 	%   MAXFUN is the maximal number of function evaluations.
 	%
 	% NPT
@@ -109,14 +108,12 @@ function [x, f, exitflag, nf, xhist, fhist] = newuoam(calfun, x, rhobeg, rhoend,
 	%   Setting MAXHIST to a large value can be costly in terms of memory.
 	%   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take
 	%   reset to a smaller value if the memory needed for XHIST and/or FHIST
-	%   exceeds consts(maxmemory) defined in CONSTS_MOD (see consts.F90 under the
-	%   directory named "common"; default: 2GB). Use XHIST, FHIST, and MAXHIST
-	%   with caution%%%
+	%   exceeds consts(maxmemory) defined in consts.m
+	%   Use XHIST, FHIST, and MAXHIST with caution!!!
 	%
 	% INFO
 	%   Output, scalar.
-	%   INFO is the exit flag. It can be set to the following values defined
-	%   in the module INFO_MOD (see info.F90 under the directory named "common"):
+	%   INFO is the exit flag. It can be set to the following values defined in infos.m:
 	%   infos(small_tr_radius): the lower bound for the trust region radius is reached;
 	%   infos(ftarget_achieved): the target function value is reached;
 	%   infos(trsubp_failed): a trust region step failed to reduce the quadratic model;
