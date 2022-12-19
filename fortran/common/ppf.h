@@ -122,8 +122,8 @@
 
 /******************************************************************************/
 /* The maximal memory for recording the computation history (MB).
- * N.B.: Setting it to a big value may lead to SEGFAULTs due to large arrays.
- * The maximal supported value is 2000, as 2000 M = 2*10^9 = maximum of INT32.*/
+ * The maximal supported value is 2000, as 2000 M = 2*10^9 = maximum of INT32.
+ * N.B.: A big value (even < 2000) may lead to SEGFAULTs due to large arrays. */
 #if defined __MAXHISTMEM__
 #undef __MAXHISTMEM__
 #endif

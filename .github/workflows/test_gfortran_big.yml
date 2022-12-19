@@ -1,4 +1,4 @@
-name: Test gfortran, -fast
+name: Test gfortran, big
 
 on:
   # Trigger the workflow on push or pull request
@@ -6,7 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 15 * * *'
+    - cron: '0 17 * * *'
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
@@ -45,7 +45,8 @@ jobs:
         bitness: [32, 64]
         ikind: [i2] #, i4, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        testdim: [small]
+        fflags: [-O1, -O2, -O3, -g, -fast]
+        testdim: [big]
         # Limit the test on macos to 64-bit.
         # Limit the test on Windows to 64-bit and the latest version of the compiler.
         exclude:
@@ -100,7 +101,7 @@ jobs:
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
                 cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
                 export TESTDIM=${{ matrix.testdim }}
-                export FFLAGS='-fast'
+                export FFLAGS=${{ matrix.fflags }}
                 cd "$ROOT"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
             if (( ${{ matrix.version }} < 8 )) ; then export FS=08; else export FS=18; fi  # Needed by the next line; `-f2018` is not implemented until gcc-8

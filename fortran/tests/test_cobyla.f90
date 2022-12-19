@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 19, 2022 AM07:42:24
+! Last Modified: Monday, December 19, 2022 PM12:33:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,15 +129,14 @@ if (test_bigprob) then
     n = bign
     call construct(prob, probname, n)
     m = prob % m
-    nrand_loc = 2
-    do irand = 1, max(nrand_loc, 1_IK)
+    do irand = 1, 3
         rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
         iprint = 2
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(n) + 1000]), IK)
         maxhist = maxfun
         ftarget = -HUGENUM
         rhobeg = noisy(prob % Delta0)
-        rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
+        rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(5.0_RP * rand() - 4.5_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
         x = noisy(prob % x0)
         orig_calcfc => prob % calcfc
