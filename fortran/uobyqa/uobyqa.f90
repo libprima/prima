@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, December 18, 2022 PM10:48:31
+! Last Modified: Monday, December 19, 2022 AM08:07:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -135,9 +135,8 @@ subroutine uobyqa(calfun, x, f, &
 !
 !   IMPORTANT NOTICE:
 !   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
-!   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take up to 1 GB if we use double
-!   precision. MAXHIST will be reset to a smaller value if the memory needed exceeds MAXMEMORY
-!   defined in CONSTS_MOD (see consts.F90 under the directory named "common"; default: 2GB).
+!   MAXHIST will be reset to a smaller value if the memory needed exceeds MAXHISTMEM defined in
+!   CONSTS_MOD (see consts.F90 under the directory named "common").
 !   Use *HIST with caution!!! (N.B.: the algorithm is NOT designed for large problems).
 !
 ! INFO
@@ -310,7 +309,7 @@ end if
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
     & eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
 
-! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
+! Further revise MAXHIST_LOC according to MAXHISTMEM, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
 ! FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN) if they are requested; replace MAXFUN with 0 for
 ! the history that is not requested.

@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, December 18, 2022 PM11:08:19
+! Last Modified: Monday, December 19, 2022 AM07:42:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,7 +125,7 @@ if (test_bigprob) then
 
         print '(/1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', Random test ', irand
         call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
-            & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
+            & maxhist=maxhist, fhist=fhist, ftarget=ftarget, iprint=iprint)
 
         deallocate (x)
         nullify (orig_calfun)

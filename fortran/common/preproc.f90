@@ -24,7 +24,7 @@ subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, 
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine preprocesses the inputs. It does nothing to the inputs that are valid.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, HALF, EPS, MAXMEMORY, MSGLEN, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, HALF, EPS, MAXHISTMEM, MSGLEN, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 use, non_intrinsic :: consts_mod, only : CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT, IPRINT_DFT, MIN_MAXFILT, MAXFILT_DFT
 use, non_intrinsic :: debug_mod, only : assert, warning
@@ -183,7 +183,7 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     else
         maxfilt = max(MIN_MAXFILT, maxfilt)  ! The inputted MAXFILT is too small.
     end if
-    ! Further revise MAXFILT according to MAXMEMORY.
+    ! Further revise MAXFILT according to MAXHISTMEM.
     select case (lower(solver))
     case ('lincoa')
         unit_memo = (n + 2_IK) * cstyle_sizeof(0.0_RP)
@@ -192,10 +192,10 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     case default
         unit_memo = 1
     end select
-    ! We cannot simply set MAXFILT = MIN(MAXFILT, MAXMEMORY/...), as they may not have
+    ! We cannot simply set MAXFILT = MIN(MAXFILT, MAXHISTMEM/...), as they may not have
     ! the same kind, and compilers may complain. We may convert them, but overflow may occur.
-    if (maxfilt > MAXMEMORY / unit_memo) then
-        maxfilt = int(MAXMEMORY / unit_memo, kind(maxfilt))  ! Integer division.
+    if (maxfilt > MAXHISTMEM / unit_memo) then
+        maxfilt = int(MAXHISTMEM / unit_memo, kind(maxfilt))  ! Integer division.
     end if
     maxfilt = min(maxfun, max(MIN_MAXFILT, maxfilt))
     if (is_constrained_loc) then

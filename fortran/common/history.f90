@@ -22,12 +22,12 @@ contains
 
 subroutine prehist(maxhist, n, output_xhist, xhist, output_fhist, fhist, output_chist, chist, m, output_conhist, conhist)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine revises MAXHIST according to MAXMEMORY, and allocates memory for the history.
+! This subroutine revises MAXHIST according to MAXHISTMEM, and allocates memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
 ! XHIST = NaN(N, MAXFUN), FHIST = NaN(1, MAXFUN), CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN),
 ! if they are requested; replace MAXFUN with 0 for the history that is not requested.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, MAXMEMORY, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, MAXHISTMEM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : int
 use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
@@ -75,7 +75,7 @@ end if
 ! Save the input value of MAXHIST for debugging.
 maxhist_in = maxhist
 
-! Revise MAXHIST according to MAXMEMORY, i.e., the maximal memory allowed for the history.
+! Revise MAXHIST according to MAXHISTMEM, i.e., the maximal memory allowed for the history.
 unit_memo = int(output_xhist) * n + int(output_fhist)
 if (present(output_chist) .and. present(chist)) then
     unit_memo = unit_memo + int(output_chist)
@@ -86,9 +86,9 @@ end if
 unit_memo = unit_memo * cstyle_sizeof(0.0_RP)
 if (unit_memo <= 0) then  ! No output of history is requested
     maxhist = 0
-elseif (maxhist > MAXMEMORY / unit_memo) then
-    maxhist = int(MAXMEMORY / unit_memo, kind(maxhist))  ! Integer division.
-    ! We cannot simply set MAXHIST = MIN(MAXHIST, MAXMEMORY/UNIT_MEMO), as they may not have
+elseif (maxhist > MAXHISTMEM / unit_memo) then
+    maxhist = int(MAXHISTMEM / unit_memo, kind(maxhist))  ! Integer division.
+    ! We cannot simply set MAXHIST = MIN(MAXHIST, MAXHISTMEM/UNIT_MEMO), as they may not have
     ! the same kind, and compilers may complain. We may convert them, but overflow may occur.
 end if
 
@@ -110,8 +110,8 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(maxhist >= 0 .and. maxhist <= maxhist_in, '0 <= MAXHIST <= MAXHIST_IN', srname)
-    call assert(int(maxhist, kind(MAXMEMORY)) * int(unit_memo, kind(MAXMEMORY)) <= MAXMEMORY, &
-        & 'The history will not take more memory than MAXMEMORY', srname)
+    call assert(int(maxhist, kind(MAXHISTMEM)) * int(unit_memo, kind(MAXHISTMEM)) <= MAXHISTMEM, &
+        & 'The history will not take more memory than MAXHISTMEM', srname)
     call assert(allocated(xhist), 'XHIST is allocated', srname)
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxhist * int(output_xhist), &
         & 'if XHIST is requested, then SIZE(XHIST) == [N, MAXHIST]; otherwise, SIZE(XHIST) == [N, 0]', srname)
