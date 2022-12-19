@@ -7,8 +7,6 @@ function [itest, gq, hq, pq] = tryqalt(idz, fval, ratio, smat, zmat, itest, gq, 
     %
     % See Section 8 of the NEWUOA paper.
 
-    % In-output
-
     % N.B.:
     % GQ, HQ, and PQ should be IN10T(INOUT) instead of IN10T(OUT). According to the Fortran 2018
     % standard, an IN10T(OUT) dummy argument becomes undefined on invocation of the procedure.
