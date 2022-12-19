@@ -1,8 +1,8 @@
 name: Test Absoft
 
 on:
-  # Trigger the workflow on push or pull request
-  #push:
+  # Trigger the workflow on #PUSH or pull request
+  ##PUSH:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -38,7 +38,7 @@ jobs:
       matrix:
         ikind: [i2]  # [i2, i4, i8] fails due to unavailability of license servers
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-O1, -g, -fast]  # Too expensive; skip -O2, -O3
+        fflags: [-O1, -g, -O3]  # -fast always runs overtime. Bug of compiler?
 
     steps:
       - name: Checkout repository
