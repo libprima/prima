@@ -57,7 +57,7 @@ jobs:
         compiler: [gcc]
         version: [12] # gfortran 9 is buggy wit logical variables when invoked with -Ofast
         bitness: [64]
-        ikind: [i4]
+        ikind: [i2]
         solver: [lincoa]
         fflags: [-g]
         testdim: [big]
