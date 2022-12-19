@@ -1,3 +1,5 @@
+% N.B.: This version is implemented based on an earlier version of the modern Fortran implementation.
+%
 % NEWUOAM provides the MATLAB implementation of M. J. D. Powell's NEWUOA algorithm described in
 %
 % M. J. D. Powell, The NEWUOA software for unconstrained optimization
