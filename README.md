@@ -19,8 +19,9 @@ Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell
 ### What
 
 PRIMA provides the reference implementation for Powell's derivative-free optimization methods,
-namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA. The "P" in the name stands for **P**owell, and
-"RIMA" is an acronym for "**R**eference **I**mplementation with **M**odernization and **A**melioration".
+namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA. The "P" in the name stands for
+[**P**owell](https://www.zhangzk.net/powell.html), and "RIMA" is an acronym for
+"**R**eference **I**mplementation with **M**odernization and **A**melioration".
 
 PRIMA is part of a research project funded by the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and
