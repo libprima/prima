@@ -119,7 +119,7 @@ be available later.
 Given the **modern** Fortran version, the implementation in other languages
 becomes **much easier**, because we now have a structured and modularized implementation as a reference.
 As an illustration, we have implemented a [MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/)
-based on an earlier version of the **modern** Fortran code.
+based on an earlier version of the **modern** Fortran code (with the help of Mr. Galann Pennec).
 The MATLAB code was obtained from the **modern** Fortran code straightforwardly, and indeed, **automatically**.
 
 
