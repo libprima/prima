@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM11:53:16
+! Last Modified: Tuesday, December 20, 2022 AM01:12:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -293,7 +293,11 @@ do while (.true.)
 
     if (negcrv) then
         ! Set K to the first index corresponding to a negative curvature.
-        k = minval(trueloc(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0)))
+        ! N.B.: In theory, we need not prepend N to TRUELOC(...), because TRUELOC must return
+        ! a nonempty array when NEGCRV is TRUE, and hence K <= N; however, the Fortran code may not
+        ! behave in this way when compiled with aggressive optimization options; on 20221220, it is
+        ! observed that K = HUGE(K) = 32767 with Flang -Ofast.
+        k = minval([n, trueloc(piv < 0 .or. (piv <= 0 .and. abs([tn, 0.0_RP]) > 0))])
     else
         ! Set K to the last index corresponding to a zero curvature; K = 0 if no such curvature exits.
         k = maxval([0_IK, trueloc(abs(piv) + abs([tn, 0.0_RP]) <= 0)])

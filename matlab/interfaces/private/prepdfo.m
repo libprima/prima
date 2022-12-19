@@ -127,6 +127,8 @@ if isa(options, 'struct') && isfield(options, 'precision') && ischarstr(options.
         ismember(lower(options.precision), all_precisions())
     precision = lower(options.precision);
 end
+% Zaikun 20221220: What if the Fortran code is not compiled? Do we still need these numbers, or
+% should we set them according to the range of double-precision floating point numbers?
 probinfo.hugenum = gethuge('real', precision);
 probinfo.hugefun = gethuge('fun', precision);
 probinfo.hugecon = gethuge('con', precision);
