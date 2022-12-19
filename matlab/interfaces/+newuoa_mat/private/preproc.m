@@ -1,7 +1,5 @@
 function [iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend] = preproc(n, iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend)
 
-    % In-outputs
-
     % Local variable
     solver = 'NEWUOA';
 

@@ -9,8 +9,6 @@ function [idz, bmat, zmat] = updateh(knew, beta, vlag_in, idz, bmat, zmat, debug
     %
     % See Section 4 of the NEWUOA paper.
 
-    % In-outputs
-
     % Local variables
     w = NaN(length(vlag_in), 1);
     funname = 'UPDATEH';

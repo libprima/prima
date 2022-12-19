@@ -5,8 +5,6 @@ function [bmat, gq, hq, xbase, xopt, xpt] = shiftbase(idz, pq, zmat, bmat, gq, h
     % GQ, HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
     % shifting. See Section 7 of the NEWUOA paper.
 
-    % In-outputs
-
     % Local variables
     funname = 'SHIFTBASE';
 
