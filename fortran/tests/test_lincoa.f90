@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 19, 2022 PM05:18:23
+! Last Modified: Tuesday, December 20, 2022 PM11:43:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,6 +54,7 @@ integer(IK) :: idim
 integer(IK) :: iprint
 integer(IK) :: iprob
 integer(IK) :: irand
+integer(IK) :: m
 integer(IK) :: maxdim_loc
 integer(IK) :: maxfilt
 integer(IK) :: maxfun
@@ -129,16 +130,12 @@ end if
 if (test_bigprob) then
     probname = bigprob
     n = bign
-    call construct(prob, probname, n)
-    nnpt = 1
-    npt_list(1:nnpt) = [2_IK * n + 1_IK]
-    do irand = 1, nnpt + 2_IK
-        rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
-        if (irand <= nnpt) then
-            npt = npt_list(irand)
-        else
-            npt = int(TEN * rand() * real(n, RP), kind(npt))
-        end if
+    do irand = 1, 2
+        rseed = int(sum(istr(probname)) + n + irand + RP)
+        call setseed(rseed)
+        m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**floor(0.9 * real(min(range(0), range(0_IK))))), IK)
+        call construct(prob, probname, n, m)
+        npt = int(TEN * rand() * real(n, RP), kind(npt))
         iprint = 2
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + 1000]), IK)
         maxhist = maxfun
@@ -162,9 +159,9 @@ if (test_bigprob) then
 
         deallocate (x)
         nullify (orig_calfun)
+        ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
+        call destruct(prob)  ! Destruct the testing problem.
     end do
-    ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
-    call destruct(prob)  ! Destruct the testing problem.
 
 else
 
