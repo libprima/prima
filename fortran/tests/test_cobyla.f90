@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 19, 2022 PM12:33:26
+! Last Modified: Wednesday, December 21, 2022 AM12:01:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -127,10 +127,11 @@ end if
 if (test_bigprob) then
     probname = bigprob
     n = bign
-    call construct(prob, probname, n)
-    m = prob % m
-    do irand = 1, 3
-        rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
+    do irand = 1, 2
+        rseed = int(sum(istr(probname)) + n + irand + RP)
+        call setseed(rseed)
+        m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**floor(0.9 * real(min(range(0), range(0_IK))))), IK)
+        call construct(prob, probname, n, m)
         iprint = 2
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(n) + 1000]), IK)
         maxhist = maxfun
@@ -148,9 +149,9 @@ if (test_bigprob) then
 
         deallocate (x)
         nullify (orig_calcfc)
+        ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
+        call destruct(prob)  ! Destruct the testing problem.
     end do
-    ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
-    call destruct(prob)  ! Destruct the testing problem.
 
 else
 

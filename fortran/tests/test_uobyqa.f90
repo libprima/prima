@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 19, 2022 PM12:31:43
+! Last Modified: Tuesday, December 20, 2022 PM10:44:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -109,9 +109,9 @@ if (test_bigprob) then
     probname = bigprob
     n = bign
     call construct(prob, probname, n)
-    nrand_loc = 2
-    do irand = 1, 3
-        rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
+    do irand = 1, 2
+        rseed = int(sum(istr(probname)) + n + irand + RP)
+        call setseed(rseed)
         iprint = 2
         npt = (n + 2_IK) * (n + 1_IK) / 2_IK
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + 1000]), IK)

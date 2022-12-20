@@ -1,5 +1,6 @@
 module prob_mod
 !--------------------------------------------------------------------------------------------------!
+!
 ! This module implements the following testing problems.
 !
 ! Unconstrained:
@@ -20,6 +21,10 @@ module prob_mod
 ! hs100
 ! rsnszk
 ! hexagon
+!
+! "Big" problem:
+! bigprob
+!
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: param_mod, only : RANDSEED_DFT
@@ -55,7 +60,7 @@ end type PROB_T
 contains
 
 
-subroutine construct(prob, probname, n)
+subroutine construct(prob, probname, n, m)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine constructs a derived type PROB of type PROB_T.
 ! In F2003, this subroutine can be contained in the definition of PROB_T, but the declaration of
@@ -70,12 +75,14 @@ implicit none
 ! Inputs
 character(len=*), intent(in) :: probname
 integer(IK), intent(in), optional :: n
+integer(IK), intent(in), optional :: m
 
 ! Outputs
 type(PROB_T), intent(out) :: prob
 
 ! Local variables
 character(len=*), parameter :: srname = 'CONSTRUCT'
+integer(IK) :: m_loc
 integer(IK) :: n_loc
 
 if (present(n)) then
@@ -84,9 +91,15 @@ else
     n_loc = 1
 end if
 
+if (present(m)) then
+    m_loc = m
+else
+    m_loc = 0
+end if
+
 select case (lower(trimstr(probname)))
 case ('bigprob')
-    call construct_bigprob(prob, n_loc)
+    call construct_bigprob(prob, n_loc, m_loc)
 case ('chebyquad')
     call construct_chebyquad(prob, n_loc)
 case ('chrosen')

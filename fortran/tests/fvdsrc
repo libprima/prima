@@ -7,6 +7,7 @@
 
 DIR="$(realpath "$1")"
 LINALG="$DIR/common/linalg.f90"
+POWALG="$DIR/common/powalg.f90"
 LINGEO="$DIR/lincoa/geometry.f90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
@@ -24,6 +25,17 @@ if [[ -f "$LINALG" ]] ; then
     OLDSTR="x(i) = (b(i) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)"
     NEWSTR="x(i) = (b(i) - dot_product(R(i, i + 1:n), x(i + 1:n))) / R(i, i)"
     sed -i "s|$OLDSTR|$NEWSTR|g" "$LINALG"
+fi
+
+if [[ -f "$POWALG" ]] ; then
+    OLDSTR="Anew = reshape(\[A(:, 1:i - 1), A(:, i + 1:n), A(:, i)\], shape(Anew))"
+    NEWSTR="if (i<n) then \n if (i <= 1) then \n Anew = reshape(\[A(:, i + 1:n), A(:, i)\], shape(Anew))\
+        \n else \n Anew = reshape(\[A(:, 1:i - 1), A(:, i + 1:n), A(:, i)\], shape(Anew)) \n end if \n end if"
+    sed -i "s|$OLDSTR|$NEWSTR|g" "$POWALG"
+    OLDSTR="Anew = reshape(\[Anew(:, 1:i - 1), Anew(:, i + 1:n), Anew(:, i)\], shape(Anew))"
+    NEWSTR="if (i<n) then \n if (i <= 1) then \n Anew = reshape(\[Anew(:, i + 1:n), Anew(:, i)\], shape(Anew))\
+        \n else \n Anew = reshape(\[Anew(:, 1:i - 1), Anew(:, i + 1:n), Anew(:, i)\], shape(Anew)) \n end if \n end if"
+    sed -i "s|$OLDSTR|$NEWSTR|g" "$POWALG"
 fi
 
 if [[ -f "$LINGEO" ]] ; then

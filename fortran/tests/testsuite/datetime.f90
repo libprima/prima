@@ -96,6 +96,7 @@ integer :: w
 integer :: jan1
 integer :: values(8)
 integer :: y
+integer :: y11(3)
 
 if (present(ymd)) then
     y = ymd(1)
@@ -104,7 +105,8 @@ else
     y = values(1)
 end if
 
-jan1 = whatday([y, 1, 1])
+y11 = [y, 1, 1]
+jan1 = whatday(y11)
 
 if (present(ymd)) then
     w = ceiling(real(day(ymd) + jan1 - 1) / 7.0)
