@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        solver: [newuoa, cobyla, bobyqa, uobyqa]  # With the blacklist, there is no large problem for lincoa
         #dim: [small, big, large]
         dim: [large]
     steps:
