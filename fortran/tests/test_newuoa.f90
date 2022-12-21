@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, December 20, 2022 PM10:46:56
+! Last Modified: Wednesday, December 21, 2022 PM07:23:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -119,9 +119,13 @@ if (test_bigprob) then
         call setseed(rseed)
         npt = int(TEN * rand() * real(n, RP), kind(npt))
         iprint = 2
-        maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + 500]), IK)
-        maxhist = maxfun
-        ftarget = -HUGENUM
+        maxfun = int(minval([10**min(range(0), range(0_IK)), int(n) + int(1000.0_RP * rand())]), IK)
+        maxhist = int(TWO * rand() * real(maxfun, RP), kind(maxhist))
+        if (rand() <= 0.5_RP) then
+            ftarget = -TEN**abs(TWO * randn())
+        else
+            ftarget = -HUGENUM
+        end if
         rhobeg = noisy(prob % Delta0)
         rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(5.0_RP * rand() - 4.5_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
