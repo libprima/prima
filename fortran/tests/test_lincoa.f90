@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, December 21, 2022 PM07:37:39
+! Last Modified: Wednesday, December 21, 2022 PM10:08:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -140,16 +140,12 @@ if (test_bigprob) then
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + int(1000.0_RP * rand())]), IK)
         maxhist = int(TWO * rand() * real(maxfun, RP), kind(maxhist))
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
-        if (rand() <= 0.5_RP) then
+        if (rand() <= 0.5) then
             ctol = TEN**(-abs(5.0 * randn()))
         else
             ctol = ZERO
         end if
-        if (rand() <= 0.5_RP) then
-            ftarget = -TEN**abs(TWO * randn())
-        else
-            ftarget = -HUGENUM
-        end if
+        ftarget = -TEN**abs(range(0.0_RP) * rand())
         rhobeg = noisy(prob % Delta0)
         rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(5.0_RP * rand() - 4.5_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
@@ -213,33 +209,33 @@ else
                 else
                     npt = int(TEN * rand() * real(n, RP), kind(npt))
                 end if
-                if (rand() <= 0.2_RP) then
+                if (rand() <= 0.2) then
                     npt = 0
                 end if
                 !iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
                 iprint = 3
                 maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
-                if (rand() <= 0.2_RP) then
+                if (rand() <= 0.2) then
                     maxfun = 0
                 end if
                 maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
-                if (rand() <= 0.2_RP) then
+                if (rand() <= 0.2) then
                     maxhist = -maxhist
                 end if
                 maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
-                if (rand() <= 0.2_RP) then
+                if (rand() <= 0.2) then
                     maxfilt = 0
                 end if
-                if (rand() <= 0.2_RP) then
+                if (rand() <= 0.2) then
                     ctol = randn() * TEN**(-abs(TWO * randn()))
-                elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
+                elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.
                     ctol = HUGENUM
                 else
                     ctol = ZERO
                 end if
-                if (rand() <= 0.2_RP) then
+                if (rand() <= 0.2) then
                     ftarget = -TEN**abs(TWO * randn())
-                elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
+                elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.
                     ftarget = HUGENUM
                 else
                     ftarget = -HUGENUM
@@ -247,9 +243,9 @@ else
 
                 rhobeg = noisy(prob % Delta0)
                 rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
-                if (rand() <= 0.2_RP) then
+                if (rand() <= 0.2) then
                     rhoend = rhobeg
-                elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
+                elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.
                     rhobeg = ZERO
                 end if
 
