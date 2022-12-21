@@ -109,12 +109,12 @@ if (test_bigprob) then
     probname = bigprob
     n = bign
     call construct(prob, probname, n)
-    do irand = 1, 2
+    do irand = 1, 1  ! The test is expensive
         rseed = int(sum(istr(probname)) + n + irand + RP)
         call setseed(rseed)
         iprint = 2
         npt = (n + 2_IK) * (n + 1_IK) / 2_IK
-        maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + 1000]), IK)
+        maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + 500]), IK)
         maxhist = maxfun
         ftarget = -HUGENUM
         rhobeg = noisy(prob % Delta0)
