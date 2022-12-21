@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 20, 2022 PM11:07:34
+! Last Modified: Wednesday, December 21, 2022 AM08:01:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -214,8 +214,10 @@ newact = .true.
 ! Fortran compilers (can it be be removed?).
 itercg = -1
 
-! What is the theoretical upper bound of ITER?
-maxiter = maxval([m, n, min(1000_IK, 10_IK * (m + n))])  ! MAXVAL: precaution against overflow
+! What is the THEORETICAL upper bound of ITER? For the moment, we set the following MAXITER.
+! The formulation of MAXITER below contains a precaution against overflow. In MATLAB/Python/Julia/R,
+! we can write maxiter = min(10000, 10*(m + n))
+maxiter = int(min(10**min(4, range(0_IK)), 10 * int(m + n)), IK)
 do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
     if (newact) then
         ! GETACT picks the active set for the current S. It also sets PSD to the vector closest to
