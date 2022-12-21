@@ -130,14 +130,14 @@ end if
 if (test_bigprob) then
     probname = bigprob
     n = bign
-    do irand = 1, 2
+    do irand = 1, 1  ! The test is expensive
         rseed = int(sum(istr(probname)) + n + irand + RP)
         call setseed(rseed)
         m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**floor(0.9 * real(min(range(0), range(0_IK))))), IK)
         call construct(prob, probname, n, m)
         npt = int(TEN * rand() * real(n, RP), kind(npt))
         iprint = 2
-        maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + 1000]), IK)
+        maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + 500]), IK)
         maxhist = maxfun
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
         ftarget = -HUGENUM
