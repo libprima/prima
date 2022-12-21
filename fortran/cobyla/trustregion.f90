@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, December 11, 2022 PM02:03:22
+! Last Modified: Wednesday, December 21, 2022 AM07:55:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -295,8 +295,9 @@ nfail = 0
 ! problems: DANWOODLS, GAUSS1LS, GAUSS2LS, GAUSS3LS, KOEBHELB, TAX13322, TAXR13322. Indeed, in all
 ! these cases, Inf/NaN appear in D due to extremely large values in A (up to 10^219). To resolve
 ! this, we set the maximal number of iterations to MAXITER, and terminate if Inf/NaN occurs in D.
-! In MATLAB or Python: MAXITER = MIN(10000, 100*MAX(M, N))
-maxiter = int(min(int(10_IK**min(4, range(0_IK)), IK), 100_IK * max(m, n)), IK)
+! The formulation of MAXITER below contains a precaution against overflow. In MATLAB/Python/Julia/R,
+! we can write maxiter = min(10000, 100*max(m, n))
+maxiter = int(min(10**min(4, range(0_IK)), 100 * int(max(m, n))), IK)
 do iter = 1, maxiter
     if (DEBUGGING) then
         call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)

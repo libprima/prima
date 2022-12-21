@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, December 20, 2022 PM11:43:33
+! Last Modified: Wednesday, December 21, 2022 AM07:41:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ contains
 subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed)
 
 use, non_intrinsic :: lincoa_mod, only : lincoa
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM, EPS
 use, non_intrinsic :: debug_mod, only : validate
 use, non_intrinsic :: infnan_mod, only : is_neginf
 use, non_intrinsic :: linalg_mod, only : eye
@@ -139,7 +139,9 @@ if (test_bigprob) then
         iprint = 2
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + 1000]), IK)
         maxhist = maxfun
+        maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
         ftarget = -HUGENUM
+        ctol = EPS
         rhobeg = noisy(prob % Delta0)
         rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(5.0_RP * rand() - 4.5_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
