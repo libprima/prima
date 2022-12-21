@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, December 21, 2022 PM10:08:37
+! Last Modified: Wednesday, December 21, 2022 PM11:53:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -121,7 +121,7 @@ if (test_bigprob) then
         iprint = 2
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + int(1000.0_RP * rand())]), IK)
         maxhist = int(TWO * rand() * real(maxfun, RP), kind(maxhist))
-        ftarget = -TEN**abs(range(0.0_RP) * rand())
+        ftarget = -TEN**abs(min(10, range(0.0_RP)) * rand())
         rhobeg = noisy(prob % Delta0)
         rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(5.0_RP * rand() - 4.5_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
