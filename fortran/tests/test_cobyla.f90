@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, December 21, 2022 AM12:01:38
+! Last Modified: Wednesday, December 21, 2022 AM07:38:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,7 +20,7 @@ contains
 subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed)
 
 use, non_intrinsic :: cobyla_mod, only : cobyla
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM, EPS
 use, non_intrinsic :: debug_mod, only : validate
 use, non_intrinsic :: infnan_mod, only : is_neginf
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -136,6 +136,7 @@ if (test_bigprob) then
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(n) + 1000]), IK)
         maxhist = maxfun
         ftarget = -HUGENUM
+        ctol = EPS
         rhobeg = noisy(prob % Delta0)
         rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(5.0_RP * rand() - 4.5_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
@@ -145,7 +146,7 @@ if (test_bigprob) then
         print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' M = ', m, ', Random test ', irand
         call cobyla(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
             & maxhist=maxhist, fhist=fhist, chist=chist, &
-            & ftarget=ftarget, iprint=iprint)
+            & ftarget=ftarget, ctol=ctol, iprint=iprint)
 
         deallocate (x)
         nullify (orig_calcfc)

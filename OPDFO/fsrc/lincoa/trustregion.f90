@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 08, 2022 AM11:55:47
+! Last Modified: Wednesday, December 21, 2022 AM08:02:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -191,7 +191,7 @@ newact = .true.
 ! Fortran compilers (can it be be removed?).
 itercg = -1_IK
 
-maxiter = min(1000_IK, 10_IK * (m + n))  ! What is the theoretical upper bound of ITER?
+maxiter = min(10000_IK, 10_IK * (m + n))  ! What is the theoretical upper bound of ITER?
 do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
     if (newact) then
         ! GETACT picks the active set for the current S. It also sets PSD to the vector closest to

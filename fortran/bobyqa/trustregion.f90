@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 13, 2022 AM10:05:55
+! Last Modified: Wednesday, December 21, 2022 AM07:55:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -211,7 +211,9 @@ itercg = 0
 twod_search = .false.  ! The default value of TWOD_SEARCH is FALSE!
 
 ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
-maxiter = (n - nact)**2_IK
+! The formulation of MAXITER below contains a precaution against overflow. In MATLAB/Python/Julia/R,
+! we can write maxiter = min(10000, (n - nact)^2).
+maxiter = int(min(10**min(4, range(0_IK)), int(n - nact)**2), IK)
 do iter = 1, maxiter
     resid = delsq - sum(d(trueloc(xbdi == 0))**2)
     if (resid <= 0) then
