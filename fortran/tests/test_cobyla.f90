@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, December 21, 2022 PM11:52:48
+! Last Modified: Thursday, December 22, 2022 AM11:47:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 10
 character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed dimensions
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 500_IK
+integer(IK), parameter :: bign = 300_IK
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -133,7 +133,7 @@ if (test_bigprob) then
         m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**floor(0.9 * real(min(range(0), range(0_IK))))), IK)
         call construct(prob, probname, n, m)
         iprint = 2
-        maxfun = int(minval([10**min(range(0), range(0_IK)), int(n) + int(1000.0_RP * rand())]), IK)
+        maxfun = int(minval([10**min(range(0), range(0_IK)), int(n) + int(500.0_RP * rand())]), IK)
         maxhist = int(TWO * rand() * real(maxfun, RP), kind(maxhist))
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
         if (rand() <= 0.5) then
@@ -141,14 +141,15 @@ if (test_bigprob) then
         else
             ctol = ZERO
         end if
-        ftarget = -TEN**abs(min(10, range(0.0_RP)) * rand())
+        ftarget = -TEN**(min(10, range(0.0_RP)) * rand())
         rhobeg = noisy(prob % Delta0)
-        rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(5.0_RP * rand() - 4.5_RP))
+        rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(4.0_RP * rand() - 3.5_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
         x = noisy(prob % x0)
         orig_calcfc => prob % calcfc
 
-        print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' M = ', m, ', Random test ', irand
+        print '(/1A, I0, 1A, I0, 1A, I0, 1A, I0)', &
+            & trimstr(probname)//': N = ', n, ' M = ', m, ', MAXFUN = ', maxfun, ', Random test ', irand
         call cobyla(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxfilt=maxfilt,&
             & maxhist=maxhist, fhist=fhist, chist=chist, &
             & ftarget=ftarget, ctol=ctol, iprint=iprint)
