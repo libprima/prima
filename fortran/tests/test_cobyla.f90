@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, December 22, 2022 AM11:47:07
+! Last Modified: Thursday, December 22, 2022 PM02:32:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,9 +132,9 @@ if (test_bigprob) then
         call setseed(rseed)
         m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**floor(0.9 * real(min(range(0), range(0_IK))))), IK)
         call construct(prob, probname, n, m)
-        iprint = 2
+        iprint = 3
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(n) + int(500.0_RP * rand())]), IK)
-        maxhist = int(TWO * rand() * real(maxfun, RP), kind(maxhist))
+        maxhist = maxfun
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
         if (rand() <= 0.5) then
             ctol = TEN**(-abs(5.0 * randn()))
