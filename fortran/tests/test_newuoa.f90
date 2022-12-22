@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, December 22, 2022 AM11:41:51
+! Last Modified: Thursday, December 22, 2022 PM02:23:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -117,11 +117,11 @@ if (test_bigprob) then
     do irand = 1, 1  ! The test is expensive
         rseed = int(sum(istr(probname)) + n + irand + RP)
         call setseed(rseed)
-        npt = int(TEN * rand() * real(n, RP), kind(npt))
-        iprint = 2
+        npt = max(n + 2_IK, int(5.0 * rand() * real(n, RP), kind(npt)))
+        iprint = 3
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + int(500.0_RP * rand())]), IK)
-        maxhist = int(TWO * rand() * real(maxfun, RP), kind(maxhist))
-        ftarget = -TEN * (min(10, range(0.0_RP)) * rand())
+        maxhist = maxfun
+        ftarget = -HUGENUM!-TEN * (min(10, range(0.0_RP)) * rand())
         rhobeg = noisy(prob % Delta0)
         rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(4.0_RP * rand() - 3.5_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
