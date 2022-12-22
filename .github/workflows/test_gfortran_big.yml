@@ -2,7 +2,7 @@ name: Test gfortran, big
 
 on:
   # Trigger the workflow on #PUSH or pull request
-  ##PUSH:
+  push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -39,27 +39,14 @@ jobs:
       matrix:
         # As of 20221119, according to https://github.com/actions/virtual-environments ,
         # ubuntu-latest = ubuntu-20.04,
-        # os: [ubuntu-latest, macos-latest, windows-latest]
-        # compiler: [gcc]
-        # version: [10, 12] # gfortran 9 is buggy wit logical variables when invoked with -Ofast
-        # bitness: [32, 64]
-        # ikind: [i2] #, i4, i8]
-        # solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        # fflags: [-O1, -O2, -O3, -g, -fast]
-        # # Limit the test on macos to 64-bit.
-        # # Limit the test on Windows to 64-bit and the latest version of the compiler.
-        # exclude:
-        #   - os: macos-latest
-        #     bitness: 32
-        #   - os: windows-latest
-        #     bitness: 32
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
         compiler: [gcc]
-        version: [12] # gfortran 9 is buggy wit logical variables when invoked with -Ofast
+        version: [12]
         bitness: [64]
-        ikind: [i2]
-        solver: [lincoa]
-        fflags: [-g]
+        ikind: [i2, i4]
+        rkind: [r4, r8]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        fflags: [-O2, -g, -fast]
         testdim: [big]
 
     steps:
@@ -106,13 +93,10 @@ jobs:
             # 1. Windows does not support the symlink of linux, and hence mlint and flint do not work.
             # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
-            #cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
                 export TESTDIM=${{ matrix.testdim }}
                 export FFLAGS=${{ matrix.fflags }}
-                cd "$ROOT"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
+                cd "$ROOT"/fortran/tests && make gtest_${{ matrix.ikind }}_${{ matrix.rkind }}_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_${{ matrix.rkind }}_tst.${{ matrix.solver }}
             fi
-            #if (( ${{ matrix.version }} < 8 )) ; then export FS=08; else export FS=18; fi  # Needed by the next line; `-f2018` is not implemented until gcc-8
-            #cd "$ROOT"/fortran/examples/${{ matrix.solver }} && make gtest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
