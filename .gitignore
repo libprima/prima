@@ -8,6 +8,7 @@ __pycache__/
 
 # misc files for testing
 matlab/tests/testdata/
+core.*
 *.cmdx
 *.cmod
 *.dbg
