@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 19, 2022 AM09:06:19
+! Last Modified: Friday, December 23, 2022 AM10:18:13
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -191,9 +191,10 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 ! compilers. See https://fortran-lang.discourse.group/t/strange-behavior-of-ifort.
 ! Update 20221210: In the following cases, we set SYMTOL_DFT to HUGENUM, which signifies to weaken
 ! the criteria for symmetry.
-! 1. When the compiler is ifort and the floating point numbers are in the single precision. As of
-! ifort 2021.7.1, for single precision, 1/Inf is sometimes evaluated to NaN, but sometimes to zero.
-! See https://fortran-lang.discourse.group/t/ifort-question-1-inf.
+! 1. When the compiler is ifort and the floating point numbers are in the single precision.
+! See https://fortran-lang.discourse.group/t/strange-behavior-of-ifort,
+! https://fortran-lang.discourse.group/t/ifort-question-1-inf,
+! https://fortran-lang.discourse.group/t/ifort-ifort-2021-8-0-1-7633055e-37-1-0e-38-0 .
 ! 2. When gfortran is invoked with aggressive optimization options.
 #if (defined __GFORTRAN__ && __AGRESSIVE_OPTIONS__ == 1) || (defined __INTEL_COMPILER && __REAL_PRECISION__ < 64)
 real(RP), parameter :: SYMTOL_DFT = HUGENUM

@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 18, 2022 PM06:34:31
+! Last Modified: Friday, December 23, 2022 AM10:40:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1889,20 +1889,18 @@ end if
 ! 2. In addition, since Inf - Inf is NaN, we cannot replace ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC ...)
 ! with .NOT. ALL(ABS(A - TRANSPOSE(A)) <= TOL_LOC ...).
 ! 3. Some compilers (i.e., ifort 2021.7.1) sometimes evaluates 1/Inf to NaN, but sometimes to zero.
-! See https://fortran-lang.discourse.group/t/ifort-question-1-inf . We signify this strange case by
-! setting SYMTOL_DFT to HUGENUM.
+! See https://fortran-lang.discourse.group/t/ifort-question-1-inf . ifort 2021.8.0 may evaluate
+! 1.0E37/1.0E38 to 0. See https://fortran-lang.discourse.group/t/ifort-ifort-2021-8-0-1-0e-37-1-0e-38-0
+! We signify these strange cases by setting SYMTOL_DFT to HUGENUM.
 ! 4. When invoked with aggressive optimization options (e.g., -fast-math), gfortran 11 is buggy with
 ! ALL and ANY: ALL returns .FALSE. on a vector of .TRUE., while ANY returns .TRUE. on a vector of
 ! .FALSE.. In that case, we cannot test ALL(IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A))).
 is_symmetric = .true.
 if (size(A, 1) /= size(A, 2)) then
     is_symmetric = .false.
-elseif (any(abs(A - transpose(A)) > tol_loc * max(maxval(abs(A)), ONE))) then
-    is_symmetric = .false.
-elseif (SYMTOL_DFT < HUGENUM .and. .not. all(is_nan(A) .eqv. is_nan(transpose(A)))) then
-    is_symmetric = .false.
-elseif (.not. all(abs(A) > 0 .eqv. abs(transpose(A)) > 0)) then
-    is_symmetric = .false.
+elseif (SYMTOL_DFT < 0.9_RP * HUGENUM) then
+    is_symmetric = (.not. any(abs(A - transpose(A)) > tol_loc * max(maxval(abs(A)), ONE))) .and. &
+        & all(is_nan(A) .eqv. is_nan(transpose(A))) .and. all(abs(A) > 0 .eqv. abs(transpose(A)) > 0)
 end if
 
 !====================!
