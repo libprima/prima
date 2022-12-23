@@ -118,7 +118,7 @@ if (test_bigprob) then
         rseed = int(sum(istr(probname)) + n + irand + RP)
         call setseed(rseed)
         npt = max(n + 2_IK, int(5.0 * rand() * real(n, RP), kind(npt)))
-        iprint = 3
+        iprint = 2
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + int(500.0_RP * rand())]), IK)
         maxhist = maxfun
         ftarget = -TEN * (min(10, range(0.0_RP)) * rand())

@@ -17,7 +17,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 21, 2022 PM12:53:59
+! Last Modified: Saturday, December 24, 2022 AM12:09:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -298,7 +298,10 @@ do while (.true.)
 
     delsav = delta
     ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
+!write (17, *) 300, 'q', gopt!, hq, pq
     call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
+!write (17, *) 300, 'tr', delta, d
+
     dnorm = min(delta, sqrt(sum(d**2)))
 
     ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
@@ -437,6 +440,13 @@ do while (.true.)
         ! first update DELTA to SQRT(2)*RHO. If this factor were not smaller than SQRT(2),
         ! then DELTA will be reset to RHO, which is not reasonable as D is very successful.
 
+        if (.not. abs(dffalt) < TENTH * abs(diff)) then
+            itest = 0
+        else
+            itest = itest + 1
+        end if
+!write (17, *) 458, dffalt, TENTH * diff, itest
+
         freduced = (f < fopt)
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
@@ -448,15 +458,16 @@ do while (.true.)
         if (knew_tr > 0) then
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
 
-            ! If ITEST is increased to 3, then the next quadratic model is the one whose second
-            ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
-            ! new model is constructed by the symmetric Broyden method in the usual way.
-            !if (abs(dffalt) >= TENTH * abs(diff)) then
-            if (.not. abs(dffalt) < TENTH * abs(diff)) then
-                itest = 0
-            else
-                itest = itest + 1
-            end if
+            !! If ITEST is increased to 3, then the next quadratic model is the one whose second
+            !! derivative matrix is least subject to the new interpolation conditions. Otherwise the
+            !! new model is constructed by the symmetric Broyden method in the usual way.
+            !!if (abs(dffalt) >= TENTH * abs(diff)) then
+            !if (.not. abs(dffalt) < TENTH * abs(diff)) then
+            !    itest = 0
+            !else
+            !    itest = itest + 1
+            !end if
+            !write (17, *) 458, dffalt, TENTH * diff, itest
 
             ! Update the second derivatives of the model by the symmetric Broyden method, using PQW
             ! for the second derivative parameters of the new KNEW-th Lagrange function. The
@@ -497,11 +508,13 @@ do while (.true.)
 
             ! Replace the current model by the least Frobenius norm interpolant if this interpolant
             ! gives substantial reductions in the predictions of values of F at feasible points.
-            if (itest == 3) then
+            !if (itest == 3) then
+            if (itest >= 3) then
                 fshift = fval - fval(kopt)
                 pq = omega_mul(idz, zmat, fshift)
                 hq = ZERO
                 gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+                itest = 0
             end if
         end if
     end if
@@ -574,6 +587,7 @@ do while (.true.)
         ! Alternatively, KNEW > 0, and the model step is calculated within a trust region of radius DELBAR.
         delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
         call geostep(iact, idz, knew_geo, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
+!write (17, *) 500, 'geo', d
 
         ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT.
         qred = -quadinc(d, xpt, gopt, pq, hq)
@@ -640,10 +654,10 @@ do while (.true.)
 !write (17, *) 540, nf, fval(kopt), fval, fshift
 !write (17, *) 541, d, galt, pqalt, xpt
 !write (17, *) 542, diff, dffalt, f, fopt, quadinc(d, xpt, galt, pqalt)
-        if (itest == 3) then
-            !dffalt = diff
-            itest = 0
-        end if
+        !if (itest == 3) then
+        !    !dffalt = diff
+        !    itest = 0
+        !end if
 
         ! If ITEST is increased to 3, then the next quadratic model is the one whose second
         ! derivative matrix is least subject to the new interpolation conditions. Otherwise the
@@ -657,6 +671,7 @@ do while (.true.)
                 itest = itest + 1
             end if
         end if
+!write (17, *) 658, dffalt, TENTH * diff, itest
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved. If
         ! D is a trust region step, then KNEW is ZERO at present, but a positive value is picked
@@ -667,7 +682,9 @@ do while (.true.)
         ! the second derivative parameters of the new KNEW-th Lagrange function. The contribution
         ! from the old parameter PQ(KNEW) is included in the second derivative matrix HQ.
         freduced = (f < fopt .and. feasible)
+!write (17, *) '673', gopt
         call updateq(idz, knew_geo, kopt, freduced, bmat, d, f, fval, xnew, xpt, zmat, gopt, hq, pq)
+!write (17, *) '674', gopt
 !write (17, *) 544, nf, gopt
 !write (17, *) 545, nf, hq
 !write (17, *) 546, nf, pq
@@ -702,11 +719,13 @@ do while (.true.)
 
         ! Replace the current model by the least Frobenius norm interpolant if this interpolant
         ! gives substantial reductions in the predictions of values of F at feasible points.
-        if (itest == 3) then
+        !if (itest == 3) then
+        if (itest >= 3) then
             fshift = fval - fval(kopt)
             pq = omega_mul(idz, zmat, fshift)
             hq = ZERO
             gopt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pq)
+            itest = 0
         end if
     end if
 
