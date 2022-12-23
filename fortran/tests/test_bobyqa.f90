@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, December 22, 2022 PM02:44:39
+! Last Modified: Friday, December 23, 2022 AM11:28:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,7 +45,7 @@ character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 500_IK
+integer(IK), parameter :: bign = 400_IK
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -124,7 +124,7 @@ if (test_bigprob) then
         rseed = int(sum(istr(probname)) + n + irand + RP)
         call setseed(rseed)
         npt = max(n + 2_IK, int(5.0 * rand() * real(n, RP), kind(npt)))
-        iprint = 3
+        iprint = 2
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + int(500.0_RP * rand())]), IK)
         maxhist = maxfun
         ftarget = -TEN**(min(10, range(0.0_RP)) * rand())
@@ -180,7 +180,7 @@ else
                     npt = 0
                 end if
                 !iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
-                iprint = 3
+                iprint = 2
                 maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
                 if (rand() <= 0.2) then
                     maxfun = 0

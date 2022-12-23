@@ -112,7 +112,7 @@ if (test_bigprob) then
     do irand = 1, 1  ! The test is expensive
         rseed = int(sum(istr(probname)) + n + irand + RP)
         call setseed(rseed)
-        iprint = 3
+        iprint = 2
         npt = (n + 2_IK) * (n + 1_IK) / 2_IK
         maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + int(500.0_RP * rand())]), IK)
         maxhist = maxfun
