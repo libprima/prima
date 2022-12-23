@@ -712,6 +712,8 @@ $(TESTS_C) $(TESTS_INT_C):
 	@mkdir -p $(LOG_DIR)
 	@if echo $@ | grep -q "9test" ; then \
 		printf "\n$@ is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
+	elif echo $@ | grep -q "_d0" && [[ $(TESTDIM) = "big" ]] ; then \
+		printf "\n$@ is skipped since we are testing a BIG problem!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 	else  \
 		if [[ -n "$(FFLAGSO)" ]] ; then \
 			if [[ -x $@_c_$(SUFFIXO) ]] ; then \
