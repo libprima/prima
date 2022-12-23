@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM09:41:40
+! Last Modified: Saturday, December 24, 2022 AM12:09:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -297,6 +297,7 @@ galt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pqalt)
 
 ! Replace the current model with the alternative model if ALL(QALT_BETTER) = TRUE, i.e., the
 ! recent few alternative models are more accurate in predicting the function value of XOPT + D.
+!write (16, *) qalt_better
 if (all(qalt_better)) then
     pq = pqalt
     hq = ZERO

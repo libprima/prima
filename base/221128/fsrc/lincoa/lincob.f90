@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, November 28, 2022 PM09:41:10
+! Last Modified: Saturday, December 24, 2022 AM12:09:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -292,11 +292,14 @@ do tr = 1, maxtr
         fshift = fval - fopt
         pqalt = omega_mul(idz, zmat, fshift)
         galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+!write (16, *) '293'
     end if
 
     ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
+!write (16, *) 300, 'q', gopt!, hq, pq
     call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, ngetact, d)
     dnorm = min(delta, sqrt(sum(d**2)))
+!write (16, *) 300, 'tr', delta, d
 
     ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
     ! applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has caused a
@@ -394,6 +397,7 @@ do tr = 1, maxtr
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
         knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat)
         if (knew_tr > 0) then
+!write (16, *) 400
             ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT,
             ! FOPT] and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes
             ! XNEW = XOPT + D.
@@ -476,6 +480,7 @@ do tr = 1, maxtr
     ! exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
 
     if (improve_geo) then
+!write (16, *) 482
         ! Shift XBASE if XOPT may be too far from XBASE.
         ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
         ! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably
@@ -497,6 +502,7 @@ do tr = 1, maxtr
         delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
         ! Find D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) becomes XOPT + D.
         call geostep(iact, idz, knew_geo, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
+!write (16, *) 500, 'geo', d
 
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
@@ -539,13 +545,16 @@ do tr = 1, maxtr
         xosav = xpt(:, kopt)
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         call updatexf(knew_geo, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
+!write (16, *) '673', gopt
         call updateq(idz, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
+!write (16, *) '674', gopt
 
         ! Establish the alternative model, namely the least Frobenius norm interpolant. Replace the
         ! current model with the alternative model if the recent few (three) alternative models are
         ! more accurate in predicting the function value of XOPT + D.
         ! N.B.: Powell's code does this only if XOPT + D is feasible.
         call tryqalt(idz, bmat, fval - fopt, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
+!write (16, *) '717', gopt
 
         ! Update RESCON. Zaikun 20221115: Currently, UPDATERES does not update RESCON unless
         ! XIMPROVED is TRUE. Shouldn't we do it whenever DELTA is updated? Have we MISUNDERSTOOD
@@ -604,7 +613,7 @@ call retmsg(solver, info, iprint, nf, f, x, cstrv)
 
 ! Postconditions
 
-!close (16)
+close (16)
 
 end subroutine lincob
 
