@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, December 22, 2022 PM02:33:04
+! Last Modified: Saturday, December 24, 2022 AM12:54:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,7 +42,7 @@ character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 150_IK
+integer(IK), parameter :: bign = 120_IK
 integer(IK) :: dimstride_loc
 integer(IK) :: iprint
 integer(IK) :: iprob
