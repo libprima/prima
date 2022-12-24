@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, December 24, 2022 PM12:38:51
+! Last Modified: Saturday, December 24, 2022 PM07:43:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 10
 character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed dimensions
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 120_IK
+integer(IK), parameter :: bign = 150_IK
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
