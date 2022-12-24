@@ -6,7 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 23 * * *'
+    - cron: '0 4 3-31/3 * *'
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
@@ -48,6 +48,7 @@ jobs:
         ikind: [i2] #, i4, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
+        testdim: [small, big]
 
     steps:
       - name: Checkout repository
@@ -71,7 +72,7 @@ jobs:
         run: |
           ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"  # `realpath` is unavailable on macOS
           cd $ROOT/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && make vtest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make vtest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd $ROOT/fortran/examples/${{ matrix.solver }} && make vtest
 
       - name: Store artifacts
