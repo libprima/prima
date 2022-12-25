@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, December 24, 2022 PM07:43:16
+! Last Modified: Sunday, December 25, 2022 PM11:49:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -114,7 +114,11 @@ if (test_bigprob) then
         call setseed(rseed)
         iprint = 2
         npt = (n + 2_IK) * (n + 1_IK) / 2_IK
-        maxfun = int(minval([10**min(range(0), range(0_IK)), int(npt) + int(500.0_RP * rand())]), IK)
+        if (int(npt) + 500 > huge(0_IK)) then
+            maxfun = huge(0_IK)
+        else
+            maxfun = npt + int(500.0_RP * rand(), IK)
+        end if
         maxhist = maxfun
         ftarget = -HUGENUM
         rhobeg = noisy(prob % Delta0)
