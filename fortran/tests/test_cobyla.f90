@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, December 25, 2022 PM08:07:55
+! Last Modified: Sunday, December 25, 2022 PM11:57:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -130,10 +130,14 @@ if (test_bigprob) then
     do irand = 1, 1  ! The test is expensive
         rseed = int(sum(istr(probname)) + n + irand + RP)
         call setseed(rseed)
-        m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**floor(0.9 * real(min(range(0), range(0_IK))))), IK)
+        m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         call construct(prob, probname, n, m)
         iprint = 2
-        maxfun = int(minval([10**min(range(0), range(0_IK)), int(n) + int(500.0_RP * rand())]), IK)
+        if (int(n) + 500 > huge(0_IK)) then
+            maxfun = huge(0_IK)
+        else
+            maxfun = n + int(500.0_RP * rand(), IK)
+        end if
         maxhist = maxfun
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
         if (rand() <= 0.5) then
