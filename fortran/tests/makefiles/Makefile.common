@@ -896,11 +896,11 @@ header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
 header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
 header_%: source_%
 	@printf "\nPreparing the header file for the test.\n"
-	$(SEDI) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
-	$(SEDI) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
-	$(SEDI) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
-	$(SEDI) "0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/" $(HEADERS)
-	$(SEDI) "0,/^#define __AGRESSIVE_OPTIONS__ [0-9]*/s//#define __AGRESSIVE_OPTIONS__ $(AGRESSIVE)/" $(HEADERS)
+	$(SEDI) "s|^#define __QP_AVAILABLE__ [0-9]*|#define __QP_AVAILABLE__ $(QPAVLB)|" $(HEADERS)
+	$(SEDI) "s|^#define __INTEGER_KIND__ [0-9]*|#define __INTEGER_KIND__ $(IK)|" $(HEADERS)
+	$(SEDI) "s|^#define __REAL_PRECISION__ [0-9]*|#define __REAL_PRECISION__ $(RP)|" $(HEADERS)
+	$(SEDI) "s|^#define __DEBUGGING__ [0-9]*|#define __DEBUGGING__ $(DBG)|" $(HEADERS)
+	$(SEDI) "s|^#define __AGRESSIVE_OPTIONS__ [0-9]*|#define __AGRESSIVE_OPTIONS__ $(AGRESSIVE)|" $(HEADERS)
 	@printf "Done.\n"
 
 
