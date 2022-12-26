@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, December 25, 2022 PM11:51:18
+! Last Modified: Monday, December 26, 2022 PM12:16:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -137,10 +137,10 @@ if (test_bigprob) then
         call construct(prob, probname, n, m)
         npt = max(n + 2_IK, int(5.0 * rand() * real(n, RP), kind(npt)))
         iprint = 2
-        if (int(npt) + 500 > huge(0_IK)) then
+        if (int(npt) + 1000 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else
-            maxfun = npt + int(500.0_RP * rand(), IK)
+            maxfun = npt + int(1000.0_RP * rand(), IK)
         end if
         maxhist = maxfun
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
@@ -164,7 +164,7 @@ if (test_bigprob) then
            & trimstr(probname)//': N = ', n, ' NPT = ', npt, ' M = ', size(Aineq, 2), ', MAXFUN = ', maxfun, ', Random test ', irand
 
         call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=Aineq, b=bineq, &
-            & npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
+            & npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist,&
             & chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
         deallocate (x)
