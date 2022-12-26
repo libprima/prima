@@ -96,7 +96,7 @@ jobs:
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
                 export TESTDIM=${{ matrix.testdim }}
                 export FFLAGS=${{ matrix.fflags }}
-                cd "$ROOT"/fortran/tests && make gtest_${{ matrix.ikind }}_r16_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r16_d1_tst.${{ matrix.solver }}
+                cd "$ROOT"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
 
       - name: Store artifacts
