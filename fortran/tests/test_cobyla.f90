@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, December 25, 2022 PM11:57:25
+! Last Modified: Monday, December 26, 2022 PM12:17:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,10 +133,10 @@ if (test_bigprob) then
         m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         call construct(prob, probname, n, m)
         iprint = 2
-        if (int(n) + 500 > huge(0_IK)) then
+        if (int(n) + 1000 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else
-            maxfun = n + int(500.0_RP * rand(), IK)
+            maxfun = n + int(1000.0_RP * rand(), IK)
         end if
         maxhist = maxfun
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
@@ -155,7 +155,7 @@ if (test_bigprob) then
         print '(/1A, I0, 1A, I0, 1A, I0, 1A, I0)', &
             & trimstr(probname)//': N = ', n, ' M = ', m, ', MAXFUN = ', maxfun, ', Random test ', irand
         call cobyla(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxfilt=maxfilt,&
-            & maxhist=maxhist, fhist=fhist, chist=chist, &
+            & maxhist=maxhist, fhist=fhist, xhist=xhist, chist=chist, conhist=conhist,&
             & ftarget=ftarget, ctol=ctol, iprint=iprint)
 
         deallocate (x)
