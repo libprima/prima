@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 08, 2022 PM06:25:39
+! Last Modified: Monday, December 26, 2022 PM05:26:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -50,7 +50,7 @@ subroutine trsapp(delta, gq_in, hq_in, pq_in, tol, x, xpt, crvmin, s, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, REALMIN, ZERO, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, project
@@ -137,11 +137,13 @@ end if
 
 ! Scale the problem if GQ contains large values. Otherwise, floating point exceptions may occur.
 ! Note that CRVMIN must be scaled back if it is nonzero, but the step is scale invariant.
-modscal = maxval(abs(gq_in))
-if (modscal > 1.0E12) then   ! The threshold is empirical.
-    gq = gq_in / modscal
-    pq = pq_in / modscal
-    hq = hq_in / modscal
+! N.B.: It is faster and safer to scale by multiplying a reciprocal than by division. See
+! https://fortran-lang.discourse.group/t/ifort-ifort-2021-8-0-1-0e-37-1-0e-38-0/
+if (maxval(abs(gq_in)) > 1.0E12) then   ! The threshold is empirical.
+    modscal = max(TWO * REALMIN, ONE / maxval(abs(gq_in)))  ! MAX: precaution against underflow.
+    gq = gq_in * modscal
+    pq = pq_in * modscal
+    hq = hq_in * modscal
     scaled = .true.
 else
     gq = gq_in
@@ -418,7 +420,7 @@ end if
 
 ! Scale CRVMIN back before return. Note that the trust-region step is scale invariant.
 if (scaled .and. crvmin > 0) then
-    crvmin = crvmin * modscal
+    crvmin = crvmin / modscal
 end if
 
 if (present(info)) then

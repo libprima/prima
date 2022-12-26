@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 23, 2022 AM10:18:13
+! Last Modified: Monday, December 26, 2022 PM07:00:26
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -185,18 +185,9 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 ! for REAL128. Indeed, Fortran standards do not enforce IEEE 754, so compilers are not guaranteed to
 ! respect it. Hence we set SYMTOL_DFT to a nonzero number when __RELEASED__ is 1, although we do not
 ! intend to test symmetry in production. We set SYMTOL_DFT in the same way when __DEBUGGING__ is 0.
-! Update 20221202: for REAL32, ifort does not ensure that a symmetric matrix remains symmetric after
-! divided by a scalar. In brief, this is because different parts of the matrix may not be handled in
-! the same way due to vectorization. It will be no surprise if the same thing happens to other
-! compilers. See https://fortran-lang.discourse.group/t/strange-behavior-of-ifort.
-! Update 20221210: In the following cases, we set SYMTOL_DFT to HUGENUM, which signifies to weaken
-! the criteria for symmetry.
-! 1. When the compiler is ifort and the floating point numbers are in the single precision.
-! See https://fortran-lang.discourse.group/t/strange-behavior-of-ifort,
-! https://fortran-lang.discourse.group/t/ifort-question-1-inf,
-! https://fortran-lang.discourse.group/t/ifort-ifort-2021-8-0-1-7633055e-37-1-0e-38-0 .
-! 2. When gfortran is invoked with aggressive optimization options.
-#if (defined __GFORTRAN__ && __AGRESSIVE_OPTIONS__ == 1) || (defined __INTEL_COMPILER && __REAL_PRECISION__ < 64)
+! Update 20221226: When gfortran 12 is invoked with aggressive optimization options, it is buggy
+! with ALL() and ANY(). We set SYMTOL_DFT to HUGENUM to signify this case and disable the check.
+#if (defined __GFORTRAN__ && __AGRESSIVE_OPTIONS__ == 1)
 real(RP), parameter :: SYMTOL_DFT = HUGENUM
 #elif (__RELEASED__ == 1) || (__DEBUGGING__ == 0) || (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)

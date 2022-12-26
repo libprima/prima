@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, December 21, 2022 AM07:58:49
+! Last Modified: Monday, December 26, 2022 PM05:24:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -158,9 +158,9 @@ pq = pq_in
 scaled = .false.
 scaling = maxval(abs(gopt))
 if (scaling > 1.0E12) then
-    gopt = gopt / scaling
-    hq = hq / scaling
-    pq = pq / scaling
+    gopt = gopt * max(TWO * tiny(scaling), ONE / scaling)
+    hq = hq * max(TWO * tiny(scaling), ONE / scaling)
+    pq = pq * max(TWO * tiny(scaling), ONE / scaling)
     scaled = .true.
 end if
 
@@ -519,7 +519,7 @@ if (crvmin <= -HUGENUM) then
 end if
 
 if (scaled .and. crvmin > 0) then
-    crvmin = crvmin * scaling
+    crvmin = crvmin / max(TWO * tiny(scaling), ONE / scaling)
 end if
 
 !====================!

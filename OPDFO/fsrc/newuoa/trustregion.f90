@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 08, 2022 AM11:54:23
+! Last Modified: Monday, December 26, 2022 PM05:25:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -50,7 +50,7 @@ subroutine trsapp(delta, gq_in, hq_in, pq_in, tol, x, xpt, crvmin, s, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, project
@@ -133,9 +133,9 @@ end if
 
 scaling = maxval(abs(gq_in))
 if (scaling > 1.0E12) then
-    gq = gq_in / scaling
-    hq = hq_in / scaling
-    pq = pq_in / scaling
+    gq = gq_in * max(TWO * tiny(scaling), ONE / scaling)
+    hq = hq_in * max(TWO * tiny(scaling), ONE / scaling)
+    pq = pq_in * max(TWO * tiny(scaling), ONE / scaling)
     scaled = .true.
 else
     gq = gq_in
@@ -391,7 +391,7 @@ if (is_nan(crvmin)) then  ! This may happen if the problem is ill-conditioned.
 end if
 
 if (crvmin > 0 .and. scaled) then
-    crvmin = crvmin * scaling
+    crvmin = crvmin / max(TWO * tiny(scaling), ONE / scaling)
 end if
 
 if (present(info)) then
