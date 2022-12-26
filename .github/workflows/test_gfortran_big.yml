@@ -1,8 +1,8 @@
 name: Test gfortran, big
 
 on:
-  # Trigger the workflow on #PUSH or pull request
-  push:
+  # Trigger the workflow on push or pull request
+  #push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -43,7 +43,7 @@ jobs:
         compiler: [gcc]
         version: [12]
         bitness: [64]
-        ikind: [i4]
+        ikind: [i2]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -g, -fast]
         testdim: [big]

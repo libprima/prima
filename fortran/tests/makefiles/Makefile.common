@@ -93,7 +93,7 @@ DFF := -O4 -Ofast -ffast-math  # As of AMD clang version 13.0., -Ofast implies -
 FFF := -O3 -Ofast -ffast-math  # No documentation found about the relation between -Ofast, -O3, and -ffast-math
 GFF := -Ofast  # -Ofast implies -O3 and -ffast-math
 NFF := -O4
-SFF := -fast  # -fast implies -O5
+SFF := -fast -g # -fast implies -O5
 SFF16 := -O5  # -fast leads to a mistakenly failure of assertion in BOBYQA: RHOBEG <= MINVAL(XU-XL)/2
 VFF := -O4 -fast  # nvfortran -fast implies -O2, but the highest optimization level is -O4
 
@@ -403,11 +403,11 @@ GFORT := $(GFORT) -Werror -pedantic-errors
 # `-fautomatic` (the default) tells `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.
 # We enable them for small problems to verify that we will not have stack overflows.
-# N.B.: -Ofast turns on -fstack-arrays. We have to turn if off when the problem is big. 
+# N.B.: -Ofast turns on -fstack-arrays. We have to turn if off when the problem is big.
 ifeq ($(TESTDIM),small)
 	GFORT := $(GFORT) -fautomatic -fstack-arrays -fstack-check
 else
-	GFORT := $(GFORT) -fno-stack-arrays -fstack-check  
+	GFORT := $(GFORT) -fno-stack-arrays -fstack-check
 endif
 GFORT := $(GFORT) -std=f$(FSTD) -fall-intrinsics \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion -Wuninitialized -Wmaybe-uninitialized \
@@ -567,21 +567,21 @@ stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_ts
 stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
 	FCG := $(SFORT) $(FFLAGSG) -fnonstd -ftrap=division
 stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
-	FCF := $(SFORT) $(SFF)
+	FCF := $(SFORT) $(SFF) -ftrap=division # N.B. -fast implies -ftrap=common; we have to turn off undesired traps manually
 
 stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
 	FCO := $(SFORT) $(FFLAGSO) -fnonstd -ftrap=overflow,division#,invalid#,underflow
 stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
 	FCG := $(SFORT) $(FFLAGSG) -fnonstd -ftrap=overflow,division#,invalid#,underflow
 stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
-	FCF := $(SFORT) -fnonstd -ftrap=overflow,division $(SFF)
+	FCF := $(SFORT) -fnonstd $(SFF) -ftrap=overflow,division
 
 stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
 	FCO := $(SFORT) $(FFLAGSO) -fnonstd -ftrap=overflow,division#,invalid#,underflow
 stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
 	FCG := $(SFORT) $(FFLAGSG) -fnonstd -ftrap=overflow,division#,invalid#,underflow
 stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
-	FCF := $(SFORT) -fnonstd -ftrap=overflow,division $(SFF16)
+	FCF := $(SFORT) -fnonstd $(SFF16) -ftrap=overflow,division
 
 # Intel ifx
 XFORT := ifx
