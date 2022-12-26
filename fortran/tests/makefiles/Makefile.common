@@ -403,10 +403,11 @@ GFORT := $(GFORT) -Werror -pedantic-errors
 # `-fautomatic` (the default) tells `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.
 # We enable them for small problems to verify that we will not have stack overflows.
+# N.B.: -Ofast turns on -fstack-arrays. We have to turn if off when the problem is big. 
 ifeq ($(TESTDIM),small)
 	GFORT := $(GFORT) -fautomatic -fstack-arrays -fstack-check
 else
-	GFORT := $(GFORT) -fstack-check -fno-stack-arrays
+	GFORT := $(GFORT) -fno-stack-arrays -fstack-check  
 endif
 GFORT := $(GFORT) -std=f$(FSTD) -fall-intrinsics \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion -Wuninitialized -Wmaybe-uninitialized \
