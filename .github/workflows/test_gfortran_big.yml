@@ -39,13 +39,15 @@ jobs:
       matrix:
         # As of 20221119, according to https://github.com/actions/virtual-environments ,
         # ubuntu-latest = ubuntu-20.04,
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         compiler: [gcc]
         version: [12]
         bitness: [64]
-        ikind: [i2, i4]
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-O2, -g, -fast]
+          #ikind: [i2, i4]
+        ikind: [i4]
+        solver: [uobyqa]
+          #fflags: [-O1, -O2, -g, -fast]
+        fflags: [-fast]
         testdim: [big]
 
     steps:
