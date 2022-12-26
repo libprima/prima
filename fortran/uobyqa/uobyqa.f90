@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 26, 2022 AM10:05:36
+! Last Modified: Monday, December 19, 2022 AM08:07:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -215,7 +215,6 @@ real(RP) :: rhoend_loc
 real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 
-write (*, *) 'In UOBYQA, 218'
 
 ! Sizes
 n = int(size(x), kind(n))
@@ -316,8 +315,6 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 ! the history that is not requested.
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc)
 
-write (*, *) 'In UOBYQB, 319'
-
 
 !-------------------- Call UOBYQB, which performs the real calculations. --------------------------!
 call uobyqb(calfun, iprint_loc, maxfun_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
@@ -374,8 +371,6 @@ if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
     call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recorded')
 end if
 
-write (*, *) 'In UOBYQA, 375'
-
 ! Postconditions
 if (DEBUGGING) then
     call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
@@ -390,7 +385,6 @@ if (DEBUGGING) then
         call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
     end if
 end if
-write (*, *) 'In UOBYQA, 388'
 
 end subroutine uobyqa
 
