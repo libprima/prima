@@ -1,25 +1,3 @@
-test_gfortran_finished.yml:    - cron: '0 16 * * *'
-profile_finished.yml:    - cron: '0 8 * * *'
-test_flang_finished.yml:    - cron: '0 12 * * *'
-test_aflang_finished.yml:    - cron: '0 7 * * *'
-test_g95_finished.yml:    - cron: '0 6 * * *'
-test_ifort_finished.yml:    - cron: '0 14 * * *'
-verify_finished.yml:    - cron: '0 20 * *
-test_ifx_finished.yml:    - cron: '0 22 * * *'
-test_nvfortran_finished.yml:    - cron: '0 0 * * *'
-test_sunf95_finished.yml:    - cron: '0 4 * * *'
-lint_finished.yml:    - cron: '0 18 * * *'
-test_nagfor_finished.yml:    - cron: '0 10 * * *'
-test_absoft_finished.yml:    - cron: '0 2 * * *'
-test_kunpeng_finished.yml:    - cron: '0 16 * * *'
-
-test_matlab.yml: - cron: '0 1,7,13,19 * * *'
-verify_small.yml: - cron: '0 3,11,15,23 * * *'
-verify_big.yml:  - cron: '0 1,9,13,21 * * *'
-verify_large.yml: - cron: '0 5,17 * * *'
-profile_big_all.yml: - cron: '0 11,23 * * *
-
-----------------------------------------------------------------------------------------------------
 lint.yml:    - cron: '0 17 * * *'
 test_g95.yml:    - cron: '0 5 * * *'
 
@@ -39,9 +17,9 @@ test_gfortran_fast.yml:    - cron: '0 16 4-31/4 * *'
 test_ifort.yml:    - cron: '0 10 1-31/2 * *'
 test_ifx.yml:    - cron: '0 10 2-31/2 * *'
 
-test_matlab.yml:    - cron: '0 1,13, * * *'
-verify_big.yml:    - cron: '0 9,21 * * *'
-verify_large.yml:    - cron: '0 5,17 * * *'
-verify_small.yml:    - cron: '0 3,15 * * *'
-profile_all.yml:    - cron: '0 0,12 * * *'
-verify_base.yml:    - cron: '0 17 * * *'
+test_matlab.yml:    - cron: '0 1, * * *'
+verify_big.yml:    - cron: '0 9 * * *'
+verify_large.yml:    - cron: '0 5 * * *'
+verify_small.yml:    - cron: '0 15 * * *'
+profile_all.yml:    - cron: '0 12 * * *'
+verify_base.yml:    - cron: '0 17 1-31/3 * *'
