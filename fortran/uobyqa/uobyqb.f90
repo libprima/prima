@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 26, 2022 AM10:01:08
+! Last Modified: Monday, December 12, 2022 PM11:52:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -136,8 +136,6 @@ maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = max(maxxhist, maxfhist)
 
-write (*, *) 'In UOBYQB, 139'
-
 ! Preconditions.
 if (DEBUGGING) then
     call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
@@ -152,8 +150,6 @@ if (DEBUGGING) then
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
 end if
 
-write (*, *) 'In UOBYQB, 154'
-
 !====================!
 ! Calculation starts !
 !====================!
@@ -164,23 +160,17 @@ fopt = fval(kopt)
 x = xbase + xopt
 f = fopt
 
-write (*, *) 'In UOBYQB, 167'
-
 if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Arrange FHIST and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist)
     ! Print a return message according to IPRINT.
     call retmsg(solver, info, iprint, nf, f, x)
-    write (*, *) 'In UOBYQB, 174'
     return
 end if
 
-
 call initq(fval, xpt, pq)
-write (*, *) 'In UOBYQB, 180'
 call initl(xpt, pl)
-write (*, *) 'In UOBYQB, 182'
 
 ! Set some more initial values.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
@@ -209,9 +199,7 @@ do while (.true.)
     xopt = xpt(:, kopt)
     g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
     h = vec2smat(pq(n + 1:npt - 1))
-    write (*, *) 'In UOBYQB, 211'
     call trstep(delta, g, h, trtol, d, crvmin)
-    write (*, *) 'In UOBYQB, 212'
 
     ! Check whether D is too short to invoke a function evaluation.
     dnorm = min(delta, sqrt(sum(d**2)))
@@ -220,7 +208,6 @@ do while (.true.)
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(pq, d, xopt)  ! QRED = Q(XOPT) - Q(XOPT + D)
-    write (*, *) 'In UOBYQB, 223'
 
     if (shortd .or. .not. qred > 0) then
         ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
@@ -231,18 +218,13 @@ do while (.true.)
     else
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
-        write (*, *) 'In UOBYQB, 233'
         call evaluate(calfun, x, f)
-        write (*, *) 'In UOBYQB, 235'
         nf = nf + 1_IK
 
         ! Print a message about the function evaluation according to IPRINT.
-        write (*, *) 'In UOBYQB, 239'
         call fmsg(solver, iprint, nf, f, x)
         ! Save X, F into the history.
-        write (*, *) 'In UOBYQB, 242'
         call savehist(nf, x, xhist, f, fhist)
-        write (*, *) 'In UOBYQB, 244'
 
         ! Check whether to exit
         subinfo = checkexit(maxfun, nf, f, ftarget, x)
@@ -279,9 +261,7 @@ do while (.true.)
         if (knew_tr > 0) then
             ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
             ! Update PL, PQ, XPT, KOPT, XOPT, and FOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
-            write (*, *) 'In UOBYQB, 281'
             call update(knew_tr, d, f, moderr, kopt, fopt, pl, pq, xpt, xopt)
-            write (*, *) 'In UOBYQB, 283'
         end if
     end if
 
@@ -384,24 +364,17 @@ do while (.true.)
         ! improve the performance slightly according to a test on 20220720.
         delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
 
-        write (*, *) 'In UOBYQB, 387'
         d = geostep(knew_geo, kopt, delbar, pl, xpt)
-        write (*, *) 'In UOBYQB, 388'
 
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
-        write (*, *) 'In UOBYQB, 390'
         call evaluate(calfun, x, f)
-        write (*, *) 'In UOBYQB, 392'
         nf = nf + 1_IK
 
         ! Print a message about the function evaluation according to IPRINT.
-        write (*, *) 'In UOBYQB, 396'
         call fmsg(solver, iprint, nf, f, x)
-        write (*, *) 'In UOBYQB, 398'
         ! Save X, F into the history.
         call savehist(nf, x, xhist, f, fhist)
-        write (*, *) 'In UOBYQB, 402'
 
         ! Check whether to exit
         subinfo = checkexit(maxfun, nf, f, ftarget, x)
@@ -420,9 +393,7 @@ do while (.true.)
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
         ! Update PL, PQ, XPT, KOPT, XOPT, and FOPT so that XPT(:, KNEW_GEO) becomes XOPT + D.
-        write (*, *) 'In UOBYQB, 421'
         call update(knew_geo, d, f, moderr, kopt, fopt, pl, pq, xpt, xopt)
-        write (*, *) 'In UOBYQB, 422'
     end if
 
     if (reduce_rho) then
@@ -433,18 +404,14 @@ do while (.true.)
 
         ! Shifting XBASE to the best point so far, and make the corresponding changes to the
         ! gradients of the Lagrange functions and the quadratic model.
-        write (*, *) 'In UOBYQB, 433'
         call shiftbase(xopt, pl, pq, xbase, xpt)
-        write (*, *) 'In UOBYQB, 435'
 
         ! Pick the next values of RHO and DELTA.
         delta = HALF * rho
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
-        write (*, *) 'In UOBYQB, 441'
         call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
-        write (*, *) 'In UOBYQB, 444'
         ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
         ! the current RHO. Update them after reducing RHO.
         dnormsav = HUGENUM
@@ -455,16 +422,12 @@ end do
 ! Return, possibly after another Newton-Raphson step, if it is too short to have been tried before.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
-    write (*, *) 'In UOBYQB, 455'
     call evaluate(calfun, x, f)
-    write (*, *) 'In UOBYQB, 457'
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, iprint, nf, f, x)
-    write (*, *) 'In UOBYQB, 461'
     ! Save X, F into the history.
     call savehist(nf, x, xhist, f, fhist)
-    write (*, *) 'In UOBYQB, 465'
 end if
 
 ! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
@@ -474,14 +437,11 @@ if (fopt <= f .or. is_nan(f)) then
 end if
 
 ! Arrange FHIST and XHIST so that they are in the chronological order.
-write (*, *) 'In UOBYQB, 474'
 call rangehist(nf, xhist, fhist)
-write (*, *) 'In UOBYQB, 476'
 
 ! Print a return message according to IPRINT.
 call retmsg(solver, info, iprint, nf, f, x)
 
-write (*, *) 'In UOBYQB, 480'
 !====================!
 !  Calculation ends  !
 !====================!
@@ -499,8 +459,6 @@ if (DEBUGGING) then
         & 'FHIST does not contain NaN/+Inf', srname)
     call assert(.not. any(fhist(1:min(nf, maxfhist)) < f), 'F is the smallest in FHIST', srname)
 end if
-
-write (*, *) 'In UOBYQB, 499'
 
 close (16)
 

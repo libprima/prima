@@ -406,7 +406,7 @@ GFORT := $(GFORT) -Werror -pedantic-errors
 ifeq ($(TESTDIM),small)
 	GFORT := $(GFORT) -fautomatic -fstack-arrays -fstack-check
 else
-	GFORT := $(GFORT) -fstack-check
+	GFORT := $(GFORT) -fstack-check -fno-stack-arrays
 endif
 GFORT := $(GFORT) -std=f$(FSTD) -fall-intrinsics \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion -Wuninitialized -Wmaybe-uninitialized \
