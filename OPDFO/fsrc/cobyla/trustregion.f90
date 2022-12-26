@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, December 08, 2022 AM11:16:12
+! Last Modified: Monday, December 26, 2022 PM05:37:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,7 +69,7 @@ function trstlp(A_in, b_in, delta) result(d)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : norm
@@ -107,8 +107,8 @@ do i = 1, m + 1
 
     scaling = maxval(abs(A_in(:, i)))
     if (scaling > 1.0E12) then
-        A(:, i) = A_in(:, i) / scaling
-        b(i) = b_in(i) / scaling
+        A(:, i) = A_in(:, i) * max(TWO * tiny(0.0_RP), ONE / scaling)
+        b(i) = b_in(i) * max(TWO * tiny(0.0_RP), ONE / scaling)
     else
         A(:, i) = A_in(:, i)
         b(i) = b_in(i)

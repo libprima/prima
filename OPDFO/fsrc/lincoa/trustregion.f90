@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, December 21, 2022 AM08:02:06
+! Last Modified: Monday, December 26, 2022 PM05:27:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,9 +79,9 @@ real(RP) :: pq(size(pq_in)), gq(size(gq_in)), hq(size(hq_in, 1), size(hq_in, 2))
 
 scaling = maxval(abs(gq_in))
 if (scaling > 1.0E12) then
-    gq = gq_in / scaling
-    pq = pq_in / scaling
-    hq = hq_in / scaling
+    gq = gq_in * max(TWO * tiny(scaling), ONE / scaling)
+    pq = pq_in * max(TWO * tiny(scaling), ONE / scaling)
+    hq = hq_in * max(TWO * tiny(scaling), ONE / scaling)
 else
     gq = gq_in
     pq = pq_in

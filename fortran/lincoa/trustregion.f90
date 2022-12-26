@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, December 21, 2022 AM08:01:27
+! Last Modified: Monday, December 26, 2022 PM05:34:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ subroutine trstep(amat, delta, gopt_in, hq_in, pq_in, rescon, xpt, iact, nact, q
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TWO, HALF, EPS, TINYCV, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TWO, HALF, EPS, REALMIN, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, solve, isorth, istriu, &
@@ -153,11 +153,13 @@ end if
 
 ! Scale the problem if GOPT contains large values. Otherwise, floating point exceptions may occur.
 ! Note that the trust-region step is scale invariant.
-modscal = maxval(abs(gopt_in))
-if (modscal > 1.0E12) then   ! The threshold is empirical.
-    gopt = gopt_in / modscal
-    pq = pq_in / modscal
-    hq = hq_in / modscal
+! N.B.: It is faster and safer to scale by multiplying a reciprocal than by division. See
+! https://fortran-lang.discourse.group/t/ifort-ifort-2021-8-0-1-0e-37-1-0e-38-0/
+if (maxval(abs(gopt_in)) > 1.0E12) then   ! The threshold is empirical.
+    modscal = max(TWO * REALMIN, ONE / maxval(abs(gopt_in)))  ! MAX: precaution against underflow.
+    gopt = gopt_in * modscal
+    pq = pq_in * modscal
+    hq = hq_in * modscal
 else
     gopt = gopt_in
     pq = pq_in

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, December 21, 2022 AM07:55:21
+! Last Modified: Monday, December 26, 2022 PM05:42:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,7 +69,7 @@ function trstlp(A_in, b_in, delta) result(d)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, REALMIN, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : norm
@@ -91,7 +91,7 @@ integer(IK) :: m
 integer(IK) :: nact
 real(RP) :: A(size(A_in, 1), size(A_in, 2))
 real(RP) :: b(size(b_in))
-real(RP) :: modscal(size(A_in, 2))
+real(RP) :: modscal
 real(RP) :: vmultc(size(b_in))
 real(RP) :: z(size(d), size(d))
 
@@ -111,13 +111,15 @@ end if
 
 ! Scale the problem if A contains large values. Otherwise, floating point exceptions may occur.
 ! Note that the trust-region step is scale invariant.
-modscal = maxval(abs(A_in), dim=1)
+! N.B.: It is faster and safer to scale by multiplying a reciprocal than by division. See
+! https://fortran-lang.discourse.group/t/ifort-ifort-2021-8-0-1-0e-37-1-0e-38-0/
 A = A_in
 b = b_in
 do i = 1, m + 1_IK  ! Note that SIZE(A, 2) = SIZE(B) = M + 1 /= M.
-    if (modscal(i) > 1.0E12) then
-        A(:, i) = A(:, i) / modscal(i)
-        b(i) = b(i) / modscal(i)
+    if (maxval(abs(A_in(:, i))) > 1.0E12) then
+        modscal = max(TWO * REALMIN, ONE / maxval(abs(A_in(:, i)))) ! MAX: avoid underflow.
+        A(:, i) = A(:, i) * modscal
+        b(i) = b(i) * modscal
     end if
 end do
 
