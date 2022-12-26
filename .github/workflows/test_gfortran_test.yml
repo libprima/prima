@@ -2,7 +2,7 @@ name: Test gfortran, big
 
 on:
   # Trigger the workflow on #PUSH or pull request
-  #PUSH:
+  push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -39,13 +39,15 @@ jobs:
       matrix:
         # As of 20221119, according to https://github.com/actions/virtual-environments ,
         # ubuntu-latest = ubuntu-20.04,
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         compiler: [gcc]
         version: [12]
         bitness: [64]
-        ikind: [i2, i4]
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-O1, -O2, -g, -fast]
+          #ikind: [i2, i4]
+        ikind: [i4]
+        solver: [uobyqa]
+          #fflags: [-O1, -O2, -g, -fast]
+        fflags: [-fast]
         testdim: [big]
 
     steps:
@@ -94,7 +96,7 @@ jobs:
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
                 export TESTDIM=${{ matrix.testdim }}
                 export FFLAGS=${{ matrix.fflags }}
-                cd "$ROOT"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
+                cd "$ROOT"/fortran/tests && make gtest_${{ matrix.ikind }}_r16_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r16_d1_tst.${{ matrix.solver }}
             fi
 
       - name: Store artifacts
