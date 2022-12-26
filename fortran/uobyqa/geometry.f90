@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM11:52:44
+! Last Modified: Tuesday, December 27, 2022 AM02:32:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -154,7 +154,7 @@ function geostep(knew, kopt, delbar, pl, xpt) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates a step D that approximately solves
 !
-! maximize |LFUNC(XOPT + D) subject to ||D|| <= DELBAR,
+! maximize |LFUNC(XOPT + D)| subject to ||D|| <= DELBAR,
 !
 ! so that the geometry of the interpolation step is improved when XPT(:, KNEW) becomes XOPT + D.
 ! Here, LFUNC is the Lagrange polynomial at the KNEW-th interpolation point. See (8) and Section 2
@@ -163,10 +163,10 @@ function geostep(knew, kopt, delbar, pl, xpt) result(d)
 ! PL contains the parameters of the Lagrange functions. PL(KNEW) defines LFUNC.
 !
 ! Powell's comments on the cost of linear algebra is as follows.
-! Calculating the D that maximizes |Q(0)-Q(D)| subject to ||D|| <= DELBAR requires of order N**3
-! operations, but sometimes it is adequate if |Q(0)-Q(D)| is within about 0.9 of its greatest
-! possible value. This subroutine provides such a solution in only of order N**2 operations, where
-! the claim of accuracy has been tested by numerical experiments.
+! Calculating the D that maximizes |LFUNC(XOPT + D)| subject to ||D|| <= DELBAR requires of order
+! N^3 operations, but sometimes it is adequate if |LFUNC(XOPT + D)| is within about 0.9 of its
+! greatest possible value. This subroutine provides such a solution in only of order N^2 operations,
+! where the claim of accuracy has been tested by numerical experiments.
 !
 ! N.B.: In Powell's UOBYQA code, DELBAR = RHO. We take the DELBAR of NEWUOA, which works better.
 !--------------------------------------------------------------------------------------------------!
@@ -249,6 +249,13 @@ xopt = xpt(:, kopt)
 g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
 h = vec2smat(pl(n + 1:npt - 1, knew))
 
+! Scale the problem if H contains huge values.
+!if (maxval(abs(h)) > 1.0E5) then
+!    scaling = max(TWO * REALMIN, ONE / maxval(abs(h)))
+!    g = g * scaling
+!    h = h * scaling
+!end if
+
 ! Evaluate GG = G^T*G and GHG = G^T*H*G. They will be used later.
 gg = sum(g**2)
 ghg = inprod(g, matprod(h, g))
@@ -268,6 +275,17 @@ end if
 ! Return if H or G contains NaN.
 if (is_nan(sum(abs(h)) + sum(abs(g)))) then
     d = dcauchy
+    return
+end if
+
+! Handle the case with N = 1. This should be done after the case where G or H contains NaN. Powell's
+! code does not contain this part.
+if (n == 1) then
+    if (g(1) * h(1, 1) > 0) then
+        d = delbar
+    else
+        d = -delbar
+    end if
     return
 end if
 
@@ -297,8 +315,8 @@ end if
 
 ! We now turn our attention to the subspace span{G, D}. A multiple of the current D is returned if
 ! that choice seems to be adequate.
-gd = inprod(g, d)
 dd = sum(d**2)
+gd = inprod(g, d)
 dhd = inprod(d, matprod(h, d))
 
 ! Zaikun 20220504: GG and DD can become 0 at this point due to rounding. Detected by IFORT.

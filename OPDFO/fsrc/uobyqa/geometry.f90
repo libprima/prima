@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, December 02, 2022 AM11:07:26
+! Last Modified: Tuesday, December 27, 2022 AM02:26:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -236,6 +236,16 @@ if (is_nan(sum(abs(h)) + sum(abs(g)))) then
     d = dcauchy
     return
 end if
+
+if (n == 1) then
+    if (g(1) * h(1, 1) > 0) then
+        d = delbar
+    else
+        d = -delbar
+    end if
+    return
+end if
+
 
 ! Pick V such that ||HV|| / ||V|| is large.
 k = int(maxloc(sum(h**2, dim=1), dim=1), IK)

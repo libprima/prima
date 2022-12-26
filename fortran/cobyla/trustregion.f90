@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Monday, December 26, 2022 PM05:42:42
+! Last Modified: Monday, December 26, 2022 PM07:09:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,8 +116,8 @@ end if
 A = A_in
 b = b_in
 do i = 1, m + 1_IK  ! Note that SIZE(A, 2) = SIZE(B) = M + 1 /= M.
-    if (maxval(abs(A_in(:, i))) > 1.0E12) then
-        modscal = max(TWO * REALMIN, ONE / maxval(abs(A_in(:, i)))) ! MAX: avoid underflow.
+    if (maxval(abs(A(:, i))) > 1.0E12) then
+        modscal = max(TWO * REALMIN, ONE / maxval(abs(A(:, i)))) ! MAX: avoid underflow.
         A(:, i) = A(:, i) * modscal
         b(i) = b(i) * modscal
     end if
