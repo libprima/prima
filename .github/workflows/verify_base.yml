@@ -1,8 +1,8 @@
 name: Verification, base
 
 on:
-  # Trigger the workflow on #PUSH or pull request
-  ##PUSH:
+  # Trigger the workflow on push or pull request
+  #push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
