@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, December 04, 2022 PM06:19:00
+! Last Modified: Monday, December 26, 2022 PM05:23:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -130,8 +130,8 @@ crvmin = ZERO
 ! GG and HH are used instead of G and H, which are INTENT(IN) and hence cannot be changed.
 scaling = maxval(abs(g))
 if (scaling > 1.0E8) then  ! The threshold is empirical.
-    gg = g / scaling
-    hh = h / scaling
+    gg = g * max(TWO * tiny(scaling), ONE / scaling)
+    hh = h * max(TWO * tiny(scaling), ONE / scaling)
     scaled = .true.
 else
     gg = g
@@ -541,7 +541,8 @@ if (norm(d) > delta) then
 end if
 
 if (scaled .and. crvmin > 0) then
-    crvmin = crvmin * scaling  ! CRVMIN is not invariant under the scaling.
+    !crvmin = crvmin * scaling  ! CRVMIN is not invariant under the scaling.
+    crvmin = crvmin / max(TWO * tiny(scaling), ONE / scaling)  ! CRVMIN is not invariant under the scaling.
 end if
 
 if (is_nan(crvmin)) then  ! This may happen if the problem is ill-conditioned.
