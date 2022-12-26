@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 26, 2022 AM09:54:32
+! Last Modified: Monday, December 19, 2022 AM08:07:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -215,7 +215,6 @@ real(RP) :: rhoend_loc
 real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 
-write (*, *) 'In UOBYQA, 218'
 
 ! Sizes
 n = int(size(x), kind(n))
@@ -372,8 +371,6 @@ if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
     call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recorded')
 end if
 
-write (*, *) 'In UOBYQA, 375'
-
 ! Postconditions
 if (DEBUGGING) then
     call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
@@ -388,7 +385,6 @@ if (DEBUGGING) then
         call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
     end if
 end if
-write (*, *) 'In UOBYQA, 388'
 
 end subroutine uobyqa
 
