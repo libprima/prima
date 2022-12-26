@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, December 25, 2022 PM11:49:27
+! Last Modified: Monday, December 26, 2022 PM12:16:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -114,10 +114,10 @@ if (test_bigprob) then
         call setseed(rseed)
         iprint = 2
         npt = (n + 2_IK) * (n + 1_IK) / 2_IK
-        if (int(npt) + 500 > huge(0_IK)) then
+        if (int(npt) + 1000 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else
-            maxfun = npt + int(500.0_RP * rand(), IK)
+            maxfun = npt + int(1000.0_RP * rand(), IK)
         end if
         maxhist = maxfun
         ftarget = -HUGENUM
@@ -129,7 +129,7 @@ if (test_bigprob) then
 
         print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', MAXFUN = ', maxfun, ', Random test ', irand
         call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
-            & maxhist=maxhist, fhist=fhist, ftarget=ftarget, iprint=iprint)
+            & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
 
         deallocate (x)
         nullify (orig_calfun)
