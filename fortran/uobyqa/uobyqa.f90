@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 26, 2022 AM09:54:32
+! Last Modified: Monday, December 26, 2022 AM10:05:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -315,6 +315,8 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 ! FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN) if they are requested; replace MAXFUN with 0 for
 ! the history that is not requested.
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc)
+
+write (*, *) 'In UOBYQB, 319'
 
 
 !-------------------- Call UOBYQB, which performs the real calculations. --------------------------!
