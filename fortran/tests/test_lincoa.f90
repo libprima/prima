@@ -137,10 +137,10 @@ if (test_bigprob) then
         call construct(prob, probname, n, m)
         npt = max(n + 2_IK, int(5.0 * rand() * real(n, RP), kind(npt)))
         iprint = 2
-        if (int(npt) + 1000 > huge(0_IK)) then
+        if (int(npt) + 800 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else
-            maxfun = npt + int(1000.0_RP * rand(), IK)
+            maxfun = npt + int(800.0_RP * rand(), IK)
         end if
         maxhist = maxfun
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
