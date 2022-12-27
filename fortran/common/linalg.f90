@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, December 27, 2022 PM04:34:40
+! Last Modified: Tuesday, December 27, 2022 PM05:45:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1545,7 +1545,7 @@ else
     !end if
     ! Scaling seems to improve the precision in general.
     if (y(2) > 0) then
-        r = maxval([y(1), y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE)])
+        r = maxval([abs(y(1)), y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE)])
         ! Without MAXVAL, R < Y(2) may happen due to rounding errors.
     else
         r = ZERO
