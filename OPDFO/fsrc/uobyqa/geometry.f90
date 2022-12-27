@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 27, 2022 AM02:26:49
+! Last Modified: Wednesday, December 28, 2022 AM01:39:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -232,7 +232,7 @@ if (any(is_nan(dcauchy)) .or. .not. any(abs(dcauchy) > 0)) then
     end if
 end if
 
-if (is_nan(sum(abs(h)) + sum(abs(g)))) then
+if (is_nan(sum(abs(h)) + sum(abs(g))) .or. sum(abs(h)) <= 0) then
     d = dcauchy
     return
 end if
@@ -250,6 +250,7 @@ end if
 ! Pick V such that ||HV|| / ||V|| is large.
 k = int(maxloc(sum(h**2, dim=1), dim=1), IK)
 v = h(:, k)
+v = v / sqrt(sum(v**2))
 
 ! Set D to a vector in the subspace span{V, HV} that maximizes |(D, HD)|/(D, D), except that we set
 ! D = HV if V and HV are nearly parallel.

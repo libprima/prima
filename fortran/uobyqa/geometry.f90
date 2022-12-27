@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 27, 2022 AM02:32:27
+! Last Modified: Wednesday, December 28, 2022 AM01:45:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -249,13 +249,6 @@ xopt = xpt(:, kopt)
 g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
 h = vec2smat(pl(n + 1:npt - 1, knew))
 
-! Scale the problem if H contains huge values.
-!if (maxval(abs(h)) > 1.0E5) then
-!    scaling = max(TWO * REALMIN, ONE / maxval(abs(h)))
-!    g = g * scaling
-!    h = h * scaling
-!end if
-
 ! Evaluate GG = G^T*G and GHG = G^T*H*G. They will be used later.
 gg = sum(g**2)
 ghg = inprod(g, matprod(h, g))
@@ -272,8 +265,8 @@ else ! GG is 0 or NaN due to rounding errors. Set DCAUCHY to a displacement from
     dcauchy = max(0.6_RP * scaling, min(HALF, scaling)) * dcauchy
 end if
 
-! Return if H or G contains NaN.
-if (is_nan(sum(abs(h)) + sum(abs(g)))) then
+! Return if H or G contains NaN or H is zero. Powell's code does not do this.
+if (is_nan(sum(abs(h)) + sum(abs(g))) .or. all(abs(h) <= 0)) then
     d = dcauchy
     return
 end if
@@ -291,6 +284,9 @@ end if
 
 ! Pick V such that ||HV|| / ||V|| is large.
 v = h(:, maxloc(sum(h**2, dim=1), dim=1))
+! Normalize V. Powell's code does not do this. It does not change the algorithm as only its
+! direction matters. It slightly improves the performance in the noiseless case.
+v = v / sqrt(sum(v**2))
 
 ! Set D to a vector in the subspace span{V, HV} that maximizes |(D, HD)|/(D, D), except that we set
 ! D = HV if V and HV are nearly parallel.
