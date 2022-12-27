@@ -64,6 +64,6 @@ jobs:
             ver;
             root_dir = pwd();
             cd('matlab/tests');
-            options = struct(); if strcmp('${{ matrix.solver }}', 'bobyqa') || strcmp('${{ matrix.solver }}', 'lincoa'), options.nr = 5; end; options
+            options = struct(); if strcmp('${{ matrix.solver }}', 'bobyqa') || strcmp('${{ matrix.solver }}', 'lincoa'), options.nr = 4; end; options
             verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             cd(fullfile(root_dir)); setup path  % Test that `setup path` works properly.

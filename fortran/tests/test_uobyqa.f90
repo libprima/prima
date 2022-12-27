@@ -114,10 +114,10 @@ if (test_bigprob) then
         call setseed(rseed)
         iprint = 2
         npt = (n + 2_IK) * (n + 1_IK) / 2_IK
-        if (int(npt) + 1000 > huge(0_IK)) then
+        if (int(npt) + 800 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else
-            maxfun = npt + int(1000.0_RP * rand(), IK)
+            maxfun = npt + int(800.0_RP * rand(), IK)
         end if
         maxhist = maxfun
         ftarget = -HUGENUM
