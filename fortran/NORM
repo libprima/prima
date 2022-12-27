@@ -1,3 +1,5 @@
+***SEE ALSO: HYPOTENUSE***
+
 What is the best implementation for NORM in common/linalg.f90?
 Here are the places where it is used. It affects the performance of NEWUOA.
 

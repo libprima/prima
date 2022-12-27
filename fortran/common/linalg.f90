@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 26, 2022 PM07:03:54
+! Last Modified: Tuesday, December 27, 2022 PM04:34:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -657,7 +657,7 @@ end if
 
 ! Zaikun 20220527: With the following code, the classic flang 7.0.1, Huawei Bisheng flang 1.3.3,
 ! NVIDIA nvfortran 22.5, and AOCC 3.2.0 flang raise a false positive error of out-bound subscripts
-! when invoked with the -Mbounds flag. See https:
+! when invoked with the -Mbounds flag. See https://github.com/flang-compiler/flang/issues/1238
 if (istril(A)) then
     do i = 1, n
         x(i) = (b(i) - inprod(A(i, 1:i - 1), x(1:i - 1))) / A(i, i) ! INPROD = 0 if I == 1.
@@ -1545,8 +1545,8 @@ else
     !end if
     ! Scaling seems to improve the precision in general.
     if (y(2) > 0) then
-        r = max(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
-        ! Without MAX, R < Y(2) may happen due to rounding errors.
+        r = maxval([y(1), y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE)])
+        ! Without MAXVAL, R < Y(2) may happen due to rounding errors.
     else
         r = ZERO
     end if
@@ -1646,12 +1646,14 @@ else
         s = x(2) / r
     elseif (abs(x(1)) > abs(x(2))) then
         t = x(2) / x(1)
-        u = sign(sqrt(ONE + t**2), x(1)) !!MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
+        u = maxval([ONE, abs(t), sqrt(ONE + t**2)])  ! MAXVAL: precaution against rounding error.
+        u = sign(u, x(1)) !!MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
         c = ONE / u
         s = t / u
     else
         t = x(1) / x(2)
-        u = sign(sqrt(ONE + t**2), x(2)) !!MATLAB: u = sign(x(2))*sqrt(ONE + t**2)
+        u = maxval([ONE, abs(t), sqrt(ONE + t**2)])  ! MAXVAL: precaution against rounding error.
+        u = sign(u, x(2)) !!MATLAB: u = sign(x(2))*sqrt(ONE + t**2)
         c = t / u
         s = ONE / u
     end if
@@ -1673,7 +1675,7 @@ if (DEBUGGING) then
     call assert(isorth(G, tol), 'G is orthonormal', srname)
     if (all(is_finite(x) .and. abs(x) < sqrt(HUGENUM / 2.1_RP))) then
         r = sqrt(sum(x**2))
-        call assert(norm(matprod(G, x) - [r, ZERO]) <= max(tol, tol * r), 'G*x = [|x|, 0]', srname)
+        call assert(maxval(abs(matprod(G, x) - [r, ZERO])) <= max(tol, tol * r), 'G * X = [|X|, 0]', srname)
     end if
 end if
 end function planerot
