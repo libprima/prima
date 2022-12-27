@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 04, 2022 AM01:38:18
+! Last Modified: Tuesday, December 27, 2022 PM05:46:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1544,7 +1544,7 @@ else
     !end if
     ! Scaling seems to improve the precision in general.
     if (y(2) > 0) then
-        r = max(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
+        r = maxval([abs(y(1)), y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE)])
     else
         r = ZERO
     end if
@@ -1644,12 +1644,12 @@ else
         s = x(2) / r
     elseif (abs(x(1)) > abs(x(2))) then
         t = x(2) / x(1)
-        u = sign(sqrt(ONE + t**2), x(1)) !!MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
+        u = sign(maxval([ONE, abs(t), sqrt(ONE + t**2)]), x(1)) !!MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
         c = ONE / u
         s = t / u
     else
         t = x(1) / x(2)
-        u = sign(sqrt(ONE + t**2), x(2)) !!MATLAB: u = sign(x(2))*sqrt(ONE + t**2)
+        u = sign(maxval([ONE, abs(t), sqrt(ONE + t**2)]), x(2)) !!MATLAB: u = sign(x(2))*sqrt(ONE + t**2)
         c = t / u
         s = ONE / u
     end if
