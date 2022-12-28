@@ -31,6 +31,7 @@ ERRORS="$(grep -i "error\|fail\|exception\|invalid\|bad\|overflow\|segmentation\
     | grep -vi "Warning: [A-Z]*MS.*G: Failed to open file .*_output" \
     | grep -vi "Warning:\ Floating\ overflow\ occurred" \
     | grep -vi "precaution against overflow" \
+    | grep -vi "precaution against rounding error" \
     | grep -vi "Warning:\ Floating\ invalid\ operation\ occurred" \
     | grep -vi "Processor does not support trapping of floating-point exceptions" \
     | grep -vi "Assertion failed: Q interpolates FVAL at XPT" \
