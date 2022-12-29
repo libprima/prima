@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 26, 2022 PM07:00:26
+! Last Modified: Thursday, December 29, 2022 PM09:27:44
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -187,9 +187,13 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 ! intend to test symmetry in production. We set SYMTOL_DFT in the same way when __DEBUGGING__ is 0.
 ! Update 20221226: When gfortran 12 is invoked with aggressive optimization options, it is buggy
 ! with ALL() and ANY(). We set SYMTOL_DFT to HUGENUM to signify this case and disable the check.
-#if (defined __GFORTRAN__ && __AGRESSIVE_OPTIONS__ == 1)
+! Update 20221229: ifx 2023.0.0 20221201 cannot ensure symmetry even up to 100*EPS if invoked
+! with aggressive optimization options and if the floating-point numbers are in single precision.
+#if defined __GFORTRAN__ && __AGRESSIVE_OPTIONS__ == 1
 real(RP), parameter :: SYMTOL_DFT = HUGENUM
-#elif (__RELEASED__ == 1) || (__DEBUGGING__ == 0) || (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64)
+#elif defined __INTEL_COMPILER && __REAL_PRECISION__ < 64 && __AGRESSIVE_OPTIONS__ == 1
+real(RP), parameter :: SYMTOL_DFT = max(1.0E3 * EPS, 1.0E-10_RP)
+#elif (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64) || (__RELEASED__ == 1) || (__DEBUGGING__ == 0)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO

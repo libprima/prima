@@ -13,6 +13,8 @@ MTOOLS="mtools"
 INSTALL_DIR="$HOME/local"  # CUTEst will be installed $INSTALL_DIR/$PKG_NAME
 TMPDIR="/tmp"
 
+sudo apt install p7zip-full
+
 if command -v 7z &> /dev/null ; then
     DECOMP="$(command -v 7z) x"  # Command to decompress the package
 else
@@ -23,6 +25,7 @@ fi
 GITREPO="https://$GIT/$GIT_USR/$REPONAME"
 PKG_NAME="${PKG//.*/}"  # Remove the suffix from $PKG
 
+mkdir -p "$INSTALL_DIR"
 if [[ -d "$INSTALL_DIR"/"$PKG_NAME" ]] ;then
     # Exit if the package seems to have be installed.
     printf "\n%s already exists. Remove it to (re-)install the package.\n\n" "$INSTALL_DIR"/"$PKG_NAME"
@@ -33,7 +36,6 @@ elif [[ -f "./$PKG" ]] ; then
 else
     # If $PKG does not exist in the current directory, download it.
     cd "$TMPDIR" && rm -rf "$REPONAME" && git clone "$GITREPO"
-    mkdir -p "$INSTALL_DIR"
     mv "$TMPDIR"/"$REPONAME"/$PKG "$INSTALL_DIR"
 fi
 
