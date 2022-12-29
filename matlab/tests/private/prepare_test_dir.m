@@ -21,7 +21,7 @@ assert(~contains(mfilepath, test_dir));
 assert(~contains(s_root_dir, test_dir));
 
 d_root_dir = test_dir;
-% If test_options.compile = true, then remove `d_root_dir` to sure that we are testing the latest
+% If test_options.compile = true, then remove `d_root_dir` to make sure that we are testing the latest
 % code in `s_root_dir`
 if test_options.compile
     if exist(d_root_dir, 'dir')
