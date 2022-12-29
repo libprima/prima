@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 26, 2022 PM12:17:16
+! Last Modified: Thursday, December 29, 2022 PM08:29:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,10 +133,10 @@ if (test_bigprob) then
         m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         call construct(prob, probname, n, m)
         iprint = 2
-        if (int(n) + 800 > huge(0_IK)) then
+        if (int(n) + 500 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else
-            maxfun = n + int(800.0_RP * rand(), IK)
+            maxfun = n + int(500.0_RP * rand(), IK)
         end if
         maxhist = maxfun
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))

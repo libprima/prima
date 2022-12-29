@@ -81,7 +81,8 @@ jobs:
           # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
           if [[ "$RUNNER_OS" != "Windows" ]]; then
                cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-               cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
+               cd $ROOT/fortran/tests && sed -i 's|800|500|g' test_*.f90
+               export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
           fi
           cd $ROOT/fortran/examples/${{ matrix.solver }} && make xtest
       - name: Store artifacts
