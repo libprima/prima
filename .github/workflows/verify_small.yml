@@ -33,7 +33,7 @@ jobs:
         id: cache-install-cutest
         uses: actions/cache@v3
         with:
-          path: ~/local/cutesif
+          path: ~/local/matcutest
           key:  ${{ runner.os }}-${{ hashFiles('**/.github/scripts/install_cutest') }}
       - name: Install CUTEst
         if: steps.cache-install-cutest.outputs.cache-hit != 'true'

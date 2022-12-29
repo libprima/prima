@@ -1,13 +1,13 @@
 #!/bin/bash
 # This script installs CUTEst on Linux, using the compiled CUTEst in $GITREPO.
-# CUTEst version: 20220310
+# CUTEst version: 20221229
 
 #GIT="gitee.com"
 GIT="github.com"
-GIT_USR="zaikunzhang"
-REPONAME="CUTEst"
-PKG="cutesif.7z"
-CSRC="cutesifrc"
+GIT_USR="equipez"
+REPONAME="matcutest_compiled"
+PKG="matcutest.7z"
+CSRC="matcutestrc"
 MTOOLS="mtools"
 
 INSTALL_DIR="$HOME/local"  # CUTEst will be installed $INSTALL_DIR/$PKG_NAME
@@ -40,10 +40,10 @@ fi
 cd "$INSTALL_DIR" && $DECOMP $PKG   # "$DECOMP $PKG" does not work
 rm -f "$INSTALL_DIR"/"$PKG"
 
-printf "\nTo use CUTEst, do the following.\n"
-printf "\n1. Append the following line to ~/.bashrc:\n\n"
+printf "\n*** To use CUTEst in MATLAB, do the following.\n"
+printf "\n*** 1. Append the following line to ~/.bashrc:\n\n"
 printf "   source %s\n" "$INSTALL_DIR"/"$PKG_NAME"/"$CSRC"
-printf "\n2. In MATLAB, go to the following directory and then run 'setup':\n"
+printf "\n*** 2. In MATLAB, go to the following directory and then run 'setup':\n"
 printf "\n   %s\n\n" "$INSTALL_DIR"/"$PKG_NAME"/"$MTOOLS"
 
 exit 0
