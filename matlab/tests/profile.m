@@ -123,7 +123,7 @@ try
     if isfield(options, 'reverse') && options.reverse
         solvers = {[solver, 'n_classical'], [solver, 'n']};  % Reverse order: first run 'SOLVERn_classical', and then run 'SOLVERn'
     else
-        solvers = {[solver, 'n'], [solver, 'n_classical']};  % % Default order: first run 'SOLVERn', and then run 'SOLVERn_classical'.
+        solvers = {[solver, 'n'], [solver, 'n_classical']};  % Default order: first run 'SOLVERn', and then run 'SOLVERn_classical'.
     end
 
     % The following line can be used for testing the single-precision version. If such a test is

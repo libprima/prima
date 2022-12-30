@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, December 30, 2022 AM12:16:16
+! Last Modified: Friday, December 30, 2022 AM12:35:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -435,14 +435,14 @@ do while (.true.)
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
         delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)
 
-        ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-        if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
-            sl = min(sl - xopt, ZERO)
-            su = max(su - xopt, ZERO)
-            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
-            ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
-            xbase = max(xl, min(xu, xbase))
-        end if
+        !! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
+        !if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
+        !    sl = min(sl - xopt, ZERO)
+        !    su = max(su - xopt, ZERO)
+        !    call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
+        !    ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
+        !    xbase = max(xl, min(xu, xbase))
+        !end if
 
         ! Find D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) becomes XOPT + D.
         d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
@@ -525,6 +525,17 @@ do while (.true.)
         ! the current RHO. Update them after reducing RHO.
         dnormsav = HUGENUM
         moderrsav = HUGENUM
+    end if
+
+    ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
+    !if (sum(xopt**2) >= 1.0E3_RP * delta**2) then  ! 0018
+    !if (sum(xopt**2) >= 1.0E3_RP * delta**2) then  ! 0026
+    if (sum(xopt**2) >= 1.0E4_RP * delta**2) then  ! 0030
+        sl = min(sl - xopt, ZERO)
+        su = max(su - xopt, ZERO)
+        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
+        ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
+        xbase = max(xl, min(xu, xbase))
     end if
 end do
 
