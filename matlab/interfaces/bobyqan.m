@@ -272,11 +272,37 @@ catch exception
     end
 end
 
+% Extract the options
+npt = options.npt;
+maxfun = options.maxfun;
+rhobeg = options.rhobeg;
+rhoend = options.rhoend;
+eta1 = options.eta1;
+eta2 = options.eta2;
+gamma1 = options.gamma1;
+gamma2 = options.gamma2;
+ftarget = options.ftarget;
+maxhist = options.maxhist;
+output_xhist = options.output_xhist;
+iprint = options.iprint;
+precision = options.precision;
+debug_flag = options.debug;
+if options.classical
+    variant = 'classical';
+else
+    variant = 'modern';
+end
+solver = options.solver;
+
+% Solve the problem, starting with special cases.
 if ~strcmp(invoker, 'pdfon') && probinfo.infeasible % The problem turned out infeasible during prepdfo
     output.x = x0;
     output.fx = fun(output.x);
     output.exitflag = -4;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
@@ -285,6 +311,9 @@ elseif ~strcmp(invoker, 'pdfon') && probinfo.nofreex % x was fixed by the bound 
     output.fx = fun(output.x);
     output.exitflag = 13;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_fixedx;
     output.chist = output.constrviolation;
@@ -298,31 +327,13 @@ elseif ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     output.fx = fun(output.x);  % prepdfo has defined a fake objective function
     output.exitflag = 14;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
 else % The problem turns out 'normal' during prepdfo
-    % Extract the options
-    npt = options.npt;
-    maxfun = options.maxfun;
-    rhobeg = options.rhobeg;
-    rhoend = options.rhoend;
-    eta1 = options.eta1;
-    eta2 = options.eta2;
-    gamma1 = options.gamma1;
-    gamma2 = options.gamma2;
-    ftarget = options.ftarget;
-    maxhist = options.maxhist;
-    output_xhist = options.output_xhist;
-    iprint = options.iprint;
-    precision = options.precision;
-    debug_flag = options.debug;
-    if options.classical
-        variant = 'classical';
-    else
-        variant = 'modern';
-    end
-    solver = options.solver;
 
     % Call the Fortran code
     mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.

@@ -292,11 +292,40 @@ catch exception
     end
 end
 
+% Extract the options
+npt = options.npt;
+maxfun = options.maxfun;
+rhobeg = options.rhobeg;
+rhoend = options.rhoend;
+eta1 = options.eta1;
+eta2 = options.eta2;
+gamma1 = options.gamma1;
+gamma2 = options.gamma2;
+ftarget = options.ftarget;
+ctol = options.ctol;
+cweight = options.cweight;
+maxhist = options.maxhist;
+output_xhist = options.output_xhist;
+maxfilt = options.maxfilt;
+iprint = options.iprint;
+precision = options.precision;
+debug_flag = options.debug;
+if options.classical
+    variant = 'classical';
+else
+    variant = 'modern';
+end
+solver = options.solver;
+
+% Solve the problem, starting with special cases.
 if ~strcmp(invoker, 'pdfon') && probinfo.infeasible % The problem turned out infeasible during prepdfo
     output.x = x0;
     output.fx = fun(output.x);
     output.exitflag = -4;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
@@ -306,6 +335,9 @@ elseif ~strcmp(invoker, 'pdfon') && probinfo.nofreex % x was fixed by the bound 
     output.fx = fun(output.x);
     output.exitflag = 13;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_fixedx;
     output.chist = output.constrviolation;
@@ -318,6 +350,9 @@ elseif ~strcmp(invoker, 'pdfon') &&  probinfo.feasibility_problem
     % and fhist as below and then revise them in postpdfo.
     output.fx = fun(output.x);  % prepdfo has defined a fake objective function
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
@@ -356,31 +391,6 @@ else % The problem turns out 'normal' during prepdfo
         % Public/normal error
         error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
     end
-
-    % Extract the options
-    npt = options.npt;
-    maxfun = options.maxfun;
-    rhobeg = options.rhobeg;
-    rhoend = options.rhoend;
-    eta1 = options.eta1;
-    eta2 = options.eta2;
-    gamma1 = options.gamma1;
-    gamma2 = options.gamma2;
-    ftarget = options.ftarget;
-    ctol = options.ctol;
-    cweight = options.cweight;
-    maxhist = options.maxhist;
-    output_xhist = options.output_xhist;
-    maxfilt = options.maxfilt;
-    iprint = options.iprint;
-    precision = options.precision;
-    debug_flag = options.debug;
-    if options.classical
-        variant = 'classical';
-    else
-        variant = 'modern';
-    end
-    solver = options.solver;
 
     % If x0 is not feasible, LINCOA will modify the constraints to make
     % it feasible (which is a bit strange, but Powell decided to do it).
@@ -422,7 +432,7 @@ else % The problem turns out 'normal' during prepdfo
     output.fx = fx;
     output.exitflag = exitflag;
     output.funcCount = nf;
-    if (output_xhist)
+    if output_xhist
         output.xhist = xhist;
     end
     output.fhist = fhist;

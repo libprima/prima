@@ -416,11 +416,18 @@ if probinfo.infeasible % The problem turned out infeasible during prepdfo
     output.fx = fun(output.x);
     output.exitflag = -4;
     output.funcCount = 1;
+    if options.output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
     output.nlcineq = probinfo.nlcineq_x0;
     output.nlceq = probinfo.nlceq_x0;
+    if options.output_nlchist
+        output.nlcihist = output.nlcineq;
+        output.nlcehist = output.nlceq;
+    end
     if strcmp(options.solver, 'lincoan') % LINCOA requires constr_modified to exist in output
         output.constr_modified = false;
     end
@@ -429,11 +436,18 @@ elseif probinfo.nofreex % x was fixed by the bound constraints during prepdfo
     output.fx = fun(output.x);
     output.exitflag = 13;
     output.funcCount = 1;
+    if options.output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_fixedx;
     output.chist = output.constrviolation;
     output.nlcineq = probinfo.nlcineq_fixedx;
     output.nlceq = probinfo.nlceq_fixedx;
+    if options.output_nlchist
+        output.nlcihist = output.nlcineq;
+        output.nlcehist = output.nlceq;
+    end
     if strcmp(options.solver, 'lincoan') % LINCOA requires constr_modified to exist in output
         output.constr_modified = false;
     end
@@ -445,6 +459,9 @@ elseif probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinear
     % and fhist as below and then revise them in postpdfo.
     output.fx = fun(output.x);  % prepdfo has defined a fake objective function
     output.funcCount = 1;
+    if options.output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
@@ -454,6 +471,10 @@ elseif probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinear
         output.exitflag = 14;
     else
         output.exitflag = 15;
+    end
+    if options.output_nlchist
+        output.nlcihist = output.nlcineq;
+        output.nlcehist = output.nlceq;
     end
     if strcmp(options.solver, 'lincoan') % LINCOA requires constr_modified to exist in output
         output.constr_modified = false;
