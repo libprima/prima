@@ -720,7 +720,6 @@ if options.debug && ~options.classical
                         > cobylan_prec*max(1,abs([zeros(1, nhist); nlcihistx; nlcehistx])), 'all'))
                     % In the last few max of the above line, we put a 0 to avoid an empty result
                     % Public/unexpected error
-                    keyboard
                     error(sprintf('%s:InvalidConx', invoker), ...
                         '%s: UNEXPECTED ERROR: %s returns an nlcihist or nlcehist that does not match xhist.', invoker, solver);
                 end
