@@ -53,7 +53,11 @@ else
     requirements.mincon = options.mincon;
     requirements.maxcon = options.maxcon;
     requirements.type = options.type;
-    requirements.blacklist = {};
+    if isfield(options, 'blacklist')
+        requirements.blacklist = options.blacklist;
+    else
+        requirements.blacklist = {};
+    end
     if startsWith(solvers{1}, 'cobyla') || startsWith(solvers{2}, 'cobyla')
         %requirements.blacklist = [requirements.blacklist, {'CHEBYQADNE','HAIFAM','HIMMELBI','HYDCAR20','LUKSAN12','LUKSAN13','MSS1','SPANHYD','VANDERM1','VANDERM2','VANDERM3', 'TAX13322', 'TAXR13322'}]; % Takes more than 2 min to solve
         requirements.blacklist = [requirements.blacklist, {'ACOPP30', 'ACOPR30', 'AIRPORT', 'CHANDHEQ', ...
