@@ -447,7 +447,7 @@ elseif strcmp(probinfo.refined_type, 'unconstrained') && ~strcmp(probinfo.raw_ty
     end
 end
 
-% Revise output.nlcineq and output.nlceq according to problem type
+% Revise output.nlcineq, output.nlceq according to problem type
 if ~strcmp(probinfo.raw_type, 'nonlinearly-constrained')
     if isfield(output, 'nlcineq')
         output = rmfield(output, 'nlcineq');
@@ -455,7 +455,14 @@ if ~strcmp(probinfo.raw_type, 'nonlinearly-constrained')
     if isfield(output, 'nlceq')
         output = rmfield(output, 'nlceq');
     end
+    if isfield(output, 'nlcihist')
+        output.nlcihist = [];
+    end
+    if isfield(output, 'nlcehist')
+        output.nlcehist = [];
+    end
 end
+
 
 % Record the return message in output.message according to exitflag
 switch exitflag % If prepdfo works properly, then 5, 6, 10, 11, 12 should never happen
@@ -713,6 +720,7 @@ if options.debug && ~options.classical
                         > cobylan_prec*max(1,abs([zeros(1, nhist); nlcihistx; nlcehistx])), 'all'))
                     % In the last few max of the above line, we put a 0 to avoid an empty result
                     % Public/unexpected error
+                    keyboard
                     error(sprintf('%s:InvalidConx', invoker), ...
                         '%s: UNEXPECTED ERROR: %s returns an nlcihist or nlcehist that does not match xhist.', invoker, solver);
                 end

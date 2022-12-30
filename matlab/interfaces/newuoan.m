@@ -264,8 +264,9 @@ else
 end
 solver = options.solver;
 
+% Solve the problem, starting with special cases.
 if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
-    % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
+    % An "unconstrained feasibility problem" is ridiculous, yet nothing wrong mathematically.
     output.x = x0;
     % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
     % occured. But then we will have to modify the validation of fx, funcCount,
@@ -274,6 +275,9 @@ if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     output.fx = fun(output.x);  % prepdfo has defined a fake objective function
     output.exitflag = 14;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []

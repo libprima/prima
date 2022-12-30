@@ -335,26 +335,66 @@ catch exception
     end
 end
 
+% Extract the options
+maxfun = options.maxfun;
+rhobeg = options.rhobeg;
+rhoend = options.rhoend;
+eta1 = options.eta1;
+eta2 = options.eta2;
+gamma1 = options.gamma1;
+gamma2 = options.gamma2;
+ftarget = options.ftarget;
+ctol = options.ctol;
+cweight = options.cweight;
+maxhist = options.maxhist;
+output_xhist = options.output_xhist;
+output_nlchist = options.output_nlchist;
+maxfilt = options.maxfilt;
+iprint = options.iprint;
+precision = options.precision;
+debug_flag = options.debug;
+if options.classical
+    variant = 'classical';
+else
+    variant = 'modern';
+end
+solver = options.solver;
+
+% Solve the problem, starting with special cases.
 if ~strcmp(invoker, 'pdfon') && probinfo.infeasible % The problem turned out infeasible during prepdfo
     output.x = x0;
     output.fx = fun(output.x);
     output.exitflag = -4;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
     output.nlcineq = probinfo.nlcineq_x0;
     output.nlceq = probinfo.nlceq_x0;
+    if output_nlchist
+        output.nlcihist = output.nlcineq;
+        output.nlcehist = output.nlceq;
+    end
 elseif ~strcmp(invoker, 'pdfon') && probinfo.nofreex % x was fixed by the bound constraints during prepdfo
     output.x = probinfo.fixedx_value;
     output.fx = fun(output.x);
     output.exitflag = 13;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_fixedx;
     output.chist = output.constrviolation;
     output.nlcineq = probinfo.nlcineq_fixedx;
     output.nlceq = probinfo.nlceq_fixedx;
+    if output_nlchist
+        output.nlcihist = output.nlcineq;
+        output.nlcehist = output.nlceq;
+    end
 elseif ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
     output.x = x0;  % prepdfo has tried to set x0 to a feasible point (but may have failed)
     % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
@@ -363,6 +403,9 @@ elseif ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem && ~strcmp(prob
     % and fhist as below and then revise them in postpdfo.
     output.fx = fun(output.x);  % prepdfo has defined a fake objective function
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
@@ -372,6 +415,10 @@ elseif ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem && ~strcmp(prob
         output.exitflag = 14;
     else
         output.exitflag = 15;
+    end
+    if output_nlchist
+        output.nlcihist = output.nlcineq;
+        output.nlcehist = output.nlceq;
     end
 else % The problem turns out 'normal' during prepdfo
     % Include all the constraints into one single 'nonlinear constraint'
@@ -393,31 +440,6 @@ else % The problem turns out 'normal' during prepdfo
         % Public/normal error
         error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
     end
-
-    % Extract the options
-    maxfun = options.maxfun;
-    rhobeg = options.rhobeg;
-    rhoend = options.rhoend;
-    eta1 = options.eta1;
-    eta2 = options.eta2;
-    gamma1 = options.gamma1;
-    gamma2 = options.gamma2;
-    ftarget = options.ftarget;
-    ctol = options.ctol;
-    cweight = options.cweight;
-    maxhist = options.maxhist;
-    output_xhist = options.output_xhist;
-    output_nlchist = options.output_nlchist;
-    maxfilt = options.maxfilt;
-    iprint = options.iprint;
-    precision = options.precision;
-    debug_flag = options.debug;
-    if options.classical
-        variant = 'classical';
-    else
-        variant = 'modern';
-    end
-    solver = options.solver;
 
     % Call the Fortran code
     mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
@@ -446,7 +468,7 @@ else % The problem turns out 'normal' during prepdfo
     output.fx = fx;
     output.exitflag = exitflag;
     output.funcCount = nf;
-    if (output_xhist)
+    if output_xhist
         output.xhist = xhist;
     end
     output.fhist = fhist;
