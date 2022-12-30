@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, December 27, 2022 PM05:45:07
+! Last Modified: Saturday, December 31, 2022 AM03:32:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -622,6 +622,7 @@ function solve(A, b) result(x)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
 implicit none
 
 ! Inputs
@@ -683,8 +684,10 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(x) == size(A, 2), 'SIZE(X) == SIZE(A, 2)', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n + 1_IK, RP)))
-    call assert(norm(matprod(A, x) - b) <= tol * maxval([ONE, norm(b), norm(x)]), 'A*X == B', srname)
+    if (is_finite(sum(abs(A)) + sum(abs(b)))) then
+        tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n + 1_IK, RP)))
+        call assert(norm(matprod(A, x) - b) <= tol * maxval([ONE, norm(b), norm(x)]), 'A*X == B', srname)
+    end if
 end if
 end function solve
 
