@@ -62,8 +62,8 @@ real(RP), intent(out), allocatable, optional :: xhist(:, :)
 
 ! Local variables
 character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
-character(len=*), parameter :: solver = 'LINCOA'
-character(len=*), parameter :: srname = 'LINCOA'
+character(len=*), parameter :: solver = 'BOBYQA'
+character(len=*), parameter :: srname = 'BOBYQA'
 character(len=MSGLEN) :: wmsg
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
@@ -220,7 +220,7 @@ end if
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc, xl = xl_loc, xu = xu_loc)
+    & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc, xl=xl_loc, xu=xu_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! !!! Revise X (see below) and RHOBEG, RHOEND
 ! Zaikun, 2020-05-05

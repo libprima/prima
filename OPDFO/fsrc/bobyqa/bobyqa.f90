@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 23, 2022 PM06:27:39
+! Last Modified: Sunday, January 01, 2023 PM08:34:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
