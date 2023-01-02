@@ -104,7 +104,12 @@ jobs:
           # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
           if [[ "$RUNNER_OS" != "Windows" ]]; then
               cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-              cd $ROOT/fortran/tests && sed -i 's|800|500|g' test_*.f90
+              cd $ROOT/fortran/tests
+              if [[ "$RUNNER_OS" = "macOS" ]] ; then
+                  sed -i "" 's|800|500|g' test_*.f90
+              else
+                  sed -i 's|800|500|g' test_*.f90
+              fi
               export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make itest_${{ matrix.ikind }}.${{ matrix.solver }}
           fi
           cd $ROOT/fortran/examples/${{ matrix.solver }} && make itest
