@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 26, 2022 PM05:22:53
+! Last Modified: Tuesday, January 03, 2023 PM05:50:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -585,6 +585,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
+    write (*, *) n, d
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
     call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
