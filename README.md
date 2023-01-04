@@ -108,8 +108,8 @@ PRIMA has been verified by more than $10^5$ hours (or more than $10$ years) of r
     - [![Verification, big](https://github.com/equipez/PRIMA/actions/workflows/verify_big.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_big.yml)
     - [![Verification, large](https://github.com/equipez/PRIMA/actions/workflows/verify_large.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_large.yml)
     - [![Lint](https://github.com/equipez/PRIMA/actions/workflows/lint.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/lint.yml)
-    - [![Test Absoft](https://github.com/primalib/PRIMA/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_absoft.yml)
-    - [![Test nagfor](https://github.com/primalib/PRIMA/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_nagfor.yml)
+    - [![Test Absoft](https://github.com/equipez/PRIMA/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/test_absoft.yml)
+    - [![Test nagfor](https://github.com/equipez/PRIMA/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/test_nagfor.yml)
 
 - Tests at [primalib/PRIMA](https://github.com/primalib/PRIMA)
 
