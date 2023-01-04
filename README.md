@@ -7,6 +7,7 @@ Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell
 [![Verification, big](https://github.com/equipez/PRIMA/actions/workflows/verify_big.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_big.yml)
 [![Verification, large](https://github.com/equipez/PRIMA/actions/workflows/verify_large.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_large.yml)
 [![Verification, base](https://github.com/equipez/PRIMA/actions/workflows/verify_base.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_base.yml)
+[![Lint]](https://github.com/equipez/PRIMA/actions/workflows/lint.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/lint.yml)
 
 - [What](#what)
 - [Why](#why)
