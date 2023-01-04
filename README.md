@@ -113,6 +113,7 @@ PRIMA has been verified by more than $10^5$ hours (or more than $10$ years) of r
 
 - Tests at [primalib/PRIMA](https://github.com/primalib/PRIMA)
 
+    - [![Plot performance profiles for all problems](https://github.com/primalib/PRIMA/actions/workflows/profile_all.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/profile_all.yml)
     - [![Verification, base](https://github.com/primalib/PRIMA/actions/workflows/verify_base.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/verify_base.yml)
     - [![Test MATLAB](https://github.com/primalib/PRIMA/actions/workflows/test_matlab.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_matlab.yml)
     - [![Test Flang](https://github.com/primalib/PRIMA/actions/workflows/test_flang.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_flang.yml)
