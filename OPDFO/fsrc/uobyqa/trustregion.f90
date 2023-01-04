@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 26, 2022 PM05:23:50
+! Last Modified: Wednesday, January 04, 2023 PM02:15:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -402,6 +402,12 @@ do while (.true.)
         do k = n - 1_IK, 1, -1
             d(k) = d(k) - tn(k) * d(k + 1) / piv(k)
         end do
+
+        if (.not. is_finite(sum(abs(d)))) then
+            d = dold
+            exit
+        end if
+
 
         !----------------------------------------------------------------!
         !----------------------------------------------------------------!
