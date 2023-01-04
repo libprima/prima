@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 03, 2023 PM05:50:52
+! Last Modified: Wednesday, January 04, 2023 AM10:42:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -248,11 +248,13 @@ do while (.true.)
     ! and NaN appear in D due to extremely large values in the Hessian matrix (up to 10^219).
     if (.not. is_finite(sum(abs(d)))) then
         d = dold
+        write (*, *) 251, d
         exit
     else
         dold = d
     end if
     if (iter > maxiter) then
+        write (*, *) 256, d
         exit
     end if
 
@@ -271,12 +273,14 @@ do while (.true.)
         elseif (abs(piv(k)) + abs(tn(k)) <= 0) then  ! PIV(K) == 0 == TN(K)
             piv(k + 1) = td(k + 1) + par
         else  ! PIV(K) < 0 .OR. (PIV(K) == 0 .AND. TN(K) /= 0)
+            write (*, *) 274, d
             exit
         end if
     end do
 
     ! Zaikun 20220509
     if (any(is_nan(piv))) then
+        write (*, *) 280, d
         exit  ! Better action to take???
     end if
 
@@ -289,6 +293,7 @@ do while (.true.)
         paru = par
         paruest = par
         if (par <= 0) then  ! PAR == 0. A rare case: the trust region center is optimal.
+            write (*, *) 292, d
             exit
         end if
     end if
@@ -369,6 +374,7 @@ do while (.true.)
                 d(i) = -tn(i) * d(i + 1) / piv(i)
             else
                 d(1:i) = ZERO
+                write (*, *) 472, d
                 exit
             end if
         end do
@@ -413,6 +419,7 @@ do while (.true.)
             ! N.B.: As per Powell's code, the lines above would be D = -SIGN(DELTA/SQRT(DSQ), DTG)*D.
             ! However, our version here seems more reasonable in case DTG == 0, which is unlikely
             ! but did happen numerically. Note that SIGN(A, 0) = |A| /= -SIGN(A, 0).
+            write (*, *) 416, d
             exit
         end if
     else
@@ -447,6 +454,7 @@ do while (.true.)
             !!% It is critical for the efficiency to use `spdiags` to construct `tridh` sparsely.
             !!tridh = spdiags([[tn; 0], td, [0; tn]], -1:1, n, n);
             !!crvmin = eigs(tridh, 1, 'smallestreal');
+            write (*, *) 450, d
             exit
         end if
 
@@ -456,12 +464,15 @@ do while (.true.)
         phi = ONE / dnorm - ONE / delta
         if (tol * (ONE + par * dsq / wsq) - dsq * phi * phi >= 0) then
             d = (delta / dnorm) * d
+            write (*, *) 459, d
             exit
         end if
         if (iter >= 2 .and. par <= parl) then
+            write (*, *) 462, d
             exit
         end if
         if (paru > 0 .and. par >= paru) then
+            write (*, *) 465, d
             exit
         end if
 
@@ -470,6 +481,7 @@ do while (.true.)
             parlest = par
             if (posdef) then
                 if (phi <= phil) then
+                    write (*, *) 473, d
                     exit  ! Has PHIL got the correct value
                 end if
                 slope = (phi - phil) / (par - parl)
@@ -523,6 +535,7 @@ do while (.true.)
                 end if
                 if (tol * (wsq + par * delsq) - gam * gam * wwsq >= 0) then
                     d = d + gam * z
+                    write (*, *) 526, d
                     exit
                 end if
                 parlest = max(parlest, par - wwsq / zsq)
@@ -532,6 +545,7 @@ do while (.true.)
             slope = ONE / gnorm
             if (paru > 0) then
                 if (phi >= phiu) then
+                    write (*, *) 535, d
                     exit  ! Has PHIU got the correct value?
                 end if
                 slope = (phiu - phi) / (paru - par)
@@ -557,11 +571,13 @@ do while (.true.)
     if (paruest > 0) par = min(par, paruest)
 end do
 
+write (*, *) d
 ! Apply the inverse Householder transformations to recover D.
 do k = n - 1_IK, 1, -1
     d(k + 1:n) = d(k + 1:n) - inprod(d(k + 1:n), hh(k + 1:n, k)) * hh(k + 1:n, k)
 end do
 !!MATLAB: d = P*d;
+write (*, *) d
 
 ! If the More-Sorensen algorithm breaks down abnormally (e.g., NaN in the computation), then |D| may
 ! be (much) more than DELTA. This is handled in the following naive way.
@@ -585,7 +601,6 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    write (*, *) n, d
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
     call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
