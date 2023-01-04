@@ -1,12 +1,12 @@
 name: Test ifort
 
 on:
-  # Trigger the workflow on #PUSH or pull request
-  ##PUSH:
+  # Trigger the workflow on push or pull request
+  #push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 10 1-31/2 * *'
+    - cron: '0 4 1-31/2 * *'
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
