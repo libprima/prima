@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script installs CUTEst on Linux, using the compiled CUTEst in the current directory of $GITREPO.
-# CUTEst version: 20221230
+# CUTEst version: 20230105
 
 if [[ "$OSTYPE" != "linux-gnu"* ]]; then
     printf "\nThis package supports only GNU/Linux, not %s.\n\n" "$OSTYPE"
