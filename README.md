@@ -93,7 +93,7 @@ the faithfulness of our implementation, but also check that **the solvers behave
 are invoked with improper inputs or encounter failures of function evaluations**.
 
 The tests are automated by
-[GitHub Actions](https://docs.github.com/en/actions). As of November 2022, more than
+[GitHub Actions](https://docs.github.com/en/actions). As of January 2023, more than
 30,000 "workflows" have been successfully run by GitHub Actions.
 Normally, each workflow consists of \~ 5
 ([sometimes more than 100](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_gO3.yml))
@@ -102,7 +102,10 @@ each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words,
 PRIMA has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
 
-- Tests at [equipez/PRIMA](https://github.com/equipez/PRIMA)
+Since each GitHub Team account can only run at most 60 GitHub Actions jobs, we have to distribute
+this large amount of tests to several different Team accounts as follows.
+
+- [Tests](https://github.com/equipez/PRIMA/actions) at [equipez/PRIMA](https://github.com/equipez/PRIMA)
 
     - [![Verification, small](https://github.com/equipez/PRIMA/actions/workflows/verify_small.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_small.yml)
     - [![Verification, big](https://github.com/equipez/PRIMA/actions/workflows/verify_big.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_big.yml)
@@ -111,7 +114,7 @@ PRIMA has been verified by more than $10^5$ hours (or more than $10$ years) of r
     - [![Test Absoft](https://github.com/equipez/PRIMA/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/test_absoft.yml)
     - [![Test nagfor](https://github.com/equipez/PRIMA/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/test_nagfor.yml)
 
-- Tests at [primalib/PRIMA](https://github.com/primalib/PRIMA)
+- [Tests](https://github.com/primalib/PRIMA/actions) at [primalib/PRIMA](https://github.com/primalib/PRIMA)
 
     - [![Plot performance profiles for all problems](https://github.com/primalib/PRIMA/actions/workflows/profile_all.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/profile_all.yml)
     - [![Verification, base](https://github.com/primalib/PRIMA/actions/workflows/verify_base.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/verify_base.yml)
@@ -122,7 +125,7 @@ PRIMA has been verified by more than $10^5$ hours (or more than $10$ years) of r
     - [![Test Oracle sunf95](https://github.com/primalib/PRIMA/actions/workflows/test_sunf95.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_sunf95.yml)
     - [![Test g95](https://github.com/primalib/PRIMA/actions/workflows/test_g95.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_g95.yml)
 
-- Tests at [s-prima/PRIMA](https://github.com/s-prima/PRIMA)
+- [Tests](https://github.com/s-prima/PRIMA/actions) at [s-prima/PRIMA](https://github.com/s-prima/PRIMA)
 
     - [![Test gfortran, O1, O2](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_O12.yml/badge.svg)](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_O12.yml)
     - [![Test gfortran, g, O3](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_gO3.yml/badge.svg)](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_gO3.yml)
@@ -131,7 +134,7 @@ PRIMA has been verified by more than $10^5$ hours (or more than $10$ years) of r
     - [![Test ifort](https://github.com/s-prima/PRIMA/actions/workflows/test_ifort.yml/badge.svg)](https://github.com/s-prima/PRIMA/actions/workflows/test_ifort.yml)
     - [![Test ifx](https://github.com/s-prima/PRIMA/actions/workflows/test_ifx.yml/badge.svg)](https://github.com/s-prima/PRIMA/actions/workflows/test_ifx.yml)
 
-- Tests at [equipez/gitpersonal](https://github.com/equipez/gitpersonal)
+- [Tests](https://github.com/equipez/gitpersonal/actions) at [equipez/gitpersonal](https://github.com/equipez/gitpersonal)
     - [all the tests](https://github.com/equipez/gitpersonal/actions) are disabled
 
 ### Current status
