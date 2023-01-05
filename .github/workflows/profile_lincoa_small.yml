@@ -37,7 +37,7 @@ jobs:
       - name: Install CUTEst
         if: steps.cache-install-cutest.outputs.cache-hit != 'true'
         run: |
-          bash .github/scripts/install_cutest
+          bash .github/scripts/install_cutest --full
 
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
