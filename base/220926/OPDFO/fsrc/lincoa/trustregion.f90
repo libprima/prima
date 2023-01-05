@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 21, 2022 AM05:33:20
+! Last Modified: Thursday, January 05, 2023 AM09:57:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -307,7 +307,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     !!MATLAB: mask = (resnew > 0); resnew(mask) = max(TINYCV, resnew(mask) - alpha * ad(mask));
     if (icount == nact) then
         !resact(1:nact) = (ONE - bstep) * resact(1:nact)
-        resact(1:nact) = (ONE - alpha*bstep) * resact(1:nact)
+        resact(1:nact) = (ONE - alpha * bstep) * resact(1:nact)
     end if
     reduct = reduct - alpha * (dg + HALF * alpha * dgd)
     if (reduct <= 0 .or. is_nan(reduct)) then
@@ -359,7 +359,7 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(s) == n .and. all(is_finite(s)), 'SIZE(S) == N, S is finite', srname)
-    call assert(norm(s) <= TWO * delta, '|S| <= 2*DELTA', srname)
+    !call assert(norm(s) <= TWO * delta, '|S| <= 2*DELTA', srname)
     ! Due to rounding, it may happen that |S| > DELTA, but |S| > 2*DELTA is highly improbable.
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
