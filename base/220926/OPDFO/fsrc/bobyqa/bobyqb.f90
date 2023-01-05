@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM05:48:47
+! Last Modified: Thursday, January 05, 2023 PM11:08:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -242,6 +242,8 @@ do while (.true.)
         dnorm = min(delta, sqrt(dsq))
         shortd = (dnorm < HALF * rho)
 
+!write (17, *) 247, shortd
+
         ! When D is short make a choice between improving the geometry and reducing RHO depends on
         ! whether or not our work with the current RHO seems to be complete. Either RHO is decreased
         ! or termination occurs if the errors in the quadratic model at the last three interpolation
@@ -253,9 +255,11 @@ do while (.true.)
             !dsquare = (TEN * rho)**2
             dsquare = 1.0E2_RP * rho**2
             if (nf <= nfsav + 2) then
+!write (17, *) nf, nfsav
                 improve_geo = .true.
             else
-                errbig = max(diffa, diffb, diffc)
+                !errbig = max(diffa, diffb, diffc)
+                errbig = maxval([diffc, diffb, diffa])
                 frhosq = 0.125_RP * rho * rho
                 !if (crvmin > ZERO .and. errbig > frhosq * crvmin) then
                 !if (crvmin > ZERO .and. errbig > 0.125_RP * crvmin * rho**2) then
@@ -266,9 +270,11 @@ do while (.true.)
                 bdtest = bdtol
                 bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
                 bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
+!write (17, *) 260, errbig, bdtest
                 hqdiag = diag(hq)
                 curv = ZERO ! Entertain Fortran compilers. No need in MATLAB/Python/Julia/R.
-                where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
+                !where (bdtest < bdtol) curv = hqdiag + matprod(xpt**2, pq)
+                curv = hqdiag + matprod(xpt**2, pq)
                     !!MATLAB: curv(bdtest < bdtol) = hqdiag(bdtest < bdtol) + xpt(bdtest < bdtol, :).^2 * pq
                 !if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho < bdtol)) then
                 !if (any(bdtest < bdtol .and. bdtest + HALF * curv * rho**2 < bdtol)) then
@@ -280,7 +286,8 @@ do while (.true.)
                         improve_geo = .false.
                     end if
                 else
-                    if (any(minval(max(bdtest, bdtest + HALF * curv * rho**2)) < [diffa, diffb, diffc])) then
+!                    if (any(minval(max(bdtest, bdtest + HALF * curv * rho**2)) < [diffa, diffb, diffc])) then
+                    if (any(minval(max(bdtest, bdtest + HALF * curv * rho**2)) < [diffc, diffb, diffa])) then
                         improve_geo = .true.
                     else
                         improve_geo = .false.
@@ -288,6 +295,8 @@ do while (.true.)
                 end if
                 !end if
             end if
+!write (17, *) crvmin, bdtest, curv
+!write (17, *) 293, improve_geo, [diffc, diffb, diffa], minval(max(bdtest, bdtest + HALF * curv * rho**2))
         else
             ntrits = ntrits + 1_IK
         end if
@@ -354,11 +363,14 @@ do while (.true.)
 
             ! Call RESCUE if if rounding errors have damaged the denominator corresponding to D.
             !if (.not. (denom > HALF * vlag(knew)**2)) then
+!write (17, *) 358, dnorm, vlag(knew)**2, nf, nresc
             if (.not. (denom > vlag(knew)**2)) then  ! This is used when verifying RESCUE
+!write (17, *) 359
                 if (nf <= nresc) then
                     info = DAMAGING_ROUNDING
                     exit
                 else
+!write (17, *) 363
                     ! XBASE is also moved to XOPT by a call of RESCUE. This calculation is more
                     ! expensive than the previous shift, because new matrices BMAT and ZMAT are
                     ! generated from scratch, which may include the replacement of interpolation
@@ -525,6 +537,11 @@ do while (.true.)
             exit
         end if
 
+        if (ntrits == 0) then
+!write (17, *) nf, 'geo', x
+        else
+!write (17, *) nf, 'tr', x
+        end if
         call evaluate(calfun, x, f)
         call savehist(nf, x, xhist, f, fhist)
 
@@ -693,6 +710,7 @@ do while (.true.)
         ! If a trust region step has provided a sufficient decrease in F, then branch for another
         ! trust region calculation. The case NTRITS=0 occurs when the new interpolation point was
         ! reached by an alternative step.
+!write (17, *) '701', ntrits, knew, f, fopt, qred
         if (ntrits == 0) cycle
         !if (f <= fopt - TENTH * qred) cycle
         if (knew > 0 .and. f <= fopt - TENTH * qred) cycle
@@ -701,6 +719,7 @@ do while (.true.)
         dsquare = max((TWO * delta)**2, (TEN * rho)**2)
         improve_geo = .true.
     end if
+!write (17, *) 713, improve_geo
 
     if (improve_geo) then
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
@@ -710,6 +729,7 @@ do while (.true.)
         ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
         ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region
         ! iteration, unless the calculations with the current RHO are complete.
+!write (17, *) '719, knew', knew
         if (knew > 0) then
             dist = sqrt(dsquare)
             if (ntrits == -1) then
@@ -723,10 +743,12 @@ do while (.true.)
         else
             geo_step = .false.
         end if
+!write (17, *) '733', ntrits, ratio, max(delta, dnorm), rho
         if (ntrits /= -1 .and. (ratio > 0 .or. max(delta, dnorm) > rho)) cycle
     end if
 
     ! The calculations with the current value of RHO are complete. Update RHO and DELTA.
+!write (17, *) 'reduce rho'
     if (rho > rhoend) then
         delta = HALF * rho
         ratio = rho / rhoend

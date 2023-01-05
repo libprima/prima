@@ -10,7 +10,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, September 26, 2022 PM11:04:58
+! Last Modified: Thursday, January 05, 2023 PM10:58:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -244,6 +244,7 @@ do while (.true.)
     ! trust-region center may be an approximate local minimizer. When this occurs, the algorithm
     ! takes the view that the work for the current RHO is complete, and hence it will reduce
     ! RHO, which will enhance the resolution of the algorithm in general.
+!write (16, *) 247, shortd
     if (shortd) then  ! D is to short to invoke a function evaluation.
         ! Reduce DELTA.
         delta = TENTH * delta
@@ -256,12 +257,15 @@ do while (.true.)
         bdtest = maxval(abs(moderrsav))
         bdtest(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
         bdtest(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
+!write (16, *) 260, maxval(abs(moderrsav)), bdtest
         curv = diag(hq) + matprod(xpt**2, pq)
         errbd = minval(max(bdtest, bdtest + HALF * curv * rhosq))
         if (crvmin > 0) then
             errbd = min(errbd, 0.125_RP * crvmin * rhosq)
         end if
         improve_geo = (any(abs(moderrsav) > errbd) .or. any(dnormsav > rho))
+!write (16, *) crvmin, bdtest, curv
+!write (16, *) 293, improve_geo, abs(moderrsav), errbd, dnormsav, rho
     else  ! D is long enough to invoke a function evaluation.
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
         if (sum(xopt**2) >= 1.0E3_RP * dsq) then
@@ -292,6 +296,7 @@ do while (.true.)
         end if
 
         ! Calculate the value of the objective function at XBASE+XNEW.
+!write (16, *) nf, 'tr', x
         call evaluate(calfun, x, f)
         call savehist(nf, x, xhist, f, fhist)
         !write (16, *) 'tr ', nf, f, fopt, kopt
@@ -475,6 +480,7 @@ do while (.true.)
         dsquare = max((TWO * delta)**2, (TEN * rho)**2)
         !end if
     end if
+!write (16, *) 713, improve_geo
 
     if (improve_geo) then
         distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
@@ -484,6 +490,7 @@ do while (.true.)
         ! If KNEW is positive, then GEOSTEP finds alternative new positions for the KNEW-th
         ! interpolation point within distance DELBAR of XOPT. Otherwise, go for another trust region
         ! iteration, unless the calculations with the current RHO are complete.
+!write (16, *) '719, knew', knew
         if (knew > 0) then
             dist = sqrt(dsquare)
             delbar = max(min(TENTH * dist, delta), rho)
@@ -532,6 +539,7 @@ do while (.true.)
                 end if
 
                 ! Calculate the value of the objective function at XBASE+XNEW.
+!write (16, *) nf, 'geo', x
                 call evaluate(calfun, x, f)
                 call savehist(nf, x, xhist, f, fhist)
                 !write (16, *) 'geo', nf, f, fopt, kopt
@@ -590,6 +598,7 @@ do while (.true.)
                     xopt = xnew
                     gopt = gopt + hess_mul(d, xpt, pq, hq)
                 end if
+!write (16, *) '701', 0, knew, f, fopt, qred
                 cycle
             end if
         else if ((.not. shortd) .and. (ratio > 0 .or. max(delta, dnorm) > rho)) then
@@ -623,6 +632,7 @@ do while (.true.)
     end if
 
 ! The calculations with the current value of RHO are complete. Update RHO and DELTA.
+!write (16, *) 'reduce rho'
     if (rho <= rhoend) then
         info = SMALL_TR_RADIUS
         exit
@@ -672,7 +682,7 @@ call rangehist(nf, xhist, fhist)
 
 ! Postconditions
 
-!close (16)
+close (16)
 
 end subroutine bobyqb
 
