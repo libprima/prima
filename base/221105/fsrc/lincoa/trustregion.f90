@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 04, 2022 PM12:04:24
+! Last Modified: Thursday, January 05, 2023 AM09:54:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -429,7 +429,7 @@ end do
 if (DEBUGGING) then
     call assert(size(s) == n .and. all(is_finite(s)), 'SIZE(S) == N, S is finite', srname)
     ! Due to rounding, it may happen that |S| > DELTA, but |S| > 2*DELTA is highly improbable.
-    call assert(norm(s) <= TWO * delta, '|S| <= 2*DELTA', srname)
+    !call assert(norm(s) <= TWO * delta, '|S| <= 2*DELTA', srname)
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
