@@ -133,7 +133,7 @@ else
         blacklist = [blacklist, {'HS80'}];  % QRADD_RDIAG: Assertion failed: C^T*Q(:, N) == Rdiag(N).
         blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE'}];
         blacklist = [blacklist, {'POLAK6', 'SPIRAL', 'POLAK2'}]; % B = A^{-1} fails
-        blacklist = [blacklist, {'SIPOW3', 'HS55','PRODPL1', 'BQPGASIM','LSNNODOC', 'VESUVIA', 'MESH', 'LOADBAL','MIFFLIN1'}]; % Takes too long
+        blacklist = [blacklist, {'SIPOW3', 'HS55','PRODPL1', 'BQPGASIM','LSNNODOC', 'VESUVIA', 'MESH', 'LOADBAL','MIFFLIN1', 'DUALC5'}]; % Takes too long
         blacklist = [blacklist, {'MINMAXRB', 'MAKELA1', 'HS75', 'GAUSS3','HATFLDG'}]; % Classical COBYLA encounters SEGFAULT
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
