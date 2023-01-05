@@ -1,29 +1,23 @@
 #!/bin/bash
-# This script installs CUTEst on Linux, using the compiled CUTEst in the current directory of $GITREPO.
-# CUTEst version: 20221230
+# This script installs CUTEst on Linux, using the compiled CUTEst in $GITREPO.
+# CUTEst version: 20221229
 
-if [[ "$OSTYPE" != "linux-gnu"* ]]; then
-    printf "\nThis package supports only GNU/Linux, not %s.\n\n" "$OSTYPE"
-    exit 127
-fi
-
+#GIT="gitee.com"
+GIT="github.com"
+GIT_USR="equipez"
+REPONAME="matcutest_compiled"
 if [[ "$1" = --full ]] ; then
     PKG="matcutest.full.7z"  # The full package containing all problems at https://bitbucket.org/optrove/sif
 else
     PKG="matcutest.7z"  # A customized package containing the problems at https://github.com/zaikunzhang/my_cutest_sif
 fi
-PKG_NAME="${PKG//.*/}"  # Remove the suffix from $PKG
-CSRC="$PKG_NAME"rc
+CSRC="matcutestrc"
 MTOOLS="mtools"
-
-#GIT="gitee.com"
-GIT="github.com"
-GIT_USR="equipez"
-REPONAME="$PKG_NAME"_compiled
-GITREPO="https://$GIT/$GIT_USR/$REPONAME"  # Used only if $PKG does not exist in the current directory
 
 INSTALL_DIR="$HOME/local"  # CUTEst will be installed $INSTALL_DIR/$PKG_NAME
 TMPDIR="/tmp"
+
+sudo apt install p7zip-full
 
 if command -v 7z &> /dev/null ; then
     DECOMP="$(command -v 7z) x"  # Command to decompress the package
@@ -32,11 +26,14 @@ else
     exit 1
 fi
 
+GITREPO="https://$GIT/$GIT_USR/$REPONAME"
+PKG_NAME="${PKG//.*/}"  # Remove the suffix from $PKG
+
 mkdir -p "$INSTALL_DIR"
 if [[ -d "$INSTALL_DIR"/"$PKG_NAME" ]] ;then
     # Exit if the package seems to have be installed.
-    printf "\nThe package path\n\n%s\n\nalready exists. Remove it to (re-)install the package.\n\n" "$INSTALL_DIR"/"$PKG_NAME"
-    exit 2
+    printf "\n%s already exists. Remove it to (re-)install the package.\n\n" "$INSTALL_DIR"/"$PKG_NAME"
+    exit 0
 elif [[ -f "./$PKG" ]] ; then
     # If $PKG exists in the current directory, use it.
     cp "./$PKG" "$INSTALL_DIR"
@@ -46,14 +43,13 @@ else
     mv "$TMPDIR"/"$REPONAME"/$PKG "$INSTALL_DIR"
 fi
 
-cd "$INSTALL_DIR" && $DECOMP $PKG  || exit 3  # "$DECOMP $PKG" does not work
+cd "$INSTALL_DIR" && $DECOMP $PKG   # "$DECOMP $PKG" does not work
 rm -f "$INSTALL_DIR"/"$PKG"
 
-source "$INSTALL_DIR"/"$PKG_NAME"/"$CSRC"
-#cd "$INSTALL_DIR"/"$PKG_NAME"/"$MTOOLS" && matlab -nosplash -nodesktop -nodisplay -r "setup; exit" || exit 4
-
-printf "\n*** To use CUTEst in MATLAB, ADD THE FOLLOWING LINE TO %s/.bashrc:\n\n" "$HOME"
-printf "\n   source %s\n" "$INSTALL_DIR"/"$PKG_NAME"/"$CSRC"
-printf "\n\n"
+printf "\n*** To use CUTEst in MATLAB, do the following.\n"
+printf "\n*** 1. Append the following line to ~/.bashrc:\n\n"
+printf "   source %s\n" "$INSTALL_DIR"/"$PKG_NAME"/"$CSRC"
+printf "\n*** 2. In MATLAB, go to the following directory and then run 'setup':\n"
+printf "\n   %s\n\n" "$INSTALL_DIR"/"$PKG_NAME"/"$MTOOLS"
 
 exit 0
