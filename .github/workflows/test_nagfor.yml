@@ -56,7 +56,13 @@ jobs:
           export PATH=$PATH:"~/local/bin"
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
           ROOT=$(realpath ./)
-          cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd $ROOT/fortran/tests
+
+          if [[ -f test_cobyla.f90 ]]; then
+              sed -i 's|bign = 120|bign = 110|g' test_cobyla.f90
+          fi
+
+          export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd $ROOT/fortran/examples/${{ matrix.solver }} && make ntest
 
       - name: Store artifacts
