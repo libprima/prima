@@ -4,7 +4,7 @@ cd /tmp || exit 1
 
 wget "https://www.dropbox.com/s/5xxfpr0tx8kn0o1/aocc-compiler-4.0.0_1_amd64.deb" -O aocc.deb
 
-apt install ./aocc.deb
+apt install /tmp/aocc.deb
 
 SETENVSH="$(find /opt/AMD/ -name "*setenv*.sh" -type f -print | sort | tail -n 1)"
 
