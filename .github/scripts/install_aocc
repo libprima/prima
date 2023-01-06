@@ -1,13 +1,13 @@
 #!/bin/bash
 
-git clone https://github.com/zaikunzhang/resources
+cd /tmp || exit 1
 
-cd resources/
+wget "https://www.dropbox.com/s/5xxfpr0tx8kn0o1/aocc-compiler-4.0.0_1_amd64.deb" -O aocc.deb
 
-apt install ./aocc*.deb
+apt install ./aocc.deb
 
-SETENV="$(find /opt/AMD/ -name *setenv*.sh -print -quit)"
+SETENVSH="$(find /opt/AMD/ -name "*setenv*.sh" -type f -print | sort | tail -n 1)"
 
-source "$SETENV"
+source "$SETENVSH"
 
-cp "$SETENV" /tmp/setenv.sh
+cp "$SETENVSH" /tmp/setenv.sh
