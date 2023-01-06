@@ -12,7 +12,7 @@ profile_bobyqa_small.yml:   - push
 profile_lincoa_small.yml:   - push
 
 primalib/PRIMA:
-profile_all.yml:    - cron: '0 12 * * *'
+profile_all.yml:    - cron: '0 16 * * *'
 verify_base.yml:    - cron: '0 17 * * *'
 test_matlab.yml:    - cron: '0 1, * * *'
 test_g95.yml:    - cron: '0 5 * * *'
