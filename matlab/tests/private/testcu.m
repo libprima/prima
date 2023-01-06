@@ -76,6 +76,9 @@ else
         requirements.blacklist = [requirements.blacklist, {'AGG', 'DALLASM', 'GMNCASE1', 'GMNCASE2', 'SMBANK', 'SSEBLIN'}];  % Takes more than 10 seconds to solve; removed for quick profiling
         %requirements.blacklist = [requirements.blacklist, {'DALLASM','GMNCASE1', 'GMNCASE2', 'SMBANK'}];  % Takes more than 10 seconds to solve; removed for quick profiling
     end
+    if startsWith(solvers{1}, 'newuoa') || startsWith(solvers{2}, 'newuoa')
+        requirements.blacklist = [requirements.blacklist, {'ARGTRIGLS'}]; % Takes too long time
+    end
     if startsWith(solvers{1}, 'uobyqa') || startsWith(solvers{2}, 'uobyqa')
         requirements.blacklist = [requirements.blacklist, {'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'ERRINRSM', 'TOINTGOR', 'TOINTPSP', 'VAREIGVL'}]; % Takes too long time
     end
