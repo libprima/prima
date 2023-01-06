@@ -77,7 +77,7 @@ jobs:
           if [[ "$RUNNER_OS" != "Windows" ]]; then
                cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
                cd $ROOT/fortran/tests
-               if [[ -f test_cobyla.f90 ]]; then
+               if [[ -f test_bobyqa.f90 ]]; then
                    sed -i 's|800|400|g' test_bobyqa.f90
                fi
                sed -i 's|800|500|g' test_*.f90
