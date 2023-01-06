@@ -102,6 +102,7 @@ if isempty(requirements.list)
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
     switch lower(solvers{1})
     case {'uobyqa', 'uobyqan'}
+        blacklist = [blacklist, {'MUONSINELS'}]; % 1-D problem, which is not supported by Powell's UOBYQA
         blacklist = [blacklist, {'BENNETT5LS', 'HIELOW'}]; % More than 30 minutes to solve.
         blacklist = [blacklist, {'YFITU'}]; % Takes too long
     case {'newuoa', 'newuoan'}
