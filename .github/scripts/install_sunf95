@@ -1,10 +1,10 @@
 #!/bin/bash
 
-cd /tmp/
+cd /tmp/ || exit 1
 
-wget "https://www.dropbox.com/s/ayi572hcf5drdvk/OracleDevStd.zip"
+wget "https://www.dropbox.com/s/ayi572hcf5drdvk/OracleDevStd.zip" -O OracleDevStd.zip
 
-unzip OracleDevStd.zip
+unzip /tmp/OracleDevStd.zip
 
 SETENV="/tmp/setenv.sh"
 cat > "$SETENV" <<EOF
