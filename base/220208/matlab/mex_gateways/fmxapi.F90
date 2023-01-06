@@ -29,7 +29,7 @@ module fmxapi_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Monday, February 07, 2022 AM12:23:23
+! Last Modified: Friday, January 06, 2023 AM10:44:51
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : DP, RP
@@ -355,7 +355,7 @@ case ('rank0', 'scalar')
         call mexErrMsgIdAndTxt(trim(eid), trim(msg))
     end if
 case ('rank1', 'vector')
-    if ((m /= 1 .or. n < 0) .and. (m < 0 .or. n /= 1)) then
+    if ((m /= 1 .or. n < 0) .and. (m < 0 .or. n /= 1) .and. (m /= 0 .or. n /= 0)) then
         eid = 'FMXAPI:WrongInput'
         msg = 'fmxVerifyClassShape: A variable of invalid shape received when an array of rank 1 (vector) is expected.'
         call mexErrMsgIdAndTxt(trim(eid), trim(msg))
@@ -367,13 +367,13 @@ case ('rank2', 'matrix')
         call mexErrMsgIdAndTxt(trim(eid), trim(msg))
     end if
 case ('column')
-    if (m < 0 .or. n /= 1) then
+    if ((m < 0 .or. n /= 1) .and. (m /= 0 .or. n /= 0)) then
         eid = 'FMXAPI:WrongInput'
         msg = 'fmxVerifyClassShape: A variable of invalid shape received when a column vector is expected.'
         call mexErrMsgIdAndTxt(trim(eid), trim(msg))
     end if
 case ('row')
-    if (m /= 1 .or. n < 0) then
+    if ((m /= 1 .or. n < 0) .and. (m /= 0 .or. n /= 0)) then
         eid = 'FMXAPI:WrongInput'
         msg = 'fmxVerifyClassShape: A variable of invalid shape received when a row vector is expected.'
         call mexErrMsgIdAndTxt(trim(eid), trim(msg))
@@ -840,6 +840,10 @@ if (present(shape_type)) then
         call mexErrMsgIdAndTxt(trim(eid), trim(msg))
     end select
 end if
+! We accept a 0-by-0 array as a vector/row/column because the MATLAB code may pass an empty vector
+! in such a way.
+y = (y .or. (m == 0 .and. n == 0))
+y = (y .and. (mxIsDouble(px) == 1))
 end function fmxIsDoubleVector
 
 
