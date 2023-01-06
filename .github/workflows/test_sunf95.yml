@@ -7,7 +7,7 @@ on:
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
     #  - cron: '0 7 * * *'
-    - cron: '0 7 1-31/3 * *'  # Reduce the frequency until NORM is fixed.
+    - cron: '0 7 * * *'  # Reduce the frequency until NORM is fixed.
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
