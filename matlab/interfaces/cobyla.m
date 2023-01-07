@@ -235,7 +235,7 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %
 %   See also prima, UOBYQA, NEWUOA, BOBYQA, LINCOA.
 %
-%   See https://www.prima.net for more information.
+%   See https://www.libprima.net for more information.
 %
 %   ***********************************************************************
 %   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
