@@ -276,7 +276,7 @@ cv_history = NaN(1, maxfun);
 prob.options.output_xhist = true;  % We always need xhist to recover the history of the computation.
 
 [~, ~, ~, output] = solver(prob);
-% Some solvers (e.g., fmincon) may not respect maxfun. Indeed, PDFO solvers may also increase maxfun
+% Some solvers (e.g., fmincon) may not respect maxfun. Indeed, PRIMA solvers may also increase maxfun
 % if it is too small (e.g., <= npt for NEWUOA).
 nf = min(maxfun, output.funcCount);
 
@@ -292,7 +292,7 @@ if (nf >= 1)
     fval_history(nf+1:maxfun) = fval_history(nf);
     cv_history(nf+1:maxfun) = cv_history(nf);
 else
-    % Sometimes pdfo may return nf = 0, e.g., when it detects infeasibility.
+    % Sometimes prima may return nf = 0, e.g., when it detects infeasibility.
     fval_history = prob.f0;
     cv_history = prob.constrv0;
 end

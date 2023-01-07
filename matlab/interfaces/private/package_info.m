@@ -2,8 +2,7 @@ function information = package_info(request)
 %PACKAGE_INFO returns information about the pacakge.
 %
 %   ***********************************************************************
-%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
-%               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+%   Author:     Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University
 %
@@ -19,7 +18,7 @@ function information = package_info(request)
 % package_info starts
 
 % Who is calling this function? Is it a correct invoker?
-invoker_list = {'pdfo', 'prepdfo'};
+invoker_list = {'prima', 'preprima'};
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1 || ~ismember(callstack(2).name, invoker_list))
@@ -30,34 +29,34 @@ else
     invoker = callstack(2).name; % Name of the function who calls this function
 end
 
-name = 'pdfon';
+name = 'PRIMA';
 
-about = 'PDFO (Powell''s Derivative-Free Optimization solvers) is a cross-platform package providing interfaces for using late Professor M. J. D. Powell''s derivative-free optimization solvers, including UOBYQA, NEWUOA, BOBYQA, LINCOA, and COBYLA.';
+about = 'PRIMA: Reference Implementation for Powell''s methods with Modernization and Amelioration. PRIMA provides the reference implementation of late Professor M. J. D. Powell''s derivative-free optimization methods, namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.';
 
-author = 'Tom M. Ragonneau and Zaikun Zhang';
+author = 'Zaikun Zhang';
 
-email = 'tom.ragonneau@connect.polyu.hk and zaikun.zhang@polyu.edu.hk';
+email = 'zaikun.zhang@polyu.edu.hk';
 
-url = 'www.pdfo.net';
+url = 'www.libprima.net';
 
-maintainer = 'Tom M. Ragonneau and Zaikun Zhang';
+maintainer = 'Zaikun Zhang';
 
-credits = {'Tom M. Ragonneau', 'Zaikun Zhang'};
+credits = {'Zaikun Zhang'};
 
 license = 'LGPLv3+';
 
-version = '1.0';
+version = '0.9';
 
-date = 'June, 2020';
+date = 'January, 2023';
 
-status = 'Production';
+status = 'Development';
 
 message = 'Dedicated to late Professor M. J. D. Powell FRS (29 July 1936--19 April 2015).';
 
-if year(datetime()) == 2020
-    copyright = sprintf('Copyright %d, Tom M. Ragonneau and Zaikun Zhang', year(datetime()));
+if year(datetime()) == 2023
+    copyright = sprintf('Copyright %d, Zaikun Zhang', year(datetime()));
 else
-    copyright = sprintf('Copyright 2020--%d, Tom M. Ragonneau and Zaikun Zhang', year(datetime()));
+    copyright = sprintf('Copyright 2020--%d, Zaikun Zhang', year(datetime()));
 end
 
 switch lower(request)

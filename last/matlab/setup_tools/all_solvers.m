@@ -11,22 +11,22 @@ if nargin > 1 || (nargin == 1 && ~ischarstr(solver_type))
 end
 
 % All solvers available
-all_solvers_available = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
+all_solvers_available = {'uobyqa_last', 'newuoa_last', 'bobyqa_last', 'lincoa_last', 'cobyla_last'};
 % Solvers without the capability of dealing constraints
-solvers_without_constraints = {'uobyqa', 'newuoa'};
+solvers_without_constraints = {'uobyqa_last', 'newuoa_last'};
 % Solvers capable of dealing constraints
 solvers_with_constraints = setdiff(all_solvers_available, solvers_without_constraints);
 % Solvers capable of solving unconstrained problems
 unconstrained_solvers = all_solvers_available;
 % Solvers capable of solving bound constrained problems
-bound_constrained_solvers = {'bobyqa', 'lincoa', 'cobyla'};
+bound_constrained_solvers = {'bobyqa_last', 'lincoa_last', 'cobyla_last'};
 % Solvers capable of solving linearly constrained problems
-linearly_constrained_solvers = {'lincoa', 'cobyla'};
+linearly_constrained_solvers = {'lincoa_last', 'cobyla_last'};
 % Solvers capable of solving nonlinearly constrained problems
-nonlinearly_constrained_solvers = {'cobyla'};
+nonlinearly_constrained_solvers = {'cobyla_last'};
 % Solvers that are native to this package. The package may also be used to provide interfaces for
 % external solvers
-internal_solvers = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
+internal_solvers = {'uobyqa_last', 'newuoa_last', 'bobyqa_last', 'lincoa_last', 'cobyla_last'};
 
 if nargin < 1
     solver_list = all_solvers_available;

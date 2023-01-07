@@ -121,14 +121,14 @@ try
 
     % Define the solvers to test.
     if isfield(options, 'reverse') && options.reverse
-        solvers = {[solver, 'n_classical'], [solver, 'n']};  % Reverse order: first run 'SOLVERn_classical', and then run 'SOLVERn'
+        solvers = {[solver, 'classical'], solver};  % Reverse order: first run 'SOLVER_classical', and then run 'SOLVER'
     else
-        solvers = {[solver, 'n'], [solver, 'n_classical']};  % Default order: first run 'SOLVERn', and then run 'SOLVERn_classical'.
+        solvers = {solver, [solver, '_classical']};  % Default order: first run 'SOLVER', and then run 'SOLVER_classical'.
     end
 
     % The following line can be used for testing the single-precision version. If such a test is
     % intended, remember to set mexopt.single = true in `get_solvers`.
-    %solvers = {[solver, 'n'], [solver, 'n_single']};
+    %solvers = {solver, [solver, '_single']};
 
     % Show current path information.
     showpath(solvers);

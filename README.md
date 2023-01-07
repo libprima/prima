@@ -2,8 +2,6 @@
 
 Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell.html) FRS (1936--2015)
 
-[![license](https://img.shields.io/badge/license-LGPLv3+-blue)](https://github.com/equipez/PRIMA/blob/master/LICENCE.txt)
-
 - [What](#what)
 - [Why](#why)
 - [How](#how)
@@ -11,6 +9,7 @@ Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell
 - [Bug fixes](#bug-fixes)
 - [Improvements](#improvements)
 - [A "fun" fact](#a-fun-fact)
+- [Acknowledgement](#acknowledgement)
 
 ### What
 
@@ -30,8 +29,7 @@ and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) i
 you intend to solve bound-constrained problems).
 
 PRIMA was initiated by [Zaikun Zhang](https://www.zhangzk.net) in July 2020, based on
-the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonneau.com/) and
-Zaikun Zhang.
+the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang.
 
 ### Why
 
@@ -84,7 +82,7 @@ The mission of PRIMA is nontrivial due to the delicacy of Powell's algorithms an
 of his code. To ensure the faithfulness of PRIMA,
 the **modern** Fortran version was started by refactoring Powell's code into the free form via a small
 [MATLAB tool](https://github.com/equipez/PRIMA/blob/master/matlab/setup_tools/freeform.m).
-However, such refactored code is far from what we want, because it inherits completely
+However, such refactored code is far from what is desired, because it inherits completely
 the structure and style of Powell's code except for the layout. Extensive modifications are needed
 to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of our
 implementation, extensive tests are conducted after each and every tiny modification, the test
@@ -102,7 +100,7 @@ each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words,
 PRIMA has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
 
-Since each GitHub Team account can only run at most 60 GitHub Actions jobs, we have to distribute
+Since each GitHub Team account can only run at most 60 GitHub Actions jobs, I have to distribute
 this large amount of tests to several different Team accounts as follows.
 
 - [Tests](https://github.com/equipez/PRIMA/actions) at [equipez/PRIMA](https://github.com/equipez/PRIMA)
@@ -147,7 +145,7 @@ be available later.
 
 Given the **modern** Fortran version, the implementation in other languages
 becomes **much easier**, because we now have a structured and modularized implementation as a reference.
-As an illustration, we have implemented a [MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/)
+As an illustration, I have implemented a [MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/)
 based on an earlier version of the **modern** Fortran code (with the help of Mr. Galann Pennec).
 The MATLAB code was obtained from the **modern** Fortran code straightforwardly, and indeed, **automatically**.
 
@@ -255,3 +253,22 @@ the coding has been.
 
 The bitterness behind this "fun" fact is exactly why I work on PRIMA: I hope that all
 the frustrations that I have experienced will not happen to any user of Powell's methods anymore.
+
+-----
+
+### Acknowledgement
+
+PRIMA is dedicated to the memory of [late Professor Powell](https://www.zhangzk.net/powell.html) with gratitude for his inspiration and
+for the wealth he left to us.
+
+I am grateful to [Professor Ya-xiang Yuan](http://lsec.cc.ac.cn/~yyx) for his everlasting encouragement and support.
+
+The development of PRIMA is a long-term project, which would not be sustainable without the continued funds from the
+[Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc/) (ref. PolyU 253012/17P, PolyU 153054/20P,
+and PolyU 153066/21P) and [The Hong Kong Polytechnic University](https://www.polyu.edu.hk/) (PolyU),
+in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA).
+
+The development of PRIMA would not be possible without the groundwork laid by the [PDFO](https://www.pdfo.net)
+package of [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang. PDFO is Chapter 3 of the
+Ragonneau's thesis under the supervision of Zhang, financially supported by
+the [Hong Kong Ph.D. Fellowship Scheme](https://cerg1.ugc.edu.hk/hkpfs/index.html) (ref. PF18-24698).

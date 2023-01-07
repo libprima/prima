@@ -12,14 +12,13 @@ end
 prima_dir = test_dir;  % `test_dir` is the root directory of a copy of the package made for the test.
 callstack = dbstack;
 invoker = callstack(2).name;  % The function that calls this function.
-isverify = strcmp(invoker, 'verify');  % Are we conduction verification?
-isprofile = strcmp(invoker, 'profile');  % Are we profiling the solvers?
+isverify = strcmp(invoker, 'verify');  % Are we conducting verification?
 
 % Get the solver paths.
-pdfo_dir = fullfile(prima_dir, 'OPDFO');
-solver_dir = fullfile(pdfo_dir, 'matlab', 'interfaces');
-solvern_dir = fullfile(prima_dir, 'matlab', 'interfaces');
-spaths={solver_dir, solvern_dir};
+last_dir = fullfile(prima_dir, 'last');
+solverl_dir = fullfile(last_dir, 'matlab', 'interfaces');
+solver_dir = fullfile(prima_dir, 'matlab', 'interfaces');
+spaths={solverl_dir, solver_dir};
 
 % Set up the solvers, taking particularly `compile_flag` and `debug_flag` (true/false) into account.
 compile_flag = ~isfield(options, 'compile') || options.compile;
@@ -36,11 +35,7 @@ try
 
     for is = 1 : length(solvers)
 
-        if strcmp(solvers{is}(end), 'n')
-            tested_solver_name = solvers{is}(1:end-1);
-        else
-            tested_solver_name = solvers{is};
-        end
+        tested_solver_name = regexprep(solvers{is}, '_last', '');
 
         if compile_flag  % Compilation requested.
 
@@ -63,12 +58,12 @@ try
 
             cd(prima_dir);
             clear('setup');  % Without this, the next line may not call the latest version of `setup`
-            setup([tested_solver_name, 'n'], mexopt);
+            setup(tested_solver_name, mexopt);
 
             if isverify
-                cd(pdfo_dir);
+                cd(last_dir);
                 clear('setup');  % Without this, the next line may not call the latest version of `setup`
-                setup(tested_solver_name, mexopt);
+                setup([tested_solver_name, '_last'], mexopt);
             end
 
         else  % No compilation. Set up the path only.
@@ -78,7 +73,7 @@ try
             setup('path');
 
             if isverify
-                cd(pdfo_dir);
+                cd(last_dir);
                 clear('setup');  % Without this, the next line may not call the latest version of `setup`
                 setup('path');
             end
