@@ -43,7 +43,7 @@ jobs:
         compiler: [gcc]
         version: [10, 12] # gfortran 9 is buggy wit logical variables when invoked with -Ofast
         bitness: [32, 64]
-        ikind: [i2]
+        ikind: [i2, i4]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [small]
         # Limit the test on macos to 64-bit.
