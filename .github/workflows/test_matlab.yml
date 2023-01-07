@@ -93,15 +93,15 @@ jobs:
               options = struct();
               options.debug=true;
               setup(options);
-              testpdfon;
+              testprima;
               setup
               setup path
-              testpdfon;
-              setup cobylan
-              setup uobyqan
-              setup newuoan
-              setup bobyqan
-              setup lincoan
+              testprima;
+              setup cobyla
+              setup uobyqa
+              setup newuoa
+              setup bobyqa
+              setup lincoa
               setup path
               setup clean
               setup path
