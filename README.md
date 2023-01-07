@@ -84,11 +84,11 @@ the **modern** Fortran version was started by refactoring Powell's code into the
 [MATLAB tool](./matlab/setup_tools/freeform.m).
 However, such refactored code is far from what is desired, because it inherits completely
 the structure and style of Powell's code except for the layout. Extensive modifications are needed
-to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of our
-implementation, extensive tests are conducted after each and every tiny modification, the test
-problems coming from the [CUTEst set](https://github.com/ralna/CUTEst). The tests do not only verify
-the faithfulness of our implementation, but also check that **the solvers behave properly even if they
-are invoked with improper inputs or encounter failures of function evaluations**.
+to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of the
+reference implementation, extensive tests are conducted after each and every tiny modification,
+using the [CUTEst](https://github.com/ralna/CUTEst) problems via [MatCUTEst](https://github.com/equipez/matcutest).
+The tests do not only verify the faithfulness of the implementation, but also check that **the solvers
+behave properly even if they are invoked with improper inputs or encounter failures of function evaluations**.
 
 The tests are automated by
 [GitHub Actions](https://docs.github.com/en/actions). As of January 2023, more than
