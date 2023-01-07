@@ -199,7 +199,7 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 %
 %   See also prima, UOBYQA, NEWUOA, BOBYQA, COBYLA.
 %
-%   See https://www.prima.net for more information.
+%   See https://www.libprima.net for more information.
 %
 %   ***********************************************************************
 %   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)

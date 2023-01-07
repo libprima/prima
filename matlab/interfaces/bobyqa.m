@@ -180,7 +180,7 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %
 %   See also prima, UOBYQA, NEWUOA, LINCOA, COBYLA.
 %
-%   See https://www.prima.net for more information.
+%   See https://www.libprima.net for more information.
 %
 %   ***********************************************************************
 %   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
