@@ -2,7 +2,7 @@
 
 Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell.html) FRS (1936--2015)
 
-[![license](https://img.shields.io/badge/license-LGPLv3+-blue)](https://github.com/equipez/PRIMA/blob/master/LICENCE.txt)
+[![license](https://img.shields.io/badge/license-LGPLv3+-blue)](./LICENCE.txt)
 
 - [What](#what)
 - [Why](#why)
@@ -41,7 +41,7 @@ see the citations of [COBYLA](https://scholar.google.com/scholar?hl=en&as_sdt=0%
 and [BOBYQA](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=The+BOBYQA+algorithm+for+bound+constrained+optimization+without+derivatives&btnG=)).
 
 However, Professor Powell's
-implementation is in [Fortran 77](https://github.com/equipez/PRIMA/tree/master/fortran/original)
+implementation is in [Fortran 77](./fortran/original)
 and the code is nontrivial to understand or maintain, let alone to
 extend. This becomes an obstacle for many practitioners to exploit these solvers in their
 applications and hinders researchers from exploring the wealth left by Professor Powell to the
@@ -83,7 +83,7 @@ to Python, with significant improvements.
 The mission of PRIMA is nontrivial due to the delicacy of Powell's algorithms and the unique style
 of his code. To ensure the faithfulness of PRIMA,
 the **modern** Fortran version was started by refactoring Powell's code into the free form via a small
-[MATLAB tool](https://github.com/equipez/PRIMA/blob/master/matlab/setup_tools/freeform.m).
+[MATLAB tool](./matlab/setup_tools/freeform.m).
 However, such refactored code is far from what is desired, because it inherits completely
 the structure and style of Powell's code except for the layout. Extensive modifications are needed
 to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of our
@@ -96,7 +96,7 @@ The tests are automated by
 [GitHub Actions](https://docs.github.com/en/actions). As of January 2023, more than
 30,000 "workflows" have been successfully run by GitHub Actions.
 Normally, each workflow consists of \~ 5
-([sometimes more than 100](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_gO3.yml))
+([sometimes more than 100](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml))
 **randomized** tests that are conducted in parallel,
 each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words,
@@ -105,34 +105,34 @@ PRIMA has been verified by more than $10^5$ hours (or more than $10$ years) of r
 Since each GitHub Team account can only run at most 60 GitHub Actions jobs, I have to distribute
 this large amount of tests to several different Team accounts as follows.
 
-- [Tests](https://github.com/equipez/PRIMA/actions) at [equipez/PRIMA](https://github.com/equipez/PRIMA)
+- [Tests](https://github.com/equipez/prima/actions) at [equipez/prima](https://github.com/equipez/prima)
 
-    - [![Verification, small](https://github.com/equipez/PRIMA/actions/workflows/verify_small.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_small.yml)
-    - [![Verification, big](https://github.com/equipez/PRIMA/actions/workflows/verify_big.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_big.yml)
-    - [![Verification, large](https://github.com/equipez/PRIMA/actions/workflows/verify_large.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/verify_large.yml)
-    - [![Lint](https://github.com/equipez/PRIMA/actions/workflows/lint.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/lint.yml)
-    - [![Test Absoft](https://github.com/equipez/PRIMA/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/test_absoft.yml)
-    - [![Test nagfor](https://github.com/equipez/PRIMA/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/equipez/PRIMA/actions/workflows/test_nagfor.yml)
+    - [![Verification, small](https://github.com/equipez/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/verify_small.yml)
+    - [![Verification, big](https://github.com/equipez/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/verify_big.yml)
+    - [![Verification, large](https://github.com/equipez/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/verify_large.yml)
+    - [![Lint](https://github.com/equipez/prima/actions/workflows/lint.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/lint.yml)
+    - [![Test Absoft](https://github.com/equipez/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_absoft.yml)
+    - [![Test nagfor](https://github.com/equipez/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_nagfor.yml)
 
-- [Tests](https://github.com/primalib/PRIMA/actions) at [primalib/PRIMA](https://github.com/primalib/PRIMA)
+- [Tests](https://github.com/primalib/prima/actions) at [primalib/prima](https://github.com/primalib/prima)
 
-    - [![Plot performance profiles for all problems](https://github.com/primalib/PRIMA/actions/workflows/profile_all.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/profile_all.yml)
-    - [![Verification, base](https://github.com/primalib/PRIMA/actions/workflows/verify_base.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/verify_base.yml)
-    - [![Test MATLAB](https://github.com/primalib/PRIMA/actions/workflows/test_matlab.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_matlab.yml)
-    - [![Test Flang](https://github.com/primalib/PRIMA/actions/workflows/test_flang.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_flang.yml)
-    - [![Test Flang in AMD AOCC](https://github.com/primalib/PRIMA/actions/workflows/test_aflang.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_aflang.yml)
-    - [![Test nvfortran](https://github.com/primalib/PRIMA/actions/workflows/test_nvfortran.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_nvfortran.yml)
-    - [![Test Oracle sunf95](https://github.com/primalib/PRIMA/actions/workflows/test_sunf95.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_sunf95.yml)
-    - [![Test g95](https://github.com/primalib/PRIMA/actions/workflows/test_g95.yml/badge.svg)](https://github.com/primalib/PRIMA/actions/workflows/test_g95.yml)
+    - [![Plot performance profiles for all problems](https://github.com/primalib/prima/actions/workflows/profile_all.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_all.yml)
+    - [![Verification, base](https://github.com/primalib/prima/actions/workflows/verify_base.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/verify_base.yml)
+    - [![Test MATLAB](https://github.com/primalib/prima/actions/workflows/test_matlab.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_matlab.yml)
+    - [![Test Flang](https://github.com/primalib/prima/actions/workflows/test_flang.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_flang.yml)
+    - [![Test Flang in AMD AOCC](https://github.com/primalib/prima/actions/workflows/test_aflang.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_aflang.yml)
+    - [![Test nvfortran](https://github.com/primalib/prima/actions/workflows/test_nvfortran.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_nvfortran.yml)
+    - [![Test Oracle sunf95](https://github.com/primalib/prima/actions/workflows/test_sunf95.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_sunf95.yml)
+    - [![Test g95](https://github.com/primalib/prima/actions/workflows/test_g95.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_g95.yml)
 
-- [Tests](https://github.com/s-prima/PRIMA/actions) at [s-prima/PRIMA](https://github.com/s-prima/PRIMA)
+- [Tests](https://github.com/s-prima/prima/actions) at [s-prima/prima](https://github.com/s-prima/prima)
 
-    - [![Test gfortran, O1, O2](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_O12.yml/badge.svg)](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_O12.yml)
-    - [![Test gfortran, g, O3](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_gO3.yml/badge.svg)](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_gO3.yml)
-    - [![Test gfortran, fast](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_fast.yml/badge.svg)](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_fast.yml)
-    - [![Test gfortran, big](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_big.yml/badge.svg)](https://github.com/s-prima/PRIMA/actions/workflows/test_gfortran_big.yml)
-    - [![Test ifort](https://github.com/s-prima/PRIMA/actions/workflows/test_ifort.yml/badge.svg)](https://github.com/s-prima/PRIMA/actions/workflows/test_ifort.yml)
-    - [![Test ifx](https://github.com/s-prima/PRIMA/actions/workflows/test_ifx.yml/badge.svg)](https://github.com/s-prima/PRIMA/actions/workflows/test_ifx.yml)
+    - [![Test gfortran, O1, O2](https://github.com/s-prima/prima/actions/workflows/test_gfortran_O12.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_O12.yml)
+    - [![Test gfortran, g, O3](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml)
+    - [![Test gfortran, fast](https://github.com/s-prima/prima/actions/workflows/test_gfortran_fast.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_fast.yml)
+    - [![Test gfortran, big](https://github.com/s-prima/prima/actions/workflows/test_gfortran_big.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_big.yml)
+    - [![Test ifort](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml)
+    - [![Test ifx](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml)
 
 - [Tests](https://github.com/equipez/gitpersonal/actions) at [equipez/gitpersonal](https://github.com/equipez/gitpersonal)
     - [all the tests](https://github.com/equipez/gitpersonal/actions) are disabled
@@ -140,8 +140,8 @@ this large amount of tests to several different Team accounts as follows.
 ### Current status
 
 After almost **three** years of intensive coding, **the
-[modern Fortran version](https://github.com/equipez/PRIMA/tree/master/fortran) of
-PRIMA has been finished by December 2022.** An [interface](./matlab/interfaces)
+[modern Fortran version](./fortran) of
+PRIMA has been finished by December 2022.** An [interface](./matlab/interfaces/prima.m)
 is also provided for [using the Fortran implementation under MATLAB](./README_mat.txt). Interfaces for other languages will
 be available later.
 
