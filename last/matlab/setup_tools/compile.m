@@ -1,8 +1,8 @@
-function compile(solvers, mexdir, fsrc, gateways, options)
+function compile(solvers, mexdir, fortd, gateways, options)
 %COMPILE mexifies the Fortran solvers.
 % solvers: list of the solvers to mexify
 % mexdir: the directory that will contain the mexified solvers
-% fsrc: the directory containing the source files of the Fortran solvers
+% fortd: the directory containing the source files of the Fortran solvers
 % gateways: the directory containing the MEX gateways of the Fortran solvers
 % options: some options
 
@@ -31,12 +31,12 @@ function compile(solvers, mexdir, fsrc, gateways, options)
 
 % Directories
 cpwd = pwd();  % The current directory, which may not be the directory containing this m file.
-% `modern_src`: the directory containing the modernized source files of the Fortran solvers
-modern_src = fsrc;
-% `classical_src`: the directory containing the classical source files of the Fortran solvers
-classical_src = fullfile(fsrc, 'classical');
+% `modern_fortd`: the directory containing the modernized source files of the Fortran solvers
+modern_fortd = fortd;
+% `classical_fortd`: the directory containing the classical source files of the Fortran solvers
+classical_fortd = fullfile(fortd, 'classical');
 % `common`: the directory that contains some common source files shared by all the Fortran solvers
-common = fullfile(fsrc, 'common');
+common = fullfile(fortd, 'common');
 
 % `options.debug_only` and `options.debug` indicate whether to compile the debugging version of the
 % solvers. `debug_only` prevails if both of them are present (e.g., debug_only = true, debug = false).
@@ -68,15 +68,6 @@ if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31
 else
     ad_option = '-compatibleArrayDims'; % This works for both 32-bit and 64-bit MATLAB
 end
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%ready_solvers = {'cobyla_last', 'newuoa_last'};  % To be removed !!! %%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Name of the file that contains the list of Fortran files. There should be such a file in each
 % Fortran source code directory, and the list should indicate the dependence among the files.
@@ -128,9 +119,9 @@ for isol = 1 : length(solvers)
     gateway = fullfile(gateways, [solver, '_mex.F']);
     for ivar = 1 : length(variants)
         if strcmp(variants{ivar}, 'classical')
-            soldir = fullfile(classical_src, solver);
+            soldir = fullfile(classical_fortd, solver);
         else
-            soldir = fullfile(modern_src, solver);
+            soldir = fullfile(modern_fortd, solver);
         end
         for idbg = 1 : length(debug_flags)
             if strcmp(variants{ivar}, 'classical') && debug_flags{idbg}
@@ -139,15 +130,6 @@ for isol = 1 : length(solvers)
             end
             mex_options = {verbose_option, ad_option, ['-', dbgstr(debug_flags{idbg})]};
             for iprc = 1 : length(precisions)
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                %if ~ismember(solver, ready_solvers) && ~strcmp(precisions{iprc}, 'double')
-                %    %continue  % To be removed !!! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                %end
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 work_dir = fullfile(soldir, pdstr(precisions{iprc}, debug_flags{idbg}));
                 prepare_work_dir(work_dir);
                 common_dir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));

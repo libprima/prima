@@ -15,7 +15,7 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, probinfo] =
 %
 % Remarks
 % 1. Input/output names: MATLAB allows to use the same name for inputs and outputs.
-% 2. invoker: invoker is the function that calls preprima_last
+% 2. invoker: invoker is the function that calls preprima_last.
 %
 % TODO: None
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -127,6 +127,9 @@ if isa(options, 'struct') && isfield(options, 'precision') && ischarstr(options.
         ismember(lower(options.precision), all_precisions())
     precision = lower(options.precision);
 end
+% Zaikun 20221220: What if the Fortran code is not compiled? Do we still need these numbers, or
+% should we set them according to the range of double-precision floating point numbers? Note that
+% `gethuge` is used nowhere else.
 probinfo.hugenum = gethuge('real', precision);
 probinfo.hugefun = gethuge('fun', precision);
 probinfo.hugecon = gethuge('con', precision);
@@ -1246,7 +1249,7 @@ if isfield(options, 'fortran')
     elseif ~options.fortran && options.classical
         wid = sprintf('%s:FortranContradictClassical', invoker);
         wmsg = sprintf('%s: fortran = false but classical = true; fortran is reset to true.', invoker);
-        options.fortran = false;
+        options.fortran = true;
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
         validated = true;
@@ -1256,7 +1259,7 @@ if isfield(options, 'fortran')
         wid = sprintf('%s:FortranContradictPrecision', invoker);
         wmsg = sprintf('%s: fortran = false but precision = %s; fortran is reset to true.', ...
             invoker, options.precision);
-        options.fortran = false;
+        options.fortran = true;
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
         validated = true;

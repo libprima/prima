@@ -1,0 +1,1305 @@
+     The Fortran version of UOBYQA, written by M.J.D. Powell, is attached.
+Its purpose is to seek the least value of a function F of several variables,
+when derivatives are not available, where F is specified by the user through
+a subroutine called CALFUN. The algorithm is intended to change the variables
+to values that are close to a local minimum of F. The user, however, should
+assume responsibility for finding out if the calculations are satisfactory,
+by giving careful attention to the values of F that occur. The details of
+the method are described in "UOBYQA: unconstrained optimization by quadratic
+approximation" by M.J.D. Powell, Mathematical Programming Series B, Volume
+92, pages 555-582 (2002).
+
+     The attachments in sequence are a suitable Makefile, followed by a main
+program and a CALFUN routine for the Chebyquad problems, in order to provide
+an example for testing. Then UOBYQA and its three auxiliary routines, namely
+UOBYQB, TRSTEP and LAGMAX, are given. Finally, the computed output that the
+author obtained for the Chebyquad problems is listed.
+
+     The way of calling UOBYQA should be clear from the given example and
+from the comments of that subroutine. It is hoped that the software will
+be helpful to much future research and to many applications. There are no
+restrictions on or charges for its use. If you wish to refer to it, please
+cite the paper that is mentioned above.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Makefile %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+main: calfun.o lagmax.o main.o trstep.o uobyqa.o uobyqb.o
+        f77 -g calfun.o lagmax.o main.o trstep.o uobyqa.o uobyqb.o
+calfun.o: calfun.f
+        f77 -g  -c calfun.f
+lagmax.o: lagmax.f
+        f77 -g  -c lagmax.f
+main.o: main.f
+        f77 -g  -c main.f
+trstep.o: trstep.f
+        f77 -g  -c trstep.f
+uobyqa.o: uobyqa.f
+        f77 -g  -c uobyqa.f
+uobyqb.o: uobyqb.f
+        f77 -g  -c uobyqb.f
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% main.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+C
+C     The Chebyquad test problem (Fletcher, 1965) for N = 2,4,6,8.
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION X(10),W(10000)
+      IPRINT=2
+      MAXFUN=5000
+      RHOEND=1.0D-8
+      DO 30 N=2,8,2
+      DO 10 I=1,N
+   10 X(I)=DFLOAT(I)/DFLOAT(N+1)
+      RHOBEG=0.2D0*X(1)
+      PRINT 20, N
+   20 FORMAT (//5X,'******************'/5X,
+     1  'Results with N =',I2,/5X,'******************')
+      CALL UOBYQA (N,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W)
+   30 CONTINUE
+      STOP
+      END
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% calfun.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE CALFUN (N,X,F)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION X(*),Y(10,10)
+      DO 10 J=1,N
+      Y(1,J)=1.0D0
+   10 Y(2,J)=2.0D0*X(J)-1.0D0
+      DO 20 I=2,N
+      DO 20 J=1,N
+   20 Y(I+1,J)=2.0D0*Y(2,J)*Y(I,J)-Y(I-1,J)
+      F=0.0D0
+      NP=N+1
+      IW=1
+      DO 40 I=1,NP
+      SUM=0.0D0
+      DO 30 J=1,N
+   30 SUM=SUM+Y(I,J)
+      SUM=SUM/DFLOAT(N)
+      IF (IW .GT. 0) SUM=SUM+1.0/DFLOAT(I*I-2*I)
+      IW=-IW
+   40 F=F+SUM*SUM
+      RETURN
+      END
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% uobyqa.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE UOBYQA (N,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION X(*),W(*)
+C
+C     This subroutine seeks the least value of a function of many variables,
+C     by a trust region method that forms quadratic models by interpolation.
+C     The algorithm is described in "UOBYQA: unconstrained optimization by
+C     quadratic approximation" by M.J.D. Powell, Report DAMTP 2000/NA14,
+C     University of Cambridge. The arguments of the subroutine are as follows.
+C
+C     N must be set to the number of variables and must be at least two.
+C     Initial values of the variables must be set in X(1),X(2),...,X(N). They
+C       will be changed to the values that give the least calculated F.
+C     RHOBEG and RHOEND must be set to the initial and final values of a trust
+C       region radius, so both must be positive with RHOEND<=RHOBEG. Typically
+C       RHOBEG should be about one tenth of the greatest expected change to a
+C       variable, and RHOEND should indicate the accuracy that is required in
+C       the final values of the variables.
+C     The value of IPRINT should be set to 0, 1, 2 or 3, which controls the
+C       amount of printing. Specifically, there is no output if IPRINT=0 and
+C       there is output only at the return if IPRINT=1. Otherwise, each new
+C       value of RHO is printed, with the best vector of variables so far and
+C       the corresponding value of the objective function. Further, each new
+C       value of F with its variables are output if IPRINT=3.
+C     MAXFUN must be set to an upper bound on the number of calls of CALFUN.
+C     The array W will be used for working space. Its length must be at least
+C       ( N**4 + 8*N**3 + 23*N**2 + 42*N + max [ 2*N**2 + 4, 18*N ] ) / 4.
+C
+C     SUBROUTINE CALFUN (N,X,F) must be provided by the user. It must set F to
+C     the value of the objective function for the variables X(1),X(2),...,X(N).
+C
+C     Partition the working space array, so that different parts of it can be
+C     treated separately by the subroutine that performs the main calculation.
+C
+      NPT=(N*N+3*N+2)/2
+      IXB=1
+      IXO=IXB+N
+      IXN=IXO+N
+      IXP=IXN+N
+      IPQ=IXP+N*NPT
+      IPL=IPQ+NPT-1
+      IH=IPL+(NPT-1)*NPT
+      IG=IH+N*N
+      ID=IG+N
+      IVL=IH
+      IW=ID+N
+      CALL UOBYQB (N,X,RHOBEG,RHOEND,IPRINT,MAXFUN,NPT,W(IXB),W(IXO),
+     1  W(IXN),W(IXP),W(IPQ),W(IPL),W(IH),W(IG),W(ID),W(IVL),W(IW))
+      RETURN
+      END
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% uobyqb.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE UOBYQB (N,X,RHOBEG,RHOEND,IPRINT,MAXFUN,NPT,XBASE,
+     1  XOPT,XNEW,XPT,PQ,PL,H,G,D,VLAG,W)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION X(*),XBASE(*),XOPT(*),XNEW(*),XPT(NPT,*),PQ(*),
+     1  PL(NPT,*),H(N,*),G(*),D(*),VLAG(*),W(*)
+C
+C     The arguments N, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to
+C       the corresponding arguments in SUBROUTINE UOBYQA.
+C     NPT is set by UOBYQA to (N*N+3*N+2)/2 for the above dimension statement.
+C     XBASE will contain a shift of origin that reduces the contributions from
+C       rounding errors to values of the model and Lagrange functions.
+C     XOPT will be set to the displacement from XBASE of the vector of
+C       variables that provides the least calculated F so far.
+C     XNEW will be set to the displacement from XBASE of the vector of
+C       variables for the current calculation of F.
+C     XPT will contain the interpolation point coordinates relative to XBASE.
+C     PQ will contain the parameters of the quadratic model.
+C     PL will contain the parameters of the Lagrange functions.
+C     H will provide the second derivatives that TRSTEP and LAGMAX require.
+C     G will provide the first derivatives that TRSTEP and LAGMAX require.
+C     D is reserved for trial steps from XOPT, except that it will contain
+C       diagonal second derivatives during the initialization procedure.
+C     VLAG will contain the values of the Lagrange functions at a new point X.
+C     The array W will be used for working space. Its length must be at least
+C     max [ 6*N, ( N**2 + 3*N + 2 ) / 2 ].
+C
+C     Set some constants.
+C
+      ONE=1.0D0
+      TWO=2.0D0
+      ZERO=0.0D0
+      HALF=0.5D0
+      TOL=0.01D0
+      NNP=N+N+1
+      NPTM=NPT-1
+      NFTEST=MAX0(MAXFUN,1)
+C
+C     Initialization. NF is the number of function calculations so far.
+C
+      RHO=RHOBEG
+      RHOSQ=RHO*RHO
+      NF=0
+      DO 10 I=1,N
+      XBASE(I)=X(I)
+      DO 10 K=1,NPT
+   10 XPT(K,I)=ZERO
+      DO 20 K=1,NPT
+      DO 20 J=1,NPTM
+   20 PL(K,J)=ZERO
+C
+C     The branch to label 120 obtains a new value of the objective function
+C     and then there is a branch back to label 50, because the new function
+C     value is needed to form the initial quadratic model. The least function
+C     value so far and its index are noted below.
+C
+   30 DO 40 I=1,N
+   40 X(I)=XBASE(I)+XPT(NF+1,I)
+      GOTO 120
+   50 IF (NF .EQ. 1) THEN
+          FOPT=F
+          KOPT=NF
+          FBASE=F
+          J=0
+          JSWITCH=-1
+          IH=N
+      ELSE
+          IF (F .LT. FOPT) THEN
+              FOPT=F
+              KOPT=NF
+          END IF
+      END IF
+C
+C     Form the gradient and diagonal second derivatives of the initial
+C     quadratic model and Lagrange functions.
+C
+      IF (NF .LE. NNP) THEN
+          JSWITCH=-JSWITCH
+          IF (JSWITCH .GT. 0) THEN
+              IF (J .GE. 1) THEN
+                  IH=IH+J
+                  IF (W(J) .LT. ZERO) THEN
+                      D(J)=(FSAVE+F-TWO*FBASE)/RHOSQ
+                      PQ(J)=(FSAVE-F)/(TWO*RHO)
+                      PL(1,IH)=-TWO/RHOSQ
+                      PL(NF-1,J)=HALF/RHO
+                      PL(NF-1,IH)=ONE/RHOSQ
+                  ELSE
+                      PQ(J)=(4.0D0*FSAVE-3.0D0*FBASE-F)/(TWO*RHO)
+                      D(J)=(FBASE+F-TWO*FSAVE)/RHOSQ
+                      PL(1,J)=-1.5D0/RHO
+                      PL(1,IH)=ONE/RHOSQ
+                      PL(NF-1,J)=TWO/RHO
+                      PL(NF-1,IH)=-TWO/RHOSQ
+                  END IF
+                  PQ(IH)=D(J)
+                  PL(NF,J)=-HALF/RHO
+                  PL(NF,IH)=ONE/RHOSQ
+              END IF
+C
+C     Pick the shift from XBASE to the next initial interpolation point
+C     that provides diagonal second derivatives.
+C
+              IF (J .LT. N) THEN
+                  J=J+1
+                  XPT(NF+1,J)=RHO
+              END IF
+          ELSE
+              FSAVE=F
+              IF (F .LT. FBASE) THEN
+                  W(J)=RHO
+                  XPT(NF+1,J)=TWO*RHO
+              ELSE
+                  W(J)=-RHO
+                  XPT(NF+1,J)=-RHO
+              END IF
+          END IF
+          IF (NF .LT. NNP) GOTO 30
+C
+C     Form the off-diagonal second derivatives of the initial quadratic model.
+C
+          IH=N
+          IP=1
+          IQ=2
+      END IF
+      IH=IH+1
+      IF (NF .GT. NNP) THEN
+          TEMP=ONE/(W(IP)*W(IQ))
+          TEMPA=F-FBASE-W(IP)*PQ(IP)-W(IQ)*PQ(IQ)
+          PQ(IH)=(TEMPA-HALF*RHOSQ*(D(IP)+D(IQ)))*TEMP
+          PL(1,IH)=TEMP
+          IW=IP+IP
+          IF (W(IP) .LT. ZERO) IW=IW+1
+          PL(IW,IH)=-TEMP
+          IW=IQ+IQ
+          IF (W(IQ) .LT. ZERO) IW=IW+1
+          PL(IW,IH)=-TEMP
+          PL(NF,IH)=TEMP
+C
+C     Pick the shift from XBASE to the next initial interpolation point
+C     that provides off-diagonal second derivatives.
+C
+          IP=IP+1
+      END IF
+      IF (IP .EQ. IQ) THEN
+          IH=IH+1
+          IP=1
+          IQ=IQ+1
+      END IF
+      IF (NF .LT. NPT) THEN
+          XPT(NF+1,IP)=W(IP)
+          XPT(NF+1,IQ)=W(IQ)
+          GOTO 30
+      END IF
+C
+C     Set parameters to begin the iterations for the current RHO.
+C
+      SIXTHM=ZERO
+      DELTA=RHO
+   60 TWORSQ=(TWO*RHO)**2
+      RHOSQ=RHO*RHO
+C
+C     Form the gradient of the quadratic model at the trust region centre.
+C
+   70 KNEW=0
+      IH=N
+      DO 80 J=1,N
+      XOPT(J)=XPT(KOPT,J)
+      G(J)=PQ(J)
+      DO 80 I=1,J
+      IH=IH+1
+      G(I)=G(I)+PQ(IH)*XOPT(J)
+      IF (I .LT. J) G(J)=G(J)+PQ(IH)*XOPT(I)
+   80 H(I,J)=PQ(IH)
+C
+C     Generate the next trust region step and test its length. Set KNEW
+C     to -1 if the purpose of the next F will be to improve conditioning,
+C     and also calculate a lower bound on the Hessian term of the model Q.
+C
+      CALL TRSTEP (N,G,H,DELTA,TOL,D,W(1),W(N+1),W(2*N+1),W(3*N+1),
+     1  W(4*N+1),W(5*N+1),EVALUE)
+      TEMP=ZERO
+      DO 90 I=1,N
+   90 TEMP=TEMP+D(I)**2
+      DNORM=DMIN1(DELTA,DSQRT(TEMP))
+      ERRTOL=-ONE
+      IF (DNORM .LT. HALF*RHO) THEN
+          KNEW=-1
+          ERRTOL=HALF*EVALUE*RHO*RHO
+          IF (NF .LE. NPT+9) ERRTOL=ZERO
+          GOTO 290
+      END IF
+C
+C     Calculate the next value of the objective function.
+C
+  100 DO 110 I=1,N
+      XNEW(I)=XOPT(I)+D(I)
+  110 X(I)=XBASE(I)+XNEW(I)
+  120 IF (NF .GE. NFTEST) THEN
+          IF (IPRINT .GT. 0) PRINT 130
+  130     FORMAT (/4X,'Return from UOBYQA because CALFUN has been',
+     1      ' called MAXFUN times')
+          GOTO 420
+      END IF
+      NF=NF+1
+      CALL CALFUN (N,X,F)
+      IF (IPRINT .EQ. 3) THEN
+          PRINT 140, NF,F,(X(I),I=1,N)
+  140      FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
+     1       '    The corresponding X is:'/(2X,5D15.6))
+      END IF
+      IF (NF .LE. NPT) GOTO 50
+      IF (KNEW .EQ. -1) GOTO 420
+C
+C     Use the quadratic model to predict the change in F due to the step D,
+C     and find the values of the Lagrange functions at the new point.
+C
+      VQUAD=ZERO
+      IH=N
+      DO 150 J=1,N
+      W(J)=D(J)
+      VQUAD=VQUAD+W(J)*PQ(J)
+      DO 150 I=1,J
+      IH=IH+1
+      W(IH)=D(I)*XNEW(J)+D(J)*XOPT(I)
+      IF (I .EQ. J) W(IH)=HALF*W(IH)
+  150 VQUAD=VQUAD+W(IH)*PQ(IH)
+      DO 170 K=1,NPT
+      TEMP=ZERO
+      DO 160 J=1,NPTM
+  160 TEMP=TEMP+W(J)*PL(K,J)
+  170 VLAG(K)=TEMP
+      VLAG(KOPT)=VLAG(KOPT)+ONE
+C
+C     Update SIXTHM, which is a lower bound on one sixth of the greatest
+C     third derivative of F.
+C
+      DIFF=F-FOPT-VQUAD
+      SUM=ZERO
+      DO 190 K=1,NPT
+      TEMP=ZERO
+      DO 180 I=1,N
+  180 TEMP=TEMP+(XPT(K,I)-XNEW(I))**2
+      TEMP=DSQRT(TEMP)
+  190 SUM=SUM+DABS(TEMP*TEMP*TEMP*VLAG(K))
+      SIXTHM=DMAX1(SIXTHM,DABS(DIFF)/SUM)
+C
+C     Update FOPT and XOPT if the new F is the least value of the objective
+C     function so far. Then branch if D is not a trust region step.
+C
+      FSAVE=FOPT
+      IF (F .LT. FOPT) THEN
+          FOPT=F
+          DO 200 I=1,N
+  200     XOPT(I)=XNEW(I)
+      END IF
+      KSAVE=KNEW
+      IF (KNEW .GT. 0) GOTO 240
+C
+C     Pick the next value of DELTA after a trust region step.
+C
+      IF (VQUAD .GE. ZERO) THEN
+          IF (IPRINT .GT. 0) PRINT 210
+  210     FORMAT (/4X,'Return from UOBYQA because a trust',
+     1      ' region step has failed to reduce Q')
+          GOTO 420
+      END IF
+      RATIO=(F-FSAVE)/VQUAD
+      IF (RATIO .LE. 0.1D0) THEN
+          DELTA=HALF*DNORM
+      ELSE IF (RATIO. LE. 0.7D0) THEN
+          DELTA=DMAX1(HALF*DELTA,DNORM)
+      ELSE
+          DELTA=DMAX1(DELTA,1.25D0*DNORM,DNORM+RHO)
+      END IF
+      IF (DELTA .LE. 1.5D0*RHO) DELTA=RHO
+C
+C     Set KNEW to the index of the next interpolation point to be deleted.
+C
+      KTEMP=0
+      DETRAT=ZERO
+      IF (F .GE. FSAVE) THEN
+          KTEMP=KOPT
+          DETRAT=ONE
+      END IF
+      DO 230 K=1,NPT
+      SUM=ZERO
+      DO 220 I=1,N
+  220 SUM=SUM+(XPT(K,I)-XOPT(I))**2
+      TEMP=DABS(VLAG(K))
+      IF (SUM .GT. RHOSQ) TEMP=TEMP*(SUM/RHOSQ)**1.5D0
+      IF (TEMP .GT. DETRAT .AND. K .NE. KTEMP) THEN
+          DETRAT=TEMP
+          DDKNEW=SUM
+          KNEW=K
+      END IF
+  230 CONTINUE
+      IF (KNEW .EQ. 0) GOTO 290
+C
+C     Replace the interpolation point that has index KNEW by the point XNEW,
+C     and also update the Lagrange functions and the quadratic model.
+C
+  240 DO 250 I=1,N
+  250 XPT(KNEW,I)=XNEW(I)
+      TEMP=ONE/VLAG(KNEW)
+      DO 260 J=1,NPTM
+      PL(KNEW,J)=TEMP*PL(KNEW,J)
+  260 PQ(J)=PQ(J)+DIFF*PL(KNEW,J)
+      DO 280 K=1,NPT
+      IF (K .NE. KNEW) THEN
+          TEMP=VLAG(K)
+          DO 270 J=1,NPTM
+  270     PL(K,J)=PL(K,J)-TEMP*PL(KNEW,J)
+      END IF
+  280 CONTINUE
+C
+C     Update KOPT if F is the least calculated value of the objective
+C     function. Then branch for another trust region calculation. The
+C     case KSAVE>0 indicates that a model step has just been taken.
+C
+      IF (F .LT. FSAVE) THEN
+          KOPT=KNEW
+          GOTO 70
+      END IF
+      IF (KSAVE .GT. 0) GOTO 70
+      IF (DNORM .GT. TWO*RHO) GOTO 70
+      IF (DDKNEW .GT. TWORSQ) GOTO 70
+C
+C     Alternatively, find out if the interpolation points are close
+C     enough to the best point so far.
+C
+  290 DO 300 K=1,NPT
+      W(K)=ZERO
+      DO 300 I=1,N
+  300 W(K)=W(K)+(XPT(K,I)-XOPT(I))**2
+  310 KNEW=-1
+      DISTEST=TWORSQ
+      DO 320 K=1,NPT
+      IF (W(K) .GT. DISTEST) THEN
+          KNEW=K
+          DISTEST=W(K)
+      END IF
+  320 CONTINUE
+C
+C     If a point is sufficiently far away, then set the gradient and Hessian
+C     of its Lagrange function at the centre of the trust region, and find
+C     half the sum of squares of components of the Hessian.
+C
+      IF (KNEW .GT. 0) THEN
+          IH=N
+          SUMH=ZERO
+          DO 340 J=1,N
+          G(J)=PL(KNEW,J)
+          DO 330 I=1,J
+          IH=IH+1
+          TEMP=PL(KNEW,IH)
+          G(J)=G(J)+TEMP*XOPT(I)
+          IF (I .LT. J) THEN
+              G(I)=G(I)+TEMP*XOPT(J)
+              SUMH=SUMH+TEMP*TEMP
+          END IF
+  330     H(I,J)=TEMP
+  340     SUMH=SUMH+HALF*TEMP*TEMP
+C
+C     If ERRTOL is positive, test whether to replace the interpolation point
+C     with index KNEW, using a bound on the maximum modulus of its Lagrange
+C     function in the trust region.
+C
+          IF (ERRTOL .GT. ZERO) THEN
+              W(KNEW)=ZERO
+              SUMG=ZERO
+              DO 350 I=1,N
+  350         SUMG=SUMG+G(I)**2
+              ESTIM=RHO*(DSQRT(SUMG)+RHO*DSQRT(HALF*SUMH))
+              WMULT=SIXTHM*DISTEST**1.5D0
+              IF (WMULT*ESTIM .LE. ERRTOL) GOTO 310
+          END IF
+C
+C     If the KNEW-th point may be replaced, then pick a D that gives a large
+C     value of the modulus of its Lagrange function within the trust region.
+C     Here the vector XNEW is used as temporary working space.
+C
+          CALL LAGMAX (N,G,H,RHO,D,XNEW,VMAX)
+          IF (ERRTOL .GT. ZERO) THEN
+              IF (WMULT*VMAX .LE. ERRTOL) GOTO 310
+          END IF
+          GOTO 100
+      END IF
+      IF (DNORM .GT. RHO) GOTO 70
+C
+C     Prepare to reduce RHO by shifting XBASE to the best point so far,
+C     and make the corresponding changes to the gradients of the Lagrange
+C     functions and the quadratic model.
+C
+      IF (RHO .GT. RHOEND) THEN
+          IH=N
+          DO 380 J=1,N
+          XBASE(J)=XBASE(J)+XOPT(J)
+          DO 360 K=1,NPT
+  360     XPT(K,J)=XPT(K,J)-XOPT(J)
+          DO 380 I=1,J
+          IH=IH+1
+          PQ(I)=PQ(I)+PQ(IH)*XOPT(J)
+          IF (I .LT. J) THEN
+              PQ(J)=PQ(J)+PQ(IH)*XOPT(I)
+              DO 370 K=1,NPT
+  370         PL(K,J)=PL(K,J)+PL(K,IH)*XOPT(I)
+          END IF
+          DO 380 K=1,NPT
+  380     PL(K,I)=PL(K,I)+PL(K,IH)*XOPT(J)
+C
+C     Pick the next values of RHO and DELTA.
+C
+          DELTA=HALF*RHO
+          RATIO=RHO/RHOEND
+          IF (RATIO .LE. 16.0D0) THEN
+              RHO=RHOEND
+          ELSE IF (RATIO .LE. 250.0D0) THEN
+              RHO=DSQRT(RATIO)*RHOEND
+          ELSE
+              RHO=0.1D0*RHO
+          END IF
+          DELTA=DMAX1(DELTA,RHO)
+          IF (IPRINT .GE. 2) THEN
+              IF (IPRINT .GE. 3) PRINT 390
+  390         FORMAT (5X)
+              PRINT 400, RHO,NF
+  400         FORMAT (/4X,'New RHO =',1PD11.4,5X,'Number of',
+     1          ' function values =',I6)
+              PRINT 410, FOPT,(XBASE(I),I=1,N)
+  410         FORMAT (4X,'Least value of F =',1PD23.15,9X,
+     1          'The corresponding X is:'/(2X,5D15.6))
+          END IF
+          GOTO 60
+      END IF
+C
+C     Return from the calculation, after another Newton-Raphson step, if
+C     it is too short to have been tried before.
+C
+      IF (ERRTOL .GE. ZERO) GOTO 100
+  420 IF (FOPT .LE. F) THEN
+          DO 430 I=1,N
+  430     X(I)=XBASE(I)+XOPT(I)
+          F=FOPT
+      END IF
+      IF (IPRINT .GE. 1) THEN
+          PRINT 440, NF
+  440     FORMAT (/4X,'At the return from UOBYQA',5X,
+     1      'Number of function values =',I6)
+          PRINT 410, F,(X(I),I=1,N)
+      END IF
+      RETURN
+      END
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% trstep.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE TRSTEP (N,G,H,DELTA,TOL,D,GG,TD,TN,W,PIV,Z,EVALUE)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION G(*),H(N,*),D(*),GG(*),TD(*),TN(*),W(*),PIV(*),Z(*)
+C
+C     N is the number of variables of a quadratic objective function, Q say.
+C     G is the gradient of Q at the origin.
+C     H is the Hessian matrix of Q. Only the upper triangular and diagonal
+C       parts need be set. The lower triangular part is used to store the
+C       elements of a Householder similarity transformation.
+C     DELTA is the trust region radius, and has to be positive.
+C     TOL is the value of a tolerance from the open interval (0,1).
+C     D will be set to the calculated vector of variables.
+C     The arrays GG, TD, TN, W, PIV and Z will be used for working space.
+C     EVALUE will be set to the least eigenvalue of H if and only if D is a
+C     Newton-Raphson step. Then EVALUE will be positive, but otherwise it
+C     will be set to zero.
+C
+C     Let MAXRED be the maximum of Q(0)-Q(D) subject to ||D|| .LEQ. DELTA,
+C     and let ACTRED be the value of Q(0)-Q(D) that is actually calculated.
+C     We take the view that any D is acceptable if it has the properties
+C
+C             ||D|| .LEQ. DELTA  and  ACTRED .LEQ. (1-TOL)*MAXRED.
+C
+C     The calculation of D is done by the method of Section 2 of the paper
+C     by MJDP in the 1997 Dundee Numerical Analysis Conference Proceedings,
+C     after transforming H to tridiagonal form.
+C
+C     Initialization.
+C
+      ONE=1.0D0
+      TWO=2.0D0
+      ZERO=0.0D0
+      DELSQ=DELTA*DELTA
+      EVALUE=ZERO
+      NM=N-1
+      DO 10 I=1,N
+      D(I)=ZERO
+      TD(I)=H(I,I)
+      DO 10 J=1,I
+   10 H(I,J)=H(J,I)
+C
+C     Apply Householder transformations to obtain a tridiagonal matrix that
+C     is similar to H, and put the elements of the Householder vectors in
+C     the lower triangular part of H. Further, TD and TN will contain the
+C     diagonal and other nonzero elements of the tridiagonal matrix.
+C
+      DO 80 K=1,NM
+      KP=K+1
+      SUM=ZERO
+      IF (KP .LT. N) THEN
+          KPP=KP+1
+          DO 20 I=KPP,N
+   20     SUM=SUM+H(I,K)**2
+      END IF
+      IF (SUM .EQ. ZERO) THEN
+          TN(K)=H(KP,K)
+          H(KP,K)=ZERO
+      ELSE
+          TEMP=H(KP,K)
+          TN(K)=DSIGN(DSQRT(SUM+TEMP*TEMP),TEMP)
+          H(KP,K)=-SUM/(TEMP+TN(K))
+          TEMP=DSQRT(TWO/(SUM+H(KP,K)**2))
+          DO 30 I=KP,N
+          W(I)=TEMP*H(I,K)
+          H(I,K)=W(I)
+   30     Z(I)=TD(I)*W(I)
+          WZ=ZERO
+          DO 50 J=KP,NM
+          JP=J+1
+          DO 40 I=JP,N
+          Z(I)=Z(I)+H(I,J)*W(J)
+   40     Z(J)=Z(J)+H(I,J)*W(I)
+   50     WZ=WZ+W(J)*Z(J)
+          WZ=WZ+W(N)*Z(N)
+          DO 70 J=KP,N
+          TD(J)=TD(J)+W(J)*(WZ*W(J)-TWO*Z(J))
+          IF (J .LT. N) THEN
+              JP=J+1
+              DO 60 I=JP,N
+   60         H(I,J)=H(I,J)-W(I)*Z(J)-W(J)*(Z(I)-WZ*W(I))
+          END IF
+   70     CONTINUE
+      END IF
+   80 CONTINUE
+C
+C     Form GG by applying the similarity transformation to G.
+C
+      GSQ=ZERO
+      DO 90 I=1,N
+      GG(I)=G(I)
+   90 GSQ=GSQ+G(I)**2
+      GNORM=DSQRT(GSQ)
+      DO 110 K=1,NM
+      KP=K+1
+      SUM=ZERO
+      DO 100 I=KP,N
+  100 SUM=SUM+GG(I)*H(I,K)
+      DO 110 I=KP,N
+  110 GG(I)=GG(I)-SUM*H(I,K)
+C
+C     Begin the trust region calculation with a tridiagonal matrix by
+C     calculating the norm of H. Then treat the case when H is zero.
+C
+      HNORM=DABS(TD(1))+DABS(TN(1))
+      TDMIN=TD(1)
+      TN(N)=ZERO
+      DO 120 I=2,N
+      TEMP=DABS(TN(I-1))+DABS(TD(I))+DABS(TN(I))
+      HNORM=DMAX1(HNORM,TEMP)
+  120 TDMIN=DMIN1(TDMIN,TD(I))
+      IF (HNORM .EQ. ZERO) THEN
+          IF (GNORM .EQ. ZERO) GOTO 400
+          SCALE=DELTA/GNORM
+          DO 130 I=1,N
+  130     D(I)=-SCALE*GG(I)
+          GOTO 370
+      END IF
+C
+C     Set the initial values of PAR and its bounds.
+C
+      PARL=DMAX1(ZERO,-TDMIN,GNORM/DELTA-HNORM)
+      PARLEST=PARL
+      PAR=PARL
+      PARU=ZERO
+      PARUEST=ZERO
+      POSDEF=ZERO
+      ITERC=0
+C
+C     Calculate the pivots of the Cholesky factorization of (H+PAR*I).
+C
+  140 ITERC=ITERC+1
+      KSAV=0
+      PIV(1)=TD(1)+PAR
+      K=1
+  150 IF (PIV(K) .GT. ZERO) THEN
+          PIV(K+1)=TD(K+1)+PAR-TN(K)**2/PIV(K)
+      ELSE
+          IF (PIV(K) .LT. ZERO .OR. TN(K) .NE. ZERO) GOTO 160
+          KSAV=K
+          PIV(K+1)=TD(K+1)+PAR
+      END IF
+      K=K+1
+      IF (K .LT. N) GOTO 150
+      IF (PIV(K) .LT. ZERO) GOTO 160
+      IF (PIV(K) .EQ. ZERO) KSAV=K
+C
+C     Branch if all the pivots are positive, allowing for the case when
+C     G is zero.
+C
+      IF (KSAV .EQ. 0 .AND. GSQ .GT. ZERO) GOTO 230
+      IF (GSQ .EQ. ZERO) THEN
+          IF (PAR .EQ. ZERO) GOTO 370
+          PARU=PAR
+          PARUEST=PAR
+          IF (KSAV .EQ. 0) GOTO 190
+      END IF
+      K=KSAV
+C
+C     Set D to a direction of nonpositive curvature of the given tridiagonal
+C     matrix, and thus revise PARLEST.
+C
+  160 D(K)=ONE
+      IF (DABS(TN(K)) .LE. DABS(PIV(K))) THEN
+          DSQ=ONE
+          DHD=PIV(K)
+      ELSE
+          TEMP=TD(K+1)+PAR
+          IF (TEMP .LE. DABS(PIV(K))) THEN
+              D(K+1)=DSIGN(ONE,-TN(K))
+              DHD=PIV(K)+TEMP-TWO*DABS(TN(K))
+          ELSE
+              D(K+1)=-TN(K)/TEMP
+              DHD=PIV(K)+TN(K)*D(K+1)
+          END IF
+          DSQ=ONE+D(K+1)**2
+      END IF
+  170 IF (K .GT. 1) THEN
+          K=K-1
+          IF (TN(K) .NE. ZERO) THEN
+              D(K)=-TN(K)*D(K+1)/PIV(K)
+              DSQ=DSQ+D(K)**2
+              GOTO 170
+          END IF
+          DO 180 I=1,K
+  180     D(I)=ZERO
+      END IF
+      PARL=PAR
+      PARLEST=PAR-DHD/DSQ
+C
+C     Terminate with D set to a multiple of the current D if the following
+C     test suggests that it suitable to do so.
+C
+  190 TEMP=PARUEST
+      IF (GSQ .EQ. ZERO) TEMP=TEMP*(ONE-TOL)
+      IF (PARUEST .GT. ZERO .AND. PARLEST .GE. TEMP) THEN
+          DTG=ZERO
+          DO 200 I=1,N
+  200     DTG=DTG+D(I)*GG(I)
+          SCALE=-DSIGN(DELTA/DSQRT(DSQ),DTG)
+          DO 210 I=1,N
+  210     D(I)=SCALE*D(I)
+          GOTO 370
+      END IF
+C
+C     Pick the value of PAR for the next iteration.
+C
+  220 IF (PARU .EQ. ZERO) THEN
+          PAR=TWO*PARLEST+GNORM/DELTA
+      ELSE
+          PAR=0.5D0*(PARL+PARU)
+          PAR=DMAX1(PAR,PARLEST)
+      END IF
+      IF (PARUEST .GT. ZERO) PAR=DMIN1(PAR,PARUEST)
+      GOTO 140
+C
+C     Calculate D for the current PAR in the positive definite case.
+C
+  230 W(1)=-GG(1)/PIV(1)
+      DO 240 I=2,N
+  240 W(I)=(-GG(I)-TN(I-1)*W(I-1))/PIV(I)
+      D(N)=W(N)
+      DO 250 I=NM,1,-1
+  250 D(I)=W(I)-TN(I)*D(I+1)/PIV(I)
+C
+C     Branch if a Newton-Raphson step is acceptable.
+C
+      DSQ=ZERO
+      WSQ=ZERO
+      DO 260 I=1,N
+      DSQ=DSQ+D(I)**2
+  260 WSQ=WSQ+PIV(I)*W(I)**2
+      IF (PAR .EQ. ZERO .AND. DSQ .LE. DELSQ) GOTO 320
+C
+C     Make the usual test for acceptability of a full trust region step.
+C
+      DNORM=DSQRT(DSQ)
+      PHI=ONE/DNORM-ONE/DELTA
+      TEMP=TOL*(ONE+PAR*DSQ/WSQ)-DSQ*PHI*PHI
+      IF (TEMP .GE. ZERO) THEN
+          SCALE=DELTA/DNORM
+          DO 270 I=1,N
+  270     D(I)=SCALE*D(I)
+          GOTO 370
+      END IF
+      IF (ITERC .GE. 2 .AND. PAR .LE. PARL) GOTO 370
+      IF (PARU .GT. ZERO .AND. PAR .GE. PARU) GOTO 370
+C
+C     Complete the iteration when PHI is negative.
+C
+      IF (PHI .LT. ZERO) THEN
+          PARLEST=PAR
+          IF (POSDEF. EQ. ONE) THEN
+              IF (PHI .LE. PHIL) GOTO 370
+              SLOPE=(PHI-PHIL)/(PAR-PARL)
+              PARLEST=PAR-PHI/SLOPE
+          END IF
+          SLOPE=ONE/GNORM
+          IF (PARU .GT. ZERO) SLOPE=(PHIU-PHI)/(PARU-PAR)
+          TEMP=PAR-PHI/SLOPE
+          IF (PARUEST .GT. ZERO) TEMP=DMIN1(TEMP,PARUEST)
+          PARUEST=TEMP
+          POSDEF=ONE
+          PARL=PAR
+          PHIL=PHI
+          GOTO 220
+      END IF
+C
+C     If required, calculate Z for the alternative test for convergence.
+C
+      IF (POSDEF .EQ. ZERO) THEN
+          W(1)=ONE/PIV(1)
+          DO 280 I=2,N
+          TEMP=-TN(I-1)*W(I-1)
+  280     W(I)=(DSIGN(ONE,TEMP)+TEMP)/PIV(I)
+          Z(N)=W(N)
+          DO 290 I=NM,1,-1
+  290     Z(I)=W(I)-TN(I)*Z(I+1)/PIV(I)
+          WWSQ=ZERO
+          ZSQ=ZERO
+          DTZ=ZERO
+          DO 300 I=1,N
+          WWSQ=WWSQ+PIV(I)*W(I)**2
+          ZSQ=ZSQ+Z(I)**2
+  300     DTZ=DTZ+D(I)*Z(I)
+C
+C     Apply the alternative test for convergence.
+C
+          TEMPA=DABS(DELSQ-DSQ)
+          TEMPB=DSQRT(DTZ*DTZ+TEMPA*ZSQ)
+          GAM=TEMPA/(DSIGN(TEMPB,DTZ)+DTZ)
+          TEMP=TOL*(WSQ+PAR*DELSQ)-GAM*GAM*WWSQ
+          IF (TEMP .GE. ZERO) THEN
+              DO 310 I=1,N
+  310         D(I)=D(I)+GAM*Z(I)
+              GOTO 370
+          END IF
+          PARLEST=DMAX1(PARLEST,PAR-WWSQ/ZSQ)
+      END IF
+C
+C     Complete the iteration when PHI is positive.
+C
+      SLOPE=ONE/GNORM
+      IF (PARU .GT. ZERO) THEN
+          IF (PHI .GE. PHIU) GOTO 370
+          SLOPE=(PHIU-PHI)/(PARU-PAR)
+      END IF
+      PARLEST=DMAX1(PARLEST,PAR-PHI/SLOPE)
+      PARUEST=PAR
+      IF (POSDEF .EQ. ONE) THEN
+          SLOPE=(PHI-PHIL)/(PAR-PARL)
+          PARUEST=PAR-PHI/SLOPE
+      END IF
+      PARU=PAR
+      PHIU=PHI
+      GOTO 220
+C
+C     Set EVALUE to the least eigenvalue of the second derivative matrix if
+C     D is a Newton-Raphson step. SHFMAX will be an upper bound on EVALUE.
+C
+  320 SHFMIN=ZERO
+      PIVOT=TD(1)
+      SHFMAX=PIVOT
+      DO 330 K=2,N
+      PIVOT=TD(K)-TN(K-1)**2/PIVOT
+  330 SHFMAX=DMIN1(SHFMAX,PIVOT)
+C
+C     Find EVALUE by a bisection method, but occasionally SHFMAX may be
+C     adjusted by the rule of false position.
+C
+      KSAVE=0
+  340 SHIFT=0.5D0*(SHFMIN+SHFMAX)
+      K=1
+      TEMP=TD(1)-SHIFT
+  350 IF (TEMP .GT. ZERO) THEN
+          PIV(K)=TEMP
+          IF (K .LT. N) THEN
+              TEMP=TD(K+1)-SHIFT-TN(K)**2/TEMP
+              K=K+1
+              GOTO 350
+          END IF
+          SHFMIN=SHIFT
+      ELSE
+          IF (K .LT. KSAVE) GOTO 360
+          IF (K .EQ. KSAVE) THEN
+              IF (PIVKSV .EQ. ZERO) GOTO 360
+              IF (PIV(K)-TEMP .LT. TEMP-PIVKSV) THEN
+                  PIVKSV=TEMP
+                  SHFMAX=SHIFT
+              ELSE
+                  PIVKSV=ZERO
+                  SHFMAX=(SHIFT*PIV(K)-SHFMIN*TEMP)/(PIV(K)-TEMP)
+              END IF
+          ELSE
+              KSAVE=K
+              PIVKSV=TEMP
+              SHFMAX=SHIFT
+          END IF
+      END IF
+      IF (SHFMIN .LE. 0.99D0*SHFMAX) GOTO 340
+  360 EVALUE=SHFMIN
+C
+C     Apply the inverse Householder transformations to D.
+C
+  370 NM=N-1
+      DO 390 K=NM,1,-1
+      KP=K+1
+      SUM=ZERO
+      DO 380 I=KP,N
+  380 SUM=SUM+D(I)*H(I,K)
+      DO 390 I=KP,N
+  390 D(I)=D(I)-SUM*H(I,K)
+C
+C     Return from the subroutine.
+C
+  400 RETURN
+      END
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% lagmax.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE LAGMAX (N,G,H,RHO,D,V,VMAX)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION G(*),H(N,*),D(*),V(*)
+C
+C     N is the number of variables of a quadratic objective function, Q say.
+C     G is the gradient of Q at the origin.
+C     H is the symmetric Hessian matrix of Q. Only the upper triangular and
+C       diagonal parts need be set.
+C     RHO is the trust region radius, and has to be positive.
+C     D will be set to the calculated vector of variables.
+C     The array V will be used for working space.
+C     VMAX will be set to |Q(0)-Q(D)|.
+C
+C     Calculating the D that maximizes |Q(0)-Q(D)| subject to ||D|| .LEQ. RHO
+C     requires of order N**3 operations, but sometimes it is adequate if
+C     |Q(0)-Q(D)| is within about 0.9 of its greatest possible value. This
+C     subroutine provides such a solution in only of order N**2 operations,
+C     where the claim of accuracy has been tested by numerical experiments.
+C
+C     Preliminary calculations.
+C
+      HALF=0.5D0
+      HALFRT=DSQRT(HALF)
+      ONE=1.0D0
+      ZERO=0.0D0
+C
+C     Pick V such that ||HV|| / ||V|| is large.
+C
+      HMAX=ZERO
+      DO 20 I=1,N
+      SUM=ZERO
+      DO 10 J=1,N
+      H(J,I)=H(I,J)
+   10 SUM=SUM+H(I,J)**2
+      IF (SUM .GT. HMAX) THEN
+          HMAX=SUM
+          K=I
+      END IF
+   20 CONTINUE
+      DO 30 J=1,N
+   30 V(J)=H(K,J)
+C
+C     Set D to a vector in the subspace spanned by V and HV that maximizes
+C     |(D,HD)|/(D,D), except that we set D=HV if V and HV are nearly parallel.
+C     The vector that has the name D at label 60 used to be the vector W.
+C
+      VSQ=ZERO
+      VHV=ZERO
+      DSQ=ZERO
+      DO 50 I=1,N
+      VSQ=VSQ+V(I)**2
+      D(I)=ZERO
+      DO 40 J=1,N
+   40 D(I)=D(I)+H(I,J)*V(J)
+      VHV=VHV+V(I)*D(I)
+   50 DSQ=DSQ+D(I)**2
+      IF (VHV*VHV .LE. 0.9999D0*DSQ*VSQ) THEN
+          TEMP=VHV/VSQ
+          WSQ=ZERO
+          DO 60 I=1,N
+          D(I)=D(I)-TEMP*V(I)
+   60     WSQ=WSQ+D(I)**2
+          WHW=ZERO
+          RATIO=DSQRT(WSQ/VSQ)
+          DO 80 I=1,N
+          TEMP=ZERO
+          DO 70 J=1,N
+   70     TEMP=TEMP+H(I,J)*D(J)
+          WHW=WHW+TEMP*D(I)
+   80     V(I)=RATIO*V(I)
+          VHV=RATIO*RATIO*VHV
+          VHW=RATIO*WSQ
+          TEMP=HALF*(WHW-VHV)
+          TEMP=TEMP+DSIGN(DSQRT(TEMP**2+VHW**2),WHW+VHV)
+          DO 90 I=1,N
+   90     D(I)=VHW*V(I)+TEMP*D(I)
+      END IF
+C
+C     We now turn our attention to the subspace spanned by G and D. A multiple
+C     of the current D is returned if that choice seems to be adequate.
+C
+      GG=ZERO
+      GD=ZERO
+      DD=ZERO
+      DHD=ZERO
+      DO 110 I=1,N
+      GG=GG+G(I)**2
+      GD=GD+G(I)*D(I)
+      DD=DD+D(I)**2
+      SUM=ZERO
+      DO 100 J=1,N
+  100 SUM=SUM+H(I,J)*D(J)
+  110 DHD=DHD+SUM*D(I)
+      TEMP=GD/GG
+      VV=ZERO
+      SCALE=DSIGN(RHO/DSQRT(DD),GD*DHD)
+      DO 120 I=1,N
+      V(I)=D(I)-TEMP*G(I)
+      VV=VV+V(I)**2
+  120 D(I)=SCALE*D(I)
+      GNORM=DSQRT(GG)
+      IF (GNORM*DD .LE. 0.5D-2*RHO*DABS(DHD) .OR.
+     1  VV/DD .LE. 1.0D-4) THEN
+          VMAX=DABS(SCALE*(GD+HALF*SCALE*DHD))
+          GOTO 170
+      END IF
+C
+C     G and V are now orthogonal in the subspace spanned by G and D. Hence
+C     we generate an orthonormal basis of this subspace such that (D,HV) is
+C     negligible or zero, where D and V will be the basis vectors.
+C
+      GHG=ZERO
+      VHG=ZERO
+      VHV=ZERO
+      DO 140 I=1,N
+      SUM=ZERO
+      SUMV=ZERO
+      DO 130 J=1,N
+      SUM=SUM+H(I,J)*G(J)
+  130 SUMV=SUMV+H(I,J)*V(J)
+      GHG=GHG+SUM*G(I)
+      VHG=VHG+SUMV*G(I)
+  140 VHV=VHV+SUMV*V(I)
+      VNORM=DSQRT(VV)
+      GHG=GHG/GG
+      VHG=VHG/(VNORM*GNORM)
+      VHV=VHV/VV
+      IF (DABS(VHG) .LE. 0.01D0*DMAX1(DABS(GHG),DABS(VHV))) THEN
+          VMU=GHG-VHV
+          WCOS=ONE
+          WSIN=ZERO
+      ELSE
+          TEMP=HALF*(GHG-VHV)
+          VMU=TEMP+DSIGN(DSQRT(TEMP**2+VHG**2),TEMP)
+          TEMP=DSQRT(VMU**2+VHG**2)
+          WCOS=VMU/TEMP
+          WSIN=VHG/TEMP
+      END IF
+      TEMPA=WCOS/GNORM
+      TEMPB=WSIN/VNORM
+      TEMPC=WCOS/VNORM
+      TEMPD=WSIN/GNORM
+      DO 150 I=1,N
+      D(I)=TEMPA*G(I)+TEMPB*V(I)
+  150 V(I)=TEMPC*V(I)-TEMPD*G(I)
+C
+C     The final D is a multiple of the current D, V, D+V or D-V. We make the
+C     choice from these possibilities that is optimal.
+C
+      DLIN=WCOS*GNORM/RHO
+      VLIN=-WSIN*GNORM/RHO
+      TEMPA=DABS(DLIN)+HALF*DABS(VMU+VHV)
+      TEMPB=DABS(VLIN)+HALF*DABS(GHG-VMU)
+      TEMPC=HALFRT*(DABS(DLIN)+DABS(VLIN))+0.25D0*DABS(GHG+VHV)
+      IF (TEMPA .GE. TEMPB .AND. TEMPA .GE. TEMPC) THEN
+          TEMPD=DSIGN(RHO,DLIN*(VMU+VHV))
+          TEMPV=ZERO
+      ELSE IF (TEMPB .GE. TEMPC) THEN
+          TEMPD=ZERO
+          TEMPV=DSIGN(RHO,VLIN*(GHG-VMU))
+      ELSE
+          TEMPD=DSIGN(HALFRT*RHO,DLIN*(GHG+VHV))
+          TEMPV=DSIGN(HALFRT*RHO,VLIN*(GHG+VHV))
+      END IF
+      DO 160 I=1,N
+  160 D(I)=TEMPD*D(I)+TEMPV*V(I)
+      VMAX=RHO*RHO*DMAX1(TEMPA,TEMPB,TEMPC)
+  170 RETURN
+      END
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% Chebyquad output %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+     ******************
+     Results with N = 2
+     ******************
+
+    New RHO = 6.6667D-03     Number of function values =     9
+    Least value of F =  2.627489963528159D-03         The corresponding X is:
+     2.083513D-01   7.656407D-01
+
+    New RHO = 6.6667D-04     Number of function values =    16
+    Least value of F =  1.137753607650710D-05         The corresponding X is:
+     2.102629D-01   7.868501D-01
+
+    New RHO = 6.6667D-05     Number of function values =    18
+    Least value of F =  1.251328746096981D-07         The corresponding X is:
+     2.115131D-01   7.888341D-01
+
+    New RHO = 6.6667D-06     Number of function values =    20
+    Least value of F =  4.854193461059926D-10         The corresponding X is:
+     2.113339D-01   7.886756D-01
+
+    New RHO = 6.6667D-07     Number of function values =    22
+    Least value of F =  3.205143092086003D-11         The corresponding X is:
+     2.113263D-01   7.886781D-01
+
+    New RHO = 8.1650D-08     Number of function values =    23
+    Least value of F =  5.393089175572744D-18         The corresponding X is:
+     2.113249D-01   7.886751D-01
+
+    New RHO = 1.0000D-08     Number of function values =    23
+    Least value of F =  5.393089175572744D-18         The corresponding X is:
+     2.113249D-01   7.886751D-01
+
+    At the return from UOBYQA     Number of function values =    25
+    Least value of F =  4.101186270170302D-18         The corresponding X is:
+     2.113249D-01   7.886751D-01
+
+
+     ******************
+     Results with N = 4
+     ******************
+
+    New RHO = 4.0000D-03     Number of function values =    34
+    Least value of F =  3.340515350035493D-03         The corresponding X is:
+     1.038837D-01   3.824455D-01   5.940921D-01   8.867976D-01
+
+    New RHO = 4.0000D-04     Number of function values =    54
+    Least value of F =  6.474047494996536D-06         The corresponding X is:
+     1.026380D-01   4.057797D-01   5.937945D-01   8.980253D-01
+
+    New RHO = 4.0000D-05     Number of function values =    57
+    Least value of F =  6.825177339316550D-08         The corresponding X is:
+     1.027415D-01   4.062001D-01   5.938739D-01   8.973257D-01
+
+    New RHO = 4.0000D-06     Number of function values =    62
+    Least value of F =  7.859650867155102D-11         The corresponding X is:
+     1.026715D-01   4.062038D-01   5.937904D-01   8.973247D-01
+
+    New RHO = 4.0000D-07     Number of function values =    66
+    Least value of F =  7.180250968973935D-12         The corresponding X is:
+     1.026729D-01   4.062045D-01   5.937962D-01   8.973266D-01
+
+    New RHO = 6.3246D-08     Number of function values =    69
+    Least value of F =  2.957551534434571D-16         The corresponding X is:
+     1.026728D-01   4.062038D-01   5.937962D-01   8.973272D-01
+
+    New RHO = 1.0000D-08     Number of function values =    71
+    Least value of F =  2.957551534434571D-16         The corresponding X is:
+     1.026728D-01   4.062038D-01   5.937962D-01   8.973272D-01
+
+    At the return from UOBYQA     Number of function values =    73
+    Least value of F =  7.789134876445051D-20         The corresponding X is:
+     1.026728D-01   4.062038D-01   5.937962D-01   8.973272D-01
+
+
+     ******************
+     Results with N = 6
+     ******************
+
+    New RHO = 2.8571D-03     Number of function values =    63
+    Least value of F =  1.928710351699899D-03         The corresponding X is:
+     7.537816D-02   2.799988D-01   3.678985D-01   6.244399D-01   7.260429D-01
+     9.377106D-01
+
+    New RHO = 2.8571D-04     Number of function values =   101
+    Least value of F =  1.730673791709993D-06         The corresponding X is:
+     6.692247D-02   2.885147D-01   3.659676D-01   6.329996D-01   7.104306D-01
+     9.329739D-01
+
+    New RHO = 2.8571D-05     Number of function values =   109
+    Least value of F =  2.001528065612581D-08         The corresponding X is:
+     6.688127D-02   2.887447D-01   3.666718D-01   6.332647D-01   7.112836D-01
+     9.330927D-01
+
+    New RHO = 2.8571D-06     Number of function values =   118
+    Least value of F =  3.938059667715963D-10         The corresponding X is:
+     6.688157D-02   2.887463D-01   3.666784D-01   6.333201D-01   7.112608D-01
+     9.331229D-01
+
+    New RHO = 2.8571D-07     Number of function values =   123
+    Least value of F =  1.774926518140111D-12         The corresponding X is:
+     6.687674D-02   2.887413D-01   3.666824D-01   6.333183D-01   7.112590D-01
+     9.331231D-01
+
+    New RHO = 5.3452D-08     Number of function values =   128
+    Least value of F =  1.458726605288345D-14         The corresponding X is:
+     6.687664D-02   2.887408D-01   3.666823D-01   6.333177D-01   7.112594D-01
+     9.331234D-01
+
+    New RHO = 1.0000D-08     Number of function values =   132
+    Least value of F =  8.864805750457940D-17         The corresponding X is:
+     6.687659D-02   2.887407D-01   3.666823D-01   6.333177D-01   7.112593D-01
+     9.331234D-01
+
+    At the return from UOBYQA     Number of function values =   135
+    Least value of F =  3.129438445534726D-19         The corresponding X is:
+     6.687659D-02   2.887407D-01   3.666823D-01   6.333177D-01   7.112593D-01
+     9.331234D-01
+
+
+     ******************
+     Results with N = 8
+     ******************
+
+    New RHO = 2.2222D-03     Number of function values =   129
+    Least value of F =  4.373356342725789D-03         The corresponding X is:
+     4.808297D-02   1.997487D-01   2.614878D-01   4.866556D-01   5.022007D-01
+     7.267718D-01   8.011400D-01   9.488097D-01
+
+    New RHO = 2.2222D-04     Number of function values =   194
+    Least value of F =  3.517656411513201D-03         The corresponding X is:
+     4.324523D-02   1.929902D-01   2.666390D-01   5.004365D-01   4.998230D-01
+     7.338903D-01   8.067300D-01   9.567396D-01
+
+    New RHO = 2.2222D-05     Number of function values =   206
+    Least value of F =  3.516883330193253D-03         The corresponding X is:
+     4.317562D-02   1.930923D-01   2.663344D-01   4.999818D-01   4.999975D-01
+     7.336495D-01   8.069017D-01   9.568341D-01
+
+    New RHO = 2.2222D-06     Number of function values =   213
+    Least value of F =  3.516873956830852D-03         The corresponding X is:
+     4.315643D-02   1.930977D-01   2.663270D-01   4.999976D-01   5.000031D-01
+     7.336712D-01   8.069148D-01   9.568504D-01
+
+    New RHO = 1.4907D-07     Number of function values =   221
+    Least value of F =  3.516873729275010D-03         The corresponding X is:
+     4.315301D-02   1.930912D-01   2.663281D-01   5.000001D-01   4.999993D-01
+     7.336715D-01   8.069084D-01   9.568469D-01
+
+    New RHO = 1.0000D-08     Number of function values =   237
+    Least value of F =  3.516873725684826D-03         The corresponding X is:
+     4.315278D-02   1.930909D-01   2.663287D-01   5.000000D-01   5.000000D-01
+     7.336713D-01   8.069091D-01   9.568472D-01
+
+    At the return from UOBYQA     Number of function values =   244
+    Least value of F =  3.516873725677941D-03         The corresponding X is:
+     4.315276D-02   1.930908D-01   2.663287D-01   5.000000D-01   5.000000D-01
+     7.336713D-01   8.069092D-01   9.568472D-01
