@@ -154,7 +154,7 @@ function [x, fx, exitflag, output] = newuoa_last(varargin)
 %       min cos(x)
 %   starting from x0 = -1 with at most 50 function evaluations.
 %
-%   See also PRIMA, UOBYQA, BOBYQA, LINCOA, COBYLA.
+%   See also prima_last, UOBYQA, BOBYQA, LINCOA, COBYLA.
 %
 %   See https://www.prima_last.net for more information.
 %
@@ -171,8 +171,8 @@ function [x, fx, exitflag, output] = newuoa_last(varargin)
 % Attribute: public (can  be called directly by users)
 %
 % Remarks:
-% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREPRIMA !!!
-% !!! DO NOT CHANGE probinfo AFTER PREPRIMA !!!
+% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREprima_last !!!
+% !!! DO NOT CHANGE probinfo AFTER PREprima_last !!!
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -190,13 +190,13 @@ internal_invokers = {'prima_last'}; % Invokers from this package; may have other
 % OUTPUT records the information that is produced by the solver and
 % intended to pass to postprima_last.
 % OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation;
-% for internal solvers (solvers from PRIMA), it should also contain fhist, chist, warnings;
+% for internal solvers (solvers from prima_last), it should also contain fhist, chist, warnings;
 % for lincoa_last, it should also contain constr_modified;
 % for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq.
 output = struct();
 % N.B.: DO NOT record anything in PROBINFO. If the solver is called by prima_last,
 % then postprima_last will do nothing; the real postprocessing will be done when
-% prima_last calls postpdfo using the OUTPUT returned by solver together with the
+% prima_last calls postprima_last using the OUTPUT returned by solver together with the
 % PROBINFO in prima_last; that said, in such a senario, the PROBINFO of this solver
 % will NOT be passed to the real postprocessing. Indeed, the PROBINFO of
 % this solver is set to empty in preprima_last.
@@ -230,7 +230,7 @@ else
 end
 
 % Preprocess the input
-% Even if invoker = 'prima_last', we still need to call prepdfo, which will assign
+% Even if invoker = 'prima_last', we still need to call preprima_last, which will assign
 % values to fun, x0, ..., options.
 try % preprima_last is a private function that may generate public errors; error-handling needed
     [fun, x0, ~, ~, ~, ~, ~, ~, ~, options, probinfo] = preprima_last(args{:});
@@ -264,8 +264,9 @@ else
 end
 solver = options.solver;
 
+% Solve the problem, starting with special cases.
 if ~strcmp(invoker, 'prima_last') && probinfo.feasibility_problem
-    % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
+    % An "unconstrained feasibility problem" is ridiculous, yet nothing wrong mathematically.
     output.x = x0;
     % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
     % occured. But then we will have to modify the validation of fx, funcCount,
@@ -274,23 +275,33 @@ if ~strcmp(invoker, 'prima_last') && probinfo.feasibility_problem
     output.fx = fun(output.x);  % preprima_last has defined a fake objective function
     output.exitflag = 14;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 else
-    % Call the Fortran code
-    mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
-    mexdir = fullfile(mfiledir, 'private');
-    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant, mexdir));
-    % The mexified Fortran Function is a private function generating only private errors;
-    % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
-        [x, fx, exitflag, nf, xhist, fhist] = ...
-            fsolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
-            iprint, maxhist, double(output_xhist));
-        % Fortran MEX does not provide an API for reading Boolean variables. So we convert
-        % output_xhist to a double (0 or 1) before passing it to the MEX gateway.
-        % In C MEX, however, we have mxGetLogicals.
+        if options.fortran
+            % Call the Fortran code
+            mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
+            mexdir = fullfile(mfiledir, 'private');
+            fsolver = str2func(get_mexname(solver, precision, debug_flag, variant, mexdir));
+            % The mexified Fortran Function is a private function generating only private errors;
+            % however, public errors can occur due to, e.g., evalobj; error handling needed.
+            [x, fx, exitflag, nf, xhist, fhist] = ...
+                fsolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
+                iprint, maxhist, double(output_xhist));
+            % Fortran MEX does not provide an API for reading Boolean variables. So we convert
+            % output_xhist to a double (0 or 1) before passing it to the MEX gateway.
+            % In C MEX, however, we have mxGetLogicals.
+        else
+            % Call the Matlab code
+            [x, fx, exitflag, nf, xhist, fhist] = ...
+                newuoa_last_mat.newuoa_last_mat(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
+                iprint, maxhist, output_xhist, debug_flag);
+        end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);

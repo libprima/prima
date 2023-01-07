@@ -178,7 +178,7 @@ function [x, fx, exitflag, output] = bobyqa_last(varargin)
 %       min cos(x) s.t. 2 <= x <= 3
 %   starting from x0 = -1 with at most 50 function evaluations.
 %
-%   See also PRIMA, UOBYQA, NEWUOA, LINCOA, COBYLA.
+%   See also prima_last, UOBYQA, NEWUOA, LINCOA, COBYLA.
 %
 %   See https://www.prima_last.net for more information.
 %
@@ -195,8 +195,8 @@ function [x, fx, exitflag, output] = bobyqa_last(varargin)
 % Attribute: public (can  be called directly by users)
 %
 % Remarks:
-% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREPRIMA !!!
-% !!! DO NOT CHANGE probinfo AFTER PREPRIMA !!!
+% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREprima_last !!!
+% !!! DO NOT CHANGE probinfo AFTER PREprima_last !!!
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -215,13 +215,13 @@ internal_invokers = {'prima_last'}; % Invokers from this package; may have other
 % OUTPUT records the information that is produced by the solver and
 % intended to pass to postprima_last.
 % OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation;
-% for internal solvers (solvers from PRIMA), it should also contain fhist, chist, warnings;
+% for internal solvers (solvers from prima_last), it should also contain fhist, chist, warnings;
 % for lincoa_last, it should also contain constr_modified;
 % for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq.
 output = struct();
 % N.B.: DO NOT record anything in PROBINFO. If the solver is called by prima_last,
 % then postprima_last will do nothing; the real postprocessing will be done when
-% prima_last calls postpdfo using the OUTPUT returned by solver together with the
+% prima_last calls postprima_last using the OUTPUT returned by solver together with the
 % PROBINFO in prima_last; that said, in such a senario, the PROBINFO of this solver
 % will NOT be passed to the real postprocessing. Indeed, the PROBINFO of
 % this solver is set to empty in preprima_last.
@@ -260,7 +260,7 @@ else
 end
 
 % Preprocess the input
-% Even if invoker = 'prima_last', we still need to call prepdfo, which will assign
+% Even if invoker = 'prima_last', we still need to call preprima_last, which will assign
 % values to fun, x0, ..., options.
 try % preprima_last is a private function that may generate public errors; error-handling needed
     [fun, x0, ~, ~, ~, ~, lb, ub, ~, options, probinfo] = preprima_last(args{:});
@@ -272,19 +272,48 @@ catch exception
     end
 end
 
-if ~strcmp(invoker, 'prima_last') && probinfo.infeasible % The problem turned out infeasible during prepdfo
+% Extract the options
+npt = options.npt;
+maxfun = options.maxfun;
+rhobeg = options.rhobeg;
+rhoend = options.rhoend;
+eta1 = options.eta1;
+eta2 = options.eta2;
+gamma1 = options.gamma1;
+gamma2 = options.gamma2;
+ftarget = options.ftarget;
+maxhist = options.maxhist;
+output_xhist = options.output_xhist;
+iprint = options.iprint;
+precision = options.precision;
+debug_flag = options.debug;
+if options.classical
+    variant = 'classical';
+else
+    variant = 'modern';
+end
+solver = options.solver;
+
+% Solve the problem, starting with special cases.
+if ~strcmp(invoker, 'prima_last') && probinfo.infeasible % The problem turned out infeasible during preprima_last
     output.x = x0;
     output.fx = fun(output.x);
     output.exitflag = -4;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
-elseif ~strcmp(invoker, 'prima_last') && probinfo.nofreex % x was fixed by the bound constraints during prepdfo
+elseif ~strcmp(invoker, 'prima_last') && probinfo.nofreex % x was fixed by the bound constraints during preprima_last
     output.x = probinfo.fixedx_value;
     output.fx = fun(output.x);
     output.exitflag = 13;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_fixedx;
     output.chist = output.constrviolation;
@@ -298,31 +327,13 @@ elseif ~strcmp(invoker, 'prima_last') && probinfo.feasibility_problem
     output.fx = fun(output.x);  % preprima_last has defined a fake objective function
     output.exitflag = 14;
     output.funcCount = 1;
+    if output_xhist
+        output.xhist = output.x;
+    end
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
 else % The problem turns out 'normal' during preprima_last
-    % Extract the options
-    npt = options.npt;
-    maxfun = options.maxfun;
-    rhobeg = options.rhobeg;
-    rhoend = options.rhoend;
-    eta1 = options.eta1;
-    eta2 = options.eta2;
-    gamma1 = options.gamma1;
-    gamma2 = options.gamma2;
-    ftarget = options.ftarget;
-    maxhist = options.maxhist;
-    output_xhist = options.output_xhist;
-    iprint = options.iprint;
-    precision = options.precision;
-    debug_flag = options.debug;
-    if options.classical
-        variant = 'classical';
-    else
-        variant = 'modern';
-    end
-    solver = options.solver;
 
     % Call the Fortran code
     mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
