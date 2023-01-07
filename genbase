@@ -24,6 +24,7 @@ rm -r "$BVDIR"/matlab/tests/testdata
 mv "$LAST" "$LAST"_"$VERSION"
 mkdir "$LAST"
 cp -r "$PRIMADIR"/fortran "$LAST"
+cp "$PRIMADIR"/setup.m "$LAST"
 mkdir "$LAST"/matlab
 for DIR in setup_tools mex_gateways interfaces ; do
     cp -r "$PRIMADIR"/matlab/"$DIR" "$LAST"/matlab
@@ -39,6 +40,22 @@ for WORD in cobyla uobyqa newuoa bobyqa lincoa prima ; do
     for DIR in "$MSETUPTOOLS" "$MINTERFACES" ; do
         find "$DIR" -type f -exec sed -i -e "s|$WORD|$WORDL|g" {} \;
     done
+done
+for WORD in preprima postprima ; do
+    WORDL="$WORD"_last
+    mv "$MINTERFACES"/private/"$WORD".m "$MINTERFACES"/private/"$WORDL".m
+done
+
+# Modify the names of the MATLAB version of the solvers in "$LAST/matlab". This must be done because
+# there invocations have been changed in the last step.
+#for SOLVER in cobyla uobyqa newuoa bobyqa lincoa ; do
+for SOLVER in newuoa ; do  # As of 2023010, only the MATLAB version of NEWUOA is implemented.
+    MATPKG="$MINTERFACES"/+"$SOLVER"_mat
+    MATPKGL="$MINTERFACES"/+"$SOLVER"_last_mat
+    MATSOLVER="$SOLVER"_mat.m
+    MATSOLVERL="$SOLVER"_last_mat.m
+    mv "$MATPKG" "$MATPKGL"
+    mv "$MATPKGL"/"$MATSOLVER" "$MATPKGL"/"$MATSOLVERL"
 done
 
 # Modify compile.m for the new last version.

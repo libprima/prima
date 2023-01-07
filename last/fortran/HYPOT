@@ -1,0 +1,12 @@
+***SEE ALSO: NORM***
+
+Similar to NORM, the current implementation of HYPOTENUSE may be suboptimal due to improper or 
+unnecessary scaling.
+
+HYPOTENUSE is used in POWALG/QRADD_RDIAG and LINALG/QR;
+QRADD_RDIAG is used in COBYLA/TRUSTREGION;
+QR is used in LINALG/SOLVE, LINALG/INV, LINALG/PROJECT2, LINALG/LSQR_RDIAG, and
+LINALG/LSQR_RDIAG is used in COBYLA/TRUSTREGION,
+while SOLVE, INV, and PROJECT2 are not invoked in PRIMA.
+
+Therefore, only COBYLA/TRUSTREGION is affected by HYPOTENUSE.
