@@ -4,37 +4,50 @@
 # The directory where this scrip resides
 PRIMADIR="$(realpath "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")"
 
-# Prepare the base
+# Name of the last version, which will be used as the reference version in the development of the
+# new version.
+LAST=last
+
+# Copy the current version (together with the corresponding last version) into $BASEDIR, so that it
+# becomes a new base.
 BASEDIR="$PRIMADIR"/base
 VERSION=$(date +%y%m%d)
-BDIR="$BASEDIR"/"$VERSION"
-mkdir -p "$BDIR"
-cp -r "$PRIMADIR"/fortran "$BDIR"
-cp "$PRIMADIR"/setup.m "$BDIR"
-cp -r "$PRIMADIR"/OPDFO "$BDIR"
-cp -r "$PRIMADIR"/matlab "$BDIR"
-rm -r "$BDIR"/matlab/tests/testdata
+BVDIR="$BASEDIR"/"$VERSION"
+mkdir -p "$BVDIR"
+cp -r "$PRIMADIR"/"$LAST" "$BVDIR"
+cp -r "$PRIMADIR"/fortran "$BVDIR"
+cp "$PRIMADIR"/setup.m "$BVDIR"
+cp -r "$PRIMADIR"/matlab "$BVDIR"
+rm -r "$BVDIR"/matlab/tests/testdata
 
-# Update the OPDFO to the current version of PDFO
-mv OPDFO OPDFO_"$VERSION"
-mkdir OPDFO
-cp -r "$PRIMADIR"/fortran OPDFO
-
-cp "$PRIMADIR"/setup.m OPDFO
-sed -i "s/ALLn/ALL/g" OPDFO/setup.m
-
-cp -r "$PRIMADIR"/matlab OPDFO
-sed -i 's/solver(1:end-1)/solver/' OPDFO/matlab/setup_tools/compile.m
-
-rm -r OPDFO/matlab/tests/testdata
-
-MINTRFDIR=OPDFO/matlab/interfaces
-rm -f "$MINTRFDIR"/private/*mexa64
-
-for WORD in cobyla uobyqa newuoa bobyqa lincoa pdfo ; do
-    WORDN="$WORD"n
-    mv "$MINTRFDIR"/"$WORDN".m "$MINTRFDIR"/"$WORD".m
-    find OPDFO -type f -exec sed -i -e "s/$WORDN/$WORD/g" {} \;
+# Copy the current version to "$LAST".
+mv "$LAST" "$LAST"_"$VERSION"
+mkdir "$LAST"
+cp -r "$PRIMADIR"/fortran "$LAST"
+mkdir "$LAST"/matlab
+for DIR in setup_tools mex_gateways interfaces ; do
+    cp -r "$PRIMADIR"/matlab/"$DIR" "$LAST"/matlab
 done
+
+# Modify the code in "$LAST"/matlab so that it becomes the "new last version".
+MSETUPTOOLS="$LAST"/matlab/setup_tools
+MINTERFACES="$LAST"/matlab/interfaces
+rm -f "$MINTERFACES"/private/*mexa64
+for WORD in cobyla uobyqa newuoa bobyqa lincoa prima ; do
+    WORDL="$WORD"_last
+    mv "$MINTERFACES"/"$WORD".m "$MINTERFACES"/"$WORDL".m
+    for DIR in "$MSETUPTOOLS" "$MINTERFACES" ; do
+        find "$DIR" -type f -exec sed -i -e "s|$WORD|$WORDL|g" {} \;
+    done
+done
+
+# Modify compile.m for the new last version.
+COMPILEM="$LAST"/matlab/setup_tools/compile.m
+OLDSTR="solver = solvers{isol}"
+NEWSTR="solver = regexprep(solvers{isol}, '_last', '')"
+sed -i "s|$OLDSTR|$NEWSTR|" "$COMPILEM"
+OLDSTR="get_mexname(solver"
+NEWSTR="get_mexname(solvers{isol}"
+sed -i "s|$OLDSTR|$NEWSTR|" "$COMPILEM"
 
 exit 0

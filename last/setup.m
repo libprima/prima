@@ -1,5 +1,5 @@
 function setup(varargin)
-%SETUP sets the package up for MATLAB.
+%SETUP compiles the package and try adding the package into the search path.
 %
 %   This script can be called in the following ways.
 %
@@ -48,7 +48,7 @@ function setup(varargin)
 
 % Name of the package. It will be used as a stamp to be included in the path_string. Needed only
 % if `savepath` fails.
-package_name = 'prima';
+package_name = 'prima_last';
 
 % Check the version of MATLAB.
 if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
@@ -59,7 +59,7 @@ end
 % The full paths to several directories needed for the setup.
 cpwd = pwd();  % Current directory, which may not be the directory containing this setup script
 setup_dir = fileparts(mfilename('fullpath')); % The directory containing this setup script
-fortd = fullfile(setup_dir, 'fortran'); % Directory of the Fortran source code
+fsrc = fullfile(setup_dir, 'fsrc'); % Directory of the Fortran source code
 matd = fullfile(setup_dir, 'matlab'); % Matlab directory
 gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
@@ -87,7 +87,7 @@ addpath(tools);
 % Exit if wrong input detected. Error messages have been printed during the parsing.
 if wrong_input
     rmpath(tools);
-    error('prima:InvalidInput', 'setup: The input is invalid.');
+    return
 end
 
 % Remove the compiled MEX files if requested.
@@ -99,7 +99,7 @@ end
 
 % Uninstall the package if requested.
 if strcmp(action, 'uninstall')
-    uninstall_prima(package_name);
+    uninstall_prima_last(package_name);
     rmpath(tools);
     return
 end
@@ -156,8 +156,8 @@ end
 % We need to do this because MEX accepts only the (obsolescent) fixed-form Fortran code on Windows.
 % Intersection-form Fortran code can be compiled both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
-interform(fortd);
-fortd_interform = fullfile(fortd, '.interform'); % Directory of the intersection-form Fortran code
+interform(fsrc);
+fsrc_interform = fullfile(fsrc, '.interform'); % Directory of the intersection-form Fortran code
 interform(gateways);
 gateways_interform = fullfile(gateways, '.interform'); % Directory of the intersection-form MEX gateways
 fprintf('Done.\n\n');
@@ -169,14 +169,14 @@ fprintf('Compilation starts. It may take some time ...\n');
 cd(mexdir);
 exception = [];
 try
-    compile(solver_list, mexdir, fortd_interform, gateways_interform, options);
+    compile(solver_list, mexdir, fsrc_interform, gateways_interform, options);
 catch exception
     % Do nothing for the moment.
 end
 
 %% Remove the intersection-form Fortran files unless we are debugging.
 %if ~debug_flag
-%    rmdir(fortd_interform, 's');
+%    rmdir(fsrc_interform, 's');
 %    rmdir(gateways_interform, 's');
 %end
 
@@ -193,11 +193,11 @@ fprintf('Package compiled successfully!\n');
 path_saved = add_save_path(interfaces, package_name);
 
 fprintf('\nThe package is ready to use.\n');
-fprintf('\nYou may now try ''help prima'' for information on the usage of the package.\n');
+fprintf('\nYou may now try ''help prima_last'' for information on the usage of the package.\n');
 
 if isempty(setdiff(all_solvers(), solver_list))
     addpath(tests);
-    fprintf('\nYou may also run ''testprima'' to test the package on a few examples.\n\n');
+    fprintf('\nYou may also run ''testprima_last'' to test the package on a few examples.\n\n');
 else
     fprintf('\n');
 end
