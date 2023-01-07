@@ -41,7 +41,7 @@ url = 'www.libprima.net';
 
 maintainer = 'Zaikun Zhang';
 
-credits = {'Zaikun Zhang'};
+credits = {'Tom M. Ragonneau', 'Zaikun Zhang'};
 
 license = 'LGPLv3+';
 
