@@ -2,6 +2,8 @@
 
 Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell.html) FRS (1936--2015)
 
+[![license](https://img.shields.io/badge/license-LGPLv3+-blue)](https://github.com/equipez/PRIMA/blob/master/LICENCE.txt)
+
 - [What](#what)
 - [Why](#why)
 - [How](#how)
@@ -263,12 +265,12 @@ for the wealth he left to us.
 
 I am grateful to [Professor Ya-xiang Yuan](http://lsec.cc.ac.cn/~yyx) for his everlasting encouragement and support.
 
-The development of PRIMA is a long-term project, which would not be sustainable without the continued funds from the
+The development of PRIMA would have been a mission imponderable without the groundwork laid by the [PDFO](https://www.pdfo.net)
+package of [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang. PDFO is Chapter 3 of
+Ragonneau's [thesis](https://tomragonneau.com/documents/thesis.pdf) supervised by Zhang and financially supported by
+the [Hong Kong Ph.D. Fellowship Scheme](https://cerg1.ugc.edu.hk/hkpfs/index.html) (ref. PF18-24698).
+
+PRIMA is a long-term project, which would not have been sustainable without the continued funds from the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc/) (ref. PolyU 253012/17P, PolyU 153054/20P,
 and PolyU 153066/21P) and [The Hong Kong Polytechnic University](https://www.polyu.edu.hk/) (PolyU),
 in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA).
-
-The development of PRIMA would not be possible without the groundwork laid by the [PDFO](https://www.pdfo.net)
-package of [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang. PDFO is Chapter 3 of the
-Ragonneau's thesis under the supervision of Zhang, financially supported by
-the [Hong Kong Ph.D. Fellowship Scheme](https://cerg1.ugc.edu.hk/hkpfs/index.html) (ref. PF18-24698).
