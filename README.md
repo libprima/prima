@@ -2,8 +2,6 @@
 
 Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell.html) FRS (1936--2015)
 
-[![license](https://img.shields.io/badge/license-LGPLv3+-blue)](./LICENCE.txt)
-
 - [What](#what)
 - [Why](#why)
 - [How](#how)
@@ -96,7 +94,7 @@ The tests are automated by
 [GitHub Actions](https://docs.github.com/en/actions). As of January 2023, more than
 30,000 "workflows" have been successfully run by GitHub Actions.
 Normally, each workflow consists of \~ 5
-([sometimes more than 100](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml))
+([sometimes more than 100](https://github.com/primalib/prima/actions/workflows/verify_base.yml))
 **randomized** tests that are conducted in parallel,
 each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words,
@@ -265,7 +263,7 @@ for the wealth he left to us.
 
 I am grateful to [Professor Ya-xiang Yuan](http://lsec.cc.ac.cn/~yyx) for his everlasting encouragement and support.
 
-The development of PRIMA would have been a mission imponderable without the groundwork laid by the [PDFO](https://www.pdfo.net)
+The development of PRIMA would have been a mission impossible without the groundwork laid by the [PDFO](https://www.pdfo.net)
 package of [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang. PDFO is Chapter 3 of
 Ragonneau's [thesis](https://tomragonneau.com/documents/thesis.pdf) supervised by Zhang and financially supported by
 the [Hong Kong Ph.D. Fellowship Scheme](https://cerg1.ugc.edu.hk/hkpfs/index.html) (ref. PF18-24698).
