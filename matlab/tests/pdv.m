@@ -6,7 +6,7 @@ restoredefaultpath;  % Restore the "right out of the box" path of MATLAB
 
 olddir = pwd();  % Record the current directory.
 
-matlab_implemented = {'newuoan'};  % Solvers that has a MATLAB implementation.
+matlab_implemented = {'newuoa'};  % Solvers that has a MATLAB implementation.
 
 % Prepare the test directory, i.e., `test_dir`.
 callstack = dbstack;
@@ -32,10 +32,10 @@ try
     opt.classical=true;
     tic
     setup(opt);
-    testpdfon
+    testprima
     toc
 
-    solvers = {'cobylan', 'uobyqan', 'newuoan', 'bobyqan', 'lincoan'};
+    solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
     precisions = {'double', 'single', 'quadruple'};
     debug_flags = {true, false};
     variants = {'modern', 'classical'};

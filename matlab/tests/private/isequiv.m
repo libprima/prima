@@ -2,9 +2,9 @@ function isequiv(solvers, options)
 %This function verifies that two solvers produce the same result on CUTEst problems.
 %
 % As an example:
-% options=[]; options.maxdi=20; options.nr=20; isequiv({'newuoan', 'newuoa'}, options)
+% options=[]; options.maxdi=20; options.nr=20; isequiv({'newuoa', 'newuoa_last'}, options)
 %
-% verifies newuoan against newuoa on problems of at most 20 variables, 20 random runs for each problem.
+% verifies newuoa against newuoa_last on problems of at most 20 variables, 20 random runs for each problem.
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net).
 %
@@ -106,10 +106,10 @@ else
     blacklist = {};
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
     switch lower(solvers{1})
-    case {'uobyqa', 'uobyqan'}
+    case {'uobyqa_last', 'uobyqa'}
         blacklist = [blacklist, {'VARDIM', 'HATFLDFL', 'BENNETT5LS', 'HIELOW'}];  % too large for UOBYQA
         blacklist = [blacklist, {'YFITU'}]; % Takes too long
-    case {'newuoa', 'newuoan'}
+    case {'newuoa_last', 'newuoa'}
         blacklist = [blacklist, {'LUKSAN22LS', 'MANCINO', 'LUKSAN11LS'}]; % too long to solve
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.
         blacklist = [blacklist, {'PENALTY2', 'HYDC20LS', 'MANCINO'}]; % Too long time
@@ -117,18 +117,18 @@ else
         blacklist = [blacklist, {'ARGLINC'}]; % Takes too long to solve
         blacklist = [blacklist, {'HYDC20LS', 'BA-L1SPLS'}]; % Takes too long to solve
         %blacklist = [blacklist, {'PENALTY2'}]; % More than 5 minutes to solve.
-    case {'bobyqa', 'bobyqan'}
+    case {'bobyqa_last', 'bobyqa'}
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}];  % More than 10 minutes to solve.
         blacklist = [blacklist, {'ARGLINB', 'ARGLINA', 'ARGLINC', 'PENALTY2'}];  % Takes too long
-    case {'lincoa', 'lincoan'}
+    case {'lincoa_last', 'lincoa'}
         blacklist = [blacklist, {'LSNNODOC', 'HS55', 'HEART6'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
         blacklist = [blacklist, {'CHEBYQAD'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'SPANHYD', 'SPANHYD', 'SPANHYD', 'MINSURF', 'QPCBLEND', 'QPNBLEND', 'LINSPANH'}]; % Too long to solve
         blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1', 'HIMMELBI', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS','LUKSAN21LS'}]; % Too long to solve
-    case {'cobyla', 'cobylan'}
+    case {'cobyla_last', 'cobyla'}
         blacklist = [blacklist, {'HS80'}];  % QRADD_RDIAG: Assertion failed: C^T*Q(:, N) == Rdiag(N).
         blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE', 'MESH'}];
         blacklist = [blacklist, {'POLAK6', 'SPIRAL', 'POLAK2'}]; % B = A^{-1} fails
@@ -472,23 +472,23 @@ prob.options = test_options;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % N.B.: In some tests, we may invoke this function with solvers{1} == solvers{2}. So do NOT assume
-% that one of the solvers is 'SOLVER' and the other is 'SOLVERn'.
+% that one of the solvers is 'SOLVER' and the other is 'SOLVER_last'.
 
 solver1 = str2func(solvers{1});  % Use function handle to avoid `feval`.
 solver2 = str2func(solvers{2});  % Use function handle to avoid `feval`.
 
-if endsWith(solvers{1}, 'n')
-    package1 = @pdfon;
+if endsWith(solvers{1}, '_last')
+    package1 = @prima_last;
 else
-    package1 = @pdfo;
+    package1 = @prima;
 end
-if endsWith(solvers{2}, 'n')
-    package2 = @pdfon;
+if endsWith(solvers{2}, '_last')
+    package2 = @prima_last;
 else
-    package2 = @pdfo;
+    package2 = @prima;
 end
 
-tested_solver_name = regexprep(solvers{1}, 'n$', '');
+tested_solver_name = regexprep(solvers{1}, '_last', '');
 
 if call_by_package
     if call_by_structure
@@ -558,7 +558,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Special Treatments%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 minfhist = min(length(output1.fhist), length(output2.fhist));
 % NEWUOA
-if strcmpi(solvers{1}, 'newuoa') && strcmpi(solvers{2}, 'newuoan') && exitflag1 == 2 && exitflag2 ~=2 ...
+if strcmpi(solvers{1}, 'newuoa_last') && strcmpi(solvers{2}, 'newuoa') && exitflag1 == 2 && exitflag2 ~=2 ...
         && fx2 <= fx1 && output1.funcCount <= output2.funcCount ...
         && all(output2.fhist(end-minfhist+1:end-(output2.funcCount-output1.funcCount)) ...
         == output1.fhist(end-minfhist+(output2.funcCount-output1.funcCount)+1:end))
@@ -569,7 +569,7 @@ if strcmpi(solvers{1}, 'newuoa') && strcmpi(solvers{2}, 'newuoan') && exitflag1 
     output2.funcCount = output1.funcCount;
     fprintf('The original solver exits due to failure of the TR subproblem solver.\n');
 end
-if strcmpi(solvers{1}, 'newuoan') && strcmpi(solvers{2}, 'newuoa') && exitflag2 == 2 && exitflag1 ~=2 ...
+if strcmpi(solvers{1}, 'newuoa') && strcmpi(solvers{2}, 'newuoa_last') && exitflag2 == 2 && exitflag1 ~=2 ...
         && fx1 <= fx2 && output2.funcCount <= output1.funcCount ...
         && all(output1.fhist(end-minfhist+1:end-(output1.funcCount-output2.funcCount)) ...
         == output2.fhist(end-minfhist+(output1.funcCount-output2.funcCount)+1:end))
@@ -633,9 +633,3 @@ if ~equiv
 end
 
 return
-
-
-
-%function [x,fx, exitflag, output] = newuoan1(varargin)
-%[x,fx, exitflag, output] = newuoan(varargin, 1);
-%return

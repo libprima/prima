@@ -16,7 +16,7 @@ switch solver
         req.type = 'ubln';
 end
 
-solver_fun = str2func([solver, 'n']);
+solver_fun = str2func(solver);
 plist = secup(req);
 tlist= NaN(length(plist), 1);
 

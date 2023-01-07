@@ -57,7 +57,7 @@ else
     elseif strcmpi(solver, 'ALL')
         solver_list = all_solvers();
     else
-        fprintf('Unknown solver ''%s'' to compile.\n\n', solver);
+        fprintf('\nUnknown solver ''%s'' to compile.\n\n', solver);
         solver_list = {};
         wrong_input = true;
     end

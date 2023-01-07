@@ -32,7 +32,7 @@ if ~exist(d_root_dir, 'dir')
     mkdir(d_root_dir);
 end
 
-% `matlab_dir`: MATLAB directory
+% `matlab_dir`: the `matlab` directory
 s_matlab_dir = fullfile(s_root_dir, 'matlab');
 d_matlab_dir = fullfile(d_root_dir, 'matlab');
 if ~exist(d_matlab_dir, 'dir')
@@ -46,9 +46,9 @@ end
 % It must be done BEFORE copying the files from `s_matlab_dir` to `d_matlab_dir`.
 setup_tools = fullfile(s_root_dir, 'matlab', 'setup_tools');
 addpath(setup_tools);  % We use `clean_mex` from `setup_tools` to clean up the compiled MEX files.
-s_opdfo_mexdir = fullfile(s_root_dir, 'OPDFO', 'matlab', 'interfaces', 'private');
+s_last_mexdir = fullfile(s_root_dir, 'last', 'matlab', 'interfaces', 'private');
 s_mexdir = fullfile(s_matlab_dir, 'interfaces', 'private');
-mexdir_list = {s_opdfo_mexdir, s_mexdir};
+mexdir_list = {s_last_mexdir, s_mexdir};
 cellfun(@clean_mex, mexdir_list);
 rmpath(setup_tools);  % Remove `setup_tools` from path since it has finishes its job.
 %%%!!!----------------------------------------------------------------------------------------!!!%%%
@@ -67,19 +67,19 @@ if exist(s_mex_interform, 'dir')
 end
 
 % `root_sub_list: directories/files to be copied under `root_dir`
-root_sub_list = {'fortran', 'OPDFO', 'setup.m'};
+root_sub_list = {'fortran', 'last', 'setup.m'};
 for il = 1 : length(root_sub_list)
     copyfile(fullfile(s_root_dir, root_sub_list{il}), fullfile(d_root_dir, root_sub_list{il}));
 end
 %!------------------------------------------------------------------------------------------------!%
-% Remove the OPDFO/matlab/tests directories under d_root_dir. This is IMPORTANT! Without this, the
-% test will mistakenly call scripts from there, because OPDFO/matlab/tests may be added to the path
+% Remove the last/matlab/tests directories under d_root_dir. This is IMPORTANT! Without this, the
+% test will mistakenly call scripts from there, because last/matlab/tests may be added to the path
 % by the corresponding setup.m. This problem occurred on 2022-02-18 and took two days to debug.
-d_opdfo_matlab_test = fullfile(d_root_dir, 'OPDFO', 'matlab', 'tests');
-if exist(d_opdfo_matlab_test, 'dir')
-    rmdir(d_opdfo_matlab_test, 's');
+d_last_matlab_test = fullfile(d_root_dir, 'last', 'matlab', 'tests');
+if exist(d_last_matlab_test, 'dir')
+    rmdir(d_last_matlab_test, 's');
 end
-mkdir(d_opdfo_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
+mkdir(d_last_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 %!------------------------------------------------------------------------------------------------!%
 
 % `matlab_sub_list`: directories/files to be copied under `matlab_dir`
@@ -87,10 +87,10 @@ matlab_sub_list = {'setup_tools', 'mex_gateways', 'interfaces'};
 for il = 1 : length(matlab_sub_list)
     copyfile(fullfile(s_matlab_dir, matlab_sub_list{il}), fullfile(d_matlab_dir, matlab_sub_list{il}));
 end
-pdfo_matlab_test = fullfile(d_matlab_dir, 'tests');
-if exist(pdfo_matlab_test, 'dir')
-    rmdir(pdfo_matlab_test, 's');
+prima_matlab_test = fullfile(d_matlab_dir, 'tests');
+if exist(prima_matlab_test, 'dir')
+    rmdir(prima_matlab_test, 's');
 end
-mkdir(pdfo_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
-% `testpdfon` is needed by `pdv`.
-copyfile(fullfile(s_matlab_dir, 'tests', 'testpdfon.m'), fullfile(pdfo_matlab_test, 'testpdfon.m'));
+mkdir(prima_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
+% `testprima` is needed by `pdv`.
+copyfile(fullfile(s_matlab_dir, 'tests', 'testprima.m'), fullfile(prima_matlab_test, 'testprima.m'));

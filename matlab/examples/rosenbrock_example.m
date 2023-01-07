@@ -1,5 +1,5 @@
 function rosenbrock_example()
-%ROSENBROCK_EXAMPLE illustrates how to use pdfo.
+%ROSENBROCK_EXAMPLE illustrates how to use prima.
 %
 %   ***********************************************************************
 %   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
@@ -32,10 +32,10 @@ ub = [];  % ub = [inf; inf; inf] works equally well
 % nonlinear constraints
 nonlcon = @nlc;  % see function nlc given below
 % The following syntax is identical to fmincon:
-[x, fx, exitflag, output] = pdfo(@chrosen, x0, A, b, Aeq, beq, lb, ub, nonlcon)
-% Alternatively, the problem can be passed to pdfo as a structure:
+[x, fx, exitflag, output] = prima(@chrosen, x0, A, b, Aeq, beq, lb, ub, nonlcon)
+% Alternatively, the problem can be passed to prima as a structure:
 %p.objective = @chrosen; p.x0 = x0; p.Aineq = A; p.bineq = b; p.lb = lb; p.nonlcon = @nlc;
-%[x, fx, exitflag, output] = pdfo(p)
+%[x, fx, exitflag, output] = prima(p)
 
 fprintf('\n2. Linear constraints --- sum(x) = 1, x(i+1) <= x(i) <= 1 for i = 1, 2:\n');
 A = [-1, 1, 0; 0, -1, 1];
@@ -43,15 +43,15 @@ b = [0; 0];
 Aeq = [1, 1, 1];
 beq = 1;
 ub = [1; 1; 1];
-[x, fx, exitflag, output] = pdfo(@chrosen, x0, A, b, Aeq, beq, [], ub)
+[x, fx, exitflag, output] = prima(@chrosen, x0, A, b, Aeq, beq, [], ub)
 
 fprintf('\n3. Bound constraints --- -0.5 <= x(1) <= 0.5, 0 <= x(2) <= 0.25:\n');
 lb = [-0.5; 0; -inf];
 ub = [0.5; 0.25; inf];
-[x, fx, exitflag, output] = pdfo(@chrosen, x0, [], [], [], [], lb, ub)
+[x, fx, exitflag, output] = prima(@chrosen, x0, [], [], [], [], lb, ub)
 
 fprintf('\n4. No constraints:\n');
-[x, fx, exitflag, output] = pdfo(@chrosen, x0)
+[x, fx, exitflag, output] = prima(@chrosen, x0)
 
 return
 

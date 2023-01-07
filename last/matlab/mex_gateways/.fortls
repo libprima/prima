@@ -1,0 +1,6 @@
+{
+    "source_dirs": ["../../fsrc/common", "../../fsrc/newuoa_last", "../../fsrc/uobyqa_last", "../../fsrc/bobyqa_last", "../../fsrc/lincoa_last", "../../fsrc/cobyla_last"],
+    "pp_suffixes": [".F90", ".F"],
+    "include_dirs": ["../../fsrc/common", "./tests"],
+    "lowercase_intrinsics": true
+}
