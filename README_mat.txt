@@ -40,7 +40,8 @@ testprima
 
 2. Usage
 
-2.1. PRIMA provides the following MATLAB functions `prima`.
+2.1. PRIMA provides a MATLAB function `prima`, which can solve general
+constrained or unconstrained optimization problems without using derivatives.
 
 2.2. The `prima` function can automatically identify the type of your problem
 and then call one of Powell's solvers. The user can also choose the solver.
@@ -49,8 +50,7 @@ and then call one of Powell's solvers. The user can also choose the solver.
 function available in the Optimization Toolbox of MATLAB. You can call `prima`
 in exactly the same way as calling `fmincon`.
 
-2.4. For detailed syntax of these functions, use the standard `help` command
-of MATLAB. For example,
+2.4. For detailed syntax of `prima`, use the standard `help` command of MATLAB:
 
 help prima
 
