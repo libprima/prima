@@ -1,4 +1,4 @@
-name: Plot performance profiles for all problems
+name: Plot performance profiles for all
 
 on:
   # Trigger the workflow on push or pull request
