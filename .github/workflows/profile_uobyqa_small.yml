@@ -1,4 +1,4 @@
-name: Plot performance profiles for uobyqa, small (put only 1 job to see the profile ASAP)
+name: Plot performance profiles for UOBYQA, small
 
 on:
   # Trigger the workflow on push or pull request
