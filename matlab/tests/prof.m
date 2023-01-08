@@ -74,7 +74,7 @@ for ipt = 1 : length(prob_types)
     for iout = 1 : length(output)
         inputfiles = [inputfiles, ' ', output{iout}.(ptype)];
     end
-    system(['bash ', fullfile(mfiledir, 'compdf'), ' ', inputfiles, ' -o ', outputfile]);
+    system(['bash ', fullfile(mfiledir, 'private', 'compdf'), ' ', inputfiles, ' -o ', outputfile]);
     outputfiles.(ptype) = outputfile;
     fprintf('\nSummary for problem type %s:\n\n%s\n\n', ptype, outputfile);
 end
