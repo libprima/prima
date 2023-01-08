@@ -72,7 +72,7 @@ jobs:
             DayMonth = day(dt);
             options = struct();
             options.seed = 10000*mod(year(dt), 100) + 100*week(dt) + hour(dt);
-            if strcmp('${{ matrix.dim }}', 'large'), options.nr = 5; end;
+            options.nr = 1; % Since the code will not change along the time, big nr is not needed.
             options
             if mod(DayMonth, 2) == 1
                 fprintf('\n\n==========> Run the test sequentially <===========\n\n');
