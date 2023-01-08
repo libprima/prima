@@ -12,8 +12,13 @@ catch exception
     cineq = NaN;
     ceq = NaN;
     wid = sprintf('%s:ConstraintFailure', invoker);
-    wmsg = sprintf('%s: Constraint function fails with the following error:\n  %s: %s\n  Error occurred in %s, line %d', ...
-        invoker, exception.identifier, exception.message, exception.stack(1).file, exception.stack(1).line);
+    if ~isempty(exception.identifier)
+        wmsg = sprintf('%s: Constraint function fails with the following error:\n  %s: %s\n  Error occurred in %s, line %d', ...
+            invoker, exception.identifier, exception.message, exception.stack(1).file, exception.stack(1).line);
+    else
+        wmsg = sprintf('%s: Constraint function fails with the following error:\n  %s\n  Error occurred in %s, line %d', ...
+            invoker, exception.message, exception.stack(1).file, exception.stack(1).line);
+    end
     warning(wid, '%s', wmsg);
 end
 

@@ -31,6 +31,8 @@ cellfun(@(solver) warning('off', [solver, ':InvalidPrecision']), solvers);
 cellfun(@(solver) warning('off', [solver, ':IprintContradictQuiet']), solvers);
 cellfun(@(solver) warning('off', [solver, ':FortranContradictClassical']), solvers);
 cellfun(@(solver) warning('off', [solver, ':FortranContradictPrecision']), solvers);
+cellfun(@(solver) warning('off', [solver, ':ObjectiveFailure']), solvers);
+cellfun(@(solver) warning('off', [solver, ':ConstraintFailure']), solvers);
 %cellfun(@(solver) warning('off', ['FMXAPI:', upper(solver)]), solvers);
 
 return
