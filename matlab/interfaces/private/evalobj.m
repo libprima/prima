@@ -11,8 +11,13 @@ catch exception
     succ = false;
     f = NaN;
     wid = sprintf('%s:ObjectiveFailure', invoker);
-    wmsg = sprintf('%s: Objective function fails with the following error:\n  %s: %s\n  Error occurred in %s, line %d', ...
-        invoker, exception.identifier, exception.message, exception.stack(1).file, exception.stack(1).line);
+    if ~isempty(exception.identifier)
+        wmsg = sprintf('%s: Objective function fails with the following error:\n  %s: %s\n  Error occurred in %s, line %d', ...
+            invoker, exception.identifier, exception.message, exception.stack(1).file, exception.stack(1).line);
+    else
+        wmsg = sprintf('%s: Objective function fails with the following error:\n  %s\n  Error occurred in %s, line %d', ...
+            invoker, exception.message, exception.stack(1).file, exception.stack(1).line);
+    end
     warning(wid, '%s', wmsg);
 end
 

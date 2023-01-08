@@ -301,7 +301,9 @@ if nargin < 3
 end
 r = cos(1.0D6 * sin(1.0D6 * (abs(f) + 1.0D0) * cos(1.0D6 * sum(abs(x)))));
 f = f*(1+noise_level*r);
-if (r > 0.75)
+if (r > 0.9)
+    error('Function evaluation fails!')
+elseif (r > 0.75)
     f = inf;
 elseif (r > 0.5)
     f = NaN;
@@ -490,49 +492,64 @@ end
 
 tested_solver_name = regexprep(solvers{1}, '_last', '');
 
-if call_by_package
-    if call_by_structure
-        prob.options.solver = solvers{1};
-        %tic;
-        [x1, fx1, exitflag1, output1] = package1(prob);
-        %T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
-        prob.options.solver = solvers{2};
-        %tic;
-        [x2, fx2, exitflag2, output2] = package2(prob);
-        %T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
-    else
-        prob.options.solver = solvers{1};
-        [x1, fx1, exitflag1, output1] = package1(prob.objective, prob.x0, prob.Aineq, ...
-            prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
-        prob.options.solver = solvers{2};
-        [x2, fx2, exitflag2, output2] = package2(prob.objective, prob.x0, prob.Aineq, ...
-            prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
-    end
-else
-    if call_by_structure
-        [x1, fx1, exitflag1, output1] = solver1(prob);
-        [x2, fx2, exitflag2, output2] = solver2(prob);
-    else
-        switch lower(tested_solver_name)
-        case {'uobyqa', 'newuoa'}
-            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, prob.options);
-            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, prob.options);
-        case {'bobyqa'}
-            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, prob.lb, prob.ub, prob.options);
-            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, prob.lb, prob.ub, prob.options);
-        case {'lincoa'}
-            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, ...
-                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.options);
-            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, ...
-                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.options);
-        case {'cobyla'}
-            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, ...
-                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
-            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, ...
-                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
-        otherwise
-            error('Wrong solver tested: %s', tested_solver_name);
+exception = [];
+try
+    if call_by_package
+        if call_by_structure
+            prob.options.solver = solvers{1};
+            %tic;
+            [x1, fx1, exitflag1, output1] = package1(prob);
+            %T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
+            prob.options.solver = solvers{2};
+            %tic;
+            [x2, fx2, exitflag2, output2] = package2(prob);
+            %T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
+        else
+            prob.options.solver = solvers{1};
+            [x1, fx1, exitflag1, output1] = package1(prob.objective, prob.x0, prob.Aineq, ...
+                prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+            prob.options.solver = solvers{2};
+            [x2, fx2, exitflag2, output2] = package2(prob.objective, prob.x0, prob.Aineq, ...
+                prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
         end
+    else
+        if call_by_structure
+            [x1, fx1, exitflag1, output1] = solver1(prob);
+            [x2, fx2, exitflag2, output2] = solver2(prob);
+        else
+            switch lower(tested_solver_name)
+            case {'uobyqa', 'newuoa'}
+                [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, prob.options);
+                [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, prob.options);
+            case {'bobyqa'}
+                [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, prob.lb, prob.ub, prob.options);
+                [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, prob.lb, prob.ub, prob.options);
+            case {'lincoa'}
+                [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, ...
+                    prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.options);
+                [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, ...
+                    prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.options);
+            case {'cobyla'}
+                [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, ...
+                    prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+                [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, ...
+                    prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+            otherwise
+                error('Wrong solver tested: %s', tested_solver_name);
+            end
+        end
+    end
+catch exception
+    % Do nothing for the moment
+end
+
+if ~isempty(exception)
+    if endsWith(exception.identifier, 'ConstraintFailureAtX0') && (strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla'))
+        % In this case, error is expected.
+        equiv = true;
+        return
+    else
+        rethrow(exception)
     end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
