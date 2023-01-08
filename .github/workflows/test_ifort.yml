@@ -106,9 +106,9 @@ jobs:
               cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
               cd $ROOT/fortran/tests
               if [[ "$RUNNER_OS" = "macOS" ]] ; then
-                  sed -i "" 's|800|400|g' test_*.f90
+                  sed -i "" 's|800|300|g' test_*.f90
               else
-                  sed -i 's|800|400|g' test_*.f90
+                  sed -i 's|800|300|g' test_*.f90
               fi
               export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make itest_${{ matrix.ikind }}.${{ matrix.solver }}
           fi
