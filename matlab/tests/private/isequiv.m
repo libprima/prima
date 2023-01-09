@@ -420,6 +420,7 @@ if test_options.classical
 end
 
 call_by_package = (rand < 0.5);  % Call by the package instead of the solver
+%call_by_package = true;  % Call by the package instead of the solver
 call_by_structure = (rand < 0.5);  % Pass the problem by a structure
 if mod(ir, 50) == 0 && ~isempty(dir('*_output.txt'))
     delete('*_output.txt');

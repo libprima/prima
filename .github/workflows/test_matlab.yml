@@ -11,13 +11,21 @@ on:
   workflow_dispatch:
 
 env:
+  MATLAB_RELEASE: latest
+  MACOS_FORTRAN_COMPONENTS: intel.oneapi.mac.ifort-compiler
+  WINDOWS_FORTRAN_COMPONENTS: intel.oneapi.win.ifort-compiler
+  # The following version specifications work for MATLAB 2022b. Do not change they until they stop working.
+  # See https://github.com/matlab-actions/setup-matlab/issues/29#issuecomment-1048390901
+  # https://www.mathworks.com/support/requirements/supported-compilers.html
+  # https://github.com/zequipe/test_matlab/actions/workflows/test_compiler.yml
+  # For Linux
+  GFORTRAN_VERSION: 11
+  # For macOS
+  MACOS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18341/m_HPCKit_p_2022.1.0.86_offline.dmg
+  # For Windows
+  WINDOWS_VERSION: 2019
   WINDOWS_BASEKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18497/w_BaseKit_p_2022.1.2.154_offline.exe
   WINDOWS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18529/w_HPCKit_p_2022.1.2.116_offline.exe
-  MACOS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18341/m_HPCKit_p_2022.1.0.86_offline.dmg
-  WINDOWS_FORTRAN_COMPONENTS: intel.oneapi.win.ifort-compiler
-  MACOS_FORTRAN_COMPONENTS: intel.oneapi.mac.ifort-compiler
-  GFORTRAN_VERSION: 11
-  MATLAB_RELEASE: latest
 
 jobs:
   test:
@@ -26,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-2019]   # MEX Fortran does not work on windows-latest yet
+        os: [ubuntu-latest, macos-latest, windows-${{ env.WINDOWS_VERSION }}]   # MEX Fortran does not work on windows-latest yet
         bitness: [32, 64]
 
     steps:
