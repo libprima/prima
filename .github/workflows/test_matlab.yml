@@ -22,8 +22,7 @@ env:
   GFORTRAN_VERSION: 11
   # For macOS
   MACOS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18341/m_HPCKit_p_2022.1.0.86_offline.dmg
-  # For Windows
-  WINDOWS_VERSION: 2019
+  # For Windows 2019
   WINDOWS_BASEKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18497/w_BaseKit_p_2022.1.2.154_offline.exe
   WINDOWS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18529/w_HPCKit_p_2022.1.2.116_offline.exe
 
@@ -34,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-${{ env.WINDOWS_VERSION }}]   # MEX Fortran does not work on windows-latest yet
+        os: [ubuntu-latest, macos-latest, windows-2019]   # MEX Fortran does not work on windows-latest yet
         bitness: [32, 64]
 
     steps:
