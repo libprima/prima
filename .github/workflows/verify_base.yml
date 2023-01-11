@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 env:
-  GFORTRAN_VERSION: 11
+  GFORTRAN_VERSION: 12
   MATLAB_RELEASE: latest
 
 jobs:
