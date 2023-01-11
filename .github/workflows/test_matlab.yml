@@ -22,57 +22,41 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-2019]   # MEX Fortran does not work on windows-latest yet
+        matlab: [R2020a, R2020b, R2021a, R2021b, R2022a, R2022b, latest]
+        exclude:
+          - os: windows-2019
+            matlab: R2020a
+          - os: windows-2019
+            matlab: R2020b
+          # - os: windows-latest
+          #   matlab: R2020a
+          # - os: windows-latest
+          #   matlab: R2020b
+          # - os: windows-latest
+          #   matlab: R2021a
+          # - os: windows-latest
+          #   matlab: R2021b
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: prepare for cache restore for Intel oneAPI on macOS
-        if: matrix.os == 'macos-latest'
-        run: sudo mkdir -p /opt/intel && sudo chown $USER /opt/intel
-      - name: cache install Intel oneAPI on macOS
-        if: matrix.os == 'macos-latest'
-        id: cache-install-macos
-        uses: actions/cache@v3
-        with:
-          path: /opt/intel/oneapi
-          key: install-${{ env.MACOS_HPCKIT_URL }}-${{ env.MACOS_FORTRAN_COMPONENTS }}
-      - name: install Intel oneAPI on macOS
-        if: matrix.os == 'macos-latest' && steps.cache-install-macos.outputs.cache-hit != 'true'
-        run: bash .github/scripts/install_oneapi_macos.sh $MACOS_HPCKIT_URL $MACOS_FORTRAN_COMPONENTS
-      - name: Run intelvas_macos.sh on macOS
-        if: matrix.os == 'macos-latest'
-        run: bash .github/scripts/intelvars_macos.sh
-
-
-      - name: cache install Intel oneAPI on Windows
-        if: startsWith(matrix.os, 'windows')
-        id: cache-install-windows
-        uses: actions/cache@v3
-        with:
-          path: C:\Program Files (x86)\Intel\oneAPI\compiler
-          key: install-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_FORTRAN_COMPONENTS }}-compiler-${{ hashFiles('**/.github/scripts/cache_exclude_oneapi_windows.sh') }}
-      - name: install Intel oneAPI on Windows
-        if: startsWith(matrix.os, 'windows') && steps.cache-install-windows.outputs.cache-hit != 'true'
-        shell: bash
-        run: .github/scripts/install_oneapi_windows.bat $WINDOWS_HPCKIT_URL $WINDOWS_FORTRAN_COMPONENTS
-      - name: exclude unused files from cache for Intel oneAPI on Windows
-        if: startsWith(matrix.os, 'windows') && steps.cache-install-windows.outputs.cache-hit != 'true'
-        shell: bash
-        run: .github/scripts/cache_exclude_oneapi_windows.sh
-      - name: Run intelvars_windows.bat
-        if: startsWith(matrix.os, 'windows')
-        run: |
-          cmd.exe "/K" '".github/scripts/intelvars_windows.bat" && powershell'
-
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: sudo bash .github/scripts/link_gfortran_for_matlab ${{ env.GFORTRAN_VERSION }}
 
+      - name: Install Intel oneAPI on macOS
+        if: startsWith(matrix.os, 'macos')
+        run: sudo bash .github/scripts/install_oneapi_macos.sh
+
+      - name: Install Intel oneAPI on Windows
+        if: startsWith(matrix.os, 'windows')
+        run: cmd.exe "/K" '"install_oneapi_windows.bat"'
+
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v1.2.3
         with:
-          release: ${{ env.MATLAB_RELEASE }}
+          release: ${{ matrix.matlab }}
 
       - name: Run script
         uses: matlab-actions/run-command@v1.1.2

@@ -37,8 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        bitness: [32, 64]  # Expensive
+        os: [ubuntu-latest, windows-latest]  # As of 202301, ifx is not available on macOS
         ikind: [i2]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
@@ -48,14 +47,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install ifort/ifx
-        run: |
-          sudo .github/scripts/install_oneapi_linux.sh
       - name: Make sed available on Windows
         if: runner.os == 'Windows'
         run: $env:Path += ";C:\Program Files\Git\usr\bin"
 
+      - name: Install Intel oneAPI on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: sudo .github/scripts/install_oneapi_linux.sh
+
+      - name: Install Intel oneAPI on Windows
+        if: startsWith(matrix.os, 'windows')
+        run: cmd.exe "/K" '"install_oneapi_windows.bat"'
+
       - name: Set environment variables
+        shell: bash  # Important; otherwise, the following statements do not work on Windows.
         run: |
           TEST_DIR=/tmp/gittest_"$(date +%s)"_"$((RANDOM*RANDOM))"  # Needed in the Makefiles
           echo "TEST_DIR=$TEST_DIR" >> $GITHUB_ENV  # Make the environment variable available in subsequent steps
@@ -65,7 +70,7 @@ jobs:
         shell: bash
         run: |
           if [[ "$RUNNER_OS" = "Windows" ]]; then
-              "C:\Program Files (x86)\Intel\oneAPI\compiler\latest\env\vars.bat"
+              "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           else
               source /opt/intel/oneapi/setvars.sh
           fi
@@ -75,12 +80,13 @@ jobs:
           # 1. Windows does not support the symlink of linux, and hence mlint and flint do not work.
           # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
           if [[ "$RUNNER_OS" != "Windows" ]]; then
-               cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-               cd $ROOT/fortran/tests
-               sed -i 's|800|400|g' test_*.f90
-               export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
+              cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+              cd $ROOT/fortran/tests
+              sed -i 's|800|400|g' test_*.f90
+              export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
           fi
           cd $ROOT/fortran/examples/${{ matrix.solver }} && make xtest
+
       - name: Store artifacts
         uses: actions/upload-artifact@v3
         with:
