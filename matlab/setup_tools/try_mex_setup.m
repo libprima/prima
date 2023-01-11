@@ -92,8 +92,8 @@ end
 
 if ~isempty(exception) || mex_setup ~= 0
     fprintf('\nYour MATLAB failed to run mex(''-setup'', ''%s'').', language);
-    fprintf('\nTo see the detailed error message, execute the following command:');
-    fprintf('\n\n  mex(''-v'', ''-setup'', ''%s'')\n\n', language)
+    fprintf('\nTo see the detailed error message, execute the following command:\n');
+    fprintf('\n  mex(''-v'', ''-setup'', ''%s'')\n', language)
     success = 0;
 else
     % Try `mex(example_file)`
@@ -169,8 +169,8 @@ if ~isempty(exception) || mex_status ~= 0
     delete(fullfile(temp_mexdir, 'timestwo.*'));  % Remove the trash before returning
     if verbose
         fprintf('\nThe MEX of your MATLAB failed to compile\n%s,\nwhich is a MATLAB built-in example for trying MEX on %s.\n', example_file, language);
-        fprintf('\nTo see the detailed error message, execute the following command:');
-        fprintf('\n\n  mex(''-v'', fullfile(matlabroot, ''extern'', ''examples'', ''refbook'', ''%s''));\n\n', example_file_name);
+        fprintf('\nTo see the detailed error message, execute the following command:\n');
+        fprintf('\n  mex(''-v'', fullfile(matlabroot, ''extern'', ''examples'', ''refbook'', ''%s''));\n', example_file_name);
     end
     success = 0;
     return
