@@ -137,9 +137,9 @@ create_all_variants(options);
 copy_shared_tools(tools, mexdir);
 
 % Check whether MEX is properly configured.
-fprintf('\nVerifying the set-up of MEX ... \n\n');
-language = 'FORTRAN'; % Language to compile
-mex_well_conf = mex_well_configured(language);
+fprintf('\nVerifying the set-up of MEX ... \n');
+language = 'Fortran'; % Language to compile
+mex_well_conf = try_mex_setup(language);
 if mex_well_conf == 0
     fprintf('\nVerification FAILED.\n')
     fprintf('\nThe MEX of your MATLAB is not properly configured for compiling Fortran.');
