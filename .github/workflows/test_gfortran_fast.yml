@@ -47,9 +47,6 @@ jobs:
         testdim: [small]
         # Limit the test on macos to 64-bit.
         # Limit the test on Windows to 64-bit and the latest version of the compiler.
-        exclude:
-          - os: macos-latest
-          - os: windows-latest
 
     steps:
       - name: Checkout repository

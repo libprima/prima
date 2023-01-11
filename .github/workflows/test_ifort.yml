@@ -61,7 +61,9 @@ jobs:
 
       - name: Install Intel oneAPI on Windows
         if: startsWith(matrix.os, 'windows')
-        run: cmd.exe "/K" '"install_oneapi_windows.bat"'
+        shell: bash
+        run: .github/scripts/install_oneapi_windows.bat
+        #run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'
 
       - name: Set environment variables
         shell: bash  # Important; otherwise, the following statements do not work on Windows.
