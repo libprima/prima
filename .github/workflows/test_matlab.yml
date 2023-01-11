@@ -10,10 +10,6 @@ on:
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
-env:
-  MATLAB_RELEASE: latest
-  GFORTRAN_VERSION: 11
-
 jobs:
   test:
     name: Test MATLAB
@@ -43,7 +39,13 @@ jobs:
 
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: sudo bash .github/scripts/link_gfortran_for_matlab ${{ env.GFORTRAN_VERSION }}
+        run: |
+          GFVER=12
+          if [[ "${{ matrix.matlab }}" = "R2020a" || "${{ matrix.matlab }}" == "R2020b" \
+             || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" == "R2021b" ]] ; then
+              GFVER=9
+          fi
+          sudo bash .github/scripts/link_gfortran_for_matlab "$GFVER"
 
       - name: Install Intel oneAPI on macOS
         if: startsWith(matrix.os, 'macos')
