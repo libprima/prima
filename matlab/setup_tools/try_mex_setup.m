@@ -53,17 +53,16 @@ if strcmpi(language, 'FORTRAN') && (ismac || (ispc && ~isunix)) && (~isempty(exc
     % Set PATH, ONEAPI_ROOT, and IFORT_COMPILER18.
     if ismac
         oneapi_root = '/opt/intel/oneapi/';
-        ifort_compiler18 = [oneapi_root, 'compiler/latest/mac/'];
-        ifort_path = fullfile(ifort_compiler18, 'bin', 'intel64');
-        setenv('PATH', [getenv('PATH'), ':', ifort_path]);
+        compiler_dir = [oneapi_root, 'compiler/latest/mac/'];
     elseif ispc && ~isunix  % Windows
         oneapi_root = 'C:\Program Files (x86)\Intel\oneAPI\';
-        ifort_compiler18 = [oneapi_root, 'compiler\latest\windows\'];
-        ifort_path = fullfile(ifort_compiler18, 'bin', 'intel64');
-        setenv('PATH', [getenv('PATH'), ';', ifort_path]);  % Seems not needed.
+        compiler_dir = [oneapi_root, 'compiler\latest\windows\'];
     end
+    compiler_bin = fullfile(compiler_dir, 'bin');
+    compiler_bin64 = fullfile(compiler_bin, 'intel64');
+    setenv('PATH', [getenv('PATH'), pathsep, compiler_bin, pathsep, compiler_bin64]);  % Not needed for Windows as of 2023.
     setenv('ONEAPI_ROOT', oneapi_root);
-    setenv('IFORT_COMPILER18', ifort_compiler18);
+    setenv('IFORT_COMPILER18', compiler_dir);
 
     % Try setting up MEX again.
     mex_setup = -1;
