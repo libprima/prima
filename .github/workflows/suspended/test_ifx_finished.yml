@@ -43,7 +43,6 @@ jobs:
         # windows-latest = windows-2019
         #os: [ubuntu-latest, ubuntu-18.04]
         os: [ubuntu-latest]
-        bitness: [32, 64]
         ikind: [i2, i4, i8]
         solver: [newuoa, cobyla]
 

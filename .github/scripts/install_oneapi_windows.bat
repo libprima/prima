@@ -14,9 +14,6 @@ if "%1"=="2022" (
 if "%1"=="2021" (
     set URL=https://registrationcenter-download.intel.com/akdlm/irc_nas/18247/w_HPCKit_p_2021.4.0.3340_offline.exe
 )
-::set URL=https://registrationcenter-download.intel.com/akdlm/irc_nas/17940/w_HPCKit_p_2021.3.0.3227_offline.exe
-::set URL=https://registrationcenter-download.intel.com/akdlm/irc_nas/17762/w_HPCKit_p_2021.2.0.2901_offline.exe
-::set URL=https://registrationcenter-download.intel.com/akdlm/irc_nas/17392/w_HPCKit_p_2021.1.0.2682_offline.exe
 
 :: Component to install.
 set COMPONENTS=intel.oneapi.win.ifort-compiler
