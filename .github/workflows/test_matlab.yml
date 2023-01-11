@@ -2,7 +2,7 @@ name: Test MATLAB
 
 on:
   # Trigger the workflow on push or pull request
-  #push:
+  push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -12,20 +12,7 @@ on:
 
 env:
   MATLAB_RELEASE: latest
-  MACOS_FORTRAN_COMPONENTS: intel.oneapi.mac.ifort-compiler
-  WINDOWS_FORTRAN_COMPONENTS: intel.oneapi.win.ifort-compiler
-  # The following version specifications work for MATLAB 2022b. Do not change them until they stop working.
-  # See https://github.com/matlab-actions/setup-matlab/issues/29#issuecomment-1048390901
-  # https://www.mathworks.com/support/requirements/supported-compilers.html
-  # https://github.com/zequipe/test_matlab/actions/workflows/test_compiler.yml
-  # For Linux
   GFORTRAN_VERSION: 11
-  # For macOS
-  MACOS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18341/m_HPCKit_p_2022.1.0.86_offline.dmg
-    #https://registrationcenter-download.intel.com/akdlm/IRC_NAS/19086/m_HPCKit_p_2023.0.0.25440_offline.dmg
-  # For Windows 2019
-  WINDOWS_BASEKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18497/w_BaseKit_p_2022.1.2.154_offline.exe
-  WINDOWS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/18529/w_HPCKit_p_2022.1.2.116_offline.exe
 
 jobs:
   test:
@@ -35,7 +22,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-2019]   # MEX Fortran does not work on windows-latest yet
-        bitness: [32, 64]
 
     steps:
       - name: Check out repository
