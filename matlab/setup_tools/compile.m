@@ -58,17 +58,6 @@ else
     verbose_option = '-silent';
 end
 
-% Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1, and then set ad_option
-% accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1 according to the document of MATLAB R2019a.
-% !!! Make sure that everything is compiled with the SAME ad_option !!!
-% !!! Otherwise, Segmentation Fault may occur !!!
-[Architecture, maxArrayDim] = computer;
-if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31
-    ad_option = '-largeArrayDims';
-else
-    ad_option = '-compatibleArrayDims'; % This works for both 32-bit and 64-bit MATLAB
-end
-
 % Name of the file that contains the list of Fortran files. There should be such a file in each
 % Fortran source code directory, and the list should indicate the dependence among the files.
 filelist = 'ffiles.txt';
@@ -87,7 +76,7 @@ common_files = [list_files(common, filelist), fullfile(gateways, 'fmxapi.F'), fu
 
 fprintf('Compiling the common files ... ');
 for idbg = 1 : length(debug_flags)
-    mex_options = {verbose_option, ad_option, ['-', dbgstr(debug_flags{idbg})]};
+    mex_options = {verbose_option, ['-', dbgstr(debug_flags{idbg})]};
     for iprc = 1 : length(precisions)
         prepare_header(header_file, precisions{iprc}, debug_flags{idbg});
         work_dir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
@@ -128,7 +117,7 @@ for isol = 1 : length(solvers)
                 % The support for the classical variant is limited. No debugging version.
                 continue
             end
-            mex_options = {verbose_option, ad_option, ['-', dbgstr(debug_flags{idbg})]};
+            mex_options = {verbose_option, ['-', dbgstr(debug_flags{idbg})]};
             for iprc = 1 : length(precisions)
                 work_dir = fullfile(soldir, pdstr(precisions{iprc}, debug_flags{idbg}));
                 prepare_work_dir(work_dir);
@@ -225,4 +214,28 @@ else
     mkdir(directory);
 end
 % PREPARE_WORKDIR ends
+return
+
+
+function mod_files = list_mod_files(dir_name)
+%LIST_MOD_FILES lists all module files (*.mod) in a directory
+
+mod_files = files_with_wildcard(dir_name, '*.mod');
+
+return
+
+
+function obj_files = list_obj_files(dir_name)
+%LIST_OBJ_FILES lists all object files (*.o, *.obj) in a directory
+
+obj_files = [files_with_wildcard(dir_name, '*.o'), files_with_wildcard(dir_name, '*.obj')];
+
+return
+
+
+function modo_files = list_modo_files(dir_name)
+%LIST_MODO_FILES lists all module or object files in a directory
+
+modo_files = [list_mod_files(dir_name), list_obj_files(dir_name)];
+
 return

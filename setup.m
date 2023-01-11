@@ -51,8 +51,8 @@ function setup(varargin)
 package_name = 'prima';
 
 % Check the version of MATLAB.
-if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
-    fprintf('\nSorry, this package does not support MATLAB R2013b or earlier releases.\n\n');
+if verLessThan('matlab', '9.4')   % MATLAB R2018a = MATLAB 9.4
+    fprintf('\nSorry, this package does not support MATLAB R2017b or earlier releases.\n\n');
     return
 end
 

@@ -50,7 +50,7 @@ funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1) || ~ismember(callstack(2).name, invoker_list)
     % Private/unexpected error
     error(sprintf('%s:InvalidInvoker', funname), ...
-    '%s: UNEXPECTED ERROR: %s should only be called by %s.', funname, funname, mystrjoin(invoker_list, ', '));
+    '%s: UNEXPECTED ERROR: %s should only be called by %s.', funname, funname, strjoin(invoker_list, ', '));
 else
     invoker = callstack(2).name; % Name of the function who calls this function
 end
@@ -74,7 +74,7 @@ else
     if ~isempty(missing_fields)
         % Public/unexpected error
         error(sprintf('%s:InvalidProbinfo', invoker),...
-            '%s: UNEXPECTED ERROR: probinfo misses the %s field(s).', invoker, mystrjoin(missing_fields, ', '));
+            '%s: UNEXPECTED ERROR: probinfo misses the %s field(s).', invoker, strjoin(missing_fields, ', '));
     end
 
     % Read and verify options
@@ -88,7 +88,7 @@ else
     if ~isempty(missing_fields)
         % Public/unexpected error
         error(sprintf('%s:InvalidOptions', invoker),...
-            '%s: UNEXPECTED ERROR: options misses the %s field(s).', invoker, mystrjoin(missing_fields, ', '));
+            '%s: UNEXPECTED ERROR: options misses the %s field(s).', invoker, strjoin(missing_fields, ', '));
     end
 end
 
@@ -127,7 +127,7 @@ missing_fields = setdiff(obligatory_output_fields, fieldnames(output));
 if ~isempty(missing_fields)
     % Public/unexpected error
     error(sprintf('%s:InvalidOutput', invoker),...
-        '%s: UNEXPECTED ERROR: %s returns an output that misses the %s field(s).', invoker, solver, mystrjoin(missing_fields, ', '));
+        '%s: UNEXPECTED ERROR: %s returns an output that misses the %s field(s).', invoker, solver, strjoin(missing_fields, ', '));
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

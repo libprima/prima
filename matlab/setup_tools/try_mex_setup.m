@@ -106,7 +106,9 @@ warning(orig_warning_state);
 return
 
 
-%--------------------------------------------------------------------------------------------------%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 function success = mex_well_configured(language, verbose)
 %MEX_WELL_CONFIGURED verifies whether MEX is well configured by testing it on the official example.
 % At return,
@@ -163,10 +165,8 @@ catch exception
     % Do nothing
 end
 
-trash_files = files_with_wildcard(temp_mexdir, 'timestwo.*');
-
 if ~isempty(exception) || mex_status ~= 0
-    cellfun(@(filename) delete(filename), trash_files);  % Clean up the trash before returning
+    delete(fullfile(temp_mexdir, 'timestwo.*'));  % Remove the trash before returning
     if verbose
         fprintf('\nThe MEX of your MATLAB failed to compile\n%s,\nwhich is a MATLAB built-in example for trying MEX on %s.\n', example_file, language);
         fprintf('\nTo see the detailed error message, execute the following command:');
@@ -186,7 +186,7 @@ catch exception
 end
 
 rmpath(temp_mexdir);  % Clean up the path before returning.
-cellfun(@(filename) delete(filename), trash_files);  % Clean up the trash before returning
+delete(fullfile(temp_mexdir, 'timestwo.*'));  % Remove the trash before returning
 
 if ~isempty(exception)
     if verbose
