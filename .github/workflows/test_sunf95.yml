@@ -69,7 +69,6 @@ jobs:
 
       - name: Conduct the test
         run: |
-          source /tmp/setenv.sh
           ROOT=$(realpath ./)
           cd $ROOT/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make stest_${{ matrix.ikind }}.${{ matrix.solver }}

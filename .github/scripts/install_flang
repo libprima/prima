@@ -8,8 +8,6 @@ cd /tmp/ || exit 42
 wget "https://www.dropbox.com/s/myhdi239myw1tsi/flang.7z"
 7za x flang.7z
 
-SETENVSH="/tmp/setenv.sh"
-cat > "$SETENVSH" <<EOF
-export PATH=$PATH:/tmp/flang/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/tmp/flang/lib
-EOF
+# Set environment variable for subsequent steps
+echo "PATH=$PATH:/tmp/flang/bin" >> "$GITHUB_ENV"
+echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/tmp/flang/lib" >> "$GITHUB_ENV"
