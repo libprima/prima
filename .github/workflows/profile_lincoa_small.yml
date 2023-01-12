@@ -36,8 +36,7 @@ jobs:
           key:  ${{ runner.os }}-${{ hashFiles('**/.github/scripts/install_matcutest') }}
       - name: Install CUTEst
         if: steps.cache-install-cutest.outputs.cache-hit != 'true'
-        run: |
-          bash .github/scripts/install_matcutest --full
+        run: bash .github/scripts/install_matcutest --full
 
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
@@ -49,8 +48,7 @@ jobs:
 
       - name: Check MATLAB
         id: check_matlab
-        run: |
-            if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
+        run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
 
       - name: Set up MATLAB
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}

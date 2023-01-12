@@ -1,0 +1,12 @@
+#!/bin/bash
+# This script sets the environment variable TEST_DIR to a random directory. It is needed in the
+# Makefiles for the Fortran tests of PRIM.
+#
+# Usage: bash set_test_dir
+
+TEST_DIR=/tmp/gittest_$(date +%s)_"$((RANDOM*RANDOM))"
+
+echo "$TEST_DIR"
+
+# Make the environment variable available in subsequent steps
+echo "TEST_DIR=$TEST_DIR" >> "$GITHUB_ENV"
