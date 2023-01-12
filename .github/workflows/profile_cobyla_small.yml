@@ -83,5 +83,4 @@ jobs:
             !matlab/tests/testdata/*problems.txt
 
       - name: Remove the test data
-        run:
-          rm -rf ./matlab/tests/testdata
+        run: rm -rf ./matlab/tests/testdata

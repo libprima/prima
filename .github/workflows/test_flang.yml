@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install Flang
-        run: sudo bash .github/scripts/install_flang
+        run: bash .github/scripts/install_flang
 
       - name: Set TEST_DIR
         run: bash .github/scripts/set_test_dir
@@ -66,5 +66,4 @@ jobs:
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
-        run:
-          rm -rf ${{ env.TEST_DIR }}
+        run: rm -rf ${{ env.TEST_DIR }}

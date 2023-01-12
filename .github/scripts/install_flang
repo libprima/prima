@@ -1,7 +1,7 @@
 #!/bin/bash
-# Usage: sudo bash install_flang
+# Usage: bash install_flang
 
-apt install p7zip-full libncurses* # libncurses* needed for libtinfo.so
+sudo apt install p7zip-full libncurses* # libncurses* needed for libtinfo.so
 
 cd /tmp/ || exit 42
 
@@ -9,5 +9,6 @@ wget "https://www.dropbox.com/s/myhdi239myw1tsi/flang.7z"
 7za x flang.7z
 
 # Set environment variable for subsequent steps
+# N.B.: The following lines will not work if this script is invoked with sudo.
 echo "PATH=$PATH:/tmp/flang/bin" >> "$GITHUB_ENV"
 echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/tmp/flang/lib" >> "$GITHUB_ENV"

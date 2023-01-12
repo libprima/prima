@@ -68,5 +68,4 @@ jobs:
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
-        run:
-          rm -rf ${{ env.TEST_DIR }}
+        run: rm -rf ${{ env.TEST_DIR }}
