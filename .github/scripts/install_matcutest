@@ -1,6 +1,6 @@
 #!/bin/bash
-# This script installs CUTEst on Linux, using the compiled CUTEst in the current directory or $GITREPO.
-# Usage: bash install_cutest
+# This script installs MatCUTEst using the compiled MatCUTEst in the current directory or $GITREPO.
+# Usage: bash install_matcutest
 # CUTEst version: 20230105
 
 if [[ "$OSTYPE" != "linux-gnu"* ]]; then
