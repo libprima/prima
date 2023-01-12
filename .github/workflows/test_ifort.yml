@@ -62,7 +62,8 @@ jobs:
 
       - name: Install Intel oneAPI on Windows
         if: startsWith(matrix.os, 'windows')
-        run: call .github/scripts/install_oneapi_windows.bat
+        shell: bash
+        run: .github/scripts/install_oneapi_windows.bat
 
       - name: Set environment variables
         shell: bash  # Important; otherwise, the following statements do not work on Windows.
@@ -70,12 +71,17 @@ jobs:
           TEST_DIR=/tmp/gittest_"$(date +%s)"_"$((RANDOM*RANDOM))"  # Needed in the Makefiles
           echo "TEST_DIR=$TEST_DIR" >> $GITHUB_ENV  # Make the environment variable available in subsequent steps
           echo "$TEST_DIR"
+          if [[ "$RUNNER_OS" = "Windows" ]]; then
+              .github/scripts/intelvars_windows.bat
+          else
+              .github/scripts/intelvars_unix.sh
+          fi
 
       - name: Conduct the test
         shell: bash
         run: |
           if [[ "$RUNNER_OS" = "Windows" ]]; then
-              call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+              "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           else
               source /opt/intel/oneapi/setvars.sh
           fi
