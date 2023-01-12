@@ -61,7 +61,7 @@ ftest: FC := flang -Wall -Wextra -std=f$(FSTD)
 gtest: FC := gfortran -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
 
 # Intel ifort
-itest: FC := ifort -warn all -stand f$(FS)
+itest: FC := ifort -warn all -stand f$(FS) -fpp
 
 # NAG nagfor
 ntest: FC := nagfor -C -f$(FSTD)
@@ -74,7 +74,7 @@ vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard
 stest: FC := sunf95 -w3 -u -U
 
 # Intel ifx
-xtest: FC := ifx -warn all -stand f$(FS)
+xtest: FC := ifx -warn all -stand f$(FS) -fpp
 
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test
