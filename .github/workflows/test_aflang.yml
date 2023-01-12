@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install AOCC
-        run: sudo .github/scripts/install_aocc
+        run: sudo bash .github/scripts/install_aocc
 
       - name: Set TEST_DIR
         run: bash .github/scripts/set_test_dir
@@ -67,5 +67,4 @@ jobs:
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
-        run:
-          rm -rf ${{ env.TEST_DIR }}
+        run: rm -rf ${{ env.TEST_DIR }}
