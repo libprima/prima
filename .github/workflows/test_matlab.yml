@@ -18,8 +18,17 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-2019]   # MEX Fortran does not work on windows-latest yet
-        matlab: [R2020a, R2020b, R2021a, R2021b, R2022a, R2022b, latest]
+        matlab: [R2020a, R2020b, R2021a, R2021b, R2022a, R2022b]
+        # Below R2022a, MEX is extremely slow on macOS; R2020a/b are not available on Windows.
         exclude:
+          - os: macos-latest
+            matlab: R2020a
+          - os: macos-latest
+            matlab: R2020b
+          - os: macos-latest
+            matlab: R2021a
+          - os: macos-latest
+            matlab: R2021b
           - os: windows-2019
             matlab: R2020a
           - os: windows-2019
@@ -74,15 +83,12 @@ jobs:
               setup
               setup path
               testprima;
-              % Below R2022a = 9.12, MEX on macOS with GitHub Actions is slow.
-              if ~verLessThan('matlab', '9.12')
-                setup cobyla
-                setup uobyqa
-                setup newuoa
-                setup bobyqa
-                setup lincoa
-                setup path
-              end
+              setup cobyla
+              setup uobyqa
+              setup newuoa
+              setup bobyqa
+              setup lincoa
+              setup path
               setup clean
               setup path
               setup uninstall
