@@ -34,11 +34,11 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/local/matcutest
-          key:  ${{ runner.os }}-${{ hashFiles('**/.github/scripts/install_cutest') }}
+          key:  ${{ runner.os }}-${{ hashFiles('**/.github/scripts/install_matcutest') }}
       - name: Install CUTEst
         if: steps.cache-install-cutest.outputs.cache-hit != 'true'
         run: |
-          bash .github/scripts/install_cutest --full
+          bash .github/scripts/install_matcutest --full
 
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
