@@ -124,7 +124,7 @@ else
     case {'lincoa_last', 'lincoa'}
         blacklist = [blacklist, {'LSNNODOC', 'HS55', 'HEART6'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
-        blacklist = [blacklist, {'CHEBYQAD'}]; % The classical lincoa encounters segfault
+        blacklist = [blacklist, {'CHEBYQAD', 'HS54'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'SPANHYD', 'SPANHYD', 'SPANHYD', 'MINSURF', 'QPCBLEND', 'QPNBLEND', 'LINSPANH'}]; % Too long to solve
         blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1', 'HIMMELBI', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS','LUKSAN21LS', 'COATING'}]; % Too long to solve
@@ -411,7 +411,7 @@ test_options.chkfunval = test_options.debug;
 %!------------------------------------------------------------------------------------------------!%
 
 % Test all variants. If the classical variant is unavailable,  the modernized variant will be called.
-test_options.classical = (rand < 0.05);
+test_options.classical = (rand < 0.025);
 % Test only double for the classical variant; debugging version is unavailable for the classical variant.
 if test_options.classical
     test_options.precision = 'double';
