@@ -1,4 +1,6 @@
 #!/usr/bin/bash
+# This script installs the requested version of gfortran and links it to /usr/bin/gfortran
+# Usage: sudo bash link_gfortran
 
 if [[ $# -lt 1 ]]; then
     printf "\nPlease provide the version of gfortran to link.\n\n"

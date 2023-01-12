@@ -1,7 +1,9 @@
 #!/bin/bash
+# This script installs the Fortran compilers provided in Intel OneAPI.
+# Usage: sudo bash install_oneapi_linux.sh
 
 # do the job in the temporary directory of the system
-cd "$TMPDIR" || exit 42
+cd /tmp || exit 42
 
 # use wget to fetch the Intel repository public key
 wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB

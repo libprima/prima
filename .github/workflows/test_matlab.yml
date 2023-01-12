@@ -45,7 +45,7 @@ jobs:
              || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" == "R2021b" ]] ; then
               GFVER=9
           fi
-          sudo bash .github/scripts/link_gfortran_for_matlab "$GFVER"
+          sudo bash .github/scripts/link_gfortran "$GFVER"
 
       - name: Install Intel oneAPI on macOS
         if: startsWith(matrix.os, 'macos')
@@ -53,8 +53,7 @@ jobs:
 
       - name: Install Intel oneAPI on Windows
         if: startsWith(matrix.os, 'windows')
-        shell: bash
-        run: .github/scripts/install_oneapi_windows.bat
+        run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'
 
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v1.2.3
