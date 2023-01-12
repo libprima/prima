@@ -112,7 +112,7 @@ try
     % Make the solvers available. Note that the solvers are under `test_dir`.
     get_solvers(solver, test_dir, options);
 
-    % Tell MATLAB where to find CUTEST.
+    % Tell MATLAB where to find MatCUTEst.
     locate_matcutest();
 
     % Go to the test directory. This is not really necessary. It will not affect the test, but any
