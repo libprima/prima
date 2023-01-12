@@ -45,11 +45,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set environment variables
-        run: |
-          TEST_DIR=/tmp/gittest_"$(date +%s)"_"$((RANDOM*RANDOM))"  # Needed in the Makefiles
-          echo "TEST_DIR=$TEST_DIR" >> $GITHUB_ENV  # Make the environment variable available in subsequent steps
-          echo "$TEST_DIR"
+      - name: Set TEST_DIR
+        run: bash .github/scripts/set_test_dir
 
       - name: Conduct the test
         run: |
