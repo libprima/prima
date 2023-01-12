@@ -114,7 +114,7 @@ if isempty(requirements.list)
         blacklist = [blacklist, {'ARGLINB', 'ARGLINA', 'ARGLINC', 'PENALTY2'}];  % Takes too long
     case {'lincoa', 'lincoan'}
         blacklist = [blacklist, {'LSNNODOC', 'HS55', 'AVGASA', 'AVGASB'}]; % possible reason for a segfault; should test it after the modernization.
-        blacklist = [blacklist, {'CHEBYQAD', 'HIMMELBJ'}]; % The classical lincoa encounters segfault
+        blacklist = [blacklist, {'CHEBYQAD', 'HIMMELBJ', 'HS54'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2', 'EXTRASIM', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS','LUKSAN21LS', 'MINSURF', 'QPCBLEND', 'MUONSINELS'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
