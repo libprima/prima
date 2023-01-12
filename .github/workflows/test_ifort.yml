@@ -56,13 +56,9 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: sudo bash .github/scripts/install_oneapi_macos.sh
 
-      - name: Set environment variables
+      - name: Set TEST_DIR
         shell: bash
-        run: |
-          TEST_DIR=/tmp/gittest_"$(date +%s)"_"$((RANDOM*RANDOM))"  # Needed in the Makefiles
-          echo "TEST_DIR=$TEST_DIR" >> $GITHUB_ENV  # Make the environment variable available in subsequent steps
-          echo "$TEST_DIR"
-          bash .github/scripts/intelvars_unix.sh
+        run: bash .github/scripts/set_test_dir
 
       - name: Conduct the test
         shell: bash
