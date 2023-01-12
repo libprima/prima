@@ -62,7 +62,6 @@ jobs:
 
       - name: Conduct the test
         run: |
-          source /tmp/setenv.sh
           ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"  # `realpath` is unavailable on macOS
           cd $ROOT/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}

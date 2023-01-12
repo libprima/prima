@@ -7,8 +7,5 @@ wget "https://www.dropbox.com/s/ayi572hcf5drdvk/OracleDevStd.zip" -O OracleDevSt
 
 unzip /tmp/OracleDevStd.zip
 
-SETENVSH="/tmp/setenv.sh"
-cat > "$SETENVSH" <<EOF
-export PATH=$PATH:/tmp/OracleDevStd/bin
-export LD_LIBRARY_PATH=/tmp/OracleDevStd/lib/compilers/sys/amd64:/tmp/OracleDevStd/lib/compilers/sys/:$LD_LIBRARY_PATH
-EOF
+echo "PATH=$PATH:/tmp/OracleDevStd/bin" >> "$GITHUB_ENV"
+echo "LD_LIBRARY_PATH=/tmp/OracleDevStd/lib/compilers/sys/amd64:/tmp/OracleDevStd/lib/compilers/sys/:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"

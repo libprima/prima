@@ -9,7 +9,5 @@ cd resources/ || exit 42
 
 unzip g95.zip
 
-SETENVSH="/tmp/setenv.sh"
-cat > "$SETENVSH" <<EOF
-export PATH=$PATH:/tmp/resources/g95/bin:/tmp/resources/g95/lib/gcc-lib/x86_64-unknown-linux-gnu/4.0.3
-EOF
+# Set environment variable for subsequent steps
+echo "PATH=$PATH:/tmp/resources/g95/bin:/tmp/resources/g95/lib/gcc-lib/x86_64-unknown-linux-gnu/4.0.3" >> "$GITHUB_ENV"

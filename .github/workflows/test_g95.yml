@@ -67,7 +67,6 @@ jobs:
       - name: Conduct the test
         run: |
           # No need to test in parallel, as 9test compiles without running (identical to 9test_c).
-          source /tmp/setenv.sh
           ROOT=$(realpath ./)
           cd $ROOT/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           cd $ROOT/fortran/tests && make 9test_c.${{ matrix.solver }}
