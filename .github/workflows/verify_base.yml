@@ -48,7 +48,7 @@ jobs:
 
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: sudo bash .github/scripts/link_gfortran_for_matlab ${{ env.GFORTRAN_VERSION }}
+        run: sudo bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
 
       - name: Check MATLAB
         id: check_matlab

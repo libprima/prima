@@ -1,15 +1,14 @@
 #!/bin/bash
+# Usage: bash install_sunf95
 
-cd /tmp/ || exit 1
+cd /tmp/ || exit 42
 
 wget "https://www.dropbox.com/s/ayi572hcf5drdvk/OracleDevStd.zip" -O OracleDevStd.zip
 
 unzip /tmp/OracleDevStd.zip
 
-SETENV="/tmp/setenv.sh"
-cat > "$SETENV" <<EOF
+SETENVSH="/tmp/setenv.sh"
+cat > "$SETENVSH" <<EOF
 export PATH=$PATH:/tmp/OracleDevStd/bin
 export LD_LIBRARY_PATH=/tmp/OracleDevStd/lib/compilers/sys/amd64:/tmp/OracleDevStd/lib/compilers/sys/:$LD_LIBRARY_PATH
 EOF
-
-source "$SETENV"

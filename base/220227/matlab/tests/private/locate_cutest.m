@@ -10,7 +10,7 @@ if isempty(cdir)
     setenv('CUTEST', cdir);  % This is needed by `cutestdir`, which will be called by `macup`.
 end
 
-cmtools = fullfile(fileparts(cdir), 'mtools', 'msrc');
+cmtools = fullfile(fileparts(cdir), 'mtools', 'src');
 cpaths = {cmtools};
 
 for ip = 1 : length(cpaths)

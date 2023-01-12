@@ -1,3 +1,6 @@
+#!/bin/bash
+# Usage: bash intelvars_unix.sh
+
 source /opt/intel/oneapi/setvars.sh
 ifort --version
 where ifort

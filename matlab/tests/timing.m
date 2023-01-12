@@ -1,6 +1,6 @@
 function [tlist, plist] = timing(solver, mindim, maxdim)
 
-locate_cutest();
+locate_matcutest();
 
 req.mindim = mindim;
 req.maxdim = maxdim;

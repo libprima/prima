@@ -16,7 +16,7 @@ case 'n'
 otherwise
 end
 
-locate_cutest();
+locate_matcutest();
 plist = secup(requirement);
 
 rng(42);

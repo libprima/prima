@@ -1,4 +1,5 @@
 #!/bin/bash
+# Usage: sudo bash install_nvfortran
 
 # ARCH is the architecture of the current system.
 if [[ "$(uname -m)" == "aarch64" || "$(uname -m)" == "aarch" ]]  ; then
