@@ -104,5 +104,4 @@ jobs:
 
       - name: Remove the test data
         shell: bash  # Important; otherwise, `rm -rf` will not work on Windows.
-        run:
-          rm -rf ${{ env.TEST_DIR }}
+        run: rm -rf ${{ env.TEST_DIR }}

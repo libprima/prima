@@ -52,7 +52,7 @@ jobs:
 
       - name: Install Intel oneAPI on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: sudo .github/scripts/install_oneapi_linux.sh
+        run: sudo bash .github/scripts/install_oneapi_linux.sh
 
       - name: Install Intel oneAPI on macOS
         if: startsWith(matrix.os, 'macos')
@@ -83,5 +83,4 @@ jobs:
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
-        run:
-          rm -rf ${{ env.TEST_DIR }}
+        run: rm -rf ${{ env.TEST_DIR }}
