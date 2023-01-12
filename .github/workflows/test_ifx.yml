@@ -37,7 +37,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]  # As of 202301, ifx is not available on macOS
+        # Windows does not work. On Windows, the options for ifort/ifx starts with "/" instead of "-".
+        # As of 202301, ifx is not available on macOS.
+        #os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         ikind: [i2]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
@@ -47,46 +50,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Make sed available on Windows
-        if: runner.os == 'Windows'
-        run: $env:Path += ";C:\Program Files\Git\usr\bin"
-
       - name: Install Intel oneAPI on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: sudo .github/scripts/install_oneapi_linux.sh
 
-      - name: Install Intel oneAPI on Windows
-        if: startsWith(matrix.os, 'windows')
-        shell: bash
-        run: .github/scripts/install_oneapi_windows.bat
-        #run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'
+      - name: Install Intel oneAPI on macOS
+        if: startsWith(matrix.os, 'macos')
+        run: sudo bash .github/scripts/install_oneapi_macos.sh
 
       - name: Set environment variables
-        shell: bash  # Important; otherwise, the following statements do not work on Windows.
+        shell: bash
         run: |
           TEST_DIR=/tmp/gittest_"$(date +%s)"_"$((RANDOM*RANDOM))"  # Needed in the Makefiles
           echo "TEST_DIR=$TEST_DIR" >> $GITHUB_ENV  # Make the environment variable available in subsequent steps
           echo "$TEST_DIR"
+          bash .github/scripts/intelvars_unix.sh
 
       - name: Conduct the test
         shell: bash
         run: |
-          if [[ "$RUNNER_OS" = "Windows" ]]; then
-              "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
-          else
-              source /opt/intel/oneapi/setvars.sh
-          fi
+          source /opt/intel/oneapi/setvars.sh
           ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"
-          # 20221212: We skip the linting and extensive test on Windows due to the following
-          # reasons. The example will still be tested on Windows.
-          # 1. Windows does not support the symlink of linux, and hence mlint and flint do not work.
-          # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
-          if [[ "$RUNNER_OS" != "Windows" ]]; then
-              cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-              cd $ROOT/fortran/tests
+          cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd $ROOT/fortran/tests
+          if [[ "$RUNNER_OS" = "macOS" ]] ; then
+              sed -i "" 's|800|400|g' test_*.f90
+          else
               sed -i 's|800|400|g' test_*.f90
-              export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
           fi
+          export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd $ROOT/fortran/examples/${{ matrix.solver }} && make xtest
 
       - name: Store artifacts
