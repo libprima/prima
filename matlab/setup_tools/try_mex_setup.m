@@ -59,7 +59,7 @@ if strcmpi(language, 'FORTRAN') && (ismac || (ispc && ~isunix)) && (~isempty(exc
         compiler_dir = [oneapi_root, 'compiler\latest\windows\'];
     end
     compiler_bin = fullfile(compiler_dir, 'bin');
-    compiler_bin64 = fullfile(compiler_bin, 'intel64');
+    compiler_bin64 = fullfile(compiler_bin, 'intel64');  % Why not worry about 32-bit case? Since R2016a, MATLAB has been 64-bit only.
     setenv('PATH', [getenv('PATH'), pathsep, compiler_bin, pathsep, compiler_bin64]);  % Not needed for Windows as of 2023.
     setenv('ONEAPI_ROOT', oneapi_root);
     setenv('IFORT_COMPILER18', compiler_dir);

@@ -76,12 +76,15 @@ jobs:
               setup
               setup path
               testprima;
-              setup cobyla
-              setup uobyqa
-              setup newuoa
-              setup bobyqa
-              setup lincoa
-              setup path
+              % Below R2022a = 9.12, MEX on macOS with GitHub Actions is slow.
+              if ~verLessThan('matlab', '9.12')
+                setup cobyla
+                setup uobyqa
+                setup newuoa
+                setup bobyqa
+                setup lincoa
+                setup path
+              end
               setup clean
               setup path
               setup uninstall
