@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# do the job in /tmp
-cd /tmp || exit 1
+# do the job in the temporary directory of the system
+cd "$TMPDIR" || exit 42
 
 # use wget to fetch the Intel repository public key
 wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -18,17 +18,18 @@ add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
 apt-get update
 #apt install intel-basekit intel-hpckit  # Instead of this line, the following line seems to suffice
 apt-get install -y intel-oneapi-common-vars intel-oneapi-compiler-fortran
+installer_exit_code=$?
 
-# source `setvars.sh`
-if [[ -f /opt/intel/oneapi/setvars.sh ]] ; then
-    source /opt/intel/oneapi/setvars.sh > /dev/null ; env | grep intel | sed "s/:\/User.*$//" \
-        | sed 's/^/export /' > "/tmp/setenv.sh"
-    source "/tmp/setenv.sh"
-else
-    exit 2
-fi
+# Run the script that sets the environment variables.
+source /opt/intel/oneapi/setvars.sh
 
-IFORT="$(find /opt/*ntel* -type f -executable -name ifort -print -quit)"
-IFX="$(find /opt/*ntel* -type f -executable -name ifx -print -quit)"
-ln -s "$IFORT" /usr/bin
-ln -s "$IFX" /usr/bin
+# Show the result of the installation.
+echo "The latest ifort installed is:"
+ifort --version
+echo "The path to ifort is:"
+echo "The latest ifx installed is:"
+ifx --version
+echo "The path to ifx is:"
+
+# Exit with the installer exit code.
+exit $installer_exit_code
