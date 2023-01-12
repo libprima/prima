@@ -27,9 +27,11 @@ source /opt/intel/oneapi/setvars.sh
 echo "The latest ifort installed is:"
 ifort --version
 echo "The path to ifort is:"
+command -v ifort
 echo "The latest ifx installed is:"
 ifx --version
 echo "The path to ifx is:"
+command -v ifx
 
 # Exit with the installer exit code.
 exit $installer_exit_code
