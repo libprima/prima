@@ -14,7 +14,6 @@ else
     PKG="matcutest.7z"  # A customized package containing the problems at https://github.com/zaikunzhang/my_cutest_sif
 fi
 PKG_NAME="${PKG//.*/}"  # Remove the suffix from $PKG
-CSRC="$PKG_NAME"rc
 
 #GIT="gitee.com"
 GIT="github.com"
@@ -49,8 +48,7 @@ fi
 cd "$INSTALL_DIR" && $DECOMP $PKG  || exit 3  # "$DECOMP $PKG" does not work
 rm -f "$INSTALL_DIR"/"$PKG"
 
-printf "\n*** To use CUTEst in MATLAB, ADD THE FOLLOWING LINE TO %s/.bashrc:\n\n" "$HOME"
-printf "\n   source %s\n" "$INSTALL_DIR"/"$PKG_NAME"/"$CSRC"
-printf "\n\n"
+printf "\n\n*** Remember to invoke the M function \`locate_matcutest\` before using MatCUTEst."
+printf "\n*** See locate_matcutest.m.\n\n"
 
 exit 0
