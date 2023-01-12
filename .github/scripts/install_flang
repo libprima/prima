@@ -1,16 +1,15 @@
 #!/bin/bash
+# Usage: sudo bash install_flang
 
-sudo apt install p7zip-full libncurses* # libncurses* needed for libtinfo.so
+apt install p7zip-full libncurses* # libncurses* needed for libtinfo.so
 
-cd /tmp/
+cd /tmp/ || exit 42
 
 wget "https://www.dropbox.com/s/myhdi239myw1tsi/flang.7z"
 7za x flang.7z
 
-SETENV="/tmp/setenv.sh"
-cat > "$SETENV" <<EOF
+SETENVSH="/tmp/setenv.sh"
+cat > "$SETENVSH" <<EOF
 export PATH=$PATH:/tmp/flang/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/tmp/flang/lib
 EOF
-
-source "$SETENV"

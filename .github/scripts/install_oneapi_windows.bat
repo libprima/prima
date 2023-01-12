@@ -1,6 +1,8 @@
-:: This script installs the Fortran compilers ifort and ifx provided in Intel OneAPI.
+:: This script installs the Fortran compilers provided in Intel OneAPI.
 :: See https://github.com/oneapi-src/oneapi-ci
 :: https://github.com/oneapi-src/oneapi-ci/blob/master/scripts/install_windows.bat
+::
+:: Usage: cmd.exe "/K" '"install_oneapi_windows.bat"'
 ::
 :: Zaikun Zhang (www.zhangzk.net), January 9, 2023
 

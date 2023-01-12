@@ -48,7 +48,7 @@ try
     get_solvers(solver, test_dir, options);
 
     % Tell MATLAB where to find CUTEST.
-    locate_cutest();
+    locate_matcutest();
 
     % Go to the test directory. This is not really necessary. It will not affect the test, but any
     % output (e.g., NEWUOA_output.txt, fort.6) will be dumped to `test_dir`.
