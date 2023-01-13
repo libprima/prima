@@ -52,11 +52,11 @@ jobs:
 
       - name: Install Intel oneAPI on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: sudo bash .github/scripts/install_oneapi_linux.sh
+        run: bash .github/scripts/install_oneapi_linux.sh
 
       - name: Install Intel oneAPI on macOS
         if: startsWith(matrix.os, 'macos')
-        run: sudo bash .github/scripts/install_oneapi_macos.sh
+        run: bash .github/scripts/install_oneapi_macos.sh
 
       - name: Set TEST_DIR
         shell: bash
