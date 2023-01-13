@@ -1,6 +1,7 @@
 #!/bin/bash
 # This script installs MatCUTEst using the compiled MatCUTEst in the current directory or $GITREPO.
 # Usage: bash install_matcutest
+# N.B.: Remember to invoke the M function `locate_matcutest` before using MatCUTEst.
 # CUTEst version: 20230105
 
 if [[ "$OSTYPE" != "linux-gnu"* ]]; then
