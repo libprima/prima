@@ -42,11 +42,11 @@ jobs:
 
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: sudo bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
+        run: bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
 
       - name: install epstopdf and ghostscript
         if: startsWith(matrix.os, 'ubuntu')
-        run: sudo bash .github/scripts/install_epstopdf && sudo bash .github/scripts/install_ghostscript
+        run: bash .github/scripts/install_epstopdf && bash .github/scripts/install_ghostscript
 
       - name: Check MATLAB
         id: check_matlab

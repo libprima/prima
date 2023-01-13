@@ -50,7 +50,7 @@ jobs:
           submodules: recursive
 
       - name: Install AOCC
-        run: sudo bash .github/scripts/install_aocc
+        run: bash .github/scripts/install_aocc
 
       - name: Set TEST_DIR
         run: bash .github/scripts/set_test_dir

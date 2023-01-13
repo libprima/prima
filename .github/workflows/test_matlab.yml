@@ -56,11 +56,11 @@ jobs:
              || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" == "R2021b" ]] ; then
               GFVER=9
           fi
-          sudo bash .github/scripts/link_gfortran "$GFVER"
+          bash .github/scripts/link_gfortran "$GFVER"
 
       - name: Install Intel oneAPI on macOS
         if: startsWith(matrix.os, 'macos')
-        run: sudo bash .github/scripts/install_oneapi_macos.sh
+        run: bash .github/scripts/install_oneapi_macos.sh
 
       - name: Install Intel oneAPI on Windows
         if: startsWith(matrix.os, 'windows')
