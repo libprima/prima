@@ -2,7 +2,7 @@
 # This script installs the Fortran compilers provided in Intel OneAPI.
 # See https://github.com/oneapi-src/oneapi-ci
 # https://github.com/oneapi-src/oneapi-ci/blob/master/scripts/install_macos.sh
-# 
+#
 # Usage: sudo bash install_oneapi_macos.sh
 #
 # Zaikun Zhang (www.zhangzk.net), January 9, 2023

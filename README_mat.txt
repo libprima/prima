@@ -11,7 +11,11 @@ mex('-setup', '-v', 'FORTRAN'); mex('-v', fullfile(matlabroot, 'extern', 'exampl
 
 If this completes successfully, then your MEX is ready. Otherwise, it is not.
 
-0.2. To configure MEX for compiling Fortran, see
+0.2. To configure MEX for compiling Fortran, you may refer to
+https://github.com/equipez/setup_mex ,
+which is a package providing scripts that attempt to facilitate setting up MEX.
+
+In case it does not work, then please check the official documentation of MEX at
 https://www.mathworks.com/help/matlab/ref/mex.html .
 It will require you to install a supported Fortran compiler on your system.
 See https://www.mathworks.com/support/requirements/previous-releases.html .
@@ -44,7 +48,9 @@ testprima
 constrained or unconstrained optimization problems without using derivatives.
 
 2.2. The `prima` function can automatically identify the type of your problem
-and then call one of Powell's solvers. The user can also choose the solver.
+and then call one of Powell's solvers, namely COBYLA, UOBYQA, NEWUOA, BOBYQA,
+and LINCOA. The user can also specify the solver by setting the `solver` field
+of the options passed to `prima`.
 
 2.3. The `prima` function is designed to be compatible with the `fmincon`
 function available in the Optimization Toolbox of MATLAB. You can call `prima`
