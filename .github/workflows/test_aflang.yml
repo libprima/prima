@@ -46,6 +46,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
       - name: Install AOCC
         run: sudo bash .github/scripts/install_aocc
