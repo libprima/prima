@@ -7,7 +7,7 @@ on:
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   # schedule:
   #   - cron: '0 2,6,10,14,18,22 * * *'
-  # Trigger the workflow when it is manually triggered
+  # Trigger the workflow manually
   workflow_dispatch:
 
 env:
@@ -30,13 +30,13 @@ jobs:
         with:
           submodules: recursive
 
-      - name: cache install CUTEst
+      - name: cache install MatCUTEst
         id: cache-install-cutest
         uses: actions/cache@v3
         with:
           path: ~/local/matcutest
           key:  ${{ runner.os }}-${{ hashFiles('**/.github/scripts/install_matcutest') }}
-      - name: Install CUTEst
+      - name: Install MatCUTEst
         if: steps.cache-install-cutest.outputs.cache-hit != 'true'
         run: bash .github/scripts/install_matcutest --full
 
