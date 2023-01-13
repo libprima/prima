@@ -50,7 +50,7 @@ jobs:
           submodules: recursive
 
       - name: Install nvfotran
-        run: sudo bash .github/scripts/install_nvfortran
+        run: bash .github/scripts/install_nvfortran
 
       - name: Set TEST_DIR
         run: bash .github/scripts/set_test_dir
