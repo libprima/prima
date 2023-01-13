@@ -1,0 +1,3 @@
+[submodule ".github/scripts"]
+	path = .github/scripts
+	url = git@github.com:equipez/github_actions_scripts.git
