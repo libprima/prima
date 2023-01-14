@@ -142,17 +142,21 @@ this large amount of tests to several different Team accounts as follows.
 
 ### Current status
 
-After almost **three** years of intensive coding, **the
-[modern Fortran version](./fortran) of
-PRIMA has been finished by December 2022.** An [interface](./matlab/interfaces/prima.m)
-is also provided for [using the Fortran implementation under MATLAB](./README_mat.txt). Interfaces for other languages will
-be available later.
+- **Fortran.**
 
-Given the **modern** Fortran version, the implementation in other languages
-becomes **much easier**, because we now have a structured and modularized implementation as a reference.
-As an illustration, I have implemented a [MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/)
-based on an earlier version of the **modern** Fortran code (with the help of Mr. Galann Pennec).
-The MATLAB code was obtained from the **modern** Fortran code straightforwardly, and indeed, **automatically**.
+    After almost **three** years of intensive coding, **the [modern Fortran version](./fortran) of
+    PRIMA has been finished by December 2022.**
+
+    Given the **modern** Fortran version, the implementation in other languages
+    becomes **much easier**, because we now have a structured and modularized implementation as a reference.
+
+- **MATLAB.**
+
+    - An [interface](./matlab/interfaces/prima.m) is provided for [using the Fortran implementation under MATLAB](./README_mat.txt).
+      Interfaces for other languages will be available later.
+    - A [pure MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/) is implemented. It was
+      generated straightforwardly (indeed, **automatically**) from an earlier version of the
+      **modern** Fortran code (with the help of Mr. Galann Pennec).
 
 
 ------
