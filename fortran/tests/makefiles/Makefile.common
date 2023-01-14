@@ -832,6 +832,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[NINT\]" \
 	| grep -v "f90: Warning: -xcache=native detection failed, falling back to -xcache=generic" \
 	| grep -v "warning: line table parameters mismatch. Cannot emit." \
+	| grep -v "note: while processing /var/folders/" \
 	| grep -v "all warnings being treated as errors" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___mulvdi3" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___mulvsi3" \
