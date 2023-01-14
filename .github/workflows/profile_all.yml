@@ -30,15 +30,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: cache install MatCUTEst
-        id: cache-install-cutest
-        uses: actions/cache@v3
+      - name: Clone MatCUTEst
+        uses: actions/checkout@v3
         with:
-          path: ~/local/matcutest
-          key:  ${{ runner.os }}-${{ hashFiles('**/.github/scripts/install_matcutest') }}
-      - name: Install MatCUTEst
-        if: steps.cache-install-cutest.outputs.cache-hit != 'true'
-        run: bash .github/scripts/install_matcutest --full
+          repository: equipez/matcutest_compiled
+          path: matcutest
 
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
@@ -64,8 +60,11 @@ jobs:
           command: |
             ver;
             root_dir = pwd();
-            cd('matlab/tests');
-            if  strcmp('${{ matrix.solver }}', 'cobyla')
+
+            cd(fullfile(root_dir, 'matcutest')); install(); which macup
+
+            cd(fullfile(root_dir, 'matlab/tests'));
+            if strcmp('${{ matrix.solver }}', 'cobyla')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'ln');
             elseif  strcmp('${{ matrix.solver }}', 'lincoa')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l');
@@ -75,7 +74,7 @@ jobs:
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}');
             end
             delete(fullfile(cd(), 'testdata', '*.mat'));
-            cd(fullfile(root_dir)); setup path  % Test that `setup path` works properly.
+            cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3

@@ -2,9 +2,9 @@ function hdir = homedir()
 %This function gets the full path to the home directory of the current user.
 
 hdir ='';
-if isunix || ismac
+if isunix  % Linux or macOS
     hdir = getenv('HOME');
-elseif ispc
+elseif ispc  % Windows
     hdir = getenv('HOMEPATH');
 end
 
