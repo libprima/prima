@@ -1,18 +1,23 @@
-function cpaths = locate_cutest()
-%This function tells MATLAB where to find CUTEst. The following lines should be written according to
-% the installation of CUTEst on this machine.
+function cmpaths = locate_cutest(directory)
+%This function finds where MatCUTEst (https://github.com/equipez/matcutest) is installed, add the
+% paths needed for using MatCUTEst, and return these paths in a cell array.
+% We search at most 3 levels below the given directory, whose default value is $HOME (as of 202301,
+% MatCUTEst supports only Linux).
 
-cdir_dft = fullfile(homedir, 'local', 'matcutest', 'cutest');
-
-cdir = getenv('CUTEST');
-if isempty(cdir)
-    cdir = cdir_dft;
-    setenv('CUTEST', cdir);  % This is needed by `cutestdir`, which will be called by `macup`.
+if nargin < 1
+    directory = getenv('HOME');
 end
 
-cmtools = fullfile(fileparts(cdir), 'mtools', 'src');
-cpaths = {cmtools};
+[~, cmtools] = system(['find ', directory, ' -maxdepth 6 -wholename "*/matcutest/mtools/src" -type d -print -quit']);
 
-for ip = 1 : length(cpaths)
-    addpath(cpaths{ip});
+if isempty(cmtools)
+    error('locate_matcutest:MatCUTEstNotFound', 'MatCUTEst is not found under %s.', directory);
+end
+
+cmtools = strtrim(cmtools);  % Remove the leading and trailing white-space characters, including '\n'.
+
+cmpaths = {cmtools};  % There may be other paths to include in the future.
+
+for ip = 1 : length(cmpaths)
+    addpath(cmpaths{ip});
 end
