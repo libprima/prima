@@ -77,7 +77,7 @@ jobs:
           command: |
               ver;
               root_dir = pwd();
-              cd(fullfile(root_dir));
+              cd(root_dir);
               options = struct();
               options.debug=true;
               setup(options);

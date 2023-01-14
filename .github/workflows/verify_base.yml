@@ -37,15 +37,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: cache install MatCUTEst
-        id: cache-install-cutest
-        uses: actions/cache@v3
+      - name: Clone MatCUTEst
+        uses: actions/checkout@v3
         with:
-          path: ~/local/matcutest
-          key:  ${{ runner.os }}-${{ hashFiles('**/.github/scripts/install_matcutest') }}
-      - name: Install MatCUTEst
-        if: steps.cache-install-cutest.outputs.cache-hit != 'true'
-        run: bash .github/scripts/install_matcutest --full
+          repository: equipez/matcutest_compiled
+          path: matcutest
 
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
@@ -66,7 +62,11 @@ jobs:
         with:
           command: |
             ver;
-            cd('base/${{ matrix.version }}/matlab/tests');
+            root_dir = pwd();
+
+            cd(fullfile(root_dir, 'matcutest')); install(); which macup
+
+            cd(fullfile(root_dir, 'base/${{ matrix.version }}/matlab/tests'));
             tz = 'Asia/Shanghai';
             dt = datetime('now', 'TimeZone', tz);
             DayMonth = day(dt);
@@ -83,5 +83,4 @@ jobs:
             end
             delete([upper('${{ matrix.solver }}'), '_output.txt']);
             delete('fort.6');
-            cd ../../;
-            setup clean; setup uninstall;
+            cd(root_dir); setup clean; setup uninstall;
