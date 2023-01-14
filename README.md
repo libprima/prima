@@ -142,7 +142,7 @@ this large amount of tests to several different Team accounts as follows.
 
 ### Current status
 
-- **Fortran.**
+- **Fortran**
 
     After almost **three** years of intensive coding, **the [modern Fortran version](./fortran) of
     PRIMA has been finished by December 2022.**
@@ -150,7 +150,7 @@ this large amount of tests to several different Team accounts as follows.
     Given the **modern** Fortran version, the implementation in other languages
     becomes **much easier**, because we now have a structured and modularized implementation as a reference.
 
-- **MATLAB.**
+- **MATLAB**
 
     - An [interface](./matlab/interfaces/prima.m) is provided for [using the Fortran implementation under MATLAB](./README_mat.txt).
       Interfaces for other languages will be available later.
