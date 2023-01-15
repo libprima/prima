@@ -17,8 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-2019]   # MEX Fortran does not work on windows-latest yet
-        matlab: [R2020a, R2020b, R2021a, R2021b, R2022a, R2022b]
+        os: [ubuntu-20.04, ubuntu-latest, macos-11, macos-latest, windows-2019]   # MEX Fortran does not work on windows-latest yet
+        matlab: [R2020a, R2020b, R2021a, R2021b, R2022a, latest]
         # Below R2022a, MEX is extremely slow on macOS; R2020a/b are not available on Windows.
         exclude:
           - os: macos-latest
@@ -52,8 +52,11 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           GFVER=12
-          if [[ "${{ matrix.matlab }}" = "R2020a" || "${{ matrix.matlab }}" == "R2020b" \
-             || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" == "R2021b" ]] ; then
+          if [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
+              GFVER=11
+          fi
+          if [[ "${{ matrix.matlab }}" = "R2020a" || "${{ matrix.matlab }}" = "R2020b" \
+             || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" = "R2021b" ]] ; then
               GFVER=9
           fi
           bash .github/scripts/link_gfortran "$GFVER"
