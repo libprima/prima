@@ -53,11 +53,7 @@ status = 'Development';
 
 message = 'Dedicated to late Professor M. J. D. Powell FRS (29 July 1936--19 April 2015).';
 
-if year(datetime()) == 2023
-    copyright = sprintf('Copyright %d, Zaikun Zhang', year(datetime()));
-else
-    copyright = sprintf('Copyright 2020--%d, Zaikun Zhang', year(datetime()));
-end
+copyright = sprintf('Copyright 2020--%d, Zaikun Zhang', year(datetime()));
 
 switch lower(request)
 case 'name'
