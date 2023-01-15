@@ -197,19 +197,19 @@ fprintf('\nYou may now try ''help prima'' for information on the usage of the pa
 
 if isempty(setdiff(all_solvers(), solver_list))
     addpath(tests);
-    fprintf('\nYou may also run ''testprima'' to test the package on a few examples.\n\n');
-else
-    fprintf('\n');
+    fprintf('\nYou may also run ''testprima'' to test the package on a few examples.\n');
 end
 
 if ~path_saved  % `add_save_path` failed to save the path.
     add_path_string = sprintf('addpath(''%s'');', interfaces);
-    fprintf('***** To use the package in other MATLAB sessions, do ONE of the following. *****\n\n');
-    fprintf('- add the following line to your startup script\n');
-    fprintf('  (see https://www.mathworks.com/help/matlab/ref/startup.html for information):\n\n');
-    fprintf('    %s\n\n', add_path_string);
-    fprintf('- OR come to the current directory and run ''setup path'' when you need the package.\n\n');
+    fprintf('\n***** To use the package in other MATLAB sessions, do ONE of the following. *****\n');
+    fprintf('\n- add the following line to your startup script');
+    fprintf('\n  (see https://www.mathworks.com/help/matlab/ref/startup.html for information):\n');
+    fprintf('\n    %s\n', add_path_string);
+    fprintf('\n- OR come to the current directory and run ''setup path'' when you need the package.\n');
 end
+
+fprintf('\n');
 
 rmpath(tools);
 
