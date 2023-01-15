@@ -57,7 +57,7 @@ jobs:
         with:
           release: ${{ env.MATLAB_RELEASE }}
 
-      - name: Run script
+      - name: Conduct the test
         uses: matlab-actions/run-command@v1.1.2
         with:
           command: |
@@ -75,10 +75,10 @@ jobs:
             options.nr = 1; % Since the code will not change along the time, big nr is not needed.
             options
             if mod(DayMonth, 2) == 1
-                fprintf('\n\n==========> Run the test sequentially <===========\n\n');
+                fprintf('\n\n==========> Conduct the test sequentially <===========\n\n');
                 verify('${{ matrix.solver }}', '${{ matrix.dim }}', 'seq', options);
             else
-                fprintf('\n\n==========> Run the test in parallel <===========\n\n');
+                fprintf('\n\n==========> Conduct the test in parallel <===========\n\n');
                 verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             end
             delete([upper('${{ matrix.solver }}'), '_output.txt']);
