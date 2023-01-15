@@ -1,6 +1,6 @@
 #!/bin/bash
-# This script pre-processes the Fortran source code for g95. It does not recognize the `back`
-# keyword in `min/maxloc`, which is available since F2008.
+# This script pre-processes the Fortran source code for g95 and Absoft af95. They do not recognize
+# the `back` keyword in `min/maxloc`, which is available since F2008.
 
 DIR="$(realpath "$1")"
 GETACTF90="getact.f90"
