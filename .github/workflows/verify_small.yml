@@ -51,7 +51,7 @@ jobs:
         with:
           release: ${{ env.MATLAB_RELEASE }}
 
-      - name: Run script
+      - name: Conduct the test
         uses: matlab-actions/run-command@v1.1.2
         with:
           command: |
