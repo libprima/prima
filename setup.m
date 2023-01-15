@@ -203,7 +203,7 @@ end
 if ~path_saved  % `add_save_path` failed to save the path.
     add_path_string = sprintf('addpath(''%s'');', interfaces);
     fprintf('\n***** To use the package in other MATLAB sessions, do ONE of the following. *****\n');
-    fprintf('\n- add the following line to your startup script');
+    fprintf('\n- Add the following line to your startup script');
     fprintf('\n  (see https://www.mathworks.com/help/matlab/ref/startup.html for information):\n');
     fprintf('\n    %s\n', add_path_string);
     fprintf('\n- OR come to the current directory and run ''setup path'' when you need the package.\n');
