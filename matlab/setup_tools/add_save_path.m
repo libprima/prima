@@ -7,6 +7,10 @@ if nargin < 2
     path_string_stamp = sprintf('Added by %s', mfilename);
 end
 
+if ~exist(path_string, 'dir')
+    error('MatCUTEst:PathNotExist', 'The string %s does not correspond to an existing directory.', path_string);
+end
+
 addpath(path_string);
 
 % Try saving the path in the system path-defining file at sys_pathdef. If the user does not have
