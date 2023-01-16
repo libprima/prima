@@ -8,7 +8,7 @@ if nargin < 2
 end
 
 if ~exist(path_string, 'dir')
-    error('MatCUTEst:PathNotExist', 'The string %s does not correspond to an existing directory.', path_string);
+    error('prima:PathNotExist', 'The string %s does not correspond to an existing directory.', path_string);
 end
 
 addpath(path_string);
