@@ -103,19 +103,19 @@ PRIMA has been verified by more than $10^5$ hours (or more than $10$ years) of r
 Since each GitHub Team account can only run at most 60 GitHub Actions jobs, I have to distribute
 this large amount of tests to several different Team accounts as follows.
 
-- [Tests](https://github.com/equipez/prima/actions) at [equipez/prima](https://github.com/equipez/prima)
+- [Tests](https://github.com/libprima/prima/actions) at [libprima/prima](https://github.com/libprima/prima)
 
-    - [![Verification, small](https://github.com/equipez/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/verify_small.yml)
-    - [![Verification, big](https://github.com/equipez/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/verify_big.yml)
-    - [![Verification, large](https://github.com/equipez/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/verify_large.yml)
-    - [![Lint](https://github.com/equipez/prima/actions/workflows/lint.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/lint.yml)
-    - [![Plot performance profiles for cobyla](https://github.com/equipez/prima/actions/workflows/profile_cobyla_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/profile_cobyla_small.yml)
-    - [![Plot performance profiles for uobyqa](https://github.com/equipez/prima/actions/workflows/profile_uobyqa_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/profile_uobyqa_small.yml)
-    - [![Plot performance profiles for newuoa](https://github.com/equipez/prima/actions/workflows/profile_newuoa_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/profile_newuoa_small.yml)
-    - [![Plot performance profiles for bobyqa](https://github.com/equipez/prima/actions/workflows/profile_bobyqa_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/profile_bobyqa_small.yml)
-    - [![Plot performance profiles for lincoa](https://github.com/equipez/prima/actions/workflows/profile_lincoa_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/profile_lincoa_small.yml)
-    - [![Test Absoft](https://github.com/equipez/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_absoft.yml)
-    - [![Test nagfor](https://github.com/equipez/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_nagfor.yml)
+    - [![Verification, small](https://github.com/libprima/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_small.yml)
+    - [![Verification, big](https://github.com/libprima/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_big.yml)
+    - [![Verification, large](https://github.com/libprima/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_large.yml)
+    - [![Lint](https://github.com/libprima/prima/actions/workflows/lint.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint.yml)
+    - [![Plot performance profiles for cobyla](https://github.com/libprima/prima/actions/workflows/profile_cobyla_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_cobyla_small.yml)
+    - [![Plot performance profiles for uobyqa](https://github.com/libprima/prima/actions/workflows/profile_uobyqa_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_uobyqa_small.yml)
+    - [![Plot performance profiles for newuoa](https://github.com/libprima/prima/actions/workflows/profile_newuoa_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_newuoa_small.yml)
+    - [![Plot performance profiles for bobyqa](https://github.com/libprima/prima/actions/workflows/profile_bobyqa_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_bobyqa_small.yml)
+    - [![Plot performance profiles for lincoa](https://github.com/libprima/prima/actions/workflows/profile_lincoa_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_lincoa_small.yml)
+    - [![Test Absoft](https://github.com/libprima/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_absoft.yml)
+    - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
 
 - [Tests](https://github.com/primalib/prima/actions) at [primalib/prima](https://github.com/primalib/prima)
 
