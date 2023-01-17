@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM02:28:16
+! Last Modified: Tuesday, January 17, 2023 PM03:40:18
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -55,8 +55,7 @@ program newuoa_exmp
 ! The following line makes the solver available.
 use newuoa_mod, only : newuoa
 
-! The following line specifies which module provides CALFUN. If CALFUN is given by an external
-! subroutine instead of a module, remove this line and uncomment the "external calfun" line below.
+! The following line specifies which module provides CALFUN.
 use calfun_mod, only : calfun
 
 implicit none
@@ -65,12 +64,6 @@ integer :: i
 integer, parameter :: n = 6
 real(kind(0.0D0)) :: x(n)
 real(kind(0.0D0)) :: f
-
-! If CALFUN is an external subroutine, then remove the line of  "use calfun_mod, only : calfun", and
-! uncomment the following line.
-!--------------------------------------------------------------------------------------------------!
-!external calfun
-!--------------------------------------------------------------------------------------------------!
 
 ! The following lines illustrates how to call the solver to solve the Chebyquad problem.
 x = [(real(i, kind(0.0D0)) / real(n + 1, kind(0.0D0)), i=1, n)]  ! Define the starting point.

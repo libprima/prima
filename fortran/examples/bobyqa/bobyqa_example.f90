@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM10:02:06
+! Last Modified: Tuesday, January 17, 2023 PM03:41:10
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -55,8 +55,7 @@ program bobyqa_exmp
 ! The following line makes the solver available.
 use bobyqa_mod, only : bobyqa
 
-! The following line specifies which module provides CALFUN. If CALFUN is given by an external
-! subroutine instead of a module, remove this line and uncomment the "external calfun" line below.
+! The following line specifies which module provides CALFUN.
 use calfun_mod, only : calfun
 
 implicit none
@@ -67,12 +66,6 @@ integer :: nf
 real(kind(0.0D0)) :: x(n)
 real(kind(0.0D0)) :: f
 real(kind(0.0D0)) :: x0(n), lb(n), ub(n), angle
-
-! If CALFUN is an external subroutine, then remove the line of  "use calfun_mod, only : calfun", and
-! uncomment the following line.
-!--------------------------------------------------------------------------------------------------!
-!external calfun
-!--------------------------------------------------------------------------------------------------!
 
 ! Define the starting point.
 do i = 1, n / 2
