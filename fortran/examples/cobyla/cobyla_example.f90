@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM02:27:36
+! Last Modified: Tuesday, January 17, 2023 PM03:39:15
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -86,8 +86,7 @@ program cobyla_exmp
 ! The following line makes the solver available.
 use cobyla_mod, only : cobyla
 
-! The following line specifies which module provides CALCFC. If CALCFC is given by an external
-! subroutine instead of a module, remove this line and uncomment the "external" line below.
+! The following line specifies which module provides CALCFC.
 use calcfc_mod, only : calcfc_chebyquad, calcfc_hexagon
 
 implicit none
@@ -99,12 +98,6 @@ integer, parameter :: n_hexagon = 9
 real(kind(0.0D0)) :: x_hexagon(n_hexagon)
 real(kind(0.0D0)), allocatable :: constr(:)
 integer :: m, i
-
-! If CALCFC is an external subroutine, then remove the line of  "use calcfc_mod", and uncomment the
-! following line.
-!--------------------------------------------------------------------------------------------------!
-!external calcfc_chebyquad, calcfc_hexagon
-!--------------------------------------------------------------------------------------------------!
 
 ! The following lines illustrates how to call the solver to solve the Chebyquad problem.
 x_chebyquad = [(real(i, kind(0.0D0)) / real(n_chebyquad + 1, kind(0.0D0)), i=1, n_chebyquad)] ! Starting point
