@@ -53,12 +53,12 @@ jobs:
           if [[ "$RUNNER_OS" = "macOS" ]] ; then
               sed -i "" 's|800|100|g' test_*.f90
               if [[ -f "test_uobyqa.f90" ]] ; then
-                  sed -i "" 's|bign = 120|bign = 110' test_uobyqa.f90
+                  sed -i "" 's|bign = 120|bign = 110|g' test_uobyqa.f90
               fi
           else
               sed -i 's|800|100|g' test_*.f90
               if [[ -f "test_uobyqa.f90" ]] ; then
-                  sed -i 's|bign = 120|bign = 110' test_uobyqa.f90
+                  sed -i 's|bign = 120|bign = 110|g' test_uobyqa.f90
               fi
           fi
           export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make itest_${{ matrix.ikind }}.${{ matrix.solver }}
