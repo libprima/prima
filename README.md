@@ -174,14 +174,6 @@ The examples given below are bugs or requests sent to [SciPy](https://github.com
 etc., which are reputable packages that wrap/interface the **original Fortran 77 implementation**
 of Powell's solver. Inevitably, they suffer from the bugs in the Fortran 77 code.
 
-- The solvers may **crash** with segmentation faults due to uninitialized variables that are used as indices.
-
-     - [Fix all uninitialized variable warnings #134](https://github.com/stevengj/nlopt/issues/134)
-
-	 - [BOBYQA uninitialised variables in rare cases #133](https://github.com/stevengj/nlopt/issues/133)
-
-	 - [Use of uninitialized variable in BOBYQA altmov #36](https://github.com/stevengj/nlopt/issues/36)
-
 - The solvers may get **stuck** in infinite loops.
 
      - [optimize: COBYLA hangs / infinite loop #8998](https://github.com/scipy/scipy/issues/8998)
@@ -200,6 +192,15 @@ of Powell's solver. Inevitably, they suffer from the bugs in the Fortran 77 code
      - [BOBYQA gets stuck in infinite loop. #7](https://github.com/cureos/csnumerics/issues/7)
 
      - [Algorithm turns into infinite loop and never finishes #3](https://github.com/xypron/jcobyla/issues/3)
+
+- The solvers may **crash** with [segmentation faults](https://en.wikipedia.org/wiki/Segmentation_fault)
+  due to uninitialized variables that are used as indices.
+
+     - [Fix all uninitialized variable warnings #134](https://github.com/stevengj/nlopt/issues/134)
+
+	 - [BOBYQA uninitialised variables in rare cases #133](https://github.com/stevengj/nlopt/issues/133)
+
+	 - [Use of uninitialized variable in BOBYQA altmov #36](https://github.com/stevengj/nlopt/issues/36)
 
 - COBYLA may **not return the best point** that is evaluated; sometimes, the returned point can have a
 large constraint violation even though the starting point is feasible.
