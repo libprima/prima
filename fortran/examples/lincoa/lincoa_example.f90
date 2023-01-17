@@ -112,16 +112,11 @@ end module tetrahedron_mod
 !---------------------------------------- THE MAIN PROGRAM ----------------------------------------!
 program lincoa_exmp
 
-!--------------------------------------------------------------------------------------------------!
 ! The following line makes the solver available.
 use lincoa_mod, only : lincoa
-!--------------------------------------------------------------------------------------------------!
 
-!--------------------------------------------------------------------------------------------------!
-! The following line specifies which module provides CALFUN. If CALFUN is given by an external
-! subroutine instead of a module, remove this line and uncomment the "external calfun" line below.
+! The following line specifies which module provides CALFUN. 
 use tetrahedron_mod, only : calfun
-!--------------------------------------------------------------------------------------------------!
 
 use tetrahedron_mod, only : setup
 
@@ -132,12 +127,6 @@ integer, parameter :: np = 50
 integer :: nf
 real(kind(0.0D0)) :: x(n), f
 real(kind(0.0D0)) :: x0(n), A(n, 4 * np), b(4 * np)
-
-!--------------------------------------------------------------------------------------------------!
-! If CALFUN is an external subroutine, then remove the line of  "use calfun_mod, only : calfun", and
-! uncomment the following line.
-!external calfun
-!--------------------------------------------------------------------------------------------------!
 
 ! Set up X0 (starting point), A, and b.
 call setup(x0, A, b)
