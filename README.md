@@ -11,6 +11,7 @@ Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell
 - [A "fun" fact](#a-fun-fact)
 - [Acknowledgement](#acknowledgement)
 
+
 ### What
 
 PRIMA provides the reference implementation for Powell's derivative-free optimization methods,
@@ -30,6 +31,7 @@ you intend to solve bound-constrained problems).
 
 PRIMA was initiated by [Zaikun Zhang](https://www.zhangzk.net) in July 2020, based on
 the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang.
+
 
 ### Why
 
@@ -140,6 +142,7 @@ distribute this large amount of tests to several different Team accounts as foll
 - [Tests](https://github.com/equipez/gitpersonal/actions) at [equipez/gitpersonal](https://github.com/equipez/gitpersonal)
     - [all the tests](https://github.com/equipez/gitpersonal/actions) are disabled
 
+
 ### Current status
 
 - **Fortran**
@@ -158,8 +161,6 @@ distribute this large amount of tests to several different Team accounts as foll
       generated straightforwardly (indeed, **automatically**) from an earlier version of the
       **modern** Fortran code (with the help of Mr. Galann Pennec).
 
-
-------
 
 ### Bug fixes
 
@@ -220,7 +221,6 @@ large constraint violation even though the starting point is feasible.
     - [BUG: Make cobyla threadsafe #3](https://github.com/sturlamolden/scipy/pull/3)
 -->
 
-------
 
 ### Improvements
 
@@ -252,7 +252,6 @@ for more information.
 - UOBYQA on unconstrained CUTEst problems of at most 20 variables
 <img src="./benchmark/uobyqa.png" style="width:26em;"/>
 
-------
 
 ### A "fun" fact
 
@@ -264,7 +263,6 @@ the coding has been.
 The bitterness behind this "fun" fact is exactly why I work on PRIMA: I hope that all
 the frustrations that I have experienced will not happen to any user of Powell's methods anymore.
 
------
 
 ### Acknowledgement
 
