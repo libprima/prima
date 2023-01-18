@@ -175,7 +175,7 @@ The examples given below are bugs or requests sent to [SciPy](https://github.com
 etc., which are reputable packages that wrap/interface the **original Fortran 77 implementation**
 of Powell's solver. Inevitably, they suffer from the bugs in the Fortran 77 code.
 
-- The solvers may get **stuck** in infinite loops.
+- The Fortran 77 solvers may get **stuck** in infinite loops.
 
      - [optimize: COBYLA hangs / infinite loop #8998](https://github.com/scipy/scipy/issues/8998)
      - [BUG: Scipy.optimize / COBYLA hangs on some CPUs #15527](https://github.com/scipy/scipy/issues/15527)
@@ -194,7 +194,7 @@ of Powell's solver. Inevitably, they suffer from the bugs in the Fortran 77 code
 
      - [Algorithm turns into infinite loop and never finishes #3](https://github.com/xypron/jcobyla/issues/3)
 
-- The solvers may **crash** with [segmentation faults](https://en.wikipedia.org/wiki/Segmentation_fault)
+- The Fortran 77 solvers may **crash** with [segmentation faults](https://en.wikipedia.org/wiki/Segmentation_fault)
   due to uninitialized variables that are used as indices.
 
      - [Fix all uninitialized variable warnings #134](https://github.com/stevengj/nlopt/issues/134)
@@ -203,7 +203,7 @@ of Powell's solver. Inevitably, they suffer from the bugs in the Fortran 77 code
 
 	 - [Use of uninitialized variable in BOBYQA altmov #36](https://github.com/stevengj/nlopt/issues/36)
 
-- COBYLA may **not return the best point** that is evaluated; sometimes, the returned point can have a
+- Fortran 77 COBYLA may **not return the best point** that is evaluated; sometimes, the returned point can have a
 large constraint violation even though the starting point is feasible.
 
 	 - [nlopt COBYLA optimizer gives unexpected output #182](https://github.com/stevengj/nlopt/issues/182)
