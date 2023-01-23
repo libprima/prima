@@ -43,7 +43,7 @@ and [BOBYQA](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=The+BOBYQA+
 However, Professor Powell's
 implementation is in [Fortran 77](./fortran/original)
 and the code is nontrivial to understand or maintain, let alone to
-extend. This becomes an obstacle for many practitioners to exploit these solvers in their
+extend. This becomes an obstacle for many practitioners to exploiting these solvers in their
 applications and hinders researchers from exploring the wealth left by Professor Powell to the
 community.
 
