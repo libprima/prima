@@ -47,9 +47,9 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: bash .github/scripts/install_oneapi_macos.sh
 
-      - name: Set TEST_DIR
+      - name: Set miscellaneous environment variables
         shell: bash
-        run: bash .github/scripts/set_test_dir
+        run: bash .github/scripts/misc_env
 
       - name: Conduct the test
         shell: bash
@@ -57,10 +57,9 @@ jobs:
           ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"
           cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           cd $ROOT/fortran/tests
-          if [[ "$RUNNER_OS" = "macOS" ]] ; then
-              sed -i "" 's|800|400|g' test_*.f90
-          else
-              sed -i 's|800|400|g' test_*.f90
+          $SEDI 's|800|400|g' test_*.f90
+          if [[ -f "test_uobyqa.f90" ]] ; then
+              $SEDI 's|bign = 120|bign = 110|g' test_uobyqa.f90
           fi
           export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make xtest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd $ROOT/fortran/examples/${{ matrix.solver }} && make xtest

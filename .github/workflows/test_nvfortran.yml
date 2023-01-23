@@ -34,8 +34,8 @@ jobs:
       - name: Install nvfotran
         run: bash .github/scripts/install_nvfortran
 
-      - name: Set TEST_DIR
-        run: bash .github/scripts/set_test_dir
+      - name: Set miscellaneous environment variables
+        run: bash .github/scripts/misc_env
 
       - name: Conduct the test
         run: |
