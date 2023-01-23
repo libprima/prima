@@ -1,4 +1,4 @@
-name: Test gfortran, -fast
+name: Test gfortran on Raspberry Pi
 
 on:
   # Trigger the workflow on push or pull request
@@ -6,7 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 16 4-31/4 * *'
+    - cron: '0 16 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
 
@@ -21,7 +21,8 @@ jobs:
       matrix:
         ikind: [i2, i4]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        testdim: [small]
+        fflags: [-O1, -O2, -O3, -g, -fast]
+        testdim: [small, big]
 
     steps:
       - name: Checkout repository
@@ -37,8 +38,8 @@ jobs:
         shell: bash
         run: |
             cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+            export FFLAGS=${{ matrix.fflags }}
             export TESTDIM=${{ matrix.testdim }}
-            export FFLAGS='-fast'
             cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_r4_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r4_d1_tst.${{ matrix.solver }}
             cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_r8_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r8_d1_tst.${{ matrix.solver }}
             export FS=18
