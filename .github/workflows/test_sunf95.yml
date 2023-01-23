@@ -40,12 +40,11 @@ jobs:
 
       - name: Conduct the test
         run: |
-          ROOT=$(realpath ./)
-          cd $ROOT/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          cd $ROOT/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make stest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd $ROOT_DIR/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd $ROOT_DIR/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make stest_${{ matrix.ikind }}.${{ matrix.solver }}
           # sunf95 cannot handle matrix indexing with TRUELOC
           if [[ ! ${{ matrix.solver }}=='lincoa' && ! ${{ matrix.solver }}=='bobyqa' ]] ; then
-              cd $ROOT/fortran/examples/${{ matrix.solver }} && make stest
+              cd $ROOT_DIR/fortran/examples/${{ matrix.solver }} && make stest
           fi
 
       - name: Store artifacts
