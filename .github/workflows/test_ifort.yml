@@ -52,15 +52,14 @@ jobs:
       - name: Conduct the test
         shell: bash
         run: |
-          ROOT="$(cd "$(dirname "./")"; pwd -P)/$(basename "./")"
-          cd "$ROOT"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          cd $ROOT/fortran/tests
+          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd $ROOT_DIR/fortran/tests
           $SEDI 's|800|100|g' test_*.f90
           if [[ -f "test_uobyqa.f90" ]] ; then
               $SEDI 's|bign = 120|bign = 110|g' test_uobyqa.f90
           fi
           export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make itest_${{ matrix.ikind }}.${{ matrix.solver }}
-          cd $ROOT/fortran/examples/${{ matrix.solver }} && make itest
+          cd $ROOT_DIR/fortran/examples/${{ matrix.solver }} && make itest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
