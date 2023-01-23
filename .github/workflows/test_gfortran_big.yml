@@ -54,6 +54,10 @@ jobs:
           FC: ${{ steps.setup_fortran.outputs.fc }}
           CC: ${{ steps.setup_fortran.outputs.cc }}
 
+      - name: Make tools such as grep, make, and git available on Windows
+        if: runner.os == 'Windows'
+        run: $env:Path += ";C:\Program Files\Git\usr\bin;C:\Program Files\Git\bin;C:\ProgramData\Chocolatey\bin"
+
       - name: Set miscellaneous environment variables
         shell: bash  # Important; otherwise, the following statements do not work on Windows.
         run: bash .github/scripts/misc_env
