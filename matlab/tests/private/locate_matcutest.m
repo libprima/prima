@@ -1,11 +1,11 @@
 function cmpaths = locate_matcutest(directory)
 %This function finds where MatCUTEst (https://github.com/equipez/matcutest) is installed, add the
 % paths needed for using MatCUTEst, and return these paths in a cell array.
-% We search at most 3 levels below the given directory, whose default value is $HOME (as of 202301,
-% MatCUTEst supports only Linux).
+% We search at most 3 levels below the given directory, whose default value is the home directory.
+% N.B.: As of 202301, MatCUTEst supports only Linux.
 
 if nargin < 1
-    directory = getenv('HOME');
+    directory = homedir();
 end
 
 [~, cmtools] = system(['find ', directory, ' -maxdepth 6 -wholename "*/matcutest/mtools/src" -type d -print -quit']);
