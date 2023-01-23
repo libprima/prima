@@ -40,7 +40,7 @@ jobs:
           cd $ROOT/fortran/tests
 
           if [[ -f test_cobyla.f90 ]]; then
-              sed -i 's|bign = 120|bign = 110|g' test_cobyla.f90
+              $SED 's|bign = 120|bign = 110|g' test_cobyla.f90
           fi
 
           export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
