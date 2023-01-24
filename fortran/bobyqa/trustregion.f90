@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 26, 2022 PM05:24:52
+! Last Modified: Tuesday, January 24, 2023 PM01:39:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -173,6 +173,7 @@ if (maxval(abs(gopt_in)) > 1.0E12) then   ! The threshold is empirical.
     hq = hq_in * modscal
     scaled = .true.
 else
+    modscal = ONE  ! This value is not used, but Fortran compilers may complain without it.
     gopt = gopt_in
     pq = pq_in
     hq = hq_in

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, January 04, 2023 PM04:05:52
+! Last Modified: Tuesday, January 24, 2023 PM01:35:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -159,6 +159,7 @@ if (maxval(abs(g)) > 1.0E8) then  ! The threshold is empirical.
     hh = h * modscal
     scaled = .true.
 else
+    modscal = ONE  ! This value is not used, but Fortran compilers may complain without it.
     gg = g
     hh = h
     scaled = .false.
