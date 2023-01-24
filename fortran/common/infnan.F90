@@ -2,7 +2,7 @@
 
 module infnan_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides functions that check whether a real number x is infinite, NaN, or finite.
+! This module provides functions that check whether a real number X is infinite, NaN, or finite.
 !
 ! N.B.:
 !
@@ -47,19 +47,24 @@ module infnan_mod
 ! (X > HUGE(X) .OR. X < -HUGE(X)) may differ from (ABS(X) > HUGE(X)) , and
 ! (ABS(X) > HUGE(X) .AND. X > 0) may differ from (X > HUGE(X)) .
 !
-! 8. Even though the functions involve invocation of ABS and HUGE, their performance (in terms of
+! 8. IS_NAN must be implemented in a file separated from is_inf and is_finite. Otherwise, is_nan may
+! not work with some compilers invoked with agressive optimization flags e.g., ifx -fast with
+! ifx 2022.1.0 or flang -Ofast with flang 15.0.3.
+!
+! 9. Even though the functions involve invocation of ABS and HUGE, their performance (in terms of
 ! CPU time) turns out comparable to or even better than the functions in IEEE_ARITHMETIC.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020.
 !
-! Last Modified: Tuesday, December 13, 2022 AM10:47:40
+! Last Modified: Tuesday, January 24, 2023 PM01:30:31
 !--------------------------------------------------------------------------------------------------!
 
+use inf_mod, only : is_finite, is_inf, is_posinf, is_neginf
 implicit none
 private
-public :: is_nan, is_finite, is_posinf, is_neginf, is_inf
+public :: is_finite, is_posinf, is_neginf, is_inf, is_nan
 
 #if __QP_AVAILABLE__ == 1
 
@@ -67,43 +72,11 @@ interface is_nan
     module procedure is_nan_sp, is_nan_dp, is_nan_qp
 end interface is_nan
 
-interface is_finite
-    module procedure is_finite_sp, is_finite_dp, is_finite_qp
-end interface is_finite
-
-interface is_posinf
-    module procedure is_posinf_sp, is_posinf_dp, is_posinf_qp
-end interface is_posinf
-
-interface is_neginf
-    module procedure is_neginf_sp, is_neginf_dp, is_neginf_qp
-end interface is_neginf
-
-interface is_inf
-    module procedure is_inf_sp, is_inf_dp, is_inf_qp
-end interface is_inf
-
 #else
 
 interface is_nan
     module procedure is_nan_sp, is_nan_dp
 end interface is_nan
-
-interface is_finite
-    module procedure is_finite_sp, is_finite_dp
-end interface is_finite
-
-interface is_posinf
-    module procedure is_posinf_sp, is_posinf_dp
-end interface is_posinf
-
-interface is_neginf
-    module procedure is_neginf_sp, is_neginf_dp
-end interface is_neginf
-
-interface is_inf
-    module procedure is_inf_sp, is_inf_dp
-end interface is_inf
 
 #endif
 
@@ -116,7 +89,8 @@ use, non_intrinsic :: consts_mod, only : SP
 implicit none
 real(SP), intent(in) :: x
 logical :: y
-y = (.not. (x <= huge(x) .and. x >= -huge(x))) .and. (.not. abs(x) > huge(x))
+!y = (.not. (x <= huge(x) .and. x >= -huge(x))) .and. (.not. abs(x) > huge(x))  ! Does not always work
+y = (.not. is_finite(x)) .and. (.not. is_inf(x))
 end function is_nan_sp
 
 pure elemental function is_nan_dp(x) result(y)
@@ -124,72 +98,9 @@ use, non_intrinsic :: consts_mod, only : DP
 implicit none
 real(DP), intent(in) :: x
 logical :: y
-y = (.not. (x <= huge(x) .and. x >= -huge(x))) .and. (.not. abs(x) > huge(x))
+!y = (.not. (x <= huge(x) .and. x >= -huge(x))) .and. (.not. abs(x) > huge(x))  ! Does not always work
+y = (.not. is_finite(x)) .and. (.not. is_inf(x))
 end function is_nan_dp
-
-pure elemental function is_finite_sp(x) result(y)
-use, non_intrinsic :: consts_mod, only : SP
-implicit none
-real(SP), intent(in) :: x
-logical :: y
-y = (x <= huge(x) .and. x >= -huge(x))
-end function is_finite_sp
-
-pure elemental function is_finite_dp(x) result(y)
-use, non_intrinsic :: consts_mod, only : DP
-implicit none
-real(DP), intent(in) :: x
-logical :: y
-y = (x <= huge(x) .and. x >= -huge(x))
-end function is_finite_dp
-
-pure elemental function is_posinf_sp(x) result(y)
-use, non_intrinsic :: consts_mod, only : SP
-implicit none
-real(SP), intent(in) :: x
-logical :: y
-y = (abs(x) > huge(x)) .and. (x > 0)
-end function is_posinf_sp
-
-pure elemental function is_posinf_dp(x) result(y)
-use, non_intrinsic :: consts_mod, only : DP
-implicit none
-real(DP), intent(in) :: x
-logical :: y
-y = (abs(x) > huge(x)) .and. (x > 0)
-end function is_posinf_dp
-
-pure elemental function is_neginf_sp(x) result(y)
-use, non_intrinsic :: consts_mod, only : SP
-implicit none
-real(SP), intent(in) :: x
-logical :: y
-y = (abs(x) > huge(x)) .and. (x < 0)
-end function is_neginf_sp
-
-pure elemental function is_neginf_dp(x) result(y)
-use, non_intrinsic :: consts_mod, only : DP
-implicit none
-real(DP), intent(in) :: x
-logical :: y
-y = (abs(x) > huge(x)) .and. (x < 0)
-end function is_neginf_dp
-
-pure elemental function is_inf_sp(x) result(y)
-use, non_intrinsic :: consts_mod, only : SP
-implicit none
-real(SP), intent(in) :: x
-logical :: y
-y = (abs(x) > huge(x))
-end function is_inf_sp
-
-pure elemental function is_inf_dp(x) result(y)
-use, non_intrinsic :: consts_mod, only : DP
-implicit none
-real(DP), intent(in) :: x
-logical :: y
-y = (abs(x) > huge(x))
-end function is_inf_dp
 
 
 #if __QP_AVAILABLE__ == 1
@@ -199,40 +110,9 @@ use, non_intrinsic :: consts_mod, only : QP
 implicit none
 real(QP), intent(in) :: x
 logical :: y
-y = (.not. (x <= huge(x) .and. x >= -huge(x))) .and. (.not. abs(x) > huge(x))
+!y = (.not. (x <= huge(x) .and. x >= -huge(x))) .and. (.not. abs(x) > huge(x))  ! Does not always work
+y = (.not. is_finite(x)) .and. (.not. is_inf(x))
 end function is_nan_qp
-
-pure elemental function is_finite_qp(x) result(y)
-use, non_intrinsic :: consts_mod, only : QP
-implicit none
-real(QP), intent(in) :: x
-logical :: y
-y = (x <= huge(x) .and. x >= -huge(x))
-end function is_finite_qp
-
-pure elemental function is_posinf_qp(x) result(y)
-use, non_intrinsic :: consts_mod, only : QP
-implicit none
-real(QP), intent(in) :: x
-logical :: y
-y = (abs(x) > huge(x)) .and. (x > 0)
-end function is_posinf_qp
-
-pure elemental function is_neginf_qp(x) result(y)
-use, non_intrinsic :: consts_mod, only : QP
-implicit none
-real(QP), intent(in) :: x
-logical :: y
-y = (abs(x) > huge(x)) .and. (x < 0)
-end function is_neginf_qp
-
-pure elemental function is_inf_qp(x) result(y)
-use, non_intrinsic :: consts_mod, only : QP
-implicit none
-real(QP), intent(in) :: x
-logical :: y
-y = (abs(x) > huge(x))
-end function is_inf_qp
 
 #endif
 
