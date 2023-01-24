@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 26, 2022 PM05:26:26
+! Last Modified: Tuesday, January 24, 2023 PM01:38:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -146,6 +146,7 @@ if (maxval(abs(gq_in)) > 1.0E12) then   ! The threshold is empirical.
     hq = hq_in * modscal
     scaled = .true.
 else
+    modscal = ONE  ! This value is not used, but Fortran compilers may complain without it.
     gq = gq_in
     pq = pq_in
     hq = hq_in
