@@ -1,7 +1,11 @@
-When the MATLAB version is implemented (e.g., newuoa_mat), we may remove the 'matlab/interfaces/' directory,
+1. When the MATLAB version is implemented (e.g., newuoa_mat), we may remove the 'matlab/interfaces/' directory,
 and put its content directly below matlab/
 
 20230108: put the MEX files under newuoa_for, and name them ast newuoa_for_dgm, etc? What about gethuge?
 githuge is used only in preprima and maxint, the latter again only used in preprima.
 
-Make newuoa etc unavailable to the end users. (?)
+2. Make newuoa etc unavailable to the end users. (?)
+
+3. 20230128: Check what happens with
+cobyla(macup('LHAIFAM'))
+The classical version works well, but not the new one.
