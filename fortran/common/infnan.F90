@@ -47,9 +47,9 @@ module infnan_mod
 ! (X > HUGE(X) .OR. X < -HUGE(X)) may differ from (ABS(X) > HUGE(X)) , and
 ! (ABS(X) > HUGE(X) .AND. X > 0) may differ from (X > HUGE(X)) .
 !
-! 8. IS_NAN must be implemented in a file separated from is_inf and is_finite. Otherwise, is_nan may
-! not work with some compilers invoked with agressive optimization flags e.g., ifx -fast with
-! ifx 2022.1.0 or flang -Ofast with flang 15.0.3.
+! 8. IS_NAN must be implemented in a file separated from is_inf and is_finite (a separated module is
+! not enough). Otherwise, IS_NAN may not work with some compilers invoked with aggressive
+! optimization flags e.g., ifx -fast with ifx 2022.1.0 or flang -Ofast with flang 15.0.3.
 !
 ! 9. Even though the functions involve invocation of ABS and HUGE, their performance (in terms of
 ! CPU time) turns out comparable to or even better than the functions in IEEE_ARITHMETIC.
@@ -58,7 +58,7 @@ module infnan_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Tuesday, January 24, 2023 PM01:30:31
+! Last Modified: Tuesday, January 24, 2023 PM04:17:14
 !--------------------------------------------------------------------------------------------------!
 
 use inf_mod, only : is_finite, is_inf, is_posinf, is_neginf
