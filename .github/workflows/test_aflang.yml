@@ -39,9 +39,9 @@ jobs:
 
       - name: Conduct the test
         run: |
-          cd $ROOT_DIR/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          cd $ROOT_DIR/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make dtest_${{ matrix.ikind }}.${{ matrix.solver }}
-          cd $ROOT_DIR/fortran/examples/${{ matrix.solver }} && make dtest
+          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd "$ROOT_DIR"/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make dtest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make dtest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
