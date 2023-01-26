@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 26, 2022 PM12:16:01
+! Last Modified: Thursday, January 26, 2023 PM12:34:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,6 +40,7 @@ integer(IK), intent(in), optional :: nrand
 integer, intent(in), optional :: randseed
 
 character(len=*), parameter :: bigprob = 'bigprob'
+character(len=*), parameter :: solname = 'bobyqa'
 character(len=*), parameter :: srname = 'TEST_BOBYQA'
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
@@ -121,7 +122,7 @@ if (test_bigprob) then
     n = bign
     call construct(prob, probname, n)
     do irand = 1, 1  ! The test is expensive
-        rseed = int(sum(istr(probname)) + n + irand + RP)
+        rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
         call setseed(rseed)
         npt = max(n + 2_IK, int(5.0 * rand() * real(n, RP), kind(npt)))
         iprint = 2
@@ -173,7 +174,7 @@ else
             do irand = 1, nnpt + max(0_IK, nrand_loc)
                 ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
                 ! that the results for different IK are the same.
-                rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
+                rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
                 call setseed(rseed)
                 if (irand <= nnpt) then
                     npt = npt_list(irand)

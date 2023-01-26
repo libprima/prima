@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, December 29, 2022 PM08:29:24
+! Last Modified: Thursday, January 26, 2023 PM12:34:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,6 +40,7 @@ integer(IK), intent(in), optional :: nrand
 integer, intent(in), optional :: randseed
 
 character(len=*), parameter :: bigprob = 'bigprob'
+character(len=*), parameter :: solname = 'cobyla'
 character(len=*), parameter :: srname = 'TEST_COBYLA'
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
@@ -128,7 +129,7 @@ if (test_bigprob) then
     probname = bigprob
     n = bign
     do irand = 1, 1  ! The test is expensive
-        rseed = int(sum(istr(probname)) + n + irand + RP)
+        rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
         call setseed(rseed)
         m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         call construct(prob, probname, n, m)
@@ -187,7 +188,7 @@ else
             do irand = 1, max(1_IK, nrand_loc)
                 ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
                 ! that the results for different IK are the same.
-                rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
+                rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
                 call setseed(rseed)
                 iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
                 maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
