@@ -37,8 +37,8 @@ jobs:
           AFDIR="$(find "$LOCAL" -maxdepth 2 -name "absoft[0-9]*" -type d -print | sort | tail -n 1)"
           source "$AFDIR"/bin/absvars.sh
           export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
-          cd $ROOT_DIR/fortran/tests && export FFLAGS=${{ matrix.fflags }} && make atest_${{ matrix.ikind }}.${{ matrix.solver }}
-          cd $ROOT_DIR/fortran/examples/${{ matrix.solver }} && make atest
+          cd "$ROOT_DIR"/fortran/tests && export FFLAGS=${{ matrix.fflags }} && make atest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make atest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
