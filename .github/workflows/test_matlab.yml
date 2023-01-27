@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       max-parallel: 50
       matrix:
-        os: [ubuntu-20.04, ubuntu-latest, windows-2019, macos-11, macos-latest]   # MEX Fortran does not work on windows-latest yet
+        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest, windows-2019, macos-10.15, macos-11, macos-latest]   # MEX Fortran does not work on windows-latest yet
         matlab: [R2020a, R2020b, R2021a, R2021b, R2022a, latest]
         # Below R2022a, MEX is extremely slow on macOS; R2020a/b are not available on Windows.
         exclude:
@@ -65,7 +65,9 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           GFVER=12
-          if [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
+          if [[ "${{ matrix.os }}" = "ubuntu-18.04" ]] ; then
+              GFVER=9
+          elif [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
               GFVER=11
           fi
           if [[ "${{ matrix.matlab }}" = "R2020a" || "${{ matrix.matlab }}" = "R2020b" \
