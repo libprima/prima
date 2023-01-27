@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, January 28, 2023 AM01:00:48
+! Last Modified: Saturday, January 28, 2023 AM04:55:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -300,8 +300,8 @@ do tr = 1, maxtr
     ! linearized constraints.
     ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
     ! 3. Due to 2, in theory, MAX(PREREC, preref) > 0 if SHORTD is FALSE.
-    preref = inprod(d, A(:, m + 1))  ! Can be negative.
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+    preref = inprod(d, A(:, m + 1))  ! Can be negative.
     ! N.B.: 1. B(1:M) = -CONMAT(:, N + 1). 2. CVAL(N+1) = MAXVAL([B(1:M), ZERO]).
     ! 3. D is supposed to reduce MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]). Hence PREREC
     ! is nonnegative in theory, but it may fail to be so due to rounding errors.

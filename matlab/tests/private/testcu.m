@@ -53,39 +53,42 @@ else
     requirements.mincon = options.mincon;
     requirements.maxcon = options.maxcon;
     requirements.type = options.type;
+
     if isfield(options, 'blacklist')
         requirements.blacklist = options.blacklist;
     else
         requirements.blacklist = {};
     end
     if startsWith(solvers{1}, 'cobyla') || startsWith(solvers{2}, 'cobyla')
-        %requirements.blacklist = [requirements.blacklist, {'CHEBYQADNE','HAIFAM','HIMMELBI','HYDCAR20','LUKSAN12','LUKSAN13','MSS1','SPANHYD','VANDERM1','VANDERM2','VANDERM3', 'TAX13322', 'TAXR13322'}]; % Takes more than 2 min to solve
-        requirements.blacklist = [requirements.blacklist, {'ACOPP30', 'ACOPR30', 'AIRPORT', 'CHANDHEQ', ...
-            'CHEBYQAD', 'CHEBYQADNE', 'CORE1', 'DECONVB', 'DECONVC', 'DUAL1', 'DUAL2', 'FEEDLOC', ...
-            'GROUPING', 'HAIFAM', 'HIMMELBI', 'HYDC20LS', 'HYDCAR20', 'KISSING2', 'LAKES', 'LINSPANH', ...
-            'LUKSAN11', 'LUKSAN11LS', 'LUKSAN12', 'LUKSAN12LS', 'LUKSAN13', 'LUKSAN13LS', 'LUKSAN14', ...
-            'LUKSAN14LS', 'LUKSAN15', 'MSS1', 'VANDERM1', 'VANDERM2', 'VANDERM3', 'TAX13322', 'TAXR13322'}];  % Takes more than 100 seconds
-        requirements.blacklist = [requirements.blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Time-consuming
-        requirements.blacklist = [requirements.blacklist, {'GMNCASE2'}];
+    %    %requirements.blacklist = [requirements.blacklist, {'CHEBYQADNE','HAIFAM','HIMMELBI','HYDCAR20','LUKSAN12','LUKSAN13','MSS1','SPANHYD','VANDERM1','VANDERM2','VANDERM3', 'TAX13322', 'TAXR13322'}]; % Takes more than 2 min to solve
+    %    requirements.blacklist = [requirements.blacklist, {'ACOPP30', 'ACOPR30', 'AIRPORT', 'CHANDHEQ', ...
+    %        'CHEBYQAD', 'CHEBYQADNE', 'CORE1', 'DECONVB', 'DECONVC', 'DUAL1', 'DUAL2', 'FEEDLOC', ...
+    %        'GROUPING', 'HAIFAM', 'HIMMELBI', 'HYDC20LS', 'HYDCAR20', 'KISSING2', 'LAKES', 'LINSPANH', ...
+    %        'LUKSAN11', 'LUKSAN11LS', 'LUKSAN12', 'LUKSAN12LS', 'LUKSAN13', 'LUKSAN13LS', 'LUKSAN14', ...
+    %        'LUKSAN14LS', 'LUKSAN15', 'MSS1', 'VANDERM1', 'VANDERM2', 'VANDERM3', 'TAX13322', 'TAXR13322'}];  % Takes more than 100 seconds
+    %    requirements.blacklist = [requirements.blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Time-consuming
+    %    requirements.blacklist = [requirements.blacklist, {'GMNCASE2'}];
+
         requirements.blacklist = [requirements.blacklist, {'VANDERM4', 'LAKES'}]; % The classical COBYLA encounters SIGFAULT
         requirements.blacklist = [requirements.blacklist, {'DALLASS', 'QPCBLEND'}]; % The profiling script on GitHub Actions seems to be blocked by them
     end
     if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
+    %    requirements.blacklist = [requirements.blacklist, {'TARGUS', 'ARGTRIGLS', 'VARDIM'}];  % Takes too long time
+    %    requirements.blacklist = [requirements.blacklist, {'AGG', 'DALLASM', 'GMNCASE1', 'GMNCASE2', 'SMBANK', 'SSEBLIN'}];  % Takes more than 10 seconds to solve; removed for quick profiling
+    %    %requirements.blacklist = [requirements.blacklist, {'DALLASM','GMNCASE1', 'GMNCASE2', 'SMBANK'}];  % Takes more than 10 seconds to solve; removed for quick profiling
+
         requirements.blacklist = [requirements.blacklist, {'3PK', 'LSNNODOC', 'SIPOW3', 'SIPOW4', 'OET1', 'MAKELA4','TFI2', 'QPCBOEI2', 'QPNBOEI2'}]; % The classical LINCOA encounters SIGFAULT
-        requirements.blacklist = [requirements.blacklist, {'TARGUS', 'ARGTRIGLS', 'VARDIM'}];  % Takes too long time
-        requirements.blacklist = [requirements.blacklist, {'AGG', 'DALLASM', 'GMNCASE1', 'GMNCASE2', 'SMBANK', 'SSEBLIN'}];  % Takes more than 10 seconds to solve; removed for quick profiling
-        %requirements.blacklist = [requirements.blacklist, {'DALLASM','GMNCASE1', 'GMNCASE2', 'SMBANK'}];  % Takes more than 10 seconds to solve; removed for quick profiling
     end
-    if startsWith(solvers{1}, 'newuoa') || startsWith(solvers{2}, 'newuoa')
-        requirements.blacklist = [requirements.blacklist, {'ARGTRIGLS'}]; % Takes too long time
-    end
-    if startsWith(solvers{1}, 'uobyqa') || startsWith(solvers{2}, 'uobyqa')
-        requirements.blacklist = [requirements.blacklist, {'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'ERRINRSM', 'TOINTGOR', 'TOINTPSP', 'VAREIGVL'}]; % Takes too long time
-    end
+    %if startsWith(solvers{1}, 'newuoa') || startsWith(solvers{2}, 'newuoa')
+    %    requirements.blacklist = [requirements.blacklist, {'ARGTRIGLS'}]; % Takes too long time
+    %end
+    %if startsWith(solvers{1}, 'uobyqa') || startsWith(solvers{2}, 'uobyqa')
+    %    requirements.blacklist = [requirements.blacklist, {'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'ERRINRSM', 'TOINTGOR', 'TOINTPSP', 'VAREIGVL'}]; % Takes too long time
+    %end
+
     plist = secup(requirements);
 end
 
-%plist={'ALLINITU'};
 np = length(plist);
 ns = length(solvers);
 nr = options.nr;
