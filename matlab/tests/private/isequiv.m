@@ -122,11 +122,12 @@ else
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}];  % More than 10 minutes to solve.
         blacklist = [blacklist, {'ARGLINB', 'ARGLINA', 'ARGLINC', 'PENALTY2', 'COATING'}];  % Takes too long
     case {'lincoa_last', 'lincoa'}
+        %blacklist = [blacklist, {'GOFFIN'}];% This linear-equality constrained problem is strange; when lincoa solves it, x becomes so large (up to 10e16) that the constraint values evaluated by Fortran and matlab are substantially different. Seems to be due to rounding error. Not sure.
         blacklist = [blacklist, {'LSNNODOC', 'HS55', 'HEART6'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
         blacklist = [blacklist, {'CHEBYQAD', 'HS54'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
-        blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'SPANHYD', 'SPANHYD', 'SPANHYD', 'MINSURF', 'QPCBLEND', 'QPNBLEND', 'LINSPANH'}]; % Too long to solve
+        blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'SPANHYD', 'SPANHYD', 'SPANHYD', 'MINSURF', 'QPCBLEND', 'QPNBLEND', 'LINSPANH', 'LSQFIT'}]; % Too long to solve
         blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1', 'HIMMELBI', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS','LUKSAN21LS', 'COATING'}]; % Too long to solve
     case {'cobyla_last', 'cobyla'}
         blacklist = [blacklist, {'HS80'}];  % QRADD_RDIAG: Assertion failed: C^T*Q(:, N) == Rdiag(N).
