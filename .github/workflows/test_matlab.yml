@@ -22,10 +22,33 @@ jobs:
       fail-fast: false
       max-parallel: 50
       matrix:
-        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest, windows-2019, macos-10.15, macos-11, macos-latest]   # MEX Fortran does not work on windows-latest yet
+        # As of 230127, MEX Fortran does not work on windows-latest yet
+        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest, windows-2019, macos-10.15, macos-11, macos-latest]
         matlab: [R2020a, R2020b, R2021a, R2021b, R2022a, latest]
-        # Below R2022a, MEX is extremely slow on macOS; R2020a/b are not available on Windows.
         exclude:
+
+        # R2020b or above does not work with ubuntu-18.04
+          - os: ubuntu-18.04
+            matlab: R20R20b
+          - os: ubuntu-18.04
+            matlab: R2021a
+          - os: ubuntu-18.04
+            matlab: R2021b
+          - os: ubuntu-18.04
+            matlab: R2022a
+          - os: ubuntu-18.04
+            matlab: latest
+
+        # Below R2022a, MEX is extremely slow on macOS
+          - os: macos-10.15
+            matlab: R2020a
+          - os: macos-10.15
+            matlab: R2020b
+          - os: macos-10.15
+            matlab: R2021a
+          - os: macos-10.15
+            matlab: R2021b
+
           - os: macos-11
             matlab: R2020a
           - os: macos-11
@@ -34,6 +57,7 @@ jobs:
             matlab: R2021a
           - os: macos-11
             matlab: R2021b
+
           - os: macos-latest
             matlab: R2020a
           - os: macos-latest
@@ -42,10 +66,13 @@ jobs:
             matlab: R2021a
           - os: macos-latest
             matlab: R2021b
+
+        # R2020a/b are not available on Windows.
           - os: windows-2019
             matlab: R2020a
           - os: windows-2019
             matlab: R2020b
+
           # - os: windows-latest
           #   matlab: R2020a
           # - os: windows-latest
