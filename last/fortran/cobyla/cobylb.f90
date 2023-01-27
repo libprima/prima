@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, December 13, 2022 PM01:05:34
+! Last Modified: Saturday, January 28, 2023 AM01:01:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -294,7 +294,10 @@ do tr = 1, maxtr
     ! whether D causes a change to the active set. Should we try the same here?
     shortd = (dnorm < TENTH * rho)
 
-    if (shortd) then
+    preref = inprod(d, A(:, m + 1))  ! Can be negative.
+    prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+    !if (shortd) then
+    if (shortd .or. .not. max(prerec, preref) > 0) then
         ! Reduce DELTA if D is short. This seems quite important for performance.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then

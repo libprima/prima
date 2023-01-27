@@ -31,8 +31,6 @@ jobs:
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [small]
         exclude:
-          - os: ubuntu-22.04
-            version: 9
           - os: windows-latest
             version: 9
 

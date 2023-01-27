@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 26, 2023 PM10:35:56
+! Last Modified: Saturday, January 28, 2023 AM01:00:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -294,24 +294,26 @@ do tr = 1, maxtr
     ! whether D causes a change to the active set. Should we try the same here?
     shortd = (dnorm < TENTH * rho)
 
-    if (shortd) then
-        ! Reduce DELTA if D is short. This seems quite important for performance.
+    ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
+    ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
+    ! 1. PREREC >= 0; PREREC = 0 iff B(1:M) <= 0, i.e., the trust-region center satisfies the
+    ! linearized constraints.
+    ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
+    ! 3. Due to 2, in theory, MAX(PREREC, preref) > 0 if SHORTD is FALSE.
+    preref = inprod(d, A(:, m + 1))  ! Can be negative.
+    prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+    ! N.B.: 1. B(1:M) = -CONMAT(:, N + 1). 2. CVAL(N+1) = MAXVAL([B(1:M), ZERO]).
+    ! 3. D is supposed to reduce MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]). Hence PREREC
+    ! is nonnegative in theory, but it may fail to be so due to rounding errors.
+
+    if (shortd .or. .not. max(prerec, preref) > 0) then
+        ! Reduce DELTA if D is short or D fails to render MAX(PREREC, PREREF) > 0, the latter can
+        ! only happen due to rounding errors. This seems quite important for performance.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
-        ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
-        ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
-        ! 1. PREREC >= 0; PREREC = 0 iff B(1:M) <= 0, i.e., the trust-region center satisfies the
-        ! linearized constraints.
-        ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
-        preref = inprod(d, A(:, m + 1))  ! Can be negative.
-        prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
-        ! N.B.: 1. B(1:M) = -CONMAT(:, N + 1). 2. CVAL(N+1) = MAXVAL([B(1:M), ZERO]).
-        ! 3. D is supposed to reduce MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]). Hence PREREC
-        ! is nonnegative in theory, but it may fail to be so due to rounding errors.
-
         ! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
         ! optimal vertex. See the discussions around equation (9) of the COBYLA paper.
         ! This is the first (out of two) place where CPEN is updated. It can change CPEN only when
@@ -342,70 +344,68 @@ do tr = 1, maxtr
             end if
         end if
 
-        if (max(prerec, preref) > 0) then
-            x = sim(:, n + 1) + d
-            ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-            call evaluate(calcfc, x, f, constr, cstrv)
-            nf = nf + 1_IK
+        x = sim(:, n + 1) + d
+        ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
+        call evaluate(calcfc, x, f, constr, cstrv)
+        nf = nf + 1_IK
 
-            ! Print a message about the function/constraint evaluation according to IPRINT.
-            call fmsg(solver, iprint, nf, f, x, cstrv, constr)
-            ! Save X, F, CONSTR, CSTRV into the history.
-            call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
-            ! Save X, F, CONSTR, CSTRV into the filter.
-            call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
+        ! Print a message about the function/constraint evaluation according to IPRINT.
+        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        ! Save X, F, CONSTR, CSTRV into the history.
+        call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
+        ! Save X, F, CONSTR, CSTRV into the filter.
+        call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
 
-            ! Evaluate PREREM and ACTREM, which are the predicted and actual reductions in the merit
-            ! function respectively.
-            prerem = preref + cpen * prerec  ! Theoretically nonnegative; is 0 if CPEN = 0 = PREREF.
-            actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
-            if (cpen <= 0 .and. abs(f - fval(n + 1)) <= 0) then
-                ! CPEN <= 0 indeed means CPEN == 0, while ABS(A - B) <= 0 indeed means A == B.
-                prerem = prerec
-                actrem = cval(n + 1) - cstrv
-            end if
-
-            ! In theory, PREREM >= 0, but this can fail due to rounding errors.
-            !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')
-
-            !dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-            !moderrsav = [moderrsav(2:size(moderrsav)), maxval(abs([f - fval(n + 1) + preref, cstrv - cval(n + 1) + prerec]))]
-
-            ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
-            ratio = redrat(actrem, prerem, eta1)
-
-            ! Update DELTA. After this, DELTA < DNORM may hold.
-            delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
-            if (delta <= 1.5_RP * rho) then
-                delta = rho  ! Set DELTA to RHO when it is close to or below.
-            end if
-
-            ! Is the newly generated X better than current best point?
-            ximproved = (actrem > 0)  ! If ACTREM is NaN, then XIMPROVED should & will be FALSE.
-
-            ! Set JDROP_TR to the index of the vertex to be replaced by X. JDROP_TR = 0 means there
-            ! is no good point to replace, and X will not be included into the simplex; in this case,
-            ! the geometry of the simplex likely needs improvement, which will be handled below.
-            ! N.B.: COBYLA never sets JDROP_TR = N + 1.
-            jdrop_tr = setdrop_tr(ximproved, d, delta, factor_alpha, factor_delta, sim, simi)
-
-            ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
-            ! UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides to discard X.
-            call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
-            ! Check whether to exit due to damaging rounding in UPDATEPOLE (called by UPDATEXFC).
-            if (subinfo == DAMAGING_ROUNDING) then
-                info = subinfo
-                exit  ! Better action to take? Geometry step, or a RESCUE as in BOBYQA?
-            end if
-
-            ! Check whether to exit due to MAXFUN, FTARGET, etc.
-            subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
-            if (subinfo /= INFO_DFT) then
-                info = subinfo
-                exit
-            end if
+        ! Evaluate PREREM and ACTREM, which are the predicted and actual reductions in the merit
+        ! function respectively.
+        prerem = preref + cpen * prerec  ! Theoretically nonnegative; is 0 if CPEN = 0 = PREREF.
+        actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
+        if (cpen <= 0 .and. abs(f - fval(n + 1)) <= 0) then
+            ! CPEN <= 0 indeed means CPEN == 0, while ABS(A - B) <= 0 indeed means A == B.
+            prerem = prerec
+            actrem = cval(n + 1) - cstrv
         end if
-    end if  ! End of IF (SHORTD). The normal trust-region calculation ends here.
+
+        ! In theory, PREREM >= 0, but this can fail due to rounding errors.
+        !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')
+
+        !dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+        !moderrsav = [moderrsav(2:size(moderrsav)), maxval(abs([f - fval(n + 1) + preref, cstrv - cval(n + 1) + prerec]))]
+
+        ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
+        ratio = redrat(actrem, prerem, eta1)
+
+        ! Update DELTA. After this, DELTA < DNORM may hold.
+        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+        if (delta <= 1.5_RP * rho) then
+            delta = rho  ! Set DELTA to RHO when it is close to or below.
+        end if
+
+        ! Is the newly generated X better than current best point?
+        ximproved = (actrem > 0)  ! If ACTREM is NaN, then XIMPROVED should & will be FALSE.
+
+        ! Set JDROP_TR to the index of the vertex to be replaced by X. JDROP_TR = 0 means there
+        ! is no good point to replace, and X will not be included into the simplex; in this case,
+        ! the geometry of the simplex likely needs improvement, which will be handled below.
+        ! N.B.: COBYLA never sets JDROP_TR = N + 1.
+        jdrop_tr = setdrop_tr(ximproved, d, delta, factor_alpha, factor_delta, sim, simi)
+
+        ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
+        ! UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides to discard X.
+        call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
+        ! Check whether to exit due to damaging rounding in UPDATEPOLE (called by UPDATEXFC).
+        if (subinfo == DAMAGING_ROUNDING) then
+            info = subinfo
+            exit  ! Better action to take? Geometry step, or a RESCUE as in BOBYQA?
+        end if
+
+        ! Check whether to exit due to MAXFUN, FTARGET, etc.
+        subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
+    end if  ! End of IF (SHORTD .OR. .NOT. MAX(PREREC, PREREF) > 0). The normal trust-region calculation ends.
 
 
     !----------------------------------------------------------------------------------------------!
