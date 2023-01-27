@@ -29,7 +29,7 @@ jobs:
 
         # R2020b or above does not work with ubuntu-18.04
           - os: ubuntu-18.04
-            matlab: R20R20b
+            matlab: R2020b
           - os: ubuntu-18.04
             matlab: R2021a
           - os: ubuntu-18.04
