@@ -29,7 +29,7 @@ SHELL = /bin/bash
 
 # The MathWorks header file for Fortran MEX. To respect the copyright, we do not include it in this
 # package but use the file on this machine if available.
-FINTRFH := $(shell locate '/extern/include/fintrf.h' | head -n 1)
+FINTRFH := $(shell locate '/extern/include/fintrf.h' 2>/dev/null | head -n 1)
 # If FINTRFH is empty, i.e., fintrf.h is not found, then we use ".ONESHELL", so that all the lines
 # in the recipe are run in the same shell, and the "exit 0" below will work as expected.
 # N.B.: Use .ONESHELL with caution. Makefiles with .ONESHELL will behave differently in ways that
@@ -467,7 +467,7 @@ $(TESTS) $(TESTS_INT):
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@printf "\n\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
-	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log"
+	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log" 2> /dev/null
 	@$(MAKE) clean
 
 
