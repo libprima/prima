@@ -23,8 +23,9 @@ PRIMA is part of a research project funded by the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and
 the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at the
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
-It is still **under intensive development**, and there is no release yet. If you want to use the
-above-mentioned methods, see the [website](https://www.pdfo.net)
+It is still **under intensive development**.
+The current version is ready to be [used in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.txt).
+If you want to use the above-mentioned methods in Python, see the [website](https://www.pdfo.net)
 and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead
 ([Py-BOBYQA](https://numericalalgorithmsgroup.github.io/pybobyqa/) is also highly recommended if
 you intend to solve bound-constrained problems).
@@ -40,18 +41,15 @@ which are genuine masterpieces. They are widely used by engineers and scientists
 see the citations of [COBYLA](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=A+Direct+Search+Optimization+Method+That+Models+the+Objective+and+Constraint+Functions+by+Linear+Interpolation&btnG=)
 and [BOBYQA](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=The+BOBYQA+algorithm+for+bound+constrained+optimization+without+derivatives&btnG=)).
 
-However, Professor Powell's
-implementation is in [Fortran 77](./fortran/original)
+However, Professor Powell's implementation was in [Fortran 77](./fortran/original)
 and the code is nontrivial to understand or maintain, let alone to
 extend. This becomes an obstacle for many practitioners to exploiting these solvers in their
-applications and hinders researchers from exploring the wealth left by Professor Powell to the
-community.
+applications and hinders researchers from exploring the wealth left by Professor Powell to us.
 
 Before he passed, Professor Powell had asked me to maintain his solvers. This is an honorable
-mission, and I have the responsibility to make the solvers more accessible.
-PRIMA is a project somehow similar to the translation, interpretation, and annotation of
-Euclid’s *Elements*.
-It will make Powell's solvers easily accessible to everyone, not only the experts.
+mission. To make the solvers more accessible, I started PRIMA.
+It is a project somehow similar to the translation, interpretation, and annotation of Euclid’s
+*Elements*. It will make Powell's solvers easily understandable to everyone, not only the experts.
 Few people remember [who translated *Elements*](https://en.wikipedia.org/wiki/Euclid%27s_Elements#Translations),
 but it is a job that must be done.
 
@@ -96,14 +94,14 @@ The tests are automated by
 [GitHub Actions](https://docs.github.com/en/actions). As of January 2023, more than
 30,000 "workflows" have been successfully run by GitHub Actions.
 Normally, each workflow consists of \~ 5
-([sometimes more than 100](https://github.com/primalib/prima/actions/workflows/verify_base.yml))
-**randomized** tests that are conducted in parallel,
+([sometimes more than 100](https://github.com/primalib/prima/actions/runs/4026574684))
+**randomized** tests,
 each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words,
 PRIMA has been verified by more than $10^5$ hours (or more than $10$ years) of randomized tests.
 
-Since each GitHub Team account can only run at most 60 GitHub Actions jobs concurrently, I have to
-distribute this large amount of tests to several different Team accounts as follows.
+Since each GitHub Team account can only run at most 60 GitHub Actions workflows concurrently, I have
+to distribute this large amount of tests to several different Team accounts as follows.
 
 - [Tests](https://github.com/libprima/prima/actions) at [libprima/prima](https://github.com/libprima/prima)
 
@@ -170,7 +168,7 @@ distribute this large amount of tests to several different Team accounts as foll
 ### Bug fixes
 
 PRIMA has fixed the some **serious** issues in the **original Fortran 77 implementation** of Powell's methods.
-Note that all the issues are problems in the Fortran 77 code rather than flaws in the algorithms.
+Note that all of them are problems in the Fortran 77 code rather than flaws in the algorithms.
 
 <!---[NLopt.jl](https://github.com/JuliaOpt/NLopt.jl), -->
 The examples given below are bugs or requests sent to [SciPy](https://github.com/scipy/scipy),
