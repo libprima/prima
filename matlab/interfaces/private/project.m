@@ -104,7 +104,7 @@ if (nargin == 8 && isa(options, 'struct')) % Adopt user-defined options.
         StepTol = options.StepTolerance;
     end
     if (isfield(options,'MaxIterations'))
-        maxit = int32(options.MaxIterations);
+        maxit = options.MaxIterations;
     end
     if (isfield(options,'TryMatlab'))
         TryMatlab = options.TryMatlab;
