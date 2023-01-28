@@ -127,7 +127,7 @@
 #if defined __MAXHISTMEM__
 #undef __MAXHISTMEM__
 #endif
-#define __MAXHISTMEM__ 200  /* 1MB > 10^5*REAL64. 100 is sometimes too small. */
+#define __MAXHISTMEM__ 300  /* 1MB > 10^5*REAL64. 100 is sometimes too small. */
 /******************************************************************************/
 
 
