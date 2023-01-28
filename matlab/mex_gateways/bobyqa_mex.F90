@@ -11,7 +11,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:30:37
+! Last Modified: Saturday, January 28, 2023 PM11:54:47
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -26,7 +26,7 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK
+se, non_intrinsic :: consts_mod, only:RP, IK
 use, non_intrinsic :: memory_mod, only : safealloc
 
 ! Fortran MEX API modules
