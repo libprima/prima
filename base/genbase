@@ -32,6 +32,7 @@ for DIR in setup_tools mex_gateways interfaces ; do
 done
 
 # Modify the code in "$LAST"/matlab so that it becomes the "new last version".
+rm -f "$LAST"/matlab/mex_gateways/tests/fintrf.h
 MSETUPTOOLS="$LAST"/matlab/setup_tools
 MINTERFACES="$LAST"/matlab/interfaces
 rm -f "$MINTERFACES"/private/*mexa64
