@@ -500,6 +500,14 @@ case 15
     output.message = sprintf('%s receives a linear feasibility problem but does not find a feasible point.', invoker);
 case 20
     output.message = sprintf('Return from %s because the trust-region iteration has been performed maxtr (= 2*maxfun) times.', invoker);
+    wid = sprintf('%s:MaxtrReached', invoker);
+    wmsg = sprintf('%s: The maximal number of trust-region iterations is reached. This is rare. Check that the algorithm works properly.', invoker);
+    warning(wid, '%s', wmsg);
+    if isfield(output, 'warnings')
+        output.warnings = [output.warnings, wmsg];
+    else
+        output.warnings = {wmsg};
+    end
 case -1
     output.message = sprintf('Return from %s because NaN occurs in x.', solver);
 case -2  % This cannot happen if the moderated extreme barrier is implemented, which is the case when options.classical is false.
