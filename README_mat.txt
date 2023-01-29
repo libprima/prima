@@ -3,8 +3,8 @@ This is the README file for the MATLAB version of PRIMA.
 0. Prerequisites
 
 PRIMA supports MATLAB R2018a and later releases. To use PRIMA, you need first
-configure the MEX of your MATLAB so that it can compile Fortran (N.B.: this is
-a MATLAB usage problem and it has nothing to do with PRIMA).
+set up the MEX of your MATLAB so that it can compile Fortran (N.B.: the setup
+of MEX is a pure MATLAB usage problem and it has nothing to do with PRIMA).
 
 0.1. To see whether your MEX is ready, run the following code in MATLAB:
 
