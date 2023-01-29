@@ -1,4 +1,4 @@
-This is the README file for the MATLAB version of PRIMA.
+This is the README file for using PRIMA under MATLAB.
 
 0. Prerequisites
 
