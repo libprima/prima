@@ -463,15 +463,22 @@ test:
 # not be executable on all operating systems.
 # 2. The log for itest or itest_i2 will be itest_(STAMP). Similar for other tests.
 $(TESTS) $(TESTS_INT):
-	@if [[ -z "$(FINTRFH)" ]] ; then printf "\nfintrf.h is not available. Skip the test.\n"; exit 0; fi
-	@mkdir -p $(LOG_DIR)
-	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
-	@$(MAKE) $(SUBTESTS) #--jobs $(NPROCS)
-	@bash $(CHCKTST) --error "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
-	@bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
-	@printf "\n\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
-	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log" 2>/dev/null || :
-	@$(MAKE) clean
+	# Even with .ONESHELL, the exit in the following line does not work as expected. Why?
+	#@if [[ -z "$(FINTRFH)" ]] ; then printf "\nfintrf.h is not available. Skip the test.\n"; exit 0; fi
+	# To make exit work, we have to write in the following way so that the recipe is essentially only
+	# one line and executed in one process. We may do the same for other recipes as well.
+	@if [[ -z "$(FINTRFH)" ]] ; then \
+		printf "\nfintrf.h is not available. Skip the test.\n"; \
+	else \
+		mkdir -p $(LOG_DIR) ; \
+		printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" ; \
+		$(MAKE) $(SUBTESTS) ; \
+		bash $(CHCKTST) --error "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" ; \
+		bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" ; \
+		printf "\n\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" ; \
+		mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log" 2> /dev/null ; \
+		$(MAKE) clean ; \
+	fi
 
 
 # Make a compiler-specific subtest.
