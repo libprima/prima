@@ -893,12 +893,13 @@ source_%: $(SRC_DIRS)
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../a9src ./ ; \
 	fi
-	## flsrc is not needed for flang >= 15.0
-	#@if echo $@ | grep -q "ftest" && ! type flang | grep -iq "bisheng\|AMD" ; then \
-	#	printf "\nPreparing the source code for $@.\n" ; \
-	#	bash ../flsrc ./ ; \
-	#fi
 	@printf "Done.\n"
+## flsrc is not needed by Flang 15.0.3
+#@if echo $@ | grep -q "ftest" && ! type flang | grep -iq "bisheng\|AMD" ; then \
+#	printf "\nPreparing the source code for $@.\n" ; \
+#	bash ../flsrc ./ ; \
+#fi
+#@printf "Done.\n"
 
 # Adapt the header file for the test.
 header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
