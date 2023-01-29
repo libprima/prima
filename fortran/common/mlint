@@ -2,6 +2,15 @@
 # This script checks the Fortran code of the solver corresponding to this directory.
 # Usage: mlint [--compiler_name [-all]] or mlint -c|--clean
 
+# This test needs the MathWorks fintrf.h. Exit if the file cannot be found.
+FINTRFH=$(locate '/extern/include/fintrf.h' 2>/dev/null | head -n 1)
+if [[ -z "$FINTRFH" ]] ; then
+    printf "\n***********************************************"
+    printf "\nfintrf.h is not found. All tests are skipped.\n"
+    printf "*********************************************\n\n"
+    exit 0
+fi
+
 # Parse inputs.
 if ! [[ $# -eq 0 || $# -eq 1 ]] ; then
     printf "Usage: mlint [--compiler_name [-all]] or mlint -c|--clean\n"
@@ -20,6 +29,7 @@ CLEAN="N"
 printf "\n****** XTEST is disabled ******\n"
 printf "\n****** NTEST is disabled ******\n"
 
+# N.B.: () defines an array
 COMPILER_LIST=(sunf95 gfortran g95 ifort nvfortran flang aflang)
 CLIST=(s g 9 i v f d)
 COMP_LIST=""
@@ -157,11 +167,11 @@ for COMP in $COMP_LIST; do
             fi
         done
     fi
-    mv "$TEST_LOG_DIR"/"$COMP"test*.log "$SOLVER_LOG_DIR"
+    mv "$TEST_LOG_DIR"/"$COMP"test*.log "$SOLVER_LOG_DIR" 2>/dev/null || true
 done
 
 # Check the logfiles
-LOGFILES=("$SOLVER_LOG_DIR"/*test*.log)
+LOGFILES=("$SOLVER_LOG_DIR"/*test*.log)  # An array
 if [[ "$TEST_ALL" == "Y" ]] ; then
     for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}}" ; do
         printf "\nChecking %s ...\n" "$LOGFILE"
