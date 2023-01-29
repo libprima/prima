@@ -24,6 +24,8 @@ if length(solvers) ~= 2
     return
 end
 
+solvers = lower(solvers);
+
 if nargin == 1
     options = struct();
 end
@@ -47,6 +49,14 @@ else
     ir = -1;
 end
 
+if ir < 0
+    minir = 0;
+    maxir = nr + 20;
+else
+    minir = ir;
+    maxir = ir;
+end
+
 if isfield(options, 'minip')
     minip=options.minip;
 else
@@ -67,7 +77,7 @@ end
 if (isfield(options, 'maxdim'))
     requirements.maxdim = options.maxdim;
 else
-    if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')
+    if any(startsWith(lower(solvers), 'cobyla'))
         requirements.maxdim = 20;
     else
         requirements.maxdim = 50;
@@ -89,14 +99,6 @@ else
     requirements.type = 'ubln';
 end
 
-if ir < 0
-    minir = 0;
-    maxir = nr + 20;
-else
-    minir = ir;
-    maxir = ir;
-end
-
 if ~isempty(requirements.list)
     plist = requirements.list; % Use the list provided by the user
     if (ischstr(plist))  % In case plist is indeed the name of a problem
@@ -104,12 +106,11 @@ if ~isempty(requirements.list)
     end
 else
     blacklist = {};
-    %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
-    switch lower(solvers{1})
-    case {'uobyqa_last', 'uobyqa'}
+    if any(startsWith(solvers, 'uobyqa'))
         blacklist = [blacklist, {'VARDIM', 'HATFLDFL', 'BENNETT5LS', 'HIELOW'}];  % too large for UOBYQA
         blacklist = [blacklist, {'YFITU'}]; % Takes too long
-    case {'newuoa_last', 'newuoa'}
+    end
+    if any(startsWith(solvers, 'newuoa'))
         blacklist = [blacklist, {'LUKSAN22LS', 'MANCINO', 'LUKSAN11LS', 'COATING', 'ARGLINB'}]; % too long to solve
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}]; % More than 30 minutes to solve.
         blacklist = [blacklist, {'PENALTY2', 'HYDC20LS', 'MANCINO'}]; % Too long time
@@ -117,11 +118,13 @@ else
         blacklist = [blacklist, {'ARGLINC'}]; % Takes too long to solve
         blacklist = [blacklist, {'HYDC20LS', 'BA-L1SPLS'}]; % Takes too long to solve
         %blacklist = [blacklist, {'PENALTY2'}]; % More than 5 minutes to solve.
-    case {'bobyqa_last', 'bobyqa'}
+    end
+    if any(startsWith(solvers, 'bobyqa'))
         blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'VARDIM'}];  % More than 10 minutes to solve.
         blacklist = [blacklist, {'ARGLINB', 'ARGLINA', 'ARGLINC', 'PENALTY2', 'COATING'}];  % Takes too long
-    case {'lincoa_last', 'lincoa'}
+    end
+    if any(startsWith(solvers, 'lincoa'))
         %blacklist = [blacklist, {'GOFFIN'}];% This linear-equality constrained problem is strange; when lincoa solves it, x becomes so large (up to 10e16) that the constraint values evaluated by Fortran and matlab are substantially different. Seems to be due to rounding error. Not sure.
         blacklist = [blacklist, {'LSNNODOC', 'HS55', 'HEART6'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'AVGASA', 'AVGASB'}];  % SEGFAULT on 20220306
@@ -129,7 +132,8 @@ else
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
         blacklist = [blacklist, {'QPNBOEI2', 'QPCBOEI2', 'SPANHYD', 'SPANHYD', 'SPANHYD', 'MINSURF', 'QPCBLEND', 'QPNBLEND', 'LINSPANH', 'LSQFIT', 'CVXQP1'}]; % Too long to solve
         blacklist = [blacklist, {'DUAL3', 'DUAL2', 'DUAL1', 'HIMMELBI', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS','LUKSAN21LS', 'COATING'}]; % Too long to solve
-    case {'cobyla_last', 'cobyla'}
+    end
+    if any(startsWith(solvers, 'cobyla'))
         blacklist = [blacklist, {'HS80'}];  % QRADD_RDIAG: Assertion failed: C^T*Q(:, N) == Rdiag(N).
         blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE', 'MESH'}];
         blacklist = [blacklist, {'POLAK6', 'SPIRAL', 'POLAK2'}]; % B = A^{-1} fails
@@ -158,21 +162,12 @@ else
 
         % blacklist when QRADD/QREXC calls ISORTH
         blacklist = [blacklist, {'ACOPP30', 'ACOPR30', 'AIRPORT', 'BATCH', 'CHANDHEQ', 'CHEBYQAD', 'CHEBYQADNE', 'CHNRSBNE', ...
-        'CHNRSNBMNE', 'CORE1', 'CRESC132', 'DALLASS', 'DECONVB', 'DECONVBNE', 'DECONVU', 'DEGENQPC', 'DUAL1', 'DUAL2', ...
-        'ERRINRSM','ERRINRSMNE', 'FBRAIN3', 'FEEDLOC', 'GROUPING', 'HAIFAM', 'HIMMELBI', 'HYDC20LS', 'HYDCAR20', 'KISSING2', ...
-        'LAKES', 'LUKSAN11', 'LUKSAN11LS', 'LUKSAN12', 'LUKSAN12LS', 'LUKSAN13', 'LUKSAN13LS', 'LUKSAN14', 'LUKSAN14LS', ...
-        'LUKSAN15', 'LUKSAN16', 'LUKSAN17', 'LUKSAN17LS', 'LUKSAN21', 'LUKSAN21LS', 'LUKSAN22', 'LUKSAN22LS', ...
-        'MANCINONE', 'MSS1', 'NET1', 'SPANHYD', 'SWOPF', 'TAX13322', 'TAXR13322', 'TRO4X4', 'TRO6X2', 'VANDERM1', ...
-        'VANDERM2', 'VANDERM3', 'VESUVIOU'}];  % 20211125 version of COBYLAN takes more than 2 minutes to solve
-
-        % blacklist when QRADD/QREXC do not call ISORTH
-        %blacklist = [blacklist, {'AIRPORT', 'BATCH', 'CHEBYQAD', 'CHEBYQADNE', 'CHNRSBNE', 'CHNRSNBMNE', ...
-        %'CORE1', 'CRESC132', 'DALLASS', 'DECONVB', 'DECONVBNE', 'DEGENQPC', 'DUAL1', 'DUAL2', 'ERRINRSM', ...
-        %'ERRINRSMNE', 'FBRAIN3', 'HAIFAM', 'HIMMELBI', 'HYDC20LS', 'HYDCAR20', ...
-        %'LAKES', 'LUKSAN11LS', 'LUKSAN12', 'LUKSAN12LS', 'LUKSAN13', 'LUKSAN13LS', 'LUKSAN14', 'LUKSAN14LS', ...
-        %'LUKSAN15', 'LUKSAN16', 'LUKSAN17', 'LUKSAN17LS', 'LUKSAN21', 'LUKSAN21LS', 'LUKSAN22', 'LUKSAN22LS', ...
-        %'MSS1', 'NET1', 'SPANHYD', 'SWOPF', 'TAX13322', 'TAXR13322', 'TRO4X4', 'TRO6X2', 'VANDERM1', ...
-        %'VANDERM2', 'VANDERM3', 'VESUVIOU'}];  % 20211125 version of COBYLAN takes more than 2 minutes to solve
+            'CHNRSNBMNE', 'CORE1', 'CRESC132', 'DALLASS', 'DECONVB', 'DECONVBNE', 'DECONVU', 'DEGENQPC', 'DUAL1', 'DUAL2', ...
+            'ERRINRSM','ERRINRSMNE', 'FBRAIN3', 'FEEDLOC', 'GROUPING', 'HAIFAM', 'HIMMELBI', 'HYDC20LS', 'HYDCAR20', 'KISSING2', ...
+            'LAKES', 'LUKSAN11', 'LUKSAN11LS', 'LUKSAN12', 'LUKSAN12LS', 'LUKSAN13', 'LUKSAN13LS', 'LUKSAN14', 'LUKSAN14LS', ...
+            'LUKSAN15', 'LUKSAN16', 'LUKSAN17', 'LUKSAN17LS', 'LUKSAN21', 'LUKSAN21LS', 'LUKSAN22', 'LUKSAN22LS', ...
+            'MANCINONE', 'MSS1', 'NET1', 'SPANHYD', 'SWOPF', 'TAX13322', 'TAXR13322', 'TRO4X4', 'TRO6X2', 'VANDERM1', ...
+            'VANDERM2', 'VANDERM3', 'VESUVIOU'}];  % 20211125 version of COBYLAN takes more than 2 minutes to solve
     end
     requirements.blacklist = blacklist;
     plist = secup(requirements);
@@ -474,12 +469,13 @@ end
 prob.options = test_options;
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BEGIN: Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % N.B.: In some tests, we may invoke this function with solvers{1} == solvers{2}. So do NOT assume
 % that one of the solvers is 'SOLVER' and the other is 'SOLVER_last'.
 
-solver1 = str2func(solvers{1});  % Use function handle to avoid `feval`.
-solver2 = str2func(solvers{2});  % Use function handle to avoid `feval`.
+% Use function handle to avoid `feval`.
+solver1 = str2func(solvers{1});
+solver2 = str2func(solvers{2});
 
 if endsWith(solvers{1}, '_last')
     package1 = @prima_last;
@@ -554,66 +550,69 @@ if ~isempty(exception)
         rethrow(exception)
     end
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END: Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
-    exitflag1 = 3;
-    %display('exitflag1 changed to 3.')
-end
-if output2.funcCount == test_options.maxfun && (exitflag2 == 0 || exitflag2 == 2) && exitflag1 == 3
-    exitflag2 = 3;
-    %display('exitflag2 changed to 3.')
-end
-if fx1 <= test_options.ftarget
-    exitflag1 = 1;
-    %fprintf('exitflag1 changed to 1.\n')
-end
-if fx2 <= test_options.ftarget
-    exitflag2 = 1;
-    %fprintf('exitflag2 changed to 1.\n')
-end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Special Treatments%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Zaikun 230129: The special treatments are not needed since the modernization is finished.
+%if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
+%    exitflag1 = 3;
+%    %fprintf('exitflag1 changed to 3.\n')
+%end
+%if output2.funcCount == test_options.maxfun && (exitflag2 == 0 || exitflag2 == 2) && exitflag1 == 3
+%    exitflag2 = 3;
+%    %fprintf('exitflag2 changed to 3.\n')
+%end
+%if fx1 <= test_options.ftarget
+%    exitflag1 = 1;
+%    %fprintf('exitflag1 changed to 1.\n')
+%end
+%if fx2 <= test_options.ftarget
+%    exitflag2 = 1;
+%    %fprintf('exitflag2 changed to 1.\n')
+%end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Special Treatments%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-minfhist = min(length(output1.fhist), length(output2.fhist));
-% NEWUOA
-if strcmpi(solvers{1}, 'newuoa_last') && strcmpi(solvers{2}, 'newuoa') && exitflag1 == 2 && exitflag2 ~=2 ...
-        && fx2 <= fx1 && output1.funcCount <= output2.funcCount ...
-        && all(output2.fhist(end-minfhist+1:end-(output2.funcCount-output1.funcCount)) ...
-        == output1.fhist(end-minfhist+(output2.funcCount-output1.funcCount)+1:end))
-    x2 = x1;
-    fx2 = fx1;
-    exitflag2 = exitflag1;
-    output2.fhist = output1.fhist;
-    output2.funcCount = output1.funcCount;
-    fprintf('The original solver exits due to failure of the TR subproblem solver.\n');
-end
-if strcmpi(solvers{1}, 'newuoa') && strcmpi(solvers{2}, 'newuoa_last') && exitflag2 == 2 && exitflag1 ~=2 ...
-        && fx1 <= fx2 && output2.funcCount <= output1.funcCount ...
-        && all(output1.fhist(end-minfhist+1:end-(output1.funcCount-output2.funcCount)) ...
-        == output2.fhist(end-minfhist+(output1.funcCount-output2.funcCount)+1:end))
-    x1 = x2;
-    fx1 = fx2;
-    exitflag1 = exitflag2;
-    output1.fhist = output2.fhist;
-    output1.funcCount = output2.funcCount;
-    fprintf('The original solver exits due to failure of the TR subproblem solver.\n');
-end
-if (ismember('newuoa', solvers) || ismember('bobyqa', solvers) || ismember('uobyqa', solvers)) ...
-        && fx1 == fx2 && norm(x1 - x2) > 0 && output1.funcCount == output2.funcCount ...
-        && all(output1.fhist(end-minfhist+1:end) == output2.fhist(end-minfhist+1:end))
-    x1 = x2;
-    fprintf('x1 changed to x2\n');
-end
+%minfhist = min(length(output1.fhist), length(output2.fhist));
 
-% COBYLA
-if (ismember('cobyla', solvers) && fx1 == fx2 && norm(x1-x2)>0) ...
-        && (~isfield(output1,'constrviolation') && ~isfield(output2, 'constrviolation') ...
-        || isfield(output1, 'constrviolation') && output1.constrviolation == output2.constrviolation)
-    x1 = x2;
-    fprintf('x1 changed to x2.\n');
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% NEWUOA
+%if strcmpi(solvers{1}, 'newuoa_last') && strcmpi(solvers{2}, 'newuoa') && exitflag1 == 2 && exitflag2 ~=2 ...
+%        && fx2 <= fx1 && output1.funcCount <= output2.funcCount ...
+%        && all(output2.fhist(end-minfhist+1:end-(output2.funcCount-output1.funcCount)) ...
+%        == output1.fhist(end-minfhist+(output2.funcCount-output1.funcCount)+1:end))
+%    x2 = x1;
+%    fx2 = fx1;
+%    exitflag2 = exitflag1;
+%    output2.fhist = output1.fhist;
+%    output2.funcCount = output1.funcCount;
+%    fprintf('The original solver exits due to failure of the TR subproblem solver.\n');
+%end
+%if strcmpi(solvers{1}, 'newuoa') && strcmpi(solvers{2}, 'newuoa_last') && exitflag2 == 2 && exitflag1 ~=2 ...
+%        && fx1 <= fx2 && output2.funcCount <= output1.funcCount ...
+%        && all(output1.fhist(end-minfhist+1:end-(output1.funcCount-output2.funcCount)) ...
+%        == output2.fhist(end-minfhist+(output1.funcCount-output2.funcCount)+1:end))
+%    x1 = x2;
+%    fx1 = fx2;
+%    exitflag1 = exitflag2;
+%    output1.fhist = output2.fhist;
+%    output1.funcCount = output2.funcCount;
+%    fprintf('The original solver exits due to failure of the TR subproblem solver.\n');
+%end
+%if (ismember('newuoa', solvers) || ismember('bobyqa', solvers) || ismember('uobyqa', solvers)) ...
+%        && fx1 == fx2 && norm(x1 - x2) > 0 && output1.funcCount == output2.funcCount ...
+%        && all(output1.fhist(end-minfhist+1:end) == output2.fhist(end-minfhist+1:end))
+%    x1 = x2;
+%    fprintf('x1 changed to x2\n');
+%end
+
+%% COBYLA
+%if (ismember('cobyla', solvers) && fx1 == fx2 && norm(x1-x2)>0) ...
+%        && (~isfield(output1,'constrviolation') && ~isfield(output2, 'constrviolation') ...
+%        || isfield(output1, 'constrviolation') && output1.constrviolation == output2.constrviolation)
+%    x1 = x2;
+%    fprintf('x1 changed to x2.\n');
+%end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 equiv = iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec);
 

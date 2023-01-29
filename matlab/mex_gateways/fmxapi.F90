@@ -10,14 +10,14 @@ module fmxapi_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Thursday, June 23, 2022 PM04:25:51
+! Last Modified: Sunday, January 29, 2023 PM03:58:43
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
 ! 1. MathWorks may change its APIs in the future!!!
 ! 2. Make sure that everything is identical to the description in the official documentation of
 ! MathWorks. Otherwise, failure or unexpected behavior may occur!!!
-! 3. Be careful with the "kind" and storage size for integer-type (integer, mwSize, mwIndex)
+! 3. Be careful with the "KIND" and storage size for integer-type (INTEGER, mwSize, mwIndex)
 ! variables/functions. Some of them may be 32bit, while the others may be 64bit, depending on the
 ! machine, the version of MATLAB, and the compilation option of mex. Do NOT assume any two of them
 ! to be the same. If ever a Segmentation Fault occurs, check these variables first.
@@ -26,9 +26,9 @@ module fmxapi_mod
 ! exchanged between Fortran and MATLAB. Type mismatch will lead to errors like Segmentation Fault.
 ! 5. Be careful with the line width limit. After preprocessing (macro expansion), some lines may
 ! become too long and hence get truncated. For the same reason, do NOT have any continued line
-! involving macros, because the & may not appear at the correct position after macro expansion. This
-! is why, for example, we define EID and MSG in the subroutines to avoid line continuation involving
-! mexErrMsgIdAndTxt.
+! involving macros, because the "&" may not appear at the correct position after macro expansion.
+! This is why, for example, we define EID and MSG in the subroutines to avoid line continuation
+! involving mexErrMsgIdAndTxt.
 
 use, non_intrinsic :: consts_mod, only : DP, RP
 implicit none
@@ -105,13 +105,14 @@ interface
 ! may change the interfaces in the future!!! Make sure that the interfaces are identical to those
 ! described in the official documentation of MathWorks!!!
 ! In particular, pay attention to the following.
-! 1. What is the type of an array? Is it automatic (like y(n)), assumed shape (like y(:)), or
-! assumed size (like y(*))?
+! 1. What is the type of an array? Is it automatic (like Y(N)), assumed shape (like Y(:)), or
+! assumed size (like Y(*))?
 ! 2. What is the kind of an integer argument? Is it INT32, INT64, or default INTEGER?
 ! 3. What is the kind of a real argument? Is it REAL32, REAL64, or default REAL?
-! 4. The return values of IsClass, IsChar, and IsDouble, etc., are INTEGER*4 (here we use INT32_MEX
-! to represent it). MathWorks may change them in the future to, e.g., logical or default INTEGER.
-! 5. Very weirdly, according to MATLAB 2020a documentation, the signature of mexFunction (entry
+! 4. The return values of IsClass, IsChar, and IsDouble, etc., are INTEGER*4 (we use INT32_MEX
+! instead as INTEGER*4 is not standard conforming). MathWorks may change them in the future to,
+! e.g., logical or default INTEGER.
+! 5. Very weirdly, according to MATLAB 2022b documentation, the signature of mexFunction (entry
 ! point to Fortran MEX function) is
 !
 !    !---------------------------------------------!
@@ -131,8 +132,8 @@ interface
 !
 ! Note that the NLHS/NRHS in the two signatures DO NOT have the same type (INTEGER v.s. INTEGER*4).
 ! This does not cause any problem, but very bizarre! MathWorks may well modify this later ---
-! for example, change all the INTEGER*4 to INTEGER. In that case, we would have to replace all the
-! INTEGER(INT32_MEX) by INTEGER.
+! for example, change the INTEGER*4 to INTEGER. In that case, we would have to replace the
+! INTEGER(INT32_MEX) with INTEGER.
 
 ! MEX subroutines
     subroutine mexErrMsgIdAndTxt(eid, emsg)
@@ -202,7 +203,11 @@ interface
 
     function mxGetM(pm)
     implicit none
-    ! The type of mxGetM/N is mwPointer by MATLAB R2020a documentation. Shouldn't it be mwSize?
+    ! The type of mxGetM/N is mwPointer by MATLAB R2022b documentation with the following "Note":
+    ! "Fortran does not have an equivalent of size_t. mwPointer is a preprocessor macro that
+    ! provides the appropriate Fortran type. The value returned by this function, however, is not
+    ! a pointer."
+    ! Isn't mwSize more appropriate here?
     mwPointer :: mxGetM
     mwPointer, intent(in) :: pm
     end function mxGetM
