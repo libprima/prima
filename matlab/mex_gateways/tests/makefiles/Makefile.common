@@ -20,7 +20,10 @@
 #
 # Started: January 2021
 #
-# Last Modified: January 2022
+# Last Modified: January 2023
+#
+# N.B. ":" means to do nothing in bash. We can use "COMMAND || :" to avoid errors when COMMAND fails.
+# It is also possible to use "true" instead of ":".
 ####################################################################################################
 
 #$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
@@ -221,7 +224,7 @@ atest_i2_r16_d1_tst atest_i4_r16_d1_tst atest_i8_r16_d1_tst atest_i2_r16_d0_tst 
 	FC2 := $(AFORT) $(FFLAGS2) -TENV:simd_zmask=off
 
 # AMD AOCC Flang
-AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2> /dev/null | sort | tail -n 1)
+AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
 AFLANG := $(AFLANG) -pedantic-errors -Werror
 # Strangely, with `-Mchkptr`, the compiler may not print the error message of `-Mbounds` anymore.
 DFORT := $(AFLANG) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Kieee #-Mchkptr
@@ -356,7 +359,7 @@ ntest_i2_r16_d1_tst ntest_i4_r16_d1_tst ntest_i8_r16_d1_tst ntest_i2_r16_d0_tst 
 	FC2 := $(NFORT) $(FFLAGS2) -nan -ieee=stop
 
 # NVIDIA nvfortran (aka, pgfortran)
-VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
+VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2>/dev/null | sort | tail -n 1)
 VFORT := $(VFORT) -Werror
 VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr
 
@@ -467,7 +470,7 @@ $(TESTS) $(TESTS_INT):
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@printf "\n\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
-	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log" 2> /dev/null
+	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log" 2>/dev/null || :
 	@$(MAKE) clean
 
 
@@ -559,7 +562,7 @@ source_%: $(SRC_DIRS)
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
 	@for SRC in $(MEXGATE_SRC); do cp $(MEXGATE_DIR)/"$$SRC" ./; done
 	@cp $(MEXGATE_DIR)/$(DEBUGF90) ./$(COMMON)  # Use the MEX version of debug.F90 instead of the Fortran version.
-	@cp $(FINTRFH) ./ && chmod 777 ./fintrf.h # The MathWorks header file for Fortran MEX. chmod is necessary.
+	@cp $(FINTRFH) ./ && chmod 777 ./fintrf.h 2>/dev/null || : # The MathWorks header file for Fortran MEX. chmod is necessary.
 	@find ./ -type f \( \
 		-name "*.mod" \
 		-o -name "*.o" \
@@ -607,7 +610,8 @@ header_%: source_%
 
 ####################################################################################################
 # Cleaning up.
-# ":" means to do nothing in bash. We can use "COMMAND || :" to avoid errors when COMMAND fails.
+# N.B. ":" means to do nothing in bash. We can use "COMMAND || :" to avoid errors when COMMAND fails.
+# It is also possible to use "true" instead of ":".
 cleanmisc:
 	@printf "\nCleaning up miscellaneous files ...\n"
 	@rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb *.out *__genmod.f90 || :

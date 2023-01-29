@@ -4,9 +4,11 @@ function [mrec, mmin, output] = testcu(solvers, options)
 rhobeg = 1;
 rhoend = 1e-6;
 maxfun_dim = 500;
-%maxfun = 50000;
 maxfun = 20000;
-maxit = 1000;
+%maxfun = 40000;
+%maxfun = 100000;
+%maxit = 1000;
+maxit = 10000;  % maxit is not used by Powell's methods
 ftarget = -inf;
 perm = false;
 randomizex0 = 0;
@@ -14,21 +16,20 @@ eval_options = struct();
 nr = 5;
 ctol = 1e-10;
 cpenalty = 1e10;
-%ctol = inf
-%cpenalty  = 0
-type = 'ubln'; % The types of problems to test
-mindim = 1; % The minimal dimension of problems to test
+type = 'ubln'; % The default types of problems to test
+mindim = 1; % The default minimal dimension of problems to test
 solvers = lower(solvers);
 if startsWith(solvers{1}, 'cobyla') || startsWith(solvers{2}, 'cobyla')
-    maxdim = 20; % The maximal dimension of problems to test
+    maxdim = 20; % The default maximal dimension of problems to test
 else
-    maxdim = 50; % The maximal dimension of problems to test
+    maxdim = 50; % The default maximal dimension of problems to test
 end
-mincon = 0; % The minimal number of constraints of problems to test
-maxcon = min(5000, 100*maxdim); % The maximal number of constraints of problems to test
+mincon = 0; % The default minimal number of constraints of problems to test
+maxcon = min(5000, 100*maxdim); % The default maximal number of constraints of problems to test
 sequential = false;
 %debug = false;
 debug = true;
+%chkfunval = false;
 chkfunval = true;
 output_xhist = true;
 output_nlchist = true;
@@ -273,6 +274,8 @@ if ischstr(solver)
     solver = str2func(solver);
 end
 
+% N.B.: prob.options.maxfun may differ from options.maxfun. Here we use the latter. Otherwise, the
+% sizes will mismatch when we assign the result of this function to frec and crec.
 maxfun = options.maxfun;
 fval_history = NaN(1, maxfun);
 cv_history = NaN(1, maxfun);
@@ -281,7 +284,7 @@ cv_history = NaN(1, maxfun);
 prob.options.output_xhist = true;  % We always need xhist to recover the history of the computation.
 
 [~, ~, ~, output] = solver(prob);
-% Some solvers (e.g., fmincon) may not respect maxfun. Indeed, PRIMA solvers may also increase maxfun
+% Solvers (e.g., fmincon) may not respect maxfun. Indeed, PRIMA solvers may also increase maxfun
 % if it is too small (e.g., <= npt for NEWUOA).
 nf = min(maxfun, output.funcCount);
 
@@ -297,7 +300,7 @@ if (nf >= 1)
     fval_history(nf+1:maxfun) = fval_history(nf);
     cv_history(nf+1:maxfun) = cv_history(nf);
 else
-    % Sometimes prima may return nf = 0, e.g., when it detects infeasibility.
+    % Sometimes PRIMA may return nf = 0, e.g., when it detects infeasibility.
     fval_history = prob.f0;
     cv_history = prob.constrv0;
 end
@@ -493,7 +496,7 @@ function solv_options = setsolvopt(solv, n, options)
 solv_options = struct();
 solv_options.rhobeg = options.rhobeg;
 solv_options.rhoend = options.rhoend;
-solv_options.maxfun = min(options.maxfun_dim*n, options.maxfun);
+solv_options.maxfun = min(options.maxfun_dim*n, options.maxfun);  % may differ from options.maxfun
 solv_options.ftarget = options.ftarget;
 solv_options.output_xhist = options.output_xhist;
 solv_options.output_nlchist = options.output_nlchist;
