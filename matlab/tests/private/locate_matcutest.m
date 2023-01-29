@@ -8,6 +8,7 @@ if nargin < 1
     directory = homedir();
 end
 
+% In the following line, the "*/" before "matcutest" cannot be removed.
 [~, cmtools] = system(['find ', directory, ' -maxdepth 6 -wholename "*/matcutest/mtools/src" -type d -print -quit']);
 
 if isempty(cmtools)
