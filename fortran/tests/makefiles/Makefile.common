@@ -843,6 +843,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___negvdi2" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___negvsi2" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___powidf2" \
+	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___powisf2" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvdi3" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvsi3" \
 	| tee -a "$(LOG_DIR)/$@.log"
