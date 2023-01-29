@@ -9,11 +9,11 @@ switch solver
     case {'uobyqa', 'newuoa'}
         req.type = 'u';
     case 'bobyqa'
-        req.type = 'ub';
+        req.type = 'b';
     case 'lincoa'
-        req.type = 'ubl';
+        req.type = 'l';
     case 'cobyla'
-        req.type = 'ubln';
+        req.type = 'ln';
 end
 
 solver_fun = str2func(solver);

@@ -185,19 +185,21 @@ if isempty(prob)
         end
         if options.maxdim == 100
             options.maxdim = 50;
-            options.maxcon = 20*options.maxdim;
+            %options.maxcon = 20*options.maxdim;
         end
         if options.mindim == 101
             options.mindim = 51;
         end
         if options.maxdim == 200
-            if strcmpi(invoker, 'profile')  % It is indeed 'profile', not a typo
-                options.maxdim = 90;
-            else
-                options.maxdim = 100;
-            end
-            options.maxcon = 20*options.maxdim;
+            %if strcmpi(invoker, 'profile')  % It is indeed 'profile', not a typo
+            %    options.maxdim = 90;
+            %else
+            %    options.maxdim = 100;
+            %end
+            %options.maxcon = 20*options.maxdim;
+            options.maxdim = 100;
         end
+        options.maxcon = 100*options.maxdim;
     end
 
 

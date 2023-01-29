@@ -39,7 +39,8 @@ else
     maxdim = 50; % The default maximal dimension of problems to test
 end
 mincon = 0; % The default minimal number of constraints of problems to test
-maxcon = min(5000, 100*maxdim); % The default maximal number of constraints of problems to test
+%maxcon = min(5000, 100*maxdim); % The default maximal number of constraints of problems to test
+maxcon = 100; % The default maximal number of constraints of problems to test
 sequential = false;
 %debug = false;
 debug = true;
@@ -688,6 +689,38 @@ case 'cobyla'
         'TAXR13322', ...
         'TRO4X4', ...
         }];
+    % In a test on 230130, the following problems were the most time consuming. The number following
+    % the problem is the time in seconds. All the linear of nonlinearly constrained problems with at
+    % most 100 variables and 10000 constraints were tested. Bound-constrained or unconstrained
+    % problems were not tested.
+    blacklist = [blacklist, { ...
+        'DIAMON3D', ...     % 3703
+        'DMN15103', ...     % 3205
+        'DMN37143', ...     % 2406
+        'DMN15333', ...     % 1441
+        'DIAMON2D', ...     % 1415
+        'DMN15102', ...     % 887
+        'DMN37142', ...     % 857
+        'DMN15332', ...     % 838
+        'HYDCAR20', ...     % 648
+        'LUKSAN12', ...     % 563
+        'CHEBYQADNE', ...   % 546
+        'LUKSAN13', ...     % 508
+        %'HAIFAM', ...       % 173
+        %'HIMMELBI', ...     % 100
+        %'VANDERM3', ...     % 76
+        %'AIRPORT', ...      % 73
+        %'DUAL1', ...        % 73
+        %'VANDERM1', ...     % 72
+        %'VANDERM2', ...     % 72
+        %'LAKES', ...        % 65
+        %'CORE1', ...        % 64
+        %'CVXQP1', ...       % 54
+        %'MSS1', ...         % 39
+        %'CHNRSNBMNE', ...   % 32
+        %'TRO4X4', ...       % 30
+        %'DUAL2', ...        % 30
+         }];
     % For the following problems, the classical cobyla encounters SEGFAULT.
     blacklist = [blacklist, {'LAKES', 'VANDERM4'}];
 end
