@@ -6,7 +6,7 @@
 FINTRFH=$(locate '/extern/include/fintrf.h' 2>/dev/null | head -n 1)
 if [[ -z "$FINTRFH" ]] ; then
     printf "\n***********************************************"
-    printf "\nfintrf.h is not found. All tests are skipped.\n"
+    printf "\nfintrf.h is not found. Skip mlint.\n"
     printf "*********************************************\n\n"
     exit 0
 fi
