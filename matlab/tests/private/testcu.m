@@ -40,7 +40,7 @@ else
 end
 mincon = 0; % The default minimal number of constraints of problems to test
 %maxcon = min(5000, 100*maxdim); % The default maximal number of constraints of problems to test
-maxcon = 100; % The default maximal number of constraints of problems to test
+maxcon = 10000; % The default maximal number of constraints of problems to test
 sequential = false;
 %debug = false;
 debug = true;
