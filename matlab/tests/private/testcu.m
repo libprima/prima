@@ -80,7 +80,6 @@ else
 
     plist = secup(requirements);
 end
-keyboard
 
 np = length(plist);
 ns = length(solvers);
