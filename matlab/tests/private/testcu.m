@@ -70,7 +70,7 @@ else
     %    requirements.blacklist = [requirements.blacklist, {'GMNCASE2'}];
 
         requirements.blacklist = [requirements.blacklist, {'VANDERM4', 'LAKES'}]; % The classical COBYLA encounters SIGFAULT
-        requirements.blacklist = [requirements.blacklist, {'DALLASS', 'QPCBLEND', 'TAXR13322'}]; % The profiling script on GitHub Actions seems to be blocked by them
+        requirements.blacklist = [requirements.blacklist, {'DALLASS', 'QPCBLEND', 'TAXR13322', 'TAX13322'}]; % The profiling script on GitHub Actions seems to be blocked by them
     end
     if startsWith(solvers{1}, 'lincoa') || startsWith(solvers{2}, 'lincoa')
     %    requirements.blacklist = [requirements.blacklist, {'TARGUS', 'ARGTRIGLS', 'VARDIM'}];  % Takes too long time
@@ -81,11 +81,11 @@ else
     end
     if startsWith(solvers{1}, 'newuoa') || startsWith(solvers{2}, 'newuoa')
     %    requirements.blacklist = [requirements.blacklist, {'ARGTRIGLS'}]; % Takes too long time
-        requirements.blacklist = [requirements.blacklist, {'LRCOVTYPE', 'HYDC20LS', 'DIAMON2DLS'}]; % The profiling script on GitHub Actions seems to be blocked by them
+        requirements.blacklist = [requirements.blacklist, {'LRCOVTYPE', 'HYDC20LS', 'DIAMON2DLS', 'BROWNAL'}]; % The profiling script on GitHub Actions seems to be blocked by them
     end
     if startsWith(solvers{1}, 'uobyqa') || startsWith(solvers{2}, 'uobyqa')
     %    requirements.blacklist = [requirements.blacklist, {'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'ERRINRSM', 'TOINTGOR', 'TOINTPSP', 'VAREIGVL'}]; % Takes too long time
-        requirements.blacklist = [requirements.blacklist, {'LRCOVTYPE', 'HYDC20LS', 'ERRINROS'}]; % The profiling script on GitHub Actions seems to be blocked by them
+        requirements.blacklist = [requirements.blacklist, {'LRCOVTYPE', 'HYDC20LS', 'ERRINROS', 'DMN37142LS'}]; % The profiling script on GitHub Actions seems to be blocked by them
     end
 
     plist = secup(requirements);
