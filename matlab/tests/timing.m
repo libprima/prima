@@ -4,7 +4,7 @@ locate_matcutest();
 
 req.mindim = mindim;
 req.maxdim = maxdim;
-req.maxcon = 500*maxdim;
+req.maxcon = 100*maxdim;
 switch solver
     case {'uobyqa', 'newuoa'}
         req.type = 'u';
