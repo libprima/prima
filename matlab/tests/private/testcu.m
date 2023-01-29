@@ -3,10 +3,19 @@ function [mrec, mmin, output] = testcu(solvers, options)
 % Default options
 rhobeg = 1;
 rhoend = 1e-6;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Suppose that MAXN is the maximal possible dimension of problems
+% in our test. Ideally, we should set maxfun to maxfun_dim*MAXN.
+% Note that MAXN is not maxdim, which may be overridden by options.
+% If MAXN = 200, then we should set maxfun to 200*maxfun_dim.
+% To be done later.
+%maxfun_dim = 100;
+%maxfun_dim = 200;
 maxfun_dim = 500;
 maxfun = 20000;
 %maxfun = 40000;
 %maxfun = 100000;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %maxit = 1000;
 maxit = 10000;  % maxit is not used by Powell's methods
 ftarget = -inf;
