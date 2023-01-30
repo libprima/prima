@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, January 30, 2023 PM04:31:30
+! Last Modified: Monday, January 30, 2023 PM11:56:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -109,7 +109,7 @@ integer(IK) :: nhist
 integer(IK) :: subinfo
 integer(IK) :: tr
 logical :: bad_trstep
-logical :: adequate_geo
+logical :: acceptable_geo
 logical :: evaluated(size(x) + 1)
 logical :: improve_geo
 logical :: reduce_rho
@@ -195,6 +195,9 @@ call initxfc(calcfc, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, ch
    & conmat, cval, fhist, fval, sim, simi, xhist, evaluated, subinfo)
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
+! N.B.: The filter is used only when selecting which iterate to return. It does not interfere with
+! the iterations. COBYLA is NOT a filter method but a trust-region method based on an L-infinity
+! merit function.
 call initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
 ! Check whether to return due to abnormal cases that may occur during the initialization.
@@ -271,7 +274,7 @@ do tr = 1, maxtr
     ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
     ! Does the interpolation set have acceptable geometry? It affects IMPROVE_GEO and REDUCE_RHO.
-    adequate_geo = assess_geo(delta, factor_alpha, factor_beta, sim, simi)
+    acceptable_geo = assess_geo(delta, factor_alpha, factor_beta, sim, simi)
 
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
@@ -416,24 +419,24 @@ do tr = 1, maxtr
     ! consecutive iterations without moving SIM(:, N+1) or reducing RHO. Otherwise, the algorithm
     ! will get stuck in repetitive invocations of GEOSTEP. This is ensured by the following facts.
     ! 1. If an iteration sets IMPROVE_GEO = TRUE, it must also reduce DELTA or set DELTA to RHO.
-    ! 2. If SIM(:, N+1) and RHO remain unchanged, then ADEQUATE_GEO will become TRUE after at most
-    ! N invocations of GEOSTEP.
+    ! 2. If SIM(:, N+1) and RHO remains unchanged, then ACCEPTABLE_GEO will become TRUE after at
+    ! most N invocations of GEOSTEP.
 
     ! BAD_TRSTEP: Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
     ! IMPROVE_GEO: Should we take a geometry step to improve the geometry of the interpolation set?
-    improve_geo = (bad_trstep .and. .not. adequate_geo)
+    improve_geo = (bad_trstep .and. .not. acceptable_geo)
     ! REDUCE_RHO: Should we enhance the resolution by reducing RHO?
-    reduce_rho = (bad_trstep .and. adequate_geo .and. max(delta, dnorm) <= rho)
+    reduce_rho = (bad_trstep .and. acceptable_geo .and. max(delta, dnorm) <= rho)
 
     ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
     !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO are not both TRUE', srname)
 
     ! If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO
-    ! is TRUE unless ADEQUATE_GEO is TRUE and MAX(DELTA, DNORM) > RHO.
+    ! is TRUE unless ACCEPTABLE_GEO is TRUE and MAX(DELTA, DNORM) > RHO.
     !call assert((.not. shortd .and. max(prerec, preref) > 0) .or. (improve_geo .or. reduce_rho .or. &
-    !    & (adequate_geo .and. max(delta, dnorm) > rho)), 'If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then&
-    !    & either IMPROVE_GEO or REDUCE_RHO is TRUE unless ADEQUATE_GEO is TRUE and MAX(DELTA, DNORM) > RHO', srname)
+    !    & (acceptable_geo .and. max(delta, dnorm) > rho)), 'If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then&
+    !    & either IMPROVE_GEO or REDUCE_RHO is TRUE unless ACCEPTABLE_GEO is TRUE and MAX(DELTA, DNORM) > RHO', srname)
     !----------------------------------------------------------------------------------------------!
 
     ! Comments on BAD_TRSTEP:
@@ -445,9 +448,9 @@ do tr = 1, maxtr
     ! 2. NEWUOA/BOBYQA/LINCOA would define BAD_TRSTEP, IMPROVE_GEO, and REDUCE_RHO as follows. Two
     ! different thresholds are used in BAD_TRSTEP. It outperforms Powell's version.
     ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= eta1 .or. jdrop_tr == 0)
-    ! !improve_geo = bad_trstep .and. .not. adequate_geo
+    ! !improve_geo = bad_trstep .and. .not. acceptable_geo
     ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
-    ! !reduce_rho = bad_trstep .and. adequate_geo .and. max(delta, dnorm) <= rho
+    ! !reduce_rho = bad_trstep .and. acceptable_geo .and. max(delta, dnorm) <= rho
     ! 3. Theoretically, JDROP_TR > 0 when ACTREM > 0 (guaranteed by RATIO > 0). However, in Powell's
     ! implementation, JDROP_TR may be 0 even RATIO > 0 due to NaN. The modernized code has rectified
     ! this in the function SETDROP_TR. After this rectification, we can indeed simplify the
