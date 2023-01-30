@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, January 28, 2023 AM04:55:35
+! Last Modified: Monday, January 30, 2023 PM04:31:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -296,15 +296,16 @@ do tr = 1, maxtr
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
     ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
-    ! 1. PREREC >= 0; PREREC = 0 iff B(1:M) <= 0, i.e., the trust-region center satisfies the
-    ! linearized constraints.
+    ! 1. B(1:M) = -CONMAT(:, N + 1), and hence MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]) is the
+    ! L-infinity violation of the linearized constraints corresponding to D. When D = 0, the
+    ! violation is MAXVAL([B(1:M), ZERO]) = CVAL(N+1). PREREC is the reduction of this violation
+    ! achieved by D, which is nonnegative in theory; PREREC = 0 iff B(1:M) <= 0, i.e., the
+    ! trust-region center satisfies the linearized constraints.
     ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
-    ! 3. Due to 2, in theory, MAX(PREREC, preref) > 0 if SHORTD is FALSE.
+    ! 3. Due to 2, in theory, MAX(PREREC, PREREF) > 0 if SHORTD is FALSE.
+    ! 4. In the code, MAX(PREREC, PREREF) is the counterpart of QRED in UOBYQA/NEWUOA/BOBYQA/LINCOA.
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     preref = inprod(d, A(:, m + 1))  ! Can be negative.
-    ! N.B.: 1. B(1:M) = -CONMAT(:, N + 1). 2. CVAL(N+1) = MAXVAL([B(1:M), ZERO]).
-    ! 3. D is supposed to reduce MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]). Hence PREREC
-    ! is nonnegative in theory, but it may fail to be so due to rounding errors.
 
     if (shortd .or. .not. max(prerec, preref) > 0) then
         ! Reduce DELTA if D is short or D fails to render MAX(PREREC, PREREF) > 0, the latter can
