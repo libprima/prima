@@ -1,4 +1,4 @@
-function [tlist, plist] = timing(solver, mindim, maxdim)
+function [tlist, plist] = timing(solver, mindim, maxdim, blacklist, minip)
 
 % Find where MatCUTEst is installed
 locate_matcutest();
@@ -15,6 +15,15 @@ clear('setup');  % Without this, the next line may not call the latest version o
 setup(solver);
 cd(cpwd);
 
+% In case blacklist and minip are not present ...
+if nargin <= 3
+    blacklist = {};
+end
+if nargin <= 4
+    minip = 1;
+end
+
+% Define the problem list
 req.mindim = mindim;
 req.maxdim = maxdim;
 req.maxcon = 100*maxdim;
@@ -30,10 +39,10 @@ switch solver
 end
 
 solver_fun = str2func(solver);
-plist = secup(req);
+plist = setdiff(secup(req), blacklist);
 tlist= NaN(length(plist), 1);
 
-for ip = 1 : length(plist)
+for ip = minip : length(plist)
     fprintf("%4d. %s ", ip, plist{ip});
     tic;
     prob = macup(plist{ip});
