@@ -1,6 +1,19 @@
 function [tlist, plist] = timing(solver, mindim, maxdim)
 
+% Find where MatCUTEst is installed
 locate_matcutest();
+
+% Mute the warnings
+orig_warning_state = warnoff({solver});
+
+% Prepare the solver
+cpwd = pwd();  % The current directory
+mfiledir = fileparts(mfilename('fullpath'));  % The directory containing this m file
+prima_dir = fileparts(fileparts(mfiledir));  % The directory containing the setup script
+cd(prima_dir);
+clear('setup');  % Without this, the next line may not call the latest version of `setup`
+setup(solver);
+cd(cpwd);
 
 req.mindim = mindim;
 req.maxdim = maxdim;
@@ -21,13 +34,18 @@ plist = secup(req);
 tlist= NaN(length(plist), 1);
 
 for ip = 1 : length(plist)
-    plist{ip}
+    fprintf("%4d. %s ", ip, plist{ip});
     tic;
     prob = macup(plist{ip});
     prob.options.debug = true;
     solver_fun(prob);
+    decup(prob);
     tlist(ip) = toc;
-    tlist(ip)
+    fprintf("\t\t%g\n", tlist(ip));
 end
 
+% Restore the behavior of displaying warnings
+warning(orig_warning_state);
+
+% Save the data
 save([solver, '_', int2str(mindim), '_', int2str(maxdim), '_', 'timing.mat'], 'plist', 'tlist');

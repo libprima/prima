@@ -18,7 +18,7 @@ isverify = strcmp(invoker, 'verify');  % Are we conducting verification?
 last_dir = fullfile(prima_dir, 'last');
 solverl_dir = fullfile(last_dir, 'matlab', 'interfaces');
 solver_dir = fullfile(prima_dir, 'matlab', 'interfaces');
-spaths={solverl_dir, solver_dir};
+spaths = {solverl_dir, solver_dir};
 
 % Set up the solvers, taking particularly `compile_flag` and `debug_flag` (true/false) into account.
 compile_flag = ~isfield(options, 'compile') || options.compile;
