@@ -138,7 +138,8 @@ if sequential
             compare(solvers, prob, ir, prec, single_test, options);
         end
 
-        decup(pname);
+        decup(prob);
+
         warning(orig_warning_state); % Restore the behavior of displaying warnings
     end
 else
@@ -160,7 +161,8 @@ else
             compare(solvers, prob, ir, prec, single_test, options);
         end
 
-        decup(pname);
+        decup(prob);
+
         warning(orig_warning_state); % Restore the behavior of displaying warnings
     end
 end

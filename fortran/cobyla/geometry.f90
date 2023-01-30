@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, December 01, 2022 PM12:33:40
+! Last Modified: Monday, January 30, 2023 PM11:54:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: assess_geo, setdrop_geo, setdrop_tr, geostep
 contains
 
 
-function assess_geo(delta, factor_alpha, factor_beta, sim, simi) result(adequate_geo)
+function assess_geo(delta, factor_alpha, factor_beta, sim, simi) result(acceptable_geo)
 !--------------------------------------------------------------------------------------------------!
 ! This function checks if an interpolation set has acceptable geometry as (14) of the COBYLA paper.
 !--------------------------------------------------------------------------------------------------!
@@ -44,7 +44,7 @@ real(RP), intent(in) :: sim(:, :)   ! SIM(N, N+1)
 real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
 
 ! Outputs
-logical :: adequate_geo
+logical :: acceptable_geo
 
 ! Local variables
 character(len=*), parameter :: srname = 'ASSESS_GEO'
@@ -84,7 +84,7 @@ end if
 ! number, i.e., one. For this simplex, the distance from V_{N+1} to its opposite face is L/SQRT{N}.
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
-adequate_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta * delta)
+acceptable_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta * delta)
 
 !====================!
 !  Calculation ends  !
@@ -265,7 +265,7 @@ end if
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 
-! Decide which vertex to drop from the simplex. It will be replaced by a new point to improve
+! Decide which vertex to drop from the simplex. It will be replaced by a new point to improve the
 ! acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
 if (any(veta > factor_beta * delta)) then
     jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))

@@ -40,4 +40,5 @@ for ip = 1 : length(plist)
             keyboard
         end
     end
+    decup(p);
 end

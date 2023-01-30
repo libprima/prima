@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 22, 2022 AM11:32:34
+! Last Modified: Monday, January 30, 2023 PM10:53:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -252,6 +252,10 @@ constr = matprod(x, A_orig) - b_orig
 cstrv = maximum([ZERO, constr])
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
+! N.B.: The filter is used only when selecting which iterate to return. It does not interfere with
+! the iterations. LINCOA is NOT a filter method but a trust-region method. All the trust-region
+! iterates are supposed to be feasible, but can be infeasible due to rounding errors; the
+! geometry-improving iterates are not necessarily feasible.
 nfilt = 0
 do k = 1, npt
     if (evaluated(k)) then
