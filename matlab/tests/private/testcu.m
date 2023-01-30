@@ -21,8 +21,7 @@ maxfun = 20000;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % maxit is not used by Powell's methods
-%maxit = 1000;
-maxit = 10000;
+maxit = 1000;
 
 ftarget = -inf;
 perm = false;
@@ -40,7 +39,7 @@ else
 end
 mincon = 0; % The default minimal number of constraints of problems to test
 %maxcon = min(5000, 100*maxdim); % The default maximal number of constraints of problems to test
-maxcon = 10000; % The default maximal number of constraints of problems to test
+maxcon = 20000; % The default maximal number of constraints of problems to test
 sequential = false;
 %debug = false;
 debug = true;
@@ -673,6 +672,9 @@ case 'lincoa'
     % For the following problems, the classical lincoa encounters SEGFAULT.
     blacklist = [blacklist, {'3PK', 'LSNNODOC', 'MAKELA4', 'OET1', 'QPCBOEI2', 'QPNBOEI2', 'SIPOW3', 'SIPOW4', 'TFI2'}];
 case 'cobyla'
+    % The following problems were observed to take excessive time during tests GitHub Actions and
+    % make the tests run overtime. Some of them may not be very time-consuming during a "plain"
+    % test but become more challenging with some perturbations or variations.
     blacklist = [blacklist, { ...
         'AIRPORT', ...
         'BATCH', ...
@@ -709,16 +711,16 @@ case 'cobyla'
         %'HAIFAM', ...       % 173
         %'HIMMELBI', ...     % 100
         %'VANDERM3', ...     % 76
-        %'AIRPORT', ...      % 73
-        %'DUAL1', ...        % 73
+        %'AIRPORT', ...      % 73, included in the first list
+        %'DUAL1', ...        % 73, included in the first list
         %'VANDERM1', ...     % 72
         %'VANDERM2', ...     % 72
         %'LAKES', ...        % 65
-        %'CORE1', ...        % 64
+        %'CORE1', ...        % 64, included in the first list
         %'CVXQP1', ...       % 54
-        %'MSS1', ...         % 39
-        %'CHNRSNBMNE', ...   % 32
-        %'TRO4X4', ...       % 30
+        %'MSS1', ...         % 39, included in the first list
+        %'CHNRSNBMNE', ...   % 32, included in the first list
+        %'TRO4X4', ...       % 30, included in the first list
         %'DUAL2', ...        % 30
          }];
     % For the following problems, the classical cobyla encounters SEGFAULT.
