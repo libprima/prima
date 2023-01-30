@@ -117,7 +117,7 @@ if isempty(requirements.list)
         blacklist = [blacklist, {'LSNNODOC', 'HS55', 'AVGASA', 'AVGASB'}]; % possible reason for a segfault; should test it after the modernization.
         blacklist = [blacklist, {'CHEBYQAD', 'HS54'}]; % The classical lincoa encounters segfault
         blacklist = [blacklist, {'ARGTRIGLS', 'BROWNAL', 'PENALTY3', 'VARDIM'}]; % More than 10 minutes to solve.
-        blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS', 'LUKSAN21LS', 'MINSURF', 'QPCBLEND', 'LSQFIT'}]; % Too long to solve
+        blacklist = [blacklist, {' QPNBOEI2', 'QPCBOEI2', 'SIM2BQP', 'BQP1VAR', 'LUKSAN22LS', 'LUKSAN21LS', 'MINSURF', 'QPCBLEND', 'LSQFIT', 'CVXQP1'}]; % Too long to solve
     case {'cobyla', 'cobylan'}
         blacklist = [blacklist, {'HS80'}];  % QRADD_RDIAG: Assertion failed: C^T*Q(:, N) == Rdiag(N).
         blacklist = [blacklist, {'PALMER4ANE', 'PALMER5BNE'}];
@@ -138,7 +138,7 @@ if isempty(requirements.list)
         %    'VANDERM1', 'VANDERM2', 'VANDERM3'}];  % Takes more than 10 sec to solve
 
         % 51-100 dimensional problems that take too long time to be used in the verification.
-        blacklist = [blacklist, {'HYDCAR20', 'LUKSAN13', 'CHEBYQADNE', 'HAIFAM', 'LUKSAN12', 'HIMMELBI', 'DUAL1', ...
+        blacklist = [blacklist, {'PALMER7ANE', 'HYDCAR20', 'LUKSAN13', 'CHEBYQADNE', 'HAIFAM', 'LUKSAN12', 'HIMMELBI', 'DUAL1', ...
             'AIRPORT', 'CHEBYQAD', 'LUKSAN14LS', 'LUKSAN13LS', 'HYDC20LS', 'LUKSAN11LS', 'LUKSAN12LS', 'CORE1', ...
             'LUKSAN14', 'DUAL2', 'LUKSAN15', 'ACOPP30', ...  % 6~10 min
             'VANDERM3', 'CHANDHEQ', ... % > 5 min
