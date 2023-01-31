@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, December 31, 2022 AM03:19:37
+! Last Modified: Tuesday, January 31, 2023 PM05:25:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -432,6 +432,7 @@ do while (.true.)
 
     ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
+        ! XPT(:, KNEW_GEO) will become XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
         delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)
 

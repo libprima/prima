@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, January 30, 2023 PM11:56:18
+! Last Modified: Tuesday, January 31, 2023 PM11:00:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -198,7 +198,7 @@ call initxfc(calcfc, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, ch
 ! N.B.: The filter is used only when selecting which iterate to return. It does not interfere with
 ! the iterations. COBYLA is NOT a filter method but a trust-region method based on an L-infinity
 ! merit function. Powell's implementation does not use a filter to select the iterate, possibly
-! returning a suboptimal iterate. 
+! returning a suboptimal iterate.
 call initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
 ! Check whether to return due to abnormal cases that may occur during the initialization.
@@ -393,7 +393,7 @@ do tr = 1, maxtr
         ! is no good point to replace, and X will not be included into the simplex; in this case,
         ! the geometry of the simplex likely needs improvement, which will be handled below.
         ! N.B.: COBYLA never sets JDROP_TR = N + 1.
-        jdrop_tr = setdrop_tr(ximproved, d, delta, factor_alpha, factor_delta, sim, simi)
+        jdrop_tr = setdrop_tr(ximproved, d, delta, sim, simi)
 
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
         ! UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides to discard X.
