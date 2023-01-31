@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 31, 2023 PM11:16:16
+! Last Modified: Wednesday, February 01, 2023 AM02:04:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -192,7 +192,13 @@ if (ximproved .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP == 0 f
     !!MATLAB: [~, jdrop] = max(veta, [], 'omitnan');
 end if
 
-score = max(ONE, 10.0_RP * veta / delta**2)**2 * abs(simid)
+if (ximproved) then
+    veta = (sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
+    !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2));  % d should be a column! Implicit expansion
+else
+    veta = (sum(sim(:, 1:n)**2, dim=1))
+end if
+score = veta * abs(simid)
 
 if (any(veta > 0)) then
     jdrop = maxloc(score, dim=1, mask=.not. is_nan(score))
