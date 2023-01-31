@@ -96,7 +96,7 @@ end
 if (isfield(options, 'maxcon'))
     requirements.maxcon = options.maxcon;
 else
-    requirements.maxcon = min(5000, 100*requirements.maxdim);
+    requirements.maxcon = min(20000, 100*requirements.maxdim);
 end
 if (isfield(options, 'type'))
     requirements.type = options.type;
