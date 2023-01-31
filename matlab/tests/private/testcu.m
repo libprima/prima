@@ -709,7 +709,6 @@ case 'cobyla'
         'CHNRSNBMNE', ...   % 32
         'CORE1', ...        % 64
         'CVXQP1', ...       % 54
-        'DALLASS', ...      % 3
         'DIAMON2D', ...     % 1415
         'DIAMON3D', ...     % 3703
         'DMN15102', ...     % 887
@@ -726,7 +725,6 @@ case 'cobyla'
         'HYDCAR20', ...     % 648
         'LAKES', ...        % 65
         'LEVYMONE', ...     % 15
-        'LINSPANH', ...     % 3
         'LUKSAN12', ...     % 563
         'LUKSAN13', ...     % 508
         'LUKSAN14', ...     % 23
@@ -738,12 +736,14 @@ case 'cobyla'
         'MSS1', ...         % 39
         'SPANHYD', ...      % 15
         'SWOPF', ...        % 10
-        'TAX13322', ...     % 5
-        'TAXR13322', ...    % 5
         'TRO4X4', ...       % 30
         'VANDERM1', ...     % 72
         'VANDERM2', ...     % 72
         'VANDERM3', ...     % 76
+        'TAX13322', ...     % 5
+        'TAXR13322', ...    % 5
+        %'DALLASS', ...      % 3
+        %'LINSPANH', ...     % 3
          }];
     % For the following problems, the classical cobyla encounters SEGFAULT.
     blacklist = [blacklist, {'LAKES', 'VANDERM4'}];

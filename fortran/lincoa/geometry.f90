@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 31, 2023 PM02:21:23
+! Last Modified: Tuesday, January 31, 2023 PM11:31:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,8 +116,8 @@ den = calden(kopt, bmat, d, xpt, zmat, idz)
 score = weight * abs(den)
 
 ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
-! This is not really needed if DISTSQ does not take XIMPROVED into account and WEIGHT is defined to
-! DISTSQ to some power, in which case SCORE(KOPT) = 0. We keep the code for robustness.
+! This is not really needed if WEIGHT is defined to DISTSQ to some power, in which case
+! SCORE(KOPT) = 0. We keep the code for robustness (in case the definition of WEIGHT changes later).
 if (.not. ximproved) then
     score(kopt) = -ONE
 end if

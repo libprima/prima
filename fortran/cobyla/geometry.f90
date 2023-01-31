@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 31, 2023 PM11:08:43
+! Last Modified: Tuesday, January 31, 2023 PM11:33:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -226,6 +226,13 @@ weight = max(ONE, TEN * veta / delta**2)**2
 !! and DEN in NEWUOA/BOBYQA/LINCOA.
 simid = matprod(simi, d)
 score = weight * abs(simid)
+
+! If XIMPROVED is FALSE (the new D does not render a better X), we set SCORE(KOPT) = -1 to avoid
+! KNEW = KOPT. This is not really needed if WEIGHT is defined to DISTSQ to some power, in which case
+! SCORE(KOPT) = 0. We keep the code for robustness (in case the definition of WEIGHT changes later).
+if (.not. ximproved) then
+    score(kopt) = -ONE
+end if
 
 if (any(score > 0)) then
     jdrop = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(jdrop))
