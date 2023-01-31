@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 31, 2023 PM02:20:03
+! Last Modified: Tuesday, January 31, 2023 PM02:29:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -171,15 +171,19 @@ if (any(abs(simid) > 1) .or. (ximproved .and. any(.not. is_nan(simid)))) then
     !!MATLAB: [~, jdrop] = max(simid, [], 'omitnan');
 end if
 
+! VETA(J) is the square of the distance from the J-th vertex of the simplex to the best vertex,
+! taking the trial point SIM(:, N+1) + D into account.
 if (ximproved) then
     veta = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
     !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2));  % d should be a column! Implicit expansion
 else
     veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
+
 ! VSIG(J) (J=1, .., N) is the Euclidean distance from vertex J to the opposite face of the simplex.
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 sigbar = abs(simid) * vsig
+
 ! The following JDROP will overwrite the previous one if its premise holds.
 mask = (veta > factor_delta * delta .and. (sigbar >= factor_alpha * delta .or. sigbar >= vsig))
 if (any(mask)) then
