@@ -741,7 +741,7 @@ case 'cobyla'
         'VANDERM2', ...     % 72
         'VANDERM3', ...     % 76
         'TAX13322', ...     % 5
-        'TAXR13322', ...    % 5
+        %'TAXR13322', ...    % 5
         %'DALLASS', ...      % 3
         %'LINSPANH', ...     % 3
          }];
