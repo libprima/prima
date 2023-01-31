@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 13, 2022 AM10:06:56
+! Last Modified: Tuesday, January 31, 2023 PM02:17:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,6 +129,8 @@ weight = max(ONE, distsq / rho**2)**3.5
 ! !weight = max(ONE, distsq / rho**2)**4
 ! !weight = max(ONE, distsq / rho**2)**4.5
 
+! Different from NEWUOA/LINCOA, the possibility that entries in DEN become negative is handled by
+! RESCUE. Hence the SCORE here uses DEN in contrast to ABS(DEN) in NEWUOA/LINCOA.
 den = calden(kopt, bmat, d, xpt, zmat)
 score = weight * den
 
