@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 31, 2023 PM11:00:59
+! Last Modified: Wednesday, February 01, 2023 AM02:02:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -393,7 +393,7 @@ do tr = 1, maxtr
         ! is no good point to replace, and X will not be included into the simplex; in this case,
         ! the geometry of the simplex likely needs improvement, which will be handled below.
         ! N.B.: COBYLA never sets JDROP_TR = N + 1.
-        jdrop_tr = setdrop_tr(ximproved, d, delta, sim, simi)
+        jdrop_tr = setdrop_tr(ximproved, d, sim, simi)
 
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
         ! UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides to discard X.
@@ -492,6 +492,8 @@ do tr = 1, maxtr
         ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
         ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
         jdrop_geo = setdrop_geo(delta, factor_alpha, factor_beta, sim, simi)
+
+        !jdrop_geo = maxloc(sum(sim(:, 1:n)**2, dim=1), dim=1) !???
 
         ! JDROP_GEO is between 1 and N unless SIM and SIMI contain NaN, which should not happen
         ! at this point unless there is a bug. Nevertheless, for robustness, we include the
