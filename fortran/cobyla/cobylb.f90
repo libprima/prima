@@ -197,7 +197,8 @@ call initxfc(calcfc, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, ch
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
 ! N.B.: The filter is used only when selecting which iterate to return. It does not interfere with
 ! the iterations. COBYLA is NOT a filter method but a trust-region method based on an L-infinity
-! merit function.
+! merit function. Powell's implementation does not use a filter to select the iterate, possibly
+! returning a suboptimal iterate. 
 call initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
 ! Check whether to return due to abnormal cases that may occur during the initialization.
