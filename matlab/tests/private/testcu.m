@@ -13,10 +13,10 @@ rhoend = 1e-6;
 % If MAXN = 200, then we should set maxfun to 200*maxfun_dim.
 % To be done later.
 %maxfun_dim = 100;
-%maxfun_dim = 200;
-maxfun_dim = 500;
-maxfun = 20000;
-%maxfun = 40000;
+maxfun_dim = 200;
+%maxfun_dim = 500;
+%maxfun = 20000;
+maxfun = 40000;
 %maxfun = 100000;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
