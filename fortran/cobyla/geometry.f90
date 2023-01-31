@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 31, 2023 PM11:38:32
+! Last Modified: Wednesday, February 01, 2023 AM02:07:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -92,7 +92,7 @@ acceptable_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta
 end function assess_geo
 
 
-function setdrop_tr(ximproved, d, delta, sim, simi) result(jdrop)
+function setdrop_tr(ximproved, d, sim, simi) result(jdrop)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds (the index) of a current interpolation point to be replaced by the
 ! trust-region trial point. See (19)--(22) of the COBYLA paper.
@@ -104,7 +104,7 @@ function setdrop_tr(ximproved, d, delta, sim, simi) result(jdrop)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TEN, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, TENTH, DEBUGGING
 use, non_intrinsic :: linalg_mod, only : matprod, isinv
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert
@@ -114,7 +114,6 @@ implicit none
 ! Inputs
 logical, intent(in) :: ximproved
 real(RP), intent(in) :: d(:)    ! D(N)
-real(RP), intent(in) :: delta
 real(RP), intent(in) :: sim(:, :)   ! SIM(N, N+1)
 real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
 
@@ -125,11 +124,12 @@ integer(IK) :: jdrop
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 !logical :: mask(size(sim, 1))
+real(RP) :: distsq(size(sim, 1))
 real(RP) :: score(size(sim, 1))
 real(RP) :: weight(size(sim, 1))
-!real(RP) :: sigbar(size(sim, 1))
 real(RP) :: simid(size(sim, 1))
-real(RP) :: veta(size(sim, 1))
+!real(RP) :: sigbar(size(sim, 1))
+!real(RP) :: veta(size(sim, 1))
 !real(RP) :: vsig(size(sim, 1))
 real(RP), parameter :: itol = TENTH
 
@@ -207,19 +207,19 @@ end if
 ! VETA(J) is the square of the distance from the J-th vertex of the simplex to the best vertex,
 ! taking the trial point SIM(:, N+1) + D into account.
 if (ximproved) then
-    veta = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
-    !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2));  % d should be a column! Implicit expansion
+    distsq = sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1)
+    !!MATLAB: distsq = sum((sim(:, 1:n) - d).^2);  % d should be a column! Implicit expansion
 else
-    veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
+    distsq = sum(sim(:, 1:n)**2, dim=1)
 end if
-weight = max(ONE, TEN * veta / delta**2)**2
 
-!------------------------------------------------------------------------------------------!
+weight = distsq
+
 ! Other possible definitions of WEIGHT. They work well. It seems that the power 2 is good.
-!weight = max(ONE, 25.0_RP * veta / delta**2)**2
-!weight = max(ONE, 1.0E2_RP * veta / delta**2)**2
-!weight = max(ONE, veta / rho**2)**2
-!weight = max(ONE, veta / max(TENTH * delta, rho)**2)**2
+!------------------------------------------------------------------------------------------!
+!weight = max(ONE, 25.0_RP * distsq / delta**2)
+!weight = max(ONE, TEN * distsq / delta**2)
+!weight = max(ONE, 1.0E2_RP * distsq / delta**2)
 !------------------------------------------------------------------------------------------!
 
 !! SIMID(J) is the value of the J-th Lagrange function at D. It is the counterpart of VLAG in UOBYQA
@@ -239,7 +239,7 @@ if (any(score > 0)) then
     jdrop = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(jdrop))
     !!MATLAB: [~, jdrop] = max(score, [], 'omitnan');
 elseif (ximproved) then
-    jdrop = int(maxloc(veta, dim=1), kind(jdrop))
+    jdrop = int(maxloc(distsq, dim=1), kind(jdrop))
 else
     jdrop = 0  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE is positive.
 end if
