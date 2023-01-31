@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, January 30, 2023 PM10:53:48
+! Last Modified: Tuesday, January 31, 2023 AM12:14:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -255,7 +255,8 @@ cstrv = maximum([ZERO, constr])
 ! N.B.: The filter is used only when selecting which iterate to return. It does not interfere with
 ! the iterations. LINCOA is NOT a filter method but a trust-region method. All the trust-region
 ! iterates are supposed to be feasible, but can be infeasible due to rounding errors; the
-! geometry-improving iterates are not necessarily feasible.
+! geometry-improving iterates are not necessarily feasible. Powell's implementation does not use a
+! filter to select the iterate, possibly returning a suboptimal iterate.
 nfilt = 0
 do k = 1, npt
     if (evaluated(k)) then
