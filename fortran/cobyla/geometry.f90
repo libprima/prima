@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, January 30, 2023 PM11:54:59
+! Last Modified: Tuesday, January 31, 2023 PM02:20:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -156,10 +156,15 @@ end if
 ! Calculation starts !
 !====================!
 
+! TODO: The following scheme is different from the one in UOBYQA/NEWUOA/BOBYQA/LINCOA. Check whether
+! the latter can bring some improvements.
+
 ! JDROP = 0 by default. It cannot be removed, as JDROP may not be set below in some cases (e.g.,
 ! when XIMPROVED == FALSE, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(VETA) <= EDGMAX).
 jdrop = 0
 
+! SIMID(J) is the value of the J-th Lagrange function at D. It is the counterpart of VLAG in UOBYQA
+! and DEN in NEWUOA/BOBYQA/LINCOA.
 simid = matprod(simi, d)
 if (any(abs(simid) > 1) .or. (ximproved .and. any(.not. is_nan(simid)))) then
     jdrop = int(maxloc(abs(simid), mask=(.not. is_nan(simid)), dim=1), kind(jdrop))
@@ -172,6 +177,7 @@ if (ximproved) then
 else
     veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
+! VSIG(J) (J=1, .., N) is the Euclidean distance from vertex J to the opposite face of the simplex.
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 sigbar = abs(simid) * vsig
 ! The following JDROP will overwrite the previous one if its premise holds.
