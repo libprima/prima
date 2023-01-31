@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, December 27, 2022 PM11:52:21
+! Last Modified: Tuesday, January 31, 2023 PM05:31:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -303,8 +303,8 @@ do tr = 1, maxtr
         ! 1. KNEW_TR = 0 means it is impossible to obtain a good interpolation set by replacing any
         ! current interpolation point with XNEW. Then XNEW and its function value will be discarded.
         ! In this case, the geometry of XPT likely needs improvement, which will be handled below.
-        ! 2. If XIMPROVED = TRUE (i.e., RATIO > 0), then SETDROP_TR ensures KNEW_TR > 0 so that
-        ! XNEW is included into XPT. Otherwise, SETDROP_TR is buggy; moreover, if XIMPROVED = TRUE
+        ! 2. If XIMPROVED = TRUE (i.e., RATIO > 0), then SETDROP_TR should ensure KNEW_TR > 0 so that
+        ! XNEW is included into XPT. Otherwise, SETDROP_TR is buggy. Moreover, if XIMPROVED = TRUE
         ! but KNEW_TR = 0, XOPT will differ from XPT(:, KOPT), because the former is set to XNEW but
         ! XNEW is discarded. Such a difference can lead to unexpected behaviors; for example,
         ! KNEW_GEO may equal KOPT, with which GEOSTEP will not work.
@@ -479,7 +479,7 @@ do tr = 1, maxtr
 
     ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
-        ! XPT(:,KNEW_GEO) will become XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
+        ! XPT(:, KNEW_GEO) will become XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
 
         ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving

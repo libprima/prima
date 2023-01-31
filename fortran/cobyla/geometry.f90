@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 31, 2023 PM02:29:00
+! Last Modified: Tuesday, January 31, 2023 PM11:08:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -92,21 +92,19 @@ acceptable_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta
 end function assess_geo
 
 
-function setdrop_tr(ximproved, d, delta, factor_alpha, factor_delta, sim, simi) result(jdrop)
+function setdrop_tr(ximproved, d, delta, sim, simi) result(jdrop)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds (the index) of a current interpolation point to be replaced by the
 ! trust-region trial point. See (19)--(22) of the COBYLA paper.
 ! N.B.:
 ! 1. If XIMPROVED == TRUE, then JDROP > 0 so that D is included into XPT. Otherwise, it is a bug.
-! 2. COBYLA never sets JDROP = N + 1.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: SIGBAR(N), SIMID(N), VETA(N), VSIG(N)
-! Size of local arrays: REAL(RP)*(4*N)
+! 2. COBYLA never sets JDROP = N+1.
+! TODO: Check whether it improves the performance if JDROP = N+1 is allowed when XIMPROVED is TRUE.
+! Note that UPDATEXFC should be revised accordingly.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: linalg_mod, only : matprod, isinv
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert
@@ -117,8 +115,6 @@ implicit none
 logical, intent(in) :: ximproved
 real(RP), intent(in) :: d(:)    ! D(N)
 real(RP), intent(in) :: delta
-real(RP), intent(in) :: factor_alpha
-real(RP), intent(in) :: factor_delta
 real(RP), intent(in) :: sim(:, :)   ! SIM(N, N+1)
 real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
 
@@ -128,11 +124,13 @@ integer(IK) :: jdrop
 ! Local variables
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
-logical :: mask(size(sim, 1))
-real(RP) :: sigbar(size(sim, 1))
+!logical :: mask(size(sim, 1))
+real(RP) :: score(size(sim, 1))
+real(RP) :: weight(size(sim, 1))
+!real(RP) :: sigbar(size(sim, 1))
 real(RP) :: simid(size(sim, 1))
 real(RP) :: veta(size(sim, 1))
-real(RP) :: vsig(size(sim, 1))
+!real(RP) :: vsig(size(sim, 1))
 real(RP), parameter :: itol = TENTH
 
 ! Sizes
@@ -148,28 +146,63 @@ if (DEBUGGING) then
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
-    call assert(factor_alpha > 0 .and. factor_alpha < 1, '0 < FACTOR_ALPHA < 1', srname)
-    call assert(factor_delta > 1, 'FACTOR_DELTA > 1', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
 
-! TODO: The following scheme is different from the one in UOBYQA/NEWUOA/BOBYQA/LINCOA. Check whether
-! the latter can bring some improvements.
+!--------------------------------------------------------------------------------------------------!
+! The following code is Powell's scheme for defining JDROP.
+!--------------------------------------------------------------------------------------------------!
+!! JDROP = 0 by default. It cannot be removed, as JDROP may not be set below in some cases (e.g.,
+!! when XIMPROVED == FALSE, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(VETA) <= EDGMAX).
+!jdrop = 0
+!
+!! SIMID(J) is the value of the J-th Lagrange function at D. It is the counterpart of VLAG in UOBYQA
+!! and DEN in NEWUOA/BOBYQA/LINCOA.
+!simid = matprod(simi, d)
+!if (any(abs(simid) > 1) .or. (ximproved .and. any(.not. is_nan(simid)))) then
+!    jdrop = int(maxloc(abs(simid), mask=(.not. is_nan(simid)), dim=1), kind(jdrop))
+!    !!MATLAB: [~, jdrop] = max(simid, [], 'omitnan');
+!end if
+!
+!! VETA(J) is the square of the distance from the J-th vertex of the simplex to the best vertex,
+!! taking the trial point SIM(:, N+1) + D into account.
+!if (ximproved) then
+!    veta = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
+!    !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2));  % d should be a column! Implicit expansion
+!else
+!    veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
+!end if
+!
+!! VSIG(J) (J=1, .., N) is the Euclidean distance from vertex J to the opposite face of the simplex.
+!vsig = ONE / sqrt(sum(simi**2, dim=2))
+!sigbar = abs(simid) * vsig
+!
+!! The following JDROP will overwrite the previous one if its premise holds.
+!mask = (veta > factor_delta * delta .and. (sigbar >= factor_alpha * delta .or. sigbar >= vsig))
+!if (any(mask)) then
+!    jdrop = int(maxloc(veta, mask=mask, dim=1), kind(jdrop))
+!    !!MATLAB: etamax = max(veta(mask)); jdrop = find(mask & ~(veta < etamax), 1, 'first');
+!end if
+!
+!! Powell's code does not include the following instructions. With Powell's code, if SIMID consists
+!! of only NaN, then JDROP can be 0 even when XIMPROVED == TRUE (i.e., D reduces the merit function).
+!! With the following code, JDROP cannot be 0 when XIMPROVED == TRUE, unless VETA is all NaN, which
+!! should not happen if X0 does not contain NaN, the trust-region/geometry steps never contain NaN,
+!! and we exit once encountering an iterate containing Inf (due to overflow).
+!if (ximproved .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP == 0 for robustness.
+!    jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
+!    !!MATLAB: [~, jdrop] = max(veta, [], 'omitnan');
+!end if
+!--------------------------------------------------------------------------------------------------!
+! Powell's scheme ends here.
+!--------------------------------------------------------------------------------------------------!
 
-! JDROP = 0 by default. It cannot be removed, as JDROP may not be set below in some cases (e.g.,
-! when XIMPROVED == FALSE, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(VETA) <= EDGMAX).
-jdrop = 0
 
-! SIMID(J) is the value of the J-th Lagrange function at D. It is the counterpart of VLAG in UOBYQA
-! and DEN in NEWUOA/BOBYQA/LINCOA.
-simid = matprod(simi, d)
-if (any(abs(simid) > 1) .or. (ximproved .and. any(.not. is_nan(simid)))) then
-    jdrop = int(maxloc(abs(simid), mask=(.not. is_nan(simid)), dim=1), kind(jdrop))
-    !!MATLAB: [~, jdrop] = max(simid, [], 'omitnan');
-end if
+! The following definition of JDROP is inspired by SETDROP_TR in UOBYQA/NEWUOA/BOBYQA/LINCOA.
+! It is simpler and works better than Powell's scheme.
 
 ! VETA(J) is the square of the distance from the J-th vertex of the simplex to the best vertex,
 ! taking the trial point SIM(:, N+1) + D into account.
@@ -179,26 +212,28 @@ if (ximproved) then
 else
     veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
+weight = max(ONE, TEN * veta / delta**2)**2
 
-! VSIG(J) (J=1, .., N) is the Euclidean distance from vertex J to the opposite face of the simplex.
-vsig = ONE / sqrt(sum(simi**2, dim=2))
-sigbar = abs(simid) * vsig
+!------------------------------------------------------------------------------------------!
+! Other possible definitions of WEIGHT. They work well. It seems that the power 2 is good.
+!weight = max(ONE, 25.0_RP * veta / delta**2)**2
+!weight = max(ONE, 1.0E2_RP * veta / delta**2)**2
+!weight = max(ONE, veta / rho**2)**2
+!weight = max(ONE, veta / max(TENTH * delta, rho)**2)**2
+!------------------------------------------------------------------------------------------!
 
-! The following JDROP will overwrite the previous one if its premise holds.
-mask = (veta > factor_delta * delta .and. (sigbar >= factor_alpha * delta .or. sigbar >= vsig))
-if (any(mask)) then
-    jdrop = int(maxloc(veta, mask=mask, dim=1), kind(jdrop))
-    !!MATLAB: etamax = max(veta(mask)); jdrop = find(mask & ~(veta < etamax), 1, 'first');
-end if
+!! SIMID(J) is the value of the J-th Lagrange function at D. It is the counterpart of VLAG in UOBYQA
+!! and DEN in NEWUOA/BOBYQA/LINCOA.
+simid = matprod(simi, d)
+score = weight * abs(simid)
 
-! Powell's code does not include the following instructions. With Powell's code, if SIMID consists
-! of only NaN, then JDROP can be 0 even when XIMPROVED == TRUE (i.e., D reduces the merit function).
-! With the following code, JDROP cannot be 0 when XIMPROVED == TRUE, unless VETA is all NaN, which
-! should not happen if X0 does not contain NaN, the trust-region/geometry steps never contain NaN,
-! and we exit once encountering an iterate containing Inf (due to overflow).
-if (ximproved .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP == 0 for robustness.
-    jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
-    !!MATLAB: [~, jdrop] = max(veta, [], 'omitnan');
+if (any(score > 0)) then
+    jdrop = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(jdrop))
+    !!MATLAB: [~, jdrop] = max(score, [], 'omitnan');
+elseif (ximproved) then
+    jdrop = int(maxloc(veta, dim=1), kind(jdrop))
+else
+    jdrop = 0  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE is positive.
 end if
 
 !====================!

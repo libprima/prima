@@ -744,7 +744,6 @@ case 'cobyla'
         'VANDERM1', ...     % 72
         'VANDERM2', ...     % 72
         'VANDERM3', ...     % 76
-        %'QPCBLEND', ...     % 1
          }];
     % For the following problems, the classical cobyla encounters SEGFAULT.
     blacklist = [blacklist, {'LAKES', 'VANDERM4'}];
