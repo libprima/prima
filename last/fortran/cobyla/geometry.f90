@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, December 01, 2022 PM12:33:40
+! Last Modified: Tuesday, January 31, 2023 PM11:16:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,6 +129,7 @@ integer(IK) :: jdrop
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 logical :: mask(size(sim, 1))
+real(RP) :: score(size(sim, 1))
 real(RP) :: sigbar(size(sim, 1))
 real(RP) :: simid(size(sim, 1))
 real(RP) :: veta(size(sim, 1))
@@ -190,6 +191,17 @@ if (ximproved .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP == 0 f
     jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
     !!MATLAB: [~, jdrop] = max(veta, [], 'omitnan');
 end if
+
+score = max(ONE, 10.0_RP * veta / delta**2)**2 * abs(simid)
+
+if (any(veta > 0)) then
+    jdrop = maxloc(score, dim=1, mask=.not. is_nan(score))
+elseif (ximproved) then
+    jdrop = maxloc(veta, dim=1)
+else
+    jdrop = 0
+end if
+
 
 !====================!
 !  Calculation ends  !
