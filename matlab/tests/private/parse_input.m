@@ -199,18 +199,20 @@ if isempty(prob)
             %options.maxcon = 20*options.maxdim;
             options.maxdim = 100;
         end
-        options.maxcon = 100*options.maxdim;
     end
+    options.maxcon = 100*options.maxdim;
 
 
+    % Revise the dimension range for verification to avoid overtime of GitHub Actions.
     if strcmpi(invoker, 'verify')
         if strcmpi(solver, 'cobyla')
             options.maxdim = min(options.maxdim, 80); %!!!
         elseif strcmpi(solver, 'newuoa')
-            %options.maxdim = min(options.maxdim, 190); % There is no unstrained problem in [101, 190]!!!
+            %options.maxdim = min(options.maxdim, 190);
+            % N.B.: There is no unconstrained problem in [101, 190]!!!
         elseif strcmpi(solver, 'lincoa')
             options.maxdim = min(options.maxdim, 160); %!!!
-            options.maxcon = 20*options.maxdim;
+            options.maxcon = 20*options.maxdim; %!!!
         end
     end
 
