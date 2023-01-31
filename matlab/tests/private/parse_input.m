@@ -175,6 +175,7 @@ if isempty(prob)
     % Define the dimension range.
     options.mindim = mindim;
     options.maxdim = maxdim;
+
     % Revise the dimension range for COBYLA and UOBYQA.
     if strcmpi(solver, 'cobyla') || strcmpi(solver, 'uobyqa')
         if options.maxdim == 50
@@ -185,23 +186,16 @@ if isempty(prob)
         end
         if options.maxdim == 100
             options.maxdim = 50;
-            %options.maxcon = 20*options.maxdim;
         end
         if options.mindim == 101
             options.mindim = 51;
         end
         if options.maxdim == 200
-            %if strcmpi(invoker, 'profile')  % It is indeed 'profile', not a typo
-            %    options.maxdim = 90;
-            %else
-            %    options.maxdim = 100;
-            %end
-            %options.maxcon = 20*options.maxdim;
             options.maxdim = 100;
         end
     end
-    options.maxcon = 100*options.maxdim;
 
+    options.maxcon = 100*options.maxdim;
 
     % Revise the dimension range for verification to avoid overtime of GitHub Actions.
     if strcmpi(invoker, 'verify')
@@ -215,7 +209,6 @@ if isempty(prob)
             options.maxcon = 20*options.maxdim; %!!!
         end
     end
-
 
     % Define the number of random runs.
     if ~isfield(options, 'nr')
