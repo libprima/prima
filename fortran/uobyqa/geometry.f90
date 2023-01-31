@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 31, 2023 PM02:19:43
+! Last Modified: Tuesday, January 31, 2023 PM02:29:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -115,7 +115,7 @@ weight = max(ONE, distsq / rho**2)**4
 !------------------------------------------------------------------------------------------!
 
 ! Here, VLAG is the counterpart of DEN in NEWUOA/BOBYQA/LINCOA, representing the denominator in the
-! update of the Lagrange functions (or, inverse of the coefficients or KKT matrix of the
+! update of the Lagrange functions (or, inverse of the coefficient or KKT matrix of the
 ! interpolation system).
 vlag = calvlag(pl, d, xpt(:, kopt), kopt)
 score = weight * abs(vlag)
