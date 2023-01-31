@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM10:59:00
+! Last Modified: Tuesday, January 31, 2023 PM02:21:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -59,7 +59,7 @@ integer(IK) :: knew
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: denabs(size(xpt, 2))
+real(RP) :: den(size(xpt, 2))
 real(RP) :: distsq(size(xpt, 2))
 real(RP) :: score(size(xpt, 2))
 real(RP) :: weight(size(xpt, 2))
@@ -112,8 +112,8 @@ weight = distsq**2  ! Powell's code.
 ! !weight = max(1.0_RP, distsq / delta**2)**2
 ! !weight = max(1.0_RP, distsq / delta**2)**3
 
-denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
-score = weight * denabs
+den = calden(kopt, bmat, d, xpt, zmat, idz)
+score = weight * abs(den)
 
 ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
 ! This is not really needed if DISTSQ does not take XIMPROVED into account and WEIGHT is defined to
@@ -124,7 +124,7 @@ end if
 
 if (any(score > 0)) then
 !if (any(score > 1) .or. any(score > 0) .and. ximproved) then
-    ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
+    ! SCORE(K) is NaN implies ABS(DEN(K)) is NaN, but we want ABS(DEN) to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
 else if (ximproved) then

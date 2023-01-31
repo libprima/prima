@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 12, 2022 PM02:34:24
+! Last Modified: Tuesday, January 31, 2023 PM02:23:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,7 +36,7 @@ function setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat) result
 ! landscape of the function sufficiently.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: HDIAG(NPT), DENABS(NPT), SCORE(NPT) VLAG(N+NPT), XDIST(NPT)
+! REAL(RP) :: HDIAG(NPT), DEN(NPT), SCORE(NPT) VLAG(N+NPT), XDIST(NPT)
 ! Size of local arrays: REAL(RP)*(4*NPT+N)
 !--------------------------------------------------------------------------------------------------!
 
@@ -67,7 +67,7 @@ integer(IK) :: knew
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: denabs(size(xpt, 2))
+real(RP) :: den(size(xpt, 2))
 real(RP) :: distsq(size(xpt, 2))
 real(RP) :: score(size(xpt, 2))
 real(RP) :: weight(size(xpt, 2))
@@ -117,8 +117,8 @@ weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's code.
 ! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! It does not work as well as the above.
 ! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! This works poorly.
 
-denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
-score = weight * denabs
+den = calden(kopt, bmat, d, xpt, zmat, idz)
+score = weight * abs(den)
 
 ! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
 if (.not. ximproved) then
@@ -128,12 +128,12 @@ end if
 ! Changing the following IF to `IF (ANY(SCORE > 0)) THEN` does not lead to a better performance.
 if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
     ! See (7.5) of the NEWUOA paper for the definition of KNEW in this case.
-    ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
+    ! SCORE(K) is NaN implies ABS(DEN(K)) is NaN, but we want ABS(DEN) to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
 elseif (ximproved) then
-    ! Powell's code does not include the following instructions. With Powell's code, if DENABS
-    ! consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
+    ! Powell's code does not include the following instructions. With Powell's code, if DEN consists
+    ! of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
     knew = int(maxloc(distsq, dim=1), kind(knew))
 else
     knew = 0  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE exceeds one.
