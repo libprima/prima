@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, January 31, 2023 PM05:31:28
+! Last Modified: Thursday, February 02, 2023 AM01:09:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -553,7 +553,7 @@ do tr = 1, maxtr
     end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
 
     ! Shift XBASE if XOPT may be too far from XBASE.
-    ! Powell's original criterion for shifting XBASE is as follows.
+    ! Powell's original criteria for shifting XBASE is as follows.
     ! 1. After a trust region step that is not short, shift XBASE if SUM(XOPT**2) >= 1.0E3*DNORM**2.
     ! 2. Before a geometry step, shift XBASE if SUM(XOPT**2) >= 1.0E3*DELBAR**2.
     if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
