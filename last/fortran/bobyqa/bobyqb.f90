@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, December 31, 2022 AM03:19:37
+! Last Modified: Thursday, February 02, 2023 AM01:01:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -270,7 +270,8 @@ do while (.true.)
         ebound = errbd(crvmin, d, gopt, hq, moderrsav, pq, rho, sl, su, xopt, xpt)
     else
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-        if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
+        !if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
+        if (.false.) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
@@ -436,7 +437,8 @@ do while (.true.)
         delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)
 
         ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-        if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
+        !if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
+        if (.false.) then
             sl = min(sl - xopt, ZERO)
             su = max(su - xopt, ZERO)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
@@ -529,14 +531,14 @@ do while (.true.)
 
     !! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
     !!if (sum(xopt**2) >= 1.0E3_RP * delta**2) then  ! 0018
-    !!if (sum(xopt**2) >= 1.0E3_RP * delta**2) then  ! 0026
-    !if (sum(xopt**2) >= 1.0E4_RP * delta**2) then  ! 0030
-    !    sl = min(sl - xopt, ZERO)
-    !    su = max(su - xopt, ZERO)
-    !    call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
-    !    ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
-    !    xbase = max(xl, min(xu, xbase))
-    !end if
+    !!if (sum(xopt**2) >= 1.0E4_RP * delta**2) then  ! 0030
+    if (sum(xopt**2) >= 1.0E3_RP * delta**2) then  ! 0026
+        sl = min(sl - xopt, ZERO)
+        su = max(su - xopt, ZERO)
+        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
+        ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
+        xbase = max(xl, min(xu, xbase))
+    end if
 end do
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
