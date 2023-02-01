@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 02, 2023 AM12:59:22
+! Last Modified: Thursday, February 02, 2023 AM01:42:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -331,19 +331,6 @@ info = MAXTR_REACHED
 ! REDUCE_RHO: Should we reduce rho?
 ! LINCOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
-    ! Shift XBASE if XOPT may be too far from XBASE.
-    ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
-    ! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably
-    ! to the one here? What about comparing with RHO? What about calling SHIFTBASE only before
-    ! TRSTEP but not GEOSTEP (consider GEOSTEP as a postprocessor).
-    if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
-        b = b - matprod(xopt, amat)
-        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
-        fshift = fval - fopt
-        pqalt = omega_mul(idz, zmat, fshift)
-        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-    end if
-
     ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
     call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, d, ngetact)
     dnorm = min(delta, sqrt(sum(d**2)))
@@ -528,19 +515,6 @@ do tr = 1, maxtr
     ! exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
 
     if (improve_geo) then
-        ! Shift XBASE if XOPT may be too far from XBASE.
-        ! Zaikun 20220528: The criteria is different from those in NEWUOA or BOBYQA, particularly here
-        ! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably
-        ! to the one here? What about comparing with RHO? What about calling SHIFTBASE only before
-        ! TRSTEP but not GEOSTEP (consider GEOSTEP as a postprocessor).
-        if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
-            b = b - matprod(xopt, amat)
-            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
-            fshift = fval - fopt
-            pqalt = omega_mul(idz, zmat, fshift)
-            galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
-        end if
-
         ! XPT(:, KNEW_GEO) will become  XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
 
@@ -621,6 +595,19 @@ do tr = 1, maxtr
         ! Update it after reducing RHO.
         dnormsav = HUGENUM
     end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
+
+    ! Shift XBASE if XOPT may be too far from XBASE.
+    ! Powell's original criterion for shifting XBASE: before a trust region step or a geometry step,
+    ! shift XBASE if SUM(XOPT**2) >= 1.0E4*DELTA**2.
+    if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
+        ! Other possible criteria: SUM(XOPT**2) >= 1.0E3*DELTA**2, SUM(XOPT**2) >= 1.0E4*RHO**2.
+        b = b - matprod(xopt, amat)
+        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+        ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
+        fshift = fval - fopt
+        pqalt = omega_mul(idz, zmat, fshift)
+        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+    end if
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried before.

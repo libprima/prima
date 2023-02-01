@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 22, 2022 AM11:32:34
+! Last Modified: Thursday, February 02, 2023 AM01:40:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -331,7 +331,8 @@ do tr = 1, maxtr
     ! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably
     ! to the one here? What about comparing with RHO? What about calling SHIFTBASE only before
     ! TRSTEP but not GEOSTEP (consider GEOSTEP as a postprocessor).
-    if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
+    !if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
+    if (.false.) then
         b = b - matprod(xopt, amat)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
         fshift = fval - fopt
@@ -528,7 +529,8 @@ do tr = 1, maxtr
         ! |XOPT| is compared with DELTA instead of DNORM. What about unifying the criteria, preferably
         ! to the one here? What about comparing with RHO? What about calling SHIFTBASE only before
         ! TRSTEP but not GEOSTEP (consider GEOSTEP as a postprocessor).
-        if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
+        !if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
+        if (.false.) then
             b = b - matprod(xopt, amat)
             call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
             fshift = fval - fopt
@@ -616,6 +618,14 @@ do tr = 1, maxtr
         ! Update it after reducing RHO.
         dnormsav = HUGENUM
     end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
+
+    if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
+        b = b - matprod(xopt, amat)
+        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+        fshift = fval - fopt
+        pqalt = omega_mul(idz, zmat, fshift)
+        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+    end if
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried before.
