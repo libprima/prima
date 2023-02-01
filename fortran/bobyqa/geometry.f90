@@ -319,8 +319,8 @@ end if
 ! and SUBD will be lower and upper bounds on the step along each of these lines in turn. On each
 ! line, we will evaluate the value of the KNEW-th Lagrange function at 3 trial points, and estimate
 ! the denominator accordingly. The three points take the form (1-t)*XOPT + t*XPT(:, K) with step
-! lengths t = SLBD, SUBD, and STPM, corresponding the upper (U) bound of t, the lower (L) bound of
-! t, and a medium (M) step. In total, 3*(NPT-1) trial points will be considered. On the K-th line,
+! lengths t = SLBD, SUBD, and STPM, corresponding to the upper (U) bound of t, the lower (L) bound 
+! of t, and a medium (M) step. In total, 3*(NPT-1) trial points will be considered. On the K-th line,
 ! we intend to maximize the modulus of PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:,K)); overall, we intend
 ! to find a trial point rendering a large value of the PREDSQ defined in (3.11) of the BOBYQA paper.
 !
@@ -486,7 +486,7 @@ den_line = calden(kopt, bmat, d, xpt, zmat)
 ! How to make this condition adaptive? A naive idea is to replace the thresholds to,
 ! e.g.,1.0E-2*RHOBEG. However, in a test on 20220517, this adaptation worsened the performance. In
 ! such a test, RHOBEG must take a value that is quite different from one. We tried RHOBEG = 0.9E-2.
-!if (DELBAR > 1.0E-3) then
+!if (delbar > 1.0E-3) then
 !if (delbar > 1.0E-1) then
 if (delbar > 1.0E-2) then
     return

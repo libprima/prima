@@ -30,7 +30,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, January 01, 2023 PM08:23:28
+! Last Modified: Wednesday, February 01, 2023 PM08:25:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -444,6 +444,10 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 ! Normalize the constraints, and copy the resultant constraint matrix and right hand sides into
 ! working space, after increasing the right hand sides if necessary so that the starting point
 ! is feasible.
+! N.B.: Yes, LINCOA modifies the right hand sides of the constraints to make the starting point
+! feasible if it is not. This is not ideal, but Powell's code was implemented in this way. In the
+! MATLAB/Python code, we include a preprocessing subroutine to project the starting point to
+! the feasible region if it is infeasible, so that the modification will not occur.
 constr_modified = .false.; 
 smallx = 1.0E-6_RP * rhoend_loc
 call safealloc(A_normalized, n, m)
@@ -462,6 +466,10 @@ if (m > 0) then
         b_normalized(j) = max(b_loc(j), ax) / anorm
         A_normalized(:, j) = A_loc(:, j) / anorm
     end do
+    if (constr_modified) then
+        call warning(solver, 'The starting point is infeasible. '//solver// &
+            & ' modified the right-hand sides of the constraints to make it feasible')
+    end if
 end if
 
 

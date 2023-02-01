@@ -392,7 +392,7 @@ else % The problem turns out 'normal' during preprima
     if ~isempty(A_aug) && any(A_aug'*x0 > b_aug + 1e-10*max(1, abs(b_aug)))
         output.constr_modified = true;
         wid = sprintf('%s:ConstraintModified', funname);
-        wmsg = sprintf('%s will modify the right-hand side of the constraints to make x0 feasible.', funname);
+        wmsg = sprintf('%s will modify the right-hand sides of the constraints to make the starting point feasible.', funname);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     else

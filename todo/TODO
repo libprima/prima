@@ -13,4 +13,7 @@
 4. What about solve the TR subproblem of COBYLA using a composite step approach? Vardi or
    Byrd-Omojokun?
 
-5. What if allowing JDROP_TR = N+1 in COBYLA?
+5. Check the definition and update of RESCON in LINCOA.
+
+6. Do we need to update X, F, XOPT, FOPT, KOPT all together? Aren't they redundant? What if only
+   KOPT?
