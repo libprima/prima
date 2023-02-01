@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 01, 2023 AM02:14:56
+! Last Modified: Wednesday, February 01, 2023 PM06:24:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -392,7 +392,6 @@ do tr = 1, maxtr
         ! Set JDROP_TR to the index of the vertex to be replaced by X. JDROP_TR = 0 means there
         ! is no good point to replace, and X will not be included into the simplex; in this case,
         ! the geometry of the simplex likely needs improvement, which will be handled below.
-        ! N.B.: COBYLA never sets JDROP_TR = N + 1.
         jdrop_tr = setdrop_tr(ximproved, d, sim, simi)
 
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 01, 2023 AM02:07:13
+! Last Modified: Wednesday, February 01, 2023 PM06:41:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,7 +104,7 @@ function setdrop_tr(ximproved, d, sim, simi) result(jdrop)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : IK, RP, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: linalg_mod, only : matprod, isinv
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert
@@ -124,10 +124,10 @@ integer(IK) :: jdrop
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 !logical :: mask(size(sim, 1))
-real(RP) :: distsq(size(sim, 1))
-real(RP) :: score(size(sim, 1))
-real(RP) :: weight(size(sim, 1))
-real(RP) :: simid(size(sim, 1))
+real(RP) :: distsq(size(sim, 2))
+real(RP) :: score(size(sim, 2))
+real(RP) :: weight(size(sim, 2))
+real(RP) :: simid(size(simi, 1))
 !real(RP) :: sigbar(size(sim, 1))
 !real(RP) :: veta(size(sim, 1))
 !real(RP) :: vsig(size(sim, 1))
@@ -160,7 +160,7 @@ end if
 !jdrop = 0
 !
 !! SIMID(J) is the value of the J-th Lagrange function at D. It is the counterpart of VLAG in UOBYQA
-!! and DEN in NEWUOA/BOBYQA/LINCOA.
+!! and DEN in NEWUOA/BOBYQA/LINCOA, but it excludes the value of the (N+1)-th Lagrange function.
 !simid = matprod(simi, d)
 !if (any(abs(simid) > 1) .or. (ximproved .and. any(.not. is_nan(simid)))) then
 !    jdrop = int(maxloc(abs(simid), mask=(.not. is_nan(simid)), dim=1), kind(jdrop))
@@ -202,38 +202,44 @@ end if
 
 
 ! The following definition of JDROP is inspired by SETDROP_TR in UOBYQA/NEWUOA/BOBYQA/LINCOA.
-! It is simpler and works better than Powell's scheme.
+! It is simpler and works better than Powell's scheme. Note that we allow JDROP to be N+1 if
+! IMPROVEX is TRUE, whereas Powell's code does not.
+
 
 ! VETA(J) is the square of the distance from the J-th vertex of the simplex to the best vertex,
 ! taking the trial point SIM(:, N+1) + D into account.
 if (ximproved) then
     distsq = sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1)
     !!MATLAB: distsq = sum((sim(:, 1:n) - d).^2);  % d should be a column! Implicit expansion
+    distsq(n + 1) = sum(d**2)
 else
     distsq = sum(sim(:, 1:n)**2, dim=1)
+    distsq(n + 1) = ZERO
 end if
 
 weight = distsq
 
-! Other possible definitions of WEIGHT. They work well.
+! Other possible definitions of WEIGHT. They work almost the same as the one above.
 !------------------------------------------------------------------------------------------!
 !weight = max(ONE, 25.0_RP * distsq / delta**2)
-!weight = max(ONE, TEN * distsq / delta**2)
+!weight = max(ONE, 10.0_RP * distsq / delta**2)
 !weight = max(ONE, 1.0E2_RP * distsq / delta**2)
+!weight = max(ONE, distsq / max(rho, TENTH * delta)**2)
+!weight = max(ONE, distsq / rho**2)
 !------------------------------------------------------------------------------------------!
 
-!! SIMID(J) is the value of the J-th Lagrange function at D. It is the counterpart of VLAG in UOBYQA
-!! and DEN in NEWUOA/BOBYQA/LINCOA.
+! If 1 <= J <= N, SIMID(J) is the value of the J-th Lagrange function at D; the value of the
+! (N+1)-th Lagrange function is 1 - SUM(SIMID). [SIMID, 1 - SUM(SIMID)] is the counterpart of
+! VLAG in UOBYQA and DEN in NEWUOA/BOBYQA/LINCOA.
 simid = matprod(simi, d)
-score = weight * abs(simid)
+score = weight * abs([simid, ONE - sum(simid)])
 
-! The following is not necessary if we do not allow JDROP = N+1.
-!! If XIMPROVED is FALSE (the new D does not render a better X), we set SCORE(N+1) = -1 to avoid
-!! JDROP = N+1. This is not really needed if WEIGHT is defined to DISTSQ to some power, in which case
-!! SCORE(N+1) = 0. We keep the code for robustness (in case the definition of WEIGHT changes later).
-!if (.not. ximproved) then
-!    score(n + 1) = -ONE
-!end if
+! If XIMPROVED is FALSE (the new D does not render a better X), we set SCORE(N+1) = -1 to avoid
+! JDROP = N+1. This is not really needed if WEIGHT is defined to DISTSQ to some power, in which case
+! SCORE(N+1) = 0. We keep the code for robustness (in case the definition of WEIGHT changes later).
+if (.not. ximproved) then
+    score(n + 1) = -ONE
+end if
 
 if (any(score > 0)) then
     jdrop = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(jdrop))
@@ -250,8 +256,11 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(jdrop >= 0 .and. jdrop <= n, '0 <= JDROP <= N', srname)
-    call assert(jdrop >= 1 .or. .not. ximproved, 'JDROP >= 1 unless the trust-region step failed', srname)
+    call assert(jdrop >= 0 .and. jdrop <= n + 1, '0 <= JDROP <= N+1', srname)
+    call assert(jdrop <= n .or. ximproved, 'JDROP >= 1 unless IMPROVEX = TRUE', srname)
+    call assert(jdrop >= 1 .or. .not. ximproved, 'JDROP >= 1 unless IMPROVEX = FALSE', srname)
+    ! JDROP >= 1 when XIMPROVED = TRUE unless NaN occurs in DISTSQ, which should not happen if the
+    ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.
 end if
 
 end function setdrop_tr

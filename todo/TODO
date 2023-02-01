@@ -9,3 +9,8 @@
    $ gprof a.out gmon.out | gprof2dot | dot -Tpng -o output.png
 
 3. 20230108: See TODO_mat
+
+4. What about solve the TR subproblem of COBYLA using a composite step approach? Vardi or
+   Byrd-Omojokun?
+
+5. What if allowing JDROP_TR = N+1 in COBYLA?

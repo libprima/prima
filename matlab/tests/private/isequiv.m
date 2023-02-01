@@ -63,6 +63,12 @@ else
     minip = 1;
 end
 
+if isfield(options, 'maxip')
+    maxip=options.maxip;
+else
+    maxip = 2^32 - 1;
+end
+
 requirements = struct();
 if isfield(options, 'list')
     requirements.list = options.list;  % Only test problems in this list
@@ -114,15 +120,19 @@ else
     plist = secup(requirements);
 end
 
-single_test = (length(plist) <= 1);
+np = length(plist);
+
+single_test = (np <= 1);
 if isfield(options, 'sequential')
     sequential = options.sequential;
 else
     sequential = single_test;
 end
 
+maxip = min(np, maxip);
+
 if sequential
-    for ip = minip : length(plist)
+    for ip = minip : maxip
         orig_warning_state = warnoff(solvers);
         pname = upper(plist{ip});
 
@@ -143,7 +153,7 @@ if sequential
         warning(orig_warning_state); % Restore the behavior of displaying warnings
     end
 else
-    parfor ip = minip : length(plist)
+    parfor ip = minip : maxip
 
         orig_warning_state = warnoff(solvers);
 
