@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, December 13, 2022 AM10:00:02
+! Last Modified: Wednesday, February 01, 2023 PM06:36:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,7 +29,7 @@ subroutine updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, 
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : IK, RP, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, isinv
@@ -61,6 +61,8 @@ integer(IK) :: m
 integer(IK) :: n
 real(RP), parameter :: itol = TENTH
 real(RP) :: simi_jdrop(size(simi, 2))
+real(RP) :: simid(size(simi, 1))
+real(RP) :: sum_simi(size(simi, 2))
 
 ! Sizes
 m = int(size(constr), kind(m))
@@ -70,7 +72,7 @@ n = int(size(sim, 1), kind(n))
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(jdrop >= 0 .and. jdrop <= n, '1 <= JDROP <= N', srname)
+    call assert(jdrop >= 0 .and. jdrop <= n + 1, '1 <= JDROP <= N+1', srname)
     call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), 'CONSTR does not contain NaN/-Inf', srname)
     call assert(.not. (is_nan(cstrv) .or. is_posinf(cstrv)), 'CSTRV is not NaN/+Inf', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
@@ -99,10 +101,18 @@ if (jdrop <= 0) then  ! JDROP < 0 is impossible if the input is correct.
     return
 end if
 
-sim(:, jdrop) = d
-simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
-simi = simi - outprod(matprod(simi, d), simi_jdrop)
-simi(jdrop, :) = simi_jdrop
+if (jdrop <= n) then
+    sim(:, jdrop) = d
+    simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
+    simi = simi - outprod(matprod(simi, d), simi_jdrop)
+    simi(jdrop, :) = simi_jdrop
+else  ! JDROP = N+1
+    sim(:, n + 1) = sim(:, n + 1) + d
+    sim(:, 1:n) = sim(:, 1:n) - spread(d, dim=2, ncopies=n)
+    simid = matprod(simi, d)
+    sum_simi = sum(simi, dim=1)
+    simi = simi + outprod(simid, sum_simi / (ONE - sum(simid)))
+end if
 fval(jdrop) = f
 conmat(:, jdrop) = constr
 cval(jdrop) = cstrv

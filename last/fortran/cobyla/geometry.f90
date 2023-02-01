@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 01, 2023 AM02:04:22
+! Last Modified: Wednesday, February 01, 2023 PM06:40:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,7 +129,7 @@ integer(IK) :: jdrop
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 logical :: mask(size(sim, 1))
-real(RP) :: score(size(sim, 1))
+real(RP) :: score(size(sim, 1) + 1)
 real(RP) :: sigbar(size(sim, 1))
 real(RP) :: simid(size(sim, 1))
 real(RP) :: veta(size(sim, 1))
@@ -192,13 +192,16 @@ if (ximproved .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP == 0 f
     !!MATLAB: [~, jdrop] = max(veta, [], 'omitnan');
 end if
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! New scheme
 if (ximproved) then
     veta = (sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
     !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2));  % d should be a column! Implicit expansion
+    score = [veta, sum(d**2)] * abs([simid, 1.0_RP - sum(simid)])
 else
     veta = (sum(sim(:, 1:n)**2, dim=1))
+    score = [veta, 0.0_RP] * abs([simid, 1.0_RP - sum(simid)])
 end if
-score = veta * abs(simid)
 
 if (any(veta > 0)) then
     jdrop = maxloc(score, dim=1, mask=.not. is_nan(score))
@@ -215,7 +218,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(jdrop >= 0 .and. jdrop <= n, '0 <= JDROP <= N', srname)
+    !call assert(jdrop >= 0 .and. jdrop <= n, '0 <= JDROP <= N', srname)
     call assert(jdrop >= 1 .or. .not. ximproved, 'JDROP >= 1 unless the trust-region step failed', srname)
 end if
 

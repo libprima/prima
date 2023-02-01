@@ -51,11 +51,12 @@ thorough_test = 0;
 % minip is the minimal index of the problem to test. It is used if we want to skip the first few
 % problems for debugging.
 minip = 1;
+maxip = 2^32 - 1;
 
 % Set options
 options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
     eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
-    sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip);
+    sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip);
 
 % Select the problems to test.
 if isfield(options, 'list')
@@ -87,6 +88,7 @@ nr = options.nr;
 maxfun = options.maxfun;
 sequential = options.sequential;
 minip = options.minip;
+maxip = min(np, options.maxip);
 
 % These arrays will record the function values and constraint values during the tests.
 pdim = NaN(np, 1);  % Data profile needs the dimension of the problem.
@@ -122,7 +124,7 @@ end
 
 
 if sequential
-    for ip = minip : np
+    for ip = minip : maxip
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};
@@ -174,7 +176,7 @@ if sequential
         warning(orig_warning_state); % Restore the behavior of displaying warnings
     end
 else
-    parfor ip = minip : np
+    parfor ip = minip : maxip
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};
@@ -305,7 +307,7 @@ return
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, ...
         randomizex0, eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
-        sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip) % Set options
+        sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip) % Set options
 
 if (~isfield(options, 'rhoend'))
     options.rhoend = rhoend;
@@ -379,6 +381,9 @@ if (~isfield(options, 'thorough_test'))
 end
 if (~isfield(options, 'minip'))
     options.minip = minip;
+end
+if (~isfield(options, 'maxip'))
+    options.maxip = maxip;
 end
 
 % Set eval_options

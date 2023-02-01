@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, December 13, 2022 AM10:00:02
+! Last Modified: Wednesday, February 01, 2023 PM06:38:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,6 +57,7 @@ integer(IK), intent(out) :: info
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATEXFC'
+integer(IK) :: j
 integer(IK) :: m
 integer(IK) :: n
 real(RP), parameter :: itol = TENTH
@@ -70,7 +71,7 @@ n = int(size(sim, 1), kind(n))
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(jdrop >= 0 .and. jdrop <= n, '1 <= JDROP <= N', srname)
+    !call assert(jdrop >= 0 .and. jdrop <= n, '1 <= JDROP <= N', srname)
     call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), 'CONSTR does not contain NaN/-Inf', srname)
     call assert(.not. (is_nan(cstrv) .or. is_posinf(cstrv)), 'CSTRV is not NaN/+Inf', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
@@ -99,10 +100,18 @@ if (jdrop <= 0) then  ! JDROP < 0 is impossible if the input is correct.
     return
 end if
 
-sim(:, jdrop) = d
-simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
-simi = simi - outprod(matprod(simi, d), simi_jdrop)
-simi(jdrop, :) = simi_jdrop
+if (jdrop == n + 1) then
+    sim(:, n + 1) = sim(:, n + 1) + d
+    do j = 1, n
+        sim(:, j) = sim(:, j) - d
+    end do
+    simi = simi + outprod(matprod(simi, d), sum(simi, dim=1) / (1.0_RP - sum(matprod(simi, d))))
+else
+    sim(:, jdrop) = d
+    simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
+    simi = simi - outprod(matprod(simi, d), simi_jdrop)
+    simi(jdrop, :) = simi_jdrop
+end if
 fval(jdrop) = f
 conmat(:, jdrop) = constr
 cval(jdrop) = cstrv
