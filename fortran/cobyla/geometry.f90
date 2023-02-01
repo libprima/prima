@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 01, 2023 PM06:41:31
+! Last Modified: Wednesday, February 01, 2023 PM07:18:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -123,10 +123,9 @@ integer(IK) :: jdrop
 ! Local variables
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
-!logical :: mask(size(sim, 1))
 real(RP) :: distsq(size(sim, 2))
-real(RP) :: score(size(sim, 2))
 real(RP) :: weight(size(sim, 2))
+real(RP) :: score(size(sim, 2))
 real(RP) :: simid(size(simi, 1))
 !real(RP) :: sigbar(size(sim, 1))
 !real(RP) :: veta(size(sim, 1))
@@ -167,8 +166,8 @@ end if
 !    !!MATLAB: [~, jdrop] = max(simid, [], 'omitnan');
 !end if
 !
-!! VETA(J) is the square of the distance from the J-th vertex of the simplex to the best vertex,
-!! taking the trial point SIM(:, N+1) + D into account.
+!! VETA(J) is the distance from the J-th vertex of the simplex to the best vertex, taking the trial
+!! point SIM(:, N+1) + D into account.
 !if (ximproved) then
 !    veta = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
 !    !!MATLAB: veta = sqrt(sum((sim(:, 1:n) - d).^2));  % d should be a column! Implicit expansion
@@ -205,15 +204,14 @@ end if
 ! It is simpler and works better than Powell's scheme. Note that we allow JDROP to be N+1 if
 ! IMPROVEX is TRUE, whereas Powell's code does not.
 
-
-! VETA(J) is the square of the distance from the J-th vertex of the simplex to the best vertex,
-! taking the trial point SIM(:, N+1) + D into account.
+! DISTQ(J) is the square of the distance from the J-th vertex of the simplex to the "best" point so
+! far, taking the trial point SIM(:, N+1) + D into account.
 if (ximproved) then
-    distsq = sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1)
+    distsq(1:n) = sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1)
     !!MATLAB: distsq = sum((sim(:, 1:n) - d).^2);  % d should be a column! Implicit expansion
     distsq(n + 1) = sum(d**2)
 else
-    distsq = sum(sim(:, 1:n)**2, dim=1)
+    distsq(1:n) = sum(sim(:, 1:n)**2, dim=1)
     distsq(n + 1) = ZERO
 end if
 
@@ -222,7 +220,7 @@ weight = distsq
 ! Other possible definitions of WEIGHT. They work almost the same as the one above.
 !------------------------------------------------------------------------------------------!
 !weight = max(ONE, 25.0_RP * distsq / delta**2)
-!weight = max(ONE, 10.0_RP * distsq / delta**2)
+!weight = max(ONE, TEN * distsq / delta**2)
 !weight = max(ONE, 1.0E2_RP * distsq / delta**2)
 !weight = max(ONE, distsq / max(rho, TENTH * delta)**2)
 !weight = max(ONE, distsq / rho**2)
@@ -234,7 +232,7 @@ weight = distsq
 simid = matprod(simi, d)
 score = weight * abs([simid, ONE - sum(simid)])
 
-! If XIMPROVED is FALSE (the new D does not render a better X), we set SCORE(N+1) = -1 to avoid
+! If XIMPROVED is FALSE (the new D does not render a "better" X), we set SCORE(N+1) = -1 to avoid
 ! JDROP = N+1. This is not really needed if WEIGHT is defined to DISTSQ to some power, in which case
 ! SCORE(N+1) = 0. We keep the code for robustness (in case the definition of WEIGHT changes later).
 if (.not. ximproved) then
