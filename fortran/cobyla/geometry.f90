@@ -19,7 +19,7 @@ public :: assess_geo, setdrop_geo, setdrop_tr, geostep
 contains
 
 
-function assess_geo(delta, factor_alpha, factor_beta, sim, simi) result(acceptable_geo)
+function assess_geo(delta, factor_alpha, factor_beta, sim, simi) result(adequate_geo)
 !--------------------------------------------------------------------------------------------------!
 ! This function checks if an interpolation set has acceptable geometry as (14) of the COBYLA paper.
 !--------------------------------------------------------------------------------------------------!
@@ -44,7 +44,7 @@ real(RP), intent(in) :: sim(:, :)   ! SIM(N, N+1)
 real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
 
 ! Outputs
-logical :: acceptable_geo
+logical :: adequate_geo
 
 ! Local variables
 character(len=*), parameter :: srname = 'ASSESS_GEO'
@@ -84,7 +84,7 @@ end if
 ! number, i.e., one. For this simplex, the distance from V_{N+1} to its opposite face is L/SQRT{N}.
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
-acceptable_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta * delta)
+adequate_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta * delta)
 
 !====================!
 !  Calculation ends  !

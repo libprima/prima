@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, January 28, 2023 AM11:44:17
+! Last Modified: Wednesday, February 01, 2023 PM08:05:37
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -206,7 +206,7 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
         elseif (maxfilt_in < min(maxfun, MIN_MAXFILT)) then
             call warning(solver, 'MAXFILT is too small; it is set to '//trimstr(wmsg))
         elseif (maxfilt < min(maxfilt_in, maxfun)) then
-            call warning(solver, 'MAXFILT is set to '//trimstr(wmsg)//' due to memory limit.')
+            call warning(solver, 'MAXFILT is set to '//trimstr(wmsg)//' due to memory limit')
         end if
     end if
 end if
@@ -315,7 +315,7 @@ if (lower(solver) == 'bobyqa') then
         ! will get a huge value when XU or XL contains huge values that indicate unbounded variables.
         rhobeg = minval(xu - xl) / 4.0_RP  ! Here, we do not take RHOBEG_DEFAULT.
         call warning(solver, 'Invalid RHOBEG; '//solver//' requires 0 < RHOBEG <= MINVAL(XU-XL)/2;' &
-            & //' it is set to MINVAL(XU-XL)/4.')
+            & //' it is set to MINVAL(XU-XL)/4')
     end if
 end if
 if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
