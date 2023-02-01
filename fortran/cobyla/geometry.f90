@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 01, 2023 PM07:18:50
+! Last Modified: Wednesday, February 01, 2023 PM11:55:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -203,6 +203,9 @@ end if
 ! The following definition of JDROP is inspired by SETDROP_TR in UOBYQA/NEWUOA/BOBYQA/LINCOA.
 ! It is simpler and works better than Powell's scheme. Note that we allow JDROP to be N+1 if
 ! IMPROVEX is TRUE, whereas Powell's code does not.
+! See also (4.1) of Scheinberg-Toint-2010: Self-Correcting Geometry in Model-Based Algorithms for
+! Derivative-Free Unconstrained Optimization, which refers to the strategy here as the "combined
+! distance/poisedness criteria".
 
 ! DISTQ(J) is the square of the distance from the J-th vertex of the simplex to the "best" point so
 ! far, taking the trial point SIM(:, N+1) + D into account.

@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 31, 2023 PM05:25:44
+! Last Modified: Thursday, February 02, 2023 AM12:59:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -269,17 +269,6 @@ do while (.true.)
         ! Evaluate EBOUND. It will be used as a bound to test if the entries of MODERRSAV are small.
         ebound = errbd(crvmin, d, gopt, hq, moderrsav, pq, rho, sl, su, xopt, xpt)
     else
-        ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-        if (sum(xopt**2) >= 1.0E3_RP * dnorm**2) then
-            sl = min(sl - xopt, ZERO)
-            su = max(su - xopt, ZERO)
-            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
-            ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
-            xbase = max(xl, min(xu, xbase))
-            ! It seems important for the performance to recalculate QRED.
-            qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-        end if
-
         ! Calculate the next value of the objective function.
         x = xinbd(xbase, xopt + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
         call evaluate(calfun, x, f)
@@ -436,14 +425,6 @@ do while (.true.)
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
         delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)
 
-        ! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-        if (sum(xopt**2) >= 1.0E3_RP * delbar**2) then
-            sl = min(sl - xopt, ZERO)
-            su = max(su - xopt, ZERO)
-            call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
-            ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
-            xbase = max(xl, min(xu, xbase))
-        end if
 
         ! Find D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) becomes XOPT + D.
         d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)
@@ -528,16 +509,19 @@ do while (.true.)
         moderrsav = HUGENUM
     end if
 
-    !! Zaikun 20220528: TODO: check the shifting strategy of NEWUOA and LINCOA.
-    !!if (sum(xopt**2) >= 1.0E3_RP * delta**2) then  ! 0018
-    !!if (sum(xopt**2) >= 1.0E3_RP * delta**2) then  ! 0026
-    !if (sum(xopt**2) >= 1.0E4_RP * delta**2) then  ! 0030
-    !    sl = min(sl - xopt, ZERO)
-    !    su = max(su - xopt, ZERO)
-    !    call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
-    !    ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
-    !    xbase = max(xl, min(xu, xbase))
-    !end if
+    ! Shift XBASE if XOPT may be too far from XBASE.
+    ! Powell's original criterion for shifting XBASE is as follows.
+    ! 1. After a trust region step that is not short, shift XBASE if SUM(XOPT**2) >= 1.0E3*DNORM**2.
+    ! In this case, it seems quite important for the performance to recalculate QRED.
+    ! 2. Before a geometry step, shift XBASE if SUM(XOPT**2) >= 1.0E3*DELBAR**2.
+    if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
+        ! Other possible criteria: SUM(XOPT**2) >= 1.0E4*DELTA**2, SUM(XOPT**2) >= 1.0E4*RHO**2.
+        sl = min(sl - xopt, ZERO)
+        su = max(su - xopt, ZERO)
+        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
+        ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
+        xbase = max(xl, min(xu, xbase))
+    end if
 end do
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
