@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 01, 2023 AM02:02:29
+! Last Modified: Wednesday, February 01, 2023 AM02:14:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -493,7 +493,8 @@ do tr = 1, maxtr
         ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
         jdrop_geo = setdrop_geo(delta, factor_alpha, factor_beta, sim, simi)
 
-        !jdrop_geo = maxloc(sum(sim(:, 1:n)**2, dim=1), dim=1) !???
+        ! The following JDROP_GEO comes from UOBYQA/NEWUOA/BOBYQA/LINCOA. It performs poorly!
+        !!jdrop_geo = maxloc(sum(sim(:, 1:n)**2, dim=1), dim=1)
 
         ! JDROP_GEO is between 1 and N unless SIM and SIMI contain NaN, which should not happen
         ! at this point unless there is a bug. Nevertheless, for robustness, we include the
