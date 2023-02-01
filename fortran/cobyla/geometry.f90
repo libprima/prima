@@ -215,7 +215,7 @@ end if
 
 weight = distsq
 
-! Other possible definitions of WEIGHT. They work well. It seems that the power 2 is good.
+! Other possible definitions of WEIGHT. They work well.
 !------------------------------------------------------------------------------------------!
 !weight = max(ONE, 25.0_RP * distsq / delta**2)
 !weight = max(ONE, TEN * distsq / delta**2)
