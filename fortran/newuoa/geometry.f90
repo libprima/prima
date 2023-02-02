@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, January 31, 2023 PM02:23:02
+! Last Modified: Thursday, February 02, 2023 PM12:31:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -810,7 +810,7 @@ end function bigden
 
 function circle_fun_biglag(theta, args) result(f)
 !--------------------------------------------------------------------------------------------------!
-! This function defines the objective function of the 2D search on a circle in BIGLAG.
+! This function defines the objective function of the 2-dimensional search on a circle in BIGLAG.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
@@ -850,7 +850,7 @@ end function circle_fun_biglag
 
 function circle_fun_bigden(theta, args) result(f)
 !--------------------------------------------------------------------------------------------------!
-! This function defines the objective function of the 2D search on a circle in BIGDEN.
+! This function defines the objective function of the 2-dimensional search on a circle in BIGDEN.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 ! REAL(RP) :: PAR(9)

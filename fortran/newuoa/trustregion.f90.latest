@@ -29,9 +29,9 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(:, K)*XPT(:, K)' .
 !
 ! The calculation of S begins with the truncated conjugate gradient method. If the boundary of the
-! trust region is reached, then further changes to S may be made, each one being in the 2D space
-! spanned by the current S and the corresponding gradient of Q. Thus S should provide a substantial
-! reduction to Q within the trust region. See Section 5 of the NEWUOA paper.
+! trust region is reached, then further changes to S may be made, each one being in the 2-dimensional
+! space spanned by the current S and the corresponding gradient of Q. Thus S should provide a
+! substantial reduction to Q within the trust region. See Section 5 of the NEWUOA paper.
 !
 ! At return, S will be the approximate solution. CRVMIN will be set to the least curvature of
 ! HESSIAN along the conjugate directions that occur, except that it is set to ZERO if S goes all the
@@ -206,7 +206,7 @@ do iter = 1, maxiter
     qadd = alpha * (gg - HALF * alpha * dhd)
     ! QRED is the reduction of Q up to now.
     qred = qred + qadd
-    ! QADD and QRED will be used in the 2D minimization if any.
+    ! QADD and QRED will be used in the 2-dimensional minimization if any.
 
     ! Update S, HS, and GG.
     sold = s
@@ -220,7 +220,7 @@ do iter = 1, maxiter
     ! Note that we should NOT set g = g + hs, because g contains the gradient of Q at x.
 
     ! Check whether to exit. This should be done after updating HS and GG, which will be used for
-    ! the 2D minimization if any.
+    ! the 2-dimensional minimization if any.
     ! Exit in case of Inf/NaN in S. This should come the first! Otherwise, we may return an S that
     ! contains NaN and fulfills other exit conditions.
     if (.not. is_finite(sum(abs(s)))) then
@@ -261,13 +261,13 @@ if (ss <= 0 .or. is_nan(ss)) then
 end if
 
 if (twod_search) then
-    ! At least 1 iteration of 2D minimization
+    ! At least 1 iteration of 2-dimensional minimization
     maxiter = max(int(1, kind(maxiter)), maxiter - iter)
 else
     maxiter = 0
 end if
 
-! The 2D minimization
+! The 2-dimensional minimization
 ! N.B.: During the iterations, G is NOT updated, and it equals always GQ+HX, which is the gradient
 ! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
 ! which is the norm square of the gradient at the current iterate.
@@ -280,7 +280,7 @@ do iter = 1, maxiter
     sg = inprod(s, g)
     shs = inprod(s, hs)
 
-    ! Begin the 2D minimization by calculating D and HD and some scalar products.
+    ! Begin the 2-dimensional minimization by calculating D and HD and some scalar products.
 
     ! Powell's code calculates D as follows. In precise arithmetic, INPROD(D, S) = 0 and |D| = |S|.
     ! However, when DELSQ*GG - SGK**2 is tiny, the error in D can be large and hence damage these
@@ -300,8 +300,8 @@ do iter = 1, maxiter
     ! 1. The condition |D|<=SQRT(TOL*GG) below is equivalent to |INPROD(G+HS,S)|<=SQRT((1-TOL)*GG*SS)
     ! in theory. As given above, Powell's code triggers an exit if INPROD(G+HS,S)=SGK<=(TOL-1)*GG*SS.
     ! Since |SQRT(1-TOL) - (1-TOL)| <= TOL/2, our condition is close to |SGK| <= (TOL-1)*GG*SS.
-    ! When |SGK| is tiny, S and G+HS are nearly parallel and hence the 2D search cannot continue.
-    ! Note that SGK is unlikely positive if everything goes well.
+    ! When |SGK| is tiny, S and G+HS are nearly parallel and hence the 2-dimensional search cannot
+    ! continue. Note that SGK is unlikely positive if everything goes well.
     ! 2. SQRT(TOL)*SQRT(GG) is less likely to encounter underflow than SQRT(TOL*GG).
     ! 3. The condition below should be non-strict so that |D| = 0 can trigger the exit.
     if (norm(d) <= sqrt(tol) * sqrt(gg)) then
@@ -378,7 +378,7 @@ end subroutine trsapp
 
 function circle_fun_trsapp(theta, args) result(f)
 !--------------------------------------------------------------------------------------------------!
-! This function defines the objective function of the 2D search on a circle in TRSAPP.
+! This function defines the objective function of the 2-dimensional search on a circle in TRSAPP.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!

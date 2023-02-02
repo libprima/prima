@@ -13,7 +13,12 @@
 4. What about solve the TR subproblem of COBYLA using a composite step approach? Vardi or
    Byrd-Omojokun?
 
-5. Check the definition and update of RESCON in LINCOA.
+5. Check the definition and update of RESCON in LINCOA, in UPDATE/UPDATERES.
 
 6. Do we need to update X, F, XOPT, FOPT, KOPT all together? Aren't they redundant? What if only
    KOPT?
+
+7. Unify the UPDATEQ, UPDATEXF(, and UPDATEH) of BOBYQA/LINCOA/NEWUOA.
+
+8. Implement a subroutine that evaluates the functions, updates NF, updates history/filter, and
+   prints messages?
