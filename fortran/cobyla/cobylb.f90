@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 02, 2023 AM08:12:08
+! Last Modified: Thursday, February 02, 2023 PM12:28:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -257,10 +257,11 @@ jdrop_tr = 0
 jdrop_geo = 0
 
 ! MAXTR is the maximal number of trust-region iterations. Normally, each trust-region iteration
-! takes 1 or 2 function evaluations unless the update of CPEN alters the optimal vertex or the
-! trust-region step is short or fails to reduce either the linearized objective or the linearized
-! constraint violation but the geometry step is not invoked. Thus the following MAXTR is unlikely
-! to be reached.
+! takes 1 or 2 function evaluations except for the following cases:
+! 1. the update of CPEN alters the optimal vertex;
+! 2. the trust-region step is short or fails to reduce either the linearized objective or the
+! linearized constraint violation but the geometry step is not invoked.
+! The following MAXTR is unlikely to be reached.
 maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
 info = MAXTR_REACHED
 

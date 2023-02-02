@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 24, 2023 PM01:39:32
+! Last Modified: Thursday, February 02, 2023 PM12:38:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -211,7 +211,7 @@ beta = ZERO
 ! ITERCG is the number of CG iterations corresponding to the current set of active bounds.
 itercg = 0
 
-! TWOD_SEARCH: whether to perform a 2D search after the truncated conjugate gradient method.
+! TWOD_SEARCH: whether to perform a 2-dimensional search after the truncated CG method.
 twod_search = .false.  ! The default value of TWOD_SEARCH is FALSE!
 
 ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
@@ -384,9 +384,9 @@ do iter = 1, maxiter
     end if
 end do
 
-! Set MAXITER for the 2D search on the trust region boundary. Powell's code essentially sets MAXITER
-! to infinity; the loop will exit when NACT >= N-1 or the procedure cannot significantly reduce the
-! quadratic model. We impose an explicit but large bound on the number of iterations as a safeguard.
+! Set MAXITER for the 2-dimensional search on the trust region boundary. Powell's code essentially
+! sets MAXITER to infinity; the loop exits when NACT >= N-1 or the procedure cannot significantly
+! reduce the quadratic model. We set a finite but large MAXITER as a safeguard.
 if (twod_search) then
     crvmin = ZERO
     maxiter = 10_IK * (n - nact)
@@ -394,8 +394,8 @@ else
     maxiter = 0
 end if
 
-! Improve D by a sequential 2D search on the boundary of the trust region for the variables that
-! have not reached a bound. See (3.6) of the BOBYQA paper and the elaborations nearby.
+! Improve D by a sequential 2-dimensional search on the boundary of the trust region for the
+! variables that have not reached a bound. See (3.6) of the BOBYQA paper and the elaborations nearby.
 ! 1. At each iteration, the current D is improved by a search conducted on the circular arch
 ! {D(THETA): D(THETA) = (I-P)*D + [COS(THETA)*P*D + SIN(THETA)*S], 0<=THETA<=PI/2, SL<=XOPT+D(THETA)<=SU},
 ! where P is the orthogonal projection onto the space of the variables that have not reached their
