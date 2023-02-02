@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 01, 2023 PM11:55:37
+! Last Modified: Thursday, February 02, 2023 PM05:01:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -317,6 +317,8 @@ if (DEBUGGING) then
     call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
     call assert(factor_alpha > 0 .and. factor_alpha < 1, '0 < FACTOR_ALPHA < 1', srname)
     call assert(factor_beta > 1, 'FACTOR_BETA > 1', srname)
+    call assert(.not. assess_geo(delta, factor_alpha, factor_beta, sim, simi), &
+        & 'The geometry is not adequate when '//srname//' is called', srname)
 end if
 
 !====================!
@@ -341,6 +343,10 @@ else
     ! which should not happen unless there is a bug.
     jdrop = 0
 end if
+
+! Zaikun 230202: What if we consider VETA and VSIG together? The following attempts do not work well.
+!jdrop = maxval(sum(sim(:, 1:n)**2, dim=1) * sum(simi**2, dim=2)) ! Condition number
+!jdrop = maxval(sum(sim(:, 1:n)**2, dim=1)**2 * sum(simi**2, dim=2)) ! Condition number times distance
 
 !====================!
 !  Calculation ends  !
