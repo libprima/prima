@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM11:52:51
+! Last Modified: Thursday, February 02, 2023 AM08:14:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -96,6 +96,7 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
+integer(IK) :: tr
 logical :: accurate_mod
 logical :: adequate_geo
 logical :: bad_trstep
@@ -194,7 +195,8 @@ knew_geo = 0
 ! IMPROVE_GEO: Should we improve the geometry?
 ! REDUCE_RHO: Should we reduce rho?
 ! UOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
-do while (.true.)
+!do while (.true.)
+do tr = 1, max(maxfun, 2 * maxfun)
     ! Generate trust region step D, and also calculate a lower bound on the Hessian of Q.
     xopt = xpt(:, kopt)
     g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)

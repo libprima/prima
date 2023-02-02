@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 31, 2023 PM06:07:00
+! Last Modified: Thursday, February 02, 2023 AM08:10:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,7 +45,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHED
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec !, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -92,10 +92,12 @@ integer(IK) :: knew_tr
 integer(IK) :: kopt
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
+integer(IK) :: maxtr
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
+integer(IK) :: tr
 logical :: accurate_mod
 logical :: adequate_geo
 logical :: bad_trstep
@@ -188,13 +190,19 @@ moderrsav = HUGENUM
 knew_tr = 0
 knew_geo = 0
 
+! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
+! function evaluations unless the trust-region step is short or fails to reduce the trust-region
+! model but the geometry step is not invoked. Thus the following MAXTR is unlikely to be reached.
+maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
+info = MAXTR_REACHED
+
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, we use three boolean variables to control the workflow.
 ! SHORTD: Is the trust-region trial step too short to invoke a function evaluation?
 ! IMPROVE_GEO: Should we improve the geometry?
 ! REDUCE_RHO: Should we reduce rho?
 ! UOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
-do while (.true.)
+do tr = 1, maxtr
     ! Generate trust region step D, and also calculate a lower bound on the Hessian of Q.
     xopt = xpt(:, kopt)
     g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)

@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, February 02, 2023 AM01:09:23
+! Last Modified: Thursday, February 02, 2023 AM08:08:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -227,8 +227,8 @@ knew_geo = 0
 itest = 0
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
-! function evaluations unless the trust-region step is short but the geometry step is not invoked.
-! Thus the following MAXTR is unlikely to be reached.
+! function evaluations unless the trust-region step is short or fails to reduce the trust-region
+! model but the geometry step is not invoked. Thus the following MAXTR is unlikely to be reached.
 maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
 info = MAXTR_REACHED
 

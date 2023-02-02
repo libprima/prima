@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 02, 2023 AM01:41:56
+! Last Modified: Thursday, February 02, 2023 AM08:10:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,7 +60,7 @@ use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS!, MAXTR_REACHED
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag!, errquad
@@ -114,9 +114,11 @@ integer(IK) :: knew_tr
 integer(IK) :: kopt
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
+integer(IK) :: maxtr
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: subinfo
+integer(IK) :: tr
 logical :: accurate_mod
 logical :: adequate_geo
 logical :: bad_trstep
@@ -232,6 +234,12 @@ knew_tr = 0
 knew_geo = 0
 itest = 0
 
+! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
+! function evaluations unless the trust-region step is short or fails to reduce the trust-region
+! model but the geometry step is not invoked. Thus the following MAXTR is unlikely to be reached.
+maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
+info = MAXTR_REACHED
+
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, we use three boolean variables to control the workflow.
 ! SHORTD: Is the trust-region trial step too short to invoke a function evaluation?
@@ -239,7 +247,7 @@ itest = 0
 ! REDUCE_RHO: Should we reduce rho?
 ! BOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 info = INFO_DFT
-do while (.true.)
+do tr = 1, maxtr
     ! Generate the next trust region step D.
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
     dnorm = min(delta, sqrt(sum(d**2)))
