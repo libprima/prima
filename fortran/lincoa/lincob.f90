@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 02, 2023 AM01:42:55
+! Last Modified: Thursday, February 02, 2023 AM08:05:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -319,8 +319,8 @@ nact = 0
 iact = linspace(1_IK, m, m)
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
-! function evaluations unless the trust-region step is short but the geometry step is not invoked.
-! Thus the following MAXTR is unlikely to be reached.
+! function evaluations unless the trust-region step is short or fails to reduce the trust-region
+! model but the geometry step is not invoked. Thus the following MAXTR is unlikely to be reached.
 maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
 info = MAXTR_REACHED
 

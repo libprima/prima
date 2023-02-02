@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 24, 2023 PM01:35:31
+! Last Modified: Thursday, February 02, 2023 AM08:23:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -237,16 +237,14 @@ par = parl
 paru = ZERO  ! Upper bound for the optimal PAR ??? The initial value is less than PARL. Why?
 paruest = ZERO  ! Estimation for PARU
 posdef = .false.
+dold = ZERO
 iter = 0
-maxiter = min(1000_IK, 100_IK * n)  ! What is the theoretical bound of iterations?
+maxiter = min(1000_IK, 100_IK * n)  ! Unlikely to be reached.
+! Zaikun 26-06-2019: Powell's original code can encounter infinite cycling, which did happen when
+! testing the CUTEst problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. Indeed, in all these cases, Inf
+! and NaN appear in D due to extremely large values in the Hessian matrix (up to 10^219).
 
-do while (.true.)
-
-    iter = iter + 1_IK
-
-    ! Zaikun 26-06-2019: The original code can encounter infinite cycling, which did happen when
-    ! testing the CUTEst problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. Indeed, in all these cases, Inf
-    ! and NaN appear in D due to extremely large values in the Hessian matrix (up to 10^219).
+do iter = 1, maxiter
     if (.not. is_finite(sum(abs(d)))) then
         d = dold
         exit

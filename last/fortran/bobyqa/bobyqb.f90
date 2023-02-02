@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 02, 2023 AM01:01:05
+! Last Modified: Thursday, February 02, 2023 AM08:14:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -117,6 +117,7 @@ integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: subinfo
+integer(IK) :: tr
 logical :: accurate_mod
 logical :: adequate_geo
 logical :: bad_trstep
@@ -239,7 +240,8 @@ itest = 0
 ! REDUCE_RHO: Should we reduce rho?
 ! BOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 info = INFO_DFT
-do while (.true.)
+!do while (.true.)
+do tr = 1, max(maxfun, 2 * maxfun)
     ! Generate the next trust region step D.
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
     dnorm = min(delta, sqrt(sum(d**2)))
