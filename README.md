@@ -46,8 +46,9 @@ and the code is nontrivial to understand or maintain, let alone to
 extend. This becomes an obstacle for many practitioners to exploiting these solvers in their
 applications and hinders researchers from exploring the wealth left by Professor Powell to us.
 
-Before he passed, Professor Powell had asked me to maintain his solvers. This is an honorable
-mission. To make the solvers more accessible, I started PRIMA.
+Before he passed, Professor Powell had asked me and
+[Professor Nick Gould](https://www.numerical.rl.ac.uk/people/nimg) to maintain his solvers.
+This is an honorable mission. To make the solvers more accessible, I started PRIMA.
 It is a project somehow similar to the translation, interpretation, and annotation of Euclid’s
 *Elements*. It will make Powell's solvers easily understandable to everyone, not only the experts.
 Few people remember [who translated *Elements*](https://en.wikipedia.org/wiki/Euclid%27s_Elements#Translations),
