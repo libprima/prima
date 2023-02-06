@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 31, 2023 PM11:30:05
+! Last Modified: Monday, February 06, 2023 PM02:24:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,8 +23,8 @@ function setdrop_tr(kopt, ximproved, d, pl, rho, xpt) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
-! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step. See the discussions
-! around (56) of the UOBYQA paper.
+! XPT(:, KNEW) is replaced with XNEW = XOPT + D, where D is the trust-region step. See the
+! discussions around (56) of the UOBYQA paper.
 ! N.B.:
 ! 1. If XIMPROVED = TRUE, then KNEW > 0 so that XNEW is included into XPT. Otherwise, it is a bug.
 ! 2. If XIMPROVED = FALSE, then KNEW /= KOPT so that XPT(:, KOPT) stays. Otherwise, it is a bug.

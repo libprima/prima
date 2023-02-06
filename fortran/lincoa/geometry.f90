@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 31, 2023 PM11:31:31
+! Last Modified: Monday, February 06, 2023 PM02:23:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ function setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
-! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.
+! XPT(:, KNEW) is replaced with XNEW = XOPT + D, where D is the trust-region step.
 ! N.B.:
 ! It is tempting to take the function value into consideration when defining KNEW, for example,
 ! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL), unless there is a better
