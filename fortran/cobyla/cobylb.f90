@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, February 06, 2023 PM03:37:13
+! Last Modified: Monday, February 06, 2023 PM03:41:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -396,7 +396,7 @@ do tr = 1, maxtr
         ! UOBYQA/NEWUOA/BOBYQA/LINCOA and improves the performance of COBYLA.
         ! 3. The same as Powell's code, we do not reduce RHO unless ADEQUATE_GEO is TRUE. What about
         ! we also use ADEQUATE_GEO == TRUE as a prerequisite for reducing DELTA? The argument would
-        ! be that the bad (negative) value of RATIO may be because of bad geometry (and hence bad
+        ! be that the bad (small) value of RATIO may be because of a bad geometry (and hence a bad
         ! model) rather than an inappropriately large DELTA, and it might be good to try improving
         ! the geometry first without reducing DELTA. However, according to a test on 230206, it does
         ! not improve the performance if we skip the update of DELTA when ADEQUATE_GEO is FALSE and
