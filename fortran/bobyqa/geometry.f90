@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 31, 2023 PM02:17:30
+! Last Modified: Monday, February 06, 2023 PM02:25:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ function setdrop_tr(kopt, ximproved, bmat, d, delta, rho, xpt, zmat) result(knew
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
-! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step. See discussions
+! XPT(:, KNEW) is replaced with XNEW = XOPT + D, where D is the trust-region step. See discussions
 ! around (6.1) of the BOBYQA paper.
 ! N.B.:
 ! 1. If XIMPROVED = TRUE, then KNEW > 0 so that XNEW is included into XPT. Otherwise, it is a bug.
@@ -319,7 +319,7 @@ end if
 ! and SUBD will be lower and upper bounds on the step along each of these lines in turn. On each
 ! line, we will evaluate the value of the KNEW-th Lagrange function at 3 trial points, and estimate
 ! the denominator accordingly. The three points take the form (1-t)*XOPT + t*XPT(:, K) with step
-! lengths t = SLBD, SUBD, and STPM, corresponding to the upper (U) bound of t, the lower (L) bound 
+! lengths t = SLBD, SUBD, and STPM, corresponding to the upper (U) bound of t, the lower (L) bound
 ! of t, and a medium (M) step. In total, 3*(NPT-1) trial points will be considered. On the K-th line,
 ! we intend to maximize the modulus of PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:,K)); overall, we intend
 ! to find a trial point rendering a large value of the PREDSQ defined in (3.11) of the BOBYQA paper.

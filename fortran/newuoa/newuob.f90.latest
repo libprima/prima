@@ -304,7 +304,7 @@ do tr = 1, maxtr
         ! Is the newly generated X better than current best point?
         ximproved = (f < fopt)
 
-        ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW = XOPT + D.
+        ! Set KNEW_TR to the index of the interpolation point to be replaced with XNEW = XOPT + D.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
         ! N.B.:
         ! 1. KNEW_TR = 0 means it is impossible to obtain a good interpolation set by replacing any
@@ -338,7 +338,7 @@ do tr = 1, maxtr
             ! maybe because the model is expected to be good after a geometry step.
             ! 3. If KNEW_TR = 0 after a trust-region step, TRYQALT is not invoked. In this case, the
             ! interpolation set is unchanged, so it seems reasonable to keep the model unchanged.
-            ! 4. In theory, FVAL - FOPT in the call of TRYQALT can be replaced by FVAL + C with any
+            ! 4. In theory, FVAL - FOPT in the call of TRYQALT can be changed to FVAL + C with any
             ! constant C. This constant will not affect the result in precise arithmetic. Powell
             ! chose C = - FVAL(KOPT_OLD), where KOPT_OLD is the KOPT before the update above (Powell
             ! updated KOPT after TRYQALT). Here we use C = -FOPT, as it worked slightly better on

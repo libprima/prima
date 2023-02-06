@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 02, 2023 PM05:01:59
+! Last Modified: Monday, February 06, 2023 PM02:21:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -94,7 +94,7 @@ end function assess_geo
 
 function setdrop_tr(ximproved, d, sim, simi) result(jdrop)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine finds (the index) of a current interpolation point to be replaced by the
+! This subroutine finds (the index) of a current interpolation point to be replaced with the
 ! trust-region trial point. See (19)--(22) of the COBYLA paper.
 ! N.B.:
 ! 1. If XIMPROVED == TRUE, then JDROP > 0 so that D is included into XPT. Otherwise, it is a bug.
@@ -269,8 +269,8 @@ end function setdrop_tr
 
 function setdrop_geo(delta, factor_alpha, factor_beta, sim, simi) result(jdrop)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine finds (the index) of a current interpolation point to be replaced by
-! a geometry-improving point. See (15)--(16) of the COBYLA paper.
+! This subroutine finds (the index) of a current interpolation point to be replaced with a
+! geometry-improving point. See (15)--(16) of the COBYLA paper.
 ! N.B.: COBYLA never sets JDROP = N + 1.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
@@ -330,7 +330,7 @@ end if
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 
-! Decide which vertex to drop from the simplex. It will be replaced by a new point to improve the
+! Decide which vertex to drop from the simplex. It will be replaced with a new point to improve the
 ! acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
 if (any(veta > factor_beta * delta)) then
     jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
@@ -362,7 +362,7 @@ end function setdrop_geo
 function geostep(jdrop, cpen, conmat, cval, delta, fval, factor_gamma, simi) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates a geometry step so that the geometry of the interpolation set is improved
-! when SIM(:, JDRO_GEO) is replaced by SIM(:, N+1) + D.
+! when SIM(:, JDRO_GEO) is replaced with SIM(:, N+1) + D.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: D(N), A(N, M+1)
