@@ -42,7 +42,7 @@ end
 %%%!!!----------------------------------------------------------------------------------------!!!%%%
 % Remove the existing compiled MEX files in the source directories. This is IMPORTANT!
 % Without, MATLAB will crash due to a bug of MATLAB under Linux. This was observed on
-% 2022-02-16 and took two days to fix. See https://github.com/equipez/test_matlab/tree/master/crash.
+% 2022-02-16 and took two days to fix. See https://github.com/zequipe/test_matlab/blob/master/crash/.
 % It must be done BEFORE copying the files from `s_matlab_dir` to `d_matlab_dir`.
 setup_tools = fullfile(s_root_dir, 'matlab', 'setup_tools');
 addpath(setup_tools);  % We use `clean_mex` from `setup_tools` to clean up the compiled MEX files.
