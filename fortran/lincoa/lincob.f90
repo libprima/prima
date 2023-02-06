@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 02, 2023 AM08:05:37
+! Last Modified: Monday, February 06, 2023 PM02:23:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -427,7 +427,7 @@ do tr = 1, maxtr
         ! Is the newly generated X better than current best point?
         ximproved = (f < fopt)
 
-        ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW = XOPT + D.
+        ! Set KNEW_TR to the index of the interpolation point to be replaced with XNEW = XOPT + D.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
         knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat)
         if (knew_tr > 0) then

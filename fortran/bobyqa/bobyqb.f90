@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 02, 2023 PM07:43:32
+! Last Modified: Monday, February 06, 2023 PM02:24:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -342,7 +342,7 @@ do tr = 1, maxtr
             ximproved = (f < fopt)
         end if
 
-        ! Set KNEW_TR to the index of the interpolation point to be replaced by XOPT + D.
+        ! Set KNEW_TR to the index of the interpolation point to be replaced with XOPT + D.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
         knew_tr = setdrop_tr(kopt, ximproved, bmat, d, delta, rho, xpt, zmat)
 

@@ -15,7 +15,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 02, 2023 PM12:28:15
+! Last Modified: Monday, February 06, 2023 PM02:20:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -391,12 +391,12 @@ do tr = 1, maxtr
         ! Is the newly generated X better than current best point?
         ximproved = (actrem > 0)  ! If ACTREM is NaN, then XIMPROVED should & will be FALSE.
 
-        ! Set JDROP_TR to the index of the vertex to be replaced by X. JDROP_TR = 0 means there
+        ! Set JDROP_TR to the index of the vertex to be replaced with X. JDROP_TR = 0 means there
         ! is no good point to replace, and X will not be included into the simplex; in this case,
         ! the geometry of the simplex likely needs improvement, which will be handled below.
         jdrop_tr = setdrop_tr(ximproved, d, sim, simi)
 
-        ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
+        ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced with D.
         ! UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides to discard X.
         call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding in UPDATEPOLE (called by UPDATEXFC).
@@ -415,7 +415,7 @@ do tr = 1, maxtr
 
 
     !----------------------------------------------------------------------------------------------!
-    ! Before the next trust-region iteration, we possibly improves the geometry of simplex or
+    ! Before the next trust-region iteration, we possibly improve the geometry of simplex or
     ! reduces RHO according to IMPROVE_GEO and REDUCE_RHO. Now we decide these indicators.
     ! N.B.: We must ensure that the algorithm does not set IMPROVE_GEO = TRUE at infinitely many
     ! consecutive iterations without moving SIM(:, N+1) or reducing RHO. Otherwise, the algorithm
@@ -489,7 +489,7 @@ do tr = 1, maxtr
         ! Before the geometry step, UPDATEPOLE has been called either implicitly by UPDATEXFC or
         ! explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
-        ! Decide a vertex to drop from the simplex. It will be replaced by SIM(:, N + 1) + D to
+        ! Decide a vertex to drop from the simplex. It will be replaced with SIM(:, N + 1) + D to
         ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
         ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
         jdrop_geo = setdrop_geo(delta, factor_alpha, factor_beta, sim, simi)
@@ -525,7 +525,7 @@ do tr = 1, maxtr
         ! Save X, F, CONSTR, CSTRV into the filter.
         call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
 
-        ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced by D.
+        ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced with D.
         call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
         if (subinfo == DAMAGING_ROUNDING) then

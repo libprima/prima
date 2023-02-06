@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, January 06, 2023 AM11:31:25
+! Last Modified: Monday, February 06, 2023 PM02:25:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -303,7 +303,7 @@ score = sqrt(sum((xpt)**2, dim=1))  ! Powell's BOBYQA paper
 score(kopt) = ZERO  ! Set SCORE(KOPT) to 0 so that KOPT will be skipped when we choose KORIG below.
 scoreinc = maxval(score)
 
-! NPROV is the number of provisional points that has not yet been replaced by original points.
+! NPROV is the number of provisional points that has not yet been replaced with original points.
 nprov = npt - 1_IK
 
 ! The following loop runs for at most NPT^2 times: for each value of NPROV, we need at most NPT
@@ -425,7 +425,7 @@ do while (any(score > 0) .and. nprov > 1)   ! Retain at least one provisional po
     ! provisional point.
     call updateh_rsc(korig, beta, vlag, bmat, zmat)
 
-    ! NPROV is the number of provisional points that has not yet been replaced by original points.
+    ! NPROV is the number of provisional points that has not yet been replaced with original points.
     nprov = nprov - 1_IK
 end do
 
