@@ -8,14 +8,15 @@ module cobylb_mod
 ! trust-region radius, and RHO is never increased. DELTA does not exist in Powell's COBYLA code.
 ! Following the idea in Powell's other solvers (UOBYQA, ..., LINCOA), our code uses DELTA as the
 ! trust-region radius, while RHO works a lower bound of DELTA and indicates the current resolution
-! of the algorithm. DELTA is updated in a classical way, whereas RHO is updated as in Powell's
-! COBYLA code and is never increased. The new implementation improves the performance of COBYLA.
+! of the algorithm. DELTA is updated in a classical way subject to DELTA >= RHO, whereas RHO is
+! updated as in Powell's COBYLA code and is never increased. The new implementation improves the
+! performance of COBYLA.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, February 06, 2023 PM02:20:53
+! Last Modified: Monday, February 06, 2023 PM03:37:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -383,6 +384,23 @@ do tr = 1, maxtr
         ratio = redrat(actrem, prerem, eta1)
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
+        ! N.B.: 1. Powell's code uses RHO as the trust-region radius and updates it as follows.
+        ! Reduce RHO to GAMMA1*RHO if ADEQUATE_GEO is TRUE and either SHORTD is TRUE or RATIO < ETA1,
+        ! and then revise RHO to RHOEND if its new value is not more than 1.5*RHOEND; RHO remains
+        ! unchanged in all other cases; in particular, RHO is never increased.
+        ! 2. Our implementation uses DELTA as the trust-region radius, while using RHO as a lower
+        ! bound for DELTA. DELTA is updated in a way that is typical for trust-region methods, and
+        ! it is revised to RHO if its new value is not more thant 1.5*RHO. RHO reflects the current
+        ! resolution of the algorithm; its update is essentially the same as the update of RHO in
+        ! Powell's code (see the definition of REDUCE_RHO below). Our implementation aligns with
+        ! UOBYQA/NEWUOA/BOBYQA/LINCOA and improves the performance of COBYLA.
+        ! 3. The same as Powell's code, we do not reduce RHO unless ADEQUATE_GEO is TRUE. What about
+        ! we also use ADEQUATE_GEO == TRUE as a prerequisite for reducing DELTA? The argument would
+        ! be that the bad (negative) value of RATIO may be because of bad geometry (and hence bad
+        ! model) rather than an inappropriately large DELTA, and it might be good to try improving
+        ! the geometry first without reducing DELTA. However, according to a test on 230206, it does
+        ! not improve the performance if we skip the update of DELTA when ADEQUATE_GEO is FALSE and
+        ! RATIO < 0.1. Therefore, we choose to update DELTA without checking ADEQUATE_GEO.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
