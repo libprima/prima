@@ -188,8 +188,8 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 % Attribute: public (can  be called directly by users)
 %
 % Remarks:
-% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREprima !!!
-% !!! DO NOT CHANGE probinfo AFTER PREprima !!!
+% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREPRIMA !!!
+% !!! DO NOT CHANGE PROBINFO AFTER PREPRIMA !!!
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
