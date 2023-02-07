@@ -10,6 +10,7 @@
 6. gethuge now accpets 'precision' as an input; implement maxint; call gethuge only in preprima and
    maxint; call maxint only in preprima and lincoan, cobylan; record hugenum, hugefun, hugecon in
    probinfo and use hugefun/hugecon in postprima.
+   update 20230207: gethuge is now implemented in MATLAB; the Fortran version is removed.
 7. No need to check maxint in uobyqa, newuoa, and bobyqa; in lincoa, cobyla, and preprima, only check
    that the number of variables/constraints do not exceed maxint.
 8. Do not take the value of rhoend into consideration when correcting the incorrect (non-positive,
