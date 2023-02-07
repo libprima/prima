@@ -31,10 +31,9 @@ if strcmpi(precision_or_variant, default_variant)
     return;
 end
 
-% `availability` set to true if `gethuge` and all the solvers present in `directory` are available
-% with the version specified by the following [precision, default_debug_flag, variant].
-% N.B.: If no solver is present in `directory`, then `availability` is totally defined by the
-% availability of `gethuge`.
+% `availability` is set to true if all the solvers present in `directory` are available with the
+% version specified by the following [precision, default_debug_flag, variant].
+% N.B.: If no solver is present in `directory`, then `availability` is set to false.
 precision = default_precision;
 if ismember(precision_or_variant, precision_list)  % `precision_or_variant` is a precision.
     precision = precision_or_variant;
@@ -45,20 +44,10 @@ if ismember(precision_or_variant, variant_list)  % `precision_or_variant` is a v
 end
 default_debug_flag = false;  % Default debug flag: non-debugging.
 
-% Check the availability of `gethuge` corresponding to `precision` (note that the availability
-% of `gethuge` does not depend on `default_debug_flag` or `variant`). If it is unavailable, then set
-% `availability` to false and return.
-mexname = get_mexname('gethuge', precision);
-if ~exist(fullfile(directory, [mexname, '.', mexext()]), 'file')
-    availability = false;
-    return
-end
-
-% If `gethuge` is available corresponding to [precision, default_debug_flag, variant], then we set
-% `availability` to true if and only if [precision, default_debug_flag, variant] is available for all the
-% solvers that are present under `directory`. A solver is considered present if it is available for
-% at least one combination of precision and variant with the default debug flag. The following lines
-% decide the presence of the solvers.
+% We set `availability` to true if and only if [precision, default_debug_flag, variant] is available
+% for all the solvers that are present under `directory`. A solver is considered present if it is
+% available for at least one combination of precision and variant with the default debug flag. The
+% following lines decide the presence of the solvers.
 solver_present = false(length(solver_list), 1);
 for isol = 1 : length(solver_list)
     for iprc = 1 : length(precision_list)
