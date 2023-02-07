@@ -301,12 +301,18 @@ if strcmp(invoker, 'prima')
     [options, warnings] = select_solver(invoker, options, probinfo, warnings);
 end
 
+% If options.fortran is true, check whether the Fortran MEX function is available. If no, set
+% options.fortran to false, and the MATLAB version of the solver will be called (we are assuming
+% that the MATLAB version is available).
+if options.fortran
+    [options, warnings] = is_fortran_available(invoker, options, warnings);
+end
+
 if strcmpi(options.solver, 'bobyqa') && ~probinfo.nofreex && ~probinfo.infeasible && ~probinfo.feasibility_problem
-% The Fortran code of BOBYQA will revise x0 so that the distance between
-% x0 and the inactive bounds is at least rhobeg. We do it here in order
-% to raise a warning when such a revision occurs. After this, the
-% Fortran code will not revise x0 again. If the options.honour_x0 = true,
-% then we keep x0 unchanged and revise rhobeg if necessary.
+% BOBYQA will revise x0 so that the distance between x0 and the inactive bounds
+% is at least rhobeg. We do it here in order to raise a warning when such a
+% revision occurs. After this, BOBYQA will not revise x0 again. If options.honour_x0
+% is true, then we keep x0 unchanged and revise rhobeg if necessary.
 % N.B.: If x0 violates the bounds, then it is always revised by `project` to respect the bounds.
     [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, probinfo.user_options_fields, options, warnings);
     probinfo.refined_data.x0 = x0;  % x0 may have been revised.
@@ -1911,5 +1917,31 @@ else
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     end
+end
+return
+
+
+%% Function for checking whether the Fortran MEX function is available and revising ptions.fortran %
+function [options, warnings] = is_fortran_available(invoker, options, warnings)
+% IS_FORTRAN_AVAILABLE checks whether the Fortran MEX function is available. If no, raise a warning
+% and set options.fortran to false. It does nothing if options.fortran is false or does not exist.
+if ~isfield(options, 'fortran') || ~options.fortran
+    return
+end
+mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
+mexdir = mfiledir;  % The directory where the MEX functions reside.
+if options.classical
+    variant = 'classical';
+else
+    variant = 'modern';
+end
+mexname = get_mexname(options.solver, options.precision, options.debug, variant, mexdir);
+if exist(fullfile(mexdir, [mexname, '.', mexext]), 'file') ~= 3
+    wid = sprintf('%s:FortranNotAvailable', invoker);
+    wmsg = sprintf('%s: fortran = true but the Fortran MEX function is not available for the %s variant of %s with precision %s; fortran is reset to false.', invoker, variant, options.solver, options.precision);
+    options.fortran = false;
+    warning(wid, '%s', wmsg);
+    warnings = [warnings, wmsg];
+    options.fortran = false;
 end
 return
