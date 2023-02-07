@@ -83,7 +83,7 @@ SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR)
 # Sources.
 COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
 SOLVER_SRC := $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
-MEXGATE_SRC := fmxapi.F90 cbfun.F90 gethuge.F90 $(SOLVER)_mex.F90
+MEXGATE_SRC := fmxapi.F90 cbfun.F90 $(SOLVER)_mex.F90
 SRC := $(COMMON_SRC) $(SOLVER_SRC) $(MEXGATE_SRC)
 # DEBUGF90 is the name of the Fortran file that defines `debug_mod`, which has a Fortran version and
 # a MEX version. We should use the MEX version in place of the Fortran one when testing the MEX gateways.
@@ -494,7 +494,6 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "Warning: Change of value in conversion from .INTEGER(8). to .REAL(8). at (1) \[-Wconversion\]" \
 	| grep -v "Warning: Change of value in conversion from .REAL(16). to .REAL(8). at (1) \[-Wconversion\]" \
 	| grep -v "Extension: fmxapi\.F90, line [0-9]*: Byte count on numeric data type" \
-	| grep -v "Extension: gethuge\.F90, line [0-9]*: Byte count on numeric data type" \
 	| grep -v "Extension: cbfun\.F90, line [0-9]*: Byte count on numeric data type" \
 	| grep -v "Extension: \./classical/fmxcl\.F90, line [0-9]*: Byte count on numeric data type" \
 	| grep -v "Extension: \./classical/fmxcl\.F90, line [0-9]*: Line longer than 132 characters" \

@@ -120,18 +120,12 @@ probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', 
 % respectively in the sequel. Note the following.
 % 1. `precision` takes effect only if Fortran solvers are called (i.e., when options.fortran = true).
 % 2. `precision` is passed only to `gethuge`, which defines huge values (e.g., `hugenum`, `hugefun`).
-% 3. `precision` does not affect integer-type huge values (e.g., `maxint`).
 precision = 'double';
 % Since `options` is not validated yet, validations are needed before inquiring options.precision.
 if isa(options, 'struct') && isfield(options, 'precision') && ischarstr(options.precision) && ...
         ismember(lower(options.precision), all_precisions())
     precision = lower(options.precision);
 end
-% Zaikun 20221220: What if the Fortran code is not compiled? Do we still need these numbers, or
-% should we set them according to the range of double-precision floating point numbers? Note that
-% `gethuge` is used only here and in maxint (which is used only by preprima), but nowhere else.
-% Zaikun 20230207: It seems a good idea to implement a MATLAB version of `gethuge` that returns the
-% needed values (real, fun, con, integer, mwSI) and get rid of the Fortran version completely.
 probinfo.hugenum = gethuge('real', precision);
 probinfo.hugefun = gethuge('fun', precision);
 probinfo.hugecon = gethuge('con', precision);
@@ -1051,7 +1045,7 @@ if isfield(options, 'maxfun')
     elseif options.maxfun > maxint()
         % maxfun would suffer from overflow in the Fortran code
         wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of integers in Fortran MEX; it is set to %d.', funname, maxint());
+        wmsg = sprintf('%s: maxfun exceeds the upper limit supported; it is set to %d.', funname, maxint());
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
         options.maxfun = maxint();

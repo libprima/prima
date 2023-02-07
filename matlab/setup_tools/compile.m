@@ -88,14 +88,6 @@ for idbg = 1 : length(debug_flags)
             mex(mex_options{:}, '-c', common_files{icf});
             % The module/object files are dumped to the current directory, namely `work_dir`.
         end
-        common_obj_files = list_obj_files(work_dir);
-        % Compile `gethuge`. We only provide a non-debugging version of `gethuge` unless `debug_flags`
-        % contains only true.
-        if all([debug_flags{:}]) || ~debug_flags{idbg}
-            gateway = fullfile(gateways, 'gethuge.F');
-            mexname = get_mexname('gethuge', precisions{iprc});
-            mex(mex_options{:}, common_obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
-        end
     end
 end
 fprintf('Done.\n');
