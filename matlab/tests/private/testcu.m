@@ -30,6 +30,10 @@ eval_options = struct();
 nr = 5;
 ctol = 1e-10;
 cpenalty = 1e10;
+%ctol = 1e-8;
+%cpenalty = 1e8;
+%ctol = 1e-5;
+%cpenalty = 1e5;
 type = 'ubln'; % The default types of problems to test
 mindim = 1; % The default minimal dimension of problems to test
 if any(startsWith(solvers, 'cobyla'))

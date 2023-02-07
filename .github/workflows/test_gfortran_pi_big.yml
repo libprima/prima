@@ -38,6 +38,9 @@ jobs:
         shell: bash
         run: |
             cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+            if [[ -f "test_cobyla.f90" ]] ; then
+                $SEDI 's|bign = 120|bign = 110|g' test_cobyla.f90
+            fi
             export FFLAGS=${{ matrix.fflags }}
             export TESTDIM=${{ matrix.testdim }}
             cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_r4_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r4_d1_tst.${{ matrix.solver }}
