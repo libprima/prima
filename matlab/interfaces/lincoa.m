@@ -207,8 +207,8 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 % Attribute: public (can  be called directly by users)
 %
 % Remarks:
-% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREprima !!!
-% !!! DO NOT CHANGE probinfo AFTER PREprima !!!
+% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREPRIMA !!!
+% !!! DO NOT CHANGE probinfo AFTER PREPRIMA !!!
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
