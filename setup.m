@@ -17,6 +17,20 @@ function setup(varargin)
 %   setup(solver_name)  % Compile a solver with the default options
 %   setup(solver_name, options)  % Compile a solver with `options`
 %
+%   Possible options for compilation:
+%   - single: whether to compile the single precision of the Fortran solvers (default: true)
+%   - quadruple: whether to compile the quadruple precision of the Fortran solvers (default: false)
+%   - classical: whether to compile the classical variant of the Fortran solvers (default: true)
+%   - debug: whether to compile the debugging version of the Fortran solvers (default: false)
+%   - debug_only: whether to compile only the debugging version (default: false);
+%     `debug_only` prevails if both `debug` and `debug_only` are present
+%   - verbose: whether to be verbose during the compilation (default: false)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   TODO: When the MATLAB implementation is available, we should support
+%   setting options.fortran = false and skipping the compilation.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 %   REMARKS:
 %
 %   1. Since MEX is the standard way of calling Fortran code in MATLAB, you
@@ -40,8 +54,6 @@ function setup(varargin)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can be called directly by users)
-%
-% TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % setup starts
