@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, February 06, 2023 PM03:41:09
+! Last Modified: Tuesday, February 07, 2023 AM08:42:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -394,13 +394,14 @@ do tr = 1, maxtr
         ! resolution of the algorithm; its update is essentially the same as the update of RHO in
         ! Powell's code (see the definition of REDUCE_RHO below). Our implementation aligns with
         ! UOBYQA/NEWUOA/BOBYQA/LINCOA and improves the performance of COBYLA.
-        ! 3. The same as Powell's code, we do not reduce RHO unless ADEQUATE_GEO is TRUE. What about
-        ! we also use ADEQUATE_GEO == TRUE as a prerequisite for reducing DELTA? The argument would
-        ! be that the bad (small) value of RATIO may be because of a bad geometry (and hence a bad
-        ! model) rather than an inappropriately large DELTA, and it might be good to try improving
-        ! the geometry first without reducing DELTA. However, according to a test on 230206, it does
-        ! not improve the performance if we skip the update of DELTA when ADEQUATE_GEO is FALSE and
-        ! RATIO < 0.1. Therefore, we choose to update DELTA without checking ADEQUATE_GEO.
+        ! 3. The same as Powell's code, we do not reduce RHO unless ADEQUATE_GEO is TRUE. This is
+        ! also the case for UOBYQA/NEWUOA/BOBYQA/LINCOA. What about we also use ADEQUATE_GEO == TRUE
+        ! as a prerequisite for reducing DELTA? The argument would be that the bad (small) value of
+        ! RATIO may be because of a bad geometry (and hence a bad model) rather than an improperly
+        ! large DELTA, and it might be good to try improving the geometry first without reducing
+        ! DELTA. However, according to a test on 230206, it does not improve the performance if we
+        ! skip the update of DELTA when ADEQUATE_GEO is FALSE and RATIO < 0.1. Therefore, we choose
+        ! to update DELTA without checking ADEQUATE_GEO.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
