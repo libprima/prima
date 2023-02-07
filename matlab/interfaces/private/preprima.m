@@ -96,7 +96,7 @@ end
 % 22. options: (refined) options for calling the solvers
 % 23. warnings: warnings during the preprocessing/validation
 % 24. hugenum: the large possible absolute value of the variables
-% 25. hugefun: the largest value of the objective function
+% 25. hugefun: the largest possible value of the objective function
 % 26. hugecon: the largest possible absolute value of the constraints
 probinfo = struct();
 
@@ -129,7 +129,9 @@ if isa(options, 'struct') && isfield(options, 'precision') && ischarstr(options.
 end
 % Zaikun 20221220: What if the Fortran code is not compiled? Do we still need these numbers, or
 % should we set them according to the range of double-precision floating point numbers? Note that
-% `gethuge` is used nowhere else.
+% `gethuge` is used only here and in maxint (which is used only by preprima), but nowhere else.
+% Zaikun 20230207: It seems a good idea to implement a MATLAB version of `gethuge` that returns the
+% needed values (real, fun, con, integer, mwSI) and get rid of the Fortran version completely.
 probinfo.hugenum = gethuge('real', precision);
 probinfo.hugefun = gethuge('fun', precision);
 probinfo.hugecon = gethuge('con', precision);
