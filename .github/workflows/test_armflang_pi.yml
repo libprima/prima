@@ -1,4 +1,4 @@
-name: Test nvfortran on Raspberry Pi
+name: Test armflang on Raspberry Pi
 
 on:
   # Trigger the workflow on push or pull request
@@ -14,7 +14,7 @@ on:
 jobs:
 
   test:
-    name: Run nvfortran tests
+    name: Run armflang tests
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -37,8 +37,8 @@ jobs:
       - name: Conduct the test
         run: |
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          cd "$ROOT_DIR"/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make vtest_${{ matrix.ikind }}.${{ matrix.solver }}
-          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make vtest
+          cd "$ROOT_DIR"/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make rtest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make rtest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3

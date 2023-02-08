@@ -93,6 +93,7 @@ DFF := -O4 -Ofast -ffast-math  # As of AOCC 4.4.0, -Ofast implies -O3, but it is
 FFF := -O3 -Ofast -ffast-math  # No documentation found about the relation between -Ofast, -O3, and -ffast-math
 GFF := -Ofast  # -Ofast implies -O3 and -ffast-math
 NFF := -O4
+FFF := -Ofast  # -Ofast implies -O3 and -ffast-math
 SFF := -fast # -fast implies -O5 and ftrap=common
 SFF16 := -O5  # -fast leads to a mistakenly failure of assertion in BOBYQA: RHOBEG <= MINVAL(XU-XL)/2
 VFF := -O4 -fast  # nvfortran -fast implies -O2, but the highest optimization level is -O4
@@ -162,7 +163,7 @@ CHCKTST := $(TEST_DIR)/checktest
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # ifx encounters an internal error when compiling with REAL128.
 TESTS_QP = atest gtest ntest itest stest 9test
-TESTS_NO_QP = dtest ftest vtest xtest
+TESTS_NO_QP = dtest ftest rtest vtest xtest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
 # When listing the tests, we first put the ones that are more likely to raise errors.
 $(foreach TST, $(TESTS_QP), $(eval $(TST): SUBTESTS := \
@@ -186,7 +187,7 @@ $(foreach TST, $(TESTS), $(eval $(TST): TST_C := $(TST)_c))
 # The following tests compile the code but do not run the binary. This is useful if we want to
 # check whether the code can compile.
 TESTS_C_QP = atest_c gtest_c ntest_c itest_c stest_c 9test_c
-TESTS_C_NO_QP = dtest_c ftest_c vtest_c xtest_c
+TESTS_C_NO_QP = dtest_c ftest_c rtest_c vtest_c xtest_c
 TESTS_C = $(TESTS_C_QP) $(TESTS_C_NO_QP)
 $(foreach TST, $(TESTS_C_QP), $(eval $(TST): SUBTESTS_C := \
 	$(subst _c,,$(TST))_i2_r16_d1_tst_c $(subst _c,,$(TST))_i2_r4_d1_tst_c $(subst _c,,$(TST))_i2_r8_d1_tst_c \
@@ -216,6 +217,7 @@ TESTS_INT_QP = atest_i2 atest_i4 atest_i8 \
 			   9test_i2 9test_i4 9test_i8
 TESTS_INT_NO_QP = dtest_i2 dtest_i4 dtest_i8 \
 				  ftest_i2 ftest_i4 ftest_i8 \
+				  rtest_i2 rtest_i4 rtest_i8 \
 				  vtest_i2 vtest_i4 vtest_i8 \
 				  xtest_i2 xtest_i4 xtest_i8
 TESTS_INT = $(TESTS_INT_QP) $(TESTS_INT_NO_QP)
@@ -239,6 +241,7 @@ TESTS_INT_C_QP = atest_i2_c atest_i4_c atest_i8_c \
 				 9test_i2_c 9test_i4_c 9test_i8_c
 TESTS_INT_C_NO_QP = dtest_i2_c dtest_i4_c dtest_i8_c \
 					ftest_i2_c ftest_i4_c ftest_i8_c \
+					rtest_i2_c rtest_i4_c rtest_i8_c \
 					vtest_i2_c vtest_i4_c vtest_i8_c \
 					xtest_i2_c xtest_i4_c xtest_i8_c
 TESTS_INT_C = $(TESTS_INT_C_QP) $(TESTS_INT_C_NO_QP)
@@ -554,6 +557,37 @@ vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d
 	FCG := $(VFORT) $(FFLAGSG) -Ktrap=divz,ovf,inv#,unf,denorm -Kieee
 vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d0_tst_c vtest_i4_r16_d0_tst_c vtest_i8_r16_d0_tst_c: \
 	FCF := $(VFORT) -Ktrap=divz,ovf,inv $(VFF)
+
+
+# ARM Flang
+RFORT := $(shell find -L /opt/arm -type f -executable -name armflang -print 2> /dev/null | sort | tail -n 1)
+RFORT := $(RFORT) -pedantic-errors -Werror
+ifeq ($(TESTDIM),small)
+	RFORT := $(RFORT) -Mstack_arrays
+endif
+RFORT := $(RFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkptr #-Kieee
+
+rtest_i2_r4_d1_tst_c rtest_i4_r4_d1_tst_c rtest_i8_r4_d1_tst_c rtest_i2_r4_d0_tst_c rtest_i4_r4_d0_tst_c rtest_i8_r4_d0_tst_c: \
+	FCO := $(RFORT) $(FFLAGSO)
+rtest_i2_r4_d1_tst_c rtest_i4_r4_d1_tst_c rtest_i8_r4_d1_tst_c rtest_i2_r4_d0_tst_c rtest_i4_r4_d0_tst_c rtest_i8_r4_d0_tst_c: \
+	FCG := $(RFORT) $(FFLAGSG)
+rtest_i2_r4_d1_tst_c rtest_i4_r4_d1_tst_c rtest_i8_r4_d1_tst_c rtest_i2_r4_d0_tst_c rtest_i4_r4_d0_tst_c rtest_i8_r4_d0_tst_c: \
+	FCF := $(RFORT) $(RFF)
+
+rtest_i2_r8_d1_tst_c rtest_i4_r8_d1_tst_c rtest_i8_r8_d1_tst_c rtest_i2_r8_d0_tst_c rtest_i4_r8_d0_tst_c rtest_i8_r8_d0_tst_c: \
+	FCO := $(RFORT) $(FFLAGSO)
+rtest_i2_r8_d1_tst_c rtest_i4_r8_d1_tst_c rtest_i8_r8_d1_tst_c rtest_i2_r8_d0_tst_c rtest_i4_r8_d0_tst_c rtest_i8_r8_d0_tst_c: \
+	FCG := $(RFORT) $(FFLAGSG)
+rtest_i2_r8_d1_tst_c rtest_i4_r8_d1_tst_c rtest_i8_r8_d1_tst_c rtest_i2_r8_d0_tst_c rtest_i4_r8_d0_tst_c rtest_i8_r8_d0_tst_c: \
+	FCF := $(RFORT) $(RFF)
+
+rtest_i2_r16_d1_tst_c rtest_i4_r16_d1_tst_c rtest_i8_r16_d1_tst_c rtest_i2_r16_d0_tst_c rtest_i4_r16_d0_tst_c rtest_i8_r16_d0_tst_c: \
+	FCO := $(RFORT) $(FFLAGSO)
+rtest_i2_r16_d1_tst_c rtest_i4_r16_d1_tst_c rtest_i8_r16_d1_tst_c rtest_i2_r16_d0_tst_c rtest_i4_r16_d0_tst_c rtest_i8_r16_d0_tst_c: \
+	FCG := $(RFORT) $(FFLAGSG)
+rtest_i2_r16_d1_tst_c rtest_i4_r16_d1_tst_c rtest_i8_r16_d1_tst_c rtest_i2_r16_d0_tst_c rtest_i4_r16_d0_tst_c rtest_i8_r16_d0_tst_c: \
+	FCF := $(RFORT) $(RFF)
+
 
 # Oracle sunf95
 SFORT := sunf95

@@ -139,8 +139,10 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Test ifx](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml)
 
 - [Tests](https://github.com/equipez/prima/actions) at [equipez/prima](https://github.com/equipez/prima)
-    - [![Test gfortran on Raspberry Pi, small](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi_small.yml)
-    - [![Test gfortran on Raspberry Pi, big](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi_big.yml)
+    - [![Test gfortran on Raspberry Pi, small](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi32_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi32_small.yml)
+    - [![Test gfortran on Raspberry Pi, big](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi32_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi32_big.yml)
+    - [![Test gfortran on Raspberry Pi, small](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64_small.yml)
+    - [![Test gfortran on Raspberry Pi, big](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64_big.yml)
 
 
 - [Tests](https://github.com/equipez/gitpersonal/actions) at [equipez/gitpersonal](https://github.com/equipez/gitpersonal)
