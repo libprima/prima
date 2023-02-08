@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, February 08, 2023 PM06:40:21
+! Last Modified: Thursday, February 09, 2023 AM02:45:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,7 +103,7 @@ else
 end if
 !distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)  ! Powell's code
 
-weight = distsq**3  ! 1420
+weight = distsq**3  ! 1840
 !weight = distsq**2  ! Powell's code.
 ! Other possible definitions of WEIGHT.
 ! !weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
@@ -120,6 +120,8 @@ weight = distsq**3  ! 1420
 ! !weight = max(1.0_RP, 10.0_RP * distsq / delta**2)**3  ! 1435
 ! !weight = max(1.0_RP, 1.0E2_RP * distsq / delta**2)**2
 ! !weight = max(1.0_RP, 1.0E2_RP * distsq / delta**2)**3  ! 1706
+! !weight = max(1.0_RP, 4.0_RP * distsq / delta**2)**3  ! 0031
+weight = max(1.0_RP, 25.0_RP * distsq / delta**2)**3  ! 0031
 
 den = calden(kopt, bmat, d, xpt, zmat, idz)
 score = weight * abs(den)
