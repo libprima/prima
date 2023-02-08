@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, February 06, 2023 PM02:27:42
+! Last Modified: Wednesday, February 08, 2023 PM01:28:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -101,16 +101,17 @@ end if
 ! not always lead to a better performance of NEWUOA. Here, we choose not to check XIMPROVED, as
 ! the performance of NEWUOA is better in this way. THIS DIFFERS FROM POWELL'S CODE.
 ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF NEWUOA ARE IMPLEMENTED DIFFERENTLY.
-! !if (ximproved) then  ! This is Powell's version
-! !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-! !    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
-! !else
-! !    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-! !    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-! !end if
-distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+if (ximproved) then  ! This is Powell's version
+    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
+else
+    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+end if
+!distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 
 weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's code.
+!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! 1320
 ! Other possible definitions of WEIGHT.
 ! !weight = max(ONE, distsq / rho**2)**3  ! This works almost the same as the above.
 ! !weight = max(ONE, distsq / delta**2)**3  ! BOBYQA code. It does not work as well as the above.

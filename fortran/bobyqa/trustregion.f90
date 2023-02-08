@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 02, 2023 PM12:38:23
+! Last Modified: Wednesday, February 08, 2023 AM12:24:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -217,6 +217,9 @@ twod_search = .false.  ! The default value of TWOD_SEARCH is FALSE!
 ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
 ! The formulation of MAXITER below contains a precaution against overflow. In MATLAB/Python/Julia/R,
 ! we can write maxiter = min(10000, (n - nact)^2).
+! Powell commented in the BOBYQA paper (the paragraph above (3.7)) that "numerical experiments show
+! that it is very unusual for subroutine TRSBOX to make more than ten changes to d when seeking an
+! approximate solution to the subproblem (1.8), even if there are hundreds of variables."
 maxiter = int(min(10**min(4, range(0_IK)), int(n - nact)**2), IK)
 do iter = 1, maxiter
     resid = delsq - sum(d(trueloc(xbdi == 0))**2)

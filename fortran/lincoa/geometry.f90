@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 06, 2023 PM02:23:20
+! Last Modified: Wednesday, February 08, 2023 PM06:40:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: setdrop_tr, geostep
 contains
 
 
-function setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat) result(knew)
+function setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
@@ -49,6 +49,8 @@ integer(IK), intent(in) :: kopt
 logical, intent(in) :: ximproved
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:)        ! D(N)
+real(RP), intent(in) :: delta
+real(RP), intent(in) :: rho
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
@@ -92,16 +94,17 @@ end if
 ! evidently worsens the performance of LINCOA according to a test on 20221108. Hence we choose not
 ! to check XIMPROVED. POWELL CODED IN THE SAME WAY.
 ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF LINCOA ARE IMPLEMENTED DIFFERENTLY.
-! !if (ximproved) then
-! !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-! !    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
-! !else
-! !    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-! !    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-! !end if
-distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)  ! Powell's code
+if (ximproved) then
+    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
+else
+    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+end if
+!distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)  ! Powell's code
 
-weight = distsq**2  ! Powell's code.
+weight = distsq**3  ! 1420
+!weight = distsq**2  ! Powell's code.
 ! Other possible definitions of WEIGHT.
 ! !weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
 ! !weight = distsq**1.5_RP
@@ -109,8 +112,14 @@ weight = distsq**2  ! Powell's code.
 ! !weight = (distsq / delta**2)**3
 ! !weight = max(1.0_RP, distsq / rho**2)**2
 ! !weight = max(1.0_RP, distsq / rho**2)**3
+! !weight = max(1.0_RP, 1.0E2 * distsq / rho**2)**2
+! !weight = max(1.0_RP, 10.0_RP * distsq / rho**2)**3  ! 1457
+! !weight = max(1.0_RP, 1.0E2 * distsq / rho**2)**3  ! 1503
 ! !weight = max(1.0_RP, distsq / delta**2)**2
 ! !weight = max(1.0_RP, distsq / delta**2)**3
+! !weight = max(1.0_RP, 10.0_RP * distsq / delta**2)**3  ! 1435
+! !weight = max(1.0_RP, 1.0E2_RP * distsq / delta**2)**2
+! !weight = max(1.0_RP, 1.0E2_RP * distsq / delta**2)**3  ! 1706
 
 den = calden(kopt, bmat, d, xpt, zmat, idz)
 score = weight * abs(den)
