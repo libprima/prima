@@ -15,7 +15,7 @@ jobs:
 
   test:
     name: Run gfortran tests
-    runs-on: [self-hosted, pi, ARM64]
+    runs-on: [self-hosted, ARM64, pi64]
     strategy:
       fail-fast: false
       matrix:
