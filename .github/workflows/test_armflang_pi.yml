@@ -15,11 +15,10 @@ jobs:
 
   test:
     name: Run armflang tests
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, ARM64, pi64]
     strategy:
       fail-fast: false
       matrix:
-        os: [self-hosted, ARM64, pi64]
         ikind: [i2]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
