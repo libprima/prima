@@ -1,0 +1,52 @@
+name: Test nvfortran on Raspberry Pi
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 4 * * *'
+  # Trigger the workflow manually
+  workflow_dispatch:
+
+
+jobs:
+
+  test:
+    name: Run nvfortran tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [self-hosted, pi, ARM64]
+        ikind: [i2]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        fflags: [-O1, -O2, -O3, -g, -fast]
+        testdim: [small, big]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install nvfotran
+        run: bash .github/scripts/install_nvfortran
+
+      - name: Set miscellaneous environment variables
+        run: bash .github/scripts/misc_env
+
+      - name: Conduct the test
+        run: |
+          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd "$ROOT_DIR"/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make vtest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make vtest
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
+
+      - name: Remove the test data
+        run: rm -rf ${{ env.TEST_DIR }}
