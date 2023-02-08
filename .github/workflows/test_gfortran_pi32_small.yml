@@ -1,4 +1,4 @@
-name: Test gfortran on Raspberry Pi, small
+name: Test gfortran on Raspberry Pi32, small
 
 on:
   # Trigger the workflow on push or pull request
@@ -15,7 +15,7 @@ jobs:
 
   test:
     name: Run gfortran tests
-    runs-on: [self-hosted, pi]
+    runs-on: [self-hosted, pi, ARM]
     strategy:
       fail-fast: false
       matrix:

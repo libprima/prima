@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 06, 2023 PM02:23:06
+! Last Modified: Wednesday, February 08, 2023 PM02:07:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -429,7 +429,7 @@ do tr = 1, maxtr
 
         ! Set KNEW_TR to the index of the interpolation point to be replaced with XNEW = XOPT + D.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
-        knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat)
+        knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat)
         if (knew_tr > 0) then
             ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT,
             ! FOPT] and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes

@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 06, 2023 PM02:24:26
+! Last Modified: Wednesday, February 08, 2023 AM12:20:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -385,7 +385,7 @@ do tr = 1, maxtr
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
     ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive in practice.
-    small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code.
+    small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code. See also (6.7) of the BOBYQA paper.
     !small_trrad = (delsav <= rho)  ! Behaves the same as Powell's version. DELSAV = unupdated DELTA.
 
     ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
@@ -394,10 +394,10 @@ do tr = 1, maxtr
 
     ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= eta1 .or. knew_tr == 0)
-    improve_geo = bad_trstep .and. .not. adequate_geo
+    improve_geo = bad_trstep .and. .not. adequate_geo  ! See the text above (6.7) of the BOBYQA paper.
     ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
     bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)
-    reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
+    reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad  ! See (6.7) of the BOBYQA paper.
     ! Zaikun 20221111: What if RESCUE has been called? Is it still reasonable to use RATIO?
     ! Zaikun 20221127: If RESCUE has been called, then KNEW_TR may be 0 even if RATIO > 0.
 
