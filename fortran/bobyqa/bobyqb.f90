@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, February 08, 2023 AM12:20:33
+! Last Modified: Thursday, February 09, 2023 PM01:12:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -446,8 +446,6 @@ do tr = 1, maxtr
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
-            ! The condition below works the same as the above one, which is used in Powell's code.
-            ! !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > 0.25 * vlag(knew_geo)**2)) then
             call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
                 & fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then

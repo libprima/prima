@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 13, 2022 AM10:06:56
+! Last Modified: Thursday, February 09, 2023 PM01:21:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -105,15 +105,16 @@ end if
 ! BOBYQA. Here, we choose not to check XIMPROVED, as the performance of BOBYQA is better
 ! in this way. THIS DIFFERS FROM POWELL'S CODE.
 ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF BOBYQA ARE IMPLEMENTED DIFFERENTLY.
-! !if (ximproved) then
-! !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-! !else
-! !    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-! !end if
-distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+if (ximproved) then
+    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+else
+    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+end if
+!distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 
-weight = max(ONE, distsq / rho**2)**3.5
+weight = max(ONE, distsq / rho**2)**4
 ! Other possible definitions of WEIGHT.
+!weight = max(ONE, distsq / rho**2)**3.5  ! Similar to power 4
 ! !weight = max(ONE, distsq / delta**2)**2  ! Powell's original code. Works well.
 ! !weight = max(ONE, distsq / rho**2)**2  ! Worse than Powell's code.
 ! !weight = max(ONE, distsq / delta**2)  ! Defined in (6.1) of the BOBYQA paper. It works poorly!
