@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, February 08, 2023 PM01:28:17
+! Last Modified: Thursday, February 09, 2023 PM12:19:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -95,25 +95,31 @@ end if
 !====================!
 
 ! Calculate the distance squares between the interpolation points and the "optimal point". When
-! identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is reasonable to
-! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
-! point in the next interpolation if XIMPROVED is TRUE. Strangely, considering this new point does
-! not always lead to a better performance of NEWUOA. Here, we choose not to check XIMPROVED, as
-! the performance of NEWUOA is better in this way. THIS DIFFERS FROM POWELL'S CODE.
-! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF NEWUOA ARE IMPLEMENTED DIFFERENTLY.
-if (ximproved) then  ! This is Powell's version
+! identifying the optimal point, it is reasonable to take into account the new trust-region trial
+! point XPT(:, KOPT) + D, which will become the optimal point in the next iteration if XIMPROVED
+! is TRUE. Powell suggested this in
+! - (56) of the UOBYQA paper, lines 276--297 of uobyqb.f
+! - (7.5) and Box 5 of the NEWUOA paper, lines 383--409 of newuob.f
+! - the last paragraph of page 26 of the BOBYQA paper, lines 435--465 of bobyqb.f.
+! However, Powell's LINCOA code is different. In his code, the KNEW after a trust-region step is
+! picked in lines 72--96 of the update.f for LINCOA, where DISTSQ is calculated as the square of the
+! distance to XPT(KOPT, :) (Powell recorded the interpolation points in rows). However, note that
+! the trust-region trial point has not been included in to XPT yet --- it can not be included
+! without knowing KNEW (see lines 332-344 and 404--431 of lincob.f). Hence Powell's LINCOA code
+! picks KNEW based on the distance to the un-updated "optimal point", which is unreasonable.
+! This has been corrected in our implementation of LINCOA, yet it does not boost the performance.
+if (ximproved) then
     distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
 else
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
 end if
-!distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
 
 weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's code.
-!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! 1320
 ! Other possible definitions of WEIGHT.
-! !weight = max(ONE, distsq / rho**2)**3  ! This works almost the same as the above.
+! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! This sometimes works better
+! !weight = max(ONE, distsq / rho**2)**3  ! This works almost the same as Powell's code
 ! !weight = max(ONE, distsq / delta**2)**3  ! BOBYQA code. It does not work as well as the above.
 ! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! It does not work as well as the above.
 ! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! This works poorly.

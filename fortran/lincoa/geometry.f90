@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 AM02:45:48
+! Last Modified: Thursday, February 09, 2023 AM11:53:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,7 +35,7 @@ function setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat) result
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric
@@ -88,12 +88,19 @@ end if
 !====================!
 
 ! Calculate the distance squares between the interpolation points and the "optimal point". When
-! identifying the optimal point, as suggested in (7.5) of the NEWUOA paper, it is reasonable to
-! take into account the new trust-region trial point XPT(:, KOPT) + D, which will become the optimal
-! point in the next interpolation if XIMPROVED is TRUE. Strangely, considering this new point
-! evidently worsens the performance of LINCOA according to a test on 20221108. Hence we choose not
-! to check XIMPROVED. POWELL CODED IN THE SAME WAY.
-! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF LINCOA ARE IMPLEMENTED DIFFERENTLY.
+! identifying the optimal point, it is reasonable to take into account the new trust-region trial
+! point XPT(:, KOPT) + D, which will become the optimal point in the next iteration if XIMPROVED
+! is TRUE. Powell suggested this in
+! - (56) of the UOBYQA paper, lines 276--297 of uobyqb.f
+! - (7.5) and Box 5 of the NEWUOA paper, lines 383--409 of newuob.f
+! - the last paragraph of page 26 of the BOBYQA paper, lines 435--465 of bobyqb.f.
+! However, Powell's LINCOA code is different. In his code, the KNEW after a trust-region step is
+! picked in lines 72--96 of the update.f for LINCOA, where DISTSQ is calculated as the square of the
+! distance to XPT(KOPT, :) (Powell recorded the interpolation points in rows). However, note that
+! the trust-region trial point has not been included in to XPT yet --- it can not be included
+! without knowing KNEW (see lines 332-344 and 404--431 of lincob.f). Hence Powell's LINCOA code
+! picks KNEW based on the distance to the un-updated "optimal point", which is unreasonable.
+! This has been corrected in our implementation of LINCOA, yet it does not boost the performance.
 if (ximproved) then
     distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
@@ -103,25 +110,15 @@ else
 end if
 !distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)  ! Powell's code
 
-weight = distsq**3  ! 1840
-!weight = distsq**2  ! Powell's code.
+weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA code
 ! Other possible definitions of WEIGHT.
+! !weight = distsq**2  ! Powell's code.
 ! !weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
-! !weight = distsq**1.5_RP
-! !weight = distsq**2.5_RP
 ! !weight = (distsq / delta**2)**3
-! !weight = max(1.0_RP, distsq / rho**2)**2
-! !weight = max(1.0_RP, distsq / rho**2)**3
-! !weight = max(1.0_RP, 1.0E2 * distsq / rho**2)**2
-! !weight = max(1.0_RP, 10.0_RP * distsq / rho**2)**3  ! 1457
-! !weight = max(1.0_RP, 1.0E2 * distsq / rho**2)**3  ! 1503
-! !weight = max(1.0_RP, distsq / delta**2)**2
-! !weight = max(1.0_RP, distsq / delta**2)**3
-! !weight = max(1.0_RP, 10.0_RP * distsq / delta**2)**3  ! 1435
-! !weight = max(1.0_RP, 1.0E2_RP * distsq / delta**2)**2
-! !weight = max(1.0_RP, 1.0E2_RP * distsq / delta**2)**3  ! 1706
-! !weight = max(1.0_RP, 4.0_RP * distsq / delta**2)**3  ! 0031
-weight = max(1.0_RP, 25.0_RP * distsq / delta**2)**3  ! 0031
+! !weight = max(1.0_RP, 10.0_RP * distsq / rho**2)**3
+! !weight = max(1.0_RP, 1.0E2 * distsq / rho**2)**3
+! !weight = max(1.0_RP, 10.0_RP * distsq / delta**2)**3
+! !weight = max(1.0_RP, 1.0E2_RP * distsq / delta**2)**3
 
 den = calden(kopt, bmat, d, xpt, zmat, idz)
 score = weight * abs(den)
@@ -133,8 +130,9 @@ if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
-if (any(score > 0)) then
-!if (any(score > 1) .or. any(score > 0) .and. ximproved) then
+!if (any(score > 0)) then  ! Powell's code
+! The following is Powell's NEWUOA code. It should NOT be used if WEIGHT is a power of DISTSQ.
+if (any(score > 1) .or. any(score > 0) .and. ximproved) then
     ! SCORE(K) is NaN implies ABS(DEN(K)) is NaN, but we want ABS(DEN) to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
