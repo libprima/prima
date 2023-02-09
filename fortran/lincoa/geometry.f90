@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 PM12:24:45
+! Last Modified: Thursday, February 09, 2023 PM03:21:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -112,9 +112,11 @@ end if
 
 weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA code
 ! Other possible definitions of WEIGHT.
+! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2.5  ! Worse than power 3
+! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! Worse than Powell 3
 ! !weight = distsq**2  ! Powell's code.
 ! !weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
-! !weight = (distsq / delta**2)**3
+! !weight = (distsq / delta**2)**3  ! Not bad
 ! !weight = max(1.0_RP, 10.0_RP * distsq / rho**2)**3
 ! !weight = max(1.0_RP, 1.0E2 * distsq / rho**2)**3
 ! !weight = max(1.0_RP, 10.0_RP * distsq / delta**2)**3
