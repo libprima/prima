@@ -50,8 +50,16 @@ else
 end
 
 if ir < 0
-    minir = 0;
-    maxir = nr + 20;
+    if isfield(options, 'minir')
+        minir = options.minir;
+    else
+        minir = 0;
+    end
+    if isfield(options, 'maxir')
+        maxir = options.maxir;
+    else
+        maxir = nr + 20;
+    end
 else
     minir = ir;
     maxir = ir;
