@@ -438,7 +438,7 @@ do tr = 1, maxtr
 
         ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW = XOPT + D.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
-        knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat)
+        knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat, rho, delta)
         if (knew_tr > 0) then
             ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT,
             ! FOPT] and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes

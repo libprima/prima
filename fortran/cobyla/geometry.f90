@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, February 06, 2023 PM02:21:42
+! Last Modified: Thursday, February 09, 2023 AM11:40:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -221,13 +221,11 @@ end if
 weight = distsq
 
 ! Other possible definitions of WEIGHT. They work almost the same as the one above.
-!------------------------------------------------------------------------------------------!
-!weight = max(ONE, 25.0_RP * distsq / delta**2)
-!weight = max(ONE, TEN * distsq / delta**2)
-!weight = max(ONE, 1.0E2_RP * distsq / delta**2)
-!weight = max(ONE, distsq / max(rho, TENTH * delta)**2)
-!weight = max(ONE, distsq / rho**2)
-!------------------------------------------------------------------------------------------!
+! !weight = max(ONE, 25.0_RP * distsq / delta**2)
+! !weight = max(ONE, TEN * distsq / delta**2)
+! !weight = max(ONE, 1.0E2_RP * distsq / delta**2)
+! !weight = max(ONE, distsq / max(rho, TENTH * delta)**2)
+! !weight = max(ONE, distsq / rho**2)
 
 ! If 1 <= J <= N, SIMID(J) is the value of the J-th Lagrange function at D; the value of the
 ! (N+1)-th Lagrange function is 1 - SUM(SIMID). [SIMID, 1 - SUM(SIMID)] is the counterpart of

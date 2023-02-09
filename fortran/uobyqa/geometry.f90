@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 06, 2023 PM02:24:09
+! Last Modified: Thursday, February 09, 2023 AM11:35:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -83,9 +83,19 @@ end if
 !====================!
 
 ! Calculate the distance squares between the interpolation points and the "optimal point". When
-! identifying the optimal point, as suggested in (56) of the UOBYQA paper and (7.5) of the NEWUOA
-! paper, it is reasonable to take into account the new trust-region trial point XPT(:, KOPT) + D,
-! which will become the optimal point in the next interpolation if XIMPROVED is TRUE.
+! identifying the optimal point, it is reasonable to take into account the new trust-region trial
+! point XPT(:, KOPT) + D, which will become the optimal point in the next iteration if XIMPROVED
+! is TRUE. Powell suggested this in
+! - (56) of the UOBYQA paper, lines 276--297 of uobyqb.f
+! - (7.5) and Box 5 of the NEWUOA paper, lines 383--409 of newuob.f
+! - the last paragraph of page 26 of the BOBYQA paper, lines 435--465 of bobyqb.f.
+! However, Powell's LINCOA code is different. In his code, the KNEW after a trust-region step is
+! picked in lines 72--96 of the update.f for LINCOA, where DISTSQ is calculated as the square of the
+! distance to XPT(KOPT, :) (Powell recorded the interpolation points in rows). However, note that
+! the trust-region trial point has not been included in to XPT yet --- it can not be included
+! without knowing KNEW (see lines 332-344 and 404--431 of lincob.f). Hence Powell's LINCOA code
+! picks KNEW based on the distance to the un-updated "optimal point", which is unreasonable.
+! This has been corrected in our implementation of LINCOA, yet it does not boost the performance.
 if (ximproved) then
     distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion

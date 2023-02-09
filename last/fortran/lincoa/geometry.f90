@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM10:59:00
+! Last Modified: Thursday, February 09, 2023 AM11:52:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: setdrop_tr, geostep
 contains
 
 
-function setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat) result(knew)
+function setdrop_tr(idz, kopt, ximproved, bmat, d, xpt, zmat, rho, delta) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
@@ -48,7 +48,7 @@ integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: kopt
 logical, intent(in) :: ximproved
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
-real(RP), intent(in) :: d(:)        ! D(N)
+real(RP), intent(in) :: d(:), delta, rho        ! D(N)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
@@ -92,14 +92,14 @@ end if
 ! evidently worsens the performance of LINCOA according to a test on 20221108. Hence we choose not
 ! to check XIMPROVED. POWELL CODED IN THE SAME WAY.
 ! HOWEVER, THINGS MAY WELL CHANGE WHEN OTHER PARTS OF LINCOA ARE IMPLEMENTED DIFFERENTLY.
-! !if (ximproved) then
-! !    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-! !    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
-! !else
-! !    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-! !    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-! !end if
-distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)  ! Powell's code
+if (ximproved) then
+    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
+else
+    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+end if
+!distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)  ! Powell's code
 
 weight = distsq**2  ! Powell's code.
 ! Other possible definitions of WEIGHT.
@@ -112,6 +112,8 @@ weight = distsq**2  ! Powell's code.
 ! !weight = max(1.0_RP, distsq / delta**2)**2
 ! !weight = max(1.0_RP, distsq / delta**2)**3
 
+weight = max(1.0_RP, distsq / max(0.1_RP * delta, rho)**2)**3
+
 denabs = abs(calden(kopt, bmat, d, xpt, zmat, idz))
 score = weight * denabs
 
@@ -122,8 +124,8 @@ if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
-if (any(score > 0)) then
-!if (any(score > 1) .or. any(score > 0) .and. ximproved) then
+!if (any(score > 0)) then
+if (any(score > 1) .or. any(score > 0) .and. ximproved) then
     ! SCORE(K) is NaN implies DENABS(K) is NaN, but we want DENABS to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
