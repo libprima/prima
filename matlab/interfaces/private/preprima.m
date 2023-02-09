@@ -592,7 +592,7 @@ if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
     '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq) = [length(bineq), length(X0)] unless Aineq = bineq = [].', invoker);
 end
 if any(isnan(bineq))
-    bineq(isnan(bineq)) = inf; % Replace the NaN in bineq by inf
+    bineq(isnan(bineq)) = inf; % Replace the NaN in bineq by inf, namely to remove this constraint
     wid = sprintf('%s:NaNInbineq', invoker);
     wmsg = sprintf('%s: bineq contains NaN; it is replaced by inf.', invoker);
     warning(wid, '%s', wmsg);

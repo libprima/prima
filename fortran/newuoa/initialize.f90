@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Monday, December 12, 2022 PM03:23:43
+! Last Modified: Thursday, February 09, 2023 PM05:21:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,7 +79,7 @@ real(RP), intent(out) :: fhist(:)   ! FHIST(MAXFHIST)
 real(RP), intent(out) :: fval(:)    ! FVAL(NPT)
 real(RP), intent(out) :: xbase(:)   ! XBASE(N)
 real(RP), intent(out) :: xhist(:, :)    ! XHIST(N, MAXXHIST)
-real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
+real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT) 
 
 ! Local variables
 character(len=*), parameter :: solver = 'NEWUOA'
@@ -395,21 +395,24 @@ subroutine inith(ij, xpt, idz, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_MODEL
 use, non_intrinsic :: linalg_mod, only : issymmetric, eye
+use, non_intrinsic :: powalg_mod, only : errh
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: ij(:, :) ! IJ(2, MAX(0_IK, NPT - 2_IK * N - 1_IK))
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
+! N.B.: XPT is essentially only used for debugging, to test the error in the initial H. The initial
+! ZMAT and BMAT are completely defined by RHOBEG and IJ. 
 
 ! Outputs
-integer(IK), intent(out) :: idz
 integer(IK), intent(out), optional :: info
+integer(IK), intent(out) :: idz
 real(RP), intent(out) :: bmat(:, :) ! BMAT(N, NPT + N)
 real(RP), intent(out) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
 
@@ -444,7 +447,6 @@ end if
 ! Calculation starts !
 !====================!
 
-! Some values to be used for setting BMAT and ZMAT.
 rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
 rhosq = rhobeg**2
 
@@ -508,6 +510,8 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(errh(idz, bmat, zmat, xpt) <= max(1.0E-3_RP, 1.0E2_RP * real(npt, RP) * EPS), &
+        & '[IDZ, BMA, ZMAT] represents H = W^{-1}', srname)
 end if
 
 end subroutine inith

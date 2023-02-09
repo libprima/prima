@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 PM03:44:44
+! Last Modified: Thursday, February 09, 2023 PM06:27:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -439,11 +439,12 @@ subroutine inith(ij, xpt, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_MODEL
 use, non_intrinsic :: linalg_mod, only : issymmetric, diag
+use, non_intrinsic :: powalg_mod, only : errh
 
 implicit none
 
@@ -489,7 +490,7 @@ end if
 !====================!
 
 ! Some values to be used for setting BMAT and ZMAT.
-rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
+rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT. Note that XPT(:, 1) = 0.
 rhosq = rhobeg**2
 
 ! The interpolation set decides the first NDIAG diagonal 2nd derivatives of the Lagrange polynomials.
@@ -543,6 +544,8 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(errh(1_IK, bmat, zmat, xpt) <= max(1.0E-3_RP, 1.0E2_RP * real(npt, RP) * EPS), &
+        & '[IDZ, BMA, ZMAT] represents H = W^{-1}', srname)
 end if
 
 end subroutine inith

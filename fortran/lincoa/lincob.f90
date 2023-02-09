@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, February 08, 2023 PM02:07:17
+! Last Modified: Thursday, February 09, 2023 PM08:27:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -282,7 +282,7 @@ if (subinfo /= INFO_DFT) then
 end if
 
 ! Initialize BMAT, ZMAT, and IDZ.
-call inith(ij, rhobeg, xpt, idz, bmat, zmat)
+call inith(ij, xpt, idz, bmat, zmat)
 
 ! Initialize GQ, HQ, and PQ.
 hq = ZERO

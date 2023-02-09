@@ -55,7 +55,7 @@ for ip = 1:np
     end
 end
 
-% T(ip, is) is the average number of function evaluations that the is-solver needs to solve the
+% T(ip, is) is the average number of function evaluations that the is-th solver needs to solve the
 % ip-th problem (up to the tolerance tau), average taken across the random runs.
 T = mean(T, 3);
 
