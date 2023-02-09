@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 PM01:15:01
+! Last Modified: Friday, February 10, 2023 AM01:38:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,7 +42,7 @@ function setdrop_tr(kopt, ximproved, bmat, d, delta, rho, xpt, zmat) result(knew
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric
