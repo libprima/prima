@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM03:23:27
+! Last Modified: Thursday, February 09, 2023 PM03:25:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -179,18 +179,18 @@ xpt(:, 2 * n + 2:npt) = xpt(:, ij(1, :) + 1) + xpt(:, ij(2, :) + 1)
 ! Update the constraint right-hand sides to allow for the shift XBASE.
 b = b - matprod(xbase, amat)
 
-! Go through the initial points, shifting every infeasible point if necessary so that its constraint
-! violation is at least 0.2*RHOBEG. This is OPTIONAL. According to a test on 20220614, it does
-! improve the performance of LINCOA modestly. The magic number 0.2 set by Powell works well.
-mincv = 0.2_RP * rhobeg
-do k = 2, npt  ! LINCOA always starts with a feasible point. So we do this only for K >= 2.
-    ! Internally, we use AMAT and B to evaluate the constraints.
-    constr = matprod(xpt(:, k), amat) - b
-    if (all(constr < mincv) .and. any(constr > 0)) then
-        j = int(maxloc(constr, dim=1), kind(j))
-        xpt(:, k) = xpt(:, k) + (mincv - constr(j)) * amat(:, j)
-    end if
-end do
+!! Go through the initial points, shifting every infeasible point if necessary so that its constraint
+!! violation is at least 0.2*RHOBEG. This is OPTIONAL. According to a test on 20220614, it does
+!! improve the performance of LINCOA modestly. The magic number 0.2 set by Powell works well.
+!mincv = 0.2_RP * rhobeg
+!do k = 2, npt  ! LINCOA always starts with a feasible point. So we do this only for K >= 2.
+!    ! Internally, we use AMAT and B to evaluate the constraints.
+!    constr = matprod(xpt(:, k), amat) - b
+!    if (all(constr < mincv) .and. any(constr > 0)) then
+!        j = int(maxloc(constr, dim=1), kind(j))
+!        xpt(:, k) = xpt(:, k) + (mincv - constr(j)) * amat(:, j)
+!    end if
+!end do
 
 ! Set FVAL by evaluating F. Totally parallelizable except for FMSG.
 feasible = .false.

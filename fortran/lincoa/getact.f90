@@ -1,6 +1,7 @@
 module getact_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides the GETACT subroutine of LINCOA.
+! This module provides the GETACT subroutine of LINCOA. It is used only in the trust-region
+! subproblem solver. We do not put it in trustregion.f90 as it is too long.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the paper
 !
@@ -11,7 +12,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, December 13, 2022 AM10:04:33
+! Last Modified: Thursday, February 09, 2023 PM02:16:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
