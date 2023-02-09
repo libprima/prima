@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 AM11:35:28
+! Last Modified: Thursday, February 09, 2023 PM01:18:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -86,8 +86,8 @@ end if
 ! identifying the optimal point, it is reasonable to take into account the new trust-region trial
 ! point XPT(:, KOPT) + D, which will become the optimal point in the next iteration if XIMPROVED
 ! is TRUE. Powell suggested this in
-! - (56) of the UOBYQA paper, lines 276--297 of uobyqb.f
-! - (7.5) and Box 5 of the NEWUOA paper, lines 383--409 of newuob.f
+! - (56) of the UOBYQA paper, lines 276--297 of uobyqb.f,
+! - (7.5) and Box 5 of the NEWUOA paper, lines 383--409 of newuob.f,
 ! - the last paragraph of page 26 of the BOBYQA paper, lines 435--465 of bobyqb.f.
 ! However, Powell's LINCOA code is different. In his code, the KNEW after a trust-region step is
 ! picked in lines 72--96 of the update.f for LINCOA, where DISTSQ is calculated as the square of the
@@ -105,24 +105,21 @@ else
 end if
 
 weight = max(ONE, distsq / rho**2)**4
-
-!------------------------------------------------------------------------------------------!
 ! Other possible definitions of WEIGHT.
-!weight = max(ONE, distsq / rho**2)**3.5_RP ! ! No better than power 4.
-!weight = max(ONE, distsq / delta**2)**3.5_RP  ! Not better than DISTSQ/RHO**2.
-!weight = max(ONE, distsq / rho**2)**1.5_RP  ! Powell's origin code: power 1.5.
-!weight = max(ONE, distsq / rho**2)**2  ! Better than power 1.5.
-!weight = max(ONE, distsq / delta**2)**2  ! Not better than DISTSQ/RHO**2.
-!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! The same as DISTSQ/RHO**2.
-!weight = distsq**2  ! Not better than MAX(ONE, DISTSQ/RHO**2)**2
-!weight = max(ONE, distsq / rho**2)**3  ! Better than power 2.
-!weight = max(ONE, distsq / delta**2)**3  ! Similar to DISTSQ/RHO**2; not better than it.
-!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! The same as DISTSQ/RHO**2.
-!weight = distsq**3  ! Not better than MAX(ONE, DISTSQ/RHO**2)**3
-!weight = max(ONE, distsq / delta**2)**4  ! Not better than DISTSQ/RHO**2.
-!weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! The same as DISTSQ/RHO**2.
-!weight = distsq**4  ! Not better than MAX(ONE, DISTSQ/RHO**2)**4
-!------------------------------------------------------------------------------------------!
+! !weight = max(ONE, distsq / rho**2)**3.5_RP ! ! No better than power 4.
+! !weight = max(ONE, distsq / delta**2)**3.5_RP  ! Not better than DISTSQ/RHO**2.
+! !weight = max(ONE, distsq / rho**2)**1.5_RP  ! Powell's origin code: power 1.5.
+! !weight = max(ONE, distsq / rho**2)**2  ! Better than power 1.5.
+! !weight = max(ONE, distsq / delta**2)**2  ! Not better than DISTSQ/RHO**2.
+! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2  ! The same as DISTSQ/RHO**2.
+! !weight = distsq**2  ! Not better than MAX(ONE, DISTSQ/RHO**2)**2
+! !weight = max(ONE, distsq / rho**2)**3  ! Better than power 2.
+! !weight = max(ONE, distsq / delta**2)**3  ! Similar to DISTSQ/RHO**2; not better than it.
+! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! The same as DISTSQ/RHO**2.
+! !weight = distsq**3  ! Not better than MAX(ONE, DISTSQ/RHO**2)**3
+! !weight = max(ONE, distsq / delta**2)**4  ! Not better than DISTSQ/RHO**2.
+! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**4  ! The same as DISTSQ/RHO**2.
+! !weight = distsq**4  ! Not better than MAX(ONE, DISTSQ/RHO**2)**4
 
 ! Here, VLAG is the counterpart of DEN in NEWUOA/BOBYQA/LINCOA, representing the denominator in the
 ! update of the Lagrange functions (or, inverse of the coefficient or KKT matrix of the
