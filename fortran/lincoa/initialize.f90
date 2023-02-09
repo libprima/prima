@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 PM03:25:22
+! Last Modified: Thursday, February 09, 2023 PM04:04:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -361,14 +361,15 @@ xpt_ref(:, 2:n + 1) = rhobeg * eye(n)
 xpt_ref(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)
 xpt_ref(:, 2 * n + 2:npt) = xpt_ref(:, ij(1, :) + 1) + xpt_ref(:, ij(2, :) + 1)
 
-! Update [BMAT, ZMAT, IDZ] so that it corresponds to XPT.
-kbase = 1
-do k = 1, npt
-    if (any(abs(xpt(:, k) - xpt_ref(:, k)) > 0)) then  ! XPT(:, K) /= XPT_REF(:, K)
-        call updateh(k, kbase, idz, xpt(:, k), xpt_ref, bmat, zmat)
-        xpt_ref(:, k) = xpt(:, k)
-    end if
-end do
+!! Update [BMAT, ZMAT, IDZ] so that it corresponds to XPT.
+!kbase = 1
+!do k = 1, npt
+!    if (any(abs(xpt(:, k) - xpt_ref(:, k)) > 0)) then  ! XPT(:, K) /= XPT_REF(:, K)
+!        stop
+!        call updateh(k, kbase, idz, xpt(:, k), xpt_ref, bmat, zmat)
+!        xpt_ref(:, k) = xpt(:, k)
+!    end if
+!end do
 
 if (present(info)) then
     if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
