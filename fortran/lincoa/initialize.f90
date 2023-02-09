@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 10, 2023 AM12:40:27
+! Last Modified: Friday, February 10, 2023 AM01:14:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -260,7 +260,7 @@ if (DEBUGGING) then
     ! LINCOA always starts with a feasible point.
     if (m > 0) then
         constr = matprod(xpt(:, 1), amat) - b
-        call assert(all(constr <= max(1.0E-12, 1.0E2 * EPS) * (ONE + sum(abs(xpt(:, 1))) + sum(abs(b)))), &
+        call assert(all(constr <= max(1.0E-12_RP, 1.0E2 * EPS) * (ONE + sum(abs(xpt(:, 1))) + sum(abs(b)))), &
             & 'The starting point is feasible', srname)
     end if
 end if
