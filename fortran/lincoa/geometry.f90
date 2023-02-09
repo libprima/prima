@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 AM11:53:06
+! Last Modified: Thursday, February 09, 2023 PM12:24:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -91,8 +91,8 @@ end if
 ! identifying the optimal point, it is reasonable to take into account the new trust-region trial
 ! point XPT(:, KOPT) + D, which will become the optimal point in the next iteration if XIMPROVED
 ! is TRUE. Powell suggested this in
-! - (56) of the UOBYQA paper, lines 276--297 of uobyqb.f
-! - (7.5) and Box 5 of the NEWUOA paper, lines 383--409 of newuob.f
+! - (56) of the UOBYQA paper, lines 276--297 of uobyqb.f,
+! - (7.5) and Box 5 of the NEWUOA paper, lines 383--409 of newuob.f,
 ! - the last paragraph of page 26 of the BOBYQA paper, lines 435--465 of bobyqb.f.
 ! However, Powell's LINCOA code is different. In his code, the KNEW after a trust-region step is
 ! picked in lines 72--96 of the update.f for LINCOA, where DISTSQ is calculated as the square of the
