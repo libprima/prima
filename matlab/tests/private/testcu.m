@@ -32,8 +32,6 @@ ctol = 1e-10;
 cpenalty = 1e10;
 %ctol = 1e-8;
 %cpenalty = 1e8;
-%ctol = 1e-5;
-%cpenalty = 1e5;
 type = 'ubln'; % The default types of problems to test
 mindim = 1; % The default minimal dimension of problems to test
 if any(startsWith(solvers, 'cobyla'))
@@ -105,14 +103,15 @@ fref = NaN(np, ns, maxfun);
 cref = NaN(np, ns, maxfun);
 
 permuted = options.perm;
-has_eval_options = ~isempty(fieldnames(options.eval_options));
+have_eval_options = ~isempty(fieldnames(options.eval_options));
 eval_options = options.eval_options;
 randomizex0 = abs(options.randomizex0);
 ref_options = rmfield(options, {'perm', 'randomizex0', 'eval_options'});
+use_ref = (have_eval_options || randomizex0 > 0);
 
 % `eval_options` and `randomizex0` can occur at the same time, but neither of them are compatible
 % with `perm`.
-assert(~permuted || ~(has_eval_options || randomizex0));
+assert(~permuted || ~(have_eval_options || randomizex0));
 
 
 fprintf('\n\nThe testing options:\n')
@@ -142,7 +141,7 @@ if sequential
         prob.orig_x0 = prob.x0;
         pdim(ip) = length(prob.x0);
 
-        if has_eval_options || randomizex0 > 0
+        if use_ref
             %fprintf('\nCalculate fref and cref\n');
             for is = 1 : ns
                 [fref(ip, is, :), cref(ip, is, :)] = testsolv(solvers{is}, prob, ref_options);
@@ -152,7 +151,7 @@ if sequential
         rng(ip); permutations = get_perms(nr, length(prob.x0));
 
         for ir = 1 : nr
-            if has_eval_options
+            if have_eval_options
                 prob.objective = @(x) evalfun(prob.orig_objective, x, eval_options, ir);
                 if ~isempty(prob.orig_nonlcon)
                     prob.nonlcon = @(x) evalcon(prob.orig_nonlcon, x, eval_options, ir);
@@ -178,6 +177,7 @@ if sequential
         decup(prob);
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
+
     end
 else
     parfor ip = minip : maxip
@@ -194,7 +194,7 @@ else
         prob.orig_x0 = prob.x0;
         pdim(ip) = length(prob.x0);
 
-        if has_eval_options || randomizex0 > 0
+        if use_ref
             %fprintf('\nCalculate fref and cref\n');
             for is = 1 : ns
                 [fref(ip, is, :), cref(ip, is, :)] = testsolv(solvers{is}, prob, ref_options);
@@ -204,7 +204,7 @@ else
         rng(ip); permutations = get_perms(nr, length(prob.x0));
 
         for ir = 1 : nr
-            if has_eval_options
+            if have_eval_options
                 prob.objective = @(x) evalfun(prob.orig_objective, x, eval_options, ir);
                 if ~isempty(prob.orig_nonlcon)
                     prob.nonlcon = @(x) evalcon(prob.orig_nonlcon, x, eval_options, ir);
@@ -230,22 +230,52 @@ else
         decup(prob);
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
+
     end
 end
 
 
+% For uniformity of the code, we define fref, cref, and mref by the first random test if use_ref is false.
+if ~use_ref
+    assert(all(all(all(isnan(fref)))) && all(all(all(isnan(cref)))));
+    for ip = 1 : np
+        for is = 1 : ns
+            fref(ip, is, :) = frec(ip, is, 1, :);
+            cref(ip, is, :) = crec(ip, is, 1, :);
+        end
+    end
+end
+mref = fref + options.cpenalty*cref;
+mref_min = min(min(mref, [], 3), [], 2);  % Minimum of mref for each problem.
+
+% Modify crec according to cref.
+% For the ip-th problem:
+% 1. All values of cref that are less than options.ctol*min(1, cref(ip, 1, 1)) is set to 0, meaning
+% that we consider such constraint violations as zero.
+% 2. All values of cref that are more than 10*max(1, cref(ip, 1, 1)) is set to NaN, meaning that we
+% consider such constraint violations as infinity.
+for ip = 1 : np
+    if (isnan(cref(ip, 1, 1)) || isinf(cref(ip, 1, 1)))
+        cref(ip, 1, 1) = realmax;
+    end
+    if (isnan(fref(ip, 1, 1)) || isinf(fref(ip, 1, 1)))
+        fref(ip, 1, 1) = realmax;
+    end
+    for is = 1 : ns
+        for ir = 1 : nr
+            crec(ip, is, ir, crec(ip, is, ir, :) <= options.ctol*min(1, cref(ip, 1, 1))) = 0;
+            crec(ip, is, ir, crec(ip, is, ir, :) >= 10*max(1, cref(ip, 1, 1))) = NaN;
+        end
+    end
+end
+
+% Define mrec
 mrec = frec + options.cpenalty*crec;
-mrec(crec > options.ctol) = NaN;
 mrec(:,:,:,1) = frec(:,:,:,1) + options.cpenalty*crec(:,:,:,1); % Prevent mrec(:,:,:,1) from being NaN
 mrec_min = min(min(min(mrec, [], 4), [], 3), [], 2);
 
-if has_eval_options || randomizex0
-    mref = fref + options.cpenalty*cref;
-    mref_min = min(min(mref, [], 3), [], 2);
-    mmin = min(mrec_min, mref_min);
-else
-    mmin = mrec_min;
-end
+% Define mmin. mmin(ip) is used as the "minimum merit function value" for problem ip.
+mmin = min(mrec_min, mref_min);
 
 output = struct();
 output.plist = plist;
@@ -280,7 +310,7 @@ maxfun = options.maxfun;
 fval_history = NaN(1, maxfun);
 cv_history = NaN(1, maxfun);
 
-%has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options));
+%have_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options));
 prob.options.output_xhist = true;  % We always need xhist to recover the history of the computation.
 
 [~, ~, ~, output] = solver(prob);
@@ -304,6 +334,9 @@ else
     fval_history = prob.f0;
     cv_history = prob.constrv0;
 end
+
+cv_history(isnan(cv_history)) = Inf;
+assert(all(cv_history >= 0));
 
 return
 
@@ -391,12 +424,12 @@ if (~isfield(options, 'maxip'))
 end
 
 % Set eval_options
-has_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options));
-if ~has_eval_options
+have_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options));
+if ~have_eval_options
     options.eval_options = eval_options;
 end
 
-if has_eval_options
+if have_eval_options
     eval_options = options.eval_options;
 
     noise.type = 'relative';

@@ -144,6 +144,7 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Test gfortran on Raspberry Pi, small](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64_small.yml)
     - [![Test gfortran on Raspberry Pi, big](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64_big.yml)
     - [![Test armflang on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_armflang_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_armflang_pi.yml)
+    - [![Test nvfortran on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_nvfortran_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_nvfortran_pi.yml)
 
 
 - [Tests](https://github.com/equipez/gitpersonal/actions) at [equipez/gitpersonal](https://github.com/equipez/gitpersonal)

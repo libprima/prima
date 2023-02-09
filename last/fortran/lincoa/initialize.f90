@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 PM03:25:53
+! Last Modified: Friday, February 10, 2023 AM12:30:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -183,17 +183,27 @@ b = b - matprod(xbase, amat)
 !! violation is at least 0.2*RHOBEG. This is OPTIONAL. According to a test on 20220614, it does
 !! improve the performance of LINCOA modestly. The magic number 0.2 set by Powell works well.
 !mincv = 0.2_RP * rhobeg
-!do k = 2, npt  ! LINCOA always starts with a feasible point. So we do this only for K >= 2.
-!    ! Internally, we use AMAT and B to evaluate the constraints.
-!    constr = matprod(xpt(:, k), amat) - b
-!    if (all(constr < mincv) .and. any(constr > 0)) then
-!        j = int(maxloc(constr, dim=1), kind(j))
-!        xpt(:, k) = xpt(:, k) + (mincv - constr(j)) * amat(:, j)
-!    end if
-!end do
+feasible = .false.
+feasible(1) = .true.
+do k = 1, npt  ! LINCOA always starts with a feasible point. So we do this only for K >= 2.
+    ! Internally, we use AMAT and B to evaluate the constraints.
+    constr = matprod(xpt(:, k), amat) - b
+    cval(k) = maximum([ZERO, constr])
+    if (is_nan(cval(k))) then
+        cval(k) = HUGENUM
+    end if
+    !if (all(constr < mincv) .and. any(constr > 0)) then
+    feasible(k) = all(constr <= 0)
+    if (.false.) then
+        j = int(maxloc(constr, dim=1), kind(j))
+        xpt(:, k) = xpt(:, k) + (mincv - constr(j)) * amat(:, j)
+    end if
+end do
+feasible = (cval <= 0)
+!feasible(minloc(cval, dim=1)) = .true.
 
 ! Set FVAL by evaluating F. Totally parallelizable except for FMSG.
-feasible = .false.
+!feasible = .false.
 do k = 1, npt
     x = xbase + xpt(:, k)
     call evaluate(calfun, x, f)
@@ -207,7 +217,7 @@ do k = 1, npt
     call savehist(k, x, xhist, f, fhist, cstrv, chist)
 
     evaluated(k) = .true.
-    feasible(k) = (cstrv <= 0)
+    !feasible(k) = (cstrv <= 0)
     cval(k) = cstrv
     fval(k) = f
 
@@ -218,9 +228,10 @@ do k = 1, npt
         exit
     end if
 end do
-feasible(1) = .true.  ! LINCOA always starts with a feasible point.
+!feasible(1) = .true.  ! LINCOA always starts with a feasible point.
 
 nf = int(count(evaluated), kind(nf))
+feasible(minloc(cval, mask=evaluated, dim=1)) = .true.
 kopt = int(minloc(fval, mask=(evaluated .and. feasible), dim=1), kind(kopt))
 !!MATLAB:
 !!fopt = min(fval(evaluated & feasible));

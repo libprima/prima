@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 PM04:04:01
+! Last Modified: Friday, February 10, 2023 AM12:40:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,7 +41,7 @@ subroutine initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, r
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
@@ -86,7 +86,6 @@ real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
 ! Local variables
 character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'INITXF'
-integer(IK) :: j
 integer(IK) :: k
 integer(IK) :: m
 integer(IK) :: maxchist
@@ -100,7 +99,6 @@ logical :: feasible(size(xpt, 2))
 real(RP) :: constr(size(b))
 real(RP) :: cstrv
 real(RP) :: f
-real(RP) :: mincv
 real(RP) :: x(size(x0))
 
 ! Sizes.
@@ -179,21 +177,29 @@ xpt(:, 2 * n + 2:npt) = xpt(:, ij(1, :) + 1) + xpt(:, ij(2, :) + 1)
 ! Update the constraint right-hand sides to allow for the shift XBASE.
 b = b - matprod(xbase, amat)
 
-!! Go through the initial points, shifting every infeasible point if necessary so that its constraint
-!! violation is at least 0.2*RHOBEG. This is OPTIONAL. According to a test on 20220614, it does
-!! improve the performance of LINCOA modestly. The magic number 0.2 set by Powell works well.
-!mincv = 0.2_RP * rhobeg
-!do k = 2,  npt  ! LINCOA always starts with a feasible point. So we do this only for K >= 2.
-!    ! Internally, we use AMAT and B to evaluate the constraints.
-!    constr = matprod(xpt(:, k), amat) - b
-!    if (all(constr < mincv) .and. any(constr > 0)) then
-!        j = int(maxloc(constr, dim=1), kind(j))
-!        xpt(:, k) = xpt(:, k) + (mincv - constr(j)) * amat(:, j)
-!    end if
-!end do
+! Define FEASIBLE, which will be used when defining KOPT.
+do k = 1, npt
+    ! Internally, we use AMAT and B to evaluate the constraints.
+    constr = matprod(xpt(:, k), amat) - b
+    cval(k) = maximum([ZERO, constr])  ! CVAL will be used to define FEASIBLE.
+    if (is_nan(cval(k))) then
+        cval(k) = HUGENUM
+    end if
+    ! Powell's implementation contains the following procedure that shifts every infeasible point if
+    ! necessary so that its constraint violation is at least 0.2*RHOBEG. According to a test on
+    ! 230209, it does not evidently improve the performance of LINCOA. Indeed, it worsens a bit the
+    ! performance in the early stage. Thus we decided to remove it.
+    !----------------------------------------------------------------------------------------------!
+    !mincv = 0.2_RP * rhobeg
+    !if (all(constr < mincv) .and. any(constr > 0)) then
+    !    j = int(maxloc(constr, dim=1), kind(j))
+    !    xpt(:, k) = xpt(:, k) + (mincv - constr(j)) * amat(:, j)
+    !end if
+    !----------------------------------------------------------------------------------------------!
+end do
+feasible = (cval <= 0)
 
 ! Set FVAL by evaluating F. Totally parallelizable except for FMSG.
-feasible = .false.
 do k = 1, npt
     x = xbase + xpt(:, k)
     call evaluate(calfun, x, f)
@@ -207,8 +213,7 @@ do k = 1, npt
     call savehist(k, x, xhist, f, fhist, cstrv, chist)
 
     evaluated(k) = .true.
-    feasible(k) = (cstrv <= 0)
-    cval(k) = cstrv
+    cval(k) = cstrv  ! CVAL will be used to initialize CFILT.
     fval(k) = f
 
     ! Check whether to exit.
@@ -218,9 +223,12 @@ do k = 1, npt
         exit
     end if
 end do
-feasible(1) = .true.  ! LINCOA always starts with a feasible point.
 
 nf = int(count(evaluated), kind(nf))
+! Since the starting point is supposed to be feasible, there should be at least one feasible point.
+! We set feasible to TRUE for the evaluated point with the smallest constraint violation. This is
+! necessary, or KOPT defined below may become 0 if EVALUATED .AND. FEASIBLE is all FALSE.
+feasible(minloc(cval, mask=evaluated, dim=1)) = .true.
 kopt = int(minloc(fval, mask=(evaluated .and. feasible), dim=1), kind(kopt))
 !!MATLAB:
 !!fopt = min(fval(evaluated & feasible));
@@ -249,47 +257,53 @@ if (DEBUGGING) then
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+    ! LINCOA always starts with a feasible point.
+    if (m > 0) then
+        constr = matprod(xpt(:, 1), amat) - b
+        call assert(all(constr <= max(1.0E-12, 1.0E2 * EPS) * (ONE + sum(abs(xpt(:, 1))) + sum(abs(b)))), &
+            & 'The starting point is feasible', srname)
+    end if
 end if
 
 end subroutine initxf
 
 
-subroutine inith(ij, rhobeg, xpt, idz, bmat, zmat, info)
+subroutine inith(ij, xpt, idz, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine initializes [IDZ, BMAT, ZMAT] which represents the matrix H in (3.12) of the
 ! NEWUOA paper (see also (2.7) of the BOBYQA paper).
 !--------------------------------------------------------------------------------------------------!
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_MODEL
-use, non_intrinsic :: linalg_mod, only : eye, issymmetric
-use, non_intrinsic :: powalg_mod, only : updateh
+use, non_intrinsic :: linalg_mod, only : issymmetric, eye
+use, non_intrinsic :: powalg_mod, only : errh
 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: ij(:, :)    ! IJ(2, MAX(0, NPT-2*N-1))
-real(RP), intent(in) :: rhobeg
-real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+integer(IK), intent(in) :: ij(:, :) ! IJ(2, MAX(0_IK, NPT - 2_IK * N - 1_IK))
+real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
+! N.B.: XPT is essentially only used for debugging, to test the error in the initial H. The initial
+! ZMAT and BMAT are completely defined by RHOBEG and IJ.
 
 ! Outputs
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out) :: idz
-real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT+N)
-real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
+real(RP), intent(out) :: bmat(:, :) ! BMAT(N, NPT + N)
+real(RP), intent(out) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
 
 ! Local variables
 character(len=*), parameter :: srname = 'INITH'
 integer(IK) :: k
-integer(IK) :: kbase
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: recip
 real(RP) :: reciq
+real(RP) :: rhobeg
 real(RP) :: rhosq
-real(RP) :: xpt_ref(size(xpt, 1), size(xpt, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -312,9 +326,10 @@ end if
 ! Calculation starts !
 !====================!
 
+rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
 rhosq = rhobeg**2
 
-! Set BMAT corresponding to the XPT_REF that will be defined later.
+! Set BMAT.
 recip = ONE / rhobeg
 reciq = HALF / rhobeg
 bmat = ZERO
@@ -331,7 +346,7 @@ else
     bmat(:, n + 2:2 * n + 1) = -reciq * eye(n)
 end if
 
-! Set ZMAT corresponding to the XPT_REF that will be defined later.
+! Set ZMAT.
 recip = ONE / rhosq
 reciq = sqrt(HALF) / rhosq
 zmat = ZERO
@@ -355,22 +370,6 @@ end if
 ! Set IDZ.
 idz = 1
 
-! Up to now, [BMAT, ZMAT, IDZ] corresponds to the XPT_REF defined below.
-xpt_ref(:, 1) = ZERO
-xpt_ref(:, 2:n + 1) = rhobeg * eye(n)
-xpt_ref(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)
-xpt_ref(:, 2 * n + 2:npt) = xpt_ref(:, ij(1, :) + 1) + xpt_ref(:, ij(2, :) + 1)
-
-!! Update [BMAT, ZMAT, IDZ] so that it corresponds to XPT.
-!kbase = 1
-!do k = 1, npt
-!    if (any(abs(xpt(:, k) - xpt_ref(:, k)) > 0)) then  ! XPT(:, K) /= XPT_REF(:, K)
-!        stop
-!        call updateh(k, kbase, idz, xpt(:, k), xpt_ref, bmat, zmat)
-!        xpt_ref(:, k) = xpt(:, k)
-!    end if
-!end do
-
 if (present(info)) then
     if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
         info = NAN_INF_MODEL
@@ -390,6 +389,8 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(errh(idz, bmat, zmat, xpt) <= max(1.0E-3_RP, 1.0E2_RP * real(npt, RP) * EPS), &
+        & '[IDZ, BMA, ZMAT] represents H = W^{-1}', srname)
 end if
 
 end subroutine inith
