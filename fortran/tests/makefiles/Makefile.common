@@ -916,7 +916,7 @@ source_%: $(SRC_DIRS)
 	# https://forums.developer.nvidia.com/t/bug-in-nvfortran-22-3-false-positive-of-out-bound-subscripts/209936
 	# Check it again when new versions are available. Make a test using
 	# https://github.com/zequipe/test_compiler/blob/master/test_solve.f90
-	@if echo $@ | grep -q "ftest\|vtest\|dtest"; then \
+	@if echo $@ | grep -q "ftest\|vtest\|dtest\|rtest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../fvdsrc ./ ; \
 	fi
