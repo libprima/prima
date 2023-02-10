@@ -40,6 +40,7 @@ test:
 	$(MAKE) gtest
 	$(MAKE) itest
 	$(MAKE) ntest
+	$(MAKE) rtest
 	$(MAKE) stest
 	$(MAKE) vtest
 	$(MAKE) xtest
@@ -52,10 +53,10 @@ atest: FC := af95 -m3
 
 # AMD AOCC Flang
 AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2> /dev/null | sort | tail -n 1)
-dtest: FC := $(AFLANG) -Wall -Wextra -std=f$(FSTD)
+dtest: FC := $(AFLANG) -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # Flang
-ftest: FC := flang -Wall -Wextra -std=f$(FSTD)
+ftest: FC := flang -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # GNU gfortran
 gtest: FC := gfortran -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
@@ -69,6 +70,10 @@ ntest: FC := nagfor -C -f$(FSTD)
 # NVIDIA nvfortran (aka, pgfortran)
 VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
 vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard
+
+# ARM Flang
+RFORT := $(shell find -L /opt/arm -type f -executable -name armflang -print 2> /dev/null | sort | tail -n 1)
+rtest: FC := $(RFORT) -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # Oracle sunf95
 stest: FC := sunf95 -w3 -u -U
