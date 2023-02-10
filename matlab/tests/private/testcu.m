@@ -254,16 +254,23 @@ mref_min = min(min(mref, [], 3), [], 2);  % Minimum of mref for each problem.
 % consider such constraint violations as infinity.
 % 2. All values of cref that are less than options.ctol*min(1, cref(ip, 1, 1)) are set to 0, meaning
 % that we consider such constraint violations as zero. Other values are also reduced by this threshold.
+%keyboard
 for ip = 1 : np
     if (isnan(cref(ip, 1, 1)) || isinf(cref(ip, 1, 1)))
         cref(ip, 1, 1) = realmax;
     end
     for is = 1 : ns
         for ir = 1 : nr
-            crec(ip, is, ir, crec(ip, is, ir, :) >= 10*max(1, cref(ip, 1, 1))) = NaN;
+            crec(ip, is, ir, crec(ip, is, ir, :) > max(0.01, 2*cref(ip, 1, 1))) = NaN;
+            %crec(ip, is, ir, crec(ip, is, ir, :) > 0.01) = NaN;
+            %crec(ip, is, ir, crec(ip, is, ir, :) > 2*cref(ip, 1, 1)) = NaN;
+            %crec(ip, is, ir, crec(ip, is, ir, :) >= options.ctol) = NaN;
         end
     end
-    cshift = max(eps, options.ctol*min(1, cref(ip, 1, 1)));
+    %cshift = max(eps, options.ctol*min(1, cref(ip, 1, 1)));
+    % The following two lines make a huge difference to the result. Why? Shouldn't it change
+    % nothing?
+    cshift = 0;
     crec(ip, :, :, :) = max(0, crec(ip, :, :, :) - cshift);
 end
 
