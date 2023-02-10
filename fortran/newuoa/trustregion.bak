@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, February 10, 2023 PM06:47:52
+! Last Modified: Thursday, February 02, 2023 PM12:31:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -164,8 +164,7 @@ hx = hess_mul(x, xpt, pq, hq)
 ! N.B.: During the iterations, G is NOT updated, and it equals always GQ+HX, which is the gradient
 ! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
 ! which is the norm square of the gradient at the current iterate.
-!g = gq + hx
-g = gq
+g = gq + hx
 gg = inprod(g, g)
 !--------------------------------------------------------------------------------------------------!
 gg0 = gg

@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 12, 2022 PM11:09:10
+! Last Modified: Friday, February 10, 2023 PM06:35:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -227,8 +227,8 @@ knew_geo = 0
 itest = 0
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
-! function evaluations unless the trust-region step is short but the geometry step is not invoked.
-! Thus the following MAXTR is unlikely to be reached.
+! function evaluations unless the trust-region step is short or fails to reduce the trust-region
+! model but the geometry step is not invoked. Thus the following MAXTR is unlikely to be reached.
 maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
 info = MAXTR_REACHED
 
@@ -303,8 +303,8 @@ do tr = 1, maxtr
         ! 1. KNEW_TR = 0 means it is impossible to obtain a good interpolation set by replacing any
         ! current interpolation point with XNEW. Then XNEW and its function value will be discarded.
         ! In this case, the geometry of XPT likely needs improvement, which will be handled below.
-        ! 2. If XIMPROVED = TRUE (i.e., RATIO > 0), then SETDROP_TR ensures KNEW_TR > 0 so that
-        ! XNEW is included into XPT. Otherwise, SETDROP_TR is buggy; moreover, if XIMPROVED = TRUE
+        ! 2. If XIMPROVED = TRUE (i.e., RATIO > 0), then SETDROP_TR should ensure KNEW_TR > 0 so that
+        ! XNEW is included into XPT. Otherwise, SETDROP_TR is buggy. Moreover, if XIMPROVED = TRUE
         ! but KNEW_TR = 0, XOPT will differ from XPT(:, KOPT), because the former is set to XNEW but
         ! XNEW is discarded. Such a difference can lead to unexpected behaviors; for example,
         ! KNEW_GEO may equal KOPT, with which GEOSTEP will not work.
@@ -479,7 +479,7 @@ do tr = 1, maxtr
 
     ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
-        ! XPT(:,KNEW_GEO) will become XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
+        ! XPT(:, KNEW_GEO) will become XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
 
         ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
@@ -553,7 +553,7 @@ do tr = 1, maxtr
     end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
 
     ! Shift XBASE if XOPT may be too far from XBASE.
-    ! Powell's original criterion for shifting XBASE is as follows.
+    ! Powell's original criteria for shifting XBASE is as follows.
     ! 1. After a trust region step that is not short, shift XBASE if SUM(XOPT**2) >= 1.0E3*DNORM**2.
     ! 2. Before a geometry step, shift XBASE if SUM(XOPT**2) >= 1.0E3*DELBAR**2.
     if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
