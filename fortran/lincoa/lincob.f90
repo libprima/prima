@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 PM08:27:37
+! Last Modified: Friday, February 10, 2023 PM06:01:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -309,10 +309,10 @@ rho = rhobeg
 delta = rho
 ratio = -ONE
 dnormsav = HUGENUM
-knew_tr = 0
-knew_geo = 0
 shortd = .false.
 qalt_better = .false.
+knew_tr = 0
+knew_geo = 0
 qfac = eye(n)
 rfac = ZERO
 nact = 0
