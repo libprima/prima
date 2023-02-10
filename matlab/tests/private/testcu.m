@@ -250,21 +250,20 @@ mref_min = min(min(mref, [], 3), [], 2);  % Minimum of mref for each problem.
 
 % Modify crec according to cref.
 % For the ip-th problem:
-% 1. All values of cref that are less than options.ctol*min(1, cref(ip, 1, 1)) are set to 0, meaning
+% 1. All values of cref that are less than options.ctol*min(0.01, cref(ip, 1, 1)) are set to 0, meaning
 % that we consider such constraint violations as zero. Other values are also reduced by this threshold.
-% 2. All values of cref that are more than 10*max(1, cref(ip, 1, 1)) are set to Inf, meaning that we
-% consider such constraint violations as infinity.
+% 2. All values of cref that are more than max(0.1, 2*cref(ip, 1, 1)) are set to Inf, meaning that
+% consider the corresponding iterates is too bad to consider.
 for ip = 1 : np
     if (isnan(cref(ip, 1, 1)) || isinf(cref(ip, 1, 1)))
         cref(ip, 1, 1) = realmax;
     end
     %cshift = options.ctol*min(0.01, cref(ip, 1, 1));
-    cshift = max(eps, options.ctol*min(0.01, cref(ip, 1, 1)));
+    cshift = max(eps, options.ctol*min(0.01, cref(ip, 1, 1)));  % max(eps, ...) makes a difference.
     crec(ip, :, :, :) = max(0, crec(ip, :, :, :) - cshift);
     for is = 1 : ns
         for ir = 1 : nr
             crec(ip, is, ir, crec(ip, is, ir, :) > max(0.1, 2*cref(ip, 1, 1))) = Inf;
-            %crec(ip, is, ir, crec(ip, is, ir, :) >= options.ctol) = Inf;
         end
     end
 end
