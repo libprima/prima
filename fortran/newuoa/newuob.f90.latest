@@ -214,7 +214,7 @@ end if
 ! (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the code will continue to run
 ! and possibly recovers by geometry steps.
 
-! Set some more initial values and parameters.
+! Set some more initial values.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
 ! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
 ! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
@@ -490,7 +490,7 @@ do tr = 1, maxtr
 
     ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
-        ! XPT(:,KNEW_GEO) will become XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
+        ! XPT(:, KNEW_GEO) will become XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
 
         ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving

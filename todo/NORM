@@ -24,7 +24,7 @@ implement NORM in this naive way. TO be checked.
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Function DNRM2 LAPACK 3.11.0:
-https://netlib.org/lapack/explore-html/df/d28/group__single__blas__level1_gab5393665c8f0e7d5de9bd1dd2ff0d9d0.html
+!https://netlib.org/lapack/explore-html/df/d28/group__single__blas__level1_gab5393665c8f0e7d5de9bd1dd2ff0d9d0.html
 function dnrm2(n, x, incx)
 integer, parameter :: wp = kind(1.D0)
 real(wp) :: DNRM2
