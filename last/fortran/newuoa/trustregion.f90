@@ -163,7 +163,8 @@ hx = hess_mul(x, xpt, pq, hq)
 ! N.B.: During the iterations, G is NOT updated, and it equals always GQ+HX, which is the gradient
 ! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
 ! which is the norm square of the gradient at the current iterate.
-g = gq + hx
+!g = gq + hx
+g = gq
 gg = inprod(g, g)
 !--------------------------------------------------------------------------------------------------!
 gg0 = gg
