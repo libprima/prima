@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 11, 2023 PM09:38:44
+! Last Modified: Sunday, February 12, 2023 AM12:49:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -303,7 +303,8 @@ if (ratio > TENTH) then
 else
     !galt = matprod(bmat(:, 1:npt), fval)
     galt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, omega_mul(idz, zmat, fval))
-    if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
+    if (inprod(gq, gq) < 1.0E1_RP * inprod(galt, galt)) then
+        !if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
         itest = 0
     else
         itest = itest + 1_IK

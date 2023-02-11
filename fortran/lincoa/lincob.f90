@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 10, 2023 PM06:01:33
+! Last Modified: Sunday, February 12, 2023 AM12:45:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -284,7 +284,8 @@ end if
 ! Initialize BMAT, ZMAT, and IDZ.
 call inith(ij, xpt, idz, bmat, zmat)
 
-! Initialize GQ, HQ, and PQ.
+! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
+! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
 hq = ZERO
 pq = omega_mul(idz, zmat, fval)
 gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
@@ -432,7 +433,7 @@ do tr = 1, maxtr
         knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat)
         if (knew_tr > 0) then
             ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT,
-            ! FOPT] and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes
+            ! FOPT] and [GOPT, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes
             ! XNEW = XOPT + D.
             xdrop = xpt(:, knew_tr)
             xosav = xpt(:, kopt)
@@ -560,7 +561,7 @@ do tr = 1, maxtr
         ximproved = (f < fopt .and. feasible)
 
         ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
-        ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
+        ! and [GOPT, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
         xdrop = xpt(:, knew_geo)
         xosav = xpt(:, kopt)
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)

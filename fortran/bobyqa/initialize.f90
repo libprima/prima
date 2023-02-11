@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 PM06:27:29
+! Last Modified: Sunday, February 12, 2023 AM12:42:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -302,9 +302,9 @@ end subroutine initxf
 
 subroutine initq(ij, fval, xpt, gopt, hq, pq, info)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine initializes the quadratic model, which is represented by (GOPT, HQ, PQ) so that
-! its gradient at XOPT is GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'. Here,
-! XOPT = XBASE + XPT(:, KOPT).
+! This subroutine initializes the quadratic model, which is represented by [GOPT, HQ, PQ] so that
+! its gradient at XBASE+XOPT is GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+! Here, XOPT = XPT(:, KOPT).
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -380,8 +380,8 @@ xb = diag(xpt(:, n + 2:n + ndiag + 1))
 gopt(1:ndiag) = (gopt(1:ndiag) * xb - ((fval(n + 2:n + ndiag + 1) - fbase) / xb) * xa) / (xb - xa)
 
 ! Set the diagonal of HQ by the three-point interpolation. If we do this before the revision of
-! GQ(1:NDIAG), we can avoid the calculation of FVAL(K + 1) - FBASE) / RHOBEG. But we prefer to
-! decouple the initialization of GQ and HQ. We are not concerned by this amount of flops.
+! GOPT(1:NDIAG), we can avoid the calculation of FVAL(K + 1) - FBASE) / RHOBEG. But we prefer to
+! decouple the initialization of GOPT and HQ. We are not concerned by this amount of flops.
 hq = ZERO
 do k = 1, ndiag
     hq(k, k) = TWO * ((fval(k + 1) - fbase) / xa(k) - (fval(n + k + 1) - fbase) / xb(k)) / (xa(k) - xb(k))
