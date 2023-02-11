@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, February 10, 2023 PM06:47:52
+! Last Modified: Sunday, February 12, 2023 AM12:41:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -18,11 +18,11 @@ public :: trsapp, trrad
 contains
 
 
-subroutine trsapp(delta, gq_in, hq_in, pq_in, tol, x, xpt, crvmin, s, info)
+subroutine trsapp(delta, gopt_in, hq_in, pq_in, tol, x, xpt, crvmin, s, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds an approximate solution to the N-dimensional trust region subproblem
 !
-! min <X+S, GQ> + 0.5*<X+S, HESSIAN*(X+S)> s.t. ||S|| <= DELTA
+! min <S, GOPT> + 0.5*<S, HESSIAN*S> s.t. ||S|| <= DELTA
 !
 ! Note that the HESSIAN here is the sum of an explicit part HQ and an implicit part (PQ, XPT):
 !
@@ -61,7 +61,7 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: delta
-real(RP), intent(in) :: gq_in(:)   ! GQ_IN(N)
+real(RP), intent(in) :: gopt_in(:)   ! GOPT_IN(N)
 real(RP), intent(in) :: hq_in(:, :)    ! HQ_IN(N, N)
 real(RP), intent(in) :: pq_in(:)   ! PQ_IN(NPT)
 real(RP), intent(in) :: tol
@@ -98,11 +98,10 @@ real(RP) :: g(size(x))
 real(RP) :: gg
 real(RP) :: gg0
 real(RP) :: ggsav
-real(RP) :: gq(size(gq_in))
+real(RP) :: gopt(size(gopt_in))
 real(RP) :: hd(size(x))
 real(RP) :: hq(size(hq_in, 1), size(hq_in, 2))
 real(RP) :: hs(size(x))
-real(RP) :: hx(size(x))
 real(RP) :: modscal
 real(RP) :: pq(size(pq_in))
 real(RP) :: qadd
@@ -123,7 +122,7 @@ npt = int(size(xpt, 2), kind(npt))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
-    call assert(size(gq_in) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(gopt_in) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq_in, 1) == n .and. issymmetric(hq_in), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq_in) == npt, 'SIZE(PQ) = NPT', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
@@ -135,19 +134,19 @@ end if
 ! Calculation starts !
 !====================!
 
-! Scale the problem if GQ contains large values. Otherwise, floating point exceptions may occur.
+! Scale the problem if GOPT contains large values. Otherwise, floating point exceptions may occur.
 ! Note that CRVMIN must be scaled back if it is nonzero, but the step is scale invariant.
 ! N.B.: It is faster and safer to scale by multiplying a reciprocal than by division. See
 ! https://fortran-lang.discourse.group/t/ifort-ifort-2021-8-0-1-0e-37-1-0e-38-0/
-if (maxval(abs(gq_in)) > 1.0E12) then   ! The threshold is empirical.
-    modscal = max(TWO * REALMIN, ONE / maxval(abs(gq_in)))  ! MAX: precaution against underflow.
-    gq = gq_in * modscal
+if (maxval(abs(gopt_in)) > 1.0E12) then   ! The threshold is empirical.
+    modscal = max(TWO * REALMIN, ONE / maxval(abs(gopt_in)))  ! MAX: precaution against underflow.
+    gopt = gopt_in * modscal
     pq = pq_in * modscal
     hq = hq_in * modscal
     scaled = .true.
 else
     modscal = ONE  ! This value is not used, but Fortran compilers may complain without it.
-    gq = gq_in
+    gopt = gopt_in
     pq = pq_in
     hq = hq_in
     scaled = .false.
@@ -159,13 +158,11 @@ qred = ZERO
 info_loc = 2  ! Default exit flag is 2, i.e., MAXITER is attained
 
 ! Prepare for the first line search.
-hx = hess_mul(x, xpt, pq, hq)
 !--------------------------------------------------------------------------------------------------!
-! N.B.: During the iterations, G is NOT updated, and it equals always GQ+HX, which is the gradient
+! N.B.: During the iterations, G is NOT updated, and it equals always GOPT, which is the gradient
 ! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
 ! which is the norm square of the gradient at the current iterate.
-!g = gq + hx
-g = gq
+g = gopt
 gg = inprod(g, g)
 !--------------------------------------------------------------------------------------------------!
 gg0 = gg
@@ -325,7 +322,7 @@ else
 end if
 
 ! The 2-dimensional minimization
-! N.B.: During the iterations, G is NOT updated, and it equals always GQ+HX, which is the gradient
+! N.B.: During the iterations, G is NOT updated, and it equals always GOPT, which is the gradient
 ! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
 ! which is the norm square of the gradient at the current iterate.
 do iter = 1, maxiter

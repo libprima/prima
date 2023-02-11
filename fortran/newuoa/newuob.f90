@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 11, 2023 PM10:58:19
+! Last Modified: Sunday, February 12, 2023 AM12:29:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,9 +35,9 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! [XPT, FVAL, KOPT] describes the interpolation set:
 ! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
 !   values of F at the interpolation points; KOPT is the index of XOPT in XPT.
-! [GQ, HQ, PQ] describes the quadratic model: GQ will hold the gradient of the quadratic model at
-!   XBASE; HQ will hold the explicit second order derivatives of the quadratic model; PQ will
-!   contain the parameters of the implicit second order derivatives of the quadratic model.
+! [GOPT, HQ, PQ] describes the quadratic model: GOPT will hold the gradient of the quadratic model
+!   at XBASE+XOPT; HQ will hold the explicit second order derivatives of the quadratic model; PQ
+!   will contain the parameters of the implicit second order derivatives of the quadratic model.
 ! [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12), which is the inverse of
 !   the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
 !   ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
@@ -130,7 +130,7 @@ real(RP) :: dnorm
 real(RP) :: dnormsav(3)
 real(RP) :: fopt
 real(RP) :: fval(npt)
-real(RP) :: gq(size(x)), gopt(size(x))
+real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: moderr
 real(RP) :: moderrsav(size(dnormsav))
@@ -140,7 +140,8 @@ real(RP) :: ratio
 real(RP) :: rho
 real(RP) :: xbase(size(x))
 real(RP) :: xdrop(size(x))
-real(RP) :: xopt(size(x)), xosav(size(x))
+real(RP) :: xopt(size(x))
+real(RP) :: xosav(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP), parameter :: trtol = 1.0E-2_RP  ! Tolerance used in TRSAPP.
@@ -202,15 +203,10 @@ end if
 ! Initialize BMAT, ZMAT, and IDZ.
 call inith(ij, xpt, idz, bmat, zmat)
 
-! Initialize GQ, HQ, and PQ.
-call initq(ij, fval, xpt, gq, hq, pq)
+! Initialize GOPT, HQ, and PQ.
+call initq(ij, fval, xpt, gopt, hq, pq)
 
-gopt = gq
-if (kopt /= 1) then
-    gopt = gopt + matprod(hq, xpt(:, kopt))
-end if
-
-! After initializing BMAT, ZMAT, GQ, HQ, PQ, one can also choose to return if these arrays contain
+! After initializing BMAT, ZMAT, GOPT, HQ, PQ, one can also choose to return if these arrays contain
 ! NaN. We do not do it here. If such a model is harmful, then it will probably lead to other returns
 ! (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the code will continue to run
 ! and possibly recovers by geometry steps.
@@ -245,7 +241,6 @@ info = MAXTR_REACHED
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Generate the next trust region step D.
-    !call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, d)
     call trsapp(delta, gopt, hq, pq, trtol, xopt, xpt, crvmin, d)
     dnorm = min(delta, norm(d))
 
@@ -254,7 +249,6 @@ do tr = 1, maxtr
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
-    !qred = -quadinc(d, xopt, xpt, gq, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
     qred = -quadinc(d, xpt, gopt, pq, hq)
 
     if (shortd .or. .not. qred > 0) then
@@ -318,7 +312,7 @@ do tr = 1, maxtr
         knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat)
 
         ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
-        ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes XNEW = XOPT + D.
+        ! and [GOPT, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes XNEW = XOPT + D.
         ! If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
         ! decides not to include XNEW into XPT.
         if (knew_tr > 0) then
@@ -326,8 +320,6 @@ do tr = 1, maxtr
             xosav = xopt
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
             call updatexf(knew_tr, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
-            !call updateq(idz, knew_tr, bmat, moderr, xdrop, zmat, gq, hq, pq)
-
             call updateq(idz, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
             ! Test whether to replace the new quadratic model Q by the least-Frobenius norm
@@ -346,7 +338,6 @@ do tr = 1, maxtr
             ! not equal FOPT_OLD --- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD)
             ! has been revised after the last function evaluation.
             ! 5. Powell's code tries Q_alt only when DELT == RHO.
-            !call tryqalt(idz, fval - fopt, ratio, bmat, zmat, itest, gq, hq, pq)
             call tryqalt(idz, bmat, fval - fopt, ratio, xopt, xpt, zmat, itest, gopt, hq, pq)
         end if
     end if  ! End of IF (SHORTD .OR. .NOT. QRED > 0). The normal trust-region calculation ends here.
@@ -523,12 +514,10 @@ do tr = 1, maxtr
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+
         ! MODERR is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
-        !moderr = f - fopt - quadinc(d, xopt, xpt, gq, pq, hq)  ! QUADINC = Q(XOPT + D) - Q(XOPT)
-
         moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)
-
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
         !------------------------------------------------------------------------------------------!
         ! Zaikun 20200801: Powell's code does not update DNORM. Therefore, DNORM is the length of
@@ -541,13 +530,11 @@ do tr = 1, maxtr
         ximproved = (f < fopt)
 
         ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
-        ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
+        ! and [GOPT, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
         xdrop = xpt(:, knew_geo)
         xosav = xopt
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         call updatexf(knew_geo, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
-        !call updateq(idz, knew_geo, bmat, moderr, xdrop, zmat, gq, hq, pq)
-
         call updateq(idz, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
@@ -574,7 +561,6 @@ do tr = 1, maxtr
     ! 1. After a trust region step that is not short, shift XBASE if SUM(XOPT**2) >= 1.0E3*DNORM**2.
     ! 2. Before a geometry step, shift XBASE if SUM(XOPT**2) >= 1.0E3*DELBAR**2.
     if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
-        !call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
     end if
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
@@ -751,8 +737,6 @@ integer(IK), intent(in) :: idz
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
 real(RP), intent(in) :: fval(:)     ! FVAL(NPT)
 real(RP), intent(in) :: ratio
-!real(RP), intent(in) :: sl(:)       ! SL(N)
-!real(RP), intent(in) :: su(:)       ! SU(N)
 real(RP), intent(in) :: xopt(:)     ! XOPT(N)
 real(RP), intent(in) :: xpt(:, :)   ! XOPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
@@ -774,10 +758,6 @@ character(len=*), parameter :: srname = 'TRYQALT'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: galt(size(gopt))
-real(RP) :: gisq
-real(RP) :: gqsq
-real(RP) :: pgalt(size(gopt))
-real(RP) :: pgopt(size(gopt))
 real(RP) :: pqalt(size(pq))
 
 ! Debugging variables
@@ -811,28 +791,14 @@ end if
 ! Calculation starts !
 !====================!
 
-! Calculate the norm square of the projected gradient.
-pgopt = gopt
-!pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))
-!pgopt(trueloc(xopt <= sl)) = min(ZERO, gopt(trueloc(xopt <= sl)))
-gqsq = sum(pgopt**2)
-
 ! Calculate the parameters of the least Frobenius norm interpolant to the current data.
 pqalt = omega_mul(idz, zmat, fval)
 galt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pqalt)
 
-! Calculate the norm square of the projected alternative gradient.
-pgalt = galt
-!pgalt(trueloc(xopt >= su)) = max(ZERO, galt(trueloc(xopt >= su)))
-!pgalt(trueloc(xopt <= sl)) = min(ZERO, galt(trueloc(xopt <= sl)))
-gisq = sum(pgalt**2)
-
-! Test whether to replace the new quadratic model by the least Frobenius norm interpolant,
-! making the replacement if the test is satisfied.
-! N.B.: In the following IF, Powell's condition is GQSQ < TEN *GISQ. The condition here is adopted
-! and adapted from NEWUOA, and it seems to improve the performance.
-!if (ratio > TENTH .or. inprod(gopt, gopt)< TEN * inprod(galt, galt)) then  ! BOBYQA
-if (ratio > TENTH .or. inprod(gopt, gopt) < 1.0E2_RP * inprod(galt, galt)) then  ! NEWUOA
+! Test whether to replace the new quadratic model by the least Frobenius norm interpolant, making
+! the replacement if the test is satisfied. In the sequel, TEN seems to work a bit better than 100.
+if (ratio > TENTH .or. inprod(gopt, gopt) < TEN * inprod(galt, galt)) then  ! BOBYQA
+!if (ratio > TENTH .or. inprod(gopt, gopt) < 1.0E2_RP * inprod(galt, galt)) then  ! NEWUOA
     itest = 0
 else
     itest = itest + 1_IK

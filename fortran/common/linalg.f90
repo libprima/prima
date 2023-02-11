@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 11, 2023 PM04:51:58
+! Last Modified: Sunday, February 12, 2023 AM12:33:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1928,7 +1928,6 @@ real(RP), intent(in), optional :: p
 real(RP) :: y
 ! Local variables
 character(len=*), parameter :: srname = 'P_NORM'
-real(RP) :: scaling
 real(RP) :: p_loc
 
 ! Preconditions
