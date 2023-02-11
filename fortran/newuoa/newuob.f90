@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, February 10, 2023 PM07:01:53
+! Last Modified: Saturday, February 11, 2023 PM10:58:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -347,7 +347,7 @@ do tr = 1, maxtr
             ! has been revised after the last function evaluation.
             ! 5. Powell's code tries Q_alt only when DELT == RHO.
             !call tryqalt(idz, fval - fopt, ratio, bmat, zmat, itest, gq, hq, pq)
-            call tryqalt(bmat, fval - fopt, ratio, xopt, xpt, zmat, itest, gopt, hq, pq)
+            call tryqalt(idz, bmat, fval - fopt, ratio, xopt, xpt, zmat, itest, gopt, hq, pq)
         end if
     end if  ! End of IF (SHORTD .OR. .NOT. QRED > 0). The normal trust-region calculation ends here.
 
@@ -729,7 +729,7 @@ end if
 
 end subroutine updateq
 
-subroutine tryqalt(bmat, fval, ratio, xopt, xpt, zmat, itest, gopt, hq, pq)
+subroutine tryqalt(idz, bmat, fval, ratio, xopt, xpt, zmat, itest, gopt, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine tests whether to replace Q by the alternative model, namely the model that
 ! minimizes the F-norm of the Hessian subject to the interpolation conditions. It does the
@@ -741,12 +741,13 @@ subroutine tryqalt(bmat, fval, ratio, xopt, xpt, zmat, itest, gopt, hq, pq)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : matprod, issymmetric, trueloc
-use, non_intrinsic :: powalg_mod, only : hess_mul
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, issymmetric, trueloc
+use, non_intrinsic :: powalg_mod, only : hess_mul, omega_mul
 
 implicit none
 
 ! Inputs
+integer(IK), intent(in) :: idz
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
 real(RP), intent(in) :: fval(:)     ! FVAL(NPT)
 real(RP), intent(in) :: ratio
@@ -817,7 +818,7 @@ pgopt = gopt
 gqsq = sum(pgopt**2)
 
 ! Calculate the parameters of the least Frobenius norm interpolant to the current data.
-pqalt = matprod(zmat, matprod(fval, zmat))
+pqalt = omega_mul(idz, zmat, fval)
 galt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pqalt)
 
 ! Calculate the norm square of the projected alternative gradient.
@@ -830,7 +831,8 @@ gisq = sum(pgalt**2)
 ! making the replacement if the test is satisfied.
 ! N.B.: In the following IF, Powell's condition is GQSQ < TEN *GISQ. The condition here is adopted
 ! and adapted from NEWUOA, and it seems to improve the performance.
-if (ratio > TENTH .or. gqsq < TEN * gisq) then
+!if (ratio > TENTH .or. inprod(gopt, gopt)< TEN * inprod(galt, galt)) then  ! BOBYQA
+if (ratio > TENTH .or. inprod(gopt, gopt) < 1.0E2_RP * inprod(galt, galt)) then  ! NEWUOA
     itest = 0
 else
     itest = itest + 1_IK

@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM09:45:06
+! Last Modified: Saturday, February 11, 2023 PM09:38:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -211,7 +211,7 @@ end if
 end subroutine updateq
 
 
-subroutine tryqalt(idz, fval, ratio, bmat, zmat, itest, gq, hq, pq)
+subroutine tryqalt(idz, fval, ratio, xopt, xpt, bmat, zmat, itest, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine tests whether to replace Q by the alternative model, namely the model that
 ! minimizes the F-norm of the Hessian subject to the interpolation conditions. It does the
@@ -228,7 +228,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
-use, non_intrinsic :: powalg_mod, only : omega_mul
+use, non_intrinsic :: powalg_mod, only : omega_mul, hess_mul
 
 implicit none
 
@@ -238,6 +238,8 @@ real(RP), intent(in) :: fval(:)     ! FVAL(NPT)
 real(RP), intent(in) :: ratio
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
+real(RP), intent(in) :: xopt(:)
+real(RP), intent(in) :: xpt(:, :)
 
 ! In-output
 integer(IK), intent(inout) :: itest
@@ -299,7 +301,8 @@ end if
 if (ratio > TENTH) then
     itest = 0
 else
-    galt = matprod(bmat(:, 1:npt), fval)
+    !galt = matprod(bmat(:, 1:npt), fval)
+    galt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, omega_mul(idz, zmat, fval))
     if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
         itest = 0
     else
