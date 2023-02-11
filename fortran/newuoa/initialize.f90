@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Thursday, February 09, 2023 PM05:21:53
+! Last Modified: Sunday, February 12, 2023 AM12:43:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,7 +79,7 @@ real(RP), intent(out) :: fhist(:)   ! FHIST(MAXFHIST)
 real(RP), intent(out) :: fval(:)    ! FVAL(NPT)
 real(RP), intent(out) :: xbase(:)   ! XBASE(N)
 real(RP), intent(out) :: xhist(:, :)    ! XHIST(N, MAXXHIST)
-real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT) 
+real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! Local variables
 character(len=*), parameter :: solver = 'NEWUOA'
@@ -254,10 +254,11 @@ end if
 end subroutine initxf
 
 
-subroutine initq(ij, fval, xpt, gq, hq, pq, info)
+subroutine initq(ij, fval, xpt, gopt, hq, pq, info)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine initializes the quadratic model, which is represented by (GQ, HQ, PQ) so that its
-! gradient at XBASE is GQ; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+! This subroutine initializes the quadratic model, which is represented by [GOPT, HQ, PQ] so that
+! its gradient at XBASE+XOPT is GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+! Here, XOPT = XPT(:, KOPT).
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
@@ -267,7 +268,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, NAN_INF_MODEL
-use, non_intrinsic :: linalg_mod, only : issymmetric
+use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
 
 implicit none
 
@@ -278,7 +279,7 @@ real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 
 ! Outputs
 integer(IK), intent(out), optional :: info
-real(RP), intent(out) :: gq(:)  ! GQ(N)
+real(RP), intent(out) :: gopt(:)   ! GOPT(N)
 real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
 
@@ -287,6 +288,7 @@ character(len=*), parameter :: srname = 'INITQ'
 integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: k
+integer(IK) :: kopt
 integer(IK) :: n
 integer(IK) :: ndiag
 integer(IK) :: npt
@@ -308,7 +310,7 @@ if (DEBUGGING) then
         & 'SIZE(IJ) == [2, NPT - 2*N - 1]', srname)
     call assert(all(ij >= 1 .and. ij <= 2 * n), '1 <= IJ <= 2*N', srname)
     call assert(all(ij(1, :) /= ij(2, :)), 'IJ(1, :) /= IJ(2, :)', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) = [N, N]', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
@@ -321,20 +323,20 @@ end if
 rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
 fbase = fval(1)  ! FBASE is the function value at XBASE.
 
-! Set GQ by the forward difference.
-gq(1:n) = (fval(2:n + 1) - fbase) / rhobeg
+! Set GOPT by the forward difference.
+gopt(1:n) = (fval(2:n + 1) - fbase) / rhobeg
 
-! The interpolation conditions decide GQ(1:NDIAG) and the first NDIAG diagonal 2nd derivatives of
+! The interpolation conditions decide GOPT(1:NDIAG) and the first NDIAG diagonal 2nd derivatives of
 ! the initial quadratic model by a quadratic interpolation on three points, which is equivalent to
 ! the central finite difference.
 ndiag = min(npt - n - 1_IK, n)
 
-! Revise GQ(1:NDIAG) to the value provided by the central finite difference.
-gq(1:ndiag) = HALF * (gq(1:ndiag) + (fbase - fval(n + 2:n + 1 + ndiag)) / rhobeg)
+! Revise GOPT(1:NDIAG) to the value provided by the central finite difference.
+gopt(1:ndiag) = HALF * (gopt(1:ndiag) + (fbase - fval(n + 2:n + 1 + ndiag)) / rhobeg)
 
 ! Set the diagonal of HQ by the 2nd-order central finite difference. If we do this before the
-! revision of GQ(1:NDIAG), we can avoid the calculation of FVAL(K + 1) - FBASE) / RHOBEG. But we
-! prefer to decouple the initialization of GQ and HQ. We are not concerned by this amount of flops.
+! revision of GOPT(1:NDIAG), we can avoid the calculation of FVAL(K + 1) - FBASE) / RHOBEG. But we
+! prefer to decouple the initialization of GOPT and HQ. We are not concerned by this amount of flops.
 hq = ZERO
 do k = 1, ndiag
     hq(k, k) = ((fval(k + 1) - fbase) / rhobeg - (fbase - fval(k + n + 1)) / rhobeg) / rhobeg
@@ -362,10 +364,15 @@ do k = 1, npt - 2_IK * n - 1_IK
     hq(j, i) = hq(i, j)
 end do
 
+kopt = int(minloc(fval, dim=1), kind(kopt))
+if (kopt /= 1) then
+    gopt = gopt + matprod(hq, xpt(:, kopt))
+end if
+
 pq = ZERO
 
 if (present(info)) then
-    if (is_nan(sum(abs(gq)) + sum(abs(hq)))) then
+    if (is_nan(sum(abs(gopt)) + sum(abs(hq)))) then
         info = NAN_INF_MODEL
     else
         info = INFO_DFT
@@ -378,7 +385,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
 end if
@@ -408,7 +415,7 @@ implicit none
 integer(IK), intent(in) :: ij(:, :) ! IJ(2, MAX(0_IK, NPT - 2_IK * N - 1_IK))
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 ! N.B.: XPT is essentially only used for debugging, to test the error in the initial H. The initial
-! ZMAT and BMAT are completely defined by RHOBEG and IJ. 
+! ZMAT and BMAT are completely defined by RHOBEG and IJ.
 
 ! Outputs
 integer(IK), intent(out), optional :: info

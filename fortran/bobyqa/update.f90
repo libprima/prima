@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, January 06, 2023 AM11:38:07
+! Last Modified: Sunday, February 12, 2023 AM12:48:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -393,7 +393,7 @@ subroutine tryqalt(bmat, fval, ratio, sl, su, xopt, xpt, zmat, itest, gopt, hq, 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : matprod, issymmetric, trueloc
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, issymmetric, trueloc
 use, non_intrinsic :: powalg_mod, only : hess_mul
 
 implicit none
@@ -425,8 +425,6 @@ character(len=*), parameter :: srname = 'TRYQALT'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: galt(size(gopt))
-real(RP) :: gisq
-real(RP) :: gqsq
 real(RP) :: pgalt(size(gopt))
 real(RP) :: pgopt(size(gopt))
 real(RP) :: pqalt(size(pq))
@@ -466,7 +464,6 @@ end if
 pgopt = gopt
 pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))
 pgopt(trueloc(xopt <= sl)) = min(ZERO, gopt(trueloc(xopt <= sl)))
-gqsq = sum(pgopt**2)
 
 ! Calculate the parameters of the least Frobenius norm interpolant to the current data.
 pqalt = matprod(zmat, matprod(fval, zmat))
@@ -476,13 +473,12 @@ galt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pqalt)
 pgalt = galt
 pgalt(trueloc(xopt >= su)) = max(ZERO, galt(trueloc(xopt >= su)))
 pgalt(trueloc(xopt <= sl)) = min(ZERO, galt(trueloc(xopt <= sl)))
-gisq = sum(pgalt**2)
 
 ! Test whether to replace the new quadratic model by the least Frobenius norm interpolant,
 ! making the replacement if the test is satisfied.
-! N.B.: In the following IF, Powell's condition is GQSQ < TEN *GISQ. The condition here is adopted
-! and adapted from NEWUOA, and it seems to improve the performance.
-if (ratio > TENTH .or. gqsq < TEN * gisq) then
+! N.B.: In the following IF, Powell's condition does not check RATIO. The condition here (with RATIO
+! > TENTH)is adopted and adapted from NEWUOA, and it seems to improve the performance.
+if (ratio > TENTH .or. inprod(pgopt, pgopt) < TEN * inprod(pgalt, pgalt)) then
     itest = 0
 else
     itest = itest + 1_IK
