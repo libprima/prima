@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 31, 2022 AM03:32:32
+! Last Modified: Saturday, February 11, 2023 PM04:51:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1965,12 +1965,14 @@ else
         y = maxval([abs(x), ZERO])
     elseif (.not. present(p) .or. abs(p_loc - TWO) <= 0) then
         !y = sqrt(sum(x**2))
-        scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
-        y = scaling * sqrt(sum((x / scaling)**2))
+        !scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
+        !y = scaling * sqrt(sum((x / scaling)**2))
+        y = sqrt(sum(x**2))
     else
         !scaling = max(REALMIN, sqrt(maxval(abs(x)) * minval(abs(x), mask=(abs(x) > 0))))
-        scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
-        y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
+        !scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
+        !y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
+        y = sum(abs(x)**p_loc)**(ONE / p_loc)
     end if
 end if
 
