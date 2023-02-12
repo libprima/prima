@@ -803,7 +803,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	(if echo $@ | grep -q '9test'; then \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
 			if [[ '$(FFLAGSO)' = '-fast' ]] ; then \
-				$(FCF) -c $(SRC) ; \
+				$(FCF) -g -c $(SRC) ; \
 			else \
 				$(FCO) -g -c $(SRC) ; \
 			fi ; \
@@ -825,7 +825,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		fi ; \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
 			if [[ '$(FFLAGSO)' = '-fast' ]] ; then \
-				$(FCF) -o $@_$(SUFFIXO) $(SRC) ; \
+				$(FCF) -g -o $@_$(SUFFIXO) $(SRC) ; \
 			else \
 				$(FCO) -g -o $@_$(SUFFIXO) $(SRC) ; \
 			fi ; \
