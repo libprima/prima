@@ -50,7 +50,8 @@ try
             mexopt.debug_only = false;
             mexopt.debug = debug_flag;
 
-            mexopt.classical = true;
+            % We test the classical version unless otherwise specified.
+            mexopt.classical = ~(isfield(options, 'no_classical') && options.no_classical);
 
             % Include the single and quadruple precisions into the verification.
             mexopt.single = isverify;

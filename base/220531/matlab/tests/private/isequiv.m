@@ -412,7 +412,7 @@ test_options.chkfunval = test_options.debug;
 %!------------------------------------------------------------------------------------------------!%
 
 % Test all variants. If the classical variant is unavailable,  the modernized variant will be called.
-test_options.classical = (rand < 0.1);
+test_options.classical = ~(isfield(options, 'no_classical') && options.no_classical) && (rand < 0.1);
 % Test only double for the classical variant; debugging version is unavailable for the classical variant.
 if test_options.classical
     test_options.precision = 'double';
