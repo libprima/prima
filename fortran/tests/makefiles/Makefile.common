@@ -102,7 +102,6 @@ GFF := -Ofast  # -Ofast implies -O3 and -ffast-math
 NFF := -O4
 FFF := -Ofast  # -Ofast implies -O3 and -ffast-math
 SFF := -fast # -fast implies -O5 and ftrap=common
-#SFF := -fast # -fast implies -O5 and ftrap=common
 SFF16 := -O5  # -fast leads to a mistakenly failure of assertion in BOBYQA: RHOBEG <= MINVAL(XU-XL)/2
 VFF := -O4 -fast  # nvfortran -fast implies -O2, but the highest optimization level is -O4
 
