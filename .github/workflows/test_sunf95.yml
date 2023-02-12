@@ -22,12 +22,12 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         ikind: [i2]
-          #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-          #fflags: [-O1, -O2, -O3, -g, -fast]
-          #testdim: [small, big]
-          solver: [uobyqa]
-          fflags: [-fast]
-          testdim: [small]
+        solver: [uobyqa]
+        fflags: [-fast]
+        testdim: [small]
+        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        #fflags: [-O1, -O2, -O3, -g, -fast]
+        #testdim: [small, big]
 
     steps:
       - name: Checkout repository
