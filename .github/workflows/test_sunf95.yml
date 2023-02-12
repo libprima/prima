@@ -28,7 +28,6 @@ jobs:
           solver: [uobyqa]
           fflags: [-fast]
           testdim: [small]
-          stest_i2_r4_d1_tst
 
     steps:
       - name: Checkout repository
