@@ -34,8 +34,8 @@ jobs:
       - name: Install Flang
         run: bash .github/scripts/install_flang
 
-      - name: Set miscellaneous environment variables
-        run: bash .github/scripts/misc_env
+      - name: Miscellaneous setup
+        run: bash .github/scripts/misc_setup
 
       - name: Conduct the test
         run: |
