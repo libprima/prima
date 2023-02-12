@@ -58,9 +58,9 @@ jobs:
         if: runner.os == 'Windows'
         run: $env:Path += ";C:\Program Files\Git\usr\bin;C:\Program Files\Git\bin;C:\ProgramData\Chocolatey\bin"
 
-      - name: Set miscellaneous environment variables
+      - name: Miscellaneous setup
         shell: bash  # Important; otherwise, the following statements do not work on Windows.
-        run: bash .github/scripts/misc_env
+        run: bash .github/scripts/misc_setup
 
       - name: Conduct the test
         shell: bash  # Important; otherwise, `<` will not work on Windows.

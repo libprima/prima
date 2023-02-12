@@ -45,9 +45,9 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: bash .github/scripts/install_oneapi_macos.sh
 
-      - name: Set miscellaneous environment variables
+      - name: Miscellaneous setup
         shell: bash
-        run: bash .github/scripts/misc_env
+        run: bash .github/scripts/misc_setup
 
       - name: Conduct the test
         shell: bash

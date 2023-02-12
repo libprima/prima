@@ -30,8 +30,8 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Set miscellaneous environment variables
-        run: bash .github/scripts/misc_env
+      - name: Miscellaneous setup
+        run: bash .github/scripts/misc_setup
 
       - name: Conduct the test
         run: |
