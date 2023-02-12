@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 29, 2022 PM09:18:27
+! Last Modified: Sunday, February 12, 2023 PM10:36:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,11 +23,18 @@ end interface shiftbase
 contains
 
 
-subroutine shiftbase_lfqint(xbase, xopt, xpt, zmat, bmat, pq, hq, idz, gq)
+subroutine shiftbase_lfqint(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine shifts the base point from XBASE to XBASE + XOPT and updates BMAT, HQ, and GQ
+! This subroutine shifts the base point from XBASE to XBASE + XOPT and updates BMAT and HQ
 ! accordingly. PQ and ZMAT remain the same after the shifting. See Section 7 of the NEWUOA paper.
-! N.B.: [IDZ, ZMAT] provides the factorization of Omega in (3.17) of the NEWUOA paper; in specific,
+! N.B.:
+! 1. In Powell's implementation of NEWUOA, the quadratic model is represented by [GQ, PQ, HQ], where
+! GQ is the gradient of the quadratic model at XBASE. In that case, GQ should be updated by
+! GQ = GQ + HESS_MUL(XOPT, XPT, PQ, HQ) in this subroutine, where PQ is the un-updated version.
+! However, Powell implemented BOBYQA and LINCOA without GQ but with GOPT, which is the gradient at
+! XBASE + XOPT. Note that GOPT remains unchanged when XBASE is shifted. In our implementation,
+! NEWUOA also uses GOPT instead of GQ.
+! 2. [IDZ, ZMAT] provides the factorization of Omega in (3.17) of the NEWUOA paper; in specific,
 ! Omega = sum_{i=1}^{NPT-N-1} s_i*ZMAT(:,i)*ZMAT(:,i)^T, s_i = -1 if i < IDZ, and si = 1 if i >= IDZ.
 ! In precise arithmetic, IDZ should be always 1; to cope with rounding errors, NEWUOA and LINCOA
 ! allow IDZ = -1 (see (4.18)--(4.20) of the NEWUOA paper); in BOBYQA, IDZ is always 1, and the
@@ -44,7 +51,6 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric
-use, non_intrinsic :: powalg_mod, only : hess_mul!, errh
 
 implicit none
 
@@ -59,9 +65,6 @@ real(RP), intent(inout) :: hq(:, :) ! HQ(N, N)
 real(RP), intent(inout) :: xbase(:) ! XBASE(N)
 real(RP), intent(inout) :: xopt(:)  ! XOPT(N)
 real(RP), intent(inout) :: xpt(:, :)    ! XPT(N, NPT)
-real(RP), intent(inout), optional :: gq(:)    ! GQ(N)
-! N.B.: GQ is the gradient of the quadratic model at XBASE. It is present in NEWUOA. BOBYQA & LINCOA
-! do not use GQ but always use GOPT, namely the gradient at XBASE+XOPT. Shouldn't NEWUOA do the same?
 
 ! Local variables
 character(len=*), parameter :: srname = 'SHIFTBASE_LFQINT'
@@ -106,9 +109,6 @@ if (DEBUGGING) then
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    if (present(gq)) then
-        call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
-    end if
     ! The following test cannot be passed.
     !htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for error in H
     !call assert(errh(idz_loc, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
@@ -145,9 +145,6 @@ bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + matprod(yzmat, transpose(y
 bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
 
 ! Update the quadratic model. Note that PQ remains unchanged. For HQ, see (7.14) of the NEWUOA paper.
-if (present(gq)) then
-    gq = gq + hess_mul(xopt, xpt, pq, hq)  ! HQ is not updated yet.
-end if
 !v = matprod(xptxav, pq)  ! Vector V in (7.14) of the NEWUOA paper
 v = matprod(xpt, pq) - HALF * sum(pq) * xopt ! This one seems to work better numerically.
 vxopt = outprod(v, xopt)  !!MATLAB: vxopt = v * xopt';  % v and xopt should be both columns
@@ -175,9 +172,6 @@ if (DEBUGGING) then
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    if (present(gq)) then
-        call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
-    end if
     ! The following test cannot be passed.
     !call assert(errh(idz_loc, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
