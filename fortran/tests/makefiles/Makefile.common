@@ -35,7 +35,7 @@
 SHELL = /bin/bash
 
 # Invoke the binary by gdb in the batch mode, so that we get necessary information if it crashes.
-GDB := gdb -batch -ex run -ex where -ex quit
+GDB := gdb -return-child-result -batch -ex run -ex where -ex quit
 
 ####################################################################################################
 # Variables
