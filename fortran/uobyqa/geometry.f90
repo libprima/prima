@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 12, 2023 PM08:02:29
+! Last Modified: Sunday, February 12, 2023 PM09:01:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -262,8 +262,6 @@ h = vec2smat(pl(n + 1:npt - 1, knew))
 gg = sum(g**2)
 ghg = inprod(g, matprod(h, g))
 
-write (*, *) 264
-
 ! Calculate the Cauchy step as a backup. Powell's code does not have this, and D may be 0 or NaN.
 if (gg > 0) then
     dcauchy = (delbar / sqrt(gg)) * g
@@ -282,8 +280,6 @@ if (is_nan(sum(abs(h)) + sum(abs(g))) .or. all(abs(h) <= 0)) then
     return
 end if
 
-write (*, *) 282
-
 ! Handle the case with N = 1. This should be done after the case where G or H contains NaN. Powell's
 ! code does not contain this part.
 if (n == 1) then
@@ -294,8 +290,6 @@ if (n == 1) then
     end if
     return
 end if
-
-write (*, *) 294
 
 ! Pick V such that ||HV|| / ||V|| is large.
 v = h(:, maxloc(sum(h**2, dim=1), dim=1))
@@ -324,15 +318,11 @@ if (vhv * vhv <= 0.9999_RP * sum(d**2) * vv) then
     end if
 end if
 
-write (*, *) 327
-
 ! We now turn our attention to the subspace span{G, D}. A multiple of the current D is returned if
 ! that choice seems to be adequate.
 dd = sum(d**2)
 gd = inprod(g, d)
 dhd = inprod(d, matprod(h, d))
-
-write (*, *) 334
 
 ! Zaikun 20220504: GG and DD can become 0 at this point due to rounding. Detected by IFORT.
 if (.not. (gg > 0 .and. dd > 0)) then
@@ -350,8 +340,6 @@ end if
 d = scaling * d
 gnorm = sqrt(gg)
 
-write (*, *) 353
-
 if (.not. (gnorm * dd > 0.5E-2_RP * delbar * abs(dhd) .and. vv > 1.0E-4_RP * dd)) then
     ! It may happen that D = 0 due to overflow in DD, which is used to define SCALING.
     if (sum(abs(d)) <= 0 .or. is_nan(sum(abs(d)))) then
@@ -359,8 +347,6 @@ if (.not. (gnorm * dd > 0.5E-2_RP * delbar * abs(dhd) .and. vv > 1.0E-4_RP * dd)
     end if
     return
 end if
-
-write (*, *) 362
 
 ! G and V are now orthogonal in the subspace span{G, D}. Hence we generate an orthonormal basis of
 ! this subspace such that (D, HV) is negligible or 0, where D and V will be the basis vectors.
@@ -392,8 +378,6 @@ tempc = wcos / vnorm
 tempd = wsin / gnorm
 d = tempa * g + tempb * v
 v = tempc * v - tempd * g
-
-write (*, *) 396
 
 ! The final D is a multiple of the current D, V, D + V or D - V. We make the choice from these
 ! possibilities that is optimal.
@@ -432,8 +416,6 @@ d = tempd * d + tempv * v
 if (is_nan(sum(abs(d)))) then
     d = dcauchy
 end if
-
-write (*, *) 436
 
 !====================!
 !  Calculation ends  !
