@@ -73,6 +73,7 @@ jobs:
             options = struct();
             options.seed = 10000*mod(year(dt), 100) + 100*week(dt) + hour(dt);
             options.nr = 1; % Since the code will not change along the time, big nr is not needed.
+            options.no_classical = true;  % Starting from 20230212, we do not verify the classical version for the base.
             options
             if mod(DayMonth, 2) == 1
                 fprintf('\n\n==========> Conduct the test sequentially <===========\n\n');

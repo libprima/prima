@@ -34,6 +34,9 @@
 
 SHELL = /bin/bash
 
+# Invoke the binary by gdb in the batch mode, so that we get necessary information if it crashes.
+GDB := gdb -batch -ex run -ex where
+
 ####################################################################################################
 # Variables
 
@@ -754,7 +757,7 @@ $(TESTS_C) $(TESTS_INT_C):
 			if [[ -x $@_c_$(SUFFIXO) ]] ; then \
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 				printf "\n$@_$(SUFFIXO) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
-				./$@_c_$(SUFFIXO) 2>&1 \
+				$(GDB) ./$@_c_$(SUFFIXO) 2>&1 \
 				| tee -a "$(LOG_DIR)/$@.log" ; \
 			else \
 				printf "\n$@_c_$(SUFFIXO) is not executable!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
@@ -764,7 +767,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		if [[ -n "$(FFLAGSG)" ]] ; then \
 			export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 			printf "\n$@_$(SUFFIXG) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
-			./$@_c_$(SUFFIXG) 2>&1 \
+			$(GDB) ./$@_c_$(SUFFIXG) 2>&1 \
 			| tee -a "$(LOG_DIR)/$@.log" ; \
 		fi ; \
 	fi
