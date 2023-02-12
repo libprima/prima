@@ -94,7 +94,9 @@ ifeq ($(FFLAGS),-g)
 	SUFFIXG := g
 endif
 
-FFLAGS := -g $(FFLAGS)  # -g does not conflict with -O in general.
+# -g does not conflict with -O in general. See
+# https://fortran-lang.discourse.group/t/do-the-g-and-ox-compilation-flags-conflict-with-each-other/
+FFLAGS := -g $(FFLAGS)
 
 # Define the compiler-dependent "fast flags", which will be used when FFLAGS is -fast.
 AFF := -g -O4
@@ -103,7 +105,8 @@ FFF := -g -O3 -Ofast -ffast-math  # No documentation found about the relation be
 GFF := -g -Ofast  # -Ofast implies -O3 and -ffast-math
 NFF := -g -O4
 FFF := -g -Ofast  # -Ofast implies -O3 and -ffast-math
-SFF := -g -fast # -fast implies -O5 and ftrap=common
+#SFF := -g -fast # -fast implies -O5 and ftrap=common
+SFF := -fast # -fast implies -O5 and ftrap=common
 SFF16 := -g -O5  # -fast leads to a mistakenly failure of assertion in BOBYQA: RHOBEG <= MINVAL(XU-XL)/2
 VFF := -g -O4 -fast  # nvfortran -fast implies -O2, but the highest optimization level is -O4
 
