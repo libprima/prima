@@ -35,7 +35,11 @@
 SHELL = /bin/bash
 
 # Invoke the binary by gdb in the batch mode, so that we get necessary information if it crashes.
-GDB := gdb -return-child-result -batch -ex run -ex where -ex quit
+# N.B.: -return-child-return asks gdb to return with the exit code of the binary that it invokes,
+# unless gdb itself terminates with an error. In our situation, it is better not to use this flag,
+# Otherwise, when the binary crashes, `checktest` will not be called due to the error returned by gdb.
+#GDB := gdb -return-child-result -batch -ex run -ex where -ex quit
+GDB := gdb -batch -ex run -ex where -ex quit
 
 ####################################################################################################
 # Variables
@@ -90,7 +94,7 @@ ifeq ($(FFLAGS),-g)
 	SUFFIXG := g
 endif
 
-FFLAGS := -g $(FFLAGS)
+FFLAGS := -g $(FFLAGS)  # -g does not conflict with -O in general.
 
 # Define the compiler-dependent "fast flags", which will be used when FFLAGS is -fast.
 AFF := -g -O4
