@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, February 13, 2023 PM07:24:57
+! Last Modified: Tuesday, February 14, 2023 AM12:25:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1606,8 +1606,8 @@ end subroutine updateh
 ! (4.24) of the NEWUOA paper, with w = w(X) and v = w(X_KREF) (KREF = KOPT in the paper); it is
 ! also hat{w} in (6.5) of M. J. D. Powell, Least Frobenius norm updating of quadratic models that
 ! satisfy interpolation conditions. Math. Program., 100:183--215, 2004 (KREF = b in the paper).
-! 8. Assume that the |D| ~ DELTA, |XPT| ~ |XREF|, and DELTA < |XREF|. Then WCHECK is of the order
-! DELTA*|XREF|^3, which is can be huge at the beginning of the algorithm and quickly become tiny.
+! 8. Assume that the ||D|| ~ DELTA, ||XPT|| ~ ||XREF||, and DELTA < ||XREF||. Then WCHECK is of the
+! order DELTA*||XREF||^3, which can be huge at the beginning of the algorithm and quickly become tiny.
 !--------------------------------------------------------------------------------------------------!
 
 function calvlag_lfqint(kref, bmat, d, xpt, zmat, idz) result(vlag)
@@ -1796,8 +1796,8 @@ vlag(npt + 1:npt + n) = matprod(bmat, wmv)
 ! The following line is equivalent to the above one, but handles WCHECK and D separately.
 ! !VLAG(NPT + 1:NPT + N) = MATPROD(BMAT(:, 1:NPT), WCHECK) + MATPROD(BMAT(:, NPT + 1:NPT + N), D)
 
-! Set BETA = HALF*|XREF + D|^4 - (W-V)'*H*(W-V) - [XREF'*(X+XREF)]^2 + HALF*|XREF|^4. See equations
-! (4.10), (4.12), (4.24), and (4.26) of the NEWUOA paper.
+! Set BETA = HALF*||XREF + D||^4 - (W-V)'*H*(W-V) - [XREF'*(X+XREF)]^2 + HALF*||XREF||^4. See
+! equations (4.10), (4.12), (4.24), and (4.26) of the NEWUOA paper.
 dxref = inprod(d, xref)
 dsq = inprod(d, d)
 xrefsq = inprod(xref, xref)
@@ -1815,10 +1815,10 @@ beta = dxref**2 + dsq * (xrefsq + dxref + dxref + HALF * dsq) - dvlag - wvlag
 ! DXREF**2 + DSQ * (XREFSQ + DXREF + DXREF + HALF * DSQ) ,
 ! HALF * (INPROD(X, X)**2 + INPROD(XREF, XREF)**2) - INPROD(X, XREF)**2 with X = XREF + D.
 ! However, the first (by Powell) is a better numerical scheme. According to the first formulation,
-! this quantity is in the oder of |D|^2*|XREF|^2 if |XREF| >> |D|, which is normally the case.
-! However, each term in the second formulation has an order of |XREF|^4. Thus much cancellation will
-! occur in the second formulation. In addition, the first formulation contracts the rounding error
-! in (XREFSQ + DXREF + DXREF + HALF * DSQ) by a factor of |D|^2, which is typically small.
+! this quantity is in the oder of ||D||^2*||XREF||^2 if ||XREF|| >> ||D||, which is normally the case.
+! However, each term in the second formulation has an order of ||XREF||^4. Thus much cancellation
+! will occur in the second formulation. In addition, the first formulation contracts the rounding
+! error in (XREFSQ + DXREF + DXREF + HALF * DSQ) by a factor of ||D||^2, which is typically small.
 ! 2. We can evaluate INPROD(VLAG, WMV) as INPROD(VLAG(1:NPT), WCHECK) + INPROD(VLAG(NPT+1:NPT+N),D)
 ! if it is desirable to handle WCHECK and D separately due to their significantly different magnitudes.
 

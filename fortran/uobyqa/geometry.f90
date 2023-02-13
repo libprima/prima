@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:06:34
+! Last Modified: Tuesday, February 14, 2023 AM12:50:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -270,7 +270,7 @@ if (gg > 0) then
     end if
 else ! GG is 0 or NaN due to rounding errors. Set DCAUCHY to a displacement from XOPT to XPT(:, KNEW).
     dcauchy = xpt(:, knew) - xopt
-    scaling = delbar / sqrt(sum(dcauchy**2))
+    scaling = delbar / norm(dcauchy)
     dcauchy = max(0.6_RP * scaling, min(HALF, scaling)) * dcauchy
 end if
 
@@ -295,7 +295,7 @@ end if
 v = h(:, maxloc(sum(h**2, dim=1), dim=1))
 ! Normalize V. Powell's code does not do this. It does not change the algorithm as only its
 ! direction matters. It slightly improves the performance in the noiseless case.
-v = v / sqrt(sum(v**2))
+v = v / norm(v)
 
 ! Set D to a vector in the subspace span{V, HV} that maximizes |(D, HD)|/(D, D), except that we set
 ! D = HV if V and HV are nearly parallel.
