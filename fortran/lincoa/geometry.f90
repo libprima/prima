@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:12:31
+! Last Modified: Tuesday, February 14, 2023 AM01:15:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -351,7 +351,7 @@ den = calden(kopt, bmat, s, xpt, zmat, idz)  ! Indeed, only DEN(KNEW) is needed.
 denabs = abs(den(knew))
 
 ! Replace S with a steepest ascent step from XOPT if the latter provides a larger value of DENABS.
-normg = sqrt(sum(glag**2))
+normg = norm(glag)
 if (normg > 0) then
     gstp = (delbar / normg) * glag
     if (inprod(gstp, hess_mul(gstp, xpt, pqlag)) < 0) then  ! <GSTP, HESS_LAG*GSTP> is negative
@@ -383,7 +383,7 @@ feasible = (cstrv <= 0)
 ! small and leads to good feasibility. **This strategy is critical for the performance of LINCOA.**
 pglag = matprod(qfac(:, nact + 1:n), matprod(glag, qfac(:, nact + 1:n)))
 !!MATLAB: pglag = qfac(:, nact+1:n) * (glag' * qfac(:, nact+1:n))';
-normg = sqrt(sum(pglag**2))
+normg = norm(pglag)
 if (nact > 0 .and. nact < n .and. normg > 0) then
     pgstp = (delbar / normg) * pglag
     if (inprod(pgstp, hess_mul(pgstp, xpt, pqlag)) < 0) then  ! <PGSTP, HESS_LAG*PGSTP> is negative.
@@ -394,7 +394,7 @@ if (nact > 0 .and. nact < n .and. normg > 0) then
     cstrv = maximum([ZERO, matprod(pgstp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))])
     ! The purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
     ! contributions from computer rounding errors. Note that CVTOL equals 0 in precise arithmetic.
-    cvtol = min(0.01_RP * sqrt(sum(pgstp**2)), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
+    cvtol = min(0.01_RP * norm(pgstp), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
     take_pgstp = .false.
     if (cstrv <= cvtol) then
         den = calden(kopt, bmat, pgstp, xpt, zmat, idz)  ! Indeed, only DEN(KNEW) is needed.
@@ -410,7 +410,7 @@ end if
 ! does not have this.
 if (is_nan(sum(abs(s)))) then
     s = xpt(:, knew) - xopt
-    scaling = delbar / sqrt(sum(s**2))
+    scaling = delbar / norm(s)
     s = max(0.6_RP * scaling, min(HALF, scaling)) * s
     cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
     feasible = (cstrv <= 0)

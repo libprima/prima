@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 12, 2023 AM12:45:44
+! Last Modified: Tuesday, February 14, 2023 AM02:17:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,7 +77,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, linspace
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, linspace, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul
@@ -277,7 +277,6 @@ if (subinfo /= INFO_DFT) then
     ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist)
     call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
-    !close (16)
     return
 end if
 
@@ -334,7 +333,7 @@ info = MAXTR_REACHED
 do tr = 1, maxtr
     ! Generate the next trust region step D by calling TRSTEP. Note that D is feasible.
     call trstep(amat, delta, gopt, hq, pq, rescon, xpt, iact, nact, qfac, rfac, d, ngetact)
-    dnorm = min(delta, sqrt(sum(d**2)))
+    dnorm = min(delta, norm(d))
 
     ! A trust region step is applied whenever its length is at least 0.5*DELTA. It is also
     ! applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has caused a
@@ -661,8 +660,6 @@ if (DEBUGGING) then
     call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv, ctol)),&
         & 'No point in the history is better than X', srname)
 end if
-
-!close (16)
 
 end subroutine lincob
 
