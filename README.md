@@ -14,7 +14,7 @@ Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell
 
 ### What
 
-PRIMA provides the reference implementation for Powell's derivative-free optimization methods,
+PRIMA provides the reference implementation for Powell's renowned derivative-free optimization methods,
 namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA. The "P" in the name stands for
 [**P**owell](https://www.zhangzk.net/powell.html), and "RIMA" is an acronym for
 "**R**eference **I**mplementation with **M**odernization and **A**melioration".
@@ -66,6 +66,8 @@ are easily **understandable**, **maintainable**, **extendable**,
 The code will **have no GOTO** (of course)
 and will **use matrix-vector procedures instead of loops** whenever possible.
 In doing so, PRIMA codes the algorithms **in a way that we would present them on a blackboard**.
+Such an implementation will enable us to get a deeper understanding about Powell's methods and make
+new developments based on them.
 
 There do exist "translations" of Powell's Fortran 77 code into other languages. For example,
 [NLopt](https://github.com/stevengj/nlopt) contains a C version of COBYLA, NEWUOA, and BOBYQA,
