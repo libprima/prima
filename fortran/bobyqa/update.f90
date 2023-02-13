@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 12, 2023 AM12:48:50
+! Last Modified: Monday, February 13, 2023 PM02:26:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -478,6 +478,7 @@ pgalt(trueloc(xopt <= sl)) = min(ZERO, galt(trueloc(xopt <= sl)))
 ! making the replacement if the test is satisfied.
 ! N.B.: In the following IF, Powell's condition does not check RATIO. The condition here (with RATIO
 ! > TENTH)is adopted and adapted from NEWUOA, and it seems to improve the performance.
+! !if (inprod(pgopt, pgopt) < TEN * inprod(pgalt, pgalt)) then  ! Powell's code
 if (ratio > TENTH .or. inprod(pgopt, pgopt) < TEN * inprod(pgalt, pgalt)) then
     itest = 0
 else
