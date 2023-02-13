@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 06, 2023 PM02:25:01
+! Last Modified: Tuesday, February 14, 2023 AM12:11:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -359,10 +359,10 @@ do while (any(score > 0) .and. nprov > 1)   ! Retain at least one provisional po
     vlag(npt + 1:npt + n) = matprod(bmat, wmv(1:npt + n))
 
     ! Now calculate BETA. According to (4.12) of the NEWUOA paper (also (4.10) of the BOBYQA paper),
-    ! BETA = HALF*|XNEW - XOPT|^4 - WMV'*H*WMV. To calculate WMX'*H*WMV, note that
+    ! BETA = HALF*||XNEW - XOPT||^4 - WMV'*H*WMV. To calculate WMX'*H*WMV, note that
     ! WMV'*H*WMV = WMV' * [Z*Z', B2^T; B1, B2] * WMV with Z = ZMAT, B1 = BMAT(:, 1:NPT), and
     ! B2 = BMAT(:, NPT+1:NPT+N). Denoting W1 = WMV(1:NPT) and W2 = WMV(NPT+1:NPT+N), we then have
-    ! WMV'*H*WMV = |W1*Z|^2 + 2*W1'*B1*W2 + W1'*B2*W2 = |W1*Z|^2 + W1'(B1*W2 + [B1, B2]*WMV).
+    ! WMV'*H*WMV = ||W1'*Z||^2 + 2*W1'*B1*W2 + W1'*B2*W2 = ||W1'*Z||^2 + W1'(B1*W2 + [B1, B2]*WMV).
     bsum = inprod(wmv(1:n), matprod(bmat(:, 1:npt), wmv(1:npt)) + matprod(bmat, wmv))
     beta = HALF * sum(xpt(:, korig)**2)**2 - sum(matprod(wmv(1:npt), zmat)**2) - bsum
 
