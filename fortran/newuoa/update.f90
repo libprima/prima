@@ -10,7 +10,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, February 13, 2023 PM02:30:20
+! Last Modified: Monday, February 13, 2023 PM07:49:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -278,9 +278,6 @@ integer(IK) :: npt
 real(RP) :: galt(size(gopt))
 real(RP) :: pqalt(size(pq))
 
-! Debugging variables
-!real(RP) :: intp_tol
-
 ! Sizes
 n = int(size(gopt), kind(n))
 npt = int(size(pq), kind(npt))
@@ -300,9 +297,6 @@ if (DEBUGGING) then
     call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! [GOPT, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
-    !intp_tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * real(size(pq), RP) * EPS))
-    !call wassert(errquad(fval, xpt, gopt, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 !====================!
@@ -338,8 +332,6 @@ if (DEBUGGING) then
     call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! [GOPT, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
-    !call wassert(errquad(fval, xpt, gopt, pq, hq) <= intp_tol, 'QALT interpolates FVAL at XPT', srname)
 end if
 
 end subroutine tryqalt

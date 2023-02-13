@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, February 09, 2023 PM12:24:13
+! Last Modified: Tuesday, February 14, 2023 AM12:03:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -277,9 +277,9 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! In theory, |D| = DELBAR. Considering rounding errors, we check that DELBAR/2 < |D| < 2*DELBAR.
+    ! In theory, ||D|| = DELBAR. Considering rounding errors, we check that DELBAR/2 < ||D|| < 2*DELBAR.
     ! It is crucial to ensure that the geometry step is nonzero.
-    call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < |D| < 2*DELBAR', srname)
+    call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < ||D|| < 2*DELBAR', srname)
 end if
 
 end function geostep
@@ -415,7 +415,7 @@ do iter = 1, maxiter
     ! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
     ! tolerance is 1.0D-4. We adapt it to the following value in case single precision is in use.
 
-    ! Powell's code calculates S as follows. In precise arithmetic, INPROD(S, D) = 0 and |S| = |D|.
+    ! Powell's code calculates S as follows. In precise arithmetic, INPROD(S, D) = 0, ||S|| = ||D||.
     ! However, when DD*SS - DS**2 is tiny, the error in S can be large and hence damage these
     ! equalities significantly. This did happen in tests, especially when using the single precision.
     ! !ds = inprod(d, s)
@@ -428,25 +428,25 @@ do iter = 1, maxiter
 
     ! We calculate S as follows. It did improve the performance of NEWUOA in our test.
     ss = inprod(s, s)
-    s = s - project(s, d)  ! PROJECT(X, V) returns the projection of X to SPAN(V): X'*(V/|V|)*(V/|V|)
+    s = s - project(s, d)  ! PROJECT(X, V) is the projection of X to SPAN(V): X'*(V/||V||)*(V/||V||)
     ! N.B.:
-    ! 1. The condition |S|<=TOL*SQRT(SS) below is equivalent to DS^2>=(1-TOL^2)*DD*SS in theory. As
-    ! shown above, Powell's code triggers an exit if DS^2>=(1-1.0E-8)*DD*SS. So our condition is the
-    ! same except that we take the machine epsilon into account in case single precision is in use.
-    ! 2. The condition below should be non-strict so that |S| = 0 can trigger the exit.
+    ! 1. The condition ||S||<=TOL*SQRT(SS) below is equivalent to DS^2>=(1-TOL^2)*DD*SS in theory.
+    ! As shown above, Powell's code triggers an exit if DS^2>=(1-1.0E-8)*DD*SS. So our condition is
+    ! the same except that we take EPS into account in case single precision is in use.
+    ! 2. The condition below should be non-strict so that ||S|| = 0 can trigger the exit.
     if (norm(s) <= tol * sqrt(ss)) then
         exit
     end if
     s = (norm(d) / norm(s)) * s
 
-    ! In precise arithmetic, INPROD(S, D) = 0 and |S| = |D| = DELBAR.
+    ! In precise arithmetic, INPROD(S, D) = 0 and ||S|| = ||D|| = DELBAR.
     if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(s) >= TWO * delbar) then
         exit
     end if
 
     w = hess_mul(s, xpt, pqlag)  ! W = MATPROD(XPT, PQLAG * MATPROD(S, XPT))
 
-    ! Seek the value of the angle that maximizes |TAU|.
+    ! Seek the value of the angle that maximizes ||TAU||.
     ! First, calculate the coefficients of the objective function on the circle.
     cf(1) = HALF * inprod(s, w)
     cf(2) = inprod(d, gc)
@@ -486,9 +486,9 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! In theory, |D| = DELBAR. Considering rounding errors, we check that DELBAR/2 < |D| < 2*DELBAR.
+    ! In theory, ||D|| = DELBAR. Considering rounding errors, we check that DELBAR/2 < ||D|| < 2*DELBAR.
     ! It is crucial to ensure that the geometry step is nonzero.
-    call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < |D| < 2*DELBAR', srname)
+    call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < ||D|| < 2*DELBAR', srname)
 end if
 
 end function biglag
@@ -605,7 +605,7 @@ end if
 
 x = xpt(:, kopt) ! For simplicity, we use X to denote XOPT.
 
-delbar = norm(d0)  ! In theory, |D0| = DELBAR.
+delbar = norm(d0)  ! In theory, ||D0|| = DELBAR.
 
 ! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
 ! derivative parameters of LFUNC.
@@ -655,7 +655,7 @@ do iter = 1, n
     ! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
     ! tolerance is 1.0D-4. We adapt it to the following value in case single precision is in use.
 
-    ! Powell's code calculates S as follows. In precise arithmetic, INPROD(S, D) = 0 and |S| = |D|.
+    ! Powell's code calculates S as follows. In precise arithmetic, INPROD(S, D) = 0, ||S|| = ||D||.
     ! However, when DD*SS - DS**2 is tiny, the error in S can be large and hence damage these
     ! equalities significantly. This did happen in tests, especially when using the single precision.
     ! !ds = inprod(d, s)
@@ -668,17 +668,17 @@ do iter = 1, n
 
     ! We calculate S as below. It did improve the performance of NEWUOA in our test.
     ss = inprod(s, s)
-    s = s - project(s, d)  ! PROJECT(X, V) returns the projection of X to SPAN(V): X'*(V/|V|)*(V/|V|)
+    s = s - project(s, d)  ! PROJECT(X, V) is the projection of X to SPAN(V): X'*(V/||V||)*(V/||V||)
     ! N.B.:
-    ! 1. The condition |S|<=TOL*SQRT(SS) below is equivalent to DS^2>=(1-TOL^2)*DD*SS in theory. As
-    ! shown above, Powell's code triggers an exit if DS^2>=(1-1.0E-8)*DD*SS. So our condition is the
-    ! same except that we take the machine epsilon into account in case single precision is in use.
-    ! 2. The condition below should be non-strict so that |S| = 0 can trigger the exit.
+    ! 1. The condition ||S||<=TOL*SQRT(SS) below is equivalent to DS^2>=(1-TOL^2)*DD*SS in theory.
+    ! As shown above, Powell's code triggers an exit if DS^2>=(1-1.0E-8)*DD*SS. So our condition is
+    ! the same except that we take EPS into account in case single precision is in use.
+    ! 2. The condition below should be non-strict so that ||S|| = 0 can trigger the exit.
     if (norm(s) <= tol * sqrt(ss)) then
         exit
     end if
     s = (s / norm(s)) * norm(d)
-    ! In precise arithmetic, INPROD(S, D) = 0 and |S| = |D| = DELBAR = |D0|.
+    ! In precise arithmetic, INPROD(S, D) = 0 and ||S|| = ||D|| = DELBAR = ||D0||.
     if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(s) >= TWO * delbar) then
         exit
     end if
@@ -807,9 +807,9 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! In theory, |D| = DELBAR. Considering rounding errors, we check that DELBAR/2 < |D| < 2*DELBAR.
+    ! In theory, ||D|| = DELBAR. Considering rounding errors, we check that DELBAR/2 < ||D|| < 2*DELBAR.
     ! It is crucial to ensure that the geometry step is nonzero.
-    call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < |D| < 2*DELBAR', srname)
+    call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < ||D|| < 2*DELBAR', srname)
 end if
 
 end function bigden

@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 10, 2023 AM01:18:10
+! Last Modified: Tuesday, February 14, 2023 AM12:13:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,7 +25,7 @@ contains
 subroutine trstep(amat, delta, gopt_in, hq_in, pq_in, rescon, xpt, iact, nact, qfac, rfac, s, ngetact)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine solves
-!       minimize Q(XOPT + D)  s.t. |D| <= DELTA, AMAT^T*D <= B.
+!       minimize Q(XOPT + D)  s.t. ||D|| <= DELTA, AMAT^T*D <= B.
 ! It is assumed that D = 0 is feasible, namely B >= 0 except for rounding errors. See Powell 2015
 ! for details.
 !
@@ -439,11 +439,11 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     end if
 
     ! Branch to a new loop if there is a new active constraint.
-    ! When JSAV > 0, Powell's code branches back with NEWACT = .TRUE. only if |S| <= 0.8*DELTA, and
-    ! it exits if |S| > 0.8*DELTA, as mentioned at the end of Section 3 of Powell 2015. The
+    ! When JSAV > 0, Powell's code branches back with NEWACT = .TRUE. only if ||S|| <= 0.8*DELTA,
+    ! and it exits if ||S|| > 0.8*DELTA, as mentioned at the end of Section 3 of Powell 2015. The
     ! motivation seems to avoid small steps that changes the active set, because GETACT is expensive
     ! in flops. However, according to a test on 20220820, removing this condition (essentially
-    ! replacing it with |S| < DELTA) improves the performance of LINCOA a bit. This may lead to
+    ! replacing it with ||S|| < DELTA) improves the performance of LINCOA a bit. This may lead to
     ! small steps, but tiny steps will lead to tiny reductions and trigger an exit.
     newact = (jsav > 0)
     if (newact) then
@@ -490,8 +490,8 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(s) == n .and. all(is_finite(s)), 'SIZE(S) == N, S is finite', srname)
-    ! Due to rounding, it may happen that |S| > DELTA, but |S| > 2*DELTA is highly improbable.
-    call assert(norm(s) <= TWO * delta, '|S| <= 2*DELTA', srname)
+    ! Due to rounding, it may happen that ||S|| > DELTA, but ||S|| > 2*DELTA is highly improbable.
+    call assert(norm(s) <= TWO * delta, '||S|| <= 2*DELTA', srname)
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
