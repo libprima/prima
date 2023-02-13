@@ -23,7 +23,9 @@ jobs:
         os: [ubuntu-latest]
         ikind: [i2]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-O1, -O2, -O3, -g, -fast] #As of 20230213, -fast fails often; seems due to stack overflow. To be fixed.
+        # As of 20230213, -fast fails often; seems due to stack overflow. How to force sunf95 to use
+        # heap only?
+        fflags: [-O1, -O2, -O3, -g] #, -fast]
         testdim: [small, big]
 
     steps:
