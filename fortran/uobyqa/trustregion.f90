@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:07:12
+! Last Modified: Tuesday, February 14, 2023 AM02:38:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,7 +58,7 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, REALMIN, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, wassert
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : issymmetric, inprod, hessenberg, eigmin, trueloc, norm
 
@@ -81,7 +81,6 @@ integer(IK) :: iter
 integer(IK) :: k
 integer(IK) :: maxiter
 integer(IK) :: n
-logical :: d_initialized  ! TO BE REMOVED.
 logical :: negcrv
 logical :: posdef
 logical :: scaled
@@ -136,17 +135,11 @@ end if
 ! Calculation starts !
 !====================!
 
-!------------------------------------------------------------------------------------------!
-!------------------------------------------------------------------------------------------!
-d_initialized = .false.  ! For development and debugging. TO BE REMOVED
-
 ! The initial values of DSQ, PHIU, and PHIL are unused but to entertain Fortran compilers.
-! TODO: Check that DSQ, PHIU, PHIL have been initialized before used. Maybe remove DSQ?
+! TODO: Check that DSQ, PHIU, PHIL have been initialized before used.
 dsq = ZERO
 phiu = ZERO
 phil = ZERO
-!------------------------------------------------------------------------------------------!
-!------------------------------------------------------------------------------------------!
 
 ! Scale the problem if G contains large values. Otherwise, floating point exceptions may occur. In
 ! the sequel, GG and HH are used instead of G and H, which are INTENT(IN) and hence cannot be
@@ -311,24 +304,18 @@ do iter = 1, maxiter
         ! Set D to a direction of nonpositive curvature of the tridiagonal matrix, and revise PARLEST.
 
         !------------------------------------------------------------------------------------------!
-        !------------------------------------------------------------------------------------------!
         ! Zaikun 20220512: Powell's code does not include the following initialization. Consequently,
         ! D(KSAV+1:N) or D(KSAV+2:N) will not be initialized but inherit values from the previous
         ! iteration. Is this intended?
         d = ZERO
         !------------------------------------------------------------------------------------------!
-        !------------------------------------------------------------------------------------------!
 
         d(k) = ONE  ! Zaikun 20220512: D(K+1:N) = ?
 
         !------------------------------------------------------------------------------------------!
-        !------------------------------------------------------------------------------------------!
         ! The code until "Terminate with D set to a multipe of the current D ..." sets only D(1:KSAV)
         ! or D(1:KSAV+1), with the KSAV defined later. D_INITIALIZED indicates whether D(1:N) is
-        ! fully initialized in this process (TRUE) or not (FALSE). See the comments above
-        ! CALL WASSERT(D_INITIALIZED, 'D IS INITIALIZED', SRNAME) for details.
-        d_initialized = (k == n)  ! Zaikun 20220512, TO BE REMOVED
-        !------------------------------------------------------------------------------------------!
+        ! fully initialized in this process (TRUE) or not (FALSE). See the comments above for details.
         !------------------------------------------------------------------------------------------!
 
         dhd = piv(k)
@@ -341,13 +328,6 @@ do iter = 1, maxiter
         ! circuit is ensured.
         if (k < n) then
             if (abs(tn(k)) > abs(piv(k))) then
-
-                !---------------------------------------------------------------------!
-                !---------------------------------------------------------------------!
-                d_initialized = (k == n - 1)  ! Zaikun 20220512, TO BE REMOVED
-                !---------------------------------------------------------------------!
-                !---------------------------------------------------------------------!
-
                 ! PIV(K+1) was named as "TEMP" in Powell's code. Is PIV(K+1) consistent with the meaning of PIV?
                 piv(k + 1) = td(k + 1) + par
                 if (piv(k + 1) <= abs(piv(k))) then
@@ -388,9 +368,9 @@ do iter = 1, maxiter
             partmp = paruest
         end if
         if (paruest > 0 .and. parlest >= partmp) then
+
             !--------------------------------------------------------------------------------------!
-            !--------------------------------------------------------------------------------------!
-            ! Zaikun 20220512, TO BE REMOVED
+            ! Zaikun 20220512:
             ! The definition of D below requires that D is initialized. In Powell's code, it may
             ! happen that only D(1:KSAV) or D(1:KSAV+1) is initialized during the current iteration,
             ! but the other entries are inherited from the previous iteration OR from the initial
@@ -399,8 +379,6 @@ do iter = 1, maxiter
             ! Interestingly, in both cases, the inherited values were all zero or close to zero
             ! (1E-16), and hence not very different from the initial value zero that we set above.
             ! Is this intended?
-            call wassert(d_initialized, 'D is initialized', srname)
-            !--------------------------------------------------------------------------------------!
             !--------------------------------------------------------------------------------------!
 
             dtg = inprod(d, gg)
@@ -435,12 +413,6 @@ do iter = 1, maxiter
             d = dold
             exit
         end if
-
-        !----------------------------------------------------------------!
-        !----------------------------------------------------------------!
-        d_initialized = .true.  ! Zaikun 20220512, TO BE REMOVED
-        !----------------------------------------------------------------!
-        !----------------------------------------------------------------!
 
         dsq = sum(d**2)
 
