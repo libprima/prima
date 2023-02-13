@@ -2,7 +2,7 @@ name: Test Oracle sunf95
 
 on:
   # Trigger the workflow on push or pull request
-  #push:
+  push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -23,7 +23,7 @@ jobs:
         os: [ubuntu-latest]
         ikind: [i2]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-O1, -O2, -O3, -g] #, -fast] As of 20230213, -fast fails often; seems due to stack overflow. To be fixed.
+        fflags: [-O1, -O2, -O3, -g, -fast] As of 20230213, -fast fails often; seems due to stack overflow. To be fixed.
         testdim: [small, big]
 
     steps:
