@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:07:52
+! Last Modified: Tuesday, February 14, 2023 AM12:53:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -312,7 +312,7 @@ glag = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
 ! geometry step is nonzero.
 if (is_nan(sum(abs(glag)))) then
     d = xpt(:, knew) - xopt
-    d = min(HALF, delbar / sqrt(sum(d**2))) * d  ! Since XPT respects the bounds, so does XOPT + D.
+    d = min(HALF, delbar / norm(d)) * d  ! Since XPT respects the bounds, so does XOPT + D.
     return
 end if
 
@@ -593,7 +593,7 @@ end if
 if (DEBUGGING) then
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
-    ! In theory, ||D|| <= DELBAR, which may be false due to rounding, but |||D| >= 2*DELBAR is unlikely.
+    ! In theory, ||D|| <= DELBAR, which may be false due to rounding, but ||D|| >= 2*DELBAR is unlikely.
     ! It is crucial to ensure that the geometry step is nonzero, which holds in theory. However, due
     ! to the bound constraints, ||D|| may be much smaller than DELBAR.
     call assert(norm(d) > 0 .and. norm(d) < TWO * delbar, '0 < ||D|| < 2*DELBAR', srname)

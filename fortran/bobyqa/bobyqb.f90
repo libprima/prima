@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 PM01:12:23
+! Last Modified: Tuesday, February 14, 2023 AM12:52:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -61,6 +61,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED
+use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag!, errquad
@@ -250,7 +251,7 @@ info = INFO_DFT
 do tr = 1, maxtr
     ! Generate the next trust region step D.
     call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
-    dnorm = min(delta, sqrt(sum(d**2)))
+    dnorm = min(delta, norm(d))
 
     shortd = (dnorm < HALF * rho)
 
@@ -477,7 +478,7 @@ do tr = 1, maxtr
             ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
             ! Powell's code does not update DNORM. Therefore, DNORM is the length of the last
             ! trust-region trial step, inconsistent with MODERRSAV. The same problem exists in NEWUOA.
-            dnorm = min(delbar, sqrt(sum(d**2)))
+            dnorm = min(delbar, norm(d))
             dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
             ! MODERR is the error of the current model in predicting the change in F due to D.
             ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.

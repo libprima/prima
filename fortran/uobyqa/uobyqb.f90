@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 02, 2023 AM08:10:08
+! Last Modified: Tuesday, February 14, 2023 AM12:55:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED
-use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec !, norm
+use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc
@@ -210,7 +210,7 @@ do tr = 1, maxtr
     call trstep(delta, g, h, trtol, d, crvmin)
 
     ! Check whether D is too short to invoke a function evaluation.
-    dnorm = min(delta, sqrt(sum(d**2)))
+    dnorm = min(delta, norm(d))
     shortd = (dnorm < HALF * rho)
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
@@ -395,7 +395,7 @@ do tr = 1, maxtr
 
         ! Update DNORMSAV and MODERRSAV.
         ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
-        dnorm = min(delbar, sqrt(sum(d**2)))   ! In theory, DNORM = DELBAR in this case.
+        dnorm = min(delbar, norm(d))   ! In theory, DNORM = DELBAR in this case.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! MODERR is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.

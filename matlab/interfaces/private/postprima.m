@@ -578,7 +578,12 @@ if options.debug && ~options.classical
         fhistf = fhistf(chist <= max(cstrv_returned, 0));
     end
     minf = min([fhistf, fx]);
-    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoa') && constr_modified)
+    % Why excluding the case with options.precision = 'quadruple' in the following? Consider two
+    % points x1 and x2. Suppose that x1 is returned because it has a slightly smaller constraint
+    % violation in quadruple precision. In MATLAB, which uses double precision, x1 may be regarded
+    % as a wrong return if the two constraint violations become equal due to rounding. This did
+    % happen in a test on 20230214.
+    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoa') && constr_modified) && ~strcmp(options.precision, 'quadruple')
         % Public/unexpected error
         error(sprintf('%s:InvalidFhist', invoker), ...
              '%s: UNEXPECTED ERROR: %s returns an fhist that does not match nf or fx.', invoker, solver);
