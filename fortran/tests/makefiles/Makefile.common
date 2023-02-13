@@ -598,8 +598,12 @@ rtest_i2_r16_d1_tst_c rtest_i4_r16_d1_tst_c rtest_i8_r16_d1_tst_c rtest_i2_r16_d
 
 # Oracle sunf95
 SFORT := sunf95
-ifeq ($(TESTDIM),small)
-	SFORT := $(SFORT) -stackvar  # Force all automatic arrays to be on the stack to test whether stack overflow can occur
+ifeq ($(FFLAGS),-fast)
+	SFORT := $(SFORT) -xassume_control=heap  # Force all automatic arrays to be on the heap
+else
+	ifeq ($(TESTDIM),small)
+		SFORT := $(SFORT) -stackvar  # Force all automatic arrays to be on the stack to test whether stack overflow can occur
+	endif
 endif
 SFORT := $(SFORT) -w3 -u -U -ansi -xcheck=%all -C
 
