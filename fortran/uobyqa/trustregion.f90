@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 02, 2023 AM08:23:45
+! Last Modified: Tuesday, February 14, 2023 AM12:07:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,15 +23,15 @@ subroutine trstep(delta, g, h, tol, d, crvmin)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine solves the trust-region subproblem
 !
-!     minimize <G, D> + 0.5 * <D, H*D> subject to |D| <= DELTA.
+!     minimize <G, D> + 0.5 * <D, H*D> subject to ||D|| <= DELTA.
 !
 ! D will be set to the calculated vector of variables. CRVMIN will be the least eigenvalue of H iff
 ! D is a Newton-Raphson step. Then CRVMIN will be positive, but otherwise it will be set to zero.
 ! TOL is the value of a tolerance from the open interval (0,1). Let MAXRED be the maximum of
-!   Q(0)-Q(D) subject to |D| <= DELTA, and let ACTRED be the value of Q(0)-Q(D) that is actually
+!   Q(0)-Q(D) subject to ||D|| <= DELTA, and let ACTRED be the value of Q(0)-Q(D) that is actually
 !   calculated. We take the view that any D is acceptable if it has the properties
 !
-!             |D| <= DELTA  and  ACTRED <= (1-TOL)*MAXRED.
+!             ||D|| <= DELTA  and  ACTRED <= (1-TOL)*MAXRED.
 !
 ! The algorithm first tridiagonalizes H and then applies the More-Sorensen method in
 ! More and Sorensen, "Computing a trust region step", SIAM J. Sci. Stat. Comput. 4: 553-572, 1983.
@@ -567,8 +567,8 @@ do k = n - 1_IK, 1, -1
 end do
 !!MATLAB: d = P*d;
 
-! If the More-Sorensen algorithm breaks down abnormally (e.g., NaN in the computation), then |D| may
-! be (much) more than DELTA. This is handled in the following naive way.
+! If the More-Sorensen algorithm breaks down abnormally (e.g., NaN in the computation), then ||D||
+! may be (much) more than DELTA. This is handled in the following naive way.
 if (norm(d) > delta) then
     d = (delta / norm(d)) * d
 end if
@@ -590,8 +590,8 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
-    call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
+    ! Due to rounding, it may happen that ||D|| > DELTA, but ||D|| > 2*DELTA is highly improbable.
+    call assert(norm(d) <= TWO * delta, '||D|| <= 2*DELTA', srname)
     call assert(crvmin >= 0, 'CRVMIN >= 0', srname)
 end if
 
@@ -652,7 +652,7 @@ else
     delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's NEWUOA/BOBYQA. Works well for UOBYQA.
     !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's original UOBYQA code.
     !delta = max(delta_in, gamma2 * dnorm)  ! This works evidently better than Powell's version.
-    !delta = min(max(gamma1 * delta_in, gamma2* dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
+    !delta = min(max(gamma1 * delta_in, gamma2 * dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
 end if
 
 ! For noisy problems, the following may work better.

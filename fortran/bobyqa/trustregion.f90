@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 PM01:03:34
+! Last Modified: Tuesday, February 14, 2023 AM12:09:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine trsbox(delta, gopt_in, hq_in, pq_in, sl, su, xopt, xpt, crvmin, d)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine approximately solves
-! minimize Q(XOPT + D) subject to |D| <= DELTA, SL <= D <= SU.
+! minimize Q(XOPT + D) subject to ||D|| <= DELTA, SL <= D <= SU.
 ! See Section 3 of the BOBYQA paper.
 !
 ! A version of the truncated conjugate gradient is applied. If a line search is restricted by
@@ -256,7 +256,7 @@ do iter = 1, maxiter
     ! In theory, switching the condition to DS > 0 changes nothing; indeed, the two formulations
     ! of BSTEP are equivalent. However, surprisingly, DS > 0 clearly worsens the performance of
     ! BOBYQA in tests on 20220210, 20221206. Why? When DS = 0, what should be the best formulation?
-    ! What if we are at the first iteration? BSTEP = DELTA/|D|?
+    ! What if we are at the first iteration? BSTEP = DELTA/||D||?
     ! See TRSAPP.F90 of NEWUOA.
     !if (ds > 0) then  ! Zaikun 20210925
     if (ds >= 0) then
@@ -402,10 +402,10 @@ end if
 ! 1. At each iteration, the current D is improved by a search conducted on the circular arch
 ! {D(THETA): D(THETA) = (I-P)*D + [COS(THETA)*P*D + SIN(THETA)*S], 0<=THETA<=PI/2, SL<=XOPT+D(THETA)<=SU},
 ! where P is the orthogonal projection onto the space of the variables that have not reached their
-! bounds, and S is a linear combination of P*D and P*G(XOPT+D) with |S| = |P*D| and G(.) being the
-! gradient of the quadratic model. The iteration is performed only if P*D and P*G(XOPT+D) are not
-! nearly parallel. The arc lies in the hyperplane (I-P)*D + Span{P*D, P*G(XOPT+D)} and the trust
-! region boundary {D: |D|=DELTA}; it is part of the circle (I-P)*D + {COS(THETA)*P*D + SIN(THETA)*S}
+! bounds, and S is a linear combination of P*D and P*G(XOPT+D) with ||S|| = ||P*D|| and G(.) being
+! the gradient of the quadratic model. The iteration is performed only if P*D and P*G(XOPT+D) are
+! not nearly parallel. The arc lies in the hyperplane (I-P)*D + Span{P*D, P*G(XOPT+D)} and the trust
+! region boundary {D: ||D||=DELTA}; it is part of the circle (I-P)*D + {COS(THETA)*P*D + SIN(THETA)*S}
 ! with THETA being in [0, PI/2] and restricted by the bounds on X.
 ! 2. In (3.6) of the BOBYQA paper, Powell wrote that 0 <= THETA <= PI/4, which seems a typo.
 ! 3. The search on the arch is done by calling INTERVAL_MAX, which maximizes INTERVAL_FUN_TRSBOX.
@@ -440,7 +440,7 @@ do iter = 1, maxiter
     ! Let the search direction S be a linear combination of the reduced D and the reduced G that is
     ! orthogonal to the reduced D.
     ! Zaikun 20210926:
-    ! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that |S| = |D|?? Namely:
+    ! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that ||S|| = ||D||?? Namely:
     ! S = something, then S = (norm(D)/norm(S))*S
     ! Also, should exit if the orthogonality of S and D is damaged, or S is  not finite.
     ! See the corresponding part of TRSAPP.
@@ -567,8 +567,8 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
-    call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
+    ! Due to rounding, it may happen that ||D|| > DELTA, but ||D|| > 2*DELTA is highly improbable.
+    call assert(norm(d) <= TWO * delta, '||D|| <= 2*DELTA', srname)
     call assert(crvmin >= 0, 'CRVMIN >= 0', srname)
     ! D is supposed to satisfy the bound constraints SL <= XOPT + D <= SU.
     call assert(all(xopt + d >= sl - TEN * EPS * max(ONE, abs(sl)) .and. &
@@ -677,7 +677,7 @@ else
     delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's NEWUOA/BOBYQA.
     !delta = max(delta_in, gamma2 * dnorm)  ! Modified version. Works well for UOBYQA.
     !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's UOBYQA
-    !delta = min(max(gamma1 * delta_in, gamma2* dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
+    !delta = min(max(gamma1 * delta_in, gamma2 * dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
 end if
 
 ! For noisy problems, the following may work better.

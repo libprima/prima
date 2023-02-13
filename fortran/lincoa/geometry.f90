@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 PM03:21:33
+! Last Modified: Tuesday, February 14, 2023 AM12:12:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -170,7 +170,7 @@ subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon
 ! numerically due to rounding errors; in the code, SIGMA is represented by DEN and its modulus by
 ! DENABS). This is done by solving
 !
-!   |LFUNC(XOPT + S)|, subject to |S| <= DELBAR,
+!   |LFUNC(XOPT + S)|, subject to ||S|| <= DELBAR,
 !
 ! because SIGMA >= |LFUNC(XOPT + S)|^2 according to (4.12) of the NEWUOA paper. We do not solve this
 ! problem exactly, but calculate three approximate solutions as follows and then choose S from them.
@@ -424,9 +424,9 @@ end if
 if (DEBUGGING) then
     call assert(size(s) == n, 'SIZE(S) == N', srname)
     call assert(all(is_finite(s)), 'S is finite', srname)
-    ! In theory, |S| = DELBAR. Considering rounding errors, we check that DELBAR/2 < |S| < 2*DELBAR.
+    ! In theory, ||S|| = DELBAR. Considering rounding errors, we check that DELBAR/2 < ||S|| < 2*DELBAR.
     ! It is crucial to ensure that the geometry step is nonzero.
-    call assert(norm(s) > HALF * delbar .and. norm(s) < TWO * delbar, 'DELBAR/2 < |S| < 2*DELBAR', srname)
+    call assert(norm(s) > HALF * delbar .and. norm(s) < TWO * delbar, 'DELBAR/2 < ||S|| < 2*DELBAR', srname)
 end if
 
 end subroutine geostep

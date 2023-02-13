@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 10, 2023 AM01:38:38
+! Last Modified: Tuesday, February 14, 2023 AM12:07:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -593,10 +593,10 @@ end if
 if (DEBUGGING) then
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
-    ! In theory, |D| <= DELBAR, which may be false due to rounding, but |D| >= 2*DELBAR is unlikely.
+    ! In theory, ||D|| <= DELBAR, which may be false due to rounding, but |||D| >= 2*DELBAR is unlikely.
     ! It is crucial to ensure that the geometry step is nonzero, which holds in theory. However, due
-    ! to the bound constraints, |D| may be much smaller than DELBAR.
-    call assert(norm(d) > 0 .and. norm(d) < TWO * delbar, '0 < |D| < 2*DELBAR', srname)
+    ! to the bound constraints, ||D|| may be much smaller than DELBAR.
+    call assert(norm(d) > 0 .and. norm(d) < TWO * delbar, '0 < ||D|| < 2*DELBAR', srname)
     ! D is supposed to satisfy the bound constraints SL <= XOPT + D <= SU.
     call assert(all(xopt + d >= sl - TEN * EPS * max(ONE, abs(sl)) .and. &
         & xopt + d <= su + TEN * EPS * max(ONE, abs(su))), 'SL <= XOPT + D <= SU', srname)

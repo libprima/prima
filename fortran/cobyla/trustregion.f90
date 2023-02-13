@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, January 24, 2023 PM01:40:09
+! Last Modified: Tuesday, February 14, 2023 AM12:15:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -137,8 +137,8 @@ call trstlp_sub(iact, nact, 2_IK, A, b, delta, d, vmultc, z)
 if (DEBUGGING) then
     call assert(size(d) == size(A, 1), 'SIZE(D) == SIZE(A, 1)', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
-    call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
+    ! Due to rounding, it may happen that ||D|| > DELTA, but ||D|| > 2*DELTA is highly improbable.
+    call assert(norm(d) <= TWO * delta, '||D|| <= 2*DELTA', srname)
 end if
 end function trstlp
 
@@ -231,7 +231,7 @@ if (DEBUGGING) then
     call assert(delta > 0, 'DELTA > 0', srname)
     if (stage == 2) then
         call assert(all(is_finite(d)) .and. norm(d) <= TWO * delta, &
-            & 'D is finite and |D| <= 2*DELTA at the beginning of stage 2', srname)
+            & 'D is finite and ||D|| <= 2*DELTA at the beginning of stage 2', srname)
         call assert((nact >= 0 .and. nact <= min(mcon, n)), &
             & '0 <= NACT <= MIN(MCON, N) at the beginning of stage 2', srname)
         call assert(all(vmultc(1:mcon - 1) >= 0), 'VMULTC >= 0 at the beginning of stage 2', srname)
@@ -585,11 +585,6 @@ do iter = 1, maxiter
     end if
 end do
 
-!! Due to rounding errors, it can happen that |D| > DELTA. We brutally scale D down if |D| > 2*DELTA.
-!if (norm(d) > TWO * delta) then
-!    d = (delta / norm(d)) * d
-!end if
-
 !====================!
 !  Calculation ends  !
 !====================!
@@ -601,7 +596,7 @@ if (DEBUGGING) then
     call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
-    call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
+    call assert(norm(d) <= TWO * delta, '||D|| <= 2*DELTA', srname)
     call assert(size(z, 1) == n .and. size(z, 2) == n, 'SIZE(Z) == [N, N]', srname)
     call assert(nact >= 0 .and. nact <= min(mcon, n), '0 <= NACT <= MIN(MCON, N)', srname)
 end if
@@ -665,7 +660,7 @@ else
     ! For noise-free CUTEst problems of <= 100 variables, Powell's version works slightly better
     ! than the modified one.
     !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's UOBYQA.
-    !delta = min(max(gamma1 * delta_in, gamma2* dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
+    !delta = min(max(gamma1 * delta_in, gamma2 * dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
 end if
 
 ! For noisy problems, the following may work better.

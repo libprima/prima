@@ -23,8 +23,6 @@
 8. Implement a subroutine that evaluates the functions, updates NF, updates history/filter, and
    prints messages?
 
-9. Get rid of GQ from the code, especially the common code.
-
 10. Test whether the scaling threshold in the trust-region subproblem solvers can be improved.
 
 11. For NEWUOA, BOBYQA, LINCOA, implement the trust-redundant subroutine solvers using hmul.

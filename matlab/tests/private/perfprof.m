@@ -106,7 +106,7 @@ for is = 1:ns
     [x,y] = stairs(r(:,is), (1:np)/np);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % The following ensures the correctness of the profiles in extreme
-    % cases like one the solvers alway performs the best, or one of
+    % cases like one of the solvers always performs the best, or one of
     % the solvers cannot solve any problem.
     x = [0; x(1); x; penalty_ratio];
     y = [0; 0; y; y(end)];

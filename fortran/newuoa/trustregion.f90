@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, February 13, 2023 PM03:37:41
+! Last Modified: Tuesday, February 14, 2023 AM12:05:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -160,7 +160,7 @@ info_loc = 2  ! Default exit flag is 2, i.e., MAXITER is attained
 ! Prepare for the first line search.
 !--------------------------------------------------------------------------------------------------!
 ! N.B.: During the iterations, G is NOT updated, and it equals always GOPT, which is the gradient
-! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
+! of the trust-region model at the trust-region center X. However, GG is updated: GG = ||G + HS||^2,
 ! which is the norm square of the gradient at the current iterate.
 g = gopt
 gg = inprod(g, g)
@@ -201,7 +201,7 @@ do iter = 1, maxiter
         exit
     end if
 
-    ! Set BSTEP to the step length such that |S + BSTEP*D| = DELTA.
+    ! Set BSTEP to the step length such that ||S + BSTEP*D|| = DELTA.
     if (iter == 1) then
         bstep = delta / sqrt(dd)
     else
@@ -323,7 +323,7 @@ end if
 
 ! The 2-dimensional minimization
 ! N.B.: During the iterations, G is NOT updated, and it equals always GOPT, which is the gradient
-! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
+! of the trust-region model at the trust-region center X. However, GG is updated: GG = ||G + HS||^2,
 ! which is the norm square of the gradient at the current iterate.
 do iter = 1, maxiter
     ! Exit if G contains NaN.
@@ -341,7 +341,7 @@ do iter = 1, maxiter
 
     ! Begin the 2-dimensional minimization by calculating D and HD and some scalar products.
 
-    ! Powell's code calculates D as follows. In precise arithmetic, INPROD(D, S) = 0 and |D| = |S|.
+    ! Powell's code calculates D as follows. In precise arithmetic, INPROD(D, S) = 0, ||D|| = ||S||.
     ! However, when DELSQ*GG - SGK**2 is tiny, the error in D can be large and hence damage these
     ! equalities significantly. This did happen in tests, especially when using the single precision.
     ! !sgk = sg + shs
@@ -353,22 +353,22 @@ do iter = 1, maxiter
     ! !d = (delsq / t) * (g + hs) - (sgk / t) * s
 
     ! We calculate D as below. It did improve the performance of NEWUOA in our test.
-    ! PROJECT(X, V) returns the projection of X to SPAN(V): X'*(V/|V|)*(V/|V|).
+    ! PROJECT(X, V) returns the projection of X to SPAN(V): X'*(V/||V||)*(V/||V||).
     d = (g + hs) - project(g + hs, s)
     ! N.B.:
-    ! 1. The condition |D|<=SQRT(TOL*GG) below is equivalent to |INPROD(G+HS,S)|<=SQRT((1-TOL)*GG*SS)
+    ! 1. The condition ||D||<=SQRT(TOL*GG) below is equivalent to |INPROD(G+HS,S)|<=SQRT((1-TOL)*GG*SS)
     ! in theory. As given above, Powell's code triggers an exit if INPROD(G+HS,S)=SGK<=(TOL-1)*GG*SS.
     ! Since |SQRT(1-TOL) - (1-TOL)| <= TOL/2, our condition is close to |SGK| <= (TOL-1)*GG*SS.
     ! When |SGK| is tiny, S and G+HS are nearly parallel and hence the 2-dimensional search cannot
     ! continue. Note that SGK is unlikely positive if everything goes well.
     ! 2. SQRT(TOL)*SQRT(GG) is less likely to encounter underflow than SQRT(TOL*GG).
-    ! 3. The condition below should be non-strict so that |D| = 0 can trigger the exit.
+    ! 3. The condition below should be non-strict so that ||D|| = 0 can trigger the exit.
     if (norm(d) <= sqrt(tol) * sqrt(gg)) then
         info_loc = 0
         exit
     end if
     d = (norm(s) / norm(d)) * d
-    ! In precise arithmetic, INPROD(D, S) = 0 and |D| = |S| = DELTA.
+    ! In precise arithmetic, INPROD(D, S) = 0 and ||D|| = ||S|| = DELTA.
     if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(d) >= TWO * delta) then
         info_loc = -1
         exit
@@ -433,8 +433,8 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(s) == n .and. all(is_finite(s)), 'SIZE(S) == N, S is finite', srname)
-    ! Due to rounding, it may happen that |S| > DELTA, but |S| > 2*DELTA is highly improbable.
-    call assert(norm(s) <= TWO * delta, '|S| <= 2*DELTA', srname)
+    ! Due to rounding, it may happen that ||S|| > DELTA, but ||S|| > 2*DELTA is highly improbable.
+    call assert(norm(s) <= TWO * delta, '||S|| <= 2*DELTA', srname)
     call assert(crvmin >= 0, 'CRVMIN >= 0', srname)
 end if
 
@@ -537,7 +537,7 @@ else
     ! For noise-free CUTEst problems of <= 200 variables, Powell's version works slightly better
     ! than the modified one.
     !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's UOBYQA
-    !delta = min(max(gamma1 * delta_in, gamma2* dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
+    !delta = min(max(gamma1 * delta_in, gamma2 * dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
 end if
 
 ! For noisy problems, the following may work better.

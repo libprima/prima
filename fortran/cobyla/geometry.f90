@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 09, 2023 AM11:40:39
+! Last Modified: Tuesday, February 14, 2023 AM12:14:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -451,10 +451,10 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! In theory, |S| == FACTOR_GAMMA*DELTA, which may be false due to rounding, but not too far.
+    ! In theory, ||S|| == FACTOR_GAMMA*DELTA, which may be false due to rounding, but not too far.
     ! It is crucial to ensure that the geometry step is nonzero, which holds in theory.
     call assert(norm(d) > 0.9_RP * factor_gamma * delta .and. norm(d) <= 1.1_RP * factor_gamma * delta, &
-        & '|D| == FACTOR_GAMMA*DELTA', srname)
+        & '||D|| == FACTOR_GAMMA*DELTA', srname)
 end if
 end function geostep
 
