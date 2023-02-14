@@ -101,7 +101,7 @@ Normally, each workflow consists of \~ 5
 **randomized** tests,
 each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words,
-PRIMA has been verified by more than $10^5$ hours (or **more than 10 years**) of randomized tests.
+PRIMA has been verified by more than 100,000 hours (or **more than 10 years**) of randomized tests.
 
 Since each GitHub Team account can only run at most 60 GitHub Actions workflows concurrently, I have
 to distribute this large amount of tests to several different Team accounts as follows.
