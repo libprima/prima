@@ -61,13 +61,12 @@ mathematically equivalent to Powell’s, except for the
 [bug fixes](#bug-fixes) and [improvements](#improvements) made intentionally.
 
 The focus is to implement these methods in a **structured** and **modularized** way so that they
-are easily **understandable**, **maintainable**, **extendable**,
-**fault tolerant**, and **future-proof**.
+are easily **understandable**, **maintainable**, **extendable**, **fault tolerant**, and **future proof**.
 The code will **have no GOTO** (of course)
 and will **use matrix-vector procedures instead of loops** whenever possible.
 In doing so, PRIMA codes the algorithms **in a way that we would present them on a blackboard**.
-Such an implementation will enable us to get a deeper understanding about Powell's methods and make
-new developments based on them.
+Such an implementation will enable us to get a deeper understanding about Powell's methods and
+pave the way for new developments based on them.
 
 There do exist "translations" of Powell's Fortran 77 code into other languages. For example,
 [NLopt](https://github.com/stevengj/nlopt) contains a C version of COBYLA, NEWUOA, and BOBYQA,
