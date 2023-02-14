@@ -1,16 +1,14 @@
 module update_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides subroutines concerning the update of [BMAT, ZMAT, IDZ] (represents H in the
-! NEWUOA paper; there is no LINCOA paper), [XPT, FVAL, KOPT, XOPT, FOPT], [GQ, HQ, PQ] (the
-! quadratic model), and RESCON when XPT(:, KNEW) is updated to XNEW = XOPT + D.
+! This module provides subroutines concerning the updates when XPT(:, KNEW) becomes XNEW = XOPT + D.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's LICOA code.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's LINCOA code.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, December 12, 2022 PM10:46:11
+! Last Modified: Tuesday, February 14, 2023 AM11:34:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +21,7 @@ contains
 
 subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt, fopt, xopt)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates [XPT, FVAL, KOPT, XOPT, FOPT] so that X(:, KNEW) is updated to XNEW.
+! This subroutine updates [XPT, FVAL, KOPT, XOPT, FOPT] so that XPT(:, KNEW) is updated to XNEW.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
@@ -121,7 +119,7 @@ subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zma
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GOPT, HQ, and PQ when XPT(:, KNEW) changes from XDROP to XNEW = XOSAV + D,
 ! where XOSAV is the upupdated XOPT, namedly the XOPT before UPDATEXF is called.
-! See Section 4 of the NEWUOA paper (there is no LINCOA paper).
+! See Section 4 of the NEWUOA paper and that of the BOBYQA paper (there is no LINCOA paper).
 ! N.B.:
 ! XNEW is encoded in [BMAT, ZMAT, IDZ] after UPDATEH being called, and it also equals XPT(:, KNEW)
 ! after UPDATEXF being called. Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
