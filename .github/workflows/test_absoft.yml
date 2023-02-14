@@ -20,7 +20,6 @@ jobs:
       matrix:
         ikind: [i2]  # [i2, i4, i8] fails due to unavailability of license servers
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-g, -O3]  # -fast always runs overtime. Bug of compiler?
 
     steps:
       - name: Checkout repository
@@ -37,7 +36,10 @@ jobs:
           AFDIR="$(find "$LOCAL" -maxdepth 2 -name "absoft[0-9]*" -type d -print | sort | tail -n 1)"
           source "$AFDIR"/bin/absvars.sh
           export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
-          cd "$ROOT_DIR"/fortran/tests && export FFLAGS=${{ matrix.fflags }} && make atest_${{ matrix.ikind }}.${{ matrix.solver }}
+          FFLAGS=-O$(expr $(date +%d) % 4)
+          FFLAGS=${FFLAGS/O0/g}
+          export FFLAGS
+          cd "$ROOT_DIR"/fortran/tests && make atest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make atest
 
       - name: Store artifacts
