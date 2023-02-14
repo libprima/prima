@@ -1,7 +1,6 @@
 module update_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides subroutines concerning the update of PL, PQ, XPT, KOPT, XOPT, and FOPT
-! when XPT(:, KNEW) becomes XNEW = XOPT + D.
+! This module provides subroutines concerning the updates when XPT(:, KNEW) becomes XNEW = XOPT + D.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the UOBYQA paper.
 !
@@ -9,7 +8,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 12, 2022 PM11:53:52
+! Last Modified: Tuesday, February 14, 2023 AM11:36:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

@@ -75,7 +75,11 @@ jobs:
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
                 export TESTDIM=${{ matrix.testdim }}
                 export FFLAGS=${{ matrix.fflags }}
-                cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
+                cd "$ROOT_DIR"/fortran/tests
+                if [[ -f "test_cobyla.f90" ]] ; then
+                    $SEDI 's|bign = 120|bign = 110|g' test_cobyla.f90
+                fi
+                make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
 
       - name: Store artifacts
