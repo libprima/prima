@@ -1,4 +1,4 @@
-## PRIMA: Reference Implementation for Powell's methods with Modernization and Amelioration
+## PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration
 
 Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell.html) FRS (1936--2015)
 

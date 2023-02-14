@@ -7,8 +7,7 @@ function output = perfprof(frec, fmin, options)
 % solvers: the list of solvers.
 
 % Parameters.
-delsame = 0;
-penalty = 2;
+penalty = 100;
 cut = 1.05;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Appearance of the plots.
@@ -55,90 +54,75 @@ for ip = 1:np
     end
 end
 
-% T(ip, is) is the average number of function evaluations that the is-th solver needs to solve the
-% ip-th problem (up to the tolerance tau), average taken across the random runs.
-T = mean(T, 3);
+pp = cell(ns, nr);
+cut_ratio = 0;
+for ir = 1 : nr
+    Tmin = min(T(:, :, ir), [], 2);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if(delsame==1)
-warning('Deleting all the problems for which all the solvers perform the same.');
-% Delete the problems for which all the solvers performs the same.
-    mask = true(np,1);
-    for ip = 1:np
-        if (sum(isnan(T(ip,:))) == ns || (sum(isnan(T(ip,:))) == 0 && max(T(ip,:)) <= min(T(ip,:))+1))
-            mask(ip) = false;
+    % Calculate r. r(ip, is, ir) is the number of function evaluations that the is-th solvers needs
+    % to solve the ip-th problem during the ir-th run, normalized by the minimal number of function
+    % evaluations needed by all the solvers for this problem during the same run. We replace r by
+    % log2(r) for better scaling. Why not using semilogx instead? Because semilogx only supports log10!
+    r = zeros(np, ns);
+    for ip = 1 : np
+      r(ip, :) = T(ip, :, ir)/Tmin(ip);
+    end
+    r = log2(r);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    max_ratio = max(1.0D-1, max(max(r)));
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    penalty_ratio = penalty*max_ratio;
+    cut_ratio = max(cut_ratio, cut*max_ratio);
+    r(isnan(r)) = penalty_ratio;
+    r = sort(r);
+
+    for is = 1:ns
+        [xx, yy] = stairs(r(:, is), (1:np)/np);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % The following ensures the correctness of the profiles in extreme
+        % cases like one of the solvers always performs the best, or one of
+        % the solvers cannot solve any problem.
+        %xx = [0; xx(1); xx; penalty_ratio];
+        %y = [0; 0; yy; yy(end)];
+        xx = [0; xx(1); xx];
+        yy = [0; 0; yy];
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        xx = xx + 10*max(xx)*eps*(0: length(xx)-1)';
+        pp{is, ir} = [xx'; yy'];
+    end
+end
+
+
+x = cell(1, ns);
+for is = 1 : ns
+    x{is} = [];
+    for ir = 1 : nr
+        x{is} = [x{is}, pp{is, ir}(1, :)];
+    end
+    x{is} = sort(x{is});
+end
+
+y = cell(1, ns);
+perf_prof = cell(1, ns);
+for is = 1 : ns
+    r = NaN(nr, length(x{is}));
+    for ir = 1 : nr
+        for ix = 1 : length(x{is})
+            r(ir, ix) = pp{is, ir}(2, find(pp{is, ir}(1, :) <= x{is}(ix), 1, 'last'));
         end
     end
-    T = T(mask,:);
+    y{is} = mean(r, 1);
+    perf_prof{is} = [x{is}; y{is}];
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-[np, ns] = size(T);
-if(np == 0)  % Prevent T from being empty.
-    T=ones(1,ns);
-    np =1;
-end
-Tmin = min(T, [], 2);
-
-% Calculate r. r(ip, is) is the number of function evaluations that the is-th solvers needs to solve
-% the ip-th problem, normalized by the minimal number of function evaluations needed by all the
-% solvers for this problem. We replace r by log2(r) for better scaling. Why not using semilogx
-% instead? Because semilogx only supports log10!
-r = zeros(np, ns);
-for ip = 1: np
-  r(ip, :) = T(ip, :)/Tmin(ip);
-end
-r = log2(r);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-max_ratio = max(1.0D-1,max(max(r)));
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-penalty_ratio = penalty*max_ratio;
-cut_ratio = cut*max_ratio;
-r(isnan(r)) = penalty_ratio;
-r = sort(r);
-
-success_rate = cell(1, ns);
-perf_prof = cell(1, ns);
 
 clf;
 hfig=figure("visible", false);  % Plot the figure without displaying it.
 for is = 1:ns
-    [x,y] = stairs(r(:,is), (1:np)/np);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % The following ensures the correctness of the profiles in extreme
-    % cases like one of the solvers always performs the best, or one of
-    % the solvers cannot solve any problem.
-    x = [0; x(1); x; penalty_ratio];
-    y = [0; 0; y; y(end)];
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    perf_prof{is} = [x'; y'];
-    plot(x, y, lines{is}, 'Color', colors{is},  'Linewidth', linewidth);
+    plot(perf_prof{is}(1, :), perf_prof{is}(2, :), lines{is}, 'Color', colors{is},  'Linewidth', linewidth);
     hold on;
-
-    % Evaluate the success rate.
-    if ~any(x > 0 & x < penalty_ratio)
-        success_rate{is} = ones(1,3);
-        continue;
-    end
-    xx = x(x>0 & x < penalty_ratio);
-    yy = y(x>0 & x < penalty_ratio);
-    xx = [0; xx; xx(end)*cut];
-    yy = [yy(1); yy; yy(end)];
-    success_rate{is} = NaN(1,3);
-    success_rate{is}(1) = yy(1);  % The success rate corresponding to NF/NFMIN = 1 (i.e., NF=NFMIN).
-    success_rate{is}(3) = yy(end);  % The success rate with "infinite budget".
-
-
-    % The following lines calculates the average success rate.
-    k = floor(length(xx)/2);  % In theory, length(xx) is even
-    % The following line calculates the simple average
-    %success_rate(is, 2) = sum(yy(2*(1:k)-1).*(xx(2*(1:k))-xx(2*(1:k)-1)))/xx(end);
-    % The following line calculates the weighted average with the weight = exp(-NF/NFMIN), putting
-    % more weight when NF/NFMIN is small.
-    success_rate{is}(2) = sum(yy(2*(1:k)-1).*(xx(2*(1:k))-xx(2*(1:k)-1)).*exp(-xx(2*(1:k)-1)))/sum((xx(2*(1:k))-xx(2*(1:k)-1)).*exp(-xx(2*(1:k)-1)));
 end
 
-output.success_rate = success_rate;
+%output.success_rate = success_rate;
 output.profile = perf_prof;
 output.cut_ratio = cut_ratio;
 
