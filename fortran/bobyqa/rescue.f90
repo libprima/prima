@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:11:43
+! Last Modified: Tuesday, February 14, 2023 PM12:19:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -311,8 +311,8 @@ nprov = npt - 1_IK
 ! origin and provisional points are found, then NPROV will de reduced by 1; otherwise, SCORE will
 ! become all zero or negative, and the loop will exit.
 do while (any(score > 0) .and. nprov > 1)   ! Retain at least one provisional point.
-! !do while (any(score > 0) .and. nprov > 0)  ! Powell's code. It may not keep any provisional point.
-! !do while (any(score > 0) .and. nprov > 2)  ! Retain at least two provisional point.
+! !do while (any(score > 0) .and. nprov > 0)  ! Powell's code. It may not take any provisional point.
+! !do while (any(score > 0) .and. nprov > 2)  ! Retain at least two provisional points.
     ! Pick the index KORIG of an original point that has not yet replaced one of the provisional
     ! points, giving attention to the closeness to XOPT and to previous tries with KORIG.
     korig = int(minloc(score, mask=(score > 0), dim=1), kind(korig))
@@ -592,7 +592,7 @@ end subroutine rescue
 
 
 subroutine updateh_rsc(knew, beta, vlag_in, bmat, zmat, info)
-! !!! N.B.: UPDATEH_RSC is only used by RESCUE. Is it possible to merge UPDATEH_RSC with UPDATEH?!!!
+! !!! N.B.: UPDATEH_RSC is only used by RESCUE.
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays BMAT and ZMAT in order to replace the interpolation point
 ! XPT(:, KNEW) by XNEW = XPT(:, KOPT) + D. See Section 4 of the BOBYQA paper. [BMAT, ZMAT] describes
