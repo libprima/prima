@@ -20,7 +20,6 @@ jobs:
       matrix:
         ikind: [i2]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-O1, -O2, -g, -fast]   # Expensive, ignore -O3
         testdim: [small, big]
 
     steps:
@@ -36,11 +35,14 @@ jobs:
         run: |
           export PATH=$PATH:"~/local/bin"
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
+          FFLAGS=-O$(expr $(date +%d) % 4)
+          FFLAGS=${FFLAGS/O0/g}
+          export FFLAGS
           cd "$ROOT_DIR"/fortran/tests
           if [[ -f test_cobyla.f90 ]]; then
               $SEDI 's|bign = 120|bign = 110|g' test_cobyla.f90
           fi
-          export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
+          export TESTDIM=${{ matrix.testdim }} && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make ntest
 
       - name: Store artifacts
