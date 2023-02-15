@@ -30,7 +30,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, February 01, 2023 PM08:25:53
+! Last Modified: Wednesday, February 15, 2023 PM09:18:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -206,7 +206,7 @@ use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : ZERO_LINEAR_CONSTRAINT
-use, non_intrinsic :: linalg_mod, only : inprod
+use, non_intrinsic :: linalg_mod, only : inprod, norm
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
@@ -441,9 +441,8 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc, present(chist), chist_loc)
 
 
-! Normalize the constraints, and copy the resultant constraint matrix and right hand sides into
-! working space, after increasing the right hand sides if necessary so that the starting point
-! is feasible.
+! Normalize the constraints after increasing the right hand sides if necessary so that the starting
+! point is feasible.
 ! N.B.: Yes, LINCOA modifies the right hand sides of the constraints to make the starting point
 ! feasible if it is not. This is not ideal, but Powell's code was implemented in this way. In the
 ! MATLAB/Python code, we include a preprocessing subroutine to project the starting point to
@@ -455,7 +454,7 @@ call safealloc(b_normalized, m)
 if (m > 0) then
     do j = 1, m
         ax = inprod(x, A_loc(:, j))
-        anorm = sqrt(sum(A_loc(:, j)**2))
+        anorm = norm(A_loc(:, j))
         if (anorm <= 0) then
             if (present(info)) then
                 info = ZERO_LINEAR_CONSTRAINT
