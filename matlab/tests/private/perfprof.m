@@ -7,7 +7,10 @@ function output = perfprof(frec, fmin, options)
 % solvers: the list of solvers.
 
 % Parameters.
+% If a solver fails to achieve the convergence test on a problem, the log performance ratio is set to
+% penalty*max_ratio, where max_ratio is the maximal log performance ratio that achieve the convergence.
 penalty = 100;
+% We plot the performance profiles only for the log performance ratio in [0, cut*max_ratio].
 cut = 1.05;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Appearance of the plots.
@@ -26,14 +29,12 @@ M = maxfun;
 % T(ip, is, ir) is the number of function evaluations that the is-th solver needs to solve the ip-th
 % problem (up to tolerance tau) at the ir-th random run.
 T = NaN(np, ns, nr);
-
 f0 = -Inf(np, nr);
 for ip = 1:np
     for ir = 1:nr
         f0(ip,ir) = frec(ip, 1, ir, 1);
     end
 end
-
 tau = options.tau;
 for ip = 1:np
     for is = 1:ns
@@ -54,6 +55,7 @@ for ip = 1:np
     end
 end
 
+% pp{is, ir} is the performance profile of the is-th solver during the ir-th run.
 pp = cell(ns, nr);
 cut_ratio = 0;
 for ir = 1 : nr
@@ -68,9 +70,10 @@ for ir = 1 : nr
       r(ip, :) = T(ip, :, ir)/Tmin(ip);
     end
     r = log2(r);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    max_ratio = max(1.0D-1, max(max(r)));
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Taking a max with 1.0E-1 ensures the correctness of the profiles in extreme cases.
+    max_ratio = max(1.0E-1, max(max(r)));
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     penalty_ratio = penalty*max_ratio;
     cut_ratio = max(cut_ratio, cut*max_ratio);
     r(isnan(r)) = penalty_ratio;
@@ -78,21 +81,32 @@ for ir = 1 : nr
 
     for is = 1:ns
         [xx, yy] = stairs(r(:, is), (1:np)/np);
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % The following ensures the correctness of the profiles in extreme
-        % cases like one of the solvers always performs the best, or one of
-        % the solvers cannot solve any problem.
-        %xx = [0; xx(1); xx; penalty_ratio];
-        %y = [0; 0; yy; yy(end)];
-        xx = [0; xx(1); xx];
-        yy = [0; 0; yy];
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % The following ensures the correctness of the profiles in extreme cases like
+        % one of the solvers always performs the best, or one of the solvers cannot
+        % solve any problem.
+        xx = [0; xx(1); xx; penalty_ratio];
+        yy = [0; 0; yy; yy(end)];
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % In the curve defined by [xx, yy], the same value of x may correspond to many
+        % different y; this will be an issue when averaging these curves across the
+        % random runs. To overcome this difficulty, we slightly modify xx as follows
+        % so that it becomes strictly increasing. This modification makes no visible
+        % difference to the plots.
         xx = xx + 10*max(xx)*eps*(0: length(xx)-1)';
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
         pp{is, ir} = [xx'; yy'];
     end
 end
 
-
+% For each solver, we average the performance profiles across the random runs. The resultant profile
+% for the is-th solver is recorded in perf_prof{is}.
+perf_prof = cell(1, ns);
+% x{is} is the "horizontal values" of the profile for the is-th solver. It is the sorted union of
+% the horizontal values of all the profiles for this solver among all the random runs.
 x = cell(1, ns);
 for is = 1 : ns
     x{is} = [];
@@ -101,20 +115,27 @@ for is = 1 : ns
     end
     x{is} = sort(x{is});
 end
-
+% y{is} is the "vertical values" of the profile for the is-th solver.
 y = cell(1, ns);
-perf_prof = cell(1, ns);
 for is = 1 : ns
+    % r(ir, :) is the "vertical values" of the profile for the current (is-th) solver during the
+    % ir-th random run. Note that some values in x{is} do not have a corresponding vertical value,
+    % which is defined below according to the fact that the performance profiles are right-continuous
+    % piecewise constant functions.
     r = NaN(nr, length(x{is}));
     for ir = 1 : nr
         for ix = 1 : length(x{is})
             r(ir, ix) = pp{is, ir}(2, find(pp{is, ir}(1, :) <= x{is}(ix), 1, 'last'));
         end
     end
+    % y{is} is the average of r across its first dimension.
     y{is} = mean(r, 1);
+    % Record the averaged profile in perf_prof, which will be plotted later and also returned as
+    % a field of "output".
     perf_prof{is} = [x{is}; y{is}];
 end
 
+% Plot the performance profiles.
 clf;
 hfig=figure("visible", false);  % Plot the figure without displaying it.
 for is = 1:ns
@@ -122,9 +143,8 @@ for is = 1:ns
     hold on;
 end
 
-%output.success_rate = success_rate;
 output.profile = perf_prof;
-output.cut_ratio = cut_ratio;
+output.cut_ratio = cut_ratio;  % Needed if we re-plot the profiles by loading the data.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 axis([0 cut_ratio 0 1]);
