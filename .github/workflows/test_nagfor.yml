@@ -35,8 +35,8 @@ jobs:
         run: |
           export PATH=$PATH:"~/local/bin"
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
-          # FFLAGS=-O$(expr $(date +%d) % 5)
-          # FFLAGS=${FFLAGS/O0/g}
+          FFLAGS=-O$(expr $(date +%d) % 5)
+          FFLAGS=${FFLAGS/O0/g}
           # FFLAGS=${FFLAGS/O4/fast}
           # export FFLAGS
           # cd "$ROOT_DIR"/fortran/tests
