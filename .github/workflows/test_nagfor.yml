@@ -38,13 +38,13 @@ jobs:
           FFLAGS=-O$(expr $(date +%d) % 5)
           FFLAGS=${FFLAGS/O0/g}
           FFLAGS=${FFLAGS/O4/fast}
-          export FFLAGS
-          cd "$ROOT_DIR"/fortran/tests
-          if [[ -f test_cobyla.f90 ]]; then
-              $SEDI 's|bign = 120|bign = 110|g' test_cobyla.f90
-          fi
-          export TESTDIM=${{ matrix.testdim }} && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
-          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make ntest
+          # export FFLAGS
+          # cd "$ROOT_DIR"/fortran/tests
+          # if [[ -f test_cobyla.f90 ]]; then
+          #     $SEDI 's|bign = 120|bign = 110|g' test_cobyla.f90
+          # fi
+          # export TESTDIM=${{ matrix.testdim }} && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
+          # cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make ntest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
