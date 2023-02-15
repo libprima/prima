@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 PM12:19:22
+! Last Modified: Wednesday, February 15, 2023 PM08:53:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -298,8 +298,8 @@ ptsid(kopt) = ZERO
 ! current. Note that, in Powell's BOBYQA code, the initial scores are the squares of the distances,
 ! but there is no square in the BOBYQA paper (see the paragraph between (5.9) and (5.10) of the
 ! BOBYQA paper). The latter seem to work better in a test on 20221125.
-!score = sum((xpt)**2, dim=1)  ! Powell's BOBYQA code
-score = sqrt(sum((xpt)**2, dim=1))  ! Powell's BOBYQA paper
+!score = sum(xpt**2, dim=1)  ! Powell's BOBYQA code
+score = sqrt(sum(xpt**2, dim=1))  ! Powell's BOBYQA paper
 score(kopt) = ZERO  ! Set SCORE(KOPT) to 0 so that KOPT will be skipped when we choose KORIG below.
 scoreinc = maxval(score)
 
