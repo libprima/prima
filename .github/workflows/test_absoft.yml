@@ -36,7 +36,8 @@ jobs:
           AFDIR="$(find "$LOCAL" -maxdepth 2 -name "absoft[0-9]*" -type d -print | sort | tail -n 1)"
           source "$AFDIR"/bin/absvars.sh
           export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
-          FFLAGS=-O$(expr $(date +%d) % 4)
+          # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
+          FFLAGS=-O$(($(date +%d) % 4))
           FFLAGS=${FFLAGS/O0/g}
           export FFLAGS
           cd "$ROOT_DIR"/fortran/tests && make atest_${{ matrix.ikind }}.${{ matrix.solver }}
