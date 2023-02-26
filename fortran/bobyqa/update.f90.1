@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 26, 2023 AM11:10:40
+! Last Modified: Sunday, February 26, 2023 AM11:09:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,6 +110,7 @@ end if
 beta = calbeta(kopt, bmat, d, xpt, zmat)
 vlag = calvlag(kopt, bmat, d, xpt, zmat)
 tau = vlag(knew)
+
 ! In theory, DENOM can also be calculated after ZMAT is rotated below. However, this worsened the
 ! performance of BOBYQA in a test on 20220413.
 denom = sum(zmat(knew, :)**2) * beta + tau**2
@@ -118,14 +119,13 @@ denom = sum(zmat(knew, :)**2) * beta + tau**2
 vlag(knew) = vlag(knew) - ONE
 
 ! Put the KNEW-th column of the unupdated H (except for the (NPT+1)th entry) into HCOL.
-!hcol(1:npt) = zmat(knew, 1) * zmat(:, 1)
+! Powell's code does this after ZMAT is rotated below.
 hcol(1:npt) = matprod(zmat, zmat(knew, :))
 hcol(npt + 1:npt + n) = bmat(:, knew)
 
 ! Quite rarely, due to rounding errors, VLAG or BETA may not be finite, or DENOM may not be
 ! positive. In such cases, [BMAT, ZMAT] would be destroyed by the update, and hence we would rather
 ! not update them at all. Or should we simply terminate the algorithm?
-!if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. denom > 0)) then
 if (.not. (is_finite(sum(abs(vlag)) + abs(beta) + sum(abs(hcol))) .and. denom > 0)) then
     if (present(info)) then
         info = DAMAGING_ROUNDING

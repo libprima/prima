@@ -42,7 +42,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, February 26, 2023 AM10:21:32
+! Last Modified: Saturday, February 11, 2023 PM04:51:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -120,7 +120,7 @@ interface maximum
 end interface maximum
 
 interface norm
-    module procedure p_norm, named_norm_vec, named_norm_mat
+    module procedure p_norm, named_norm
 end interface norm
 
 interface linspace
@@ -1502,7 +1502,7 @@ if (DEBUGGING) then
         call assert(norm(y) <= (ONE + tol) * norm(x), 'NORM(Y) <= NORM(X)', srname)
         call assert(norm(x - y) <= (ONE + tol) * norm(x), 'NORM(X - Y) <= NORM(X)', srname)
         ! The following test may not be passed.
-        call assert(norm(matprod(x - y, V)) <= max(tol, tol * max(norm(x - y) * norm(V, 'fro'), &
+        call assert(norm(matprod(x - y, V)) <= max(tol, tol * max(norm(x - y) * sqrt(sum(V**2)), &
             & norm(matprod(x, V)))), 'X - Y is orthogonal to V', srname)
     end if
 end if
@@ -1539,14 +1539,14 @@ else
     y = abs([x1, x2])
     y = [minval(y), maxval(y)]
     !if (y(1) > sqrt(REALMIN) .and. y(2) < sqrt(HUGENUM / 2.1_RP)) then
-    !    r = sqrt(sum(y**2))
+    ! r = sqrt(sum(y**2))
     !elseif (y(2) > 0) then
-    !    r = max(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
-    !    ! Without MAX, R < Y(2) may happen due to rounding errors.
+    ! r = max(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
+    ! ! Without MAX, R < Y(2) may happen due to rounding errors.
     !else
-    !    r = ZERO
+    ! r = ZERO
     !end if
-    ! Scaling seems to be good in general.
+    ! Scaling seems to improve the precision in general.
     if (y(2) > 0) then
         r = maxval([abs(y(1)), y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE)])
         ! Without MAXVAL, R < Y(2) may happen due to rounding errors.
@@ -1644,7 +1644,7 @@ else
     ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
     if (all(abs(x) > sqrt(REALMIN) .and. abs(x) < sqrt(HUGENUM / 2.1_RP))) then
         ! Do NOT use HYPOTENUSE here; the best implementation for one may be suboptimal for the other
-        r = norm(x)
+        r = sqrt(sum(x**2))
         c = x(1) / r
         s = x(2) / r
     elseif (abs(x(1)) > abs(x(2))) then
@@ -1677,8 +1677,8 @@ if (DEBUGGING) then
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
     if (all(is_finite(x) .and. abs(x) < sqrt(HUGENUM / 2.1_RP))) then
-        r = norm(x)
-        call assert(maxval(abs(matprod(G, x) - [r, ZERO])) <= max(tol, tol * r), 'G * X = [||X||, 0]', srname)
+        r = sqrt(sum(x**2))
+        call assert(maxval(abs(matprod(G, x) - [r, ZERO])) <= max(tol, tol * r), 'G * X = [|X|, 0]', srname)
     end if
 end if
 end function planerot
@@ -1928,6 +1928,7 @@ real(RP), intent(in), optional :: p
 real(RP) :: y
 ! Local variables
 character(len=*), parameter :: srname = 'P_NORM'
+real(RP) :: scaling
 real(RP) :: p_loc
 
 ! Preconditions
@@ -1963,11 +1964,14 @@ else
         ! above, it is OK to write Y = MAXVAL(ABS(X)) below, but we append 0 for robustness.
         y = maxval([abs(x), ZERO])
     elseif (.not. present(p) .or. abs(p_loc - TWO) <= 0) then
-        ! N.B.: We may use the intrinsic NORM2. Here, we use the following naive implementation to
-        ! get full control on the computation, in a way similar to MATPROD and INPROD. A
-        ! disadvantage is the possibility of over/underflow.
+        !y = sqrt(sum(x**2))
+        !scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
+        !y = scaling * sqrt(sum((x / scaling)**2))
         y = sqrt(sum(x**2))
     else
+        !scaling = max(REALMIN, sqrt(maxval(abs(x)) * minval(abs(x), mask=(abs(x) > 0))))
+        !scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
+        !y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
         y = sum(abs(x)**p_loc)**(ONE / p_loc)
     end if
 end if
@@ -1978,7 +1982,7 @@ end if
 
 end function p_norm
 
-function named_norm_vec(x, nname) result(y)
+function named_norm(x, nname) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates named norms of a vector X.
 !--------------------------------------------------------------------------------------------------!
@@ -1994,7 +1998,7 @@ character(len=*), intent(in) :: nname
 ! Outputs
 real(RP) :: y
 ! Local variables
-character(len=*), parameter :: srname = 'NAMED_NORM_VEC'
+character(len=*), parameter :: srname = 'NAMED_NORM'
 
 !====================!
 ! Calculation starts !
@@ -2014,7 +2018,7 @@ else
         y = p_norm(x) ! 2-norm, which is the default case of P_NORM.
     case ('inf')
         ! If SIZE(X) = 0, then MAXVAL(ABS(X)) = -HUGE(X); since we have handled such a case in the
-        ! above, it is OK to write Y = MAXVAL(ABS(X)) below, but we append a 0 for robustness.
+        ! above, it is OK to write Y = MAXVAL(ABS(X)) below, but we append 0 for robustness.
         y = maxval([abs(x), ZERO])
     case default
         call warning(srname, 'Unknown name of norm: '//trimstr(nname)//'; default to the L2-norm')
@@ -2025,57 +2029,7 @@ end if
 !====================!
 !  Calculation ends  !
 !====================!
-end function named_norm_vec
-
-function named_norm_mat(x, nname) result(y)
-!--------------------------------------------------------------------------------------------------!
-! This function calculates named norms of a vector X.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ZERO
-use, non_intrinsic :: debug_mod, only : warning
-use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: string_mod, only : lower, trimstr
-implicit none
-
-! Inputs
-real(RP), intent(in) :: x(:, :)
-character(len=*), intent(in) :: nname
-! Outputs
-real(RP) :: y
-! Local variables
-character(len=*), parameter :: srname = 'NAMED_NORM_MAT'
-
-!====================!
-! Calculation starts !
-!====================!
-
-if (size(x, 1) * size(x, 2) == 0) then
-    y = ZERO
-elseif (.not. all(is_finite(x))) then
-    ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
-    y = sum(abs(x))
-elseif (.not. any(abs(x) > 0)) then
-    ! The following is incorrect without checking the last case, as X may be all NaN.
-    y = ZERO
-else
-    select case (lower(trimstr(nname)))
-    case ('fro')
-        y = sqrt(sum(x**2))
-    case ('inf')
-        ! If SIZE(X) = 0, then MAXVAL(SUM(ABS(X), DIM=2)) = -HUGE(X); since we have handled such a
-        ! case in the above, it is OK to write Y = MAXVAL(SUM(ABS(X), DIM=2)) below, but we append
-        ! a 0 for robustness.
-        y = maxval([sum(abs(x), dim=2), ZERO])
-    case default
-        call warning(srname, 'Unknown name of norm: '//trimstr(nname)//'; default to the Frobenius norm')
-        y = sqrt(sum(x**2))
-    end select
-end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-end function named_norm_mat
+end function named_norm
 
 
 function sort_i1(x, direction) result(y)

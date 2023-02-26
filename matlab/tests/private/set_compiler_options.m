@@ -10,7 +10,7 @@ setup_tools = fullfile(fileparts(fileparts(mfilepath)), 'setup_tools');
 addpath(setup_tools);  % We use `rep_str` from `setup_tools`.
 
 % Modify mexopts files in `config_dir` after making backups.
-config_dir = fullfile(matlabroot,'bin', 'glnxa64', 'mexopts');
+config_dir = fullfile(matlabroot, 'bin', 'glnxa64', 'mexopts');
 config_files = {dir(fullfile(config_dir, 'gfortran*.xml')).name};
 fileattrib(config_dir, '+w');
 for ifile = 1 : length(config_files)

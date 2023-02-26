@@ -2,7 +2,8 @@ function output = perfprof(frec, fmin, options)
 %This function plots the performance profiles of solvers.
 % frec: trajectory of function values; frec(ip, is, ir, k) is the function value of the ip-th problem
 % obtained by the is-th solver at the ir-th random run at the k-th iteration.
-% fmin: the minimal function values; fmin(ip) is the minimal function value of the ip-th problem.
+% fmin: the minimal function values; either fmin(ip) is the minimal function value of the ip-th
+% problem, or fmin(ip, ir) is the minimal function value of the ip-th problem for the ir-th run.
 % tau: the tolerance of convergence.
 % solvers: the list of solvers.
 
@@ -39,11 +40,16 @@ tau = options.tau;
 for ip = 1:np
     for is = 1:ns
         for ir = 1:nr
-            fthreshold = tau*f0(ip,ir) + (1-tau)*fmin(ip);
-            % We need to ensure fthreshold >= fmin(ip), which may not be true due to rounding
-            % errors when fmin(ip)=f0(ip,ir).
+            if numel(fmin) == length(fmin)  % fmin is a vector indexed by ip only.
+                fminp = fmin(ip);
+            else
+                fminp = fmin(ip, ir);
+            end
+            fthreshold = tau*f0(ip,ir) + (1-tau)*fminp;
+            % We need to ensure fthreshold >= fminp, which may not be true due to rounding
+            % errors when fminp = f0(ip,ir).
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            fthreshold = max(fthreshold, fmin(ip));
+            fthreshold = max(fthreshold, fminp);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             if (min(frec(ip, is, ir, 1:M)) <= fthreshold)
                 % Do not change the "if .. else ..." order, as frec(ip, is, ir, 1:M) may be all NaNs.

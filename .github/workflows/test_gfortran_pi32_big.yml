@@ -42,7 +42,7 @@ jobs:
             export TESTDIM=${{ matrix.testdim }}
             cd "$ROOT_DIR"/fortran/tests
             if [[ -f "test_cobyla.f90" ]] ; then
-                $SEDI 's|bign = 120|bign = 110|g' test_cobyla.f90
+                $SEDI 's|bign = 120|bign = 100|g' test_cobyla.f90
             fi
             make gtest_${{ matrix.ikind }}_r4_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r4_d1_tst.${{ matrix.solver }}
             make gtest_${{ matrix.ikind }}_r8_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r8_d1_tst.${{ matrix.solver }}

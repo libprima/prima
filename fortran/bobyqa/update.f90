@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM11:34:41
+! Last Modified: Sunday, February 26, 2023 AM11:50:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -106,26 +106,40 @@ if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
 
-! Calculate parameters for the updating formula (4.9) and (4.14) of the BOBYQA paper.
+! Put the KNEW-th column of the unupdated H (except for the (NPT+1)th entry) into HCOL. Powell's
+! code does this after ZMAT is rotated below, and then HCOL(1:NPT) = ZMAT(KNEW, 1) * ZMAT(:, 1).
+hcol(1:npt) = matprod(zmat, zmat(knew, :))
+hcol(npt + 1:npt + n) = bmat(:, knew)
+
+! Calculate VLAG and BETA and other parameters for (4.9) and (4.14) of the BOBYQA paper.
 beta = calbeta(kopt, bmat, d, xpt, zmat)
 vlag = calvlag(kopt, bmat, d, xpt, zmat)
-tau = vlag(knew)
+
 ! In theory, DENOM can also be calculated after ZMAT is rotated below. However, this worsened the
 ! performance of BOBYQA in a test on 20220413.
-denom = sum(zmat(knew, :)**2) * beta + tau**2
+alpha = hcol(knew)
+tau = vlag(knew)
+denom = alpha * beta + tau**2
+
+! After the following line, VLAG = H*w - e_KNEW in the NEWUOA paper (where t = KNEW).
+vlag(knew) = vlag(knew) - ONE
 
 ! Quite rarely, due to rounding errors, VLAG or BETA may not be finite, or DENOM may not be
 ! positive. In such cases, [BMAT, ZMAT] would be destroyed by the update, and hence we would rather
 ! not update them at all. Or should we simply terminate the algorithm?
-if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. denom > 0)) then
+if (.not. (is_finite(sum(abs(hcol)) + sum(abs(vlag)) + abs(beta)) .and. denom > 0)) then
     if (present(info)) then
         info = DAMAGING_ROUNDING
     end if
     return
 end if
 
-! After the following line, VLAG = H*w - e_KNEW in the NEWUOA paper (where t = KNEW).
-vlag(knew) = vlag(knew) - ONE
+! Update the matrix BMAT. It implements the last N rows of (4.9) in the BOBYQA paper.
+v1 = (alpha * vlag(npt + 1:npt + n) - tau * hcol(npt + 1:npt + n)) / denom
+v2 = (-beta * hcol(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
+bmat = bmat + outprod(v1, vlag) + outprod(v2, hcol) !call r2update(bmat, ONE, v1, vlag, ONE, v2, hcol)
+! Numerically, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be symmetric.
+call symmetrize(bmat(:, npt + 1:npt + n))
 
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT. After this, ZMAT(KNEW, :) contains
 ! only one nonzero at ZMAT(KNEW, 1). Entries of ZMAT are treated as 0 if the moduli are at most ZTEST.
@@ -138,21 +152,9 @@ do j = 2, npt - n - 1_IK
     zmat(knew, j) = ZERO
 end do
 
-! Put the KNEW-th column of the unupdated H (except for the (NPT+1)th entry) into HCOL.
-hcol(1:npt) = zmat(knew, 1) * zmat(:, 1)
-hcol(npt + 1:npt + n) = bmat(:, knew)
-
 ! Complete the updating of ZMAT. See (4.14) of the BOBYQA paper.
 sqrtdn = sqrt(denom)
 zmat(:, 1) = (tau / sqrtdn) * zmat(:, 1) - (zmat(knew, 1) / sqrtdn) * vlag(1:npt)
-
-! Finally, update the matrix BMAT. It implements the last N rows of (4.9) in the BOBYQA paper.
-alpha = hcol(knew)
-v1 = (alpha * vlag(npt + 1:npt + n) - tau * hcol(npt + 1:npt + n)) / denom
-v2 = (-beta * hcol(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
-bmat = bmat + outprod(v1, vlag) + outprod(v2, hcol) !call r2update(bmat, ONE, v1, vlag, ONE, v2, hcol)
-! Numerically, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be symmetric.
-call symmetrize(bmat(:, npt + 1:npt + n))
 
 !====================!
 !  Calculation ends  !

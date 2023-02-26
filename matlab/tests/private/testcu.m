@@ -54,11 +54,12 @@ thorough_test = 0;
 % problems for debugging.
 minip = 1;
 maxip = 2^32 - 1;
+strict = 2;
 
 % Set options
 options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
     eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
-    sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip);
+    sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict);
 
 % Select the problems to test.
 if isfield(options, 'list')
@@ -91,6 +92,7 @@ maxfun = options.maxfun;
 sequential = options.sequential;
 minip = options.minip;
 maxip = min(np, options.maxip);
+strict = options.strict;
 
 % These arrays will record the function values and constraint values during the tests.
 pdim = NaN(np, 1);  % Data profile needs the dimension of the problem.
@@ -271,10 +273,28 @@ end
 % Define mrec
 mrec = frec + options.cpenalty*crec;
 mrec(:,:,:,1) = frec(:,:,:,1) + options.cpenalty*crec(:,:,:,1); % Prevent mrec(:,:,:,1) from being NaN
-mrec_min = min(min(min(mrec, [], 4), [], 3), [], 2);
 
-% Define mmin. mmin(ip) is used as the "minimum merit function value" for problem ip.
-mmin = min(mrec_min, mref_min);
+% Define mmin, which is used as the "minimum merit function value" for problem ip. However, we
+% have different definitions of mmin depending on the strictness as follows.
+% N.B.: When mref_min is not taken into account, it may happen that the solvers "solve more problems
+% when there is noise / perturbation than when there is not". This is because the value of mmin may
+% be much larger in the former case. This should be noted particularly if the functions are
+% evaluated in single precision.
+if strict == 0
+    % Minimum taken over the current run.
+    mmin = min(min(mrec, [], 4), [], 2);
+elseif strict == 1
+    % Minimum taken over the current run and the reference run.
+    mrec_min = min(min(mrec, [], 4), [], 2);
+    mmin = min(mrec_min, mref_min);  % Works, even though the two arrays have different sizes.
+elseif strict == 2
+    % Minimum taken over all the random runs.
+    mmin = min(min(min(mrec, [], 4), [], 3), [], 2);
+else
+    % Minimum taken over all the random runs and the reference run.
+    mrec_min = min(min(min(mrec, [], 4), [], 3), [], 2);
+    mmin = min(mrec_min, mref_min);
+end
 
 output = struct();
 output.plist = plist;
@@ -343,7 +363,7 @@ return
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, ...
         randomizex0, eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
-        sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip) % Set options
+        sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict) % Set options
 
 if (~isfield(options, 'rhoend'))
     options.rhoend = rhoend;
@@ -420,6 +440,9 @@ if (~isfield(options, 'minip'))
 end
 if (~isfield(options, 'maxip'))
     options.maxip = maxip;
+end
+if (~isfield(options, 'strict'))
+    options.strict = strict;
 end
 
 % Set eval_options
