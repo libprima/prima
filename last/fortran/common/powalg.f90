@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, December 27, 2022 PM03:42:31
+! Last Modified: Sunday, February 26, 2023 PM08:31:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1324,6 +1324,32 @@ end if
 vlag = calvlag(kref, bmat, d, xpt, zmat, idz)
 beta = calbeta(kref, bmat, d, xpt, zmat, idz)
 
+hcol(1:npt) = omega_col(idz, zmat, knew)
+hcol(npt + 1:npt + n) = bmat(:, knew)
+
+
+! Calculate the parameters of the updating formula (4.18)--(4.20) in the NEWUOA paper.
+alpha = hcol(knew)
+tau = vlag(knew)
+denom = alpha * beta + tau**2
+
+! Quite rarely, due to rounding errors, VLAG or BETA may not be finite, and ABS(DENOM) may not be
+! positive. In such cases, [BMAT, ZMAT] would be destroyed by the update, and hence we would rather
+! not update them at all. Or should we simply terminate the algorithm?
+! N.B.: 1. Up to here, only ZMAT is rotated, which does not change H in precise arithmetic, so it is
+! fine if we do not revert ZMAT to the un-updated version.
+! 2. After UPDATEH returns, ideally, the algorithm should do something to rectify the damaging
+! rounding. However, nothing is done in the current (20220412) version of NEWUOA/LINCOA, while
+! Powell's version of LINCOA terminates immediately. Note that H is not updated at all up to here.
+if (.not. (is_finite(sum(abs(vlag)) + abs(beta) + sum(abs(hcol))) .and. abs(denom) > 0)) then
+    if (present(info)) then
+        info = DAMAGING_ROUNDING
+    end if
+    return
+end if
+
+hcol(npt + 1:npt + n) = ZERO
+
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT and set JL. After this,
 ! ZMAT(KNEW, :) contains at most two nonzero entries ZMAT(KNEW, 1) and ZMAT(KNEW, JL), one
 ! corresponding to all the columns of ZMAT that has a coefficient -1 in the factorization of
@@ -1351,42 +1377,42 @@ do j = 2, npt - n - 1_IK
     zmat(knew, j) = ZERO
 end do
 
-! Set HCOL(1:NPT) to the first NPT components of the KNEW-th column of H.
-! Here, Powell's code calculates this column by the ZMAT that has been updated by the rotation as
-! above. Theoretically, HCOL(1:NPT) can also be calculated before the rotation by calling OMEGA_COL,
-! which is tempting to do because the rotation may introduce some rounding errors to ZMAT. However,
-! according to a test on 20220411, this alternative does not improve the performance. We can also
-! calculate VLAG and BETA using the updated ZMAT here, which does not lead to improvements either.
-if (idz <= 1) then  ! IDZ <= 0 is impossible unless there is a bug.
-    !tempa = zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
-    hcol(1:npt) = zmat(knew, 1) * zmat(:, 1)
-else
-    !tempa = -zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
-    hcol(1:npt) = -zmat(knew, 1) * zmat(:, 1)
-end if
-if (jl > 1) then  ! In this case, 1 < JL == IDZ < NPT - N.
-    hcol(1:npt) = hcol(1:npt) + zmat(knew, jl) * zmat(:, jl)
-end if
+!! Set HCOL(1:NPT) to the first NPT components of the KNEW-th column of H.
+!! Here, Powell's code calculates this column by the ZMAT that has been updated by the rotation as
+!! above. Theoretically, HCOL(1:NPT) can also be calculated before the rotation by calling OMEGA_COL,
+!! which is tempting to do because the rotation may introduce some rounding errors to ZMAT. However,
+!! according to a test on 20220411, this alternative does not improve the performance. We can also
+!! calculate VLAG and BETA using the updated ZMAT here, which does not lead to improvements either.
+!if (idz <= 1) then  ! IDZ <= 0 is impossible unless there is a bug.
+!    !tempa = zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
+!    hcol(1:npt) = zmat(knew, 1) * zmat(:, 1)
+!else
+!    !tempa = -zmat(knew,1)  ! Not needed anymore. Retained for the comments below.
+!    hcol(1:npt) = -zmat(knew, 1) * zmat(:, 1)
+!end if
+!if (jl > 1) then  ! In this case, 1 < JL == IDZ < NPT - N.
+!    hcol(1:npt) = hcol(1:npt) + zmat(knew, jl) * zmat(:, jl)
+!end if
 
-! Calculate the parameters of the updating formula (4.18)--(4.20) in the NEWUOA paper.
-alpha = hcol(knew)
-tau = vlag(knew)
-denom = alpha * beta + tau**2
+!! Calculate the parameters of the updating formula (4.18)--(4.20) in the NEWUOA paper.
+!alpha = hcol(knew)
+!tau = vlag(knew)
+!denom = alpha * beta + tau**2
 
-! Quite rarely, due to rounding errors, VLAG or BETA may not be finite, and ABS(DENOM) may not be
-! positive. In such cases, [BMAT, ZMAT] would be destroyed by the update, and hence we would rather
-! not update them at all. Or should we simply terminate the algorithm?
-! N.B.: 1. Up to here, only ZMAT is rotated, which does not change H in precise arithmetic, so it is
-! fine if we do not revert ZMAT to the un-updated version.
-! 2. After UPDATEH returns, ideally, the algorithm should do something to rectify the damaging
-! rounding. However, nothing is done in the current (20220412) version of NEWUOA/LINCOA, while
-! Powell's version of LINCOA terminates immediately. Note that H is not updated at all up to here.
-if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. abs(denom) > 0)) then
-    if (present(info)) then
-        info = DAMAGING_ROUNDING
-    end if
-    return
-end if
+!! Quite rarely, due to rounding errors, VLAG or BETA may not be finite, and ABS(DENOM) may not be
+!! positive. In such cases, [BMAT, ZMAT] would be destroyed by the update, and hence we would rather
+!! not update them at all. Or should we simply terminate the algorithm?
+!! N.B.: 1. Up to here, only ZMAT is rotated, which does not change H in precise arithmetic, so it is
+!! fine if we do not revert ZMAT to the un-updated version.
+!! 2. After UPDATEH returns, ideally, the algorithm should do something to rectify the damaging
+!! rounding. However, nothing is done in the current (20220412) version of NEWUOA/LINCOA, while
+!! Powell's version of LINCOA terminates immediately. Note that H is not updated at all up to here.
+!if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. abs(denom) > 0)) then
+!    if (present(info)) then
+!        info = DAMAGING_ROUNDING
+!    end if
+!    return
+!end if
 
 sqrtdn = sqrt(abs(denom))
 ! After the following line, VLAG = H*w - e_KNEW in the NEWUOA paper (where t = KNEW).
