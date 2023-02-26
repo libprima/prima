@@ -1,6 +1,6 @@
 module update_mod
 !--------------------------------------------------------------------------------------------------!
-! This module contains subroutines concerning the update of the interpolation set.
+! This module provides subroutines concerning the updates when XPT(:, KNEW) becomes XNEW = XOPT + D.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 26, 2023 AM11:10:40
+! Last Modified: Tuesday, February 14, 2023 AM11:34:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -114,25 +114,18 @@ tau = vlag(knew)
 ! performance of BOBYQA in a test on 20220413.
 denom = sum(zmat(knew, :)**2) * beta + tau**2
 
-! After the following line, VLAG = H*w - e_KNEW in the NEWUOA paper (where t = KNEW).
-vlag(knew) = vlag(knew) - ONE
-
-! Put the KNEW-th column of the unupdated H (except for the (NPT+1)th entry) into HCOL.
-!hcol(1:npt) = zmat(knew, 1) * zmat(:, 1)
-hcol(1:npt) = matprod(zmat, zmat(knew, :))
-hcol(npt + 1:npt + n) = bmat(:, knew)
-
 ! Quite rarely, due to rounding errors, VLAG or BETA may not be finite, or DENOM may not be
 ! positive. In such cases, [BMAT, ZMAT] would be destroyed by the update, and hence we would rather
 ! not update them at all. Or should we simply terminate the algorithm?
-!if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. denom > 0)) then
-if (.not. (is_finite(sum(abs(vlag)) + abs(beta) + sum(abs(hcol))) .and. denom > 0)) then
+if (.not. (is_finite(sum(abs(vlag)) + abs(beta)) .and. denom > 0)) then
     if (present(info)) then
         info = DAMAGING_ROUNDING
     end if
     return
 end if
 
+! After the following line, VLAG = H*w - e_KNEW in the NEWUOA paper (where t = KNEW).
+vlag(knew) = vlag(knew) - ONE
 
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT. After this, ZMAT(KNEW, :) contains
 ! only one nonzero at ZMAT(KNEW, 1). Entries of ZMAT are treated as 0 if the moduli are at most ZTEST.
@@ -145,9 +138,9 @@ do j = 2, npt - n - 1_IK
     zmat(knew, j) = ZERO
 end do
 
-!! Put the KNEW-th column of the unupdated H (except for the (NPT+1)th entry) into HCOL.
-!hcol(1:npt) = zmat(knew, 1) * zmat(:, 1)
-!hcol(npt + 1:npt + n) = bmat(:, knew)
+! Put the KNEW-th column of the unupdated H (except for the (NPT+1)th entry) into HCOL.
+hcol(1:npt) = zmat(knew, 1) * zmat(:, 1)
+hcol(npt + 1:npt + n) = bmat(:, knew)
 
 ! Complete the updating of ZMAT. See (4.14) of the BOBYQA paper.
 sqrtdn = sqrt(denom)
@@ -286,7 +279,7 @@ subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zma
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GOPT, HQ, and PQ when XPT(:, KNEW) changes from XDROP to XNEW = XOSAV + D,
 ! where XOSAV is the upupdated XOPT, namedly the XOPT before UPDATEXF is called.
-! See Section 4 of the NEWUOA paper and that of the BOBYQA paper.
+! See Section 4 of the NEWUOA paper and that of the BOBYQA paper (there is no LINCOA paper).
 ! N.B.:
 ! XNEW is encoded in [BMAT, ZMAT, IDZ] after UPDATEH being called, and it also equals XPT(:, KNEW)
 ! after UPDATEXF being called. Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
@@ -335,6 +328,7 @@ if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
+    call assert(knew >= 1 .or. .not. ximproved, 'KNEW >= 1 unless X is not improved', srname)
     call assert(size(xdrop) == n .and. all(is_finite(xdrop)), 'SIZE(XDROP) == N, XDROP is finite', srname)
     call assert(size(xosav) == n .and. all(is_finite(xosav)), 'SIZE(XOSAV) == N, XOSAV is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
@@ -400,7 +394,7 @@ subroutine tryqalt(bmat, fval, ratio, sl, su, xopt, xpt, zmat, itest, gopt, hq, 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : matprod, issymmetric, trueloc
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, issymmetric, trueloc
 use, non_intrinsic :: powalg_mod, only : hess_mul
 
 implicit none
@@ -432,8 +426,6 @@ character(len=*), parameter :: srname = 'TRYQALT'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: galt(size(gopt))
-real(RP) :: gisq
-real(RP) :: gqsq
 real(RP) :: pgalt(size(gopt))
 real(RP) :: pgopt(size(gopt))
 real(RP) :: pqalt(size(pq))
@@ -460,9 +452,6 @@ if (DEBUGGING) then
     call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! [GOPT, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
-    !intp_tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * real(size(pq), RP) * EPS))
-    !call wassert(errquad(fval, xpt, gopt, pq, hq) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 !====================!
@@ -473,7 +462,6 @@ end if
 pgopt = gopt
 pgopt(trueloc(xopt >= su)) = max(ZERO, gopt(trueloc(xopt >= su)))
 pgopt(trueloc(xopt <= sl)) = min(ZERO, gopt(trueloc(xopt <= sl)))
-gqsq = sum(pgopt**2)
 
 ! Calculate the parameters of the least Frobenius norm interpolant to the current data.
 pqalt = matprod(zmat, matprod(fval, zmat))
@@ -483,13 +471,13 @@ galt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pqalt)
 pgalt = galt
 pgalt(trueloc(xopt >= su)) = max(ZERO, galt(trueloc(xopt >= su)))
 pgalt(trueloc(xopt <= sl)) = min(ZERO, galt(trueloc(xopt <= sl)))
-gisq = sum(pgalt**2)
 
 ! Test whether to replace the new quadratic model by the least Frobenius norm interpolant,
 ! making the replacement if the test is satisfied.
-! N.B.: In the following IF, Powell's condition is GQSQ < TEN *GISQ. The condition here is adopted
-! and adapted from NEWUOA, and it seems to improve the performance.
-if (ratio > TENTH .or. gqsq < TEN * gisq) then
+! N.B.: In the following IF, Powell's condition does not check RATIO. The condition here (with RATIO
+! > TENTH)is adopted and adapted from NEWUOA, and it seems to improve the performance.
+! !if (inprod(pgopt, pgopt) < TEN * inprod(pgalt, pgalt)) then  ! Powell's code
+if (ratio > TENTH .or. inprod(pgopt, pgopt) < TEN * inprod(pgalt, pgalt)) then
     itest = 0
 else
     itest = itest + 1_IK
@@ -510,8 +498,6 @@ if (DEBUGGING) then
     call assert(size(gopt) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    ! [GOPT, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
-    !call wassert(errquad(fval, xpt, gopt, pq, hq) <= intp_tol, 'QALT interpolates FVAL at XPT', srname)
 end if
 
 end subroutine tryqalt

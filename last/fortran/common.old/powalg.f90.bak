@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, February 16, 2023 AM12:46:44
+! Last Modified: Tuesday, December 27, 2022 PM03:42:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,7 @@ interface qrexc
 end interface
 
 interface quadinc
-    module procedure quadinc_d0, quadinc_ghv
+    module procedure quadinc_dx, quadinc_d0, quadinc_ghv
 end interface quadinc
 
 interface calvlag
@@ -543,115 +543,112 @@ end if
 end subroutine qrexc_Rfull
 
 
-!function quadinc_dx(d, x, xpt, gq, pq, hq) result(qinc)
-!! This function was needed in Powell's implementation of NEWUOA, but not in our implementation.
-!! It is because we use GOPT instead of GQ when representing the quadratic model. Here, GOPT is the
-!! gradient at the current "best" point, but GQ is the gradient at the base point XBASE.
-!!--------------------------------------------------------------------------------------------------!
-!! This function evaluates QINC = Q(X + D) - Q(X) with Q being the quadratic function defined
-!! via [GQ, HQ, PQ] by
-!! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
-!! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
-!! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
-!! N.B.: QUADINC_DX(D, ZEROS(SIZE(D)), XPT, GQ, PQ, HQ) = QUADINC_D0(D, XPT, GQ, PQ, HQ)
-!!--------------------------------------------------------------------------------------------------!
-!use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
-!use, non_intrinsic :: debug_mod, only : assert
-!use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-!use, non_intrinsic :: linalg_mod, only : matprod, inprod, issymmetric
-!implicit none
+function quadinc_dx(d, x, xpt, gq, pq, hq) result(qinc)
+!--------------------------------------------------------------------------------------------------!
+! This function evaluates QINC = Q(X + D) - Q(X) with Q being the quadratic function defined
+! via [GQ, HQ, PQ] by
+! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
+! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
+! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
+! N.B.: QUADINC_DX(D, ZEROS(SIZE(D)), XPT, GQ, PQ, HQ) = QUADINC_D0(D, XPT, GQ, PQ, HQ)
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, issymmetric
+implicit none
 
-!! Inputs
-!real(RP), intent(in) :: d(:)      ! D(N)
-!real(RP), intent(in) :: x(:)      ! X(N)
-!real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
-!real(RP), intent(in) :: gq(:)     ! GQ(N)
-!real(RP), intent(in) :: pq(:)     ! PQ(NPT)
-!real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
+! Inputs
+real(RP), intent(in) :: d(:)      ! D(N)
+real(RP), intent(in) :: x(:)      ! X(N)
+real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+real(RP), intent(in) :: gq(:)     ! GQ(N)
+real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+real(RP), intent(in), optional :: hq(:, :)  ! HQ(N, N)
 
-!! Output
-!real(RP) :: qinc
+! Output
+real(RP) :: qinc
 
-!! Local variable
-!character(len=*), parameter :: srname = 'QUADINC_DX'
-!integer(IK) :: n
-!integer(IK) :: npt
-!real(RP) :: dxpt(size(pq))
-!real(RP) :: s(size(x))
-!real(RP) :: sxpt(size(pq))
+! Local variable
+character(len=*), parameter :: srname = 'QUADINC_DX'
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: dxpt(size(pq))
+real(RP) :: s(size(x))
+real(RP) :: sxpt(size(pq))
 
-!! Sizes
-!n = int(size(xpt, 1), kind(n))
-!npt = int(size(xpt, 2), kind(npt))
+! Sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 
-!! Preconditions
-!if (DEBUGGING) then
-!    call assert(n >= 1, 'N >= 1', srname)
-!    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-!    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
-!    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-!    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
-!    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-!    if (present(hq)) then
-!        call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-!    end if
-!end if
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    if (present(hq)) then
+        call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    end if
+end if
 
-!!====================!
-!! Calculation starts !
-!!====================!
+!====================!
+! Calculation starts !
+!====================!
 
-!!--------------------------------------------------------------------------------------------------!
-!! The following is Powell's scheme in NEWUOA.
-!! !s = x + d
-!! !qinc = ZERO
-!! !do j = 1, n
-!! !    ! First-order term
-!! !    qinc = qinc + d(j) * gq(j)
-!! !    ! Explicit second-order term
-!! !    if (present(hq)) then
-!! !        do i = 1, j
-!! !            t = d(i) * s(j) + d(j) * x(i)
-!! !            if (i == j) then
-!! !                t = HALF * t
-!! !            end if
-!! !            qinc = qinc + t * hq(i, j)
-!! !        end do
-!! !    end if
-!! !end do
-!! !! Implicit second-order term
-!! !dxpt = matprod(d, xpt)
-!! !w = dxpt * (HALF * dxpt + matprod(x, xpt))
-!! !do i = 1, npt
-!! !    qinc = qinc + pq(i) * w(i)
-!! !end do
-!!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+! The following is Powell's scheme in NEWUOA.
+! !s = x + d
+! !qinc = ZERO
+! !do j = 1, n
+! !    ! First-order term
+! !    qinc = qinc + d(j) * gq(j)
+! !    ! Explicit second-order term
+! !    if (present(hq)) then
+! !        do i = 1, j
+! !            t = d(i) * s(j) + d(j) * x(i)
+! !            if (i == j) then
+! !                t = HALF * t
+! !            end if
+! !            qinc = qinc + t * hq(i, j)
+! !        end do
+! !    end if
+! !end do
+! !! Implicit second-order term
+! !dxpt = matprod(d, xpt)
+! !w = dxpt * (HALF * dxpt + matprod(x, xpt))
+! !do i = 1, npt
+! !    qinc = qinc + pq(i) * w(i)
+! !end do
+!--------------------------------------------------------------------------------------------------!
 
-!!--------------------------------------------------------------------------------------------------!
-!! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
-!! N.B.: INPROD(DXPT, PQ * SXPT) = INPROD(D, HESS_MUL(S, XPT, PQ))
-!!--------------------------------------------------------------------------------------------------!
-!s = HALF * d + x
-!sxpt = matprod(s, xpt)
-!dxpt = matprod(d, xpt)
-!if (present(hq)) then
-!    qinc = inprod(d, gq + matprod(hq, s)) + inprod(dxpt, pq * sxpt)
-!else
-!    qinc = inprod(d, gq) + inprod(dxpt, pq * sxpt)
-!end if
-!!!MATLAB:
-!!!if nargin >= 6
-!!!    qinc = d'*(gq + hq*s) + 0.5*dxpt'*(pq*sxpt);
-!!!else
-!!!    qinc = d'*gq + 0.5*dxpt'*(pq*sxpt);
-!!!end
-!!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+! The following is a loop-free implementation, which should be applied in MATLAB/Python/R/Julia.
+! N.B.: INPROD(DXPT, PQ * SXPT) = INPROD(D, HESS_MUL(S, XPT, PQ))
+!--------------------------------------------------------------------------------------------------!
+s = HALF * d + x
+sxpt = matprod(s, xpt)
+dxpt = matprod(d, xpt)
+if (present(hq)) then
+    qinc = inprod(d, gq + matprod(hq, s)) + inprod(dxpt, pq * sxpt)
+else
+    qinc = inprod(d, gq) + inprod(dxpt, pq * sxpt)
+end if
+!!MATLAB:
+!!if nargin >= 6
+!!    qinc = d'*(gq + hq*s) + 0.5*dxpt'*(pq*sxpt);
+!!else
+!!    qinc = d'*gq + 0.5*dxpt'*(pq*sxpt);
+!!end
+!--------------------------------------------------------------------------------------------------!
 
-!!====================!
-!!  Calculation ends  !
-!!====================!
+!====================!
+!  Calculation ends  !
+!====================!
 
-!end function quadinc_dx
+end function quadinc_dx
 
 
 function quadinc_d0(d, xpt, gq, pq, hq) result(qinc)
@@ -1175,7 +1172,7 @@ err = maxval(e) / (maxabs * real(n + npt, RP))
 end function errh
 
 
-subroutine updateh(knew, kref, d, xpt, idz, bmat, zmat, info)
+subroutine updateh(knew, kref, idz, d, xpt, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays [BMAT, ZMAT, IDZ], in order to replace the interpolation point
 ! XPT(:, KNEW) by XNEW = XPT(:, KREF) + D, where KREF usually equals KOPT in practice. See Section 4
@@ -1606,8 +1603,8 @@ end subroutine updateh
 ! (4.24) of the NEWUOA paper, with w = w(X) and v = w(X_KREF) (KREF = KOPT in the paper); it is
 ! also hat{w} in (6.5) of M. J. D. Powell, Least Frobenius norm updating of quadratic models that
 ! satisfy interpolation conditions. Math. Program., 100:183--215, 2004 (KREF = b in the paper).
-! 8. Assume that the ||D|| ~ DELTA, ||XPT|| ~ ||XREF||, and DELTA < ||XREF||. Then WCHECK is of the
-! order DELTA*||XREF||^3, which can be huge at the beginning of the algorithm and quickly become tiny.
+! 8. Assume that the |D| ~ DELTA, |XPT| ~ |XREF|, and DELTA < |XREF|. Then WCHECK is of the order
+! DELTA*|XREF|^3, which is can be huge at the beginning of the algorithm and quickly become tiny.
 !--------------------------------------------------------------------------------------------------!
 
 function calvlag_lfqint(kref, bmat, d, xpt, zmat, idz) result(vlag)
@@ -1796,8 +1793,8 @@ vlag(npt + 1:npt + n) = matprod(bmat, wmv)
 ! The following line is equivalent to the above one, but handles WCHECK and D separately.
 ! !VLAG(NPT + 1:NPT + N) = MATPROD(BMAT(:, 1:NPT), WCHECK) + MATPROD(BMAT(:, NPT + 1:NPT + N), D)
 
-! Set BETA = HALF*||XREF + D||^4 - (W-V)'*H*(W-V) - [XREF'*(X+XREF)]^2 + HALF*||XREF||^4. See
-! equations (4.10), (4.12), (4.24), and (4.26) of the NEWUOA paper.
+! Set BETA = HALF*|XREF + D|^4 - (W-V)'*H*(W-V) - [XREF'*(X+XREF)]^2 + HALF*|XREF|^4. See equations
+! (4.10), (4.12), (4.24), and (4.26) of the NEWUOA paper.
 dxref = inprod(d, xref)
 dsq = inprod(d, d)
 xrefsq = inprod(xref, xref)
@@ -1815,10 +1812,10 @@ beta = dxref**2 + dsq * (xrefsq + dxref + dxref + HALF * dsq) - dvlag - wvlag
 ! DXREF**2 + DSQ * (XREFSQ + DXREF + DXREF + HALF * DSQ) ,
 ! HALF * (INPROD(X, X)**2 + INPROD(XREF, XREF)**2) - INPROD(X, XREF)**2 with X = XREF + D.
 ! However, the first (by Powell) is a better numerical scheme. According to the first formulation,
-! this quantity is in the oder of ||D||^2*||XREF||^2 if ||XREF|| >> ||D||, which is normally the case.
-! However, each term in the second formulation has an order of ||XREF||^4. Thus much cancellation
-! will occur in the second formulation. In addition, the first formulation contracts the rounding
-! error in (XREFSQ + DXREF + DXREF + HALF * DSQ) by a factor of ||D||^2, which is typically small.
+! this quantity is in the oder of |D|^2*|XREF|^2 if |XREF| >> |D|, which is normally the case.
+! However, each term in the second formulation has an order of |XREF|^4. Thus much cancellation will
+! occur in the second formulation. In addition, the first formulation contracts the rounding error
+! in (XREFSQ + DXREF + DXREF + HALF * DSQ) by a factor of |D|^2, which is typically small.
 ! 2. We can evaluate INPROD(VLAG, WMV) as INPROD(VLAG(1:NPT), WCHECK) + INPROD(VLAG(NPT+1:NPT+N),D)
 ! if it is desirable to handle WCHECK and D separately due to their significantly different magnitudes.
 

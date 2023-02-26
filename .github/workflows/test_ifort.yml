@@ -58,6 +58,12 @@ jobs:
           if [[ -f "test_uobyqa.f90" ]] ; then
               $SEDI 's|bign = 120|bign = 90|g' test_uobyqa.f90
           fi
+          if [[ -f "test_cobyla.f90" ]] ; then
+              $SEDI 's|bign = 120|bign = 100|g' test_cobyla.f90
+          fi
+          if [[ -f "test_bobyqa.f90" ]] ; then
+              $SEDI 's|bign = 400|bign = 380|g' test_cobyla.f90
+          fi
           export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make itest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make itest
 

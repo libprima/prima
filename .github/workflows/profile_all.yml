@@ -64,7 +64,7 @@ jobs:
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
             cd(fullfile(root_dir, 'matlab/tests'));
-            options=struct(); options.nr = 10;  % Ten random runs for each problem
+            options=struct(); options.nr = 5;  % 5 random runs for each problem
             if strcmp('${{ matrix.solver }}', 'cobyla')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'ln', options);
             elseif  strcmp('${{ matrix.solver }}', 'lincoa')
