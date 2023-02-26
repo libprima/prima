@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 26, 2023 AM11:50:52
+! Last Modified: Sunday, February 26, 2023 PM11:34:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -107,7 +107,8 @@ if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
 end if
 
 ! Put the KNEW-th column of the unupdated H (except for the (NPT+1)th entry) into HCOL. Powell's
-! code does this after ZMAT is rotated below, and then HCOL(1:NPT) = ZMAT(KNEW, 1) * ZMAT(:, 1).
+! code does this after ZMAT is rotated below, and then HCOL(1:NPT) = ZMAT(KNEW, 1) * ZMAT(:, 1),
+! which saves flops but also introduces rounding errors due to the rotation.
 hcol(1:npt) = matprod(zmat, zmat(knew, :))
 hcol(npt + 1:npt + n) = bmat(:, knew)
 
