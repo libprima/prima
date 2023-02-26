@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:52:36
+! Last Modified: Sunday, February 26, 2023 AM10:17:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -75,7 +75,7 @@ use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
 use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_mod, only : trsbox, trrad
-use, non_intrinsic :: update_mod, only : updateh, updatexf, updateq, tryqalt
+use, non_intrinsic :: update_mod, only : updatexf, updateq, tryqalt, updateh
 
 implicit none
 

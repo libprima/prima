@@ -1,3 +1,5 @@
+#include "ppf.h"
+
 module linalg_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides some basic linear algebra procedures.
@@ -9,7 +11,7 @@ module linalg_mod
 !
 ! If your needs are of a different nature, you may still use these procedures to prototype your
 ! ideas, but keep in mind that the implementations here are mostly STRAIGHTFORWARD and NAIVE, and
-! some algorithms selected here may be suboptimal for your problems.
+! some algorithms selected here may be suboptimal for the your problems.
 !
 ! If it is needed to enhance the performance of these procedures, one can optimize their
 ! implementations according to the resources (hardware, e.g., C/GPU, cache, and libraries, e.g.,
@@ -22,32 +24,32 @@ module linalg_mod
 ! external functions, because the code is usually short using matrix/vector operations, and because
 ! the overhead of function calling can be high in these languages.
 ! 3. In Fortran, we implement the procedures as subroutines/functions here for several reasons.
-! 3.1.) Most of the procedures are not intrinsically available in Fortran.
+! 3.1.) Most of the procedures are not available intrinsically in Fortran.
 ! 3.2.) When using these procedures for the modernization of Powell's derivative-free software, we
-! want to start with an implementation that is verifiably faithful to Powell's original code. To
-! achieve such faithfulness, it is not always possible to use the intrinsic matrix/vector procedures
-! in Fortran, the most noticeable examples being DOT_PRODUCT (v.s. INPROD) and MATMUL (v.s. MATPROD).
-! Powell implemented all matrix/vector operations by loops, which may not be the case for intrinsic
-! procedures such as MATMUL and DOT_PRODUCT. Different implementations lead to slightly different
-! results due to rounding, and hence the verification of faithfulness will fail.
+! want to start with an implementation that is verifiably faithful to Powell's original code.
+! To achieve such faithfulness, it is not always possible to use the matrix/vector operations that
+! are intrinsically available in Fortran, the most noticeable examples being DOT_PRODUCT (INPROD) and
+! MATMUL (MATPROD). Powell implemented all matrix/vector operations by loops, which may not be the
+! case for intrinsic procedures such as MATMUL and DOT_PRODUCT. Different implementations lead to
+! slightly different results due to rounding, and hence the verification of faithfulness will fail.
 ! 3.3.) As of 20220507, with some compilers, the performance of Fortran's intrinsic matrix/vector
 ! procedures may not be as good as naive loops, let alone highly optimized libraries like BLAS.
-! Concentrating all the linear algebra procedures at one place as we do here, it will be relatively
-! easy to optimize them when necessary.
+! Concentrating all the linear algebra procedures at one place like here, we can optimize them in a
+! relatively easy way when necessary.
 !
 ! TODO: To avoid stack overflows, functions that return a potentially large array (e.g., MATPROD)
-! should declare the array as ALLOCATABLE rather than automatic (20220725: should we?).
+! should declare the array as ALLOCATABLE rather than automatic.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, February 26, 2023 AM10:21:32
+! Last Modified: Tuesday, June 21, 2022 PM11:15:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: inprod, matprod, outprod ! Mathematically, INPROD = DOT_PRODUCT, MATPROD = MATMUL
+public :: inprod, matprod, outprod  ! Mathematically, INPROD = DOT_PRODUCT, MATPROD = MATMUL
 public :: r1update, r2update, symmetrize
 public :: Ax_plus_y
 public :: eye
@@ -66,21 +68,20 @@ public :: norm
 public :: linspace
 public :: hessenberg
 public :: eigmin
-public :: vec2smat, smat2vec, smat_mul_vec
 public :: int
 
 interface matprod
-    module procedure matprod12, matprod21, matprod22
 ! N.B.:
-! 1.matprod22(x, y) may differ from the intrinsic matmul(x, y) in finite-precision arithmetic. This
-! means that the implementation of matmul is not a naive triple loop. The difference has been
-! observed on matprod22 and matprod12. The second case occurred on Oct. 11, 2021 in the
-! trust-region subproblem solver of COBYLA, and it took enormous time to find out that Powell's
-! code and the modernized code behaved differently due to matmul and matprod12 when calculating
-! RESMAX (in Powell's code) and CSTRV (in the modernized code) when stage 2 starts.
+! 1. When __USE_INTRINSIC_ALGEBRA__ = 0, matprod22(x, y) may differ from matmul(x, y) in
+! finite-precision arithmetic. This means that the implementation of matmul is not a naive triple
+! loop. The difference has been observed on matprod22 and matprod12. The second case occurred on
+! Oct. 11, 2021 in the trust-region subproblem solver of COBYLA, and it took enormous time to find
+! out that Powell's code and the modernized code behaved differently due to matmul and matprod12
+! when calculating RESMAX (in Powell's code) and CSTRV (in the modernized code) when stage 2 starts.
 ! 2. When interfaced with MATLAB, the intrinsic matmul and dot_product seem not as efficient as the
 ! implementations below (mostly by loops). This may depend on the machine (e.g., cache size),
 ! compiler, compiling options, and MATLAB version.
+    module procedure matprod12, matprod21, matprod22
 end interface matprod
 
 interface r1update
@@ -120,7 +121,7 @@ interface maximum
 end interface maximum
 
 interface norm
-    module procedure p_norm, named_norm_vec, named_norm_mat
+    module procedure p_norm, named_norm
 end interface norm
 
 interface linspace
@@ -144,472 +145,413 @@ contains
 
 
 subroutine r1_sym(A, alpha, x)
-!--------------------------------------------------------------------------------------------------!
 ! R1_SYM sets
 ! A = A + ALPHA*( X*X^T ),
-! where A is an NxN matrix, ALPHA is a scalar, and X is an N-dimensional vector.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
+! where A is an NxN matrix, ALPHA is a scalar, and X is an N-dimenional vector.
+use, non_intrinsic :: consts_mod, only : RP
 
-! Inputs
+#if __USE_POWELL_ALGEBRA__ == 1
+use, non_intrinsic :: consts_mod, only : IK
+#endif
+
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : errstop, assert
+#endif
+
+implicit none
 real(RP), intent(in) :: alpha
 real(RP), intent(in) :: x(:)
-! In-outputs
-real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(X))
-! Local variables
-character(len=*), parameter :: srname = 'R1_SYM'
+real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
+
+#if __USE_POWELL_ALGEBRA__ == 1
 integer(IK) :: n, j
+#endif
 
-! Sizes
-n = int(size(x), kind(n))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(A, 1) == n .and. size(A, 2) == n, 'SIZE(A) == [N, N]', srname)
+#if __DEBUGGING__ == 1
+character(len=*), parameter :: srname = 'R1_SYM'
+! Be careful with initialization!
+! In Fortran >=90, the initialization in the declaration implies the "save" attribute.
+! If the variable is not a parameter, it may cause unwanted behavior.
+if (size(A, 1) /= size(x) .or. size(A, 2) /= size(x)) then
+    call errstop(srname, 'SIZE(A) is invalid')
 end if
+#endif
 
-!====================!
-! Calculation starts !
-!====================!
-
-! Only update the LOWER TRIANGULAR part of A.
+#if __USE_POWELL_ALGEBRA__ == 1
+n = int(size(x), kind(n))
+! Only update the LOWER TRIANGULAR part of A. Both of the following cases are invoked in NEWUOA.
 do j = 1, n
     A(j:n, j) = A(j:n, j) + alpha * x(j:n) * x(j)
 end do
-call symmetrize(A) ! Copy A(LOWER_TRI) to A(UPPER_TRI).
-
+call symmetrize(A)  ! Copy A(LOWER_TRI) to A(UPPER_TRI).
+#else
 ! For some reason, A + alpha*outprod(x,x), A + (outprod(alpha*x, x) + outprod(x, alpha*x))/2,
-! A + symmetrize(x, alpha*x), or A + sign(alpha) * outprod(sqrt(|alpha|) * x, sqrt(|alpha|) * x)
-! does not work as well as the above lines in NEWUOA, where SYMMETRIZE should copy A(LOWER_TRI)
-! to A(UPPER_TRI) rather than set A = (A'+A)/2. When X is rather small or large, calculating
+! A + symmetrize(x, alpha*x), or A = A + sign(alpha) * outprod(sqrt(|alpha|) * x, sqrt(|alpha|) * x)
+! does not work as well as the following lines for NEWUOA, where SYMMETRIZE should copy A(LOWER_TRI)
+! to A(UPPER_TRI) rather than set A = (A'+A)/2. This is essentially the same as Powell's code,
+! although it computes A(UPPER_TRI) unnecessarily. When X is rather small or large, calculating
 ! OUTPROD(X, X) can be a bad idea, even though it guarantees symmetry in finite-precision arithmetic.
+A = A + outprod(alpha * x, x)
+call symmetrize(A)
+#endif
 
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(A, 1) == n .and. issymmetric(A), 'A is N-by-N and symmetric', srname)
-end if
+#if __DEBUGGING__ == 1
+call assert(issymmetric(A), 'A is symmetric', srname)
+#endif
 end subroutine r1_sym
 
 
 subroutine r1(A, alpha, x, y)
-!--------------------------------------------------------------------------------------------------!
 ! R1 sets
 ! A = A + ALPHA*( X*Y^T ),
-! where A is an MxN matrix, ALPHA is a real scalar, X is an M-dimensional vector, and Y is an
-! N-dimensional vector.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
+! where A is an MxN matrix, ALPHA is a real scalar, X is an M-dimenional vector, and Y is an
+! N-dimenional vector.
+use, non_intrinsic :: consts_mod, only : RP
 
-! Inputs
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : errstop
+#endif
+
+implicit none
 real(RP), intent(in) :: alpha
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: y(:)
-! In-outputs
-real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(Y))
-! Local variables
+real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
+
+#if __DEBUGGING__ == 1
 character(len=*), parameter :: srname = 'R1'
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(A, 1) == size(x) .and. size(A, 2) == size(y), 'SIZE(A) == [SIZE(X), SIZE(Y)]', srname)
+! Be careful with initialization!
+! In Fortran >=90, the initialization in the declaration implies the "save" attribute. If the
+! variable is not a parameter, it may cause unwanted behavior.
+if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
+    call errstop(srname, 'SIZE(A) is invalid')
 end if
-
-!====================!
-! Calculation starts !
-!====================!
+#endif
 
 A = A + outprod(alpha * x, y)
 !A = A + alpha * outprod(x, y)
-
-!====================!
-!  Calculation ends  !
-!====================!
 end subroutine r1
 
 
 subroutine r2_sym(A, alpha, x, y)
-!--------------------------------------------------------------------------------------------------!
 ! R2_SYM sets
 ! A = A + ALPHA*( X*Y^T + Y*X^T ),
-! where A is an NxN matrix, X and Y are N-dimensional vectors, and alpha is a scalar.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
+! where A is an NxN matrix, X and Y are N-dimenional vectors, and alpha is a scalar.
+use, non_intrinsic :: consts_mod, only : RP
 
-! Inputs
+#if __USE_POWELL_ALGEBRA__ == 1
+use, non_intrinsic :: consts_mod, only : IK
+#endif
+
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : errstop, assert
+#endif
+
+implicit none
 real(RP), intent(in) :: alpha
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: y(:)
-! In-outputs
-real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(X))
-! Local variables
-character(len=*), parameter :: srname = 'R2_SYM'
+real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
+
+#if __USE_POWELL_ALGEBRA__ == 1
 integer(IK) :: n, j
+#endif
 
-! Sizes
-n = int(size(x), kind(n))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(y) == n, 'SIZE(Y) == N', srname)
-    call assert(size(A, 1) == n .and. size(A, 2) == n, 'SIZE(A) == [N, N]', srname)
+#if __DEBUGGING__ == 1
+character(len=*), parameter :: srname = 'R2_SYM'
+if (size(x) /= size(y)) then
+    call errstop(srname, 'SIZE(X) /= SIZE(Y)')
 end if
+if (size(A, 1) /= size(x) .or. size(A, 2) /= size(x)) then
+    call errstop(srname, 'SIZE(A) is invalid')
+end if
+#endif
 
-!====================!
-! Calculation starts !
-!====================!
 
+#if __USE_POWELL_ALGEBRA__ == 1
+n = int(size(x), kind(n))
 do j = 1, n
     A(j:n, j) = A(j:n, j) + alpha * x(j:n) * y(j) + alpha * y(j:n) * x(j)
 end do
-call symmetrize(A)  ! Copy A(LOWER_TRI) to A(UPPER_TRI).
-
+! Copy A(LOWER_TRI) to A(UPPER_TRI).
+call symmetrize(A)
+#else
 ! For some reason, A = A + ALPHA * (OUTPROD(X, Y) + OUTPROD(Y, X)) does not work as well as the
-! above lines for NEWUOA, where SYMMETRIZE should copy A(LOWER_TRI) to A(UPPER_TRI), although
-! ALPHA*( X*Y^T + Y*X^T) is guaranteed symmetric even in floating-point arithmetic.
+! following lines for NEWUOA, where SYMMETRIZE should copy A(LOWER_TRI) to A(UPPER_TRI),
+! although ALPHA*( X*Y^T + Y*X^T) is guaranteed symmetric even in floating-point arithmetic. These
+! lines are essentially the same as Powell's code, although it calculates A(UPPER_TRI) unnecessarily.
+A = A + outprod(alpha * x, y) + outprod(alpha * y, x)
+call symmetrize(A)
+#endif
 
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(issymmetric(A), 'A is symmetric', srname)
-end if
+#if __DEBUGGING__ == 1
+call assert(issymmetric(A), 'A is symmetric', srname)
+#endif
 end subroutine r2_sym
 
 
 subroutine r2(A, alpha, x, y, beta, u, v)
-!--------------------------------------------------------------------------------------------------!
 ! R2 sets
 ! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ),
-! where A is an MxN matrix, ALPHA and BETA are real scalars, X and U are M-dimensional vectors,
-! Y and V are N-dimensional vectors.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
+! where A is an MxN matrix, ALPHA and BETA are real scalars, X and U are M-dimenional vectors,
+! Y and V are N-dimenional vectors.
+use, non_intrinsic :: consts_mod, only : RP
 
-! Inputs
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : errstop
+#endif
+
+implicit none
 real(RP), intent(in) :: alpha
 real(RP), intent(in) :: beta
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: y(:)
-real(RP), intent(in) :: u(:) ! U(SIZE(X))
-real(RP), intent(in) :: v(:) ! V(SIZE(Y))
-! In-outputs
-real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(Y))
-! Local variables
+real(RP), intent(in) :: u(:)          ! U(SIZE(X))
+real(RP), intent(in) :: v(:)          ! V(SIZE(Y))
+real(RP), intent(inout) :: A(:, :)    ! A(SIZE(X), SIZE(Y))
+
+
+#if __DEBUGGING__ == 1
 character(len=*), parameter :: srname = 'R2'
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(u) == size(x), 'SIZE(U) == SIZE(X)', srname)
-    call assert(size(v) == size(y), 'SIZE(V) == SIZE(Y)', srname)
-    call assert(size(A, 1) == size(x) .and. size(A, 2) == size(y), 'SIZE(A) == [SIZE(X), SIZE(Y)]', srname)
+if (size(u) /= size(x)) then
+    call errstop(srname, 'SIZE(U) /= SIZE(X)')
 end if
-
-!====================!
-! Calculation starts !
-!====================!
+if (size(v) /= size(y)) then
+    call errstop(srname, 'SIZE(V) /= SIZE(Y)')
+end if
+if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
+    call errstop(srname, 'SIZE(A) is invalid')
+end if
+#endif
 
 A = A + outprod(alpha * x, y) + outprod(beta * u, v)
 !A = A + (alpha * outprod(x, y) + beta * outprod(u, v))
-
-!====================!
-!  Calculation ends  !
-!====================!
 end subroutine r2
 
 
 function matprod12(x, y) result(z)
-!--------------------------------------------------------------------------------------------------!
-! This procedure calculates the matrix product of X and Y, where X is an M-dimensional vector
-! considered as a row, and Y is an M-by-N matrix.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
 
-! Inputs
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+use, non_intrinsic :: consts_mod, only : RP
+#else
+use, non_intrinsic :: consts_mod, only : RP, IK
+#endif
+
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : errstop
+#endif
+
+implicit none
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: y(:, :)
-! Outputs
 real(RP) :: z(size(y, 2))
-! Local variables
-character(len=*), parameter :: srname = 'MATPROD12'
+
+#if __USE_INTRINSIC_ALGEBRA__ == 0
 integer(IK) :: j
+#endif
 
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(x) == size(y, 1), 'SIZE(X) == SIZE(Y, 1)', srname)
+#if __DEBUGGING__ == 1
+character(len=*), parameter :: srname = 'MATPROD12'
+if (size(x) /= size(y, 1)) then
+    call errstop(srname, 'SIZE(X) /= SIZE(Y, 1)')
 end if
+#endif
 
-!====================!
-! Calculation starts !
-!====================!
-
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+z = matmul(x, y)
+#else
 do j = 1, int(size(y, 2), kind(j))
     ! When interfaced with MATLAB, the following seems more efficient than a loop, which is strange
     ! since inprod itself is implemented by a loop. This may depend on the machine (e.g., cache
     ! size), compiler, compiling options, and MATLAB version.
     z(j) = inprod(x, y(:, j))
 end do
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(z) == size(y, 2), 'SIZE(Z) == SIZE(Y, 2)', srname)
-end if
+#endif
 end function matprod12
 
 
 function matprod21(x, y) result(z)
-!--------------------------------------------------------------------------------------------------!
-! This procedure calculates the matrix product of X and Y, where X is an M-by-N matrix, and Y is an
-! M-dimensional vector considered as a column.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
 
-! Inputs
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+use, non_intrinsic :: consts_mod, only : RP
+#else
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
+#endif
+
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : errstop
+#endif
+
+implicit none
 real(RP), intent(in) :: x(:, :)
 real(RP), intent(in) :: y(:)
-! Outputs
 real(RP) :: z(size(x, 1))
-! Local variables
-character(len=*), parameter :: srname = 'MATPROD21'
+
+#if __USE_INTRINSIC_ALGEBRA__ == 0
 integer(IK) :: j
+#endif
 
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(x, 2) == size(y), 'SIZE(X, 2) == SIZE(Y)', srname)
+#if __DEBUGGING__ == 1
+character(len=*), parameter :: srname = 'MATPROD21'
+if (size(x, 2) /= size(y)) then
+    call errstop(srname, 'SIZE(X, 2) /= SIZE(Y)')
 end if
+#endif
 
-!====================!
-! Calculation starts !
-!====================!
-
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+z = matmul(x, y)
+#else
 z = ZERO
 do j = 1, int(size(x, 2), kind(j))
     z = z + x(:, j) * y(j)
 end do
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(z) == size(x, 1), 'SIZE(Z) == SIZE(X, 1)', srname)
-end if
+#endif
 end function matprod21
 
 
 function matprod22(x, y) result(z)
-!--------------------------------------------------------------------------------------------------!
-! This procedure calculates the matrix product of X and Y, where X is an M-by-P matrix, and Y is a
-! P-by-N matrix.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
+! N.B.: When __USE_INTRINSIC_ALGEBRA__ = 0, matprod22(x, y) may differ from matmul(x, y) due to
+! finite-precision arithmetic. This means that the implementation of matmul is not a naive triple
+! loop. Of course, the implementation depends on the platform.
 
-! Inputs
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+use, non_intrinsic :: consts_mod, only : RP
+#else
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
+#endif
+
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : errstop
+#endif
+
+implicit none
 real(RP), intent(in) :: x(:, :)
 real(RP), intent(in) :: y(:, :)
-! Outputs
 real(RP) :: z(size(x, 1), size(y, 2))
-! Local variables
-character(len=*), parameter :: srname = 'MATPROD22'
+
+#if __USE_INTRINSIC_ALGEBRA__ == 0
 integer(IK) :: i, j
+#endif
 
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(x, 2) == size(y, 1), 'SIZE(X, 2) == SIZE(Y, 1)', srname)
+#if __DEBUGGING__ == 1
+character(len=*), parameter :: srname = 'MATPROD22'
+if (size(x, 2) /= size(y, 1)) then
+    call errstop(srname, 'SIZE(X, 2) /= SIZE(Y, 1)')
 end if
+#endif
 
-!====================!
-! Calculation starts !
-!====================!
-
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+z = matmul(x, y)
+#else
 z = ZERO
 do j = 1, int(size(y, 2), kind(j))
     do i = 1, int(size(x, 2), kind(i))
         z(:, j) = z(:, j) + x(:, i) * y(i, j)
     end do
 end do
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(z, 1) == size(x, 1) .and. size(z, 2) == size(y, 2), '[SIZE(Z) == SIZE(X, 1), SIZE(Y, 2)]', srname)
-end if
+#endif
 end function matprod22
 
 
 function inprod(x, y) result(z)
-!--------------------------------------------------------------------------------------------------!
-! INPROD calculates the inner product of X and Y, i.e., Z = X^T*Y, regarding X and Y as columns.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
 
-! Inputs
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+use, non_intrinsic :: consts_mod, only : RP
+#else
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
+#endif
+
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : errstop
+#endif
+
+implicit none
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: y(:)
-! Outputs
 real(RP) :: z
-! Local variables
-character(len=*), parameter :: srname = 'INPROD'
+
+#if __USE_INTRINSIC_ALGEBRA__ == 0
 integer(IK) :: i
+#endif
 
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(x) == size(y), 'SIZE(X) == SIZE(Y)', srname)
+#if __DEBUGGING__ == 1
+character(len=*), parameter :: srname = 'INPROD'
+if (size(x) /= size(y)) then
+    call errstop(srname, 'SIZE(X) /= SIZE(Y)')
 end if
+#endif
 
-!====================!
-! Calculation starts !
-!====================!
-
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+z = dot_product(x, y)
+#else
+!z = sum(x*y)
+! Using sum seems not as efficient as a loop when interfaced with MATLAB, but this may depend
+! on the machine (e.g., cache size), compiler, compiling options, and MATLAB version.
 z = ZERO
 do i = 1, int(size(x), kind(i))
     z = z + x(i) * y(i)
 end do
-
-!====================!
-!  Calculation ends  !
-!====================!
+#endif
 end function inprod
-
 
 function outprod(x, y) result(z)
 !--------------------------------------------------------------------------------------------------!
 ! OUTPROD calculates the outer product of X and Y, i.e., Z = X*Y^T, regarding X and Y as columns.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK
 implicit none
-
-! Inputs
+! Input
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: y(:)
-! Outputs
+! Output
 real(RP) :: z(size(x), size(y))
-! Local variables
-character(len=*), parameter :: srname = 'OUTPROD'
+
 integer(IK) :: i
-
-!====================!
-! Calculation starts !
-!====================!
-
 do i = 1, int(size(y), kind(i))
     z(:, i) = x * y(i)
 end do
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(z, 1) == size(x) .and. size(z, 2) == size(y), 'SIZE(Z) == [SIZE(X), SIZE(Y)]', srname)
-end if
 end function outprod
 
 
-function eye1(n) result(x)
+pure function eye1(n) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! EYE1 is the univariate case of EYE, a function similar to the MATLAB function with the same name.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE
 implicit none
-
 ! Inputs
 integer(IK), intent(in) :: n
 ! Outputs
 real(RP) :: x(max(n, 0_IK), max(n, 0_IK))
 ! Local variables
-character(len=*), parameter :: srname = 'EYE1'
 integer(IK) :: i
-
-!====================!
-! Calculation starts !
-!====================!
-
 if (size(x, 1) * size(x, 2) > 0) then
     x = ZERO
     do i = 1, int(min(size(x, 1), size(x, 2)), kind(i))
         x(i, i) = ONE
     end do
 end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(x, 1) == max(n, 0_IK) .and. size(x, 2) == max(n, 0_IK), 'SIZE(X) == [N, N]', srname)
-end if
 end function eye1
 
 
-function eye2(m, n) result(x)
+pure function eye2(m, n) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! EYE2 is the bivariate case of EYE, a function similar to the MATLAB function with the same name.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE
 implicit none
-
 ! Inputs
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 ! Outputs
 real(RP) :: x(max(m, 0_IK), max(n, 0_IK))
 ! Local variables
-character(len=*), parameter :: srname = 'EYE2'
 integer(IK) :: i
-
-!====================!
-! Calculation starts !
-!====================!
-
 if (size(x, 1) * size(x, 2) > 0) then
     x = ZERO
     do i = 1, int(min(size(x, 1), size(x, 2)), kind(i))
         x(i, i) = ONE
     end do
-end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(x, 1) == max(m, 0_IK) .and. size(x, 2) == max(n, 0_IK), 'SIZE(X) == [M, N]', srname)
 end if
 end function eye2
 
@@ -622,14 +564,15 @@ function solve(A, b) result(x)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
 implicit none
 
 ! Inputs
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in) :: b(:)
+
 ! Outputs
 real(RP) :: x(size(A, 2))
+
 ! Local variables
 character(len=*), parameter :: srname = 'SOLVE'
 integer(IK) :: P(size(A, 1))
@@ -652,29 +595,29 @@ end if
 ! Calculation starts !
 !====================!
 
-if (n <= 0) then ! Of course, N < 0 should never happen.
+if (n <= 0) then  ! Of course, N < 0 should never happen.
     return
 end if
 
 ! Zaikun 20220527: With the following code, the classic flang 7.0.1, Huawei Bisheng flang 1.3.3,
 ! NVIDIA nvfortran 22.5, and AOCC 3.2.0 flang raise a false positive error of out-bound subscripts
-! when invoked with the -Mbounds flag. See https://github.com/flang-compiler/flang/issues/1238
+! when invoked with the -Mbounds flag. See https://github.com/flang-compiler/flang/issues/1238 .
 if (istril(A)) then
     do i = 1, n
-        x(i) = (b(i) - inprod(A(i, 1:i - 1), x(1:i - 1))) / A(i, i) ! INPROD = 0 if I == 1.
+        x(i) = (b(i) - inprod(A(i, 1:i - 1), x(1:i - 1))) / A(i, i)  ! INPROD = 0 if I == 1.
     end do
-elseif (istriu(A)) then ! This case is invoked in LINCOA.
+elseif (istriu(A)) then  ! This case is invoked in LINCOA.
     do i = n, 1, -1
-        x(i) = (b(i) - inprod(A(i, i + 1:n), x(i + 1:n))) / A(i, i) ! INPROD = 0 if I == N.
+        x(i) = (b(i) - inprod(A(i, i + 1:n), x(i + 1:n))) / A(i, i)  ! INPROD = 0 if I == N.
     end do
 else
     ! This is NOT a good algorithm for linear systems, but since the QR subroutine is available ...
     call qr(A, Q, R, P)
     x = matprod(b, Q)
     do i = n, 1, -1
-        x(i) = (x(i) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i) ! INPROD = 0 if I == N.
+        x(i) = (x(i) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)  ! INPROD = 0 if I == N.
     end do
-    x(P) = x ! Handle the permutation.
+    x(P) = x  ! Handle the permutation.
 end if
 
 !====================!
@@ -684,11 +627,10 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(x) == size(A, 2), 'SIZE(X) == SIZE(A, 2)', srname)
-    if (is_finite(sum(abs(A)) + sum(abs(b)))) then
-        tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n + 1_IK, RP)))
-        call assert(norm(matprod(A, x) - b) <= tol * maxval([ONE, norm(b), norm(x)]), 'A*X == B', srname)
-    end if
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n + 1_IK, RP)))
+    call assert(norm(matprod(A, x) - b) <= tol * maxval([ONE, norm(b), norm(x)]), 'A*X == B', srname)
 end if
+
 end function solve
 
 
@@ -707,8 +649,10 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: A(:, :)
+
 ! Outputs
 real(RP) :: B(size(A, 1), size(A, 1))
+
 ! Local variables
 character(len=*), parameter :: srname = 'INV'
 integer(IK) :: P(size(A, 1))
@@ -731,13 +675,13 @@ end if
 ! Calculation starts !
 !====================!
 
-if (n <= 0) then ! Of course, N < 0 should never happen.
+if (n <= 0) then  ! Of course, N < 0 should never happen.
     return
 end if
 
 if (istril(A)) then
     ! This case is invoked in COBYLA.
-    R = transpose(A) ! Take transpose to work on columns.
+    R = transpose(A)  ! Take transpose to work on columns.
     B = ZERO
     do i = 1, n
         B(i, i) = ONE / R(i, i)
@@ -753,11 +697,11 @@ elseif (istriu(A)) then
 else
     ! This is NOT the best algorithm for the inverse, but since the QR subroutine is available ...
     call qr(A, Q, R, P)
-    R = transpose(R) ! Take transpose to work on columns.
+    R = transpose(R)  ! Take transpose to work on columns.
     do i = n, 1, -1
         B(:, i) = (Q(:, i) - matprod(B(:, i + 1:n), R(i + 1:n, i))) / R(i, i)
     end do
-    InvP(P) = linspace(1_IK, n, n) ! The inverse permutation
+    InvP(P) = linspace(1_IK, n, n)  ! The inverse permutation
     B = transpose(B(:, InvP))
 end if
 
@@ -773,13 +717,11 @@ if (DEBUGGING) then
     tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(n + 1_IK, RP)))
     call assert(isinv(A, B, tol), 'B = A^{-1}', srname)
 end if
+
 end function inv
 
 
 function isinv(A, B, tol) result(is_inv)
-!--------------------------------------------------------------------------------------------------!
-! This procedure tests whether A = B^{-1} up to the tolerance TOL.
-!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
@@ -788,8 +730,10 @@ implicit none
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in) :: B(:, :)
 real(RP), intent(in), optional :: tol
+
 ! Outputs
 logical :: is_inv
+
 ! Local variables
 character(len=*), parameter :: srname = 'ISINV'
 real(RP) :: tol_loc
@@ -803,14 +747,7 @@ if (DEBUGGING) then
     call assert(size(A, 1) == size(A, 2), 'A is suqare', srname)
     call assert(size(B, 1) == size(B, 2), 'B is suqare', srname)
     call assert(size(A, 1) == size(B, 1), 'SIZE(A) == SIZE(B)', srname)
-    if (present(tol)) then
-        call assert(tol >= 0, 'TOL >= 0', srname)
-    end if
 end if
-
-!====================!
-! Calculation starts !
-!====================!
 
 if (present(tol)) then
     tol_loc = tol
@@ -818,11 +755,8 @@ else
     tol_loc = min(1.0E-3_RP, 1.0E2_RP * EPS * real(max(size(A, 1), size(A, 2)), RP))
 end if
 tol_loc = maxval([tol_loc, tol_loc * maxval(abs(A)), tol_loc * maxval(abs(B))])
-is_inv = all(abs(matprod(A, B) - eye(n)) <= tol_loc) .or. all(abs(matprod(B, A) - eye(n)) <= tol_loc)
 
-!====================!
-!  Calculation ends  !
-!====================!
+is_inv = all(abs(matprod(A, B) - eye(n)) <= tol_loc) .or. all(abs(matprod(B, A) - eye(n)) <= tol_loc)
 end function isinv
 
 
@@ -838,10 +772,12 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: A(:, :)
+
 ! Outputs
 real(RP), intent(out), optional :: Q(:, :)
 real(RP), intent(out), optional :: R(:, :)
 integer(IK), intent(out), optional :: P(:)
+
 ! Local variables
 character(len=*), parameter :: srname = 'QR'
 logical :: pivote
@@ -887,7 +823,7 @@ end if
 
 pivote = (present(P))
 Q_loc = eye(m)
-T = transpose(A) ! T is the transpose of R. We consider T in order to work on columns.
+T = transpose(A)  ! T is the transpose of R. We consider T in order to work on columns.
 if (pivote) then
     P = linspace(1_IK, n, n)
 end if
@@ -917,10 +853,6 @@ if (present(R)) then
     R = transpose(T(:, 1:size(R, 1)))
 end if
 
-!====================!
-!  Calculation ends  !
-!====================!
-
 ! Postconditions
 if (DEBUGGING) then
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(max(m, n) + 1_IK, RP)))
@@ -932,7 +864,7 @@ if (DEBUGGING) then
         do j = 1, min(m, n) - 1_IK
             ! The following test cannot be passed on ill-conditioned problems.
             !call assert(abs(T(j, j)) + max(tol, tol * abs(T(j, j))) >= &
-            ! & abs(T(j + 1, j + 1)), '|R(J, J)| >= |R(J + 1, J + 1)|', srname)
+            !    & abs(T(j + 1, j + 1)), '|R(J, J)| >= |R(J + 1, J + 1)|', srname)
             call assert(all(T(j, j)**2 + max(tol, tol * T(j, j)**2) >= &
                 & sum(T(j + 1:n, j:min(m, n))**2, dim=2)), &
                 & 'R(J, J)^2 >= SUM(R(J : MIN(M, N), J + 1 : N).^2', srname)
@@ -959,12 +891,14 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: A(:, :) ! A(M, N)
-real(RP), intent(in) :: b(:) ! B(M)
-real(RP), intent(in), optional :: Q(:, :) ! Q(M, :), SIZE(Q, 2) = M or MIN(M, N)
+real(RP), intent(in) :: A(:, :)  ! A(M, N)
+real(RP), intent(in) :: b(:)  ! B(M)
+real(RP), intent(in), optional :: Q(:, :)  ! Q(M, :), SIZE(Q, 2) = M or MIN(M, N)
 real(RP), intent(in), optional :: Rdiag(:) ! Rdiag(MIN(M, N))
+
 ! Outputs
 real(RP) :: x(size(A, 2))
+
 ! Local variables
 character(len=*), parameter :: srname = 'LSQR_RDIAG'
 logical :: pivote
@@ -1004,7 +938,7 @@ end if
 ! Calculation starts !
 !====================!
 
-if (n <= 0) then ! Of course, N < 0 should never happen.
+if (n <= 0) then  ! Of course, N < 0 should never happen.
     return
 end if
 
@@ -1014,20 +948,23 @@ if (present(Q)) then
         Rdiag_loc = Rdiag
     else
         Rdiag_loc = [(inprod(Q_loc(:, i), A(:, i)), i=1, min(m, n))]
-        !!MATLAB: Rdiag_loc = sum(Q_loc(:, 1:min(m,n)) .* A(:, 1:min(m,n)), 1); % Row vector
+        !!MATLAB: Rdiag_loc = sum(Q_loc(:, 1:min(m,n)) .* A(:, 1:min(m,n)), 1);  % Row vector
     end if
     rank = min(m, n)
     pivote = .false.
-else
+end if
+
+!if (.not. present(Q) .or. any(abs(Rdiag_loc) <= ZERO)) then  ! This is more reasonable
+if (.not. present(Q)) then
     call qr(A, Q=Q_loc, P=P)
     Rdiag_loc = [(inprod(Q_loc(:, i), A(:, P(i))), i=1, min(m, n))]
-    !!MATLAB: Rdiag_loc = sum(Q_loc(:, 1:min(m,n)) .* A(:, P(1:min(m,n))), 1); % Row vector
+    !!MATLAB: Rdiag_loc = sum(Q_loc(:, 1:min(m,n)) .* A(:, P(1:min(m,n))), 1);  % Row vector
     rank = maxval([0_IK, trueloc(abs(Rdiag_loc) > 0)])
     pivote = .true.
 end if
 
 x = ZERO
-y = b ! Local copy of B; B is INTENT(IN) and should not be modified.
+y = b  ! Local copy of B; B is INTENT(IN) and should not be modified.
 
 do i = rank, 1, -1
     if (pivote) then
@@ -1053,12 +990,11 @@ end do
 
 !! Postconditions
 !if (DEBUGGING) then
-! ! The following test cannot be passed.
-! !call assert(norm(matprod(b - matprod(A, x), A)) <= max(tol, tol * norm(matprod(b, A))), &
-! ! & 'A*X is the projection of B to the column space of A', srname)
+!    ! The following test cannot be passed.
+!    !call assert(norm(matprod(b - matprod(A, x), A)) <= max(tol, tol * norm(matprod(b, A))), &
+!    !    & 'A*X is the projection of B to the column space of A', srname)
 !end if
 end function lsqr_Rdiag
-
 
 function lsqr_Rfull(b, Q, R) result(x)
 !--------------------------------------------------------------------------------------------------!
@@ -1072,11 +1008,13 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: b(:) ! B(M)
-real(RP), intent(in) :: Q(:, :) ! Q(M, N)
-real(RP), intent(in) :: R(:, :) ! R(N, N)
+real(RP), intent(in) :: b(:)  ! B(M)
+real(RP), intent(in) :: Q(:, :)  ! Q(M, N)
+real(RP), intent(in) :: R(:, :)  ! R(N, N)
+
 ! Outputs
 real(RP) :: x(size(R, 2))
+
 ! Local variables
 character(len=*), parameter :: srname = 'LSQR_RFULL'
 integer(IK) :: i
@@ -1104,7 +1042,7 @@ end if
 ! Calculation starts !
 !====================!
 
-if (n <= 0) then ! Of course, N < 0 should never happen.
+if (n <= 0) then  ! Of course, N < 0 should never happen.
     return
 end if
 
@@ -1117,14 +1055,15 @@ do i = n, 1, -1
 end do
 !--------------------------------------------------------------------------------------------------!
 ! The following is equivalent to the above, yet the above version works slightly better in LINCOA.
-! !do i = n, 1_IK, -1_IK
-! !    x(i) = (inprod(Q(:, i), b) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
-! !end do
+!!do i = n, 1_IK, -1_IK
+!!    x(i) = (inprod(Q(:, i), b) - inprod(R(i, i + 1:n), x(i + 1:n))) / R(i, i)
+!!end do
 !--------------------------------------------------------------------------------------------------!
 
 !====================!
 !  Calculation ends  !
 !====================!
+
 end function lsqr_Rfull
 
 
@@ -1132,50 +1071,34 @@ function diag(A, k) result(D)
 !--------------------------------------------------------------------------------------------------!
 ! This function takes the K-th diagonal of the matrix A, K = 0 (default) corresponding to the main
 ! diagonal, K > 0 above the main diagonal, and K < 0 below the main diagonal. When |K| exceeds the
-! number of rows or columns in A, the function returns an empty rank-1 array.
+! number of rows or columns in A, then the function returns an empty rank-1 array.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
-
 ! Inputs
 real(RP), intent(in) :: A(:, :)
 integer(IK), intent(in), optional :: k
 ! Outputs
 real(RP), allocatable :: D(:)
 ! Local variables
-character(len=*), parameter :: srname = 'DIAG'
 integer(IK) :: dlen
 integer(IK) :: i
 integer(IK) :: k_loc
 
-!====================!
-! Calculation starts !
-!====================!
-
 if (present(k)) then
     k_loc = k
 else
-    k_loc = 0
+    k_loc = 0_IK
 end if
 
-! DLEN is the length of D. We allow |K| to exceed the number of rows/columns in A.
-dlen = max(0_IK, int(min(size(A, 1), size(A, 2)) - abs(k_loc), IK))
+dlen = int(min(size(A, 1), size(A, 2)), IK)
+dlen = max(0_IK, dlen - abs(k_loc))  ! We allow |K| to exceed the number of rows/columns in A.
 call safealloc(D, dlen)
 if (k_loc >= 0) then
     D = [(A(i, i + k_loc), i=1, dlen)]
 else
     D = [(A(i - k_loc, i), i=1, dlen)]
-end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(D) == dlen, 'SIZE(D) == DLEN', srname)
 end if
 end function diag
 
@@ -1189,14 +1112,15 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
-
 ! Inputs
 real(RP), intent(in) :: A(:, :)
 integer(IK), intent(in) :: lwidth
 integer(IK), intent(in) :: uwidth
 real(RP), intent(in), optional :: tol
+
 ! Outputs
 logical :: is_banded
+
 ! Local variables
 character(len=*), parameter :: srname = 'ISBANDED'
 integer(IK) :: i
@@ -1204,17 +1128,12 @@ integer(IK) :: m
 integer(IK) :: n
 real(RP) :: tol_loc
 
-! Preconditions
 if (DEBUGGING) then
     call assert(lwidth >= 0 .and. uwidth >= 0, 'LWIDTH >= 0 .and. UWIDTH >= 0', srname)
     if (present(tol)) then
         call assert(tol >= 0, 'TOL >= 0', srname)
     end if
 end if
-
-!====================!
-! Calculation starts !
-!====================!
 
 tol_loc = ZERO
 if (present(tol)) then
@@ -1234,10 +1153,6 @@ do i = 1, n
         exit
     end if
 end do
-
-!====================!
-!  Calculation ends  !
-!====================!
 end function isbanded
 
 
@@ -1245,30 +1160,18 @@ function istril(A, tol) result(is_tril)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether the matrix A is lower triangular up to the tolerance TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
 implicit none
-
 ! Inputs
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in), optional :: tol
+
 ! Outputs
 logical :: is_tril
+
 ! Local variables
-character(len=*), parameter :: srname = 'ISTRIL'
 integer(IK) :: width
 real(RP) :: tol_loc
-
-! Preconditions
-if (DEBUGGING) then
-    if (present(tol)) then
-        call assert(tol >= 0, 'TOL >= 0', srname)
-    end if
-end if
-
-!====================!
-! Calculation starts !
-!====================!
 
 if (present(tol)) then
     tol_loc = tol
@@ -1277,10 +1180,6 @@ else
 end if
 width = int(max(0, size(A, 1) - 1), kind(width))
 is_tril = isbanded(A, width, 0_IK, tol_loc)
-
-!====================!
-!  Calculation ends  !
-!====================!
 end function istril
 
 
@@ -1288,30 +1187,18 @@ function istriu(A, tol) result(is_triu)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether the matrix A is upper triangular up to the tolerance TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
 implicit none
-
 ! Inputs
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in), optional :: tol
+
 ! Outputs
 logical :: is_triu
+
 ! Local variables
-character(len=*), parameter :: srname = 'ISTRIU'
 integer(IK) :: width
 real(RP) :: tol_loc
-
-! Preconditions
-if (DEBUGGING) then
-    if (present(tol)) then
-        call assert(tol >= 0, 'TOL >= 0', srname)
-    end if
-end if
-
-!====================!
-! Calculation starts !
-!====================!
 
 if (present(tol)) then
     tol_loc = tol
@@ -1320,10 +1207,6 @@ else
 end if
 width = int(max(0, size(A, 2) - 1), kind(width))
 is_triu = isbanded(A, 0_IK, width, tol_loc)
-
-!====================!
-!  Calculation ends  !
-!====================!
 end function istriu
 
 
@@ -1331,30 +1214,18 @@ function isorth(A, tol) result(is_orth)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether the matrix A has orthonormal columns up to the tolerance TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
-
 ! Inputs
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in), optional :: tol
+
 ! Outputs
 logical :: is_orth
+
 ! Local variables
-character(len=*), parameter :: srname = 'ISORTH'
 integer(IK) :: n
-
-! Preconditions
-if (DEBUGGING) then
-    if (present(tol)) then
-        call assert(tol >= 0, 'TOL >= 0', srname)
-    end if
-end if
-
-!====================!
-! Calculation starts !
-!====================!
 
 n = int(size(A, 2), kind(n))
 
@@ -1369,10 +1240,6 @@ else
         is_orth = all(abs(matprod(transpose(A), A) - eye(n)) <= 0)
     end if
 end if
-
-!====================!
-!  Calculation ends  !
-!====================!
 end function isorth
 
 
@@ -1388,8 +1255,10 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: v(:)
+
 ! Outputs
 real(RP) :: y(size(x))
+
 ! Local variables
 character(len=*), parameter :: srname = 'PROJECT1'
 real(RP) :: u(size(v))
@@ -1405,22 +1274,22 @@ end if
 ! Calculation starts !
 !====================!
 
-if (all(abs(x) <= 0) .or. all(abs(v) <= 0)) then
+if (all(abs(x) <= ZERO) .or. all(abs(v) <= ZERO)) then
     y = ZERO
 elseif (any(is_nan(x)) .or. any(is_nan(v))) then
-    y = sum(x) + sum(v) ! Set Y to NaN
+    y = sum(x) + sum(v)  ! Set Y to NaN
 elseif (any(is_inf(v))) then
     u = ZERO
     u(trueloc(is_inf(v))) = sign(ONE, v(trueloc(is_inf(v))))
     !!MATLAB: u = 0; u(isinf(v)) = sign(v(isinf(v)))
     u = u / norm(u)
     !y = inprod(x, u) * u
-    scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
+    scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
     y = scaling * inprod(x / scaling, u) * u
 else
     u = v / norm(v)
     !y = inprod(x, u) * u
-    scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
+    scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
     y = scaling * inprod(x / scaling, u) * u
 end if
 
@@ -1454,8 +1323,10 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: V(:, :)
+
 ! Outputs
 real(RP) :: y(size(x))
+
 ! Local variables
 character(len=*), parameter :: srname = 'PROJECT2'
 real(RP) :: U(size(V, 1), min(size(V, 1), size(V, 2)))
@@ -1473,10 +1344,10 @@ end if
 
 if (size(V, 2) == 1) then
     y = project1(x, V(:, 1))
-elseif (all(abs(x) <= 0) .or. all(abs(V) <= 0)) then
+elseif (all(abs(x) <= ZERO) .or. all(abs(V) <= ZERO)) then
     y = ZERO
 elseif (any(is_nan(x)) .or. any(is_nan(V))) then
-    y = sum(x) + sum(V) ! Set Y to NaN
+    y = sum(x) + sum(V)  ! Set Y to NaN
 elseif (any(is_inf(V))) then
     where (is_inf(V))
         V_loc = sign(ONE, V)
@@ -1502,7 +1373,7 @@ if (DEBUGGING) then
         call assert(norm(y) <= (ONE + tol) * norm(x), 'NORM(Y) <= NORM(X)', srname)
         call assert(norm(x - y) <= (ONE + tol) * norm(x), 'NORM(X - Y) <= NORM(X)', srname)
         ! The following test may not be passed.
-        call assert(norm(matprod(x - y, V)) <= max(tol, tol * max(norm(x - y) * norm(V, 'fro'), &
+        call assert(norm(matprod(x - y, V)) <= max(tol, tol * max(norm(x - y) * sqrt(sum(V**2)), &
             & norm(matprod(x, V)))), 'X - Y is orthogonal to V', srname)
     end if
 end if
@@ -1510,9 +1381,7 @@ end function project2
 
 
 function hypotenuse(x1, x2) result(r)
-!--------------------------------------------------------------------------------------------------!
 ! HYPOTENUSE(X1, X2) returns SQRT(X1^2 + X2^2), handling over/underflow.
-!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
@@ -1521,8 +1390,10 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: x1
 real(RP), intent(in) :: x2
+
 ! Outputs
 real(RP) :: r
+
 ! Local variables
 character(len=*), parameter :: srname = 'HYPOTENUSE'
 real(RP) :: y(2)
@@ -1541,15 +1412,13 @@ else
     !if (y(1) > sqrt(REALMIN) .and. y(2) < sqrt(HUGENUM / 2.1_RP)) then
     !    r = sqrt(sum(y**2))
     !elseif (y(2) > 0) then
-    !    r = max(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
-    !    ! Without MAX, R < Y(2) may happen due to rounding errors.
+    !    r = y(2) * sqrt((y(1) / y(2))**2 + ONE)
     !else
     !    r = ZERO
     !end if
-    ! Scaling seems to be good in general.
+    ! Scaling seems to improve the precision in general.
     if (y(2) > 0) then
-        r = maxval([abs(y(1)), y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE)])
-        ! Without MAXVAL, R < Y(2) may happen due to rounding errors.
+        r = y(2) * sqrt((y(1) / y(2))**2 + ONE)
     else
         r = ZERO
     end if
@@ -1568,6 +1437,7 @@ if (DEBUGGING) then
             & 'MAX{ABS(X1), ABS(X2)} <= R <= ABS(X1) + ABS(X2)', srname)
     end if
 end if
+
 end function hypotenuse
 
 
@@ -1590,8 +1460,10 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: x(:)
+
 ! Outputs
 real(RP) :: G(2, 2)
+
 ! Local variables
 character(len=*), parameter :: srname = 'PLANEROT'
 real(RP) :: c
@@ -1619,23 +1491,23 @@ elseif (all(is_inf(x))) then
     ! In this case, MATLAB sets G to NaN(2, 2). We refrain from doing so to keep G orthogonal.
     c = sign(1 / sqrt(2.0_RP), x(1))
     s = sign(1 / sqrt(2.0_RP), x(2))
-elseif (abs(x(1)) <= 0 .and. abs(x(2)) <= 0) then ! X(1) == 0 == X(2).
+elseif (abs(x(1)) <= 0 .and. abs(x(2)) <= 0) then  ! X(1) == 0 == X(2).
     c = ONE
     s = ZERO
 elseif (abs(x(2)) <= EPS * abs(x(1))) then
     ! N.B.:
     ! 0. With <= instead of <, this case covers X(1) == 0 == X(2), which is treated above separately
     ! to avoid the confusing SIGN(., 0) (see 1).
-    ! 1. SIGN(A, 0) = ABS(A) in Fortran but sign(0) = 0 in MATLAB, Python, Julia, and R!
+    ! 1. SIGN(A, 0) = ABS(A) in Fortran but sign(0) = 0 in MATLAB, Python, Julia, and R!!!
     ! 2. Taking SIGN(X(1)) into account ensures the continuity of G with respect to X except at 0.
-    c = sign(ONE, x(1)) !!MATLAB: c = sign(x(1))
+    c = sign(ONE, x(1))  !!MATLAB: c = sign(x(1))
     s = ZERO
 elseif (abs(x(1)) <= EPS * abs(x(2))) then
-    ! N.B.: SIGN(A, X) = ABS(A) * sign of X /= A * sign of X ! Therefore, it is WRONG to define G
+    ! N.B.: SIGN(A, X) = ABS(A) * sign of X /= A * sign of X !!! Therefore, it is WRONG to define G
     ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)). This mistake was committed on
     ! 20211206 and took a whole day to debug! NEVER use SIGN on arrays unless you are really sure.
     c = ZERO
-    s = sign(ONE, x(2)) !!MATLAB: s = sign(x(2))
+    s = sign(ONE, x(2))  !!MATLAB: s = sign(x(2))
 else
     ! Here is the normal case. It implements the Givens rotation in a stable & continuous way as in:
     ! Bindel, D., Demmel, J., Kahan, W., and Marques, O. (2002). On computing Givens rotations
@@ -1644,25 +1516,23 @@ else
     ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
     if (all(abs(x) > sqrt(REALMIN) .and. abs(x) < sqrt(HUGENUM / 2.1_RP))) then
         ! Do NOT use HYPOTENUSE here; the best implementation for one may be suboptimal for the other
-        r = norm(x)
+        r = sqrt(sum(x**2))
         c = x(1) / r
         s = x(2) / r
     elseif (abs(x(1)) > abs(x(2))) then
         t = x(2) / x(1)
-        u = maxval([ONE, abs(t), sqrt(ONE + t**2)])  ! MAXVAL: precaution against rounding error.
-        u = sign(u, x(1)) !!MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
+        u = sign(sqrt(ONE + t**2), x(1))  !!MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
         c = ONE / u
         s = t / u
     else
         t = x(1) / x(2)
-        u = maxval([ONE, abs(t), sqrt(ONE + t**2)])  ! MAXVAL: precaution against rounding error.
-        u = sign(u, x(2)) !!MATLAB: u = sign(x(2))*sqrt(ONE + t**2)
+        u = sign(sqrt(ONE + t**2), x(2))  !!MATLAB: u = sign(x(2))*sqrt(ONE + t**2)
         c = t / u
         s = ONE / u
     end if
 end if
 
-G = reshape([c, -s, s, c], [2, 2]) !!MATLAB: G = [c, s; -s, c]
+G = reshape([c, -s, s, c], [2, 2])  !!MATLAB: G = [c, s; -s, c]
 
 !====================!
 !  Calculation ends  !
@@ -1677,52 +1547,57 @@ if (DEBUGGING) then
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
     if (all(is_finite(x) .and. abs(x) < sqrt(HUGENUM / 2.1_RP))) then
-        r = norm(x)
-        call assert(maxval(abs(matprod(G, x) - [r, ZERO])) <= max(tol, tol * r), 'G * X = [||X||, 0]', srname)
+        r = sqrt(sum(x**2))
+        call assert(norm(matprod(G, x) - [r, ZERO]) <= max(tol, tol * r), 'G*x = [|x|, 0]', srname)
     end if
 end if
+
 end function planerot
 
 
 subroutine symmetrize(A)
-!--------------------------------------------------------------------------------------------------!
 ! SYMMETRIZE(A) symmetrizes A.
-! N.B.: Here, we assume that A is a matrix that IS SUPPOSED TO BE symmetric in precise arithmetic,
-! and its asymmetry comes only from errors (e.g., rounding, noise).
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+! Here, we assume that A is a matrix that is symmetric in precise arithmetic, and its asymmetry
+! comes only from rounding errors.
+
+#if __USE_POWELL_ALGEBRA__ == 1
+use, non_intrinsic :: consts_mod, only : RP, IK
+#else
+use, non_intrinsic :: consts_mod, only : RP, HALF
+#endif
+
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : errstop, assert
+#endif
+
 implicit none
-
-! In-outputs
 real(RP), intent(inout) :: A(:, :)
-! Local variables
+
+#if __USE_POWELL_ALGEBRA__ == 1
 integer(IK) :: j
+#endif
+
+#if __DEBUGGING__ == 1
 character(len=*), parameter :: srname = 'SYMMETRIZE'
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(A, 1) == size(A, 2), 'A is square', srname)
+if (size(A, 1) /= size(A, 2)) then
+    call errstop(srname, 'A is not square')
 end if
+#endif
 
-!====================!
-! Calculation starts !
-!====================!
-
+#if __USE_POWELL_ALGEBRA__ == 1
 ! A is symmetrized by copying A(LOWER_TRI) to A(UPPER_TRI).
 ! N.B.: The following assumes that A(LOWER_TRI) has been properly defined.
 do j = 1, int(size(A, 1), kind(j))
     A(1:j - 1, j) = A(j, 1:j - 1)
 end do
+#else
+! N.B.: The following assumes that both A(UPPER_TRI) and A(LOWER_TRI) have been properly defined.
+A = HALF * (A + transpose(A))
+#endif
 
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(issymmetric(A), 'A is symmetrized', srname)
-end if
+#if __DEBUGGING__ == 1
+call assert(issymmetric(A), 'A is symmetrized', srname)
+#endif
 end subroutine symmetrize
 
 
@@ -1738,8 +1613,10 @@ implicit none
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: y(:)
+
 ! Outputs
 real(RP) :: z(size(y))
+
 ! Local variables
 character(len=*), parameter :: srname = 'AX_PLUS_Y'
 integer(IK) :: j
@@ -1766,93 +1643,59 @@ end do
 !  Calculation ends  !
 !====================!
 
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(z) == size(x), 'SIZE(Z) == SIZE(X)', srname)
-end if
 end function Ax_plus_y
 
 
 pure function isminor0(x, ref) result(is_minor)
-!--------------------------------------------------------------------------------------------------!
 ! This function tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
 ! In precise arithmetic, ISMINOR(X, REF) is TRUE if and only if X == 0; in floating-point
 ! arithmetic, ISMINOR(X, REF) is true if X is zero or its nonzero value can be attributed to
 ! computer rounding errors according to REF.
-! Larger SENSITIVITY means the function is more strict/precise, the value TENTH being due to Powell.
-!--------------------------------------------------------------------------------------------------!
+! Larger SENSITIVITY means the function is more strict/precise.
 use, non_intrinsic :: consts_mod, only : RP, TENTH, TWO
 implicit none
 
-! Inputs
 real(RP), intent(in) :: x
 real(RP), intent(in) :: ref
-! Outputs
 logical :: is_minor
-! Local variables
 real(RP), parameter :: sensitivity = TENTH
 real(RP) :: refa
 real(RP) :: refb
 
-!====================!
-! Calculation starts !
-!====================!
-
 refa = abs(ref) + sensitivity * abs(x)
 refb = abs(ref) + TWO * sensitivity * abs(x)
 is_minor = (abs(ref) >= refa .or. refa >= refb)
-
-!====================!
-!  Calculation ends  !
-!====================!
-
 end function isminor0
 
 
 function isminor1(x, ref) result(is_minor)
-!--------------------------------------------------------------------------------------------------!
 ! This function tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : IK, RP, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : IK, RP
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : errstop
+#endif
 implicit none
 
-! Inputs
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: ref(:)
-! Outputs
 logical :: is_minor(size(x))
-! Local variables
-character(len=*), parameter :: srname = 'ISMINOR1'
 integer(IK) :: i
 
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(x) == size(ref), 'SIZE(X) == SIZE(REF)', srname)
+#if __DEBUGGING__ == 1
+character(len=*), parameter :: srname = 'ISMINOR1'
+if (size(x) /= size(ref)) then
+    call errstop(srname, 'SIZE(X) /= SIZE(REF)')
 end if
-
-!====================!
-! Calculation starts !
-!====================!
+#endif
 
 is_minor = [(isminor0(x(i), ref(i)), i=1, int(size(x), IK))]
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(is_minor) == size(x), 'SIZE(IS_MINOR) == SIZE(X)', srname)
-end if
 end function isminor1
-
 
 function issymmetric(A, tol) result(is_symmetric)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether A is symmetric up to TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, HUGENUM, SYMTOL_DFT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, SYMTOL_DFT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
@@ -1860,8 +1703,10 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in), optional :: tol
+
 ! Outputs
 logical :: is_symmetric
+
 ! Local variables
 character(len=*), parameter :: srname = 'ISSYMMETRIC'
 real(RP) :: tol_loc
@@ -1882,33 +1727,27 @@ if (present(tol)) then
     tol_loc = tol
 end if
 
-! N.B.:
-! 0. It may be expensive to take TRANSPOSE(A), let alone doing it multiple times, but this is not an
-! issue in our project. We call ISSYMMETRIC only in the debugging mode, but never in production.
-! 1. In Fortran, the following instructions cannot be written as the following Boolean expression:
-! !IS_SYMMETRIC = (SIZE(A, 1)==SIZE(A, 2) .AND. &
-! ! & ALL(IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A))) .AND. &
-! ! & .NOT. ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC * MAX(MAXVAL(ABS(A)), ONE)))
+! In Fortran, the following instructions cannot be written as the following Boolean expression:
+!!IS_SYMMETRIC = (SIZE(A, 1)==SIZE(A, 2) .AND. &
+!!    & ALL(IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A))) .AND. &
+!!    & .NOT. ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC * MAX(MAXVAL(ABS(A)), ONE)))
 ! This is because Fortran may not perform short-circuit evaluation of this expression. If A is not
 ! square, then IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A)) and A - TRANSPOSE(A) are invalid.
-! 2. In addition, since Inf - Inf is NaN, we cannot replace ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC ...)
+! In addition, since Inf - Inf is NaN, we cannot replace ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC ...)
 ! with .NOT. ALL(ABS(A - TRANSPOSE(A)) <= TOL_LOC ...).
-! 3. In some cases, due to compiler bugs / features, we need to disable the test. We signify such
-! cases by setting SYMTOL_DFT to HUGENUM. For instance, when invoked with aggressive optimization
-! options (e.g., -fast-math), gfortran 11 is buggy with ALL and ANY: ALL returns .FALSE. on a vector
-! of .TRUE., while ANY returns .TRUE. on a vector of .FALSE.. In that case, we cannot test
-! ALL(IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A))).
 is_symmetric = .true.
 if (size(A, 1) /= size(A, 2)) then
     is_symmetric = .false.
-elseif (SYMTOL_DFT < 0.9_RP * HUGENUM) then
-    is_symmetric = (.not. any(abs(A - transpose(A)) > tol_loc * max(maxval(abs(A)), ONE))) .and. &
-        & all(is_nan(A) .eqv. is_nan(transpose(A))) .and. all(abs(A) > 0 .eqv. abs(transpose(A)) > 0)
+elseif (.not. all(is_nan(A) .eqv. is_nan(transpose(A)))) then
+    is_symmetric = .false.
+elseif (any(abs(A - transpose(A)) > tol_loc * max(maxval(abs(A)), ONE))) then
+    is_symmetric = .false.
 end if
 
 !====================!
 !  Calculation ends  !
 !====================!
+
 end function issymmetric
 
 
@@ -1916,7 +1755,7 @@ function p_norm(x, p) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates the P-norm of a vector X.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, TWO, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, TWO, ZERO
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf
 implicit none
@@ -1924,25 +1763,18 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: x(:)
 real(RP), intent(in), optional :: p
+
 ! Outputs
 real(RP) :: y
+
 ! Local variables
 character(len=*), parameter :: srname = 'P_NORM'
+real(RP) :: scaling
 real(RP) :: p_loc
-
-! Preconditions
-if (DEBUGGING) then
-    if (present(p)) then
-        call assert(p >= 0, 'P >= 0', srname)
-    end if
-end if
-
-!====================!
-! Calculation starts !
-!====================!
 
 if (present(p)) then
     p_loc = p
+    call assert(p >= 0, 'P >= 0', srname)
 else
     p_loc = TWO
 end if
@@ -1963,27 +1795,23 @@ else
         ! above, it is OK to write Y = MAXVAL(ABS(X)) below, but we append 0 for robustness.
         y = maxval([abs(x), ZERO])
     elseif (.not. present(p) .or. abs(p_loc - TWO) <= 0) then
-        ! N.B.: We may use the intrinsic NORM2. Here, we use the following naive implementation to
-        ! get full control on the computation, in a way similar to MATPROD and INPROD. A
-        ! disadvantage is the possibility of over/underflow.
-        y = sqrt(sum(x**2))
+        !y = sqrt(sum(x**2))
+        scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
+        y = scaling * sqrt(sum((x / scaling)**2))
     else
-        y = sum(abs(x)**p_loc)**(ONE / p_loc)
+        !scaling = max(REALMIN, sqrt(maxval(abs(x)) * minval(abs(x), mask=(abs(x) > ZERO))))
+        scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
+        y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
     end if
 end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-
 end function p_norm
 
-function named_norm_vec(x, nname) result(y)
+function named_norm(x, nname) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates named norms of a vector X.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ZERO
-use, non_intrinsic :: debug_mod, only : warning
+use, non_intrinsic :: debug_mod, only : errstop
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: string_mod, only : lower, trimstr
 implicit none
@@ -1991,14 +1819,12 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: x(:)
 character(len=*), intent(in) :: nname
+
 ! Outputs
 real(RP) :: y
-! Local variables
-character(len=*), parameter :: srname = 'NAMED_NORM_VEC'
 
-!====================!
-! Calculation starts !
-!====================!
+! Local variables
+character(len=*), parameter :: srname = 'NAMED_NORM'
 
 if (size(x) == 0) then
     y = ZERO
@@ -2011,89 +1837,38 @@ elseif (.not. any(abs(x) > 0)) then
 else
     select case (lower(trimstr(nname)))
     case ('fro')
-        y = p_norm(x) ! 2-norm, which is the default case of P_NORM.
+        y = p_norm(x)  ! 2-norm, which is the default case of P_NORM.
     case ('inf')
         ! If SIZE(X) = 0, then MAXVAL(ABS(X)) = -HUGE(X); since we have handled such a case in the
-        ! above, it is OK to write Y = MAXVAL(ABS(X)) below, but we append a 0 for robustness.
+        ! above, it is OK to write Y = MAXVAL(ABS(X)) below, but we append 0 for robustness.
         y = maxval([abs(x), ZERO])
     case default
-        call warning(srname, 'Unknown name of norm: '//trimstr(nname)//'; default to the L2-norm')
-        y = p_norm(x) ! 2-norm, which is the default case of P_NORM.
+        y = -huge(x)  ! Without this, compiles complain that Y may be uninitialized.
+        call errstop(srname, 'Unknown name of norm: '//trimstr(nname))
     end select
 end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-end function named_norm_vec
-
-function named_norm_mat(x, nname) result(y)
-!--------------------------------------------------------------------------------------------------!
-! This function calculates named norms of a vector X.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ZERO
-use, non_intrinsic :: debug_mod, only : warning
-use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: string_mod, only : lower, trimstr
-implicit none
-
-! Inputs
-real(RP), intent(in) :: x(:, :)
-character(len=*), intent(in) :: nname
-! Outputs
-real(RP) :: y
-! Local variables
-character(len=*), parameter :: srname = 'NAMED_NORM_MAT'
-
-!====================!
-! Calculation starts !
-!====================!
-
-if (size(x, 1) * size(x, 2) == 0) then
-    y = ZERO
-elseif (.not. all(is_finite(x))) then
-    ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
-    y = sum(abs(x))
-elseif (.not. any(abs(x) > 0)) then
-    ! The following is incorrect without checking the last case, as X may be all NaN.
-    y = ZERO
-else
-    select case (lower(trimstr(nname)))
-    case ('fro')
-        y = sqrt(sum(x**2))
-    case ('inf')
-        ! If SIZE(X) = 0, then MAXVAL(SUM(ABS(X), DIM=2)) = -HUGE(X); since we have handled such a
-        ! case in the above, it is OK to write Y = MAXVAL(SUM(ABS(X), DIM=2)) below, but we append
-        ! a 0 for robustness.
-        y = maxval([sum(abs(x), dim=2), ZERO])
-    case default
-        call warning(srname, 'Unknown name of norm: '//trimstr(nname)//'; default to the Frobenius norm')
-        y = sqrt(sum(x**2))
-    end select
-end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-end function named_norm_mat
+end function named_norm
 
 
 function sort_i1(x, direction) result(y)
-!--------------------------------------------------------------------------------------------------!
 ! This function sorts X according to DIRECTION, which should be 'ascend' (default) or 'descend'.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK
+#if __DEBUGGING__ == 1
 use, non_intrinsic :: debug_mod, only : assert
+#endif
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: x(:)
 character(len=*), intent(in), optional :: direction
+
 ! Outputs
 integer(IK) :: y(size(x))
-! Local variables
-character(len=*), parameter :: srname = 'SORT_I1'
 
+! Local variables
+#if __DEBUGGING__ == 1
+character(len=*), parameter :: srname = 'SORT_I1'
+#endif
 integer(IK) :: i
 integer(IK) :: n
 integer(IK) :: newn
@@ -2112,7 +1887,7 @@ end if
 
 y = x
 n = int(size(y), kind(n))
-do while (n > 1) ! Bubble sort.
+do while (n > 1)  ! Bubble sort.
     newn = 0
     do i = 2, n
         if ((y(i - 1) > y(i) .and. ascending) .or. (y(i - 1) < y(i) .and. .not. ascending)) then
@@ -2128,35 +1903,39 @@ end do
 !====================!
 
 ! Postconditions
-if (DEBUGGING) then
-    if (ascending) then
-        call assert(all(y(1:n - 1) <= y(2:n)), 'Y is ascending', srname)
-    else
-        call assert(all(y(1:n - 1) >= y(2:n)), 'Y is descending', srname)
-    end if
+#if __DEBUGGING__ == 1
+if (ascending) then
+    call assert(all(y(1:n - 1) <= y(2:n)), 'Y is ascending', srname)
+else
+    call assert(all(y(1:n - 1) >= y(2:n)), 'Y is descending', srname)
 end if
+#endif
 end function sort_i1
 
 function sort_i2(x, dim, direction) result(y)
-!--------------------------------------------------------------------------------------------------!
 ! This function sorts a matrix X according to DIM (1 or 2) and DIRECTION ('ascend' or 'descend').
-!--------------------------------------------------------------------------------------------------!
+#if __DEBUGGING__ == 1
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
+#endif
+use, non_intrinsic :: consts_mod, only : IK
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: x(:, :)
 integer, intent(in), optional :: dim
 character(len=*), intent(in), optional :: direction
+
 ! Outputs
 integer(IK) :: y(size(x, 1), size(x, 2))
+
 ! Local variables
+#if __DEBUGGING__ == 1
 character(len=*), parameter :: srname = 'SORT_I2'
+integer(IK) :: n
+#endif
 character(len=100) :: direction_loc
 integer :: dim_loc
 integer(IK) :: i
-integer(IK) :: n
 
 !====================!
 ! Calculation starts !
@@ -2188,23 +1967,23 @@ end if
 !====================!
 
 ! Postconditions
-if (DEBUGGING) then
-    if (dim_loc == 1) then
-        n = int(size(y, 1), kind(n))
-        if (trim(direction_loc) == 'ascend' .or. trim(direction_loc) == 'ASCEND') then
-            call assert(all(y(1:n - 1, :) <= y(2:n, :)), 'Y is ascending along dimension 1', srname)
-        else
-            call assert(all(y(1:n - 1, :) >= y(2:n, :)), 'Y is descending along dimension 1', srname)
-        end if
+#if __DEBUGGING__ == 1
+if (dim_loc == 1) then
+    n = int(size(y, 1), kind(n))
+    if (trim(direction_loc) == 'ascend' .or. trim(direction_loc) == 'ASCEND') then
+        call assert(all(y(1:n - 1, :) <= y(2:n, :)), 'Y is ascending along dimension 1', srname)
     else
-        n = int(size(y, 2), kind(n))
-        if (trim(direction_loc) == 'ascend' .or. trim(direction_loc) == 'ASCEND') then
-            call assert(all(y(:, 1:n - 1) <= y(:, 2:n)), 'Y is ascending along dimension 2', srname)
-        else
-            call assert(all(y(:, 1:n - 1) >= y(:, 2:n)), 'Y is descending along dimension 2', srname)
-        end if
+        call assert(all(y(1:n - 1, :) >= y(2:n, :)), 'Y is descending along dimension 1', srname)
+    end if
+else
+    n = int(size(y, 2), kind(n))
+    if (trim(direction_loc) == 'ascend' .or. trim(direction_loc) == 'ASCEND') then
+        call assert(all(y(:, 1:n - 1) <= y(:, 2:n)), 'Y is ascending along dimension 2', srname)
+    else
+        call assert(all(y(:, 1:n - 1) >= y(:, 2:n)), 'Y is descending along dimension 2', srname)
     end if
 end if
+#endif
 end function sort_i2
 
 
@@ -2214,12 +1993,8 @@ pure elemental function logical_to_int(x) result(y)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : IK
 implicit none
-
-! Inputs
 logical, intent(in) :: x
-! Outputs
 integer(IK) :: y
-
 y = merge(tsource=1_IK, fsource=0_IK, mask=x)
 end function logical_to_int
 
@@ -2228,7 +2003,7 @@ function trueloc(x) result(loc)
 !--------------------------------------------------------------------------------------------------!
 ! Similar to the `find` function in MATLAB, TRUELOC returns the indices where X is true.
 ! The motivation for this function is the fact that Fortran does not support logical indexing. See,
-! for example, https:
+! for example, https://fortran-lang.discourse.group/t/indexing-arrays-by-an-array-of-logicals
 ! 1. MATLAB, Python, Julia, and R support logical indexing, so that the Fortran code Y(TRUELOC(X))
 ! can simply be translated to Y(X).
 ! 2. If the return of TRUELOC is NOT used for indexing, its analogs in other languages are:
@@ -2238,28 +2013,13 @@ use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
-
-! Inputs
 logical, intent(in) :: x(:)
-! Outputs
-integer(IK), allocatable :: loc(:) ! INTEGER(IK) :: LOC(COUNT(X)) does not work with Absoft 22.0
-! Local variables
+integer(IK), allocatable :: loc(:)  ! INTEGER(IK) :: LOC(COUNT(X)) does not work with Absoft 22.0
 character(len=*), parameter :: srname = 'TRUELOC'
 integer(IK) :: n
-
-!====================!
-! Calculation starts !
-!====================!
-
-call safealloc(loc, int(count(x), IK)) ! Removable in F03.
+call safealloc(loc, int(count(x), IK))  ! Removable in F03.
 n = int(size(x), IK)
 loc = pack(linspace(1_IK, n, n), mask=x)
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
 if (DEBUGGING) then
     call assert(all(loc >= 1 .and. loc <= n), '1 <= LOC <= N', srname)
     call assert(size(loc) == count(x), 'SIZE(LOC) == COUNT(X)', srname)
@@ -2276,26 +2036,11 @@ use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
-
-! Inputs
 logical, intent(in) :: x(:)
-! Outputs
-integer(IK), allocatable :: loc(:) ! INTEGER(IK) :: LOC(COUNT(.NOT.X)) does not work with Absoft 22.0
-! Local variables
+integer(IK), allocatable :: loc(:)  ! INTEGER(IK) :: LOC(COUNT(.NOT.X)) does not work with Absoft 22.0
 character(len=*), parameter :: srname = 'FALSELOC'
-
-!====================!
-! Calculation starts !
-!====================!
-
-call safealloc(loc, int(count(.not. x), IK)) ! Removable in F03.
+call safealloc(loc, int(count(.not. x), IK))  ! Removable in F03.
 loc = trueloc(.not. x)
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
 if (DEBUGGING) then
     call assert(all(loc >= 1 .and. loc <= size(x)), '1 <= LOC <= N', srname)
     call assert(size(loc) == size(x) - count(x), 'SIZE(LOC) == SIZE(X) - COUNT(X)', srname)
@@ -2321,25 +2066,18 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: x(:)
+
 ! Outputs
 real(RP) :: y
+
 ! Local variables
 character(len=*), parameter :: srname = 'MINIMUM1'
 real(RP) :: nan_test
 
-!====================!
-! Calculation starts !
-!====================!
-
 !y = merge(tsource=sum(x), fsource=minval(x), mask=any(is_nan(x)))
-nan_test = sum(abs(x)) ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
+nan_test = sum(abs(x))  ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
 y = merge(tsource=nan_test, fsource=minval(x), mask=is_nan(nan_test))
 
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
 if (DEBUGGING) then
     call assert(.not. any(x < y), 'No entry of X is smaller than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
@@ -2364,25 +2102,18 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: x(:, :)
+
 ! Outputs
 real(RP) :: y
+
 ! Local variables
 character(len=*), parameter :: srname = 'MINIMUM2'
 real(RP) :: nan_test
 
-!====================!
-! Calculation starts !
-!====================!
-
 !y = merge(tsource=sum(x), fsource=minval(x), mask=any(is_nan(x)))
-nan_test = sum(abs(x)) ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
+nan_test = sum(abs(x))  ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
 y = merge(tsource=nan_test, fsource=minval(x), mask=is_nan(nan_test))
 
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
 if (DEBUGGING) then
     call assert(.not. any(x < y), 'No entry of X is smaller than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
@@ -2408,25 +2139,18 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: x(:)
+
 ! Outputs
 real(RP) :: y
+
 ! Local variables
 character(len=*), parameter :: srname = 'MAXIMUM1'
 real(RP) :: nan_test
 
-!====================!
-! Calculation starts !
-!====================!
-
 !y = merge(tsource=sum(x), fsource=maxval(x), mask=any(is_nan(x)))
-nan_test = sum(abs(x)) ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
+nan_test = sum(abs(x))  ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
 y = merge(tsource=nan_test, fsource=maxval(x), mask=is_nan(nan_test))
 
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
 if (DEBUGGING) then
     call assert(.not. any(x > y), 'No entry of X is larger than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
@@ -2439,7 +2163,7 @@ function maximum2(x) result(y)
 ! This function returns NaN if X contains NaN; otherwise, it returns MAXVAL(X). Matrix version.
 ! F2018 does not specify MAXVAL(X) when X contains NaN, which motivates this function. The behavior
 ! of this function is the same as the following functions in various languages:
-! MATLAB: max(x, [], 'all', 'includenan')
+! MATLAB: max(x, [],  'all', 'includenan')
 ! Python: numpy.max(x)
 ! Julia: maximum(x)
 ! R: max(x)
@@ -2451,25 +2175,18 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: x(:, :)
+
 ! Outputs
 real(RP) :: y
+
 ! Local variables
 character(len=*), parameter :: srname = 'MAXIMUM2'
 real(RP) :: nan_test
 
-!====================!
-! Calculation starts !
-!====================!
-
 !y = merge(tsource=sum(x), fsource=maxval(x), mask=any(is_nan(x)))
-nan_test = sum(abs(x)) ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
+nan_test = sum(abs(x))  ! 1. Assume: X has NaN iff NAN_TEST = NaN. 2. Avoid enormous calls to IS_NAN
 y = merge(tsource=nan_test, fsource=maxval(x), mask=is_nan(nan_test))
 
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
 if (DEBUGGING) then
     call assert(.not. any(x > y), 'No entry of X is larger than Y', srname)
     call assert((.not. is_nan(y)) .or. any(is_nan(x)), 'Y is not NaN unless X contains NaN', srname)
@@ -2485,14 +2202,17 @@ function linspace_r(xstart, xstop, n) result(x)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Inputs
 real(RP), intent(in) :: xstart
 real(RP), intent(in) :: xstop
 integer(IK), intent(in) :: n
+
 ! Outputs
-real(RP) :: x(max(n, 0_IK))
+real(RP), allocatable :: x(:)
+
 ! Local variables
 character(len=*), parameter :: srname = 'LINSPACE_R'
 integer(IK) :: i
@@ -2503,7 +2223,9 @@ real(RP) :: xunit
 ! Calculation starts !
 !====================!
 
-if (n <= 0) then ! Quick return when N <= 0.
+call safealloc(x, max(n, 0_IK))
+
+if (n <= 0) then  ! Quick return when N <= 0.
     return
 end if
 
@@ -2522,7 +2244,7 @@ else
     x = xstart + xunit * real([(i, i=0, nm)], RP)
 end if
 
-if (n >= 1) then ! Indeed, N < 1 cannot happen due to the quick return when N <= 0.
+if (n >= 1) then  ! Indeed, N < 1 cannot happen due to the quick return when N <= 0.
     x(1) = xstart
     x(n) = xstop
 end if
@@ -2543,14 +2265,17 @@ function linspace_i(xstart, xstop, n) result(x)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: xstart
 integer(IK), intent(in) :: xstop
 integer(IK), intent(in) :: n
+
 ! Outputs
-integer(IK) :: x(max(n, 0_IK))
+integer(IK), allocatable :: x(:)
+
 ! Local variables
 character(len=*), parameter :: srname = 'LINSPACE_I'
 
@@ -2558,7 +2283,8 @@ character(len=*), parameter :: srname = 'LINSPACE_I'
 ! Calculation starts !
 !====================!
 
-x = nint(linspace_r(real(xstart, RP), real(xstop, RP), n), IK)  ! Rounded to the closest integer.
+call safealloc(x, max(n, 0_IK))
+x = int(linspace_r(real(xstart, RP), real(xstop, RP), n), IK)
 
 !====================!
 !  Calculation ends  !
@@ -2585,9 +2311,11 @@ implicit none
 
 ! In-outputs
 real(RP), intent(inout) :: A(:, :)
+
 ! Outputs
 real(RP), intent(out) :: tdiag(:)
 real(RP), intent(out) :: tsubdiag(:)
+
 ! Local variables
 character(len=*), parameter :: srname = 'HESSENBERG_HHD_TRID'
 integer(IK) :: i
@@ -2607,8 +2335,8 @@ n = int(size(A, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
-    ! Even though we only need the lower triangular part of A, we assume that, in our project,
-    ! something is wrong if this subroutine is invoked with a non-symmetric matrix A.
+    ! Even though we only need the lower triangular part of A, we assume that something is wrong if
+    ! this subroutine is invoked with a non-symmetric matrix A.
     call assert(issymmetric(A), 'A is symmetric', srname)
     call assert(size(tdiag) == n, 'SIZE(TDIAG) == N', srname)
     call assert(size(tsubdiag) == max(0_IK, n - 1_IK), 'SIZE(TDIAG) == MAX(0, N-1)', srname)
@@ -2618,7 +2346,7 @@ end if
 ! Calculation starts !
 !====================!
 
-if (n <= 0) then ! Quick return when N <= 0. Of course, N < 0 is impossible.
+if (n <= 0) then  ! Quick return when N <= 0. Of course, N < 0 is impossible.
     return
 end if
 
@@ -2630,7 +2358,7 @@ if (scaling <= 0) then
     tdiag = ZERO
     tsubdiag = ZERO
     return
-elseif (scaling > 1.0E8 .or. scaling < 1.0E-4) then ! The thresholds are empirical.
+elseif (scaling > 1.0E8 .or. scaling < 1.0E-4) then  ! The thresholds are empirical
     A = A / scaling
     scaled = .true.
 end if
@@ -2640,7 +2368,7 @@ tdiag = diag(A)
 do k = 1, n - 1_IK
     colsq = sum(A(k + 2:n, k)**2)
     if (colsq <= 0) then
-        tsubdiag(k) = A(k + 1, k) ! A(K+1, K) may have been updated in previous loops.
+        tsubdiag(k) = A(k + 1, k)  ! A(K+1, K) may have been updated in previous loops.
         A(k + 1, k) = ZERO
         cycle
     end if
@@ -2652,8 +2380,8 @@ do k = 1, n - 1_IK
     w(k + 1:n) = sqrt(TWO / (colsq + A(k + 1, k)**2)) * A(k + 1:n, k)
     !----------------------------------------------------------------------------------------------!
     ! The two lines above are from Powell. They are equivalent to the following two lines.
-    ! !A(K + 1, K) = A(K + 1, K) - ASUBD
-    ! !W(K + 1:N) = sqrt(TWO) * A(K + 1:N, K) / NORM(A(K + 1:N, K))
+    !!A(K + 1, K) = A(K + 1, K) - ASUBD
+    !!W(K + 1:N) = sqrt(TWO) * A(K + 1:N, K) / NORM(A(K + 1:N, K))
     !----------------------------------------------------------------------------------------------!
     A(k + 1:n, k) = w(k + 1:n)
 
@@ -2686,6 +2414,7 @@ if (DEBUGGING) then
     call assert(size(tdiag) == n, 'SIZE(TDIAG) == N', srname)
     call assert(size(tsubdiag) == max(0_IK, n - 1_IK), 'SIZE(TDIAG) == MAX(0, N-1)', srname)
 end if
+
 end subroutine hessenberg_hhd_trid
 
 
@@ -2700,9 +2429,11 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: A(:, :)
+
 ! Outputs
 real(RP), intent(out) :: H(:, :)
 real(RP), intent(out), optional :: Q(:, :)
+
 ! Local variables
 character(len=*), parameter :: srname = 'HESSENBERG_FULL'
 integer(IK) :: i
@@ -2734,13 +2465,13 @@ if (DEBUGGING) then
     end if
 end if
 
-if (n <= 0) then ! Quick return when N <= 0. Of course, N < 0 is impossible.
+if (n <= 0) then  ! Quick return when N <= 0. Of course, N < 0 is impossible.
     return
 end if
 
 H = A
 if (present(Q)) then
-    Q = eye(n)
+    Q = eye(n, n)
 end if
 
 ! According to a test on 20220508, scaling enhances the stability and slightly improves the
@@ -2749,7 +2480,7 @@ scaling = maxval(abs(H))
 scaled = .false.
 if (scaling <= 0) then
     return
-elseif (scaling > 1.0E6 .or. scaling < 1.0E-6) then ! 1.0E6 and 1.0E-6 are heuristic.
+elseif (scaling > 1.0E6 .or. scaling < 1.0E-6) then  ! 1.0E6 and 1.0E-6 are heuristic.
     H = H / scaling
     scaled = .true.
 end if
@@ -2767,8 +2498,8 @@ do j = 1, n - 1_IK
     v(j + 1) = -colsq / (v(j + 1) + subd)
     v(j + 1:n) = sqrt(TWO / (colsq + v(j + 1)**2)) * v(j + 1:n)
     ! The two lines above are from Powell. They are equivalent to the following two lines.
-    ! !V(J + 1) = V(J + 1) - SUBD
-    ! !V(J + 1:N) = sqrt(TWO) * V(J + 1:N) / NORM(V(J + 1:N))
+    !!V(J + 1) = V(J + 1) - SUBD
+    !!V(J + 1:N) = sqrt(TWO) * V(J + 1:N) / NORM(V(J + 1:N))
     !----------------------------------------------------------------------------------------------!
 
     do i = j + 1_IK, n
@@ -2798,7 +2529,6 @@ end if
 !  Calculation ends  !
 !====================!
 
-! Postconditions
 if (DEBUGGING) then
     call assert(size(H, 1) == n .and. size(H, 2) == n, 'SIZE(H) == [N, N]', srname)
     call assert(isbanded(H, 1_IK, n - 1_IK), 'H is a Hessenberg matrix', srname)
@@ -2810,6 +2540,7 @@ if (DEBUGGING) then
         call assert(all(abs(matprod(Q, H) - matprod(A, Q)) <= tol * maxval(abs(A))), 'Q*H = A*Q', srname)
     end if
 end if
+
 end subroutine hessenberg_full
 
 
@@ -2818,7 +2549,7 @@ function eigmin_sym_trid(td, tn, tol) result(eig_min)
 ! This function approximates the smallest eigenvalue EIG_MIN of a symmetric tridiagonal matrix by a
 ! bisection method, in which process EMINLB is a lower bound on EIG_MIN and EMINUB an upper bound.
 ! TD is the diagonal of the tridiagonal matrix, and TN is the subdiagonal and superdiagonal. EMINUB
-! is occasionally adjusted by the rule of false position (https:
+! is occasionally adjusted by the rule of false position (https://en.wikipedia.org/wiki/Regula_falsi),
 ! which attempts to accelerate the bisection by linear interpolation. The code is retrieved from
 ! Powell's trust region subproblem solver in UOBYQA.
 !
@@ -2839,9 +2570,9 @@ function eigmin_sym_trid(td, tn, tol) result(eig_min)
 !
 ! In MATLAB/Python/Julia/R, to get the smallest eigenvalue, we should use the eigenvalue computation
 ! function built in the languages or standard libraries. For example, in MATLAB, we can do
-! !tridh = spdiags([[tn; 0], td, [0; tn]], -1:1, n, n);
-! !crvmin = eigs(tridh, 1, 'smallestreal');
-! !% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
+!!tridh = spdiags([[tn; 0], td, [0; tn]], -1:1, n, n);
+!!crvmin = eigs(tridh, 1, 'smallestreal');
+!!% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -2882,7 +2613,7 @@ end if
 ! Calculation starts !
 !====================!
 
-maxiter = 100
+maxiter = 100_IK
 tol_loc = 1.0E-6_RP
 if (present(tol)) then
     tol_loc = tol
@@ -2903,7 +2634,7 @@ do k = 1, n - 1_IK
     end if
 end do
 
-if (all(piv >= 0)) then ! The matrix is positive semidefinite.
+if (all(piv >= 0)) then  ! The matrix is positive semidefinite.
     eminub = minval(piv)
     eminlb = ZERO
 else
@@ -2912,8 +2643,8 @@ else
 end if
 
 ksav = 0
-pivksv = ZERO ! This initial value will not be used, but Fortran compilers may complain without it.
-do iter = 1, maxiter ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
+pivksv = ZERO  ! This initial value will not be used, but Fortran compilers may complain without it.
+do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose an explicit MAXITER.
     if (eminub - eminlb <= tol_loc * max(abs(eminlb), abs(eminub))) then
         exit
     end if
@@ -2952,14 +2683,14 @@ do iter = 1, maxiter ! Powell's code is essentially a DO WHILE loop. We impose a
         eminub = (eig_min * piv(k) - eminlb * pivnew(k)) / (piv(k) - pivnew(k))
     else
         ksav = k
-        pivksv = pivnew(k) ! PIVKSAV <= 0.
+        pivksv = pivnew(k)  ! PIVKSAV <= 0.
         eminub = eig_min
     end if
 
     !----------------------------------------------------------------------------------------------!
     ! Powell's original code contains the following, why? It seems to cause wrong outputs sometimes.
     ! Zaikun 20220511: Does this affect the adjustment by the rule of false position?
-    ! !IF (K < KSAV .OR. (K == KSAV .AND. PIVKSV == 0)) EXIT
+    !!IF (K < KSAV .OR. (K == KSAV .AND. PIVKSV == 0)) EXIT
     !----------------------------------------------------------------------------------------------!
 end do
 
@@ -2968,138 +2699,8 @@ eig_min = eminlb
 !====================!
 !  Calculation ends  !
 !====================!
+
 end function eigmin_sym_trid
-
-
-function vec2smat(vec) result(smat)
-!--------------------------------------------------------------------------------------------------!
-! This function transforms a vector VEC to a symmetric matrix SMAT with the vector storing the upper
-! triangular part of the matrix column by column.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
-! Inputs
-real(RP), intent(in) :: vec(:)
-! Outputs
-real(RP) :: smat((nint(sqrt(real(8 * size(vec) + 1))) - 1) / 2, (nint(sqrt(real(8 * size(vec) + 1))) - 1) / 2)
-! Local variables
-character(len=*), parameter :: srname = 'SMAT2VEC'
-integer(IK) :: ih
-integer(IK) :: j
-integer(IK) :: n
-
-! Sizes
-n = int(size(smat, 1), kind(n))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(vec) == n * (n + 1) / 2, 'SIZE(VEC) = N*(N+1)/2', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-do j = 1, n
-    ih = (j - 1_IK) * j / 2_IK
-    smat(1:j, j) = vec(ih + 1:ih + j)
-    smat(j, 1:j - 1) = smat(1:j - 1, j)
-end do
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(issymmetric(smat), 'SMAT is symmetric', srname)
-end if
-end function vec2smat
-
-
-function smat2vec(smat) result(vec)
-!--------------------------------------------------------------------------------------------------!
-! This function transforms a symmetric matrix SMAT to a vector VEC that stores the upper triangular
-! part of the matrix column by column.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
-! Inputs
-real(RP), intent(in) :: smat(:, :)
-! Outputs
-real(RP) :: vec((size(smat, 1) * (size(smat, 1) + 1)) / 2)
-! Local variables
-character(len=*), parameter :: srname = 'SMAT2VEC'
-integer(IK) :: ih
-integer(IK) :: n
-integer(IK) :: j
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(issymmetric(smat), 'SMAT is symmetric', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-n = int(size(smat, 1), kind(n))
-do j = 1, n
-    ih = (j - 1_IK) * j / 2_IK
-    vec(ih + 1:ih + j) = smat(1:j, j)
-end do
-
-!====================!
-! Calculation ends   !
-!====================!
-
-end function smat2vec
-
-
-function smat_mul_vec(smatv, x) result(y)
-!--------------------------------------------------------------------------------------------------!
-! This function calculates the product of a symmetric matrix and a vector X, with the upper
-! triangular part of the matrix stored in the vector SMATV column by column.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
-! Inputs
-real(RP), intent(in) :: smatv(:)
-real(RP), intent(in) :: x(:)
-! Outputs
-real(RP) :: y(size(x))
-! Local variables
-character(len=*), parameter :: srname = 'SMAT_MUL_VEC'
-integer(IK) :: ih
-integer(IK) :: n
-integer(IK) :: j
-
-! Sizes
-n = int(size(x), kind(n))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(smatv) == n * (n + 1_IK) / 2_IK, 'SIZE(SMATV) = N*(N+1)/2', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-do j = 1, n
-    ih = (j - 1_IK) * j / 2_IK
-    y(j) = inprod(smatv(ih + 1:ih + j), x(1:j))
-    y(1:j - 1) = y(1:j - 1) + x(j) * smatv(ih + 1:ih + j - 1)
-end do
-
-!====================!
-! Calculation ends   !
-!====================!
-
-end function smat_mul_vec
 
 
 end module linalg_mod

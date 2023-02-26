@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, February 15, 2023 PM08:52:40
+! Last Modified: Thursday, February 16, 2023 AM12:17:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -436,7 +436,7 @@ do tr = 1, maxtr
             ! XNEW = XOPT + D.
             xdrop = xpt(:, knew_tr)
             xosav = xpt(:, kopt)
-            call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
+            call updateh(knew_tr, kopt, d, xpt, idz, bmat, zmat)
             call updatexf(knew_tr, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
             call updateq(idz, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
@@ -563,7 +563,7 @@ do tr = 1, maxtr
         ! and [GOPT, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
         xdrop = xpt(:, knew_geo)
         xosav = xpt(:, kopt)
-        call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
+        call updateh(knew_geo, kopt, d, xpt, idz, bmat, zmat)
         call updatexf(knew_geo, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
         call updateq(idz, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 

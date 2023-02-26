@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, February 12, 2023 AM12:29:11
+! Last Modified: Sunday, February 26, 2023 PM12:52:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -318,7 +318,7 @@ do tr = 1, maxtr
         if (knew_tr > 0) then
             xdrop = xpt(:, knew_tr)
             xosav = xopt
-            call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
+            call updateh(knew_tr, kopt, d, xpt, idz, bmat, zmat)
             call updatexf(knew_tr, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
             call updateq(idz, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
@@ -533,7 +533,7 @@ do tr = 1, maxtr
         ! and [GOPT, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
         xdrop = xpt(:, knew_geo)
         xosav = xopt
-        call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
+        call updateh(knew_geo, kopt, d, xpt, idz, bmat, zmat)
         call updatexf(knew_geo, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
         call updateq(idz, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
