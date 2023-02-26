@@ -17,7 +17,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, February 26, 2023 PM08:21:19
+! Last Modified: Sunday, February 26, 2023 PM11:33:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1319,7 +1319,7 @@ if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
 end if
 
 ! Set the first NPT components of HCOL to the leading elements of the KNEW-th column of H. Powell's
-! code does this after ZMAT is rotated blow, which saves flops.
+! code does this after ZMAT is rotated blow, which saves flops but also introduces rounding errors.
 hcol(1:npt) = omega_col(idz, zmat, knew)
 hcol(npt + 1:npt + n) = bmat(:, knew)
 

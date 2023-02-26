@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 02, 2023 AM01:40:06
+! Last Modified: Monday, February 27, 2023 AM01:55:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -619,7 +619,8 @@ do tr = 1, maxtr
         dnormsav = HUGENUM
     end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
 
-    if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
+    !if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
+    if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
         b = b - matprod(xopt, amat)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
         fshift = fval - fopt
