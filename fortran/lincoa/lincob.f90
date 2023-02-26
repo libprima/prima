@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 16, 2023 AM12:17:06
+! Last Modified: Monday, February 27, 2023 AM01:56:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -598,9 +598,9 @@ do tr = 1, maxtr
 
     ! Shift XBASE if XOPT may be too far from XBASE.
     ! Powell's original criterion for shifting XBASE: before a trust region step or a geometry step,
-    ! shift XBASE if SUM(XOPT**2) >= 1.0E4*DELTA**2.
-    if (sum(xopt**2) >= 1.0E4_RP * delta**2) then
-        ! Other possible criteria: SUM(XOPT**2) >= 1.0E3*DELTA**2, SUM(XOPT**2) >= 1.0E4*RHO**2.
+    ! shift XBASE if SUM(XOPT**2) >= 1.0E3*DELTA**2.
+    if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
+        ! Other possible criteria: SUM(XOPT**2) >= 1.0E4*DELTA**2, SUM(XOPT**2) >= 1.0E3*RHO**2.
         b = b - matprod(xopt, amat)
         call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
         ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
