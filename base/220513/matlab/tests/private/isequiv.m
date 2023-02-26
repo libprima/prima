@@ -561,6 +561,27 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Special Treatments%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 minfhist = min(length(output1.fhist), length(output2.fhist));
+% UOBYQA
+if strcmpi(solvers{1}, 'uobyqan') && strcmpi(solvers{2}, 'uobyqa') && exitflag1 == -1 ...
+        && output1.funcCount <= output2.funcCount ...
+        && all(output1.fhist(1:minfhist) == output2.fhist(1:minfhist))
+    x2 = x1;
+    fx2 = fx1;
+    exitflag2 = exitflag1;
+    output2.fhist = output1.fhist;
+    output2.funcCount = output1.funcCount;
+    fprintf('UOBYQAN exits due to NaN in X.\n');
+end
+if strcmpi(solvers{1}, 'uobyqa') && strcmpi(solvers{2}, 'uobyqan') && exitflag2 == -1 ...
+        && output2.funcCount <= output1.funcCount ...
+        && all(output1.fhist(1:minfhist) == output2.fhist(1:minfhist))
+    x2 = x1;
+    fx2 = fx1;
+    exitflag2 = exitflag1;
+    output2.fhist = output1.fhist;
+    output2.funcCount = output1.funcCount;
+    fprintf('UOBYQAN exits due to NaN in X.\n');
+end
 % NEWUOA
 if strcmpi(solvers{1}, 'newuoa') && strcmpi(solvers{2}, 'newuoan') && exitflag1 == 2 && exitflag2 ~=2 ...
         && fx2 <= fx1 && output1.funcCount <= output2.funcCount ...
