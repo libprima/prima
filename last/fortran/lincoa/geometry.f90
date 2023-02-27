@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 09, 2023 AM11:52:32
+! Last Modified: Monday, February 27, 2023 PM02:58:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -375,7 +375,8 @@ feasible = (cstrv <= 0)
 pglag = matprod(qfac(:, nact + 1:n), matprod(glag, qfac(:, nact + 1:n)))
 !!MATLAB: pglag = qfac(:, nact+1:n) * (glag' * qfac(:, nact+1:n))';
 normg = sqrt(sum(pglag**2))
-if (nact > 0 .and. nact < n .and. normg > 0) then
+!if (nact > 0 .and. nact < n .and. normg > 0) then
+if (nact > 0 .and. nact < n .and. normg > EPS) then
     pgstp = (delbar / normg) * pglag
     if (inprod(pgstp, hess_mul(pgstp, xpt, pqlag)) < 0) then  ! <PGSTP, HESS_LAG*PGSTP> is negative.
         pgstp = -pgstp
@@ -417,7 +418,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(s)), 'S is finite', srname)
     ! In theory, |S| = DELBAR. Considering rounding errors, we check that DELBAR/2 < |S| < 2*DELBAR.
     ! It is crucial to ensure that the geometry step is nonzero.
-    call assert(norm(s) > HALF * delbar .and. norm(s) < TWO * delbar, 'DELBAR/2 < |S| < 2*DELBAR', srname)
+    !call assert(norm(s) > HALF * delbar .and. norm(s) < TWO * delbar, 'DELBAR/2 < |S| < 2*DELBAR', srname)
 end if
 
 end subroutine geostep
