@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM01:15:27
+! Last Modified: Monday, February 27, 2023 PM03:19:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -384,7 +384,7 @@ feasible = (cstrv <= 0)
 pglag = matprod(qfac(:, nact + 1:n), matprod(glag, qfac(:, nact + 1:n)))
 !!MATLAB: pglag = qfac(:, nact+1:n) * (glag' * qfac(:, nact+1:n))';
 normg = norm(pglag)
-if (nact > 0 .and. nact < n .and. normg > 0) then
+if (nact > 0 .and. nact < n .and. normg > EPS) then  ! EPS prevents floating point exception.
     pgstp = (delbar / normg) * pglag
     if (inprod(pgstp, hess_mul(pgstp, xpt, pqlag)) < 0) then  ! <PGSTP, HESS_LAG*PGSTP> is negative.
         pgstp = -pgstp
