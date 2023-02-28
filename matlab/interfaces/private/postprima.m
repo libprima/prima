@@ -615,7 +615,9 @@ if options.debug && ~options.classical
         lb = probinfo.raw_data.lb(:);
         ub = probinfo.raw_data.ub(:);
         cstrv = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq);
-        if ~(isnan(cstrv) && isnan(constrviolation)) && ~(cstrv == inf && constrviolation == inf) && ~(abs(constrviolation-cstrv) <= lincoa_prec*max(1,abs(cstrv)) && strcmp(solver, 'lincoa')) && ~(abs(constrviolation-cstrv) <= cobyla_prec*max(1,abs(cstrv)) && strcmp(solver, 'cobyla'))
+        if ~(isnan(cstrv) && isnan(constrviolation)) && ~(cstrv == inf && constrviolation == inf) && ...
+                ~(abs(constrviolation-cstrv) <= lincoa_prec*max(1,abs(cstrv)) && strcmp(solver, 'lincoa')) && ...
+                ~(abs(constrviolation-cstrv) <= cobyla_prec*max(1,abs(cstrv)) && strcmp(solver, 'cobyla'))
             % Public/unexpected error
             error(sprintf('%s:InvalidChist', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
@@ -675,7 +677,9 @@ if options.debug && ~options.classical
             % Due to the moderated extreme barrier (implemented when options.classical is false),
             % all function values that are NaN or above hugefun are replaced by hugefun.
             fhistx(fhistx ~= fhistx | fhistx > hugefun) = hugefun;
-            if any(~(isnan(fhist) & isnan(fhistx)) & ~((fhist == fhistx) | (abs(fhistx-fhist) <= cobyla_prec*max(1, abs(fhist)) & strcmp(solver, 'cobyla'))))
+            if any(~(isnan(fhist) & isnan(fhistx)) & ~((fhist == fhistx) ...
+                    | (abs(fhistx-fhist) <= lincoa_prec*max(1, abs(fhist)) & strcmp(solver, 'lincoa'))  ...
+                    | (abs(fhistx-fhist) <= cobyla_prec*max(1, abs(fhist)) & strcmp(solver, 'cobyla'))))
                 % Public/unexpected error
                 error(sprintf('%s:InvalidFx', invoker), ...
                     '%s: UNEXPECTED ERROR: %s returns an fhist that does not match xhist.', invoker, solver);
@@ -754,7 +758,9 @@ if options.debug && ~options.classical
                 if strcmp(solver, 'cobyla')
                     chistx(chistx > hugecon | isnan(chistx)) = hugecon;
                 end
-                if any(~(isnan(chist) & isnan(chistx)) & ~((chist == chistx) | abs(chistx-chist) <= lincoa_prec*max(1, abs(chist)) & strcmp(solver, 'lincoa') | (abs(chistx-chist) <= cobyla_prec*max(1, abs(chist)) & strcmp(solver, 'cobyla'))))
+                if any(~(isnan(chist) & isnan(chistx)) & ~((chist == chistx) | ...
+                        (abs(chistx-chist) <= lincoa_prec*max(1, abs(chist)) & strcmp(solver, 'lincoa')) | ...
+                        (abs(chistx-chist) <= cobyla_prec*max(1, abs(chist)) & strcmp(solver, 'cobyla'))))
                     % Public/unexpected error
                     error(sprintf('%s:InvalidFx', invoker), ...
                         '%s: UNEXPECTED ERROR: %s returns an chist that does not match xhist.', invoker, solver);
