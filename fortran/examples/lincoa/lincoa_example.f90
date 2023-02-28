@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 28, 2022 PM10:04:36
+! Last Modified: Tuesday, February 28, 2023 PM09:06:13
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -115,7 +115,7 @@ program lincoa_exmp
 ! The following line makes the solver available.
 use lincoa_mod, only : lincoa
 
-! The following line specifies which module provides CALFUN. 
+! The following line specifies which module provides CALFUN.
 use tetrahedron_mod, only : calfun
 
 use tetrahedron_mod, only : setup
@@ -139,6 +139,6 @@ call lincoa(calfun, x, f, A=A, b=b, nf=nf)  ! This call will not print anything.
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call lincoa(calfun, x, f, A=A, b=b, rhobeg=0.5D0, iprint=1, nf=nf)
+call lincoa(calfun, x, f, A=A, b=b, rhobeg=1.0D0, iprint=1, nf=nf)
 
 end program lincoa_exmp
