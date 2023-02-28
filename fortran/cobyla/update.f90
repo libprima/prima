@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, February 14, 2023 AM11:35:38
+! Last Modified: Tuesday, February 28, 2023 PM06:32:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -164,10 +164,10 @@ subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 ! N.B. 3: UPDATEPOLE should be called when and only when FINDPOLE can potentially returns a value
 ! other than N+1. The value of FINDPOLE is determined by CPEN, CVAL, and FVAL, the latter two being
 ! decided by SIM. Thus UPDATEPOLE should be called after CPEN or SIM changes. COBYLA updates CPEN at
-! only two places: the beginning of each trust-region iteration, and when RESENHANCE is called;
+! only two places: the beginning of each trust-region iteration, and when REDRHO is called;
 ! SIM is updated only by UPDATEXFC, which itself calls UPDATEPOLE internally. Therefore, we only
 ! need to call UPDATEPOLE after updating CPEN at the beginning of each trust-region iteration and
-! after each invocation of RESENHANCE.
+! after each invocation of REDRHO.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: CONMAT_OLD(M, N+1), CVAL_OLD(N+1), FVAL_OLD(N+1), SIM_JDROP(N), SIM_OLD(N, N+1), &
