@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, January 17, 2023 PM03:41:10
+! Last Modified: Tuesday, February 28, 2023 PM08:46:50
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -61,7 +61,7 @@ use calfun_mod, only : calfun
 implicit none
 
 integer :: i
-integer, parameter :: n = 10
+integer, parameter :: n = 20
 integer :: nf
 real(kind(0.0D0)) :: x(n)
 real(kind(0.0D0)) :: f
@@ -84,7 +84,7 @@ call bobyqa(calfun, x, f, lb, ub)  ! This call will not print anything.
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call bobyqa(calfun, x, f, lb, ub, rhobeg=1.0D0, iprint=1, nf=nf)
+call bobyqa(calfun, x, f, lb, ub, rhobeg=1.0D-1, iprint=2, nf=nf)
 
 
 end program bobyqa_exmp
