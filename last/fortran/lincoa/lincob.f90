@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 27, 2023 AM01:55:48
+! Last Modified: Friday, March 03, 2023 AM02:40:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -171,7 +171,7 @@ real(RP) :: delbar
 real(RP) :: delta
 real(RP) :: distsq(npt)
 real(RP) :: dnorm
-real(RP) :: dnormsav(5)
+real(RP) :: dnormsav(4)
 real(RP) :: ffilt(maxfilt)
 real(RP) :: fopt
 real(RP) :: fshift(npt)
@@ -471,7 +471,8 @@ do tr = 1, maxtr
     ! 2. If an iteration sets IMPROVE_GEO = TRUE, it must also reduce DELTA or set DELTA to RHO.
 
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
-    accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
+    accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= 0.2 * rho)
+    !accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
