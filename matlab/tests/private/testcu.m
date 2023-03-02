@@ -96,13 +96,18 @@ strict = options.strict;
 
 % These arrays will record the function values and constraint values during the tests.
 pdim = NaN(np, 1);  % Data profile needs the dimension of the problem.
-frec = NaN(np, ns, nr, maxfun);
-crec = NaN(np, ns, nr, maxfun);
+frec = NaN(np, ns, nr, maxfun + 1);
+crec = NaN(np, ns, nr, maxfun + 1);
+% Why the last dimension of frec and cref are maxfun + 1? Because the frec(ip, is, ir, nf+1) and
+% cref(ip, is, ir, nf+1) will be used to record the function value and constraint violations of the
+% x returned by the solver. Such x is important because users are supposed to take it as the
+% solution. This is why we profile the solvers according to its function value and constraint
+% violation when `natural_stop` is true. See perfdata.m and perfprof.m for details.
 
 % These arrays will record the reference function values and constraint values when there is an
 % eval_options or `randomizex0` is positive.
-fref = NaN(np, ns, maxfun);
-cref = NaN(np, ns, maxfun);
+fref = NaN(np, ns, maxfun + 1);
+cref = NaN(np, ns, maxfun + 1);
 
 permuted = options.perm;
 have_eval_options = ~isempty(fieldnames(options.eval_options));
@@ -126,7 +131,6 @@ end
 if isfield(eval_options, 'dnoise')
     display(eval_options.dnoise);
 end
-
 
 if sequential
     for ip = minip : maxip
@@ -326,13 +330,13 @@ end
 % N.B.: prob.options.maxfun may differ from options.maxfun. Here we use the latter. Otherwise, the
 % sizes will mismatch when we assign the result of this function to frec and crec.
 maxfun = options.maxfun;
-fval_history = NaN(1, maxfun);
-cv_history = NaN(1, maxfun);
+fval_history = NaN(1, maxfun + 1);
+cv_history = NaN(1, maxfun + 1);
 
 %have_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options));
 prob.options.output_xhist = true;  % We always need xhist to recover the history of the computation.
 
-[~, ~, ~, output] = solver(prob);
+[x, ~, ~, output] = solver(prob);
 % Solvers (e.g., fmincon) may not respect maxfun. Indeed, PRIMA solvers may also increase maxfun
 % if it is too small (e.g., <= npt for NEWUOA).
 nf = min(maxfun, output.funcCount);
@@ -346,8 +350,17 @@ if (nf >= 1)
     fval_history(1:nf) = cellfun(prob.orig_objective, xhist_cell);
     orig_cstrv = @(x) get_cstrv(x, prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.orig_nonlcon);
     cv_history(1:nf) = cellfun(orig_cstrv, xhist_cell);
-    fval_history(nf+1:maxfun) = fval_history(nf);
-    cv_history(nf+1:maxfun) = cv_history(nf);
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Set the (nf+1)-th entries of fval_history and cv_history to the values returned by the solver.
+    % This is needed for plotting when natrual_stop is true.
+    fval_history(nf + 1) = prob.orig_objective(x);
+    cv_history(nf + 1) = orig_cstrv(x);
+    % Removing the following two lines, we keep the trailing entries of fval_history and cv_history
+    % being NaN. This is correct and needed for plotting when natrual_stop is true.
+    %fval_history(nf+2:maxfun) = fval_history(nf);
+    %cv_history(nf+2:maxfun) = cv_history(nf);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 else
     % Sometimes PRIMA may return nf = 0, e.g., when it detects infeasibility.
     fval_history = prob.f0;

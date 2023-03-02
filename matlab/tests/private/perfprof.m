@@ -25,7 +25,26 @@ lines   = {'-', '-.', '--', ':', '-', '-.', '--', ':', '-', '-.'};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 [np, ns, nr, maxfun] = size(frec);
-M = maxfun;
+
+% nf_return(ip, is, ir) is the number of function evaluations that the is-th solver uses when it
+% returns from solving the ip-th problem at the ir-th random run, and f_return(ip, is, ir) is the
+% function value it returns. In testcu.m, the returned function value and constraint violation are
+% recorded in fval_history(nf + 1) and cv_history(nf + 1), respectively.
+nf_return = NaN(np, ns, nr);
+f_return = NaN(np, ns, nr);
+for ip = 1:np
+    for is = 1:ns
+        for ir = 1:nr
+            if all(isnan(frec(ip, is, ir, :)))
+                nf_return(ip, is, ir) = maxfun;
+                f_return(ip, is, ir) = NaN;
+            else
+                nf_return(ip, is, ir) = find(~isnan(frec(ip, is, ir, :)), 1, 'last') - 1;
+                f_return(ip, is, ir) = frec(ip, is, ir, nf_return(ip, is, ir) + 1);
+            end
+        end
+    end
+end
 
 % T(ip, is, ir) is the number of function evaluations that the is-th solver needs to solve the ip-th
 % problem (up to tolerance tau) at the ir-th random run.
@@ -36,7 +55,9 @@ for ip = 1:np
         f0(ip,ir) = frec(ip, 1, ir, 1);
     end
 end
+
 tau = options.tau;
+
 for ip = 1:np
     for is = 1:ns
         for ir = 1:nr
@@ -51,11 +72,23 @@ for ip = 1:np
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             fthreshold = max(fthreshold, fminp);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            if (min(frec(ip, is, ir, 1:M)) <= fthreshold)
-                % Do not change the "if .. else ..." order, as frec(ip, is, ir, 1:M) may be all NaNs.
-                T(ip, is, ir) = find(frec(ip, is, ir, 1:M) <= fthreshold, 1, 'first');
+            if options.natural_stop
+                % In this case, the number of function evaluations is the amount used by the
+                % solver when it stops naturally.
+                ftest = f_return(ip, is, ir);
+                if (ftest <= fthreshold)
+                    T(ip, is, ir) = nf_return(ip, is, ir);
+                else
+                    T(ip, is, ir) = NaN;
+                end
             else
-                T(ip, is, ir) = NaN;
+                ftest = min(frec(ip, is, ir, :));
+                % Do not change the "if .. else ..." order, as frec(ip, is, ir, 1:M) may be all NaNs.
+                if (ftest <= fthreshold)
+                    T(ip, is, ir) = find(frec(ip, is, ir, :) <= fthreshold, 1, 'first');
+                else
+                    T(ip, is, ir) = NaN;
+                end
             end
         end
     end
