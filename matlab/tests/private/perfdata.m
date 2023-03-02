@@ -84,10 +84,14 @@ prof_options.feature_and_time = feature_and_time;
 prec = (1:10);
 nprec = length(prec);
 tau = 10.^(-prec);
-prof_output = cell(1,nprec);
+prof_output = cell(1, 2*nprec);
 format long
-for iprec = 1 : nprec
-    prof_options.tau = tau(iprec);
+for iprec = 1 : 2*nprec
+    % If `natural_stop` is true, the number of function evaluations is the amount used by the solver
+    % when it stops naturally.
+    prof_options.natural_stop = (iprec > nprec);
+    real_iprec = mod(iprec-1, nprec) + 1;  % The real index of the precision.
+    prof_options.tau = tau(real_iprec);
     prof_output{iprec} = perfprof(frec, fmin, prof_options);
     %dataprof(frec, fmin, pdim, prof_options);
 end
@@ -103,20 +107,31 @@ colors  = {bleu, 'k', 'b', 'r', vert, bleu, 'k', 'b', 'r', vert};
 lines   = {'-', '-', '-', '-', '-', '-', '-', '-', '-', '-'};
 hfig = figure("visible", false, 'DefaultAxesPosition', [0, 0, 1, 1]);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for iprec = 1 : nprec
-    subplot(1, nprec, iprec);
+for iprec = 1 : 2*nprec
+    subplot(2, nprec, iprec);
+    if iprec > nprec
+        lw = linewidth;
+    else
+        lw = linewidth * 3;
+    end
     for is = 1 : ns
        plot(prof_output{iprec}.profile{is}(1,:), prof_output{iprec}.profile{is}(2,:), ...
-           lines{is}, 'Color', colors{is},  'Linewidth', linewidth);
+           lines{is}, 'Color', colors{is},  'Linewidth', lw);
        hold on;
     end
     xlabel(sprintf('%d', iprec));
     axis([0 prof_output{iprec}.cut_ratio 0 1]);
     grid on;
+    %pbaspect([1 1 1]);
 end
-for iprec = 1 : nprec
+for iprec = 1 : 2*nprec
     ha=get(gcf,'children');
-    set(ha(iprec),'position', [0.01+(nprec-iprec)/nprec, 0.1, 0.9/nprec, 0.9]);
+    real_iprec = mod(iprec-1, nprec) + 1;  % The real index of the precision.
+    if iprec > nprec
+        set(ha(iprec),'position', [0.01+(nprec-real_iprec)/(nprec), 0.53, 0.9/(nprec), 0.4]);
+    else
+        set(ha(iprec),'position', [0.01+(nprec-real_iprec)/(nprec), 0.1, 0.9/(nprec), 0.4]);
+    end
 end
 
 % The following appears only in the last subplot, but it is sufficient for our use.
@@ -126,7 +141,7 @@ legend(solvers,'Location', 'southeast','Orientation','vertical');
 % Save the figure as eps.
 figname = strcat(stamp, '.', 'summary', '.', feature_and_time);
 epsname = fullfile(outdir, strcat(figname,'.eps'));
-set(gcf,'position',[0, 0, 4600,460]);
+set(gcf,'position',[0, 0, 4600, 920]);
 saveas(hfig, epsname, 'epsc2');
 
 % Try converting the eps to pdf.
