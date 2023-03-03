@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, March 02, 2023 PM09:54:42
+! Last Modified: Friday, March 03, 2023 AM11:18:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -216,7 +216,7 @@ function selectx(fhist, chist, cweight, ctol) result(kopt)
 ! in a filter should not dominate each other, but this subroutine does NOT assume such a property.
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : IK, RP, HUGENUM, HUGEFUN, HUGECON, ZERO, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, EPS, HUGENUM, HUGEFUN, HUGECON, ZERO, TWO, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: debug_mod, only : assert
 
@@ -284,7 +284,9 @@ else
     ! CMIN is the minimal shifted constraint violation attained in the history.
     cmin = minval(chist_shifted, mask=(fhist < fref))
     ! We consider only the points whose shifted constraint violations are at most the CREF below.
-    cref = TWO * cmin  ! CREF = 0 if CMIN = 0; thus asking for CSTRV_SHIFTED < CREF is WRONG!
+    ! N.B.: Without taking MAX(EPS, .), CREF would be 0 if CMIN = 0. In that case, asking for
+    ! CSTRV_SHIFTED < CREF would be WRONG!
+    cref = max(EPS, TWO * cmin)
     ! We use the following PHI as our merit function to select X.
     if (cweight <= 0) then
         phi = fhist
