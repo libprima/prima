@@ -1,5 +1,5 @@
 subroutine construct_circle(prob)
-use, non_intrinsic :: consts_mod, only : ONE, HALF, HUGENUM
+use, non_intrinsic :: consts_mod, only : ONE, HALF, REALMAX
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
@@ -20,9 +20,9 @@ prob % calcfc => calcfc_circle
 
 n = prob % n
 call safealloc(prob % lb, n)
-prob % lb = -HUGENUM
+prob % lb = -REALMAX
 call safealloc(prob % ub, n)
-prob % ub = HUGENUM
+prob % ub = REALMAX
 call safealloc(prob % Aeq, n, 0_IK)
 call safealloc(prob % beq, 0_IK)
 call safealloc(prob % Aineq, n, 0_IK)

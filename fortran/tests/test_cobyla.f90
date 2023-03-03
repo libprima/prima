@@ -20,7 +20,7 @@ contains
 subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed)
 
 use, non_intrinsic :: cobyla_mod, only : cobyla
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, REALMAX
 use, non_intrinsic :: debug_mod, only : validate
 use, non_intrinsic :: infnan_mod, only : is_neginf
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -146,7 +146,7 @@ if (test_bigprob) then
         else
             ctol = ZERO
         end if
-        ftarget = -HUGENUM
+        ftarget = -REALMAX
         rhobeg = noisy(prob % Delta0)
         rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(4.0_RP * rand() - 3.5_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
@@ -206,16 +206,16 @@ else
                 if (rand() <= 0.2) then
                     ctol = randn() * TEN**(-abs(TWO * randn()))
                 elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.
-                    ctol = HUGENUM
+                    ctol = REALMAX
                 else
                     ctol = ZERO
                 end if
                 if (rand() <= 0.2) then
                     ftarget = -TEN**abs(TWO * randn())
                 elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.
-                    ftarget = HUGENUM
+                    ftarget = REALMAX
                 else
-                    ftarget = -HUGENUM
+                    ftarget = -REALMAX
                 end if
 
                 rhobeg = noisy(prob % Delta0)

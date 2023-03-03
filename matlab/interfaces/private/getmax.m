@@ -1,5 +1,5 @@
-function huge = gethuge(data_type, precision)
-%GETHUGE calls returns a huge number according to `data_type` and `precision`.
+function maxnum = getmax(data_type, precision)
+%GETMAX calls returns a huge number according to `data_type` and `precision`.
 
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
@@ -22,28 +22,29 @@ if nargin < 2
     precision = 'double';
 end
 
-% The following values are intended to be the returns of the Fortran intrinsics HUGE, RADIX, and
+% The following values are intended to be the returns of the Fortran intrinsics RADIX, HUGE, and
 % MAXEXPONENT corresponding to the given precision. They are the largest finite value, base of the
 % model that represents the floating point numbers, and maximal exponent of the model.
 % As of 20230207, the following values are consistent with gfortran, ifort, ifx, nagfor, nvfortran,
 % Classic flang, AOCC flang, sunf95, and g95.
+radix = 2;
 if strcmpi(precision, 'single')
-    hugenum = realmax('single') ;
-    radix = 2;
+    maxfloat = realmax('single') ;
     maxexponent = 128;
 else  % Even if precision = 'quadruple'
-    hugenum = realmax('double') ;
-    radix = 2;
+    maxfloat = realmax('double') ;
     maxexponent = 1024;
 end
 
-% The following values are intended to be consistent with HUGENUM, HUGECON, and HUGEFUN defined in
-% the Fortran code.
+% The following values are intended to be consistent with BOUNDMAX, FUNCMAX, and CONSTRMAX defined
+% in the Fortran code.
 switch lower(data_type)
 case {'real'}
-    huge = hugenum;
-case {'fun', 'function', 'con', 'constraint'}
-    huge = radix^min(100, maxexponent / 2);
+    maxnum = maxfloat;
+case {'bound'}
+    maxnum = 0.25 * maxfloat;
+case {'fun', 'func', 'function', 'con', 'constr', 'constraint'}
+    maxnum = radix^min(100, maxexponent / 2);
 otherwise
     % Private/unexpected error
     error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid data_type received.', funname);

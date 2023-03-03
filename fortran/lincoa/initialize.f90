@@ -41,7 +41,7 @@ subroutine initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, r
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
@@ -150,11 +150,11 @@ evaluated = .false.
 ! Initialize XHIST, FHIST, CHIST, FVAL, and CVAL. Otherwise, compilers may complain that they are
 ! not (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
 ! Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
-xhist = -HUGENUM
-fhist = HUGENUM
-chist = HUGENUM
-fval = HUGENUM
-cval = HUGENUM
+xhist = -REALMAX
+fhist = REALMAX
+chist = REALMAX
+fval = REALMAX
+cval = REALMAX
 
 ! Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT], but they may be altered
 ! later to make a constraint violation sufficiently large.
@@ -183,7 +183,7 @@ do k = 1, npt
     constr = matprod(xpt(:, k), amat) - b
     cval(k) = maximum([ZERO, constr])  ! CVAL will be used to define FEASIBLE.
     if (is_nan(cval(k))) then
-        cval(k) = HUGENUM
+        cval(k) = REALMAX
     end if
     ! Powell's implementation contains the following procedure that shifts every infeasible point if
     ! necessary so that its constraint violation is at least 0.2*RHOBEG. According to a test on

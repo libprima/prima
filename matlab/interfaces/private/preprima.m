@@ -95,9 +95,9 @@ end
 % 21. user_options_fields: the fields in the user-specified options
 % 22. options: (refined) options for calling the solvers
 % 23. warnings: warnings during the preprocessing/validation
-% 24. hugenum: the large possible absolute value of the variables
-% 25. hugefun: the largest possible value of the objective function
-% 26. hugecon: the largest possible absolute value of the constraints
+% 24. boundmax: the large allowed absolute value of bound constraints
+% 25. funcmax: the largest allowed value of the objective function
+% 26. constrmax: the largest allowed absolute value of the constraints
 probinfo = struct();
 
 % Save the raw data (date before validation/preprocessing) in probinfo.
@@ -115,26 +115,26 @@ probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', 
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon, 'options', options);
 
 % Decide the precision ('single', 'double', or 'quadruple') of the real calculation within the
-% Fortran solvers. This is needed ONLY by `hugenum`, `hugefun`, and `hugecon` defined below by
-% calling `gethuge`. These three numbers will be used in `pre_x0`, `pre_fun`, and `pre_con`
+% Fortran solvers. This is needed ONLY by `boundmax`, `funcmax`, and `constrmax` defined below by
+% calling `getmax`. These three numbers will be used in `pre_x0`, `pre_fun`, and `pre_con`
 % respectively in the sequel. Note the following.
 % 1. `precision` takes effect only if Fortran solvers are called (i.e., when options.fortran = true).
-% 2. `precision` is passed only to `gethuge`, which defines huge values (e.g., `hugenum`, `hugefun`).
+% 2. `precision` is passed only to `getmax`, which defines huge values (e.g., `boundmax`, `funcmax`).
 precision = 'double';
 % Since `options` is not validated yet, validations are needed before inquiring options.precision.
 if isa(options, 'struct') && isfield(options, 'precision') && ischarstr(options.precision) && ...
         ismember(lower(options.precision), all_precisions())
     precision = lower(options.precision);
 end
-probinfo.hugenum = gethuge('real', precision);
-probinfo.hugefun = gethuge('fun', precision);
-probinfo.hugecon = gethuge('con', precision);
+probinfo.boundmax = getmax('bound', precision);
+probinfo.funcmax = getmax('function', precision);
+probinfo.constrmax = getmax('constraint', precision);
 
 % Validate and preprocess fun
-[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, probinfo.hugefun, warnings);
+[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, probinfo.funcmax, warnings);
 
 % Validate and preprocess x0
-[x0, warnings] = pre_x0(invoker, x0, probinfo.hugenum, warnings);
+[x0, warnings] = pre_x0(invoker, x0, precision, warnings);
 lenx0 = length(x0); % Within this file, for clarity, we denote length(x0) by lenx0 instead of n
 
 % Validate and preprocess the bound constraints
@@ -179,7 +179,7 @@ probinfo.trivial_leq = trivial_leq; % A vector of true/false
 % The constraints will be reduced if some but not all variables are fixed by the bound
 % constraints. See pre_lcon for why we do not reduce the problem when all variables
 % are fixed.
-nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, probinfo.hugecon);
+nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, probinfo.constrmax);
 
 % Reduce fun, x0, lb, and ub if some but not all variables are fixed by
 % the bound constraints. See pre_lcon for why we do not reduce the
@@ -463,7 +463,7 @@ end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for fun preprocessing %%%%%%%%%%%%%%%%%
-function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, hugefun, warnings)
+function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, funcmax, warnings)
 if ~(isempty(fun) || ischarstr(fun) || isa(fun, 'function_handle'))
     % Public/normal error
     error(sprintf('%s:InvalidFun', invoker), ...
@@ -501,11 +501,11 @@ if ~exist('OCTAVE_VERSION', 'builtin')
         '%s: FUN has no output; it should return the objective function value.', invoker);
     end
 end
-fun = @(x) evalobj(invoker, fun, x, hugefun);  % See evalobj.m
+fun = @(x) evalobj(invoker, fun, x, funcmax);  % See evalobj.m
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for x0 preprocessing %%%%%%%%%%%%%%%%%
-function [x0, warnings] = pre_x0(invoker, x0, hugenum, warnings)
+function [x0, warnings] = pre_x0(invoker, x0, precision, warnings)
 [isrv, lenx0]  = isrealvector(x0);
 if ~(isrv && (lenx0 > 0))
     % Public/normal error
@@ -519,10 +519,11 @@ x0 = double(x0(:));
 abnormal_x0 = isnan(x0) | (abs(x0) >= inf);
 if any(abnormal_x0)
     x0(isnan(x0)) = 0;
-    x0(isinf(x0) & x0 > 0) = hugenum;
-    x0(isinf(x0) & x0 < 0) = -hugenum;
+    maxfloat = getmax('real', precision);
+    x0(isinf(x0) & x0 > 0) = maxfloat;
+    x0(isinf(x0) & x0 < 0) = -maxfloat;
     wid = sprintf('%s:AbnormalX0', invoker);
-    wmsg = sprintf('%s: X0 contains NaN or infinite values; NaN is replaced by 0 and Inf by the largest real number.', invoker);
+    wmsg = sprintf('%s: X0 contains NaN or infinite values; NaN is replaced by 0 and Inf by %g.', invoker, maxfloat);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -722,7 +723,7 @@ end
 return
 
 %%%%%%%%%%%%%%%%% Function for nonlinear constraint preprocessing %%%%%%%%%%
-function nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, hugecon)
+function nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, constrmax)
 if ~(isempty(nonlcon) || isa(nonlcon, 'function_handle') || ischarstr(nonlcon))
     % Public/normal error
     error(sprintf('%s:InvalidCon', invoker), ...
@@ -762,7 +763,7 @@ else
         freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
         nonlcon = @(freex_value) nonlcon(fullx(freex_value, fixedx_value, freex, fixedx));
     end
-    nonlcon = @(x) evalcon(invoker, nonlcon, x, hugecon);  % See evalcon.m
+    nonlcon = @(x) evalcon(invoker, nonlcon, x, constrmax);  % See evalcon.m
 end
 return
 

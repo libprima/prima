@@ -83,7 +83,7 @@ integer(IK) :: npt, ixb, ixo, ixn, ixp, ipq, ipl, ih, ig, id, ivl, iw
 ! Sizes
 n = int(size(x), kind(n))
 
-! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
+! Replace any NaN in X by ZERO and Inf/-Inf in X by REALMAX/-REALMAX.
 x = moderatex(x)
 
 ! Read the inputs.

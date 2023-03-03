@@ -31,7 +31,7 @@ subroutine initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TENTH, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatef, moderatec
 use, non_intrinsic :: history_mod, only : savehist
@@ -142,13 +142,13 @@ evaluated = .false.
 ! Initialize XHIST, FHIST, CHIST, CONHIST, FVAL, CVAL, and CONMAT. Otherwise, compilers may complain
 !that they are not (completely) initialized if the initialization aborts due to abnormality (see
 !CHECKEXIT). Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
-xhist = -HUGENUM
-fhist = HUGENUM
-chist = HUGENUM
-conhist = -HUGENUM
-fval = HUGENUM
-cval = HUGENUM
-conmat = -HUGENUM
+xhist = -REALMAX
+fhist = REALMAX
+chist = REALMAX
+conhist = -REALMAX
+fval = REALMAX
+cval = REALMAX
+conmat = -REALMAX
 
 do k = 1, n + 1_IK
     x = sim(:, n + 1)

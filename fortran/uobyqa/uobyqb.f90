@@ -40,7 +40,7 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -185,8 +185,8 @@ delta = rho
 shortd = .false.
 ratio = -ONE
 ddmove = -ONE
-dnormsav = HUGENUM
-moderrsav = HUGENUM
+dnormsav = REALMAX
+moderrsav = REALMAX
 knew_tr = 0
 knew_geo = 0
 
@@ -424,8 +424,8 @@ do tr = 1, maxtr
         call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
         ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
         ! the current RHO. Update them after reducing RHO.
-        dnormsav = HUGENUM
-        moderrsav = HUGENUM
+        dnormsav = REALMAX
+        moderrsav = REALMAX
     end if
 end do
 

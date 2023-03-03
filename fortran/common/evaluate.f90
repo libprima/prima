@@ -26,9 +26,9 @@ contains
 
 function moderatex(x) result(y)
 !--------------------------------------------------------------------------------------------------!
-! This function moderates a decision variable. It replaces NaN by 0 and Inf/-Inf by HUGENUM/-HUGENUM.
+! This function moderates a decision variable. It replaces NaN by 0 and Inf/-Inf by REALMAX/-REALMAX.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ZERO, HUGENUM
+use, non_intrinsic :: consts_mod, only : RP, ZERO, REALMAX
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : trueloc
 implicit none
@@ -40,16 +40,16 @@ real(RP) :: y(size(x))
 
 y = x
 y(trueloc(is_nan(x))) = ZERO
-y = max(-HUGENUM, min(HUGENUM, y))
+y = max(-REALMAX, min(REALMAX, y))
 end function moderatex
 
 
 pure elemental function moderatef(f) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function moderates the function value of a MINIMIZATION problem. It replaces NaN and any
-! value above HUGEFUN by HUGEFUN.
+! value above FUNCMAX by FUNCMAX.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, HUGEFUN
+use, non_intrinsic :: consts_mod, only : RP, FUNCMAX
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
@@ -60,20 +60,20 @@ real(RP) :: y
 
 y = f
 if (is_nan(f)) then
-    y = HUGEFUN
+    y = FUNCMAX
 end if
-y = min(HUGEFUN, y)
+y = min(FUNCMAX, y)
 ! We may moderate huge negative function values, but we decide not to.
-!y = max(-HUGEFUN, min(HUGEFUN, y))
+!y = max(-FUNCMAX, min(FUNCMAX, y))
 end function moderatef
 
 
 function moderatec(c) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function moderates the constraint value, the constraint demanding this value to be NONNEGATIVE.
-! It replaces NaN and any value below -HUGECON by -HUGECON, and any value above HUGECON by HUGECON.
+! It replaces NaN and any value below -CONSTRMAX by -CONSTRMAX, and any value above CONSTRMAX by CONSTRMAX.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, HUGECON
+use, non_intrinsic :: consts_mod, only : RP, CONSTRMAX
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : trueloc
 implicit none
@@ -84,8 +84,8 @@ real(RP), intent(in) :: c(:)
 real(RP) :: y(size(c))
 
 y = c
-y(trueloc(is_nan(c))) = -HUGECON
-y = max(-HUGECON, min(HUGECON, y))
+y(trueloc(is_nan(c))) = -CONSTRMAX
+y = max(-CONSTRMAX, min(CONSTRMAX, y))
 end function moderatec
 
 
@@ -133,7 +133,7 @@ else
     f = moderatef(f)
 
     ! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
-    !f = max(-HUGEFUN, f)
+    !f = max(-FUNCMAX, f)
 end if
 
 
@@ -200,7 +200,7 @@ else
     f = moderatef(f)
     constr = moderatec(constr)
     ! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
-    !f = max(-HUGEFUN, f)
+    !f = max(-FUNCMAX, f)
 
     ! Evaluate the constraint violation for constraints CONSTR(X) >= 0.
     cstrv = maxval([-constr, ZERO])

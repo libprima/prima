@@ -85,9 +85,9 @@ subroutine bobyqa(calfun, x, f, &
 ! XL, XU
 !   Input, REAL(RP) vectors, default: XL = [], XU = [].
 !   XL is the lower bound for X. Its size is either N or 0, the latter signifying that X has no
-!   lower bound. Any entry of XL that is NaN or below -HUGEBOUND will be taken as -HUGEBOUND, which
+!   lower bound. Any entry of XL that is NaN or below -BOUNDMAX will be taken as -BOUNDMAX, which
 !   effectively means there is no lower bound for the corresponding entry of X. The value of
-!   HUGEBOUND is 0.25*HUGE(X), which is about 8.6E37 for single precision and 4.5E307 for double
+!   BOUNDMAX is 0.25*HUGE(X), which is about 8.6E37 for single precision and 4.5E307 for double
 !   precision. XU is similar.
 !   N.B.: It is required that XU - XL > 2*EPSILON(X), which is about 2.4E-7 for single precision and
 !   4.5E-16 for double precision. Otherwise, the solver will return after printing a warning.
@@ -177,7 +177,7 @@ subroutine bobyqa(calfun, x, f, &
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, HUGEBOUND, MSGLEN, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, BOUNDMAX, MSGLEN, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, MAXFUN_DIM_DFT, IPRINT_DFT
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
@@ -268,16 +268,16 @@ end if
 if (present(xl)) then
     xl_loc = xl
 else
-    xl_loc = -HUGEBOUND
+    xl_loc = -BOUNDMAX
 end if
-xl_loc(trueloc(is_nan(xl_loc) .or. xl_loc < -HUGEBOUND)) = -HUGEBOUND
+xl_loc(trueloc(is_nan(xl_loc) .or. xl_loc < -BOUNDMAX)) = -BOUNDMAX
 
 if (present(xu)) then
     xu_loc = xu
 else
-    xu_loc = HUGEBOUND
+    xu_loc = BOUNDMAX
 end if
-xu_loc(trueloc(is_nan(xu_loc) .or. xu_loc > HUGEBOUND)) = HUGEBOUND
+xu_loc(trueloc(is_nan(xu_loc) .or. xu_loc > BOUNDMAX)) = BOUNDMAX
 
 ! The solver requires that MINVAL(XU-XL) >= 2*RHOBEG, and we return if MINVAL(XU-XL) < 2*EPS.
 ! It would be better to fix the variables at (XU+XL)/2 wherever XU and XL almost equal, as is done
