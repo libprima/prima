@@ -40,7 +40,7 @@ obligatory_probinfo_fields = {'raw_data', 'refined_data', 'fixedx', 'fixedx_valu
     'trivial_lineq', 'trivial_leq', 'infeasible', 'scaled', 'scaling_factor', ...
     'shift', 'reduced', 'raw_type', 'raw_dim', 'refined_type', 'refined_dim', ...
     'feasibility_problem', 'user_options_fields', 'options', 'warnings', ...
-    'hugenum', 'hugefun', 'hugecon'};
+    'boundmax', 'funcmax', 'constrmax'};
 obligatory_options_fields = {'classical', 'debug', 'chkfunval', 'precision'};
 
 % Who is calling this function? Is it a correct invoker?
@@ -146,10 +146,10 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % With the moderated extreme barrier (implemented when options.classical is false), all
-% the function values that are NaN or larger than hugefun are replaced by hugefun;
-% all the constraint values that are NaN or larger than hugecon are replaced by hugecon.
-hugefun = probinfo.hugefun;
-hugecon = probinfo.hugecon;
+% the function values that are NaN or larger than funcmax are replaced by funcmax;
+% all the constraint values that are NaN or larger than constrmax are replaced by constrmax.
+funcmax = probinfo.funcmax;
+constrmax = probinfo.constrmax;
 
 % Record solver name in output (do it after verifying that output is a structure).
 output.algorithm = solver;
@@ -243,18 +243,18 @@ if ~isempty(fhist) && ~(isrealvector(fhist) && length(fhist) == nhist)
         '%s: UNEXPECTED ERROR: %s returns an fhist that is not a real vector of length min(nf, maxhist).', invoker, solver);
 end
 if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
-    if any(fhist > hugefun) || any(isnan(fhist))
+    if any(fhist > funcmax) || any(isnan(fhist))
         % Public/unexpected error
         error(sprintf('%s:InvalidFhist', invoker), ...
-             '%s: UNEXPECTED ERROR: %s returns an fhist with NaN or values larger than hugefun = %g; this is impossible except in the classical mode.', invoker, solver, hugefun);
-    elseif ~isempty(fhist) && max(fhist) == hugefun
+             '%s: UNEXPECTED ERROR: %s returns an fhist with NaN or values larger than funcmax = %g; this is impossible except in the classical mode.', invoker, solver, funcmax);
+    elseif ~isempty(fhist) && max(fhist) == funcmax
         wid = sprintf('%s:ExtremeBarrier', invoker);
-        wmsg = sprintf('%s: the moderated extreme barrier is invoked; function values that are NaN or larger than hugefun = %g are replaced by hugefun.', invoker, hugefun);
+        wmsg = sprintf('%s: the moderated extreme barrier is invoked; function values that are NaN or larger than funcmax = %g are replaced by funcmax.', invoker, funcmax);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
-    elseif ~isempty(fhist) && any(fhist < -hugefun)
+    elseif ~isempty(fhist) && any(fhist < -funcmax)
         wid = sprintf('%s:HugeNegativeF', invoker);
-        wmsg = sprintf('%s: fhist contains values below %g. Check the objective function to see whether it is expected.', invoker, -hugefun);
+        wmsg = sprintf('%s: fhist contains values below %g. Check the objective function to see whether it is expected.', invoker, -funcmax);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     end
@@ -297,13 +297,13 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
         error(sprintf('%s:InvalidChist', invoker), ...
             '%s: UNEXPECTED ERROR: %s returns a chist that contains negative values.', invoker, solver);
     end
-    if strcmp(solver, 'cobyla') && (any(chist > hugecon) || any(isnan(chist)))
+    if strcmp(solver, 'cobyla') && (any(chist > constrmax) || any(isnan(chist)))
         % Public/unexpected error
         error(sprintf('%s:InvalidChist', invoker), ...
-             '%s: UNEXPECTED ERROR: %s returns a chist with NaN or values larger than hugecon = %g; this is impossible except in the classical mode.', invoker, solver, hugecon);
-    elseif ~isempty(chist) && max(chist) == hugecon
+             '%s: UNEXPECTED ERROR: %s returns a chist with NaN or values larger than constrmax = %g; this is impossible except in the classical mode.', invoker, solver, constrmax);
+    elseif ~isempty(chist) && max(chist) == constrmax
         wid = sprintf('%s:ExtremeBarrier', invoker);
-        wmsg = sprintf('%s: the moderated extreme barrier is invoked; constraint values that are NaN or larger than hugecon = %g are replaced by hugecon.', invoker, hugecon);
+        wmsg = sprintf('%s: the moderated extreme barrier is invoked; constraint values that are NaN or larger than constrmax = %g are replaced by constrmax.', invoker, constrmax);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     end
@@ -651,9 +651,9 @@ if options.debug && ~options.classical
             funx = feval(objective, x);
         end
         % Due to the moderated extreme barrier (implemented when options.classical is false),
-        % all function values that are NaN or larger than hugefun are replaced by hugefun.
-        if (funx ~= funx) || (funx > hugefun)
-            funx = hugefun;
+        % all function values that are NaN or larger than funcmax are replaced by funcmax.
+        if (funx ~= funx) || (funx > funcmax)
+            funx = funcmax;
         end
         %if (funx ~= fx) && ~(isnan(fx) && isnan(funx))
         % It seems that COBYLA can return fx ~= fun(x) due to rounding errors. Therefore, we cannot
@@ -675,8 +675,8 @@ if options.debug && ~options.classical
                 end
             end
             % Due to the moderated extreme barrier (implemented when options.classical is false),
-            % all function values that are NaN or above hugefun are replaced by hugefun.
-            fhistx(fhistx ~= fhistx | fhistx > hugefun) = hugefun;
+            % all function values that are NaN or above funcmax are replaced by funcmax.
+            fhistx(fhistx ~= fhistx | fhistx > funcmax) = funcmax;
             if any(~(isnan(fhist) & isnan(fhistx)) & ~((fhist == fhistx) ...
                     | (abs(fhistx-fhist) <= lincoa_prec*max(1, abs(fhist)) & strcmp(solver, 'lincoa'))  ...
                     | (abs(fhistx-fhist) <= cobyla_prec*max(1, abs(fhist)) & strcmp(solver, 'cobyla'))))
@@ -693,12 +693,12 @@ if options.debug && ~options.classical
         if ~isempty(nonlcon)
             [nlcineqx, nlceqx] = feval(nonlcon, x);
             % Due to the moderated extreme barrier (implemented when options.classical is false),
-            % all constraint values that are NaN or above hugecon are replaced by hugecon.
-            nlcineqx(nlcineqx ~= nlcineqx | nlcineqx > hugecon) = hugecon;
-            % All constraint values below -hugecon are replaced by -hugecon to avoid numerical difficulties.
-            nlcineqx(nlcineqx < -hugecon) = -hugecon;
-            nlceqx(nlceqx ~= nlceqx | nlceqx > hugecon) = hugecon;
-            nlceqx(nlceqx < -hugecon) = -hugecon;
+            % all constraint values that are NaN or above constrmax are replaced by constrmax.
+            nlcineqx(nlcineqx ~= nlcineqx | nlcineqx > constrmax) = constrmax;
+            % All constraint values below -constrmax are replaced by -constrmax to avoid numerical difficulties.
+            nlcineqx(nlcineqx < -constrmax) = -constrmax;
+            nlceqx(nlceqx ~= nlceqx | nlceqx > constrmax) = constrmax;
+            nlceqx(nlceqx < -constrmax) = -constrmax;
         end
         if any(size([nlcineq; nlceq]) ~= size([nlcineqx; nlceqx])) || any(isnan([nlcineq; nlceq]) ~= isnan([nlcineqx; nlceqx])) || (~any(isnan([nlcineq; nlceq; nlcineqx; nlceqx])) && any(abs([0; nlcineq; nlceq] - [0; nlcineqx; nlceqx]) > cobyla_prec*max(1,abs([0; nlcineqx; nlceqx]))))
         % In the last few max of the above line, we put a 0 to avoid an empty result
@@ -719,12 +719,12 @@ if options.debug && ~options.classical
                     [nlcihistx(:, k), nlcehistx(:, k)] = feval(nonlcon, xhist(:, k));
                 end
                 % Due to the moderated extreme barrier (implemented when options.classical is false),
-                % all constraint values that are NaN or above hugecon are replaced by hugecon.
-                nlcihistx(nlcihistx ~= nlcihistx | nlcihistx > hugecon) = hugecon;
-                % All constraint values below -hugecon are replaced by -hugecon to avoid numerical difficulties.
-                nlcihistx(nlcihistx < -hugecon) = -hugecon;
-                nlcehistx(nlcehistx ~= nlcehistx | nlcehistx > hugecon) = hugecon;
-                nlcehistx(nlcehistx < -hugecon) = -hugecon;
+                % all constraint values that are NaN or above constrmax are replaced by constrmax.
+                nlcihistx(nlcihistx ~= nlcihistx | nlcihistx > constrmax) = constrmax;
+                % All constraint values below -constrmax are replaced by -constrmax to avoid numerical difficulties.
+                nlcihistx(nlcihistx < -constrmax) = -constrmax;
+                nlcehistx(nlcehistx ~= nlcehistx | nlcehistx > constrmax) = constrmax;
+                nlcehistx(nlcehistx < -constrmax) = -constrmax;
             end
 
             % Check whether [output.nlcihist, output.nlcehist] = nonlcon(xhist).
@@ -756,7 +756,7 @@ if options.debug && ~options.classical
                 end
                 % Modify chistx according to the moderated extreme barrier if the solver is cobyla.
                 if strcmp(solver, 'cobyla')
-                    chistx(chistx > hugecon | isnan(chistx)) = hugecon;
+                    chistx(chistx > constrmax | isnan(chistx)) = constrmax;
                 end
                 if any(~(isnan(chist) & isnan(chistx)) & ~((chist == chistx) | ...
                         (abs(chistx-chist) <= lincoa_prec*max(1, abs(chist)) & strcmp(solver, 'lincoa')) | ...

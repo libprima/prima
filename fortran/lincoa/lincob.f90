@@ -71,7 +71,7 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 
 ! Generic models
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, HUGENUM, MIN_MAXFILT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, REALMAX, MIN_MAXFILT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -308,7 +308,7 @@ gamma3 = sqrt(gamma2)
 rho = rhobeg
 delta = rho
 ratio = -ONE
-dnormsav = HUGENUM
+dnormsav = REALMAX
 shortd = .false.
 qalt_better = .false.
 knew_tr = 0
@@ -352,11 +352,11 @@ do tr = 1, maxtr
     ! SHORTD is TRUE. Note that it does not record the geometry steps.
     dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
-    ! In some cases, we reset DNORMSAV to HUGENUM. This indicates a preference of improving the
+    ! In some cases, we reset DNORMSAV to REALMAX. This indicates a preference of improving the
     ! geometry of the interpolation set to reducing RHO in the subsequent three or more
     ! iterations. This is important for the performance of LINCOA.
     if (delta > rho .or. .not. shortd) then  ! Another possibility: IF (DELTA > RHO) THEN
-        dnormsav = HUGENUM
+        dnormsav = REALMAX
     end if
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
@@ -595,7 +595,7 @@ do tr = 1, maxtr
         call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt, cstrv, constr)
         ! DNORMSAV is corresponding to the latest function evaluations with the current RHO.
         ! Update it after reducing RHO.
-        dnormsav = HUGENUM
+        dnormsav = REALMAX
     end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
 
     ! Shift XBASE if XOPT may be too far from XBASE.

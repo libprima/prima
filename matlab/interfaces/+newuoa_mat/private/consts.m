@@ -12,7 +12,7 @@ function const = consts(name)
             const = 0;
         case 'maxfun_dim_dft'
             const = 500;
-        case {'hugefun', 'hugecon'}
+        case {'funcmax', 'constrmax'}
             const = 10^40;
 
         % Maximal amount of memory (Byte) allowed for XHIST, FHIST, NLCHIST

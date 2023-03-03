@@ -1538,7 +1538,7 @@ elseif (.not. is_finite(x2)) then
 else
     y = abs([x1, x2])
     y = [minval(y), maxval(y)]
-    !if (y(1) > sqrt(REALMIN) .and. y(2) < sqrt(HUGENUM / 2.1_RP)) then
+    !if (y(1) > sqrt(REALMIN) .and. y(2) < sqrt(REALMAX / 2.1_RP)) then
     !    r = sqrt(sum(y**2))
     !elseif (y(2) > 0) then
     !    r = max(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
@@ -1583,7 +1583,7 @@ function planerot(x) result(G)
 ! 2. Difference from MATLAB: if X contains NaN or consists of only Inf, MATLAB returns a NaN matrix,
 ! but we return an identity matrix or a matrix of +/-SQRT(2). We intend to keep G always orthogonal.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, REALMIN, EPS, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, REALMIN, EPS, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_inf
 implicit none
@@ -1640,9 +1640,9 @@ else
     ! Here is the normal case. It implements the Givens rotation in a stable & continuous way as in:
     ! Bindel, D., Demmel, J., Kahan, W., and Marques, O. (2002). On computing Givens rotations
     ! reliably and efficiently. ACM Transactions on Mathematical Software (TOMS), 28(2), 206-238.
-    ! N.B.: 1. Modern compilers compute SQRT(REALMIN) and SQRT(HUGENUM/2.1) at compilation time.
+    ! N.B.: 1. Modern compilers compute SQRT(REALMIN) and SQRT(REALMAX/2.1) at compilation time.
     ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
-    if (all(abs(x) > sqrt(REALMIN) .and. abs(x) < sqrt(HUGENUM / 2.1_RP))) then
+    if (all(abs(x) > sqrt(REALMIN) .and. abs(x) < sqrt(REALMAX / 2.1_RP))) then
         ! Do NOT use HYPOTENUSE here; the best implementation for one may be suboptimal for the other
         r = norm(x)
         c = x(1) / r
@@ -1676,7 +1676,7 @@ if (DEBUGGING) then
         & 'G(1,1) == G(2,2), G(1,2) = -G(2,1)', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
-    if (all(is_finite(x) .and. abs(x) < sqrt(HUGENUM / 2.1_RP))) then
+    if (all(is_finite(x) .and. abs(x) < sqrt(REALMAX / 2.1_RP))) then
         r = norm(x)
         call assert(maxval(abs(matprod(G, x) - [r, ZERO])) <= max(tol, tol * r), 'G * X = [||X||, 0]', srname)
     end if
@@ -1852,7 +1852,7 @@ function issymmetric(A, tol) result(is_symmetric)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether A is symmetric up to TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, HUGENUM, SYMTOL_DFT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, REALMAX, SYMTOL_DFT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
@@ -1894,14 +1894,14 @@ end if
 ! 2. In addition, since Inf - Inf is NaN, we cannot replace ANY(ABS(A - TRANSPOSE(A)) > TOL_LOC ...)
 ! with .NOT. ALL(ABS(A - TRANSPOSE(A)) <= TOL_LOC ...).
 ! 3. In some cases, due to compiler bugs / features, we need to disable the test. We signify such
-! cases by setting SYMTOL_DFT to HUGENUM. For instance, when invoked with aggressive optimization
+! cases by setting SYMTOL_DFT to REALMAX. For instance, when invoked with aggressive optimization
 ! options (e.g., -fast-math), gfortran 11 is buggy with ALL and ANY: ALL returns .FALSE. on a vector
 ! of .TRUE., while ANY returns .TRUE. on a vector of .FALSE.. In that case, we cannot test
 ! ALL(IS_NAN(A) .EQV. IS_NAN(TRANSPOSE(A))).
 is_symmetric = .true.
 if (size(A, 1) /= size(A, 2)) then
     is_symmetric = .false.
-elseif (SYMTOL_DFT < 0.9_RP * HUGENUM) then
+elseif (SYMTOL_DFT < 0.9_RP * REALMAX) then
     is_symmetric = (.not. any(abs(A - transpose(A)) > tol_loc * max(maxval(abs(A)), ONE))) .and. &
         & all(is_nan(A) .eqv. is_nan(transpose(A))) .and. all(abs(A) > 0 .eqv. abs(transpose(A)) > 0)
 end if

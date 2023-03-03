@@ -53,7 +53,7 @@ subroutine trsbox(delta, gopt_in, hq_in, pq_in, sl, su, xopt, xpt, crvmin, d)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, HALF, REALMIN, EPS, HUGENUM, &
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, HALF, REALMIN, EPS, REALMAX, &
     & DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
@@ -196,7 +196,7 @@ nact = int(count(xbdi /= 0), kind(nact))
 
 ! Initialized D and CRVMIN.
 d = ZERO
-crvmin = -HUGENUM
+crvmin = -REALMAX
 
 ! GNEW is the gradient at the current iterate.
 gnew = gopt
@@ -341,7 +341,7 @@ do iter = 1, maxiter
         itercg = itercg + 1_IK
         rayleighq = shs / stepsq
         if (iact == 0 .and. rayleighq > 0) then
-            if (crvmin <= -HUGENUM) then  ! CRVMIN <= -HUGENUM means CRVMIN has not been set.
+            if (crvmin <= -REALMAX) then  ! CRVMIN <= -REALMAX means CRVMIN has not been set.
                 crvmin = rayleighq
             else
                 crvmin = min(crvmin, rayleighq)
@@ -471,10 +471,10 @@ do iter = 1, maxiter
     ! 2. Even if XOPT - SL < SQRT(SSQ), rounding errors may render SSQ - (XOPT - SL)**2) < 0.
     ssq = d**2 + s**2  ! Indeed, only SSQ(TRUELOC(XBDI == 0)) is needed.
     tanbd = ONE
-    sqdscr = -HUGENUM
+    sqdscr = -REALMAX
     where (xbdi == 0 .and. xopt - sl < sqrt(ssq)) sqdscr = sqrt(max(ZERO, ssq - (xopt - sl)**2))
     where (sqdscr - s > 0) tanbd = min(tanbd, (xnew - sl) / (sqdscr - s))
-    sqdscr = -HUGENUM
+    sqdscr = -REALMAX
     where (xbdi == 0 .and. su - xopt < sqrt(ssq)) sqdscr = sqrt(max(ZERO, ssq - (su - xopt)**2))
     where (sqdscr + s > 0) tanbd = min(tanbd, (su - xnew) / (sqdscr + s))
     tanbd(trueloc(is_nan(tanbd))) = ZERO
@@ -551,7 +551,7 @@ xnew(trueloc(xbdi == 1)) = su(trueloc(xbdi == 1))
 d = xnew - xopt
 
 ! Set CRVMIN to ZERO if it has never been set or becomes NaN due to ill conditioning.
-if (crvmin <= -HUGENUM .or. is_nan(crvmin)) then
+if (crvmin <= -REALMAX .or. is_nan(crvmin)) then
     crvmin = ZERO
 end if
 

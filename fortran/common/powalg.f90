@@ -820,7 +820,7 @@ function errquad(fval, xpt, gq, pq, hq, kref) result(err)
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
 ! N.B.: If KREF is absent, then GQ = nabla Q(0); otherwise, GQ = nabla Q(XREF).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : issymmetric
@@ -880,7 +880,7 @@ end if
 !!    qval = cellfun(@(x) quadinc(x, xpt, gq, pq, hq), num2cell(xpt, 1));  % Row vector
 !!end
 if (.not. all(is_finite(qval))) then
-    err = HUGENUM
+    err = REALMAX
 else
     fmq = fval - qval
     err = (maxval(fmq) - minval(fmq)) / maxval([ONE, abs(fval)])

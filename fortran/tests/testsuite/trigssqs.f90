@@ -1,5 +1,5 @@
 subroutine construct_trigssqs(prob, n)
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, PI, HUGENUM
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, PI, REALMAX
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: rand_mod, only : getseed, setseed, rand
 implicit none
@@ -21,9 +21,9 @@ prob % probtype = 'u'
 prob % m = 0
 prob % n = n
 call safealloc(prob % lb, n)
-prob % lb = -HUGENUM
+prob % lb = -REALMAX
 call safealloc(prob % ub, n)
-prob % ub = HUGENUM
+prob % ub = REALMAX
 call safealloc(prob % Aeq, n, 0_IK)
 call safealloc(prob % beq, 0_IK)
 call safealloc(prob % Aineq, n, 0_IK)

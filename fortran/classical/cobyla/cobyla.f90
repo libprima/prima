@@ -142,7 +142,7 @@ if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
     constr_loc = constr0
     cstrv_loc = maxval([ZERO, -constr_loc])
 else
-    ! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
+    ! Replace any NaN in X by ZERO and Inf/-Inf in X by REALMAX/-REALMAX.
     x = moderatex(x)
     call evaluate(calcfc, x, f, constr_loc, cstrv_loc)
 end if

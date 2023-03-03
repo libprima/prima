@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 30, 2022 PM07:59:36
+! Last Modified: Friday, March 03, 2023 AM11:58:47
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -84,7 +84,7 @@ public :: DEBUGGING
 public :: IK, IK_DFT
 public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
-public :: REALMIN, EPS, TINYCV, HUGENUM, HUGEFUN, HUGECON, HUGEBOUND
+public :: REALMIN, EPS, TINYCV, REALMAX, FUNCMAX, CONSTRMAX, BOUNDMAX
 public :: SYMTOL_DFT
 public :: MSGLEN, FNAMELEN
 public :: OUTUNIT, STDIN, STDOUT, STDERR
@@ -159,25 +159,35 @@ real(RP), parameter :: PI = 3.141592653589793238462643383279502884_RP
 ! We may set PI to acos(-1.0_RP), but some compilers may complain about `Elemental function as
 ! initialization expression with non-integer or non-character arguments`.
 
-! REALMIN is the smallest positive normalized floating-point number, which is 2^(-1022), ~2.225E-308
+! EPS is the machine epsilon, namely the smallest floating-point number such that 1.0 + EPS > 1.0.
+real(RP), parameter :: EPS = epsilon(ZERO)
+! REALMIN is the smallest positive normalized floating-point number, which is 2^(-1022) ~ 2.225E-308
 ! for IEEE double precision. Taking double precision as an example, REALMIN in other languages:
-!!MATLAB: realmin or realmin('double')
+! MATLAB: realmin or realmin('double')
 ! Python: numpy.finfo(numpy.float64).tiny
 ! Julia: realmin(Float64)
+! R: double.xmin
 real(RP), parameter :: REALMIN = tiny(ZERO)
-real(RP), parameter :: EPS = epsilon(ZERO)  ! Machine epsilon
+! REALMAX is the largest positive floating-point number, which is 2^1023 * (2 - EPS) ~ 1.797E308
+! for IEEE double precision. Taking double precision as an example, REALMAX in other languages:
+! MATLAB: realmax or realmax('double')
+! Python: numpy.finfo(numpy.float64).max
+! Julia: realmax(Float64)
+! R: double.xmax
+real(RP), parameter :: REALMAX = huge(ZERO)
 
 integer, parameter :: MINE = minexponent(ZERO)
+integer, parameter :: MAXE = maxexponent(ZERO)
+
 ! TINYCV is used in LINCOA. Powell set TINYCV = 1.0D-60. What about setting TINYCV = REALMIN?
 real(RP), parameter :: TINYCV = real(radix(ZERO), RP)**max(-200, MINE)  ! Normally, RADIX = 2.
-
-real(RP), parameter :: HUGENUM = huge(ZERO)
-
-integer, parameter :: MAXE = maxexponent(ZERO)
-real(RP), parameter :: HUGEFUN = real(radix(ZERO), RP)**min(100, MAXE / 2)  ! Normally, RADIX = 2.
-real(RP), parameter :: HUGECON = HUGEFUN
-! Any bound with an absolute value at least HUGEBOUND is considered as no bound.
-real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
+! FUNCMAX is used in the moderated extreme barrier. All function values are projected to the
+! interval [-FUNCMAX, FUNCMAX] before passing to the solvers, and NaN is replaced with FUNCMAX.
+! CONSTRMAX plays a similar role for constraints.
+real(RP), parameter :: FUNCMAX = real(radix(ZERO), RP)**min(100, MAXE / 2)  ! Normally, RADIX = 2.
+real(RP), parameter :: CONSTRMAX = FUNCMAX
+! Any bound with an absolute value at least BOUNDMAX is considered as no bound.
+real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 
 ! SYMTOL_DFT is the default tolerance for testing symmetry of matrices. It can be set to 0 if the
 ! IEEE Standard for Floating-Point Arithmetic (IEEE 754) is respected, particularly if addition and
@@ -186,11 +196,11 @@ real(RP), parameter :: HUGEBOUND = QUART * HUGENUM
 ! respect it. Hence we set SYMTOL_DFT to a nonzero number when __RELEASED__ is 1, although we do not
 ! intend to test symmetry in production. We set SYMTOL_DFT in the same way when __DEBUGGING__ is 0.
 ! Update 20221226: When gfortran 12 is invoked with aggressive optimization options, it is buggy
-! with ALL() and ANY(). We set SYMTOL_DFT to HUGENUM to signify this case and disable the check.
+! with ALL() and ANY(). We set SYMTOL_DFT to REALMAX to signify this case and disable the check.
 ! Update 20221229: ifx 2023.0.0 20221201 cannot ensure symmetry even up to 100*EPS if invoked
 ! with aggressive optimization options and if the floating-point numbers are in single precision.
 #if (defined __GFORTRAN__ || defined __INTEL_COMPILER && __REAL_PRECISION__ < 64) && __AGRESSIVE_OPTIONS__ == 1
-real(RP), parameter :: SYMTOL_DFT = HUGENUM
+real(RP), parameter :: SYMTOL_DFT = REALMAX
 #elif (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64) || (__RELEASED__ == 1) || (__DEBUGGING__ == 0)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
 #else
@@ -214,7 +224,7 @@ integer, parameter :: STDERR = 0
 ! Some default values
 real(RP), parameter :: RHOBEG_DFT = ONE
 real(RP), parameter :: RHOEND_DFT = 1.0E-6_RP
-real(RP), parameter :: FTARGET_DFT = -HUGENUM
+real(RP), parameter :: FTARGET_DFT = -REALMAX
 real(RP), parameter :: CTOL_DFT = EPS
 real(RP), parameter :: CWEIGHT_DFT = 1.0E8_RP
 real(RP), parameter :: ETA1_DFT = TENTH

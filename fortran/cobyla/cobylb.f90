@@ -39,7 +39,7 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ft
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, &
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, REALMAX, &
     & DEBUGGING, MIN_MAXFILT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
@@ -249,10 +249,10 @@ end if
 rho = rhobeg
 delta = rhobeg
 cpen = ZERO
-prerec = -HUGENUM
-preref = -HUGENUM
-prerem = -HUGENUM
-actrem = -HUGENUM
+prerec = -REALMAX
+preref = -REALMAX
+prerem = -REALMAX
+actrem = -REALMAX
 ratio = -ONE
 jdrop_tr = 0
 jdrop_geo = 0
@@ -336,7 +336,7 @@ do tr = 1, maxtr
             ! directly to the maximum between its current value and 2*BARMU while handling possible
             ! overflow. This simplifies the scheme without worsening the performance of COBYLA.
             barmu = -preref / prerec  ! PREREF + BARMU * PREREC = 0
-            cpen = max(cpen, min(TWO * barmu, HUGENUM))  ! The 1st (out of 2) update of CPEN.
+            cpen = max(cpen, min(TWO * barmu, REALMAX))  ! The 1st (out of 2) update of CPEN.
             if (findpole(cpen, cval, fval) <= n) then
                 call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
                 ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.

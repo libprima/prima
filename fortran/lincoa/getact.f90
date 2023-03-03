@@ -77,7 +77,7 @@ subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth, norm, lsqr, solve, trueloc
@@ -275,7 +275,7 @@ do iter = 1, maxiter
         violmx = apsd(l)
     else
         l = 0
-        violmx = -HUGENUM
+        violmx = -REALMAX
     end if
     !!MATLAB: apsd(mask) = -Inf; [violmx , l] = max(apsd);
     ! N.B.: the value of L will differ from the Fortran version if MASK is all FALSE, but this is OK
@@ -312,7 +312,7 @@ do iter = 1, maxiter
         ! Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
         ! N.B.: 1. VLAM(1:NACT-1) < 0 and VLAM(NACT) <= 0 by the updates of VLAM. 2. VMU(NACT) > 0.
         ! 3. Only the places where VMU(1:NACT) < 0 is relevant below, if any.
-        frac = HUGENUM
+        frac = REALMAX
         where (vmu(1:nact) < 0 .and. vlam(1:nact) < 0) frac(1:nact) = vlam(1:nact) / vmu(1:nact)
         !!MATLAB: frac = vlam / vmu; frac(vmu >= 0 | vlam >= 0) = Inf;
         vmult = minval([violmx, frac(1:nact)])

@@ -335,7 +335,7 @@ if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
     f = f0
     constr_loc = constr0
 else
-    ! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
+    ! Replace any NaN in X by ZERO and Inf/-Inf in X by REALMAX/-REALMAX.
     x = moderatex(x)
     call evaluate(calcfc, x, f, constr_loc, cstrv_loc) ! Indeed, CSTRV_LOC needs not to be evaluated.
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
