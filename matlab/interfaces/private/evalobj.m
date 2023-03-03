@@ -1,4 +1,4 @@
-function [f, succ] = evalobj(invoker, fun, x, hugefun)
+function [f, succ] = evalobj(invoker, fun, x, funcmax)
 %EVALOBJ evaluates an objective function `f = fun(x)`.
 % In particular, it uses a 'moderated extreme barrier' to cope with 'hidden constraints' or
 % evaluation failures.
@@ -33,7 +33,7 @@ if ~isnumeric(f)
 end
 
 % Use a 'moderated extreme barrier' to cope with 'hidden constraints' or evaluation failures.
-if isnan(f) || ~isreal(f) || f > hugefun
+if isnan(f) || ~isreal(f) || f > funcmax
     wid = sprintf('%s:ObjectiveAbnormalReturn', invoker);
     xstr = sprintf('%g    ', x);
     if ~isreal(f)
@@ -41,12 +41,12 @@ if isnan(f) || ~isreal(f) || f > hugefun
     else
         fstr = sprintf('%g', f);
     end
-    wmsg = sprintf('%s: Objective function returns %s, which is replaced by hugefun = %g.\nThe value of x is:\n%s\n', invoker, fstr, hugefun, xstr);
+    wmsg = sprintf('%s: Objective function returns %s, which is replaced by funcmax = %g.\nThe value of x is:\n%s\n', invoker, fstr, funcmax, xstr);
     warning(wid, '%s', wmsg);
     %warnings = [warnings, wmsg];  % We do not record this warning in the output.
 
     % Apply the moderated extreme barrier:
-    f = hugefun;
+    f = funcmax;
 end
 
 f = double(real(f)); % Some functions like 'asin' can return complex values even when it is not intended

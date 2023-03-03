@@ -21,7 +21,7 @@ function redrat(ared, pred, rshrink) result(ratio)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates the reduction ratio of a trust-region step, handling Inf/NaN properly.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, HALF, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, HALF, REALMAX, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
@@ -48,7 +48,7 @@ end if
 
 if (is_nan(ared)) then
     ! This should not happen in unconstrained problems due to the moderated extreme barrier.
-    ratio = -HUGENUM
+    ratio = -REALMAX
 elseif (is_nan(pred) .or. pred <= 0) then
     ! The trust-region subproblem solver fails in this rare case. Instead of terminating as Powell's
     ! original code does, we set RATIO as follows so that the solver may continue to progress.
@@ -58,12 +58,12 @@ elseif (is_nan(pred) .or. pred <= 0) then
     else
         ! Set ratio to a large negative number to signify a bad trust-region step, so that the
         ! solver will check whether to take a geometry step or reduce RHO.
-        ratio = -HUGENUM
+        ratio = -REALMAX
     end if
 elseif (is_posinf(pred) .and. is_posinf(ared)) then
     ratio = ONE  ! ARED/PRED = NaN if calculated directly.
 elseif (is_posinf(pred) .and. is_neginf(ared)) then
-    ratio = -HUGENUM  ! ARED/PRED = NaN if calculated directly.
+    ratio = -REALMAX  ! ARED/PRED = NaN if calculated directly.
 else
     ratio = ared / pred
 end if

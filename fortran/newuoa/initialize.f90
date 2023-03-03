@@ -49,7 +49,7 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhi
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
@@ -139,9 +139,9 @@ evaluated = .false.
 ! Initialize XHIST, FHIST, and FVAL. Otherwise, compilers may complain that they are not
 ! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
 ! Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
-xhist = -HUGENUM
-fhist = HUGENUM
-fval = HUGENUM
+xhist = -REALMAX
+fhist = REALMAX
+fval = REALMAX
 
 ! Initialize XPT(:, 1: MIN(2*N + 1, NPT)).
 xpt(:, 1) = ZERO

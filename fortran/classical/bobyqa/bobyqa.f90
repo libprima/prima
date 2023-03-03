@@ -22,7 +22,7 @@ subroutine bobyqa(calfun, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, HUGENUM, MSGLEN
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, REALMAX, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
@@ -112,19 +112,19 @@ end if
 if (present(xl)) then
     xl_loc = xl
 else
-    xl_loc = -HUGENUM
+    xl_loc = -REALMAX
 end if
 where (is_nan(xl_loc))
-    xl_loc = -HUGENUM
+    xl_loc = -REALMAX
 end where
 
 if (present(xu)) then
     xu_loc = xu
 else
-    xu_loc = HUGENUM
+    xu_loc = REALMAX
 end if
 where (is_nan(xu_loc))
-    xu_loc = HUGENUM
+    xu_loc = REALMAX
 end where
 
 x = max(xl_loc, min(xu_loc, moderatex(x)))

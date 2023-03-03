@@ -34,7 +34,7 @@ subroutine savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, cons
 ! XFILT(:, NFILT+1:MAXFILT) and FFILT(:, NFILT+1:MAXFILT) etc are not initialized yet.
 ! 2. We decide whether an X is better than another by the ISBETTER function.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: linalg_mod, only : trueloc
@@ -136,8 +136,8 @@ if (count(keep) == maxfilt) then  ! In this case, NFILT = SIZE(KEEP) = COUNT(KEE
         ! We should not use CFILT here; if MAX(CFILT_SHIFTED) is attained at multiple indices, then
         ! we will check FFILT to exhaust the remaining degree of freedom.
     else
-        phi = max(ffilt, -HUGENUM) + cweight * cfilt_shifted
-        ! MAX(FFILT, -HUGENUM) makes sure that PHI will not contain NaN (unless there is a bug).
+        phi = max(ffilt, -REALMAX) + cweight * cfilt_shifted
+        ! MAX(FFILT, -REALMAX) makes sure that PHI will not contain NaN (unless there is a bug).
     end if
     ! We select X to maximize PHI. In case there are multiple maximizers, we take the one with the
     ! largest CSTRV_SHIFTED; if there are more than one choices, we take the one with the largest F;
@@ -216,7 +216,7 @@ function selectx(fhist, chist, cweight, ctol) result(kopt)
 ! in a filter should not dominate each other, but this subroutine does NOT assume such a property.
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : IK, RP, EPS, HUGENUM, HUGEFUN, HUGECON, ZERO, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, EPS, REALMAX, FUNCMAX, CONSTRMAX, ZERO, TWO, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: debug_mod, only : assert
 
@@ -261,19 +261,19 @@ end if
 !====================!
 
 ! We select X among the points with F < FREF and CSTRV < CREF.
-! Do NOT use F <= FREF, because F == FREF (HUGEFUN or HUGENUM) may mean F == INF in practice!
-if (any(fhist < HUGEFUN .and. chist < HUGECON)) then
-    fref = HUGEFUN
-    cref = HUGECON
-elseif (any(fhist < HUGENUM .and. chist < HUGECON)) then
-    fref = HUGENUM
-    cref = HUGECON
-elseif (any(fhist < HUGEFUN .and. chist < HUGENUM)) then
-    fref = HUGEFUN
-    cref = HUGENUM
+! Do NOT use F <= FREF, because F == FREF (FUNCMAX or REALMAX) may mean F == INF in practice!
+if (any(fhist < FUNCMAX .and. chist < CONSTRMAX)) then
+    fref = FUNCMAX
+    cref = CONSTRMAX
+elseif (any(fhist < REALMAX .and. chist < CONSTRMAX)) then
+    fref = REALMAX
+    cref = CONSTRMAX
+elseif (any(fhist < FUNCMAX .and. chist < REALMAX)) then
+    fref = FUNCMAX
+    cref = REALMAX
 else
-    fref = HUGENUM
-    cref = HUGENUM
+    fref = REALMAX
+    cref = REALMAX
 end if
 
 if (.not. any(fhist < fref .and. chist < cref)) then
@@ -295,8 +295,8 @@ else
         ! We should not use CHIST here; if MIN(CHIST_SHIFTED) is attained at multiple indices, then
         ! we will check FHIST to exhaust the remaining degree of freedom.
     else
-        phi = max(fhist, -HUGENUM) + cweight * chist_shifted
-        ! MAX(FHIST, -HUGENUM) makes sure that PHI will not contain NaN (unless there is a bug).
+        phi = max(fhist, -REALMAX) + cweight * chist_shifted
+        ! MAX(FHIST, -REALMAX) makes sure that PHI will not contain NaN (unless there is a bug).
     end if
     ! We select X to minimize PHI subject to F < FREF and CSTRV_SHIFTED <= CREF (see the comments
     ! above for the reason of taking "<" and "<=" in these two constraints). In case there are
@@ -339,7 +339,7 @@ function isbetter00(f1, c1, f2, c2, ctol) result(is_better)
 ! Here, C means constraint violation, which is a nonnegative number.
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, TEN, EPS, HUGECON, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, TEN, EPS, CONSTRMAX, REALMAX, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
@@ -377,10 +377,10 @@ is_better = is_better .or. (any(is_nan([f1, c1])) .and. .not. any(is_nan([f2, c2
 is_better = is_better .or. (f1 < f2 .and. c1 <= c2)
 is_better = is_better .or. (f1 <= f2 .and. c1 < c2)
 ! If C1 <= CTOL and C2 is significantly larger/worse than CTOL, i.e., C2 > MAX(CTOL,CREF),
-! then FC1 is better than FC2 as long as F1 < HUGENUM. Normally CREF >= CTOL so MAX(CTOL, CREF)
-! is indeed CREF. However, this may not be true if CTOL > 1E-1*HUGECON.
-cref = TEN * max(EPS, min(ctol, 1.0E-2_RP * HUGECON))  ! The MIN avoids overflow.
-is_better = is_better .or. (f1 < HUGENUM .and. c1 <= ctol .and. (c2 > max(ctol, cref) .or. is_nan(c2)))
+! then FC1 is better than FC2 as long as F1 < REALMAX. Normally CREF >= CTOL so MAX(CTOL, CREF)
+! is indeed CREF. However, this may not be true if CTOL > 1E-1*CONSTRMAX.
+cref = TEN * max(EPS, min(ctol, 1.0E-2_RP * CONSTRMAX))  ! The MIN avoids overflow.
+is_better = is_better .or. (f1 < REALMAX .and. c1 <= ctol .and. (c2 > max(ctol, cref) .or. is_nan(c2)))
 
 !====================!
 !  Calculation ends  !

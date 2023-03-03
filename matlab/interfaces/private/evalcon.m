@@ -1,4 +1,4 @@
-function [cineq, ceq, succ] = evalcon(invoker, nonlcon, x, hugecon)
+function [cineq, ceq, succ] = evalcon(invoker, nonlcon, x, constrmax)
 %EVALCON evaluates a constraint function `[cineq, ceq] = nonlcon(x)`.
 % In particular, it uses a 'moderated extreme barrier' to cope with 'hidden constraints' or
 % evaluation failures.
@@ -33,7 +33,7 @@ if ~(isempty(ceq) || isnumeric(ceq))
 end
 
 % Use a 'moderated extreme barrier' to cope with 'hidden constraints' or evaluation failures.
-if any(isnan(cineq) | ~isreal(cineq) | cineq > hugecon)
+if any(isnan(cineq) | ~isreal(cineq) | cineq > constrmax)
     wid = sprintf('%s:ConstraintAbnormalReturn', invoker);
     xstr = sprintf('%g    ', x);
     if any(~isreal(cineq))
@@ -41,15 +41,15 @@ if any(isnan(cineq) | ~isreal(cineq) | cineq > hugecon)
     else
         cstr = sprintf('%g    ', cineq);
     end
-    wmsg = sprintf('%s: Constraint function returns cineq =\n%s\nAny value that is not real or above hugecon = %g is replaced by hugecon.\nThe value of x is:\n%s\n', invoker, cstr, hugecon, xstr);
+    wmsg = sprintf('%s: Constraint function returns cineq =\n%s\nAny value that is not real or above constrmax = %g is replaced by constrmax.\nThe value of x is:\n%s\n', invoker, cstr, constrmax, xstr);
     warning(wid, '%s', wmsg);
     %warnings = [warnings, wmsg];  % We do not record this warning in the output.
 
     % Apply the moderated extreme barrier:
-    cineq(~isreal(cineq) | cineq~= cineq | cineq > hugecon) = hugecon;
+    cineq(~isreal(cineq) | cineq~= cineq | cineq > constrmax) = constrmax;
 end
 
-if any(isnan(ceq) | ~isreal(ceq) | abs(ceq) > hugecon)
+if any(isnan(ceq) | ~isreal(ceq) | abs(ceq) > constrmax)
     wid = sprintf('%s:ConstraintAbnormalReturn', invoker);
     xstr = sprintf('%g    ', x);
     if any(~isreal(ceq))
@@ -57,19 +57,19 @@ if any(isnan(ceq) | ~isreal(ceq) | abs(ceq) > hugecon)
     else
         cstr = sprintf('%g    ', ceq);
     end
-    wmsg = sprintf('%s: Constraint function returns ceq =\n%s\nAny value that is not real or with an absolute value above hugecon = %g is replaced by hugecon.\nThe value of x is:\n%s\n', invoker, cstr, hugecon, xstr);
+    wmsg = sprintf('%s: Constraint function returns ceq =\n%s\nAny value that is not real or with an absolute value above constrmax = %g is replaced by constrmax.\nThe value of x is:\n%s\n', invoker, cstr, constrmax, xstr);
     warning(wid, '%s', wmsg);
     %warnings = [warnings, wmsg];  % We do not record this warning in the output.
 
     % Apply the moderated extreme barrier:
-    ceq(~isreal(ceq) | ceq ~= ceq | ceq > hugecon) = hugecon;
-    ceq(ceq < -hugecon) = -hugecon;
+    ceq(~isreal(ceq) | ceq ~= ceq | ceq > constrmax) = constrmax;
+    ceq(ceq < -constrmax) = -constrmax;
 end
 
 % This part is NOT an extreme barrier. We replace extremely negative values of
-% cineq (which leads to no constraint violation) by -hugecon. Otherwise,
+% cineq (which leads to no constraint violation) by -constrmax. Otherwise,
 % NaN or Inf may occur in the interpolation models.
-cineq(cineq < -hugecon) = -hugecon;
+cineq(cineq < -constrmax) = -constrmax;
 
 cineq = double(real(cineq(:))); % Some functions like 'asin' can return complex values even when it is not intended
 ceq = double(real(ceq(:)));

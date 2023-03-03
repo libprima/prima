@@ -7,10 +7,12 @@
 4. New functions: evalobj.m, evalcon.m, cobyla_con, cobyla_funcon, all_solvers, all_precisions,
    all_variants.
 5. Unify the signatures of the classical and modern version
-6. gethuge now accpets 'precision' as an input; implement maxint; call gethuge only in preprima and
-   maxint; call maxint only in preprima and lincoan, cobylan; record hugenum, hugefun, hugecon in
-   probinfo and use hugefun/hugecon in postprima.
-   update 20230207: gethuge is now implemented in MATLAB; the Fortran version is removed.
+6. gethuge, hugefun, and hugecon are renamed to getmax, funcmax, constrmax respectively.
+   Add `boundmax`. Remove `hugenum`, which can be obtained by getmax('real', 'precision').
+   getmax now accepts 'precision' as an input; implement maxint; call getmax only in preprima and
+   maxint; call maxint only in preprima and lincoa, cobyla; record boundmax, funcmax, constrmax in
+   probinfo and use them in postprima.
+   update 20230207: getmax is now implemented in MATLAB; the Fortran version is removed.
 7. No need to check maxint in uobyqa, newuoa, and bobyqa; in lincoa, cobyla, and preprima, only check
    that the number of variables/constraints do not exceed maxint.
 8. Do not take the value of rhoend into consideration when correcting the incorrect (non-positive,

@@ -161,7 +161,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HUGENUM, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, REALMAX, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, norm, linspace, trueloc
@@ -285,7 +285,7 @@ zdota(1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=1, nact)]
 !!MATLAB: zdota(1:nact) = sum(z(:, 1:nact) .* A(:, iact(1:nact)), 1);  % Row vector
 
 ! More initialization.
-optold = HUGENUM
+optold = REALMAX
 nactold = nact
 nfail = 0
 
@@ -363,7 +363,7 @@ do iter = 1, maxiter
             vmultd(nact + 1:mcon) = -ONE  ! SIZE(VMULTD) = MCON
 
             ! Revise the Lagrange multipliers. The revision is not applicable to VMULTC(NACT + 1:M).
-            fracmult = HUGENUM
+            fracmult = REALMAX
             where (vmultd > 0 .and. iact <= m) fracmult = vmultc / vmultd
             !!MATLAB: mask = (vmultd > 0 & iact <= m); fracmult(mask) = vmultc(mask) / vmultd(mask);
             ! Only the places with VMULTD > 0 and IACT <= M is relevant blow, if any.
@@ -553,7 +553,7 @@ do iter = 1, maxiter
     vmultd(nact + 1:mcon) = cvshift(nact + 1:mcon)
 
     ! Calculate the fraction of the step from D to DNEW that will be taken.
-    fracmult = HUGENUM
+    fracmult = REALMAX
     where (vmultd < 0) fracmult = vmultc / (vmultc - vmultd)
     !!MATLAB: mask = (vmultd < 0); fracmult(mask) = vmultc(mask) / (vmultc(mask) - vmultd(mask));
     ! Only the places with VMULTD < 0 is relevant below, if any.

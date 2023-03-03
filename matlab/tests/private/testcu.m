@@ -578,7 +578,7 @@ solv_options.quiet = true;
 solv_options.debug = options.debug;
 solv_options.chkfunval = options.chkfunval;
 %solv_options.scale = true;
-%solv_options.ctol = options.ctol;
+solv_options.ctol = options.ctol;
 
 if (strcmpi(solv, 'fmincon'))
     solv_options = optimoptions('fmincon');
