@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, November 14, 2022 AM08:50:38
+! Last Modified: Friday, March 03, 2023 AM11:20:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -284,7 +284,8 @@ else
     ! CMIN is the minimal shifted constraint violation attained in the history.
     cmin = minval(chist_shifted, mask=(fhist < fref))
     ! We consider only the points whose shifted constraint violations are at most the CREF below.
-    cref = TWO * cmin  ! CREF = 0 if CMIN = 0; thus asking for CSTRV_SHIFTED < CREF is WRONG!
+    !cref = TWO * cmin  ! CREF = 0 if CMIN = 0; thus asking for CSTRV_SHIFTED < CREF is WRONG!
+    cref = max(epsilon(cref), TWO * cmin)
     ! We use the following PHI as our merit function to select X.
     if (cweight <= 0) then
         phi = fhist
