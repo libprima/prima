@@ -48,19 +48,23 @@ argin = [varargin, {options}];
 output{3} = profile(argin{:});
 options = rmfield(options, {'perm'});
 
+% Precision of function evaluation ~ 1.0e-7 (eps('single') = 1.1921e-07)
 options.eval_options = struct('single', true);
 argin = [varargin, {options}];
 output{4} = profile(argin{:});
 options = rmfield(options, {'eval_options'});
 
-%options.eval_options = struct('signif', 5);
-%argin = [varargin, {options}];
-%output{5} = profile(argin{:});
-%options = rmfield(options, {'eval_options'});
+% Precision of function evaluation ~ 1.0e-6
+options.eval_options = struct('dnoise', 1e-6);
+argin = [varargin, {options}];
+output{5} = profile(argin{:});
 
-%options.eval_options = struct('dnoise', 1e-5);
-%argin = [varargin, {options}];
-%output{6} = profile(argin{:});
+% Precision of function evaluation ~ 1.0e-5
+options.eval_options = struct('signif', 5);
+argin = [varargin, {options}];
+output{6} = profile(argin{:});
+options = rmfield(options, {'eval_options'});
+
 
 outputfiles = struct();
 prob_types = fieldnames(output{1});

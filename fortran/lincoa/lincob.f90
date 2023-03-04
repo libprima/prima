@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 04, 2023 PM09:13:16
+! Last Modified: Saturday, March 04, 2023 PM09:26:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -466,9 +466,15 @@ do tr = 1, maxtr
     ! 2. If an iteration sets IMPROVE_GEO = TRUE, it must also reduce DELTA or set DELTA to RHO.
 
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
-    accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(size(dnormsav) - 1:size(dnormsav)) <= 0.2 * rho)
+    ! N.B.: The ACCURATE_MOD here plays a similar role as the variable with the same name in UOBYQA,
+    ! NEWUOA, and BOBYQA. However, the definition of ACCURATE_MOD here is different from that in
+    ! those solvers, which do not only check whether DNORM is small in recent iterations, but also
+    ! verify a curvature condition that really indicates that recent models are sufficiently
+    ! accurate. Here, however, we are not really sure whether they are accurate or not. Therefore,
+    ! ACCURATE_MOD is not the best name, but we keep it to align with the other solvers.
+    accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= 0.2 * rho)
     ! Powell's version (note that size(dnormsav) = 5 in his implementation):
-    !accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(size(dnormsav) - 2:size(dnormsav)) <= TENTH * rho)
+    !accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
