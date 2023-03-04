@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 03, 2023 AM02:40:03
+! Last Modified: Saturday, March 04, 2023 PM09:46:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -382,7 +382,8 @@ do tr = 1, maxtr
         ! 3. The factor HALF works better than TENTH (used in NEWUOA/BOBYQA), 0.2, and 0.7.
         ! 4. The factor 0.99*GAMMA3 aligns with the update of DELTA after a trust-region step.
         delta = HALF * delta
-        if (delta <= min(0.99_RP * gamma3, 1.5_RP) * rho) then
+        !if (delta <= min(0.99_RP * gamma3, 1.5_RP) * rho) then
+        if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
@@ -429,7 +430,8 @@ do tr = 1, maxtr
         ! not smaller than GAMMA3, then DELTA will be reset to RHO, which is not reasonable as D is
         ! very successful. See paragraph two of Sec. 5.2.5 in T. M. Ragonneau's thesis: "Model-Based
         ! Derivative-Free Optimization Methods and Software".
-        if (delta <= min(0.99_RP * gamma3, 1.5_RP) * rho) then
+        !if (delta <= min(0.99_RP * gamma3, 1.5_RP) * rho) then
+        if (delta <= 1.5_RP * rho) then
             delta = rho
         end if
 

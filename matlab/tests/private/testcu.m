@@ -569,10 +569,10 @@ if isfield(eval_options, 'signif')
     options.ctol = max(options.ctol, 10^(-eval_options.signif));
 end
 if isfield(eval_options, 'single') && eval_options.single
-    options.ctol = max(options.ctol, 1.0e-7);
+    options.ctol = max(options.ctol, eps('single'));
 end
 if options.randomizex0 > 0
-    options.ctol = max(options.ctol, 1e-7);
+    options.ctol = max(options.ctol, 1e-8);
 end
 options.cpenalty = min(options.cpenalty, 1/options.ctol);
 
