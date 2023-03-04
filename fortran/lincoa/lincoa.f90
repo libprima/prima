@@ -30,7 +30,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, February 15, 2023 PM09:18:34
+! Last Modified: Saturday, March 04, 2023 PM01:41:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -118,6 +118,8 @@ subroutine lincoa(calfun, x, f, &
 !   Input, REAL(RP) scalar, default: machine epsilon.
 !   CTOL is the tolerance of constraint violation. Any X with MAXVAL(A^T*X-B) <= CTOL is
 !   considered feasible.
+!   N.B.: 1. CTOL is absolute, not relative. 2. CTOL is used only when selecting the returned X.
+!   It does not affect the iterations of the algorithm.
 !
 ! CWEIGHT
 !   Input, REAL(RP) scalar, default: CWEIGHT_DFT defined in the module CONSTS_MOD in common/consts.F90.

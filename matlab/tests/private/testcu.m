@@ -251,32 +251,52 @@ if ~use_ref
         end
     end
 end
-mref = fref + options.cpenalty*cref;
-mref_min = min(min(mref, [], 3), [], 2);  % Minimum of mref for each problem.
 
-% Modify crec according to cref.
-% For the ip-th problem:
-% 1. All values of cref that are less than options.ctol*min(0.01, cref(ip, 1, 1)) are set to 0, meaning
-% that we consider such constraint violations as zero. Other values are also reduced by this threshold.
-% 2. All values of cref that are more than max(0.1, 2*cref(ip, 1, 1)) are set to Inf, meaning that
-% consider the corresponding iterates is too bad to consider.
-for ip = 1 : np
+for ip = 1:np
     if (isnan(cref(ip, 1, 1)) || isinf(cref(ip, 1, 1)))
         cref(ip, 1, 1) = realmax;
     end
+    cref(ip, :, 1) = cref(ip, 1, 1);
+end
+
+% Modify crec and cref.
+% For the ip-th problem:
+% 1. All values of crec/cref that are less than options.ctol*min(0.01, cref(ip, 1, 1)) are set to 0, meaning
+% that we consider such constraint violations as zero. Other values are also reduced by this threshold.
+% 2. All values of crec/cref that are more than max(0.1, 2*cref(ip, 1, 1)) are set to Inf, meaning that
+% consider the corresponding iterates is too bad to consider.
+for ip = 1 : np
     %cshift = options.ctol*min(0.01, cref(ip, 1, 1));
-    cshift = max(eps, options.ctol*min(0.01, cref(ip, 1, 1)));  % max(eps, ...) makes a difference.
+    %cshift = max(eps, options.ctol*min(0.01, cref(ip, 1, 1)));  % max(eps, ...) makes a difference.
+    cshift = max(eps, options.ctol);
+    cref(ip, :, :) = max(0, cref(ip, :, :) - cshift);
     crec(ip, :, :, :) = max(0, crec(ip, :, :, :) - cshift);
+    cbig = max(0.1, 2*cref(ip, 1, 1));
     for is = 1 : ns
+        cref(ip, is, cref(ip, is, :) > cbig) = Inf;
         for ir = 1 : nr
-            crec(ip, is, ir, crec(ip, is, ir, :) > max(0.1, 2*cref(ip, 1, 1))) = Inf;
+            crec(ip, is, ir, crec(ip, is, ir, :) > cbig) = Inf;
         end
     end
 end
 
 % Define mrec
 mrec = frec + options.cpenalty*crec;
-mrec(:,:,:,1) = frec(:,:,:,1) + options.cpenalty*crec(:,:,:,1); % Prevent mrec(:,:,:,1) from being NaN
+% Prevent mrec(:,:,:,1) from being Inf
+for ip = 1 : np
+    for is = 1 : ns
+        for ir = 1 : nr
+            if isnan(mrec(ip, is, ir, 1))
+                mrec(ip, is, ir, 1) = realmax;
+            end
+        end
+    end
+end
+
+% Define mref
+mref = fref + options.cpenalty*cref;
+mref_min = min(min(mref, [], 3), [], 2);  % Minimum of mref for each problem.
+
 
 % Define mmin, which is used as the "minimum merit function value" for problem ip. However, we
 % have different definitions of mmin depending on the strictness as follows.
@@ -541,24 +561,20 @@ end
 % Revise options.ctol and options.cpenalty
 if isfield(eval_options, 'dnoise')
     options.ctol = max(options.ctol, eval_options.dnoise.level);
-    options.cpenalty = min(options.cpenalty, 100/options.ctol);
 end
 if isfield(eval_options, 'noise')
     options.ctol = max(options.ctol, eval_options.noise.level);
-    options.cpenalty = min(options.cpenalty, 100/options.ctol);
 end
 if isfield(eval_options, 'signif')
     options.ctol = max(options.ctol, 10^(-eval_options.signif));
-    options.cpenalty = min(options.cpenalty, 100/options.ctol);
 end
 if isfield(eval_options, 'single') && eval_options.single
-    options.ctol = max(options.ctol, 1e-5);
-    options.cpenalty = min(options.cpenalty, 100/options.ctol);
+    options.ctol = max(options.ctol, 1.0e-7);
 end
 if options.randomizex0 > 0
-    options.ctol = max(options.ctol, 1e-5);
-    options.cpenalty = min(options.cpenalty, 100/options.ctol);
+    options.ctol = max(options.ctol, 1e-7);
 end
+options.cpenalty = min(options.cpenalty, 1/options.ctol);
 
 return
 
