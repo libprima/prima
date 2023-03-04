@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 03, 2023 AM02:39:14
+! Last Modified: Saturday, March 04, 2023 PM09:00:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -177,7 +177,6 @@ real(RP) :: fopt
 real(RP) :: fshift(npt)
 real(RP) :: fval(npt), cval(npt)
 real(RP) :: galt(size(x))
-real(RP) :: gamma3
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: moderr
@@ -296,9 +295,6 @@ rescon = max(b - matprod(xopt, amat), ZERO)
 rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
 !!MATLAB: rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
-! GAMMA3 is a parameter for updating the trust-region radius; 0 < GAMMA1 < 1 < GAMMA3 <= GAMMA2.
-gamma3 = sqrt(gamma2)
-
 ! Set some more initial values.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
 ! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
@@ -371,9 +367,11 @@ do tr = 1, maxtr
         ! infinite cycling, because both REDUCE_RHO and IMPROVE_GEO may end up with FALSE in this
         ! case, which did happen in tests.
         ! 3. The factor HALF works better than TENTH (used in NEWUOA/BOBYQA), 0.2, and 0.7.
-        ! 4. The factor 0.99*GAMMA3 aligns with the update of DELTA after a trust-region step.
         delta = HALF * delta
-        if (delta <= min(0.99_RP * gamma3, 1.5_RP) * rho) then
+        ! Powell's code uses DELTA <= MIN(0.99_RP * GAMMA3, 1.5_RP) * RHO as the condition for the
+        ! following IF, where GAMMA3 is a parameter in (1, GAMMA2] for updating DELTA. This aligns
+        ! with the update of DELTA after a trust-region step. See the comment there for more info.
+        if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
@@ -412,15 +410,18 @@ do tr = 1, maxtr
         ratio = redrat(fopt - f, qred, eta1)
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
-        ! The new DELTA lies in [GAMMA1*DNORM, GAMMA3*DELTA].
-        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, gamma3, ratio)
-        ! Set DELTA to RHO when it is close to or below. The multiplicative factor in the scheme
-        ! below should be less than GAMMA3. Imagine a very successful step with DENORM = the
-        ! un-updated DELTA = RHO. Then TRRAD will update DELTA to GAMMA3*RHO. If this factor were
-        ! not smaller than GAMMA3, then DELTA will be reset to RHO, which is not reasonable as D is
-        ! very successful. See paragraph two of Sec. 5.2.5 in T. M. Ragonneau's thesis: "Model-Based
-        ! Derivative-Free Optimization Methods and Software".
-        if (delta <= min(0.99_RP * gamma3, 1.5_RP) * rho) then
+        ! The new DELTA lies in [GAMMA1*DNORM, GAMMA2*DNORM].
+        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+        ! Set DELTA to RHO when it is close to or below.
+        ! N.B.: Powell's code uses DELTA <= MIN(0.99_RP * GAMMA3, 1.5_RP) * RHO as the condition for
+        ! the following IF, where GAMMA3 is a parameter in (1, GAMMA2] for updating DELTA. Powell's
+        ! code must make sure that the multiplicative factor in the condition is less than GAMMA3.
+        ! Imagine a very successful step with DENORM = the un-updated DELTA = RHO. Then, in Powell's
+        ! implementation, TRRAD will update DELTA to GAMMA3*RHO. If this factor were not less than
+        ! GAMMA3, then DELTA will be reset to RHO, which is not reasonable as D is very successful.
+        ! See paragraph two of Sec. 5.2.5 in T. M. Ragonneau's thesis: "Model-Based Derivative-Free
+        ! Optimization Methods and Software".
+        if (delta <= 1.5_RP * rho) then
             delta = rho
         end if
 
@@ -462,9 +463,9 @@ do tr = 1, maxtr
     ! 2. If an iteration sets IMPROVE_GEO = TRUE, it must also reduce DELTA or set DELTA to RHO.
 
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
-    accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= 0.2 * rho)
+    accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(size(dnormsav) - 1:size(dnormsav)) <= 0.2 * rho)
     ! Powell's version (note that size(dnormsav) = 5 in his implementation):
-    !accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
+    !accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(size(dnormsav) - 2:size(dnormsav)) <= TENTH * rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
