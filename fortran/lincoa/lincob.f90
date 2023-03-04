@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 04, 2023 PM09:00:17
+! Last Modified: Saturday, March 04, 2023 PM09:13:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -335,6 +335,9 @@ do tr = 1, maxtr
     ! applied if its length is at least 0.1999*DELTA and if a line search of TRSTEP has caused a
     ! change to the active set, indicated by NGETACT >= 2 (note that NGETACT is at least 1).
     ! Otherwise, the trust region step is considered too short to try.
+    ! N.B. The magic number 0.1999 seems to be related to the fact that a linear constraint is
+    ! considered nearly active if the point under consideration is within 0.2*DELTA to the boundary
+    ! of the constraint. See the subroutine GETACT and Section 3 of Powell (2015) for more details.
     shortd = ((dnorm < HALF * delta .and. ngetact < 2) .or. dnorm < 0.1999_RP * delta)
     !------------------------------------------------------------------------------------------!
     ! The SHORTD defined above needs NGETACT, which relies on Powell's trust region subproblem
@@ -363,7 +366,7 @@ do tr = 1, maxtr
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
         ! N.B.: 1. This value of DELTA will be discarded if REDUCE_RHO turns out TRUE later.
         ! 2. Powell's code does not shrink DELTA when QRED > 0 is FALSE (i.e., when VQUAD >= 0 in
-        ! Powell's code, where VQUAD = -QRED). Consequently, the algorithm may  be stuck in an
+        ! Powell's code, where VQUAD = -QRED). Consequently, the algorithm may be stuck in an
         ! infinite cycling, because both REDUCE_RHO and IMPROVE_GEO may end up with FALSE in this
         ! case, which did happen in tests.
         ! 3. The factor HALF works better than TENTH (used in NEWUOA/BOBYQA), 0.2, and 0.7.
