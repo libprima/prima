@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:13:54
+! Last Modified: Saturday, March 04, 2023 PM08:47:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -520,7 +520,7 @@ end subroutine trstep
 !--------------------------------------------------------------------------------------------------!
 
 
-function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, gamma3, ratio) result(delta)
+function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
 !--------------------------------------------------------------------------------------------------!
 ! This function updates the trust region radius according to RATIO and DNORM.
 !--------------------------------------------------------------------------------------------------!
@@ -539,7 +539,6 @@ real(RP), intent(in) :: eta1    ! Ratio threshold for contraction
 real(RP), intent(in) :: eta2    ! Ratio threshold for expansion
 real(RP), intent(in) :: gamma1  ! Contraction factor
 real(RP), intent(in) :: gamma2  ! Expansion factor
-real(RP), intent(in) :: gamma3  ! Expansion factor
 real(RP), intent(in) :: ratio   ! Reduction ratio
 
 ! Outputs
@@ -553,8 +552,7 @@ if (DEBUGGING) then
     call assert(delta_in >= dnorm .and. dnorm > 0, 'DELTA_IN >= DNORM > 0', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
-    call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma3 > 1 .and. gamma2 >= gamma3, &
-        & '0 < GAMMA1 < 1 < GAMMA3 <= GAMMA2', srname)
+    call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
     ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
     ! NaN, which should NOT happen due to the moderated extreme barrier.
     call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
@@ -571,10 +569,11 @@ if (ratio <= eta1) then
 elseif (ratio <= eta2) then
     delta = max(gamma1 * delta_in, dnorm)   ! Powell's UOBYQA/NEWUOA/BOBYQA/LINCOA
 else
-    delta = min(max(gamma1 * delta_in, gamma2 * dnorm), gamma3 * delta_in)
-    !delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's NEWUOA/BOBYQA.
+    delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's NEWUOA/BOBYQA.
     !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's UOBYQA
     !delta = max(delta_in, gamma2 * dnorm)  ! Modified version. Works well for UOBYQA.
+    ! Powell's LINCOA code is as follows with 1 < GAMMA3 <= GAMMA2.
+    !delta = min(max(gamma1 * delta_in, gamma2 * dnorm), gamma3 * delta_in)
 end if
 
 ! For noisy problems, the following may work better.
