@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, February 27, 2023 AM01:37:14
+! Last Modified: Sunday, March 05, 2023 PM02:59:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -241,7 +241,7 @@ info = MAXTR_REACHED
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Generate the next trust region step D.
-    call trsapp(delta, gopt, hq, pq, trtol, xopt, xpt, crvmin, d)
+    call trsapp(delta, gopt, hq, pq, trtol, xpt, crvmin, d)
     dnorm = min(delta, norm(d))
 
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.

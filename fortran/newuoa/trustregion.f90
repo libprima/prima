@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:05:38
+! Last Modified: Sunday, March 05, 2023 PM03:01:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -18,7 +18,7 @@ public :: trsapp, trrad
 contains
 
 
-subroutine trsapp(delta, gopt_in, hq_in, pq_in, tol, x, xpt, crvmin, s, info)
+subroutine trsapp(delta, gopt_in, hq_in, pq_in, tol, xpt, crvmin, s, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds an approximate solution to the N-dimensional trust region subproblem
 !
@@ -65,7 +65,6 @@ real(RP), intent(in) :: gopt_in(:)   ! GOPT_IN(N)
 real(RP), intent(in) :: hq_in(:, :)    ! HQ_IN(N, N)
 real(RP), intent(in) :: pq_in(:)   ! PQ_IN(NPT)
 real(RP), intent(in) :: tol
-real(RP), intent(in) :: x(:)    ! X(N)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 
 ! Outputs
@@ -87,21 +86,21 @@ real(RP) :: angle
 real(RP) :: args(4)
 real(RP) :: bstep
 real(RP) :: cth
-real(RP) :: d(size(x))
+real(RP) :: d(size(gopt_in))
 real(RP) :: dd
 real(RP) :: delsq
 real(RP) :: dg
 real(RP) :: dhd
 real(RP) :: dhs
 real(RP) :: ds
-real(RP) :: g(size(x))
+real(RP) :: g(size(gopt_in))
 real(RP) :: gg
 real(RP) :: gg0
 real(RP) :: ggsav
 real(RP) :: gopt(size(gopt_in))
-real(RP) :: hd(size(x))
+real(RP) :: hd(size(gopt_in))
 real(RP) :: hq(size(hq_in, 1), size(hq_in, 2))
-real(RP) :: hs(size(x))
+real(RP) :: hs(size(gopt_in))
 real(RP) :: modscal
 real(RP) :: pq(size(pq_in))
 real(RP) :: qadd
@@ -110,7 +109,7 @@ real(RP) :: reduc
 real(RP) :: resid
 real(RP) :: sg
 real(RP) :: shs
-real(RP) :: sold(size(x))
+real(RP) :: sold(size(gopt_in))
 real(RP) :: sqrtd
 real(RP) :: ss
 real(RP) :: sth
@@ -126,7 +125,6 @@ if (DEBUGGING) then
     call assert(size(hq_in, 1) == n .and. issymmetric(hq_in), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq_in) == npt, 'SIZE(PQ) = NPT', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(x) == n .and. all(is_finite(x)), 'SIZE(X) == N, X is finite', srname)
     call assert(size(s) == n, 'SIZE(S) == N', srname)
 end if
 
@@ -272,7 +270,7 @@ do iter = 1, maxiter
     gg = inprod(g + hs, g + hs)  ! Current gradient norm square
     ! We may record g+hs for later usage:
     ! gnew = g + hs
-    ! Note that we should NOT set g = g + hs, because g contains the gradient of Q at x.
+    ! Note that we should NOT set g = g + hs, because g contains the gradient of Q at X.
 
     ! Check whether to exit. This should be done after updating HS and GG, which will be used for
     ! the 2-dimensional minimization if any.
