@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 26, 2023 AM10:17:30
+! Last Modified: Sunday, March 05, 2023 PM07:05:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,9 +36,9 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! SL and SU hold XL - XBASE and XU - XBASE, respectively.
 ! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
 !   the least calculated F so far). XOPT satisfies SL(I) <= XOPT(I) <= SU(I), with appropriate
-! equalities when XOPT is on a constraint boundary. FOPT = F(XOPT + XBASE).
-! D is reserved for trial steps from XOPT. It is chosen by subroutine TRSBOX or GEOSTEP. Usually
-!   XBASE + XOPT + D is the vector of variables for the next call of CALFUN.
+!   equalities when XOPT is on a constraint boundary. FOPT = F(XOPT + XBASE). However, we do not
+!   save XOPT and FOPT explicitly, because XOPT = XPT(:, KOPT) and FOPT = FVAL(KOPT), which is
+!   explained below.
 ! [XPT, FVAL, KOPT] describes the interpolation set:
 ! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
 !   values of F at the interpolation points; KOPT is the index of XOPT in XPT.
@@ -51,6 +51,8 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 !   OMEGA = ZMAT*ZMAT^T, which provides both the correct rank and positive semi-definiteness. BMAT
 !   will hold the last N ROWs of H except for the (NPT+1)th column. Note that the (NPT + 1)th row
 !   and column of H are not saved as they are unnecessary for the calculation.
+! D is reserved for trial steps from XOPT. It is chosen by subroutine TRSBOX or GEOSTEP. Usually
+!   XBASE + XOPT + D is the vector of variables for the next call of CALFUN.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -139,7 +141,6 @@ real(RP) :: distsq(npt)
 real(RP) :: dnorm
 real(RP) :: dnormsav(3)
 real(RP) :: ebound
-real(RP) :: fopt
 real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
@@ -154,7 +155,6 @@ real(RP) :: su(size(x))
 real(RP) :: vlag(npt + size(x))
 real(RP) :: xbase(size(x))
 real(RP) :: xdrop(size(x))
-real(RP) :: xopt(size(x))
 real(RP) :: xosav(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
@@ -193,10 +193,8 @@ end if
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fhist, fval, &
     & sl, su, xbase, xhist, xpt, subinfo)
 
-xopt = xpt(:, kopt)
-fopt = fval(kopt)
-x = xinbd(xbase, xopt, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
-f = fopt
+x = xinbd(xbase, xpt(:, kopt), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
+f = fval(kopt)
 
 ! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
@@ -250,7 +248,7 @@ info = MAXTR_REACHED
 info = INFO_DFT
 do tr = 1, maxtr
     ! Generate the next trust region step D.
-    call trsbox(delta, gopt, hq, pq, sl, su, xopt, xpt, crvmin, d)
+    call trsbox(delta, gopt, hq, pq, sl, su, xpt(:, kopt), xpt, crvmin, d)
     dnorm = min(delta, norm(d))
 
     shortd = (dnorm < HALF * rho)
@@ -276,10 +274,10 @@ do tr = 1, maxtr
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
         ! Evaluate EBOUND. It will be used as a bound to test if the entries of MODERRSAV are small.
-        ebound = errbd(crvmin, d, gopt, hq, moderrsav, pq, rho, sl, su, xopt, xpt)
+        ebound = errbd(crvmin, d, gopt, hq, moderrsav, pq, rho, sl, su, xpt(:, kopt), xpt)
     else
         ! Calculate the next value of the objective function.
-        x = xinbd(xbase, xopt + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
+        x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
@@ -300,11 +298,11 @@ do tr = 1, maxtr
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! MODERR is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
-        moderr = f - fopt + qred
+        moderr = f - fval(kopt) + qred
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
-        ratio = redrat(fopt - f, qred, eta1)
+        ratio = redrat(fval(kopt) - f, qred, eta1)
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
@@ -313,7 +311,7 @@ do tr = 1, maxtr
         end if
 
         ! Is the newly generated X better than current best point?
-        ximproved = (f < fopt)
+        ximproved = (f < fval(kopt))
 
         ! Call RESCUE if rounding errors have damaged the denominator corresponding to D.
         ! RESCUE is invoked sometimes though not often after a trust-region step, and it does
@@ -328,7 +326,7 @@ do tr = 1, maxtr
             ! !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then  ! Powell's code.
             ! !if (.not. any(den > maxval(vlag(1:npt)**2))) then
             call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
-                & fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, subinfo)
+                & fval, gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
                 exit
@@ -338,9 +336,9 @@ do tr = 1, maxtr
 
             ! RESCUE shifts XBASE to XBASE + XOPT. Update D, MODERR, and XIMPROVED.
             ! Do NOT calculate QRED according to this D, as it is not really a trust region step.
-            d = max(sl, min(su, d)) - xopt
-            moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)
-            ximproved = (f < fopt)
+            d = max(sl, min(su, d)) - xpt(:, kopt)
+            moderr = f - fval(kopt) - quadinc(d, xpt, gopt, pq, hq)
+            ximproved = (f < fval(kopt))
         end if
 
         ! Set KNEW_TR to the index of the interpolation point to be replaced with XOPT + D.
@@ -355,11 +353,11 @@ do tr = 1, maxtr
             xdrop = xpt(:, knew_tr)
             xosav = xpt(:, kopt)
             call updateh(knew_tr, kopt, d, xpt, bmat, zmat)
-            call updatexf(knew_tr, ximproved, f, max(sl, min(su, xopt + d)), kopt, fval, xpt, fopt, xopt)
+            call updatexf(knew_tr, ximproved, f, max(sl, min(su, xosav + d)), kopt, fval, xpt)
             call updateq(1_IK, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
             ! Try whether to replace the new quadratic model with the alternative model, namely the
             ! least Frobenius norm interpolant.
-            call tryqalt(bmat, fval - fopt, ratio, sl, su, xopt, xpt, zmat, itest, gopt, hq, pq)
+            call tryqalt(bmat, fval - fval(kopt), ratio, sl, su, xpt(:, kopt), xpt, zmat, itest, gopt, hq, pq)
         end if
     end if
 
@@ -377,8 +375,8 @@ do tr = 1, maxtr
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderrsav) <= ebound) .and. all(dnormsav <= rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
-    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
+    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
     close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's code.
     ! Below are some alternative definitions of CLOSE_ITPSET.
     ! !close_itpset = all(distsq <= (TEN * delta)**2)  ! Does not work as well as Powell's version.
@@ -448,7 +446,7 @@ do tr = 1, maxtr
         den = calden(kopt, bmat, d, xpt, zmat)
         if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
             call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
-                & fopt, fval, gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, subinfo)
+                & fval, gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
                 exit
@@ -458,7 +456,7 @@ do tr = 1, maxtr
             moderrsav = REALMAX
         else
             ! Calculate the next value of the objective function.
-            x = xinbd(xbase, xopt + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
+            x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
             call evaluate(calfun, x, f)
             nf = nf + 1_IK
 
@@ -482,18 +480,18 @@ do tr = 1, maxtr
             dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
             ! MODERR is the error of the current model in predicting the change in F due to D.
             ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
-            moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
+            moderr = f - fval(kopt) - quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
             moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
             ! Is the newly generated X better than current best point?
-            ximproved = (f < fopt)
+            ximproved = (f < fval(kopt))
 
             ! Update [BMAT, ZMAT] (represents H in the BOBYQA paper), [FVAL, XPT, KOPT, FOPT, XOPT],
             ! and [GQ, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XOPT + D.
             xdrop = xpt(:, knew_geo)
             xosav = xpt(:, kopt)
             call updateh(knew_geo, kopt, d, xpt, bmat, zmat)
-            call updatexf(knew_geo, ximproved, f, max(sl, min(su, xopt + d)), kopt, fval, xpt, fopt, xopt)
+            call updatexf(knew_geo, ximproved, f, max(sl, min(su, xosav + d)), kopt, fval, xpt)
             call updateq(1_IK, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
         end if
     end if
@@ -508,7 +506,7 @@ do tr = 1, maxtr
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
-        call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
+        call rhomsg(solver, iprint, nf, fval(kopt), rho, xbase + xpt(:, kopt))
         ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
         ! the current RHO. Update them after reducing RHO.
         dnormsav = REALMAX
@@ -520,11 +518,11 @@ do tr = 1, maxtr
     ! 1. After a trust region step that is not short, shift XBASE if SUM(XOPT**2) >= 1.0E3*DNORM**2.
     ! In this case, it seems quite important for the performance to recalculate QRED.
     ! 2. Before a geometry step, shift XBASE if SUM(XOPT**2) >= 1.0E3*DELBAR**2.
-    if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
+    if (sum(xpt(:, kopt)**2) >= 1.0E3_RP * delta**2) then
         ! Other possible criteria: SUM(XOPT**2) >= 1.0E4*DELTA**2, SUM(XOPT**2) >= 1.0E4*RHO**2.
-        sl = min(sl - xopt, ZERO)
-        su = max(su - xopt, ZERO)
-        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq)
+        sl = min(sl - xpt(:, kopt), ZERO)
+        su = max(su - xpt(:, kopt), ZERO)
+        call shiftbase(kopt, xbase, xpt, zmat, bmat, pq, hq)
         ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
         xbase = max(xl, min(xu, xbase))
     end if
@@ -533,7 +531,7 @@ end do
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
-    x = xinbd(xbase, xopt + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
+    x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
@@ -543,8 +541,8 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
 end if
 
 ! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
-if (fval(kopt) <= f .or. is_nan(f)) then
-    x = xinbd(xbase, xopt, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
+if (fval(kopt) < f .or. is_nan(f)) then
+    x = xinbd(xbase, xpt(:, kopt), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
     f = fval(kopt)
 end if
 

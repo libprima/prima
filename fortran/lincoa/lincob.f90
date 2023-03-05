@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 04, 2023 PM09:26:25
+! Last Modified: Sunday, March 05, 2023 PM07:01:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,10 +39,10 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 !   modified for variables relative to XBASE.
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
 !   of the model and Lagrange functions.
-! XOPT is the displacement from XBASE of the feasible vector of variables
-!   that provides the least calculated F so far, this vector being the current trust region centre.
-! D is reserved for trial steps from XOPT. It is chosen by subroutine TRSTEP or GEOSTEP. Usually
-!   XBASE + XOPT + D is the vector of variables for the next call of CALFUN.
+! XOPT is the displacement from XBASE of the feasible vector of variables that provides the least
+!   calculated F so far, this vector being the current trust region centre. FOPT = F(XOPT + XBASE).
+!   However, we do not save XOPT and FOPT explicitly, because XOPT = XPT(:, KOPT) and
+!   FOPT = FVAL(KOPT), which is explained below.
 ! [XPT, FVAL, KOPT] describes the interpolation set:
 ! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
 !   values of F at the interpolation points; KOPT is the index of XOPT in XPT.
@@ -55,6 +55,8 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 !   ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
 !   except for the (NPT+1)th column. Note that the (NPT + 1)th row and column of H are not saved as
 !   they are unnecessary for the calculation.
+! D is reserved for trial steps from XOPT. It is chosen by subroutine TRSTEP or GEOSTEP. Usually
+!   XBASE + XOPT + D is the vector of variables for the next call of CALFUN.
 ! IACT is an integer array for the indices of the active constraints.
 ! RESCON holds information about the constraint residuals at the current trust region center XOPT.
 !   1. If if B(J) - AMAT(:, J)^T*XOPT <= DELTA, then RESCON(J) = B(J) - AMAT(:, J)^T*XOPT. Note that
@@ -173,8 +175,6 @@ real(RP) :: distsq(npt)
 real(RP) :: dnorm
 real(RP) :: dnormsav(4)  ! Powell's implementation uses 5
 real(RP) :: ffilt(maxfilt)
-real(RP) :: fopt
-real(RP) :: fshift(npt)
 real(RP) :: fval(npt), cval(npt)
 real(RP) :: galt(size(x))
 real(RP) :: gopt(size(x))
@@ -192,7 +192,6 @@ real(RP) :: rho
 real(RP) :: xbase(size(x))
 real(RP) :: xdrop(size(x))
 real(RP) :: xfilt(size(x), maxfilt)
-real(RP) :: xopt(size(x))
 real(RP) :: xosav(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
@@ -238,10 +237,8 @@ call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg,
 
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20221129: Are the following needed?
-xopt = xpt(:, kopt)
-fopt = fval(kopt)
-x = xbase + xopt
-f = fopt
+x = xbase + xpt(:, kopt)
+f = fval(kopt)
 !--------------------------------------------------------------------------------------------------!
 
 ! Evaluate the constraints using A_ORIG and B_ORIG. Should we do this in INITXF?
@@ -286,12 +283,12 @@ call inith(ij, xpt, idz, bmat, zmat)
 ! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
 hq = ZERO
 pq = omega_mul(idz, zmat, fval)
-gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xopt, xpt, pq)
+gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xpt(:, kopt), xpt, pq)
 pqalt = pq
 galt = gopt
 
 ! Initialize RESCON.
-rescon = max(b - matprod(xopt, amat), ZERO)
+rescon = max(b - matprod(xpt(:, kopt), amat), ZERO)
 rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
 !!MATLAB: rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
@@ -379,7 +376,7 @@ do tr = 1, maxtr
         end if
     else
         ! Calculate the next value of the objective function.
-        x = xbase + (xopt + d)
+        x = xbase + (xpt(:, kopt) + d)
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
@@ -405,12 +402,12 @@ do tr = 1, maxtr
         ! models are more accurate in predicting the function value at XOPT + D.
         ! N.B.: Do NOT change the "<" in the comparison to "<="; otherwise, the result will not be
         ! reasonable if the two values being compared are both ZERO or INF.
-        moderr = f - fopt + qred
-        moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
+        moderr = f - fval(kopt) + qred
+        moderr_alt = f - fval(kopt) - quadinc(d, xpt, galt, pqalt)
         qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
-        ratio = redrat(fopt - f, qred, eta1)
+        ratio = redrat(fval(kopt) - f, qred, eta1)
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
         ! The new DELTA lies in [GAMMA1*DNORM, GAMMA2*DNORM].
@@ -429,28 +426,28 @@ do tr = 1, maxtr
         end if
 
         ! Is the newly generated X better than current best point?
-        ximproved = (f < fopt)
+        ximproved = (f < fval(kopt))
 
         ! Set KNEW_TR to the index of the interpolation point to be replaced with XNEW = XOPT + D.
         ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
         knew_tr = setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat)
         if (knew_tr > 0) then
-            ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT,
-            ! FOPT] and [GOPT, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes
-            ! XNEW = XOPT + D.
+            ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT] and
+            ! [GOPT, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_TR) becomes XNEW = XOPT + D.
             xdrop = xpt(:, knew_tr)
             xosav = xpt(:, kopt)
             call updateh(knew_tr, kopt, d, xpt, idz, bmat, zmat)
-            call updatexf(knew_tr, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
+            call updatexf(knew_tr, ximproved, f, xosav + d, kopt, fval, xpt)
             call updateq(idz, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
             ! Establish the alternative model, namely the least Frobenius norm interpolant. Replace
             ! the current model with the alternative model if the recent few (three) alternative
             ! models are more accurate in predicting the function value of XOPT + D.
-            call tryqalt(idz, bmat, fval - fopt, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
+            call tryqalt(idz, bmat, fval - fval(kopt), xpt(:, kopt), xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
 
-            ! Update RESCON if XOPT is changed. Zaikun 20221115: Shouldn't we do it after DELTA is updated?
-            call updateres(ximproved, amat, b, delta, norm(d), xopt, rescon)
+            ! Update RESCON if XOPT is changed.
+            ! Zaikun 20221115: Shouldn't we do it after DELTA is updated?
+            call updateres(ximproved, amat, b, delta, norm(d), xpt(:, kopt), rescon)
         end if
 
     end if  ! End of IF (SHORTD .OR. .NOT. QRED > 0). The normal trust-region calculation ends here.
@@ -476,8 +473,8 @@ do tr = 1, maxtr
     ! Powell's version (note that size(dnormsav) = 5 in his implementation):
     !accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
-    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column! Implicit expansion
+    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
     ! Below are some alternative definitions of CLOSE_ITPSET.
     ! !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's code.
@@ -537,7 +534,7 @@ do tr = 1, maxtr
         call geostep(iact, idz, knew_geo, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
 
         ! Calculate the next value of the objective function.
-        x = xbase + (xopt + d)
+        x = xbase + (xpt(:, kopt) + d)
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
@@ -564,31 +561,30 @@ do tr = 1, maxtr
         ! Powell's code takes XOPT + D into account only if it is feasible.
         ! N.B.: Do NOT change the "<" in the comparison to "<="; otherwise, the result will not be
         ! reasonable if the two values being compared are both ZERO or INF.
-        moderr = f - fopt - quadinc(d, xpt, gopt, pq, hq)
-        moderr_alt = f - fopt - quadinc(d, xpt, galt, pqalt)
+        moderr = f - fval(kopt) - quadinc(d, xpt, gopt, pq, hq)
+        moderr_alt = f - fval(kopt) - quadinc(d, xpt, galt, pqalt)
         qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
 
         ! Is the newly generated X better than current best point?
-        ximproved = (f < fopt .and. feasible)
+        ximproved = (f < fval(kopt) .and. feasible)
 
-        ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT, XOPT, FOPT]
-        ! and [GOPT, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
+        ! Update [BMAT, ZMAT, IDZ] (represents H in the NEWUOA paper), [XPT, FVAL, KOPT] and
+        ! [GOPT, HQ, PQ] (the quadratic model), so that XPT(:, KNEW_GEO) becomes XNEW = XOPT + D.
         xdrop = xpt(:, knew_geo)
         xosav = xpt(:, kopt)
         call updateh(knew_geo, kopt, d, xpt, idz, bmat, zmat)
-        call updatexf(knew_geo, ximproved, f, xopt + d, kopt, fval, xpt, fopt, xopt)
+        call updatexf(knew_geo, ximproved, f, xosav + d, kopt, fval, xpt)
         call updateq(idz, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 
         ! Establish the alternative model, namely the least Frobenius norm interpolant. Replace the
         ! current model with the alternative model if the recent few (three) alternative models are
         ! more accurate in predicting the function value of XOPT + D.
         ! N.B.: Powell's code does this only if XOPT + D is feasible.
-        call tryqalt(idz, bmat, fval - fopt, xopt, xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
+        call tryqalt(idz, bmat, fval - fval(kopt), xpt(:, kopt), xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
 
-        ! Update RESCON. Zaikun 20221115: Currently, UPDATERES does not update RESCON unless
-        ! XIMPROVED is TRUE. Shouldn't we do it whenever DELTA is updated? Have we MISUNDERSTOOD
-        ! RESCON?
-        call updateres(ximproved, amat, b, delta, norm(d), xopt, rescon)
+        ! Update RESCON. Zaikun 20221115: Currently, UPDATERES does not update RESCON if XIMPROVED
+        ! is FALSE. Shouldn't we do it whenever DELTA is updated? Have we MISUNDERSTOOD RESCON?
+        call updateres(ximproved, amat, b, delta, norm(d), xpt(:, kopt), rescon)
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
     ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm
@@ -602,7 +598,7 @@ do tr = 1, maxtr
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
-        call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt, cstrv, constr)
+        call rhomsg(solver, iprint, nf, fval(kopt), rho, xbase + xpt(:, kopt), cstrv, constr)
         ! DNORMSAV is corresponding to the latest function evaluations with the current RHO.
         ! Update it after reducing RHO.
         dnormsav = REALMAX
@@ -611,20 +607,19 @@ do tr = 1, maxtr
     ! Shift XBASE if XOPT may be too far from XBASE.
     ! Powell's original criterion for shifting XBASE: before a trust region step or a geometry step,
     ! shift XBASE if SUM(XOPT**2) >= 1.0E3*DELTA**2.
-    if (sum(xopt**2) >= 1.0E3_RP * delta**2) then
+    if (sum(xpt(:, kopt)**2) >= 1.0E3_RP * delta**2) then
         ! Other possible criteria: SUM(XOPT**2) >= 1.0E4*DELTA**2, SUM(XOPT**2) >= 1.0E3*RHO**2.
-        b = b - matprod(xopt, amat)
-        call shiftbase(xbase, xopt, xpt, zmat, bmat, pq, hq, idz)
+        b = b - matprod(xpt(:, kopt), amat)
+        call shiftbase(kopt, xbase, xpt, zmat, bmat, pq, hq, idz)
         ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
-        fshift = fval - fopt
-        pqalt = omega_mul(idz, zmat, fshift)
-        galt = matprod(bmat(:, 1:npt), fshift) + hess_mul(xopt, xpt, pqalt)
+        pqalt = omega_mul(idz, zmat, fval - fval(kopt))
+        galt = matprod(bmat(:, 1:npt), fval - fval(kopt)) + hess_mul(xpt(:, kopt), xpt, pqalt)
     end if
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried before.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
-    x = xbase + (xopt + d)
+    x = xbase + (xpt(:, kopt) + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
     constr = matprod(x, A_orig) - b_orig

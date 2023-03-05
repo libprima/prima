@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 02, 2023 AM08:14:37
+! Last Modified: Sunday, March 05, 2023 PM07:06:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -556,7 +556,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
 end if
 
 ! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
-if (fval(kopt) <= f .or. is_nan(f)) then
+if (fval(kopt) < f .or. is_nan(f)) then
     x = xinbd(xbase, xopt, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
     f = fval(kopt)
 end if
