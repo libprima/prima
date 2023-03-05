@@ -1,0 +1,2202 @@
+     The Fortran version of LINCOA is attached. Its purpose is to seek the
+least value of a function F of several variables subject to general linear
+inequality constraints on the variables, when derivatives of F are not
+available. The name LINCOA denotes LINearly Constrained Optimization
+Algorithm. F is specified by the user through a subroutine called CALFUN.
+The algorithm is intended to change the variables to values that are close
+to a local constrained minimum of F. The user, however, should assume
+responsibility for finding out if the calculations are adequate. It may be
+helpful to employ several starting points in the space of the variables and
+to try different values of the parameters NPT and RHOEND. I intend to write
+a paper that explains briefly the main features of the software.
+
+     LINCOA is not suitable for very large numbers of variables because no
+attention is given to any sparsity. A few calculations with 1000 variables,
+however, have been run successfully overnight, and the performance of LINCOA
+is satisfactory usually for small numbers of variables. Several calculations
+of the objective function may be required at points that do not satisfy the
+linear constraints, especially if an equality constraint is expressed as
+two inequalities.
+
+     The attachments in sequence are a suitable Makefile, followed by a main
+program and a CALFUN routine for the "PtsinTet" problem, in order to provide
+an example for testing. Then LINCOA and its six auxiliary routines, namely
+LINCOB, GETACT, PRELIM, QMSTEP, TRSTEP and UPDATE, are given. Finally, the
+output from the author's computer for the PtsinTet problem is listed.
+
+     In addition to providing CALFUN, the linear constraints, and an initial
+vector of variables, the user has to set the values of RHOBEG, RHOEND and
+NPT. After scaling the individual variables, so that the magnitudes of their
+expected changes are similar, RHOBEG is the initial steplength for changes
+to the variables, a reasonable choice being the mesh size of a coarse grid
+search. Further, RHOEND should be suitable for a search on a very fine grid.
+Typically, the final vector of variables is within distance 10*RHOEND of
+a local minimum. The parameter NPT specifies the number of interpolation
+conditions on each quadratic model, the value NPT=2*N+1 being recommended
+for a start, where N is the number of variables.
+
+     The way of calling LINCOA should be clear from the PtsinTet example
+and from the comments near the beginning of SUBROUTINE LINCOA. There are no
+restrictions on or charges for the use of the software. I hope that the time
+and effort I have spent on developing the package will be helpful to much
+research and to many applications.
+
+December 6th, 2013                    M.J.D. Powell (mjdp@cam.ac.uk)
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Makefile %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+main: calfun.o getact.o lincoa.o lincob.o main.o prelim.o qmstep.o trstep.o update.o
+	ifort -g calfun.o getact.o lincoa.o lincob.o main.o prelim.o qmstep.o trstep.o update.o
+calfun.o: calfun.f
+	ifort -g  -c calfun.f
+getact.o: getact.f
+	ifort -g  -c getact.f
+lincoa.o: lincoa.f
+	ifort -g  -c lincoa.f
+lincob.o: lincob.f
+	ifort -g  -c lincob.f
+main.o: main.f
+	ifort -g  -c main.f
+prelim.o: prelim.f
+	ifort -g  -c prelim.f
+qmstep.o: qmstep.f
+	ifort -g  -c qmstep.f
+trstep.o: trstep.f
+	ifort -g  -c trstep.f
+update.o: update.f
+	ifort -g  -c update.f
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% main.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+C
+C     Calculate the tetrahedron of least volume that encloses the points
+C       (XP(J),YP(J),ZP(J)), J=1,2,...,NP. Our method requires the origin
+C       to be strictly inside the convex hull of these points. There are
+C       twelve variables that define the four faces of each tetrahedron
+C       that is considered. Each face has the form ALPHA*X+BETA*Y+GAMMA*Z=1,
+C       the variables X(3K-2), X(3K-1) and X(3K) being the values of ALPHA,
+C       BETA and GAMMA for the K-th face, K=1,2,3,4. Let the set T contain
+C       all points in three dimensions that can be reached from the origin
+C       without crossing a face. Because the volume of T may be infinite,
+C       the objective function is the smaller of FMAX and the volume of T,
+C       where FMAX is set to an upper bound on the final volume initially.
+C       There are 4*NP linear constraints on the variables, namely that each
+C       of the given points (XP(J),YP(J),ZP(J)) shall be in T. Let XS = min
+C       XP(J), YS = min YP(J), ZS = min ZP(J) and SS = max XP(J)+YP(J)+ZP(J),
+C       where J runs from 1 to NP. The initial values of the variables are
+C       X(1)=1/XS, X(5)=1/YS, X(9)=1/ZS, X(2)=X(3)=X(4)=X(6)=X(7) =X(8)=0
+C       and X(10)=X(11)=X(12)=1/SS, which satisfy the linear constraints,
+C       and which provide the bound FMAX=(SS-XS-YS-ZS)**3/6. Other details
+C       of the test calculation are given below, including the choice of
+C       the data points (XP(J),YP(J),ZP(J)), J=1,2,...,NP. The smaller final
+C       value of the objective function in the case NPT=35 shows that the
+C       problem has local minima.
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+      COMMON FMAX
+      DIMENSION XP(50),YP(50),ZP(50),A(12,200),B(200),X(12),W(500000)
+C
+C     Set some constants.
+C
+      ONE=1.0D0
+      TWO=2.0D0
+      ZERO=0.0D0
+      PI=4.0D0*DATAN(ONE)
+      IA=12
+      N=12
+C
+C     Set the data points.
+C
+      NP=50
+      SUMX=ZERO
+      SUMY=ZERO
+      SUMZ=ZERO
+      DO 10 J=1,NP
+      THETA=DFLOAT(J-1)*PI/DFLOAT(NP-1)
+      XP(J)=DCOS(THETA)*DCOS(TWO*THETA)
+      SUMX=SUMX+XP(J)
+      YP(J)=DSIN(THETA)*DCOS(TWO*THETA)
+      SUMY=SUMY+YP(J)
+      ZP(J)=DSIN(TWO*THETA)
+   10 SUMZ=SUMZ+ZP(J)
+      SUMX=SUMX/DFLOAT(NP)
+      SUMY=SUMY/DFLOAT(NP)
+      SUMZ=SUMZ/DFLOAT(NP)
+      DO 20 J=1,NP
+      XP(J)=XP(J)-SUMX
+      YP(J)=YP(J)-SUMY
+   20 ZP(J)=ZP(J)-SUMZ
+C
+C     Set the linear constraints.
+C
+      M=4*NP
+      DO 30 K=1,M
+      B(K)=ONE
+      DO 30 I=1,N
+   30 A(I,K)=ZERO
+      DO 40 J=1,NP
+      DO 40 I=1,4
+      K=4*J+I-4
+      IW=3*I
+      A(IW-2,K)=XP(J)
+      A(IW-1,K)=YP(J)
+   40 A(IW,K)=ZP(J)
+C
+C     Set the initial vector of variables. The JCASE=1,6 loop gives six
+C       different choices of NPT when LINCOA is called.
+C
+      XS=ZERO
+      YS=ZERO
+      ZS=ZERO
+      SS=ZERO
+      DO 50 J=1,NP
+      XS=DMIN1(XS,XP(J))
+      YS=DMIN1(YS,YP(J))
+      ZS=DMIN1(ZS,ZP(J))
+   50 SS=DMAX1(SS,XP(J)+YP(J)+ZP(J))
+      FMAX=(SS-XS-YS-ZS)**3/6.0D0
+      DO 80 JCASE=1,6
+      DO 60 I=2,8
+   60 X(I)=ZERO
+      X(1)=ONE/XS
+      X(5)=ONE/YS
+      X(9)=ONE/ZS
+      X(10)=ONE/SS
+      X(11)=ONE/SS
+      X(12)=ONE/SS
+C
+C     Call of LINCOA, which provides the printing given at the end of this
+C       note.
+C
+      NPT=5*JCASE+10
+      RHOBEG=1.0D0
+      RHOEND=1.0D-6
+      IPRINT=1
+      MAXFUN=10000
+      PRINT 70, NPT,RHOEND
+   70 FORMAT (//4X,'Output from LINCOA with  NPT =',I4,
+     1  '  and  RHOEND =',1PD12.4)
+      CALL LINCOA (N,NPT,M,A,IA,B,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W)
+   80 CONTINUE
+      STOP
+      END
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% calfun.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE CALFUN (N,X,F)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      COMMON FMAX
+      DIMENSION X(*)
+      ZERO=0.0D0
+      F=FMAX
+      V12=X(1)*X(5)-X(4)*X(2)
+      V13=X(1)*X(8)-X(7)*X(2)
+      V14=X(1)*X(11)-X(10)*X(2)
+      V23=X(4)*X(8)-X(7)*X(5)
+      V24=X(4)*X(11)-X(10)*X(5)
+      V34=X(7)*X(11)-X(10)*X(8)
+      DEL1=V23*X(12)-V24*X(9)+V34*X(6)
+      IF (DEL1 .LE. ZERO) GOTO 10
+      DEL2=-V34*X(3)-V13*X(12)+V14*X(9)
+      IF (DEL2 .LE. ZERO) GOTO 10
+      DEL3=-V14*X(6)+V24*X(3)+V12*X(12)
+      IF (DEL3 .LE. ZERO) GOTO 10
+      DEL4=-V12*X(9)+V13*X(6)-V23*X(3)
+      IF (DEL4 .LE. ZERO) GOTO 10
+      TEMP=(DEL1+DEL2+DEL3+DEL4)**3/(DEL1*DEL2*DEL3*DEL4)
+      F=DMIN1(TEMP/6.0D0,FMAX)
+   10 CONTINUE
+      RETURN
+      END
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% lincoa.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE LINCOA (N,NPT,M,A,IA,B,X,RHOBEG,RHOEND,IPRINT,
+     1  MAXFUN,W)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION A(IA,*),B(*),X(*),W(*)
+C
+C     This subroutine seeks the least value of a function of many variables,
+C       subject to general linear inequality constraints, by a trust region
+C       method that forms quadratic models by interpolation. Usually there
+C       is much freedom in each new model after satisfying the interpolation
+C       conditions, which is taken up by minimizing the Frobenius norm of
+C       the change to the second derivative matrix of the model. One new
+C       function value is calculated on each iteration, usually at a point
+C       where the current model predicts a reduction in the least value so
+C       far of the objective function subject to the linear constraints.
+C       Alternatively, a new vector of variables may be chosen to replace
+C       an interpolation point that may be too far away for reliability, and
+C       then the new point does not have to satisfy the linear constraints.
+C       The arguments of the subroutine are as follows.
+C
+C     N must be set to the number of variables and must be at least two.
+C     NPT must be set to the number of interpolation conditions, which is
+C       required to be in the interval [N+2,(N+1)(N+2)/2]. Typical choices
+C       of the author are NPT=N+6 and NPT=2*N+1. Larger values tend to be
+C       highly inefficent when the number of variables is substantial, due
+C       to the amount of work and extra difficulty of adjusting more points.
+C     M must be set to the number of linear inequality constraints.
+C     A is a matrix whose columns are the constraint gradients, which are
+C       required to be nonzero.
+C     IA is the first dimension of the array A, which must be at least N.
+C     B is the vector of right hand sides of the constraints, the J-th
+C       constraint being that the scalar product of A(.,J) with X(.) is at
+C       most B(J). The initial vector X(.) is made feasible by increasing
+C       the value of B(J) if necessary.
+C     X is the vector of variables. Initial values of X(1),X(2),...,X(N)
+C       must be supplied. If they do not satisfy the constraints, then B
+C       is increased as mentioned above. X contains on return the variables
+C       that have given the least calculated F subject to the constraints.
+C     RHOBEG and RHOEND must be set to the initial and final values of a
+C       trust region radius, so both must be positive with RHOEND<=RHOBEG.
+C       Typically, RHOBEG should be about one tenth of the greatest expected
+C       change to a variable, and RHOEND should indicate the accuracy that
+C       is required in the final values of the variables.
+C     The value of IPRINT should be set to 0, 1, 2 or 3, which controls the
+C       amount of printing. Specifically, there is no output if IPRINT=0 and
+C       there is output only at the return if IPRINT=1. Otherwise, the best
+C       feasible vector of variables so far and the corresponding value of
+C       the objective function are printed whenever RHO is reduced, where
+C       RHO is the current lower bound on the trust region radius. Further,
+C       each new value of F with its variables are output if IPRINT=3.
+C     MAXFUN must be set to an upper bound on the number of calls of CALFUN,
+C       its value being at least NPT+1.
+C     W is an array used for working space. Its length must be at least
+C       M*(2+N) + NPT*(4+N+NPT) + N*(9+3*N) + MAX [ M+3*N, 2*M+N, 2*NPT ].
+C       On return, W(1) is set to the final value of F, and W(2) is set to
+C       the total number of function evaluations plus 0.5.
+C
+C     SUBROUTINE CALFUN (N,X,F) has to be provided by the user. It must set
+C       F to the value of the objective function for the variables X(1),
+C       X(2),...,X(N). The value of the argument F is positive when CALFUN
+C       is called if and only if the current X satisfies the constraints
+C       to working accuracy.
+C
+C     Check that N, NPT and MAXFUN are acceptable.
+C
+      ZERO=0.0D0
+      SMALLX=1.0D-6*RHOEND
+      NP=N+1
+      NPTM=NPT-NP
+      IF (N .LE. 1) THEN
+          PRINT 10
+   10     FORMAT (/4X,'Return from LINCOA because N is less than 2.')
+          GOTO 80
+      END IF
+      IF (NPT .LT. N+2 .OR. NPT .GT. ((N+2)*NP)/2) THEN
+          PRINT 20
+   20     FORMAT (/4X,'Return from LINCOA because NPT is not in',
+     1      ' the required interval.')
+          GOTO 80
+      END IF
+      IF (MAXFUN .LE. NPT) THEN
+          PRINT 30
+   30     FORMAT (/4X,'Return from LINCOA because MAXFUN is less',
+     1      ' than NPT+1.')
+          GOTO 80
+      END IF
+C
+C     Normalize the constraints, and copy the resultant constraint matrix
+C       and right hand sides into working space, after increasing the right
+C       hand sides if necessary so that the starting point is feasible.
+C
+      IAMAT=MAX0(M+3*N,2*M+N,2*NPT)+1
+      IB=IAMAT+M*N
+      IFLAG=0
+      IF (M .GT. 0) THEN
+          IW=IAMAT-1
+          DO 60 J=1,M
+          SUM=ZERO
+          TEMP=ZERO
+          DO 40 I=1,N
+          SUM=SUM+A(I,J)*X(I)
+   40     TEMP=TEMP+A(I,J)**2
+          IF (TEMP .EQ. ZERO) THEN
+              PRINT 50
+   50         FORMAT (/4X,'Return from LINCOA because the gradient of',
+     1          ' a constraint is zero.')
+              GOTO 80
+          END IF
+          TEMP=DSQRT(TEMP)
+          IF (SUM-B(J) .GT. SMALLX*TEMP) IFLAG=1
+          W(IB+J-1)=DMAX1(B(J),SUM)/TEMP
+          DO 60 I=1,N
+          IW=IW+1
+   60     W(IW)=A(I,J)/TEMP
+      END IF
+      IF (IFLAG .EQ. 1) THEN
+          IF (IPRINT .GT. 0) PRINT 70
+   70     FORMAT (/4X,'LINCOA has made the initial X feasible by',
+     1      ' increasing part(s) of B.')
+      END IF
+C
+C     Partition the working space array, so that different parts of it can be
+C     treated separately by the subroutine that performs the main calculation.
+C
+      NDIM=NPT+N
+      IXB=IB+M
+      IXP=IXB+N
+      IFV=IXP+N*NPT
+      IXS=IFV+NPT
+      IXO=IXS+N
+      IGO=IXO+N
+      IHQ=IGO+N
+      IPQ=IHQ+(N*NP)/2
+      IBMAT=IPQ+NPT
+      IZMAT=IBMAT+NDIM*N
+      ISTP=IZMAT+NPT*NPTM
+      ISP=ISTP+N
+      IXN=ISP+NPT+NPT
+      IAC=IXN+N
+      IRC=IAC+N
+      IQF=IRC+M
+      IRF=IQF+N*N
+      IPQW=IRF+(N*NP)/2
+C
+C     The above settings provide a partition of W for subroutine LINCOB.
+C
+      CALL LINCOB (N,NPT,M,W(IAMAT),W(IB),X,RHOBEG,RHOEND,IPRINT,
+     1  MAXFUN,W(IXB),W(IXP),W(IFV),W(IXS),W(IXO),W(IGO),W(IHQ),
+     2  W(IPQ),W(IBMAT),W(IZMAT),NDIM,W(ISTP),W(ISP),W(IXN),W(IAC),
+     3  W(IRC),W(IQF),W(IRF),W(IPQW),W)
+   80 RETURN
+      END
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% lincob.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE LINCOB (N,NPT,M,AMAT,B,X,RHOBEG,RHOEND,IPRINT,
+     1  MAXFUN,XBASE,XPT,FVAL,XSAV,XOPT,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,
+     2  STEP,SP,XNEW,IACT,RESCON,QFAC,RFAC,PQW,W)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION AMAT(N,*),B(*),X(*),XBASE(*),XPT(NPT,*),FVAL(*),
+     1  XSAV(*),XOPT(*),GOPT(*),HQ(*),PQ(*),BMAT(NDIM,*),
+     2  ZMAT(NPT,*),STEP(*),SP(*),XNEW(*),IACT(*),RESCON(*),
+     3  QFAC(N,*),RFAC(*),PQW(*),W(*)
+C
+C     The arguments N, NPT, M, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
+C       identical to the corresponding arguments in SUBROUTINE LINCOA.
+C     AMAT is a matrix whose columns are the constraint gradients, scaled
+C       so that they have unit length.
+C     B contains on entry the right hand sides of the constraints, scaled
+C       as above, but later B is modified for variables relative to XBASE.
+C     XBASE holds a shift of origin that should reduce the contributions
+C       from rounding errors to values of the model and Lagrange functions.
+C     XPT contains the interpolation point coordinates relative to XBASE.
+C     FVAL holds the values of F at the interpolation points.
+C     XSAV holds the best feasible vector of variables so far, without any
+C       shift of origin.
+C     XOPT is set to XSAV-XBASE, which is the displacement from XBASE of
+C       the feasible vector of variables that provides the least calculated
+C       F so far, this vector being the current trust region centre.
+C     GOPT holds the gradient of the quadratic model at XSAV = XBASE+XOPT.
+C     HQ holds the explicit second derivatives of the quadratic model.
+C     PQ contains the parameters of the implicit second derivatives of the
+C       quadratic model.
+C     BMAT holds the last N columns of the big inverse matrix H.
+C     ZMAT holds the factorization of the leading NPT by NPT submatrix
+C       of H, this factorization being ZMAT times Diag(DZ) times ZMAT^T,
+C       where the elements of DZ are plus or minus one, as specified by IDZ.
+C     NDIM is the first dimension of BMAT and has the value NPT+N.
+C     STEP is employed for trial steps from XOPT. It is also used for working
+C       space when XBASE is shifted and in PRELIM.
+C     SP is reserved for the scalar products XOPT^T XPT(K,.), K=1,2,...,NPT,
+C       followed by STEP^T XPT(K,.), K=1,2,...,NPT.
+C     XNEW is the displacement from XBASE of the vector of variables for
+C       the current calculation of F, except that SUBROUTINE TRSTEP uses it
+C       for working space.
+C     IACT is an integer array for the indices of the active constraints.
+C     RESCON holds useful information about the constraint residuals. Every
+C       nonnegative RESCON(J) is the residual of the J-th constraint at the
+C       current trust region centre. Otherwise, if RESCON(J) is negative, the
+C       J-th constraint holds as a strict inequality at the trust region
+C       centre, its residual being at least |RESCON(J)|; further, the value
+C       of |RESCON(J)| is at least the current trust region radius DELTA.
+C     QFAC is the orthogonal part of the QR factorization of the matrix of
+C       active constraint gradients, these gradients being ordered in
+C       accordance with IACT. When NACT is less than N, columns are added
+C       to QFAC to complete an N by N orthogonal matrix, which is important
+C       for keeping calculated steps sufficiently close to the boundaries
+C       of the active constraints.
+C     RFAC is the upper triangular part of this QR factorization, beginning
+C       with the first diagonal element, followed by the two elements in the
+C       upper triangular part of the second column and so on.
+C     PQW is used for working space, mainly for storing second derivative
+C       coefficients of quadratic functions. Its length is NPT+N.
+C     The array W is also used for working space. The required number of
+C       elements, namely MAX[M+3*N,2*M+N,2*NPT], is set in LINCOA.
+C
+C     Set some constants.
+C
+      HALF=0.5D0
+      ONE=1.0D0
+      TENTH=0.1D0
+      ZERO=0.0D0
+      NP=N+1
+      NH=(N*NP)/2
+      NPTM=NPT-NP
+C
+C     Set the elements of XBASE, XPT, FVAL, XSAV, XOPT, GOPT, HQ, PQ, BMAT,
+C       ZMAT and SP for the first iteration. An important feature is that,
+C       if the interpolation point XPT(K,.) is not feasible, where K is any
+C       integer from [1,NPT], then a change is made to XPT(K,.) if necessary
+C       so that the constraint violation is at least 0.2*RHOBEG. Also KOPT
+C       is set so that XPT(KOPT,.) is the initial trust region centre.
+C
+      CALL PRELIM (N,NPT,M,AMAT,B,X,RHOBEG,IPRINT,XBASE,XPT,FVAL,
+     1  XSAV,XOPT,GOPT,KOPT,HQ,PQ,BMAT,ZMAT,IDZ,NDIM,SP,RESCON,
+     2  STEP,PQW,W)
+C
+C     Begin the iterative procedure.
+C
+      NF=NPT
+      FOPT=FVAL(KOPT)
+      RHO=RHOBEG
+      DELTA=RHO
+      IFEAS=0
+      NACT=0
+      ITEST=3
+   10 KNEW=0
+      NVALA=0
+      NVALB=0
+C
+C     Shift XBASE if XOPT may be too far from XBASE. First make the changes
+C       to BMAT that do not depend on ZMAT.
+C
+   20 FSAVE=FOPT
+      XOPTSQ=ZERO
+      DO 30 I=1,N
+   30 XOPTSQ=XOPTSQ+XOPT(I)**2
+      IF (XOPTSQ .GE. 1.0D4*DELTA*DELTA) THEN
+          QOPTSQ=0.25D0*XOPTSQ
+          DO 50 K=1,NPT
+          SUM=ZERO
+          DO 40 I=1,N
+   40     SUM=SUM+XPT(K,I)*XOPT(I)
+          SUM=SUM-HALF*XOPTSQ
+          W(NPT+K)=SUM
+          SP(K)=ZERO
+          DO 50 I=1,N
+          XPT(K,I)=XPT(K,I)-HALF*XOPT(I)
+          STEP(I)=BMAT(K,I)
+          W(I)=SUM*XPT(K,I)+QOPTSQ*XOPT(I)
+          IP=NPT+I
+          DO 50 J=1,I
+   50     BMAT(IP,J)=BMAT(IP,J)+STEP(I)*W(J)+W(I)*STEP(J)
+C
+C     Then the revisions of BMAT that depend on ZMAT are calculated.
+C
+          DO 90 K=1,NPTM
+          SUMZ=ZERO
+          DO 60 I=1,NPT
+          SUMZ=SUMZ+ZMAT(I,K)
+   60     W(I)=W(NPT+I)*ZMAT(I,K)
+          DO 80 J=1,N
+          SUM=QOPTSQ*SUMZ*XOPT(J)
+          DO 70 I=1,NPT
+   70     SUM=SUM+W(I)*XPT(I,J)
+          STEP(J)=SUM
+          IF (K .LT. IDZ) SUM=-SUM
+          DO 80 I=1,NPT
+   80     BMAT(I,J)=BMAT(I,J)+SUM*ZMAT(I,K)
+          DO 90 I=1,N
+          IP=I+NPT
+          TEMP=STEP(I)
+          IF (K .LT. IDZ) TEMP=-TEMP
+          DO 90 J=1,I
+   90     BMAT(IP,J)=BMAT(IP,J)+TEMP*STEP(J)
+C
+C     Update the right hand sides of the constraints.
+C
+          IF (M .GT. 0) THEN
+              DO 110 J=1,M
+              TEMP=ZERO
+              DO 100 I=1,N
+  100         TEMP=TEMP+AMAT(I,J)*XOPT(I)
+  110         B(J)=B(J)-TEMP
+          END IF
+C
+C     The following instructions complete the shift of XBASE, including the
+C       changes to the parameters of the quadratic model.
+C
+          IH=0
+          DO 130 J=1,N
+          W(J)=ZERO
+          DO 120 K=1,NPT
+          W(J)=W(J)+PQ(K)*XPT(K,J)
+  120     XPT(K,J)=XPT(K,J)-HALF*XOPT(J)
+          DO 130 I=1,J
+          IH=IH+1
+          HQ(IH)=HQ(IH)+W(I)*XOPT(J)+XOPT(I)*W(J)
+  130     BMAT(NPT+I,J)=BMAT(NPT+J,I)
+          DO 140 J=1,N
+          XBASE(J)=XBASE(J)+XOPT(J)
+          XOPT(J)=ZERO
+  140     XPT(KOPT,J)=ZERO
+      END IF
+C
+C     In the case KNEW=0, generate the next trust region step by calling
+C       TRSTEP, where SNORM is the current trust region radius initially.
+C       The final value of SNORM is the length of the calculated step,
+C       except that SNORM is zero on return if the projected gradient is
+C       unsuitable for starting the conjugate gradient iterations.
+C
+      DELSAV=DELTA
+      KSAVE=KNEW
+      IF (KNEW .EQ. 0) THEN
+          SNORM=DELTA
+          DO 150 I=1,N
+  150     XNEW(I)=GOPT(I)
+          CALL TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
+     1      QFAC,RFAC,SNORM,STEP,XNEW,W,W(M+1),PQW,PQW(NP),W(M+NP))
+C
+C     A trust region step is applied whenever its length, namely SNORM, is at
+C       least HALF*DELTA. It is also applied if its length is at least 0.1999
+C       times DELTA and if a line search of TRSTEP has caused a change to the
+C       active set. Otherwise there is a branch below to label 530 or 560.
+C
+          TEMP=HALF*DELTA
+          IF (XNEW(1) .GE. HALF) TEMP=0.1999D0*DELTA
+          IF (SNORM .LE. TEMP) THEN
+              DELTA=HALF*DELTA
+              IF (DELTA .LE. 1.4D0*RHO) DELTA=RHO
+              NVALA=NVALA+1
+              NVALB=NVALB+1
+              TEMP=SNORM/RHO
+              IF (DELSAV .GT. RHO) TEMP=ONE
+              IF (TEMP .GE. HALF) NVALA=ZERO
+              IF (TEMP .GE. TENTH) NVALB=ZERO
+              IF (DELSAV .GT. RHO) GOTO 530
+              IF (NVALA .LT. 5 .AND. NVALB .LT. 3) GOTO 530
+              IF (SNORM .GT. ZERO) KSAVE=-1
+              GOTO 560
+          END IF
+          NVALA=ZERO
+          NVALB=ZERO
+C
+C     Alternatively, KNEW is positive. Then the model step is calculated
+C       within a trust region of radius DEL, after setting the gradient at
+C       XBASE and the second derivative parameters of the KNEW-th Lagrange
+C       function in W(1) to W(N) and in PQW(1) to PQW(NPT), respectively.
+C
+      ELSE
+          DEL=DMAX1(TENTH*DELTA,RHO)
+          DO 160 I=1,N
+  160     W(I)=BMAT(KNEW,I)
+          DO 170 K=1,NPT
+  170     PQW(K)=ZERO
+          DO 180 J=1,NPTM
+          TEMP=ZMAT(KNEW,J)
+          IF (J .LT. IDZ) TEMP=-TEMP
+          DO 180 K=1,NPT
+  180     PQW(K)=PQW(K)+TEMP*ZMAT(K,J)
+          CALL QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,RESCON,
+     1      QFAC,KOPT,KNEW,DEL,STEP,W,PQW,W(NP),W(NP+M),IFEAS)
+      END IF
+C
+C     Set VQUAD to the change to the quadratic model when the move STEP is
+C       made from XOPT. If STEP is a trust region step, then VQUAD should be
+C       negative. If it is nonnegative due to rounding errors in this case,
+C       there is a branch to label 530 to try to improve the model.
+C
+      VQUAD=ZERO
+      IH=0
+      DO 190 J=1,N
+      VQUAD=VQUAD+STEP(J)*GOPT(J)
+      DO 190 I=1,J
+      IH=IH+1
+      TEMP=STEP(I)*STEP(J)
+      IF (I .EQ. J) TEMP=HALF*TEMP
+  190 VQUAD=VQUAD+TEMP*HQ(IH)
+      DO 210 K=1,NPT
+      TEMP=ZERO
+      DO 200 J=1,N
+      TEMP=TEMP+XPT(K,J)*STEP(J)
+  200 SP(NPT+K)=TEMP
+  210 VQUAD=VQUAD+HALF*PQ(K)*TEMP*TEMP
+      IF (KSAVE .EQ. 0 .AND. VQUAD .GE. ZERO) GOTO 530
+C
+C     Calculate the next value of the objective function. The difference
+C       between the actual new value of F and the value predicted by the
+C       model is recorded in DIFF.
+C
+  220 NF=NF+1
+      IF (NF .GT. MAXFUN) THEN
+          NF=NF-1
+          IF (IPRINT .GT. 0) PRINT 230
+  230     FORMAT (/4X,'Return from LINCOA because CALFUN has been',
+     1      ' called MAXFUN times.')
+          GOTO 600
+      END IF
+      XDIFF=ZERO
+      DO 240 I=1,N
+      XNEW(I)=XOPT(I)+STEP(I)
+      X(I)=XBASE(I)+XNEW(I)
+  240 XDIFF=XDIFF+(X(I)-XSAV(I))**2
+      XDIFF=DSQRT(XDIFF)
+      IF (KSAVE .EQ. -1) XDIFF=RHO
+      IF (XDIFF .LE. TENTH*RHO .OR. XDIFF .GE. DELTA+DELTA) THEN
+          IFEAS=0
+          IF (IPRINT .GT. 0) PRINT 250
+  250     FORMAT (/4X,'Return from LINCOA because rounding errors',
+     1      ' prevent reasonable changes to X.')
+          GOTO 600
+      END IF
+      IF (KSAVE .LE. 0) IFEAS=1
+      F=DFLOAT(IFEAS)
+      CALL CALFUN (N,X,F)
+      IF (IPRINT .EQ. 3) THEN
+          PRINT 260, NF,F,(X(I),I=1,N)
+  260     FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
+     1      '    The corresponding X is:'/(2X,5D15.6))
+      END IF
+      IF (KSAVE .EQ. -1) GOTO 600
+      DIFF=F-FOPT-VQUAD
+C
+C     If X is feasible, then set DFFALT to the difference between the new
+C       value of F and the value predicted by the alternative model.
+C
+      IF (IFEAS .EQ. 1 .AND. ITEST .LT. 3) THEN
+          DO 270 K=1,NPT
+          PQW(K)=ZERO
+  270     W(K)=FVAL(K)-FVAL(KOPT)
+          DO 290 J=1,NPTM
+          SUM=ZERO
+          DO 280 I=1,NPT
+  280     SUM=SUM+W(I)*ZMAT(I,J)
+          IF (J .LT. IDZ) SUM=-SUM
+          DO 290 K=1,NPT
+  290     PQW(K)=PQW(K)+SUM*ZMAT(K,J)
+          VQALT=ZERO
+          DO 310 K=1,NPT
+          SUM=ZERO
+          DO 300 J=1,N
+  300     SUM=SUM+BMAT(K,J)*STEP(J)
+          VQALT=VQALT+SUM*W(K)
+  310     VQALT=VQALT+PQW(K)*SP(NPT+K)*(HALF*SP(NPT+K)+SP(K))
+          DFFALT=F-FOPT-VQALT
+      END IF
+      IF (ITEST .EQ. 3) THEN
+          DFFALT=DIFF
+          ITEST=0
+      END IF
+C
+C     Pick the next value of DELTA after a trust region step.
+C
+      IF (KSAVE .EQ. 0) THEN
+          RATIO=(F-FOPT)/VQUAD
+          IF (RATIO .LE. TENTH) THEN
+              DELTA=HALF*DELTA
+          ELSE IF (RATIO .LE. 0.7D0) THEN
+              DELTA=DMAX1(HALF*DELTA,SNORM)
+          ELSE 
+              TEMP=DSQRT(2.0D0)*DELTA
+              DELTA=DMAX1(HALF*DELTA,SNORM+SNORM)
+              DELTA=DMIN1(DELTA,TEMP)
+          END IF
+          IF (DELTA .LE. 1.4D0*RHO) DELTA=RHO
+      END IF
+C
+C     Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
+C       can be moved. If STEP is a trust region step, then KNEW is zero at
+C       present, but a positive value is picked by subroutine UPDATE.
+C
+      CALL UPDATE (N,NPT,XPT,BMAT,ZMAT,IDZ,NDIM,SP,STEP,KOPT,
+     1  KNEW,PQW,W)
+      IF (KNEW .EQ. 0) THEN
+          IF (IPRINT .GT. 0) PRINT 320
+  320     FORMAT (/4X,'Return from LINCOA because the denominator'
+     1      ' of the updating formula is zero.')
+          GOTO 600
+      END IF
+C
+C     If ITEST is increased to 3, then the next quadratic model is the
+C       one whose second derivative matrix is least subject to the new
+C       interpolation conditions. Otherwise the new model is constructed
+C       by the symmetric Broyden method in the usual way.
+C
+      IF (IFEAS .EQ. 1) THEN
+          ITEST=ITEST+1
+          IF (DABS(DFFALT) .GE. TENTH*DABS(DIFF)) ITEST=0
+      END IF
+C
+C     Update the second derivatives of the model by the symmetric Broyden
+C       method, using PQW for the second derivative parameters of the new
+C       KNEW-th Lagrange function. The contribution from the old parameter
+C       PQ(KNEW) is included in the second derivative matrix HQ. W is used
+C       later for the gradient of the new KNEW-th Lagrange function.       
+C
+      IF (ITEST .LT. 3) THEN
+          DO 330 K=1,NPT
+  330     PQW(K)=ZERO
+          DO 350 J=1,NPTM
+          TEMP=ZMAT(KNEW,J)
+          IF (TEMP .NE. ZERO) THEN
+              IF (J .LT. IDZ) TEMP=-TEMP
+              DO 340 K=1,NPT
+  340         PQW(K)=PQW(K)+TEMP*ZMAT(K,J)
+          END IF
+  350     CONTINUE
+          IH=0
+          DO 360 I=1,N
+          W(I)=BMAT(KNEW,I)
+          TEMP=PQ(KNEW)*XPT(KNEW,I)
+          DO 360 J=1,I
+          IH=IH+1
+  360     HQ(IH)=HQ(IH)+TEMP*XPT(KNEW,J)
+          PQ(KNEW)=ZERO
+          DO 370 K=1,NPT
+  370     PQ(K)=PQ(K)+DIFF*PQW(K)
+      END IF
+C
+C     Include the new interpolation point with the corresponding updates of
+C       SP. Also make the changes of the symmetric Broyden method to GOPT at
+C       the old XOPT if ITEST is less than 3.
+C
+      FVAL(KNEW)=F
+      SP(KNEW)=SP(KOPT)+SP(NPT+KOPT)
+      SSQ=ZERO
+      DO 380 I=1,N
+      XPT(KNEW,I)=XNEW(I)
+  380 SSQ=SSQ+STEP(I)**2
+      SP(NPT+KNEW)=SP(NPT+KOPT)+SSQ
+      IF (ITEST .LT. 3) THEN
+          DO 390 K=1,NPT
+          TEMP=PQW(K)*SP(K)
+          DO 390 I=1,N
+  390     W(I)=W(I)+TEMP*XPT(K,I)
+          DO 400 I=1,N
+  400     GOPT(I)=GOPT(I)+DIFF*W(I)
+      END IF
+C
+C     Update FOPT, XSAV, XOPT, KOPT, RESCON and SP if the new F is the
+C       least calculated value so far with a feasible vector of variables.
+C
+      IF (F .LT. FOPT .AND. IFEAS .EQ. 1) THEN
+          FOPT=F
+          DO 410 J=1,N
+          XSAV(J)=X(J)
+  410     XOPT(J)=XNEW(J)
+          KOPT=KNEW
+          SNORM=DSQRT(SSQ)
+          DO 430 J=1,M
+          IF (RESCON(J) .GE. DELTA+SNORM) THEN
+              RESCON(J)=SNORM-RESCON(J)
+          ELSE
+              RESCON(J)=RESCON(J)+SNORM
+              IF (RESCON(J)+DELTA .GT. ZERO) THEN
+                  TEMP=B(J)
+                  DO 420 I=1,N
+  420             TEMP=TEMP-XOPT(I)*AMAT(I,J)
+                  TEMP=DMAX1(TEMP,ZERO)
+                  IF (TEMP .GE. DELTA) TEMP=-TEMP
+                  RESCON(J)=TEMP
+              END IF
+          END IF
+  430     CONTINUE
+          DO 440 K=1,NPT
+  440     SP(K)=SP(K)+SP(NPT+K)
+C
+C     Also revise GOPT when symmetric Broyden updating is applied.
+C
+          IF (ITEST .LT. 3) THEN
+              IH=0
+              DO 450 J=1,N
+              DO 450 I=1,J
+              IH=IH+1
+              IF (I .LT. J) GOPT(J)=GOPT(J)+HQ(IH)*STEP(I)
+  450         GOPT(I)=GOPT(I)+HQ(IH)*STEP(J)
+              DO 460 K=1,NPT
+              TEMP=PQ(K)*SP(NPT+K)
+              DO 460 I=1,N
+  460         GOPT(I)=GOPT(I)+TEMP*XPT(K,I)
+          END IF
+      END IF
+C
+C     Replace the current model by the least Frobenius norm interpolant if
+C       this interpolant gives substantial reductions in the predictions
+C       of values of F at feasible points.
+C
+      IF (ITEST .EQ. 3) THEN
+          DO 470 K=1,NPT
+          PQ(K)=ZERO
+  470     W(K)=FVAL(K)-FVAL(KOPT)
+          DO 490 J=1,NPTM
+          SUM=ZERO
+          DO 480 I=1,NPT
+  480     SUM=SUM+W(I)*ZMAT(I,J)
+          IF (J .LT. IDZ) SUM=-SUM
+          DO 490 K=1,NPT
+  490     PQ(K)=PQ(K)+SUM*ZMAT(K,J)
+          DO 500 J=1,N
+          GOPT(J)=ZERO
+          DO 500 I=1,NPT
+  500     GOPT(J)=GOPT(J)+W(I)*BMAT(I,J)
+          DO 510 K=1,NPT
+          TEMP=PQ(K)*SP(K)
+          DO 510 I=1,N
+  510     GOPT(I)=GOPT(I)+TEMP*XPT(K,I)
+          DO 520 IH=1,NH
+  520     HQ(IH)=ZERO
+      END IF
+C
+C     If a trust region step has provided a sufficient decrease in F, then
+C       branch for another trust region calculation. Every iteration that
+C       takes a model step is followed by an attempt to take a trust region
+C       step.
+C
+      KNEW=0
+      IF (KSAVE .GT. 0) GOTO 20
+      IF (RATIO .GE. TENTH) GOTO 20
+C
+C     Alternatively, find out if the interpolation points are close enough
+C       to the best point so far.
+C
+  530 DISTSQ=DMAX1(DELTA*DELTA,4.0D0*RHO*RHO)
+      DO 550 K=1,NPT
+      SUM=ZERO
+      DO 540 J=1,N
+  540 SUM=SUM+(XPT(K,J)-XOPT(J))**2
+      IF (SUM .GT. DISTSQ) THEN
+          KNEW=K
+          DISTSQ=SUM
+      END IF
+  550 CONTINUE
+C
+C     If KNEW is positive, then branch back for the next iteration, which
+C       will generate a "model step". Otherwise, if the current iteration
+C       has reduced F, or if DELTA was above its lower bound when the last
+C       trust region step was calculated, then try a "trust region" step
+C       instead.
+C
+      IF (KNEW .GT. 0) GOTO 20
+      KNEW=0
+      IF (FOPT .LT. FSAVE) GOTO 20
+      IF (DELSAV .GT. RHO) GOTO 20
+C
+C     The calculations with the current value of RHO are complete.
+C       Pick the next value of RHO.
+C
+  560 IF (RHO .GT. RHOEND) THEN
+          DELTA=HALF*RHO
+          IF (RHO .GT. 250.0D0*RHOEND) THEN
+              RHO=TENTH*RHO
+          ELSE IF (RHO .LE. 16.0D0*RHOEND) THEN
+              RHO=RHOEND
+          ELSE
+              RHO=DSQRT(RHO*RHOEND)
+          END IF 
+          DELTA=DMAX1(DELTA,RHO)
+          IF (IPRINT .GE. 2) THEN
+              IF (IPRINT .GE. 3) PRINT 570
+  570         FORMAT (5X)
+              PRINT 580, RHO,NF
+  580         FORMAT (/4X,'New RHO =',1PD11.4,5X,'Number of',
+     1          ' function values =',I6)
+              PRINT 590, FOPT,(XBASE(I)+XOPT(I),I=1,N)
+  590         FORMAT (4X,'Least value of F =',1PD23.15,9X,
+     1          'The corresponding X is:'/(2X,5D15.6))
+          END IF
+          GOTO 10
+      END IF
+C
+C     Return from the calculation, after branching to label 220 for another
+C       Newton-Raphson step if it has not been tried before.
+C
+      IF (KSAVE .EQ. -1) GOTO 220
+  600 IF (FOPT .LE. F .OR. IFEAS .EQ. 0) THEN
+          DO 610 I=1,N
+  610     X(I)=XSAV(I)
+          F=FOPT
+      END IF
+      IF (IPRINT .GE. 1) THEN
+          PRINT 620, NF
+  620     FORMAT (/4X,'At the return from LINCOA',5X,
+     1      'Number of function values =',I6)
+          PRINT 590, F,(X(I),I=1,N)
+      END IF
+      W(1)=F
+      W(2)=DFLOAT(NF)+HALF
+      RETURN
+      END
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% getact.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,
+     1  RESNEW,RESACT,G,DW,VLAM,W)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION AMAT(N,*),B(*),IACT(*),QFAC(N,*),RFAC(*),
+     1  RESNEW(*),RESACT(*),G(*),DW(*),VLAM(*),W(*)
+C
+C     N, M, AMAT, B, NACT, IACT, QFAC and RFAC are the same as the terms
+C       with these names in SUBROUTINE LINCOB. The current values must be
+C       set on entry. NACT, IACT, QFAC and RFAC are kept up to date when
+C       GETACT changes the current active set.
+C     SNORM, RESNEW, RESACT, G and DW are the same as the terms with these
+C       names in SUBROUTINE TRSTEP. The elements of RESNEW and RESACT are
+C       also kept up to date.
+C     VLAM and W are used for working space, the vector VLAM being reserved
+C       for the Lagrange multipliers of the calculation. Their lengths must
+C       be at least N.
+C     The main purpose of GETACT is to pick the current active set. It is
+C       defined by the property that the projection of -G into the space
+C       orthogonal to the active constraint normals is as large as possible,
+C       subject to this projected steepest descent direction moving no closer
+C       to the boundary of every constraint whose current residual is at most
+C       0.2*SNORM. On return, the settings in NACT, IACT, QFAC and RFAC are
+C       all appropriate to this choice of active set.
+C     Occasionally this projected direction is zero, and then the final value
+C       of W(1) is set to zero. Otherwise, the direction itself is returned
+C       in DW, and W(1) is set to the square of the length of the direction.
+C
+C     Set some constants and a temporary VLAM.
+C
+      ONE=1.0D0
+      TINY=1.0D-60
+      ZERO=0.0D0
+      TDEL=0.2D0*SNORM
+      DDSAV=ZERO
+      DO 10 I=1,N
+      DDSAV=DDSAV+G(I)**2
+   10 VLAM(I)=ZERO
+      DDSAV=DDSAV+DDSAV
+C
+C     Set the initial QFAC to the identity matrix in the case NACT=0.
+C
+      IF (NACT .EQ. 0) THEN
+          DO 30 I=1,N
+          DO 20 J=1,N
+   20     QFAC(I,J)=ZERO
+   30     QFAC(I,I)=ONE
+          GOTO 100
+      END IF
+C
+C     Remove any constraints from the initial active set whose residuals
+C       exceed TDEL.
+C
+      IFLAG=1
+      IC=NACT
+   40 IF (RESACT(IC) .GT. TDEL) GOTO 800
+   50 IC=IC-1
+      IF (IC .GT. 0) GOTO 40
+C
+C     Remove any constraints from the initial active set whose Lagrange
+C       multipliers are nonnegative, and set the surviving multipliers.
+C
+      IFLAG=2
+   60 IF (NACT .EQ. 0) GOTO 100
+      IC=NACT
+   70 TEMP=ZERO
+      DO 80 I=1,N
+   80 TEMP=TEMP+QFAC(I,IC)*G(I)
+      IDIAG=(IC*IC+IC)/2
+      IF (IC .LT. NACT) THEN
+          JW=IDIAG+IC
+          DO 90 J=IC+1,NACT
+          TEMP=TEMP-RFAC(JW)*VLAM(J)
+   90     JW=JW+J
+      END IF
+      IF (TEMP .GE. ZERO) GOTO 800
+      VLAM(IC)=TEMP/RFAC(IDIAG)
+      IC=IC-1
+      IF (IC .GT. 0) GOTO 70
+C
+C     Set the new search direction D. Terminate if the 2-norm of D is zero
+C       or does not decrease, or if NACT=N holds. The situation NACT=N
+C       occurs for sufficiently large SNORM if the origin is in the convex
+C       hull of the constraint gradients.
+C
+  100 IF (NACT .EQ. N) GOTO 290
+      DO 110 J=NACT+1,N
+      W(J)=ZERO
+      DO 110 I=1,N
+  110 W(J)=W(J)+QFAC(I,J)*G(I)
+      DD=ZERO
+      DO 130 I=1,N
+      DW(I)=ZERO
+      DO 120 J=NACT+1,N
+  120 DW(I)=DW(I)-W(J)*QFAC(I,J)
+  130 DD=DD+DW(I)**2
+      IF (DD .GE. DDSAV) GOTO 290
+      IF (DD .EQ. ZERO) GOTO 300
+      DDSAV=DD
+      DNORM=DSQRT(DD)
+C
+C     Pick the next integer L or terminate, a positive value of L being
+C       the index of the most violated constraint. The purpose of CTOL
+C       below is to estimate whether a positive value of VIOLMX may be
+C       due to computer rounding errors.
+C
+      L=0
+      IF (M .GT. 0) THEN
+          TEST=DNORM/SNORM
+          VIOLMX=ZERO
+          DO 150 J=1,M
+          IF (RESNEW(J) .GT. ZERO .AND. RESNEW(J) .LE. TDEL) THEN
+              SUM=ZERO
+              DO 140 I=1,N
+  140         SUM=SUM+AMAT(I,J)*DW(I)
+              IF (SUM .GT. TEST*RESNEW(J)) THEN
+                  IF (SUM .GT. VIOLMX) THEN
+                      L=J
+                      VIOLMX=SUM
+                  END IF
+              END IF
+          END IF
+  150     CONTINUE
+          CTOL=ZERO
+          TEMP=0.01D0*DNORM
+          IF (VIOLMX .GT. ZERO .AND. VIOLMX .LT. TEMP) THEN
+              IF (NACT .GT. 0) THEN
+                  DO 170 K=1,NACT
+                  J=IACT(K)
+                  SUM=ZERO
+                  DO 160 I=1,N
+  160             SUM=SUM+DW(I)*AMAT(I,J)
+  170             CTOL=DMAX1(CTOL,DABS(SUM))
+              END IF
+          END IF
+      END IF
+      W(1)=ONE
+      IF (L .EQ. 0) GOTO 300
+      IF (VIOLMX .LE. 10.0D0*CTOL) GOTO 300
+C
+C     Apply Givens rotations to the last (N-NACT) columns of QFAC so that
+C       the first (NACT+1) columns of QFAC are the ones required for the
+C       addition of the L-th constraint, and add the appropriate column
+C       to RFAC.
+C
+      NACTP=NACT+1
+      IDIAG=(NACTP*NACTP-NACTP)/2
+      RDIAG=ZERO
+      DO 200 J=N,1,-1
+      SPROD=ZERO
+      DO 180 I=1,N
+  180 SPROD=SPROD+QFAC(I,J)*AMAT(I,L)
+      IF (J .LE. NACT) THEN
+          RFAC(IDIAG+J)=SPROD
+      ELSE
+          IF (DABS(RDIAG) .LE. 1.0D-20*DABS(SPROD)) THEN
+              RDIAG=SPROD
+          ELSE
+              TEMP=DSQRT(SPROD*SPROD+RDIAG*RDIAG)
+              COSV=SPROD/TEMP
+              SINV=RDIAG/TEMP
+              RDIAG=TEMP
+              DO 190 I=1,N
+              TEMP=COSV*QFAC(I,J)+SINV*QFAC(I,J+1)
+              QFAC(I,J+1)=-SINV*QFAC(I,J)+COSV*QFAC(I,J+1)
+  190         QFAC(I,J)=TEMP
+          END IF
+      END IF
+  200 CONTINUE
+      IF (RDIAG .LT. ZERO) THEN
+          DO 210 I=1,N
+  210     QFAC(I,NACTP)=-QFAC(I,NACTP)
+      END IF
+      RFAC(IDIAG+NACTP)=DABS(RDIAG)
+      NACT=NACTP
+      IACT(NACT)=L
+      RESACT(NACT)=RESNEW(L)
+      VLAM(NACT)=ZERO
+      RESNEW(L)=ZERO
+C
+C     Set the components of the vector VMU in W.
+C
+  220 W(NACT)=ONE/RFAC((NACT*NACT+NACT)/2)**2
+      IF (NACT .GT. 1) THEN
+          DO 240 I=NACT-1,1,-1
+          IDIAG=(I*I+I)/2
+          JW=IDIAG+I
+          SUM=ZERO
+          DO 230 J=I+1,NACT
+          SUM=SUM-RFAC(JW)*W(J)
+  230     JW=JW+J
+  240     W(I)=SUM/RFAC(IDIAG)
+      END IF
+C
+C     Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
+C
+      VMULT=VIOLMX
+      IC=0
+      J=1
+  250 IF (J .LT. NACT) THEN
+          IF (VLAM(J) .GE. VMULT*W(J)) THEN
+              IC=J
+              VMULT=VLAM(J)/W(J)
+          END IF
+          J=J+1
+          GOTO 250
+      END IF
+      DO 260 J=1,NACT
+  260 VLAM(J)=VLAM(J)-VMULT*W(J)
+      IF (IC .GT. 0) VLAM(IC)=ZERO
+      VIOLMX=DMAX1(VIOLMX-VMULT,ZERO)
+      IF (IC .EQ. 0) VIOLMX=ZERO
+C
+C     Reduce the active set if necessary, so that all components of the
+C       new VLAM are negative, with resetting of the residuals of the
+C       constraints that become inactive.
+C
+      IFLAG=3
+      IC=NACT
+  270 IF (VLAM(IC) .LT. ZERO) GOTO 280
+      RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINY)
+      GOTO 800
+  280 IC=IC-1
+      IF (IC .GT. 0) GOTO 270
+C
+C     Calculate the next VMU if VIOLMX is positive. Return if NACT=N holds,
+C       as then the active constraints imply D=0. Otherwise, go to label
+C       100, to calculate the new D and to test for termination.
+C
+      IF (VIOLMX .GT. ZERO) GOTO 220
+      IF (NACT .LT. N) GOTO 100
+  290 DD=ZERO
+  300 W(1)=DD
+      RETURN
+C
+C     These instructions rearrange the active constraints so that the new
+C       value of IACT(NACT) is the old value of IACT(IC). A sequence of
+C       Givens rotations is applied to the current QFAC and RFAC. Then NACT
+C       is reduced by one.
+C
+  800 RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINY)
+      JC=IC
+  810 IF (JC .LT. NACT) THEN
+          JCP=JC+1
+          IDIAG=JC*JCP/2
+          JW=IDIAG+JCP
+          TEMP=DSQRT(RFAC(JW-1)**2+RFAC(JW)**2)
+          CVAL=RFAC(JW)/TEMP
+          SVAL=RFAC(JW-1)/TEMP
+          RFAC(JW-1)=SVAL*RFAC(IDIAG)
+          RFAC(JW)=CVAL*RFAC(IDIAG)
+          RFAC(IDIAG)=TEMP
+          IF (JCP .LT. NACT) THEN
+              DO 820 J=JCP+1,NACT
+              TEMP=SVAL*RFAC(JW+JC)+CVAL*RFAC(JW+JCP)
+              RFAC(JW+JCP)=CVAL*RFAC(JW+JC)-SVAL*RFAC(JW+JCP)
+              RFAC(JW+JC)=TEMP
+  820         JW=JW+J
+          END IF
+          JDIAG=IDIAG-JC
+          DO 830 I=1,N
+          IF (I .LT. JC) THEN
+              TEMP=RFAC(IDIAG+I)
+              RFAC(IDIAG+I)=RFAC(JDIAG+I)
+              RFAC(JDIAG+I)=TEMP
+          END IF
+          TEMP=SVAL*QFAC(I,JC)+CVAL*QFAC(I,JCP)
+          QFAC(I,JCP)=CVAL*QFAC(I,JC)-SVAL*QFAC(I,JCP)
+  830     QFAC(I,JC)=TEMP
+          IACT(JC)=IACT(JCP)
+          RESACT(JC)=RESACT(JCP)
+          VLAM(JC)=VLAM(JCP)
+          JC=JCP
+          GOTO 810
+      END IF
+      NACT=NACT-1
+      GOTO (50,60,280),IFLAG
+      END
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% prelim.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE PRELIM (N,NPT,M,AMAT,B,X,RHOBEG,IPRINT,XBASE,
+     1  XPT,FVAL,XSAV,XOPT,GOPT,KOPT,HQ,PQ,BMAT,ZMAT,IDZ,NDIM,
+     2  SP,RESCON,STEP,PQW,W)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION AMAT(N,*),B(*),X(*),XBASE(*),XPT(NPT,*),FVAL(*),
+     1  XSAV(*),XOPT(*),GOPT(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),
+     2  SP(*),RESCON(*),STEP(*),PQW(*),W(*)
+C
+C     The arguments N, NPT, M, AMAT, B, X, RHOBEG, IPRINT, XBASE, XPT, FVAL,
+C       XSAV, XOPT, GOPT, HQ, PQ, BMAT, ZMAT, NDIM, SP and RESCON are the
+C       same as the corresponding arguments in SUBROUTINE LINCOB.
+C     KOPT is set to the integer such that XPT(KOPT,.) is the initial trust
+C       region centre.
+C     IDZ is going to be set to one, so that every element of Diag(DZ) is
+C       one in the product ZMAT times Diag(DZ) times ZMAT^T, which is the
+C       factorization of the leading NPT by NPT submatrix of H.
+C     STEP, PQW and W are used for working space, the arrays STEP and PQW
+C       being taken from LINCOB. The length of W must be at least N+NPT.
+C
+C     SUBROUTINE PRELIM provides the elements of XBASE, XPT, BMAT and ZMAT
+C       for the first iteration, an important feature being that, if any of
+C       of the columns of XPT is an infeasible point, then the largest of
+C       the constraint violations there is at least 0.2*RHOBEG. It also sets
+C       the initial elements of FVAL, XOPT, GOPT, HQ, PQ, SP and RESCON.
+C
+C     Set some constants.
+C
+      HALF=0.5D0
+      ONE=1.0D0
+      ZERO=0.0D0
+      NPTM=NPT-N-1
+      RHOSQ=RHOBEG*RHOBEG
+      RECIP=ONE/RHOSQ
+      RECIQ=DSQRT(HALF)/RHOSQ
+      TEST=0.2D0*RHOBEG
+      IDZ=1
+      KBASE=1
+C
+C     Set the initial elements of XPT, BMAT, SP and ZMAT to zero. 
+C
+      DO 20 J=1,N
+      XBASE(J)=X(J)
+      DO 10 K=1,NPT
+   10 XPT(K,J)=ZERO
+      DO 20 I=1,NDIM
+   20 BMAT(I,J)=ZERO
+      DO 30 K=1,NPT
+      SP(K)=ZERO
+      DO 30 J=1,NPT-N-1
+   30 ZMAT(K,J)=ZERO
+C
+C     Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT],
+C       but they may be altered later to make a constraint violation
+C       sufficiently large. The initial nonzero elements of BMAT and of
+C       the first min[N,NPT-N-1] columns of ZMAT are set also.
+C
+      DO 40 J=1,N
+      XPT(J+1,J)=RHOBEG
+      IF (J .LT. NPT-N) THEN
+          JP=N+J+1
+          XPT(JP,J)=-RHOBEG
+          BMAT(J+1,J)=HALF/RHOBEG
+          BMAT(JP,J)=-HALF/RHOBEG
+          ZMAT(1,J)=-RECIQ-RECIQ
+          ZMAT(J+1,J)=RECIQ
+          ZMAT(JP,J)=RECIQ
+      ELSE
+          BMAT(1,J)=-ONE/RHOBEG
+          BMAT(J+1,J)=ONE/RHOBEG
+          BMAT(NPT+J,J)=-HALF*RHOSQ
+      END IF
+   40 CONTINUE
+C
+C     Set the remaining initial nonzero elements of XPT and ZMAT when the
+C       number of interpolation points exceeds 2*N+1.
+C
+      IF (NPT .GT. 2*N+1) THEN
+          DO 50 K=N+1,NPT-N-1
+          ITEMP=(K-1)/N
+          IPT=K-ITEMP*N
+          JPT=IPT+ITEMP
+          IF (JPT .GT. N) JPT=JPT-N
+          XPT(N+K+1,IPT)=RHOBEG
+          XPT(N+K+1,JPT)=RHOBEG
+          ZMAT(1,K)=RECIP
+          ZMAT(IPT+1,K)=-RECIP
+          ZMAT(JPT+1,K)=-RECIP
+   50     ZMAT(N+K+1,K)=RECIP
+      END IF
+C
+C     Update the constraint right hand sides to allow for the shift XBASE.
+C
+      IF (M .GT. 0) THEN
+          DO 70 J=1,M
+          TEMP=ZERO
+          DO 60 I=1,N
+   60     TEMP=TEMP+AMAT(I,J)*XBASE(I)
+   70     B(J)=B(J)-TEMP
+      END IF
+C
+C     Go through the initial points, shifting every infeasible point if
+C       necessary so that its constraint violation is at least 0.2*RHOBEG.
+C
+      DO 150 NF=1,NPT
+      FEAS=ONE
+      BIGV=ZERO
+      J=0
+   80 J=J+1
+      IF (J .LE. M .AND. NF .GE. 2) THEN
+          RESID=-B(J)
+          DO 90 I=1,N
+   90     RESID=RESID+XPT(NF,I)*AMAT(I,J)
+          IF (RESID .LE. BIGV) GOTO 80
+          BIGV=RESID
+          JSAV=J
+          IF (RESID .LE. TEST) THEN
+              FEAS=-ONE
+              GOTO 80
+          END IF
+          FEAS=ZERO
+      END IF
+      IF (FEAS .LT. ZERO) THEN
+          DO 100 I=1,N
+  100     STEP(I)=XPT(NF,I)+(TEST-BIGV)*AMAT(I,JSAV)
+          DO 110 K=1,NPT
+          SP(NPT+K)=ZERO
+          DO 110 J=1,N
+  110     SP(NPT+K)=SP(NPT+K)+XPT(K,J)*STEP(J)
+          CALL UPDATE (N,NPT,XPT,BMAT,ZMAT,IDZ,NDIM,SP,STEP,
+     1      KBASE,NF,PQW,W)
+          DO 120 I=1,N
+  120     XPT(NF,I)=STEP(I)
+      END IF
+C
+C     Calculate the objective function at the current interpolation point,
+C       and set KOPT to the index of the first trust region centre.
+C
+      DO 130 J=1,N
+  130 X(J)=XBASE(J)+XPT(NF,J)
+      F=FEAS
+      CALL CALFUN (N,X,F)
+      IF (IPRINT .EQ. 3) THEN
+          PRINT 140, NF,F,(X(I),I=1,N)
+  140     FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
+     1      '    The corresponding X is:'/(2X,5D15.6))
+      END IF
+      IF (NF .EQ. 1) THEN
+          KOPT=1
+      ELSE IF (F .LT. FVAL(KOPT) .AND. FEAS .GT. ZERO) THEN
+          KOPT=NF
+      END IF
+  150 FVAL(NF)=F
+C
+C     Set PQ for the first quadratic model.
+C
+      DO 160 J=1,NPTM
+      W(J)=ZERO
+      DO 160 K=1,NPT
+  160 W(J)=W(J)+ZMAT(K,J)*FVAL(K)
+      DO 170 K=1,NPT
+      PQ(K)=ZERO
+      DO 170 J=1,NPTM
+  170 PQ(K)=PQ(K)+ZMAT(K,J)*W(J)
+C
+C     Set XOPT, SP, GOPT and HQ for the first quadratic model.
+C
+      DO 180 J=1,N
+      XOPT(J)=XPT(KOPT,J)
+      XSAV(J)=XBASE(J)+XOPT(J)
+  180 GOPT(J)=ZERO
+      DO 200 K=1,NPT
+      SP(K)=ZERO
+      DO 190 J=1,N
+  190 SP(K)=SP(K)+XPT(K,J)*XOPT(J)
+      TEMP=PQ(K)*SP(K)
+      DO 200 J=1,N
+  200 GOPT(J)=GOPT(J)+FVAL(K)*BMAT(K,J)+TEMP*XPT(K,J)
+      DO 210 I=1,(N*N+N)/2
+  210 HQ(I)=ZERO
+C
+C     Set the initial elements of RESCON.
+C
+      DO 230 J=1,M
+      TEMP=B(J)
+      DO 220 I=1,N
+  220 TEMP=TEMP-XOPT(I)*AMAT(I,J)
+      TEMP=DMAX1(TEMP,ZERO)
+      IF (TEMP .GE. RHOBEG) TEMP=-TEMP
+  230 RESCON(J)=TEMP  
+      RETURN
+      END
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% qmstep.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,
+     1  RESCON,QFAC,KOPT,KNEW,DEL,STEP,GL,PQW,RSTAT,W,IFEAS)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION AMAT(N,*),B(*),XPT(NPT,*),XOPT(*),IACT(*),
+     1  RESCON(*),QFAC(N,*),STEP(*),GL(*),PQW(*),RSTAT(*),W(*)
+C
+C     N, NPT, M, AMAT, B, XPT, XOPT, NACT, IACT, RESCON, QFAC, KOPT are the
+C       same as the terms with these names in SUBROUTINE LINCOB.
+C     KNEW is the index of the interpolation point that is going to be moved.
+C     DEL is the current restriction on the length of STEP, which is never
+C       greater than the current trust region radius DELTA.
+C     STEP will be set to the required step from XOPT to the new point.
+C     GL must be set on entry to the gradient of LFUNC at XBASE, where LFUNC
+C       is the KNEW-th Lagrange function. It is used also for some other
+C       gradients of LFUNC.
+C     PQW provides the second derivative parameters of LFUNC.
+C     RSTAT and W are used for working space. Their lengths must be at least
+C       M and N, respectively. RSTAT(J) is set to -1.0, 0.0, or 1.0 if the
+C       J-th constraint is irrelevant, active, or both inactive and relevant,
+C       respectively.
+C     IFEAS will be set to 0 or 1 if XOPT+STEP is infeasible or feasible.
+C
+C     STEP is chosen to provide a relatively large value of the modulus of
+C       LFUNC(XOPT+STEP), subject to ||STEP|| .LE. DEL. A projected STEP is
+C       calculated too, within the trust region, that does not alter the
+C       residuals of the active constraints. The projected step is preferred
+C       if its value of | LFUNC(XOPT+STEP) | is at least one fifth of the
+C       original one, but the greatest violation of a linear constraint must
+C       be at least 0.2*DEL, in order to keep the interpolation points apart.
+C       The remedy when the maximum constraint violation is too small is to
+C       restore the original step, which is perturbed if necessary so that
+C       its maximum constraint violation becomes 0.2*DEL.
+C
+C     Set some constants.
+C
+      HALF=0.5D0
+      ONE=1.0D0
+      TENTH=0.1D0
+      ZERO=0.0D0
+      TEST=0.2D0*DEL
+C
+C     Replace GL by the gradient of LFUNC at the trust region centre, and
+C       set the elements of RSTAT.
+C
+      DO 20 K=1,NPT
+      TEMP=ZERO
+      DO 10 J=1,N
+   10 TEMP=TEMP+XPT(K,J)*XOPT(J)
+      TEMP=PQW(K)*TEMP
+      DO 20 I=1,N
+   20 GL(I)=GL(I)+TEMP*XPT(K,I)
+      IF (M .GT. 0) THEN
+          DO 30 J=1,M
+          RSTAT(J)=ONE
+   30     IF (DABS(RESCON(J)) .GE. DEL) RSTAT(J)=-ONE
+          DO 40 K=1,NACT
+   40     RSTAT(IACT(K))=ZERO
+      END IF
+C
+C     Find the greatest modulus of LFUNC on a line through XOPT and
+C       another interpolation point within the trust region.
+C
+      IFLAG=0
+      VBIG=ZERO
+      DO 60 K=1,NPT
+      IF (K .EQ. KOPT) GOTO 60
+      SS=ZERO
+      SP=ZERO
+      DO 50 I=1,N
+      TEMP=XPT(K,I)-XOPT(I)
+      SS=SS+TEMP*TEMP
+   50 SP=SP+GL(I)*TEMP
+      STP=-DEL/DSQRT(SS)
+      IF (K .EQ. KNEW) THEN
+          IF (SP*(SP-ONE) .LT. ZERO) STP=-STP
+          VLAG=DABS(STP*SP)+STP*STP*DABS(SP-ONE)
+      ELSE
+          VLAG=DABS(STP*(ONE-STP)*SP)
+      END IF
+      IF (VLAG .GT. VBIG) THEN
+          KSAV=K
+          STPSAV=STP
+          VBIG=VLAG
+      END IF
+   60 CONTINUE
+C
+C     Set STEP to the move that gives the greatest modulus calculated above.
+C       This move may be replaced by a steepest ascent step from XOPT.
+C
+      GG=ZERO
+      DO 70 I=1,N
+      GG=GG+GL(I)**2
+   70 STEP(I)=STPSAV*(XPT(KSAV,I)-XOPT(I))
+      VGRAD=DEL*DSQRT(GG)
+      IF (VGRAD .LE. TENTH*VBIG) GOTO 220
+C
+C     Make the replacement if it provides a larger value of VBIG.
+C
+      GHG=ZERO
+      DO 90 K=1,NPT
+      TEMP=ZERO
+      DO 80 J=1,N
+   80 TEMP=TEMP+XPT(K,J)*GL(J)
+   90 GHG=GHG+PQW(K)*TEMP*TEMP
+      VNEW=VGRAD+DABS(HALF*DEL*DEL*GHG/GG)
+      IF (VNEW .GT. VBIG) THEN
+          VBIG=VNEW
+          STP=DEL/DSQRT(GG)
+          IF (GHG .LT. ZERO) STP=-STP
+          DO 100 I=1,N
+  100     STEP(I)=STP*GL(I)
+      END IF
+      IF (NACT .EQ. 0 .OR. NACT .EQ. N) GOTO 220
+C
+C     Overwrite GL by its projection. Then set VNEW to the greatest
+C       value of |LFUNC| on the projected gradient from XOPT subject to
+C       the trust region bound. If VNEW is sufficiently large, then STEP
+C       may be changed to a move along the projected gradient.
+C
+      DO 110 K=NACT+1,N
+      W(K)=ZERO
+      DO 110 I=1,N
+  110 W(K)=W(K)+GL(I)*QFAC(I,K)
+      GG=ZERO
+      DO 130 I=1,N
+      GL(I)=ZERO
+      DO 120 K=NACT+1,N
+  120 GL(I)=GL(I)+QFAC(I,K)*W(K)
+  130 GG=GG+GL(I)**2
+      VGRAD=DEL*DSQRT(GG)
+      IF (VGRAD .LE. TENTH*VBIG) GOTO 220
+      GHG=ZERO
+      DO 150 K=1,NPT
+      TEMP=ZERO
+      DO 140 J=1,N
+  140 TEMP=TEMP+XPT(K,J)*GL(J)
+  150 GHG=GHG+PQW(K)*TEMP*TEMP
+      VNEW=VGRAD+DABS(HALF*DEL*DEL*GHG/GG)
+C
+C     Set W to the possible move along the projected gradient.
+C
+      STP=DEL/DSQRT(GG)
+      IF (GHG .LT. ZERO) STP=-STP
+      WW=ZERO
+      DO 160 I=1,N
+      W(I)=STP*GL(I)
+  160 WW=WW+W(I)**2
+C
+C     Set STEP to W if W gives a sufficiently large value of the modulus
+C       of the Lagrange function, and if W either preserves feasibility
+C       or gives a constraint violation of at least 0.2*DEL. The purpose
+C       of CTOL below is to provide a check on feasibility that includes
+C       a tolerance for contributions from computer rounding errors.
+C
+      IF (VNEW/VBIG .GE. 0.2D0) THEN
+          IFEAS=1
+          BIGV=ZERO
+          J=0
+  170     J=J+1
+          IF (J .LE. M) THEN
+              IF (RSTAT(J) .EQ. ONE) THEN
+                  TEMP=-RESCON(J)
+                  DO 180 I=1,N
+  180             TEMP=TEMP+W(I)*AMAT(I,J)
+                  BIGV=DMAX1(BIGV,TEMP)
+              END IF
+              IF (BIGV .LT. TEST) GOTO 170
+              IFEAS=0
+          END IF
+          CTOL=ZERO
+          TEMP=0.01D0*DSQRT(WW)
+          IF (BIGV .GT. ZERO .AND. BIGV .LT. TEMP) THEN
+              DO 200 K=1,NACT
+              J=IACT(K)
+              SUM=ZERO
+              DO 190 I=1,N
+  190         SUM=SUM+W(I)*AMAT(I,J)
+  200         CTOL=DMAX1(CTOL,DABS(SUM))
+          END IF
+          IF (BIGV .LE. 10.0D0*CTOL .OR. BIGV .GE. TEST) THEN
+              DO 210 I=1,N
+  210         STEP(I)=W(I)
+              GOTO 260
+          END IF
+      END IF
+C
+C     Calculate the greatest constraint violation at XOPT+STEP with STEP at
+C       its original value. Modify STEP if this violation is unacceptable.
+C
+  220 IFEAS=1
+      BIGV=ZERO
+      RESMAX=ZERO
+      J=0
+  230 J=J+1
+      IF (J .LE. M) THEN
+          IF (RSTAT(J) .LT. ZERO) GOTO 230
+          TEMP=-RESCON(J)
+          DO 240 I=1,N
+  240     TEMP=TEMP+STEP(I)*AMAT(I,J)
+          RESMAX=DMAX1(RESMAX,TEMP)
+          IF (TEMP .LT. TEST) THEN
+              IF (TEMP .LE. BIGV) GOTO 230
+              BIGV=TEMP
+              JSAV=J
+              IFEAS=-1
+              GOTO 230
+          END IF
+          IFEAS=0
+      END IF
+      IF (IFEAS .EQ. -1) THEN
+          DO 250 I=1,N
+  250     STEP(I)=STEP(I)+(TEST-BIGV)*AMAT(I,JSAV)
+          IFEAS=0
+      END IF
+C
+C     Return the calculated STEP and the value of IFEAS.
+C
+  260 RETURN
+      END
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% trstep.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
+     1  QFAC,RFAC,SNORM,STEP,G,RESNEW,RESACT,D,DW,W)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION AMAT(N,*),B(*),XPT(NPT,*),HQ(*),PQ(*),IACT(*),
+     1  RESCON(*),QFAC(N,*),RFAC(*),STEP(*),G(*),RESNEW(*),RESACT(*),
+     2  D(*),DW(*),W(*)
+C
+C     N, NPT, M, AMAT, B, XPT, HQ, PQ, NACT, IACT, RESCON, QFAC and RFAC
+C       are the same as the terms with these names in LINCOB. If RESCON(J)
+C       is negative, then |RESCON(J)| must be no less than the trust region
+C       radius, so that the J-th constraint can be ignored.
+C     SNORM is set to the trust region radius DELTA initially. On the
+C       return, however, it is the length of the calculated STEP, which is
+C       set to zero if the constraints do not allow a long enough step.
+C     STEP is the total calculated step so far from the trust region centre,
+C       its final value being given by the sequence of CG iterations, which
+C       terminate if the trust region boundary is reached.
+C     G must be set on entry to the gradient of the quadratic model at the
+C       trust region centre. It is used as working space, however, and is
+C       always the gradient of the model at the current STEP, except that
+C       on return the value of G(1) is set to ONE instead of to ZERO if
+C       and only if GETACT is called more than once.
+C     RESNEW, RESACT, D, DW and W are used for working space. A negative
+C       value of RESNEW(J) indicates that the J-th constraint does not
+C       restrict the CG steps of the current trust region calculation, a
+C       zero value of RESNEW(J) indicates that the J-th constraint is active,
+C       and otherwise RESNEW(J) is set to the greater of TINY and the actual
+C       residual of the J-th constraint for the current STEP. RESACT holds
+C       the residuals of the active constraints, which may be positive.
+C       D is the search direction of each line search. DW is either another
+C       search direction or the change in gradient along D. The length of W
+C       must be at least MAX[M,2*N].
+C
+C     Set some numbers for the conjugate gradient iterations.
+C
+      HALF=0.5D0
+      ONE=1.0D0
+      TINY=1.0D-60
+      ZERO=0.0D0
+      CTEST=0.01D0
+      SNSQ=SNORM*SNORM
+C
+C     Set the initial elements of RESNEW, RESACT and STEP.
+C
+      IF (M .GT. 0) THEN
+          DO 10 J=1,M
+          RESNEW(J)=RESCON(J)
+          IF (RESCON(J) .GE. SNORM) THEN
+              RESNEW(J)=-ONE
+          ELSE IF (RESCON(J) .GE. ZERO) THEN
+              RESNEW(J)=DMAX1(RESNEW(J),TINY)
+          END IF
+   10     CONTINUE
+          IF (NACT .GT. 0) THEN
+              DO 20 K=1,NACT
+              RESACT(K)=RESCON(IACT(K))
+   20         RESNEW(IACT(K))=ZERO
+          END IF
+      END IF
+      DO 30 I=1,N
+   30 STEP(I)=ZERO
+      SS=ZERO
+      REDUCT=ZERO
+      NCALL=0
+C
+C     GETACT picks the active set for the current STEP. It also sets DW to
+C       the vector closest to -G that is orthogonal to the normals of the
+C       active constraints. DW is scaled to have length 0.2*SNORM, as then
+C       a move of DW from STEP is allowed by the linear constraints.
+C
+   40 NCALL=NCALL+1
+      CALL GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,RESNEW,
+     1  RESACT,G,DW,W,W(N+1))
+      IF (W(N+1) .EQ. ZERO) GOTO 320
+      SCALE=0.2D0*SNORM/DSQRT(W(N+1))
+      DO 50 I=1,N
+   50 DW(I)=SCALE*DW(I)
+C
+C     If the modulus of the residual of an active constraint is substantial,
+C       then set D to the shortest move from STEP to the boundaries of the
+C       active constraints.
+C
+      RESMAX=ZERO
+      IF (NACT .GT. 0) THEN
+          DO 60 K=1,NACT
+   60     RESMAX=DMAX1(RESMAX,RESACT(K))
+      END IF
+      GAMMA=ZERO
+      IF (RESMAX .GT. 1.0D-4*SNORM) THEN
+          IR=0
+          DO 80 K=1,NACT
+          TEMP=RESACT(K)
+          IF (K .GE. 2) THEN
+              DO 70 I=1,K-1
+              IR=IR+1
+   70         TEMP=TEMP-RFAC(IR)*W(I)
+          END IF
+          IR=IR+1
+   80     W(K)=TEMP/RFAC(IR)
+          DO 90 I=1,N
+          D(I)=ZERO
+          DO 90 K=1,NACT
+   90     D(I)=D(I)+W(K)*QFAC(I,K)
+C
+C     The vector D that has just been calculated is also the shortest move
+C       from STEP+DW to the boundaries of the active constraints. Set GAMMA
+C       to the greatest steplength of this move that satisfies the trust
+C       region bound.
+C
+          RHS=SNSQ
+          DS=ZERO
+          DD=ZERO
+          DO 100 I=1,N
+          SUM=STEP(I)+DW(I)
+          RHS=RHS-SUM*SUM
+          DS=DS+D(I)*SUM
+  100     DD=DD+D(I)**2
+          IF (RHS .GT. ZERO) THEN
+              TEMP=DSQRT(DS*DS+DD*RHS)
+              IF (DS .LE. ZERO) THEN
+                  GAMMA=(TEMP-DS)/DD
+              ELSE
+                  GAMMA=RHS/(TEMP+DS)
+              END IF
+          END IF
+C
+C     Reduce the steplength GAMMA if necessary so that the move along D
+C       also satisfies the linear constraints.
+C
+          J=0
+  110     IF (GAMMA .GT. ZERO) THEN
+              J=J+1
+              IF (RESNEW(J) .GT. ZERO) THEN
+                  AD=ZERO
+                  ADW=ZERO
+                  DO 120 I=1,N
+                  AD=AD+AMAT(I,J)*D(I)
+  120             ADW=ADW+AMAT(I,J)*DW(I)
+                  IF (AD .GT. ZERO) THEN
+                      TEMP=DMAX1((RESNEW(J)-ADW)/AD,ZERO)
+                      GAMMA=DMIN1(GAMMA,TEMP)
+                  END IF
+              END IF
+              IF (J .LT. M) GOTO 110
+          END IF
+          GAMMA=DMIN1(GAMMA,ONE)
+      END IF
+C
+C     Set the next direction for seeking a reduction in the model function
+C       subject to the trust region bound and the linear constraints.
+C
+      IF (GAMMA .LE. ZERO) THEN
+          DO 130 I=1,N
+  130     D(I)=DW(I)
+          ICOUNT=NACT
+      ELSE
+          DO 140 I=1,N
+  140     D(I)=DW(I)+GAMMA*D(I)
+          ICOUNT=NACT-1
+      END IF
+      ALPBD=ONE
+C
+C     Set ALPHA to the steplength from STEP along D to the trust region
+C       boundary. Return if the first derivative term of this step is
+C       sufficiently small or if no further progress is possible.
+C
+  150 ICOUNT=ICOUNT+1
+      RHS=SNSQ-SS
+      IF (RHS .LE. ZERO) GOTO 320
+      DG=ZERO
+      DS=ZERO
+      DD=ZERO
+      DO 160 I=1,N
+      DG=DG+D(I)*G(I)
+      DS=DS+D(I)*STEP(I)
+  160 DD=DD+D(I)**2
+      IF (DG .GE. ZERO) GOTO 320
+      TEMP=DSQRT(RHS*DD+DS*DS)
+      IF (DS .LE. ZERO) THEN
+          ALPHA=(TEMP-DS)/DD
+      ELSE
+          ALPHA=RHS/(TEMP+DS)
+      END IF
+      IF (-ALPHA*DG .LE. CTEST*REDUCT) GOTO 320
+C
+C     Set DW to the change in gradient along D.
+C
+      IH=0
+      DO 170 J=1,N
+      DW(J)=ZERO
+      DO 170 I=1,J
+      IH=IH+1
+      IF (I .LT. J) DW(J)=DW(J)+HQ(IH)*D(I)
+  170 DW(I)=DW(I)+HQ(IH)*D(J)
+      DO 190 K=1,NPT
+      TEMP=ZERO
+      DO 180 J=1,N
+  180 TEMP=TEMP+XPT(K,J)*D(J)
+      TEMP=PQ(K)*TEMP
+      DO 190 I=1,N
+  190 DW(I)=DW(I)+TEMP*XPT(K,I)
+C
+C     Set DGD to the curvature of the model along D. Then reduce ALPHA if
+C       necessary to the value that minimizes the model.
+C
+      DGD=ZERO
+      DO 200 I=1,N
+  200 DGD=DGD+D(I)*DW(I)
+      ALPHT=ALPHA
+      IF (DG+ALPHA*DGD .GT. ZERO) THEN
+          ALPHA=-DG/DGD
+      END IF
+C
+C     Make a further reduction in ALPHA if necessary to preserve feasibility,
+C       and put some scalar products of D with constraint gradients in W.
+C
+      ALPHM=ALPHA
+      JSAV=0
+      IF (M .GT. 0) THEN
+          DO 220 J=1,M
+          AD=ZERO
+          IF (RESNEW(J) .GT. ZERO) THEN
+              DO 210 I=1,N
+  210         AD=AD+AMAT(I,J)*D(I)
+              IF (ALPHA*AD .GT. RESNEW(J)) THEN
+                  ALPHA=RESNEW(J)/AD
+                  JSAV=J
+              END IF
+          END IF
+  220     W(J)=AD
+      END IF
+      ALPHA=DMAX1(ALPHA,ALPBD)
+      ALPHA=DMIN1(ALPHA,ALPHM)
+      IF (ICOUNT .EQ. NACT) ALPHA=DMIN1(ALPHA,ONE)
+C
+C     Update STEP, G, RESNEW, RESACT and REDUCT.
+C
+      SS=ZERO
+      DO 230 I=1,N
+      STEP(I)=STEP(I)+ALPHA*D(I)
+      SS=SS+STEP(I)**2
+  230 G(I)=G(I)+ALPHA*DW(I)
+      IF (M .GT. 0) THEN
+          DO 240 J=1,M
+          IF (RESNEW(J) .GT. ZERO) THEN
+              RESNEW(J)=DMAX1(RESNEW(J)-ALPHA*W(J),TINY)
+          END IF
+  240     CONTINUE
+      END IF
+      IF (ICOUNT .EQ. NACT .AND. NACT .GT. 0) THEN
+          DO 250 K=1,NACT
+  250     RESACT(K)=(ONE-GAMMA)*RESACT(K)
+      END IF
+      REDUCT=REDUCT-ALPHA*(DG+HALF*ALPHA*DGD)
+C
+C     Test for termination. Branch to label 40 if there is a new active
+C       constraint and if the distance from STEP to the trust region
+C       boundary is at least 0.2*SNORM.
+C
+      IF (ALPHA .EQ. ALPHT) GOTO 320
+      TEMP=-ALPHM*(DG+HALF*ALPHM*DGD)
+      IF (TEMP .LE. CTEST*REDUCT) GOTO 320
+      IF (JSAV .GT. 0) THEN
+          IF (SS .LE. 0.64D0*SNSQ) GOTO 40
+          GOTO 320
+      END IF
+      IF (ICOUNT .EQ. N) GOTO 320
+C
+C     Calculate the next search direction, which is conjugate to the
+C       previous one except in the case ICOUNT=NACT.
+C
+      IF (NACT .GT. 0) THEN
+          DO 260 J=NACT+1,N
+          W(J)=ZERO
+          DO 260 I=1,N
+  260     W(J)=W(J)+G(I)*QFAC(I,J)
+          DO 280 I=1,N
+          TEMP=ZERO
+          DO 270 J=NACT+1,N
+  270     TEMP=TEMP+QFAC(I,J)*W(J)
+  280     W(N+I)=TEMP
+      ELSE
+          DO 290 I=1,N
+  290     W(N+I)=G(I)
+      END IF
+      IF (ICOUNT .EQ. NACT) THEN
+          BETA=ZERO
+      ELSE
+          WGD=ZERO
+          DO 300 I=1,N
+  300     WGD=WGD+W(N+I)*DW(I)
+          BETA=WGD/DGD
+      END IF
+      DO 310 I=1,N
+  310 D(I)=-W(N+I)+BETA*D(I)
+      ALPBD=ZERO
+      GOTO 150
+C
+C     Return from the subroutine.
+C
+  320 SNORM=ZERO
+      IF (REDUCT .GT. ZERO) SNORM=DSQRT(SS)
+      G(1)=ZERO
+      IF (NCALL .GT. 1) G(1)=ONE
+      RETURN
+      END
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% update.f %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      SUBROUTINE UPDATE (N,NPT,XPT,BMAT,ZMAT,IDZ,NDIM,SP,STEP,
+     1  KOPT,KNEW,VLAG,W)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION XPT(NPT,*),BMAT(NDIM,*),ZMAT(NPT,*),SP(*),STEP(*),
+     2  VLAG(*),W(*)
+C
+C     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
+C       identical to the corresponding arguments in SUBROUTINE LINCOB.
+C     KOPT is such that XPT(KOPT,.) is the current trust region centre.
+C     KNEW on exit is usually positive, and then it is the index of an
+C       interpolation point to be moved to the position XPT(KOPT,.)+STEP(.).
+C       It is set on entry either to its final value or to 0. In the latter
+C       case, the final value of KNEW is chosen to maximize the denominator
+C       of the matrix updating formula times a weighting factor.
+C     VLAG and W are used for working space, the first NPT+N elements of
+C       both of these vectors being required.
+C
+C     The arrays BMAT and ZMAT with IDZ are updated, the new matrices being
+C       the ones that are suitable after the shift of the KNEW-th point to
+C       the new position XPT(KOPT,.)+STEP(.). A return with KNEW set to zero
+C       occurs if the calculation fails due to a zero denominator in the
+C       updating formula, which should never happen.
+C
+C     Set some constants.
+C
+      HALF=0.5D0
+      ONE=1.0D0
+      ZERO=0.0D0
+      NPTM=NPT-N-1
+C
+C     Calculate VLAG and BETA for the current choice of STEP. The first NPT
+C       elements of VLAG are set to the values of the Lagrange functions at
+C       XPT(KOPT,.)+STEP(.). The first NPT components of W_check are held
+C       in W, where W_check is defined in a paper on the updating method.
+C
+      DO 20 K=1,NPT
+      W(K)=SP(NPT+K)*(HALF*SP(NPT+K)+SP(K))
+      SUM=ZERO
+      DO 10 J=1,N
+   10 SUM=SUM+BMAT(K,J)*STEP(J)
+   20 VLAG(K)=SUM
+      BETA=ZERO
+      DO 40 K=1,NPTM
+      SUM=ZERO
+      DO 30 I=1,NPT
+   30 SUM=SUM+ZMAT(I,K)*W(I)
+      IF (K .LT. IDZ) THEN
+          BETA=BETA+SUM*SUM
+          SUM=-SUM
+      ELSE
+          BETA=BETA-SUM*SUM
+      END IF
+      DO 40 I=1,NPT
+   40 VLAG(I)=VLAG(I)+SUM*ZMAT(I,K)
+      BSUM=ZERO
+      DX=ZERO
+      SSQ=ZERO
+      DO 70 J=1,N
+      SUM=ZERO
+      DO 50 I=1,NPT
+   50 SUM=SUM+W(I)*BMAT(I,J)
+      BSUM=BSUM+SUM*STEP(J)
+      JP=NPT+J
+      DO 60 K=1,N
+   60 SUM=SUM+BMAT(JP,K)*STEP(K)
+      VLAG(JP)=SUM
+      BSUM=BSUM+SUM*STEP(J)
+      DX=DX+STEP(J)*XPT(KOPT,J)
+   70 SSQ=SSQ+STEP(J)**2
+      BETA=DX*DX+SSQ*(SP(KOPT)+DX+DX+HALF*SSQ)+BETA-BSUM
+      VLAG(KOPT)=VLAG(KOPT)+ONE
+C
+C     If KNEW is zero initially, then pick the index of the interpolation
+C       point to be deleted, by maximizing the absolute value of the
+C       denominator of the updating formula times a weighting factor.
+C       
+C
+      IF (KNEW .EQ. 0) THEN
+          DENMAX=ZERO
+          DO 100 K=1,NPT
+          HDIAG=ZERO
+          DO 80 J=1,NPTM
+          TEMP=ONE
+          IF (J .LT. IDZ) TEMP=-ONE
+   80     HDIAG=HDIAG+TEMP*ZMAT(K,J)**2
+          DENABS=DABS(BETA*HDIAG+VLAG(K)**2)
+          DISTSQ=ZERO
+          DO 90 J=1,N
+   90     DISTSQ=DISTSQ+(XPT(K,J)-XPT(KOPT,J))**2
+          TEMP=DENABS*DISTSQ*DISTSQ
+          IF (TEMP .GT. DENMAX) THEN
+              DENMAX=TEMP
+              KNEW=K
+          END IF
+  100     CONTINUE
+      END IF
+C
+C     Apply the rotations that put zeros in the KNEW-th row of ZMAT.
+C
+      JL=1
+      IF (NPTM .GE. 2) THEN
+          DO 120 J=2,NPTM
+          IF (J .EQ. IDZ) THEN
+              JL=IDZ
+          ELSE IF (ZMAT(KNEW,J) .NE. ZERO) THEN
+              TEMP=DSQRT(ZMAT(KNEW,JL)**2+ZMAT(KNEW,J)**2)
+              TEMPA=ZMAT(KNEW,JL)/TEMP
+              TEMPB=ZMAT(KNEW,J)/TEMP
+              DO 110 I=1,NPT
+              TEMP=TEMPA*ZMAT(I,JL)+TEMPB*ZMAT(I,J)
+              ZMAT(I,J)=TEMPA*ZMAT(I,J)-TEMPB*ZMAT(I,JL)
+  110         ZMAT(I,JL)=TEMP
+              ZMAT(KNEW,J)=ZERO
+          END IF
+  120     CONTINUE
+      END IF
+C
+C     Put the first NPT components of the KNEW-th column of the Z Z^T matrix
+C       into W, and calculate the parameters of the updating formula.
+C
+      TEMPA=ZMAT(KNEW,1)
+      IF (IDZ .GE. 2) TEMPA=-TEMPA
+      IF (JL .GT. 1) TEMPB=ZMAT(KNEW,JL)
+      DO 130 I=1,NPT
+      W(I)=TEMPA*ZMAT(I,1)
+      IF (JL .GT. 1) W(I)=W(I)+TEMPB*ZMAT(I,JL)
+  130 CONTINUE
+      ALPHA=W(KNEW)
+      TAU=VLAG(KNEW)
+      TAUSQ=TAU*TAU
+      DENOM=ALPHA*BETA+TAUSQ
+      VLAG(KNEW)=VLAG(KNEW)-ONE
+      IF (DENOM .EQ. ZERO) THEN
+          KNEW=0
+          GOTO 180
+      END IF
+      SQRTDN=DSQRT(DABS(DENOM))
+C
+C     Complete the updating of ZMAT when there is only one nonzero element
+C       in the KNEW-th row of the new matrix ZMAT. IFLAG is set to one when
+C       the value of IDZ is going to be reduced.
+C
+      IFLAG=0
+      IF (JL .EQ. 1) THEN
+          TEMPA=TAU/SQRTDN
+          TEMPB=ZMAT(KNEW,1)/SQRTDN
+          DO 140 I=1,NPT
+  140     ZMAT(I,1)=TEMPA*ZMAT(I,1)-TEMPB*VLAG(I)
+          IF (DENOM .LT. ZERO) THEN
+              IF (IDZ .EQ. 1) THEN
+                  IDZ=2
+              ELSE
+                  IFLAG=1
+              END IF
+          END IF
+      ELSE
+C
+C     Complete the updating of ZMAT in the alternative case.
+C
+          JA=1
+          IF (BETA .GE. ZERO) JA=JL
+          JB=JL+1-JA
+          TEMP=ZMAT(KNEW,JB)/DENOM
+          TEMPA=TEMP*BETA
+          TEMPB=TEMP*TAU
+          TEMP=ZMAT(KNEW,JA)
+          SCALA=ONE/DSQRT(DABS(BETA)*TEMP*TEMP+TAUSQ)
+          SCALB=SCALA*SQRTDN
+          DO 150 I=1,NPT
+          ZMAT(I,JA)=SCALA*(TAU*ZMAT(I,JA)-TEMP*VLAG(I))
+  150     ZMAT(I,JB)=SCALB*(ZMAT(I,JB)-TEMPA*W(I)-TEMPB*VLAG(I))
+          IF (DENOM .LE. ZERO) THEN
+              IF (BETA .LT. ZERO) THEN
+                  IDZ=IDZ+1
+              ELSE
+                  IFLAG=1
+              END IF
+          END IF
+      END IF
+C
+C     Reduce IDZ when the diagonal part of the ZMAT times Diag(DZ) times
+C       ZMAT^T factorization gains another positive element. Then exchange
+C       the first and IDZ-th columns of ZMAT.
+C
+      IF (IFLAG .EQ. 1) THEN
+          IDZ=IDZ-1
+          DO 160 I=1,NPT
+          TEMP=ZMAT(I,1)
+          ZMAT(I,1)=ZMAT(I,IDZ)
+  160     ZMAT(I,IDZ)=TEMP
+      END IF
+C
+C     Finally, update the matrix BMAT.
+C
+      DO 170 J=1,N
+      JP=NPT+J
+      W(JP)=BMAT(KNEW,J)
+      TEMPA=(ALPHA*VLAG(JP)-TAU*W(JP))/DENOM
+      TEMPB=(-BETA*W(JP)-TAU*VLAG(JP))/DENOM
+      DO 170 I=1,JP
+      BMAT(I,J)=BMAT(I,J)+TEMPA*VLAG(I)+TEMPB*W(I)
+      IF (I .GT. NPT) BMAT(JP,I-NPT)=BMAT(I,J)
+  170 CONTINUE
+  180 RETURN
+      END
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PtsinTet output %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    Output from LINCOA with  NPT =  15  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   144
+    Least value of F =  2.761312530862147D+00         The corresponding X is:
+    -1.233791D+00  -1.231348D+00  -8.870616D-01   1.129888D+00  -1.128285D+00
+     1.084034D+00   8.431310D-01   7.535391D-01  -8.461760D-01  -6.585848D-01
+     1.556805D+00   5.853412D-01
+
+
+    Output from LINCOA with  NPT =  20  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   170
+    Least value of F =  2.761312522745138D+00         The corresponding X is:
+    -1.233791D+00  -1.231348D+00  -8.870616D-01   1.129888D+00  -1.128285D+00
+     1.084034D+00   8.431307D-01   7.535403D-01  -8.461757D-01  -6.585848D-01
+     1.556805D+00   5.853412D-01
+
+
+    Output from LINCOA with  NPT =  25  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   175
+    Least value of F =  2.761312556579145D+00         The corresponding X is:
+    -8.431310D-01   7.535391D-01   8.461760D-01   1.233791D+00  -1.231348D+00
+     8.870608D-01  -1.129888D+00  -1.128285D+00  -1.084034D+00   6.585848D-01
+     1.556805D+00  -5.853412D-01
+
+
+    Output from LINCOA with  NPT =  30  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   210
+    Least value of F =  2.761312522213631D+00         The corresponding X is:
+    -8.431308D-01   7.535397D-01   8.461758D-01   1.233791D+00  -1.231348D+00
+     8.870616D-01  -1.129888D+00  -1.128285D+00  -1.084034D+00   6.585848D-01
+     1.556805D+00  -5.853412D-01
+
+
+    Output from LINCOA with  NPT =  35  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   131
+    Least value of F =  2.751575570976407D+00         The corresponding X is:
+    -7.788130D-01   1.062498D+00   7.734507D-01   1.210293D+00  -1.212501D+00
+     9.512774D-01  -1.157576D+00  -1.159364D+00  -1.048821D+00   7.068259D-01
+     1.408297D+00  -6.554271D-01
+
+
+    Output from LINCOA with  NPT =  40  and  RHOEND =  1.0000D-06
+
+    At the return from LINCOA     Number of function values =   182
+    Least value of F =  2.761312522228224D+00         The corresponding X is:
+    -8.431308D-01   7.535397D-01   8.461758D-01   1.233791D+00  -1.231348D+00
+     8.870616D-01  -1.129888D+00  -1.128285D+00  -1.084034D+00   6.585848D-01
+     1.556805D+00  -5.853412D-01

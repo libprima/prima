@@ -24,7 +24,7 @@ funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1 || ~ismember(callstack(2).name, invoker_list))
     % Private/unexpected error
     error(sprintf('%s:InvalidInvoker', funname), ...
-    '%s: UNEXPECTED ERROR: %s should only be called by %s.', funname, funname, mystrjoin(invoker_list, ', '));
+    '%s: UNEXPECTED ERROR: %s should only be called by %s.', funname, funname, strjoin(invoker_list, ', '));
 else
     invoker = callstack(2).name; % Name of the function who calls this function
 end
@@ -41,7 +41,7 @@ url = 'www.libprima_last.net';
 
 maintainer = 'Zaikun Zhang';
 
-credits = {'Zaikun Zhang'};
+credits = {'Tom M. Ragonneau', 'Zaikun Zhang'};
 
 license = 'LGPLv3+';
 
@@ -53,11 +53,7 @@ status = 'Development';
 
 message = 'Dedicated to late Professor M. J. D. Powell FRS (29 July 1936--19 April 2015).';
 
-if year(datetime()) == 2023
-    copyright = sprintf('Copyright %d, Zaikun Zhang', year(datetime()));
-else
-    copyright = sprintf('Copyright 2020--%d, Zaikun Zhang', year(datetime()));
-end
+copyright = sprintf('Copyright 2020--%d, Zaikun Zhang', year(datetime()));
 
 switch lower(request)
 case 'name'

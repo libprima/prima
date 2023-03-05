@@ -1,0 +1,6 @@
+The following new features of F2008 are useful for this project.
+
+1. Intrinsic functions: HYPOT, NORM2
+2. ISO_FORTRAN_ENV: INT16, INT32, INT64, REAL32, REAL64, REAL128
+3. Intrinsic function STORAGE_SIZE , and C_SIZEOF from ISO_FORTRAN_ENV
+4. Internal procedure as an actual argument or pointer target
