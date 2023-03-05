@@ -15,16 +15,11 @@
 
 5. Check the definition and update of RESCON in LINCOA, in UPDATE/UPDATERES.
 
-6. Do we need to update X, F, XOPT, FOPT, KOPT all together? Aren't they redundant? What if only
-   KOPT?
+6. Unify the UPDATEQ, UPDATEXF(, and UPDATEH) of BOBYQA/LINCOA/NEWUOA.
 
-7. Unify the UPDATEQ, UPDATEXF(, and UPDATEH) of BOBYQA/LINCOA/NEWUOA.
-
-8. Implement a subroutine that evaluates the functions, updates NF, updates history/filter, and
+7. Implement a subroutine that evaluates the functions, updates NF, updates history/filter, and
    prints messages?
 
-10. Test whether the scaling threshold in the trust-region subproblem solvers can be improved.
+9. Test whether the scaling threshold in the trust-region subproblem solvers can be improved.
 
-11. For NEWUOA, BOBYQA, LINCOA, implement the trust-redundant subroutine solvers using hmul.
-
-12. Replace sqrt(sum(**2)) by norm when appropriate.
+10. For NEWUOA, BOBYQA, LINCOA, implement the trust-redundant subroutine solvers using hmul.
