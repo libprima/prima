@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:55:01
+! Last Modified: Sunday, March 05, 2023 PM07:07:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -441,7 +441,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
 end if
 
 ! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
-if (fopt <= f .or. is_nan(f)) then
+if (fopt < f .or. is_nan(f)) then
     x = xbase + xopt
     f = fopt
 end if
@@ -469,8 +469,6 @@ if (DEBUGGING) then
         & 'FHIST does not contain NaN/+Inf', srname)
     call assert(.not. any(fhist(1:min(nf, maxfhist)) < f), 'F is the smallest in FHIST', srname)
 end if
-
-close (16)
 
 end subroutine uobyqb
 

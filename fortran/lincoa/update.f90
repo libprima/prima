@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM11:34:14
+! Last Modified: Sunday, March 05, 2023 PM05:00:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,9 +19,9 @@ public :: updatexf, updateq, tryqalt, updateres
 contains
 
 
-subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt, fopt, xopt)
+subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates [XPT, FVAL, KOPT, XOPT, FOPT] so that XPT(:, KNEW) is updated to XNEW.
+! This subroutine updates [XPT, FVAL, KOPT] so that XPT(:, KNEW) is updated to XNEW.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
@@ -45,10 +45,6 @@ logical, intent(in) :: ximproved
 real(RP), intent(inout) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(inout) :: xpt(:, :)! XPT(N, NPT)
 
-! Outputs
-real(RP), intent(out) :: fopt
-real(RP), intent(out) :: xopt(:)    ! XOPT(N)
-
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATEXF'
 integer(IK) :: n
@@ -70,8 +66,6 @@ if (DEBUGGING) then
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
-    call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
-    ! N.B.: Do NOT test the value of FOPT or XOPT. Being INTENT(OUT), they are UNDEFINED up to here.
 end if
 
 !====================!
@@ -79,10 +73,7 @@ end if
 !====================!
 
 ! Do essentially nothing when KNEW is 0. This can only happen after a trust-region step.
-! We must set XOPT and FOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
 if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
-    xopt = xpt(:, kopt)
-    fopt = fval(kopt)
     return
 end if
 
@@ -93,11 +84,6 @@ if (ximproved) then
     kopt = knew
 end if
 
-! Even if KOPT remains unchanged, we still need to update XOPT and FOPT, because it may happen that
-! KNEW = KOPT, so that XPT(:, KOPT) has been updated to XNEW.
-xopt = xpt(:, kopt)
-fopt = fval(kopt)
-
 !====================!
 !  Calculation ends  !
 !====================!
@@ -107,9 +93,6 @@ if (DEBUGGING) then
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt .and. all(is_finite(xpt)), &
         & 'SIZE(XPT) == [N, NPT], XPT is finite', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(abs(fopt - fval(kopt)) <= 0, 'FOPT == FVAL(KOPT)', srname)
-    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
-    call assert(norm(xopt - xpt(:, kopt)) <= 0, 'XOPT == XPT(:, KOPT)', srname)
 end if
 
 end subroutine updatexf
