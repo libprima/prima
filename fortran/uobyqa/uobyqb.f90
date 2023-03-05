@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 05, 2023 PM07:07:25
+! Last Modified: Sunday, March 05, 2023 PM07:58:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,13 +29,18 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
 !
 ! XBASE will contain a shift of origin that reduces the contributions from rounding errors to values
 !   of the model and Lagrange functions.
-! XOPT will be set to the displacement from XBASE of the vector of variables that provides the least
-!   calculated F so far.
-! D is reserved for trial steps from XOPT, except that it will contain diagonal second derivatives
-!   during the initialization procedure.
-! XPT will contain the interpolation point coordinates relative to XBASE.
+! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
+!   of the model and Lagrange functions.
+! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
+!   the least calculated F so far). FOPT = F(XOPT + XBASE). However, we do not save XOPT and FOPT
+!   explicitly, because XOPT = XPT(:, KOPT) and FOPT = FVAL(KOPT), which is explained below.
+! [XPT, FVAL, KOPT] describes the interpolation set:
+! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
+!   values of F at the interpolation points; KOPT is the index of XOPT in XPT.
 ! PQ will contain the parameters of the quadratic model.
 ! PL will contain the parameters of the Lagrange functions.
+! D is reserved for trial steps from XOPT. It is chosen by subroutine TRSTEP or GEOSTEP. Usually
+!   XBASE + XOPT + D is the vector of variables for the next call of CALFUN.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -115,7 +120,6 @@ real(RP) :: delta
 real(RP) :: distsq((size(x) + 1) * (size(x) + 2) / 2)
 real(RP) :: dnorm
 real(RP) :: dnormsav(3)
-real(RP) :: fopt
 real(RP) :: fval(size(distsq))
 real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x))
@@ -127,9 +131,8 @@ real(RP) :: qred
 real(RP) :: ratio
 real(RP) :: rho
 real(RP) :: xbase(size(x))
-real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), size(distsq))
-real(RP), parameter :: trtol = 1.0E-2_RP  ! Tolerance used in TRSAPP.
+real(RP), parameter :: trtol = 1.0E-2_RP  ! Tolerance used in TRSTEP.
 
 ! Sizes.
 n = int(size(x), kind(n))
@@ -157,10 +160,8 @@ end if
 !====================!
 
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
-xopt = xpt(:, kopt)
-fopt = fval(kopt)
-x = xbase + xopt
-f = fopt
+x = xbase + xpt(:, kopt)
+f = fval(kopt)
 
 if (subinfo /= INFO_DFT) then
     info = subinfo
@@ -204,8 +205,7 @@ info = MAXTR_REACHED
 ! UOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Generate trust region step D, and also calculate a lower bound on the Hessian of Q.
-    xopt = xpt(:, kopt)
-    g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
+    g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xpt(:, kopt))
     h = vec2smat(pq(n + 1:npt - 1))
     call trstep(delta, g, h, trtol, d, crvmin)
 
@@ -215,7 +215,7 @@ do tr = 1, maxtr
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
-    qred = -quadinc(pq, d, xopt)  ! QRED = Q(XOPT) - Q(XOPT + D)
+    qred = -quadinc(pq, d, xpt(:, kopt))  ! QRED = Q(XOPT) - Q(XOPT + D)
 
     if (shortd .or. .not. qred > 0) then
         ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
@@ -225,7 +225,7 @@ do tr = 1, maxtr
         end if
     else
         ! Calculate the next value of the objective function.
-        x = xbase + (xopt + d)
+        x = xbase + (xpt(:, kopt) + d)
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
@@ -246,11 +246,11 @@ do tr = 1, maxtr
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! MODERR is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
-        moderr = f - fopt + qred
+        moderr = f - fval(kopt) + qred
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
-        ratio = redrat(fopt - f, qred, eta1)
+        ratio = redrat(fval(kopt) - f, qred, eta1)
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
@@ -259,7 +259,7 @@ do tr = 1, maxtr
         end if
 
         ! Is the newly generated X better than current best point?
-        ximproved = (f < fopt)
+        ximproved = (f < fval(kopt))
 
         ! Set KNEW to the index of the next interpolation point to be deleted.
         knew_tr = setdrop_tr(kopt, ximproved, d, pl, rho, xpt)
@@ -268,8 +268,8 @@ do tr = 1, maxtr
         ddmove = ZERO
         if (knew_tr > 0) then
             ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
-            ! Update PL, PQ, XPT, KOPT, XOPT, and FOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
-            call update(knew_tr, d, f, moderr, kopt, fopt, pl, pq, xpt, xopt)
+            ! Update PL, PQ, XPT, FVAL, and KOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
+            call update(knew_tr, d, f, moderr, kopt, fval, pl, pq, xpt)
         end if
     end if
 
@@ -287,8 +287,8 @@ do tr = 1, maxtr
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
-    distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xopt).^2)  % xopt should be a column!! Implicit expansion
+    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
     ! Below are some alternative definitions of CLOSE_ITPSET.
     ! !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Powell's code.
@@ -377,7 +377,7 @@ do tr = 1, maxtr
         d = geostep(knew_geo, kopt, delbar, pl, xpt)
 
         ! Calculate the next value of the objective function.
-        x = xbase + (xopt + d)
+        x = xbase + (xpt(:, kopt) + d)
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
@@ -399,11 +399,11 @@ do tr = 1, maxtr
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
         ! MODERR is the error of the current model in predicting the change in F due to D.
         ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
-        moderr = f - fopt - quadinc(pq, d, xopt)  ! QUADINC = Q(XOPT + D) - Q(XOPT)
+        moderr = f - fval(kopt) - quadinc(pq, d, xpt(:, kopt))  ! QUADINC = Q(XOPT + D) - Q(XOPT)
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
-        ! Update PL, PQ, XPT, KOPT, XOPT, and FOPT so that XPT(:, KNEW_GEO) becomes XOPT + D.
-        call update(knew_geo, d, f, moderr, kopt, fopt, pl, pq, xpt, xopt)
+        ! Update PL, PQ, XPT, FVAL, and KOPT so that XPT(:, KNEW_GEO) becomes XOPT + D.
+        call update(knew_geo, d, f, moderr, kopt, fval, pl, pq, xpt)
     end if
 
     if (reduce_rho) then
@@ -414,14 +414,14 @@ do tr = 1, maxtr
 
         ! Shifting XBASE to the best point so far, and make the corresponding changes to the
         ! gradients of the Lagrange functions and the quadratic model.
-        call shiftbase(xopt, pl, pq, xbase, xpt)
+        call shiftbase(kopt, pl, pq, xbase, xpt)
 
         ! Pick the next values of RHO and DELTA.
         delta = HALF * rho
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
-        call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
+        call rhomsg(solver, iprint, nf, fval(kopt), rho, xbase + xpt(:, kopt))
         ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
         ! the current RHO. Update them after reducing RHO.
         dnormsav = REALMAX
@@ -431,7 +431,7 @@ end do
 
 ! Return, possibly after another Newton-Raphson step, if it is too short to have been tried before.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
-    x = xbase + (xopt + d)
+    x = xbase + (xpt(:, kopt) + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
@@ -441,9 +441,9 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
 end if
 
 ! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
-if (fopt < f .or. is_nan(f)) then
-    x = xbase + xopt
-    f = fopt
+if (fval(kopt) < f .or. is_nan(f)) then
+    x = xbase + xpt(:, kopt)
+    f = fval(kopt)
 end if
 
 ! Arrange FHIST and XHIST so that they are in the chronological order.
