@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 12, 2023 AM12:42:50
+! Last Modified: Sunday, March 05, 2023 PM10:03:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -302,9 +302,8 @@ end subroutine initxf
 
 subroutine initq(ij, fval, xpt, gopt, hq, pq, info)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine initializes the quadratic model, which is represented by [GOPT, HQ, PQ] so that
-! its gradient at XBASE+XOPT is GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
-! Here, XOPT = XPT(:, KOPT).
+! This subroutine initializes the quadratic model represented by [GOPT, HQ, PQ] so that its gradient
+! at XBASE + XPT(:, KOPT) is GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

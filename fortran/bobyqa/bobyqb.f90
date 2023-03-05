@@ -192,7 +192,6 @@ end if
 ! Initialize XBASE, XPT, FVAL, and KOPT.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fhist, fval, &
     & sl, su, xbase, xhist, xpt, subinfo)
-
 x = xinbd(xbase, xpt(:, kopt), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
 f = fval(kopt)
 
