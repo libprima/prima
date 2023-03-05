@@ -7,28 +7,32 @@ if nargin < 2
     path_string_stamp = sprintf('Added by %s', mfilename);
 end
 
+if ~exist(path_string, 'dir')
+    error('prima_last:PathNotExist', 'The string %s does not correspond to an existing directory.', path_string);
+end
+
 addpath(path_string);
 
-% Try saving path.
-% SAVEPATH saves the current MATLABPATH in the path-defining file, which is located at:
-% fullfile(matlabroot, 'toolbox', 'local', 'pathdef.m')
-% It returns 0 if the file was saved successfully; 1 otherwise.
-% If savepath fails (probably because we do not have the permission to write the above pathdef.m
-% file), then we try saving the path to the user-specific pathdef.m file located at userpath.
-% On linux, userpath = '$HOME/Documents/MATLAB'. However, if $HOME/Documents does not exist,
-% then userpath = []. In this case, we will not save path to the user-specific pathdef.m file.
-% Otherwise, we will only get a pathdef.m in the current directory, which will not be executed
-% when MATLAB starts from other directories.
+% Try saving the path in the system path-defining file at sys_pathdef. If the user does not have
+% writing permission for this file, then the path will not saved.
+% N.B. Do not save the path to the pathdef.m file under userpath. This file is not loaded by default
+% at startup. See
+% https://www.mathworks.com/matlabcentral/answers/269482-is-userdata-pathdef-m-for-local-path-additions-supported-on-linux
 orig_warning_state = warning;
-warning('off', 'MATLAB:SavePath:PathNotSaved'); % Maybe we do not have the permission to save path.
-path_saved = (savepath == 0 || (numel(userpath) > 0 && savepath(fullfile(userpath, 'pathdef.m')) == 0));
+warning('off', 'MATLAB:SavePath:PathNotSaved'); % Maybe we do not have the permission to save path
+sys_pathdef = fullfile(matlabroot(), 'toolbox', 'local', 'pathdef.m');
+path_saved = (savepath(sys_pathdef) == 0);
 warning(orig_warning_state); % Restore the behavior of displaying warnings
 
 % If path not saved, try editing the startup.m of this user. Do this only if userpath is nonempty.
+% Otherwise, we will only get a startup.m in the current directory, which will not be executed
+% when MATLAB starts from other directories. On Linux, the default value of userpath is
+% ~/Documents/MATLAB, but it will be '' if this directory does not exist. We refrain from creating
+% this directory in that case.
 if ~path_saved && numel(userpath) > 0
     user_startup = fullfile(userpath, 'startup.m');
     add_path_string = sprintf('addpath(''%s'');', path_string);
-    full_add_path_string = sprintf('%s\t%s %s', add_path_string, '%', path_string_stamp);
+    full_add_path_string = sprintf('%s  %s %s', add_path_string, '%', path_string_stamp);
 
     % First, check whether full_add_path_string already exists in user_startup or not.
     if exist(user_startup, 'file')

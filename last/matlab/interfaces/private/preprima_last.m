@@ -31,7 +31,7 @@ funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1 || ~ismember(callstack(2).name, invoker_list))
     % Private/unexpected error
     error(sprintf('%s:InvalidInvoker', funname), ...
-    '%s: UNEXPECTED ERROR: %s should only be called by %s.', funname, funname, mystrjoin(invoker_list, ', '));
+    '%s: UNEXPECTED ERROR: %s should only be called by %s.', funname, funname, strjoin(invoker_list, ', '));
 else
     invoker = callstack(2).name; % Name of the function who calls this function
 end
@@ -95,9 +95,9 @@ end
 % 21. user_options_fields: the fields in the user-specified options
 % 22. options: (refined) options for calling the solvers
 % 23. warnings: warnings during the preprocessing/validation
-% 24. hugenum: the large possible absolute value of the variables
-% 25. hugefun: the largest value of the objective function
-% 26. hugecon: the largest possible absolute value of the constraints
+% 24. boundmax: the large allowed absolute value of bound constraints
+% 25. funcmax: the largest allowed value of the objective function
+% 26. constrmax: the largest allowed absolute value of the constraints
 probinfo = struct();
 
 % Save the raw data (date before validation/preprocessing) in probinfo.
@@ -115,30 +115,26 @@ probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', 
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon, 'options', options);
 
 % Decide the precision ('single', 'double', or 'quadruple') of the real calculation within the
-% Fortran solvers. This is needed ONLY by `hugenum`, `hugefun`, and `hugecon` defined below by
-% calling `gethuge`. These three numbers will be used in `pre_x0`, `pre_fun`, and `pre_con`
+% Fortran solvers. This is needed ONLY by `boundmax`, `funcmax`, and `constrmax` defined below by
+% calling `getmax`. These three numbers will be used in `pre_x0`, `pre_fun`, and `pre_con`
 % respectively in the sequel. Note the following.
 % 1. `precision` takes effect only if Fortran solvers are called (i.e., when options.fortran = true).
-% 2. `precision` is passed only to `gethuge`, which defines huge values (e.g., `hugenum`, `hugefun`).
-% 3. `precision` does not affect integer-type huge values (e.g., `maxint`).
+% 2. `precision` is passed only to `getmax`, which defines huge values (e.g., `boundmax`, `funcmax`).
 precision = 'double';
 % Since `options` is not validated yet, validations are needed before inquiring options.precision.
 if isa(options, 'struct') && isfield(options, 'precision') && ischarstr(options.precision) && ...
         ismember(lower(options.precision), all_precisions())
     precision = lower(options.precision);
 end
-% Zaikun 20221220: What if the Fortran code is not compiled? Do we still need these numbers, or
-% should we set them according to the range of double-precision floating point numbers? Note that
-% `gethuge` is used nowhere else.
-probinfo.hugenum = gethuge('real', precision);
-probinfo.hugefun = gethuge('fun', precision);
-probinfo.hugecon = gethuge('con', precision);
+probinfo.boundmax = getmax('bound', precision);
+probinfo.funcmax = getmax('function', precision);
+probinfo.constrmax = getmax('constraint', precision);
 
 % Validate and preprocess fun
-[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, probinfo.hugefun, warnings);
+[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, probinfo.funcmax, warnings);
 
 % Validate and preprocess x0
-[x0, warnings] = pre_x0(invoker, x0, probinfo.hugenum, warnings);
+[x0, warnings] = pre_x0(invoker, x0, precision, warnings);
 lenx0 = length(x0); % Within this file, for clarity, we denote length(x0) by lenx0 instead of n
 
 % Validate and preprocess the bound constraints
@@ -183,7 +179,7 @@ probinfo.trivial_leq = trivial_leq; % A vector of true/false
 % The constraints will be reduced if some but not all variables are fixed by the bound
 % constraints. See pre_lcon for why we do not reduce the problem when all variables
 % are fixed.
-nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, probinfo.hugecon);
+nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, probinfo.constrmax);
 
 % Reduce fun, x0, lb, and ub if some but not all variables are fixed by
 % the bound constraints. See pre_lcon for why we do not reduce the
@@ -305,12 +301,18 @@ if strcmp(invoker, 'prima_last')
     [options, warnings] = select_solver(invoker, options, probinfo, warnings);
 end
 
+% If options.fortran is true, check whether the Fortran MEX function is available. If no, set
+% options.fortran to false, and the MATLAB version of the solver will be called (we are assuming
+% that the MATLAB version is available).
+if options.fortran
+    [options, warnings] = is_fortran_available(invoker, options, warnings);
+end
+
 if strcmpi(options.solver, 'bobyqa_last') && ~probinfo.nofreex && ~probinfo.infeasible && ~probinfo.feasibility_problem
-% The Fortran code of BOBYQA will revise x0 so that the distance between
-% x0 and the inactive bounds is at least rhobeg. We do it here in order
-% to raise a warning when such a revision occurs. After this, the
-% Fortran code will not revise x0 again. If the options.honour_x0 = true,
-% then we keep x0 unchanged and revise rhobeg if necessary.
+% BOBYQA will revise x0 so that the distance between x0 and the inactive bounds
+% is at least rhobeg. We do it here in order to raise a warning when such a
+% revision occurs. After this, BOBYQA will not revise x0 again. If options.honour_x0
+% is true, then we keep x0 unchanged and revise rhobeg if necessary.
 % N.B.: If x0 violates the bounds, then it is always revised by `project` to respect the bounds.
     [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, probinfo.user_options_fields, options, warnings);
     probinfo.refined_data.x0 = x0;  % x0 may have been revised.
@@ -367,7 +369,7 @@ if ~ismember(invoker, invoker_list)
     % again, even though it should have been checked in function preprima_last
     % Private/unexpcted error
     error(sprintf('%s:InvalidInvoker', funname), ...
-    '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, mystrjoin(invoker_list, ', '));
+    '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, strjoin(invoker_list, ', '));
 end
 
 if ~isa(problem, 'struct')
@@ -385,7 +387,7 @@ missing_fields = setdiff(obligatory_fields, problem_fields);
 if ~isempty(missing_fields)
     % Public/normal error
     error(sprintf('%s:InvalidProb', invoker), ...
-    '%s: PROBLEM misses the %s field(s).', invoker, mystrjoin(missing_fields, ', '));
+    '%s: PROBLEM misses the %s field(s).', invoker, strjoin(missing_fields, ', '));
 end
 x0 = problem.x0;
 
@@ -411,9 +413,9 @@ problem = rmfield(problem, unknown_fields);  % Remove the unknown fields
 if ~isempty(unknown_fields)
     wid = sprintf('%s:UnknownProbField', invoker);
     if length(unknown_fields) == 1
-        wmsg = sprintf('%s: problem with an unknown field %s; it is ignored.', invoker, mystrjoin(unknown_fields, ', '));
+        wmsg = sprintf('%s: problem with an unknown field %s; it is ignored.', invoker, strjoin(unknown_fields, ', '));
     else
-        wmsg = sprintf('%s: problem with unknown fields %s; they are ignored.', invoker, mystrjoin(unknown_fields, ', '));
+        wmsg = sprintf('%s: problem with unknown fields %s; they are ignored.', invoker, strjoin(unknown_fields, ', '));
     end
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
@@ -461,7 +463,7 @@ end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for fun preprocessing %%%%%%%%%%%%%%%%%
-function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, hugefun, warnings)
+function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, funcmax, warnings)
 if ~(isempty(fun) || ischarstr(fun) || isa(fun, 'function_handle'))
     % Public/normal error
     error(sprintf('%s:InvalidFun', invoker), ...
@@ -499,11 +501,11 @@ if ~exist('OCTAVE_VERSION', 'builtin')
         '%s: FUN has no output; it should return the objective function value.', invoker);
     end
 end
-fun = @(x) evalobj(invoker, fun, x, hugefun);  % See evalobj.m
+fun = @(x) evalobj(invoker, fun, x, funcmax);  % See evalobj.m
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for x0 preprocessing %%%%%%%%%%%%%%%%%
-function [x0, warnings] = pre_x0(invoker, x0, hugenum, warnings)
+function [x0, warnings] = pre_x0(invoker, x0, precision, warnings)
 [isrv, lenx0]  = isrealvector(x0);
 if ~(isrv && (lenx0 > 0))
     % Public/normal error
@@ -517,10 +519,11 @@ x0 = double(x0(:));
 abnormal_x0 = isnan(x0) | (abs(x0) >= inf);
 if any(abnormal_x0)
     x0(isnan(x0)) = 0;
-    x0(isinf(x0) & x0 > 0) = hugenum;
-    x0(isinf(x0) & x0 < 0) = -hugenum;
+    maxfloat = getmax('real', precision);
+    x0(isinf(x0) & x0 > 0) = maxfloat;
+    x0(isinf(x0) & x0 < 0) = -maxfloat;
     wid = sprintf('%s:AbnormalX0', invoker);
-    wmsg = sprintf('%s: X0 contains NaN or infinite values; NaN is replaced by 0 and Inf by the largest real number.', invoker);
+    wmsg = sprintf('%s: X0 contains NaN or infinite values; NaN is replaced by 0 and Inf by %g.', invoker, maxfloat);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -590,7 +593,7 @@ if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
     '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq) = [length(bineq), length(X0)] unless Aineq = bineq = [].', invoker);
 end
 if any(isnan(bineq))
-    bineq(isnan(bineq)) = inf; % Replace the NaN in bineq by inf
+    bineq(isnan(bineq)) = inf; % Replace the NaN in bineq by inf, namely to remove this constraint
     wid = sprintf('%s:NaNInbineq', invoker);
     wmsg = sprintf('%s: bineq contains NaN; it is replaced by inf.', invoker);
     warning(wid, '%s', wmsg);
@@ -720,7 +723,7 @@ end
 return
 
 %%%%%%%%%%%%%%%%% Function for nonlinear constraint preprocessing %%%%%%%%%%
-function nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, hugecon)
+function nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, constrmax)
 if ~(isempty(nonlcon) || isa(nonlcon, 'function_handle') || ischarstr(nonlcon))
     % Public/normal error
     error(sprintf('%s:InvalidCon', invoker), ...
@@ -760,7 +763,7 @@ else
         freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
         nonlcon = @(freex_value) nonlcon(fullx(freex_value, fixedx_value, freex, fixedx));
     end
-    nonlcon = @(x) evalcon(invoker, nonlcon, x, hugecon);  % See evalcon.m
+    nonlcon = @(x) evalcon(invoker, nonlcon, x, constrmax);  % See evalcon.m
 end
 return
 
@@ -796,7 +799,7 @@ funname = callstack(1).name;
 if ~ismember(invoker, invoker_list)
     % Private/unexpcted error
     error(sprintf('%s:InvalidInvoker', funname), ...
-    '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, mystrjoin(invoker_list, ', '));
+    '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, strjoin(invoker_list, ', '));
 end
 
 % Default values of the options.
@@ -922,9 +925,9 @@ options = rmfield(options, unknown_fields);  % Remove the unknown fields
 if ~isempty(unknown_fields)
     wid = sprintf('%s:UnknownOption', invoker);
     if length(unknown_fields) == 1
-        wmsg = sprintf('%s: unknown option %s; it is ignored.', invoker, mystrjoin(unknown_fields, ', '));
+        wmsg = sprintf('%s: unknown option %s; it is ignored.', invoker, strjoin(unknown_fields, ', '));
     else
-        wmsg = sprintf('%s: unknown options %s; they are ignored.', invoker, mystrjoin(unknown_fields, ', '));
+        wmsg = sprintf('%s: unknown options %s; they are ignored.', invoker, strjoin(unknown_fields, ', '));
     end
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
@@ -1049,7 +1052,7 @@ if isfield(options, 'maxfun')
     elseif options.maxfun > maxint()
         % maxfun would suffer from overflow in the Fortran code
         wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of integers in Fortran MEX; it is set to %d.', funname, maxint());
+        wmsg = sprintf('%s: maxfun exceeds the upper limit supported; it is set to %d.', funname, maxint());
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
         options.maxfun = maxint();
@@ -1685,7 +1688,7 @@ funname = callstack(1).name; % Name of the current function
 if ~ismember(invoker, invoker_list)
     % Private/unexpected error
     error(sprintf('%s:InvalidInvoker', funname), ...
-    '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, mystrjoin(invoker_list, ', '));
+    '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, strjoin(invoker_list, ', '));
 end
 % After pre_options, options.solver is either a member of solver_list
 % or '' (i.e., an empty char array), the second signifying the solver
@@ -1876,7 +1879,7 @@ solver_list = {'bobyqa_last'}; % Only BOBYQA needs pre_rhobeg_x0. May have other
 
 if ~ismember(lower(options.solver), solver_list)
     % Private/unexpcted error
-    error(sprintf('%s:InvalidSolver', funname), '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, mystrjoin(solver_list, ', '));
+    error(sprintf('%s:InvalidSolver', funname), '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, strjoin(solver_list, ', '));
 end
 
 if isfield(options, 'honour_x0') && options.honour_x0  % In this case, we respect the user-defined x0 and revise rhobeg
@@ -1915,5 +1918,31 @@ else
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     end
+end
+return
+
+
+%% Function for checking whether the Fortran MEX function is available and revising ptions.fortran %
+function [options, warnings] = is_fortran_available(invoker, options, warnings)
+% IS_FORTRAN_AVAILABLE checks whether the Fortran MEX function is available. If no, raise a warning
+% and set options.fortran to false. It does nothing if options.fortran is false or does not exist.
+if ~isfield(options, 'fortran') || ~options.fortran
+    return
+end
+mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
+mexdir = mfiledir;  % The directory where the MEX functions reside.
+if options.classical
+    variant = 'classical';
+else
+    variant = 'modern';
+end
+mexname = get_mexname(options.solver, options.precision, options.debug, variant, mexdir);
+if exist(fullfile(mexdir, [mexname, '.', mexext]), 'file') ~= 3
+    wid = sprintf('%s:FortranNotAvailable', invoker);
+    wmsg = sprintf('%s: fortran = true but the Fortran MEX function is not available for the %s variant of %s with precision %s; fortran is reset to false.', invoker, variant, options.solver, options.precision);
+    options.fortran = false;
+    warning(wid, '%s', wmsg);
+    warnings = [warnings, wmsg];
+    options.fortran = false;
 end
 return

@@ -156,23 +156,16 @@ function [x, fx, exitflag, output] = newuoa_last(varargin)
 %
 %   See also prima_last, UOBYQA, BOBYQA, LINCOA, COBYLA.
 %
-%   See https://www.prima_last.net for more information.
-%
-%   ***********************************************************************
-%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
-%               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
-%               Department of Applied Mathematics,
-%               The Hong Kong Polytechnic University.
+%   See https://www.libprima_last.net for more information.
 %
 %   Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
-%   ***********************************************************************
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can  be called directly by users)
 %
 % Remarks:
-% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREprima_last !!!
-% !!! DO NOT CHANGE probinfo AFTER PREprima_last !!!
+% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREPRIMA !!!
+% !!! DO NOT CHANGE probinfo AFTER PREPRIMA !!!
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
