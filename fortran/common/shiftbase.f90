@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 05, 2023 PM04:38:21
+! Last Modified: Sunday, March 05, 2023 PM07:50:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -178,7 +178,7 @@ end if
 end subroutine shiftbase_lfqint
 
 
-subroutine shiftbase_qint(xopt, pl, pq, xbase, xpt)
+subroutine shiftbase_qint(kopt, pl, pq, xbase, xpt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine shifts the base point from XBASE to XBASE + XOPT, and make the corresponding
 ! changes to the gradients of the Lagrange functions and the quadratic model. See the discussion
@@ -186,7 +186,7 @@ subroutine shiftbase_qint(xopt, pl, pq, xbase, xpt)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : smat_mul_vec
@@ -194,7 +194,7 @@ use, non_intrinsic :: linalg_mod, only : smat_mul_vec
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: xopt(:)  ! XOPT(N)
+integer(IK), intent(in) :: kopt
 
 ! In-outputs
 real(RP), intent(inout) :: xbase(:)  ! XBASE(N)
@@ -207,6 +207,7 @@ character(len=*), parameter :: srname = 'SHIFTBASE_QINT'
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: xopt(size(xbase))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -215,7 +216,7 @@ npt = int(size(xpt, 2), kind(npt))
 ! Preconditions
 if (DEBUGGING) then
     call assert(npt == (n + 1) * (n + 2) / 2, 'NPT = (N+1)(N+2)/2', srname)
-    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(size(pl, 1) == npt - 1 .and. size(pl, 2) == npt, 'SIZE(PL) == [NPT-1, NPT]', srname)
     call assert(size(pq) == npt - 1, 'SIZE(PQ) == NPT-1', srname)
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XOPT) == N, XOPT is finite', srname)
@@ -228,8 +229,10 @@ end if
 !====================!
 
 ! Shift the base point from XBASE to XBASE + XOPT.
+xopt = xpt(:, kopt)
 xbase = xbase + xopt
 xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+xpt(:, kopt) = ZERO
 
 ! Update the gradient of the model
 pq(1:n) = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xopt)
@@ -247,7 +250,7 @@ end do
 if (DEBUGGING) then
     call assert(size(pl, 1) == npt - 1 .and. size(pl, 2) == npt, 'SIZE(PL) == [NPT-1, NPT]', srname)
     call assert(size(pq) == npt - 1, 'SIZE(PQ) == NPT-1', srname)
-    call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt .and. all(is_finite(xpt)), &
         & 'SIZE(XPT) == [N, NPT], XPT is finite', srname)
 end if
