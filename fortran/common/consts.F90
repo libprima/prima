@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, March 03, 2023 AM11:58:47
+! Last Modified: Monday, March 06, 2023 AM12:10:13
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -20,7 +20,7 @@ module consts_mod
 ! define what KIND = 8 means. There is NO guarantee that REAL(KIND = 8) will be legal, let alone
 ! being double precision.
 !
-! 3. Fortran standard (as of F2003) specifies the following for types INTEGER and REAL.
+! 3. Fortran standard (as of F2018) specifies the following for types INTEGER and REAL.
 !
 !    - A processor shall provide ONE OR MORE representation methods that define sets of values for
 !    data of type integer; if the kind type parameter is not specified, the default kind value is
@@ -60,7 +60,6 @@ module consts_mod
 !--------------------------------------------------------------------------------------------------!
 
 #if __USE_ISO_FORTRAN_ENV_INTREAL__ == 1
-
 #if __INTEGER_KIND__ == 16
 use, intrinsic :: iso_fortran_env, only : INT16
 #elif __INTEGER_KIND__ == 32

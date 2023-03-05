@@ -37,8 +37,8 @@ SHELL = /bin/bash
 ####################################################################################################
 # Variables
 
-# Fortran standard to follow. We aim to make the code compatible with F2003 and above.
-FS ?= 03
+# Fortran standard to follow. We aim to make the code compatible with F2008 and above.
+FS ?= 08
 FSTD := 20$(FS)
 
 # Default options for all the compilers, and corresponding suffixes for the executable. In general,
