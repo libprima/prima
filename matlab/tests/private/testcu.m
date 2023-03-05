@@ -252,11 +252,9 @@ if ~use_ref
     end
 end
 
+% Set cref(:, :, 1) to realmax if they are NaN.
 for ip = 1:np
-    if (isnan(cref(ip, 1, 1)) || isinf(cref(ip, 1, 1)))
-        cref(ip, 1, 1) = realmax;
-    end
-    cref(ip, :, 1) = cref(ip, 1, 1);
+    cref(ip, isnan(cref(ip, :, 1)), 1) = realmax;
 end
 
 % Modify crec and cref.
@@ -268,33 +266,33 @@ end
 for ip = 1 : np
     %cshift = options.ctol*min(0.01, cref(ip, 1, 1));
     %cshift = max(eps, options.ctol*min(0.01, cref(ip, 1, 1)));  % max(eps, ...) makes a difference.
-    cshift = max(eps, options.ctol);
+    cshift = max(eps, options.ctol);  % ctol is considered as an absolute tolerance
     cref(ip, :, :) = max(0, cref(ip, :, :) - cshift);
     crec(ip, :, :, :) = max(0, crec(ip, :, :, :) - cshift);
     cbig = max(0.1, 2*cref(ip, 1, 1));
     for is = 1 : ns
-        cref(ip, is, cref(ip, is, :) > cbig) = Inf;
+        cref(ip, is, cref(ip, is, :) >= cbig) = Inf;
         for ir = 1 : nr
-            crec(ip, is, ir, crec(ip, is, ir, :) > cbig) = Inf;
+            crec(ip, is, ir, crec(ip, is, ir, :) >= cbig) = Inf;
         end
     end
 end
 
 % Define mrec
 mrec = frec + options.cpenalty*crec;
-% Prevent mrec(:,:,:,1) from being Inf
+% Prevent mrec(:,:,:,1) from being NaN or Inf.
 for ip = 1 : np
     for is = 1 : ns
         for ir = 1 : nr
-            if isnan(mrec(ip, is, ir, 1))
+            if isnan(mrec(ip, is, ir, 1)) || mrec(ip, is, ir, 1) >= Inf
                 mrec(ip, is, ir, 1) = realmax;
             end
         end
     end
 end
 
-% Define mref
-mref = fref + options.cpenalty*cref;
+% Define mref_min.
+mref = fref + options.cpenalty*cref;  % The entries of mref is not used below. We need only mref_min.
 mref_min = min(min(mref, [], 3), [], 2);  % Minimum of mref for each problem.
 
 
@@ -779,6 +777,7 @@ case 'newuoa'
         'DMN15333LS', ...
         'DMN37143LS', ...
         'HYDC20LS', ...
+        'LRA9A', ...
         'LRCOVTYPE', ...
         'PENALTY2', ...
         'VARDIM', ...
