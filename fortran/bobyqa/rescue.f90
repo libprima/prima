@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, February 15, 2023 PM08:53:53
+! Last Modified: Sunday, March 05, 2023 PM06:58:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,8 +23,8 @@ public :: rescue
 contains
 
 
-subroutine rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fopt, fval, &
-    & gopt, hq, pq, sl, su, xbase, xhist, xopt, xpt, bmat, zmat, info)
+subroutine rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fval, &
+    & gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine implements "the method of RESCUE" introduced in Section 5 of BOBYQA paper. The
 ! purpose of this subroutine is to replace a few interpolation points by new points in order to
@@ -114,7 +114,6 @@ real(RP), intent(in) :: xu(:)  ! XU(N)
 integer(IK), intent(inout) :: kopt
 integer(IK), intent(inout) :: nf
 real(RP), intent(inout) :: fhist(:)  ! FHIST(MAXFHIST)
-real(RP), intent(inout) :: fopt
 real(RP), intent(inout) :: fval(:)  ! FVAL(NPT)
 real(RP), intent(inout) :: gopt(:)  ! GOPT(N)
 real(RP), intent(inout) :: hq(:, :)  ! HQ(N, N)
@@ -123,7 +122,6 @@ real(RP), intent(inout) :: sl(:)  ! SL(N)
 real(RP), intent(inout) :: su(:)  ! SU(N)
 real(RP), intent(inout) :: xbase(:)  ! XBASE(N)
 real(RP), intent(inout) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
-real(RP), intent(inout) :: xopt(:)  ! XOPT(N)
 real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! Outputs
@@ -168,6 +166,7 @@ real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: vquad
 real(RP) :: wmv(size(xpt, 1) + size(xpt, 2))
 real(RP) :: x(size(xpt, 1))
+real(RP) :: xopt(size(xpt, 1))
 real(RP) :: xp
 real(RP) :: xq
 real(RP) :: xxpt(size(xpt, 2))
@@ -200,7 +199,6 @@ if (DEBUGGING) then
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
-    call assert(size(xopt) == n, 'SIZE(XOPT) == N, XOPT is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
         & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
@@ -227,17 +225,17 @@ end if
 ! Shift the interpolation points so that XOPT becomes the origin.
 xopt = xpt(:, kopt)
 xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+xpt(:, kopt) = ZERO
 
 ! Update HQ so that HQ and PQ define the second derivatives of the model after XBASE has been
 ! shifted to the trust region centre.
 v = matprod(xpt, pq) + HALF * sum(pq) * xopt
 call r2update(hq, ONE, xopt, v)
 
-! Shift XBASE, SL, SU and XOPT. Set the elements of BMAT and ZMAT to ZERO.
+! Shift XBASE, SL, and SU. Set the elements of BMAT and ZMAT to ZERO.
 xbase = min(max(xl, xbase + xopt), xu)
 sl = min(sl - xopt, ZERO)
 su = max(su - xopt, ZERO)
-xopt = ZERO
 
 ! Set the elements of PTSAUX.
 ptsaux(1, :) = min(delta, su)
@@ -536,33 +534,30 @@ if (nprov > 0) then
     end do
 end if
 
-! Update FOPT, XOPT, and GOPT if necessary.
+! Update GOPT if necessary.
 if (kopt /= kbase) then
-    fopt = fval(kopt)
-    xopt = xpt(:, kopt)
-    gopt = gopt + hess_mul(xopt, xpt, pq, hq)
+    gopt = gopt + hess_mul(xpt(:, kopt), xpt, pq, hq)
 end if
 
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20221123: What if we rebuild the model? It seems to worsen the performance of BOBYQA.
 ! !hq = ZERO
-! !pq = omega_mul(1_IK, zmat, fval - fopt)
-! !gopt = matprod(bmat(:, 1:npt), fval - fopt) + hess_mul(xopt, xpt, pq)
+! !pq = omega_mul(1_IK, zmat, fval - fval(kopt))
+! !gopt = matprod(bmat(:, 1:npt), fval - fval(kopt)) + hess_mul(xpt(:, kopt), xpt, pq)
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20221123: Shouldn't we correct the models using the new [BMAT, ZMAT]?!
 ! In this way, we do not even need the quadratic model received by RESCUE is an interpolant.
 !real(RP) :: qval(size(xpt, 2))
-!qval = [(quadinc(xpt(:, k) - xopt, xpt, gopt, pq, hq), k=1, npt)]
-!pq = pq + omega_mul(1_IK, zmat, fval - qval - fopt)
-!gopt = gopt + matprod(bmat(:, 1:npt), fval - qval - fopt) + hess_mul(xopt, xpt, pq)
+!qval = [(quadinc(xpt(:, k) - xpt(:, kopt), xpt, gopt, pq, hq), k=1, npt)]
+!pq = pq + omega_mul(1_IK, zmat, fval - qval - fval(kopt))
+!gopt = gopt + matprod(bmat(:, 1:npt), fval - qval - fval(kopt)) + hess_mul(xpt(:, kopt), xpt, pq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Postconditions
 if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(.not. (is_nan(fopt) .or. is_posinf(fopt)), 'FOPT is not NaN/+Inf', srname)
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN/+Inf', srname)
@@ -575,8 +570,6 @@ if (DEBUGGING) then
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
-    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
-    call assert(all(xopt >= sl .and. xopt <= su), 'SL <= XOPT <= SU', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
