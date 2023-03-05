@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 05, 2023 PM07:59:12
+! Last Modified: Sunday, March 05, 2023 PM09:58:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,7 +21,7 @@ contains
 
 subroutine update(knew, d, f, moderr, kopt, fval, pl, pq, xpt)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates PL, PQ, XPT, KOPT, and FVAL when XPT(:, KNEW) becomes XNEW = XOPT+D.
+! This subroutine updates PL, PQ, XPT, KOPT, and FVAL when XPT(:, KNEW) becomes XNEW.
 ! See Section 4 of the UOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 

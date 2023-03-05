@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 05, 2023 PM07:01:12
+! Last Modified: Sunday, March 05, 2023 PM10:15:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -234,12 +234,8 @@ end if
 b = bvec
 call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
     & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
-
-!--------------------------------------------------------------------------------------------------!
-! Zaikun 20221129: Are the following needed?
 x = xbase + xpt(:, kopt)
 f = fval(kopt)
-!--------------------------------------------------------------------------------------------------!
 
 ! Evaluate the constraints using A_ORIG and B_ORIG. Should we do this in INITXF?
 ! N.B.: We must initialize CONSTR and CSTRV. Otherwise, if REDUCE_RHO is TRUE after the very first

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:03:50
+! Last Modified: Sunday, March 05, 2023 PM10:04:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -175,8 +175,8 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 ! D will be set to the step from X to the new point.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: D(N), DDEN, PQLAG(NPT), VLAG(N+NPT), XOPT(N)
-! Size of local arrays: REAL(RP)*(2*NPT+4*N)
+! REAL(RP) :: D(N), DDEN, PQLAG(NPT), VLAG(N+NPT)
+! Size of local arrays: REAL(RP)*(2*NPT+3*N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -210,7 +210,6 @@ real(RP) :: denom
 real(RP) :: denrat
 real(RP) :: pqlag(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
-real(RP) :: xopt(size(xpt, 1))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -235,9 +234,7 @@ end if
 ! Calculation starts !
 !====================!
 
-xopt = xpt(:, kopt)  ! Read XOPT.
-
-d = biglag(idz, knew, bmat, delbar, xopt, xpt, zmat)
+d = biglag(idz, knew, bmat, delbar, xpt(:, kopt), xpt, zmat)
 
 ! PQLAG contains the leading NPT elements of the KNEW-th column of H, and it provides the second
 ! derivative parameters of LFUNC.
