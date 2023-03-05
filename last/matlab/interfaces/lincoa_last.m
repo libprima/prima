@@ -199,23 +199,16 @@ function [x, fx, exitflag, output] = lincoa_last(varargin)
 %
 %   See also prima_last, UOBYQA, NEWUOA, BOBYQA, COBYLA.
 %
-%   See https://www.prima_last.net for more information.
-%
-%   ***********************************************************************
-%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
-%               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
-%               Department of Applied Mathematics,
-%               The Hong Kong Polytechnic University
+%   See https://www.libprima_last.net for more information.
 %
 %   Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
-%   ***********************************************************************
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can  be called directly by users)
 %
 % Remarks:
-% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREprima_last !!!
-% !!! DO NOT CHANGE probinfo AFTER PREprima_last !!!
+% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREPRIMA !!!
+% !!! DO NOT CHANGE probinfo AFTER PREPRIMA !!!
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -399,7 +392,7 @@ else % The problem turns out 'normal' during preprima_last
     if ~isempty(A_aug) && any(A_aug'*x0 > b_aug + 1e-10*max(1, abs(b_aug)))
         output.constr_modified = true;
         wid = sprintf('%s:ConstraintModified', funname);
-        wmsg = sprintf('%s will modify the right-hand side of the constraints to make x0 feasible.', funname);
+        wmsg = sprintf('%s will modify the right-hand sides of the constraints to make the starting point feasible.', funname);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     else

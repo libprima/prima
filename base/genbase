@@ -5,9 +5,9 @@
 THISDIR="$(realpath "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")"
 PRIMADIR="$(dirname "$THISDIR")"
 
-# Name of the last version, which will be used as the reference version in the development of the
-# new version.
-LAST=last
+# Directory of the last version, which will be used as the reference version in the development of 
+# the new version.
+LAST="$PRIMADIR"/last
 
 # Copy the current version (together with the corresponding last version) into $BASEDIR, so that it
 # becomes a new base.
@@ -15,7 +15,7 @@ BASEDIR="$PRIMADIR"/base
 VERSION=$(date +%y%m%d)
 BVDIR="$BASEDIR"/"$VERSION"
 mkdir -p "$BVDIR"
-cp -r "$PRIMADIR"/"$LAST" "$BVDIR"
+cp -r "$LAST" "$BVDIR"
 cp -r "$PRIMADIR"/fortran "$BVDIR"
 cp "$PRIMADIR"/setup.m "$BVDIR"
 cp -r "$PRIMADIR"/matlab "$BVDIR"
