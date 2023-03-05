@@ -10,7 +10,7 @@
  *
  * __RELEASED__                released or not: 1, 0
  * __DEBUGGING__               debug or not: 0, 1
- * __FORTRAN_STANDARD__        which Fortran standard to follow: 2003, 2008, 2018
+ * __FORTRAN_STANDARD__        which Fortran standard to follow: 2008, 2018, 2023
  * __INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16
  * __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0
  * __MAXHISTMEM__         maximal MB memory for computation history: 100
@@ -69,7 +69,7 @@
 #if defined __FORTRAN_STANDARD__
 #undef __FORTRAN_STANDARD__
 #endif
-#define __FORTRAN_STANDARD__ 2003 /* Will be default to 2008 later (in 2025?).*/
+#define __FORTRAN_STANDARD__ 2008 /* Will be default to 2018 later (in 2028?).*/
 /******************************************************************************/
 
 
