@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3.3.0
         with:
           submodules: recursive
 
@@ -86,7 +86,7 @@ jobs:
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make gtest
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.2
         # Note that `$TEST_DIR` does not work on Windows, where its equivalent is `$env:TEST_DIR`.
         # In the following, we enquire `$TEST_DIR` by using the `env` context, which is platform independent.
         with:
