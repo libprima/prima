@@ -26,12 +26,12 @@ jobs:
         solver: [lincoa]
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3.3.0
         with:
           submodules: recursive
 
       - name: Clone MatCUTEst
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3.3.0
         with:
           repository: equipez/matcutest_compiled
           path: matcutest
@@ -73,7 +73,7 @@ jobs:
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.2
         with:
           path: |
             matlab/tests/testdata
