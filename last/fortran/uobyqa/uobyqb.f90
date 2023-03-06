@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 05, 2023 PM07:58:38
+! Last Modified: Monday, March 06, 2023 PM12:00:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -119,7 +119,8 @@ real(RP) :: delbar
 real(RP) :: delta
 real(RP) :: distsq((size(x) + 1) * (size(x) + 2) / 2)
 real(RP) :: dnorm
-real(RP) :: dnormsav(3)
+!real(RP) :: dnormsav(3)
+real(RP) :: dnormsav(2)
 real(RP) :: fval(size(distsq))
 real(RP) :: g(size(x))
 real(RP) :: h(size(x), size(x))
@@ -333,8 +334,8 @@ do tr = 1, maxtr
     !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= eta1 .or. knew_tr == 0)  ! Works poorly!
     improve_geo = bad_trstep .and. .not. adequate_geo
     ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
-    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! Performs OK.
+    !bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! Performs OK.
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
 
     ! Equivalently, REDUCE_RHO can be set as follows. It shows that REDUCE_RHO is TRUE in two cases.
@@ -414,7 +415,7 @@ do tr = 1, maxtr
 
         ! Shifting XBASE to the best point so far, and make the corresponding changes to the
         ! gradients of the Lagrange functions and the quadratic model.
-        call shiftbase(kopt, pl, pq, xbase, xpt)
+        if (.false.) call shiftbase(kopt, pl, pq, xbase, xpt)
 
         ! Pick the next values of RHO and DELTA.
         delta = HALF * rho
@@ -426,6 +427,10 @@ do tr = 1, maxtr
         ! the current RHO. Update them after reducing RHO.
         dnormsav = REALMAX
         moderrsav = REALMAX
+    end if
+
+    if (sum(xpt(:, kopt)**2) >= 1.0E3_RP * delta**2) then
+        call shiftbase(kopt, pl, pq, xbase, xpt)
     end if
 end do
 
