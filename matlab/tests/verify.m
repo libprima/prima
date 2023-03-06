@@ -44,24 +44,24 @@ exception = [];
 
 try
 
-    % Make the solvers available. Note that the solvers are under `test_dir`.
-    get_solvers(solver, test_dir, options);
-
-    % Record `olddir` in `options` so that we can come back to `olddir` during `isequiv` if
-    % necessary (for example, when a single test fails).
-    options.olddir = olddir;
-
     % Define the solvers to test.
     solvers = {solver, [solver, '_last']};  % Default order: run 'SOLVER' first
     if isfield(options, 'reverse') && options.reverse
         solvers = solvers(end:-1:1);  % Reverse order
     end
 
+    % Make the solvers available. Note that the solvers are under `test_dir`.
+    get_solvers(solvers, test_dir, options);
+
     % Show current path information.
     showpath(solvers);
 
     % Tell MATLAB where to find MatCUTEst.
     locate_matcutest();
+
+    % Record `olddir` in `options` so that we can come back to `olddir` during `isequiv` if
+    % necessary (for example, when a single test fails).
+    options.olddir = olddir;
 
     % Go to the test directory. This will not affect the test, but any output (e.g., NEWUOA_output.txt,
     % fort.6) will be dumped to `test_dir`.

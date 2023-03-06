@@ -32,7 +32,6 @@ olddir = pwd();  % Record the current directory.
 % Parse the inputs.
 [solver, options] = parse_input(varargin);
 
-
 % Set up the directory to save the testing data, i.e., `data_dir`.
 if isfield(options, 'data_dir')
     data_dir = options.data_dir;
@@ -109,11 +108,8 @@ try
         options.time = datestr(datetime(), 'yymmdd_HHMM');
     end
 
-    % Make the solvers available. Note that the solvers are under `test_dir`.
-    get_solvers(solver, test_dir, options);
-
     % Define the solvers to test.
-    solvers = {solver, [solver, '_classical']};  % Default order: run 'SOLVER' first
+    solvers = {solver, [solver, '_', options.competitor]};  % Default order: run 'SOLVER' first
     if isfield(options, 'reverse') && options.reverse
         solvers = solvers(end:-1:1);  % Reverse order
     end
@@ -121,6 +117,9 @@ try
     % The following line can be used for testing the single-precision version. If such a test is
     % intended, remember to set mexopt.single = true in `get_solvers`.
     %solvers = {solver, [solver, '_single']};
+
+    % Make the solvers available. Note that the solvers are under `test_dir`.
+    get_solvers(solvers, test_dir, options);
 
     % Show current path information.
     showpath(solvers);
