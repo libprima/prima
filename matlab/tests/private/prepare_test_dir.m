@@ -104,11 +104,14 @@ matlab_sub_list = {'setup_tools', 'mex_gateways', 'interfaces'};
 for il = 1 : length(matlab_sub_list)
     copyfile(fullfile(s_matlab_dir, matlab_sub_list{il}), fullfile(d_matlab_dir, matlab_sub_list{il}));
 end
+%!------------------------------------------------------------------------------------------------!%
+% Remove the tests directories under d_matlab_dir.
 prima_matlab_test = fullfile(d_matlab_dir, 'tests');
 if exist(prima_matlab_test, 'dir')
     rmdir(prima_matlab_test, 's');
 end
 mkdir(prima_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
+%!------------------------------------------------------------------------------------------------!%
 % `testprima` is needed by `pdv`.
 copyfile(fullfile(s_matlab_dir, 'tests', 'testprima.m'), fullfile(prima_matlab_test, 'testprima.m'));
 
@@ -118,9 +121,7 @@ for il = 1 : length(base_sub_list)
     copyfile(fullfile(s_base_dir, base_sub_list{il}), fullfile(d_base_dir, base_sub_list{il}));
 end
 %!------------------------------------------------------------------------------------------------!%
-% Remove the matlab/tests directories under d_base_dir. This is IMPORTANT! Without this, the
-% test will mistakenly call scripts from there, because matlab/tests may be added to the path
-% by the corresponding setup.m.
+% Remove the matlab/tests directories under d_base_dir.
 d_base_matlab_test = fullfile(d_base_dir, 'matlab', 'tests');
 if exist(d_base_matlab_test, 'dir')
     rmdir(d_base_matlab_test, 's');
