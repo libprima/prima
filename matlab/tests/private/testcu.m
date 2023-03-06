@@ -342,6 +342,7 @@ if ischstr(solver)
     solver = regexprep(solver, '_classical$', '');
     solver = regexprep(solver, '_single$', '');
     solver = regexprep(solver, '_quadruple$', '');
+    solver = regexprep(solver, '_base$', '_last');
     solver = str2func(solver);
 end
 
@@ -787,7 +788,7 @@ case 'lincoa'
     blacklist = [blacklist, {'3PK', 'LSNNODOC', 'MAKELA4', 'OET1', 'QPCBOEI2', 'QPNBOEI2', 'SIPOW3', 'SIPOW4', 'TFI2'}];
     blacklist = [blacklist, { ...
         'TARGUS', ...
-        }]
+        }];
 case 'cobyla'
     % The following problems were observed to take excessive time during tests GitHub Actions and
     % make the tests run overtime. Some of them may not be very time-consuming during a "plain"

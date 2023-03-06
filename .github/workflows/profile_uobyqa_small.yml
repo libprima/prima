@@ -24,6 +24,7 @@ jobs:
         os: [ubuntu-latest]
         dim: [small]
         solver: [uobyqa]
+        competitor: [classical, base, last]
     steps:
       - name: Check out repository
         uses: actions/checkout@v3.3.0
@@ -65,9 +66,9 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             if strcmp('${{ matrix.solver }}', 'cobyla') && ~strcmp('${{ matrix.dim }}', 'small')
-                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'ln');
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'ln', '${{ matrix.competitor }}');
             else
-                prof('${{ matrix.solver }}', '${{ matrix.dim }}');
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}');
             end
             delete(fullfile(cd(), 'testdata', '*.mat'));
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
