@@ -72,6 +72,8 @@ for is = 1:ns
     solvers{is} = regexprep(solvers{is}, '_classical$', ' (classical)');
     solvers{is} = regexprep(solvers{is}, '_single$', ' (single)');
     solvers{is} = regexprep(solvers{is}, '_quadruple$', ' (quadruple)');
+    solvers{is} = regexprep(solvers{is}, '_base$', ' (base)');
+    solvers{is} = regexprep(solvers{is}, '_last$', ' (last)');
     %solvers{is} = regexprep(solvers{is}, 'newuoa', 'NEWUOA');
 end
 
