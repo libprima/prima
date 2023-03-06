@@ -112,18 +112,10 @@ try
     % Make the solvers available. Note that the solvers are under `test_dir`.
     get_solvers(solver, test_dir, options);
 
-    % Tell MATLAB where to find MatCUTEst.
-    locate_matcutest();
-
-    % Go to the test directory. This is not really necessary. It will not affect the test, but any
-    % output (e.g., NEWUOA_output.txt, fort.6) will be dumped to `test_dir`.
-    cd(test_dir);
-
     % Define the solvers to test.
+    solvers = {solver, [solver, '_classical']};  % Default order: run 'SOLVER' first
     if isfield(options, 'reverse') && options.reverse
-        solvers = {[solver, 'classical'], solver};  % Reverse order: first run 'SOLVER_classical', and then run 'SOLVER'
-    else
-        solvers = {solver, [solver, '_classical']};  % Default order: first run 'SOLVER', and then run 'SOLVER_classical'.
+        solvers = solvers(end:-1:1);  % Reverse order
     end
 
     % The following line can be used for testing the single-precision version. If such a test is
@@ -132,6 +124,13 @@ try
 
     % Show current path information.
     showpath(solvers);
+
+    % Tell MATLAB where to find MatCUTEst.
+    locate_matcutest();
+
+    % Go to the test directory. This will not affect the test, but any output (e.g., NEWUOA_output.txt,
+    % fort.6) will be dumped to `test_dir`.
+    cd(test_dir);
 
     % Profile the solvers.
     tic;

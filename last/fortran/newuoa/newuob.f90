@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 05, 2023 PM07:05:48
+! Last Modified: Monday, March 06, 2023 PM05:31:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,7 +129,8 @@ real(RP) :: delbar
 real(RP) :: delta
 real(RP) :: distsq(npt)
 real(RP) :: dnorm
-real(RP) :: dnormsav(3)
+!real(RP) :: dnormsav(3)
+real(RP) :: dnormsav(2)
 real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
