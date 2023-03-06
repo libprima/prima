@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 05, 2023 PM07:05:59
+! Last Modified: Monday, March 06, 2023 PM05:29:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -139,7 +139,7 @@ real(RP) :: delta
 real(RP) :: den(npt)
 real(RP) :: distsq(npt)
 real(RP) :: dnorm
-real(RP) :: dnormsav(3)
+real(RP) :: dnormsav(2)  ! Powell's implementation: DNORMSAV(3)
 real(RP) :: ebound
 real(RP) :: fval(npt)
 real(RP) :: gopt(size(x))

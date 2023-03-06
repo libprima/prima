@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:53:25
+! Last Modified: Monday, March 06, 2023 PM05:20:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -116,7 +116,7 @@ end if
 weight = max(ONE, distsq / rho**2)**4
 ! Other possible definitions of WEIGHT.
 ! !weight = max(ONE, distsq / rho**2)**3.5  ! Quite similar to power 4
-! !weight = max(ONE, distsq / rho**2)**3  ! A bit worse than power 3.5
+! !weight = max(ONE, distsq / rho**2)**3  ! Not bad
 ! !weight = max(ONE, distsq / delta**2)**2  ! Powell's code. Does not works as well as the above.
 ! !weight = max(ONE, distsq / rho**2)**2  ! Similar to Powell's code, not better.
 ! !weight = max(ONE, distsq / delta**2)  ! Defined in (6.1) of the BOBYQA paper. It works poorly!
