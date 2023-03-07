@@ -124,6 +124,8 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Verification, base](https://github.com/primalib/prima/actions/workflows/verify_base.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/verify_base.yml)
     - [![Test MATLAB](https://github.com/primalib/prima/actions/workflows/test_matlab.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_matlab.yml)
     - [![Plot performance profiles for all problems](https://github.com/primalib/prima/actions/workflows/profile_all.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_all.yml)
+    - [![Plot performance profiles for the single-precision version of the solvers](https://github.com/libprima/prima/actions/workflows/profile_single.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_single.yml)
+    - [![Plot performance profiles for the quadruple-precision version of the solvers](https://github.com/libprima/prima/actions/workflows/profile_quadruple.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_quadruple.yml)
     - [![Test Flang](https://github.com/primalib/prima/actions/workflows/test_flang.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_flang.yml)
     - [![Test Flang in AMD AOCC](https://github.com/primalib/prima/actions/workflows/test_aflang.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_aflang.yml)
     - [![Test nvfortran](https://github.com/primalib/prima/actions/workflows/test_nvfortran.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_nvfortran.yml)
