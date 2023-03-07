@@ -24,7 +24,7 @@ jobs:
         os: [ubuntu-latest]
         dim: [small]
         solver: [uobyqa]
-        competitor: [classical, base, single]
+        competitor: [classical, base]
     steps:
       - name: Check out repository
         uses: actions/checkout@v3.3.0
