@@ -1,12 +1,12 @@
-name: Plot performance profiles for the quadruple-precision version of the solvers
+name: Plot performance profiles, quadruple precision
 
 on:
   # Trigger the workflow on push or pull request
-  push:
+  #push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
-  # schedule:
-  #   - cron: '0 2,6,10,14,18,22 * * *'
+  schedule:
+    - cron: '0 12 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
 
