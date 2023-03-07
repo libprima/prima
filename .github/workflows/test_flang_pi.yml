@@ -1,4 +1,4 @@
-name: Test nvfortran on Raspberry Pi
+name: Test Flang on Raspberry Pi
 
 on:
   # Trigger the workflow on push or pull request
@@ -6,7 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 4 3-31/3 * *'
+    - cron: '0 4 2-31/3 * *'
   # Trigger the workflow manually
   workflow_dispatch:
 
@@ -14,7 +14,7 @@ on:
 jobs:
 
   test:
-    name: Run nvfortran tests
+    name: Run Flang tests
     runs-on: [self-hosted, ARM64, pi64]
     strategy:
       fail-fast: false
@@ -36,10 +36,12 @@ jobs:
       - name: Conduct the test
         run: |
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          # As of nvfotran 23.1, date_and_time() and random_number are not supported on Raspberry Pi
-          # 4B. Thus we have to disable the extensive tests, trying only the simple example.
-          #cd "$ROOT_DIR"/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make vtest_${{ matrix.ikind }}.${{ matrix.solver }}
-          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make vtest
+          cd "$ROOT_DIR"/fortran/tests
+          if [[ -f "test_cobyla.f90" ]] ; then
+              $SEDI 's|bign = 120|bign = 90|g' test_cobyla.f90
+          fi
+          export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make ftest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3.1.2
