@@ -93,14 +93,13 @@ The tests do not only verify the faithfulness of the implementation, but also ch
 behave properly even if they are invoked with improper inputs or encounter failures of function evaluations**.
 
 The tests are automated by
-[GitHub Actions](https://docs.github.com/en/actions). As of January 2023, more than
-30,000 "workflows" have been successfully run by GitHub Actions.
-Normally, each workflow consists of \~ 5
-([sometimes more than 100](https://github.com/primalib/prima/actions/runs/4026574684))
+[GitHub Actions](https://docs.github.com/en/actions). As of March 2023, more than
+35,000 "workflows" have been successfully run by GitHub Actions. Normally, each workflow consists of \~ 5
+([sometimes more than 150](https://github.com/primalib/prima/actions/runs/4345972852))
 **randomized** tests,
 each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the workflow will be canceled automatically). In other words,
-PRIMA has been verified by more than 100,000 hours (or **more than 10 years**) of randomized tests.
+PRIMA has been verified by more than 150,000 hours (or **more than 15 years**) of randomized tests.
 
 Since each GitHub Team account can only run at most 60 GitHub Actions workflows concurrently, I have
 to distribute this large amount of tests to several different Team accounts as follows.
