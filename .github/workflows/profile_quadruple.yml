@@ -1,4 +1,4 @@
-name: Plot performance profiles, quadruple precision
+name: Plot performance profiles, quadruple
 
 on:
   # Trigger the workflow on push or pull request
