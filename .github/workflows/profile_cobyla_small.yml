@@ -24,7 +24,7 @@ jobs:
         os: [ubuntu-latest]
         dim: [small]
         solver: [cobyla]
-        competitor: [classical, base, single, quadruple]
+        competitor: [classical, base, single]
     steps:
       - name: Check out repository
         uses: actions/checkout@v3.3.0
