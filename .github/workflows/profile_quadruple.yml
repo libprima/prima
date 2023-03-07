@@ -1,4 +1,4 @@
-name: Plot performance profiles for the quadruple-precision version of the solvers.
+name: Plot performance profiles for the quadruple-precision version of the solvers
 
 on:
   # Trigger the workflow on push or pull request
