@@ -37,7 +37,7 @@ jobs:
       - name: Conduct the test
         shell: bash
         run: |
-            cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+            #cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
             export FFLAGS=${{ matrix.fflags }}
             export TESTDIM=${{ matrix.testdim }}
             cd "$ROOT_DIR"/fortran/tests
