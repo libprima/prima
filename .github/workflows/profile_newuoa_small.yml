@@ -24,7 +24,7 @@ jobs:
         os: [ubuntu-latest]
         dim: [small]
         solver: [newuoa]
-        competitor: [classical, base, last]
+        competitor: [classical, base, single, quadruple]
     steps:
       - name: Check out repository
         uses: actions/checkout@v3.3.0
