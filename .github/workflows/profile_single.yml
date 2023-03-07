@@ -1,4 +1,4 @@
-name: Plot performance profiles, single precision
+name: Plot performance profiles, single
 
 on:
   # Trigger the workflow on push or pull request
