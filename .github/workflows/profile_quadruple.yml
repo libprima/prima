@@ -65,7 +65,7 @@ jobs:
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
             cd(fullfile(root_dir, 'matlab/tests'));
-            options=struct(); options.nr = 5;  % 5 random runs for each problem
+            options=struct(); options.nr = 2;  % 2 random runs for each problem, as quadruple is slow
             if strcmp('${{ matrix.solver }}', 'cobylal')
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
