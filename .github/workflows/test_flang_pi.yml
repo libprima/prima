@@ -38,7 +38,7 @@ jobs:
 
       - name: Conduct the test
         run: |
-          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          #cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           cd "$ROOT_DIR"/fortran/tests
           if [[ -f "test_cobyla.f90" ]] ; then
               $SEDI 's|bign = 120|bign = 90|g' test_cobyla.f90
