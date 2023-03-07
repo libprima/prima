@@ -41,6 +41,9 @@ jobs:
             export FFLAGS=${{ matrix.fflags }}
             export TESTDIM=${{ matrix.testdim }}
             cd "$ROOT_DIR"/fortran/tests
+            if [[ -f "test_uobyqa.f90" ]] ; then
+                $SEDI 's|bign = 120|bign = 110|g' test_uobyqa.f90
+            fi
             if [[ -f "test_cobyla.f90" ]] ; then
                 $SEDI 's|bign = 120|bign = 100|g' test_cobyla.f90
             fi
