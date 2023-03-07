@@ -133,6 +133,13 @@ if [[ "$CLEAN" == "Y" ]] ; then
     exit 0
 fi
 
+# Check whether this is a 32-bit ARM machine (e.g., Raspberry Pi with 32-bit OS).
+if [[ "$(uname -m)" = "aarch" || "$(uname -m)" = armv7* ]] ; then
+    ARM32='Y'
+else
+    ARM32='N'
+fi
+
 printf "Tests to make:%s\n\n" "$COMP_LIST"
 
 for COMP in $COMP_LIST; do
@@ -140,7 +147,7 @@ for COMP in $COMP_LIST; do
         make  "$COMP"test."$SOLVER"
     else
 #        TESTS="i4_r8_d1"
-       if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' ]] ; then
+       if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' || $ARM32 == 'Y' ]] ; then
             TESTS="i2_r4_d1 i8_r4_d0"
         else
             TESTS="i2_r16_d1 i8_r4_d0"
