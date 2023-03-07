@@ -143,10 +143,9 @@ fi
 printf "Tests to make:%s\n\n" "$COMP_LIST"
 
 for COMP in $COMP_LIST; do
-    if [[ $TEST_ALL == 'Y' ]] ; then
+    if [[ $TEST_ALL == 'Y' && $ARM32 != 'Y' ]] ; then
         make  "$COMP"test."$SOLVER"
     else
-#        TESTS="i4_r8_d1"
        if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' || $ARM32 == 'Y' ]] ; then
             TESTS="i2_r4_d1 i8_r4_d0"
         else
