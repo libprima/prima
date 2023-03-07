@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 05, 2023 PM07:50:36
+! Last Modified: Tuesday, March 07, 2023 AM11:16:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -72,7 +72,7 @@ integer(IK) :: idz_loc
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: by(size(xbase), size(xbase))
+real(RP) :: bymat(size(xbase), size(xbase))
 !real(RP) :: htol
 real(RP) :: qxoptq
 real(RP) :: sxpt(size(xpt, 2))
@@ -135,14 +135,13 @@ do k = 1, npt
 end do
 !!MATLAB: ymat = xptxav .* sxpt + qxoptq * xopt  % sxpt should be a row, xopt should be a column
 !ymat(:, kopt) = HALF * xoptsq * xopt ! This makes no difference according to a test on 20220406
-by = matprod(bmat(:, 1:npt), transpose(ymat))  ! BMAT(:, 1:NPT) is not updated yet.
-bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + (by + transpose(by))
+bymat = matprod(bmat(:, 1:npt), transpose(ymat))  ! BMAT(:, 1:NPT) is not updated yet.
+bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + (bymat + transpose(bymat))
 ! Then the revisions of BMAT that depend on ZMAT are calculated.
 yzmat = matprod(ymat, zmat)
 yzmat_c = yzmat
 yzmat_c(:, 1:idz_loc - 1) = -yzmat(:, 1:idz_loc - 1)  ! IDZ_LOC is usually small. So this assignment is cheap.
 bmat(:, npt + 1:npt + n) = bmat(:, npt + 1:npt + n) + matprod(yzmat, transpose(yzmat_c))
-!call symmetrize(bmat(:, npt + 1:npt + n))  ! Do this if the update above does not ensure symmetry.
 bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
 
 ! Update the quadratic model. Note that PQ remains unchanged. For HQ, see (7.14) of the NEWUOA paper.

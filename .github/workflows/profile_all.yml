@@ -24,7 +24,7 @@ jobs:
         os: [ubuntu-latest]
         dim: [all]
         solver: [newuoa, cobylal, cobylan, lincoa, bobyqa, uobyqa]
-        competitor: [classical, base, single, quadruple]
+        competitor: [classical, base]
     steps:
       - name: Check out repository
         uses: actions/checkout@v3.3.0
