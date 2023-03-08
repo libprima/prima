@@ -32,6 +32,8 @@ for DIR in setup_tools mex_gateways interfaces ; do
 done
 
 # Remove the unwanted files.
+find "$PRIMADIR" -name core -type f -delete
+find "$PRIMADIR" -name *.mexa64 -type f -delete
 find "$PRIMADIR" -name *.mod -type f -delete
 find "$PRIMADIR"  -name ".interform" -type d -exec rm -rf {} \;
 find "$BVDIR"  -name "flog" -type d -exec  rm -r {} \;
