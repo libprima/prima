@@ -31,7 +31,9 @@ for DIR in setup_tools mex_gateways interfaces ; do
     cp -r "$PRIMADIR"/matlab/"$DIR" "$LAST"/matlab
 done
 
-# Remove the unwanted files under "$BVDIR" and "$LAST".
+# Remove the unwanted files.
+find "$PRIMADIR" -name *.mod -type f -delete
+find "$PRIMADIR"  -name ".interform" -type d -exec rm -rf {} \;
 find "$BVDIR"  -name "flog" -type d -exec  rm -r {} \;
 find "$BVDIR"  -name "mlog" -type d -exec  rm -r {} \;
 find "$LAST"  -name "flog" -type d -exec  rm -r {} \;
