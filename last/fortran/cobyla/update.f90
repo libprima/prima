@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, February 28, 2023 PM06:32:27
+! Last Modified: Wednesday, March 08, 2023 PM04:09:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ subroutine updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, 
 use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, isinv
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, isinv, inv, eye, maximum
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -59,10 +59,12 @@ integer(IK), intent(out) :: info
 character(len=*), parameter :: srname = 'UPDATEXFC'
 integer(IK) :: m
 integer(IK) :: n
-real(RP), parameter :: itol = TENTH
+real(RP), parameter :: itol = ONE
 real(RP) :: simi_jdrop(size(simi, 2))
 real(RP) :: simid(size(simi, 1))
 real(RP) :: sum_simi(size(simi, 2))
+real(RP) :: simi_old(size(simi, 1), size(simi, 2)), simi_test(size(simi, 1), size(simi, 2)), sim_old(size(sim, 1), size(sim, 2)), &
+            & erri, erri_test
 
 ! Sizes
 m = int(size(constr), kind(m))
@@ -101,6 +103,9 @@ if (jdrop <= 0) then  ! JDROP < 0 is impossible if the input is correct.
     return
 end if
 
+sim_old = sim
+simi_old = simi
+
 if (jdrop <= n) then
     sim(:, jdrop) = d
     simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
@@ -113,12 +118,29 @@ else  ! JDROP = N+1
     sum_simi = sum(simi, dim=1)
     simi = simi + outprod(simid, sum_simi / (ONE - sum(simid)))
 end if
-fval(jdrop) = f
-conmat(:, jdrop) = constr
-cval(jdrop) = cstrv
 
-! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already.
-call updatepole(cpen, conmat, cval, fval, sim, simi, info)
+erri = maximum(abs(matprod(simi, sim(:, 1:n)) - eye(n)))
+if (erri > TENTH * itol .or. is_nan(erri)) then
+    simi_test = inv(sim(:, 1:n))
+    erri_test = maximum(abs(matprod(simi_test, sim(:, 1:n)) - eye(n)))
+    if (erri_test < erri .or. (is_nan(erri) .and. .not. is_nan(erri_test))) then
+        simi = simi_test
+        erri = erri_test
+    end if
+end if
+
+if (erri <= itol) then
+    fval(jdrop) = f
+    conmat(:, jdrop) = constr
+    cval(jdrop) = cstrv
+    ! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already.
+    call updatepole(cpen, conmat, cval, fval, sim, simi, info)
+else
+    INFO = DAMAGING_ROUNDING
+    sim = sim_old
+    simi = simi_old
+end if
+
 
 !====================!
 !  Calculation ends  !

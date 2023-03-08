@@ -35,7 +35,7 @@ if (isfield(options, 'reload') && options.reload == true)
         error('Fail to load data, because no .mat file found with the name pattern \n\n%s', matfile_with_wildcard);
     end
     load(matfile, 'frec', 'fmin', 'pdim', 'plist');
-    fprintf('\nSucceed to load data from\n\n%s\n\n', matfile)
+    fprintf('\nSucceed in loading data from\n\n%s\n\n', matfile)
     qlist = secup(options);
     fun = @(p) ismember(p, qlist);
     pind = find(cellfun(fun, plist));
