@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, February 28, 2023 PM06:32:27
+! Last Modified: Wednesday, March 08, 2023 PM02:19:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -203,11 +203,8 @@ character(len=*), parameter :: srname = 'UPDATEPOLE'
 integer(IK) :: jopt
 integer(IK) :: m
 integer(IK) :: n
-real(RP) :: conmat_old(size(conmat, 1), size(conmat, 2))
-real(RP) :: cval_old(size(cval))
 real(RP) :: erri
 real(RP) :: erri_test
-real(RP) :: fval_old(size(fval))
 real(RP) :: sim_jopt(size(sim, 1))
 real(RP) :: sim_old(size(sim, 1), size(sim, 2))
 real(RP) :: simi_old(size(simi, 1), size(simi, 2))
@@ -250,16 +247,13 @@ jopt = findpole(cpen, cval, fval)
 ! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already. Then update
 ! CONMAT etc. Before the update, save a copy of CONMAT etc. If the update is unsuccessful due to
 ! damaging rounding errors, we restore them for COBYLA to extract X/F/C from the undamaged data.
-fval_old = fval
-conmat_old = conmat
-cval_old = cval
 sim_old = sim
 simi_old = simi
 if (jopt >= 1 .and. jopt <= n) then
     ! Unless there is a bug in FINDPOLE, it is guaranteed that JOPT >= 1.
     ! When JOPT == N + 1, there is nothing to switch; in addition, SIMI(JOPT, :) will be illegal.
     fval([jopt, n + 1_IK]) = fval([n + 1_IK, jopt])
-    conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt]) ! Exchange CONMAT(:, JOPT) AND CONMAT(:, N+1)
+    conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt])
     cval([jopt, n + 1_IK]) = cval([n + 1_IK, jopt])
     sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
     sim_jopt = sim(:, jopt)
@@ -290,9 +284,11 @@ end if
 ! If the recalculated SIMI is still damaged, then restore the data to the version before the update.
 if (erri > itol .or. is_nan(erri)) then
     info = DAMAGING_ROUNDING
-    fval = fval_old
-    conmat = conmat_old
-    cval = cval_old
+    if (jopt >= 1 .and. jopt <= n) then
+        fval([jopt, n + 1_IK]) = fval([n + 1_IK, jopt])
+        conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt])
+        cval([jopt, n + 1_IK]) = cval([n + 1_IK, jopt])
+    end if
     sim = sim_old
     simi = simi_old
 end if
