@@ -58,9 +58,9 @@ try
     % Test feature and time
     test_feature = '';
     if isfield(options, 'compiler_options') && (isa(options.compiler_options, 'char') || ...
-          isa(options.compiler_options, 'string')) && ~isempty(options.compiler_options)
-        test_feature = [test_feature, '.', regexprep(options.compiler_options, '\s*','_')];
-        test_feature = regexprep(test_feature, '=','_');
+            isa(options.compiler_options, 'string')) && ~isempty(options.compiler_options)
+        test_feature = [test_feature, '.', regexprep(options.compiler_options, '\s*', '_')];
+        test_feature = regexprep(test_feature, '=', '_');
     end
     if isfield(options, 'perm') && islogical(options.perm) && isscalar(options.perm) && options.perm
         test_feature = [test_feature, '.', 'perm'];
@@ -134,7 +134,7 @@ try
     % Profile the solvers.
     tic;
     output = struct(options.type, perfdata(solvers, options));
-    problem_type=options.type;
+    problem_type = options.type;
     if length(problem_type) > 1
         options.reload = true;
         if strcmpi(solver, 'cobyla') && contains(problem_type, 'n')
