@@ -5,7 +5,7 @@
 THISDIR="$(realpath "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")"
 PRIMADIR="$(dirname "$THISDIR")"
 
-# Directory of the last version, which will be used as the reference version in the development of 
+# Directory of the last version, which will be used as the reference version in the development of
 # the new version.
 LAST="$PRIMADIR"/last
 
@@ -30,6 +30,12 @@ mkdir "$LAST"/matlab
 for DIR in setup_tools mex_gateways interfaces ; do
     cp -r "$PRIMADIR"/matlab/"$DIR" "$LAST"/matlab
 done
+
+# Remove the unwanted files under "$BVDIR" and "$LAST".
+find "$BVDIR"  -name "flog" -type d -exec  rm -r {} \;
+find "$BVDIR"  -name "mlog" -type d -exec  rm -r {} \;
+find "$LAST"  -name "flog" -type d -exec  rm -r {} \;
+find "$LAST"  -name "mlog" -type d -exec  rm -r {} \;
 
 # Modify the code in "$LAST"/matlab so that it becomes the "new last version".
 MSETUPTOOLS="$LAST"/matlab/setup_tools
