@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 01, 2023 PM06:38:31
+! Last Modified: Wednesday, March 08, 2023 PM04:09:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,10 +29,10 @@ subroutine updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, 
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : IK, RP, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, isinv
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, isinv, inv, eye, maximum
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -57,11 +57,14 @@ integer(IK), intent(out) :: info
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATEXFC'
-integer(IK) :: j
 integer(IK) :: m
 integer(IK) :: n
-real(RP), parameter :: itol = TENTH
+real(RP), parameter :: itol = ONE
 real(RP) :: simi_jdrop(size(simi, 2))
+real(RP) :: simid(size(simi, 1))
+real(RP) :: sum_simi(size(simi, 2))
+real(RP) :: simi_old(size(simi, 1), size(simi, 2)), simi_test(size(simi, 1), size(simi, 2)), sim_old(size(sim, 1), size(sim, 2)), &
+            & erri, erri_test
 
 ! Sizes
 m = int(size(constr), kind(m))
@@ -71,7 +74,7 @@ n = int(size(sim, 1), kind(n))
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    !call assert(jdrop >= 0 .and. jdrop <= n, '1 <= JDROP <= N', srname)
+    call assert(jdrop >= 0 .and. jdrop <= n + 1, '1 <= JDROP <= N+1', srname)
     call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), 'CONSTR does not contain NaN/-Inf', srname)
     call assert(.not. (is_nan(cstrv) .or. is_posinf(cstrv)), 'CSTRV is not NaN/+Inf', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
@@ -100,24 +103,44 @@ if (jdrop <= 0) then  ! JDROP < 0 is impossible if the input is correct.
     return
 end if
 
-if (jdrop == n + 1) then
-    sim(:, n + 1) = sim(:, n + 1) + d
-    do j = 1, n
-        sim(:, j) = sim(:, j) - d
-    end do
-    simi = simi + outprod(matprod(simi, d), sum(simi, dim=1) / (1.0_RP - sum(matprod(simi, d))))
-else
+sim_old = sim
+simi_old = simi
+
+if (jdrop <= n) then
     sim(:, jdrop) = d
     simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
     simi = simi - outprod(matprod(simi, d), simi_jdrop)
     simi(jdrop, :) = simi_jdrop
+else  ! JDROP = N+1
+    sim(:, n + 1) = sim(:, n + 1) + d
+    sim(:, 1:n) = sim(:, 1:n) - spread(d, dim=2, ncopies=n)
+    simid = matprod(simi, d)
+    sum_simi = sum(simi, dim=1)
+    simi = simi + outprod(simid, sum_simi / (ONE - sum(simid)))
 end if
-fval(jdrop) = f
-conmat(:, jdrop) = constr
-cval(jdrop) = cstrv
 
-! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already.
-call updatepole(cpen, conmat, cval, fval, sim, simi, info)
+erri = maximum(abs(matprod(simi, sim(:, 1:n)) - eye(n)))
+if (erri > TENTH * itol .or. is_nan(erri)) then
+    simi_test = inv(sim(:, 1:n))
+    erri_test = maximum(abs(matprod(simi_test, sim(:, 1:n)) - eye(n)))
+    if (erri_test < erri .or. (is_nan(erri) .and. .not. is_nan(erri_test))) then
+        simi = simi_test
+        erri = erri_test
+    end if
+end if
+
+if (erri <= itol) then
+    fval(jdrop) = f
+    conmat(:, jdrop) = constr
+    cval(jdrop) = cstrv
+    ! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already.
+    call updatepole(cpen, conmat, cval, fval, sim, simi, info)
+else
+    INFO = DAMAGING_ROUNDING
+    sim = sim_old
+    simi = simi_old
+end if
+
 
 !====================!
 !  Calculation ends  !
@@ -163,10 +186,10 @@ subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 ! N.B. 3: UPDATEPOLE should be called when and only when FINDPOLE can potentially returns a value
 ! other than N+1. The value of FINDPOLE is determined by CPEN, CVAL, and FVAL, the latter two being
 ! decided by SIM. Thus UPDATEPOLE should be called after CPEN or SIM changes. COBYLA updates CPEN at
-! only two places: the beginning of each trust-region iteration, and when RESENHANCE is called;
+! only two places: the beginning of each trust-region iteration, and when REDRHO is called;
 ! SIM is updated only by UPDATEXFC, which itself calls UPDATEPOLE internally. Therefore, we only
 ! need to call UPDATEPOLE after updating CPEN at the beginning of each trust-region iteration and
-! after each invocation of RESENHANCE.
+! after each invocation of REDRHO.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: CONMAT_OLD(M, N+1), CVAL_OLD(N+1), FVAL_OLD(N+1), SIM_JDROP(N), SIM_OLD(N, N+1), &

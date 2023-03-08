@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, February 28, 2023 PM06:32:27
+! Last Modified: Wednesday, March 08, 2023 PM03:09:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ subroutine updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, 
 use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, isinv
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, maximum, eye, inv, isinv
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -59,10 +59,15 @@ integer(IK), intent(out) :: info
 character(len=*), parameter :: srname = 'UPDATEXFC'
 integer(IK) :: m
 integer(IK) :: n
-real(RP), parameter :: itol = TENTH
+real(RP) :: erri
+real(RP) :: erri_test
+real(RP) :: sim_old(size(sim, 1), size(sim, 2))
 real(RP) :: simi_jdrop(size(simi, 2))
+real(RP) :: simi_old(size(simi, 1), size(simi, 2))
+real(RP) :: simi_test(size(simi, 1), size(simi, 2))
 real(RP) :: simid(size(simi, 1))
 real(RP) :: sum_simi(size(simi, 2))
+real(RP), parameter :: itol = ONE
 
 ! Sizes
 m = int(size(constr), kind(m))
@@ -101,6 +106,8 @@ if (jdrop <= 0) then  ! JDROP < 0 is impossible if the input is correct.
     return
 end if
 
+sim_old = sim
+simi_old = simi
 if (jdrop <= n) then
     sim(:, jdrop) = d
     simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
@@ -113,12 +120,32 @@ else  ! JDROP = N+1
     sum_simi = sum(simi, dim=1)
     simi = simi + outprod(simid, sum_simi / (ONE - sum(simid)))
 end if
-fval(jdrop) = f
-conmat(:, jdrop) = constr
-cval(jdrop) = cstrv
 
-! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already.
-call updatepole(cpen, conmat, cval, fval, sim, simi, info)
+! Check whether SIMI is a poor approximation to the inverse of SIM(:, 1:N).
+! Calculate SIMI from scratch if the current one is damaged by rounding errors.
+erri = maximum(abs(matprod(simi, sim(:, 1:n)) - eye(n)))  ! MAXIMUM(X) returns NaN if X contains NaN
+if (erri > TENTH * itol .or. is_nan(erri)) then
+    simi_test = inv(sim(:, 1:n))
+    erri_test = maximum(abs(matprod(simi_test, sim(:, 1:n)) - eye(n)))
+    if (erri_test < erri .or. (is_nan(erri) .and. .not. is_nan(erri_test))) then
+        simi = simi_test
+        erri = erri_test
+    end if
+end if
+
+! If SIMI is satisfactory, then update FVAL, CONMAT, CVAL, and the pole position. Otherwise, restore
+! SIM and SIMI, and return with INFO = DAMAGING_ROUNDING.
+if (erri <= itol) then
+    fval(jdrop) = f
+    conmat(:, jdrop) = constr
+    cval(jdrop) = cstrv
+    ! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already.
+    call updatepole(cpen, conmat, cval, fval, sim, simi, info)
+else  ! ERRI > ITOL or ERRI is NaN
+    info = DAMAGING_ROUNDING
+    sim = sim_old
+    simi = simi_old
+end if
 
 !====================!
 !  Calculation ends  !
@@ -203,11 +230,8 @@ character(len=*), parameter :: srname = 'UPDATEPOLE'
 integer(IK) :: jopt
 integer(IK) :: m
 integer(IK) :: n
-real(RP) :: conmat_old(size(conmat, 1), size(conmat, 2))
-real(RP) :: cval_old(size(cval))
 real(RP) :: erri
 real(RP) :: erri_test
-real(RP) :: fval_old(size(fval))
 real(RP) :: sim_jopt(size(sim, 1))
 real(RP) :: sim_old(size(sim, 1), size(sim, 2))
 real(RP) :: simi_old(size(simi, 1), size(simi, 2))
@@ -247,20 +271,14 @@ info = INFO_DFT
 ! Identify the optimal vertex of the current simplex.
 jopt = findpole(cpen, cval, fval)
 
-! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already. Then update
-! CONMAT etc. Before the update, save a copy of CONMAT etc. If the update is unsuccessful due to
-! damaging rounding errors, we restore them for COBYLA to extract X/F/C from the undamaged data.
-fval_old = fval
-conmat_old = conmat
-cval_old = cval
+! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already, and update
+! SIMI. Before the update, save a copy of SIM and SIMI. If the update is unsuccessful due to
+! damaging rounding errors, we restore them and return with INFO = DAMAGING_ROUNDING.
 sim_old = sim
 simi_old = simi
 if (jopt >= 1 .and. jopt <= n) then
     ! Unless there is a bug in FINDPOLE, it is guaranteed that JOPT >= 1.
     ! When JOPT == N + 1, there is nothing to switch; in addition, SIMI(JOPT, :) will be illegal.
-    fval([jopt, n + 1_IK]) = fval([n + 1_IK, jopt])
-    conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt]) ! Exchange CONMAT(:, JOPT) AND CONMAT(:, N+1)
-    cval([jopt, n + 1_IK]) = cval([n + 1_IK, jopt])
     sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
     sim_jopt = sim(:, jopt)
     sim(:, jopt) = ZERO
@@ -287,12 +305,16 @@ if (erri > TENTH * itol .or. is_nan(erri)) then
     end if
 end if
 
-! If the recalculated SIMI is still damaged, then restore the data to the version before the update.
-if (erri > itol .or. is_nan(erri)) then
+! If SIMI is satisfactory, then update FVAL, CONMAT, and CVAL. Otherwise, restore SIM and SIMI, and
+! return with INFO = DAMAGING_ROUNDING.
+if (erri <= itol) then
+    if (jopt >= 1 .and. jopt <= n) then
+        fval([jopt, n + 1_IK]) = fval([n + 1_IK, jopt])
+        conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt])
+        cval([jopt, n + 1_IK]) = cval([n + 1_IK, jopt])
+    end if
+else  ! ERRI > ITOL or ERRI is NaN
     info = DAMAGING_ROUNDING
-    fval = fval_old
-    conmat = conmat_old
-    cval = cval_old
     sim = sim_old
     simi = simi_old
 end if
