@@ -58,11 +58,12 @@ subroutine cobyla(calcfc, m, x, f, &
 ! or
 !
 ! ! First define CALCFC, M, and X, and then do the following.
+! call cobyla(calcfc, m, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+!
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! ! IMPORTANT NOTICE: The user must set M correctly to the number of constraints, namely the size of
 ! ! CONSTR introduced below. Set M to 0 if there is no constraint.
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! call cobyla(calcfc, m, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! See examples/cobyla_exmp.f90 for a concrete example.
 !
