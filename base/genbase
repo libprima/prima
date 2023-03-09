@@ -32,9 +32,8 @@ cp -r "$LAST" "$BVDIR"
 cp -r "$PRIMADIR"/fortran "$BVDIR"
 cp "$PRIMADIR"/setup.m "$BVDIR"
 mkdir "$BVDIR"/matlab
-for DIR in setup_tools mex_gateways interfaces tests examples ; do
-    cp -r "$PRIMADIR"/matlab/"$DIR" "$BVDIR"/matlab
-done
+cp -r "$PRIMADIR"/matlab "$BVDIR"
+rm -r "$BVDIR"/matlab/tests/testdata
 
 # Copy the current version to "$LAST".
 mv "$LAST" "$LAST"_"$VERSION"
