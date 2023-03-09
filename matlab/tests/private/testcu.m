@@ -825,6 +825,7 @@ case 'cobyla'
         'HYDCAR20', ...     % 648
         'LAKES', ...        % 65
         'LEVYMONE', ...     % 15
+        'LHAIFAM', ...
         'LINSPANH', ...     % 3 (it takes a long time on GitHub Actions)
         'LUKSAN12', ...     % 563
         'LUKSAN13', ...     % 508
