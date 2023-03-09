@@ -5,6 +5,19 @@
 THISDIR="$(realpath "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")"
 PRIMADIR="$(dirname "$THISDIR")"
 
+# Remove the unwanted files.
+find "$PRIMADIR" -name core -type f -delete
+find "$PRIMADIR" -name core.* -type f -delete
+find "$PRIMADIR" -name *.mexa64 -type f -delete
+find "$PRIMADIR" -name *.mod -type f -delete
+find "$PRIMADIR"  -name ".interform" -type d -exec rm -rf {} \;
+find "$PRIMADIR"  -name "flog" -type d -exec  rm -r {} \;
+find "$PRIMADIR"  -name "mlog" -type d -exec  rm -r {} \;
+ORIGINAL="$PRIMADIR"/fortran/original
+for SOLVER in cobyla uobyqa newuoa bobyqa lincoa ; do
+    cd "$ORIGINAL"/"$SOLVER" && make clean
+done
+
 # Directory of the last version, which will be used as the reference version in the development of
 # the new version.
 LAST="$PRIMADIR"/last
@@ -18,8 +31,10 @@ mkdir -p "$BVDIR"
 cp -r "$LAST" "$BVDIR"
 cp -r "$PRIMADIR"/fortran "$BVDIR"
 cp "$PRIMADIR"/setup.m "$BVDIR"
-cp -r "$PRIMADIR"/matlab "$BVDIR"
-rm -r "$BVDIR"/matlab/tests/testdata
+mkdir "$BVDIR"/matlab
+for DIR in setup_tools mex_gateways interfaces tests examples ; do
+    cp -r "$PRIMADIR"/matlab/"$DIR" "$BVDIR"/matlab
+done
 
 # Copy the current version to "$LAST".
 mv "$LAST" "$LAST"_"$VERSION"
@@ -30,16 +45,6 @@ mkdir "$LAST"/matlab
 for DIR in setup_tools mex_gateways interfaces ; do
     cp -r "$PRIMADIR"/matlab/"$DIR" "$LAST"/matlab
 done
-
-# Remove the unwanted files.
-find "$PRIMADIR" -name core -type f -delete
-find "$PRIMADIR" -name *.mexa64 -type f -delete
-find "$PRIMADIR" -name *.mod -type f -delete
-find "$PRIMADIR"  -name ".interform" -type d -exec rm -rf {} \;
-find "$BVDIR"  -name "flog" -type d -exec  rm -r {} \;
-find "$BVDIR"  -name "mlog" -type d -exec  rm -r {} \;
-find "$LAST"  -name "flog" -type d -exec  rm -r {} \;
-find "$LAST"  -name "mlog" -type d -exec  rm -r {} \;
 
 # Modify the code in "$LAST"/matlab so that it becomes the "new last version".
 MSETUPTOOLS="$LAST"/matlab/setup_tools
