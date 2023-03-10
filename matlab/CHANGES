@@ -40,4 +40,9 @@
     also the infeasibility of x0 (which has been warned in preprima.m now), with the warning
     identifier being "lincoa:InfeasibleX0".
 
+14. When classical = true, the warning is modified to
+    sprintf('%s: in classical mode, which may CRASH your computer; it is discouraged except for research purposes; set options.classical to false to disable classical mode.', invoker);
+    The warning identifier remains "INVOKER:Classical", where INVOKER is the name of the invoker.
+    See the function `pre_options` in preprima.m.
+
 Check other changes by comparing the matlab interfaces (vimdiff).
