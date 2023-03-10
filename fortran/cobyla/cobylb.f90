@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, March 02, 2023 PM04:56:26
+! Last Modified: Friday, March 10, 2023 AM11:44:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -139,8 +139,8 @@ real(RP) :: rho
 real(RP) :: sim(size(x), size(x) + 1)
 real(RP) :: simi(size(x), size(x))
 real(RP) :: xfilt(size(x), size(cfilt))
-! N.B.: FACTOR_ALPHA, FACTOR_BETA, FACTOR_GAMMA, and FACTOR_DELTA are four factors the COBYLB uses
-! when managing the simplex. Note the following
+! N.B.: FACTOR_ALPHA, FACTOR_BETA, FACTOR_GAMMA, and FACTOR_DELTA are four factors that COBYLB uses
+! when managing the simplex. Note the following.
 ! 1. FACTOR_ALPHA < FACTOR_GAMMA < 1 < FACTOR_DELTA <= FACTOR_BETA.
 ! 2. FACTOR_DELTA has nothing to do with DELTA, which is the trust-region radius.
 ! 3. FACTOR_GAMMA has nothing to do with GAMMA1 and GAMMA2, which are the contracting/expanding
@@ -339,7 +339,7 @@ do tr = 1, maxtr
             cpen = max(cpen, min(TWO * barmu, REALMAX))  ! The 1st (out of 2) update of CPEN.
             if (findpole(cpen, cval, fval) <= n) then
                 call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-                ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
+                ! Check whether to exit due to damaging rounding in UPDATEPOLE.
                 if (subinfo == DAMAGING_ROUNDING) then
                     info = subinfo
                     exit  ! Better action to take? Geometry step, or simply continue?
@@ -418,7 +418,7 @@ do tr = 1, maxtr
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced with D.
         ! UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides to discard X.
         call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
-        ! Check whether to exit due to damaging rounding in UPDATEPOLE (called by UPDATEXFC).
+        ! Check whether to exit due to damaging rounding in UPDATEXFC.
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit  ! Better action to take? Geometry step, or a RESCUE as in BOBYQA?
@@ -546,7 +546,7 @@ do tr = 1, maxtr
 
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced with D.
         call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
-        ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
+        ! Check whether to exit due to damaging rounding in UPDATEXFC.
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit  ! Better action to take? Geometry step, or simply continue?
@@ -574,7 +574,7 @@ do tr = 1, maxtr
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-        ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
+        ! Check whether to exit due to damaging rounding in UPDATEPOLE.
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit  ! Better action to take? Geometry step, or simply continue?
