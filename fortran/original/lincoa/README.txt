@@ -1,13 +1,13 @@
-The code was sent by Professor Powell to Zaikun Zhang on December 14th, 2013.  
-The file "email.txt" is the original email. For more information on LINCOA, 
+The code was sent by Professor Powell to Zaikun Zhang on December 15th, 2013.
+The file "email.txt" is the original email. For more information on LINCOA,
 you might contact Professor Powell (mjdp@cam.ac.uk).
 
-December 15th, 2013                   Zaikun Zhang (www.zhangzk.net) 
+December 15th, 2013                   Zaikun Zhang (www.zhangzk.net)
 
 
 Below are the remarks from Professor Powell.
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
      The Fortran version of LINCOA is attached. Its purpose is to seek the
 least value of a function F of several variables subject to general linear
