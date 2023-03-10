@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, September 22, 2021 PM06:52:11
+! Last Modified: Friday, March 10, 2023 AM01:05:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -76,6 +76,9 @@ end function trimstr
 
 
 pure function istr(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function converts a string to an integer array.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : IK
 implicit none
 character(len=*), intent(in) :: x

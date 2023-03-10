@@ -35,14 +35,11 @@ module linalg_mod
 ! Concentrating all the linear algebra procedures at one place as we do here, it will be relatively
 ! easy to optimize them when necessary.
 !
-! TODO: To avoid stack overflows, functions that return a potentially large array (e.g., MATPROD)
-! should declare the array as ALLOCATABLE rather than automatic (20220725: should we?).
-!
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 07, 2023 AM11:15:12
+! Last Modified: Friday, March 10, 2023 AM09:45:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

@@ -1219,7 +1219,7 @@ end
 options.classical = logical(options.classical);
 if options.classical
     wid = sprintf('%s:Classical', invoker);
-    wmsg = sprintf('%s: in classical mode, which is recommended only for research purpose; set options.classical to false to disable classical mode.', invoker);
+    wmsg = sprintf('%s: in classical mode, which may CRASH your computer; it is discouraged except for research purposes; set options.classical to false to disable classical mode.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
