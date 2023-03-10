@@ -1315,7 +1315,15 @@ options.quiet = logical(options.quiet);
 % Validate options.iprint.
 validated = false;
 if isfield(options, 'iprint')
-    if ~isintegerscalar(options.iprint) || abs(options.iprint) > 3
+    if options.classical
+        % In classical mode, a nonzero iprint = 0 is not supported.
+        wid = sprintf('%s:IprintContradictClassical', invoker);
+        wmsg = sprintf('%s: iprint = %d but classical = true; iprint is reset to 0 as other values are not supported.', invoker, options.iprint);
+        options.iprint = 0;
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
+        validated = true;
+    elseif ~isintegerscalar(options.iprint) || abs(options.iprint) > 3
         wid = sprintf('%s:InvalidIprint', invoker);
         wmsg = sprintf('%s: invalid iprint; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to %d.', invoker, options.iprint);
         warning(wid, '%s', wmsg);

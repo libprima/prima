@@ -27,8 +27,8 @@ function retmssg(info, iprint, nf, f, x, solver)
             fprintf('\n');
         end
         fprintf('Return from %s because %s\n', solver, deblank(mssg));
-        fprintf('At the return from %sNumber of function evaluations = %d\n', solver, nf);
-        fprintf('Least function value = %15.6fThe corresponding X is:%15.6f\n', f, x);
+        fprintf('At the return from %s    Number of function evaluations = %d\n', solver, nf);
+        fprintf('Least function value = %.16f    The corresponding X is: %.16f\n', f, x);
         fprintf('\n');
     end
 
@@ -42,8 +42,8 @@ function retmssg(info, iprint, nf, f, x, solver)
                 fprintf(OUTUNIT, '\n');
             end
             fprintf(OUTUNIT, 'Return from %s because %s\n', solver, deblank(mssg));
-            fprintf(OUTUNIT, 'At the return from %sNumber of function evaluations = %d\n', solver, nf);
-            fprintf(OUTUNIT, 'Least function value = %15.6fThe corresponding X is:%15.6f\n', f, x);
+            fprintf(OUTUNIT, 'At the return from %s    Number of function evaluations = %d\n', solver, nf);
+            fprintf(OUTUNIT, 'Least function value = %.16f    The corresponding X is: %.16f\n', f, x);
             fclose(OUTUNIT);
         end
         %print '(/1A /)', 'The output is printed to ' // trim(fout) // '.'

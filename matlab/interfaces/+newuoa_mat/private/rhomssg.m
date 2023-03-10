@@ -10,8 +10,8 @@ function rhomssg(iprint, nf, f, rho, x, solver)
         if iprint >= 3
             fprintf('\n');
         end
-        fprintf('New RHO = %sNumber of function evaluations = %s\n', rho, nf);
-        fprintf('Least function value = %sThe corresponding X is:%s\n', f, x);
+        fprintf('New RHO = %g    Number of function evaluations = %d\n', rho, nf);
+        fprintf('Least function value = %.10f    The corresponding X is: %.10f \n', f, x);
     end
 
     if iprint <= -2
@@ -23,8 +23,8 @@ function rhomssg(iprint, nf, f, rho, x, solver)
             if iprint <= -3
                 fprintf(OUTUNIT, '\n');
             end
-            fprintf(OUTUNIT, 'New RHO = %sNumber of function evaluations = %s\n', rho, nf);
-            fprintf(OUTUNIT, 'Least function value = %sThe corresponding X is:%s\n', f, x);
+            fprintf(OUTUNIT, 'New RHO = %g    Number of function evaluations = %d\n', rho, nf);
+            fprintf(OUTUNIT, 'Least function value = %.10f    The corresponding X is: %.10f\n', f, x);
             fclose(OUTUNIT);
         end
     end

@@ -7,7 +7,7 @@ function fmssg(iprint, nf, f, x, solver)
     end
 
     if iprint >= 3
-        fprintf('Function number%sF = %sThe corresponding X is:%s\n', nf, f, x);
+        fprintf('Function number %d    F = %.10f    The corresponding X is: %.10f\n', nf, f, x);
     end
 
     if iprint <= -3
@@ -22,7 +22,7 @@ function fmssg(iprint, nf, f, x, solver)
         if OUTUNIT < 0
             fprintf('Fail to open file %s%\n', deblank(fout));
         else
-            fprintf(OUTUNIT, 'Function number%sF = %sThe corresponding X is:%s\n', nf, f, x);
+            fprintf(OUTUNIT, 'Function number %d    F = %.10f    The corresponding X is: %.10f\n', nf, f, x);
             fclose(OUTUNIT);
         end
     end
