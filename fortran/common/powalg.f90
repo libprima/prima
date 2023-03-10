@@ -3,9 +3,7 @@ module powalg_mod
 ! This module provides some Powell-style linear algebra procedures.
 !
 ! TODO:
-! 1. To avoid stack overflows, functions that return a potentially large array should declare
-! the array as ALLOCATABLE rather than automatic.
-! 2. Divide the module into three submodules:
+! Divide the module into three submodules:
 ! - QR: procedures concerning QR factorization
 ! - QUADRATIC: procedures concerning quadratic polynomials represented by [GQ, PQ, HQ] so that
 !   Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
@@ -72,7 +70,7 @@ subroutine qradd_Rdiag(c, Q, Rdiag, n)  ! Used in COBYLA
 ! 2. The subroutine changes only Q(:, NSAVE+1:M) (NSAVE is the original value of N)
 ! and R(:, N) (N takes the updated value).
 ! 3. Indeed, when C is in range(A), Powell wrote in comments that "set IOUT to the index of the
-! constraint (here, column of A -- Zaikun) to be deleted, but branch if no suitable index can be
+! constraint (here, column of A --- Zaikun) to be deleted, but branch if no suitable index can be
 ! found". The idea is to replace a column of A by C so that the new matrix still has full rank
 ! (such a column must exist unless C = 0). But his code essentially sets IOUT = N always. Maybe he
 ! found this worked well enough in practice. Meanwhile, Powell's code includes a snippet that can
