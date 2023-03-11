@@ -1,6 +1,6 @@
 ## PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration
 
-Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell.html) FRS (1936--2015)
+Dedicated to the Late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell.html) FRS (1936--2015)
 
 - [What](#what)
 - [Why](#why)
@@ -9,7 +9,7 @@ Dedicated to late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell
 - [Bug fixes](#bug-fixes)
 - [Improvements](#improvements)
 - [A "fun" fact](#a-fun-fact)
-- [Acknowledgement](#acknowledgement)
+- [Acknowledgment](#acknowledgment)
 
 
 ### What
@@ -39,13 +39,14 @@ the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonn
 Professor Powell carefully implemented his derivative-free optimization methods into publicly available solvers,
 which are genuine masterpieces. They are widely used by engineers and scientists. For instance,
 see Section 1 of [a recent paper on Powell's solvers](https://arxiv.org/pdf/2302.13246.pdf)
-as well as the google searches of [COBYLA](https://www.google.com/search?q=cobyla)
-and [BOBYQA](https://www.google.com/search?q=bobyqa)).
+as well as the Google searches of [COBYLA](https://www.google.com/search?q=cobyla)
+and [BOBYQA](https://www.google.com/search?q=bobyqa).
 
 However, Professor Powell's implementation was in [Fortran 77](./fortran/original)
-and the code is nontrivial to understand or maintain, let alone to
-extend. This becomes an obstacle for many practitioners to exploiting these solvers in their
-applications and hinders researchers from exploring the wealth left by Professor Powell to us.
+and the code is nontrivial to understand or maintain, let alone extend.
+For many practitioners, this has become an obstacle to exploiting these solvers in their
+applications. Even worse, it has hindered researchers from exploring the wealth left by Professor
+Powell to us.
 
 Before he passed, Professor Powell had asked me and
 [Professor Nick Gould](https://www.numerical.rl.ac.uk/people/nimg) to maintain his solvers.
@@ -66,7 +67,7 @@ are easily **understandable**, **maintainable**, **extendable**, **fault toleran
 The code will **have no GOTO** (of course)
 and will **use matrix-vector procedures instead of loops** whenever possible.
 In doing so, PRIMA codes the algorithms **in a way that we would present them on a blackboard**.
-Such an implementation will enable us to get a deeper understanding about Powell's methods and
+Such an implementation will enable us to get a deeper understanding of Powell's methods and
 pave the way for new developments based on them.
 
 There do exist "translations" of Powell's Fortran 77 code into other languages. For example,
@@ -90,7 +91,7 @@ the structure and style of Powell's code except for the layout. Extensive modifi
 to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of the
 reference implementation, extensive tests are conducted after each and every tiny modification,
 using the [CUTEst](https://github.com/ralna/CUTEst) problems via [MatCUTEst](https://github.com/equipez/matcutest).
-The tests do not only verify the faithfulness of the implementation, but also check that **the solvers
+The tests do not only verify the faithfulness of the implementation but also check that **the solvers
 behave properly even if they are invoked with improper inputs or encounter failures of function evaluations**.
 
 The tests are automated by
@@ -277,9 +278,9 @@ The bitterness behind this "fun" fact is exactly why I work on PRIMA: I hope tha
 the frustrations that I have experienced will not happen to any user of Powell's methods anymore.
 
 
-### Acknowledgement
+### Acknowledgment
 
-PRIMA is dedicated to the memory of [late Professor Powell](https://www.zhangzk.net/powell.html) with gratitude for his inspiration and
+PRIMA is dedicated to the memory of the [Late Professor Powell](https://www.zhangzk.net/powell.html) with gratitude for his inspiration and
 for the wealth he left to us.
 
 I am grateful to [Professor Ya-xiang Yuan](http://lsec.cc.ac.cn/~yyx) for his everlasting encouragement and support.
