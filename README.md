@@ -37,9 +37,10 @@ the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonn
 ### Why
 
 Professor Powell carefully implemented his derivative-free optimization methods into publicly available solvers,
-which are genuine masterpieces. They are widely used by engineers and scientists (for instance,
-see the citations of [COBYLA](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=A+Direct+Search+Optimization+Method+That+Models+the+Objective+and+Constraint+Functions+by+Linear+Interpolation&btnG=)
-and [BOBYQA](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=The+BOBYQA+algorithm+for+bound+constrained+optimization+without+derivatives&btnG=)).
+which are genuine masterpieces. They are widely used by engineers and scientists. For instance,
+see Section 1 of [a recent paper on Powell's solvers](https://arxiv.org/pdf/2302.13246.pdf)
+as well as the google searches of [COBYLA](https://www.google.com/search?q=cobyla)
+and [BOBYQA](https://www.google.com/search?q=bobyqa)).
 
 However, Professor Powell's implementation was in [Fortran 77](./fortran/original)
 and the code is nontrivial to understand or maintain, let alone to
