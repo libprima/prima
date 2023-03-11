@@ -4,7 +4,7 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %
 %   minimize    fun(x).
 %
-%   In the backend, UOBYQA calls late Professor M.J.D. Powell's algorithm
+%   In the backend, UOBYQA calls late Professor M. J. D. Powell's algorithm
 %   with the same name. The algorithm is described in [M. J. D. Powell,
 %   UOBYQA: unconstrained optimization by quadratic approximation. Math.
 %   Program., 92(B):555--582, 2002].

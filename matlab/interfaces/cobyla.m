@@ -9,7 +9,7 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %               cineq(x) <= 0,
 %               ceq(x) = 0.
 %
-%   In the backend, COBYLA calls late Professor M.J.D. Powell's algorithm
+%   In the backend, COBYLA calls late Professor M. J. D. Powell's algorithm
 %   with the same name. The algorithm is described in [M. J. D. Powell,
 %   A direct search optimization method that models the objective and
 %   constraint functions by linear interpolation, In Advances in Optimization
