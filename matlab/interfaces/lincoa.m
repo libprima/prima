@@ -7,7 +7,7 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 %               Aeq * x = beq,
 %               lb <= x <= ub.
 %
-%   In the backend, LINCOA calls late Professor M.J.D. Powell's algorithm
+%   In the backend, LINCOA calls late Professor M. J. D. Powell's algorithm
 %   with the same name.
 %
 %   The interface of LINCOA is similar to that of function FMINCON included
