@@ -850,6 +850,6 @@ case 'cobyla'
         'VANDERM3', ...     % 76
          }];
     % For the following problems, the classical cobyla encounters SEGFAULT.
-    blacklist = [blacklist, {'LAKES', 'TENBARS2', 'VANDERM4'}];
+    blacklist = [blacklist, {'LAKES', 'TENBARS2', 'TENBARS3', 'VANDERM4'}];
 end
 return
