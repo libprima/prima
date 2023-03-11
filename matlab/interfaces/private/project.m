@@ -16,7 +16,7 @@ function [x, fx, exitflag, output] = project (Ai, bi, Ae, be, lb, ub, x0, option
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University
 %
-%   Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+%   Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 %   ***********************************************************************
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -1,6 +1,6 @@
 ## PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration
 
-Dedicated to the Late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell.html) FRS (1936--2015)
+Dedicated to the late Professor [**M. J. D. Powell**](https://www.zhangzk.net/powell.html) FRS (1936--2015)
 
 - [What](#what)
 - [Why](#why)
@@ -178,7 +178,7 @@ to distribute this large amount of tests to several different Team accounts as f
 
 ### Bug fixes
 
-PRIMA has fixed the some **serious** issues in the **original Fortran 77 implementation** of Powell's methods.
+PRIMA has fixed some **serious** issues in the **original Fortran 77 implementation** of Powell's methods.
 Note that all of them are problems in the Fortran 77 code rather than flaws in the algorithms.
 
 <!---[NLopt.jl](https://github.com/JuliaOpt/NLopt.jl), -->
@@ -280,7 +280,7 @@ the frustrations that I have experienced will not happen to any user of Powell's
 
 ### Acknowledgment
 
-PRIMA is dedicated to the memory of the [Late Professor Powell](https://www.zhangzk.net/powell.html) with gratitude for his inspiration and
+PRIMA is dedicated to the memory of the late [Professor Powell](https://www.zhangzk.net/powell.html) with gratitude for his inspiration and
 for the wealth he left to us.
 
 I am grateful to [Professor Ya-xiang Yuan](http://lsec.cc.ac.cn/~yyx) for his everlasting encouragement and support.

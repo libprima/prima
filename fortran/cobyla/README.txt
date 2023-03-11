@@ -13,6 +13,6 @@ to the ffiles.txt therein.
 
 See the directory "examples" for an illustration about how to call the solver.
 
-Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 
 Started in July 2021.
