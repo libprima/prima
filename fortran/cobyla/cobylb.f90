@@ -12,7 +12,7 @@ module cobylb_mod
 ! updated as in Powell's COBYLA code and is never increased. The new implementation improves the
 ! performance of COBYLA.
 !
-! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2021
 !

@@ -8,7 +8,7 @@ module rescue_mod
 ! on CUTEst unconstrained or bound constrained problems with at most 50 variables unless heavy noise
 ! is imposed on the function evaluation.
 !
-! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !

@@ -4,7 +4,7 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %
 %   minimize    fun(x).
 %
-%   In the backend, NEWUOA calls late Professor M. J. D. Powell's algorithm
+%   In the backend, NEWUOA calls the late Professor M. J. D. Powell's algorithm
 %   with the same name. The algorithm is described in [M. J. D. Powell,
 %   The NEWUOA software for unconstrained optimization without derivatives,
 %   In Large-Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma,
@@ -158,7 +158,7 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %
 %   See https://www.libprima.net for more information.
 %
-%   Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+%   Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can  be called directly by users)

@@ -4,7 +4,7 @@ module trustregion_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.
 !
-! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2020
 !
