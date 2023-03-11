@@ -251,19 +251,19 @@ See [Benchmarking Derivative-Free Optimization Algorithms](https://www.mcs.anl.g
 for more information.
 
 
-- NEWUOA on unconstrained CUTEst problems of at most 50 variables
+- NEWUOA on unconstrained CUTEst problems of at most 200 variables
 <img src="./benchmark/latest/newuoa.png" style="width:26em;"/>
 
-- BOBYQA on bound-constrained CUTEst problems of at most 50 variables
+- BOBYQA on bound-constrained CUTEst problems of at most 200 variables
 <img src="./benchmark/latest/bobyqa.png" style="width:26em;"/>
 
-- LINCOA on linearly constrained CUTEst problems of at most 50 variables and 5000 constraints
+- LINCOA on linearly constrained CUTEst problems of at most 200 variables and 20000 constraints
 <img src="./benchmark/latest/lincoa.png" style="width:26em;"/>
 
-- COBYLA on nonlinearly constrained CUTEst problems of at most 20 variables and 2000 constraints
+- COBYLA on nonlinearly constrained CUTEst problems of at most 100 variables and 10000 constraints
 <img src="./benchmark/latest/cobyla.png" style="width:26em;"/>
 
-- UOBYQA on unconstrained CUTEst problems of at most 20 variables
+- UOBYQA on unconstrained CUTEst problems of at most 100 variables
 <img src="./benchmark/latest/uobyqa.png" style="width:26em;"/>
 
 
