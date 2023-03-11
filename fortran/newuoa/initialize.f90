@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Last Modified: Sunday, March 05, 2023 PM10:03:26
 !--------------------------------------------------------------------------------------------------!

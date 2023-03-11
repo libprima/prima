@@ -26,7 +26,7 @@ module lincoa_mod
 ! Powell did not publish a paper to introduce the algorithm. The above paper does not describe
 ! LINCOA but discusses how to solve linearly-constrained trust-region subproblems.
 !
-! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !

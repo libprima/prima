@@ -8,7 +8,7 @@ module getact_mod
 ! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
 ! Math. Program. Comput., 7:237--267, 2015
 !
-! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !

@@ -21,7 +21,7 @@ module bobyqa_mod
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on the BOBYQA paper and Powell's code, with
 ! modernization, bug fixes, and improvements.
 !
-! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !

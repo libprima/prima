@@ -5,7 +5,7 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %   minimize    fun(x)
 %       s.t.    lb <= x <= ub.
 %
-%   In the backend, BOBYQA calls late Professor M. J. D. Powell's algorithm
+%   In the backend, BOBYQA calls the late Professor M. J. D. Powell's algorithm
 %   with the same name. The algorithm is described in [M. J. D. Powell,
 %   The BOBYQA algorithm for bound constrained optimization without derivatives,
 %   Technical Report DAMTP 2009/NA06, Department of Applied Mathematics and
@@ -182,7 +182,7 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %
 %   See https://www.libprima.net for more information.
 %
-%   Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+%   Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can  be called directly by users)

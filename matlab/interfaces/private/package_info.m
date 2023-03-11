@@ -6,7 +6,7 @@ function information = package_info(request)
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University
 %
-%   Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+%   Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 %   ***********************************************************************
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -31,7 +31,7 @@ end
 
 name = 'PRIMA';
 
-about = 'PRIMA: Reference Implementation for Powell''s methods with Modernization and Amelioration. PRIMA provides the reference implementation of late Professor M. J. D. Powell''s derivative-free optimization methods, namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.';
+about = 'PRIMA: Reference Implementation for Powell''s methods with Modernization and Amelioration. PRIMA provides the reference implementation of the late Professor M. J. D. Powell''s derivative-free optimization methods, namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.';
 
 author = 'Zaikun Zhang';
 
@@ -51,7 +51,7 @@ date = 'January, 2023';
 
 status = 'Development';
 
-message = 'Dedicated to late Professor M. J. D. Powell FRS (29 July 1936--19 April 2015).';
+message = 'Dedicated to the late Professor M. J. D. Powell FRS (29 July 1936--19 April 2015).';
 
 copyright = sprintf('Copyright 2020--%d, Zaikun Zhang', year(datetime()));
 
