@@ -5,6 +5,7 @@ for isol = 1 : length(solvers)
     if endsWith(solvers{isol}, '_classical')
         solvers{isol} = regexprep(solvers{isol}, '_classical', '');
         warning('off', [solvers{isol}, ':Classical']);
+        warning('off', [solvers{isol}, ':IprintContradictClassical']);
     end
 end
 
