@@ -25,8 +25,8 @@ Note that MathWorks (rather than PRIMA) is quite rigid concerning the version
 of your compiler, which has to be compatible with the release of your MATLAB;
 the latest compiler is NOT necessarily supported by your MATLAB. On Windows,
 in addition to the Fortran compiler, MathWorks needs you to install the
-Microsoft Visual Studio and the Microsoft Windows SDK. Follow the official
-documentation of MathWorks closely.
+Microsoft Visual Studio with the "Desktop development with C++" workload and the
+Microsoft Windows SDK. Follow the official documentation of MathWorks closely.
 
 
 1. Installation

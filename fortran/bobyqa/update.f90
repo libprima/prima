@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 05, 2023 PM06:17:57
+! Last Modified: Sunday, March 12, 2023 PM03:49:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -261,13 +261,13 @@ end if
 end subroutine updatexf
 
 
-subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
+subroutine updateq(knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GOPT, HQ, and PQ when XPT(:, KNEW) changes from XDROP to XNEW = XOSAV + D,
 ! where XOSAV is the upupdated XOPT, namedly the XOPT before UPDATEXF is called.
 ! See Section 4 of the NEWUOA paper and that of the BOBYQA paper (there is no LINCOA paper).
 ! N.B.:
-! XNEW is encoded in [BMAT, ZMAT, IDZ] after UPDATEH being called, and it also equals XPT(:, KNEW)
+! XNEW is encoded in [BMAT, ZMAT] after UPDATEH being called, and it also equals XPT(:, KNEW)
 ! after UPDATEXF being called. Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): PQINC
@@ -277,13 +277,12 @@ subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zma
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : r1update, issymmetric
-use, non_intrinsic :: powalg_mod, only : omega_col, hess_mul
+use, non_intrinsic :: linalg_mod, only : matprod, r1update, issymmetric
+use, non_intrinsic :: powalg_mod, only : hess_mul
 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
 logical, intent(in) :: ximproved
 real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
@@ -312,7 +311,6 @@ npt = int(size(pq), kind(npt))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
-    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
     call assert(knew >= 1 .or. .not. ximproved, 'KNEW >= 1 unless X is not improved', srname)
     call assert(size(xdrop) == n .and. all(is_finite(xdrop)), 'SIZE(XDROP) == N, XDROP is finite', srname)
@@ -343,7 +341,7 @@ call r1update(hq, pq(knew), xdrop)
 pq(knew) = ZERO
 
 ! Update the implicit part of the Hessian.
-pqinc = moderr * omega_col(idz, zmat, knew)
+pqinc = moderr * matprod(zmat, zmat(knew, :))  ! pqinc = moderr * omega_col(1_IK, zmat, knew)
 pq = pq + pqinc
 
 ! Update the gradient, which needs the updated XPT.
