@@ -65,6 +65,12 @@ argin = [varargin, {options}];
 output{6} = profile(argin{:});
 options = rmfield(options, {'eval_options'});
 
+%% Precision of function evaluation ~ 1.0e-4
+%options.eval_options = struct('noise', 1e-4);
+%argin = [varargin, {options}];
+%output{7} = profile(argin{:});
+%options = rmfield(options, {'eval_options'});
+
 
 outputfiles = struct();
 prob_types = fieldnames(output{1});
