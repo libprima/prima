@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, March 08, 2023 PM11:55:26
+! Last Modified: Sunday, March 12, 2023 PM04:08:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -353,7 +353,7 @@ do tr = 1, maxtr
             xosav = xpt(:, kopt)
             call updateh(knew_tr, kopt, d, xpt, bmat, zmat)
             call updatexf(knew_tr, ximproved, f, max(sl, min(su, xosav + d)), kopt, fval, xpt)
-            call updateq(1_IK, knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
+            call updateq(knew_tr, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
             ! Try whether to replace the new quadratic model with the alternative model, namely the
             ! least Frobenius norm interpolant.
             call tryqalt(bmat, fval - fval(kopt), ratio, sl, su, xpt(:, kopt), xpt, zmat, itest, gopt, hq, pq)
@@ -491,7 +491,7 @@ do tr = 1, maxtr
             xosav = xpt(:, kopt)
             call updateh(knew_geo, kopt, d, xpt, bmat, zmat)
             call updatexf(knew_geo, ximproved, f, max(sl, min(su, xosav + d)), kopt, fval, xpt)
-            call updateq(1_IK, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
+            call updateq(knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
         end if
     end if
 
