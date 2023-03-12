@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 05, 2023 PM06:58:53
+! Last Modified: Sunday, March 12, 2023 PM07:12:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -234,8 +234,8 @@ call r2update(hq, ONE, xopt, v)
 
 ! Shift XBASE, SL, and SU. Set the elements of BMAT and ZMAT to ZERO.
 xbase = min(max(xl, xbase + xopt), xu)
-sl = min(sl - xopt, ZERO)
-su = max(su - xopt, ZERO)
+sl = min(xl - xbase, ZERO)
+su = max(xu - xbase, ZERO)
 
 ! Set the elements of PTSAUX.
 ptsaux(1, :) = min(delta, su)
