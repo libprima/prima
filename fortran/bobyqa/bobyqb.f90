@@ -31,7 +31,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 12, 2023 PM07:55:06
+! Last Modified: Monday, March 13, 2023 AM08:59:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -544,10 +544,10 @@ do tr = 1, maxtr
     ! 2. Before a geometry step, shift XBASE if SUM(XOPT**2) >= 1.0E3*DELBAR**2.
     if (sum(xpt(:, kopt)**2) >= 1.0E3_RP * delta**2) then
         ! Other possible criteria: SUM(XOPT**2) >= 1.0E4*DELTA**2, SUM(XOPT**2) >= 1.0E4*RHO**2.
+        sl = min(sl - xpt(:, kopt), ZERO)
+        su = max(su - xpt(:, kopt), ZERO)
         call shiftbase(kopt, xbase, xpt, zmat, bmat, pq, hq)
         xbase = max(xl, min(xu, xbase))
-        sl = min(xl - xbase, ZERO)
-        su = max(xu - xbase, ZERO)
     end if
 end do
 

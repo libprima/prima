@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 07, 2023 AM11:16:38
+! Last Modified: Monday, March 13, 2023 AM08:58:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -152,10 +152,10 @@ hq = (vxopt + transpose(vxopt)) + hq !call r2update(hq, ONE, xopt, v)
 !call symmetrize(hq)  ! Do this if the update above does not ensure symmetry.
 
 ! The following instructions complete the shift of XBASE.
-xpt = xpt - spread(xopt, dim=2, ncopies=npt)
-!!MATLAB: xpt = xpt - xopt  % xopt should be a column! Implicit expansion
-xpt(:, kopt) = ZERO  ! This makes no difference according to a test on 20220406
 xbase = xbase + xopt
+xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+xpt(:, kopt) = ZERO
+!!MATLAB: xpt = xpt - xopt; xpt(:, kopt) = 0;  % xopt should be a column! Implicit expansion
 
 !====================!
 !  Calculation ends  !
