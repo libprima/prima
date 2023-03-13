@@ -11,12 +11,12 @@ module bobyqb_mod
 ! N.B. (Zaikun 20230312): In Powell's code, the strategy concerning RESCUE is a bit complex.
 !
 ! 1. Suppose that a trust-region step D is calculated. Powell's code sets KNEW_TR before evaluating
-! F at the trial point XOPT+D, assuming that the value of F at the trial point is not better than
-! the current FOPT. With this KNEW_TR, the denominator of the update is calculated. If this
-! denominator is sufficiently large, then evaluate F at XOPT+D, recalculate KNEW_TR if the function
-! value turns out better than FOPT, and perform the update to include XOPT+D in the interpolation.
-! If the denominator is not sufficiently large, then RESCUE is called, and another trust-region
-! step is taken immediately after, discarding the previously calculated trust-region step D.
+! F at the trial point XOPT+D, assuming that the value of F at this point is not better than the
+! current FOPT. With this KNEW_TR, the denominator of the update is calculated. If this denominator
+! is sufficiently large, then evaluate F at XOPT+D, recalculate KNEW_TR if the function value turns
+! out better than FOPT, and perform the update to include XOPT+D in the interpolation. If the
+! denominator is not sufficiently large, then RESCUE is called, and another trust-region step is
+! taken immediately after, discarding the previously calculated trust-region step D.
 !
 ! 2. Suppose that a geometry step D is calculated. Then KNEW_GEO must have been set before. Powell's
 ! code then calculates the denominator of the update. If the denominator is sufficiently large, then
@@ -27,11 +27,12 @@ module bobyqb_mod
 !
 ! 3. If it turns out necessary to call RESCUE again, but no new function value has been evaluated
 ! after the last RESCUE, then Powell's code will terminate.
+!
 ! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, March 13, 2023 AM08:59:23
+! Last Modified: Monday, March 13, 2023 AM09:36:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -295,7 +296,7 @@ do tr = 1, maxtr
         ebound = errbd(crvmin, d, gopt, hq, moderrsav, pq, rho, sl, su, xpt(:, kopt), xpt)
     else
         ! Calculate the next value of the objective function.
-        x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
+        x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! X = XBASE + XOPT + D without rounding.
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
@@ -457,15 +458,14 @@ do tr = 1, maxtr
         ! Call RESCUE if rounding errors have damaged the denominator corresponding to D.
         ! 1. This does make a difference, yet RESCUE seems not invoked often after a geometry step.
         ! 2. In Powell's implementation, it may happen that RESCUE only recalculates [BMAT, ZMAT]
-        ! without introducing any new point into XPT. In that case, GEOSTEP will be called after
-        ! RESCUE to calculate a new geometry step, without which the code may encounter an infinite
-        ! cycling. We have modified RESCUE so that it introduces at least one new point into XPT.
-        ! This improves the performance a bit and simplifies the flow of the code.
-        ! 3. It is temping to incorporate XOPT+D into the interpolation set no matter whether RESCUE
-        ! is called or not. However, this is cannot be done without recalculating KNEW_GEO, because
-        ! XPT has been changed by RESCUE, so that it is invalid to replace XPT(:, KNEW_GEO) with
-        ! XOPT+D anymore. However, if we recalculate KNEW_GEO, then D should also be recalculated
-        ! accordingly, which will complicate the flow.
+        ! without introducing any new point into XPT. In that case, GEOSTEP will have to be called
+        ! after RESCUE, without which the code may encounter an infinite cycling. We have modified
+        ! RESCUE so that it introduces at least one new point into XPT and there is no need to call
+        ! GEOSTEP afterward. This improves the performance a bit and simplifies the flow of the code.
+        ! 3. It is temping to incorporate XOPT+D into the interpolation even if RESCUE is called.
+        ! However, this cannot be done without recalculating KNEW_GEO, as XPT has been changed by
+        ! RESCUE, so that it is invalid to replace XPT(:, KNEW_GEO) with XOPT+D anymore. With a new
+        ! KNEW_GEO, the step D will become improper as it was chosen according to the old KNEW_GEO.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
@@ -480,7 +480,7 @@ do tr = 1, maxtr
             moderrsav = REALMAX
         else
             ! Calculate the next value of the objective function.
-            x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
+            x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! X = XBASE + XOPT + D without rounding.
             call evaluate(calfun, x, f)
             nf = nf + 1_IK
 
