@@ -85,18 +85,21 @@ It should solve unconstrained/bound-constrained/linearly-constrained trust regio
 6. Create a module called powalg_mod. It should contain the Powell-style linear algebra subroutines,
    examples including calquad, shiftbase, updateq, updateh, maybe also trstep.
 
-7. In the implementation of trstep, do not pass the Hessian but pass a function hprod that
+7. In the implementation of trstep, do not pass the Hessian but pass a function hmul that
 calculates the Hessian vector product. This will make the subroutine independent of the Powell-style
-Hessian triplet (HQ, PQ, XPT). In Fortran, the function hprod should have the following signature:
+Hessian triplet (HQ, PQ, XPT). In Fortran, the function hmul should have the following signature:
 !----------------------------!
-function hprod(x) result(y)
+function hmul(x) result(y)
 real(RP), intent(in) :: x(:)
 real(RP) :: y(size(x))
 end function
 !----------------------------!
-Note that hprod must have access to the Hessian. Thus it has to be implemented an internal
+Note that hmul must have access to the Hessian. Thus it has to be implemented an internal
 function in the function that calls trstep. In MATLAB/Python/R/C++, it can be implemented as an
 anonymous/lambda function with the Hessian being a parameter.
+
+Update 20230312: However, doing this will make the scaling impossible. See the code of trust-region
+subproblems for more information.
 
 Also, implement circle_fun_trsapp etc as internal functions with `args` being a parameter that does
 not need to be passed.
