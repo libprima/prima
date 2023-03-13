@@ -12,7 +12,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 12, 2023 PM07:12:29
+! Last Modified: Monday, March 13, 2023 AM08:55:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -224,6 +224,9 @@ end if
 
 ! Shift the interpolation points so that XOPT becomes the origin.
 xopt = xpt(:, kopt)
+sl = min(sl - xopt, ZERO)
+su = max(su - xopt, ZERO)
+xbase = min(max(xl, xbase + xopt), xu)
 xpt = xpt - spread(xopt, dim=2, ncopies=npt)
 xpt(:, kopt) = ZERO
 
@@ -231,11 +234,6 @@ xpt(:, kopt) = ZERO
 ! shifted to the trust region centre.
 v = matprod(xpt, pq) + HALF * sum(pq) * xopt
 call r2update(hq, ONE, xopt, v)
-
-! Shift XBASE, SL, and SU. Set the elements of BMAT and ZMAT to ZERO.
-xbase = min(max(xl, xbase + xopt), xu)
-sl = min(xl - xbase, ZERO)
-su = max(xu - xbase, ZERO)
 
 ! Set the elements of PTSAUX.
 ptsaux(1, :) = min(delta, su)
