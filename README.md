@@ -287,7 +287,7 @@ I am grateful to [Professor Ya-xiang Yuan](http://lsec.cc.ac.cn/~yyx) for his ev
 
 The development of PRIMA would have been a mission impossible without the groundwork laid by the [PDFO](https://www.pdfo.net)
 package of [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang. PDFO is Chapter 3 of
-Ragonneau's [thesis](https://tomragonneau.com/documents/thesis.pdf) supervised by Zhang and financially supported by
+Ragonneau's [thesis](https://tomragonneau.com/documents/thesis.pdf) co-supervised by Zaikun Zhang and Professor [Xiaojun Chen](https://www.polyu.edu.hk/ama/staff/xjchen/ChenXJ.htm), with financial support from
 the [Hong Kong Ph.D. Fellowship Scheme](https://cerg1.ugc.edu.hk/hkpfs/index.html) (ref. PF18-24698).
 
 PRIMA is a long-term project, which would not have been sustainable without the continued funds from the
