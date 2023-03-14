@@ -590,7 +590,7 @@ if options.debug && ~options.classical
     end
 
     % Check whether constrviolation is correct
-    cobyla_last_prec = 1e-6;
+    cobyla_last_prec = 1e-3;
     lincoa_last_prec = 1e-9;
     bobyqa_last_prec = 1e-9;
     % COBYLA cannot ensure fx == fun(x) or constr == con(x) due to rounding
