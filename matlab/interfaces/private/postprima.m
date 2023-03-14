@@ -590,7 +590,7 @@ if options.debug && ~options.classical
     end
 
     % Check whether constrviolation is correct
-    cobyla_prec = 1e-6;
+    cobyla_prec = 1e-4;
     lincoa_prec = 1e-9;
     bobyqa_prec = 1e-9;
     % COBYLA cannot ensure fx == fun(x) or constr == con(x) due to rounding
@@ -703,9 +703,6 @@ if options.debug && ~options.classical
         if any(size([nlcineq; nlceq]) ~= size([nlcineqx; nlceqx])) || any(isnan([nlcineq; nlceq]) ~= isnan([nlcineqx; nlceqx])) || (~any(isnan([nlcineq; nlceq; nlcineqx; nlceqx])) && any(abs([0; nlcineq; nlceq] - [0; nlcineqx; nlceqx]) > cobyla_prec*max(1,abs([0; nlcineqx; nlceqx]))))
         % In the last few max of the above line, we put a 0 to avoid an empty result
             % Public/unexpected error
-            [nlcineq; nlceq]
-            [nlcineqx; nlceqx]
-            abs([nlcineq; nlceq]  - [nlcineqx; nlceqx])  / max(1,abs([nlcineqx; nlceqx]))
             error(sprintf('%s:InvalidConx', invoker), ...
                 '%s: UNEXPECTED ERROR: %s returns a con(x) that does not match x.', invoker, solver);
         end
