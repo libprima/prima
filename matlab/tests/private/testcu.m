@@ -840,6 +840,7 @@ case 'cobyla'
         'LUKSAN22', ...     % 19
         'MSS1', ...         % 39
         'QINGNE', ...
+        'QPCBLEND' , ...
         'SPANHYD', ...      % 15
         'SWOPF', ...        % 10
         'TAX13322', ...     % 5
