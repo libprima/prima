@@ -68,7 +68,6 @@ jobs:
             if strcmp('${{ matrix.solver }}', 'cobyla') && ~strcmp('${{ matrix.dim }}', 'small')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'ln', '${{ matrix.competitor }}');
             else
-                opt.eval_options.noise=1.0e-4; opt.list={'POLAK2'}; profile('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', opt);
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}');
             end
             delete(fullfile(cd(), 'testdata', '*.mat'));
