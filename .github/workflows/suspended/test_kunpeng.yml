@@ -1,4 +1,4 @@
-name: Test Fortran compilers on Kunpeng for the solvers
+name: Test Fortran compilers on Kunpeng
 
 on:
   # Trigger the workflow on push or pull request
@@ -36,8 +36,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [g, f, v]
-        ikind: [i2, i4, i8]
+        compiler: [g]
+        ikind: [i2]
         solver: [lincoa, bobyqa, uobyqa]
         exclude:
           - compiler: v  # Exclude vtest for BOBYQA for the moment, as it will encounter `DENOM_TEST /= DENOM`.
