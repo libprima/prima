@@ -143,8 +143,8 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Test ifx](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml)
 
 - [Tests](https://github.com/equipez/prima/actions) at [equipez/prima](https://github.com/equipez/prima)
-    - [![Test gfortran on Kunpeng, small](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpen_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpen_small.yml)
-    - [![Test gfortran on Kunpeng, big](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpen_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpen_big.yml)
+    - [![Test gfortran on Kunpeng, small](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_small.yml)
+    - [![Test gfortran on Kunpeng, big](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_big.yml)
     - [![Test Flang on Kunpeng](https://github.com/equipez/prima/actions/workflows/test_flang_kunpeng.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_flang_kunpeng.yml)
     - [![Test nvfortran on Kunpeng](https://github.com/equipez/prima/actions/workflows/test_nvfortran_kunpeng.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_nvfortran_kunpeng.yml)
     - [![Test armflang on Kunpeng](https://github.com/equipez/prima/actions/workflows/test_armflang_kunpeng.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_armflang_kunpeng.yml)
