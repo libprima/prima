@@ -146,6 +146,7 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Test gfortran on Kunpeng, small](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpen_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpen_small.yml)
     - [![Test gfortran on Kunpeng, big](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpen_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpen_big.yml)
     - [![Test Flang on Kunpeng](https://github.com/equipez/prima/actions/workflows/test_flang_kunpeng.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_flang_kunpeng.yml)
+    - [![Test nvfortran on Kunpeng](https://github.com/equipez/prima/actions/workflows/test_nvfortran_kunpeng.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_nvfortran_kunpeng.yml)
     - [![Test armflang on Kunpeng](https://github.com/equipez/prima/actions/workflows/test_armflang_kunpeng.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_armflang_kunpeng.yml)
     - [![Test gfortran on Raspberry Pi, small](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi32_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi32_small.yml)
     - [![Test gfortran on Raspberry Pi, big](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi32_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi32_big.yml)
