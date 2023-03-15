@@ -29,7 +29,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3.3.0
         with:
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }}  # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
       - name: Install AOCC
