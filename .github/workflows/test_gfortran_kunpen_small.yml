@@ -28,6 +28,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3.3.0
         with:
+          ssh-key: |
+            ${{ secrets.SSH_PRIVATE_KEY_KP1 }}
           submodules: recursive
 
       - name: Miscellaneous setup
