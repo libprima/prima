@@ -33,12 +33,12 @@ jobs:
             dim: large  # very few problems but takes too much time to run
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v3.4.0
         with:
           submodules: recursive
 
       - name: Clone MatCUTEst
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v3.4.0
         with:
           repository: equipez/matcutest_compiled
           path: matcutest
