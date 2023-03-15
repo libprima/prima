@@ -1,0 +1,64 @@
+name: Test Flang on Kunpeng
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 16 2-31/3 * *'
+  # Trigger the workflow manually
+  workflow_dispatch:
+
+
+jobs:
+
+  test:
+    name: Run Flang tests
+    runs-on: [self-hosted, ARM64, kp]
+    strategy:
+      fail-fast: false
+      matrix:
+        ikind: [i2]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        fflags: [-O1, -O2, -O3, -g, -fast]
+        testdim: [small, big]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.3.0
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_KP }}  # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+
+      - name: Miscellaneous setup
+        run: bash .github/scripts/misc_setup
+
+      - name: Conduct the test
+        run: |
+          ARMDIR="$(find /opt/arm -maxdepth 1 -name "arm-linux-compiler*" -type d -print | sort | tail -n 1)"
+          if [[ -n "$ARMDIR" ]] ; then
+            export PATH=$PATH:"$ARMDIR"/bin
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+            ARMLD="$(find /opt/arm -type f -executable -name ld | xargs dirname)"
+            ARMLD_DIR=${ARMLD//$'\n'/:}
+            export PATH=$PATH:"$ARMLD_DIR"  # For some reason, flang also needs this ld. The system ld does not work.
+          fi
+          #cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd "$ROOT_DIR"/fortran/tests
+          if [[ -f "test_cobyla.f90" ]] ; then
+              $SEDI 's|bign = 120|bign = 90|g' test_cobyla.f90
+          fi
+          if [[ -f "test_lincoa.f90" ]] ; then
+              $SEDI 's|bign = 400|bign = 380|g' test_lincoa.f90
+          fi
+          export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
+          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make ftest
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
+
+      - name: Remove the test data
+        run: rm -rf ${{ env.TEST_DIR }}
