@@ -780,6 +780,7 @@ $(TESTS_C) $(TESTS_INT_C):
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 				printf "\n$@_$(SUFFIXO) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
 				$(GDB) ./$@_c_$(SUFFIXO) 2>&1 \
+				| grep -v "Processor does not support trapping of floating-point exceptions" \
 				| grep -v "libthread_db" \
 				| tee -a "$(LOG_DIR)/$@.log" ; \
 			else \
@@ -791,6 +792,7 @@ $(TESTS_C) $(TESTS_INT_C):
 			export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 			printf "\n$@_$(SUFFIXG) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
 			$(GDB) ./$@_c_$(SUFFIXG) 2>&1 \
+			| grep -v "Processor does not support trapping of floating-point exceptions" \
 			| grep -v "libthread_db" \
 			| tee -a "$(LOG_DIR)/$@.log" ; \
 		fi ; \
