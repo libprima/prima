@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 07, 2023 AM11:13:49
+! Last Modified: Thursday, March 16, 2023 AM10:26:00
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -200,10 +200,14 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! with aggressive optimization options and if the floating-point numbers are in single precision.
 ! Update 20230307: ifx 2023.0.0 20221201 cannot ensure symmetry even up to 10*EPS if invoked with
 ! -O3 and if the floating-point numbers are in single precision.
+! Update 20230316: HUAWEI BiSheng Compiler 2.1.0.B010 (flang) cannot ensure symmetry even up to
+! 10*EPS if invoked with -Ofast and if the floating-point numbers are in single precision.
 #if (defined __GFORTRAN__ || defined __INTEL_COMPILER && __REAL_PRECISION__ < 64) && __AGRESSIVE_OPTIONS__ == 1
 real(RP), parameter :: SYMTOL_DFT = REALMAX
 #elif (defined __INTEL_COMPILER && __REAL_PRECISION__ < 64)
 real(RP), parameter :: SYMTOL_DFT = max(5.0E1 * EPS, 1.0E-10_RP)
+#elif (defined __FLANG && __REAL_PRECISION__ < 64) && __AGRESSIVE_OPTIONS__ == 1
+real(RP), parameter :: SYMTOL_DFT = max(1.0E2 * EPS, 1.0E-10_RP)
 #elif (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64) || (__RELEASED__ == 1) || (__DEBUGGING__ == 0)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
 #else
