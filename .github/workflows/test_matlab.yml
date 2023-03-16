@@ -14,16 +14,11 @@ jobs:
   test:
     name: Test MATLAB
     runs-on: ${{ matrix.os }}
-    # As of 20230117, we must set max-parallel to 50 (not higher) and put macos-x as the last os(es).
-    # Otherwise, the other jobs will not start until all the macos jobs finish, which will take much
-    # time since the maximal concurrent number of macos jobs is 5. See
-    # https://support.github.com/ticket/personal/0/1952095
     strategy:
       fail-fast: false
-      max-parallel: 50
       matrix:
         # As of 230127, MEX Fortran does not work on windows-latest yet
-        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest, windows-2019, macos-10.15, macos-11, macos-latest]
+        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest, macos-10.15, macos-11, macos-latest, windows-2019]
         matlab: [R2020a, R2020b, R2021a, R2021b, R2022a, R2022b, latest]
 
         exclude:
