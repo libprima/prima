@@ -16,13 +16,8 @@ jobs:
   test:
     name: Run ifort tests
     runs-on: ${{ matrix.os }}
-    # As of 20230117, we must set max-parallel to 50 (not higher) and put macos-x as the last os(es).
-    # Otherwise, the other jobs will not start until all the macos jobs finish, which will take much
-    # time since the maximal concurrent number of macos jobs is 5. See
-    # https://support.github.com/ticket/personal/0/1952095
     strategy:
       fail-fast: false
-      max-parallel: 50
       matrix:
         # Windows does not work. On Windows, the options for ifort/ifx starts with "/" instead of "-".
         os: [ubuntu-latest, macos-latest]
