@@ -65,11 +65,7 @@ jobs:
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
             cd(fullfile(root_dir, 'matlab/tests'));
-            if strcmp('${{ matrix.solver }}', 'cobyla') && ~strcmp('${{ matrix.dim }}', 'small')
-                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'ln', '${{ matrix.competitor }}');
-            else
-                prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}');
-            end
+            prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'ln', '${{ matrix.competitor }}');
             delete(fullfile(cd(), 'testdata', '*.mat'));
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
