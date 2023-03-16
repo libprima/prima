@@ -845,6 +845,7 @@ case 'cobyla'
         'HAIFAM', ...       % 173
         'HIMMELBI', ...     % 100
         'HYDCAR20', ...     % 648
+        'HYDCAR6', ...
         'KISSING2', ...
         'LAKES', ...        % 65
         'LEVYMONE', ...     % 15
