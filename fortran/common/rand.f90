@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, December 06, 2022 PM02:52:21
+! Last Modified: Thursday, March 16, 2023 PM02:49:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -91,6 +91,7 @@ allocate (seed_to_put(1:n), stat=alloc_status)
 if (.not. (alloc_status == 0 .and. allocated(seed_to_put))) then
     call errstop(srname, 'Memory allocation fails.')
 end if
+
 if (allocated(cos_seed)) deallocate (cos_seed)
 allocate (cos_seed(1:n), stat=alloc_status)
 if (.not. (alloc_status == 0 .and. allocated(cos_seed))) then
