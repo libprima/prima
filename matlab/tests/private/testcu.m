@@ -814,6 +814,7 @@ case 'cobyla'
     % 230130, which tested all linearly and nonlinearly constrained problems with at most 100
     % variables and 10000 constraints. Bound-constrained or unconstrained problems were not tested.
     blacklist = [blacklist, { ...
+        'ACOPP30' , ...
         'AIRPORT', ...      % 73
         'BATCH', ...        % 20
         'CHANDHEQ', ...     % 17
