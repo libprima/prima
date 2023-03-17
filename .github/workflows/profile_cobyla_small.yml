@@ -23,7 +23,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         dim: [small]
-        solver: [cobyla]
+        solver: [cobylal, cobylan]
         competitor: [classical, base]
     steps:
       - name: Check out repository
@@ -65,7 +65,11 @@ jobs:
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
             cd(fullfile(root_dir, 'matlab/tests'));
-            prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'ln', '${{ matrix.competitor }}');
+            if strcmp('${{ matrix.solver }}', 'cobylal')
+                prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}');
+            elseif strcmp('${{ matrix.solver }}', 'cobylan')
+                prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}');
+            end
             delete(fullfile(cd(), 'testdata', '*.mat'));
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
