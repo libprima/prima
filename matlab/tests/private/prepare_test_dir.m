@@ -4,7 +4,7 @@ function test_dir = prepare_test_dir(solver, test_name, test_options)
 if verLessThan('matlab', '9.10') && ispc
     callstack = dbstack;
     funname = callstack(1).name; % Name of the current function
-    warning('%s may fail because ''copyfile'' of MATLAB R2020b or earlier may raise an error when handling unix symbolic links under Windows.', funname);
+    warning('%s may FAIL because ''copyfile'' of MATLAB R2020b or earlier may raise an error when handling unix symbolic links under Windows.', funname);
 end
 
 mfilepath = fileparts(mfilename('fullpath'));  % Directory where this .m file resides.
