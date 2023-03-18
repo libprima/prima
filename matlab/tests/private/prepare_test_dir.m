@@ -1,6 +1,12 @@
 function test_dir = prepare_test_dir(solver, test_name, test_options)
 %PREPARE_TEST_DIR prepares a copy of the package in `test_dir` for the test named `test_name`.
 
+if verLessThan('matlab', '9.10') && ispc
+    callstack = dbstack;
+    funname = callstack(1).name; % Name of the current function
+    warning('%s may fail because ''copyfile'' of MATLAB R2020b or earlier may raise an error when handling unix symbolic links under Windows.', funname);
+end
+
 mfilepath = fileparts(mfilename('fullpath'));  % Directory where this .m file resides.
 
 % In the sequel, 's_' indicates source, 'd_' indicates destination.
