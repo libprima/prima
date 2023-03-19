@@ -56,6 +56,7 @@ jobs:
           release: ${{ env.MATLAB_RELEASE }}
 
       - name: Conduct the test
+        timeout-minutes: 720  # The maximum number of minutes allowed to run the step.
         uses: matlab-actions/run-command@v1.1.3
         with:
           command: |
@@ -67,10 +68,8 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options=struct(); options.nr = 5;  % 5 random runs for each problem
             if strcmp('${{ matrix.solver }}', 'cobylal')
-                options.nr = 4;  % 4 random runs for each problem. Otherwise, the workflow will run overtime.
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
-                options.nr = 4;  % 4 random runs for each problem. Otherwise, the workflow will run overtime.
                 prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'lincoa')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
