@@ -15,6 +15,7 @@ jobs:
   test:
     name: Run nagfor tests
     runs-on: [self-hosted, nagfor]
+    timeout-minutes: 720  # The maximum number of minutes allowed to run the job.
     strategy:
       fail-fast: false
       matrix:
