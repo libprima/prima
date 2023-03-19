@@ -17,8 +17,8 @@ env:
 jobs:
   test:
     name: Profile PRIMA.
-    timeout-minutes: 720  # The maximum number of minutes allowed to run the job.
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 720  # The maximum number of minutes allowed to run the job.
     strategy:
       fail-fast: false
       matrix:

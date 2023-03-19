@@ -17,6 +17,7 @@ jobs:
   test:
     name: Run sunf95 tests
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 720  # The maximum number of minutes allowed to run the job.
     strategy:
       fail-fast: false
       matrix:
