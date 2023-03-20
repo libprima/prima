@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, March 06, 2023 PM12:15:41
+! Last Modified: Tuesday, March 21, 2023 AM12:53:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -411,10 +411,6 @@ do tr = 1, maxtr
             info = SMALL_TR_RADIUS
             exit
         end if
-
-        !! Shifting XBASE to the best point so far, and make the corresponding changes to the
-        !! gradients of the Lagrange functions and the quadratic model.
-        !call shiftbase(kopt, pl, pq, xbase, xpt)  ! 0918
 
         ! Pick the next values of RHO and DELTA.
         delta = HALF * rho
