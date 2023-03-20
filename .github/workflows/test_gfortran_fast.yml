@@ -22,7 +22,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         compiler: [gcc]
         version: [10, 12] # gfortran 9 is buggy wit logical variables when invoked with -Ofast
-        ikind: [i2, i4]
+        ikind: [i2, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [small]
 
