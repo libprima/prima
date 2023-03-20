@@ -100,7 +100,7 @@ The tests are automated by
 ([sometimes more than 150](https://github.com/primalib/prima/actions/runs/4345972852))
 **randomized** tests,
 each test taking from tens of minutes to several hours (the maximum
-is 6 hours, after which the workflow will be canceled automatically). In other words,
+is 6 hours, after which the test will be canceled automatically). In other words,
 PRIMA has been verified by more than 150,000 hours (or **more than 15 years**) of randomized tests.
 
 Since each GitHub Team account can only run at most 60 GitHub Actions workflows concurrently, I have
