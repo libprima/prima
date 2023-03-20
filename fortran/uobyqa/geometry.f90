@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, March 06, 2023 PM05:20:49
+! Last Modified: Monday, March 20, 2023 PM11:02:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -379,7 +379,7 @@ tempd = wsin / gnorm
 d = tempa * g + tempb * v
 v = tempc * v - tempd * g
 
-! The final D is a multiple of the current D, V, D + V or D - V. We make the choice from these
+! The final D is a multiple of the current D, V, D + V or D - V. We make the choice from these 
 ! possibilities that is optimal.
 dlin = wcos * gnorm / delbar
 vlin = -wsin * gnorm / delbar
