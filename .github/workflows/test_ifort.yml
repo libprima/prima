@@ -27,7 +27,7 @@ jobs:
         testdim: [small, big]
         exclude:
           - os: macos-latest
-            ikind:8
+            ikind: i8
 
     steps:
       - name: Checkout repository
