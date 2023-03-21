@@ -10,14 +10,11 @@ rhoend = 1e-6;
 % Suppose that MAXN is the maximal possible dimension of problems
 % in our test. Ideally, we should set maxfun to maxfun_dim*MAXN.
 % Note that MAXN is not maxdim, which may be overridden by options.
-% If MAXN = 200, then we should set maxfun to 200*maxfun_dim.
-% To be done later.
+maxn = 200;
 %maxfun_dim = 100;
-%maxfun = 20000;
-maxfun_dim = 200;
-maxfun = 40000;
 %maxfun_dim = 500;
-%maxfun = 100000;
+maxfun_dim = 200;
+maxfun = maxfun_dim*maxn;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % maxit is not used by Powell's methods
@@ -330,7 +327,7 @@ function [fval_history, cv_history, output] = testsolv(solver, prob, options)
 
 prob.options = setsolvopt(solver, length(prob.x0), options); % Set the options for the solver
 
-if ischstr(solver)
+if ischstr(solver) && ~strcmp(solver, 'fmincon')
     prob.options.classical = endsWith(solver, '_classical');
     if endsWith(solver, '_single')
         prob.options.precision = 'single';
@@ -794,12 +791,12 @@ case 'newuoa'
         'VARDIM', ...
         }];
 case 'lincoa'
-    % For the following problems, the classical lincoa encounters SEGFAULT.
-    blacklist = [blacklist, {'3PK', 'LSNNODOC', 'MAKELA4', 'OET1', 'QPCBOEI2', 'QPNBOEI2', 'SIPOW3', 'SIPOW4', 'TFI2'}];
     blacklist = [blacklist, { ...
         'DALLASM', ...
         'TARGUS', ...
         }];
+    % For the following problems, the classical lincoa encounters SEGFAULT.
+    blacklist = [blacklist, {'3PK', 'LSNNODOC', 'MAKELA4', 'OET1', 'QPCBOEI2', 'QPNBOEI2', 'SIPOW3', 'SIPOW4', 'TFI2'}];
 case 'cobyla'
     % The following problems were observed to take excessive time during tests GitHub Actions and
     % make the tests run overtime. Some of them may not be very time-consuming during a "plain"
