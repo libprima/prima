@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 05, 2023 PM10:04:46
+! Last Modified: Tuesday, March 21, 2023 PM10:57:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -140,7 +140,10 @@ if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
 elseif (ximproved) then
     ! Powell's code does not include the following instructions. With Powell's code, if DEN consists
-    ! of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
+    ! of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE. Here, we set KNEW to the
+    ! following value, to make sure that the new trial point is included in the interpolation set.
+    ! However, the updating subroutine will likely need to skip the update of the Lagrange
+    ! polynomials (i.e., H), or they would be destroyed by the NaNs.
     knew = int(maxloc(distsq, dim=1), kind(knew))
 else
     knew = 0  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE exceeds one.
