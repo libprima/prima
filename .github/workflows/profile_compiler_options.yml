@@ -2,7 +2,7 @@ name: Plot performance profiles, various compiler options
 
 on:
   # Trigger the workflow on push or pull request
-  push:
+  #push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -55,6 +55,12 @@ jobs:
         uses: matlab-actions/setup-matlab@v1.2.4
         with:
           release: ${{ env.MATLAB_RELEASE }}
+
+      - name: Change the permission of the compiler options files
+        run: |
+          if [[ -d /home/runner/work/ ]] ; then  # only for GitHub-hosted runners
+              sudo chmod 777 -R $(dirname $(find /usr/local -name 'matlab' -type f -executable -print | head -n1))
+          fi
 
       - name: Conduct the test
         uses: matlab-actions/run-command@v1.1.3
