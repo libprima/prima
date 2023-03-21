@@ -404,7 +404,7 @@ elseif ~strcmp(invoker, 'prima') && probinfo.feasibility_problem && ~strcmp(prob
     output.chist = output.constrviolation;
     output.nlcineq = [];  % No nonlinear constraints
     output.nlceq = [];
-    if output.constrviolation < eps  % Did preprima find a feasible point?
+    if output.constrviolation <= eps  % Did preprima find a feasible point?
         output.exitflag = 14;
     else
         output.exitflag = 15;
