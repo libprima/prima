@@ -60,7 +60,9 @@ jobs:
         run: |
           if [[ -d /home/runner/work/ ]] ; then  # only for GitHub-hosted runners
               MABIN=$(dirname $(find /usr/local -name 'matlab' -type f -executable -print | head -n1))
-              sudo chmod 777 -R "$MABIN"/glnxa64/mexopts/  # As of 20230321, this does not work: "Function not implemented"
+              !sudo chmod 777 -R "$MABIN"/glnxa64/mexopts/  # As of 20230321, this does not work: "Function not implemented"
+              sudo sed -i 's|FOPTIMFLAGS="-O2"|FOPTIMFLAGS="${{ matrix.compiler_options }}"|g' gfortran*.xml
+              cat gfortran.xml
           fi
 
       - name: Conduct the test
@@ -74,7 +76,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options=struct();
-            options.compiler_options = '${{ matrix.compiler_options }}';
+            %options.compiler_options = '${{ matrix.compiler_options }}';  % This does not work as of 20230321
             if contains(options.compiler_options, 'fast')
                 options.debug = false;
             end
