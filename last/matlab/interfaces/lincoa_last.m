@@ -350,7 +350,7 @@ elseif ~strcmp(invoker, 'prima_last') &&  probinfo.feasibility_problem
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
     output.constr_modified = false; % LINCOA requires constr_modified to exist in output
-    if output.constrviolation < eps  % Did preprima_last find a feasible point?
+    if output.constrviolation <= eps  % Did preprima_last find a feasible point?
         output.exitflag = 14;
     else
         output.exitflag = 15;
