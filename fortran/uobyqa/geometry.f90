@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, March 20, 2023 PM11:02:57
+! Last Modified: Tuesday, March 21, 2023 PM11:01:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -138,8 +138,11 @@ if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
 elseif (ximproved) then
-    ! Powell's code does not include the following instructions. With Powell's code, if DENABS
-    ! consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE.
+    ! Powell's code does not include the following instructions. With Powell's code, if VLAG
+    ! consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE. Here, we set KNEW to the
+    ! following value, to make sure that the new trial point is included in the interpolation set.
+    ! However, the updating subroutine will likely need to skip the update of the Lagrange
+    ! polynomial, or they would be destroyed by the NaNs.
     knew = int(maxloc(distsq, dim=1), kind(knew))
 end if
 
@@ -379,7 +382,7 @@ tempd = wsin / gnorm
 d = tempa * g + tempb * v
 v = tempc * v - tempd * g
 
-! The final D is a multiple of the current D, V, D + V or D - V. We make the choice from these 
+! The final D is a multiple of the current D, V, D + V or D - V. We make the choice from these
 ! possibilities that is optimal.
 dlin = wcos * gnorm / delbar
 vlin = -wsin * gnorm / delbar

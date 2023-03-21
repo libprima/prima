@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 21, 2023 AM10:38:54
+! Last Modified: Tuesday, March 21, 2023 PM09:29:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -653,9 +653,10 @@ if (n <= 0) then ! Of course, N < 0 should never happen.
     return
 end if
 
-! Zaikun 20220527: With the following code, the classic flang 7.0.1, Huawei Bisheng flang 1.3.3,
-! NVIDIA nvfortran 22.5, and AOCC 3.2.0 flang raise a false positive error of out-bound subscripts
-! when invoked with the -Mbounds flag. See https://github.com/flang-compiler/flang/issues/1238
+! Zaikun 20220527: With the following code, the classic flang 15.0.3, Huawei Bisheng flang 1.3.3,
+! NVIDIA nvfortran 23.1, and AOCC 4.0.0 flang, and Arm Fortran Compiler version 22.1 raise a false
+! positive error of out-bound subscripts when invoked with the -Mbounds flag.
+! See https://github.com/flang-compiler/flang/issues/1238
 if (istril(A)) then
     do i = 1, n
         x(i) = (b(i) - inprod(A(i, 1:i - 1), x(1:i - 1))) / A(i, i) ! INPROD = 0 if I == 1.
