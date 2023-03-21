@@ -27,7 +27,7 @@ for ifile = 1 : length(config_files)
     elseif exist(cfile_bak, 'file')
         movefile(cfile_bak, cfile, 'f');
     else
-        error('Failed to restore %s', cfile);
+        %error('Failed to restore %s', cfile);
     end
 end
 
