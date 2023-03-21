@@ -1,5 +1,8 @@
 function [mrec, mmin, output] = testcu(solvers, options)
 
+if (ischstr(solvers))  % In case solvers is indeed the name of a solver
+    solvers = {solvers};
+end
 solvers = lower(solvers);
 
 % Default options
@@ -77,7 +80,9 @@ else
     else
         requirements.blacklist = {};
     end
-    requirements.blacklist = [requirements.blacklist, black_list(solvers{1}), black_list(solvers{2})];
+    for is = 1 : length(solvers)
+        requirements.blacklist = [requirements.blacklist, black_list(solvers{is})];
+    end
 
     plist = secup(requirements);
 end
@@ -327,7 +332,7 @@ function [fval_history, cv_history, output] = testsolv(solver, prob, options)
 
 prob.options = setsolvopt(solver, length(prob.x0), options); % Set the options for the solver
 
-if ischstr(solver) && ~strcmp(solver, 'fmincon')
+if ischstr(solver) && ~strcmp(solver, 'fmincon') && ~strcmpi(solver, 'fminunc') && ~strcmpi(solver, 'fminsearch')
     prob.options.classical = endsWith(solver, '_classical');
     if endsWith(solver, '_single')
         prob.options.precision = 'single';
@@ -349,6 +354,8 @@ maxfun = options.maxfun;
 fval_history = NaN(1, maxfun + 1);
 cv_history = NaN(1, maxfun + 1);
 
+% !!! Due to the output_xhist option (we need xhist to recover the history of the computation), this
+% function does not work for fmincon, fminunc, and fminsearch anymore!!!
 %have_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options));
 prob.options.output_xhist = true;  % We always need xhist to recover the history of the computation.
 
@@ -592,14 +599,23 @@ solv_options.chkfunval = options.chkfunval;
 %solv_options.scale = true;
 solv_options.ctol = options.ctol;
 
-if (strcmpi(solv, 'fmincon'))
+if strcmpi(solv, 'fmincon') || strcmpi(solv, 'fminunc')
     solv_options = optimoptions('fmincon');
     solv_options.MaxFunctionEvaluations = min(options.maxfun_dim*n, options.maxfun);
     solv_options.MaxIterations = options.maxit;
     solv_options.ObjectiveLimit = options.ftarget;
     solv_options.OptimalityTolerance = options.rhoend;
     solv_options.StepTolerance = options.rhoend;
-    solv_options.ConstraintTolerance = min(1e-6, options.rhoend);
+    if strcmpi(solv, 'fmincon')
+        solv_options.ConstraintTolerance = min(1e-6, options.rhoend);
+    end
+elseif strcmpi(solv, 'fminsearch')
+    solv_options = optimset('fminsearch');
+    solv_options.MaxFunEvals = min(options.maxfun_dim*n, options.maxfun);
+    solv_options.MaxIter = options.maxit;
+    solv_options.ObjectiveLimit = options.ftarget;
+    solv_options.TolFun = options.rhoend;
+    solv_options.TolX = options.rhoend;
 end
 return
 
