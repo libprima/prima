@@ -1,0 +1,101 @@
+name: Plot performance profiles, various compiler options
+
+on:
+  # Trigger the workflow on push or pull request
+  push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 4 * * *'
+  # Trigger the workflow manually
+  workflow_dispatch:
+
+env:
+  GFORTRAN_VERSION: 12
+  MATLAB_RELEASE: latest
+
+jobs:
+  test:
+    name: Profile PRIMA.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        dim: [small]
+        solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]
+        compiler_options: [-O0, -O1, -O2, -O3, -Ofast -fno-stack-arrays, -ffast-math]
+        competitor: [classical]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3.4.0
+        with:
+          submodules: recursive
+
+      - name: Clone MatCUTEst
+        uses: actions/checkout@v3.4.0
+        with:
+          repository: equipez/matcutest_compiled
+          path: matcutest
+
+      - name: Link gfortran for MATLAB on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
+
+      - name: Install epstopdf and ghostscript
+        if: startsWith(matrix.os, 'ubuntu')
+        run: bash .github/scripts/install_epstopdf && bash .github/scripts/install_ghostscript
+
+      - name: Check MATLAB
+        id: check_matlab
+        run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
+
+      - name: Set up MATLAB
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
+        uses: matlab-actions/setup-matlab@v1.2.4
+        with:
+          release: ${{ env.MATLAB_RELEASE }}
+
+      - name: Conduct the test
+        uses: matlab-actions/run-command@v1.1.3
+        with:
+          command: |
+            ver;
+            root_dir = pwd();
+
+            cd(fullfile(root_dir, 'matcutest')); install(); which macup
+
+            cd(fullfile(root_dir, 'matlab/tests'));
+            options=struct();
+            options.compiler_options = '${{ matrix.compiler_options }}';
+            if contains(options.compiler_options, 'fast')
+                options.debug = false;
+            end
+            options.nr = 5;  % 5 random runs for each problem
+            if strcmp('${{ matrix.solver }}', 'cobylal')
+                prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
+            elseif strcmp('${{ matrix.solver }}', 'cobylan')
+                prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}', options);
+            elseif  strcmp('${{ matrix.solver }}', 'lincoa')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
+            elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', '${{ matrix.competitor }}', options);
+            else
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
+            end
+            delete(fullfile(cd(), 'testdata', '*.mat'));
+            cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          path: |
+            matlab/tests/testdata
+            !matlab/tests/testdata/*.mat
+            !matlab/tests/testdata/**/*.mat
+            !matlab/tests/testdata/*perf*.pdf
+            !matlab/tests/testdata/*perf*.eps
+            !matlab/tests/testdata/*problems.txt
+
+      - name: Remove the test data
+        run: rm -rf ./matlab/tests/testdata
