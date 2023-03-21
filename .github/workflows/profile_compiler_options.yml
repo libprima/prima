@@ -56,14 +56,16 @@ jobs:
         with:
           release: ${{ env.MATLAB_RELEASE }}
 
-      - name: Change the permission of the compiler options files
+      - name: Modify the compiler options files
         run: |
           if [[ -d /home/runner/work/ ]] ; then  # only for GitHub-hosted runners
               MABIN=$(dirname $(find /usr/local -name 'matlab' -type f -executable -print | head -n1))
-              #sudo chmod 777 -R "$MABIN"/glnxa64/mexopts/  # As of 20230321, this does not work: "Function not implemented"
-              cd "$MABIN"/glnxa64/mexopts || exit 1
-              sudo sed -i 's|FOPTIMFLAGS="-O2"|FOPTIMFLAGS="${{ matrix.compiler_options }}"|g' gfortran*.xml
-              cat gfortran*.xml
+              sudo chmod 777 -R "$MABIN"/glnxa64/mexopts/  # As of 20230321, this does not work: "Function not implemented"
+
+              # As of 20230321, the following does not work either: "Read-only file system"
+              #cd "$MABIN"/glnxa64/mexopts || exit 1
+              #sudo sed -i 's|FOPTIMFLAGS=.*$|FOPTIMFLAGS="${{ matrix.compiler_options }}"|g' gfortran*.xml
+              #cat gfortran*.xml
           fi
 
       - name: Conduct the test
