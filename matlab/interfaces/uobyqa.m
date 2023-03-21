@@ -150,7 +150,7 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %
 %   See also prima, NEWUOA, BOBYQA, LINCOA, COBYLA.
 %
-%   See https://www.libprima.net for more information.
+%   See www.libprima.net for more information.
 %
 %   Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 
