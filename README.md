@@ -127,20 +127,13 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Plot performance profiles for all problems](https://github.com/primalib/prima/actions/workflows/profile_all.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_all.yml)
     - [![Plot performance profiles, single](https://github.com/primalib/prima/actions/workflows/profile_single.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_single.yml)
     - [![Plot performance profiles, quadruple](https://github.com/primalib/prima/actions/workflows/profile_quadruple.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_quadruple.yml)
-    - [![Test Flang](https://github.com/primalib/prima/actions/workflows/test_flang.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_flang.yml)
-    - [![Test Flang in AMD AOCC](https://github.com/primalib/prima/actions/workflows/test_aflang.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_aflang.yml)
-    - [![Test nvfortran](https://github.com/primalib/prima/actions/workflows/test_nvfortran.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_nvfortran.yml)
-    - [![Test Oracle sunf95](https://github.com/primalib/prima/actions/workflows/test_sunf95.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_sunf95.yml)
-    - [![Test g95](https://github.com/primalib/prima/actions/workflows/test_g95.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_g95.yml)
 
-- [Tests](https://github.com/s-prima/prima/actions) at [s-prima/prima](https://github.com/s-prima/prima)
-
-    - [![Test gfortran, O1, O2](https://github.com/s-prima/prima/actions/workflows/test_gfortran_O12.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_O12.yml)
-    - [![Test gfortran, g, O3](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml)
-    - [![Test gfortran, fast](https://github.com/s-prima/prima/actions/workflows/test_gfortran_fast.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_fast.yml)
-    - [![Test gfortran, big](https://github.com/s-prima/prima/actions/workflows/test_gfortran_big.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_big.yml)
-    - [![Test ifort](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml)
-    - [![Test ifx](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml)
+- [Tests](https://github.com/zequipe/prima/actions) at [zequipe/prima](https://github.com/zequipe/prima)
+    - [![Test Flang](https://github.com/zequipe/prima/actions/workflows/test_flang.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_flang.yml)
+    - [![Test Flang in AMD AOCC](https://github.com/zequipe/prima/actions/workflows/test_aflang.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_aflang.yml)
+    - [![Test nvfortran](https://github.com/zequipe/prima/actions/workflows/test_nvfortran.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_nvfortran.yml)
+    - [![Test Oracle sunf95](https://github.com/zequipe/prima/actions/workflows/test_sunf95.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_sunf95.yml)
+    - [![Test g95](https://github.com/zequipe/prima/actions/workflows/test_g95.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_g95.yml)
 
 - [Tests](https://github.com/equipez/prima/actions) at [equipez/prima](https://github.com/equipez/prima)
     - [![Test gfortran on Kunpeng, small](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_small.yml)
@@ -156,6 +149,14 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Test armflang on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_armflang_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_armflang_pi.yml)
     - [![Test nvfortran on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_nvfortran_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_nvfortran_pi.yml)
 
+- [Tests](https://github.com/s-prima/prima/actions) at [s-prima/prima](https://github.com/s-prima/prima)
+
+    - [![Test gfortran, O1, O2](https://github.com/s-prima/prima/actions/workflows/test_gfortran_O12.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_O12.yml)
+    - [![Test gfortran, g, O3](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml)
+    - [![Test gfortran, fast](https://github.com/s-prima/prima/actions/workflows/test_gfortran_fast.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_fast.yml)
+    - [![Test gfortran, big](https://github.com/s-prima/prima/actions/workflows/test_gfortran_big.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_big.yml)
+    - [![Test ifort](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml)
+    - [![Test ifx](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml)
 
 - [Tests](https://github.com/equipez/gitpersonal/actions) at [equipez/gitpersonal](https://github.com/equipez/gitpersonal)
     - [all the tests](https://github.com/equipez/gitpersonal/actions) are disabled

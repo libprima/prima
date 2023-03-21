@@ -4,15 +4,21 @@ module rescue_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the BOBYQA paper.
 !
-! N.B.: According to a test on 20220425, the invocations of RESCUE is rare --- it is never invoked
+! N.B.:
+! 1. According to a test on 20220425, the invocations of RESCUE is rare --- it is never invoked
 ! on CUTEst unconstrained or bound constrained problems with at most 50 variables unless heavy noise
 ! is imposed on the function evaluation.
+! 2. Zaikun (20230321): According to a test on 20230321 on problems of at most 200 variables, it
+! affects (not necessarily worsen) the performance of BOBYQA quite marginally if RESCUE is
+! completely disabled. Therefore, in the first implementation of an algorithm based on the
+! derivative-free PSB, it seems safe to ignore RESCUE. It is similar for the IDZ technique of
+! NEWUOA/LINCOA.
 !
 ! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, March 13, 2023 AM08:55:43
+! Last Modified: Wednesday, March 22, 2023 AM12:55:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

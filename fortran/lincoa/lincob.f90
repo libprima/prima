@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 12, 2023 PM11:58:09
+! Last Modified: Tuesday, March 21, 2023 PM11:08:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -82,8 +82,7 @@ use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, linspace, norm
 use, non_intrinsic :: output_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul
-use, non_intrinsic :: powalg_mod, only : updateh
+use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul, updateh
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter

@@ -10,7 +10,7 @@
 
 3. 20230108: See TODO_mat
 
-4. What about solve the TR subproblem of COBYLA using a composite step approach? Vardi or
+4. What about solving the TR subproblem of COBYLA using a composite step approach? Vardi or
    Byrd-Omojokun?
 
 5. Check the definition and update of RESCON in LINCOA, in UPDATE/UPDATERES.
@@ -23,6 +23,8 @@
 9. Test whether the scaling threshold in the trust-region subproblem solvers can be improved.
 
 10. For NEWUOA, BOBYQA, LINCOA, implement the trust-redundant subroutine solvers using hmul.
+Update 202303: This is not doable (cleanly) because we scale the data before starting the TR
+calculation.
 
 11. What about invoking RESCUE in the following way?
 

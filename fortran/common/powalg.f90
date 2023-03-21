@@ -11,11 +11,17 @@ module powalg_mod
 !   HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 ! - LAGINT: procedures concerning quadratic LAGrange INTpolation.
 !
+! Zaikun (20230321): In a test on 20230321 on problems of at most 200 variables, it affects (not
+! necessarily worsens) the performance of NEWUOA/LINCOA quite marginally if the update of IDZ is
+! completely disabled (and hence IDZ remains one forever). Therefore, in the first implementation of
+! an algorithm based on the derivative-free PSB, it seems same to ignore IDZ. It is similar for the
+! RESCUE technique of BOBYQA.
+!
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, February 28, 2023 AM08:50:49
+! Last Modified: Wednesday, March 22, 2023 AM12:55:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
