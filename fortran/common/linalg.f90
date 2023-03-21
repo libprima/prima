@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, March 10, 2023 AM09:45:36
+! Last Modified: Tuesday, March 21, 2023 AM10:38:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1900,7 +1900,7 @@ if (size(A, 1) /= size(A, 2)) then
     is_symmetric = .false.
 elseif (SYMTOL_DFT < 0.9_RP * REALMAX) then
     is_symmetric = (.not. any(abs(A - transpose(A)) > tol_loc * max(maxval(abs(A)), ONE))) .and. &
-        & all(is_nan(A) .eqv. is_nan(transpose(A))) .and. all(abs(A) > 0 .eqv. abs(transpose(A)) > 0)
+        & all(is_nan(A) .eqv. is_nan(transpose(A)))
 end if
 
 !====================!
