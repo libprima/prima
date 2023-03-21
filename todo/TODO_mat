@@ -11,3 +11,5 @@ cobyla(macup('LHAIFAM'))
 The classical version works well, but not the new one.
 Update: cobylb.f90 has been updated to improve the modernized COBYLA on this problem. Yet its
 performance is still inferior compared to the classical one.
+
+4. The infos (exitflags) should be returned from a function, not to hard code them.
