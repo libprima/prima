@@ -78,7 +78,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options=struct();
-            options.compiler_options = '${{ matrix.compiler_options }}';  % This does not work as of 20230321
+            options.compiler_options = '${{ matrix.compiler_options }}';
             options.debug = ~contains('${{ matrix.compiler_options }}', 'fast')
             options.nr = 5;  % 5 random runs for each problem
             mex('-v', '-setup', 'Fortran')
