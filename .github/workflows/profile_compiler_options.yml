@@ -52,7 +52,6 @@ jobs:
         run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
 
       - name: Set up MATLAB
-        id: set-up-matlab
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
         uses: matlab-actions/setup-matlab@v2-beta
         with:
