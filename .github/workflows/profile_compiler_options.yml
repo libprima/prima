@@ -81,10 +81,9 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options=struct();
             %options.compiler_options = '${{ matrix.compiler_options }}';  % This does not work as of 20230321
-            if contains('${{ matrix.compiler_options }}', 'fast')
-                options.debug = false;
-            end
+            options.debug = ~contains('${{ matrix.compiler_options }}', 'fast')
             options.nr = 5;  % 5 random runs for each problem
+            mex('-v', '-setup', 'Fortran')
             if strcmp('${{ matrix.solver }}', 'cobylal')
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
