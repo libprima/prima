@@ -57,15 +57,15 @@ jobs:
         with:
           release: ${{ env.MATLAB_RELEASE }}
 
-      - name: Modify the compiler options files
-        run: |
-          if [[ -d /home/runner/work/ ]] ; then  # only for GitHub-hosted runners
-              MATLABROOT=${{steps.set-up-matlab.outputs.matlabroot}}
-              #sudo chmod 777 -R "$MATLABROOT"/bin/glnxa64/mexopts/  # As of 20230321, this does not work: "Function not implemented"
-              cd "$MATLABROOT"/bin/glnxa64/mexopts || exit 1
-              sed -i 's|FOPTIMFLAGS=.*$|FOPTIMFLAGS="${{ matrix.compiler_options }}"|g' gfortran*.xml
-              cat gfortran*.xml
-          fi
+      # - name: Modify the compiler options files
+      #   run: |
+      #     if [[ -d /home/runner/work/ ]] ; then  # only for GitHub-hosted runners
+      #         MATLABROOT=${{steps.set-up-matlab.outputs.matlabroot}}
+      #         #sudo chmod 777 -R "$MATLABROOT"/bin/glnxa64/mexopts/  # As of 20230321, this does not work: "Function not implemented"
+      #         cd "$MATLABROOT"/bin/glnxa64/mexopts || exit 1
+      #         sed -i 's|FOPTIMFLAGS=.*$|FOPTIMFLAGS="${{ matrix.compiler_options }}"|g' gfortran*.xml
+      #         cat gfortran*.xml
+      #     fi
 
       - name: Conduct the test
         uses: matlab-actions/run-command@v1.1.3
@@ -78,7 +78,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options=struct();
-            %options.compiler_options = '${{ matrix.compiler_options }}';  % This does not work as of 20230321
+            options.compiler_options = '${{ matrix.compiler_options }}';  % This does not work as of 20230321
             options.debug = ~contains('${{ matrix.compiler_options }}', 'fast')
             options.nr = 5;  % 5 random runs for each problem
             mex('-v', '-setup', 'Fortran')
