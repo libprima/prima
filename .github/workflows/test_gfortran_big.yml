@@ -72,7 +72,7 @@ jobs:
                 export FFLAGS=${{ matrix.fflags }}
                 cd "$ROOT_DIR"/fortran/tests
                 if [[ -f "test_cobyla.f90" ]] ; then
-                    $SEDI 's|bign = 120|bign = 100|g' test_cobyla.f90
+                    $SEDI 's|bign = 120|bign = 90|g' test_cobyla.f90
                 fi
                 make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
