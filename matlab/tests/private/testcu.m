@@ -10,9 +10,9 @@ rhobeg = 1;
 rhoend = 1e-6;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Suppose that MAXN is the maximal possible dimension of problems
-% in our test. Ideally, we should set maxfun to maxfun_dim*MAXN.
-% Note that MAXN is not maxdim, which may be overridden by options.
+% MAXN is the maximal possible dimension of problems in our test.
+% It is an upper bound of MAXDIM, which is the maximal dimension of
+% problems to be tested in the current experiment.
 maxn = 200;
 %maxfun_dim = 100;
 %maxfun_dim = 500;
@@ -40,7 +40,7 @@ else
     maxdim = 50; % The default maximal dimension of problems to test
 end
 mincon = 0; % The default minimal number of constraints of problems to test
-maxcon = 20000; % The default maximal number of constraints of problems to test, which is 100*MAXN
+maxcon = 100*maxn; % The default maximal number of constraints of problems to test
 sequential = false;
 % It is better to set debug and chkfunval to true. We do not want to profile solvers that have bugs.
 % Note that the optimized version (compiled with -O) of prima will be called even if debug is true,
@@ -60,6 +60,8 @@ strict = 2;
 options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
     eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
     sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict);
+
+assert(options.maxdim <= maxn);
 
 % Select the problems to test.
 if isfield(options, 'list')
