@@ -7,7 +7,7 @@ feature_and_time = [test_feature, '.', options.time];
 % `stamp` is an identifier for the test. N.B.:
 % 1. `stamp` does not include `time`, so that it is easy to identify when we reload the data.
 % 2. `stamp` does not include `test_feature` (but the file names will), so that we can make
-%    `test_feature` appear after `perf_*`, which is converting when we view the files in terminal
+%    `test_feature` appear after `perf_*`, which is convenient when we view the files in terminal
 %    (when using tab for auto-completion, we do not need to type `test_feature` if the files in the
 %    current directory correspond to only one `test_feature`).
 stamp = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim), '.', options.type);
