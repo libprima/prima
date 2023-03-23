@@ -418,6 +418,8 @@ end
 if (~isfield(options, 'ftarget'))
     options.ftarget = ftarget;
 end
+user_provides_ctol = isfield(options, 'ctol');
+user_provides_cpenalty = isfield(options, 'cpenalty');
 if (~isfield(options, 'ctol'))
     options.ctol = ctol;
 end
@@ -566,23 +568,28 @@ if ~(options.perm || options.randomizex0 > 0 || noisy_eval)
     options.nr = 1;
 end
 
-% Revise options.ctol and options.cpenalty
-if isfield(eval_options, 'dnoise')
-    options.ctol = max(options.ctol, eval_options.dnoise.level);
+% Revise options.ctol and options.cpenalty if the values were not from the user.
+if ~user_provides_ctol
+    options.ctol = 1e-6;
+    if isfield(eval_options, 'dnoise')
+        options.ctol = max(options.ctol, eval_options.dnoise.level);
+    end
+    if isfield(eval_options, 'noise')
+        options.ctol = max(options.ctol, eval_options.noise.level);
+    end
+    if isfield(eval_options, 'signif')
+        options.ctol = max(options.ctol, 10^(-eval_options.signif));
+    end
+    if isfield(eval_options, 'single') && eval_options.single
+        options.ctol = max(options.ctol, eps('single'));
+    end
+    if options.randomizex0 > 0
+        options.ctol = max(options.ctol, 1e-8);
+    end
 end
-if isfield(eval_options, 'noise')
-    options.ctol = max(options.ctol, eval_options.noise.level);
+if ~user_provides_cpenalty
+    options.cpenalty = min(options.cpenalty, 1/options.ctol);
 end
-if isfield(eval_options, 'signif')
-    options.ctol = max(options.ctol, 10^(-eval_options.signif));
-end
-if isfield(eval_options, 'single') && eval_options.single
-    options.ctol = max(options.ctol, eps('single'));
-end
-if options.randomizex0 > 0
-    options.ctol = max(options.ctol, 1e-8);
-end
-options.cpenalty = min(options.cpenalty, 1/options.ctol);
 
 return
 
