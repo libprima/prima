@@ -322,6 +322,7 @@ else
     mmin = min(mrec_min, mref_min);
 end
 
+% N.B.: Outside [minip, maxip], mrec, mmin, plist, and pdim contains only garbage.
 mrec = mrec(minip : maxip, :, :, :);
 mmin = mmin(minip : maxip);
 output = struct();
