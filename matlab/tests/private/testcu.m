@@ -248,7 +248,7 @@ end
 % For uniformity of the code, we define fref, cref, and mref by the first random test if use_ref is false.
 if ~use_ref
     assert(all(all(all(isnan(fref)))) && all(all(all(isnan(cref)))));
-    for ip = 1 : np
+    for ip = minip : maxip
         for is = 1 : ns
             fref(ip, is, :) = frec(ip, is, 1, :);
             cref(ip, is, :) = crec(ip, is, 1, :);
@@ -257,7 +257,7 @@ if ~use_ref
 end
 
 % Set cref(:, :, 1) to realmax if they are NaN.
-for ip = 1:np
+for ip = minip : maxip
     cref(ip, isnan(cref(ip, :, 1)), 1) = realmax;
 end
 
@@ -267,7 +267,7 @@ end
 % that we consider such constraint violations as zero. Other values are also reduced by this threshold.
 % 2. All values of crec/cref that are more than max(0.1, 2*cref(ip, 1, 1)) are set to Inf, meaning that
 % consider the corresponding iterates is too bad to consider.
-for ip = 1 : np
+for ip = minip : maxip
     %cshift = options.ctol*min(0.01, cref(ip, 1, 1));
     %cshift = max(eps, options.ctol*min(0.01, cref(ip, 1, 1)));  % max(eps, ...) makes a difference.
     cshift = max(eps, options.ctol);  % ctol is considered as an absolute tolerance
@@ -285,7 +285,7 @@ end
 % Define mrec
 mrec = frec + options.cpenalty*crec;
 % Prevent mrec(:,:,:,1) from being NaN or Inf.
-for ip = 1 : np
+for ip = minip : maxip
     for is = 1 : ns
         for ir = 1 : nr
             if isnan(mrec(ip, is, ir, 1)) || mrec(ip, is, ir, 1) >= Inf
@@ -322,9 +322,11 @@ else
     mmin = min(mrec_min, mref_min);
 end
 
+mrec = mrec(minip : maxip, :, :, :);
+mmin = mmin(minip : maxip);
 output = struct();
-output.plist = plist;
-output.pdim = pdim;
+output.plist = plist(minip : maxip);
+output.pdim = pdim(minip : maxip);
 
 return
 
