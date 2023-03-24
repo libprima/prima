@@ -12,7 +12,7 @@ on:
 
 env:
   GFORTRAN_VERSION: 12
-  MATLAB_RELEASE: latest
+  MATLAB_RELEASE: R2022b
 
 jobs:
   test:
@@ -25,6 +25,10 @@ jobs:
         dim: [small]
         solver: [cobylal, cobylan]
         competitor: [classical, base]
+        with_optim_toolbox: [yes, no]
+        exclude:
+          - solver: cobylan
+            with_optim_toolbox: yes
     steps:
       - name: Check out repository
         uses: actions/checkout@v3.4.0
@@ -50,9 +54,16 @@ jobs:
         id: check_matlab
         run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
 
-      - name: Set up MATLAB
-        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
-        uses: matlab-actions/setup-matlab@v1.2.4
+      - name: Set up MATLAB with optimization toolbox
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox == 'yes' }}
+        uses: matlab-actions/setup-matlab@v2-beta
+        with:
+          release: ${{ env.MATLAB_RELEASE }}
+          products: Optimization_Toolbox
+
+      - name: Set up MATLAB without optimization toolbox
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox == 'no' }}
+        uses: matlab-actions/setup-matlab@v2-beta
         with:
           release: ${{ env.MATLAB_RELEASE }}
 
@@ -71,7 +82,21 @@ jobs:
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
                 prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}');
             end
+
             delete(fullfile(cd(), 'testdata', '*.mat'));
+
+            cd(fullfile(cd(), 'testdata'));
+            solver = '${{ matrix.solver }}';
+            if contains(solver, 'cobyla')  % For `cobylan` and `cobylal`
+                solver = 'cobyla';
+            end
+            files = dir([solver, '*.summary.*.pdf'])
+            for ifile = 1 : length(files)
+                file = fullfile(files(ifile).folder, files(ifile).name)
+                newfile = fullfile(files(ifile).folder, ['${{ matrix.with_optim_toolbox }}', '_', files(ifile).name])
+                movefile(file, newfile);
+            end
+
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
       - name: Store artifacts
