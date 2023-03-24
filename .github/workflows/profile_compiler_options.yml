@@ -112,7 +112,11 @@ jobs:
             delete(fullfile(cd(), 'testdata', '*.mat'));
 
             cd(fullfile(cd(), 'testdata'));
-            files = dir('${{ matrix.solver }}*.summary.*.pdf')
+            solver = '${{ matrix.solver }}';
+            if contains(solver, 'cobyla')  % For `cobylan` and `cobylal`
+                solver = 'cobyla';
+            end
+            files = dir([solver, '*.summary.*.pdf'])
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
                 newfile = fullfile(files(ifile).folder, ['${{ matrix.with_optim_toolbox }}', '_', files(ifile).name])
