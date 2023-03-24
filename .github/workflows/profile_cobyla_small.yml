@@ -86,10 +86,7 @@ jobs:
             delete(fullfile(cd(), 'testdata', '*.mat'));
 
             cd(fullfile(cd(), 'testdata'));
-            solver = '${{ matrix.solver }}';
-            if contains(solver, 'cobyla')  % For `cobylan` and `cobylal`
-                solver = 'cobyla';
-            end
+            solver = 'cobyla';
             files = dir([solver, '*.summary.*.pdf'])
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
