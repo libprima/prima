@@ -112,7 +112,7 @@ jobs:
             delete(fullfile(cd(), 'testdata', '*.mat'));
 
             cd(fullfile(cd(), 'testdata'));
-            files = dir('${{ solver }}*.summary.*.pdf');
+            files = dir('${{ matrix.solver }}*.summary.*.pdf');
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name);
                 newfile = fullfile(files(ifile).folder, ['${{ matrix.with_optim_toolbox }}', '_', files(ifile).name]);
