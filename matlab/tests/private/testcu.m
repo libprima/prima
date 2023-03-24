@@ -571,7 +571,6 @@ end
 
 % Revise options.ctol and options.cpenalty if the values were not from the user.
 if ~user_provides_ctol
-    options.ctol = 1e-6;
     if isfield(eval_options, 'dnoise')
         options.ctol = max(options.ctol, eval_options.dnoise.level);
     end
