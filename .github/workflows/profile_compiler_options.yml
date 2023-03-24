@@ -93,7 +93,7 @@ jobs:
             options=struct();
             options.compiler_options = '${{ matrix.compiler_options }}';
             options.debug = ~contains('${{ matrix.compiler_options }}', 'fast')
-            options.nr = 5;  % 5 random runs for each problem
+            options.nr = 4;  % 4 random runs for each problem
             if strcmp('${{ matrix.solver }}', 'cobylal')
                 options.nr = 3;
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
