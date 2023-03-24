@@ -88,6 +88,7 @@ else
 
     plist = secup(requirements);
 end
+assert(~isempty(plist));
 
 np = length(plist);
 ns = length(solvers);
