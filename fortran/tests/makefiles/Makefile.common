@@ -1,18 +1,19 @@
 # This Makefile tests the modern-Fortran version of Powell's solvers on multiple compilers.
 #
 # 1.  The following compilers are tested:
-# 9: G95 (compilation only; no compilation of the testing code, which contains F03 constructs unsupported by G95)
+# 9: G95 (compilation only; no compilation of test_*.f90 and other testing code, which contains F03 constructs unsupported by G95)
 # a: Absoft af95
 # d: AOCC flang
 # f: Classic flang
 # g: GNU gfortran
 # n: NAG nagfor
 # i: Intel ifort
+# r: Arm flang
 # s: Oracle sunf95
 # v: NVIDIA nvfortran
 # x: Intel ifx
 #
-# 2. The following tests are available, where C = 9, a, d, f, g, l, n, i, s, v, x, and N = 2, 4, 8:
+# 2. The following tests are available, where C = 9, a, d, f, g, l, n, i, r, s, v, x, and N = 2, 4, 8:
 # Ctest: test with compiler C
 # Ctest_c: test with compiler C; compilation only (do not run the binary)
 # Ctest_iN: test with compiler C and integer kind INT(N*8)
@@ -27,7 +28,7 @@
 #
 # Started: September 2021
 #
-# Last Modified: December 2022
+# Last Modified: March 2023
 ####################################################################################################
 
 #$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
@@ -93,7 +94,7 @@ DFF := -O4 -Ofast -ffast-math  # As of AOCC 4.4.0, -Ofast implies -O3, but it is
 FFF := -O3 -Ofast -ffast-math  # No documentation found about the relation between -Ofast, -O3, and -ffast-math
 GFF := -Ofast  # -Ofast implies -O3 and -ffast-math
 NFF := -O4
-FFF := -Ofast  # -Ofast implies -O3 and -ffast-math
+RFF := -Ofast -ffast-math # -Ofast implies -O3, but no documentation found about the relation between -Ofast and -ffast-math
 SFF := -fast # -fast implies -O5 and ftrap=common
 SFF16 := -O5  # -fast leads to a mistakenly failure of assertion in BOBYQA: RHOBEG <= MINVAL(XU-XL)/2
 VFF := -O4 -fast  # nvfortran -fast implies -O2, but the highest optimization level is -O4
@@ -578,7 +579,9 @@ vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d
 RFORT := $(shell find -L /opt/arm -type f -executable -name armflang -print 2>/dev/null | sort | tail -n 1)
 RFORT := $(RFORT) -pedantic-errors -Werror
 ifeq ($(TESTDIM),small)
-	RFORT := $(RFORT) -Mstack_arrays
+	RFORT := $(RFORT) -fstack-arrays
+else
+	RFORT := $(RFORT) -fno-stack-arrays
 endif
 RFORT := $(RFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkptr #-Kieee
 
