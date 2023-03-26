@@ -41,7 +41,7 @@ if (isfield(options, 'reload') && options.reload == true)
     pind = find(cellfun(fun, plist));
     frec = frec(pind, :, :, :);
     fmin = fmin(pind);
-    %pdim = pdim(pind);
+    pdim = pdim(pind);
     plist = plist(pind);
 else
     if exist(matfile, 'file')
