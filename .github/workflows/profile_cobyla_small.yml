@@ -26,6 +26,7 @@ jobs:
         solver: [cobylal, cobylan]
         competitor: [classical, base]
         with_optim_toolbox: [yes, no]
+        ctol_indicator: [0, 1, 2]
         exclude:
           - solver: cobylan
             with_optim_toolbox: yes
@@ -77,6 +78,8 @@ jobs:
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
             cd(fullfile(root_dir, 'matlab/tests'));
+            options=struct();
+            options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
             if strcmp('${{ matrix.solver }}', 'cobylal')
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}');
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
@@ -90,7 +93,7 @@ jobs:
             files = dir([solver, '*.summary.*.pdf'])
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
-                newfile = fullfile(files(ifile).folder, ['${{ matrix.with_optim_toolbox }}', '_', files(ifile).name])
+                newfile = fullfile(files(ifile).folder, ['ctol', '${{ matrix.ctol_indicator }}_', '${{ matrix.with_optim_toolbox }}', '_optool_', files(ifile).name])
                 movefile(file, newfile);
             end
 
@@ -100,12 +103,8 @@ jobs:
         uses: actions/upload-artifact@v3.1.2
         with:
           path: |
-            matlab/tests/testdata
-            !matlab/tests/testdata/*.mat
-            !matlab/tests/testdata/**/*.mat
-            !matlab/tests/testdata/*perf*.pdf
-            !matlab/tests/testdata/*perf*.eps
-            !matlab/tests/testdata/*problems.txt
+            matlab/tests/testdata/*summary*.pdf
+            matlab/tests/testdata/*.txt
 
       - name: Remove the test data
         run: rm -rf ./matlab/tests/testdata

@@ -28,9 +28,9 @@ perm = false;
 randomizex0 = 0;
 eval_options = struct();
 nr = 5;
-ctol = 1e-10;
-ctol_multiple = 1;
-cpenalty = 1e10;
+ctol = 1e-10;  % A point is considered feasible if its constraint violation is less than ctol.
+ctol_multiple = 1;  % The real ctol to use is ctol*ctol_multiple.
+cpenalty = 1e10;  % The penalty to use when the constraint violation is greater than ctol.
 %ctol = 1e-8;
 %cpenalty = 1e8;
 type = 'ubln'; % The default types of problems to test
@@ -590,7 +590,7 @@ if ~user_provides_ctol
     if options.randomizex0 > 0
         options.ctol = max(options.ctol, 1e-8);
     end
-    options.ctol = options.ctol_multiple * options.ctol;
+    options.ctol = min(1.0e-1, options.ctol_multiple * options.ctol);
 end
 if ~user_provides_cpenalty
     options.cpenalty = min(options.cpenalty, 1/options.ctol);
