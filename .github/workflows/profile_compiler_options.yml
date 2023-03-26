@@ -128,12 +128,8 @@ jobs:
         uses: actions/upload-artifact@v3.1.2
         with:
           path: |
-            matlab/tests/testdata
-            !matlab/tests/testdata/*.mat
-            !matlab/tests/testdata/**/*.mat
-            !matlab/tests/testdata/*perf*.pdf
-            !matlab/tests/testdata/*perf*.eps
-            !matlab/tests/testdata/*problems.txt
+            matlab/tests/testdata/*summary*.pdf
+            matlab/tests/testdata/*.txt
 
       - name: Remove the test data
         run: rm -rf ./matlab/tests/testdata
