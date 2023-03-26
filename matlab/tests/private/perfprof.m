@@ -1,7 +1,7 @@
 function output = perfprof(frec, fmin, options)
 %This function plots the performance profiles of solvers.
-% frec: trajectory of function values; frec(ip, is, ir, k) is the function value of the ip-th problem
-% obtained by the is-th solver at the ir-th random run at the k-th iteration.
+% frec: trajectory of function values; frec(ip, is, ir, k) is the function value of the ip-th
+% problem obtained by the is-th solver at the ir-th random run at the k-th iteration.
 % fmin: the minimal function values; either fmin(ip) is the minimal function value of the ip-th
 % problem, or fmin(ip, ir) is the minimal function value of the ip-th problem for the ir-th run.
 % tau: the tolerance of convergence.
@@ -213,6 +213,7 @@ ylabel('$\pi_s(\alpha)$', 'fontsize', fontsize, 'interpreter', 'latex');
 %xlabh = get(gca,'XLabel');
 %set(xlabh,'Position',get(xlabh,'Position') - [0 .0175 0])
 set(gca,'FontSize',fontsize);
+
 
 % Save the figure as eps.
 if options.natural_stop
