@@ -615,6 +615,7 @@ solv_options.debug = options.debug;
 solv_options.chkfunval = options.chkfunval;
 %solv_options.scale = true;
 solv_options.ctol = options.ctol;
+% N.B.: CTOL is only used by COBYLA/LINCOA when selecting the returned X; it does not affect the iterations of the algorithm.
 
 if strcmpi(solv, 'fmincon') || strcmpi(solv, 'fminunc')
     solv_options = optimoptions('fmincon');
