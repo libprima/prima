@@ -29,6 +29,7 @@ randomizex0 = 0;
 eval_options = struct();
 nr = 5;
 ctol = 1e-10;
+ctol_multiple = 1;
 cpenalty = 1e10;
 %ctol = 1e-8;
 %cpenalty = 1e8;
@@ -58,7 +59,7 @@ strict = 2;
 
 % Set options
 options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
-    eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
+    eval_options, nr, ctol, ctol_multiple, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
     sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict);
 
 assert(options.maxdim <= maxn);
@@ -404,7 +405,7 @@ return
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, ...
-        randomizex0, eval_options, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
+        randomizex0, eval_options, nr, ctol, ctol_multiple, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
         sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict) % Set options
 
 if (~isfield(options, 'rhoend'))
@@ -423,6 +424,9 @@ user_provides_ctol = isfield(options, 'ctol');
 user_provides_cpenalty = isfield(options, 'cpenalty');
 if (~isfield(options, 'ctol'))
     options.ctol = ctol;
+end
+if (~isfield(options, 'ctol_multiple'))
+    options.ctol_multiple = ctol_multiple;
 end
 if (~isfield(options, 'cpenalty'))
     options.cpenalty = cpenalty;
@@ -586,6 +590,7 @@ if ~user_provides_ctol
     if options.randomizex0 > 0
         options.ctol = max(options.ctol, 1e-8);
     end
+    options.ctol = options.ctol_multiple * options.ctol;
 end
 if ~user_provides_cpenalty
     options.cpenalty = min(options.cpenalty, 1/options.ctol);
