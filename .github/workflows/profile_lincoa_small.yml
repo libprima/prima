@@ -77,7 +77,7 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options=struct();
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
-            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}');
+            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
 
             delete(fullfile(cd(), 'testdata', '*.mat'));
 
