@@ -81,9 +81,9 @@ jobs:
             options=struct();
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
             if strcmp('${{ matrix.solver }}', 'cobylal')
-                prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}');
+                prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
-                prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}');
+                prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}', options);
             end
 
             delete(fullfile(cd(), 'testdata', '*.mat'));
