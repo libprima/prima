@@ -590,9 +590,12 @@ if options.debug && ~options.classical
     end
 
     % Check whether constrviolation is correct
-    cobyla_prec = 1e-4;
-    lincoa_prec = 1e-9;
-    bobyqa_prec = 1e-9;
+    %cobyla_prec = 1e-4;
+    %lincoa_prec = 1e-9;
+    %bobyqa_prec = 1e-9;
+    cobyla_prec = 1e-8;
+    lincoa_prec = 1e-10;
+    bobyqa_prec = 1e-10;
     % COBYLA cannot ensure fx == fun(x) or constr == con(x) due to rounding
     % errors. Instead of checking the equality, we check whether the
     % relative error is within cobyla_prec.
@@ -661,10 +664,6 @@ if options.debug && ~options.classical
         %if ~(isnan(fx) && isnan(funx)) && ~((fx == funx) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
         % Zaikun 20220930: It seems that BOBYQA can also return fx ~= fun(x) if RESCUE is invoked.
         if ~(isnan(fx) && isnan(funx)) && ~((fx == funx) || (abs(funx-fx) <= bobyqa_prec*max(1, abs(fx)) && strcmp(solver, 'bobyqa')) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
-            fx
-            funx
-            abs(fx-funx) / max(1, abs(fx))
-            cobyla_prec
             % Public/unexpected error
             error(sprintf('%s:InvalidFx', invoker), ...
                 '%s: UNEXPECTED ERROR: %s returns an fx that does not match x.', invoker, solver);

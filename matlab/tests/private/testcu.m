@@ -46,8 +46,18 @@ sequential = false;
 % It is better to set debug and chkfunval to true. We do not want to profile solvers that have bugs.
 % Note that the optimized version (compiled with -O) of prima will be called even if debug is true,
 % because we compile only that version when profiling.
+% However, we have to set chkfunval to false if when the function evaluation is noisy. It is true
+% that we defined the noisy oracle to make the function evaluation reproducible, meaning that it
+% returns the same value when called at the same X and during the same random run, which is done by
+% setting a seed according to X and the run counter. However, when we check the function value of
+% the returned X, there may be a slight difference between this X and the one that is used to
+% evaluate the function value by the Fortran code. Consequently, the function values may differ.
 debug = true;
-chkfunval = true;
+chkfunval = ~(isfield(options, 'eval_options') && ~isempty(options.eval_options) && ...
+    (isfield(options.eval_options, 'noise') && ~isempty(options.eval_options.noise) && ...
+    isnumeric(options.eval_options.noise) && abs(options.eval_options.noise) > 0 || ...
+    isfield(options.eval_options, 'dnoise') && ~isempty(options.eval_options.dnoise) && ...
+    isnumeric(options.eval_options.dnoise) && abs(options.eval_options.dnoise) > 0))
 output_xhist = true;
 output_nlchist = true;
 thorough_test = 0;
