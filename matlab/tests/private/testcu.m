@@ -866,6 +866,7 @@ case 'cobyla'
         'CVXQP1', ...       % 54
         'DALLASS', ...      % 3 (it takes a long time on GitHub Actions)
         'DECONVBNE', ...
+        'DECONVNE', ...
         'DIAMON2D', ...     % 1415
         'DIAMON3D', ...     % 3703
         'DMN15102', ...     % 887
