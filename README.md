@@ -114,6 +114,7 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Test Absoft](https://github.com/libprima/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_absoft.yml)
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
     - [![Lint](https://github.com/libprima/prima/actions/workflows/lint.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint.yml)
+    - [![Plot performance profiles for lincoa](https://github.com/libprima/prima/actions/workflows/profile_lincoa_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_lincoa_small.yml)
 
 - [Tests](https://github.com/primapack/prima/actions) at [primapack/prima](https://github.com/primapack/prima)
 
@@ -121,7 +122,6 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Plot performance profiles for uobyqa](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml)
     - [![Plot performance profiles for newuoa](https://github.com/primapack/prima/actions/workflows/profile_newuoa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_newuoa_small.yml)
     - [![Plot performance profiles for bobyqa](https://github.com/primapack/prima/actions/workflows/profile_bobyqa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_bobyqa_small.yml)
-    - [![Plot performance profiles for lincoa](https://github.com/primapack/prima/actions/workflows/profile_lincoa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_lincoa_small.yml)
 
 - [Tests](https://github.com/primalib/prima/actions) at [primalib/prima](https://github.com/primalib/prima)
 
