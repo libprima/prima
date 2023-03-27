@@ -57,7 +57,7 @@ chkfunval = ~(isfield(options, 'eval_options') && ~isempty(options.eval_options)
     (isfield(options.eval_options, 'noise') && ~isempty(options.eval_options.noise) && ...
     isnumeric(options.eval_options.noise) && abs(options.eval_options.noise) > 0 || ...
     isfield(options.eval_options, 'dnoise') && ~isempty(options.eval_options.dnoise) && ...
-    isnumeric(options.eval_options.dnoise) && abs(options.eval_options.dnoise) > 0))
+    isnumeric(options.eval_options.dnoise) && abs(options.eval_options.dnoise) > 0));
 output_xhist = true;
 output_nlchist = true;
 thorough_test = 0;
@@ -920,6 +920,6 @@ case 'cobyla'
         'VESUVIOU', ...
          }];
     % For the following problems, the classical cobyla encounters SEGFAULT.
-    blacklist = [blacklist, {'ERRINBAR', 'HS118', 'LAKES', 'TENBARS1', 'TENBARS2', 'TENBARS3',  'TENBARS4', 'VANDERM4'}];
+    blacklist = [blacklist, {'ERRINBAR', 'HS118', 'LAKES', 'TENBARS1', 'TENBARS2', 'TENBARS3', 'TENBARS4', 'VANDERM4', 'VANDANIUMS'}];
 end
 return
