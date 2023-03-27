@@ -115,7 +115,7 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Test Absoft](https://github.com/libprima/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_absoft.yml)
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
 
-- [Tests](https://github.com/primapack/prima/actions) at [prima/prima](https://github.com/primapack/prima)
+- [Tests](https://github.com/primapack/prima/actions) at [primapack/prima](https://github.com/primapack/prima)
 
     - [![Plot performance profiles for cobyla](https://github.com/primapack/prima/actions/workflows/profile_cobyla_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_cobyla_small.yml)
     - [![Plot performance profiles for uobyqa](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml)
