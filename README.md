@@ -111,9 +111,9 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Verification, small](https://github.com/libprima/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_small.yml)
     - [![Verification, big](https://github.com/libprima/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_big.yml)
     - [![Verification, large](https://github.com/libprima/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_large.yml)
-    - [![Lint](https://github.com/libprima/prima/actions/workflows/lint.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint.yml)
     - [![Test Absoft](https://github.com/libprima/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_absoft.yml)
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
+    - [![Lint](https://github.com/libprima/prima/actions/workflows/lint.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint.yml)
 
 - [Tests](https://github.com/primapack/prima/actions) at [primapack/prima](https://github.com/primapack/prima)
 
