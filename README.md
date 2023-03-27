@@ -24,7 +24,7 @@ PRIMA is part of a research project funded by the
 the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at the
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
 It is still **under intensive development**.
-The current version is ready to be [used in MATLAB](https://github.com/primapack/prima/blob/main/README_mat.txt).
+The current version is ready to be [used in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.txt).
 If you want to use the above-mentioned methods in Python, see the [website](https://www.pdfo.net)
 and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead
 ([Py-BOBYQA](https://numericalalgorithmsgroup.github.io/pybobyqa/) is also highly recommended if
@@ -106,16 +106,16 @@ PRIMA has been verified by more than 150,000 hours (or **more than 15 years**) o
 Since each GitHub Team account can only run at most 60 GitHub Actions workflows concurrently, I have
 to distribute this large amount of tests to several different Team accounts as follows.
 
-- [Tests](https://github.com/primapack/prima/actions) at [primapack/prima](https://github.com/primapack/prima)
+- [Tests](https://github.com/libprima/prima/actions) at [libprima/prima](https://github.com/libprima/prima)
 
-    - [![Verification, small](https://github.com/primapack/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/verify_small.yml)
-    - [![Verification, big](https://github.com/primapack/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/verify_big.yml)
-    - [![Verification, large](https://github.com/primapack/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/verify_large.yml)
-    - [![Lint](https://github.com/primapack/prima/actions/workflows/lint.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/lint.yml)
-    - [![Test Absoft](https://github.com/primapack/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/test_absoft.yml)
-    - [![Test nagfor](https://github.com/primapack/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/test_nagfor.yml)
+    - [![Verification, small](https://github.com/libprima/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_small.yml)
+    - [![Verification, big](https://github.com/libprima/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_big.yml)
+    - [![Verification, large](https://github.com/libprima/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_large.yml)
+    - [![Lint](https://github.com/libprima/prima/actions/workflows/lint.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint.yml)
+    - [![Test Absoft](https://github.com/libprima/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_absoft.yml)
+    - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
 
-- [Tests](https://github.com/primapack/prima/actions) at [primapack/prima](https://github.com/primapack/prima)
+- [Tests](https://github.com/primapack/prima/actions) at [prima/prima](https://github.com/primapack/prima)
 
     - [![Plot performance profiles for cobyla](https://github.com/primapack/prima/actions/workflows/profile_cobyla_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_cobyla_small.yml)
     - [![Plot performance profiles for uobyqa](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml)
