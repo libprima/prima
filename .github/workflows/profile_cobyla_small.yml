@@ -12,7 +12,7 @@ on:
 
 env:
   GFORTRAN_VERSION: 12
-  MATLAB_RELEASE: R2022b
+  MATLAB_RELEASE: latest
 
 jobs:
   test:

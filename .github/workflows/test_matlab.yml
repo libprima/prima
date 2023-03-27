@@ -19,7 +19,7 @@ jobs:
       matrix:
         # As of 230127, MEX Fortran does not work on windows-latest yet
         os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest, windows-2019, macos-10.15, macos-11, macos-latest]
-        matlab: [R2020a, R2020b, R2021a, R2021b, R2022a, R2022b, latest]
+        matlab: [R2020a, R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, latest]
 
         exclude:
 
@@ -111,7 +111,7 @@ jobs:
         run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v1.2.4
+        uses: matlab-actions/setup-matlab@v2-beta
         with:
           release: ${{ matrix.matlab }}
 
