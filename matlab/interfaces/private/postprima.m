@@ -593,9 +593,13 @@ if options.debug && ~options.classical
     %cobyla_prec = 1e-4;
     %lincoa_prec = 1e-9;
     %bobyqa_prec = 1e-9;
-    cobyla_prec = 1e-8;
-    lincoa_prec = 1e-10;
-    bobyqa_prec = 1e-10;
+
+    %cobyla_prec = 1e-8;
+    %bobyqa_prec = 1e-10;
+
+    cobyla_prec = 1e-9;
+    lincoa_prec = 1e-9;
+    bobyqa_prec = 1e-11;
     % COBYLA cannot ensure fx == fun(x) or constr == con(x) due to rounding
     % errors. Instead of checking the equality, we check whether the
     % relative error is within cobyla_prec.
