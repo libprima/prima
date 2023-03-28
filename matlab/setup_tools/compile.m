@@ -52,7 +52,8 @@ precisions = all_precisions();
 variants = all_variants();
 
 % `options.verbose` indicates whether to do the compilation in the verbose mode.
-if isfield(options, 'verbose') && islogicalscalar(options.verbose) && options.verbose
+verbose = (isfield(options, 'verbose') && islogicalscalar(options.verbose) && options.verbose);
+if verbose
     verbose_option = '-v';
 else
     verbose_option = '-silent';
@@ -85,7 +86,11 @@ for idbg = 1 : length(debug_flags)
         % We can NOT write the loop below as `mex(mex_options{:}, '-c', common_files{:});`
         % Because such a command may not respect the order of common_files{:}, which is critical here.
         for icf = 1 : length(common_files)
-            mex(mex_options{:}, '-c', common_files{icf});
+            if verbose
+                mex(mex_options{:}, '-c', common_files{icf});
+            else
+                evalc('mex(mex_options{:}, ''-c'', common_files{icf})');  % Suppress the output.
+            end
             % The module/object files are dumped to the current directory, namely `work_dir`.
         end
     end
@@ -120,12 +125,20 @@ for isol = 1 : length(solvers)
                 % We can NOT write the loop below as `mex(mex_options{:}, '-c', common_files{:});`
                 % Because such a command may not respect the order of common_files{:}, which is critical here.
                 for isf = 1 : length(src_files)
-                    mex(mex_options{:}, '-c', src_files{isf});
+                    if verbose
+                        mex(mex_options{:}, '-c', src_files{isf});
+                    else
+                        evalc('mex(mex_options{:}, ''-c'', src_files{isf})');  % Suppress the output.
+                    end
                     % The module/object files are dumped to the current directory, namely `work_dir`.
                 end
                 obj_files = [list_obj_files(common_dir), list_obj_files(work_dir)];
                 mexname = get_mexname(solver, precisions{iprc}, debug_flags{idbg}, variants{ivar});
-                mex(mex_options{:}, obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
+                if verbose
+                    mex(mex_options{:}, obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
+                else
+                    evalc('mex(mex_options{:}, obj_files{:}, gateway, ''-output'', mexname, ''-outdir'', mexdir)'); % Suppress the output.
+                end
             end
         end
     end
