@@ -26,6 +26,7 @@ try
     % Compile the solvers.
     clear('setup');
     opt=struct();
+    opt.verbose = true;
     opt.single=true;
     opt.quadruple=true;
     opt.debug=true;
@@ -36,6 +37,7 @@ try
     toc
 
     solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
+    verbose_flags = {true, false};
     precisions = {'double', 'single', 'quadruple'};
     debug_flags = {true, false};
     variants = {'modern', 'classical'};
@@ -50,20 +52,23 @@ try
         solver = str2func(solvers{isol});
         solver
         options = struct();
-        for iprc = 1 : length(precisions)
-            options.precision = precisions{iprc};
-            for idbg = 1 : length(debug_flags)
-                options.debug = debug_flags{idbg};
-                for ivar = 1 : length(variants)
-                    options.classical = strcmp(variants{ivar}, 'classical');
-                    options.output_xhist = true;
-                    options
-                    format long
-                    [x, f, exitflag, output] = solver(fun, x0, options)
-                    if (ismember(solvers{isol}, matlab_implemented))
-                        options_mat = options;
-                        options_mat.fortran = false;
-                        [x, f, exitflag, output] = solver(fun, x0, options_mat)
+        for ivrb = 1 : length(verbose_flags)
+            options.verbose = verbose_flags{ivrb};
+            for iprc = 1 : length(precisions)
+                options.precision = precisions{iprc};
+                for idbg = 1 : length(debug_flags)
+                    options.debug = debug_flags{idbg};
+                    for ivar = 1 : length(variants)
+                        options.classical = strcmp(variants{ivar}, 'classical');
+                        options.output_xhist = true;
+                        options
+                        format long
+                        [x, f, exitflag, output] = solver(fun, x0, options)
+                        if (ismember(solvers{isol}, matlab_implemented))
+                            options_mat = options;
+                            options_mat.fortran = false;
+                            [x, f, exitflag, output] = solver(fun, x0, options_mat)
+                        end
                     end
                 end
             end
