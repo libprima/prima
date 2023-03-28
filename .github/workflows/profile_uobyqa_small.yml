@@ -66,9 +66,7 @@ jobs:
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
             cd(fullfile(root_dir, 'matlab/tests'));
-            opt.maxip = 1;
-            opt.nr = 1;
-            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', opt);
+            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}');
             delete(fullfile(cd(), 'testdata', '*.mat'));
             movefile(fullfile(cd(), 'testdata', '*summary*.pdf'), '/tmp/${{ matrix.solver }}_profile_prima/');
             movefile(fullfile(cd(), 'testdata', '*.txt'), '/tmp/${{ matrix.solver }}_profile_prima/');
