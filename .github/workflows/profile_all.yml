@@ -50,6 +50,9 @@ jobs:
             ctol_indicator: 2
 
     steps:
+      - name: Get the solver name
+        run:  echo "SOLNAME=$(echo ${{ matrix.solver }} | cut -c1-6)" >> $GITHUB_ENV
+
       - name: Check out repository
         uses: actions/checkout@v3.5.0
         with:
