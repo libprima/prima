@@ -124,10 +124,7 @@ jobs:
             delete(fullfile(cd(), 'testdata', '*.mat'));
 
             cd(fullfile(cd(), 'testdata'));
-            solver = '${{ matrix.solver }}';
-            if contains(solver, 'cobyla')  % For `cobylan` and `cobylal`
-                solver = 'cobyla';
-            end
+            solver = '${{ env.SOLNAME }}';
             files = dir([solver, '*.summary.*.pdf'])
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
@@ -152,10 +149,10 @@ jobs:
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           path: |
-            /tmp/$(echo ${{ matrix.solver }} | cut -c1-6)_profile_prima/*summary*.pdf
-            /tmp/$(echo ${{ matrix.solver }} | cut -c1-6)_profile_prima/*.txt
-            /tmp/$(echo ${{ matrix.solver }} | cut -c1-6)_profile_prima/*start*
-            /tmp/$(echo ${{ matrix.solver }} | cut -c1-6)_profile_prima/*end*
+            /tmp/${{ env.SOLNAME }}_profile_prima/*summary*.pdf
+            /tmp/${{ env.SOLNAME }}_profile_prima/*.txt
+            /tmp/${{ env.SOLNAME }}_profile_prima/*start*
+            /tmp/${{ env.SOLNAME }}_profile_prima/*end*
 
       - name: Remove the test data
-        run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/$(echo ${{ matrix.solver }} | cut -c1-6)_profile_prima
+        run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/${{ env.SOLNAME }}_profile_prima
