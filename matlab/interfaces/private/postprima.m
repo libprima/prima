@@ -597,9 +597,11 @@ if options.debug && ~options.classical
     %cobyla_prec = 1e-8;
     %bobyqa_prec = 1e-10;
 
+    % The precision of the constraints seem to be lower for cobyla and lincoa due to the
+    % matrix-vector products.
     cobyla_prec = 1e-9;
     lincoa_prec = 1e-9;
-    bobyqa_prec = 1e-11;
+    bobyqa_prec = 1e-12;
     % COBYLA cannot ensure fx == fun(x) or constr == con(x) due to rounding
     % errors. Instead of checking the equality, we check whether the
     % relative error is within cobyla_prec.
