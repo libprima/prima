@@ -64,13 +64,15 @@ jobs:
             root_dir = pwd();
 
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
-
             cd(fullfile(root_dir, 'matlab/tests'));
+
             prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}');
-            delete(fullfile(cd(), 'testdata', '*.mat'));
+
+
+            % Move the files to prepare for uploading artifacts
+
             movefile(fullfile(cd(), 'testdata', '*summary*.pdf'), '/tmp/${{ matrix.solver }}_profile_prima/');
             movefile(fullfile(cd(), 'testdata', '*.txt'), '/tmp/${{ matrix.solver }}_profile_prima/');
-            cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3.1.2
