@@ -589,24 +589,24 @@ if options.debug && ~options.classical
              '%s: UNEXPECTED ERROR: %s returns an fhist that does not match nf or fx.', invoker, solver);
     end
 
-    % Check whether constrviolation is correct
+    % 1. COBYLA cannot ensure fx == fun(x) or constr == con(x) due to rounding errors. Instead of
+    % checking the equality, we check whether the relative error is within cobyla_prec.
+    % 2. There can also be a difference between constrviolation and cstrv due to rounding errors,
+    % especially if the problem is scaled.
+    % 3. The precision of the constraints seem to be lower for cobyla and lincoa due to the
+    % matrix-vector products.
+    %%%%%%%%%%%%%%%%%%%%%% Old values %%%%%%%%%%%%%%%%%%%%%%
     %cobyla_prec = 1e-4;
     %lincoa_prec = 1e-9;
     %bobyqa_prec = 1e-9;
-
     %cobyla_prec = 1e-8;
     %bobyqa_prec = 1e-10;
-
-    % The precision of the constraints seem to be lower for cobyla and lincoa due to the
-    % matrix-vector products.
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     cobyla_prec = 1e-9;
     lincoa_prec = 1e-9;
     bobyqa_prec = 1e-12;
-    % COBYLA cannot ensure fx == fun(x) or constr == con(x) due to rounding
-    % errors. Instead of checking the equality, we check whether the
-    % relative error is within cobyla_prec.
-    % There can also be a difference between constrviolation and cstrv due
-    % to rounding errors, especially if the problem is scaled.
+
+    % Check whether constrviolation is correct
     constrviolation = 0;
     if isfield(output, 'constrviolation')
         constrviolation = output.constrviolation;
