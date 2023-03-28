@@ -77,6 +77,9 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options=struct();
             options.nr = 3;
+
+            options.nr = 1; options.maxip = 1; %!!!
+
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
             prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
 
@@ -93,6 +96,14 @@ jobs:
 
             movefile(fullfile(cd(), 'testdata', '*summary*.pdf'), '/tmp/${{ matrix.solver }}_profile_prima/');
             movefile(fullfile(cd(), 'testdata', '*.txt'), '/tmp/${{ matrix.solver }}_profile_prima/');
+
+            files = [dir(['/tmp/', solver, '_profile_prima/*start*']); dir(['/tmp/', solver, '_profile_prima/*end*'])]
+            for ifile = 1 : length(files)
+                file = fullfile(files(ifile).folder, files(ifile).name)
+                newfile = fullfile(files(ifile).folder, ['ctol', '${{ matrix.ctol_indicator }}_', '${{ matrix.with_optim_toolbox }}', '_optool_', files(ifile).name])
+                movefile(file, newfile);
+            end
+
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
       - name: Store artifacts
