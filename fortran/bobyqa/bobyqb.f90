@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 21, 2023 PM11:07:25
+! Last Modified: Tuesday, March 28, 2023 AM08:41:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -575,7 +575,6 @@ call rangehist(nf, xhist, fhist)
 ! Print a return message according to IPRINT.
 call retmsg(solver, info, iprint, nf, f, x)
 
-close (16)
 !====================!
 !  Calculation ends  !
 !====================!
