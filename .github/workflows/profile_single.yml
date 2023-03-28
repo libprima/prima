@@ -72,8 +72,6 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options=struct(); options.nr = 5;  % 5 random runs for each problem
 
-            options.nr = 1; options.maxip = 1; %!!!
-
             if strcmp('${{ matrix.solver }}', 'cobylal')
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
@@ -85,12 +83,13 @@ jobs:
             else
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
             end
-            delete(fullfile(cd(), 'testdata', '*.mat'));
+
+
+            % Move the files to prepare for uploading artifacts
 
             solver = '${{ env.SOLNAME }}';
             movefile(fullfile(cd(), 'testdata', '*summary*.pdf'), ['/tmp/', solver, '_profile_prima/']);
             movefile(fullfile(cd(), 'testdata', '*.txt'), ['/tmp/', solver, '_profile_prima/']);
-            cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3.1.2
