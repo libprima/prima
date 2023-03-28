@@ -73,5 +73,5 @@ jobs:
         uses: actions/upload-artifact@v3.1.2
         with:
           path: |
-            /tmp/${{ matlab.solver }}_verify_prima/*start*
-            /tmp/${{ matlab.solver }}_verify_prima/*end*
+            /tmp/${{ matrix.solver }}_verify_prima/*start*
+            /tmp/${{ matrix.solver }}_verify_prima/*end*
