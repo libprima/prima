@@ -78,7 +78,7 @@ jobs:
             options=struct();
             options.nr = 3;
 
-            options.nr = 1; options.maxip = 1; %!!!
+            options.nr = 1; options.maxip = 10; %!!!
 
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
             prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
