@@ -132,8 +132,8 @@ jobs:
                 movefile(file, newfile);
             end
 
-            movefile(fullfile(cd(), 'testdata', '*summary*.pdf'), ['/tmp/', solver, '_profile_prima/']);
-            movefile(fullfile(cd(), 'testdata', '*.txt'), ['/tmp/', solver, '_profile_prima/']);
+            movefile(fullfile(cd(), '*summary*.pdf'), ['/tmp/', solver, '_profile_prima/']);
+            movefile(fullfile(cd(), '*.txt'), ['/tmp/', solver, '_profile_prima/']);
 
             files = [dir(['/tmp/', solver, '_profile_prima/*start*']); dir(['/tmp/', solver, '_profile_prima/*end*'])]
             for ifile = 1 : length(files)
