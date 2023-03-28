@@ -139,10 +139,28 @@ end
 
 maxip = min(np, maxip);
 
+% Directories for recording the starting/ending of problems (tic/toc are unavailable in parfor).
+stamp = strjoin(solvers, '_');
+prob_start_time_dir = strtrim(fullfile(options.test_dir, [stamp, '_start_time']));
+prob_start_dir = strtrim(fullfile(options.test_dir, [stamp, '_start']));
+prob_end_time_dir = strtrim(fullfile(options.test_dir, [stamp, '_end_time']));
+prob_end_dir = strtrim(fullfile(options.test_dir, [stamp, '_end']));
+system(['rm -rf ', prob_start_time_dir, '; ', 'mkdir -p ', prob_start_time_dir]);
+system(['rm -rf ', prob_start_dir, '; ', 'mkdir -p ', prob_start_dir]);
+system(['rm -rf ', prob_end_time_dir, '; ', 'mkdir -p ', prob_end_time_dir]);
+system(['rm -rf ', prob_end_dir, '; ', 'mkdir -p ', prob_end_dir]);
+disp(['prob_start_time_dir = ', prob_start_time_dir]);
+disp(['prob_start_dir = ', prob_start_dir]);
+disp(['prob_end_time_dir = ', prob_end_time_dir]);
+disp(['prob_end_dir = ', prob_end_dir]);
+
 if sequential
     for ip = minip : maxip
         orig_warning_state = warnoff(solvers);
         pname = upper(plist{ip});
+        [~, time] = system('date +%y%m%d_%H%M%S');
+        system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
+        system(['touch ', fullfile(prob_start_dir, pname)]);
 
         fprintf('\n%3d. \t%s:\n', ip, pname);
 
@@ -157,6 +175,9 @@ if sequential
         end
 
         decup(prob);
+        [~, time] = system('date +%y%m%d_%H%M%S');
+        system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
+        system(['touch ', fullfile(prob_end_dir, pname)]);
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
     end
@@ -166,6 +187,9 @@ else
         orig_warning_state = warnoff(solvers);
 
         pname = upper(plist{ip});
+        [~, time] = system('date +%y%m%d_%H%M%S');
+        system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
+        system(['touch ', fullfile(prob_start_dir, pname)]);
 
         fprintf('\n%3d. \t%s:\n', ip, pname);
 
@@ -180,6 +204,9 @@ else
         end
 
         decup(prob);
+        [~, time] = system('date +%y%m%d_%H%M%S');
+        system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
+        system(['touch ', fullfile(prob_end_dir, pname)]);
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
     end

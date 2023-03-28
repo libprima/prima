@@ -67,11 +67,11 @@ minip = 1;
 maxip = 2^32 - 1;
 strict = 2;
 
-% Directories for recording the starting/ending of problems. We cannot use tic/toc in parfor.
-prob_start_time_dir = strtrim(fullfile(options.data_dir, [options.stamp, '_start_time']));
-prob_start_dir = strtrim(fullfile(options.data_dir, [options.stamp, '_start']));
-prob_end_time_dir = strtrim(fullfile(options.data_dir, [options.stamp, '_end_time']));
-prob_end_dir = strtrim(fullfile(options.data_dir, [options.stamp, '_end']));
+% Directories for recording the starting/ending of problems (tic/toc are unavailable in parfor).
+prob_start_time_dir = strtrim(fullfile(options.test_dir, [options.stamp, '_start_time']));
+prob_start_dir = strtrim(fullfile(options.test_dir, [options.stamp, '_start']));
+prob_end_time_dir = strtrim(fullfile(options.test_dir, [options.stamp, '_end_time']));
+prob_end_dir = strtrim(fullfile(options.test_dir, [options.stamp, '_end']));
 system(['rm -rf ', prob_start_time_dir, '; ', 'mkdir -p ', prob_start_time_dir]);
 system(['rm -rf ', prob_start_dir, '; ', 'mkdir -p ', prob_start_dir]);
 system(['rm -rf ', prob_end_time_dir, '; ', 'mkdir -p ', prob_end_time_dir]);
@@ -167,6 +167,9 @@ if sequential
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};
+        [~, time] = system('date +%y%m%d_%H%M%S');
+        system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
+        system(['touch ', fullfile(prob_start_dir, pname)]);
 
         fprintf('\n%3d. \t%s:\n', ip, upper(pname));
 
@@ -211,6 +214,9 @@ if sequential
         end
 
         decup(prob);
+        [~, time] = system('date +%y%m%d_%H%M%S');
+        system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
+        system(['touch ', fullfile(prob_end_dir, pname)]);
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
 
