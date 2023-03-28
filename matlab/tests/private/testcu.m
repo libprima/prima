@@ -67,6 +67,17 @@ minip = 1;
 maxip = 2^32 - 1;
 strict = 2;
 
+% Directories for recording the starting/ending of problems. We cannot use tic/toc in parfor.
+stamp = [strjoin(solvers, '_'), '.', options.test_feature];
+prob_start_time_dir = strtrim(fullfile(options.data_dir, [stamp, '_start_time']));
+prob_start_dir = strtrim(fullfile(options.data_dir, [stamp, '_start']));
+prob_end_time_dir = strtrim(fullfile(options.data_dir, [stamp, '_end_time']));
+prob_end_dir = strtrim(fullfile(options.data_dir, [stamp, '_end']));
+system(['rm -r ', prob_start_time_dir, '; ', 'mkdir -p ', prob_start_time_dir]);
+system(['rm -r ', prob_start_dir, '; ', 'mkdir -p ', prob_start_dir]);
+system(['rm -r ', prob_end_time_dir, '; ', 'mkdir -p ', prob_end_time_dir]);
+system(['rm -r ', prob_end_dir, '; ', 'mkdir -p ', prob_end_dir]);
+
 % Set options
 options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
     eval_options, nr, ctol, ctol_multiple, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
@@ -206,6 +217,9 @@ else
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};
+        [~, time] = system('date +%s');
+        system(['touch ', fullfile(prob_start_time_dir, [pname, strtrim(time)])]);
+        system(['touch ', fullfile(prob_start_dir, pname)]);
 
         fprintf('\n%3d. \t%s:\n', ip, upper(pname));
 
@@ -250,6 +264,9 @@ else
         end
 
         decup(prob);
+        [~, time] = system('date +%s');
+        system(['touch ', fullfile(prob_end_time_dir, [pname, strtrim(time)])]);
+        system(['touch ', fullfile(prob_end_dir, pname)]);
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
 
@@ -919,7 +936,6 @@ case 'cobyla'
         'VANDERM3', ...     % 76
         'VESUVIO', ...
         'VESUVIOU', ...
-        'ZY2', ...
          }];
     % For the following problems, the classical cobyla encounters SEGFAULT.
     blacklist = [blacklist, {'ERRINBAR', 'HS118', 'LAKES', 'TENBARS1', 'TENBARS2', 'TENBARS3', 'TENBARS4', 'VANDERM4', 'VANDANIUMS'}];

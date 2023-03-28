@@ -1,5 +1,5 @@
 function information = package_info(request)
-%PACKAGE_INFO returns information about the pacakge.
+%PACKAGE_INFO returns information about the package.
 %
 %   ***********************************************************************
 %   Author:     Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
