@@ -76,13 +76,7 @@ jobs:
             options.nr = 1; % Since the code will not change along the time, big nr is not needed.
             options.no_classical = true;  % Starting from 20230212, we do not verify the classical version for the base.
             options
-            if mod(DayMonth, 2) == 1
-                fprintf('\n\n==========> Conduct the test sequentially <===========\n\n');
-                verify('${{ matrix.solver }}', '${{ matrix.dim }}', 'seq', options);
-            else
-                fprintf('\n\n==========> Conduct the test in parallel <===========\n\n');
-                verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
-            end
+            verify('${{ matrix.solver }}', '${{ matrix.dim }}', 'seq', options);  % Zaikun 20230328: Conduct the verification in sequential to avoid the debugging pain.
             delete([upper('${{ matrix.solver }}'), '_output.txt']);
             delete('fort.6');
             cd(root_dir); setup clean; setup uninstall;
