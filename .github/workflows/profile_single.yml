@@ -25,7 +25,11 @@ jobs:
         dim: [small]
         solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]
         competitor: [single]
+
     steps:
+      - name: Get the solver name
+        run:  echo "SOLNAME=$(echo ${{ matrix.solver }} | cut -c1-6)" >> $GITHUB_ENV
+
       - name: Check out repository
         uses: actions/checkout@v3.5.0
         with:
@@ -83,10 +87,7 @@ jobs:
             end
             delete(fullfile(cd(), 'testdata', '*.mat'));
 
-            solver = '${{ matrix.solver }}';
-            if contains(solver, 'cobyla')  % For `cobylan` and `cobylal`
-                solver = 'cobyla';
-            end
+            solver = '${{ env.SOLNAME }}';
             movefile(fullfile(cd(), 'testdata', '*summary*.pdf'), ['/tmp/', solver, '_profile_prima/']);
             movefile(fullfile(cd(), 'testdata', '*.txt'), ['/tmp/', solver, '_profile_prima/']);
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
@@ -96,10 +97,10 @@ jobs:
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           path: |
-            /tmp/$(echo ${{ matrix.solver }} | cut -c1-6)_profile_prima/*summary*.pdf
-            /tmp/$(echo ${{ matrix.solver }} | cut -c1-6)_profile_prima/*.txt
-            /tmp/$(echo ${{ matrix.solver }} | cut -c1-6)_profile_prima/*start*
-            /tmp/$(echo ${{ matrix.solver }} | cut -c1-6)_profile_prima/*end*
+            /tmp/${{ env.SOLNAME }}_profile_prima/*summary*.pdf
+            /tmp/${{ env.SOLNAME }}_profile_prima/*.txt
+            /tmp/${{ env.SOLNAME }}_profile_prima/*start*
+            /tmp/${{ env.SOLNAME }}_profile_prima/*end*
 
       - name: Remove the test data
-        run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/$(echo ${{ matrix.solver }} | cut -c1-6)_profile_prima
+        run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/${{ env.SOLNAME }}_profile_prima
