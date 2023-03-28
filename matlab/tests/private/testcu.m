@@ -68,15 +68,18 @@ maxip = 2^32 - 1;
 strict = 2;
 
 % Directories for recording the starting/ending of problems. We cannot use tic/toc in parfor.
-stamp = [strjoin(solvers, '_'), '.', options.test_feature];
-prob_start_time_dir = strtrim(fullfile(options.data_dir, [stamp, '_start_time']));
-prob_start_dir = strtrim(fullfile(options.data_dir, [stamp, '_start']));
-prob_end_time_dir = strtrim(fullfile(options.data_dir, [stamp, '_end_time']));
-prob_end_dir = strtrim(fullfile(options.data_dir, [stamp, '_end']));
-system(['rm -r ', prob_start_time_dir, '; ', 'mkdir -p ', prob_start_time_dir]);
-system(['rm -r ', prob_start_dir, '; ', 'mkdir -p ', prob_start_dir]);
-system(['rm -r ', prob_end_time_dir, '; ', 'mkdir -p ', prob_end_time_dir]);
-system(['rm -r ', prob_end_dir, '; ', 'mkdir -p ', prob_end_dir]);
+prob_start_time_dir = strtrim(fullfile(options.data_dir, [options.stamp, '_start_time']));
+prob_start_dir = strtrim(fullfile(options.data_dir, [options.stamp, '_start']));
+prob_end_time_dir = strtrim(fullfile(options.data_dir, [options.stamp, '_end_time']));
+prob_end_dir = strtrim(fullfile(options.data_dir, [options.stamp, '_end']));
+system(['rm -rf ', prob_start_time_dir, '; ', 'mkdir -p ', prob_start_time_dir]);
+system(['rm -rf ', prob_start_dir, '; ', 'mkdir -p ', prob_start_dir]);
+system(['rm -rf ', prob_end_time_dir, '; ', 'mkdir -p ', prob_end_time_dir]);
+system(['rm -rf ', prob_end_dir, '; ', 'mkdir -p ', prob_end_dir]);
+disp(['prob_start_time_dir = ', prob_start_time_dir]);
+disp(['prob_start_dir = ', prob_start_dir]);
+disp(['prob_end_time_dir = ', prob_end_time_dir]);
+disp(['prob_end_dir = ', prob_end_dir]);
 
 % Set options
 options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
