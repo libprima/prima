@@ -106,6 +106,8 @@ jobs:
           path: |
             matlab/tests/testdata/*summary*.pdf
             matlab/tests/testdata/*.txt
+            matlab/tests/testdata/*start*
+            matlab/tests/testdata/*end*
 
       - name: Remove the test data
         run: rm -rf ./matlab/tests/testdata
