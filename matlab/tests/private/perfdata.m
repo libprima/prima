@@ -11,6 +11,7 @@ feature_and_time = [test_feature, '.', options.time];
 %    (when using tab for auto-completion, we do not need to type `test_feature` if the files in the
 %    current directory correspond to only one `test_feature`).
 stamp = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim), '.', options.type);
+options.stamp = strcat(stamp, '.', feature_and_time);
 
 % `outdir` is the directory to contain the figures (.eps, .pdf) and problem list (problem.txt).
 outdir = fullfile(data_dir, strcat(stamp, '.', feature_and_time));
