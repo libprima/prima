@@ -220,8 +220,8 @@ else
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};
-        [~, time] = system('date +%s');
-        system(['touch ', fullfile(prob_start_time_dir, [pname, strtrim(time)])]);
+        [~, time] = system('date +%y%m%d_%H%M%S');
+        system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_start_dir, pname)]);
 
         fprintf('\n%3d. \t%s:\n', ip, upper(pname));
@@ -267,8 +267,8 @@ else
         end
 
         decup(prob);
-        [~, time] = system('date +%s');
-        system(['touch ', fullfile(prob_end_time_dir, [pname, strtrim(time)])]);
+        [~, time] = system('date +%y%m%d_%H%M%S');
+        system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_end_dir, pname)]);
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
