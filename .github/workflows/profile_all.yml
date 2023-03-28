@@ -102,9 +102,6 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options=struct();
             options.nr = 4;  % 4 random runs for each problem
-
-            options.nr = 1; options.maxip = 1; %!!!
-
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
 
             if strcmp('${{ matrix.solver }}', 'cobylal')
@@ -121,17 +118,17 @@ jobs:
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
             end
 
-            delete(fullfile(cd(), 'testdata', '*.mat'));
 
-            cd(fullfile(cd(), 'testdata'));
+            % Move the files to prepare for uploading artifacts
+
             solver = '${{ env.SOLNAME }}';
+            cd(fullfile(cd(), 'testdata'));
             files = dir([solver, '*.summary.*.pdf'])
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
                 newfile = fullfile(files(ifile).folder, ['ctol', '${{ matrix.ctol_indicator }}_', '${{ matrix.with_optim_toolbox }}', '_optool_', files(ifile).name])
                 movefile(file, newfile);
             end
-
             movefile(fullfile(cd(), '*summary*.pdf'), ['/tmp/', solver, '_profile_prima/']);
             movefile(fullfile(cd(), '*.txt'), ['/tmp/', solver, '_profile_prima/']);
 
@@ -141,8 +138,6 @@ jobs:
                 newfile = fullfile(files(ifile).folder, ['ctol', '${{ matrix.ctol_indicator }}_', '${{ matrix.with_optim_toolbox }}', '_optool_', files(ifile).name])
                 movefile(file, newfile);
             end
-
-            cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3.1.2
