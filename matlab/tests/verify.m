@@ -39,6 +39,7 @@ olddir = pwd();  % Record the current directory.
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 test_dir = prepare_test_dir(solver, funname, options);
+options.test_dir = test_dir;
 
 exception = [];
 

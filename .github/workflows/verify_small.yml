@@ -64,3 +64,11 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             verify('${{ matrix.solver }}', '${{ matrix.dim }}');
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
+
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          path: |
+            /tmp/${{ matlab.solver }}_verify_prima/*start*
+            /tmp/${{ matlab.solver }}_verify_prima/*end*
