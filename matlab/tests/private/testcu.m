@@ -892,6 +892,7 @@ case 'cobyla'
         'CVXQP1', ...       % 54
         'DALLASS', ...      % 3 (it takes a long time on GitHub Actions)
         'DECONVBNE', ...
+        'DECONVC', ...      % In a test on 230328, the classical cobyla encountered infinite cycling.
         'DECONVNE', ...
         'DIAMON2D', ...     % 1415
         'DIAMON3D', ...     % 3703
