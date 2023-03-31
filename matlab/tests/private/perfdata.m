@@ -51,7 +51,7 @@ else
     [frec, fmin, output] = testcu(solvers, options);
     pdim = output.pdim;
     plist = output.plist;
-    save(matfile, 'frec', 'fmin', 'pdim', 'plist');
+    save(matfile, 'frec', 'fmin', 'pdim', 'plist', '-v7.3');
 end
 
 % Record the tested problems in `problems.txt`.

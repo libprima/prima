@@ -404,15 +404,24 @@ prob.options.output_xhist = true;  % We always need xhist to recover the history
 
 [x, ~, ~, output] = solver(prob);
 % Solvers (e.g., fmincon) may not respect maxfun. Indeed, PRIMA solvers may also increase maxfun
-% if it is too small (e.g., <= npt for NEWUOA).
+% if it is too small (e.g., <= npt for NEWUOA). In addition, nhist may be smaller than maxfun due to
+% memory limitation.
 nf = min(maxfun, output.funcCount);
+nhist = min(nf, size(output.xhist, 2));
+xhist = NaN(length(prob.x0), nf);
+% Fill xhist(1: nf - nhist) by x0 if nhist < nf; it is not perfect but there is no better solution;
+% it is rare anyway.
+for k = 1 : nf - nhist
+    xhist(:, k) = prob.x0;
+end
+xhist(:, nf - nhist + 1 : nf) = output.xhist(:, 1 : nhist);
 
 if (nf >= 1)
     % Use xhist and the original data of the problem to get fval_history and cv_history. Do NOT use
     % the information returned by the solver, as the solver may change the data (e.g., lincoa
     % may modify the right-hand side of linear constraints when x0 is infeasible; in addition, it
     % scales the constraints so that their gradients have norm 1), making results not comparable.
-    xhist_cell = num2cell(output.xhist(:, 1:nf), 1);
+    xhist_cell = num2cell(xhist(:, 1:nf), 1);
     fval_history(1:nf) = cellfun(prob.orig_objective, xhist_cell);
     orig_cstrv = @(x) get_cstrv(x, prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.orig_nonlcon);
     cv_history(1:nf) = cellfun(orig_cstrv, xhist_cell);

@@ -214,6 +214,7 @@ end
 % fhist contains the function values of the last nhist iterates of the solver.
 if isfield(output, 'fhist')
     nhist = length(output.fhist);
+    % N.B.: It may happen that length(fhist) < min(nf,maxhist) due to memory limitation.
 else
     nhist = 0;
 end
