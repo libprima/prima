@@ -358,7 +358,8 @@ else % The problem turns out 'normal' during preprima
     output.fhist = fhist;
     % BOBYQA is a feasible method. All iterates respect the bound constraints.
     output.constrviolation = 0;
-    output.chist = zeros(1, min(nf, maxhist));
+    output.chist = zeros(1, length(fhist));
+    % N.B.: It may happen that length(fhist) < min(nf,maxhist) due to memory limitation.
 end
 
 % Postprocess the result

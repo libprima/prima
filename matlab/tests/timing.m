@@ -57,4 +57,4 @@ end
 warning(orig_warning_state);
 
 % Save the data
-save([solver, '_', int2str(mindim), '_', int2str(maxdim), '_', 'timing.mat'], 'plist', 'tlist');
+save([solver, '_', int2str(mindim), '_', int2str(maxdim), '_', 'timing.mat'], 'plist', 'tlist', '-v7.3');
