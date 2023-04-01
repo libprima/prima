@@ -80,7 +80,6 @@ if strcmpi(language, 'FORTRAN') && (ismac || ispc) && (~isempty(exception) || me
         else
             setenv(envvar, compiler_dir);
         end
-        getenv(envvar)
     end
 
     % Try setting up MEX again.
@@ -103,7 +102,6 @@ if strcmpi(language, 'FORTRAN') && (ismac || ispc) && (~isempty(exception) || me
         for ienvvar = 1 : length(envvars)
             envvar = envvars{ienvvar};
             setenv(envvar, envvars_save{ienvvar});
-            getenv(envvar)
             if exist('unsetenv', 'builtin') && ~isenvs(ienvvar)  % unsetenv is available since R2022b.
                 unsetenv(envvar);
             end
@@ -114,7 +112,7 @@ end
 if ~isempty(exception) || mex_setup ~= 0
     fprintf('\nYour MATLAB failed to run mex(''-setup'', ''%s'').', language);
     fprintf('\nTo see the detailed error message, execute the following command:\n');
-    fprintf('\n  mex(''-v'', ''-setup'', ''%s'')\n', language)
+    fprintf('\n  mex(''-v'', ''-setup'', ''%s'')\n', language);
     success = 0;
 else
     % Try `mex(example_file)`
@@ -163,7 +161,7 @@ example_file = fullfile(matlabroot, 'extern', 'examples', 'refbook', example_fil
 % Check whether example_file exists
 if ~exist(example_file, 'file')
     if verbose
-        fprintf('\n')
+        fprintf('\n');
         wid = sprintf('%s:ExampleFileNotExist', funname);
         warning('on', wid);
         warning(wid, 'We cannot find\n%s,\nwhich is a MATLAB built-in example for trying MEX on %s. It will be ignored.\n', example_file, language);
@@ -218,7 +216,7 @@ if ~isempty(exception)
     success = 0;
 elseif abs(timestwo_out - 2) >= 20*eps
     if verbose
-        fprintf('\n')
+        fprintf('\n');
         wid = sprintf('%s:ExampleFileWorksIncorrectly', funname);
         warning('on', wid);
         warning(wid, 'The MEX of your MATLAB compiled\n%s,\nbut the resultant MEX file returns %.16f when calculating 2 times 1.', example_file, timestwo_out);
