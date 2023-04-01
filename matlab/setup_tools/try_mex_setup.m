@@ -1,4 +1,4 @@
-function success = try_mex_setup(language)
+function success = try_mex_setup(language, verbose)
 %TRY_MEX_SETUP tries running MEX setup for compiling language.
 % At return,
 % success = 1 means MEX is correctly set up.
@@ -7,9 +7,11 @@ function success = try_mex_setup(language)
 % file because such a file is not found, or the MEX file of the example file works but the result
 % is incorrect.
 
+verbose = (nargin >=2 && verbose);
+
 % Return if MEX is already well configured. This is important, because MEX is usable if it was set
 % up before, and because MEX setup may fail even if it succeeded before due to change of environment.
-success = mex_well_configured(language, false);  % verbose = false
+success = mex_well_configured(language);  % verbose = false
 if success == 1
     return
 end
@@ -34,23 +36,12 @@ end
 % (Microsoft Visual Studio with the "Desktop development with C++" workload) on Windows.
 % For Fortran, we need Xcode on macOS or Microsoft Visual Studio (maybe also with "Desktop
 % development with C++") on Windows, and additionally the Intel Fortran compiler with the
-% environment variables ONEAPI_ROOT or IFORT_COMPILER18/19/20 (as of R2020a-22b) set accordingly.
-% In the following, for Fortran, we set the environment variables ONEAPI_ROOT and IFORT_COMPILER18.
+% environment variables ONEAPI_ROOT or IFORT_COMPILERYEAR set accordingly. In the following,
+% for Fortran, we set the environment variables ONEAPI_ROOT and IFORT_COMPILER18/19 ...
 % This should make MEX setup work for Fortran on MATLAB 2020a or above if a **default** installation
 % of Intel OneAPI (available for free) has been done and Xcode or Microsoft VS is correctly installed.
-% Indeed, setting either ONEAPI_ROOT or IFORT_COMPILER18 would be sufficient.
+% Update 20230401: MATLAB R2022b/R2023a seem not checking ONEAPI_ROOT, and IFORT_COMPILER23 is needed.
 if strcmpi(language, 'FORTRAN') && (ismac || ispc) && (~isempty(exception) || mex_setup ~= 0)
-
-    % Test whether the environment variables ONEAPI_ROOT and IFORT_COMPILER18 exist (isenv is
-    % available since R2022b).
-    isenv_oneapi_root = ~exist('isenv', 'builtin') || isenv('ONEAPI_ROOT');
-    isenv_ifort_compiler18 = ~exist('isenv', 'builtin') || isenv('IFORT_COMPILER18');
-
-    % Get the values of ONEAPI_ROOT and IFORT_COMPILER18; the value is empty in case of nonexistence.
-    oneapi_root_save = getenv('ONEAPI_ROOT');
-    ifort_compiler18_save = getenv('IFORT_COMPILER18');
-
-    % Set PATH, ONEAPI_ROOT, and IFORT_COMPILER18.
     if ismac
         oneapi_root = '/opt/intel/oneapi/';
         compiler_dir = [oneapi_root, 'compiler/latest/mac/'];
@@ -58,32 +49,63 @@ if strcmpi(language, 'FORTRAN') && (ismac || ispc) && (~isempty(exception) || me
         oneapi_root = 'C:\Program Files (x86)\Intel\oneAPI\';
         compiler_dir = [oneapi_root, 'compiler\latest\windows\'];
     end
+
+    % Set PATH.
     compiler_bin = fullfile(compiler_dir, 'bin');
     compiler_bin64 = fullfile(compiler_bin, 'intel64');  % Why not worry about 32-bit case? Since R2016a, MATLAB has been 64-bit only.
     setenv('PATH', [getenv('PATH'), pathsep, compiler_bin, pathsep, compiler_bin64]);  % Not needed for Windows as of 2023.
-    setenv('ONEAPI_ROOT', oneapi_root);
-    setenv('IFORT_COMPILER18', compiler_dir);
+
+    % Set IFORT_COMPILER18, IFORT_COMPILER19, ..., IFORT_COMPILERCURRENT, ONEAPI_ROOT.
+    first_year = 18;
+    current_year = year(datetime()) - 2000;
+    nyear = current_year - first_year + 1;
+    envvars = cell(1, nyear + 1);
+    envvars_save = cell(1, nyear + 1);
+    isenvs = false(1, nyear + 1);
+
+    for ienvvar = 1 : length(envvars) - 1
+        envvars{ienvvar} = ['IFORT_COMPILER', int2str(first_year + ienvvar - 1)];
+    end
+    envvars{end} = 'ONEAPI_ROOT';
+
+    for ienvvar = 1 : length(envvars)
+        envvar = envvars{ienvvar};
+        % Test whether the environment variable exists (isenv is available since R2022b).
+        isenvs(ienvvar) = ~exist('isenv', 'builtin') || isenv(envvar);
+        % Save the value of the environment variable; the value is empty in case of nonexistence.
+        envvars_save{ienvvar} = getenv(envvar);
+        % Set the environment variable.
+        if strcmp(envvar, 'ONEAPI_ROOT')
+            setenv(envvar, oneapi_root);
+        else
+            setenv(envvar, compiler_dir);
+        end
+        getenv(envvar)
+    end
 
     % Try setting up MEX again.
     mex_setup = -1;
     exception = [];
     try
         %[~, mex_setup] = evalc('mex(''-setup'', language)'); % Use evalc so that no output will be displayed
-        mex_setup = mex('-setup', language); % mex -setup may be interactive. So it is not good to mute it completely!!!
+        % mex -setup may be interactive. So it is not good to mute it completely!!!
+        if verbose
+            mex_setup = mex('-v', '-setup', language);
+        else
+            mex_setup = mex('-setup', language);
+        end
     catch exception
         % Do nothing
     end
 
-    % If the setup fails again, give up after restoring ONEAPI_ROOT and IFORT_COMPILER18.
+    % If the setup fails again, give up after restoring the environment variables.
     if ~isempty(exception) || mex_setup ~= 0
-        setenv('ONEAPI_ROOT', oneapi_root_save);
-        setenv('IFORT_COMPILER18', ifort_compiler18_save);
-        if exist('unsetenv', 'builtin')  % unsetenv is available since R2022b.
-            if ~isenv_oneapi_root
-                unsetenv('ONEAPI_ROOT');
-            end
-            if ~isenv_ifort_compiler18
-                unsetenv('IFORT_COMPILER18');
+        for ienvvar = 1 : length(envvars)
+            envvar = envvars{ienvvar};
+            setenv(envvar, envvars_save{ienvvar});
+            getenv(envvar)
+            if exist('unsetenv', 'builtin') && ~isenvs(ienvvar)  % unsetenv is available since R2022b.
+                unsetenv(envvar);
             end
         end
     end
@@ -115,6 +137,8 @@ function success = mex_well_configured(language, verbose)
 % success = 0 means MEX cannot compile the example or the resultant MEX file does not work.
 % success = -1 means either we cannot try MEX on the example file because such a file is not found,
 % or the MEX file of the example file works but the result is incorrect.
+
+verbose = (nargin >=2 && verbose);
 
 success = 1;
 
