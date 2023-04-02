@@ -1,0 +1,125 @@
+name: Plot performance profiles with and without RESCUE or IDZ
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  #schedule:
+  #  - cron: '0 16 * * *'
+  # Trigger the workflow manually
+  workflow_dispatch:
+
+env:
+  GFORTRAN_VERSION: 12
+  MATLAB_RELEASE: latest
+
+jobs:
+  test:
+    name: Profile PRIMA.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        dim: [small, all]
+        solver: [newuoa, bobyqa, lincoa]
+        competitor: [last]
+        classical_indicator: [0, 1]
+        with_optim_toolbox: [yes, no]
+        exclude:
+          - solver: newuoa
+            with_optim_toolbox: yes
+          - solver: bobyqa
+            with_optim_toolbox: yes
+
+    steps:
+      - name: Get the solver name
+        run:  echo "SOLNAME=$(echo ${{ matrix.solver }} | cut -c1-6)" >> $GITHUB_ENV
+
+      - name: Check out repository
+        uses: actions/checkout@v3.5.0
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+
+      - name: Clone MatCUTEst
+        uses: actions/checkout@v3.5.0
+        with:
+          repository: equipez/matcutest_compiled
+          path: matcutest
+
+      - name: Link gfortran for MATLAB on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
+
+      - name: Install epstopdf and ghostscript
+        if: startsWith(matrix.os, 'ubuntu')
+        run: bash .github/scripts/install_epstopdf && bash .github/scripts/install_ghostscript
+
+      - name: Check MATLAB
+        id: check_matlab
+        run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
+
+      - name: Set up MATLAB with optimization toolbox
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox == 'yes' }}
+        uses: matlab-actions/setup-matlab@v2-beta
+        with:
+          release: ${{ env.MATLAB_RELEASE }}
+          products: Optimization_Toolbox
+
+      - name: Set up MATLAB without optimization toolbox
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox != 'yes' }}
+        uses: matlab-actions/setup-matlab@v2-beta
+        with:
+          release: ${{ env.MATLAB_RELEASE }}
+
+      - name: Conduct the test
+        uses: matlab-actions/run-command@v1.1.3
+        with:
+          command: |
+            ver;
+            root_dir = pwd();
+
+            cd(fullfile(root_dir, 'matcutest')); install(); which macup
+
+            cd(fullfile(root_dir, 'benchmark/rescue_idz/matlab/tests'));
+            options=struct();
+            options.classical = logical(str2num('${{ matrix.classical_indicator }}'));
+            options.nr = 3;  % 3 random runs for each problem
+
+            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
+
+
+            % Move the files to prepare for uploading artifacts
+
+            solver = '${{ env.SOLNAME }}';
+            cd(fullfile(cd(), 'testdata'));
+            files = dir([solver, '*.summary.*.pdf'])
+            for ifile = 1 : length(files)
+                file = fullfile(files(ifile).folder, files(ifile).name)
+                newfile = fullfile(files(ifile).folder, ['classical', '${{ matrix.classical_indicator }}_', '${{ matrix.with_optim_toolbox }}', '_optool_', files(ifile).name])
+                movefile(file, newfile);
+            end
+            movefile(fullfile(cd(), '*summary*.pdf'), ['/tmp/', solver, '_profile_prima/']);
+            movefile(fullfile(cd(), '*.txt'), ['/tmp/', solver, '_profile_prima/']);
+
+            files = [dir(['/tmp/', solver, '_profile_prima/*start*']); dir(['/tmp/', solver, '_profile_prima/*end*'])]
+            for ifile = 1 : length(files)
+                file = fullfile(files(ifile).folder, files(ifile).name)
+                newfile = fullfile(files(ifile).folder, ['classical', '${{ matrix.classical_indicator }}_', '${{ matrix.with_optim_toolbox }}', '_optool_', files(ifile).name])
+                movefile(file, newfile);
+            end
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3.1.2
+        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
+        with:
+          path: |
+            /tmp/${{ env.SOLNAME }}_profile_prima/*summary*.pdf
+            /tmp/${{ env.SOLNAME }}_profile_prima/*.txt
+            /tmp/${{ env.SOLNAME }}_profile_prima/*start*
+            /tmp/${{ env.SOLNAME }}_profile_prima/*end*
+
+      - name: Remove the test data
+        run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/${{ env.SOLNAME }}_profile_prima
