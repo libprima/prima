@@ -1,0 +1,7 @@
+getact.f
+prelim.f
+update.f
+lincob.f
+qmstep.f
+trstep.f
+lincoa.f90

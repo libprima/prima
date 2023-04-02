@@ -114,13 +114,14 @@ try
 
         solver = solvers{is};
 
+        % The following `cd` decides which version of the solver to compile.
         if endsWith(solver, '_last')
-            cd(last_dir);
+            cd(last_dir);  % Compile SOLVER_last
         elseif endsWith(solver, '_base')
-            solver = regexprep(solver, '_base', '_last');
+            solver = regexprep(solver, '_base', '_last');  % Compile SOLVER_base
             cd(base_dir);
         else  % SOLVER or SOLVER_classical|_single|_quadruple
-            cd(prima_dir);
+            cd(prima_dir);  % Compile SOLVER
         end
 
         clear('setup');  % Without this, the next line may not call the latest version of `setup`
