@@ -133,7 +133,7 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Plot performance profiles, various compiler options](https://github.com/primalib/prima/actions/workflows/profile_compiler_options.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_compiler_options.yml)
 
 - [Tests](https://github.com/zequipe/prima/actions) at [zequipe/prima](https://github.com/zequipe/prima)
-    - [![Plot performance profiles with and without RESCUE or IDZ](https://github.com/primalib/prima/actions/workflows/profile_rescue_idz.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_rescue_idz.yml)
+    - [![Plot performance profiles with and without RESCUE or IDZ](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz.yml)
     - [![Test Flang](https://github.com/zequipe/prima/actions/workflows/test_flang.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_flang.yml)
     - [![Test Flang in AMD AOCC](https://github.com/zequipe/prima/actions/workflows/test_aflang.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_aflang.yml)
     - [![Test nvfortran](https://github.com/zequipe/prima/actions/workflows/test_nvfortran.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_nvfortran.yml)
