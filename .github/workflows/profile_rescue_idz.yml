@@ -5,14 +5,15 @@ on:
   #push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
-  #schedule:
-  #  - cron: '0 16 * * *'
+  schedule:
+    - cron: '0 16 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
 
 env:
   GFORTRAN_VERSION: 12
   MATLAB_RELEASE: latest
+  BENCHMARK: rescue_idz
 
 jobs:
   test:
@@ -83,7 +84,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
-            cd(fullfile(root_dir, 'benchmark/rescue_idz/matlab/tests'));
+            cd(fullfile(root_dir, 'benchmark/${{ env.BENCHMARK }}/matlab/tests'));
             options=struct();
             options.classical = logical(str2num('${{ matrix.classical_indicator }}'));
             options.nr = 3;  % 3 random runs for each problem
@@ -101,10 +102,10 @@ jobs:
                 newfile = fullfile(files(ifile).folder, ['classical', '${{ matrix.classical_indicator }}_', '${{ matrix.with_optim_toolbox }}', '_optool_', files(ifile).name])
                 movefile(file, newfile);
             end
-            movefile(fullfile(cd(), '*summary*.pdf'), ['/tmp/', solver, '_profile_prima/']);
-            movefile(fullfile(cd(), '*.txt'), ['/tmp/', solver, '_profile_prima/']);
+            movefile(fullfile(cd(), '*summary*.pdf'), ['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/']);
+            movefile(fullfile(cd(), '*.txt'), ['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/']);
 
-            files = [dir(['/tmp/', solver, '_profile_prima/*start*']); dir(['/tmp/', solver, '_profile_prima/*end*'])]
+            files = [dir(['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/*start*']); dir(['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/*end*'])]
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
                 newfile = fullfile(files(ifile).folder, ['classical', '${{ matrix.classical_indicator }}_', '${{ matrix.with_optim_toolbox }}', '_optool_', files(ifile).name])
@@ -116,10 +117,10 @@ jobs:
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           path: |
-            /tmp/${{ env.SOLNAME }}_profile_prima/*summary*.pdf
-            /tmp/${{ env.SOLNAME }}_profile_prima/*.txt
-            /tmp/${{ env.SOLNAME }}_profile_prima/*start*
-            /tmp/${{ env.SOLNAME }}_profile_prima/*end*
+            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*summary*.pdf
+            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*.txt
+            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*start*
+            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*end*
 
       - name: Remove the test data
-        run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/${{ env.SOLNAME }}_profile_prima
+        run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}
