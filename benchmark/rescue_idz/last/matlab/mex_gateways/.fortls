@@ -1,0 +1,6 @@
+{
+    "source_dirs": ["../../fortran/common", "../../fortran/newuoa", "../../fortran/uobyqa", "../../fortran/bobyqa", "../../fortran/lincoa", "../../fortran/cobyla"],
+    "pp_suffixes": [".F90", ".F"],
+    "include_dirs": ["../../fortran/common", "./tests"],
+    "lowercase_intrinsics": true
+}
