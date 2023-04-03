@@ -93,7 +93,7 @@ jobs:
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
             cd(fullfile(root_dir, 'matlab/tests'));
-            options=struct();
+            options = struct();
             options.compiler_options = '${{ matrix.compiler_options }}';
             options.debug = ~contains('${{ matrix.compiler_options }}', 'fast')
             options.nr = 4;  % 4 random runs for each problem
