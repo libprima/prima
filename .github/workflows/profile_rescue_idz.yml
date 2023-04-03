@@ -82,10 +82,23 @@ jobs:
             ver;
             root_dir = pwd();
 
+            % Install MatCUTEst.
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
-            cd(fullfile(root_dir, 'benchmark/${{ env.BENCHMARK }}/matlab/tests'));
-            options=struct();
+            % Remove unnecessary files to make sure that we are testing the correct version.
+            files = {'base', 'fortran', 'last', 'matlab'};
+            for ifile = 1 : length(files)
+                rmdir(fullfile(root_dir, file), 's');
+            end
+            delete(fullfile(root_dir, 'setup.m'));
+            movefile(fullfile(root_dir, 'benchmark/${{ env.BENCHMARK }}'), root_dir);
+            rmdir(fullfile(root_dir, 'benchmark'), 's');
+
+
+            % Conduct the test.
+
+            cd(fullfile(root_dir, '${{ env.BENCHMARK }}/matlab/tests'));
+            options = struct();
             options.classical = logical(str2num('${{ matrix.classical_indicator }}'));
             options.rhoend = 1.0e-10;
             options.maxfun_dim = 1000;

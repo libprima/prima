@@ -100,7 +100,7 @@ jobs:
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
             cd(fullfile(root_dir, 'matlab/tests'));
-            options=struct();
+            options = struct();
             options.nr = 4;  % 4 random runs for each problem
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
 
