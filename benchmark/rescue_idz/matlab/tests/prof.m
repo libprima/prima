@@ -38,37 +38,37 @@ if ~any(cellfun(@(x)strcmpi(x, 'ncp'), varargin))
     varargin = [varargin, {'ncp'}];
 end
 
-%options.randomizex0 = eps;
-%argin = [varargin, {options}];
-%output{2} = profile(argin{:});
-%options = rmfield(options, {'randomizex0'});
+options.randomizex0 = eps;
+argin = [varargin, {options}];
+output{2} = profile(argin{:});
+options = rmfield(options, {'randomizex0'});
 
-%options.perm = true;
-%argin = [varargin, {options}];
-%output{3} = profile(argin{:});
-%options = rmfield(options, {'perm'});
+options.perm = true;
+argin = [varargin, {options}];
+output{3} = profile(argin{:});
+options = rmfield(options, {'perm'});
 
 % Precision of function evaluation ~ 1.0e-7 (eps('single') = 1.1921e-07)
 options.eval_options = struct('single', true);
 argin = [varargin, {options}];
-output{2} = profile(argin{:});
+output{4} = profile(argin{:});
 options = rmfield(options, {'eval_options'});
 
 % Precision of function evaluation ~ 1.0e-6
 options.eval_options = struct('dnoise', 1e-6);
 argin = [varargin, {options}];
-output{3} = profile(argin{:});
+output{5} = profile(argin{:});
 
 % Precision of function evaluation ~ 1.0e-5
 options.eval_options = struct('signif', 5);
 argin = [varargin, {options}];
-output{4} = profile(argin{:});
+output{6} = profile(argin{:});
 options = rmfield(options, {'eval_options'});
 
 % Precision of function evaluation ~ 1.0e-4
 options.eval_options = struct('noise', 1e-4);
 argin = [varargin, {options}];
-output{5} = profile(argin{:});
+output{7} = profile(argin{:});
 options = rmfield(options, {'eval_options'});
 
 
