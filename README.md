@@ -138,7 +138,8 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Test nvfortran](https://github.com/zequipe/prima/actions/workflows/test_nvfortran.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_nvfortran.yml)
     - [![Test Oracle sunf95](https://github.com/zequipe/prima/actions/workflows/test_sunf95.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_sunf95.yml)
     - [![Test g95](https://github.com/zequipe/prima/actions/workflows/test_g95.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_g95.yml)
-    - [![Plot performance profiles with and without RESCUE or IDZ](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz.yml)
+    - [![Plot performance profiles with and without RESCUE or IDZ, modernized](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_modernized.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_modernized.yml)
+    - [![Plot performance profiles with and without RESCUE or IDZ, classical](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_classical.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_classical.yml)
 
 - [Tests](https://github.com/equipez/prima/actions) at [equipez/prima](https://github.com/equipez/prima)
     - [![Test gfortran on Kunpeng, small](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_small.yml)
