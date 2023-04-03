@@ -554,9 +554,9 @@ endif
 VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr -Mchkstk -traceback
 
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
-	FCO := $(VFORT) $(FFLAGSO) -Ktrap=divz #-Kieee
+	FCO := $(VFORT) $(FFLAGSO) #-Ktrap=divz #-Kieee
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
-	FCG := $(VFORT) $(FFLAGSG) -Ktrap=divz #-Kieee
+	FCG := $(VFORT) $(FFLAGSG) #-Ktrap=divz #-Kieee
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
 	FCF := $(VFORT) $(VFF)
 
