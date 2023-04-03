@@ -101,7 +101,8 @@ jobs:
             options = struct();
             options.classical = logical(str2num('${{ matrix.classical_indicator }}'));
             options.rhoend = 1.0e-10;
-            options.maxfun_dim = 200;
+            options.maxfun_dim = 400;
+            options.strict = 0;
             options.nr = 3;  % 3 random runs for each problem
 
             if strcmp('${{ matrix.dim }}', 'small')

@@ -30,6 +30,9 @@ lines   = {'-', '-.', '--', ':', '-', '-.', '--', ':', '-', '-.'};
 % returns from solving the ip-th problem at the ir-th random run, and f_return(ip, is, ir) is the
 % function value it returns. In testcu.m, the returned function value and constraint violation are
 % recorded in fval_history(nf + 1) and cv_history(nf + 1), respectively.
+% N.B.: If the problem has no noise, then a reasonable solver (e.g., those in PRIMA) should 
+% return the best point found along the iterations, in terms of the objective function value or 
+% a merit function. It is not the case when there is noise.
 nf_return = NaN(np, ns, nr);
 f_return = NaN(np, ns, nr);
 for ip = 1:np
