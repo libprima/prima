@@ -14,7 +14,9 @@ rhoend = 1e-10;  % FOR TESTING !!!!!!
 % It is an upper bound of MAXDIM, which is the maximal dimension of
 % problems to be tested in the current experiment.
 maxn = 200;
-maxfun_dim = 1000;  % FOR TESTING !!!!!!
+%maxfun_dim = 100;
+%maxfun_dim = 500;
+maxfun_dim = 200;
 maxfun = maxfun_dim*maxn;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
