@@ -428,11 +428,14 @@ if (nf >= 1)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Set the (nf+1)-th entries of fval_history and cv_history to the values returned by the solver.
-    % This is needed for plotting when natrual_stop is true.
+    % This is needed for plotting when natural_stop is true.
+    % N.B.: If the problem has no noise, then a reasonable solver (e.g., those in PRIMA) should
+    % return the best point found along the iterations, in terms of the objective function value or
+    % a merit function. It is not the case when there is noise.
     fval_history(nf + 1) = prob.orig_objective(x);
     cv_history(nf + 1) = orig_cstrv(x);
     % Removing the following two lines, we keep the trailing entries of fval_history and cv_history
-    % being NaN. This is correct and needed for plotting when natrual_stop is true.
+    % being NaN. This is correct and needed for plotting when natural_stop is true.
     %fval_history(nf+2:maxfun) = fval_history(nf);
     %cv_history(nf+2:maxfun) = cv_history(nf);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
