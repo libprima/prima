@@ -1,4 +1,4 @@
-name: Plot performance profiles with and without RESCUE or IDZ
+name: Plot performance profiles with and without RESCUE or IDZ, classical
 
 on:
   # Trigger the workflow on push or pull request
@@ -6,7 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 16 * * *'
+    - cron: '0 20 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
 
@@ -26,13 +26,6 @@ jobs:
         dim: [small, all]
         solver: [newuoa, bobyqa, lincoa]
         competitor: [last]
-        classical_indicator: [0, 1]
-        with_optim_toolbox: [yes, no]
-        exclude:
-          - solver: newuoa
-            with_optim_toolbox: yes
-          - solver: bobyqa
-            with_optim_toolbox: yes
 
     steps:
       - name: Get the solver name
@@ -63,17 +56,11 @@ jobs:
         run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
 
       - name: Set up MATLAB with optimization toolbox
-        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox == 'yes' }}
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
         uses: matlab-actions/setup-matlab@v2-beta
         with:
           release: ${{ env.MATLAB_RELEASE }}
           products: Optimization_Toolbox
-
-      - name: Set up MATLAB without optimization toolbox
-        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox != 'yes' }}
-        uses: matlab-actions/setup-matlab@v2-beta
-        with:
-          release: ${{ env.MATLAB_RELEASE }}
 
       - name: Conduct the test
         uses: matlab-actions/run-command@v1.1.3
@@ -99,7 +86,7 @@ jobs:
 
             cd(fullfile(root_dir, '${{ env.BENCHMARK }}/matlab/tests'));
             options = struct();
-            options.classical = logical(str2num('${{ matrix.classical_indicator }}'));
+            options.classical = true;
             options.rhoend = 1.0e-10;
             options.maxfun_dim = 400;
             options.strict = 0;
@@ -123,7 +110,7 @@ jobs:
             files = dir([solver, '*.summary.*.pdf'])
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
-                newfile = fullfile(files(ifile).folder, ['classical', '${{ matrix.classical_indicator }}_', '${{ matrix.with_optim_toolbox }}', '_optool_', files(ifile).name])
+                newfile = fullfile(files(ifile).folder, ['classical_', files(ifile).name])
                 movefile(file, newfile);
             end
             movefile(fullfile(cd(), '*summary*.pdf'), ['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/']);
@@ -132,7 +119,7 @@ jobs:
             files = [dir(['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/*start*']); dir(['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/*end*'])]
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
-                newfile = fullfile(files(ifile).folder, ['classical', '${{ matrix.classical_indicator }}_', '${{ matrix.with_optim_toolbox }}', '_optool_', files(ifile).name])
+                newfile = fullfile(files(ifile).folder, ['classical_', files(ifile).name])
                 movefile(file, newfile);
             end
 
