@@ -25,7 +25,6 @@ jobs:
         os: [ubuntu-latest]
         dim: [small, all]
         solver: [newuoa, bobyqa, lincoa]
-        competitor: [last]
 
     steps:
       - name: Get the solver name
@@ -92,17 +91,15 @@ jobs:
             options.strict = 0;
             options.nr = 3;  % 3 random runs for each problem
 
-            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
-
-            % if strcmp('${{ matrix.dim }}', 'small')
-            %     prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
-            % elseif  strcmp('${{ matrix.solver }}', 'lincoa')
-            %     prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
-            % elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
-            %     prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', '${{ matrix.competitor }}', options);
-            % else
-            %     prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
-            % end
+            if strcmp('${{ matrix.dim }}', 'small')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'last', options);
+            elseif  strcmp('${{ matrix.solver }}', 'lincoa')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', 'last', options);
+            elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', 'last', options);
+            else
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'last', options);
+            end
 
 
             % Move the files to prepare for uploading artifacts
