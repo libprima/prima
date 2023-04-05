@@ -91,6 +91,8 @@ jobs:
             options.strict = 0;
             options.nr = 3;  % 3 random runs for each problem
 
+            % N.B.: Parallel profiling does not work. The worker will be shut down due to the resource
+            % requested by some problem. Worse, we do not know which problem it is due to the parallelism.
             if strcmp('${{ matrix.dim }}', 'small') || strcmp('${{ matrix.solver }}', 'newuoa')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'last', options, 'seq');
             elseif strcmp('${{ matrix.solver }}', 'lincoa')
