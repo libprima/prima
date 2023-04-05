@@ -91,14 +91,12 @@ jobs:
             options.strict = 0;
             options.nr = 3;  % 3 random runs for each problem
 
-            if strcmp('${{ matrix.dim }}', 'small')
+            if strcmp('${{ matrix.dim }}', 'small') || strcmp('$ {{ matrix.solver }}', 'newuoa')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'last', options);
             elseif  strcmp('${{ matrix.solver }}', 'lincoa')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', 'last', options);
             elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', 'last', options);
-            else
-                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'last', options);
             end
 
 
