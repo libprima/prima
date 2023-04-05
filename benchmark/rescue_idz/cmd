@@ -1,0 +1,1 @@
+tic; opt=[]; opt.nr = 30; opt.rhoend=1.0e-8; opt.maxfun_dim=500; opt.classical=true; prof('lincoa', 'last', opt, 'all', 'seq'); toc
