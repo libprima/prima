@@ -880,7 +880,7 @@ case 'lincoa'
         'TARGUS', ...
         }];
     % For the following problems, the classical lincoa encounters SEGFAULT.
-    blacklist = [blacklist, {'3PK', 'GOFFIN', 'LSNNODOC', 'MAKELA4', 'OET1', 'QPCBOEI2', 'QPNBOEI2', 'SIPOW3', 'SIPOW4', 'TFI2'}];
+    blacklist = [blacklist, {'3PK', 'GOFFIN', 'HS55', 'LSNNODOC', 'MAKELA4', 'MAXLIKA', 'OET1', 'QPCBOEI2', 'QPNBOEI2', 'SIPOW3', 'SIPOW4', 'TFI2'}];
 case 'cobyla'
     % The following problems were observed to take excessive time during tests GitHub Actions and
     % make the tests run overtime. Some of them may not be very time-consuming during a "plain"
