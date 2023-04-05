@@ -84,7 +84,7 @@ prof_options.outdir = outdir;
 prof_options.stamp = stamp;
 prof_options.feature_and_time = feature_and_time;
 
-prec = (1:16);
+prec = (1:12);
 nprec = length(prec);
 tau = 10.^(-prec);
 prof_output = cell(1, 2*nprec);
@@ -128,12 +128,17 @@ for iprec = 1 : 2*nprec
     %pbaspect([1 1 1]);
 end
 for iprec = 1 : 2*nprec
-    ha=get(gcf,'children');
+    ha = get(gcf,'children');
     real_iprec = mod(iprec-1, nprec) + 1;  % The real index of the precision.
+    %if iprec > nprec
+    %    set(ha(iprec),'position', [0.01+(nprec-real_iprec)/(nprec), 0.53, 0.9/(nprec), 0.4]);
+    %else
+    %    set(ha(iprec),'position', [0.01+(nprec-real_iprec)/(nprec), 0.1, 0.9/(nprec), 0.4]);
+    %end
     if iprec > nprec
-        set(ha(iprec),'position', [0.01+(nprec-real_iprec)/(nprec), 0.53, 0.9/(nprec), 0.4]);
+        set(ha(iprec),'position', [0.01+(nprec-real_iprec)/(nprec), 0.53, 0.8/(nprec), 0.35]);
     else
-        set(ha(iprec),'position', [0.01+(nprec-real_iprec)/(nprec), 0.1, 0.9/(nprec), 0.4]);
+        set(ha(iprec),'position', [0.01+(nprec-real_iprec)/(nprec), 0.1, 0.8/(nprec), 0.35]);
     end
 end
 
