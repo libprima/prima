@@ -30,8 +30,8 @@ lines   = {'-', '-.', '--', ':', '-', '-.', '--', ':', '-', '-.'};
 % returns from solving the ip-th problem at the ir-th random run, and f_return(ip, is, ir) is the
 % function value it returns. In testcu.m, the returned function value and constraint violation are
 % recorded in fval_history(nf + 1) and cv_history(nf + 1), respectively.
-% N.B.: If the problem has no noise, then a reasonable solver (e.g., those in PRIMA) should 
-% return the best point found along the iterations, in terms of the objective function value or 
+% N.B.: If the problem has no noise, then a reasonable solver (e.g., those in PRIMA) should
+% return the best point found along the iterations, in terms of the objective function value or
 % a merit function. It is not the case when there is noise.
 nf_return = NaN(np, ns, nr);
 f_return = NaN(np, ns, nr);
@@ -96,6 +96,7 @@ for ip = 1:np
         end
     end
 end
+
 
 % pp{is, ir} is the performance profile of the is-th solver during the ir-th run.
 pp = cell(ns, nr);
@@ -190,8 +191,10 @@ output.cut_ratio = cut_ratio;  % Needed if we re-plot the profiles by loading th
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 axis([0 cut_ratio 0 1]);
+% Zaikun 230406: It seems that the following setting does not take effects.
 yticks(0 : 0.1 : 1);
 yticklabels({'0', '', '0.2', '', '0.4', '', '0.6', '', '0.8', '', '1'});
+grid on;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Legends and title should be added.
