@@ -57,4 +57,9 @@ end
 warning(orig_warning_state);
 
 % Save the data
-save([solver, '_', int2str(mindim), '_', int2str(maxdim), '_', 'timing.mat'], 'plist', 'tlist', '-v7.3');
+data_dir = fullfile(mfiledir, 'testdata');
+if ~exist(data_dir, 'dir')
+    mkdir(data_dir);
+end
+matfile = fullfile(data_dir, [solver, '_', int2str(mindim), '_', int2str(maxdim), '_', 'timing.mat']);
+save(matfile, 'plist', 'tlist', '-v7.3');
