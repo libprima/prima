@@ -128,3 +128,4 @@ jobs:
               setup path
               setup uninstall
               cd(fullfile(root_dir, 'matlab', 'tests')); pdv
+              cd(fullfile(root_dir, 'matlab', 'examples')); rosenbrock_example
