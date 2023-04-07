@@ -1,3 +1,3 @@
-According to the test on 20230321, the RESCUE of BOBYQA and IDZ of NEWUOQ/LINCOA affects the
-performance quite marginally on problems up to 200 dimension. Therefore, it seems safe to ignore
+According to the test on 20230406, the RESCUE of BOBYQA and IDZ of NEWUOQ/LINCOA affects the
+performance marginally on problems up to 200 dimension. Therefore, it seems safe to ignore
 theses two techniques in the first implementation of algorithms based on the derivative-free PSB.
