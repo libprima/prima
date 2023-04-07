@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 05, 2023 PM05:00:05
+! Last Modified: Saturday, April 08, 2023 AM12:12:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,7 +30,6 @@ subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt)
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : norm
 
 implicit none
 

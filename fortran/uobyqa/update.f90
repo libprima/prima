@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, March 22, 2023 AM01:01:48
+! Last Modified: Saturday, April 08, 2023 AM12:28:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,7 +29,7 @@ subroutine update(knew, d, f, moderr, kopt, fval, pl, pq, xpt)
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : outprod, norm
+use, non_intrinsic :: linalg_mod, only : outprod
 use, non_intrinsic :: powalg_mod, only : calvlag
 
 ! Inputs
