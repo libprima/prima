@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, March 29, 2023 PM11:12:38
+! Last Modified: Friday, April 07, 2023 PM11:44:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,7 +58,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
-use, non_intrinsic :: linalg_mod, only : norm, matprod
+use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, updateh
