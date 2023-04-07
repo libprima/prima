@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, March 08, 2023 PM11:07:53
+! Last Modified: Friday, April 07, 2023 PM11:44:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,7 +30,6 @@ subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt)
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : norm
 
 implicit none
 
@@ -226,7 +225,7 @@ subroutine tryqalt(idz, bmat, fval, ratio, xopt, xpt, zmat, itest, gopt, hq, pq)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, issymmetric, trueloc
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, issymmetric
 use, non_intrinsic :: powalg_mod, only : hess_mul, omega_mul
 
 implicit none
