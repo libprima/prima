@@ -10,7 +10,7 @@ function isequiv(solvers, options)
 %
 % Started: July 2020
 %
-% Last Modified: Monday, October 04, 2021 PM09:19:19
+% Last Modified: Monday, April 07, 2023 PM07:04:00
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -40,10 +40,10 @@ if isfield(options, 'nr')
 else
     nr = 10;
 end
+% ir is the index of the random experiment to be conducted. If it is negative, then experiments
+% 1, ..., nr, ..., nr + 20 will be conducted. nr + 20 is because there are fixed experiments
+% that will always be run.
 if isfield(options, 'ir')
-    % ir is the index of the random experiment to be conducted. If it is negative, then experiments
-    % 1, ..., nr, ..., nr + 20 will be conducted. nr + 20 is because there are fixed experiments
-    % that will always be run.
     ir = options.ir;
 else
     ir = -1;
@@ -435,67 +435,6 @@ if ~isempty(exception)
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END: Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Special Treatments%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Zaikun 230129: The special treatments are not needed since the modernization is finished.
-%if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
-%    exitflag1 = 3;
-%    %fprintf('exitflag1 changed to 3.\n')
-%end
-%if output2.funcCount == test_options.maxfun && (exitflag2 == 0 || exitflag2 == 2) && exitflag1 == 3
-%    exitflag2 = 3;
-%    %fprintf('exitflag2 changed to 3.\n')
-%end
-%if fx1 <= test_options.ftarget
-%    exitflag1 = 1;
-%    %fprintf('exitflag1 changed to 1.\n')
-%end
-%if fx2 <= test_options.ftarget
-%    exitflag2 = 1;
-%    %fprintf('exitflag2 changed to 1.\n')
-%end
-
-%minfhist = min(length(output1.fhist), length(output2.fhist));
-
-%% NEWUOA
-%if strcmpi(solvers{1}, 'newuoa_last') && strcmpi(solvers{2}, 'newuoa') && exitflag1 == 2 && exitflag2 ~=2 ...
-%        && fx2 <= fx1 && output1.funcCount <= output2.funcCount ...
-%        && all(output2.fhist(end-minfhist+1:end-(output2.funcCount-output1.funcCount)) ...
-%        == output1.fhist(end-minfhist+(output2.funcCount-output1.funcCount)+1:end))
-%    x2 = x1;
-%    fx2 = fx1;
-%    exitflag2 = exitflag1;
-%    output2.fhist = output1.fhist;
-%    output2.funcCount = output1.funcCount;
-%    fprintf('The original solver exits due to failure of the TR subproblem solver.\n');
-%end
-%if strcmpi(solvers{1}, 'newuoa') && strcmpi(solvers{2}, 'newuoa_last') && exitflag2 == 2 && exitflag1 ~=2 ...
-%        && fx1 <= fx2 && output2.funcCount <= output1.funcCount ...
-%        && all(output1.fhist(end-minfhist+1:end-(output1.funcCount-output2.funcCount)) ...
-%        == output2.fhist(end-minfhist+(output1.funcCount-output2.funcCount)+1:end))
-%    x1 = x2;
-%    fx1 = fx2;
-%    exitflag1 = exitflag2;
-%    output1.fhist = output2.fhist;
-%    output1.funcCount = output2.funcCount;
-%    fprintf('The original solver exits due to failure of the TR subproblem solver.\n');
-%end
-%if (ismember('newuoa', solvers) || ismember('bobyqa', solvers) || ismember('uobyqa', solvers)) ...
-%        && fx1 == fx2 && norm(x1 - x2) > 0 && output1.funcCount == output2.funcCount ...
-%        && all(output1.fhist(end-minfhist+1:end) == output2.fhist(end-minfhist+1:end))
-%    x1 = x2;
-%    fprintf('x1 changed to x2\n');
-%end
-
-%% COBYLA
-%if (ismember('cobyla', solvers) && fx1 == fx2 && norm(x1-x2)>0) ...
-%        && (~isfield(output1,'constrviolation') && ~isfield(output2, 'constrviolation') ...
-%        || isfield(output1, 'constrviolation') && output1.constrviolation == output2.constrviolation)
-%    x1 = x2;
-%    fprintf('x1 changed to x2.\n');
-%end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 equiv = iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec);
 
 if ~equiv
@@ -695,7 +634,7 @@ case 'bobyqa'
         'VARDIM', ...
         }];
 case 'lincoa'
-    blacklist = [blacklist, {'LSNNODOC', 'HS55', 'HEART6', 'AVGASA', 'AVGASB', 'CHEBYQAD', 'HS54'}]; % Classical lincoa encounters SEGFAULT
+    %blacklist = [blacklist, {'LSNNODOC', 'HS55', 'HEART6', 'AVGASA', 'AVGASB', 'CHEBYQAD', 'HS54'}]; % Classical lincoa encounters SEGFAULT
     blacklist = [blacklist, { ...
         'ARGTRIGLS', ...
         'BA-L1SPLS', ...
@@ -725,7 +664,7 @@ case 'lincoa'
 case 'cobyla'
     blacklist = [blacklist, {'HS80'}];  % QRADD_RDIAG: Assertion failed: C^T*Q(:, N) == Rdiag(N).
     blacklist = [blacklist, {'EXTRASIM', 'POLAK6', 'SPIRAL', 'POLAK2'}]; % Assertion failed: B = A^{-1}
-    blacklist = [blacklist, {'LAUNCH', 'MINMAXRB', 'MAKELA1', 'HS75', 'GAUSS3','HATFLDG'}]; % Classical cobyla encounters SEGFAULT
+    %blacklist = [blacklist, {'LAUNCH', 'MINMAXRB', 'MAKELA1', 'HS75', 'GAUSS3','HATFLDG'}]; % Classical cobyla encounters SEGFAULT
     blacklist = [blacklist, { ...
         'ACOPP30', ...
         'ACOPR14', ...
