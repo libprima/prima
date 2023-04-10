@@ -5,6 +5,10 @@
 DIR="$(realpath "$1")"
 GETACTF90="getact.f90"
 GETACT="$DIR/lincoa/$GETACTF90"
+STRINGF90="string.f90"
+STRING="$DIR/common/$STRINGF90"
+PREPROCF90="preproc.f90"
+PREPROC="$DIR/common/$PREPROCF90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -14,5 +18,11 @@ fi
 if [[ -f "$GETACT" ]] ; then
     sed -i "s/,\s*back\s*=\s*\.true\.//" "$GETACT"
 fi
+
+for FILE in "$STRING" "$PREPROC" ; do
+    if [[ -f "$FILE" ]] ; then
+        sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
+    fi
+done
 
 exit 0

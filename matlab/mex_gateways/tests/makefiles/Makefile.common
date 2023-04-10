@@ -546,6 +546,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[SQRT\]" \
 	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[NINT\]" \
 	| grep -v "all warnings being treated as errors" \
+	| grep -v ": ‘\.min_maxfun_str’ may be used uninitialized \[-W.*maybe-uninitialized\]" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
