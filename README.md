@@ -108,13 +108,15 @@ to distribute this large amount of tests to several different Team accounts as f
 
 - [Tests](https://github.com/libprima/prima/actions) at [libprima/prima](https://github.com/libprima/prima)
 
-    - [![Verification, small](https://github.com/libprima/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_small.yml)
-    - [![Verification, big](https://github.com/libprima/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_big.yml)
-    - [![Verification, large](https://github.com/libprima/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/verify_large.yml)
     - [![Test Absoft](https://github.com/libprima/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_absoft.yml)
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
     - [![Lint](https://github.com/libprima/prima/actions/workflows/lint.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint.yml)
-    - [![Plot performance profiles for lincoa](https://github.com/libprima/prima/actions/workflows/profile_lincoa_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_lincoa_small.yml)
+
+- [Tests](https://github.com/libsprima/prima/actions) at [libsprima/prima](https://github.com/libsprima/prima)
+    - [![Verification, small](https://github.com/libsprima/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_small.yml)
+    - [![Verification, big](https://github.com/libsprima/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_big.yml)
+    - [![Verification, large](https://github.com/libsprima/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_large.yml)
+    - [![Plot performance profiles for lincoa](https://github.com/libsprima/prima/actions/workflows/profile_lincoa_small.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/profile_lincoa_small.yml)
 
 - [Tests](https://github.com/primapack/prima/actions) at [primapack/prima](https://github.com/primapack/prima)
 
