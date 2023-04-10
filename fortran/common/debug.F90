@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Monday, April 10, 2023 PM03:34:29
+! Last Modified: Monday, April 10, 2023 PM07:31:06
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -102,7 +102,10 @@ character(len=*), intent(in) :: msg
 
 call backtr()
 write (STDERR, '(/1A/)') 'ERROR: '//trimstr(srname)//': '//trimstr(msg)//'.'
-stop  ! This means to stop the whole program.
+error stop  ! This means to stop the whole program.
+! N.B. (Zaikun 230410): We prefer ERROR STOP to STOP, as the former has been allowed in PURE
+! procedures since F2018. Later, when F2018 is better supported, we should take advantage of this
+! feature to make our subroutines PURE whenever possible.
 end subroutine errstop
 
 
