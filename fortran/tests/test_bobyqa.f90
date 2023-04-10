@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, January 26, 2023 PM12:34:11
+! Last Modified: Monday, April 10, 2023 PM03:38:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -157,7 +157,7 @@ else
         probname = probs_loc(iprob)
         ndim = (maxdim_loc - mindim_loc) / dimstride_loc + 1_IK
         dim_list(1:ndim) = mindim_loc + dimstride_loc*[(idim - 1_IK, idim=1_IK, ndim)]
-        if (trim(probname) == 'ptinsq') then
+        if (trimstr(probname) == 'ptinsq') then
             dim_list(1:ndim) = int(ceiling(real(dim_list(1:ndim)) / 2.0) * 2, IK)  ! Must be even
         end if
         do idim = 1, ndim

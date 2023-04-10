@@ -30,7 +30,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 10, 2023 PM01:53:04
+! Last Modified: Monday, April 10, 2023 PM03:11:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -252,7 +252,6 @@ real(RP), intent(out), allocatable, optional :: xhist(:, :)  ! XHIST(N, MAXXHIST
 real(RP), intent(out), optional :: cstrv
 
 ! Local variables
-character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
 character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'LINCOA'
 integer(IK) :: info_loc

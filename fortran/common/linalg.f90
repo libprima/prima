@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 21, 2023 PM09:29:37
+! Last Modified: Monday, April 10, 2023 PM03:23:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2141,6 +2141,7 @@ function sort_i2(x, dim, direction) result(y)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 
 ! Inputs
@@ -2151,7 +2152,7 @@ character(len=*), intent(in), optional :: direction
 integer(IK) :: y(size(x, 1), size(x, 2))
 ! Local variables
 character(len=*), parameter :: srname = 'SORT_I2'
-character(len=100) :: direction_loc
+character(len=:), allocatable :: direction_loc
 integer :: dim_loc
 integer(IK) :: i
 integer(IK) :: n
@@ -2167,17 +2168,17 @@ end if
 
 direction_loc = 'ascend'
 if (present(direction)) then
-    direction_loc = direction
+    direction_loc = trimstr(direction)
 end if
 
 y = x
 if (dim_loc == 1) then
     do i = 1, int(size(x, 2), IK)
-        y(:, i) = sort_i1(y(:, i), trim(direction_loc))
+        y(:, i) = sort_i1(y(:, i), direction_loc)
     end do
 else
     do i = 1, int(size(x, 1), IK)
-        y(i, :) = sort_i1(y(i, :), trim(direction_loc))
+        y(i, :) = sort_i1(y(i, :), direction_loc)
     end do
 end if
 
@@ -2189,14 +2190,14 @@ end if
 if (DEBUGGING) then
     if (dim_loc == 1) then
         n = int(size(y, 1), kind(n))
-        if (trim(direction_loc) == 'ascend' .or. trim(direction_loc) == 'ASCEND') then
+        if (direction_loc == 'ascend' .or. direction_loc == 'ASCEND') then
             call assert(all(y(1:n - 1, :) <= y(2:n, :)), 'Y is ascending along dimension 1', srname)
         else
             call assert(all(y(1:n - 1, :) >= y(2:n, :)), 'Y is descending along dimension 1', srname)
         end if
     else
         n = int(size(y, 2), kind(n))
-        if (trim(direction_loc) == 'ascend' .or. trim(direction_loc) == 'ASCEND') then
+        if (direction_loc == 'ascend' .or. direction_loc == 'ASCEND') then
             call assert(all(y(:, 1:n - 1) <= y(:, 2:n)), 'Y is ascending along dimension 2', srname)
         else
             call assert(all(y(:, 1:n - 1) >= y(:, 2:n)), 'Y is descending along dimension 2', srname)

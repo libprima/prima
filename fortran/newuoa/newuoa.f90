@@ -22,7 +22,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 10, 2023 PM01:53:18
+! Last Modified: Monday, April 10, 2023 PM03:12:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -199,7 +199,6 @@ integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(out), optional :: info
 
 ! Local variables
-character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
 character(len=*), parameter :: solver = 'NEWUOA'
 character(len=*), parameter :: srname = 'NEWUOA'
 integer(IK) :: info_loc

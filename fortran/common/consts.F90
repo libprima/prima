@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, March 16, 2023 AM10:26:00
+! Last Modified: Monday, April 10, 2023 PM02:15:56
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -85,7 +85,6 @@ public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: REALMIN, EPS, TINYCV, REALMAX, FUNCMAX, CONSTRMAX, BOUNDMAX
 public :: SYMTOL_DFT
-public :: MSGLEN, FNAMELEN
 public :: OUTUNIT, STDIN, STDOUT, STDERR
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, CWEIGHT_DFT
 public :: ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
@@ -214,11 +213,6 @@ real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
 real(RP), parameter :: SYMTOL_DFT = ZERO
 #endif
 
-! The maximal length of messages; used in output.f90 and fmexapi.F90
-integer, parameter :: MSGLEN = 2**13
-
-! The maximal length of output file names; used in output.f90
-integer, parameter :: FNAMELEN = 128
 ! Output unit, can be any integer between 9 and 99; used in output.f90
 integer, parameter :: OUTUNIT = 42
 ! Standard IO units

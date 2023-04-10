@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, April 10, 2023 PM01:52:47
+! Last Modified: Monday, April 10, 2023 PM03:12:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -282,7 +282,6 @@ real(RP), intent(out), allocatable, optional :: xhist(:, :) ! XHIST(N, MAXXHIST)
 real(RP), intent(out), optional :: cstrv
 
 ! Local variables
-character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
 character(len=*), parameter :: solver = 'COBYLA'
 character(len=*), parameter :: srname = 'COBYLA'
 integer(IK) :: info_loc

@@ -1,6 +1,8 @@
 #!/bin/bash
-# This script pre-processes the Fortran source code for sunf95. It does not recognize overloaded
-# intrinsic functions (particularly, their returning type/kind) correctly, e.g., INT in LINALG_MOD.
+# This script pre-processes the Fortran source code for sunf95.
+# 1. It does not recognize overloaded intrinsic functions (particularly, their returning type/kind)
+# correctly, e.g., INT in LINALG_MOD.
+# 2. It sometimes encounters internal compiler errors when dealing with allocatable characters.
 
 DIR="$(realpath "$1")"
 HISTORYF90="history.f90"
@@ -11,6 +13,10 @@ LINGEO="$DIR/lincoa/geometry.f90"
 LINTR="$DIR/lincoa/trustregion.f90"
 LINUPD="$DIR/lincoa/update.f90"
 BOBTR="$DIR/bobyqa/trustregion.f90"
+OUTPUTF90="output.f90"
+OUTPUT="$DIR/common/$OUTPUTF90"
+DEBUGF90="debug.F90"
+DEBUG="$DIR/common/$DEBUGF90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -59,5 +65,11 @@ if [[ -f "$BOBTR" ]] ; then
     sed -i "s|dhd = inprod(d($TRUELOC), hdred($TRUELOC))|hs = inprod(d(ind), hdred(ind))|" "$BOBTR"
 
 fi
+
+for FILE in "$OUTPUT" "$DEBUG" ; do
+    if [[ -f "$FILE" ]] ; then
+        sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
+    fi
+done
 
 exit 0

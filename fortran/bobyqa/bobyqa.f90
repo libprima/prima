@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 10, 2023 PM02:02:16
+! Last Modified: Monday, April 10, 2023 PM03:11:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -223,7 +223,6 @@ real(RP), intent(out), allocatable, optional :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(out), allocatable, optional :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
-character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
 character(len=*), parameter :: solver = 'BOBYQA'
 character(len=*), parameter :: srname = 'BOBYQA'
 integer(IK) :: info_loc
