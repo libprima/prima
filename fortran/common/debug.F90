@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Sunday, November 13, 2022 PM02:07:02
+! Last Modified: Monday, April 10, 2023 PM03:34:29
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -32,12 +32,13 @@ subroutine assert(condition, description, srname)
 ! (python -O), the Python `assert` will also be ignored. MATLAB does not behave in this way.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
-    call errstop(trim(srname), 'Assertion failed: '//trim(description))
+    call errstop(trimstr(srname), 'Assertion failed: '//trimstr(description))
 end if
 end subroutine assert
 
@@ -51,12 +52,13 @@ subroutine validate(condition, description, srname)
 ! In Python or C, VALIDATE can be implemented following the Fortran implementation below.
 ! N.B.: ASSERT checks the condition only when debugging, but VALIDATE does it always.
 !--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (.not. condition) then
-    call errstop(trim(srname), 'Validation failed: '//trim(description))
+    call errstop(trimstr(srname), 'Validation failed: '//trimstr(description))
 end if
 end subroutine validate
 
@@ -75,13 +77,14 @@ subroutine wassert(condition, description, srname)
 ! but WASSERT only raises a warning.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
     call backtr()
-    call warning(trim(srname), 'Assertion failed: '//trim(description))
+    call warning(trimstr(srname), 'Assertion failed: '//trimstr(description))
 end if
 end subroutine wassert
 
@@ -92,12 +95,13 @@ subroutine errstop(srname, msg)
 ! It also calls BACKTR to print the backtrace.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : STDERR
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
 call backtr()
-write (STDERR, '(/1A/)') 'ERROR: '//trim(srname)//': '//trim(msg)//'.'
+write (STDERR, '(/1A/)') 'ERROR: '//trimstr(srname)//': '//trimstr(msg)//'.'
 stop  ! This means to stop the whole program.
 end subroutine errstop
 
@@ -138,11 +142,12 @@ subroutine warning(srname, msg)
 ! This subroutine prints 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.' to STDERR.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : STDERR
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
-write (STDERR, '(/1A/)') 'Warning: '//trim(srname)//': '//trim(msg)//'.'
+write (STDERR, '(/1A/)') 'Warning: '//trimstr(srname)//': '//trimstr(msg)//'.'
 end subroutine warning
 
 
