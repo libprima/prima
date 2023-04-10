@@ -2,9 +2,9 @@ consts.F90
 infos.f90
 inf.F90
 infnan.F90
+string.f90
 debug.F90
 memory.F90
-string.f90
 linalg.f90
 univar.f90
 rand.f90

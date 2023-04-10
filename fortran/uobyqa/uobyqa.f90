@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 10, 2023 PM01:53:34
+! Last Modified: Monday, April 10, 2023 PM03:11:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -195,7 +195,6 @@ integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(out), optional :: info
 
 ! Local variables
-character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
 character(len=*), parameter :: solver = 'UOBYQA'
 character(len=*), parameter :: srname = 'UOBYQA'
 integer(IK) :: info_loc

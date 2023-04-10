@@ -8,7 +8,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 12, 2022 PM03:18:06
+! Last Modified: Monday, April 10, 2023 PM03:37:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,11 +54,12 @@ subroutine retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints messages at return.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, MSGLEN, FNAMELEN, OUTUNIT, STDOUT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING, &
     & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 
 ! Compulsory inputs
@@ -75,9 +76,9 @@ real(RP), intent(in), optional :: constr(:)
 
 ! Local variables
 character(len=*), parameter :: srname = 'RETMSG'
-character(len=3) :: fstat  ! 'OLD' or 'NEW'
-character(len=FNAMELEN) :: fout
-character(len=MSGLEN) :: msg
+character(len=:), allocatable :: fstat  ! 'OLD' or 'NEW'
+character(len=:), allocatable :: fout
+character(len=:), allocatable :: msg
 integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 integer(IK), parameter :: valid_exit_flags(11) = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
@@ -102,7 +103,7 @@ elseif (iprint > 0) then
     wunit = STDOUT  ! Print the message to the standard out.
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     wunit = OUTUNIT
-    fout = trim(solver)//'_output.txt'
+    fout = trimstr(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
     open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
@@ -160,7 +161,7 @@ end select
 if (abs(iprint) >= 3) then
     write (wunit, '(1X)')
 end if
-write (wunit, '(/1A)') 'Return from '//solver//' because '//trim(msg)
+write (wunit, '(/1A)') 'Return from '//solver//' because '//trimstr(msg)
 write (wunit, retnf_fmt) 'At the return from '//solver, 'Number of function evaluations = ', nf
 write (wunit, f_fmt) 'Least function value = ', f
 if (is_constrained) then
@@ -186,8 +187,9 @@ subroutine rhomsg(solver, iprint, nf, f, rho, x, cstrv, constr, cpen)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints messages when RHO is updated.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT, FNAMELEN
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
 use, non_intrinsic :: debug_mod, only : warning
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 
 ! Compulsory inputs
@@ -205,8 +207,8 @@ real(RP), intent(in), optional :: cpen
 
 ! Local variables
 character(len=*), parameter :: srname = 'RHOMSG'
-character(len=3) :: fstat  ! 'OLD' or 'NEW'
-character(len=FNAMELEN) :: fout
+character(len=:), allocatable :: fstat  ! 'OLD' or 'NEW'
+character(len=:), allocatable :: fout
 integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 logical :: fexist
@@ -223,7 +225,7 @@ elseif (iprint > 0) then
     wunit = STDOUT  ! Print the message to the standard out.
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     wunit = OUTUNIT
-    fout = trim(solver)//'_output.txt'
+    fout = trimstr(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
     open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
@@ -281,8 +283,9 @@ subroutine cpenmsg(solver, iprint, cpen)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints a message when CPEN is updated.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, FNAMELEN, OUTUNIT, STDOUT
+use, non_intrinsic :: consts_mod, only : RP, IK, OUTUNIT, STDOUT
 use, non_intrinsic :: debug_mod, only : warning
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 
 ! Compulsory inputs
@@ -294,8 +297,8 @@ real(RP), intent(in), optional :: cpen
 
 ! Local variables
 character(len=*), parameter :: srname = 'CPENMSG'
-character(len=3) :: fstat  ! 'OLD' or 'NEW'
-character(len=FNAMELEN) :: fout
+character(len=:), allocatable :: fstat  ! 'OLD' or 'NEW'
+character(len=:), allocatable :: fout
 integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 logical :: fexist
@@ -306,7 +309,7 @@ elseif (iprint > 0) then
     wunit = STDOUT  ! Print the message to the standard out.
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     wunit = OUTUNIT
-    fout = trim(solver)//'_output.txt'
+    fout = trimstr(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
     open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
@@ -327,8 +330,9 @@ subroutine fmsg(solver, iprint, nf, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints messages at each iteration.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT, FNAMELEN
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
 use, non_intrinsic :: debug_mod, only : warning
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 
 ! Inputs
@@ -344,8 +348,8 @@ real(RP), intent(in), optional :: constr(:)
 
 ! Local variables
 character(len=*), parameter :: srname = 'FMSG'
-character(len=3) :: fstat  ! 'OLD' or 'NEW'
-character(len=FNAMELEN) :: fout
+character(len=:), allocatable :: fstat  ! 'OLD' or 'NEW'
+character(len=:), allocatable :: fout
 integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 logical :: fexist
@@ -362,7 +366,7 @@ elseif (iprint > 0) then
     wunit = STDOUT  ! Print the message to the standard out.
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     wunit = OUTUNIT
-    fout = trim(solver)//'_output.txt'
+    fout = trimstr(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
     open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')

@@ -546,7 +546,21 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[SQRT\]" \
 	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[NINT\]" \
 	| grep -v "all warnings being treated as errors" \
-	| grep -v ": ‘\.min_maxfun_str’ may be used uninitialized \[-W.*maybe-uninitialized\]" \
+	| grep -v ": ‘\.min_maxfun_str’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
+	| grep -v ": ‘\.direction_loc’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
+	| grep -v ": ‘\.wid’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
+	| grep -v ": ‘\.eid’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
+	| grep -v ": ‘\.wmsg’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
+	| grep -v ": ‘\.emsg’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
+	| grep -v ": ‘\.msg’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
+	| grep -v ": ‘\.fout’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
+	| grep -v ": ‘\.fstat’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
+    | grep -v "msg\s*=.*fmxIsDoubleVector: An invalid shape type" \
+    | grep -v "msg\s*=.*fmxCallMATLAB: MEX fails to call a MATLAB function" \
+    | grep -v "wid\s*=.*LargeConversionError" \
+    | grep -v "msg\s*=.*Large error occurs when converting " \
+	| grep -v ": warning #8236: Deferred character length in a data object or component declaration is an extension of Standard F95." \
+	| grep -v ": warning #6655: The f95 standard requires that the ALLOCATABLE attribute only be given to array objects." \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"

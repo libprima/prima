@@ -17,7 +17,7 @@ module debug_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Sunday, January 01, 2023 PM08:10:20
+! Last Modified: Monday, April 10, 2023 PM03:32:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,12 +57,13 @@ subroutine assert(condition, description, srname)
 ! (python -O), the Python `assert` will also be ignored. MATLAB does not behave in this way.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
-    call errstop(trim(srname), 'Assertion failed: '//trim(description))
+    call errstop(trimstr(srname), 'Assertion failed: '//trimstr(description))
 end if
 end subroutine assert
 
@@ -76,12 +77,13 @@ subroutine validate(condition, description, srname)
 ! In Python or C, VALIDATE can be implemented following the Fortran implementation below.
 ! N.B.: ASSERT checks the condition only when debugging, but VALIDATE does it always.
 !--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (.not. condition) then
-    call errstop(trim(srname), 'Validation failed: '//trim(description))
+    call errstop(trimstr(srname), 'Validation failed: '//trimstr(description))
 end if
 end subroutine validate
 
@@ -100,13 +102,14 @@ subroutine wassert(condition, description, srname)
 ! but WASSERT only raises a warning.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
     call backtr()
-    call warning(trim(srname), 'Assertion failed: '//trim(description))
+    call warning(trimstr(srname), 'Assertion failed: '//trimstr(description))
 end if
 end subroutine wassert
 
@@ -116,18 +119,18 @@ subroutine errstop(srname, msg)
 ! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.', then stop.
 ! It also calls BACKTR to print the backtrace.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : MSGLEN
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
-character(len=MSGLEN) :: eid
-character(len=MSGLEN) :: emsg
+character(len=:), allocatable :: eid
+character(len=:), allocatable :: emsg
 
 call backtr()
-eid = 'FMXAPI:'//trim(srname)
-emsg = trim(srname)//': '//trim(msg)//'.'
-call mexErrMsgIdAndTxt(trim(eid), trim(emsg))
+eid = 'FMXAPI:'//trimstr(srname)
+emsg = trimstr(srname)//': '//trimstr(msg)//'.'
+call mexErrMsgIdAndTxt(eid, emsg)
 end subroutine errstop
 
 
@@ -168,17 +171,17 @@ subroutine warning(srname, msg)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.'
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : MSGLEN
+use, non_intrinsic :: string_mod, only : trimstr
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
-character(len=MSGLEN) :: wid
-character(len=MSGLEN) :: wmsg
+character(len=:), allocatable :: wid
+character(len=:), allocatable :: wmsg
 
-wid = 'FMXAPI:'//trim(srname)
-wmsg = trim(srname)//': '//trim(msg)//'.'
-call mexWarnMsgIdAndTxt(trim(wid), trim(wmsg))
+wid = 'FMXAPI:'//trimstr(srname)
+wmsg = trimstr(srname)//': '//trimstr(msg)//'.'
+call mexWarnMsgIdAndTxt(wid, wmsg)
 end subroutine warning
 
 

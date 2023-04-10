@@ -10,7 +10,7 @@ module fmxapi_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Sunday, January 29, 2023 PM03:58:43
+! Last Modified: Monday, April 10, 2023 PM03:18:57
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -281,40 +281,37 @@ end function
 
 subroutine fmxVerifyNArgin(nin, expected_nin)
 ! fmxVerifyNArgin verifies that nin = expected_nin.
-use, non_intrinsic :: consts_mod, only : MSGLEN
 implicit none
 integer, intent(in) :: nin  ! NARGIN is of type INTEGER
 integer, intent(in) :: expected_nin
 
-character(len=MSGLEN) :: eid, msg
+character(len=:), allocatable :: eid, msg
 
 if (nin /= expected_nin) then
     eid = 'FMXAPI:nInput'
     msg = 'fmxVerifyNArgin: Incorrect number of input arguments.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+    call mexErrMsgIdAndTxt(eid, msg)
 end if
 end subroutine fmxVerifyNArgin
 
 subroutine fmxVerifyNArgout(nout, expected_nout)
 ! fmxVerifyNArgout verifies that nout <= expected_nout.
-use, non_intrinsic :: consts_mod, only : MSGLEN
 implicit none
 integer, intent(in) :: nout  ! NARGOUT is of type INTEGER
 integer, intent(in) :: expected_nout
 
-character(len=MSGLEN) :: eid, msg
+character(len=:), allocatable :: eid, msg
 
 if (nout > expected_nout) then
     eid = 'FMXAPI:nOutput'
     msg = 'fmxVerifyNArgout: Too many output arguments.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+    call mexErrMsgIdAndTxt(eid, msg)
 end if
 end subroutine fmxVerifyNArgout
 
 
 subroutine fmxVerifyClassShape(px, class_name, shape_type)
 ! fmxVerifyClassShape verifies the class and shape of the data associated with mwPointer px.
-use, non_intrinsic :: consts_mod, only : MSGLEN
 use, non_intrinsic :: string_mod, only : lower
 implicit none
 mwPointer, intent(in) :: px
@@ -322,18 +319,18 @@ character(len=*), intent(in) :: class_name
 character(len=*), intent(in) :: shape_type
 
 mwSize :: m, n
-character(len=MSGLEN) :: eid, msg
+character(len=:), allocatable :: eid, msg
 
 if (px == 0) then
     eid = 'FMXAPI:NULLPointer'
     msg = 'fmxVerifyClassShape: NULL pointer received.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+    call mexErrMsgIdAndTxt(eid, msg)
 end if
 
 if (mxIsClass(px, class_name) /= 1) then
     eid = 'FMXAPI:WrongInput'
     msg = 'fmxVerifyClassShape: A variable of invalid class received when an argument of class "'//class_name//'" is expected.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+    call mexErrMsgIdAndTxt(eid, msg)
 end if
 
 ! Check fmxGetDble(px) if px is associated with a double
@@ -341,7 +338,7 @@ if (lower(class_name) == 'double' .and. (lower(shape_type) == 'scalar' .or. lowe
     if (fmxGetDble(px) == 0) then  ! This can happen if px is associated with an empty array
         eid = 'FMXAPI:NULLPointer'
         msg = 'fmxVerifyClassShape: NULL pointer returned by fmxGetDble.'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexErrMsgIdAndTxt(eid, msg)
     end if
 end if
 
@@ -353,40 +350,40 @@ case ('rank0', 'scalar')
     if (m /= 1 .or. n /= 1) then
         eid = 'FMXAPI:WrongInput'
         msg = 'fmxVerifyClassShape: A variable of invalid shape received when an array of rank 0 (scalar) is expected.'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexErrMsgIdAndTxt(eid, msg)
     end if
 case ('rank1', 'vector')
     ! We accept a 0-by-0 array as a vector.
     if ((m /= 1 .or. n < 0) .and. (m < 0 .or. n /= 1) .and. (m /= 0 .or. n /= 0)) then
         eid = 'FMXAPI:WrongInput'
         msg = 'fmxVerifyClassShape: A variable of invalid shape received when an array of rank 1 (vector) is expected.'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexErrMsgIdAndTxt(eid, msg)
     end if
 case ('rank2', 'matrix')
     ! We accept a 0-by-0 array as a matrix.
     if (m < 0 .or. n < 0) then
         eid = 'FMXAPI:WrongInput'
         msg = 'fmxVerifyClassShape: A variable of invalid shape received when an array of rank 2 (matrix) is expected.'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexErrMsgIdAndTxt(eid, msg)
     end if
 case ('column', 'col')
     ! We accept a 0-by-0 array as a column.
     if ((m < 0 .or. n /= 1) .and. (m /= 0 .or. n /= 0)) then
         eid = 'FMXAPI:WrongInput'
         msg = 'fmxVerifyClassShape: A variable of invalid shape received when a column vector is expected.'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexErrMsgIdAndTxt(eid, msg)
     end if
 case ('row')
     ! We accept a 0-by-0 array as a row.
     if ((m /= 1 .or. n < 0) .and. (m /= 0 .or. n /= 0)) then
         eid = 'FMXAPI:WrongInput'
         msg = 'fmxVerifyClassShape: A variable of invalid shape received when a row vector is expected.'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexErrMsgIdAndTxt(eid, msg)
     end if
 case default
     eid = 'FMXAPI:WrongShapeType'
     msg = 'fmxVerifyClassShape: An invalid shape type "'//shape_type//'" received.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+    call mexErrMsgIdAndTxt(eid, msg)
 end select
 end subroutine fmxVerifyClassShape
 
@@ -394,7 +391,7 @@ end subroutine fmxVerifyClassShape
 subroutine read_rscalar(px, x)
 ! READ_RSCALAR reads the double scalar associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP) scalar.
-use, non_intrinsic :: consts_mod, only : RP, DP, ONE, MSGLEN
+use, non_intrinsic :: consts_mod, only : RP, DP, ONE
 implicit none
 
 ! Input
@@ -405,7 +402,7 @@ real(RP), intent(out) :: x
 
 ! Local variables
 real(DP) :: x_dp(1)
-character(len=MSGLEN) :: wid, msg
+character(len=:), allocatable :: wid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'scalar')
@@ -420,7 +417,7 @@ if (kind(x) /= kind(x_dp)) then
     if (abs(x - x_dp(1)) > cvsnTol * max(abs(x), ONE)) then
         wid = 'FMXAPI:LargeConversionError'
         msg = 'READ_RSCALAR: Large error occurs when converting REAL(DP) to REAL(RP) (maybe due to overflow).'
-        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
+        call mexWarnMsgIdAndTxt(wid, msg)
     end if
 end if
 end subroutine read_rscalar
@@ -429,7 +426,7 @@ end subroutine read_rscalar
 subroutine read_rvector(px, x)
 ! READ_RVECTOR reads the double vector associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP) allocatable vector and should have size mxGetM(PX)*mxGetN(PX) at return.
-use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE, MSGLEN
+use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
@@ -444,7 +441,7 @@ real(RP), allocatable, intent(out) :: x(:)
 real(DP), allocatable :: x_dp(:)
 integer(IK) :: n
 mwSize :: n_mw
-character(len=MSGLEN) :: wid, msg
+character(len=:), allocatable :: wid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'vector')
@@ -465,7 +462,7 @@ if (kind(x) /= kind(x_dp)) then
     if (any(abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) .or. .not. all(is_nan(x) .eqv. is_nan(x_dp))) then
         wid = 'FMXAPI:LargeConversionError'
         msg = 'READ_RVECTOR: Large error occurs when converting REAL(DP) to REAL(RP) (maybe due to overflow).'
-        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
+        call mexWarnMsgIdAndTxt(wid, msg)
     end if
 end if
 
@@ -477,7 +474,7 @@ end subroutine read_rvector
 subroutine read_rmatrix(px, x)
 ! READ_RMATRIX reads the double matrix associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP) allocatable matrix and should have size [mxGetM(PX), mxGetN(PX)] at return.
-use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE, MSGLEN
+use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
@@ -492,7 +489,7 @@ real(RP), allocatable, intent(out) :: x(:, :)
 real(DP), allocatable :: x_dp(:, :)
 integer(IK) :: m, n
 mwSize :: xsize
-character(len=MSGLEN) :: wid, msg
+character(len=:), allocatable :: wid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'matrix')
@@ -514,7 +511,7 @@ if (kind(x) /= kind(x_dp)) then
     if (any(abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) .or. .not. all(is_nan(x) .eqv. is_nan(x_dp))) then
         wid = 'FMXAPI:LargeConversionError'
         msg = 'READ_RMATRIX: Large error occurs when converting REAL(DP) to REAL(RP) (maybe due to overflow).'
-        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
+        call mexWarnMsgIdAndTxt(wid, msg)
     end if
 end if
 
@@ -534,7 +531,7 @@ subroutine read_iscalar(px, x)
 ! back to integers before using them in the Fortran code. Indeed, in MATLAB, even if we define
 ! X = 1000, the class of X is double! To get an integer X, we would have to define convert it to an
 ! integer explicitly!
-use, non_intrinsic :: consts_mod, only : DP, IK, MSGLEN
+use, non_intrinsic :: consts_mod, only : DP, IK
 implicit none
 
 ! Input
@@ -545,7 +542,7 @@ integer(IK), intent(out) :: x
 
 ! Local variables
 real(DP) :: x_dp(1)
-character(len=MSGLEN) :: wid, msg
+character(len=:), allocatable :: wid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'scalar')
@@ -561,7 +558,7 @@ if (abs(x - x_dp(1)) > epsilon(x_dp) * max(abs(x), 1_IK)) then
     wid = 'FMXAPI:LargeConversionError'
     msg = 'READ_ISCALAR: Large error occurs when converting REAL(DP) to INTEGER(IK) ' &
         & //'(maybe due to overflow, or the input is not an integer).'
-    call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
+    call mexWarnMsgIdAndTxt(wid, msg)
 end if
 end subroutine read_iscalar
 
@@ -572,7 +569,7 @@ subroutine read_lscalar(px, x)
 ! functions that can read a boolean value from a pointer. Therefore, in general, it is recommended
 ! to pass logicals as double variables and then cast them back to logicals before using them in the
 ! Fortran code.
-use, non_intrinsic :: consts_mod, only : DP, MSGLEN
+use, non_intrinsic :: consts_mod, only : DP
 implicit none
 
 ! Input
@@ -582,7 +579,7 @@ mwPointer, intent(in) :: px
 logical, intent(out) :: x
 
 ! Local variables
-character(len=MSGLEN) :: wid, msg
+character(len=:), allocatable :: wid, msg
 integer :: x_int
 real(DP) :: x_dp(1)
 
@@ -600,12 +597,12 @@ if (abs(x_int - x_dp(1)) > epsilon(x_dp) * max(abs(x_int), 1)) then
     wid = 'FMXAPI:LargeConversionError'
     msg = 'READ_LSCALAR: Large error occurs when converting REAL(DP) to INTEGER ' &
         & //'(maybe due to overflow, or the input is not an integer).'
-    call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
+    call mexWarnMsgIdAndTxt(wid, msg)
 end if
 if (x_int /= 0 .and. x_int /= 1) then
     wid = 'FMXAPI:InputNotBoolean'
     msg = 'READ_LSCALAR: The input should be boolean, either 0 or 1.'
-    call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
+    call mexWarnMsgIdAndTxt(wid, msg)
 end if
 
 x = (x_int /= 0)
@@ -616,7 +613,7 @@ end subroutine read_lscalar
 subroutine write_rscalar(x, px)
 ! WRITE_RSCALAR associates a REAL(RP) scalar X with an mwPointer PX, after which PX can be passed to
 ! MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
-use, non_intrinsic :: consts_mod, only : RP, DP, ONE, MSGLEN
+use, non_intrinsic :: consts_mod, only : RP, DP, ONE
 implicit none
 
 ! Input
@@ -627,7 +624,7 @@ mwPointer, intent(out) :: px
 
 ! Local variables
 real(DP) :: x_dp
-character(len=MSGLEN) :: wid, msg
+character(len=:), allocatable :: wid, msg
 
 ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
 x_dp = real(x, kind(x_dp))
@@ -636,7 +633,7 @@ if (kind(x_dp) /= kind(x)) then
     if (abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) then
         wid = 'FMXAPI:LargeConversionError'
         msg = 'WRITE_RSCALAR: Large error occurs when converting REAL(RP) to REAL(DP) (maybe due to overflow).'
-        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
+        call mexWarnMsgIdAndTxt(wid, msg)
     end if
 end if
 
@@ -649,7 +646,7 @@ subroutine write_rvector(x, px, shape_type)
 ! WRITE_RVECTOR associates a REAL(RP) vector X with an mwPointer PX, after which PX can be passed to
 ! MATLAB either as an output of mexFunction or an input of mexCallMATLAB. If ROWCOL = 'row', then
 ! the vector is passed as a row vector, otherwise, it will be a column vector.
-use, non_intrinsic :: consts_mod, only : DP, RP, IK, ONE, MSGLEN
+use, non_intrinsic :: consts_mod, only : DP, RP, IK, ONE
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: string_mod, only : lower
 implicit none
@@ -666,7 +663,7 @@ real(DP) :: x_dp(size(x))
 integer(IK) :: n
 mwSize :: n_mw
 logical :: row
-character(len=MSGLEN) :: wid, msg
+character(len=:), allocatable :: wid, msg
 
 ! Get size of X
 n_mw = int(size(x), kind(n_mw))
@@ -679,7 +676,7 @@ if (kind(x) /= kind(x_dp)) then
     if (any(abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) .or. .not. all(is_nan(x) .eqv. is_nan(x_dp))) then
         wid = 'FMXAPI:LargeConversionError'
         msg = 'WRITE_RVECTOR: Large error occurs when converting REAL(RP) to REAL(DP) (maybe due to overflow).'
-        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
+        call mexWarnMsgIdAndTxt(wid, msg)
     end if
 end if
 
@@ -701,7 +698,7 @@ end subroutine write_rvector
 subroutine write_rmatrix(x, px)
 ! WRITE_RMATRIX associates a REAL(RP) matrix X with an mwPointer PX, after which PX can be passed to
 ! MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
-use, non_intrinsic :: consts_mod, only : DP, RP, IK, ONE, MSGLEN
+use, non_intrinsic :: consts_mod, only : DP, RP, IK, ONE
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
@@ -715,7 +712,7 @@ mwPointer, intent(out) :: px
 real(DP) :: x_dp(size(x, 1), size(x, 2))
 integer(IK) :: m, n
 mwSize :: m_mw, n_mw
-character(len=MSGLEN) :: wid, msg
+character(len=:), allocatable :: wid, msg
 
 ! Get size of X
 m = int(size(x, 1), kind(m))
@@ -730,7 +727,7 @@ if (kind(x) /= kind(x_dp)) then
     if (any(abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) .or. .not. all(is_nan(x) .eqv. is_nan(x_dp))) then
         wid = 'FMXAPI:LargeConversionError'
         msg = 'WRITE_RMATRIX: Large error occurs when converting REAL(RP) to REAL(DP) (maybe due to overflow).'
-        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
+        call mexWarnMsgIdAndTxt(wid, msg)
     end if
 end if
 
@@ -744,7 +741,7 @@ end subroutine write_rmatrix
 subroutine write_iscalar(x, px)
 ! WRITE_RSCALAR associates an INTEGER(IK) scalar X with an mwPointer PX, after which PX can be passed
 ! to MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
-use, non_intrinsic :: consts_mod, only : DP, IK, MSGLEN
+use, non_intrinsic :: consts_mod, only : DP, IK
 implicit none
 
 ! Input
@@ -755,14 +752,14 @@ mwPointer, intent(out) :: px
 
 ! Local variables
 real(DP) :: x_dp
-character(len=MSGLEN) :: wid, msg
+character(len=:), allocatable :: wid, msg
 
 ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
 x_dp = real(x, kind(x_dp))
 if (abs(x - x_dp) > epsilon(x_dp) * max(abs(x), 1_IK)) then
     wid = 'FMXAPI:LargeConversionError'
     msg = 'WRITE_ISCALAR: Large error occurs when converting INTEGER(IK) to REAL(DP) (maybe due to overflow).'
-    call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
+    call mexWarnMsgIdAndTxt(wid, msg)
 end if
 
 px = mxCreateDoubleScalar(x_dp)
@@ -775,7 +772,6 @@ subroutine fmxCallMATLAB(fun_ptr, pin, pout)
 ! output = feval(fun, input),
 ! where fun_ptr is an mwPointer pointing to the function handle of fun, while pin/pout are mwPointer
 ! arrays associated with the inputs/outputs
-use, non_intrinsic :: consts_mod, only : MSGLEN
 implicit none
 
 mwPointer, intent(in) :: fun_ptr
@@ -785,10 +781,10 @@ mwPointer, intent(out) :: pout(:)
 mwPointer :: aug_pin(size(pin) + 1)
 integer(INT32_MEX) :: nin
 integer(INT32_MEX) :: nout
-character(5), parameter :: FEVAL = 'feval'
+character(len=*), parameter :: FEVAL = 'feval'
 
 integer(INT32_MEX) :: r
-character(len=MSGLEN) :: eid, msg
+character(len=:), allocatable :: eid, msg
 
 ! Augment the input to include FUN_PTR
 aug_pin = [fun_ptr, pin]
@@ -802,13 +798,13 @@ r = mexCallMATLAB(nout, pout, nin, aug_pin, FEVAL)
 if (r /= 0) then
     eid = 'FMXAPI:UnsuccessfulCall'
     msg = 'fmxCallMATLAB: MEX fails to call a MATLAB function.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+    call mexErrMsgIdAndTxt(eid, msg)
 end if
 
 if (any(pout == 0)) then
     eid = 'FMXAPI:NULLPointer'
     msg = 'fmxCallMATLAB: NULL pointer returned when MEX calls a MATLAB function.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+    call mexErrMsgIdAndTxt(eid, msg)
 end if
 
 end subroutine fmxCallMATLAB
@@ -823,13 +819,13 @@ end function fmxIsDoubleScalar
 
 
 function fmxIsDoubleVector(px, shape_type) result(y)
-use, non_intrinsic :: consts_mod, only : MSGLEN, IK
+use, non_intrinsic :: consts_mod, only : IK
 use, non_intrinsic :: string_mod, only : lower
 implicit none
 mwPointer, intent(in) :: px
 character(len=*), intent(in), optional :: shape_type
 logical :: y
-character(len=MSGLEN) :: eid, msg
+character(len=:), allocatable :: eid, msg
 integer(IK) :: m, n
 
 m = int(mxGetM(px), kind(m))
@@ -845,7 +841,7 @@ if (present(shape_type)) then
     case default
         eid = 'FMXAPI:WrongShapeType'
         msg = 'fmxIsDoubleVector: An invalid shape type "'//shape_type//'" received.'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexErrMsgIdAndTxt(eid, msg)
     end select
 end if
 
