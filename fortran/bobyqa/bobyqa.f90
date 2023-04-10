@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, January 01, 2023 PM08:34:32
+! Last Modified: Monday, April 10, 2023 PM02:02:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -177,7 +177,7 @@ subroutine bobyqa(calfun, x, f, &
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, BOUNDMAX, MSGLEN, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, BOUNDMAX, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, MAXFUN_DIM_DFT, IPRINT_DFT
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
@@ -188,6 +188,7 @@ use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
+use, non_intrinsic :: string_mod, only : num2str
 
 ! Solver-specific modules
 use, non_intrinsic :: bobyqb_mod, only : bobyqb
@@ -225,7 +226,6 @@ real(RP), intent(out), allocatable, optional :: xhist(:, :)  ! XHIST(N, MAXXHIST
 character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
 character(len=*), parameter :: solver = 'BOBYQA'
 character(len=*), parameter :: srname = 'BOBYQA'
-character(len=MSGLEN) :: wmsg
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: k
@@ -287,9 +287,8 @@ if (any(xu_loc - xl_loc < TWO * EPS)) then
     if (present(info)) then
         info = NO_SPACE_BETWEEN_BOUNDS
     end if
-    write (wmsg, ifmt) minval(trueloc(xu_loc - xl_loc < TWO * EPS))
-    call warning(solver, 'There is no space between the lower and upper bounds of variable. '// &
-        & 'The solver cannot continue')
+    call warning(solver, 'There is no space between the lower and upper bounds of variable '// &
+        & num2str(minval(trueloc(xu_loc - xl_loc < TWO * EPS)))//'. The solver cannot continue')
     return
 end if
 
@@ -454,8 +453,7 @@ deallocate (fhist_loc)
 
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
-    write (wmsg, ifmt) maxhist_loc
-    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recorded')
+    call warning(solver, 'Only the history of the last '//num2str(maxhist_loc)//' iteration(s) is recorded')
 end if
 
 ! Postconditions
