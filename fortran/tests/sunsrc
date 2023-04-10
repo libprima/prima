@@ -3,6 +3,7 @@
 # 1. It does not recognize overloaded intrinsic functions (particularly, their returning type/kind)
 # correctly, e.g., INT in LINALG_MOD.
 # 2. It sometimes encounters internal compiler errors when dealing with allocatable characters.
+# 3. It does not support `error stop`, which is F2003.
 
 DIR="$(realpath "$1")"
 HISTORYF90="history.f90"
@@ -71,5 +72,9 @@ for FILE in "$OUTPUT" "$DEBUG" ; do
         sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
     fi
 done
+
+if [[ -f "$DEBUG" ]] ; then
+    sed -i "s|^error stop|stop|" "$DEBUG"
+fi
 
 exit 0
