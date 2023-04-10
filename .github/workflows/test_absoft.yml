@@ -42,7 +42,8 @@ jobs:
           FFLAGS=${FFLAGS/O0/g}
           export FFLAGS
           cd "$ROOT_DIR"/fortran/tests && make atest_${{ matrix.ikind }}.${{ matrix.solver }}
-          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make atest
+          # af95 cannot handle allocatable characters.
+          # cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make atest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3.1.2
