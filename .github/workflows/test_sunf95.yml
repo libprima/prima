@@ -49,10 +49,8 @@ jobs:
               $SEDI 's|bign = 120|bign = 90|g' test_cobyla.f90
           fi
           export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make stest_${{ matrix.ikind }}.${{ matrix.solver }}
-          # sunf95 cannot handle matrix indexing with TRUELOC
-          if [[ ! ${{ matrix.solver }}=='lincoa' && ! ${{ matrix.solver }}=='bobyqa' ]] ; then
-              cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make stest
-          fi
+          # sunf95 cannot handle matrix indexing with TRUELOC or allocatable characters.
+          # cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make stest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3.1.2
