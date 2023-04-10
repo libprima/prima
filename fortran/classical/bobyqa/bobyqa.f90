@@ -22,7 +22,7 @@ subroutine bobyqa(calfun, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, REALMAX, MSGLEN
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, REALMAX
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
@@ -30,6 +30,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
+use, non_intrinsic :: string_mod, only : num2str
 
 implicit none
 
@@ -64,7 +65,6 @@ real(RP), intent(out), allocatable, optional :: xhist(:, :)
 character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
 character(len=*), parameter :: solver = 'BOBYQA'
 character(len=*), parameter :: srname = 'BOBYQA'
-character(len=MSGLEN) :: wmsg
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: maxfun_loc
@@ -366,8 +366,7 @@ deallocate (fhist_loc)
 
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
-    write (wmsg, ifmt) maxhist_loc
-    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recorded')
+    call warning(solver, 'Only the history of the last '//num2str(maxhist_loc)//' iteration(s) is recorded')
 end if
 
 end subroutine bobyqa
