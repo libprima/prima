@@ -913,6 +913,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvdi3" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvsi3" \
 	| grep -v "‘cos_seed.dim\[0\].ubound’ may be used uninitialized in this function" \
+	| grep -v ": ‘\.min_maxfun_str’ may be used uninitialized \[-W.*maybe-uninitialized\]" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"

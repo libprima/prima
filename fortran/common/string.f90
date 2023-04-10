@@ -6,12 +6,21 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, March 10, 2023 AM01:05:14
+! Last Modified: Monday, April 10, 2023 PM12:19:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: lower, upper, trimstr, istr
+public :: lower, upper, trimstr, istr, num2str
+
+! MAX_NUM_STR_LEN is the maximum length of a string that is needed to represent a real or integer
+! number. Assuming that such a number is represented by at most 128 bits, it is safe to set this
+! maximum length to 128.
+integer, parameter :: MAX_NUM_STR_LEN = 128
+
+interface num2str
+    module procedure real2str, int2str
+end interface num2str
 
 
 contains
@@ -89,5 +98,34 @@ integer(IK) :: i
 y = [(int(ichar(x(i:i)), IK), i=1, int(len(x), IK))]
 
 end function istr
+
+
+pure function real2str(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function converts a real number to a string.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP
+implicit none
+real(RP), intent(in) :: x
+character(len=:), allocatable :: y
+character(len=MAX_NUM_STR_LEN) :: str
+write (str, *) x
+y = trimstr(str)
+end function real2str
+
+
+pure function int2str(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function converts an integer number to a string.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : IK
+implicit none
+integer(IK), intent(in) :: x
+character(len=:), allocatable :: y
+character(len=MAX_NUM_STR_LEN) :: str
+write (str, *) x
+y = trimstr(str)
+end function int2str
+
 
 end module string_mod

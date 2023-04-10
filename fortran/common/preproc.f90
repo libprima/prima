@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 08, 2023 AM01:04:16
+! Last Modified: Monday, April 10, 2023 PM12:26:59
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -24,14 +24,14 @@ subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, 
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine preprocesses the inputs. It does nothing to the inputs that are valid.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, HALF, EPS, MAXHISTMEM, MSGLEN, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, HALF, EPS, MAXHISTMEM, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 use, non_intrinsic :: consts_mod, only : CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT, IPRINT_DFT, MIN_MAXFILT, MAXFILT_DFT
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 use, non_intrinsic :: linalg_mod, only : trueloc, falseloc
 use, non_intrinsic :: memory_mod, only : cstyle_sizeof
-use, non_intrinsic :: string_mod, only : lower, trimstr
+use, non_intrinsic :: string_mod, only : lower, num2str
 implicit none
 
 ! Compulsory inputs
@@ -66,11 +66,8 @@ real(RP), intent(inout), optional :: gamma2
 real(RP), intent(inout), optional :: x0(:)
 
 ! Local variables
-character(len=*), parameter :: ifmt = '(I0)'  ! Format of integers; use the minimum number of digits
-character(len=*), parameter :: rfmt = '(1PD15.6)'  ! Format of reals
 character(len=*), parameter :: srname = 'PREPROC'
-character(len=MSGLEN) :: min_maxfun_str
-character(len=MSGLEN) :: wmsg
+character(len=:), allocatable :: min_maxfun_str
 integer(IK) :: m_loc
 integer(IK) :: maxfilt_in
 integer(IK) :: min_maxfun
@@ -127,8 +124,7 @@ end if
 ! Validate IPRINT
 if (abs(iprint) > 3) then
     iprint = IPRINT_DFT
-    write (wmsg, ifmt) iprint
-    call warning(solver, 'Invalid IPRINT; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to '//trimstr(wmsg))
+    call warning(solver, 'Invalid IPRINT; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to '//num2str(iprint))
 end if
 
 ! Validate MAXFUN
@@ -145,23 +141,20 @@ case default  ! CASE ('NEWUOA', 'BOBYQA', 'LINCOA')
 end select
 if (maxfun < min_maxfun) then
     maxfun = min_maxfun
-    write (wmsg, ifmt) maxfun
-    call warning(solver, 'Invalid MAXFUN; it should be at least '//trimstr(min_maxfun_str)//'; it is set to '//trimstr(wmsg))
+    call warning(solver, 'Invalid MAXFUN; it should be at least '//min_maxfun_str//'; it is set to '//num2str(maxfun))
 end if
 
 ! Validate MAXHIST
 if (maxhist < 0) then
     maxhist = maxfun
-    write (wmsg, ifmt) maxhist
-    call warning(solver, 'Invalid MAXHIST; it should be a nonnegative integer; it is set to '//trimstr(wmsg))
+    call warning(solver, 'Invalid MAXHIST; it should be a nonnegative integer; it is set to '//num2str(maxhist))
 end if
 maxhist = min(maxhist, maxfun)  ! MAXHIST > MAXFUN is never needed.
 
 ! Validate FTARGET
 if (is_nan(ftarget)) then
     ftarget = FTARGET_DFT
-    write (wmsg, rfmt) ftarget
-    call warning(solver, 'Invalid FTARGET; it should be a real number; it is set to '//trimstr(wmsg))
+    call warning(solver, 'Invalid FTARGET; it should be a real number; it is set to '//num2str(ftarget))
 end if
 
 ! Validate NPT
@@ -169,9 +162,8 @@ if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver)
     & .and. present(npt)) then
     if (npt < n + 2 .or. npt > min(maxfun - 1, ((n + 2) * (n + 1)) / 2)) then
         npt = int(min(maxfun - 1, 2 * n + 1), kind(npt))
-        write (wmsg, ifmt) npt
         call warning(solver, 'Invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2]'// &
-            & ' and less than MAXFUN; it is set to '//trimstr(wmsg))
+            & ' and less than MAXFUN; it is set to '//num2str(npt))
     end if
 end if
 
@@ -199,14 +191,13 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     end if
     maxfilt = min(maxfun, max(MIN_MAXFILT, maxfilt))
     if (is_constrained_loc) then
-        write (wmsg, ifmt) maxfilt
         if (maxfilt_in < 1) then
             call warning(solver, 'Invalid MAXFILT; it should be a positive integer; it is set to ' &
-                & //trimstr(wmsg))
+                & //num2str(maxfilt))
         elseif (maxfilt_in < min(maxfun, MIN_MAXFILT)) then
-            call warning(solver, 'MAXFILT is too small; it is set to '//trimstr(wmsg))
+            call warning(solver, 'MAXFILT is too small; it is set to '//num2str(maxfilt))
         elseif (maxfilt < min(maxfilt_in, maxfun)) then
-            call warning(solver, 'MAXFILT is set to '//trimstr(wmsg)//' due to memory limit')
+            call warning(solver, 'MAXFILT is set to '//num2str(maxfilt)//' due to memory limit')
         end if
     end if
 end if
@@ -233,7 +224,7 @@ end if
 
 if (present(eta1)) then
     if (is_nan(eta1)) then
-        ! In this case, we take the value hard coded in Powell's orginal code
+        ! In this case, we take the value hard coded in Powell's original code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         eta1 = ETA1_DFT
     elseif (eta1 < 0 .or. eta1 >= 1) then
@@ -243,47 +234,43 @@ if (present(eta1)) then
         else
             eta1 = ETA1_DFT
         end if
-        write (wmsg, rfmt) eta1
         call warning(solver, 'Invalid ETA1; it should be in the interval [0, 1) and not more than ETA2;'// &
-            & ' it is set to '//trimstr(wmsg))
+            & ' it is set to '//num2str(eta1))
     end if
 end if
 
 if (present(eta2)) then
     if (is_nan(eta2)) then
-        ! In this case, we take the value hard coded in Powell's orginal code
+        ! In this case, we take the value hard coded in Powell's original code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         eta2 = ETA2_DFT
     elseif (present(eta1) .and. (eta2 < eta1_loc .or. eta2 > 1)) then
         eta2 = (eta1 + TWO) / 3.0_RP
-        write (wmsg, rfmt) eta2
         call warning(solver, 'Invalid ETA2; it should be in the interval [0, 1) and not less than ETA1;'// &
-            & ' it is set to '//trimstr(wmsg))
+            & ' it is set to '//num2str(eta2))
     end if
 end if
 
 ! Validate GAMMA1 and GAMMA2
 if (present(gamma1)) then
     if (is_nan(gamma1)) then
-        ! In this case, we take the value hard coded in Powell's orginal code
+        ! In this case, we take the value hard coded in Powell's original code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         gamma1 = GAMMA1_DFT
     elseif (gamma1 <= 0 .or. gamma1 >= 1) then
         gamma1 = GAMMA1_DFT
-        write (wmsg, rfmt) gamma1
-        call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//trimstr(wmsg))
+        call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//num2str(gamma1))
     end if
 end if
 
 if (present(gamma2)) then
     if (is_nan(gamma2)) then
-        ! In this case, we take the value hard coded in Powell's orginal code
+        ! In this case, we take the value hard coded in Powell's original code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         gamma2 = GAMMA2_DFT
     elseif (gamma2 < 1 .or. is_inf(gamma2)) then
         gamma2 = GAMMA2_DFT
-        write (wmsg, rfmt) gamma2
-        call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//trimstr(wmsg))
+        call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//num2str(gamma2))
     end if
 end if
 
@@ -326,15 +313,13 @@ if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
     else
         rhobeg = rhobeg_default
     end if
-    write (wmsg, rfmt) rhobeg
-    call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//trimstr(wmsg))
+    call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//num2str(rhobeg))
 end if
 
 if (rhoend <= 0 .or. rhobeg < rhoend .or. is_nan(rhoend) .or. is_inf(rhoend)) then
     rhoend = max(EPS, min(TENTH * rhobeg, rhoend_default))
-    write (wmsg, rfmt) rhoend
     call warning(solver, 'Invalid RHOEND; it should be a positive number and RHOEND <= RHOBEG; '// &
-        & 'it is set to '//trimstr(wmsg))
+        & 'it is set to '//num2str(rhoend))
 end if
 
 ! For BOBYQA, revise X0 or RHOBEG so that the distance between X0 and the inactive bounds is at
@@ -350,8 +335,7 @@ if (present(honour_x0)) then
         if (rhobeg_old - rhobeg > EPS * max(ONE, rhobeg_old)) then
             rhoend = max(EPS, min(TENTH * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
             if (has_rhobeg) then
-                write (wmsg, rfmt) rhobeg
-                call warning(solver, 'RHOBEG is reivised to '//trim(wmsg)//' and RHOEND to at most 0.1*RHOBEG'// &
+                call warning(solver, 'RHOBEG is reivised to '//num2str(rhobeg)//' and RHOEND to at most 0.1*RHOBEG'// &
                     & ' so that the distance between X0 and the inactive bounds is at least RHOBEG')
             end if
         else
@@ -394,8 +378,7 @@ if (present(ctol)) then
     if (is_nan(ctol) .or. ctol < 0) then
         ctol = CTOL_DFT
         if (is_constrained_loc) then
-            write (wmsg, rfmt) ctol
-            call warning(solver, 'Invalid CTOL; it should be a nonnegative number; it is set to '//trimstr(wmsg))
+            call warning(solver, 'Invalid CTOL; it should be a nonnegative number; it is set to '//num2str(ctol))
         end if
     end if
 end if
@@ -405,8 +388,7 @@ if (present(cweight)) then
     if (is_nan(cweight) .or. cweight < 0) then
         cweight = CWEIGHT_DFT
         if (is_constrained_loc) then
-            write (wmsg, rfmt) cweight
-            call warning(solver, 'Invalid CWEIGHT; it should be a nonnegative number; it is set to '//trimstr(wmsg))
+            call warning(solver, 'Invalid CWEIGHT; it should be a nonnegative number; it is set to '//num2str(cweight))
         end if
     end if
 end if
