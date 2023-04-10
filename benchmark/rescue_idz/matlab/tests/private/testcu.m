@@ -15,8 +15,8 @@ rhoend = 1e-10;  % FOR TESTING !!!!!!
 % problems to be tested in the current experiment.
 maxn = 200;
 %maxfun_dim = 100;
-%maxfun_dim = 500;
-maxfun_dim = 200;
+maxfun_dim = 500;  % FOR TESTING !!!!!!
+%maxfun_dim = 200;
 maxfun = maxfun_dim*maxn;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -65,7 +65,7 @@ thorough_test = 0;
 % problems for debugging.
 minip = 1;
 maxip = 2^32 - 1;
-strict = 2;
+strict = 0;  % FOR TESTING !!!!!!
 
 % Directories for recording the starting/ending of problems (tic/toc are unavailable in parfor).
 prob_start_time_dir = strtrim(fullfile(options.test_dir, [options.stamp, '_start_time']));

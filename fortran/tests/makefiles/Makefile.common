@@ -44,12 +44,18 @@ FSTD := 20$(FS)
 
 # Default options for all the compilers, and corresponding suffixes for the executable. In general,
 # "O" indicates optimization, and "G" means debugging.
-FFLAGS ?= ""
-FFLAGSO := -O3
+FFLAGS ?= -g
+FFLAGSO :=
 FFLAGSG := -g -O0
-SUFFIXO := o3
+SUFFIXO :=
 SUFFIXG := g
 AGRESSIVE := 0
+#ifeq ($(FFLAGS),-g)  # This is the default.
+#	FFLAGSO :=
+#	FFLAGSG := -g -O0
+#	SUFFIXO :=
+#	SUFFIXG := g
+#endif
 ifeq ($(FFLAGS),-O)
 	FFLAGSO := $(FFLAGS)
 	FFLAGSG :=
@@ -80,12 +86,6 @@ ifeq ($(FFLAGS),-fast)
 	SUFFIXO := fast
 	SUFFIXG :=
 	AGRESSIVE := 1
-endif
-ifeq ($(FFLAGS),-g)
-	FFLAGSO :=
-	FFLAGSG := -g -O0
-	SUFFIXO :=
-	SUFFIXG := g
 endif
 
 # Define the compiler-dependent "fast flags", which will be used when FFLAGS is -fast.
@@ -415,9 +415,12 @@ ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d
 # As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
 #GFORT := gfortran -pg  # Compile for profiling with the gprof profiler. Does not work with macOS on GitHub Actions due to missing gcrt1.o
 GFORT := gfortran
-# gfortran 7 raises a false positive error regarding "maybe-uninitialized" of allocatable arrays.
+# 1. gfortran 7 raises a false positive warning regarding "maybe-uninitialized" of allocatable arrays.
 # See https://stackoverflow.com/questions/56261880/fortran-re-allocation-on-assignment-and-gfortran-warnings
-WE := $(shell if [[ $$(gfortran -dumpversion | sed 's|\..*||') -gt 8 ]] ; then echo "-Werror"; else echo ""; fi)
+# 2. As of gfortran 12, gfortran raises a false positive warning regarding "maybe-uninitialized" of
+# allocatable characters. See
+# https://fortran-lang.discourse.group/t/warning-str-may-be-used-uninitialized
+WE := $(shell if [[ $$(gfortran -dumpversion | sed 's|\..*||') -gt 8 && -z '$(FFLAGSG)' ]] ; then echo "-Werror"; else echo ""; fi)
 GFORT := $(GFORT) $(WE) -pedantic-errors
 # `-fautomatic` (the default) tells `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.
@@ -913,11 +916,11 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvdi3" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvsi3" \
 	| grep -v "‘cos_seed.dim\[0\].ubound’ may be used uninitialized in this function" \
-	| grep -v ": ‘\.min_maxfun_str’ may be used uninitialized \[-W.*maybe-uninitialized\]" \
-	| grep -v ": ‘\.direction_loc’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
-	| grep -v ": ‘\.msg’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
-	| grep -v ": ‘\.fout’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
-	| grep -v ": ‘\.fstat’ may be used uninitialized.*\[-W.*maybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.min_maxfun_str’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.direction_loc’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.msg’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.fout’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.fstat’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
