@@ -2,6 +2,7 @@
 # This script pre-processes the Fortran source code for g95 and Absoft af95.
 # 1. They do not recognize the `back` keyword in `min/maxloc`, which is available since F2008.
 # 2. They do not support allocatable characters (variable length strings), which is F2003.
+# 3. af95 does not support `error stop`, which is F2003.
 
 DIR="$(realpath "$1")"
 GETACTF90="getact.f90"
@@ -33,5 +34,9 @@ for FILE in "$STRING" "$PREPROC" "$LINALG" "$OUTPUT" "$DEBUG" "$FMXAPI" ; do
         sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
     fi
 done
+
+if [[ -f "$DEBUG" ]] ; then
+    sed -i "s|^error stop|stop|" "$DEBUG"
+fi
 
 exit 0
