@@ -49,7 +49,7 @@ FFLAGSO :=
 FFLAGSG := -g -O0
 SUFFIXO :=
 SUFFIXG := g
-AGRESSIVE := 0
+AGGRESSIVE := 0
 #ifeq ($(FFLAGS),-g)  # This is the default.
 #	FFLAGSO :=
 #	FFLAGSG := -g -O0
@@ -85,7 +85,7 @@ ifeq ($(FFLAGS),-fast)
 	FFLAGSG :=
 	SUFFIXO := fast
 	SUFFIXG :=
-	AGRESSIVE := 1
+	AGGRESSIVE := 1
 endif
 
 # Define the compiler-dependent "fast flags", which will be used when FFLAGS is -fast.
@@ -645,7 +645,7 @@ XFORT := $(XFORT) -warn errors
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
 # and temporary arrays in the stack storage area. We enable them for small problems to verify that
 # we will not have stack overflows even in the worst case.
-# Zaikun 20220323: Not sure how it will work when __DEBUGGING__ is 1, as the debugging facilities
+# Zaikun 20220323: Not sure how it will work when DEBUGGING_ is 1, as the debugging facilities
 # involve many automatic arrays.
 # About -fp-stack-check: According to Steve Lionel (Dr. Fortran), "drop -fp-stack-check - that does
 # nothing useful for you (it is for pre-SSE x87 32-bit code.)".
@@ -820,7 +820,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	$(eval IK := $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//")))
 	$(eval RP := $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//")))
 	$(eval QPAVLB := $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16))
-	$(eval EXTRA_FLAGS := -g -D__DEBUGGING__=$(DBG) -D__AGRESSIVE_OPTIONS__=$(AGRESSIVE) -D__INTEGER_KIND__=$(IK) -D__REAL_PRECISION__=$(RP) -D__QP_AVAILABLE__=$(QPAVLB))
+	$(eval EXTRA_FLAGS := -g -DDEBUGGING_=$(DBG) -DAGGRESSIVE_OPTIONS_=$(AGGRESSIVE) -DINTEGER_KIND_=$(IK) -DREAL_PRECISION_=$(RP) -DQP_AVAILABLE_=$(QPAVLB))
 	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
 	(if echo $@ | grep -q '9test'; then \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
@@ -992,11 +992,11 @@ source_%: $(SRC_DIRS)
 #header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
 #header_%: source_%
 #	@printf "\nPreparing the header file for the test.\n"
-#	$(SEDI) "s|^#define __QP_AVAILABLE__ [0-9]*|#define __QP_AVAILABLE__ $(QPAVLB)|" $(HEADERS)
-#	$(SEDI) "s|^#define __INTEGER_KIND__ [0-9]*|#define __INTEGER_KIND__ $(IK)|" $(HEADERS)
-#	$(SEDI) "s|^#define __REAL_PRECISION__ [0-9]*|#define __REAL_PRECISION__ $(RP)|" $(HEADERS)
-#	$(SEDI) "s|^#define __DEBUGGING__ [0-9]*|#define __DEBUGGING__ $(DBG)|" $(HEADERS)
-#	$(SEDI) "s|^#define __AGRESSIVE_OPTIONS__ [0-9]*|#define __AGRESSIVE_OPTIONS__ $(AGRESSIVE)|" $(HEADERS)
+#	$(SEDI) "s|^#define QP_AVAILABLE_ [0-9]*|#define QP_AVAILABLE_ $(QPAVLB)|" $(HEADERS)
+#	$(SEDI) "s|^#define INTEGER_KIND_ [0-9]*|#define INTEGER_KIND_ $(IK)|" $(HEADERS)
+#	$(SEDI) "s|^#define REAL_PRECISION_ [0-9]*|#define REAL_PRECISION_ $(RP)|" $(HEADERS)
+#	$(SEDI) "s|^#define DEBUGGING_ [0-9]*|#define DEBUGGING_ $(DBG)|" $(HEADERS)
+#	$(SEDI) "s|^#define AGGRESSIVE_OPTIONS_ [0-9]*|#define AGGRESSIVE_OPTIONS_ $(AGGRESSIVE)|" $(HEADERS)
 #	@printf "Done.\n"
 
 

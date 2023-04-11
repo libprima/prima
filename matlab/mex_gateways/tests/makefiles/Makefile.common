@@ -616,10 +616,10 @@ header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 1
 header_%: source_%
 	@if [[ -z "$(FINTRFH)" ]] ; then printf "\nfintrf.h is not available. Skip the test.\n"; exit 0; fi
 	@printf "\nPreparing the header file for the test.\n"
-	$(SEDI) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
-	$(SEDI) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
-	$(SEDI) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
-	$(SEDI) "0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/" $(HEADERS)
+	$(SEDI) "0,/^#define QP_AVAILABLE_ [0-9]*/s//#define QP_AVAILABLE_ $(QPAVLB)/" $(HEADERS)
+	$(SEDI) "0,/^#define INTEGER_KIND_ [0-9]*/s//#define INTEGER_KIND_ $(IK)/" $(HEADERS)
+	$(SEDI) "0,/^#define REAL_PRECISION_ [0-9]*/s//#define REAL_PRECISION_ $(RP)/" $(HEADERS)
+	$(SEDI) "0,/^#define DEBUGGING_ [0-9]*/s//#define DEBUGGING_ $(DBG)/" $(HEADERS)
 	@printf "Done.\n"
 
 
