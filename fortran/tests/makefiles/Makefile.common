@@ -28,7 +28,7 @@
 #
 # Started: September 2021
 #
-# Last Modified: March 2023
+# Last Modified: April 2023
 ####################################################################################################
 
 #$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
@@ -985,7 +985,7 @@ source_%: $(SRC_DIRS)
 
 # Adapt the header file for the test.
 # Zaikun 20230411: Instead of modifying the header file, we should use the -D option of the
-# preprocessors (cpp or fpp). See the receipt of %_tst_c for details.
+# preprocessors (cpp or fpp). See the definition of $(EXTRA_FLAGS) for details.
 #header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
 #header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
 #header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
