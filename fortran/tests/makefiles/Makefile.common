@@ -921,6 +921,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "Warning: ‘\.msg’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.fout’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.fstat’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.noise_type_loc’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
