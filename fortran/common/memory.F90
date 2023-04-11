@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 11, 2023 PM08:10:15
+! Last Modified: Tuesday, April 11, 2023 PM09:24:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,14 +53,9 @@ real(SP), intent(in) :: x
 ! Outputs
 integer(IK) :: y
 
-#if USE_STORAGE_SIZE_ == 1
 ! We prefer STORAGE_SIZE to C_SIZEOF, because the former is intrinsic while the later requires the
 ! intrinsic module ISO_C_BINDING.
 y = int(storage_size(x) / 8, kind(y))  ! Y = INT(C_SIZEOF(X), KIND(Y))
-#else
-y = int(kind(x), kind(y)) ! Avoid complaint
-y = int(4, kind(y))  ! This is not portable
-#endif
 end function size_of_sp
 
 
@@ -75,12 +70,7 @@ real(DP), intent(in) :: x
 ! Outputs
 integer(IK) :: y
 
-#if USE_STORAGE_SIZE_ == 1
 y = int(storage_size(x) / 8, kind(y))
-#else
-y = int(kind(x), kind(y)) ! Avoid complaint
-y = int(8, kind(y))  ! This is not portable
-#endif
 end function size_of_dp
 
 
@@ -97,12 +87,7 @@ real(QP), intent(in) :: x
 ! Outputs
 integer(IK) :: y
 
-#if USE_STORAGE_SIZE_ == 1
 y = int(storage_size(x) / 8, kind(y))
-#else
-y = int(kind(x), kind(y)) ! Avoid complaint
-y = int(16, kind(y))  ! This is not portable
-#endif
 end function size_of_qp
 
 #endif

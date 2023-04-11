@@ -1,0 +1,60 @@
+#!/bin/bash
+# This script pre-processes the Fortran source code for g95
+# It does not support REAL32, REAL64, REAL128 in ISO_FORTRAN_ENV.
+
+DIR="$(realpath "$1")"
+CONSTSF90="consts.F90"
+CONSTS="$DIR/common/$CONSTSF90"
+MEMORYF90="memory.F90"
+MEMORY="$DIR/common/$MEMORYF90"
+
+if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
+    printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
+    exit 1
+fi
+
+if [[ -f "$CONSTS" ]] ; then
+    STR="use, intrinsic :: iso_fortran_env, only : REAL32, REAL64, REAL128"
+    sed -i "/$STR/d" "$CONSTS"
+    STR="use, intrinsic :: iso_fortran_env, only : INT16"
+    sed -i "/$STR/d" "$CONSTS"
+    STR="use, intrinsic :: iso_fortran_env, only : INT32"
+    sed -i "/$STR/d" "$CONSTS"
+    STR="use, intrinsic :: iso_fortran_env, only : INT64"
+    sed -i "/$STR/d" "$CONSTS"
+    OLD_STR="integer, parameter :: SP = REAL32"
+    NEW_STR="integer, parameter :: SP = kind(0.0)"
+    sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+    OLD_STR="integer, parameter :: DP = REAL64"
+    NEW_STR="integer, parameter :: DP = kind(0.0D0)"
+    sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+    OLD_STR="integer, parameter :: QP = REAL128"
+    NEW_STR="integer, parameter :: QP = selected_real_kind(p=30)"
+    sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+    OLD_STR="integer, parameter :: RP = REAL32"
+    NEW_STR="integer, parameter :: RP = kind(0.0)"
+    sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+    OLD_STR="integer, parameter :: RP = REAL64"
+    NEW_STR="integer, parameter :: RP = kind(0.0D0)"
+    sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+    OLD_STR="integer, parameter :: RP = REAL128"
+    NEW_STR="integer, parameter :: RP = selected_real_kind(p=30)"
+    sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+    OLD_STR="integer, parameter :: IK = INT16"
+    NEW_STR="integer, parameter :: IK = selected_int_kind(4)"
+    sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+    OLD_STR="integer, parameter :: IK = INT32"
+    NEW_STR="integer, parameter :: IK = selected_int_kind(7)"
+    sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+    OLD_STR="integer, parameter :: IK = INT64"
+    NEW_STR="integer, parameter :: IK = selected_int_kind(14)"
+    sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+fi
+
+if [[ -f "$MEMORY" ]] ; then
+    OLD_STR="y = int(storage_size(x) \/ 8, kind(y))"
+    NEW_STR="y = int(8, kind(y))"
+    sed -i "s/$OLD_STR/$NEW_STR/" "$MEMORY"
+fi
+
+exit 0
