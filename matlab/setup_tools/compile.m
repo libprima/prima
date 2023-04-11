@@ -178,23 +178,23 @@ function prepare_header(header_file, precision, debug_flag)
 
 switch precision
 case {'s', 'single'}
-    rep_str(header_file, '#define __REAL_PRECISION__ 64', '#define __REAL_PRECISION__ 32');
-    rep_str(header_file, '#define __REAL_PRECISION__ 128', '#define __REAL_PRECISION__ 32');
-    rep_str(header_file, '#define __QP_AVAILABLE__ 1', '#define __QP_AVAILABLE__ 0');
+    rep_str(header_file, '#define REAL_PRECISION_ 64', '#define REAL_PRECISION_ 32');
+    rep_str(header_file, '#define REAL_PRECISION_ 128', '#define REAL_PRECISION_ 32');
+    rep_str(header_file, '#define QP_AVAILABLE_ 1', '#define QP_AVAILABLE_ 0');
 case {'q', 'quadruple'}
-    rep_str(header_file, '#define __REAL_PRECISION__ 32', '#define __REAL_PRECISION__ 128');
-    rep_str(header_file, '#define __REAL_PRECISION__ 64', '#define __REAL_PRECISION__ 128');
-    rep_str(header_file, '#define __QP_AVAILABLE__ 0', '#define __QP_AVAILABLE__ 1');
+    rep_str(header_file, '#define REAL_PRECISION_ 32', '#define REAL_PRECISION_ 128');
+    rep_str(header_file, '#define REAL_PRECISION_ 64', '#define REAL_PRECISION_ 128');
+    rep_str(header_file, '#define QP_AVAILABLE_ 0', '#define QP_AVAILABLE_ 1');
 otherwise
-    rep_str(header_file, '#define __REAL_PRECISION__ 32', '#define __REAL_PRECISION__ 64');
-    rep_str(header_file, '#define __REAL_PRECISION__ 128', '#define __REAL_PRECISION__ 64');
-    rep_str(header_file, '#define __QP_AVAILABLE__ 1', '#define __QP_AVAILABLE__ 0');
+    rep_str(header_file, '#define REAL_PRECISION_ 32', '#define REAL_PRECISION_ 64');
+    rep_str(header_file, '#define REAL_PRECISION_ 128', '#define REAL_PRECISION_ 64');
+    rep_str(header_file, '#define QP_AVAILABLE_ 1', '#define QP_AVAILABLE_ 0');
 end
 
 if debug_flag
-    rep_str(header_file, '#define __DEBUGGING__ 0', '#define __DEBUGGING__ 1');
+    rep_str(header_file, '#define DEBUGGING_ 0', '#define DEBUGGING_ 1');
 else
-    rep_str(header_file, '#define __DEBUGGING__ 1', '#define __DEBUGGING__ 0');
+    rep_str(header_file, '#define DEBUGGING_ 1', '#define DEBUGGING_ 0');
 end
 
 % PREPARE_HEADER ends
