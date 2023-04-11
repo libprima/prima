@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, April 11, 2023 AM11:23:15
+! Last Modified: Tuesday, April 11, 2023 AM11:53:36
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: pintrf_mod, only : OBJ, OBJCON
@@ -96,7 +96,7 @@ noisy_x = x + noise_level_loc * max(abs(x), ONE) * r
 ! Recover the random seed if necessary.
 if (present(seed)) then
     call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
-    !deallocate (seedsav)  ! SEEDSAV is deallocated automatically at return.
+    deallocate (seedsav)  ! SEEDSAV is deallocated automatically at return.
 end if
 end function noisy0
 
@@ -162,7 +162,7 @@ end select
 ! Recover the random seed if necessary.
 if (present(seed)) then
     call setseed(seedsav)
-!deallocate (seedsav)  ! SEEDSAV is deallocated automatically at return.
+    deallocate (seedsav)  ! SEEDSAV is deallocated automatically at return.
 end if
 end function noisy1
 
@@ -241,7 +241,7 @@ elseif (r < 0.1_RP) then
     noisy_f = -10.0_RP * max(abs(f), ONE)  ! Discontinuously decreased values
 end if
 call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
-!deallocate (seedsav)  ! SEEDSAV is deallocated automatically at return.
+deallocate (seedsav)  ! SEEDSAV is deallocated automatically at return.
 end function noisyfun0
 
 
