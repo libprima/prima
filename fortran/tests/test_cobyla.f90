@@ -28,7 +28,7 @@ use, non_intrinsic :: noise_mod, only : noisy, noisy_calcfc, orig_calcfc
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
-use, non_intrinsic :: string_mod, only : trimstr, istr
+use, non_intrinsic :: string_mod, only : strip, istr
 
 implicit none
 
@@ -154,7 +154,7 @@ if (test_bigprob) then
         orig_calcfc => prob % calcfc
 
         print '(/1A, I0, 1A, I0, 1A, I0, 1A, I0)', &
-            & trimstr(probname)//': N = ', n, ' M = ', m, ', MAXFUN = ', maxfun, ', Random test ', irand
+            & strip(probname)//': N = ', n, ' M = ', m, ', MAXFUN = ', maxfun, ', Random test ', irand
         call cobyla(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxfilt=maxfilt,&
             & maxhist=maxhist, fhist=fhist, xhist=xhist, chist=chist, conhist=conhist,&
             & ftarget=ftarget, ctol=ctol, iprint=iprint)
@@ -229,7 +229,7 @@ else
                 x0 = noisy(prob % x0)
                 orig_calcfc => prob % calcfc
 
-                print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' M = ', m, ', Random test ', irand
+                print '(/1A, I0, 1A, I0, 1A, I0)', strip(probname)//': N = ', n, ' M = ', m, ', Random test ', irand
 
                 call safealloc(x, n)
                 x = x0

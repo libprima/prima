@@ -41,7 +41,7 @@ use, non_intrinsic :: consts_mod, only : RP, ONE, TWO
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: param_mod, only : NOISE_LEVEL_DFT, NOISE_TYPE_DFT
 use, non_intrinsic :: rand_mod, only : getseed, setseed, rand, randn
-use, non_intrinsic :: string_mod, only : lower, trimstr
+use, non_intrinsic :: string_mod, only : lower, strip
 implicit none
 
 ! Inputs
@@ -83,7 +83,7 @@ if (present(seed)) then
     call setseed(seed)  ! Set the random seed by SETSEED(SEED).
 end if
 
-select case (lower(trimstr(noise_type_loc)))
+select case (lower(strip(noise_type_loc)))
 case ('uniform')
     r = TWO * rand() - ONE
 case ('gaussian')
@@ -110,7 +110,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ONE
 use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: param_mod, only : NOISE_LEVEL_DFT, NOISE_TYPE_DFT
 use, non_intrinsic :: rand_mod, only : getseed, setseed, rand, randn
-use, non_intrinsic :: string_mod, only : lower, trimstr
+use, non_intrinsic :: string_mod, only : lower, strip
 implicit none
 
 ! Inputs
@@ -147,7 +147,7 @@ if (present(seed)) then
     call setseed(seed)  ! Set the random seed by SETSEED(SEED).
 end if
 
-select case (lower(trimstr(noise_type_loc)))
+select case (lower(strip(noise_type_loc)))
 case ('sphere')
     r = randn(int(size(x), IK))
     r = r / norm(r)

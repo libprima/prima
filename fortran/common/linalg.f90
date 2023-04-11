@@ -1983,7 +1983,7 @@ function named_norm_vec(x, nname) result(y)
 use, non_intrinsic :: consts_mod, only : RP, ZERO
 use, non_intrinsic :: debug_mod, only : warning
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: string_mod, only : lower, trimstr
+use, non_intrinsic :: string_mod, only : lower, strip
 implicit none
 
 ! Inputs
@@ -2007,7 +2007,7 @@ elseif (.not. any(abs(x) > 0)) then
     ! The following is incorrect without checking the last case, as X may be all NaN.
     y = ZERO
 else
-    select case (lower(trimstr(nname)))
+    select case (lower(strip(nname)))
     case ('fro')
         y = p_norm(x) ! 2-norm, which is the default case of P_NORM.
     case ('inf')
@@ -2015,7 +2015,7 @@ else
         ! above, it is OK to write Y = MAXVAL(ABS(X)) below, but we append a 0 for robustness.
         y = maxval([abs(x), ZERO])
     case default
-        call warning(srname, 'Unknown name of norm: '//trimstr(nname)//'; default to the L2-norm')
+        call warning(srname, 'Unknown name of norm: '//strip(nname)//'; default to the L2-norm')
         y = p_norm(x) ! 2-norm, which is the default case of P_NORM.
     end select
 end if
@@ -2032,7 +2032,7 @@ function named_norm_mat(x, nname) result(y)
 use, non_intrinsic :: consts_mod, only : RP, ZERO
 use, non_intrinsic :: debug_mod, only : warning
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: string_mod, only : lower, trimstr
+use, non_intrinsic :: string_mod, only : lower, strip
 implicit none
 
 ! Inputs
@@ -2056,7 +2056,7 @@ elseif (.not. any(abs(x) > 0)) then
     ! The following is incorrect without checking the last case, as X may be all NaN.
     y = ZERO
 else
-    select case (lower(trimstr(nname)))
+    select case (lower(strip(nname)))
     case ('fro')
         y = sqrt(sum(x**2))
     case ('inf')
@@ -2065,7 +2065,7 @@ else
         ! a 0 for robustness.
         y = maxval([sum(abs(x), dim=2), ZERO])
     case default
-        call warning(srname, 'Unknown name of norm: '//trimstr(nname)//'; default to the Frobenius norm')
+        call warning(srname, 'Unknown name of norm: '//strip(nname)//'; default to the Frobenius norm')
         y = sqrt(sum(x**2))
     end select
 end if
@@ -2141,7 +2141,7 @@ function sort_i2(x, dim, direction) result(y)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
-use, non_intrinsic :: string_mod, only : trimstr
+use, non_intrinsic :: string_mod, only : strip
 implicit none
 
 ! Inputs
@@ -2168,7 +2168,7 @@ end if
 
 direction_loc = 'ascend'
 if (present(direction)) then
-    direction_loc = trimstr(direction)
+    direction_loc = strip(direction)
 end if
 
 y = x
