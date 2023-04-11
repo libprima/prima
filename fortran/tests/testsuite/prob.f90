@@ -69,7 +69,7 @@ subroutine construct(prob, probname, n, m)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : IK
 use, non_intrinsic :: debug_mod, only : errstop
-use, non_intrinsic :: string_mod, only : lower, trimstr
+use, non_intrinsic :: string_mod, only : lower, strip
 implicit none
 
 ! Inputs
@@ -97,7 +97,7 @@ else
     m_loc = 0
 end if
 
-select case (lower(trimstr(probname)))
+select case (lower(strip(probname)))
 case ('bigprob')
     call construct_bigprob(prob, n_loc, m_loc)
 case ('chebyquad')
@@ -129,7 +129,7 @@ case ('trigssqs')
 case ('vardim')
     call construct_vardim(prob, n_loc)
 case default
-    call errstop(srname, 'Unknown problem: '//trimstr(probname))
+    call errstop(srname, 'Unknown problem: '//strip(probname))
 end select
 end subroutine construct
 

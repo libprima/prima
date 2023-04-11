@@ -26,7 +26,7 @@ use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
-use, non_intrinsic :: string_mod, only : trimstr, istr
+use, non_intrinsic :: string_mod, only : strip, istr
 
 implicit none
 
@@ -128,7 +128,7 @@ if (test_bigprob) then
         x = noisy(prob % x0)
         orig_calfun => prob % calfun
 
-        print '(/1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', MAXFUN = ', maxfun, ', Random test ', irand
+        print '(/1A, I0, 1A, I0, 1A, I0)', strip(probname)//': N = ', n, ', MAXFUN = ', maxfun, ', Random test ', irand
         call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
             & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
 
@@ -176,7 +176,7 @@ else
                 x = noisy(prob % x0)
                 orig_calfun => prob % calfun
 
-                print '(/1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ', Random test ', irand
+                print '(/1A, I0, 1A, I0)', strip(probname)//': N = ', n, ', Random test ', irand
                 call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
                     & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
 

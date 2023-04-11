@@ -11,7 +11,7 @@ module string_mod
 
 implicit none
 private
-public :: lower, upper, trimstr, istr, num2str
+public :: lower, upper, strip, istr, num2str
 
 ! MAX_NUM_STR_LEN is the maximum length of a string that is needed to represent a real or integer
 ! number. Assuming that such a number is represented by at most 128 bits, it is safe to set this
@@ -70,7 +70,7 @@ end do
 end function upper
 
 
-pure function trimstr(x) result(y)
+pure function strip(x) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function removes the leading and trailing spaces of a string.
 !--------------------------------------------------------------------------------------------------!
@@ -81,7 +81,7 @@ character(len=*), intent(in) :: x
 character(len=len(trim(adjustl(x)))) :: y
 
 y = trim(adjustl(x))
-end function trimstr
+end function strip
 
 
 pure function istr(x) result(y)
@@ -110,7 +110,7 @@ real(RP), intent(in) :: x
 character(len=:), allocatable :: y
 character(len=MAX_NUM_STR_LEN) :: str
 write (str, *) x
-y = trimstr(str)
+y = strip(str)
 end function real2str
 
 
@@ -124,7 +124,7 @@ integer(IK), intent(in) :: x
 character(len=:), allocatable :: y
 character(len=MAX_NUM_STR_LEN) :: str
 write (str, *) x
-y = trimstr(str)
+y = strip(str)
 end function int2str
 
 
