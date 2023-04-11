@@ -1,12 +1,19 @@
 In 2020, Fortran 2008/2018 features are still not completely supported by
-compilers. Therefore, the Fortran code of this project keeps some pre-2008
+compilers. Therefore, the Fortran code of this project keeps some pre-F2008
 features. They can be removed later (say, in 2025) if compilers implement
 Fortran 2008 better at that time.
 
-The pre-2008 features include the following.
+The pre-F2008 features include the following.
 
-1. We do not take advantage of the "automatic allocation upon intrinsic assignment" feature for
-ALLOCATABLE variables (NOT POINTERS). This is available since F2003.
+1. (Must update) Since F2018, ERROR STOP statement can appear in a pure subprogram. Therefore,
+ERRSTOP can be implemented as pure subroutines. Consequently, all functions can be pure!
+ERROR STOP is available since F2008.
+Note that the MATLAB version of ERRSTOP uses the mexErrMsgIdAndTxt subroutine of MathWorks and hence
+cannot be declared pure. Thus the "pure" attribute has to be removed when refactoring the code the
+mexification, after calling interform.m.
+
+1. (May update) We do not take advantage of the "automatic allocation upon intrinsic assignment"
+feature for ALLOCATABLE variables (NOT POINTERS). This is available since F2003.
 
 For example,
 
@@ -40,16 +47,9 @@ However, the above example can be simplified to the following without ALLOCATE u
 real, allocatable :: x(:)
 x = [(real(i), i = 1, n)]
 
-2. Related to 1: explicit deallocation v.s. automatic deallocation (maybe we should stick to the former)
-In F2003, automatic deallocation happens to allocatable objects when they go out of scope. However,
-we prefer to deallocate them explicitly and immediately after they finish their mission. In
-addition, as of 20220331, automatic deallocate may not be well implemented in some compilers
-including (even) gfortran. See
+3. (May update) Related to 2: explicit deallocation v.s. automatic deallocation (maybe we should
+stick to the former). In F2003, automatic deallocation happens to allocatable objects when they go
+out of scope. However, we prefer to deallocate them explicitly and immediately after they finish
+their mission. In addition, as of 20220331, automatic deallocate may not be well implemented in some
+compilers, (even) including gfortran. See
 https://fortran-lang.discourse.group/t/best-practice-deallocating-allocatable-arrays-explicitly-vs-implicitly
-
-3. Since F2018, ERROR STOP statement can appear in a pure subprogram. Therefore, ERRSTOP
-can be implemented as pure subroutines. Consequently, all functions can be pure!
-ERROR STOP is available since F2008.
-Note that the MATLAB version of ERRSTOP uses the mexErrMsgIdAndTxt subroutine of MathWorks and hence
-cannot be declared pure. Thus the "pure" attribute has to be removed when refactoring the code the
-mexification, after calling interform.m.
