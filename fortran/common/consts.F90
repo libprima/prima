@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 11, 2023 PM08:30:54
+! Last Modified: Tuesday, April 11, 2023 PM09:48:13
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -59,7 +59,6 @@ module consts_mod
 !    arrays, overflow can lead to Segmentation Faults!
 !--------------------------------------------------------------------------------------------------!
 
-#if USE_ISO_FORTRAN_ENV_INTREAL_ == 1
 #if INTEGER_KIND_ == 16
 use, intrinsic :: iso_fortran_env, only : INT16
 #elif INTEGER_KIND_ == 32
@@ -68,16 +67,13 @@ use, intrinsic :: iso_fortran_env, only : INT32
 use, intrinsic :: iso_fortran_env, only : INT64
 #endif
 
-use, intrinsic :: iso_fortran_env, only : REAL32, REAL64, REAL128
-! Unsupported kinds will be negative.
+use, intrinsic :: iso_fortran_env, only : REAL32, REAL64, REAL128  ! Unsupported kinds are negative.
 
 ! Standard IO units
-use, intrinsic :: iso_fortran_env, only : STDIN => INPUT_UNIT, &
-                                        & STDOUT => OUTPUT_UNIT, &
-                                        & STDERR => ERROR_UNIT
-#endif
+use, intrinsic :: iso_fortran_env, only : STDIN => INPUT_UNIT, STDOUT => OUTPUT_UNIT, STDERR => ERROR_UNIT
 
 implicit none
+
 private
 public :: DEBUGGING
 public :: IK, IK_DFT
@@ -97,22 +93,6 @@ logical, parameter :: DEBUGGING = .true.
 logical, parameter :: DEBUGGING = .false.
 #endif
 
-#if USE_ISO_FORTRAN_ENV_INTREAL_ != 1
-! For gfortran, SELECTED_REAL_KIND(K) returns INT16 with K = 3--4, INT32 with k = 5--9, and INT64
-! with K = 10--18. SELECTED_REAL_KIND returns a negative value for an unsupported kind.
-#if INTEGER_KIND_ == 16
-integer, parameter :: INT16 = selected_int_kind(4)
-#elif INTEGER_KIND_ == 32
-integer, parameter :: INT32 = selected_int_kind(7)
-#elif INTEGER_KIND_ == 64
-integer, parameter :: INT64 = selected_int_kind(14)
-#endif
-
-integer, parameter :: REAL32 = kind(0.0)
-integer, parameter :: REAL64 = kind(0.0D0)
-integer, parameter :: REAL128 = selected_real_kind(p=30)
-
-#endif
 integer, parameter :: IK_DFT = kind(0)  ! Default integer kind
 integer, parameter :: RP_DFT = kind(0.0)  ! Default real kind
 integer, parameter :: SP = REAL32  ! Kind for single precision
@@ -215,12 +195,6 @@ real(RP), parameter :: SYMTOL_DFT = ZERO
 
 ! Output unit, can be any integer between 9 and 99; used in output.f90
 integer, parameter :: OUTUNIT = 42
-! Standard IO units
-#if USE_ISO_FORTRAN_ENV_INTREAL_ != 1
-integer, parameter :: STDIN = 5
-integer, parameter :: STDOUT = 6
-integer, parameter :: STDERR = 0
-#endif
 
 ! Some default values
 real(RP), parameter :: RHOBEG_DFT = ONE
