@@ -256,7 +256,7 @@ $(foreach TST, $(TESTS_INT_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 	))
 ######################################################################################
 
-.PHONY: all test test_c clean $(TESTS) $(TESTS_C) $(TESTS_INT) $(TESTS_INT_C) source_* header_* clean*
+.PHONY: all test test_c clean $(TESTS) $(TESTS_C) $(TESTS_INT) $(TESTS_INT_C) source_* clean*
 
 # Operating system.
 OSTYPE :=
@@ -457,7 +457,7 @@ gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_ts
 gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
 	FCO := $(GFORT) $(FFLAGSO) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
-	FCG := $(GFORT) $(FFLAGSG) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
+	FCG := $(GFORT) $(FFLAGSG) -ffpe-trap=zero,invalid,overflow#,underflow,denorm
 gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
 	FCF := $(GFORT) -Wno-function-elimination -ffpe-trap=zero,invalid $(GFF)
 
@@ -813,20 +813,25 @@ $(TESTS_C) $(TESTS_INT_C):
 
 # Make the binary corresponding to %_tst_c, but do not execute it.
 # This is useful if we want to check whether the code can compile.
-%_tst_c: source_% header_%
+%_tst_c: source_%
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
+	$(eval DBG := $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//"))
+	$(eval IK := $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//")))
+	$(eval RP := $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//")))
+	$(eval QPAVLB := $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16))
+	$(eval EXTRA_FLAGS := -g -D__DEBUGGING__=$(DBG) -D__AGRESSIVE_OPTIONS__=$(AGRESSIVE) -D__INTEGER_KIND__=$(IK) -D__REAL_PRECISION__=$(RP) -D__QP_AVAILABLE__=$(QPAVLB))
 	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
-	(if echo $@ | grep -q 'atest\|9test'; then \
+	(if echo $@ | grep -q '9test'; then \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
 			if [[ '$(FFLAGSO)' = '-fast' ]] ; then \
-				$(FCF) -g -c $(SRC) ; \
+				$(FCF) $(EXTRA_FLAGS) -c $(SRC) ; \
 			else \
-				$(FCO) -g -c $(SRC) ; \
+				$(FCO) $(EXTRA_FLAGS) -c $(SRC) ; \
 			fi ; \
 		fi ; \
 		if [[ -n '$(FFLAGSG)' ]] ; then \
-			$(FCG) -g -c $(SRC) ; \
+			$(FCG) $(EXTRA_FLAGS) -c $(SRC) ; \
 		fi ; \
 	else \
 		if echo $@ | grep -q 'itest\|xtest' && [[ '$(OSTYPE)' = 'MAC' || '$(OSTYPE)' = 'LINUX' ]] ; then \
@@ -842,13 +847,13 @@ $(TESTS_C) $(TESTS_INT_C):
 		fi ; \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
 			if [[ '$(FFLAGSO)' = '-fast' ]] ; then \
-				$(FCF) -g -o $@_$(SUFFIXO) $(SRC) ; \
+				$(FCF) $(EXTRA_FLAGS) -o $@_$(SUFFIXO) $(SRC) ; \
 			else \
-				$(FCO) -g -o $@_$(SUFFIXO) $(SRC) ; \
+				$(FCO) $(EXTRA_FLAGS) -o $@_$(SUFFIXO) $(SRC) ; \
 			fi ; \
 		fi ; \
 		if [[ -n '$(FFLAGSG)' ]] ; then \
-			$(FCG) -g -o $@_$(SUFFIXG) $(SRC) ; \
+			$(FCG) $(EXTRA_FLAGS) -o $@_$(SUFFIXG) $(SRC) ; \
 		fi ; \
 	fi) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
@@ -979,18 +984,20 @@ source_%: $(SRC_DIRS)
 #@printf "Done.\n"
 
 # Adapt the header file for the test.
-header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
-header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
-header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
-header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
-header_%: source_%
-	@printf "\nPreparing the header file for the test.\n"
-	$(SEDI) "s|^#define __QP_AVAILABLE__ [0-9]*|#define __QP_AVAILABLE__ $(QPAVLB)|" $(HEADERS)
-	$(SEDI) "s|^#define __INTEGER_KIND__ [0-9]*|#define __INTEGER_KIND__ $(IK)|" $(HEADERS)
-	$(SEDI) "s|^#define __REAL_PRECISION__ [0-9]*|#define __REAL_PRECISION__ $(RP)|" $(HEADERS)
-	$(SEDI) "s|^#define __DEBUGGING__ [0-9]*|#define __DEBUGGING__ $(DBG)|" $(HEADERS)
-	$(SEDI) "s|^#define __AGRESSIVE_OPTIONS__ [0-9]*|#define __AGRESSIVE_OPTIONS__ $(AGRESSIVE)|" $(HEADERS)
-	@printf "Done.\n"
+# Zaikun 20230411: Instead of modifying the header file, we should use the -D option of the
+# preprocessors (cpp or fpp). See the receipt of %_tst_c for details.
+#header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
+#header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
+#header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
+#header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
+#header_%: source_%
+#	@printf "\nPreparing the header file for the test.\n"
+#	$(SEDI) "s|^#define __QP_AVAILABLE__ [0-9]*|#define __QP_AVAILABLE__ $(QPAVLB)|" $(HEADERS)
+#	$(SEDI) "s|^#define __INTEGER_KIND__ [0-9]*|#define __INTEGER_KIND__ $(IK)|" $(HEADERS)
+#	$(SEDI) "s|^#define __REAL_PRECISION__ [0-9]*|#define __REAL_PRECISION__ $(RP)|" $(HEADERS)
+#	$(SEDI) "s|^#define __DEBUGGING__ [0-9]*|#define __DEBUGGING__ $(DBG)|" $(HEADERS)
+#	$(SEDI) "s|^#define __AGRESSIVE_OPTIONS__ [0-9]*|#define __AGRESSIVE_OPTIONS__ $(AGRESSIVE)|" $(HEADERS)
+#	@printf "Done.\n"
 
 
 ####################################################################################################

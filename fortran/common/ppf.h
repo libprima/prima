@@ -2,7 +2,7 @@
 /*
  * Coded by Zaikun ZHANG (www.zhangzk.net) in July 2020.
  *
- * Last Modified: Mon 24 May 2021 04:21:00 PM HKT
+ * Last Modified: Tue 11 April 2022 04:53:00 PM HKT
  */
 /******************************************************************************/
 /*
@@ -47,29 +47,26 @@
 
 /******************************************************************************/
 /* Is this a released version? Should be 1 except for the developers. */
-#if defined __RELEASED__
-#undef __RELEASED__
-#endif
+#if !defined __RELEASED__
 #define __RELEASED__ 1
+#endif
 /******************************************************************************/
 
 
 /******************************************************************************/
 /* Are we debugging?
  * __RELEASED__ == 1 and __DEBUGGING__ == 1 do not conflict. Users may debug. */
-#if defined __DEBUGGING__
-#undef __DEBUGGING__
-#endif
+#if !defined __DEBUGGING__
 #define __DEBUGGING__ 0
+#endif
 /******************************************************************************/
 
 
 /******************************************************************************/
 /* Which Fortran standard to follow? */
-#if defined __FORTRAN_STANDARD__
-#undef __FORTRAN_STANDARD__
-#endif
+#if !defined __FORTRAN_STANDARD__
 #define __FORTRAN_STANDARD__ 2008 /* Will be default to 2018 later (in 2028?).*/
+#endif
 /******************************************************************************/
 
 
@@ -77,10 +74,9 @@
 /* Which integer kind to use?
  * 0 = default INTEGER, 16 = INTEGER*2, 32 = INTEGER*4, 64 = INTEGER*8.
  * Make sure that your compiler supports the selected kind. */
-#if defined __INTEGER_KIND__
-#undef __INTEGER_KIND__
-#endif
+#if !defined __INTEGER_KIND__
 #define __INTEGER_KIND__ 0
+#endif
 /* Fortran standards guarantee that 0 is supported, but not the others. */
 /******************************************************************************/
 
@@ -91,10 +87,9 @@
  * Make sure that your compiler supports the selected kind.  Note the following:
  * 1. The default REAL (i.e., 0) is the single-precision REAL.
  * 2. If you set __REAL_PRECISION__ to 128, you must set __QP_AVAILABLE__ to 1. */
-#if defined __REAL_PRECISION__
-#undef __REAL_PRECISION__
-#endif
+#if !defined __REAL_PRECISION__
 #define __REAL_PRECISION__ 64
+#endif
 /* Fortran standards guarantee that 0, 32, and 64 are supported, but not 128. */
 
 /* Is quad precision available on this platform (compiler, hardware ...)? */
@@ -104,13 +99,12 @@
  *    example, REAL128 of nagfor 7.0 has a range of 291, while REAL64
  *    has a range of 307.
  * 3. It is rarely a good idea to use REAL128 as the working precision,
- *    which is probably inefficient and unnecessary. */
-#if defined __QP_AVAILABLE__
-#undef __QP_AVAILABLE__
-#endif
-/* Change the following line to set __QP_AVAILABLE__ to 1 if REAL128 is
- * available and if you intend to use it. DO NOT CHANGE IT UNLESS REALLY SURE. */
+ *    which is probably inefficient and unnecessary.
+ * 4. Set __QP_AVAILABLE__ to 1 and __REAL_PRECISION__ to 128 if REAL128 is available
+ *    and you REALLY intend to use it. DO NOT DO THIS UNLESS REALLY SURE. */
+#if !defined __QP_AVAILABLE__
 #define __QP_AVAILABLE__ 0
+#endif
 
 /* Revise __REAL_PRECISION__ according to __QP_AVAILABLE__ . */
 #if __QP_AVAILABLE__ != 1 && __REAL_PRECISION__ > 64
@@ -124,10 +118,9 @@
 /* The maximal memory for recording the computation history (MB).
  * The maximal supported value is 2000, as 2000 M = 2*10^9 = maximum of INT32.
  * N.B.: A big value (even < 2000) may lead to SEGFAULTs due to large arrays. */
-#if defined __MAXHISTMEM__
-#undef __MAXHISTMEM__
-#endif
+#if !defined __MAXHISTMEM__
 #define __MAXHISTMEM__ 300  /* 1MB > 10^5*REAL64. 100 is sometimes too small. */
+#endif
 /******************************************************************************/
 
 
@@ -137,10 +130,9 @@
  * 1. It is VALID to set __AGRESSIVE_OPTIONS__ to 0 and __DEBUGGING__ to 1 at
  * the same time.
  * 2. When compiled with aggressive options, the code may behave unexpectedly */
-#if defined __AGRESSIVE_OPTIONS__
-#undef __AGRESSIVE_OPTIONS__
-#endif
+#if !defined __AGRESSIVE_OPTIONS__
 #define __AGRESSIVE_OPTIONS__ 0
+#endif
 /******************************************************************************/
 
 
@@ -149,10 +141,9 @@
 /* We prefer STORAGE_SIZE to C_SIZEOF, because the former is intrinsic while the
  * later requires the intrinsic module ISO_C_BINDING.
  * The flag will be removed later (in 2025?). */
-#if defined __USE_STORAGE_SIZE__
-#undef __USE_STORAGE_SIZE__
-#endif
+#if !defined __USE_STORAGE_SIZE__
 #define __USE_STORAGE_SIZE__ 0
+#endif
 
 #if defined __GFORTRAN__
 #if __GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
@@ -199,10 +190,9 @@
 /******************************************************************************/
 /* Do we use INT16, INT32, INT64, REAL32, REAL64, REAL128 from ISO_FORTRAN_ENV?
  * (Fortran 2008). This flag will be removed later (in 2025?). */
-#if defined __USE_ISO_FORTRAN_ENV_INTREAL__
-#undef __USE_ISO_FORTRAN_ENV_INTREAL__
-#endif
+#if !defined __USE_ISO_FORTRAN_ENV_INTREAL__
 #define __USE_ISO_FORTRAN_ENV_INTREAL__ 0
+#endif
 
 #if defined __GFORTRAN__
 #if __GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
