@@ -17,6 +17,8 @@ OUTPUTF90="output.f90"
 OUTPUT="$DIR/common/$OUTPUTF90"
 DEBUGF90="debug.F90"
 DEBUG="$DIR/common/$DEBUGF90"
+NOISEF90="noise.f90"
+NOISE="$DIR/testsuite/$NOISEF90"
 FMXAPIF90="fmxapi.F90"
 FMXAPI="$DIR/$FMXAPIF90"
 
@@ -29,7 +31,7 @@ if [[ -f "$GETACT" ]] ; then
     sed -i "s/,\s*back\s*=\s*\.true\.//" "$GETACT"
 fi
 
-for FILE in "$STRING" "$PREPROC" "$LINALG" "$OUTPUT" "$DEBUG" "$FMXAPI" ; do
+for FILE in "$STRING" "$PREPROC" "$LINALG" "$OUTPUT" "$DEBUG" "$NOISE" "$FMXAPI" ; do
     if [[ -f "$FILE" ]] ; then
         sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
     fi
