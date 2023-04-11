@@ -32,13 +32,13 @@ subroutine assert(condition, description, srname)
 ! (python -O), the Python `assert` will also be ignored. MATLAB does not behave in this way.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: string_mod, only : trimstr
+use, non_intrinsic :: string_mod, only : strip
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
-    call errstop(trimstr(srname), 'Assertion failed: '//trimstr(description))
+    call errstop(strip(srname), 'Assertion failed: '//strip(description))
 end if
 end subroutine assert
 
@@ -52,13 +52,13 @@ subroutine validate(condition, description, srname)
 ! In Python or C, VALIDATE can be implemented following the Fortran implementation below.
 ! N.B.: ASSERT checks the condition only when debugging, but VALIDATE does it always.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: string_mod, only : trimstr
+use, non_intrinsic :: string_mod, only : strip
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (.not. condition) then
-    call errstop(trimstr(srname), 'Validation failed: '//trimstr(description))
+    call errstop(strip(srname), 'Validation failed: '//strip(description))
 end if
 end subroutine validate
 
@@ -77,14 +77,14 @@ subroutine wassert(condition, description, srname)
 ! but WASSERT only raises a warning.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: string_mod, only : trimstr
+use, non_intrinsic :: string_mod, only : strip
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
     call backtr()
-    call warning(trimstr(srname), 'Assertion failed: '//trimstr(description))
+    call warning(strip(srname), 'Assertion failed: '//strip(description))
 end if
 end subroutine wassert
 
@@ -95,13 +95,13 @@ subroutine errstop(srname, msg)
 ! It also calls BACKTR to print the backtrace.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : STDERR
-use, non_intrinsic :: string_mod, only : trimstr
+use, non_intrinsic :: string_mod, only : strip
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
 call backtr()
-write (STDERR, '(/1A/)') 'ERROR: '//trimstr(srname)//': '//trimstr(msg)//'.'
+write (STDERR, '(/1A/)') 'ERROR: '//strip(srname)//': '//strip(msg)//'.'
 error stop  ! This means to stop the whole program.
 ! N.B. (Zaikun 230410): We prefer ERROR STOP to STOP, as the former has been allowed in PURE
 ! procedures since F2018. Later, when F2018 is better supported, we should take advantage of this
@@ -145,12 +145,12 @@ subroutine warning(srname, msg)
 ! This subroutine prints 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.' to STDERR.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : STDERR
-use, non_intrinsic :: string_mod, only : trimstr
+use, non_intrinsic :: string_mod, only : strip
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
-write (STDERR, '(/1A/)') 'Warning: '//trimstr(srname)//': '//trimstr(msg)//'.'
+write (STDERR, '(/1A/)') 'Warning: '//strip(srname)//': '//strip(msg)//'.'
 end subroutine warning
 
 

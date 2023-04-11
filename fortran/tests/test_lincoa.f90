@@ -29,7 +29,7 @@ use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
-use, non_intrinsic :: string_mod, only : trimstr, istr
+use, non_intrinsic :: string_mod, only : strip, istr
 
 implicit none
 
@@ -162,7 +162,7 @@ if (test_bigprob) then
         bineq = prob % bineq
 
         print '(/1A, I0, 1A, I0, 1A, I0, 1A, I0, 1A, I0)', &
-           & trimstr(probname)//': N = ', n, ' NPT = ', npt, ' M = ', size(Aineq, 2), ', MAXFUN = ', maxfun, ', Random test ', irand
+           & strip(probname)//': N = ', n, ' NPT = ', npt, ' M = ', size(Aineq, 2), ', MAXFUN = ', maxfun, ', Random test ', irand
 
         call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=Aineq, b=bineq, &
             & npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist,&
@@ -186,7 +186,7 @@ else
             ndim = (maxdim_loc - mindim_loc) / dimstride_loc + 1_IK
             dim_list(1:ndim) = mindim_loc + dimstride_loc*[(idim - 1_IK, idim=1_IK, ndim)]
         end if
-        if (trimstr(probname) == 'ptinsq') then
+        if (strip(probname) == 'ptinsq') then
             dim_list(1:ndim) = int(ceiling(real(dim_list(1:ndim)) / 2.0) * 2, IK)  ! Must be even
         end if
         do idim = 1, ndim
@@ -272,7 +272,7 @@ else
                     bineq = prob % bineq
                 end if
 
-                print '(/1A, I0, 1A, I0, 1A, I0, 1A, I0)', trimstr(probname)//': N = ', n, ' NPT = ', npt, &
+                print '(/1A, I0, 1A, I0, 1A, I0, 1A, I0)', strip(probname)//': N = ', n, ' NPT = ', npt, &
                     & ' M = ', size(Aineq, 2), ', Random test ', irand
 
                 call safealloc(x, n)

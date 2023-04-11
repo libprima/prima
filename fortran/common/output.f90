@@ -59,7 +59,7 @@ use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING, &
     & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT
-use, non_intrinsic :: string_mod, only : trimstr
+use, non_intrinsic :: string_mod, only : strip
 implicit none
 
 ! Compulsory inputs
@@ -103,7 +103,7 @@ elseif (iprint > 0) then
     wunit = STDOUT  ! Print the message to the standard out.
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     wunit = OUTUNIT
-    fout = trimstr(solver)//'_output.txt'
+    fout = strip(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
     open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
@@ -161,7 +161,7 @@ end select
 if (abs(iprint) >= 3) then
     write (wunit, '(1X)')
 end if
-write (wunit, '(/1A)') 'Return from '//solver//' because '//trimstr(msg)
+write (wunit, '(/1A)') 'Return from '//solver//' because '//strip(msg)
 write (wunit, retnf_fmt) 'At the return from '//solver, 'Number of function evaluations = ', nf
 write (wunit, f_fmt) 'Least function value = ', f
 if (is_constrained) then
@@ -189,7 +189,7 @@ subroutine rhomsg(solver, iprint, nf, f, rho, x, cstrv, constr, cpen)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
 use, non_intrinsic :: debug_mod, only : warning
-use, non_intrinsic :: string_mod, only : trimstr
+use, non_intrinsic :: string_mod, only : strip
 implicit none
 
 ! Compulsory inputs
@@ -225,7 +225,7 @@ elseif (iprint > 0) then
     wunit = STDOUT  ! Print the message to the standard out.
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     wunit = OUTUNIT
-    fout = trimstr(solver)//'_output.txt'
+    fout = strip(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
     open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
@@ -285,7 +285,7 @@ subroutine cpenmsg(solver, iprint, cpen)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, OUTUNIT, STDOUT
 use, non_intrinsic :: debug_mod, only : warning
-use, non_intrinsic :: string_mod, only : trimstr
+use, non_intrinsic :: string_mod, only : strip
 implicit none
 
 ! Compulsory inputs
@@ -309,7 +309,7 @@ elseif (iprint > 0) then
     wunit = STDOUT  ! Print the message to the standard out.
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     wunit = OUTUNIT
-    fout = trimstr(solver)//'_output.txt'
+    fout = strip(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
     open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
@@ -332,7 +332,7 @@ subroutine fmsg(solver, iprint, nf, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
 use, non_intrinsic :: debug_mod, only : warning
-use, non_intrinsic :: string_mod, only : trimstr
+use, non_intrinsic :: string_mod, only : strip
 implicit none
 
 ! Inputs
@@ -366,7 +366,7 @@ elseif (iprint > 0) then
     wunit = STDOUT  ! Print the message to the standard out.
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     wunit = OUTUNIT
-    fout = trimstr(solver)//'_output.txt'
+    fout = strip(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
     open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
