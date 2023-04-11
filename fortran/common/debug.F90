@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Monday, April 10, 2023 PM07:31:06
+! Last Modified: Tuesday, April 11, 2023 PM08:11:04
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -26,8 +26,8 @@ subroutine assert(condition, description, srname)
 ! MATLAB analogue: assert(condition, sprintf('%s: Assertion failed: %s', srname, description))
 ! Python analogue: assert condition, srname + ': Assertion failed: ' + description
 ! C analogue: assert(condition)  /* An error message will be produced by the compiler */
-! N.B.: As in C, we design ASSERT to operate only in the debug mode, i.e., when __DEBUGGING__ == 1;
-! when __DEBUGGING__ == 0, ASSERT does nothing. For the checking that should take effect in both
+! N.B.: As in C, we design ASSERT to operate only in the debug mode, i.e., when DEBUGGING_ == 1;
+! when DEBUGGING_ == 0, ASSERT does nothing. For the checking that should take effect in both
 ! the debug and release modes, use VALIDATE (see below) instead. In the optimized mode of Python
 ! (python -O), the Python `assert` will also be ignored. MATLAB does not behave in this way.
 !--------------------------------------------------------------------------------------------------!
@@ -112,16 +112,16 @@ end subroutine errstop
 subroutine backtr()
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine calls a compiler-dependent intrinsic to show a backtrace if we are in the
-! debugging mode, i.e., __DEBUGGING__ == 1.
+! debugging mode, i.e., DEBUGGING_ == 1.
 ! N.B.:
 ! 1. The intrinsic is compiler-dependent and does not exist in all compilers. Indeed, it is not
 ! standard-conforming. Therefore, compilers may warn that a non-standard intrinsic is in use.
 ! 2. More seriously, if the compiler is instructed to conform to the standards (e.g., gfortran with
-! the option -std=f2003) while __DEBUGGING__ is set to 1, then the compilation may FAIL when linking,
+! the option -std=f2003) while DEBUGGING_ is set to 1, then the compilation may FAIL when linking,
 ! complaining that a subroutine cannot be found (e.g., backtrace for gfortran). In that case, we
-! must set __DEBUGGING__ to 0 in ppf.h.
+! must set DEBUGGING_ to 0 in ppf.h.
 !--------------------------------------------------------------------------------------------------!
-#if __DEBUGGING__ == 1
+#if DEBUGGING_ == 1
 
 #if defined __GFORTRAN__
 implicit none

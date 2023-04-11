@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 13, 2022 PM02:05:50
+! Last Modified: Tuesday, April 11, 2023 PM08:10:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ public :: safealloc
 
 interface cstyle_sizeof
     module procedure size_of_sp, size_of_dp
-#if __QP_AVAILABLE__ == 1
+#if QP_AVAILABLE_ == 1
     module procedure size_of_qp
 #endif
 end interface cstyle_sizeof
@@ -33,7 +33,7 @@ interface safealloc
     module procedure alloc_ivector, alloc_imatrix
     module procedure alloc_rvector_sp, alloc_rmatrix_sp
     module procedure alloc_rvector_dp, alloc_rmatrix_dp
-#if __QP_AVAILABLE__ == 1
+#if QP_AVAILABLE_ == 1
     module procedure alloc_rvector_qp, alloc_rmatrix_qp
 #endif
 end interface safealloc
@@ -53,7 +53,7 @@ real(SP), intent(in) :: x
 ! Outputs
 integer(IK) :: y
 
-#if __USE_STORAGE_SIZE__ == 1
+#if USE_STORAGE_SIZE_ == 1
 ! We prefer STORAGE_SIZE to C_SIZEOF, because the former is intrinsic while the later requires the
 ! intrinsic module ISO_C_BINDING.
 y = int(storage_size(x) / 8, kind(y))  ! Y = INT(C_SIZEOF(X), KIND(Y))
@@ -75,7 +75,7 @@ real(DP), intent(in) :: x
 ! Outputs
 integer(IK) :: y
 
-#if __USE_STORAGE_SIZE__ == 1
+#if USE_STORAGE_SIZE_ == 1
 y = int(storage_size(x) / 8, kind(y))
 #else
 y = int(kind(x), kind(y)) ! Avoid complaint
@@ -84,7 +84,7 @@ y = int(8, kind(y))  ! This is not portable
 end function size_of_dp
 
 
-#if __QP_AVAILABLE__ == 1
+#if QP_AVAILABLE_ == 1
 
 pure function size_of_qp(x) result(y)
 !--------------------------------------------------------------------------------------------------!
@@ -97,7 +97,7 @@ real(QP), intent(in) :: x
 ! Outputs
 integer(IK) :: y
 
-#if __USE_STORAGE_SIZE__ == 1
+#if USE_STORAGE_SIZE_ == 1
 y = int(storage_size(x) / 8, kind(y))
 #else
 y = int(kind(x), kind(y)) ! Avoid complaint
@@ -249,7 +249,7 @@ call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname
 end subroutine alloc_rmatrix_dp
 
 
-#if __QP_AVAILABLE__ == 1
+#if QP_AVAILABLE_ == 1
 
 subroutine alloc_rvector_qp(x, n)
 !--------------------------------------------------------------------------------------------------!
