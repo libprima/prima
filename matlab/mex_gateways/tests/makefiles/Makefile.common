@@ -485,7 +485,7 @@ $(TESTS) $(TESTS_INT):
 	$(eval IK := $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//")))
 	$(eval RP := $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//")))
 	$(eval QPAVLB := $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16))
-	$(eval EXTRA_FLAGS := -DDEBUGGING_=$(DBG) -DAGGRESSIVE_OPTIONS_=$(AGGRESSIVE) -DINTEGER_KIND_=$(IK) -DREAL_PRECISION_=$(RP) -DQP_AVAILABLE_=$(QPAVLB))
+	$(eval EXTRA_FLAGS := -DDEBUGGING_=$(DBG) -DINTEGER_KIND_=$(IK) -DREAL_PRECISION_=$(RP) -DQP_AVAILABLE_=$(QPAVLB))
 	@($(FC1) $(EXTRA_FLAGS) -c $(SRC) && $(FC2) $(EXTRA_FLAGS) -c $(SRC)) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
 	| grep -v "Absoft ANSI 1610:" \

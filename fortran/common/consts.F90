@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 11, 2023 PM11:11:01
+! Last Modified: Tuesday, April 11, 2023 PM11:32:29
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -87,12 +87,7 @@ public :: ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 public :: MAXFUN_DIM_DFT, MAXHISTMEM, MIN_MAXFILT, MAXFILT_DFT, IPRINT_DFT
 
 
-#if DEBUGGING_ == 1
-logical, parameter :: DEBUGGING = .true.
-#else
-logical, parameter :: DEBUGGING = .false.
-#endif
-
+logical, parameter :: DEBUGGING = (DEBUGGING_ == 1)  ! Whether we are in debugging mode
 integer, parameter :: IK_DFT = kind(0)  ! Default integer kind
 integer, parameter :: RP_DFT = kind(0.0)  ! Default real kind
 integer, parameter :: SP = REAL32  ! Kind for single precision
@@ -132,9 +127,7 @@ real(RP), parameter :: HALF = 0.5_RP
 real(RP), parameter :: QUART = 0.25_RP
 real(RP), parameter :: TEN = 10.0_RP
 real(RP), parameter :: TENTH = 0.1_RP
-real(RP), parameter :: PI = 3.141592653589793238462643383279502884_RP
-! We may set PI to acos(-1.0_RP), but some compilers may complain about `Elemental function as
-! initialization expression with non-integer or non-character arguments`.
+real(RP), parameter :: PI = 3.1415926535897932384626433832795028841971693993751058209749445923078_RP
 
 ! EPS is the machine epsilon, namely the smallest floating-point number such that 1.0 + EPS > 1.0.
 real(RP), parameter :: EPS = epsilon(ZERO)
