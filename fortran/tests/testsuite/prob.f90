@@ -40,7 +40,7 @@ public :: destruct
 integer, parameter :: PNLEN = 64
 
 type PROB_T
-    character(len=PNLEN) :: probname  ! Should be allocatable, which is not supported by Absoft 22.0
+    character(len=PNLEN) :: probname  
     character :: probtype
     integer(IK) :: m
     integer(IK) :: n
@@ -145,9 +145,6 @@ implicit none
 ! Inputs
 type(PROB_T), intent(inout) :: prob
 
-!if (allocated(prob % probname)) then
-!    deallocate (prob % probname)
-!end if
 if (allocated(prob % x0)) then
     deallocate (prob % x0)
 end if
