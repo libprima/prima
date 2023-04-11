@@ -59,7 +59,7 @@ subroutine bobyqa(calfun, x, f, &
 ! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory named
 ! "common". By default, RP = kind(0.0D0) and IK = kind(0), with REAL(RP) being the double-precision
 ! real, and INTEGER(IK) being the default integer. For ADVANCED USERS, RP and IK can be defined by
-! setting __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if unsure.
+! setting REAL_PRECISION_ and INTEGER_KIND_ in common/ppf.h. Use the default if unsure.
 !
 ! CALFUN
 !   Input, subroutine.

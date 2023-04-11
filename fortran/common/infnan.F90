@@ -58,7 +58,7 @@ module infnan_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Tuesday, January 24, 2023 PM04:17:14
+! Last Modified: Tuesday, April 11, 2023 PM08:09:51
 !--------------------------------------------------------------------------------------------------!
 
 use inf_mod, only : is_finite, is_inf, is_posinf, is_neginf
@@ -66,7 +66,7 @@ implicit none
 private
 public :: is_finite, is_posinf, is_neginf, is_inf, is_nan
 
-#if __QP_AVAILABLE__ == 1
+#if QP_AVAILABLE_ == 1
 
 interface is_nan
     module procedure is_nan_sp, is_nan_dp, is_nan_qp
@@ -103,7 +103,7 @@ y = (.not. is_finite(x)) .and. (.not. is_inf(x))
 end function is_nan_dp
 
 
-#if __QP_AVAILABLE__ == 1
+#if QP_AVAILABLE_ == 1
 
 pure elemental function is_nan_qp(x) result(y)
 use, non_intrinsic :: consts_mod, only : QP

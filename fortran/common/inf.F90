@@ -9,14 +9,14 @@ module inf_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Tuesday, January 24, 2023 PM01:24:29
+! Last Modified: Tuesday, April 11, 2023 PM08:10:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: is_finite, is_posinf, is_neginf, is_inf
 
-#if __QP_AVAILABLE__ == 1
+#if QP_AVAILABLE_ == 1
 
 interface is_finite
     module procedure is_finite_sp, is_finite_dp, is_finite_qp
@@ -123,7 +123,7 @@ y = (abs(x) > huge(x))
 end function is_inf_dp
 
 
-#if __QP_AVAILABLE__ == 1
+#if QP_AVAILABLE_ == 1
 
 pure elemental function is_finite_qp(x) result(y)
 use, non_intrinsic :: consts_mod, only : QP

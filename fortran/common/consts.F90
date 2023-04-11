@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 10, 2023 PM02:15:56
+! Last Modified: Tuesday, April 11, 2023 PM08:30:54
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -59,12 +59,12 @@ module consts_mod
 !    arrays, overflow can lead to Segmentation Faults!
 !--------------------------------------------------------------------------------------------------!
 
-#if __USE_ISO_FORTRAN_ENV_INTREAL__ == 1
-#if __INTEGER_KIND__ == 16
+#if USE_ISO_FORTRAN_ENV_INTREAL_ == 1
+#if INTEGER_KIND_ == 16
 use, intrinsic :: iso_fortran_env, only : INT16
-#elif __INTEGER_KIND__ == 32
+#elif INTEGER_KIND_ == 32
 use, intrinsic :: iso_fortran_env, only : INT32
-#elif __INTEGER_KIND__ == 64
+#elif INTEGER_KIND_ == 64
 use, intrinsic :: iso_fortran_env, only : INT64
 #endif
 
@@ -91,20 +91,20 @@ public :: ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 public :: MAXFUN_DIM_DFT, MAXHISTMEM, MIN_MAXFILT, MAXFILT_DFT, IPRINT_DFT
 
 
-#if __DEBUGGING__ == 1
+#if DEBUGGING_ == 1
 logical, parameter :: DEBUGGING = .true.
 #else
 logical, parameter :: DEBUGGING = .false.
 #endif
 
-#if __USE_ISO_FORTRAN_ENV_INTREAL__ != 1
+#if USE_ISO_FORTRAN_ENV_INTREAL_ != 1
 ! For gfortran, SELECTED_REAL_KIND(K) returns INT16 with K = 3--4, INT32 with k = 5--9, and INT64
 ! with K = 10--18. SELECTED_REAL_KIND returns a negative value for an unsupported kind.
-#if __INTEGER_KIND__ == 16
+#if INTEGER_KIND_ == 16
 integer, parameter :: INT16 = selected_int_kind(4)
-#elif __INTEGER_KIND__ == 32
+#elif INTEGER_KIND_ == 32
 integer, parameter :: INT32 = selected_int_kind(7)
-#elif __INTEGER_KIND__ == 64
+#elif INTEGER_KIND_ == 64
 integer, parameter :: INT64 = selected_int_kind(14)
 #endif
 
@@ -121,25 +121,25 @@ integer, parameter :: QP = REAL128  ! Kind for quadruple precision
 
 !----------------------------------------------------------------------!
 ! Define the integer kind to be used in the Fortran code.
-#if __INTEGER_KIND__  == 0
+#if INTEGER_KIND_  == 0
 integer, parameter :: IK = IK_DFT
-#elif __INTEGER_KIND__ == 16
+#elif INTEGER_KIND_ == 16
 integer, parameter :: IK = INT16
-#elif __INTEGER_KIND__ == 32
+#elif INTEGER_KIND_ == 32
 integer, parameter :: IK = INT32
-#elif __INTEGER_KIND__ == 64
+#elif INTEGER_KIND_ == 64
 integer, parameter :: IK = INT64
 #else
 integer, parameter :: IK = IK_DFT
 #endif
 ! Define the real kind to be used in the Fortran code.
-#if __REAL_PRECISION__ == 0
+#if REAL_PRECISION_ == 0
 integer, parameter :: RP = RP_DFT
-#elif __REAL_PRECISION__ == 32
+#elif REAL_PRECISION_ == 32
 integer, parameter :: RP = REAL32
-#elif __REAL_PRECISION__ == 64
+#elif REAL_PRECISION_ == 64
 integer, parameter :: RP = REAL64
-#elif __REAL_PRECISION__ == 128
+#elif REAL_PRECISION_ == 128
 integer, parameter :: RP = REAL128
 #else
 integer, parameter :: RP = REAL64  ! double precision
@@ -191,8 +191,8 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! IEEE Standard for Floating-Point Arithmetic (IEEE 754) is respected, particularly if addition and
 ! multiplication are commutative. However, as of 20220408, NAG nagfor does not ensure commutativity
 ! for REAL128. Indeed, Fortran standards do not enforce IEEE 754, so compilers are not guaranteed to
-! respect it. Hence we set SYMTOL_DFT to a nonzero number when __RELEASED__ is 1, although we do not
-! intend to test symmetry in production. We set SYMTOL_DFT in the same way when __DEBUGGING__ is 0.
+! respect it. Hence we set SYMTOL_DFT to a nonzero number when RELEASED_ is 1, although we do not
+! intend to test symmetry in production. We set SYMTOL_DFT in the same way when DEBUGGING_ is 0.
 ! Update 20221226: When gfortran 12 is invoked with aggressive optimization options, it is buggy
 ! with ALL() and ANY(). We set SYMTOL_DFT to REALMAX to signify this case and disable the check.
 ! Update 20221229: ifx 2023.0.0 20221201 cannot ensure symmetry even up to 100*EPS if invoked
@@ -201,13 +201,13 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! -O3 and if the floating-point numbers are in single precision.
 ! Update 20230316: HUAWEI BiSheng Compiler 2.1.0.B010 (flang) cannot ensure symmetry even up to
 ! 10*EPS if invoked with -Ofast and if the floating-point numbers are in single precision.
-#if (defined __GFORTRAN__ || defined __INTEL_COMPILER && __REAL_PRECISION__ < 64) && __AGRESSIVE_OPTIONS__ == 1
+#if (defined __GFORTRAN__ || defined __INTEL_COMPILER && REAL_PRECISION_ < 64) && AGRESSIVE_OPTIONS_ == 1
 real(RP), parameter :: SYMTOL_DFT = REALMAX
-#elif (defined __INTEL_COMPILER && __REAL_PRECISION__ < 64)
+#elif (defined __INTEL_COMPILER && REAL_PRECISION_ < 64)
 real(RP), parameter :: SYMTOL_DFT = max(5.0E1 * EPS, 1.0E-10_RP)
-#elif (defined __FLANG && __REAL_PRECISION__ < 64) && __AGRESSIVE_OPTIONS__ == 1
+#elif (defined __FLANG && REAL_PRECISION_ < 64) && AGRESSIVE_OPTIONS_ == 1
 real(RP), parameter :: SYMTOL_DFT = max(1.0E2 * EPS, 1.0E-10_RP)
-#elif (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64) || (__RELEASED__ == 1) || (__DEBUGGING__ == 0)
+#elif (defined __NAG_COMPILER_RELEASE && REAL_PRECISION_ > 64) || (RELEASED_ == 1) || (DEBUGGING_ == 0)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO
@@ -216,7 +216,7 @@ real(RP), parameter :: SYMTOL_DFT = ZERO
 ! Output unit, can be any integer between 9 and 99; used in output.f90
 integer, parameter :: OUTUNIT = 42
 ! Standard IO units
-#if __USE_ISO_FORTRAN_ENV_INTREAL__ != 1
+#if USE_ISO_FORTRAN_ENV_INTREAL_ != 1
 integer, parameter :: STDIN = 5
 integer, parameter :: STDOUT = 6
 integer, parameter :: STDERR = 0
@@ -236,7 +236,7 @@ integer(IK), parameter :: IPRINT_DFT = 0
 integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
 ! Maximal amount of memory (Byte) allowed for XHIST, FHIST, CONHIST, CHIST, and the filters.
-integer, parameter :: MHM = __MAXHISTMEM__ * 10**6
+integer, parameter :: MHM = MAX_HIST_MEM_MB_ * 10**6
 ! Make sure that MAXHISTMEM does not exceed HUGE(0) to avoid overflow and memory errors.
 integer, parameter :: MAXHISTMEM = min(MHM, huge(0))
 
