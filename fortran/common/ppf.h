@@ -8,9 +8,9 @@
 /*
  * ppf.h defines the following preprocessing flags (the first value is default).
  *
+ * FORTRAN_STANDARD_            which Fortran standard to follow: 2008, 2018, 2023
  * RELEASED_                    released or not: 1, 0
  * DEBUGGING_                   debug or not: 0, 1
- * FORTRAN_STANDARD_            which Fortran standard to follow: 2008, 2018, 2023
  * INTEGER_KIND_                the integer kind to be used: 0, 32, 64, 16
  * REAL_PRECISION_              the real precision to be used: 64, 32, 128, 0
  * QP_AVAILABLE_                quad precision available or not: 0, 1
@@ -32,7 +32,7 @@
  * 2. Setting MAX_HIST_MEM_MB_ to a big value may lead failures due to large arrays.
  *
  * 3. If you change these flags, make sure that your compiler is supportive when
- * changing INTEGER_KIND_, REAL_PRECISION_, and FORTRAN_STANDARD_.
+ * changing INTEGER_KIND_ and REAL_PRECISION_.
  *
  * 4. Why not define these flags as parameters in the Fortran code, e.g.,
  *
@@ -54,6 +54,16 @@
 
 
 /******************************************************************************/
+/* Which Fortran standard to follow?
+ * N.B.: The value of FORTRAN_STANDARD_ is NOT used in the code. We define it
+ * only for the purpose of a record. */
+#if !defined FORTRAN_STANDARD_
+#define FORTRAN_STANDARD_ 2008 /* Will be default to 2018 later (in 2028?).   */
+#endif
+/******************************************************************************/
+
+
+/******************************************************************************/
 /* Is this a released version? Should be 1 except for the developers. */
 #if !defined RELEASED_
 #define RELEASED_ 1
@@ -66,14 +76,6 @@
  * RELEASED_ == 1 and DEBUGGING_ == 1 do not conflict. Users may debug. */
 #if !defined DEBUGGING_
 #define DEBUGGING_ 0
-#endif
-/******************************************************************************/
-
-
-/******************************************************************************/
-/* Which Fortran standard to follow? */
-#if !defined FORTRAN_STANDARD_
-#define FORTRAN_STANDARD_ 2008 /* Will be default to 2018 later (in 2028?).*/
 #endif
 /******************************************************************************/
 

@@ -17,7 +17,7 @@ module debug_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Tuesday, April 11, 2023 PM08:28:39
+! Last Modified: Tuesday, April 11, 2023 PM10:41:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -142,7 +142,7 @@ subroutine backtr
 ! 1. The intrinsic is compiler-dependent and does not exist in all compilers. Indeed, it is not
 ! standard-conforming. Therefore, compilers may warn that a non-standard intrinsic is in use.
 ! 2. More seriously, if the compiler is instructed to conform to the standards (e.g., gfortran with
-! the option -std=f2008) while DEBUGGING_ is set to 1, then the compilation may FAIL when linking,
+! the option -std=f2018) while DEBUGGING_ is set to 1, then the compilation may FAIL when linking,
 ! complaining that a subroutine cannot be found (e.g., backtrace for gfortran). In that case, we
 ! must set DEBUGGING_ to 0 in ppf.h. This is also why in this subroutine we do not use the constant
 ! DEBUGGING defined in the consts_mod module but use the macro DEBUGGING_ defined in ppf.h.
