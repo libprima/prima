@@ -20,7 +20,7 @@
 #
 # Started: January 2021
 #
-# Last Modified: January 2023
+# Last Modified: April 2023
 #
 # N.B. ":" means to do nothing in bash. We can use "COMMAND || :" to avoid errors when COMMAND fails.
 # It is also possible to use "true" instead of ":".
@@ -149,7 +149,7 @@ $(foreach TST, $(TESTS_INT_NO_QP), $(eval $(TST): SUBTESTS := \
 
 ######################################################################################
 
-.PHONY: all test clean $(TESTS) $(TESTS_INT) source_* header_* clean*
+.PHONY: all test clean $(TESTS) $(TESTS_INT) source_* clean*
 
 # Operating system.
 OSTYPE :=
@@ -477,11 +477,16 @@ $(TESTS) $(TESTS_INT):
 # N.B.: The prerequisite should NOT include files that may not exist, e.g., $(SRC), because
 # Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
 
-%_tst: source_% header_%
+%_tst: source_%
 	@if [[ -z "$(FINTRFH)" ]] ; then printf "\nfintrf.h is not available. Skip the test.\n"; exit 0; fi
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
-	@($(FC1) -c $(SRC) && $(FC2) -c $(SRC)) 2>&1 \
+	$(eval DBG := $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//"))
+	$(eval IK := $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//")))
+	$(eval RP := $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//")))
+	$(eval QPAVLB := $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16))
+	$(eval EXTRA_FLAGS := -DDEBUGGING_=$(DBG) -DAGGRESSIVE_OPTIONS_=$(AGGRESSIVE) -DINTEGER_KIND_=$(IK) -DREAL_PRECISION_=$(RP) -DQP_AVAILABLE_=$(QPAVLB))
+	@($(FC1) $(EXTRA_FLAGS) -c $(SRC) && $(FC2) $(EXTRA_FLAGS) -c $(SRC)) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
 	| grep -v "Absoft ANSI 1610:" \
 	| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
@@ -609,18 +614,20 @@ source_%: $(SRC_DIRS)
 #@printf "Done.\n"
 
 # Adapt the header file for the test.
-header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
-header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
-header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
-header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
-header_%: source_%
-	@if [[ -z "$(FINTRFH)" ]] ; then printf "\nfintrf.h is not available. Skip the test.\n"; exit 0; fi
-	@printf "\nPreparing the header file for the test.\n"
-	$(SEDI) "0,/^#define QP_AVAILABLE_ [0-9]*/s//#define QP_AVAILABLE_ $(QPAVLB)/" $(HEADERS)
-	$(SEDI) "0,/^#define INTEGER_KIND_ [0-9]*/s//#define INTEGER_KIND_ $(IK)/" $(HEADERS)
-	$(SEDI) "0,/^#define REAL_PRECISION_ [0-9]*/s//#define REAL_PRECISION_ $(RP)/" $(HEADERS)
-	$(SEDI) "0,/^#define DEBUGGING_ [0-9]*/s//#define DEBUGGING_ $(DBG)/" $(HEADERS)
-	@printf "Done.\n"
+# Zaikun 20230411: Instead of modifying the header file, we should use the -D option of the
+# preprocessors (cpp or fpp). See the definition of $(EXTRA_FLAGS) for details.
+#header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
+#header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
+#header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
+#header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
+#header_%: source_%
+#	@if [[ -z "$(FINTRFH)" ]] ; then printf "\nfintrf.h is not available. Skip the test.\n"; exit 0; fi
+#	@printf "\nPreparing the header file for the test.\n"
+#	$(SEDI) "0,/^#define QP_AVAILABLE_ [0-9]*/s//#define QP_AVAILABLE_ $(QPAVLB)/" $(HEADERS)
+#	$(SEDI) "0,/^#define INTEGER_KIND_ [0-9]*/s//#define INTEGER_KIND_ $(IK)/" $(HEADERS)
+#	$(SEDI) "0,/^#define REAL_PRECISION_ [0-9]*/s//#define REAL_PRECISION_ $(RP)/" $(HEADERS)
+#	$(SEDI) "0,/^#define DEBUGGING_ [0-9]*/s//#define DEBUGGING_ $(DBG)/" $(HEADERS)
+#	@printf "Done.\n"
 
 
 ####################################################################################################

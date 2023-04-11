@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Tuesday, April 11, 2023 PM08:11:04
+! Last Modified: Tuesday, April 11, 2023 PM08:42:26
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -119,7 +119,8 @@ subroutine backtr()
 ! 2. More seriously, if the compiler is instructed to conform to the standards (e.g., gfortran with
 ! the option -std=f2003) while DEBUGGING_ is set to 1, then the compilation may FAIL when linking,
 ! complaining that a subroutine cannot be found (e.g., backtrace for gfortran). In that case, we
-! must set DEBUGGING_ to 0 in ppf.h.
+! must set DEBUGGING_ to 0 in ppf.h. This is also why in this subroutine we do not use the constant
+! DEBUGGING defined in the consts_mod module but use the macro DEBUGGING_ defined in ppf.h.
 !--------------------------------------------------------------------------------------------------!
 #if DEBUGGING_ == 1
 
