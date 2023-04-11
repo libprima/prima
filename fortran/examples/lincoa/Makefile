@@ -17,8 +17,8 @@
 ####################################################################################################
 # Variables
 SOLVER := $(shell basename $(CURDIR))
-# Define the Fortran standard to follow. We aim to make the code compatible with F2003, F2008, and
-# F2018. Make sure that your compiler supports the selected standard. For example, gfortran does not
+# Define the Fortran standard to follow. We aim to make the code compatible with F2008 and above.
+# Make sure that your compiler supports the selected standard. For example, gfortran does not
 # recognize -std=f2018 until gfortran 8.1 released in May 2018.
 FS ?= 18  # Set FS if it does not have a value.
 FSTD := 20$(FS)
