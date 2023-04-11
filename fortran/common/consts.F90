@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 11, 2023 PM09:48:13
+! Last Modified: Tuesday, April 11, 2023 PM11:11:01
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -99,7 +99,6 @@ integer, parameter :: SP = REAL32  ! Kind for single precision
 integer, parameter :: DP = REAL64  ! Kind for double precision
 integer, parameter :: QP = REAL128  ! Kind for quadruple precision
 
-!----------------------------------------------------------------------!
 ! Define the integer kind to be used in the Fortran code.
 #if INTEGER_KIND_  == 0
 integer, parameter :: IK = IK_DFT
@@ -124,8 +123,8 @@ integer, parameter :: RP = REAL128
 #else
 integer, parameter :: RP = REAL64  ! double precision
 #endif
-!----------------------------------------------------------------------!
 
+! Define some frequently used numbers.
 real(RP), parameter :: ZERO = 0.0_RP
 real(RP), parameter :: ONE = 1.0_RP
 real(RP), parameter :: TWO = 2.0_RP
@@ -181,11 +180,11 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! -O3 and if the floating-point numbers are in single precision.
 ! Update 20230316: HUAWEI BiSheng Compiler 2.1.0.B010 (flang) cannot ensure symmetry even up to
 ! 10*EPS if invoked with -Ofast and if the floating-point numbers are in single precision.
-#if (defined __GFORTRAN__ || defined __INTEL_COMPILER && REAL_PRECISION_ < 64) && AGRESSIVE_OPTIONS_ == 1
+#if (defined __GFORTRAN__ || defined __INTEL_COMPILER && REAL_PRECISION_ < 64) && AGGRESSIVE_OPTIONS_ == 1
 real(RP), parameter :: SYMTOL_DFT = REALMAX
 #elif (defined __INTEL_COMPILER && REAL_PRECISION_ < 64)
 real(RP), parameter :: SYMTOL_DFT = max(5.0E1 * EPS, 1.0E-10_RP)
-#elif (defined __FLANG && REAL_PRECISION_ < 64) && AGRESSIVE_OPTIONS_ == 1
+#elif (defined __FLANG && REAL_PRECISION_ < 64) && AGGRESSIVE_OPTIONS_ == 1
 real(RP), parameter :: SYMTOL_DFT = max(1.0E2 * EPS, 1.0E-10_RP)
 #elif (defined __NAG_COMPILER_RELEASE && REAL_PRECISION_ > 64) || (RELEASED_ == 1) || (DEBUGGING_ == 0)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
