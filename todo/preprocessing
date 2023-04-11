@@ -1,2 +1,0 @@
--DUSE__DEBUGGING__=0 defines the macro __DEBUGGING__ to 0. Does this work for all compilers? If yes,
-we should revise ppf.h and Makefile to use this method.
