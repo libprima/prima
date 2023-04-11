@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, January 06, 2022 PM12:27:02
+! Last Modified: Tuesday, April 11, 2023 AM11:23:15
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: pintrf_mod, only : OBJ, OBJCON
@@ -27,7 +27,6 @@ end interface noisyfun
 
 procedure(OBJ), pointer :: orig_calfun
 procedure(OBJCON), pointer :: orig_calcfc
-integer, parameter :: NOISE_TYPE_LEN = 64
 
 
 contains
@@ -54,7 +53,7 @@ integer, intent(in), optional :: seed
 real(RP) :: noisy_x
 
 ! Local variables
-character(len=NOISE_TYPE_LEN) :: noise_type_loc
+character(len=:), allocatable :: noise_type_loc
 integer, allocatable :: seedsav(:)
 real(RP) :: noise_level_loc
 real(RP) :: r
@@ -97,7 +96,7 @@ noisy_x = x + noise_level_loc * max(abs(x), ONE) * r
 ! Recover the random seed if necessary.
 if (present(seed)) then
     call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
-!deallocate (seedsav)  ! SEEDSAV is deallocated automatically at return.
+    !deallocate (seedsav)  ! SEEDSAV is deallocated automatically at return.
 end if
 end function noisy0
 
@@ -123,7 +122,7 @@ integer, intent(in), optional :: seed
 real(RP) :: noisy_x(size(x))
 
 ! Local variables
-character(len=NOISE_TYPE_LEN) :: noise_type_loc
+character(len=:), allocatable :: noise_type_loc
 integer(IK) :: i
 integer, allocatable :: seedsav(:)
 real(RP) :: noise_level_loc
@@ -191,7 +190,7 @@ character(len=*), intent(in), optional :: noise_type
 real(RP) :: noisy_f
 
 ! Local variables
-character(len=NOISE_TYPE_LEN) :: noise_type_loc
+character(len=:), allocatable :: noise_type_loc
 integer, allocatable :: seedsav(:)
 integer :: seed
 real(RP) :: noise_level_loc
@@ -267,7 +266,7 @@ character(len=*), intent(in), optional :: noise_type
 real(RP) :: noisy_f(size(f))
 
 ! Local variables
-character(len=NOISE_TYPE_LEN) :: noise_type_loc
+character(len=:), allocatable :: noise_type_loc
 integer(IK) :: i
 real(RP) :: noise_level_loc
 
