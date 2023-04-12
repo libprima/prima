@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, March 31, 2023 AM11:15:00
+! Last Modified: Wednesday, April 12, 2023 PM11:41:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1566,7 +1566,7 @@ end subroutine updateh
 ! OMEGA(:, K) contains the leading NPT entries of H(:, K), while BMAT(:, K) contains the last N.
 ! Hence, if X corresponds to XOPT + D, then for K /= KOPT, the K-th entry of VLAG = H*w(X) equals
 ! LFUNC_K(X_0 + XOPT + D) - LFUNC_K(X_0 + XOPT) = QUADINC_DX(D, X, XPT, BMAT(:, K), OMEGA(:, K)),
-! beause LFUNC_K(X_0 + XOPT) = 0; for K = KOPT, it equals
+! because LFUNC_K(X_0 + XOPT) = 0; for K = KOPT, it equals
 ! LFUNC_K(X_0 + XOPT + D)-LFUNC_K(X_0 + XOPT)+1 = QUADINC_DX(D, X, XPT, BMAT(:, K), OMEGA(:, K)) + 1,
 ! as LFUNC_K(X_0 + XOPT) = 1 in this case.
 ! 3. Since the matrix H is W^{-1} as defined in (3.12) of the paper, we have H*w(X_K) = e_K for

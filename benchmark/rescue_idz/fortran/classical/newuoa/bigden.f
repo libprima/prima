@@ -154,7 +154,7 @@ C
           WVEC(IP,5)=ZERO
       END DO
 C
-C     Put the coefficents of THETA*Wcheck in PROD.
+C     Put the coefficients of THETA*Wcheck in PROD.
 C
       DO JC=1,5
           NW=NPT

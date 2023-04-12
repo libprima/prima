@@ -49,7 +49,7 @@ FFLAGSO := -O3
 FFLAGSG := -g -O0
 SUFFIXO := o3
 SUFFIXG := g
-AGRESSIVE := 0
+AGGRESSIVE := 0
 ifeq ($(FFLAGS),-O)
 	FFLAGSO := $(FFLAGS)
 	FFLAGSG :=
@@ -79,7 +79,7 @@ ifeq ($(FFLAGS),-fast)
 	FFLAGSG :=
 	SUFFIXO := fast
 	SUFFIXG :=
-	AGRESSIVE := 1
+	AGGRESSIVE := 1
 endif
 ifeq ($(FFLAGS),-g)
 	FFLAGSO :=
@@ -980,7 +980,7 @@ header_%: source_%
 	$(SEDI) "s|^#define __INTEGER_KIND__ [0-9]*|#define __INTEGER_KIND__ $(IK)|" $(HEADERS)
 	$(SEDI) "s|^#define __REAL_PRECISION__ [0-9]*|#define __REAL_PRECISION__ $(RP)|" $(HEADERS)
 	$(SEDI) "s|^#define __DEBUGGING__ [0-9]*|#define __DEBUGGING__ $(DBG)|" $(HEADERS)
-	$(SEDI) "s|^#define __AGRESSIVE_OPTIONS__ [0-9]*|#define __AGRESSIVE_OPTIONS__ $(AGRESSIVE)|" $(HEADERS)
+	$(SEDI) "s|^#define __AGGRESSIVE_OPTIONS__ [0-9]*|#define __AGGRESSIVE_OPTIONS__ $(AGGRESSIVE)|" $(HEADERS)
 	@printf "Done.\n"
 
 

@@ -86,7 +86,7 @@ case {'info', 'information'}
     information = struct('name', name, 'about', about, 'author', author, 'email', email, 'url', url, 'maintainer', maintainer, 'credits', [], 'copyright', copyright, 'license', license, 'version', version, 'date', date, 'status', status, 'message', message);
     % information = struct(..., 'credits', credits, ...) will produce
     % a cell array of size 1x2, which is not desired. Thus we fist
-    % define information with information.credits = [], and then assgin
+    % define information with information.credits = [], and then assign
     % the following value:
     information.credits = credits;
 otherwise % Public/expected error

@@ -14,7 +14,7 @@
  * __INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16
  * __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0
  * __MAXHISTMEM__         maximal MB memory for computation history: 100
- * __AGRESSIVE_OPTIONS__       compile the code with aggressive options: 0, 1
+ * __AGGRESSIVE_OPTIONS__       compile the code with aggressive options: 0, 1
  * __USE_STORAGE_SIZE__        use the STORAGE_SIZE intrinsic or not: 0, 1
  * __USE_ISO_FORTRAN_ENV_INTREAL__ use INT32 etc in ISO_FORTRAN_ENV or not: 0, 1
  *
@@ -134,13 +134,13 @@
 /******************************************************************************/
 /* Will we compile the code with aggressive options (e.g., -Ofast for gfortran)?
  * Some debugging will be disabled if yes (1). Note:
- * 1. It is VALID to set __AGRESSIVE_OPTIONS__ to 0 and __DEBUGGING__ to 1 at
+ * 1. It is VALID to set __AGGRESSIVE_OPTIONS__ to 0 and __DEBUGGING__ to 1 at
  * the same time.
  * 2. When compiled with aggressive options, the code may behave unexpectedly */
-#if defined __AGRESSIVE_OPTIONS__
-#undef __AGRESSIVE_OPTIONS__
+#if defined __AGGRESSIVE_OPTIONS__
+#undef __AGGRESSIVE_OPTIONS__
 #endif
-#define __AGRESSIVE_OPTIONS__ 0
+#define __AGGRESSIVE_OPTIONS__ 0
 /******************************************************************************/
 
 
