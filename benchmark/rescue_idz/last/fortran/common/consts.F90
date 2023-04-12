@@ -199,7 +199,7 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! with ALL() and ANY(). We set SYMTOL_DFT to REALMAX to signify this case and disable the check.
 ! Update 20221229: ifx 2023.0.0 20221201 cannot ensure symmetry even up to 100*EPS if invoked
 ! with aggressive optimization options and if the floating-point numbers are in single precision.
-#if (defined __GFORTRAN__ || defined __INTEL_COMPILER && __REAL_PRECISION__ < 64) && __AGRESSIVE_OPTIONS__ == 1
+#if (defined __GFORTRAN__ || defined __INTEL_COMPILER && __REAL_PRECISION__ < 64) && __AGGRESSIVE_OPTIONS__ == 1
 real(RP), parameter :: SYMTOL_DFT = REALMAX
 #elif (defined __NAG_COMPILER_RELEASE && __REAL_PRECISION__ > 64) || (__RELEASED__ == 1) || (__DEBUGGING__ == 0)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)

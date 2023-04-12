@@ -81,7 +81,7 @@ function [crvmin, s, info] = trsapp(delta, gq, hq, pq, tol, x, xpt, debugflag)
     % 1. the maximal number of iterations is attained;
     % 2. QADD <= TOL*QRED or ||G|| <= TOL*||GBEG||, where QADD is the
     %    reduction of Q due to the latest CG step, QRED is the
-    %    reduction of Q since the begnning until the latest CG step,
+    %    reduction of Q since the beginning until the latest CG step,
     %    G is the current gradient, and GBEG is the initial gradient;
     %    see (5.13) of the NEWUOA paper;
     % 3. DS <= 0

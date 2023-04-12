@@ -61,6 +61,11 @@ ignore$
 \.zip$
 ^\.github/actions/spelling/
 ^\Q.github/workflows/spelling.yml\E$
-^\.base/
-^\.last/
-^\.fortran/original/
+
+#######################################
+# Added by Zaikun
+\.eps$
+\.pdf$
+^\Qbase/\E$
+^\Qlast/\E$
+^\Qfortran/original/\E$
