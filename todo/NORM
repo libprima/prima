@@ -18,7 +18,7 @@ In particular, common/linalg.f90/PROJECT1 uses NORM, which is in turn used in NE
 the place that affects NEWUOA the most. PROJECT1 is not used by any other solver yet.
 
 Below is the implementation of DNRM2 in BLAS. If we use this one to compute 2-norms, then NEWUOA
-behavess the same as when we use SQRT(SUM OF SQUARES) naively. Therefore, maybe we should simply
+behaves the same as when we use SQRT(SUM OF SQUARES) naively. Therefore, maybe we should simply
 implement NORM in this naive way. TO be checked.
 
 

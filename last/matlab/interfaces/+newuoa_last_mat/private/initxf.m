@@ -150,7 +150,7 @@ function [ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info] = initxf(calfun, i
         % If we set XPT(:, K) to XPT(:, I + 1) + XPT(:, J + 1)
         % regardless of FVAL, then the evaluations of FVAL(1 : NPT)
         % can be merged, and they are totally parallelizable; this can be
-        % benificial if the function evaluations are expensive, which is
+        % beneficial if the function evaluations are expensive, which is
         % likely the case.
         if fval(i + 1) <= fval(i + n + 1)
             xpt(i, k) = xpt(i, i + 1);

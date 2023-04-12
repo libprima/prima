@@ -329,7 +329,7 @@ function d = bigden(idz, knew, kopt, bmat, d0, xpt, zmat, debugflag)
         w(npt + 1:npt + n, 2) = d;
         w(npt + 1:npt + n, 3) = s;
 
-        % Put the coefficents of THETA*WCHECK in PROD.
+        % Put the coefficients of THETA*WCHECK in PROD.
         for jc = 1:5
             wz = (w(1:npt, jc)' * zmat)';
             wz(1:idz - 1) = -wz(1:idz - 1);

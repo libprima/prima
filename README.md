@@ -109,7 +109,7 @@ to distribute this large amount of tests to several different Team accounts as f
 - [Tests](https://github.com/libprima/prima/actions) at [libprima/prima](https://github.com/libprima/prima)
 
     - [![Check Spelling](https://github.com/libprima/prima/actions/workflows/spelling.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/spelling.yml)
-    - [![Test Absoft](https://github.com/libprima/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_absoft.ymle)
+    - [![Test Absoft](https://github.com/libprima/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_absoft.yml)
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
     - [![Lint](https://github.com/libprima/prima/actions/workflows/lint.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint.yml)
 
