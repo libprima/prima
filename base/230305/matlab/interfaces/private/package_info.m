@@ -90,7 +90,7 @@ case {'info', 'information'}
     % the following value:
     information.credits = credits;
 otherwise % Public/expected error
-    error(sprintf('%s:UnrecogonizedString', invoker), '%s: unrecogonized string received.', invoker);
+    error(sprintf('%s:UnrecognizedString', invoker), '%s: unrecogonized string received.', invoker);
 end
 
 % package_info ends
