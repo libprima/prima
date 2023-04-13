@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 31, 2023 AM11:15:34
+! Last Modified: Thursday, April 13, 2023 PM07:37:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -462,7 +462,7 @@ do tr = 1, maxtr
         ! after RESCUE, without which the code may encounter an infinite cycling. We have modified
         ! RESCUE so that it introduces at least one new point into XPT and there is no need to call
         ! GEOSTEP afterward. This improves the performance a bit and simplifies the flow of the code.
-        ! 3. It is temping to incorporate XOPT+D into the interpolation even if RESCUE is called.
+        ! 3. It is tempting to incorporate XOPT+D into the interpolation even if RESCUE is called.
         ! However, this cannot be done without recalculating KNEW_GEO, as XPT has been changed by
         ! RESCUE, so that it is invalid to replace XPT(:, KNEW_GEO) with XOPT+D anymore. With a new
         ! KNEW_GEO, the step D will become improper as it was chosen according to the old KNEW_GEO.
