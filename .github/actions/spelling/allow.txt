@@ -135,6 +135,7 @@ FMXAPIF
 FNAMELEN
 FNEW
 FOPTIMFLAGS
+FPEs
 FPTR
 FRACSQ
 FRESERVE
@@ -354,6 +355,7 @@ SBDI
 SCADEN
 SDK
 SEDI
+SEGFAULTs
 SFF
 SFORT
 SHFMAX
@@ -423,6 +425,7 @@ Tpolation
 Trefethen
 Uninstalling
 Upda
+Updgrade
 VANDANIUMS
 VANDERM
 VBIG
@@ -480,6 +483,7 @@ XFORT
 XIPT
 XJPT
 XOPTD
+XOPTS
 XPR
 XRESERVE
 XSUM
@@ -580,6 +584,7 @@ cauchy
 cbfun
 cbig
 cdec
+cdecs
 cellfun
 ceq
 cerg
@@ -631,8 +636,10 @@ constriant
 constrmax
 constrv
 constrviolation
+constrviolations
 consts
 copyfile
+copyfiles
 cpen
 cpenalty
 cpenmsg
@@ -747,6 +754,7 @@ eid
 eig
 eigen
 eigmin
+eigs
 elif
 elseif
 eminlb
@@ -756,6 +764,7 @@ enddo
 endif
 entrywise
 envvar
+envvars
 eps
 epsc
 epsfiles
@@ -784,6 +793,7 @@ evaluatef
 evaluatefc
 exe
 exitflag
+exitflags
 exmp
 expr
 falseloc
@@ -852,6 +862,7 @@ fopt
 foreach
 forrtl
 fortd
+fortls
 fortranwiki
 fout
 fpe
@@ -918,6 +929,7 @@ ghostscript
 ghv
 github
 githuge
+gitmodules
 gitpersonal
 gitsubmodule
 gittest
@@ -931,6 +943,7 @@ goldp
 google
 gopt
 gotcha
+gotchas
 gprof
 grdstp
 gredsq
@@ -1021,6 +1034,7 @@ inputfiles
 interform
 interpolants
 intmax
+intnum
 intovf
 intp
 intrinsics
@@ -1054,6 +1068,7 @@ isdigit
 isdir
 isempty
 isenv
+isenvs
 iseq
 isequiv
 isf
@@ -1079,6 +1094,7 @@ isp
 ispc
 isprofile
 isq
+isqs
 isrc
 isreal
 isrealcolumn
@@ -1146,8 +1162,10 @@ kpt
 kref
 ksav
 ksq
+ksqs
 kunpeng
 kworst
+lagmax
 lapack
 lbfin
 lbx
@@ -1178,6 +1196,7 @@ lintering
 linting
 linux
 logfile
+logfiles
 logicals
 lscalar
 lscpu
@@ -1198,6 +1217,7 @@ mathworks
 matlab
 matlabcentral
 matlabroot
+matlabs
 matmul
 matprod
 matv
@@ -1242,10 +1262,12 @@ mexext
 mexfunction
 mexification
 mexified
+mexifies
 mexify
 mexifying
 mexname
 mexopt
+mexopts
 mfiledir
 mfilename
 mfilepath
@@ -1293,6 +1315,7 @@ nact
 nactold
 nactsav
 nagfor
+nagsrc
 nargin
 nargout
 ncopies
@@ -1367,6 +1390,7 @@ ntest
 numel
 numericalalgorithmsgroup
 numpy
+numvec
 nvararg
 nvfortran
 nvfotran
@@ -1394,6 +1418,7 @@ outprod
 outptuts
 outputdir
 outputfile
+outputfiles
 ovf
 owell
 parallelizable
@@ -1491,6 +1516,7 @@ qinc
 qint
 qlist
 qmin
+qmstep
 qnew
 qradd
 qred
@@ -1524,7 +1550,9 @@ redrho
 reduc
 refa
 refactor
+refactored
 refactoring
+refactors
 refb
 refbook
 regexp
@@ -1734,6 +1762,7 @@ tlist
 tmp
 tnz
 toc
+todo
 tomragonneau
 tracebackqq
 tridh
@@ -1775,6 +1804,7 @@ unf
 uniformoutput
 uninitialised
 uninstall
+uninstalls
 unitang
 univar
 unsetenv
@@ -1835,6 +1865,7 @@ wikipedia
 wmsg
 wmv
 workflow
+workflows
 wsin
 wsq
 wunit
