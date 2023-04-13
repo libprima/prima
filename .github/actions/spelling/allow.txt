@@ -22,6 +22,7 @@ ARGLINC
 ARGTRIGLS
 ARMDIR
 ARMLD
+ATMAT
 AVGASA
 AVGASB
 AVX
@@ -111,6 +112,7 @@ DXSIGN
 Dble
 Demmel
 EDGMAX
+ELTA
 ERRBIG
 ERRINBAR
 ERRINROS
@@ -224,6 +226,7 @@ LDOPTIMFLAGS
 LEVYMONE
 LFORT
 LFUNC
+LGPL
 LGPLv
 LHAIFAM
 LINALGF
@@ -1197,6 +1200,7 @@ linux
 logfile
 logfiles
 logicals
+loor
 lscalar
 lscpu
 lsec
@@ -1366,6 +1370,7 @@ noisyceval
 noisyfeval
 noisyfun
 nonlcon
+nonstd
 nonzeros
 noold
 nopass
@@ -1510,6 +1515,7 @@ qadd
 qalt
 qbeg
 qdiff
+qdz
 qfac
 qinc
 qint
@@ -1764,6 +1770,8 @@ toc
 todo
 tomragonneau
 tracebackqq
+trapuv
+trapv
 tridh
 tridiagonalized
 tridiagonalizes
@@ -1798,6 +1806,7 @@ ufrac
 ugc
 umask
 uname
+uncmax
 undef
 unf
 uniformoutput
@@ -1952,12 +1961,3 @@ zmat
 zsq
 ztemp
 ztest
-ATMAT
-ELTA
-LGPL
-loor
-nonstd
-qdz
-trapuv
-trapv
-uncmax
