@@ -233,7 +233,7 @@ end if
 
 if (present(eta1)) then
     if (is_nan(eta1)) then
-        ! In this case, we take the value hard coded in Powell's orginal code
+        ! In this case, we take the value hard coded in Powell's original code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         eta1 = ETA1_DFT
     elseif (eta1 < 0 .or. eta1 >= 1) then
@@ -251,7 +251,7 @@ end if
 
 if (present(eta2)) then
     if (is_nan(eta2)) then
-        ! In this case, we take the value hard coded in Powell's orginal code
+        ! In this case, we take the value hard coded in Powell's original code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         eta2 = ETA2_DFT
     elseif (present(eta1) .and. (eta2 < eta1_loc .or. eta2 > 1)) then
@@ -265,7 +265,7 @@ end if
 ! Validate GAMMA1 and GAMMA2
 if (present(gamma1)) then
     if (is_nan(gamma1)) then
-        ! In this case, we take the value hard coded in Powell's orginal code
+        ! In this case, we take the value hard coded in Powell's original code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         gamma1 = GAMMA1_DFT
     elseif (gamma1 <= 0 .or. gamma1 >= 1) then
@@ -277,7 +277,7 @@ end if
 
 if (present(gamma2)) then
     if (is_nan(gamma2)) then
-        ! In this case, we take the value hard coded in Powell's orginal code
+        ! In this case, we take the value hard coded in Powell's original code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         gamma2 = GAMMA2_DFT
     elseif (gamma2 < 1 .or. is_inf(gamma2)) then
