@@ -390,7 +390,7 @@ do tr = 1, maxtr
         ! unchanged in all other cases; in particular, RHO is never increased.
         ! 2. Our implementation uses DELTA as the trust-region radius, while using RHO as a lower
         ! bound for DELTA. DELTA is updated in a way that is typical for trust-region methods, and
-        ! it is revised to RHO if its new value is not morethan1.5*RHO. RHO reflects the current
+        ! it is revised to RHO if its new value is not more than 1.5*RHO. RHO reflects the current
         ! resolution of the algorithm; its update is essentially the same as the update of RHO in
         ! Powell's code (see the definition of REDUCE_RHO below). Our implementation aligns with
         ! UOBYQA/NEWUOA/BOBYQA/LINCOA and improves the performance of COBYLA.

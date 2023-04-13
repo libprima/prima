@@ -52,7 +52,7 @@ function [x, f, exitflag, nf, xhist, fhist] = newuoa_last_mat(calfun, x, rhobeg,
 	% FTARGET
 	%   Input, scalar, default: - Infinity.
 	%   FTARGET is the target function value. The algorithm will terminate
-	%   when a point witha function value <= FTARGET is found.
+	%   when a point with a function value <= FTARGET is found.
 	%
 	% MAXFUN
 	%   Input, scalar, default: consts(maxfun_dim_dft)*N with
