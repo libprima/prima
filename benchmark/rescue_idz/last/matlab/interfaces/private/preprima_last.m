@@ -90,7 +90,7 @@ end
 % 16. raw_type: problem type before reduction
 % 17. raw_dim: problem dimension before reduction
 % 18. refined_type: problem type after reduction
-% 19. refiend_dim: problem dimension after reduction
+% 19. refined_dim: problem dimension after reduction
 % 20. feasibility_problem: whether the problem is a feasibility problem
 % 21. user_options_fields: the fields in the user-specified options
 % 22. options: (refined) options for calling the solvers
@@ -367,7 +367,7 @@ funname = callstack(1).name; % Name of the current function
 if ~ismember(invoker, invoker_list)
     % invoker affects the behavior of this function, so we check invoker
     % again, even though it should have been checked in function preprima_last
-    % Private/unexpcted error
+    % Private/unexpected error
     error(sprintf('%s:InvalidInvoker', funname), ...
     '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, strjoin(invoker_list, ', '));
 end
@@ -797,7 +797,7 @@ funname = callstack(1).name;
 % invoker affects the behavior of this function, so we check invoker
 % again, even though it should have been checked in function preprima_last
 if ~ismember(invoker, invoker_list)
-    % Private/unexpcted error
+    % Private/unexpected error
     error(sprintf('%s:InvalidInvoker', funname), ...
     '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, strjoin(invoker_list, ', '));
 end
@@ -1353,7 +1353,7 @@ if isfield(options, 'iprint')
 end
 if ~validated % options.iprint has not got a valid value yet
     if user_says_quiet
-        % The user says "quiet!". Set options.iprint = 0 regarless of the default iprint.
+        % The user says "quiet!". Set options.iprint = 0 regardless of the default iprint.
         options.iprint = 0;
     else
         options.iprint = iprint;
@@ -1620,7 +1620,7 @@ substantially_scaled_threshold = 2;
 %shift(~index_lub) = x0(~index_lub); % Shift x0 to 0 unless both lower and upper bounds are present
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if max(ub-lb) >= inf  % At least one of [-lb; ub] is infinity
-    % Private/unexpcted error
+    % Private/unexpected error
     error(sprintf('%s:InvalidScaling', funname), '%s: UNEXPECTED ERROR: at least one of [-lb; ub] is infinity. Scaling should not be performed.', funname);
 end
 
@@ -1669,7 +1669,7 @@ if max([1; scaling_factor])/min([1; scaling_factor]) > substantially_scaled_thre
 end
 
 if min(scaling_factor) < eps
-    % Private/unexpcted error
+    % Private/unexpected error
     error(sprintf('%s:InvalidScaling', funname), '%s: UNEXPECTED ERROR: invalid scaling factor returned when called by %s.', funname, invoker);
 end
 return
@@ -1878,7 +1878,7 @@ funname = callstack(1).name; % Name of the current function
 solver_list = {'bobyqa_last'}; % Only BOBYQA needs pre_rhobeg_x0. May have others in the future.
 
 if ~ismember(lower(options.solver), solver_list)
-    % Private/unexpcted error
+    % Private/unexpected error
     error(sprintf('%s:InvalidSolver', funname), '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, strjoin(solver_list, ', '));
 end
 

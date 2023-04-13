@@ -335,7 +335,7 @@ if (present(honour_x0)) then
         if (rhobeg_old - rhobeg > EPS * max(ONE, rhobeg_old)) then
             rhoend = max(EPS, min(TENTH * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
             if (has_rhobeg) then
-                call warning(solver, 'RHOBEG is reivised to '//num2str(rhobeg)//' and RHOEND to at most 0.1*RHOBEG'// &
+                call warning(solver, 'RHOBEG is revised to '//num2str(rhobeg)//' and RHOEND to at most 0.1*RHOBEG'// &
                     & ' so that the distance between X0 and the inactive bounds is at least RHOBEG')
             end if
         else

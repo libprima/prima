@@ -100,7 +100,7 @@ end subroutine updatexf
 subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GOPT, HQ, and PQ when XPT(:, KNEW) changes from XDROP to XNEW = XOSAV + D,
-! where XOSAV is the upupdated XOPT, namely the XOPT before UPDATEXF is called.
+! where XOSAV is the unupdated XOPT, namely the XOPT before UPDATEXF is called.
 ! See Section 4 of the NEWUOA paper and that of the BOBYQA paper (there is no LINCOA paper).
 ! N.B.:
 ! XNEW is encoded in [BMAT, ZMAT, IDZ] after UPDATEH being called, and it also equals XPT(:, KNEW)
