@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 21, 2023 PM11:00:55
+! Last Modified: Thursday, April 13, 2023 PM09:17:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,7 +103,7 @@ end if
 ! However, Powell's LINCOA code is different. In his code, the KNEW after a trust-region step is
 ! picked in lines 72--96 of the update.f for LINCOA, where DISTSQ is calculated as the square of the
 ! distance to XPT(KOPT, :) (Powell recorded the interpolation points in rows). However, note that
-! the trust-region trial point has not been included in to XPT yet --- it can not be included
+! the trust-region trial point has not been included into XPT yet --- it can not be included
 ! without knowing KNEW (see lines 332-344 and 404--431 of lincob.f). Hence Powell's LINCOA code
 ! picks KNEW based on the distance to the un-updated "optimal point", which is unreasonable.
 ! This has been corrected in our implementation of LINCOA, yet it does not boost the performance.
