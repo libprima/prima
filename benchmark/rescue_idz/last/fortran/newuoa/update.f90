@@ -105,7 +105,7 @@ end subroutine updatexf
 subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GOPT, HQ, and PQ when XPT(:, KNEW) changes from XDROP to XNEW = XOSAV + D,
-! where XOSAV is the upupdated XOPT, namedly the XOPT before UPDATEXF is called.
+! where XOSAV is the upupdated XOPT, namely the XOPT before UPDATEXF is called.
 ! See Section 4 of the NEWUOA paper and that of the BOBYQA paper (there is no LINCOA paper).
 ! N.B.:
 ! 1. XNEW is encoded in [BMAT, ZMAT, IDZ] after UPDATEH being called, and it also equals XPT(:, KNEW)
@@ -250,7 +250,7 @@ real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
 ! standard, an INTENT(OUT) dummy argument becomes undefined on invocation of the procedure.
 ! Therefore, if the procedure does not define such an argument, its value becomes undefined,
 ! which is the case for HQ and PQ when ITEST < 3 at exit. In addition, the information in GOPT is
-! needed for definining ITEST, so it must be INTENT(INOUT).
+! needed for defining ITEST, so it must be INTENT(INOUT).
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRYQALT'

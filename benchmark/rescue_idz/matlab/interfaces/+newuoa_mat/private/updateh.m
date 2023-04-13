@@ -179,7 +179,7 @@ function [idz, bmat, zmat] = updateh(knew, beta, vlag_in, idz, bmat, zmat, debug
     v2 = (-beta * w(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom;
 
     bmat = bmat + (1 * (v1 * vlag') + 1 * (v2 * w'));
-    % In floating-point arithmetic, the update above does not guarante BMAT(:, NPT+1 : NPT+N) to be
+    % In floating-point arithmetic, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be
     % symmetric. Symmetrization needed.
     bmat(:, npt + 1:npt + n) = (bmat(:, npt + 1:npt + n)' + bmat(:, npt + 1:npt + n)) / 2;
 

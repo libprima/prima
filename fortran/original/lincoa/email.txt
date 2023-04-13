@@ -696,7 +696,7 @@ C
               DELTA=HALF*DELTA
           ELSE IF (RATIO .LE. 0.7D0) THEN
               DELTA=DMAX1(HALF*DELTA,SNORM)
-          ELSE 
+          ELSE
               TEMP=DSQRT(2.0D0)*DELTA
               DELTA=DMAX1(HALF*DELTA,SNORM+SNORM)
               DELTA=DMIN1(DELTA,TEMP)
@@ -731,7 +731,7 @@ C     Update the second derivatives of the model by the symmetric Broyden
 C       method, using PQW for the second derivative parameters of the new
 C       KNEW-th Lagrange function. The contribution from the old parameter
 C       PQ(KNEW) is included in the second derivative matrix HQ. W is used
-C       later for the gradient of the new KNEW-th Lagrange function.       
+C       later for the gradient of the new KNEW-th Lagrange function.
 C
       IF (ITEST .LT. 3) THEN
           DO 330 K=1,NPT
@@ -892,7 +892,7 @@ C
               RHO=RHOEND
           ELSE
               RHO=DSQRT(RHO*RHOEND)
-          END IF 
+          END IF
           DELTA=DMAX1(DELTA,RHO)
           IF (IPRINT .GE. 2) THEN
               IF (IPRINT .GE. 3) PRINT 570
@@ -1249,7 +1249,7 @@ C
       IDZ=1
       KBASE=1
 C
-C     Set the initial elements of XPT, BMAT, SP and ZMAT to zero. 
+C     Set the initial elements of XPT, BMAT, SP and ZMAT to zero.
 C
       DO 20 J=1,N
       XBASE(J)=X(J)
@@ -1399,7 +1399,7 @@ C
   220 TEMP=TEMP-XOPT(I)*AMAT(I,J)
       TEMP=DMAX1(TEMP,ZERO)
       IF (TEMP .GE. RHOBEG) TEMP=-TEMP
-  230 RESCON(J)=TEMP  
+  230 RESCON(J)=TEMP
       RETURN
       END
 
@@ -2014,7 +2014,7 @@ C
 C     If KNEW is zero initially, then pick the index of the interpolation
 C       point to be deleted, by maximizing the absolute value of the
 C       denominator of the updating formula times a weighting factor.
-C       
+C
 C
       IF (KNEW .EQ. 0) THEN
           DENMAX=ZERO

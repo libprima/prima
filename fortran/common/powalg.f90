@@ -1801,7 +1801,7 @@ beta = dxref**2 + dsq * (xrefsq + dxref + dxref + HALF * dsq) - dvlag - wvlag
 ! DXREF**2 + DSQ * (XREFSQ + DXREF + DXREF + HALF * DSQ) ,
 ! HALF * (INPROD(X, X)**2 + INPROD(XREF, XREF)**2) - INPROD(X, XREF)**2 with X = XREF + D.
 ! However, the first (by Powell) is a better numerical scheme. According to the first formulation,
-! this quantity is in the oder of ||D||^2*||XREF||^2 if ||XREF|| >> ||D||, which is normally the case.
+! this quantity is in theorderof ||D||^2*||XREF||^2 if ||XREF|| >> ||D||, which is normally the case.
 ! However, each term in the second formulation has an order of ||XREF||^4. Thus much cancellation
 ! will occur in the second formulation. In addition, the first formulation contracts the rounding
 ! error in (XREFSQ + DXREF + DXREF + HALF * DSQ) by a factor of ||D||^2, which is typically small.

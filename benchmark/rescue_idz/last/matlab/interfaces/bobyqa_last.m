@@ -314,7 +314,7 @@ elseif ~strcmp(invoker, 'prima_last') && probinfo.feasibility_problem
     % A "feasibility problem" with only bound constraints is rediculous yet nothing wrong mathematically
     output.x = x0;  % preprima_last has set x0 to a feasible point
     % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
-    % occured. But then we will have to modify the validation of fx, funcCount,
+    % occurred. But then we will have to modify the validation of fx, funcCount,
     % and fhist in postprima_last. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postprima_last.
     output.fx = fun(output.x);  % preprima_last has defined a fake objective function

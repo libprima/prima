@@ -2,7 +2,7 @@ module output_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides some subroutines concerning output to terminal/files. Note that these output
 ! operations are sequential in nature. In case parallelism is desirable (especially during
-! initializaton), the subroutines may have to be modified or disabled.
+! initialization), the subroutines may have to be modified or disabled.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and papers.
 !
