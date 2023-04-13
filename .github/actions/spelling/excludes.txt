@@ -66,6 +66,6 @@ ignore$
 # Added by Zaikun
 \.eps$
 \.pdf$
-^\Qbase/\E$
-^\Qlast/\E$
-^\Qfortran/original/\E$
+^base/
+^last/
+^fortran/original/
