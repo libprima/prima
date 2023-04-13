@@ -1,6 +1,6 @@
 #!/bin/bash
 # Usage: compdf [LIST OF INPUT FILES].
-# The pourpose is to coimbine the input files into a pdf file.
+# The purpose is to combine the input files into a pdf file.
 # The output will be written to output-\`date +%s\`.pdf."
 
 USAGE="\nUsage: compdf LIST OF INPUT FILES [-o|--output OUTPUTFILE].\n"
