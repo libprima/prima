@@ -24,7 +24,7 @@ function [x, fx, exitflag, output] = project (Ai, bi, Ae, be, lb, ub, x0, option
 %
 % Remarks
 %
-% 1. Critical issues:
+% 1. Crucial issues:
 % 1.1. How to define sigma (initial value, maximal value, update)
 % 1.2. This NAIVE implementation of semismooth-Newton method may have difficulty when the
 % Jacobin is badly conditioned, which will happen when sigma is large.

@@ -12,7 +12,7 @@ function [itest, gq, hq, pq] = tryqalt(idz, fval, ratio, smat, zmat, itest, gq, 
     % standard, an IN10T(OUT) dummy argument becomes undefined on invocation of the procedure.
     % Therefore, if the procedure does not define such an argument, its value becomes undefined,
     % which is the case for HQ and PQ when ITEST < 3 at exit. In addition, the information in GQ is
-    % needed for definining ITEST, so it must be IN10T(INOUT).
+    % needed for defining ITEST, so it must be IN10T(INOUT).
 
     % Local variables
     galt = NaN(length(gq), 1);

@@ -522,7 +522,7 @@ case -4
     % Record indices of infeasible constraints
     if any(probinfo.infeasible_lineq)
         output.InfeasibleLinearIneq = find(probinfo.infeasible_lineq)';
-        % 'find' changes an vector of true/false to a vector containing the indixes of the true values
+        % 'find' changes an vector of true/false to a vector containing the indices of the true values
     end
     if any(probinfo.infeasible_leq)
         output.InfeasibleLinearEq = find(probinfo.infeasible_leq)';

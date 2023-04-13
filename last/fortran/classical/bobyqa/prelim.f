@@ -46,7 +46,7 @@ C       of SL and SU being set in BOBYQA.
 C     GOPT is usually the gradient of the quadratic model at XOPT+XBASE, but
 C       it is set by PRELIM to the gradient of the quadratic model at XBASE.
 C       If XOPT is nonzero, BOBYQB will change it to its usual value later.
-C     NF is maintaned as the number of calls of CALFUN so far.
+C     NF is maintained as the number of calls of CALFUN so far.
 C     KOPT will be such that the least calculated value of F so far is at
 C       the point XPT(KOPT,.)+XBASE in the space of the variables.
 C

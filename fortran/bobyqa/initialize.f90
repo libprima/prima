@@ -81,7 +81,7 @@ real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! Local variables
 character(len=*), parameter :: solver = 'BOBYQA'
-character(len=*), parameter :: srname = 'INITIIALIZE'
+character(len=*), parameter :: srname = 'INITIALIZE'
 integer(IK) :: k
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
