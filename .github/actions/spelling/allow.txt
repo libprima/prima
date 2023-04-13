@@ -1952,3 +1952,12 @@ zmat
 zsq
 ztemp
 ztest
+ATMAT
+ELTA
+LGPL
+loor
+nonstd
+qdz
+trapuv
+trapv
+uncmax
