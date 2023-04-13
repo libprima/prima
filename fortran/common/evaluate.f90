@@ -216,7 +216,7 @@ if (DEBUGGING) then
     ! CONSTR cannot be NaN/-Inf.
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
     call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), &
-        & 'CONSTR does not containt NaN/-Inf', srname)
+        & 'CONSTR does not contain NaN/-Inf', srname)
     call assert(.not. (cstrv < 0 .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
         & 'CSTRV is nonnegative and not NaN/+Inf', srname)
 end if

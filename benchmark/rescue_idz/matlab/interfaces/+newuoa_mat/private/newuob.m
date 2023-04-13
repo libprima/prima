@@ -164,7 +164,7 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
                 xhist(:, khist) = x;
             end
 
-            % DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
+            % DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
             dnormsav = [dnormsav(2:length(dnormsav)); dnorm];
 
             % MODERR is the error of the current model in predicting the change in F due to D.
@@ -369,7 +369,7 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
                 xhist(:, khist) = x;
             end
 
-            % DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
+            % DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
             %------------------------------------------------------------------------------------------%
             % Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
             % trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of

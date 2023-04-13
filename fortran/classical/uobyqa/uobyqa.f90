@@ -231,7 +231,7 @@ if (present(xhist)) then
     ! 2. NF may not be present. Hence we should NOT use NF but NF_LOC.
     ! 3. When SIZE(XHIST_LOC, 2) > NF_LOC, which is the normal case in practice, XHIST_LOC contains
     ! GARBAGE in XHIST_LOC(:, NF_LOC + 1 : END). Therefore, we MUST cap XHIST at NF_LOC so that
-    ! XHIST cointains only valid history. For this reason, there is no way to avoid allocating
+    ! XHIST contains only valid history. For this reason, there is no way to avoid allocating
     ! two copies of memory for XHIST unless we declare it to be a POINTER instead of ALLOCATABLE.
 end if
 ! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet we prefer to deallocate
