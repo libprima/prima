@@ -8,7 +8,7 @@ Coded by Zaikun ZHANG (www.zhangzk.net) based on the above-mentioned paper and P
 modernization, bug fixes, and improvements.
 
 Due to the dependency among the modules, the files must be compiled in the order indicated in
-ffiles.txt. Before that, one must compile the Fotran files in the directory "common" according
+ffiles.txt. Before that, one must compile the Fortran files in the directory "common" according
 to the ffiles.txt therein.
 
 See the directory "examples" for an illustration about how to call the solver.

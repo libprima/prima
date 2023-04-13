@@ -422,7 +422,7 @@ end do
 
 ! The following lines calculate PREDSQ for all the 3*(NPT-1) trial points.
 ! First, compute VLAG = PHI(STPLEN). Using the fact that PHI_K(0) = 0, PHI_K(1) = delta_{K, KNEW}
-! (Kroneker delta), and recalling the PHI_K is quadratic, we can find that
+! (Kronecker delta), and recalling the PHI_K is quadratic, we can find that
 ! PHI_K(t) = t*(1-t)*PHI_K'(0) for K /= KNEW, and PHI_KNEW = t*[t*(1-PHI_K'(0)) + PHI_K'(0)].
 vlag = stplen * (ONE - stplen) * spread(dderiv, dim=1, ncopies=3)
 !!MATLAB: vlag = stplen .* (1 - stplen) .* dderiv; % Implicit expansion; dderiv is a row!

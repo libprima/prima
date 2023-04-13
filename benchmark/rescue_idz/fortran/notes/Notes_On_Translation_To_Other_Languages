@@ -237,7 +237,7 @@ Here are points to note when translating the Fortran code to other languages.
     X(~B) = Z(~B)
 
 13. COUNT
-    In Fortan, COUNT(X) returns the number of TRUE in a logical array X. The MATLAB counterpart is
+    In Fortran, COUNT(X) returns the number of TRUE in a logical array X. The MATLAB counterpart is
 
           sum(X, 'all')
 

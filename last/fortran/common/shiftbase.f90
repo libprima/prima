@@ -1,6 +1,6 @@
 module shiftbase_mod
 !--------------------------------------------------------------------------------------------------!
-! This module contanis a subroutine that shifts the base point from XBASE to XBASE + XPT. It is
+! This module contains a subroutine that shifts the base point from XBASE to XBASE + XPT. It is
 ! used in NEWUOA, BOBYQA, and LINCOA.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the NEWUOA paper.

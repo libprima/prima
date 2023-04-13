@@ -256,7 +256,7 @@ if ~strcmp(invoker, 'prima') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
     output.x = x0;
     % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
-    % occured. But then we will have to modify the validation of fx, funcCount,
+    % occurred. But then we will have to modify the validation of fx, funcCount,
     % and fhist in postprima. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postprima.
     output.fx = fun(output.x);  % preprima has defined a fake objective function

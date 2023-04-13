@@ -834,7 +834,7 @@ end
 options = rmempty(options); % Remove empty fields
 options_fields = fieldnames(options);
 % The list of fields in options  will be returned and used elsewhere. We
-% save it right now in case we "intellegently" change options_fields
+% save it right now in case we "intelligently" change options_fields
 % after this line in future versions.
 user_options_fields = options_fields;
 
@@ -1090,7 +1090,7 @@ options.maxfun = double(options.maxfun);   % All integers will be passed as doub
 
 % Validate options.rhobeg
 % NOTE: if the problem is to be scaled, then options.rhobeg and options.rhoend
-% will be used as the intial and final trust-region radii for the scaled problem.
+% will be used as the initial and final trust-region radii for the scaled problem.
 validated = false;
 if isfield(options, 'rhobeg')
     if ~isrealscalar(options.rhobeg) || options.rhobeg <= 0 || isnan(options.rhobeg) || options.rhobeg == inf
@@ -1651,7 +1651,7 @@ end
 if ~isempty(lb)
 % lb < x_before_scaling < ub
 % <==> lb < scaling_factor.*x_after_scaling + shift < ub
-% <==> (lb-shift)./scaling_factor < x_after_scaling < (ub-shift)./scaling_facor
+% <==> (lb-shift)./scaling_factor < x_after_scaling < (ub-shift)./scaling_factor
     lb = (lb-shift)./scaling_factor;
 end
 if ~isempty(ub)

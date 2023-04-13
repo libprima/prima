@@ -51,7 +51,7 @@ function knew = setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, 
     % set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL), unless there is a better
     % choice. However, this is not a good idea, because the definition of KNEW should benefit the
     % quality of the model that interpolates f at XPT. A set of points with low function values is not
-    % necessarily a good interplolation set. In contrast, a good interpolation set needs to include
+    % necessarily a good interpolation set. In contrast, a good interpolation set needs to include
     % points with relatively high function values; otherwise, the interpolant will unlikely reflect the
     % landscape of the function sufficiently.
 end
