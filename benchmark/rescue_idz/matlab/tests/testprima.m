@@ -298,7 +298,7 @@ f = f1 + f2 + f3 + f4 + 1;
 return
 
 function [cineq, ceq] = ballcon(x, centre, radius)
-% BALLCON represnts the ball constraint ||x-centre|| <= radius
+% BALLCON represents the ball constraint ||x-centre|| <= radius
 
 cineq = (x-centre)'*(x-centre) - radius^2;
 ceq = [];

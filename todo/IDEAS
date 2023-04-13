@@ -52,7 +52,7 @@ so that we do not need to calculate A within GEOSTEP, which would necessitate a 
 N.B.:
 1.) We do not implement GETMODEL as a function, or it will create an automatic/temporary array of (m+1)*n.
 2.) Do not call GETMODEL after updatexfc: if we do that, we would also need to call it at three other
-places: after initialization, after CPEN is upadated and we call UPDATEPOLE (two places).
+places: after initialization, after CPEN is updated and we call UPDATEPOLE (two places).
 
 However,
 1.) it is not true that we use (stack) memory more efficiently --- it is only true that we keep

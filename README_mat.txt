@@ -70,7 +70,7 @@ will tell you how to use `prima`.
 PRIMA can be uninstalled using the setup.m script by executing the following
 command in MATLAB:
 
-setup unistall
+setup uninstall
 
 
 4. References
