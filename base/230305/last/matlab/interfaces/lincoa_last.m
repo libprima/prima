@@ -177,7 +177,7 @@ function [x, fx, exitflag, output] = lincoa_last(varargin)
 %   The same as FMINCON, a problem can be passed to LINCOA by a structure
 %   PROBLEM containing the following fields:
 %   PROBLEM.objective, PROBLEM.x0, PROBLEM.Aineq, PROBLEM.bineq,
-%   PROBLEM.Aeq, PROBLEM.beq, PROBLEM.lb, PROBLEM.ub, POBLEM.options,
+%   PROBLEM.Aeq, PROBLEM.beq, PROBLEM.lb, PROBLEM.ub, PROBLEM.options,
 %   where PROBLEM.objective is the function name or function handle of
 %   the objective function (corresponding to the input 'fun' mentioned
 %   above), and all the other fields correspond to the inputs introduced
