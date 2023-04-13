@@ -1,4 +1,4 @@
-This benchmarks tests how much difference the RESCUE of BOBYQA or IDZ of NEWUOA/LINCOA makes a difference.
+This benchmarks tests how much difference the RESCUE of BOBYQA or IDZ of NEWUOA/LINCOA makes.
 
 Tests: for SOLVER in {'bobyqa', 'newuoa', 'lincoa'},
 
