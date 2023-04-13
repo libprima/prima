@@ -22,7 +22,7 @@ function testpdfo(release, precision, nrun)
 
 all_solvers =  {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla', 'pdfo'};
 
-% Supress the following warning
+% Suppress the following warning
 orig_warning_state = warning;
 cellfun(@(solver) warning('off', [solver, ':Debug']), all_solvers);
 cellfun(@(solver) warning('off', [solver, ':ChkFunval']), all_solvers);

@@ -9,7 +9,7 @@ These "gotchas" are nasty because they will not fail on some machines, while fai
 Danger with Optional Arguments
 Danger with intent(out)
 A suprise with non-advancing I/O
-Suprise with locally initialized variables
+Surprise with locally initialized variables
 Danger of calling Fortran 90 style routines
 Danger with interfaces to Fortran 77 subroutines
 A suprise with generic functions
@@ -96,7 +96,7 @@ On other compilers unit 6 is preconnected and the record length cannot be change
 
 Note that unit 6 and unit * are not necessarily the same. Although they both may point to the default output device, with non-advancing I/O, each could keep track of the current location in its own record separately. Therefore we advise choosing one default unit and sticking with it.
 
-Suprise with locally initialized variables
+Surprise with locally initialized variables
 One must be careful when initializing a locally declared variable.
          real function kinetic_energy(v)
          real, dimension(:), intent(in) :: v
@@ -223,7 +223,7 @@ The interface declaration must always match the actual subroutine declaration. I
 
 In this example, it is permitted to leave out the interface altogether since routines without interfaces are treated as Fortran77 style routines by default. However, if the interface is left out, the compiler will no longer check whether the arguments of calling procedures agree with the arguments listed in the interface.
 
-A Suprise with Generic Functions (Function Overloading)
+A Surprise with Generic Functions (Function Overloading)
 Fortran 90 allows the same function name to be used for different actual functions, so long as the arguments to the functions differ. One would expect that the functions first_sub and second_sub below would be different, because in first_sub, the first argument is a real and the second is an integer, while in second_sub the arguments are reversed.
 
          subroutine first_sub(a,i)
