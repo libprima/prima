@@ -37,7 +37,7 @@ function [iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gamma2, rho
     end
 
     if isnan(eta1)
-        % In this case, we take the value hard coded in Powell's orginal code
+        % In this case, we take the value hard coded in Powell's original code
         % without any warning. It is useful when interfacing with MATLAB/Python.
         eta1 = 0.1;
     elseif eta1 < 0 || eta1 >= 1
@@ -51,7 +51,7 @@ function [iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gamma2, rho
     end
 
     if isnan(eta2)
-        % In this case, we take the value hard coded in Powell's orginal code
+        % In this case, we take the value hard coded in Powell's original code
         % without any warning. It is useful when interfacing with MATLAB/Python.
         eta2 = 0.7;
     elseif eta2 < eta1 || eta2 > 1
@@ -60,7 +60,7 @@ function [iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gamma2, rho
     end
 
     if isnan(gamma1)
-        % In this case, we take the value hard coded in Powell's orginal code
+        % In this case, we take the value hard coded in Powell's original code
         % without any warning. It is useful when interfacing with MATLAB/Python.
         gamma1 = 0.5;
     elseif gamma1 <= 0 || gamma1 >= 1
@@ -69,7 +69,7 @@ function [iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gamma2, rho
     end
 
     if isnan(gamma2)
-        % In this case, we take the value hard coded in Powell's orginal code
+        % In this case, we take the value hard coded in Powell's original code
         % without any warning. It is useful when interfacing with MATLAB/Python.
         gamma2 = 2;
     elseif gamma2 < 1 || isinf(gamma2)

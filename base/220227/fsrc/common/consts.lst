@@ -3314,7 +3314,7 @@
        1224     1      s = ZERO
        1225     1  elseif (abs(x(1)) <= EPS * abs(x(2))) then
        1226     1      ! N.B.: SIGN(A, X) = ABS(A) * sign of X /= A * sign of X !!! Therefore, it is WRONG to define G
-       1227     1      ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)). ! This mistake was committed on on
+       1227     1      ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)). ! This mistake was comitted on on
        1228     1      ! 20211206, taking a whole day to debug! NEVER use SIGN on arrays unless you are really sure.
        1229     1      c = ZERO
        1230     1      s = sign(ONE, x(2))  ! MATLAB: s = sign(x(2))
@@ -5743,7 +5743,7 @@
         213        
         214     1  if (present(eta1)) then
         215     2      if (is_nan(eta1)) then
-        216     2          ! In this case, we take the value hard coded in Powell's orginal code
+        216     2          ! In this case, we take the value hard coded in Powell's original code
         217     2          ! without any warning. It is useful when interfacing with MATLAB/Python.
         218     2          eta1 = ETA1_DFT
         219     2      elseif (eta1 < 0 .or. eta1 >= 1) then
@@ -5761,7 +5761,7 @@
         231        
         232     1  if (present(eta2)) then
         233     2      if (is_nan(eta2)) then
-        234     2          ! In this case, we take the value hard coded in Powell's orginal code
+        234     2          ! In this case, we take the value hard coded in Powell's original code
         235     2          ! without any warning. It is useful when interfacing with MATLAB/Python.
         236     2          eta2 = ETA2_DFT
         237     2      elseif (present(eta1) .and. (eta2 < eta1_loc .or. eta2 > 1)) then
@@ -5775,7 +5775,7 @@
         245        ! Validate GAMMA1 and GAMMA2
         246     1  if (present(gamma1)) then
         247     2      if (is_nan(gamma1)) then
-        248     2          ! In this case, we take the value hard coded in Powell's orginal code
+        248     2          ! In this case, we take the value hard coded in Powell's original code
         249     2          ! without any warning. It is useful when interfacing with MATLAB/Python.
         250     2          gamma1 = GAMMA1_DFT
         251     2      elseif (gamma1 <= 0 .or. gamma1 >= 1) then
@@ -5787,7 +5787,7 @@
         257        
         258     1  if (present(gamma2)) then
         259     2      if (is_nan(gamma2)) then
-        260     2          ! In this case, we take the value hard coded in Powell's orginal code
+        260     2          ! In this case, we take the value hard coded in Powell's original code
         261     2          ! without any warning. It is useful when interfacing with MATLAB/Python.
         262     2          gamma2 = GAMMA2_DFT
         263     2      elseif (gamma2 < 1 .or. is_inf(gamma2)) then

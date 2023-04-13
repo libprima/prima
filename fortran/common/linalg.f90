@@ -1630,7 +1630,7 @@ elseif (abs(x(2)) <= EPS * abs(x(1))) then
     s = ZERO
 elseif (abs(x(1)) <= EPS * abs(x(2))) then
     ! N.B.: SIGN(A, X) = ABS(A) * sign of X /= A * sign of X ! Therefore, it is WRONG to define G
-    ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)). This mistake was committed on
+    ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)). This mistake was comitted on
     ! 20211206 and took a whole day to debug! NEVER use SIGN on arrays unless you are really sure.
     c = ZERO
     s = sign(ONE, x(2)) !!MATLAB: s = sign(x(2))
