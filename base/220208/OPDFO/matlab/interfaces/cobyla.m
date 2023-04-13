@@ -231,7 +231,7 @@ nvararg = length(varargin); % Number of inputs
 
 % Interpret the input.
 % Expected inputs: [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options],
-% yet some of them may be ommitted
+% yet some of them may be omitted
 if (nvararg < 1)
     if ismember(invoker, internal_invokers) % Private/unexpected error
         error(sprintf('%s:TooFewInputs', funname), '%s: UNEXPECTED ERROR: at least 1 input.', funname);
