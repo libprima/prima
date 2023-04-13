@@ -118,7 +118,7 @@ function [x, fx, exitflag, output] = lincoa_last(varargin)
 %       -2, 3, or -3:
 %       0: there will be no printing;
 %       1: a message will be printed to the screen at the return, showing
-%          the best vector of veriables found and its objective function value;
+%          the best vector of variables found and its objective function value;
 %       2: in addition to 1, at each "new stage" of the computation, a message
 %          is printed to the screen with the best vector of variables so far
 %          and its objective function value;

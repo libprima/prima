@@ -800,8 +800,8 @@ n = int(size(A, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(size(A, 1) == size(A, 2), 'A is suqare', srname)
-    call assert(size(B, 1) == size(B, 2), 'B is suqare', srname)
+    call assert(size(A, 1) == size(A, 2), 'A is square', srname)
+    call assert(size(B, 1) == size(B, 2), 'B is square', srname)
     call assert(size(A, 1) == size(B, 1), 'SIZE(A) == SIZE(B)', srname)
     if (present(tol)) then
         call assert(tol >= 0, 'TOL >= 0', srname)

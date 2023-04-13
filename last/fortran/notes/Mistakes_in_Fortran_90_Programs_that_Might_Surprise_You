@@ -8,11 +8,11 @@ Topics
 These "gotchas" are nasty because they will not fail on some machines, while failing on others (given various combinations of compilers and machine platforms).
 Danger with Optional Arguments
 Danger with intent(out)
-A suprise with non-advancing I/O
+A surprise with non-advancing I/O
 Suprise with locally initialized variables
 Danger of calling Fortran 90 style routines
 Danger with interfaces to Fortran 77 subroutines
-A suprise with generic functions
+A surprise with generic functions
 Big Danger with Undefined Pointers
 Subtle danger with overloading (=) to assign pointers
 Danger with pointers to pointers
@@ -73,7 +73,7 @@ The problem is that when intent(out) is used with a derived type, any component 
 
 As an alternative, use intent(inout).
 
-A suprise with non-advancing I/O
+A surprise with non-advancing I/O
 Many people think that the new non-advancing I/O in Fortran 90 is the same as stream I/O in other languages. It is not.
          do i = 1, 128
              write (unit=6,fmt='(a)',advance='no') 'X'
@@ -121,7 +121,7 @@ One must be careful when initializing a locally declared variable.
          kinetic_energy = .5*ke
          end function kinetic_energy
 Explanation
-A local variable that is initialized when declared has an implicit save attribute. ke is initialized only the first time the function is called. On subsequent calls the old value of ke is retained. This is a real suprise to C programmers.
+A local variable that is initialized when declared has an implicit save attribute. ke is initialized only the first time the function is called. On subsequent calls the old value of ke is retained. This is a real surprise to C programmers.
 
 To avoid confusion it is best to add the save attribute to such locally initialized variables explicitly, even though this is redundant.
 

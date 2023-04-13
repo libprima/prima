@@ -5,7 +5,7 @@ function cstrv = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq)
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 if nargin < 7
-    % Private/unexpcted error
+    % Private/unexpected error
     error(sprintf('%s:InvalidNargin', funname), ...
     '%s: UNEXPECTED ERROR: at least 8 inputs expected.', funname);
 end
