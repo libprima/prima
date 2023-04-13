@@ -22,7 +22,7 @@ function testpdfon(release, precision, nrun)
 
 all_solvers =  {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan', 'pdfon'};
 
-% Supress the following warning
+% Suppress the following warning
 cellfun(@(solver) warning('off', [solver, ':Debug']), all_solvers);
 cellfun(@(solver) warning('off', [solver, ':ChkFunval']), all_solvers);
 cellfun(@(solver) warning('off', [solver, ':Classical']), all_solvers);

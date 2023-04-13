@@ -1001,7 +1001,7 @@ end
 % 2. The user does not specify options.npt
 % 1.1. The solver is yet to decide (solver = ''): we set options.npt to NaN.
 % 1.2. The user has chosen a valid solver: we set options.npt to the default
-% value accoring to the solver.
+% value according to the solver.
 % After this process, options.npt is either a positive integer (compatible
 % with options.solver if it is specified by the user) or NaN (only if the
 % user does not specify a valid solver while options.npt is either unspecified

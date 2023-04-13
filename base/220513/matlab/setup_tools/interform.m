@@ -212,7 +212,7 @@ for i = 1 : length(strs)
     end
 end
 fclose(fid);
-evalc('system([''dos2unix -q '', refactored_filename])');  % Without this, sunf95 will complain. Supress the error message if dos2unix is unavailable.
+evalc('system([''dos2unix -q '', refactored_filename])');  % Without this, sunf95 will complain. Suppress the error message if dos2unix is unavailable.
 
 
 function str = refactor_str(str, first, last)
