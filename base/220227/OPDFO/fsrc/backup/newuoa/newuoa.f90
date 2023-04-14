@@ -94,7 +94,7 @@ iw=ivl+ndim
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun, 2020-05-05
 ! When the data is passed from the interfaces to the Fortran code, RHOBEG, 
-! and RHOEND may change a bit (due to rounding ???). It was oberved in
+! and RHOEND may change a bit (due to rounding ???). It was observed in
 ! a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 ! If we set RHOEND = RHOBEG in the interfaces, then it may happen
 ! that RHOEND > RHOBEG. That is why we do the following. 

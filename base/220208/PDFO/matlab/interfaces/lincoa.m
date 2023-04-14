@@ -112,7 +112,7 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 %       default: true (if it is false, LINCOA will print the return message of
 %       the Fortran code)
 %   *** debug: a boolean value indicating whether to debug or not; default: false
-%   *** chkfunvsl: a boolean value indicating whether to verify the returned
+%   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function value or not; default: false
 %       (if it is true, LINCOA will check whether the returned value of fun
 %       matches fun(x) or not, which costs a function evaluation;

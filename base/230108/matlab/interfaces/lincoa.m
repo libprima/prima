@@ -156,7 +156,7 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 %   *** maxfilt: a nonnegative integer indicating the maximal length of the
 %       "filter" used for selecting the returned solution; default: 2000
 %   *** debug: a boolean value indicating whether to debug or not; default: false
-%   *** chkfunvsl: a boolean value indicating whether to verify the returned
+%   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function value or not; default: false
 %       (if it is true, LINCOA will check whether the returned value of fun
 %       matches fun(x) or not, which costs a function evaluation;

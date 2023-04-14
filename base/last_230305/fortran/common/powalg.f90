@@ -11,7 +11,7 @@ module powalg_mod
 !   Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
 !   HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 !   HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
-! - LAGINT: procedures concerning quadratic LAGrange INTpolation.
+! - LAGINT: procedures concerning quadratic LAGrange INTerpolation.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !

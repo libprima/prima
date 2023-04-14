@@ -1,5 +1,5 @@
 % N.B.: This version was implemented based on an earlier version of the modern Fortran
-% implementation, with the help of Mr. Galann Pannec.
+% implementation, with the help of Mr. Galann Pennec.
 %
 % NEWUOAM provides the MATLAB implementation of M. J. D. Powell's NEWUOA algorithm described in
 %
