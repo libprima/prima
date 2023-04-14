@@ -79,7 +79,7 @@ function [iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gamma2, rho
 
     if abs(rhobeg - rhoend) < 1.0e2 * eps * max(abs(rhobeg), 1)
         % When the data is passed from the interfaces (e.g., MEX) to the Fortran
-        % code, RHOBEG, and RHOEND may change a bit. It was oberved in a MATLAB
+        % code, RHOBEG, and RHOEND may change a bit. It was observed in a MATLAB
         % test that MEX passed 1 to Fortran as 0.99999999999999978. Therefore,
         % if we set RHOEND = RHOBEG in the interfaces, then it may happen that
         % RHOEND > RHOBEG, which is considered as an invalid input. To avoid this
