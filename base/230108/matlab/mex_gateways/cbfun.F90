@@ -137,7 +137,7 @@ end do
 ! First, verify the class & shape of outputs (even not debugging). Indeed, fmxReadMPtr does also the
 ! verification. We do it here in order to print a more informative error message in case of failure.
 call validate(fmxIsDoubleScalar(poutput(1)), 'Objective function returns a real scalar', srname)
-call validate(fmxIsDoubleVector(poutput(2)), 'Constriant function returns a real vector', srname)
+call validate(fmxIsDoubleVector(poutput(2)), 'Constraint function returns a real vector', srname)
 ! Second, copy the data.
 call fmxReadMPtr(poutput(1), f)
 call fmxReadMPtr(poutput(2), constr_loc)
