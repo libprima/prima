@@ -251,7 +251,7 @@ call fmxCallMATLAB(funcon_ptr, pinput, poutput)
 
 ! Verify the class and shape of outputs (even if not debugging).
 call validate(fmxIsDoubleScalar(poutput(1)), 'Objective function returns a real scalar', solver)
-call validate(fmxIsDoubleVector(poutput(2)), 'Constriant function returns a real vector', solver)
+call validate(fmxIsDoubleVector(poutput(2)), 'Constraint function returns a real vector', solver)
 
 ! Read the data in OUTPUT
 call fmxReadMPtr(poutput(1), f)
