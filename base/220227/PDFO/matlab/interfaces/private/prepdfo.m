@@ -103,8 +103,8 @@ probinfo = struct();
 % time and space, matrices Aineq and Aeq being the major concern.
 % However, fortunately, this package is not intended for large problems.
 % It is designed for problems with at most ~1000 variables and several
-% thousands of constriants, tens/hundreds of variables and tens/hundreds
-% of constriants being typical. Therefore, making several copies (<10) of
+% thousands of constraints, tens/hundreds of variables and tens/hundreds
+% of constraints being typical. Therefore, making several copies (<10) of
 % the data does not do much harm, especially when we solve problems with
 % expensive (temporally or monetarily) function evaluations.
 probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
@@ -128,7 +128,7 @@ probinfo.fixedx = fixedx; % A vector of true/false
 fixedx_value_save = fixedx_value; % Values of fixed variables
 % Since fixedx_value may be revised in pre_lcon, we will record it in
 % probinfo only after that. We save its current value in
-% fixedx_value_save, which will be used when calculating the constriant
+% fixedx_value_save, which will be used when calculating the constraint
 % violation at x0.
 
 % Problem type before reduction

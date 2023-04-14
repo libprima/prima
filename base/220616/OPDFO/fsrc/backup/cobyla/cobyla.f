@@ -97,7 +97,7 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun, 2020-05-05
 C When the data is passed from the interfaces to the Fortran code, RHOBEG, 
-C and RHOEND may change a bit (due to rounding ???). It was oberved in
+C and RHOEND may change a bit (due to rounding ???). It was observed in
 C a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 C If we set RHOEND = RHOBEG in the interfaces, then it may happen
 C that RHOEND > RHOBEG. That is why we do the following. 

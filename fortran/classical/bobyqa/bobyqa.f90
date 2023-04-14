@@ -225,7 +225,7 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 ! !!! Revise X (see below) and RHOBEG, RHOEND
 ! Zaikun, 2020-05-05
 ! When the data is passed from the interfaces to the Fortran code, RHOBEG,
-! XU and XL may change a bit (due to rounding ???). It was oberved in
+! XU and XL may change a bit (due to rounding ???). It was observed in
 ! a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 ! If we set RHOBEG = MIN(XU-XL)/2 in the interfaces, then it may happen
 ! that RHOBEG > MIN(XU-XL)/2. That is why we do the following. After

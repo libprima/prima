@@ -393,7 +393,7 @@ end subroutine getact
 subroutine addact(l, c, iact, nact, qfac, resact, resnew, rfac, vlam)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine adds the constraint with index L to the active set as the (NACT+ )-th active
-! constriant, updates IACT, QFAC, etc accordingly, and increments NACT to NACT+1. Here, C is the
+! constraint, updates IACT, QFAC, etc accordingly, and increments NACT to NACT+1. Here, C is the
 ! gradient of the new active constraint.
 !--------------------------------------------------------------------------------------------------!
 

@@ -324,7 +324,6 @@ PREPROCF
 PRESAV
 PRODPL
 PSB
-Pannec
 Pennec
 Pillo
 Postconditions
@@ -424,7 +423,6 @@ Terpolation
 Tmin
 Toint
 Tpng
-Tpolation
 Trefethen
 Uninstalling
 Upda
@@ -602,7 +600,7 @@ chist
 chistx
 chk
 chkfunval
-chkfunvsl
+chkfunval
 chkglobal
 chmod
 chrosen
@@ -634,7 +632,6 @@ confilt
 conhist
 conmat
 consav
-constriant
 constrmax
 constrv
 constrviolation
@@ -1397,10 +1394,8 @@ numpy
 numvec
 nvararg
 nvfortran
-nvfotran
 nvidia
 nyear
-oberved
 odernization
 olddir
 oldnewthing
