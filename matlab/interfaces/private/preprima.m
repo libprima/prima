@@ -1930,7 +1930,7 @@ end
 return
 
 
-%% Function for checking whether the Fortran MEX function is available and revising ptions.fortran %
+%% Function for checking whether the Fortran MEX function is available and revising options.fortran %
 function [options, warnings] = is_fortran_available(invoker, options, warnings)
 % IS_FORTRAN_AVAILABLE checks whether the Fortran MEX function is available. If no, raise a warning
 % and set options.fortran to false. It does nothing if options.fortran is false or does not exist.
