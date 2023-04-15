@@ -397,7 +397,6 @@ SVAL
 SWOPF
 SYMTOL
 Scheinberg
-Setion
 Szego
 TARGUS
 TAXR
@@ -1542,7 +1541,7 @@ realpath
 reciq
 recl
 recorede
-rediculous
+ridiculous
 redrat
 redrho
 reduc

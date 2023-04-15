@@ -47,7 +47,7 @@ function d = biglag(idz, knew, delbar, bmat, x, xpt, zmat, debugflag)
     %
     % max |LFUNC(X + D)|, subject to ||D|| <= DELBAR,
     %
-    % where LFUNC is the KNEW-th Lagrange function. See Setion 6 of the NEWUOA paper.
+    % where LFUNC is the KNEW-th Lagrange function. See Section 6 of the NEWUOA paper.
 
     % Local variables
     cf = NaN(5, 1);

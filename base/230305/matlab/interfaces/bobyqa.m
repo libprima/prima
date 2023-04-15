@@ -311,7 +311,7 @@ elseif ~strcmp(invoker, 'prima') && probinfo.nofreex % x was fixed by the bound 
     output.constrviolation = probinfo.constrv_fixedx;
     output.chist = output.constrviolation;
 elseif ~strcmp(invoker, 'prima') && probinfo.feasibility_problem
-    % A "feasibility problem" with only bound constraints is rediculous yet nothing wrong mathematically
+    % A "feasibility problem" with only bound constraints is ridiculous yet nothing wrong mathematically
     output.x = x0;  % preprima has set x0 to a feasible point
     % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
     % occured. But then we will have to modify the validation of fx, funcCount,
