@@ -1449,7 +1449,6 @@ pipefail
 piv
 pivksv
 pivnew
-pivote
 planerot
 plhs
 plist
