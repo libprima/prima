@@ -71,7 +71,7 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
             % The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
             % order of Fortran arrays. In MATLAB, it is NOT necessary to call `reshape`.
         end
-        retmssg(info, iprint, nf, f, x, solver);
+        retmsg(info, iprint, nf, f, x, solver);
         return;
     end
 
@@ -154,7 +154,7 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
             end
             f = calfun(x);
             nf = nf + 1;
-            fmssg(iprint, nf, f, x, solver);
+            fmsg(iprint, nf, f, x, solver);
             if maxfhist >= 1
                 khist = mod(nf - 1, maxfhist) + 1;
                 fhist(khist) = f;
@@ -359,7 +359,7 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
             end
             f = calfun(x);
             nf = nf + 1;
-            fmssg(iprint, nf, f, x, solver);
+            fmsg(iprint, nf, f, x, solver);
             if maxfhist >= 1
                 khist = mod(nf - 1, maxfhist) + 1;
                 fhist(khist) = f;
@@ -437,7 +437,7 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
                 else
                     rho = 0.1 * rho;
                 end
-                rhomssg(iprint, nf, fopt, rho, xbase + xopt, solver);
+                rhomsg(iprint, nf, fopt, rho, xbase + xopt, solver);
                 delta = max(delta, rho);
                 % DNORMSAVE and MODERRSAVE are corresponding to the latest 3 function evaluations with
                 % the current RHO. Update them after reducing RHO.
@@ -458,7 +458,7 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
         else
             f = calfun(x);
             nf = nf + 1;
-            fmssg(iprint, nf, f, x, solver);
+            fmsg(iprint, nf, f, x, solver);
             if maxfhist >= 1
                 khist = mod(nf - 1, maxfhist) + 1;
                 fhist(khist) = f;
@@ -492,6 +492,6 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
         % 3. In MATLAB, `xhist = [xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)]` does the same thing.
     end
 
-    retmssg(info, iprint, nf, f, x, solver);
+    retmsg(info, iprint, nf, f, x, solver);
 
 end

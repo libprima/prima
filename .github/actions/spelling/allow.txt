@@ -843,7 +843,6 @@ fminunc
 fmodule
 fmq
 fmsg
-fmssg
 fmx
 fmxapi
 fmxcl
@@ -999,7 +998,7 @@ ignorefiles
 igo
 ihq
 iid
-iif
+iff
 iin
 ikind
 ilbd
@@ -1296,7 +1295,6 @@ mplementation
 mpp
 mrec
 mref
-mssg
 mtools
 mtrace
 mul
@@ -1470,7 +1468,7 @@ pqinc
 pqlag
 pqw
 preconnected
-predfo
+preprima
 predsq
 prefdir
 prehist
@@ -1553,7 +1551,6 @@ resnew
 restmp
 restoredefaultpath
 retmsg
-retmssg
 retnf
 rfac
 rfmt
@@ -1562,7 +1559,6 @@ rgc
 rhobeg
 rhoend
 rhomsg
-rhomssg
 rhosq
 rineq
 rlb
