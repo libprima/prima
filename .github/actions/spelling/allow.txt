@@ -1351,7 +1351,6 @@ nloptr
 nname
 nnpt
 nocompile
-nocomplie
 nofreex
 noisimul
 noisyceval
