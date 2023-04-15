@@ -265,7 +265,7 @@ end
 solver = options.solver;
 
 if ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem
-    % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
+    % An "unconstrained feasibility problem" is ridiculous, yet nothing wrong mathematically.
     output.x = x0;
     % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
     % occured. But then we will have to modify the validation of fx, funcCount,
