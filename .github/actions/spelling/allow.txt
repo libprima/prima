@@ -901,7 +901,6 @@ funx
 fval
 fvdsrc
 fwrite
-gammma
 gaussian
 gca
 gcc
@@ -1496,7 +1495,6 @@ probtype
 psd
 psdsav
 ptinsq
-ptions
 ptr
 ptsaux
 ptsid
@@ -1541,7 +1539,6 @@ realpath
 reciq
 recl
 recorede
-ridiculous
 redrat
 redrho
 reduc
