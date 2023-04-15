@@ -93,7 +93,7 @@ function [ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info] = initxf(calfun, i
             break;
         end
         f = calfun(xtemp);
-        fmssg(iprint, k, f, xtemp, solver);
+        fmsg(iprint, k, f, xtemp, solver);
         evaluated(k) = true;
         fval(k) = f;
 
@@ -173,7 +173,7 @@ function [ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info] = initxf(calfun, i
             break;
         end
         f = calfun(xtemp);
-        fmssg(iprint, k, f, xtemp, solver);
+        fmsg(iprint, k, f, xtemp, solver);
         evaluated(k) = true;
         fval(k) = f;
 

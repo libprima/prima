@@ -346,7 +346,7 @@ do iter = 1, maxiter
     end do  ! End of DO WHILE (VIOLMX > 0 .AND. NACT > 0)
 
     !----------------------------------------------------------------------------------------------!
-    ! NACT can become 0 at this point iif VLAM(1:NACT) >= 0 before calling DEL_ACT, which is true
+    ! NACT can become 0 at this point iff VLAM(1:NACT) >= 0 before calling DEL_ACT, which is true
     ! if NACT happens to be 1 when the WHILE loop starts. However, we have never observed a failure
     ! of the assertion below as of 20220329. Why?
     !-----------------------------------------!
