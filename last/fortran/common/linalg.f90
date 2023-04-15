@@ -844,7 +844,7 @@ real(RP), intent(out), optional :: R(:, :)
 integer(IK), intent(out), optional :: P(:)
 ! Local variables
 character(len=*), parameter :: srname = 'QR'
-logical :: pivote
+logical :: pivot
 integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: k
@@ -885,15 +885,15 @@ end if
 ! Calculation starts !
 !====================!
 
-pivote = (present(P))
+pivot = (present(P))
 Q_loc = eye(m)
 T = transpose(A) ! T is the transpose of R. We consider T in order to work on columns.
-if (pivote) then
+if (pivot) then
     P = linspace(1_IK, n, n)
 end if
 
 do j = 1, n
-    if (pivote) then
+    if (pivot) then
         k = int(maxloc(sum(T(j:n, j:m)**2, dim=2), dim=1), kind(k))
         if (k > 1 .and. k <= n - j + 1) then
             k = k + j - 1_IK
@@ -926,7 +926,7 @@ if (DEBUGGING) then
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(max(m, n) + 1_IK, RP)))
     call assert(isorth(Q_loc, tol), 'The columns of Q are orthonormal', srname)
     call assert(istril(T, tol), 'R is upper triangular', srname)
-    if (pivote) then
+    if (pivot) then
         call assert(all(abs(matprod(Q_loc, transpose(T)) - A(:, P)) <= &
                         max(tol, tol * maxval(abs(A)))), 'A(:, P) == Q*R', srname)
         do j = 1, min(m, n) - 1_IK
@@ -967,7 +967,7 @@ real(RP), intent(in), optional :: Rdiag(:) ! Rdiag(MIN(M, N))
 real(RP) :: x(size(A, 2))
 ! Local variables
 character(len=*), parameter :: srname = 'LSQR_RDIAG'
-logical :: pivote
+logical :: pivot
 integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: m
@@ -1017,20 +1017,20 @@ if (present(Q)) then
         !!MATLAB: Rdiag_loc = sum(Q_loc(:, 1:min(m,n)) .* A(:, 1:min(m,n)), 1); % Row vector
     end if
     rank = min(m, n)
-    pivote = .false.
+    pivot = .false.
 else
     call qr(A, Q=Q_loc, P=P)
     Rdiag_loc = [(inprod(Q_loc(:, i), A(:, P(i))), i=1, min(m, n))]
     !!MATLAB: Rdiag_loc = sum(Q_loc(:, 1:min(m,n)) .* A(:, P(1:min(m,n))), 1); % Row vector
     rank = maxval([0_IK, trueloc(abs(Rdiag_loc) > 0)])
-    pivote = .true.
+    pivot = .true.
 end if
 
 x = ZERO
 y = b ! Local copy of B; B is INTENT(IN) and should not be modified.
 
 do i = rank, 1, -1
-    if (pivote) then
+    if (pivot) then
         j = P(i)
     else
         j = i
