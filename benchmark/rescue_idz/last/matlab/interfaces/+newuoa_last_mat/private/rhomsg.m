@@ -1,4 +1,4 @@
-function rhomssg(iprint, nf, f, rho, x, solver)
+function rhomsg(iprint, nf, f, rho, x, solver)
 
     % Local variables    % Should be an integer of default kind
 

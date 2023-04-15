@@ -84,7 +84,7 @@ function [ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info] = initxf(calfun, i
     end
 
     % Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for
-    % FMSSG, which outputs messages to the console or files.
+    % FMSG, which outputs messages to the console or files.
     for k = 1:min(npt, 2 * n + 1)
         xtemp = xpt(:, k) + xbase;
         if any(isnan(xtemp))
@@ -165,7 +165,7 @@ function [ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info] = initxf(calfun, i
     end
 
     % Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except
-    % FMSSG, which outputs messages to the console or files.
+    % FMSG, which outputs messages to the console or files.
     for k = (2 * n + 2):npt_revised
         xtemp = xpt(:, k) + xbase;
         if any(isnan(xtemp))

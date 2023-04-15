@@ -1,4 +1,4 @@
-function fmssg(iprint, nf, f, x, solver)
+function fmsg(iprint, nf, f, x, solver)
 
     % Local variables    % Should be an integer of default kind
 
