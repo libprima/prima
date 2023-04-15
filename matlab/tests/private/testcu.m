@@ -715,12 +715,12 @@ if isfield(options, 'dnoise')
     dnoise = options.dnoise;
     if isstruct(dnoise) && isfield(dnoise, 'level') && dnoise.level > 0
         phi0 = 0.6*cos(1e8*norm(x,9)) + 0.3*sin(100*norm(x,1))*cos(100*norm(x,Inf)) + 0.1*cos(norm(x));
-        noisimul = phi0*(4*phi0^2-3);
+        r = phi0 * (4 * phi0^2 - 3);
         switch lower(dnoise.type)
         case {'absolute', 'additive', 'add', 'a', '+'}
-            f = f + dnoise.level*noisimul;
+            f = f + dnoise.level*r;
         otherwise
-            f = f * (1 + dnoise.level*noisimul);
+            f = f * (1 + dnoise.level*r);
         end
     end
 end

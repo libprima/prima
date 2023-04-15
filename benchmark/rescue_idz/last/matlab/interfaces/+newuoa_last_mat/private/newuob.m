@@ -94,7 +94,7 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
     itest = 0;
     trtol = 1.0e-2;    % Tolerance used in trsapp.
     % We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers will raise a run-time error
-    % that RATIO is undefined. Powell's code indeed sets RATIO = -1 when SHORD is TRUE, and use this
+    % that RATIO is undefined. Powell's code indeed sets RATIO = -1 when SHORTD is TRUE, and use this
     % artificial value when setting IMPROVE_GEO and REDUCE_RHO; however, we choose not to use the
     % artificial RATIO but use SHORTD to be more explicit. See IMPROVE_GEO and REDUCE_RHO for details.
     ratio = -1;
