@@ -279,7 +279,6 @@ NCALL
 NEAUOA
 NEWSTR
 NEWUOAM
-NEWUOQ
 NEquality
 NFF
 NFM
@@ -599,7 +598,6 @@ checktest
 chist
 chistx
 chk
-chkfunval
 chkfunval
 chkglobal
 chmod
