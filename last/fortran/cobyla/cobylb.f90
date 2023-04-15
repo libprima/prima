@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, March 02, 2023 PM04:56:26
+! Last Modified: Saturday, April 15, 2023 PM05:16:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -318,7 +318,7 @@ do tr = 1, maxtr
         ! Reduce DELTA if D is short or D fails to render MAX(PREREC, PREREF) > 0, the latter can
         ! only happen due to rounding errors. This seems quite important for performance.
         delta = TENTH * delta
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= max(1.0_RP, min(0.75_RP * gamma2, 1.5_RP)) * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
@@ -403,7 +403,7 @@ do tr = 1, maxtr
         ! performance if we skip the update of DELTA when ADEQUATE_GEO is FALSE and RATIO < 0.1.
         ! Therefore, we choose to update DELTA without checking ADEQUATE_GEO.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= max(1.0_RP, min(0.75_RP * gamma2, 1.5_RP)) * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 

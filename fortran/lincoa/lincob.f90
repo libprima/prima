@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 21, 2023 PM11:08:41
+! Last Modified: Saturday, April 15, 2023 PM05:05:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -176,6 +176,7 @@ real(RP) :: dnormsav(4)  ! Powell's implementation uses 5
 real(RP) :: ffilt(maxfilt)
 real(RP) :: fval(npt), cval(npt)
 real(RP) :: galt(size(x))
+real(RP) :: gamma3
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: moderr
@@ -306,6 +307,13 @@ rfac = ZERO
 nact = 0
 iact = linspace(1_IK, m, m)
 
+! If DELTA <= GAMMA3*RHO after an update, we set DELTA to RHO. GAMMA3 must be less than GAMMA2. The
+! reason is as follows. Imagine a very successful step with DENORM = the un-updated DELTA = RHO.
+! Then TRRAD will update DELTA to GAMMA2*RHO. If GAMMA3 >= GAMMA2, then DELTA will be reset to RHO,
+! which is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
+! T. M. Ragonneau's thesis: "Model-Based Derivative-Free Optimization Methods and Software".
+gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
+
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
 ! function evaluations unless the trust-region step is short or fails to reduce the trust-region
 ! model but the geometry step is not invoked. Thus the following MAXTR is unlikely to be reached.
@@ -363,10 +371,7 @@ do tr = 1, maxtr
         ! case, which did happen in tests.
         ! 3. The factor HALF works better than TENTH (used in NEWUOA/BOBYQA), 0.2, and 0.7.
         delta = HALF * delta
-        ! Powell's code uses DELTA <= MIN(0.99_RP * GAMMA3, 1.5_RP) * RHO as the condition for the
-        ! following IF, where GAMMA3 is a parameter in (1, GAMMA2] for updating DELTA. This aligns
-        ! with the update of DELTA after a trust-region step. See the comment there for more info.
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= gamma3 * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
@@ -407,17 +412,8 @@ do tr = 1, maxtr
         ! Update DELTA. After this, DELTA < DNORM may hold.
         ! The new DELTA lies in [GAMMA1*DNORM, GAMMA2*DNORM].
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
-        ! Set DELTA to RHO when it is close to or below.
-        ! N.B.: Powell's code uses DELTA <= MIN(0.99_RP * GAMMA3, 1.5_RP) * RHO as the condition for
-        ! the following IF, where GAMMA3 is a parameter in (1, GAMMA2] for updating DELTA. Powell's
-        ! code must make sure that the multiplicative factor in the condition is less than GAMMA3.
-        ! Imagine a very successful step with DENORM = the un-updated DELTA = RHO. Then, in Powell's
-        ! implementation, TRRAD will update DELTA to GAMMA3*RHO. If this factor were not less than
-        ! GAMMA3, then DELTA will be reset to RHO, which is not reasonable as D is very successful.
-        ! See paragraph two of Sec. 5.2.5 in T. M. Ragonneau's thesis: "Model-Based Derivative-Free
-        ! Optimization Methods and Software".
-        if (delta <= 1.5_RP * rho) then
-            delta = rho
+        if (delta <= gamma3 * rho) then
+            delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
         ! Is the newly generated X better than current best point?

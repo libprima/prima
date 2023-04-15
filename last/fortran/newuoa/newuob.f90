@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, March 06, 2023 PM05:31:12
+! Last Modified: Saturday, April 15, 2023 PM05:19:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -256,7 +256,7 @@ do tr = 1, maxtr
         ! 2. Without shrinking DELTA, the algorithm may be stuck in an infinite cycling, because
         ! both REDUCE_RHO and IMPROVE_GEO may end up with FALSE in this case.
         delta = TENTH * delta
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= max(1.0_RP, min(0.75_RP * gamma2, 1.5_RP)) * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
@@ -290,7 +290,7 @@ do tr = 1, maxtr
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= max(1.0_RP, min(0.75_RP * gamma2, 1.5_RP)) * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
