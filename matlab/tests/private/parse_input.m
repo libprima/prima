@@ -45,7 +45,7 @@ callstack = dbstack;
 invoker = callstack(2).name;  % The function that calls this function.
 known_solvers = {'cobyla','uobyqa','newuoa','bobyqa','lincoa'};
 known_sizes = {'small', 'big', 'large', 'all'};
-nocomplie_flags = {'nocompile', 'ncp'};
+nocompile_flags = {'nocompile', 'ncp'};
 sequential_flags = {'sequential', 'seq'};
 reverse_flags = {'reverse', 'rev'};
 reload_flags = {'reload', 'load'};
@@ -72,7 +72,7 @@ else
     options = struct();
 end
 
-fun = @(x) ischstr(x) && ismember(x, nocomplie_flags);
+fun = @(x) ischstr(x) && ismember(x, nocompile_flags);
 if any(cellfun(fun, argin))
     compile = false;
     argin = argin(~cellfun(fun, argin));
@@ -167,7 +167,7 @@ wrong_input = wrong_input || ~(ismember(solver, known_solvers) && (mindim <= max
 
 if wrong_input
     if (strcmp(invoker, 'verify'))
-        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocomplie_flag, sequential_flag, reverse_flag, problem_type, options), or %s(solver, problem, ir, nocomplie_flag, sequential_flag, reverse_flag, problem_type, options).\n', invoker, invoker);
+        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, sequential_flag, reverse_flag, problem_type, options), or %s(solver, problem, ir, nocompile_flag, sequential_flag, reverse_flag, problem_type, options).\n', invoker, invoker);
     elseif (strcmp(invoker, 'profile'))
         errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, sequential_flag, reverse_flag, problem_type, competitor, options), or %s(solver, dimrange, reload_flag, problem_type, options).\n', invoker, invoker);
     else
