@@ -146,7 +146,6 @@ FSAVE
 FSTD
 Frobenius
 Funval
-GAMAA
 GBEG
 GETACTF
 GFF
@@ -503,7 +502,6 @@ absvars
 acos
 actrem
 addact
-addedto
 addpath
 adec
 adjustl
@@ -1763,7 +1761,6 @@ tridiagonalizing
 trigsabs
 trigssqs
 tril
-trimed
 trimstr
 triu
 trrad

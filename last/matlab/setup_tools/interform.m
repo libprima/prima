@@ -158,10 +158,10 @@ k = 1;
 
 while(j <= length(cstr))
     strtmp = cstr{j};
-    strtmp_trimed = strtrim(strtmp);
+    strtmp_trimmed = strtrim(strtmp);
 
-    if isempty(strtmp_trimed) || strcmp(strtmp_trimed(1), '!') || strcmp(strtmp_trimed(1), '#')
-        strs{k} = strtmp_trimed;
+    if isempty(strtmp_trimmed) || strcmp(strtmp_trimmed(1), '!') || strcmp(strtmp_trimmed(1), '#')
+        strs{k} = strtmp_trimmed;
         k = k + 1;
         i = j + 1;
         j = j + 1;
