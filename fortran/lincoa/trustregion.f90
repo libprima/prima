@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 04, 2023 PM08:47:43
+! Last Modified: Saturday, April 15, 2023 PM02:36:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -572,8 +572,8 @@ else
     delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's NEWUOA/BOBYQA.
     !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's UOBYQA
     !delta = max(delta_in, gamma2 * dnorm)  ! Modified version. Works well for UOBYQA.
-    ! Powell's LINCOA code is as follows with 1 < GAMMA3 <= GAMMA2.
-    !delta = min(max(gamma1 * delta_in, gamma2 * dnorm), gamma3 * delta_in)
+    ! Powell's LINCOA code is as follows.
+    !delta = min(max(gamma1 * delta_in, gamma2 * dnorm), sqrt(gamma2) * delta_in)
 end if
 
 ! For noisy problems, the following may work better.

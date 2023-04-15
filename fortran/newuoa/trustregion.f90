@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, March 30, 2023 AM08:33:28
+! Last Modified: Saturday, April 15, 2023 PM02:42:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -535,7 +535,7 @@ else
     ! For noise-free CUTEst problems of <= 200 variables, Powell's version works slightly better
     ! than the modified one.
     !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's UOBYQA
-    !delta = min(max(gamma1 * delta_in, gamma2 * dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
+    !delta = min(max(gamma1 * delta_in, gamma2 * dnorm), sqrt(gamma2) * delta_in)  ! Powell's LINCOA.
 end if
 
 ! For noisy problems, the following may work better.

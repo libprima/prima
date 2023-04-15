@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 21, 2023 AM12:53:30
+! Last Modified: Saturday, April 15, 2023 PM05:09:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -122,6 +122,7 @@ real(RP) :: dnorm
 real(RP) :: dnormsav(2)  ! Powell's implementation: DNORMSAV(3)
 real(RP) :: fval(size(distsq))
 real(RP) :: g(size(x))
+real(RP) :: gamma3
 real(RP) :: h(size(x), size(x))
 real(RP) :: moderr
 real(RP) :: moderrsav(size(dnormsav))
@@ -191,6 +192,13 @@ moderrsav = REALMAX
 knew_tr = 0
 knew_geo = 0
 
+! If DELTA <= GAMMA3*RHO after an update, we set DELTA to RHO. GAMMA3 must be less than GAMMA2. The
+! reason is as follows. Imagine a very successful step with DENORM = the un-updated DELTA = RHO.
+! Then TRRAD will update DELTA to GAMMA2*RHO. If GAMMA3 >= GAMMA2, then DELTA will be reset to RHO,
+! which is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
+! T. M. Ragonneau's thesis: "Model-Based Derivative-Free Optimization Methods and Software".
+gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
+
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
 ! function evaluations unless the trust-region step is short or fails to reduce the trust-region
 ! model but the geometry step is not invoked. Thus the following MAXTR is unlikely to be reached.
@@ -220,7 +228,7 @@ do tr = 1, maxtr
     if (shortd .or. .not. qred > 0) then
         ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
         delta = TENTH * delta
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= gamma3 * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
@@ -254,7 +262,7 @@ do tr = 1, maxtr
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= gamma3 * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, March 20, 2023 PM11:18:55
+! Last Modified: Saturday, April 15, 2023 PM02:43:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -313,7 +313,7 @@ do iter = 1, maxiter
         d(k) = ONE  ! Zaikun 20220512: D(K+1:N) = ?
 
         !------------------------------------------------------------------------------------------!
-        ! The code until "Terminate with D set to a multipe of the current D ..." sets only D(1:KSAV)
+        ! The code until "Terminate with D set to a multiple of the current D ..." sets only D(1:KSAV)
         ! or D(1:KSAV+1), with the KSAV defined later. D_INITIALIZED indicates whether D(1:N) is
         ! fully initialized in this process (TRUE) or not (FALSE). See the comments above for details.
         !------------------------------------------------------------------------------------------!
@@ -624,7 +624,7 @@ else
     delta = max(gamma1 * delta_in, gamma2 * dnorm)  ! Powell's NEWUOA/BOBYQA. Works well for UOBYQA.
     !delta = max(delta_in, 1.25_RP * dnorm, dnorm + rho)  ! Powell's original UOBYQA code.
     !delta = max(delta_in, gamma2 * dnorm)  ! This works evidently better than Powell's version.
-    !delta = min(max(gamma1 * delta_in, gamma2 * dnorm), gamma3 * delta_in)  ! Powell's LINCOA, GAMMA3 = SQRT(2)
+    !delta = min(max(gamma1 * delta_in, gamma2 * dnorm), sqrt(gamma2) * delta_in)  ! Powell's LINCOA.
 end if
 
 ! For noisy problems, the following may work better.

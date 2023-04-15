@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, March 06, 2023 PM12:00:43
+! Last Modified: Saturday, April 15, 2023 PM05:17:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -221,7 +221,7 @@ do tr = 1, maxtr
     if (shortd .or. .not. qred > 0) then
         ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
         delta = TENTH * delta
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= max(1.0_RP, min(0.75_RP * gamma2, 1.5_RP)) * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
@@ -255,7 +255,7 @@ do tr = 1, maxtr
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= max(1.0_RP, min(0.75_RP * gamma2, 1.5_RP)) * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
