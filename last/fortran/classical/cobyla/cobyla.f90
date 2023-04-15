@@ -260,7 +260,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 !--------------------------------------------------------------------------------------------------!
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
-!!!! ETA1, ETA2, GAMAA1, GAMMA2, MAXFILT, CTOL, CWEIGHT are not used in the classical mode. !!!!
+!!!! ETA1, ETA2, GAMMA1, GAMMA2, MAXFILT, CTOL, CWEIGHT are not used in the classical mode. !!!!
 call cobylb(calcfc, iprint_loc, maxfun_loc, rhobeg_loc, rhoend_loc, constr_loc, x, cstrv_loc, f, info_loc, &
     & nf_loc, xhist_loc, fhist_loc, chist_loc, conhist_loc)
 !--------------------------------------------------------------------------------------------------!

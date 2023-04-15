@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 21, 2023 PM11:08:41
+! Last Modified: Saturday, April 15, 2023 PM09:00:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -66,7 +66,7 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bv
 !   that we only need to evaluate the constraints that are nearly active.
 ! QFAC is the orthogonal part of the QR factorization of the matrix of active constraint gradients,
 !   these gradients being ordered in accordance with IACT. When NACT is less than N, columns are
-!   addedto QFAC to complete an N by N orthogonal matrix, which is important for keeping calculated
+!   added to QFAC to complete an N by N orthogonal matrix, which is important for keeping calculated
 !   steps sufficiently close to the boundaries of the active constraints.
 ! RFAC is the upper triangular part of this QR factorization.
 !--------------------------------------------------------------------------------------------------!
