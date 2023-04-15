@@ -1,5 +1,5 @@
 1. Handle evaluation failures.
-2. New options: fortran, precision, eta1/2, gammma1/2, iprint, maxhist, output_xhist, output_nlchist, maxfilt, ctol, cweight
+2. New options: fortran, precision, eta1/2, gamma1/2, iprint, maxhist, output_xhist, output_nlchist, maxfilt, ctol, cweight
    New output: xhist, nlcihist, nlcehist
    When debug = chckfunval = true, check the consistency between xhist, fhist, chist, nlcihist,
    nlcehist if they are available.
