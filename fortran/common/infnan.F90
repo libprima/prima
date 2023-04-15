@@ -35,7 +35,7 @@ module infnan_mod
 !
 ! 5. The most naive implementation for IS_NAN is (X /= X). However, compilers (e.g., gfortran) may
 ! complain about inequality comparison between floating-point numbers. In addition, it is likely to
-! fail when compliers are invoked with aggressive optimization flags.
+! fail when compilers are invoked with aggressive optimization flags.
 !
 ! 6. The implementation below is totally empirical, in the sense that I have not studied in-depth
 ! what the aggressive optimization flags really do, but only made some tests and found the
