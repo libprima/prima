@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 05, 2023 PM10:15:54
+! Last Modified: Saturday, April 15, 2023 PM05:20:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -367,7 +367,7 @@ do tr = 1, maxtr
         ! Powell's code uses DELTA <= MIN(0.99_RP * GAMMA3, 1.5_RP) * RHO as the condition for the
         ! following IF, where GAMMA3 is a parameter in (1, GAMMA2] for updating DELTA. This aligns
         ! with the update of DELTA after a trust-region step. See the comment there for more info.
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= max(1.0_RP, min(0.75_RP * gamma2, 1.5_RP)) * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
@@ -417,7 +417,7 @@ do tr = 1, maxtr
         ! GAMMA3, then DELTA will be reset to RHO, which is not reasonable as D is very successful.
         ! See paragraph two of Sec. 5.2.5 in T. M. Ragonneau's thesis: "Model-Based Derivative-Free
         ! Optimization Methods and Software".
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= max(1.0_RP, min(0.75_RP * gamma2, 1.5_RP)) * rho) then
             delta = rho
         end if
 

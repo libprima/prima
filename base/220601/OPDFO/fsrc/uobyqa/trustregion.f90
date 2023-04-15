@@ -275,7 +275,7 @@ do while (.true.)
 
         !------------------------------------------------------------------------------------------!
         !------------------------------------------------------------------------------------------!
-        ! The code until "Terminate with D set to a multipe of the current D ..." sets only D(1:KSAV)
+        ! The code until "Terminate with D set to a multiple of the current D ..." sets only D(1:KSAV)
         ! or D(1:KSAV+1), with the KSAV defined later. D_INITIALIZED indicates whether D(1:N) is
         ! fully initialized in this process (TRUE) or not (FALSE). See the comments above
         ! CALL WASSERT(D_INITIALIZED, 'D IS INITIALIZED', SRNAME) for details.

@@ -1302,7 +1302,6 @@ mssg
 mtools
 mtrace
 mul
-multipe
 mulvdi
 mulvsi
 mxn
@@ -1461,7 +1460,6 @@ poisedness
 polyu
 posdef
 posinf
-postdfo
 postprima
 postprocesses
 poutput
@@ -1538,7 +1536,6 @@ realmin
 realpath
 reciq
 recl
-recorede
 redrat
 redrho
 reduc
@@ -1616,7 +1613,6 @@ segfault
 selectx
 semilogx
 semismooth
-senario
 setdiff
 setdrop
 setenv

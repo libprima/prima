@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 13, 2023 PM07:37:43
+! Last Modified: Saturday, April 15, 2023 PM05:10:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -162,6 +162,7 @@ real(RP) :: dnorm
 real(RP) :: dnormsav(2)  ! Powell's implementation: DNORMSAV(3)
 real(RP) :: ebound
 real(RP) :: fval(npt)
+real(RP) :: gamma3
 real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: moderr
@@ -252,6 +253,13 @@ knew_tr = 0
 knew_geo = 0
 itest = 0
 
+! If DELTA <= GAMMA3*RHO after an update, we set DELTA to RHO. GAMMA3 must be less than GAMMA2. The
+! reason is as follows. Imagine a very successful step with DENORM = the un-updated DELTA = RHO.
+! Then TRRAD will update DELTA to GAMMA2*RHO. If GAMMA3 >= GAMMA2, then DELTA will be reset to RHO,
+! which is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
+! T. M. Ragonneau's thesis: "Model-Based Derivative-Free Optimization Methods and Software".
+gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
+
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
 ! function evaluations unless the trust-region step is short or fails to reduce the trust-region
 ! model but the geometry step is not invoked. Thus the following MAXTR is unlikely to be reached.
@@ -264,7 +272,6 @@ info = MAXTR_REACHED
 ! IMPROVE_GEO: Should we improve the geometry?
 ! REDUCE_RHO: Should we reduce rho?
 ! BOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
-info = INFO_DFT
 do tr = 1, maxtr
     ! Generate the next trust region step D.
     call trsbox(delta, gopt, hq, pq, sl, su, xpt(:, kopt), xpt, crvmin, d)
@@ -289,7 +296,7 @@ do tr = 1, maxtr
     ! and hence it will reduce RHO, which will enhance the resolution of the algorithm in general.
     if (shortd .or. .not. qred > 0) then
         delta = TENTH * delta
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= gamma3 * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
         ! Evaluate EBOUND. It will be used as a bound to test if the entries of MODERRSAV are small.
@@ -325,7 +332,7 @@ do tr = 1, maxtr
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= gamma3 * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 

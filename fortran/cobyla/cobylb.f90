@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, April 12, 2023 PM10:07:38
+! Last Modified: Saturday, April 15, 2023 PM05:05:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,6 +132,7 @@ real(RP) :: delta
 real(RP) :: dnorm
 real(RP) :: ffilt(size(cfilt))
 real(RP) :: fval(size(x) + 1)
+real(RP) :: gamma3
 real(RP) :: prerec  ! Predicted reduction in constraint violation
 real(RP) :: preref  ! Predicted reduction in objective Function
 real(RP) :: prerem  ! Predicted reduction in merit function
@@ -257,6 +258,13 @@ ratio = -ONE
 jdrop_tr = 0
 jdrop_geo = 0
 
+! If DELTA <= GAMMA3*RHO after an update, we set DELTA to RHO. GAMMA3 must be less than GAMMA2. The
+! reason is as follows. Imagine a very successful step with DENORM = the un-updated DELTA = RHO.
+! Then TRRAD will update DELTA to GAMMA2*RHO. If GAMMA3 >= GAMMA2, then DELTA will be reset to RHO,
+! which is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
+! T. M. Ragonneau's thesis: "Model-Based Derivative-Free Optimization Methods and Software".
+gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
+
 ! MAXTR is the maximal number of trust-region iterations. Normally, each trust-region iteration
 ! takes 1 or 2 function evaluations except for the following cases:
 ! 1. the update of CPEN alters the optimal vertex;
@@ -318,7 +326,7 @@ do tr = 1, maxtr
         ! Reduce DELTA if D is short or D fails to render MAX(PREREC, PREREF) > 0, the latter can
         ! only happen due to rounding errors. This seems quite important for performance.
         delta = TENTH * delta
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= gamma3 * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
@@ -386,11 +394,11 @@ do tr = 1, maxtr
         ! Update DELTA. After this, DELTA < DNORM may hold.
         ! N.B.: 1. Powell's code uses RHO as the trust-region radius and updates it as follows.
         ! Reduce RHO to GAMMA1*RHO if ADEQUATE_GEO is TRUE and either SHORTD is TRUE or RATIO < ETA1,
-        ! and then revise RHO to RHOEND if its new value is not more than 1.5*RHOEND; RHO remains
+        ! and then revise RHO to RHOEND if its new value is not more than GAMMA3*RHOEND; RHO remains
         ! unchanged in all other cases; in particular, RHO is never increased.
         ! 2. Our implementation uses DELTA as the trust-region radius, while using RHO as a lower
         ! bound for DELTA. DELTA is updated in a way that is typical for trust-region methods, and
-        ! it is revised to RHO if its new value is not more than 1.5*RHO. RHO reflects the current
+        ! it is revised to RHO if its new value is not more than GAMMA3*RHO. RHO reflects the current
         ! resolution of the algorithm; its update is essentially the same as the update of RHO in
         ! Powell's code (see the definition of REDUCE_RHO below). Our implementation aligns with
         ! UOBYQA/NEWUOA/BOBYQA/LINCOA and improves the performance of COBYLA.
@@ -403,7 +411,7 @@ do tr = 1, maxtr
         ! performance if we skip the update of DELTA when ADEQUATE_GEO is FALSE and RATIO < 0.1.
         ! Therefore, we choose to update DELTA without checking ADEQUATE_GEO.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= gamma3 * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 

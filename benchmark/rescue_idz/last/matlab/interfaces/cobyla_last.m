@@ -270,7 +270,7 @@ output = struct();
 % N.B.: DO NOT record anything in PROBINFO. If the solver is called by prima_last,
 % then postprima_last will do nothing; the real postprocessing will be done when
 % prima_last calls postprima_last using the OUTPUT returned by solver together with the
-% PROBINFO in prima_last; that said, in such a senario, the PROBINFO of this solver
+% PROBINFO in prima_last; that said, in such a scenario, the PROBINFO of this solver
 % will NOT be passed to the real postprocessing. Indeed, the PROBINFO of
 % this solver is set to empty in preprima_last.
 
@@ -493,7 +493,7 @@ else % The problem turns out 'normal' during preprima_last
 end
 
 % Postprocess the result
-try % postdfo is a private function that may generate public errors; error-handling needed
+try % postprima is a private function that may generate public errors; error-handling needed
     [x, fx, exitflag, output] = postprima_last(probinfo, output);
 catch exception
     if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly

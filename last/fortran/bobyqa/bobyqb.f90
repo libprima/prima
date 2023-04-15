@@ -12,7 +12,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 28, 2023 AM08:41:46
+! Last Modified: Saturday, April 15, 2023 PM05:33:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -270,7 +270,7 @@ do tr = 1, maxtr
     ! and hence it will reduce RHO, which will enhance the resolution of the algorithm in general.
     if (shortd .or. .not. qred > 0) then
         delta = TENTH * delta
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= max(1.0_RP, min(0.75_RP * gamma2, 1.5_RP)) * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
         ! Evaluate EBOUND. It will be used as a bound to test if the entries of MODERRSAV are small.
@@ -306,7 +306,7 @@ do tr = 1, maxtr
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
-        if (delta <= 1.5_RP * rho) then
+        if (delta <= max(1.0_RP, min(0.75_RP * gamma2, 1.5_RP)) * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
 
