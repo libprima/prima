@@ -417,10 +417,10 @@ ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d
 GFORT := gfortran
 # 1. gfortran 7 raises a false positive warning regarding "maybe-uninitialized" of allocatable arrays.
 # See https://stackoverflow.com/questions/56261880/fortran-re-allocation-on-assignment-and-gfortran-warnings
-# 2. As of gfortran 12, gfortran raises a false positive warning regarding "maybe-uninitialized" of
+# 2. As of gfortran 11, gfortran raises a false positive warning regarding "maybe-uninitialized" of
 # allocatable characters. See
 # https://fortran-lang.discourse.group/t/warning-str-may-be-used-uninitialized
-WE := $(shell if [[ $$(gfortran -dumpversion | sed 's|\..*||') -gt 8 && -z '$(FFLAGSG)' ]] ; then echo "-Werror"; else echo ""; fi)
+WE := $(shell if [[ $$(gfortran -dumpversion | sed 's|\..*||') -gt 11 || $$(gfortran -dumpversion | sed 's|\..*||') -gt 8 && -z '$(FFLAGSG)' ]] ; then echo "-Werror"; else echo ""; fi)
 GFORT := $(GFORT) $(WE) -pedantic-errors
 # `-fautomatic` (the default) tells `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.
