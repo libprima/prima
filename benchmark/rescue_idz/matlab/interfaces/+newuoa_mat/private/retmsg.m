@@ -1,4 +1,4 @@
-function retmssg(info, iprint, nf, f, x, solver)
+function retmsg(info, iprint, nf, f, x, solver)
 
     % Local variables    % Should be an integer of default kind
 
@@ -7,26 +7,26 @@ function retmssg(info, iprint, nf, f, x, solver)
     end
 
     if info == infos('ftarget_achieved')
-        mssg = 'the target function value is achieved.';
+        msg = 'the target function value is achieved.';
     elseif info == infos('maxfun_reached')
-        mssg = 'the objective function has been evaluated MAXFUN times.';
+        msg = 'the objective function has been evaluated MAXFUN times.';
     elseif info == infos('small_tr_radius')
-        mssg = 'the trust region radius reaches its lower bound.';
+        msg = 'the trust region radius reaches its lower bound.';
     elseif info == infos('trsubp_failed')
-        mssg = 'a trust region step has failed to reduce the quadratic model.';
+        msg = 'a trust region step has failed to reduce the quadratic model.';
     elseif info == infos('nan_x')
-        mssg = 'NaN occurs in x.';
+        msg = 'NaN occurs in x.';
     elseif info == infos('nan_inf_f')
-        mssg = 'the objective function returns NaN or +INFINITY.';
+        msg = 'the objective function returns NaN or +INFINITY.';
     elseif info == infos('nan_model')
-        mssg = 'NaN occurs in the models.';
+        msg = 'NaN occurs in the models.';
     end
 
     if iprint >= 1
         if iprint >= 3
             fprintf('\n');
         end
-        fprintf('Return from %s because %s\n', solver, deblank(mssg));
+        fprintf('Return from %s because %s\n', solver, deblank(msg));
         fprintf('At the return from %s    Number of function evaluations = %d\n', solver, nf);
         fprintf('Least function value = %.16f    The corresponding X is: %.16f\n', f, x);
         fprintf('\n');
@@ -41,7 +41,7 @@ function retmssg(info, iprint, nf, f, x, solver)
             if iprint <= -3
                 fprintf(OUTUNIT, '\n');
             end
-            fprintf(OUTUNIT, 'Return from %s because %s\n', solver, deblank(mssg));
+            fprintf(OUTUNIT, 'Return from %s because %s\n', solver, deblank(msg));
             fprintf(OUTUNIT, 'At the return from %s    Number of function evaluations = %d\n', solver, nf);
             fprintf(OUTUNIT, 'Least function value = %.16f    The corresponding X is: %.16f\n', f, x);
             fclose(OUTUNIT);

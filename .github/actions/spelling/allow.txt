@@ -986,6 +986,7 @@ ieeenan
 ienvvar
 ifcore
 ifeq
+iff
 ifile
 ifmt
 ifneq
@@ -998,7 +999,6 @@ ignorefiles
 igo
 ihq
 iid
-iff
 iin
 ikind
 ilbd
@@ -1468,7 +1468,6 @@ pqinc
 pqlag
 pqw
 preconnected
-preprima
 predsq
 prefdir
 prehist
