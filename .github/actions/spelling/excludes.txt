@@ -64,6 +64,8 @@ ignore$
 
 #######################################
 # Added by Zaikun
+^\.github/CODEOWNERS
+^\.github/dependabot.yml
 \.eps$
 \.pdf$
 ^base/
