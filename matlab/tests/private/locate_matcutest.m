@@ -16,7 +16,7 @@ if nargin < 1
     if ~isempty(ind)
         cmtools = path_strs{ind};
     else
-        directory = homedir();
+        directory = getenv('HOME');
     end
 end
 
