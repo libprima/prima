@@ -55,6 +55,9 @@ intersection_form/
 .interform
 
 # automatically generated m files
+# N.B.: Do not include all_solvers.m, dbgstr.m, and get_mexname.m, which are ignored under
+# matlab/interfaces/private, but not under matlab/setup_tools. Those in the latter will be copied to
+# the former during the setup. See also the .gitignore files under matlab/ and matlab/interfaces/private.
 all_precisions.m
 all_variants.m
 
