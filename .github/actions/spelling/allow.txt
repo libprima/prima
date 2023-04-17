@@ -1936,3 +1936,4 @@ zmat
 zsq
 ztemp
 ztest
+strsplit
