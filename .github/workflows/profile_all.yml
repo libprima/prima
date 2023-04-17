@@ -62,6 +62,7 @@ jobs:
       - name: Clone MatCUTEst
         uses: actions/checkout@v3.5.2
         with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           repository: equipez/matcutest_compiled
           path: matcutest
 
