@@ -1,3 +1,22 @@
 According to the test on 20230406, the RESCUE of BOBYQA and IDZ of NEWUOA/LINCOA affects the
-performance marginally on problems up to 200 dimension. Therefore, it seems safe to ignore
-theses two techniques in the first implementation of algorithms based on the derivative-free PSB.
+performance marginally. The settings of the test are as follows.
+
+1. Test problems: the CUTEst set.
+2. Maximum dimension: 200.
+3. Maximum number of linear constraints for LINCOA: 20000.
+4. Tested features: plain, randomizex0-eps, perm, single, dnoise-1.0e-6, sifnif5, noise-1.0e-4.
+5. Number of random tests when applicable: 3.
+6. RHOEND: 1.0e-8.
+7. Maximum number of function evaluations: 500*dimension.
+8. Tolerance for the convergence tests in the performance profiles: 10^{-i}, i = 1, ..., 16.
+
+Note that we purposely set the stopping criteria and convergence tolerance to observe the long-term
+behavior of the algorithms, as the techniques under consideration do not take effect unless we ask
+for very high precision.
+
+The result: RESCUE and IDZ do not affect the performance of the algorithms significantly. For
+the classical version (i.e., Powell's implementation), the difference is barely observable. For the
+modernized version, the difference is more obvious, but still not significant.
+
+Therefore, it seems safe to ignore these two techniques in the first implementation of algorithms
+based on the derivative-free PSB.
