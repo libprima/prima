@@ -1937,3 +1937,9 @@ zsq
 ztemp
 ztest
 strsplit
+filemode
+gitee
+logallrefupdates
+mygit
+pushurl
+repositoryformatversion
