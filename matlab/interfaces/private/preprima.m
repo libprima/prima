@@ -98,6 +98,7 @@ end
 % 24. boundmax: the large allowed absolute value of bound constraints
 % 25. funcmax: the largest allowed value of the objective function
 % 26. constrmax: the largest allowed absolute value of the constraints
+% 27. x0_is_row: whether x0 is a row
 probinfo = struct();
 
 % Save the raw data (date before validation/preprocessing) in probinfo.
@@ -116,7 +117,7 @@ probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', 
 
 % Decide the precision ('single', 'double', or 'quadruple') of the real calculation within the
 % Fortran solvers. This is needed ONLY by `boundmax`, `funcmax`, and `constrmax` defined below by
-% calling `getmax`. These three numbers will be used in `pre_x0`, `pre_fun`, and `pre_con`
+% calling `getmax`. These three numbers will be used in `pre_x0`, `pre_fun`, and `pre_nonlcon`
 % respectively in the sequel. Note the following.
 % 1. `precision` takes effect only if Fortran solvers are called (i.e., when options.fortran = true).
 % 2. `precision` is passed only to `getmax`, which defines huge values (e.g., `boundmax`, `funcmax`).
@@ -130,12 +131,14 @@ probinfo.boundmax = getmax('bound', precision);
 probinfo.funcmax = getmax('function', precision);
 probinfo.constrmax = getmax('constraint', precision);
 
-% Validate and preprocess fun
-[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, probinfo.funcmax, warnings);
-
 % Validate and preprocess x0
-[x0, warnings] = pre_x0(invoker, x0, precision, warnings);
+[x0, warnings, x0_is_row] = pre_x0(invoker, x0, precision, warnings);
 lenx0 = length(x0); % Within this file, for clarity, we denote length(x0) by lenx0 instead of n
+probinfo.x0_is_row = x0_is_row;
+
+% Validate and preprocess fun
+% TODO: pre_fun may be moved after fixed x has been identified, similar to pre_con.
+[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, probinfo.funcmax, x0_is_row, warnings);
 
 % Validate and preprocess the bound constraints
 % In addition, get the indices of infeasible bounds and 'fixed variables'
@@ -153,7 +156,7 @@ fixedx_value_save = fixedx_value; % Values of fixed variables
 
 % Problem type before reduction
 % This has to be done after preprocessing the bound constraints (because
-% min(ub) and % max(lb) are evaluated) and before preprocessing the
+% min(ub) and max(lb) are evaluated) and before preprocessing the
 % linear/nonlinear constraints (because these constraints will be
 % reduced during the preprocessing). Note that Aineq, Aeq, and nonlcon will
 % not be "evaluated" in problem_type, so there is no worry about the
@@ -179,7 +182,7 @@ probinfo.trivial_leq = trivial_leq; % A vector of true/false
 % The constraints will be reduced if some but not all variables are fixed by the bound
 % constraints. See pre_lcon for why we do not reduce the problem when all variables
 % are fixed.
-nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, probinfo.constrmax);
+nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, probinfo.constrmax, x0_is_row);
 
 % Reduce fun, x0, lb, and ub if some but not all variables are fixed by
 % the bound constraints. See pre_lcon for why we do not reduce the
@@ -462,8 +465,34 @@ if isfield(problem,'solver')
 end
 return
 
+%%%%%%%%%%%%%%%%%%%%%%%% Function for x0 preprocessing %%%%%%%%%%%%%%%%%
+function [x0, warnings, x0_is_row] = pre_x0(invoker, x0, precision, warnings)
+[isrv, lenx0]  = isrealvector(x0);
+if ~(isrv && (lenx0 > 0))
+    % Public/normal error
+    error(sprintf('%s:InvalidX0', invoker), '%s: X0 should be a real vector/scalar.', invoker);
+end
+if (lenx0 > maxint())
+    % Public/normal error
+    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d variables are allowed.', invoker, maxint());
+end
+x0_is_row = isrealrow(x0);
+x0 = double(x0(:));
+abnormal_x0 = isnan(x0) | (abs(x0) >= inf);
+if any(abnormal_x0)
+    x0(isnan(x0)) = 0;
+    maxfloat = getmax('real', precision);
+    x0(isinf(x0) & x0 > 0) = maxfloat;
+    x0(isinf(x0) & x0 < 0) = -maxfloat;
+    wid = sprintf('%s:AbnormalX0', invoker);
+    wmsg = sprintf('%s: X0 contains NaN or infinite values; NaN is replaced by 0 and Inf by %g.', invoker, maxfloat);
+    warning(wid, '%s', wmsg);
+    warnings = [warnings, wmsg];
+end
+return
+
 %%%%%%%%%%%%%%%%%%%%%%%% Function for fun preprocessing %%%%%%%%%%%%%%%%%
-function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, funcmax, warnings)
+function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, funcmax, x0_is_row, warnings)
 if ~(isempty(fun) || ischarstr(fun) || isa(fun, 'function_handle'))
     % Public/normal error
     error(sprintf('%s:InvalidFun', invoker), ...
@@ -501,31 +530,12 @@ if ~exist('OCTAVE_VERSION', 'builtin')
         '%s: FUN has no output; it should return the objective function value.', invoker);
     end
 end
-fun = @(x) evalobj(invoker, fun, x, funcmax);  % See evalobj.m
-return
-
-%%%%%%%%%%%%%%%%%%%%%%%% Function for x0 preprocessing %%%%%%%%%%%%%%%%%
-function [x0, warnings] = pre_x0(invoker, x0, precision, warnings)
-[isrv, lenx0]  = isrealvector(x0);
-if ~(isrv && (lenx0 > 0))
-    % Public/normal error
-    error(sprintf('%s:InvalidX0', invoker), '%s: X0 should be a real vector/scalar.', invoker);
-end
-if (lenx0 > maxint())
-    % Public/normal error
-    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d variables are allowed.', invoker, maxint());
-end
-x0 = double(x0(:));
-abnormal_x0 = isnan(x0) | (abs(x0) >= inf);
-if any(abnormal_x0)
-    x0(isnan(x0)) = 0;
-    maxfloat = getmax('real', precision);
-    x0(isinf(x0) & x0 > 0) = maxfloat;
-    x0(isinf(x0) & x0 < 0) = -maxfloat;
-    wid = sprintf('%s:AbnormalX0', invoker);
-    wmsg = sprintf('%s: X0 contains NaN or infinite values; NaN is replaced by 0 and Inf by %g.', invoker, maxfloat);
-    warning(wid, '%s', wmsg);
-    warnings = [warnings, wmsg];
+% During the calculation, x is always a column vector. We assume that fun expects a row vector if
+% x0 is a row.
+if x0_is_row
+    fun = @(x) evalobj(invoker, fun, x', funcmax);  % See evalobj.m for evalobj
+else
+    fun = @(x) evalobj(invoker, fun, x, funcmax);  % See evalobj.m for evalobj
 end
 return
 
@@ -725,7 +735,7 @@ end
 return
 
 %%%%%%%%%%%%%%%%% Function for nonlinear constraint preprocessing %%%%%%%%%%
-function nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, constrmax)
+function nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, constrmax, x0_is_row)
 if ~(isempty(nonlcon) || isa(nonlcon, 'function_handle') || ischarstr(nonlcon))
     % Public/normal error
     error(sprintf('%s:InvalidCon', invoker), ...
@@ -758,6 +768,7 @@ else
             '%s: nonlcon has too few outputs; it should return [cineq, ceq], the constraints being cineq(x) <= 0, ceq(x) = 0.', invoker);
         end
     end
+    % TODO: the following if may be moved to the end of this function.
     if any(fixedx) && any(~fixedx)
         % Reduce the nonlinear constraints if some but not all variables are
         % fixed by the bound constraints. Note that we do not reduce the
@@ -765,7 +776,13 @@ else
         freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
         nonlcon = @(freex_value) nonlcon(fullx(freex_value, fixedx_value, freex, fixedx));
     end
-    nonlcon = @(x) evalcon(invoker, nonlcon, x, constrmax);  % See evalcon.m
+    % During the calculation, x is always a column vector. We assume that nonlcon expects a row
+    % vector if x0 is a row.
+    if x0_is_row
+        nonlcon = @(x) evalcon(invoker, nonlcon, x', constrmax);  % See evalcon.m for evalcon
+    else
+        nonlcon = @(x) evalcon(invoker, nonlcon, x, constrmax);  % See evalcon.m for evalcon
+    end
 end
 return
 
