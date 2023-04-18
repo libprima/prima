@@ -126,7 +126,7 @@ funname = callstack(1).name; % Name of the current function
 
 % Locate example_file, which is an example provided by MATLAB for trying MEX.
 % NOTE: MATLAB MAY CHANGE THE LOCATION OF THIS FILE IN THE FUTURE.
-switch upper(language)
+switch lower(language)
 case 'fortran'
     example_file_name = 'timestwo.F';
 case {'c', 'c++', 'cpp'}
