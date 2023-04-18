@@ -586,12 +586,13 @@ freex = ~fixedx; % A vector of true/false indicating whether the variable is fre
 
 % inequalities: Aineq*x <= bineq
 [isrm, mA, nA] = isrealmatrix(Aineq);
-[isrc, lenb] = isrealcolumn(bineq);
-if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
+[isrv, lenb] = isrealvector(bineq);  % The same as fmincon, we allow bineq to be a row
+if ~(isrm && isrv && (mA == lenb) && (nA == lenx0 || nA == 0))
     % Public/normal error
     error(sprintf('%s:InvalidLinIneq', invoker), ...
     '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq) = [length(bineq), length(X0)] unless Aineq = bineq = [].', invoker);
 end
+bineq = double(bineq(:));
 if any(isnan(bineq))
     bineq(isnan(bineq)) = inf; % Replace the NaN in bineq by inf, namely to remove this constraint
     wid = sprintf('%s:NaNInbineq', invoker);
@@ -635,12 +636,13 @@ end
 
 % equalities: Aeq*x == beq
 [isrm, mA, nA] = isrealmatrix(Aeq);
-[isrc, lenb] = isrealcolumn(beq);
-if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
+[isrv, lenb] = isrealvector(beq);  % The same as fmincon, we allow beq to be a row
+if ~(isrm && isrv && (mA == lenb) && (nA == lenx0 || nA == 0))
     % Public/normal error
     error(sprintf('%s:InvalidLinEq', invoker), ...
     '%s: Aeq should be a real matrix, beq should be a real column, and size(Aeq) = [length(beq), length(X0)] unless Aeq = beq = [].', invoker);
 end
+beq = double(beq(:));
 % Are there equality constraints whose both sides contain NaN?
 % This should be detected before reducing the constraints;
 % when reducing the constraints, the NaN on the left-hand side will lead
