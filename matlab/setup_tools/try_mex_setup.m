@@ -41,7 +41,7 @@ end
 % This should make MEX setup work for Fortran on MATLAB 2020a or above if a **default** installation
 % of Intel OneAPI (available for free) has been done and Xcode or Microsoft VS is correctly installed.
 % Update 20230401: MATLAB R2022b/R2023a seem not checking ONEAPI_ROOT, and IFORT_COMPILER23 is needed.
-if strcmpi(language, 'FORTRAN') && (ismac || ispc) && (~isempty(exception) || mex_setup ~= 0)
+if strcmpi(language, 'fortran') && (ismac || ispc) && (~isempty(exception) || mex_setup ~= 0)
     if ismac
         oneapi_root = '/opt/intel/oneapi/';
         compiler_dir = [oneapi_root, 'compiler/latest/mac/'];
@@ -148,10 +148,10 @@ funname = callstack(1).name; % Name of the current function
 
 % Locate example_file, which is an example provided by MATLAB for trying MEX.
 % NOTE: MATLAB MAY CHANGE THE LOCATION OF THIS FILE IN THE FUTURE.
-switch upper(language)
-case 'FORTRAN'
+switch lower(language)
+case 'fortran'
     example_file_name = 'timestwo.F';
-case {'C', 'C++', 'CPP'}
+case {'c', 'c++', 'cpp'}
     example_file_name = 'timestwo.c';
 otherwise
     error(sprintf('%s:UnsupportedLang', funname), '%s: Language ''%s'' is not supported by %s.', funname, language, funname);
