@@ -421,7 +421,7 @@ GFORT := gfortran
 # allocatable characters. See
 # https://fortran-lang.discourse.group/t/warning-str-may-be-used-uninitialized
 WE := $(shell if [[ $$(gfortran -dumpversion | sed 's|\..*||') -gt 11 || $$(gfortran -dumpversion | sed 's|\..*||') -gt 8 && -z '$(FFLAGSG)' ]] ; then echo "-Werror"; else echo ""; fi)
-GFORT := $(GFORT) $(WE) -pedantic-errors
+GFORT := $(GFORT) $(WE) -pedantic-errors -fmax-errors=1
 # `-fautomatic` (the default) tells `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.
 # We enable them for small problems to verify that we will not have stack overflows.

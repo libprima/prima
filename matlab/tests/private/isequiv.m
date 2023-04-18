@@ -373,48 +373,80 @@ end
 
 tested_solver_name = regexprep(solvers{1}, '_last', '');
 
+prob1 = prob;
+prob2 = prob;
+
+test_row_x = (rand > 0.5);
+test_row_bounds = (rand > 0.5);
+if ~endsWith(solvers{1}, '_last')
+    if test_row_x
+        prob1.x0 = prob1.x0';
+        prob1.objective = @(x) prob1.objective(x');
+        if ~isempty(prob1.nonlcon)
+            prob1.nonlcon = @(x) prob1.nonlcon(x');
+        end
+    end
+    if test_row_bounds
+        prob1.lb = prob1.lb';
+        prob1.ub = prob1.ub';
+    end
+end
+if ~endsWith(solvers{2}, '_last')
+    if test_row_x
+        prob2.x0 = prob2.x0';
+        prob2.objective = @(x) prob2.objective(x');
+        if ~isempty(prob2.nonlcon)
+            prob2.nonlcon = @(x) prob2.nonlcon(x');
+        end
+    end
+    if test_row_bounds
+        prob2.lb = prob2.lb';
+        prob2.ub = prob2.ub';
+    end
+end
+
 exception = [];
 try
     if call_by_package
         if call_by_structure
-            prob.options.solver = solvers{1};
+            prob1.options.solver = solvers{1};
             %tic;
-            [x1, fx1, exitflag1, output1] = package1(prob);
+            [x1, fx1, exitflag1, output1] = package1(prob1);
             %T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
-            prob.options.solver = solvers{2};
+            prob2.options.solver = solvers{2};
             %tic;
-            [x2, fx2, exitflag2, output2] = package2(prob);
+            [x2, fx2, exitflag2, output2] = package2(prob2);
             %T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
         else
-            prob.options.solver = solvers{1};
-            [x1, fx1, exitflag1, output1] = package1(prob.objective, prob.x0, prob.Aineq, ...
-                prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
-            prob.options.solver = solvers{2};
-            [x2, fx2, exitflag2, output2] = package2(prob.objective, prob.x0, prob.Aineq, ...
-                prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+            prob1.options.solver = solvers{1};
+            [x1, fx1, exitflag1, output1] = package1(prob1.objective, prob1.x0, prob1.Aineq, ...
+                prob1.bineq, prob1.Aeq, prob1.beq, prob1.lb, prob1.ub, prob1.nonlcon, prob1.options);
+            prob2.options.solver = solvers{2};
+            [x2, fx2, exitflag2, output2] = package2(prob2.objective, prob2.x0, prob2.Aineq, ...
+                prob2.bineq, prob2.Aeq, prob2.beq, prob2.lb, prob2.ub, prob2.nonlcon, prob2.options);
         end
     else
         if call_by_structure
-            [x1, fx1, exitflag1, output1] = solver1(prob);
-            [x2, fx2, exitflag2, output2] = solver2(prob);
+            [x1, fx1, exitflag1, output1] = solver1(prob1);
+            [x2, fx2, exitflag2, output2] = solver2(prob2);
         else
             switch lower(tested_solver_name)
             case {'uobyqa', 'newuoa'}
-                [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, prob.options);
-                [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, prob.options);
+                [x1, fx1, exitflag1, output1] = solver1(prob1.objective, prob1.x0, prob1.options);
+                [x2, fx2, exitflag2, output2] = solver2(prob2.objective, prob2.x0, prob2.options);
             case {'bobyqa'}
-                [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, prob.lb, prob.ub, prob.options);
-                [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, prob.lb, prob.ub, prob.options);
+                [x1, fx1, exitflag1, output1] = solver1(prob1.objective, prob1.x0, prob1.lb, prob1.ub, prob1.options);
+                [x2, fx2, exitflag2, output2] = solver2(prob2.objective, prob2.x0, prob2.lb, prob2.ub, prob2.options);
             case {'lincoa'}
-                [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, ...
-                    prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.options);
-                [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, ...
-                    prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.options);
+                [x1, fx1, exitflag1, output1] = solver1(prob1.objective, prob1.x0, ...
+                    prob1.Aineq, prob1.bineq, prob1.Aeq, prob1.beq, prob1.lb, prob1.ub, prob1.options);
+                [x2, fx2, exitflag2, output2] = solver2(prob2.objective, prob2.x0, ...
+                    prob2.Aineq, prob2.bineq, prob2.Aeq, prob2.beq, prob2.lb, prob2.ub, prob2.options);
             case {'cobyla'}
-                [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, ...
-                    prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
-                [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, ...
-                    prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+                [x1, fx1, exitflag1, output1] = solver1(prob1.objective, prob1.x0, ...
+                    prob1.Aineq, prob1.bineq, prob1.Aeq, prob1.beq, prob1.lb, prob1.ub, prob1.nonlcon, prob1.options);
+                [x2, fx2, exitflag2, output2] = solver2(prob2.objective, prob2.x0, ...
+                    prob2.Aineq, prob2.bineq, prob2.Aeq, prob2.beq, prob2.lb, prob2.ub, prob2.nonlcon, prob2.options);
             otherwise
                 error('Wrong solver tested: %s', tested_solver_name);
             end
@@ -435,7 +467,7 @@ if ~isempty(exception)
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END: Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-equiv = iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec);
+equiv = iseq(x1(:), fx1, exitflag1, output1, x2(:), fx2, exitflag2, output2, prec);
 
 if ~equiv
     format long;
