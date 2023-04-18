@@ -1943,3 +1943,4 @@ logallrefupdates
 mygit
 pushurl
 repositoryformatversion
+pushurls
