@@ -190,7 +190,7 @@ nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, probinfo.constrmax
 probinfo.raw_dim = lenx0; % Problem dimension before reduction
 if any(fixedx) && any(~fixedx)
     freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
-    fun = @(freex_value) fun(fullx(freex_value, fixedx_value, freex, fixedx)); % Objective function after reduction
+    fun = @(freex_value) fun(fullx(freex_value, fixedx_value, fixedx)); % Objective function after reduction
     x0 = x0(freex); % x0 after reduction
     lenx0 = length(x0);
     lb = lb(freex); % lb after reduction
@@ -597,6 +597,8 @@ freex = ~fixedx; % A vector of true/false indicating whether the variable is fre
 % inequalities: Aineq*x <= bineq
 [isrm, mA, nA] = isrealmatrix(Aineq);
 [isrv, lenb] = isrealvector(bineq);  % The same as fmincon, we allow bineq to be a row
+% No matter whether x0 or bineq is a row or column, we always require that size(Aineq) is
+% [length(bineq), length(x0)] unless Aineq = bineq = []. This is consistent with fmincon.
 if ~(isrm && isrv && (mA == lenb) && (nA == lenx0 || nA == 0))
     % Public/normal error
     error(sprintf('%s:InvalidLinIneq', invoker), ...
@@ -647,6 +649,8 @@ end
 % equalities: Aeq*x == beq
 [isrm, mA, nA] = isrealmatrix(Aeq);
 [isrv, lenb] = isrealvector(beq);  % The same as fmincon, we allow beq to be a row
+% No matter whether x0 or beq is a row or column, we always require that size(Aeq) is
+% [length(beq), length(x0)] unless Aeq = beq = []. This is consistent with fmincon.
 if ~(isrm && isrv && (mA == lenb) && (nA == lenx0 || nA == 0))
     % Public/normal error
     error(sprintf('%s:InvalidLinEq', invoker), ...
@@ -768,14 +772,6 @@ else
             '%s: nonlcon has too few outputs; it should return [cineq, ceq], the constraints being cineq(x) <= 0, ceq(x) = 0.', invoker);
         end
     end
-    % TODO: the following if may be moved to the end of this function.
-    if any(fixedx) && any(~fixedx)
-        % Reduce the nonlinear constraints if some but not all variables are
-        % fixed by the bound constraints. Note that we do not reduce the
-        % problem when all variables are fixed. See pre_lcon for the reason.
-        freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
-        nonlcon = @(freex_value) nonlcon(fullx(freex_value, fixedx_value, freex, fixedx));
-    end
     % During the calculation, x is always a column vector. We assume that nonlcon expects a row
     % vector if x0 is a row.
     if x0_is_row
@@ -783,13 +779,18 @@ else
     else
         nonlcon = @(x) evalcon(invoker, nonlcon, x, constrmax);  % See evalcon.m for evalcon
     end
+    % Reduce the nonlinear constraints if some but not all variables are fixed by the bounds.
+    % Note that we do not reduce the problem when all variables are fixed. See pre_lcon for the reason.
+    if any(fixedx) && any(~fixedx)
+        nonlcon = @(freex_value) nonlcon(fullx(freex_value, fixedx_value, fixedx));
+    end
 end
 return
 
 %%%%%%%%%%%%%%%%% Function fullx used when reducing the problem %%%%%%%%
-function x = fullx(freex_value, fixedx_value, freex, fixedx)
+function x = fullx(freex_value, fixedx_value, fixedx)
 x = NaN(length(freex_value)+length(fixedx_value), 1);
-x(freex) = freex_value;
+x(~fixedx) = freex_value;
 x(fixedx) = fixedx_value;
 return
 
