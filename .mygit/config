@@ -1,0 +1,20 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[remote "origin"]
+	url = git@github.com:libprima/prima.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+	pushurl = git@github.com:libprima/prima.git
+	pushurl = git@github.com:primalib/prima.git
+	pushurl = git@github.com:s-prima/prima.git
+	pushurl = git@github.com:equipez/prima.git
+    pushurl = git@gitee.com:zaikunzhang/prima.git
+	gh-resolved = base
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+[submodule ".github/scripts"]
+	url = git@github.com:equipez/github_actions_scripts.git
+	active = true
