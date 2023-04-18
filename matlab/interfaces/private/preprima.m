@@ -136,10 +136,6 @@ probinfo.constrmax = getmax('constraint', precision);
 lenx0 = length(x0); % Within this file, for clarity, we denote length(x0) by lenx0 instead of n
 probinfo.x0_is_row = x0_is_row;
 
-% Validate and preprocess fun
-% TODO: pre_fun may be moved after fixed x has been identified, similar to pre_con.
-[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, probinfo.funcmax, x0_is_row, warnings);
-
 % Validate and preprocess the bound constraints
 % In addition, get the indices of infeasible bounds and 'fixed variables'
 % such that ub-lb < 2*eps (if any) and save the information in probinfo.
@@ -162,6 +158,12 @@ fixedx_value_save = fixedx_value; % Values of fixed variables
 % not be "evaluated" in problem_type, so there is no worry about the
 % validity of them.
 probinfo.raw_type = problem_type(Aineq, Aeq, lb, ub, nonlcon);
+
+% Validate and preprocess fun
+% The objective function will be reduced if some but not all variables are
+% fixed by the bound constraints. See pre_lcon for why we do not reduce the
+% problem when all variables are fixed.
+[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, fixedx, fixedx_value, probinfo.funcmax, x0_is_row, warnings);
 
 % Validate and preprocess the linear constraints
 % 1. The constraints will be reduced if some but not all variables are
@@ -491,54 +493,6 @@ if any(abnormal_x0)
 end
 return
 
-%%%%%%%%%%%%%%%%%%%%%%%% Function for fun preprocessing %%%%%%%%%%%%%%%%%
-function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, funcmax, x0_is_row, warnings)
-if ~(isempty(fun) || ischarstr(fun) || isa(fun, 'function_handle'))
-    % Public/normal error
-    error(sprintf('%s:InvalidFun', invoker), ...
-        '%s: FUN should be a function handle or a function name.', invoker);
-end
-feasibility_problem = false; % Is this a feasibility problem?
-if isempty(fun)
-    fun = @(x) 0; % No objective function
-    feasibility_problem = true; % This is a feasibility problem
-    wid = sprintf('%s:NoObjective', invoker);
-    wmsg = sprintf('%s: there is no objective function. A feasibility problem will be solved.', invoker);
-    warning(wid, '%s', wmsg);
-    warnings = [warnings, wmsg];
-elseif ischarstr(fun)
-    fun = str2func(fun);
-    % Work with function handles instead of function names to avoid using 'feval'
-end
-if ~exist('OCTAVE_VERSION', 'builtin')
-    % Check whether fun has at least 1 output.
-    % nargout(fun) = #outputs in the definition of fun.
-    % If fun includes varargout in definition, nargout(fun) = -#outputs.
-    % Octave does not support nargout for built-in function (as of 2019-08-16)!
-    try
-    % If fun is not a properly defined function, then nargout
-    % can encounter an error. Wrap the error as a public error.
-        nout = nargout(fun);
-    catch exception
-        % Public/normal error
-        % Note that the identifier of a public error should start with 'invoker:'
-        error(sprintf('%s:InvalidFun', invoker), '%s: %s', invoker, exception.message);
-    end
-    if (nout == 0)
-        % Public/normal error
-        error(sprintf('%s:InvalidFun', invoker), ...
-        '%s: FUN has no output; it should return the objective function value.', invoker);
-    end
-end
-% During the calculation, x is always a column vector. We assume that fun expects a row vector if
-% x0 is a row.
-if x0_is_row
-    fun = @(x) evalobj(invoker, fun, x', funcmax);  % See evalobj.m for evalobj
-else
-    fun = @(x) evalobj(invoker, fun, x, funcmax);  % See evalobj.m for evalobj
-end
-return
-
 %%%%%%%%%%%%%%%%% Function for bound constraint preprocessing %%%%%%%%%%
 function [lb, ub, infeasible_bound, fixedx, fixedx_value, warnings] = pre_bcon(invoker, lb, ub, lenx0, warnings)
 % Lower bounds (lb)
@@ -586,6 +540,59 @@ if any(infeasible_bound)
 else
     fixedx = (abs(lb - ub) < 2*eps);
     fixedx_value = (lb(fixedx)+ub(fixedx))/2;
+end
+return
+
+%%%%%%%%%%%%%%%%%%%%%%%% Function for fun preprocessing %%%%%%%%%%%%%%%%%
+function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, fixedx, fixedx_value, funcmax, x0_is_row, warnings)
+if ~(isempty(fun) || ischarstr(fun) || isa(fun, 'function_handle'))
+    % Public/normal error
+    error(sprintf('%s:InvalidFun', invoker), ...
+        '%s: FUN should be a function handle or a function name.', invoker);
+end
+feasibility_problem = false; % Is this a feasibility problem?
+if isempty(fun)
+    fun = @(x) 0; % No objective function
+    feasibility_problem = true; % This is a feasibility problem
+    wid = sprintf('%s:NoObjective', invoker);
+    wmsg = sprintf('%s: there is no objective function. A feasibility problem will be solved.', invoker);
+    warning(wid, '%s', wmsg);
+    warnings = [warnings, wmsg];
+elseif ischarstr(fun)
+    fun = str2func(fun);
+    % Work with function handles instead of function names to avoid using 'feval'
+end
+if ~exist('OCTAVE_VERSION', 'builtin')
+    % Check whether fun has at least 1 output.
+    % nargout(fun) = #outputs in the definition of fun.
+    % If fun includes varargout in definition, nargout(fun) = -#outputs.
+    % Octave does not support nargout for built-in function (as of 2019-08-16)!
+    try
+    % If fun is not a properly defined function, then nargout
+    % can encounter an error. Wrap the error as a public error.
+        nout = nargout(fun);
+    catch exception
+        % Public/normal error
+        % Note that the identifier of a public error should start with 'invoker:'
+        error(sprintf('%s:InvalidFun', invoker), '%s: %s', invoker, exception.message);
+    end
+    if (nout == 0)
+        % Public/normal error
+        error(sprintf('%s:InvalidFun', invoker), ...
+        '%s: FUN has no output; it should return the objective function value.', invoker);
+    end
+end
+% During the calculation, x is always a column vector. We assume that fun expects a row vector if
+% x0 is a row.
+if x0_is_row
+    fun = @(x) evalobj(invoker, fun, x', funcmax);  % See evalobj.m for evalobj
+else
+    fun = @(x) evalobj(invoker, fun, x, funcmax);  % See evalobj.m for evalobj
+end
+% Reduce fun if some but not all variables are fixed by the bounds.
+% Note that we do not reduce the problem when all variables are fixed. See pre_lcon for the reason.
+if any(fixedx) && any(~fixedx)
+    funn = @(freex_value) fun(fullx(freex_value, fixedx_value, fixedx));
 end
 return
 
@@ -779,8 +786,8 @@ else
     else
         nonlcon = @(x) evalcon(invoker, nonlcon, x, constrmax);  % See evalcon.m for evalcon
     end
-    % Reduce the nonlinear constraints if some but not all variables are fixed by the bounds.
-    % Note that we do not reduce the problem when all variables are fixed. See pre_lcon for the reason.
+    % Reduce the nonlcon if some but not all variables are fixed by the bounds. Note that we do
+    % not reduce the problem when all variables are fixed. See pre_lcon for the reason.
     if any(fixedx) && any(~fixedx)
         nonlcon = @(freex_value) nonlcon(fullx(freex_value, fixedx_value, fixedx));
     end
