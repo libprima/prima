@@ -40,7 +40,7 @@ obligatory_probinfo_fields = {'raw_data', 'refined_data', 'fixedx', 'fixedx_valu
     'trivial_lineq', 'trivial_leq', 'infeasible', 'scaled', 'scaling_factor', ...
     'shift', 'reduced', 'raw_type', 'raw_dim', 'refined_type', 'refined_dim', ...
     'feasibility_problem', 'user_options_fields', 'options', 'warnings', ...
-    'boundmax', 'funcmax', 'constrmax'};
+    'boundmax', 'funcmax', 'constrmax', 'x0_is_row'};
 obligatory_options_fields = {'classical', 'debug', 'chkfunval', 'precision'};
 
 % Who is calling this function? Is it a correct invoker?
@@ -778,6 +778,17 @@ if options.debug && ~options.classical
             end
         end
     end % chkfunval ends
+end
+
+
+% If x0 is a row, then reshape x to a row.
+% N.B.:
+% 1. We do this at the very end, because the verification above assumes that x is a column.
+% 2. We choose not the reshape output.xhist (if it exists) so that its shape is consistent with that
+% of fhist, chist, nlchist, etc. More precisely, each row of the history corresponds to a point
+% visited by the algorithm.
+if probinfo.x0_is_row
+    x = x';
 end
 
 % postprima ends
