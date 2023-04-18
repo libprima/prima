@@ -8,7 +8,7 @@ of MEX is a pure MATLAB usage problem and it has nothing to do with PRIMA).
 
 0.1. To see whether your MEX is ready, run the following code in MATLAB:
 
-mex('-setup', '-v', 'FORTRAN'); mex('-v', fullfile(matlabroot, 'extern', 'examples', 'refbook', 'timestwo.F'));
+mex('-setup', '-v', 'fortran'); mex('-v', fullfile(matlabroot, 'extern', 'examples', 'refbook', 'timestwo.F'));
 
 If this completes successfully, then your MEX is ready. Otherwise, it is not.
 
