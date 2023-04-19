@@ -10,33 +10,46 @@ if nargin < 7
     '%s: UNEXPECTED ERROR: at least 8 inputs expected.', funname);
 end
 if nargin < 8
-    nlcineq = 0;
+    nlcineq = [];
 end
 if nargin < 9
-    nlceq = 0;
+    nlceq = [];
 end
-lb(isnan(lb)) = -inf; % Replace the NaN in lb with -inf
-ub(isnan(ub)) = inf; % Replace the NaN in ub with inf
-bineq(isnan(bineq)) = inf; % Replace the NaN in bineq with inf
+
+rlb = [];
+if ~isempty(lb)
+    lb(isnan(lb)) = -Inf; % Replace the NaN in lb with -Inf
+    rlb = lb - x;
+    rlb(lb <= x) = 0;  % Prevent NaN in case lb = x = +/-Inf; OR: rlb = rlb(~(lb <= x));
+end
+
+rub = [];
+if ~isempty(ub)
+    ub(isnan(ub)) = Inf; % Replace the NaN in ub with Inf
+    rub = x - ub;
+    rub(x <= ub) = 0;  % Prevent NaN in case ub = x = +/-Inf; OR: rub = rub(~(x <= ub));
+end
+
+rineq = [];
+if ~isempty(Aineq)
+    nan_ineq = isnan(bineq); % NaN inequality constraints
+    Aineq = Aineq(~nan_ineq, :); % Remove NaN inequality constraints
+    bineq = bineq(~nan_ineq);
+    Aix = Aineq*x;
+    rineq = Aix - bineq;
+    rineq(Aix <= bineq) = 0;  % Prevent NaN in case bineq = Aix = +/-Inf; OR: rineq = rineq(~(Aix <= bineq));
+end
+
+req = [];
 if ~isempty(Aeq)
     nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); % NaN equality constraints
     Aeq = Aeq(~nan_eq, :); % Remove NaN equality constraints
     beq = beq(~nan_eq);
+    Aex = Aeq*x;
+    req = Aex - beq;
+    req(Aex == beq) = 0;  % Prevent NaN in case beq = Aex = +/-Inf; OR: req = req(~(Aex == beq));
 end
-if isempty(lb)
-    lb = -inf(size(x));
-end
-if isempty(ub)
-    ub = inf(size(x));
-end
-rineq = [];
-req = [];
-if ~isempty(Aineq)
-    rineq = Aineq*x-bineq;
-end
-if ~isempty(Aeq)
-    req = Aeq*x-beq;
-end
+
 % max(X, [], 'includenan') returns NaN if X contains NaN, and maximum of X otherwise
-cstrv = max([0; rineq; abs(req); lb-x; x-ub; nlcineq; abs(nlceq)], [], 'includenan');
+cstrv = max([0; rineq; abs(req); rlb; rub; nlcineq; abs(nlceq)], [], 'includenan');
 return
