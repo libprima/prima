@@ -405,6 +405,16 @@ if ~endsWith(solvers{2}, '_last')
     end
 end
 
+test_fixed_x = (rand > 0.5 && ~isempty(prob1.lb) && ~isempty(prob1.ub));
+if test_fixed_x
+    fixedxl = (rand(n, 1) > 0.6);
+    fixedxu = (rand(n, 1) > 0.3 & ~fixedxl);
+    prob1.ub(fixedxl) = prob1.lb(fixedxl);
+    prob1.lb(fixedxu) = prob1.ub(fixedxu);
+    prob2.lb = prob1.lb;
+    prob2.ub = prob1.ub;
+end
+
 exception = [];
 try
     if call_by_package
@@ -473,8 +483,9 @@ if ~equiv
     format long;
     fprintf('\nnf: nf1 = %d, nf2 = %d', output1.funcCount, output2.funcCount)
     fprintf('\nx:')
-    x1'
-    x2'
+    x1(:)'
+    x2(:)'
+    (x1(:) == x2(:))'
     fprintf('\nf: fx1 = %.16e, fx2 = %.16e', fx1, fx2)
     fprintf('\nexitflag: exitflag1 = %d, exitflag2 = %d', exitflag1, exitflag2)
     nhist = min(length(output1.fhist), length(output2.fhist));

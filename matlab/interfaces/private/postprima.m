@@ -764,8 +764,16 @@ if options.debug && ~options.classical
                         chistx(k) = get_cstrv(xhist(:, k), Aineq, bineq, Aeq, beq, lb, ub, nlcihistx(:, k), nlcehistx(:, k));
                     end
                 end
-                % Modify chistx according to the moderated extreme barrier if the solver is cobyla.
+                % If the solver is cobyla, due to the moderated extreme barrier, any constraint
+                % violation that is NaN or above constrmax is replaced with constrmax.
+                % N.B.: In most cases, the replacement has been done for chist by the solvers.
+                % However, there are exceptions: If the problem is detected infeasible during the
+                % preprocessing, then the solvers will not be called, and chist contains only the
+                % constraint violation at x0 calculated by get_constrv, which may be NaN or above
+                % constrvmax. Similarly, if all the  variables are fixed by the bounds, then chist
+                % contains only the constraint violation at the fixed x, calculated by get_constrv.
                 if strcmp(solver, 'cobyla')
+                    chist(chist > constrmax | isnan(chist)) = constrmax;
                     chistx(chistx > constrmax | isnan(chistx)) = constrmax;
                 end
                 if any(~(isnan(chist) & isnan(chistx)) & ~((chist == chistx) | ...

@@ -757,6 +757,7 @@ if options.debug && ~options.classical
                 % Modify chistx according to the moderated extreme barrier if the solver is cobyla_last.
                 if strcmp(solver, 'cobyla_last')
                     chistx(chistx > constrmax | isnan(chistx)) = constrmax;
+                    chist(chist > constrmax | isnan(chist)) = constrmax;
                 end
                 if any(~(isnan(chist) & isnan(chistx)) & ~((chist == chistx) | ...
                         (abs(chistx-chist) <= lincoa_last_prec*max(1, abs(chist)) & strcmp(solver, 'lincoa_last')) | ...

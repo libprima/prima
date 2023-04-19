@@ -569,12 +569,13 @@ if any(isnan(ub))
     warnings = [warnings, wmsg];
 end
 
-infeasible_bound = (lb > ub) | (lb == inf) | (ub == -inf); % A vector of true/false
+infeasible_bound = (lb > ub); % A vector of true/false
 if any(infeasible_bound)
     fixedx = false(lenx0, 1);
     fixedx_value = [];
 else
-    fixedx = (abs(lb - ub) < 2*eps);
+    %fixedx = (abs(lb - ub) < 2*eps);
+    fixedx = (ub <= lb + 2*eps);
     fixedx_value = (lb(fixedx)+ub(fixedx))/2;
 end
 return
@@ -627,7 +628,8 @@ else
     infeasible_zero_ineq = (rownorm1 == 0) & (bineq < 0);
     trivial_zero_ineq = (rownorm1 == 0) & (bineq >= 0);
     rownorm1(zero_ineq) = 1;
-    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | isnan(rownorm1); % A vector of true/false
+%    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | isnan(rownorm1); % A vector of true/false
+    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | isnan(rownorm1) | isnan(bineq); % A vector of true/false
     trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq;
     Aineq = Aineq(~trivial_lineq, :); % Remove the trivial linear inequalities
     bineq = bineq(~trivial_lineq);
@@ -1858,9 +1860,10 @@ end
 if ~isempty(nonlcon)
     [nlcineq, nlceq] = nonlcon(x);
 end
-constrviolation = max([0; rineq; abs(req); lb-x; x-ub; nlcineq; abs(nlceq)], [], 'includenan');
+%constrviolation = max([0; rineq; abs(req); lb-x; x-ub; nlcineq; abs(nlceq)], [], 'includenan');
 % max(X, [], 'includenan') will return NaN if X contains NaN and the
 % maximum of X otherwise.
+constrviolation = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq);
 return
 
 %%%%%% Function for revising x0 or rhobeg when the solver is BOBYQA %%%%
