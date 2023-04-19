@@ -770,7 +770,7 @@ if options.debug && ~options.classical
                 % However, there are exceptions: If the problem is detected infeasible during the
                 % preprocessing, then the solvers will not be called, and chist contains only the
                 % constraint violation at x0 calculated by get_constrv, which may be NaN or above
-                % constrvmax. Similarly, if all the  variables are fixed by the bounds, then chist
+                % constrmax. Similarly, if all the  variables are fixed by the bounds, then chist
                 % contains only the constraint violation at the fixed x, calculated by get_constrv.
                 if strcmp(solver, 'cobyla')
                     chist(chist > constrmax | isnan(chist)) = constrmax;
