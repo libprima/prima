@@ -635,9 +635,11 @@ else
     rownorm1(zero_ineq) = 1;
 %    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | isnan(rownorm1); % A vector of true/false
 %    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq)) & ~nan_ineq); % A vector of true/false
-    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))); % A vector of true/false
+    %infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))); % A vector of true/false
+    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))) | bineq <= -inf | (any(abs(Aineq)>= inf, 2) & bineq < inf); % A vector of true/false
     %trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq;
-    trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq ; %| nan_ineq;
+    %trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq ; %| nan_ineq;
+    trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq | bineq >= inf; %| nan_ineq;
     Aineq = Aineq(~trivial_lineq, :); % Remove the trivial linear inequalities
     bineq = bineq(~trivial_lineq);
 end
@@ -695,7 +697,8 @@ else
     trivial_zero_eq = (rownorm1 == 0) & (beq == 0);
     rownorm1(zero_eq) = 1;
 %    infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) & ~nan_eq); % A vector of true/false
-    infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) ); % A vector of true/false
+    %infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) ); % A vector of true/false
+    infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) ) | abs(beq) >= inf | any(abs(Aeq) >= inf, 2); % A vector of true/false
     trivial_leq = trivial_zero_eq ;%| nan_eq;
     Aeq = Aeq(~trivial_leq, :); % Remove trivial linear equalities
     beq = beq(~trivial_leq);
