@@ -615,6 +615,7 @@ if options.debug && ~options.classical
         lb = probinfo.raw_data.lb(:);
         ub = probinfo.raw_data.ub(:);
         cstrv = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq);
+
             if strcmp(solver, 'cobyla_last')
                 cstrv(cstrv >= constrmax | isnan(cstrv)) = constrmax;
                 constrviolation(constrviolation >= constrmax | isnan(constrviolation)) = constrmax;
