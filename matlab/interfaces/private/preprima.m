@@ -549,7 +549,9 @@ function [Aineq, bineq, Aeq, beq, infeasible_lineq, trivial_lineq, infeasible_le
 
 freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
 
-% inequalities: Aineq*x <= bineq
+% Preprocess linear inequalities: Aineq*x <= bineq.
+
+% Check whether Aineq and bineq are real matrices and vectors of proper size, respectively.
 [isrm, mA, nA] = isrealmatrix(Aineq);
 [isrv, lenb] = isrealvector(bineq);  % The same as fmincon, we allow bineq to be a row
 % No matter whether x0 or bineq is a row or column, we always require that size(Aineq) is
@@ -562,30 +564,30 @@ end
 bineq = double(bineq(:));
 Aineq = double(Aineq);
 
-% Are there inequality constraints containing NaN?
+% Warn about inequality constraints containing NaN.
 if any(isnan(Aineq(:))) || any(isnan(bineq))
     wid = sprintf('%s:NaNInequality', invoker);
     wmsg = sprintf('%s: Aineq or bineq contains NaN; the problem is hence infeasible.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
+
+% Reduce the inequality constraints if some but not all variables are fixed.
+% 1. This has to be done before detecting the "zero constraints" (i.e., constraints with zero
+%    gradients), because nonzero constraints may become zero after reduction.
+% 2. We should NOT reduce the problem if all variables are fixed. Otherwise, Aineq would be [], and
+%    then bineq will be set to [] in the end. In this way, we lose completely the information in
+%    these constraints. Consequently, we cannot evaluate the constraint violation correctly when needed.
 lineq_reduced = false; % Whether linear inequality constraints are reduced
 if ~isempty(Aineq) && any(fixedx) && any(~fixedx)
-    % Reduce the linear inequality constraints if some but not all variables
-    % are fixed by the bound constraints. This has to be done before
-    % detecting the "zero constraints" (i.e., constraints with zero
-    % gradients), because nonzero constraints may become zero after reduction.
     Aineq_fixed = Aineq(:, fixedx); % Aineq_fixed and bineq_save will be used when revising fixedx_value
     bineq_save = bineq;
     bineq = bineq - Aineq_fixed * fixedx_value;
     Aineq = Aineq(:, freex);
     lineq_reduced = true;
-    % Note that we should NOT reduced the problem if all variables are
-    % fixed. Otherwise, Aineq would be [], and then bineq will be set to
-    % [] in the end. In this way, we lose completely the information in
-    % linear constraints. Consequently, we cannot evaluate the constraint
-    % violation correctly when needed.
 end
+
+% Define infeasible_lineq.
 if isempty(Aineq)
     infeasible_lineq = [];
 else
@@ -596,7 +598,9 @@ else
     infeasible_lineq = (bineq./Aineq_rownorm1 == -inf) | infeasible_zero_ineq | isnan(Aineq_rownorm1) | isnan(bineq); % A vector of true/false
 end
 
-% equalities: Aeq*x == beq
+% Preprocess linear equalities: Aeq*x == beq
+
+% Check whether Aeq and beq are real matrices and vectors of proper size, respectively.
 [isrm, mA, nA] = isrealmatrix(Aeq);
 [isrv, lenb] = isrealvector(beq);  % The same as fmincon, we allow beq to be a row
 % No matter whether x0 or beq is a row or column, we always require that size(Aeq) is
@@ -609,30 +613,30 @@ end
 beq = double(beq(:));
 Aeq = double(Aeq);
 
-% Are there equality constraints containing NaN?
+% Warn about equality constraints containing NaN.
 if any(isnan(Aeq(:))) || any(isnan(beq))
     wid = sprintf('%s:NaNEquality', invoker);
     wmsg = sprintf('%s: Aeq or beq contains NaN; The problem is hence infeasible.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
+
+% Reduce the equality constraints if some but not all variables are fixed.
+% 1. This has to be done before detecting the "zero constraints" (i.e., constraints with zero
+%    gradients), because nonzero constraints may become zero after reduction.
+% 2. We should NOT reduce the problem if all variables are fixed. Otherwise, Aeq would be [], and
+%    then beq will be set to [] in the end. In this way, we lose completely the information in
+%    these constraints. Consequently, we cannot evaluate the constraint violation correctly when needed.
 leq_reduced = false; % Whether linear equality constraints are reduced
 if ~isempty(Aeq) && any(fixedx) && any(~fixedx)
-    % Reduce the linear equality constraints if some but not all variables
-    % are fixed by the bound constraints. This has to be done before
-    % detecting the "zero constraints" (i.e., constraints with zero
-    % gradients), because nonzero constraints may become zero after reduction.
     Aeq_fixed = Aeq(:, fixedx); % Aeq_fixed and beq_save may be used when revising fixedx_value
     beq_save = beq;
     beq = beq - Aeq_fixed * fixedx_value;
     Aeq = Aeq(:, freex);
     leq_reduced = true;
-    % Note that we should NOT reduced the problem if all variables are
-    % fixed. Otherwise, Aeq would be [], and then beq will be set to
-    % [] in the end. In this way, we lose completely the information in
-    % linear constraints. Consequently, we cannot evaluate the constraint
-    % violation correctly when needed.
 end
+
+% Define infeasible_leq.
 if isempty(Aeq)
     infeasible_leq = [];
 else
@@ -643,6 +647,7 @@ else
     infeasible_leq = (abs(beq./Aeq_rownorm1) == inf) | infeasible_zero_eq | isnan(Aeq_rownorm1) | isnan(beq); % A vector of true/false
 end
 
+% Define trivial_lineq and trivial_leq; remove the trivial constraints.
 infeasible = (any(infeasible_lineq) || any(infeasible_leq));
 if infeasible
     trivial_lineq = false(size(bineq));
@@ -664,15 +669,15 @@ else
     end
 end
 
+% If infeasibility is detected, then we will return x0 without further calculations. Thus we need to
+% revise fixedx_value to x0(fixedx), and redefine bineq/beq so that they are reduced with
+% x(fixedx) = x0(fixedx) (otherwise, the constraint violation cannot be correctly calculated later).
 reduced = (lineq_reduced || leq_reduced);
 if infeasible && reduced
-    % Revise fixedx_value so that x0 will be returned
     fixedx_value = x0(fixedx);
-    % Revise bineq so that the constraint violation can be correctly calculated.
     if lineq_reduced
         bineq = bineq_save - Aineq_fixed * fixedx_value;
     end
-    % Revise beq so that the constraint violation can be correctly calculated.
     if leq_reduced
         beq = beq_save - Aeq_fixed * fixedx_value;
     end
