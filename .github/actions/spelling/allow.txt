@@ -1949,3 +1949,4 @@ constrvmax
 fixedxl
 fixedxu
 rbounds
+NInequality
