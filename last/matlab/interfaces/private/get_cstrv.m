@@ -32,11 +32,12 @@ rineq = [];
 req = [];
 if ~isempty(Aineq)
     rineq = Aineq*x-bineq;
-    rineq(Aineq*x <= bineq) = 0;
+    %rineq(Aineq*x <= bineq) = 0;
+    rineq(bineq >= inf & ~isnan(Aineq*x )) = 0;
 end
 if ~isempty(Aeq)
     req = Aeq*x-beq;
-    req (Aeq*x == beq) = 0;
+    %req (Aeq*x == beq) = 0;
 end
 % max(X, [], 'includenan') returns NaN if X contains NaN, and maximum of X otherwise
 cstrv = max([0; rineq; abs(req); rlb; rub; nlcineq; abs(nlceq)], [], 'includenan');

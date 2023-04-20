@@ -605,14 +605,14 @@ nan_ineq = isnan(bineq);
 %    warnings = [warnings, wmsg];
 %end
 lineq_reduced = false; % Whether linear inequality constraints are reduced
+Aineq_save = Aineq;
+bineq_save = bineq;
 if ~isempty(Aineq) && any(fixedx) && any(~fixedx)
     % Reduce the linear inequality constraints if some but not all variables
     % are fixed by the bound constraints. This has to be done before
     % detecting the "zero constraints" (i.e., constraints with zero
     % gradients), because nonzero constraints may become zero after reduction.
-    Aineq_save = Aineq;
     Aineq_fixed = Aineq(:, fixedx); % Aineq_fixed and bineq_save will be used when revising fixedx_value
-    bineq_save = bineq;
     bineq = bineq - Aineq_fixed * fixedx_value;
     Aineq = Aineq(:, freex);
     lineq_reduced = true;
@@ -637,6 +637,7 @@ else
 %    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq)) & ~nan_ineq); % A vector of true/false
     %infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))); % A vector of true/false
     infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))) | bineq <= -inf | (any(abs(Aineq)>= inf, 2) & bineq < inf); % A vector of true/false
+
     %trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq;
     %trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq ; %| nan_ineq;
     trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq | bineq >= inf; %| nan_ineq;
@@ -669,14 +670,14 @@ if any(nan_eq)
     warnings = [warnings, wmsg];
 end
 leq_reduced = false; % Whether linear equality constraints are reduced
+Aeq_save = Aeq;
+beq_save = beq;
 if ~isempty(Aeq) && any(fixedx) && any(~fixedx)
     % Reduce the linear equality constraints if some but not all variables
     % are fixed by the bound constraints. This has to be done before
     % detecting the "zero constraints" (i.e., constraints with zero
     % gradients), because nonzero constraints may become zero after reduction.
-    Aeq_save = Aeq;
     Aeq_fixed = Aeq(:, fixedx); % Aeq_fixed and beq_save may be used when revising fixedx_value
-    beq_save = beq;
     beq = beq - Aeq_fixed * fixedx_value;
     Aeq = Aeq(:, freex);
     leq_reduced = true;
@@ -700,7 +701,8 @@ else
 %    infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) & ~nan_eq); % A vector of true/false
     %infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) ); % A vector of true/false
     infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) ) | abs(beq) >= inf | any(abs(Aeq) >= inf, 2); % A vector of true/false
-    trivial_leq = trivial_zero_eq ;%| nan_eq;
+
+    %trivial_leq = trivial_zero_eq ;%| nan_eq;
     trivial_leq = trivial_zero_eq & ~infeasible_leq;%| nan_eq;
     Aeq = Aeq(~trivial_leq, :); % Remove trivial linear equalities
     beq = beq(~trivial_leq);
@@ -711,20 +713,35 @@ if (any(infeasible_lineq) || any(infeasible_leq)) && any(fixedx) && any(~fixedx)
     fixedx_value = x0(fixedx);
     % We have to revise bineq and beq so that the constraint violation can
     % be correctly calculated.
-    if lineq_reduced
-        bineq = bineq_save - Aineq_fixed * fixedx_value;
-        %bineq = bineq(~trivial_lineq);
-        Aineq = Aineq_save(:, freex);
-    end
-    if leq_reduced
-        beq = beq_save - Aeq_fixed * fixedx_value;
-        %beq = beq(~trivial_leq);
-        Aeq = Aeq_save(:, freex);
-    end
+    %if lineq_reduced
+    %    bineq = bineq_save - Aineq_fixed * fixedx_value;
+    %    %bineq = bineq(~trivial_lineq);
+    %    Aineq = Aineq_save(:, freex);
+    %end
+    %if leq_reduced
+    %    beq = beq_save - Aeq_fixed * fixedx_value;
+    %    %beq = beq(~trivial_leq);
+    %    Aeq = Aeq_save(:, freex);
+    %end
 end
+
 if any(infeasible_lineq) || any(infeasible_leq)
     trivial_lineq = false(size(bineq));
     trivial_leq = false(size(beq));
+    if leq_reduced
+        Aeq = Aeq_save(:, freex);
+        beq = beq_save - Aeq_fixed * fixedx_value;
+    else
+        Aeq = Aeq_save;
+        beq = beq_save;
+    end
+    if lineq_reduced
+        Aineq = Aineq_save(:, freex);
+        bineq = bineq_save - Aineq_fixed * fixedx_value;
+    else
+        Aineq = Aineq_save;
+        bineq = bineq_save;
+    end
 end
 
 % We uniformly use [] to represent empty numerical matrices/vectors;

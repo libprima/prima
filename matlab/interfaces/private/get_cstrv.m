@@ -32,14 +32,14 @@ rineq = [];
 if ~isempty(Aineq)
     Aix = Aineq*x;
     rineq = Aix - bineq;
-    rineq(Aix <= bineq) = 0;  % Prevent NaN in case bineq = Aix = +/-Inf; OR: rineq = rineq(~(Aix <= bineq));
+    rineq(bineq >= Inf & ~isnan(Aix)) = 0;  % Prevent NaN in case bineq = Aix = Inf; OR: rineq = rineq(~(bineq >= Inf));
 end
 
 req = [];
 if ~isempty(Aeq)
     Aex = Aeq*x;
     req = Aex - beq;
-    req(Aex == beq) = 0;  % Prevent NaN in case beq = Aex = +/-Inf; OR: req = req(~(Aex == beq));
+    %req(Aex == beq) = 0;  % Prevent NaN in case beq = Aex = +/-Inf; OR: req = req(~(Aex == beq));
 end
 
 % max(X, [], 'includenan') returns NaN if X contains NaN, and maximum of X otherwise
