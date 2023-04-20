@@ -640,6 +640,7 @@ else
     %trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq;
     %trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq ; %| nan_ineq;
     trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq | bineq >= inf; %| nan_ineq;
+    trivial_lineq = trivial_lineq & ~infeasible_lineq;
     Aineq = Aineq(~trivial_lineq, :); % Remove the trivial linear inequalities
     bineq = bineq(~trivial_lineq);
 end
@@ -700,6 +701,7 @@ else
     %infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) ); % A vector of true/false
     infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) ) | abs(beq) >= inf | any(abs(Aeq) >= inf, 2); % A vector of true/false
     trivial_leq = trivial_zero_eq ;%| nan_eq;
+    trivial_leq = trivial_zero_eq & ~infeasible_leq;%| nan_eq;
     Aeq = Aeq(~trivial_leq, :); % Remove trivial linear equalities
     beq = beq(~trivial_leq);
 end
