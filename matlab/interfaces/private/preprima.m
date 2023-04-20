@@ -210,9 +210,6 @@ probinfo.reduced = any(fixedx) && any(~fixedx); % Whether the problem has been r
 probinfo.infeasible = any([probinfo.infeasible_lineq; probinfo.infeasible_leq; probinfo.infeasible_bound]);
 if probinfo.infeasible  % The problem turns out infeasible
     [probinfo.constrv_x0, probinfo.nlcineq_x0, probinfo.nlceq_x0] = get_constrv(x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
-    if any(isnan(bineq)) || any(isnan(beq)) %?????
-        probinfo.constrv_x0 = NaN;
-    end
     % The constraint violation calculated by constrv does not include
     % the violation of x0 for the bounds corresponding to fixedx; the
     % corresponding values of x0 are in fixedx_value, while the values
@@ -227,9 +224,6 @@ end
 probinfo.nofreex = all(fixedx);
 if probinfo.nofreex  % x turns out fixed by the bound constraints
     [probinfo.constrv_fixedx, probinfo.nlcineq_fixedx, probinfo.nlceq_fixedx] = get_constrv(probinfo.fixedx_value, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
-    if any(isnan(bineq)) || any(isnan(beq)) %???????
-        probinfo.constrv_fixedx = NaN;
-    end
 end
 
 % Can the invoker handle the given problem?
@@ -346,9 +340,6 @@ if probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-c
 % at x0 is needed to set the output. Note that there is no nonlinear
 % constraint in this case.
     probinfo.constrv_x0 = get_constrv(x0, Aineq, bineq, Aeq, beq, lb, ub, []);
-    if any(isnan(bineq)) || any(isnan(beq))  %????
-        probinfo.constrv_x0 = NaN;
-    end
 end
 
 probinfo.warnings = warnings; % Record the warnings in probinfo
@@ -519,9 +510,8 @@ if (lenlb == 0)
 end
 lb = double(lb(:));
 if any(isnan(lb))
-    lb(isnan(lb)) = -inf; % Replace the NaN in lb by -inf
     wid = sprintf('%s:NaNInLB', invoker);
-    wmsg = sprintf('%s: LB contains NaN; it is replaced by -inf.', invoker);
+    wmsg = sprintf('%s: LB contains NaN; the problem is hence infeasible.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -538,14 +528,13 @@ if (lenub == 0)
 end
 ub = double(ub(:));
 if any(isnan(ub))
-    ub(isnan(ub)) = inf; % Replace the NaN in ub by inf
     wid = sprintf('%s:NaNInUB', invoker);
-    wmsg = sprintf('%s: UB contains NaN; it is replaced by inf.', invoker);
+    wmsg = sprintf('%s: UB contains NaN; the problem is hence infeasible.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
 
-infeasible_bound = (lb > ub); % A vector of true/false
+infeasible_bound = ~(lb <= ub); % A vector of true/false; true if lb or ub is NaN or lb > ub
 if any(infeasible_bound)
     fixedx = false(lenx0, 1);
     fixedx_value = [];
@@ -573,21 +562,10 @@ end
 bineq = double(bineq(:));
 Aineq = double(Aineq);
 
-% Are there inequality constraints whose right-hand side is NaN?
-% This should be detected before reducing the constraints;
-% when reducing the constraints, the NaN on the left-hand side will lead
-% to NaN on the right-hand side.
-if isempty(Aineq)
-    nan_ineq = [];
-else
-    nan_ineq = isnan(bineq);
-end
-if any(nan_ineq)
-    % Replace the NaN in bineq by inf; this constraint will be removed below.
-    % N.B.: The replacement is necessary so that trivial_lineq will be defined correctly.
-    bineq(nan_ineq) = inf;
-    wid = sprintf('%s:NaNInbineq', invoker);
-    wmsg = sprintf('%s: bineq contains NaN; such constraints are removed.', invoker);
+% Are there inequality constraints containing NaN?
+if any(isnan(Aineq(:))) || any(isnan(bineq))
+    wid = sprintf('%s:NaNInequality', invoker);
+    wmsg = sprintf('%s: Aineq or bineq contains NaN; the problem is hence infeasible.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -615,7 +593,7 @@ else
     zero_ineq = (Aineq_rownorm1 == 0);
     Aineq_rownorm1(zero_ineq) = 1;
     infeasible_zero_ineq = (bineq < 0 & zero_ineq);
-    infeasible_lineq = (bineq./Aineq_rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(Aineq_rownorm1) | isnan(bineq)) & ~nan_ineq); % A vector of true/false
+    infeasible_lineq = (bineq./Aineq_rownorm1 == -inf) | infeasible_zero_ineq | isnan(Aineq_rownorm1) | isnan(bineq); % A vector of true/false
 end
 
 % equalities: Aeq*x == beq
@@ -631,18 +609,10 @@ end
 beq = double(beq(:));
 Aeq = double(Aeq);
 
-% Are there equality constraints whose both sides contain NaN?
-% This should be detected before reducing the constraints;
-% when reducing the constraints, the NaN on the left-hand side will lead
-% to NaN on the right-hand side.
-if isempty(Aeq)
-    nan_eq = [];
-else
-    nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); % In MATLAB 2014a, this may lead to inconsistent sizes when Aeq is empty; in MATLAB 2018a, it is fine
-end
-if any(nan_eq)
+% Are there equality constraints containing NaN?
+if any(isnan(Aeq(:))) || any(isnan(beq))
     wid = sprintf('%s:NaNEquality', invoker);
-    wmsg = sprintf('%s: there are equality constraints whose both sides contain NaN; such constraints are removed.', invoker);
+    wmsg = sprintf('%s: Aeq or beq contains NaN; The problem is hence infeasible.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -670,10 +640,10 @@ else
     zero_eq = (Aeq_rownorm1 == 0);
     Aeq_rownorm1(zero_eq) = 1;
     infeasible_zero_eq = (beq ~= 0 & zero_eq);
-    infeasible_leq = (abs(beq./Aeq_rownorm1) == inf) | infeasible_zero_eq | ((isnan(Aeq_rownorm1) | isnan(beq)) & ~nan_eq); % A vector of true/false
+    infeasible_leq = (abs(beq./Aeq_rownorm1) == inf) | infeasible_zero_eq | isnan(Aeq_rownorm1) | isnan(beq); % A vector of true/false
 end
 
-infeasible = (any(infeasible_lineq) || any(infeasible_leq))
+infeasible = (any(infeasible_lineq) || any(infeasible_leq));
 if infeasible
     trivial_lineq = false(size(bineq));
     trivial_leq = false(size(beq));
@@ -681,14 +651,14 @@ else
     if isempty(Aineq)
         trivial_lineq = [];
     else
-        trivial_lineq = ((bineq./Aineq_rownorm1 == inf) | (bineq >= 0 & zero_ineq) | nan_ineq);
+        trivial_lineq = ((bineq./Aineq_rownorm1 == inf) | (bineq >= 0 & zero_ineq));
         Aineq = Aineq(~trivial_lineq, :); % Remove the trivial linear inequalities
         bineq = bineq(~trivial_lineq);
     end
     if isempty(Aeq)
         trivial_leq = [];
     else
-        trivial_leq = ((beq == 0 & zero_eq) | nan_eq);
+        trivial_leq = (beq == 0 & zero_eq);
         Aeq = Aeq(~trivial_leq, :); % Remove trivial linear equalities
         beq = beq(~trivial_leq);
     end
