@@ -625,11 +625,27 @@ if options.debug && ~options.classical
         lb = probinfo.raw_data.lb(:);
         ub = probinfo.raw_data.ub(:);
         cstrv = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq);
+        % If the solver is cobyla, due to the moderated extreme barrier, any constraint
+        % violation that is NaN or above constrmax is replaced with constrmax.
+        % N.B.: In most cases, the replacement has been done for chist by the solvers.
+        % However, there are exceptions: If the problem is detected infeasible during the
+        % preprocessing, then the solvers will not be called, and chist contains only the
+        % constraint violation at x0 calculated by get_constrv, which may be NaN or above
+        % constrmax. Similarly, if all the  variables are fixed by the bounds, then chist
+        % contains only the constraint violation at the fixed x, calculated by get_constrv.
+        if strcmp(solver, 'cobyla')
+            % Even though constrviolation and cstrv are numbers, we can still use logical indexing
+            % since all numbers are indeed matrices sin MATLAB.
+            constrviolation(constrviolation > constrmax | isnan(constrviolation)) = constrmax;
+            cstrv(cstrv > constrmax | isnan(cstrv)) = constrmax;
+        end
         if ~(isnan(cstrv) && isnan(constrviolation)) && ~(cstrv == inf && constrviolation == inf) && ...
                 ~(abs(constrviolation-cstrv) <= lincoa_prec*max(1,abs(cstrv)) && strcmp(solver, 'lincoa')) && ...
                 ~(abs(constrviolation-cstrv) <= cobyla_prec*max(1,abs(cstrv)) && strcmp(solver, 'cobyla'))
             % Public/unexpected error
-            error(sprintf('%s:InvalidChist', invoker), ...
+            cstrv
+            constrviolation
+            error(sprintf('%s:InvalidConstrViolation', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
         end
 
