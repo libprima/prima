@@ -207,10 +207,12 @@ probinfo.refined_dim = length(x0); % Problem dimension after reduction
 probinfo.reduced = any(fixedx) && any(~fixedx); % Whether the problem has been reduced
 
 % After the preprocessing, the problem may turn out infeasible
-if ~any([probinfo.infeasible_lineq; probinfo.infeasible_leq; probinfo.infeasible_bound])
-    probinfo.infeasible = false;
-else % The problem turns out infeasible
+probinfo.infeasible = any([probinfo.infeasible_lineq; probinfo.infeasible_leq; probinfo.infeasible_bound]);
+if probinfo.infeasible  % The problem turns out infeasible
     [probinfo.constrv_x0, probinfo.nlcineq_x0, probinfo.nlceq_x0] = get_constrv(x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
+    if any(isnan(bineq)) || any(isnan(beq)) %?????
+        probinfo.constrv_x0 = NaN;
+    end
     % The constraint violation calculated by constrv does not include
     % the violation of x0 for the bounds corresponding to fixedx; the
     % corresponding values of x0 are in fixedx_value, while the values
@@ -219,15 +221,15 @@ else % The problem turns out infeasible
     rbounds = abs(fixedx_value - fixedx_value_save);
     rbounds = rbounds(fixedx_value ~= fixedx_value_save);  % Prevent NaN in case both are +/-Inf
     probinfo.constrv_x0 = max([probinfo.constrv_x0; rbounds], [], 'includenan');
-    probinfo.infeasible = true;
 end
 
 % After the preprocessing, x may turn out fixed by the bounds
-if any(~fixedx)
-    probinfo.nofreex = false;
-else % x turns out fixed by the bound constraints
+probinfo.nofreex = all(fixedx);
+if probinfo.nofreex  % x turns out fixed by the bound constraints
     [probinfo.constrv_fixedx, probinfo.nlcineq_fixedx, probinfo.nlceq_fixedx] = get_constrv(probinfo.fixedx_value, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
-    probinfo.nofreex = true;
+    if any(isnan(bineq)) || any(isnan(beq)) %???????
+        probinfo.constrv_fixedx = NaN;
+    end
 end
 
 % Can the invoker handle the given problem?
@@ -344,6 +346,9 @@ if probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-c
 % at x0 is needed to set the output. Note that there is no nonlinear
 % constraint in this case.
     probinfo.constrv_x0 = get_constrv(x0, Aineq, bineq, Aeq, beq, lb, ub, []);
+    if any(isnan(bineq)) || any(isnan(beq))  %????
+        probinfo.constrv_x0 = NaN;
+    end
 end
 
 probinfo.warnings = warnings; % Record the warnings in probinfo
@@ -566,6 +571,7 @@ if ~(isrm && isrv && (mA == lenb) && (nA == lenx0 || nA == 0))
     '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq) = [length(bineq), length(X0)] unless Aineq = bineq = [].', invoker);
 end
 bineq = double(bineq(:));
+Aineq = double(Aineq);
 
 % Are there inequality constraints whose right-hand side is NaN?
 % This should be detected before reducing the constraints;
@@ -604,19 +610,12 @@ if ~isempty(Aineq) && any(fixedx) && any(~fixedx)
 end
 if isempty(Aineq)
     infeasible_lineq = [];
-    trivial_lineq = [];
 else
-    Aineq = double(Aineq);
-    bineq = double(bineq);
-    rownorm1 = sum(abs(Aineq), 2);
-    zero_ineq = (rownorm1 == 0);
-    infeasible_zero_ineq = (rownorm1 == 0) & (bineq < 0);
-    trivial_zero_ineq = (rownorm1 == 0) & (bineq >= 0);
-    rownorm1(zero_ineq) = 1;
-    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | isnan(rownorm1) | (isnan(bineq) & ~nan_ineq); % A vector of true/false
-    trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq | nan_ineq;
-    Aineq = Aineq(~trivial_lineq, :); % Remove the trivial linear inequalities
-    bineq = bineq(~trivial_lineq);
+    Aineq_rownorm1 = sum(abs(Aineq), 2);
+    zero_ineq = (Aineq_rownorm1 == 0);
+    Aineq_rownorm1(zero_ineq) = 1;
+    infeasible_zero_ineq = (bineq < 0 & zero_ineq);
+    infeasible_lineq = (bineq./Aineq_rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(Aineq_rownorm1) | isnan(bineq)) & ~nan_ineq); % A vector of true/false
 end
 
 % equalities: Aeq*x == beq
@@ -630,6 +629,8 @@ if ~(isrm && isrv && (mA == lenb) && (nA == lenx0 || nA == 0))
     '%s: Aeq should be a real matrix, beq should be a real column, and size(Aeq) = [length(beq), length(X0)] unless Aeq = beq = [].', invoker);
 end
 beq = double(beq(:));
+Aeq = double(Aeq);
+
 % Are there equality constraints whose both sides contain NaN?
 % This should be detected before reducing the constraints;
 % when reducing the constraints, the NaN on the left-hand side will lead
@@ -664,33 +665,46 @@ if ~isempty(Aeq) && any(fixedx) && any(~fixedx)
 end
 if isempty(Aeq)
     infeasible_leq = [];
-    trivial_leq = [];
 else
-    Aeq = double(Aeq);
-    beq = double(beq);
-    rownorm1 = sum(abs(Aeq), 2);
-    zero_eq = (rownorm1 == 0);
-    infeasible_zero_eq = (rownorm1 == 0) & (beq ~= 0);
-    trivial_zero_eq = (rownorm1 == 0) & (beq == 0);
-    rownorm1(zero_eq) = 1;
-    infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) & ~nan_eq); % A vector of true/false
-    trivial_leq = trivial_zero_eq | nan_eq;
-    Aeq = Aeq(~trivial_leq, :); % Remove trivial linear equalities
-    beq = beq(~trivial_leq);
+    Aeq_rownorm1 = sum(abs(Aeq), 2);
+    zero_eq = (Aeq_rownorm1 == 0);
+    Aeq_rownorm1(zero_eq) = 1;
+    infeasible_zero_eq = (beq ~= 0 & zero_eq);
+    infeasible_leq = (abs(beq./Aeq_rownorm1) == inf) | infeasible_zero_eq | ((isnan(Aeq_rownorm1) | isnan(beq)) & ~nan_eq); % A vector of true/false
 end
 
-% In case of infeasibility, revise fixedx_value so that x0 will be returned
-if (any(infeasible_lineq) || any(infeasible_leq)) && any(fixedx) && any(~fixedx)
-    fixedx_value = x0(fixedx);
-    % We have to revise bineq and beq so that the constraint violation can
-    % be correctly calculated.
-    if lineq_reduced
-        bineq = bineq_save - Aineq_fixed * fixedx_value;
+infeasible = (any(infeasible_lineq) || any(infeasible_leq))
+if infeasible
+    trivial_lineq = false(size(bineq));
+    trivial_leq = false(size(beq));
+else
+    if isempty(Aineq)
+        trivial_lineq = [];
+    else
+        trivial_lineq = ((bineq./Aineq_rownorm1 == inf) | (bineq >= 0 & zero_ineq) | nan_ineq);
+        Aineq = Aineq(~trivial_lineq, :); % Remove the trivial linear inequalities
         bineq = bineq(~trivial_lineq);
     end
+    if isempty(Aeq)
+        trivial_leq = [];
+    else
+        trivial_leq = ((beq == 0 & zero_eq) | nan_eq);
+        Aeq = Aeq(~trivial_leq, :); % Remove trivial linear equalities
+        beq = beq(~trivial_leq);
+    end
+end
+
+reduced = (lineq_reduced || leq_reduced);
+if infeasible && reduced
+    % Revise fixedx_value so that x0 will be returned
+    fixedx_value = x0(fixedx);
+    % Revise bineq so that the constraint violation can be correctly calculated.
+    if lineq_reduced
+        bineq = bineq_save - Aineq_fixed * fixedx_value;
+    end
+    % Revise beq so that the constraint violation can be correctly calculated.
     if leq_reduced
         beq = beq_save - Aeq_fixed * fixedx_value;
-        beq = beq(~trivial_leq);
     end
 end
 
