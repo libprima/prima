@@ -643,6 +643,9 @@ if options.debug && ~options.classical
                 ~(abs(constrviolation-cstrv) <= lincoa_prec*max(1,abs(cstrv)) && strcmp(solver, 'lincoa')) && ...
                 ~(abs(constrviolation-cstrv) <= cobyla_prec*max(1,abs(cstrv)) && strcmp(solver, 'cobyla'))
             % Public/unexpected error
+            cstrv
+            constrviolation
+            %keyboard
             error(sprintf('%s:InvalidConstrViolation', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
         end
