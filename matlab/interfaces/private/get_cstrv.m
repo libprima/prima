@@ -18,23 +18,18 @@ end
 
 rlb = [];
 if ~isempty(lb)
-    lb(isnan(lb)) = -Inf; % Replace the NaN in lb with -Inf
     rlb = lb - x;
     rlb(lb <= x) = 0;  % Prevent NaN in case lb = x = +/-Inf; OR: rlb = rlb(~(lb <= x));
 end
 
 rub = [];
 if ~isempty(ub)
-    ub(isnan(ub)) = Inf; % Replace the NaN in ub with Inf
     rub = x - ub;
     rub(x <= ub) = 0;  % Prevent NaN in case ub = x = +/-Inf; OR: rub = rub(~(x <= ub));
 end
 
 rineq = [];
 if ~isempty(Aineq)
-    nan_ineq = isnan(bineq); % NaN inequality constraints
-    Aineq = Aineq(~nan_ineq, :); % Remove NaN inequality constraints
-    bineq = bineq(~nan_ineq);
     Aix = Aineq*x;
     rineq = Aix - bineq;
     rineq(Aix <= bineq) = 0;  % Prevent NaN in case bineq = Aix = +/-Inf; OR: rineq = rineq(~(Aix <= bineq));
@@ -42,9 +37,6 @@ end
 
 req = [];
 if ~isempty(Aeq)
-    nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); % NaN equality constraints
-    Aeq = Aeq(~nan_eq, :); % Remove NaN equality constraints
-    beq = beq(~nan_eq);
     Aex = Aeq*x;
     req = Aex - beq;
     req(Aex == beq) = 0;  % Prevent NaN in case beq = Aex = +/-Inf; OR: req = req(~(Aex == beq));

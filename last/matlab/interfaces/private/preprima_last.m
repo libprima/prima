@@ -203,9 +203,6 @@ if ~any([probinfo.infeasible_lineq; probinfo.infeasible_leq; probinfo.infeasible
     probinfo.infeasible = false;
 else % The problem turns out infeasible
     [probinfo.constrv_x0, probinfo.nlcineq_x0, probinfo.nlceq_x0] = constrv(x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
-    if any(isnan([bineq; beq]))
-        probinfo.constrv_x0 = NaN;
-    end
     % The constraint violation calculated by constrv does not include
     % the violation of x0 for the bounds corresponding to fixedx; the
     % corresponding values of x0 are in fixedx_value, while the values
@@ -221,9 +218,6 @@ if any(~fixedx)
     probinfo.nofreex = false;
 else % x turns out fixed by the bound constraints
     [probinfo.constrv_fixedx, probinfo.nlcineq_fixedx, probinfo.nlceq_fixedx] = constrv(probinfo.fixedx_value, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
-    if any(isnan([bineq; beq]))
-        probinfo.constrv_fixedx = NaN;
-    end
     probinfo.nofreex = true;
 end
 
@@ -341,9 +335,6 @@ if probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-c
 % at x0 is needed to set the output. Note that there is no nonlinear
 % constraint in this case.
     probinfo.constrv_x0 = constrv(x0, Aineq, bineq, Aeq, beq, lb, ub, []);
-    if any(isnan([bineq; beq]))
-        probinfo.constrv_x0 = NaN;
-    end
 end
 
 probinfo.warnings = warnings; % Record the warnings in probinfo
@@ -554,13 +545,13 @@ if (lenlb == 0)
     lb = -inf(lenx0,1); % After pre_bcon, length(lb) = length(x0)
 end
 lb = double(lb(:));
-if any(isnan(lb))
-    lb(isnan(lb)) = -inf; % Replace the NaN in lb by -inf
-    wid = sprintf('%s:NaNInLB', invoker);
-    wmsg = sprintf('%s: LB contains NaN; it is replaced by -inf.', invoker);
-    warning(wid, '%s', wmsg);
-    warnings = [warnings, wmsg];
-end
+%if any(isnan(lb))
+%    lb(isnan(lb)) = -inf; % Replace the NaN in lb by -inf
+%    wid = sprintf('%s:NaNInLB', invoker);
+%    wmsg = sprintf('%s: LB contains NaN; it is replaced by -inf.', invoker);
+%    warning(wid, '%s', wmsg);
+%    warnings = [warnings, wmsg];
+%end
 
 % Upper bounds (ub)
 [isrvub, lenub] = isrealvector(ub);
@@ -573,15 +564,16 @@ if (lenub == 0)
     ub = inf(lenx0,1); % After pre_bcon, length(ub) = length(x0)
 end
 ub = double(ub(:));
-if any(isnan(ub))
-    ub(isnan(ub)) = inf; % Replace the NaN in ub by inf
-    wid = sprintf('%s:NaNInUB', invoker);
-    wmsg = sprintf('%s: UB contains NaN; it is replaced by inf.', invoker);
-    warning(wid, '%s', wmsg);
-    warnings = [warnings, wmsg];
-end
+%if any(isnan(ub))
+%    ub(isnan(ub)) = inf; % Replace the NaN in ub by inf
+%    wid = sprintf('%s:NaNInUB', invoker);
+%    wmsg = sprintf('%s: UB contains NaN; it is replaced by inf.', invoker);
+%    warning(wid, '%s', wmsg);
+%    warnings = [warnings, wmsg];
+%end
 
-infeasible_bound = (lb > ub); % A vector of true/false
+%infeasible_bound = (lb > ub); % A vector of true/false
+infeasible_bound = (lb > ub | isnan(lb) | isnan(ub)); % A vector of true/false
 if any(infeasible_bound)
     fixedx = false(lenx0, 1);
     fixedx_value = [];
@@ -605,13 +597,13 @@ if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
     '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq) = [length(bineq), length(X0)] unless Aineq = bineq = [].', invoker);
 end
 nan_ineq = isnan(bineq);
-if any(isnan(bineq))
-    bineq(isnan(bineq)) = inf; % Replace the NaN in bineq by inf, namely to remove this constraint
-    wid = sprintf('%s:NaNInbineq', invoker);
-    wmsg = sprintf('%s: bineq contains NaN; it is replaced by inf.', invoker);
-    warning(wid, '%s', wmsg);
-    warnings = [warnings, wmsg];
-end
+%if any(isnan(bineq))
+%    bineq(isnan(bineq)) = inf; % Replace the NaN in bineq by inf, namely to remove this constraint
+%    wid = sprintf('%s:NaNInbineq', invoker);
+%    wmsg = sprintf('%s: bineq contains NaN; it is replaced by inf.', invoker);
+%    warning(wid, '%s', wmsg);
+%    warnings = [warnings, wmsg];
+%end
 lineq_reduced = false; % Whether linear inequality constraints are reduced
 if ~isempty(Aineq) && any(fixedx) && any(~fixedx)
     % Reduce the linear inequality constraints if some but not all variables
@@ -642,9 +634,10 @@ else
     trivial_zero_ineq = (rownorm1 == 0) & (bineq >= 0);
     rownorm1(zero_ineq) = 1;
 %    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | isnan(rownorm1); % A vector of true/false
-    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq)) & ~nan_ineq); % A vector of true/false
+%    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq)) & ~nan_ineq); % A vector of true/false
+    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))); % A vector of true/false
     %trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq;
-    trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq | nan_ineq;
+    trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq ; %| nan_ineq;
     Aineq = Aineq(~trivial_lineq, :); % Remove the trivial linear inequalities
     bineq = bineq(~trivial_lineq);
 end
@@ -701,8 +694,9 @@ else
     infeasible_zero_eq = (rownorm1 == 0) & (beq ~= 0);
     trivial_zero_eq = (rownorm1 == 0) & (beq == 0);
     rownorm1(zero_eq) = 1;
-    infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) & ~nan_eq); % A vector of true/false
-    trivial_leq = trivial_zero_eq | nan_eq;
+%    infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) & ~nan_eq); % A vector of true/false
+    infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) ); % A vector of true/false
+    trivial_leq = trivial_zero_eq ;%| nan_eq;
     Aeq = Aeq(~trivial_leq, :); % Remove trivial linear equalities
     beq = beq(~trivial_leq);
 end
