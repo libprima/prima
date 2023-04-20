@@ -15,15 +15,7 @@ end
 if nargin < 9
     nlceq = 0;
 end
-lb(isnan(lb)) = -inf; % Replace the NaN in lb with -inf
-ub(isnan(ub)) = inf; % Replace the NaN in ub with inf
-%bineq(isnan(bineq)) = inf; % Replace the NaN in bineq with inf
 
-if ~isempty(Aeq)
-    nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); % NaN equality constraints
-    Aeq = Aeq(~nan_eq, :); % Remove NaN equality constraints
-    beq = beq(~nan_eq);
-end
 if isempty(lb)
     lb = -inf(size(x));
 end
@@ -41,12 +33,10 @@ req = [];
 if ~isempty(Aineq)
     rineq = Aineq*x-bineq;
     rineq(Aineq*x <= bineq) = 0;
-    rineq(isnan(bineq)) = 0;
 end
 if ~isempty(Aeq)
     req = Aeq*x-beq;
     req (Aeq*x == beq) = 0;
-    req(isnan(beq) & isnan(sum(abs(Aeq), 2))) = 0;
 end
 % max(X, [], 'includenan') returns NaN if X contains NaN, and maximum of X otherwise
 cstrv = max([0; rineq; abs(req); rlb; rub; nlcineq; abs(nlceq)], [], 'includenan');
