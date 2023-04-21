@@ -10,6 +10,7 @@ Dedicated to the late Professor [**M. J. D. Powell**](https://www.zhangzk.net/po
 - [Improvements](#improvements)
 - [A "fun" fact](#a-fun-fact)
 - [Acknowledgment](#acknowledgment)
+- [Star history](#star-history)
 
 
 ### What
@@ -309,3 +310,6 @@ PRIMA is a long-term project, which would not have been sustainable without the 
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc/) (ref. PolyU 253012/17P, PolyU 153054/20P,
 and PolyU 153066/21P) and [The Hong Kong Polytechnic University](https://www.polyu.edu.hk/) (PolyU),
 in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA).
+
+### Star History
+[![Star History Chart](https://api.star-history.com/svg?repos=libprima/prima&type=Date)](https://star-history.com/#libprima/prima&Date)
