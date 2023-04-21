@@ -45,4 +45,20 @@
     The warning identifier remains "INVOKER:Classical", where INVOKER is the name of the invoker.
     See the function `pre_options` in preprima.m.
 
+15. If lb contains NaN, then we raise a warning "INVOKER:NaNInLB" and regard the constraints as
+    infeasible. The same for UB. See the function `pre_bcon` in preprima.m.
+    This is consistent with the behavior of NaN in the floating point number system.
+
+16. If Aineq or bineq contains NaN, then we raise a warning "INVOKER:NaNInequality" and regard the
+    constraints as infeasible. Similar for Aeq and beq. See the function `pre_lcon` in preprima.m.
+
+17. If Aineq contains infinite values, or bineq = -Inf, then we raise a warning "INVOKER:InfInequality"
+    and regard the constraints as infeasible. Similar for Aeq and beq. See the function `pre_lcon` in preprima.m.
+
+18. We allow x0, bineq, beq to be rows. See the functions `pre_x0`, `pre_lcon`, `pre_fun`,
+    `pre_nonlcon` in preprima.m. No matter whether they are rows or columns, we always require
+    size(Aineq) = [length(bineq), lentgh(x0)] and size(Aeq) = [length(beq), length(x0)]. This is
+    consistent with the behavior of fmincon.
+
+
 Check other changes by comparing the matlab interfaces (vimdiff).
