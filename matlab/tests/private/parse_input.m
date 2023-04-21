@@ -173,7 +173,7 @@ if wrong_input
     else
         errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, sequential_flag, reverse_flag, options).\n', invoker);
     end
-    error(errmsg)
+    error(errmsg);
 end
 
 % Define the testing options.

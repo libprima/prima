@@ -575,7 +575,7 @@ end
 % Warn about inequality constraints containing Inf.
 if any(any(abs(Aineq) >= inf, 2) | bineq <= -inf)
     wid = sprintf('%s:InfInequality', invoker);
-    wmsg = sprintf('%s: Aineq contains infinite values or bineq is -Inf; the problem is considered as infeasible.', invoker);
+    wmsg = sprintf('%s: Aineq contains infinite values or bineq contains -Inf; the problem is considered as infeasible.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -603,7 +603,7 @@ else
     zero_ineq = (Aineq_rownorm1 == 0);
     Aineq_rownorm1(zero_ineq) = 1;
     infeasible_zero_ineq = (bineq < 0 & zero_ineq);
-    infeasible_lineq = (bineq./Aineq_rownorm1 <= -inf) | infeasible_zero_ineq | isnan(Aineq_rownorm1) | isnan(bineq) | any(abs(Aineq) >= inf, 2) | bineq <= -inf; % A vector of true/false
+    infeasible_lineq = (bineq ./ Aineq_rownorm1 <= -inf) | infeasible_zero_ineq | isnan(Aineq_rownorm1) | isnan(bineq) | any(abs(Aineq) >= inf, 2) | bineq <= -inf; % A vector of true/false
 end
 
 % Preprocess linear equalities: Aeq*x == beq
@@ -660,7 +660,7 @@ else
     zero_eq = (Aeq_rownorm1 == 0);
     Aeq_rownorm1(zero_eq) = 1;
     infeasible_zero_eq = (beq ~= 0 & zero_eq);
-    infeasible_leq = (abs(beq./Aeq_rownorm1) >= inf) | infeasible_zero_eq | isnan(Aeq_rownorm1) | isnan(beq) | any(abs(Aeq) >= inf, 2) | abs(beq) >= inf; % A vector of true/false
+    infeasible_leq = (abs(beq ./ Aeq_rownorm1) >= inf) | infeasible_zero_eq | isnan(Aeq_rownorm1) | isnan(beq) | any(abs(Aeq) >= inf, 2) | abs(beq) >= inf; % A vector of true/false
 end
 
 % Define trivial_lineq and trivial_leq; remove the trivial constraints.
@@ -672,7 +672,7 @@ else
     if isempty(Aineq)
         trivial_lineq = [];
     else
-        trivial_lineq = ((bineq./Aineq_rownorm1 == inf) | (bineq >= inf) | (bineq >= 0 & zero_ineq));
+        trivial_lineq = ((bineq ./ Aineq_rownorm1 == inf) | (bineq >= inf) | (bineq >= 0 & zero_ineq));
         Aineq = Aineq(~trivial_lineq, :); % Remove the trivial linear inequalities
         bineq = bineq(~trivial_lineq);
     end
@@ -1687,7 +1687,7 @@ scaling_factor = (ub - lb)/2;
 shift = (lb + ub)/2;
 
 fun = @(x) fun(scaling_factor.*x+shift);
-x0 = (x0-shift)./scaling_factor;
+x0 = (x0-shift) ./ scaling_factor;
 if ~isempty(Aineq)
 % Aineq*x_before_scaling <= bineq
 % <==> Aineq*(scaling_factor.*x_after_scaling+shift) <= bineq
@@ -1702,11 +1702,11 @@ end
 if ~isempty(lb)
 % lb < x_before_scaling < ub
 % <==> lb < scaling_factor.*x_after_scaling + shift < ub
-% <==> (lb-shift)./scaling_factor < x_after_scaling < (ub-shift)./scaling_factor
-    lb = (lb-shift)./scaling_factor;
+% <==> (lb-shift) ./ scaling_factor < x_after_scaling < (ub-shift) ./ scaling_factor
+    lb = (lb-shift) ./ scaling_factor;
 end
 if ~isempty(ub)
-    ub = (ub-shift)./scaling_factor;
+    ub = (ub-shift) ./ scaling_factor;
 end
 if ~isempty(nonlcon)
     nonlcon = @(x) nonlcon(scaling_factor.*x+shift);
@@ -1722,7 +1722,7 @@ end
 %end
 
 substantially_scaled = false;
-%if (max([scaling_factor; 1./scaling_factor]) > substantially_scaled_threshold)
+%if (max([scaling_factor; 1 ./ scaling_factor]) > substantially_scaled_threshold)
 if max([1; scaling_factor])/min([1; scaling_factor]) > substantially_scaled_threshold
     substantially_scaled = true;
 end

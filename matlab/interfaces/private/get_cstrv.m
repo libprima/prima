@@ -19,27 +19,34 @@ end
 rlb = [];
 if ~isempty(lb)
     rlb = lb - x;
-    rlb(lb <= x) = 0;  % Prevent NaN in case lb = x = +/-Inf; OR: rlb = rlb(~(lb <= x));
+    rlb(lb <= x) = 0;  % Prevent NaN in case lb = x = +/-Inf; OR: rlb = rlb(~(lb <= x))
 end
 
 rub = [];
 if ~isempty(ub)
     rub = x - ub;
-    rub(x <= ub) = 0;  % Prevent NaN in case ub = x = +/-Inf; OR: rub = rub(~(x <= ub));
+    rub(x <= ub) = 0;  % Prevent NaN in case ub = x = +/-Inf; OR: rub = rub(~(x <= ub))
 end
 
 rineq = [];
 if ~isempty(Aineq)
     Aix = Aineq*x;
     rineq = Aix - bineq;
-    rineq(bineq >= Inf & ~isnan(Aix)) = 0;  % Prevent NaN in case bineq = Aix = Inf; OR: rineq = rineq(~(bineq >= Inf));
+    rineq(Aix <= bineq) = 0;  % Prevent NaN in case bineq = Aix = Inf
 end
 
 req = [];
 if ~isempty(Aeq)
-    Aex = Aeq*x;
-    req = Aex - beq;
-    %req(Aex == beq) = 0;  % Prevent NaN in case beq = Aex = +/-Inf; OR: req = req(~(Aex == beq));
+    req = Aeq*x - beq;
+    % We do not write `req(Aeq*x <= beq) = 0` because we want to keep NaN if Aeq*x = beq = +/-Inf.
+    % This is to make sure preprima and postprima both obtain NaN as the constraint violation in
+    % this case. preprima will obtain NaN because pre_lcon reduces the constraints if some variables
+    % are fixed by bound constraints, and the reduction will involve Inf - Inf. postprima will
+    % calculate the constraint violation using the original constraints, and Aeq*x - beq will render
+    % an NaN as well. This may not be the best choice, but remember that a well defined problem
+    % should not contain Inf in the coefficients of the linear constraints. The same problem does
+    % not exist for linear inequality constraints (and hence we wrote `rineq(Aix <= bineq) =0)`,
+    % because pre_lcon will remove the constraints with bineq = +Inf, regarding them as redundant.
 end
 
 % max(X, [], 'includenan') returns NaN if X contains NaN, and maximum of X otherwise
