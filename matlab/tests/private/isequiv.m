@@ -416,7 +416,7 @@ if test_fixed_x
 end
 
 test_infnan_lcon = (rand > 0.5 && ~(isempty(prob1.Aineq) && isempty(prob1.Aeq)));
-if true %test_infnan_lcon
+if test_infnan_lcon
     if ~isempty(prob1.Aineq)
         prob1.Aineq(rand(size(prob1.Aineq)) > 0.9) = Inf;
         prob1.Aineq(rand(size(prob1.Aineq)) > 0.9) = -Inf;
