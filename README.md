@@ -179,24 +179,24 @@ to distribute this large amount of tests to several different Team accounts as f
 
 #### Fortran
 
-    After almost **three** years of intensive coding, **the [modern Fortran version](./fortran) of
-    PRIMA has been finished by December 2022.**
+After almost **three** years of intensive coding, **the [modern Fortran version](./fortran) of
+PRIMA has been finished by December 2022.**
 
-    Given the **modern** Fortran version, the implementation in other languages
-    becomes **much easier**, because we now have a structured and modularized implementation as a reference.
-    I will implement the methods in other languages in this way.
+Given the **modern** Fortran version, the implementation in other languages
+becomes **much easier**, because we now have a structured and modularized implementation as a reference.
+I will implement the methods in other languages in this way.
 
 #### MATLAB
 
-    - An [interface](./matlab/interfaces/prima.m) is provided for [using the Fortran implementation under MATLAB](./README_mat.txt).
-      Interfaces for other languages will be available later.
-    - A [pure MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/) is implemented. It was
-      generated straightforwardly (indeed, **automatically**) from an earlier version of the
-      **modern** Fortran code (with the help of Mr. Galann Pennec).
+- An [interface](./matlab/interfaces/prima.m) is provided for [using the Fortran implementation under MATLAB](./README_mat.txt).
+  Interfaces for other languages will be available later.
+- A [pure MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/) is implemented. It was
+  generated straightforwardly (indeed, **automatically**) from an earlier version of the
+  **modern** Fortran code (with the help of Mr. Galann Pennec).
 
 #### Python
 
-    - The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](https://github.com/libprima/prima#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
+- The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](https://github.com/libprima/prima#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
 
 
 ### Bug fixes
