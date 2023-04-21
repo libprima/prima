@@ -627,12 +627,12 @@ if options.debug && ~options.classical
         cstrv = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq);
         % If the solver is cobyla, due to the moderated extreme barrier, any constraint
         % violation that is NaN or above constrmax is replaced with constrmax.
-        % N.B.: In most cases, the replacement has been done for chist by the solvers.
+        % N.B.: In most cases, the replacement has been done for constrviolation by the solver.
         % However, there are exceptions: If the problem is detected infeasible during the
-        % preprocessing, then the solvers will not be called, and chist contains only the
+        % preprocessing, then the solvers will not be called, and constrviolation is the
         % constraint violation at x0 calculated by get_constrv, which may be NaN or above
-        % constrmax. Similarly, if all the  variables are fixed by the bounds, then chist
-        % contains only the constraint violation at the fixed x, calculated by get_constrv.
+        % constrmax. Similarly, if all the  variables are fixed by the bounds, then constrviolation
+        % is the constraint violation at the fixed x, calculated by get_constrv.
         if strcmp(solver, 'cobyla')
             % Even though constrviolation and cstrv are numbers, we can still use logical indexing
             % since all numbers are indeed matrices sin MATLAB.
@@ -643,17 +643,6 @@ if options.debug && ~options.classical
                 ~(abs(constrviolation-cstrv) <= lincoa_prec*max(1,abs(cstrv)) && strcmp(solver, 'lincoa')) && ...
                 ~(abs(constrviolation-cstrv) <= cobyla_prec*max(1,abs(cstrv)) && strcmp(solver, 'cobyla'))
             % Public/unexpected error
-            cstrv
-            constrviolation
-            probinfo
-
-            x
-            probinfo.raw_data.Aineq
-            probinfo.raw_data.bineq
-            probinfo.raw_data.x0
-            probinfo.raw_data.lb
-            probinfo.raw_data.ub
-            probinfo.refined_data
             error(sprintf('%s:InvalidConstrViolation', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
         end
@@ -791,7 +780,7 @@ if options.debug && ~options.classical
                 end
                 % If the solver is cobyla, due to the moderated extreme barrier, any constraint
                 % violation that is NaN or above constrmax is replaced with constrmax.
-                % N.B.: In most cases, the replacement has been done for chist by the solvers.
+                % N.B.: In most cases, the replacement has been done for chist by the solver.
                 % However, there are exceptions: If the problem is detected infeasible during the
                 % preprocessing, then the solvers will not be called, and chist contains only the
                 % constraint violation at x0 calculated by get_constrv, which may be NaN or above
