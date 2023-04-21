@@ -415,23 +415,23 @@ if test_fixed_x
     prob2.ub = prob1.ub;
 end
 
-test_infnan_lcon = (rand > 0.5 && ~(isempty(prob1.Aineq) && isempty(prob1.Aeq)));
-if test_infnan_lcon
+%pty(prob1.Aineq) && isempty(prob1.Aeq)));
+if true %test_infnan_lcon
     if ~isempty(prob1.Aineq)
-        prob1.Aineq(rand(size(prob1.Aineq)) > 0.9) = Inf;
-        prob1.Aineq(rand(size(prob1.Aineq)) > 0.9) = -Inf;
-        prob1.Aineq(rand(size(prob1.Aineq)) > 0.9) = NaN;
-        prob1.bineq(rand(size(prob1.bineq)) > 0.9) = Inf;
-        prob1.bineq(rand(size(prob1.bineq)) > 0.9) = -Inf;
-        prob1.bineq(rand(size(prob1.bineq)) > 0.9) = NaN;
+        prob1.Aineq(rand(size(prob1.Aineq)) > 0.7) = Inf;
+        prob1.Aineq(rand(size(prob1.Aineq)) > 0.7) = -Inf;
+        prob1.Aineq(rand(size(prob1.Aineq)) > 0.7) = NaN;
+        prob1.bineq(rand(size(prob1.bineq)) > 0.7) = Inf;
+        prob1.bineq(rand(size(prob1.bineq)) > 0.7) = -Inf;
+        prob1.bineq(rand(size(prob1.bineq)) > 0.7) = NaN;
     end
     if ~isempty(prob1.Aeq)
-        prob1.Aeq(rand(size(prob1.Aeq)) > 0.9) = Inf;
-        prob1.Aeq(rand(size(prob1.Aeq)) > 0.9) = -Inf;
-        prob1.Aeq(rand(size(prob1.Aeq)) > 0.9) = NaN;
-        prob1.beq(rand(size(prob1.beq)) > 0.9) = Inf;
-        prob1.beq(rand(size(prob1.beq)) > 0.9) = -Inf;
-        prob1.beq(rand(size(prob1.beq)) > 0.9) = NaN;
+        prob1.Aeq(rand(size(prob1.Aeq)) > 0.7) = Inf;
+        prob1.Aeq(rand(size(prob1.Aeq)) > 0.7) = -Inf;
+        prob1.Aeq(rand(size(prob1.Aeq)) > 0.7) = NaN;
+        prob1.beq(rand(size(prob1.beq)) > 0.7) = Inf;
+        prob1.beq(rand(size(prob1.beq)) > 0.7) = -Inf;
+        prob1.beq(rand(size(prob1.beq)) > 0.7) = NaN;
     end
     prob2.Aineq = prob1.Aineq;
     prob2.bineq = prob1.bineq;
