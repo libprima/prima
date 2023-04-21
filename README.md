@@ -311,5 +311,5 @@ PRIMA is a long-term project, which would not have been sustainable without the 
 and PolyU 153066/21P) and [The Hong Kong Polytechnic University](https://www.polyu.edu.hk/) (PolyU),
 in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA).
 
-### Star History
+### Star history
 [![Star History Chart](https://api.star-history.com/svg?repos=libprima/prima&type=Date)](https://star-history.com/#libprima/prima&Date)
