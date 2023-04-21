@@ -312,4 +312,7 @@ and PolyU 153066/21P) and [The Hong Kong Polytechnic University](https://www.pol
 in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA).
 
 ### Star history
+
 [![Star History Chart](https://api.star-history.com/svg?repos=libprima/prima&type=Date)](https://star-history.com/#libprima/prima&Date)
+
+<p align="center">Thank you for your support.</p>
