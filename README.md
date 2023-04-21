@@ -315,4 +315,4 @@ in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/a
 
 [![Star History Chart](https://api.star-history.com/svg?repos=libprima/prima&type=Date)](https://star-history.com/#libprima/prima&Date)
 
-<p align="center">**Thank you for your support.**</p>
+<p align="center"><strong>Thank you for your support.</strong></p>
