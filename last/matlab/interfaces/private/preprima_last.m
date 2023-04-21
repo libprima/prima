@@ -636,7 +636,7 @@ else
 %    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | isnan(rownorm1); % A vector of true/false
 %    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq)) & ~nan_ineq); % A vector of true/false
     %infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))); % A vector of true/false
-    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))) | bineq <= -inf | (any(abs(Aineq)>= inf, 2) & bineq < inf); % A vector of true/false
+    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))) | bineq <= -inf | (any(abs(Aineq)>= inf, 2)); % A vector of true/false
 
     %trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq;
     %trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq ; %| nan_ineq;

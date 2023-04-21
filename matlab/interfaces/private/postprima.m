@@ -645,7 +645,15 @@ if options.debug && ~options.classical
             % Public/unexpected error
             cstrv
             constrviolation
-            %keyboard
+            probinfo
+
+            x
+            probinfo.raw_data.Aineq
+            probinfo.raw_data.bineq
+            probinfo.raw_data.x0
+            probinfo.raw_data.lb
+            probinfo.raw_data.ub
+            probinfo.refined_data
             error(sprintf('%s:InvalidConstrViolation', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
         end
