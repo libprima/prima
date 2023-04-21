@@ -573,9 +573,9 @@ if any(isnan(Aineq(:))) || any(isnan(bineq))
 end
 
 % Warn about inequality constraints containing Inf.
-if any(bineq <= -inf | (any(abs(Aineq) >= inf, 2) & bineq < inf))
+if any(any(abs(Aineq) >= inf, 2) | bineq <= -inf)
     wid = sprintf('%s:InfInequality', invoker);
-    wmsg = sprintf('%s: Aineq or bineq contains Inf but bineq is not +Inf; the problem is considered as infeasible.', invoker);
+    wmsg = sprintf('%s: Aineq contains infinite values or bineq is -Inf; the problem is considered as infeasible.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -603,7 +603,7 @@ else
     zero_ineq = (Aineq_rownorm1 == 0);
     Aineq_rownorm1(zero_ineq) = 1;
     infeasible_zero_ineq = (bineq < 0 & zero_ineq);
-    infeasible_lineq = (bineq./Aineq_rownorm1 <= -inf) | infeasible_zero_ineq | isnan(Aineq_rownorm1) | isnan(bineq) | bineq <= -inf | (any(abs(Aineq) >= inf, 2) & bineq < inf); % A vector of true/false
+    infeasible_lineq = (bineq./Aineq_rownorm1 <= -inf) | infeasible_zero_ineq | isnan(Aineq_rownorm1) | isnan(bineq) | any(abs(Aineq) >= inf, 2) | bineq <= -inf; % A vector of true/false
 end
 
 % Preprocess linear equalities: Aeq*x == beq
@@ -630,9 +630,9 @@ if any(isnan(Aeq(:))) || any(isnan(beq))
 end
 
 % Warn about equality constraints containing Inf.
-if any(abs(beq) >= inf | any(abs(Aeq) >= inf, 2))
+if any(any(abs(Aeq) >= inf, 2) | abs(beq) >= inf)
     wid = sprintf('%s:InfEquality', invoker);
-    wmsg = sprintf('%s: Aeq or beq contains Inf; the problem is considered as infeasible.', invoker);
+    wmsg = sprintf('%s: Aeq or beq contains infinite values; the problem is considered as infeasible.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -660,7 +660,7 @@ else
     zero_eq = (Aeq_rownorm1 == 0);
     Aeq_rownorm1(zero_eq) = 1;
     infeasible_zero_eq = (beq ~= 0 & zero_eq);
-    infeasible_leq = (abs(beq./Aeq_rownorm1) >= inf) | infeasible_zero_eq | isnan(Aeq_rownorm1) | isnan(beq) | abs(beq) >= inf | any(abs(Aeq) >= inf, 2); % A vector of true/false
+    infeasible_leq = (abs(beq./Aeq_rownorm1) >= inf) | infeasible_zero_eq | isnan(Aeq_rownorm1) | isnan(beq) | any(abs(Aeq) >= inf, 2) | abs(beq) >= inf; % A vector of true/false
 end
 
 % Define trivial_lineq and trivial_leq; remove the trivial constraints.
