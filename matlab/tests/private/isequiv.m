@@ -611,7 +611,7 @@ end
 r = cos(1.0D6 * sin(1.0D6 * (abs(f) + 1.0D0) * cos(1.0D6 * sum(abs(x)))));
 f = f*(1+noise_level*r);
 if (r > 0.9)
-    error('Function evaluation fails!')
+    error('Function evaluation fails!');
 elseif (r > 0.75)
     f = inf;
 elseif (r > 0.5)
