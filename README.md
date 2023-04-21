@@ -6,6 +6,9 @@ Dedicated to the late Professor [**M. J. D. Powell**](https://www.zhangzk.net/po
 - [Why](#why)
 - [How](#how)
 - [Current status](#current-status)
+    - [Fortran](#fortran)
+    - [MATLAB](#matlab)
+    - [Python](#python)
 - [Bug fixes](#bug-fixes)
 - [Improvements](#improvements)
 - [A "fun" fact](#a-fun-fact)
@@ -174,7 +177,7 @@ to distribute this large amount of tests to several different Team accounts as f
 
 ### Current status
 
-- **Fortran**
+#### Fortran
 
     After almost **three** years of intensive coding, **the [modern Fortran version](./fortran) of
     PRIMA has been finished by December 2022.**
@@ -183,7 +186,7 @@ to distribute this large amount of tests to several different Team accounts as f
     becomes **much easier**, because we now have a structured and modularized implementation as a reference.
     I will implement the methods in other languages in this way.
 
-- **MATLAB**
+#### MATLAB
 
     - An [interface](./matlab/interfaces/prima.m) is provided for [using the Fortran implementation under MATLAB](./README_mat.txt).
       Interfaces for other languages will be available later.
@@ -191,7 +194,7 @@ to distribute this large amount of tests to several different Team accounts as f
       generated straightforwardly (indeed, **automatically**) from an earlier version of the
       **modern** Fortran code (with the help of Mr. Galann Pennec).
 
-- **Python**
+#### Python
 
     - The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](https://github.com/libprima/prima#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
 
