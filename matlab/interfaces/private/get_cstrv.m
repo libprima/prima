@@ -32,8 +32,9 @@ rineq = [];
 if ~isempty(Aineq)
     Aix = Aineq*x;
     rineq = Aix - bineq;
-    %rineq(bineq >= inf & ~isnan(Aix)) = 0;  % Prevent NaN in case bineq = Aix = Inf
-    rineq(Aix <= bineq & bineq > -Inf) = 0;  % Prevent NaN in case bineq = Aix = Inf
+    rineq(bineq >= Inf & ~isnan(Aix)) = 0;  % Prevent NaN in case bineq = Aix = Inf
+    % We do not write `rineq(Aix <= bineq) = 0` because we want to keep NaN if Aix = bineq = -Inf.
+    % See the comment in the code for req below.
 end
 
 req = [];
@@ -45,9 +46,11 @@ if ~isempty(Aeq)
     % are fixed by bound constraints, and the reduction will involve Inf - Inf. postprima will
     % calculate the constraint violation using the original constraints, and Aeq*x - beq will render
     % an NaN as well. This may not be the best choice, but remember that a well defined problem
-    % should not contain Inf in the coefficients of the linear constraints. The same problem does
-    % not exist for linear inequality constraints (and hence we wrote `rineq(Aix <= bineq) =0)`,
-    % because pre_lcon will remove the constraints with bineq = +Inf, regarding them as redundant.
+    % should not contain Inf in the coefficients of the linear constraints. A similar problem exists
+    % for linear inequality constraints (and hence we wrote `rineq(bineq >= Inf & ~isnan(Aix)) = 0`
+    % rather than `rineq(Aix <= bineq) =0)`. We need to set rineq = 0 if bineq = +Inf and Aix is not
+    % NaN, because pre_lcon will remove the constraints with bineq = +Inf, regarding them as
+    % redundant, and hence preprima will not obtain NaN as the constraint violation.
 end
 
 % max(X, [], 'includenan') returns NaN if X contains NaN, and maximum of X otherwise
