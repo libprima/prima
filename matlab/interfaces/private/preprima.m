@@ -577,7 +577,8 @@ bineq = double(bineq(:));
 Aineq = double(Aineq);
 
 % Warn about inequality constraints containing NaN.
-if any(isnan(Aineq(:))) || any(isnan(bineq))
+nan_ineq = any(isnan(Aineq), 2) | isnan(bineq);
+if any(nan_ineq)
     wid = sprintf('%s:NaNInequality', invoker);
     wmsg = sprintf('%s: Aineq or bineq contains NaN; the problem is hence infeasible.', invoker);
     warning(wid, '%s', wmsg);
@@ -585,7 +586,8 @@ if any(isnan(Aineq(:))) || any(isnan(bineq))
 end
 
 % Warn about inequality constraints containing Inf.
-if any(any(abs(Aineq) >= inf, 2) | bineq <= -inf)
+inf_ineq = any(abs(Aineq) >= inf, 2) | (bineq <= -inf);
+if any(inf_ineq)
     wid = sprintf('%s:InfInequality', invoker);
     wmsg = sprintf('%s: Aineq contains infinite values or bineq contains -Inf; the problem is considered as infeasible.', invoker);
     warning(wid, '%s', wmsg);
@@ -615,7 +617,11 @@ else
     zero_ineq = (Aineq_rownorm1 == 0);
     Aineq_rownorm1(zero_ineq) = 1;
     infeasible_zero_ineq = (bineq < 0 & zero_ineq);
-    infeasible_lineq = (bineq ./ Aineq_rownorm1 <= -inf) | infeasible_zero_ineq | isnan(Aineq_rownorm1) | isnan(bineq) | any(abs(Aineq) >= inf, 2) | bineq <= -inf; % A vector of true/false
+    % bineq has been revised during the reduction; we regard the constraint as infeasible if Inf or
+    % NaN arises after the reduction.
+    nan_ineq = nan_ineq | isnan(bineq);
+    inf_ineq = inf_ineq | (abs(bineq) >= inf);
+    infeasible_lineq = (bineq ./ Aineq_rownorm1 <= -inf) | infeasible_zero_ineq | nan_ineq | inf_ineq; % A vector of true/false
 end
 
 % Preprocess linear equalities: Aeq*x == beq
@@ -640,7 +646,8 @@ beq = double(beq(:));
 Aeq = double(Aeq);
 
 % Warn about equality constraints containing NaN.
-if any(isnan(Aeq(:))) || any(isnan(beq))
+nan_eq = any(isnan(Aeq), 2) | isnan(beq);
+if any(nan_eq)
     wid = sprintf('%s:NaNEquality', invoker);
     wmsg = sprintf('%s: Aeq or beq contains NaN; The problem is hence infeasible.', invoker);
     warning(wid, '%s', wmsg);
@@ -648,7 +655,8 @@ if any(isnan(Aeq(:))) || any(isnan(beq))
 end
 
 % Warn about equality constraints containing Inf.
-if any(any(abs(Aeq) >= inf, 2) | abs(beq) >= inf)
+inf_eq = any(abs(Aeq) >= inf, 2) | (abs(beq) >= inf);
+if any(inf_eq)
     wid = sprintf('%s:InfEquality', invoker);
     wmsg = sprintf('%s: Aeq or beq contains infinite values; the problem is considered as infeasible.', invoker);
     warning(wid, '%s', wmsg);
@@ -678,7 +686,11 @@ else
     zero_eq = (Aeq_rownorm1 == 0);
     Aeq_rownorm1(zero_eq) = 1;
     infeasible_zero_eq = (beq ~= 0 & zero_eq);
-    infeasible_leq = (abs(beq ./ Aeq_rownorm1) >= inf) | infeasible_zero_eq | isnan(Aeq_rownorm1) | isnan(beq) | any(abs(Aeq) >= inf, 2) | abs(beq) >= inf; % A vector of true/false
+    % beq has been revised during the reduction; we regard the constraint as infeasible if Inf or
+    % NaN arises after the reduction.
+    nan_eq = nan_eq | isnan(beq);
+    inf_eq = inf_eq | (abs(beq) >= inf);
+    infeasible_leq = (abs(beq ./ Aeq_rownorm1) >= inf) | infeasible_zero_eq | nan_eq | inf_eq;  % A vector of true/false
 end
 
 % Define trivial_lineq and trivial_leq; remove the trivial constraints.

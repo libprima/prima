@@ -596,7 +596,8 @@ if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
     error(sprintf('%s:InvalidLinIneq', invoker), ...
     '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq) = [length(bineq), length(X0)] unless Aineq = bineq = [].', invoker);
 end
-nan_ineq = isnan(bineq);
+nan_ineq = isnan(bineq) | any(isnan(Aineq), 2);
+inf_ineq = bineq <= -inf | any(isinf(Aineq), 2);
 %if any(isnan(bineq))
 %    bineq(isnan(bineq)) = inf; % Replace the NaN in bineq by inf, namely to remove this constraint
 %    wid = sprintf('%s:NaNInbineq', invoker);
@@ -636,7 +637,8 @@ else
 %    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | isnan(rownorm1); % A vector of true/false
 %    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq)) & ~nan_ineq); % A vector of true/false
     %infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))); % A vector of true/false
-    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))) | bineq <= -inf | (any(abs(Aineq)>= inf, 2)); % A vector of true/false
+    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | ((isnan(rownorm1) | isnan(bineq))) | isinf(bineq) | (any(abs(Aineq)>= inf, 2)); % A vector of true/false
+    infeasible_lineq = infeasible_lineq | nan_ineq | inf_ineq;
 
     %trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq;
     %trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq ; %| nan_ineq;
@@ -663,6 +665,8 @@ if isempty(Aeq)
 else
     nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); % In MATLAB 2014a, this may lead to inconsistent sizes when Aeq is empty; in MATLAB 2018a, it is fine
 end
+nan_eq = isnan(beq) | any(isnan(Aeq), 2);
+inf_eq = isinf(beq) | any(isinf(Aeq), 2);
 if any(nan_eq)
     wid = sprintf('%s:NaNEquality', invoker);
     wmsg = sprintf('%s: there are equality constraints whose both sides contain NaN; such constraints are removed.', invoker);
@@ -701,6 +705,7 @@ else
 %    infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) & ~nan_eq); % A vector of true/false
     %infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) ); % A vector of true/false
     infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) ) | abs(beq) >= inf | any(abs(Aeq) >= inf, 2); % A vector of true/false
+    infeasible_leq = infeasible_leq | nan_eq | inf_eq;
 
     %trivial_leq = trivial_zero_eq ;%| nan_eq;
     trivial_leq = trivial_zero_eq & ~infeasible_leq;%| nan_eq;

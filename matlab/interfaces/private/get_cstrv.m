@@ -32,7 +32,7 @@ rineq = [];
 if ~isempty(Aineq)
     Aix = Aineq*x;
     rineq = Aix - bineq;
-    rineq(bineq >= Inf & ~isnan(Aix)) = 0;  % Prevent NaN in case bineq = Aix = Inf
+    %rineq(bineq >= Inf & ~isnan(Aix)) = 0;  % Prevent NaN in case bineq = Aix = Inf
     % We do not write `rineq(Aix <= bineq) = 0` because we want to keep NaN if Aix = bineq = -Inf.
     % See the comment in the code for req below.
 end
