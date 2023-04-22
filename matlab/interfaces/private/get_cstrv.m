@@ -32,7 +32,8 @@ rineq = [];
 if ~isempty(Aineq)
     Aix = Aineq*x;
     rineq = Aix - bineq;
-    rineq(Aix <= bineq) = 0;  % Prevent NaN in case bineq = Aix = Inf
+    %rineq(bineq >= inf & ~isnan(Aix)) = 0;  % Prevent NaN in case bineq = Aix = Inf
+    rineq(Aix <= bineq & bineq > -Inf) = 0;  % Prevent NaN in case bineq = Aix = Inf
 end
 
 req = [];
