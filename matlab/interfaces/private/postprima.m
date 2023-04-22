@@ -619,9 +619,9 @@ if options.debug && ~options.classical
     end
     if strcmp(options.precision, 'double') && ((strcmp(solver, 'lincoa') && ~constr_modified) || strcmp(solver, 'cobyla'))
         Aineq = probinfo.raw_data.Aineq;
-        bineq = probinfo.raw_data.bineq;
+        bineq = probinfo.raw_data.bineq(:);  % The same as fmincon, we allow bineq to be a row vector
         Aeq = probinfo.raw_data.Aeq;
-        beq = probinfo.raw_data.beq;
+        beq = probinfo.raw_data.beq(:);  % The same as fmincon, we allow beq to be a row vector
         lb = probinfo.raw_data.lb(:);
         ub = probinfo.raw_data.ub(:);
         cstrv = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq);

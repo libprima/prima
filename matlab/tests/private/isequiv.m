@@ -439,6 +439,25 @@ if test_infnan_lcon
     prob2.beq = prob1.beq;
 end
 
+test_row_lineq = (rand > 0.5);
+test_row_leq = (rand > 0.5);
+if ~endsWith(solvers{2}, '_last')
+    if test_row_lineq
+        prob1.bineq = prob1.bineq';
+    end
+    if test_row_leq
+        prob1.beq = prob1.beq';
+    end
+end
+if ~endsWith(solvers{2}, '_last')
+    if test_row_lineq
+        prob2.bineq = prob2.bineq';
+    end
+    if test_row_leq
+        prob2.beq = prob2.beq';
+    end
+end
+
 exception = [];
 try
     if call_by_package
