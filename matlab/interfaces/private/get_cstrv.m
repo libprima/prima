@@ -47,10 +47,11 @@ if ~isempty(Aeq)
     % calculate the constraint violation using the original constraints, and Aeq*x - beq will render
     % an NaN as well. This may not be the best choice, but remember that a well defined problem
     % should not contain Inf in the coefficients of the linear constraints. A similar problem exists
-    % for linear inequality constraints (and hence we wrote `rineq(bineq >= Inf & ~isnan(Aix)) = 0`
-    % rather than `rineq(Aix <= bineq) =0)`. We need to set rineq = 0 if bineq = +Inf and Aix is not
-    % NaN, because pre_lcon will remove the constraints with bineq = +Inf, regarding them as
-    % redundant, and hence preprima will not obtain NaN as the constraint violation.
+    % for linear inequality constraints (consider particularly Aix = bineq = -Inf), and hence we
+    % wrote `rineq(bineq >= Inf & ~isnan(Aix)) = 0` rather than `rineq(Aix <= bineq) =0`. We need to
+    % set rineq = 0 if bineq = +Inf and Aix is not NaN, because pre_lcon will remove the constraints
+    % with bineq = +Inf, regarding them as redundant, and hence preprima will not obtain NaN as the
+    % constraint violation.
 end
 
 % max(X, [], 'includenan') returns NaN if X contains NaN, and maximum of X otherwise
