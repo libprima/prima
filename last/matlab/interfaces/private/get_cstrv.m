@@ -33,7 +33,7 @@ req = [];
 if ~isempty(Aineq)
     rineq = Aineq*x-bineq;
     %rineq(Aineq*x <= bineq) = 0;
-    rineq(bineq >= inf & ~isnan(Aineq*x )) = 0;
+    %rineq(bineq >= inf & ~isnan(Aineq*x )) = 0;
 end
 if ~isempty(Aeq)
     req = Aeq*x-beq;
