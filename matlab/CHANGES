@@ -58,7 +58,8 @@
 18. We allow x0, bineq, beq to be rows. See the functions `pre_x0`, `pre_lcon`, `pre_fun`,
     `pre_nonlcon` in preprima.m. No matter whether they are rows or columns, we always require
     size(Aineq) = [length(bineq), length(x0)] and size(Aeq) = [length(beq), length(x0)]. This is
-    consistent with the behavior of fmincon.
+    consistent with the behavior of fmincon. We raise warnings "INVOKER:X0IsRow", "INVOKER:BineqIsRow",
+    or "INVOKER:BeqIsRow" if they are rows.
 
 
 Check other changes by comparing the matlab interfaces (vimdiff).
