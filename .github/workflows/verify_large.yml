@@ -63,8 +63,11 @@ jobs:
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
             cd(fullfile(root_dir, 'matlab/tests'));
+            options = struct();
             options.nr = 5;
-            options = struct(); if strcmp('${{ matrix.solver }}', 'lincoa'), options.nr = 1; end; options
+            if strcmp('${{ matrix.solver }}', 'lincoa'), options.nr = 1; end;
+            options.no_classical = true;  % We do not test the classical mode on "large" problems.
+            options
             verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
