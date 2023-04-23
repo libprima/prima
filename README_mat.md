@@ -73,30 +73,7 @@ command in MATLAB:
 setup uninstall
 ```
 
-## References
+## Contact
 
-[1] M. J. D. Powell, A direct search optimization method that models the
-objective and constraint functions by linear interpolation, In Advances
-in *Optimization and Numerical Analysis*, *eds.* S. Gomez and J. P. Hennart,
-pages 51--67, Springer Verlag, Dordrecht, Netherlands, 1994
-
-[2] M. J. D. Powell, UOBYQA: unconstrained optimization by quadratic
-approximation, *Math. Program.*, 92(B):555--582, 2002
-
-[3] M. J. D. Powell, The NEWUOA software for unconstrained optimization
-without derivatives, In *Large-Scale Nonlinear Optimization*, *eds.* G. Di Pillo
-and M. Roma, pages 255--297, Springer, New York, US, 2006
-
-[4] M. J. D. Powell, The BOBYQA algorithm for bound constrained
-optimization without derivatives, Technical Report DAMTP 2009/NA06,
-Department of Applied Mathematics and Theoretical Physics, Cambridge
-University, Cambridge, UK, 2009
-
-[5] T. M. Ragonneau and Z.Zhang,
-[PDFO: a cross-platform package for Powell's derivative-free optimization solvers](https://arxiv.org/pdf/2302.13246.pdf),
-arXiv:2302.13246, 2023
-
-
-**Remark:** LINCOA seeks the least value of a nonlinear function subject to
-linear inequality constraints without using derivatives of the objective
-function. Powell did not publish a paper to introduce the algorithm.
+In case of problems, [open a GitHub issue](https://github.com/libprima/prima/issues) or [contact
+Zaikun Zhang](https://www.zhangzk.net).
