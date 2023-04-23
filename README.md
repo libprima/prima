@@ -13,6 +13,8 @@ Dedicated to the late Professor [**M. J. D. Powell**](https://www.zhangzk.net/po
 - [Improvements](#improvements)
 - [A "fun" fact](#a-fun-fact)
 - [Acknowledgment](#acknowledgment)
+- [References](#references)
+- [Contact](#contact)
 - [Star history](#star-history)
 
 
