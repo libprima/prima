@@ -188,7 +188,7 @@ I will implement the methods in other languages in this way.
 
 #### MATLAB
 
-- An [interface](./matlab/interfaces/prima.m) is provided for [using the Fortran implementation under MATLAB](./README_mat.txt).
+- An [interface](./matlab/interfaces/prima.m) is provided for [using the Fortran implementation under MATLAB](./README_mat.md).
   Interfaces for other languages will be available later.
 - A [pure MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/) is implemented. It was
   generated straightforwardly (indeed, **automatically**) from an earlier version of the
