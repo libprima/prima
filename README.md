@@ -198,7 +198,7 @@ I will implement the methods in other languages in this way.
 
 #### Python
 
-The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](https://github.com/libprima/prima#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
+The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
 
 
 ### Bug fixes
