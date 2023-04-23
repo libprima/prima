@@ -321,7 +321,7 @@ and PolyU 153066/21P) and [The Hong Kong Polytechnic University](https://www.pol
 in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA).
 
 
-## References
+### References
 
 [1] M. J. D. Powell, A direct search optimization method that models the
 objective and constraint functions by linear interpolation, In Advances
@@ -349,7 +349,7 @@ arXiv:2302.13246, 2023
 linear inequality constraints without using derivatives of the objective
 function. Powell did not publish a paper to introduce the algorithm.
 
-## Contact
+### Contact
 
 In case of problems, [open a GitHub issue](https://github.com/libprima/prima/issues) or [contact
 Zaikun Zhang](https://www.zhangzk.net).
