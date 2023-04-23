@@ -32,15 +32,15 @@ rineq = [];
 if ~isempty(Aineq)
     rineq = Aineq*x - bineq;
     % Do not write `rineq(Aineq*x <= bineq) = 0`, as we want to get NaN if Aineq*x = bineq = +/-Inf.
+    % What if Aineq*x = bineq = +Inf? Shouldn't such a constraint has a zero violation? Assume that
+    % Aineq*x = +Inf implies either Aineq or x contains infinite values, which is true
+    % mathematically but false numerically. Then we take the view that it is better to return NaN
+    % than 0, because either the constraint or x is problematic.
     % This function is called only by preprima and postprima. With `rineq(Aineq*x <= bineq) = 0`,
     % the same constraint may not return the same constraint violation for preprima and postprima
-    % due to the reduction of constraints by pre_lcon when some variables are fixed by bound
-    % constraints, particularly when both sides of the constraints contain infinite values (N.B.:
-    % a well-defined problem should not have such constraints. We consider such a scenario for
-    % robustness of the package). What if Aineq*x = bineq = +Inf? Shouldn't such a constraint has a
-    % zero violation? Assume that Aineq*x = +Inf implies either Aineq or x contains infinite values,
-    % which is true mathematically but false numerically. Then we take the view that it is better to
-    % return NaN than 0, because either the constraint or x is problematic.
+    % due to the reduction of linear constraints by pre_lcon if some variables are fixed by bound
+    % constraints, particularly when both sides of a linear constraint contain infinite values. A
+    % well-defined problem should not have such constraints anyway. We consider them for robustness.
 end
 
 req = [];
