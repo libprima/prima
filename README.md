@@ -345,9 +345,14 @@ University, Cambridge, UK, 2009
 arXiv:2302.13246, 2023
 
 
-**Remark:** LINCOA seeks the least value of a nonlinear function subject to
+**Remarks**
+
+- LINCOA seeks the least value of a nonlinear function subject to
 linear inequality constraints without using derivatives of the objective
 function. Powell did not publish a paper to introduce the algorithm.
+
+- The paper [5] introduces [the PDFO pacakge](https://www.pdfo.net) rather than PRIMA. Nevertheless,
+it provides a good introduction to Powell's methods.
 
 ### Contact
 
