@@ -28,7 +28,7 @@ PRIMA is part of a research project funded by the
 the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at the
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
 It is still **under intensive development**.
-The current version is ready to be [used in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.txt).
+The current version is ready to be [used in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md).
 If you want to use the above-mentioned methods in Python, see the [website](https://www.pdfo.net)
 and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead
 ([Py-BOBYQA](https://numericalalgorithmsgroup.github.io/pybobyqa/) is also highly recommended if
