@@ -93,7 +93,7 @@ Department of Applied Mathematics and Theoretical Physics, Cambridge
 University, Cambridge, UK, 2009
 
 [5] T. M. Ragonneau and Z.Zhang,
-[PDFO: a cross-platform package for Powell's derivative-free optimization solvers](https:**arxiv.org*pdf*2302.13246.pdf),
+[PDFO: a cross-platform package for Powell's derivative-free optimization solvers](https://arxiv.org/pdf/2302.13246.pdf),
 arXiv:2302.13246, 2023
 
 
