@@ -175,9 +175,10 @@ if sequential
             fprintf('\n%s Run No. %3d ends\n', pname, ir);
         end
 
+        decup(prob);
+
         fprintf('\n%3d. \t%s ends\n', ip, pname);
 
-        decup(prob);
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_end_dir, pname)]);
@@ -207,9 +208,10 @@ else
             fprintf('\n%s Run No. %3d ends\n', pname, ir);
         end
 
+        decup(prob);
+
         fprintf('\n%3d. \t%s ends\n', ip, pname);
 
-        decup(prob);
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_end_dir, pname)]);
