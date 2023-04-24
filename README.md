@@ -15,9 +15,9 @@ Dedicated to the late Professor [**M. J. D. Powell**](https://www.zhangzk.net/po
 - [Acknowledgment](#acknowledgment)
 - [References](#references)
 - [Mirrors](#mirrors)
-    - Gitee: [https://gitee.com/libprima/prima](https://gitee.com/libprima/prima)
-    - GitHub: [https://github.com/libprima/prima](https://github.com/libprima/prima)
-    - GitLab: [https://gitlab.com/libprima/prima](https://gitlab.com/libprima/prima)
+    - [Gitee](https://gitee.com/libprima/prima)
+    - [GitHub](https://github.com/libprima/prima)
+    - [GitLab](https://gitlab.com/libprima/prima)
 - [Contact](#contact)
 - [Star history](#star-history)
 
