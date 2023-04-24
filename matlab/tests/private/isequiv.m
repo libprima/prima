@@ -162,17 +162,20 @@ if sequential
         system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_start_dir, pname)]);
 
-        fprintf('\n%3d. \t%s:\n', ip, pname);
+        fprintf('\n%3d. \t%s starts\n', ip, pname);
 
         prob = macup(pname);
 
         for ir = minir : maxir
-            fprintf('\n%s Run No. %3d:\n', pname, ir);
             % The following line compares the solvers on `prob`; ir is needed for the random seed, and
             % `prec` is the precision of the comparison (should be 0). The function will raise an error
             % if the solvers behave differently.
+            fprintf('\n%s Run No. %3d starts\n', pname, ir);
             compare(solvers, prob, ir, prec, single_test, options);
+            fprintf('\n%s Run No. %3d ends\n', pname, ir);
         end
+
+        fprintf('\n%3d. \t%s ends\n', ip, pname);
 
         decup(prob);
         [~, time] = system('date +%y%m%d_%H%M%S');
@@ -191,17 +194,20 @@ else
         system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_start_dir, pname)]);
 
-        fprintf('\n%3d. \t%s:\n', ip, pname);
+        fprintf('\n%3d. \t%s starts\n', ip, pname);
 
         prob = macup(pname);
 
         for ir = minir : maxir
-            %fprintf('\n%s Run No. %3d:\n', pname, ir);
             % The following line compares the solvers on `prob`; ir is needed for the random seed, and
             % `prec` is the precision of the comparison (should be 0). The function will raise an error
             % if the solvers behave differently.
+            fprintf('\n%s Run No. %3d starts\n', pname, ir);
             compare(solvers, prob, ir, prec, single_test, options);
+            fprintf('\n%s Run No. %3d ends\n', pname, ir);
         end
+
+        fprintf('\n%3d. \t%s ends\n', ip, pname);
 
         decup(prob);
         [~, time] = system('date +%y%m%d_%H%M%S');
