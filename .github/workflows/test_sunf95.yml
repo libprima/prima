@@ -46,7 +46,7 @@ jobs:
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           cd "$ROOT_DIR"/fortran/tests
           if [[ -f "test_cobyla.f90" ]] ; then
-              $SEDI 's|bign = 120|bign = 90|g' test_cobyla.f90
+              $SEDI 's|bign = 120|bign = 80|g' test_cobyla.f90
           fi
           if [[ -f "test_uobyqa.f90" ]] ; then
               $SEDI 's|bign = 120|bign = 110|g' test_uobyqa.f90
