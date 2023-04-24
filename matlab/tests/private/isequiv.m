@@ -167,7 +167,7 @@ if sequential
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_start_dir, pname)]);
         system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
-        system(['touch ', fullfile(prob_start__runs_dir, pname)]);
+        system(['touch ', fullfile(prob_start_runs_dir, pname)]);
 
         fprintf('\n%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
 
