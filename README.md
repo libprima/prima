@@ -358,9 +358,9 @@ it provides a good introduction to Powell's methods.
 
 ### Mirrors
 
-- Gitee: [https://gitee.com/libprima/prima]
+- Gitee: [https://gitee.com/libprima/prima](https://gitee.com/libprima/prima)
 
-- Gitlab: [https://gitlab.com/libprima/prima]
+- Gitlab: [https://gitlab.com/libprima/prima](https://gitlab.com/libprima/prima)
 
 
 ### Contact
