@@ -159,6 +159,17 @@ fixedx_value_save = fixedx_value; % Values of fixed variables
 % validity of them.
 probinfo.raw_type = problem_type(Aineq, Aeq, lb, ub, nonlcon);
 
+% Raise a warning if x0 is a row and the problem has linear constraints (before the reduction),
+% as the formulation of linear constraints (Aineq*x <= bineq, Aeq*x = beq) assumes that the decision
+% variable x is a column. If x0 is a row, pre_x0 transposes it, and pre_fun, pre_nonlcon redefines
+% fun and nonlcon, so that the solvers only need to deal with x as a column.
+if x0_is_row && ~(isempty(Aineq) && isempty(Aeq))
+    wid = sprintf('%s:X0IsRow', invoker);
+    wmsg = sprintf('%s: x0 is a row, but a column is expected; it is transposed.', invoker);
+    warning(wid, '%s', wmsg);
+    warnings = [warnings, wmsg];
+end
+
 % Validate and preprocess the linear constraints
 % 1. The constraints will be reduced if some but not all variables are
 %    fixed by the bound constraints. See pre_lcon for why we do not
@@ -482,13 +493,7 @@ if (lenx0 > maxint())
     error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d variables are allowed.', invoker, maxint());
 end
 x0_is_row = (lenx0 > 1) && isrealrow(x0);
-if x0_is_row
-    wid = sprintf('%s:X0IsRow', invoker);
-    wmsg = sprintf('%s: X0 is a row, but a column is expected; it is transposed.', invoker);
-    warning(wid, '%s', wmsg);
-    warnings = [warnings, wmsg];
-end
-x0 = double(x0(:));
+x0 = double(x0(:));  % Transpose x0 if it is a row; fun and nonlcon will be redefined accordingly.
 abnormal_x0 = isnan(x0) | (abs(x0) >= inf);
 if any(abnormal_x0)
     x0(isnan(x0)) = 0;
@@ -569,7 +574,7 @@ if ~(isrm && isrv && (mA == lenb) && (nA == lenx0 || nA == 0))
 end
 if (lenb > 1) && isrealrow(bineq)
     wid = sprintf('%s:BineqIsRow', invoker);
-    wmsg = sprintf('%s: Bineq is a row, but a column is expected; it is transposed.', invoker);
+    wmsg = sprintf('%s: bineq is a row, but a column is expected; it is transposed.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -638,7 +643,7 @@ if ~(isrm && isrv && (mA == lenb) && (nA == lenx0 || nA == 0))
 end
 if (lenb > 1) && isrealrow(beq)
     wid = sprintf('%s:BeqIsRow', invoker);
-    wmsg = sprintf('%s: Beq is a row, but a column is expected; it is transposed.', invoker);
+    wmsg = sprintf('%s: beq is a row, but a column is expected; it is transposed.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
