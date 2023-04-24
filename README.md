@@ -52,7 +52,7 @@ see Section 1 of [a recent paper on Powell's solvers](https://arxiv.org/pdf/2302
 as well as the Google searches of [COBYLA](https://www.google.com/search?q=cobyla)
 and [BOBYQA](https://www.google.com/search?q=bobyqa).
 
-However, Professor Powell's implementation was in [Fortran 77](./fortran/original)
+However, Professor Powell's implementation was done in [Fortran 77](./fortran/original)
 and the code is nontrivial to understand or maintain, let alone extend.
 For many practitioners, this has become an obstacle to exploiting these solvers in their
 applications. Even worse, it has hindered researchers from exploring the wealth left by Professor
@@ -73,7 +73,7 @@ mathematically equivalent to Powell’s, except for the
 [bug fixes](#bug-fixes) and [improvements](#improvements) made intentionally.
 
 The focus is to implement these methods in a **structured** and **modularized** way so that they
-are easily **understandable**, **maintainable**, **extendable**, **fault tolerant**, and **future proof**.
+are **understandable**, **maintainable**, **extendable**, **fault tolerant**, and **future proof**.
 The code will **have no GOTO** (of course)
 and will **use matrix-vector procedures instead of loops** whenever possible.
 In doing so, PRIMA codes the algorithms **in a way that we would present them on a blackboard**.
