@@ -178,10 +178,10 @@ if sequential
             % `prec` is the precision of the comparison (should be 0). The function will raise an error
             % if the solvers behave differently.
             fprintf('\n%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
-            system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir)])]);
+            system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
             compare(solvers, prob, ir, prec, single_test, options);
             fprintf('\n%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
-            system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir)])]);
+            system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
         end
 
         decup(prob);
@@ -213,10 +213,10 @@ else
             % `prec` is the precision of the comparison (should be 0). The function will raise an error
             % if the solvers behave differently.
             fprintf('\n%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
-            system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir)])]);
+            system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
             compare(solvers, prob, ir, prec, single_test, options);
             fprintf('\n%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
-            system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir)])]);
+            system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
         end
 
         decup(prob);
