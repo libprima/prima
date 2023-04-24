@@ -20,7 +20,7 @@ Dedicated to the late Professor [**M. J. D. Powell**](https://www.zhangzk.net/po
 
 ### What
 
-PRIMA is a package for solving general nonlinear optimization problems without using derivatives.
+PRIMA is a package for **solving general nonlinear optimization problems without using derivatives**.
 It provides the reference implementation of Powell's derivative-free optimization methods, i.e., COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 The "P" in the name stands for [**P**owell](https://www.zhangzk.net/powell.html),
 and "RIMA" is an acronym for "**R**eference **I**mplementation with **M**odernization and **A**melioration".
