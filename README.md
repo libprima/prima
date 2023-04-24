@@ -14,6 +14,7 @@ Dedicated to the late Professor [**M. J. D. Powell**](https://www.zhangzk.net/po
 - [A "fun" fact](#a-fun-fact)
 - [Acknowledgment](#acknowledgment)
 - [References](#references)
+- [Mirrors](#mirrors)
 - [Contact](#contact)
 - [Star history](#star-history)
 
@@ -353,6 +354,14 @@ function. Powell did not publish a paper to introduce the algorithm.
 
 - The paper [5] introduces [the PDFO package](https://www.pdfo.net) rather than PRIMA. Nevertheless,
 it provides a good introduction to Powell's methods.
+
+
+### Mirrors
+
+- Gitee: [https://gitee.com/libprima/prima]
+
+- Gitlab: [https://gitlab.com/libprima/prima]
+
 
 ### Contact
 
