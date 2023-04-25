@@ -73,10 +73,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3.5.2
-        # As of 230425, checkout with ssh fails frequently on Windows runners.
-        # with:
+        with:
+          submodules: recursive
         #   ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
-        #   submodules: recursive
+        # As of 230425, checkout with ssh fails frequently on Windows runners.
 
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
