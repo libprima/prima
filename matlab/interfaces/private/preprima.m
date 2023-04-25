@@ -492,7 +492,7 @@ if (lenx0 > maxint())
     % Public/normal error
     error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d variables are allowed.', invoker, maxint());
 end
-x0_is_row = (lenx0 > 1) && isrealrow(x0);
+x0_is_row = (lenx0 >= 2) && isrealrow(x0);
 x0 = double(x0(:));  % Transpose x0 if it is a row; fun and nonlcon will be redefined accordingly.
 abnormal_x0 = isnan(x0) | (abs(x0) >= inf);
 if any(abnormal_x0)
@@ -572,7 +572,7 @@ if ~(isrm && isrv && (mA == lenb) && (nA == lenx0 || nA == 0))
     error(sprintf('%s:InvalidLinIneq', invoker), ...
     '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq) = [length(bineq), length(X0)] unless Aineq = bineq = [].', invoker);
 end
-if (lenb > 1) && isrealrow(bineq)
+if (lenb >= 2) && isrealrow(bineq)
     wid = sprintf('%s:BineqIsRow', invoker);
     wmsg = sprintf('%s: bineq is a row, but a column is expected; it is transposed.', invoker);
     warning(wid, '%s', wmsg);
@@ -641,7 +641,7 @@ if ~(isrm && isrv && (mA == lenb) && (nA == lenx0 || nA == 0))
     error(sprintf('%s:InvalidLinEq', invoker), ...
     '%s: Aeq should be a real matrix, beq should be a real column, and size(Aeq) = [length(beq), length(X0)] unless Aeq = beq = [].', invoker);
 end
-if (lenb > 1) && isrealrow(beq)
+if (lenb >= 2) && isrealrow(beq)
     wid = sprintf('%s:BeqIsRow', invoker);
     wmsg = sprintf('%s: beq is a row, but a column is expected; it is transposed.', invoker);
     warning(wid, '%s', wmsg);
