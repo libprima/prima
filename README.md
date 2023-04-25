@@ -202,11 +202,11 @@ PRIMA has been finished by December 2022.**
 
 The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
 
-### Other languages
+#### Other languages
 
 Given the **modern** Fortran version, the implementation in other languages
 becomes **much easier**, because we now have a structured and modularized implementation as a reference.
-I will implement the methods in other languages in this way. This is the main motivation for developing the modern Fortran version. 
+My team will implement the methods in other languages in this way. This is the main motivation for developing the modern Fortran version first --- to have an implementation that we can use as a reference during the development in other languages. 
 
 ### Bug fixes
 
