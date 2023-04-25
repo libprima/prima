@@ -1,4 +1,3 @@
-## PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration
 <h1 align="center">PRIMA</h1>
 <p align="center"><b>Reference Implementation for Powell's Methods with Modernization and Amelioration</b></p>
 
