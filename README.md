@@ -9,6 +9,7 @@ Dedicated to the late Professor [**M. J. D. Powell**](https://www.zhangzk.net/po
     - [Fortran](#fortran)
     - [MATLAB](#matlab)
     - [Python](#python)
+    - [Other languages](#other-languages)
 - [Bug fixes](#bug-fixes)
 - [Improvements](#improvements)
 - [A "fun" fact](#a-fun-fact)
@@ -33,7 +34,6 @@ PRIMA is part of a research project funded by the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and
 the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at the
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
-It is still **under intensive development**.
 The current version is ready to be [used in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md).
 If you want to use the above-mentioned methods in Python, see the [website](https://www.pdfo.net)
 and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead
@@ -56,7 +56,9 @@ However, Professor Powell's implementation was done in [Fortran 77](./fortran/or
 and the code is nontrivial to understand or maintain, let alone extend.
 For many practitioners, this has become an obstacle to exploiting these solvers in their
 applications. Even worse, it has hindered researchers from exploring the wealth left by Professor
-Powell to us.
+Powell to us. In addition, it is
+[sensible to make the solvers available in more languages](https://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-23-23992), 
+first by wrapping the Fortran code, and then by native implementations. 
 
 Before he passed, Professor Powell had asked me and
 [Professor Nick Gould](https://www.numerical.rl.ac.uk/people/nimg) to maintain his solvers.
@@ -188,10 +190,6 @@ to distribute this large amount of tests to several different Team accounts as f
 After almost **three** years of intensive coding, **the [modern Fortran version](./fortran) of
 PRIMA has been finished by December 2022.**
 
-Given the **modern** Fortran version, the implementation in other languages
-becomes **much easier**, because we now have a structured and modularized implementation as a reference.
-I will implement the methods in other languages in this way.
-
 #### MATLAB
 
 - An [interface](./matlab/interfaces/prima.m) is provided for [using the Fortran implementation under MATLAB](./README_mat.md).
@@ -204,6 +202,11 @@ I will implement the methods in other languages in this way.
 
 The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
 
+### Other languages
+
+Given the **modern** Fortran version, the implementation in other languages
+becomes **much easier**, because we now have a structured and modularized implementation as a reference.
+I will implement the methods in other languages in this way. This is the main motivation for developing the modern Fortran version. 
 
 ### Bug fixes
 
