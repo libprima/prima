@@ -57,8 +57,8 @@ and the code is nontrivial to understand or maintain, let alone extend.
 For many practitioners, this has become an obstacle to exploiting these solvers in their
 applications. Even worse, it has hindered researchers from exploring the wealth left by Professor
 Powell to us. In addition, it is
-[sensible to make the solvers available in more languages](https://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-23-23992), 
-first by wrapping the Fortran code, and then by native implementations. 
+[sensible to make the solvers available in more languages](https://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-23-23992),
+first by wrapping the Fortran code, and then by native implementations.
 
 Before he passed, Professor Powell had asked me and
 [Professor Nick Gould](https://www.numerical.rl.ac.uk/people/nimg) to maintain his solvers.
@@ -206,7 +206,7 @@ The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy
 
 Given the **modern** Fortran version, the implementation in other languages
 becomes **much easier**, because we now have a structured and modularized implementation as a reference.
-My team will implement the methods in other languages in this way. This is the main motivation for developing the modern Fortran version first --- to have an implementation that we can use as a reference during the development in other languages. 
+My team will implement the methods in other languages in this way. This is the main motivation for developing the modern Fortran version first --- to have a modernized implementation that we can refer to during the development in other languages.
 
 ### Bug fixes
 
