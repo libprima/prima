@@ -32,9 +32,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3.5.2
-        with:
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
-          submodules: recursive
+        # As of 230425, checkout with ssh fails frequently on Windows runners.
+        # with:
+        #   ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+        #   submodules: recursive
 
       - name: Setup Fortran
         id: setup_fortran
