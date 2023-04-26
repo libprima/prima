@@ -83,7 +83,22 @@ jobs:
         use_magic_file: 1
         experimental_apply_changes_via_bot: 1
         use_sarif: 1
-        extra_dictionary_limit: 10
+        # Zaikun 20230426: add dictionaries
+        extra_dictionary_limit: 20
+        extra_dictionaries:
+          cspell:bash/bash-words.txt
+          cspell:python/src/common/extra.txt
+          cspell:python/src/python/python-lib.txt
+          cspell:python/src/python/python.txt
+          cspell:python/src/additional_words.txt
+          cspell:software-terms/src/software-terms.txt
+          cspell:software-terms/src/software-tools.txt
+          cspell:cpp/src/cpp.txt
+          cspell:latex/latex.txt
+          cspell:filetypes/filetypes.txt
+          cspell:html/html.txt
+          cspell:html-symbol-entities/entities.txt
+          cspell:css/css.txt
 
   comment-push:
     name: Report (Push)
