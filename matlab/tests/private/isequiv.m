@@ -700,6 +700,10 @@ function blacklist = black_list(solver)
 
 blacklist = {};
 
+% As of 20230426, the objective function of HS67 takes infinite time to be evaluated at some
+% points, e.g., [88.1351318; 12829.9219; 1.0e-5], maybe due to an infinite cycling.
+blacklist = [blacklist, {'HS67'}];
+
 switch(lower(solver))
 case 'uobyqa'
     blacklist = [blacklist, { ...
