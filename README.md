@@ -56,7 +56,7 @@ and the code is nontrivial to understand or maintain, let alone extend.
 For many practitioners, this has become an obstacle to exploiting these solvers in their
 applications. Even worse, it has hindered researchers from exploring the wealth left by Professor
 Powell to us. In addition, it is
-[sensible to make the solvers available in more languages](https://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-23-23992),
+[sensible to make the solvers available in languages other than Fortran](https://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-23-23992),
 first by [wrapping the Fortran code](https://www.pdfo.net), and then by providing native implementations.
 
 Before he passed, Professor Powell had asked me and
