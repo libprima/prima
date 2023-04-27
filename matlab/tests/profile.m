@@ -19,8 +19,8 @@ function output = profile(varargin)
 % - `competitor` (optional) can be any of {'classical', 'base', 'last', 'single', 'quadruple'},
 %   indicating the name of a competitor solver to test (only for profiling)
 %   - 'classical' means to test the classical solvers
-%   - 'base' means to compare with the "base" version of the solver, located under the base/devbase directory
-%   - 'last' means to compare with the last version of the solver, located under the last/ directory
+%   - 'base' means to compare with the "base" version of the solver, located under the .development/base/devbase directory
+%   - 'last' means to compare with the last version of the solver, located under the .development/last/ directory
 %   - 'single' means to compare with the single precision version of the solver, namely the solver
 %     invoked with the 'single' flag set to true
 %   - 'quadruple' means to compare with the quadruple precision version of the solver, namely the solver
@@ -187,7 +187,7 @@ if strcmpi(options.competitor, 'base')
     base_dir_name = 'devbase';
     mfilepath = fileparts(mfilename('fullpath'));  % Directory where this .m file resides.
     root_dir = fileparts(fileparts(mfilepath));  % root directory of the project
-    devbase_dir = fullfile(root_dir, 'base', base_dir_name);
+    devbase_dir = fullfile(root_dir, '.development', 'base', base_dir_name);
     if isunix && ~ismac
         [~, devbase_dir] = system(['realpath ', devbase_dir]);
     end

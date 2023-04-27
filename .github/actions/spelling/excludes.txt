@@ -68,8 +68,8 @@ ignore$
 ^\.github/dependabot.yml
 \.eps$
 \.pdf$
-^base/
-^last/
+^\.development/base/
+^\.development/last/
 rescue_idz/last/
 fortran/original/
 ^\Qbenchmark/rescue_idz/base/230305/fortran/.keep\E$

@@ -32,7 +32,7 @@ prima_dir = test_dir;
 % Path for SOLVER
 solver_dir = fullfile(prima_dir, 'matlab', 'interfaces');
 % Path for SOLVER_last
-last_dir = fullfile(prima_dir, 'last');
+last_dir = fullfile(prima_dir, '.development', 'last');
 solverl_dir = fullfile(last_dir, 'matlab', 'interfaces');
 % The following lines get the path for SOLVER_base
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -40,10 +40,11 @@ solverl_dir = fullfile(last_dir, 'matlab', 'interfaces');
 % used as a benchmark for the development of the current version of the solvers.
 base_dir_name = 'devbase';
 % Define `base_dir` as the `last` directory under the latest base directory. Indeed, the solvers in
-% fullfile(prima_dir, 'base', base_dir_name) and fullfile(prima_dir, 'base', base_dir_name, 'last')
+% fullfile(prima_dir, '.development', 'base', base_dir_name) and
+% fullfile(prima_dir, '.development', 'base', base_dir_name, 'last')
 % are equivalent. We use the latter because the name of the solver there is SOLVER_last, which is
 % convenient for the test.
-base_dir = fullfile(prima_dir, 'base', base_dir_name, 'last');
+base_dir = fullfile(prima_dir, '.development', 'base', base_dir_name, 'last');
 solverb_dir = fullfile(base_dir, 'matlab', 'interfaces');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

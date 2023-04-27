@@ -5,7 +5,7 @@
 - [Why](#why)
 - [How](#how)
 - [Current status](#current-status)
-    - [Fortran](#fortran)
+    - [Modern Fortran](#modern-fortran)
     - [MATLAB](#matlab)
     - [Python](#python)
     - [Other languages](#other-languages)
@@ -57,8 +57,8 @@ For many practitioners, this has become an obstacle to exploiting these solvers 
 applications. Even worse, it has hindered researchers from exploring the wealth left by Professor
 Powell to us. By all means, it is
 [necessary to make the solvers available in languages other than Fortran](https://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-23-23992)
-promptly, first wrapping the Fortran code, which is the objective of [PDFO](https://www.pdfo.net),
-and then providing native implementations, which is the mission of PRIMA.
+promptly, first wrapping Powell's code, which is the objective of [PDFO](https://www.pdfo.net),
+and then providing native and modernized implementations, which is the mission of PRIMA.
 
 Before he passed, Professor Powell had asked me and
 [Professor Nick Gould](https://www.numerical.rl.ac.uk/people/nimg) to maintain his solvers.
@@ -185,14 +185,14 @@ to distribute this large amount of tests to several different Team accounts as f
 
 ### Current status
 
-#### Fortran
+#### Modern Fortran
 
 After almost **three** years of intensive coding, **the [modern Fortran version](./fortran) of
 PRIMA has been finished by December 2022.**
 
 #### MATLAB
 
-- An [interface](./matlab/interfaces/prima.m) is provided for [using the Fortran implementation under MATLAB](./README_mat.md).
+- An [interface](./matlab/interfaces/prima.m) is provided for [using the **modern** Fortran implementation under MATLAB](./README_mat.md).
   Interfaces for other languages will be available later.
 - A [pure MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/) is implemented. It was
   generated straightforwardly (indeed, **automatically**) from an earlier version of the
@@ -206,7 +206,8 @@ The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy
 
 Given the **modern** Fortran version, the implementation in other languages
 becomes **much easier**, because we now have a structured and modularized implementation as a reference.
-My team will implement the methods in other languages in this way. This is the main motivation for developing the modern Fortran version first --- to have a modernized implementation that we can refer to during the development in other languages.
+My team will implement the methods in other languages in this way. This is the main motivation for developing the **modern**
+Fortran version first --- to have a modernized implementation that we can refer to during the development in other languages.
 
 ### Bug fixes
 

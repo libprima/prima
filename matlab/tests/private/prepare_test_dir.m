@@ -47,20 +47,21 @@ end
 
 % The following lines get the path for SOLVER_base
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% `devbase` a subdirectory of fullfile(s_root_dir, 'base'). It contains the "base" version of solvers
-% used as a benchmark for the development of the current version of the solvers.
+% `devbase` a subdirectory of fullfile(s_root_dir, '.development', 'base'). It contains the "base"
+% version of solvers used as a benchmark for the development of the current version of the solvers.
 base_dir_name = 'devbase';
-devbase_dir = fullfile(s_root_dir, 'base', base_dir_name);
+devbase_dir = fullfile(s_root_dir, '.development', 'base', base_dir_name);
 if isunix && ~ismac
     [~, devbase_dir] = system(['realpath ', devbase_dir]);
 end
 fprintf('\nThe base version: %s\n', devbase_dir);
 % Define `base_dir` as the `last` directory under the latest base directory. Indeed, the solvers in
-% fullfile(s_root_dir, 'base', base_dir_name) and fullfile(s_root_dir, 'base', base_dir_name, 'last')
+% fullfile(s_root_dir, '.development', 'base', base_dir_name) and
+% fullfile(s_root_dir, '.development', 'base', base_dir_name, 'last')
 % are equivalent. We use the latter because the name of the solver there is SOLVER_last, which is
 % convenient for the test.
-s_base_dir = fullfile(s_root_dir, 'base', base_dir_name, 'last');
-d_base_dir = fullfile(d_root_dir, 'base', base_dir_name, 'last');
+s_base_dir = fullfile(s_root_dir, '.development', 'base', base_dir_name, 'last');
+d_base_dir = fullfile(d_root_dir, '.development', 'base', base_dir_name, 'last');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -72,7 +73,7 @@ d_base_dir = fullfile(d_root_dir, 'base', base_dir_name, 'last');
 setup_tools = fullfile(s_root_dir, 'matlab', 'setup_tools');
 addpath(setup_tools);  % We use `clean_mex` from `setup_tools` to clean up the compiled MEX files.
 s_mexdir = fullfile(s_matlab_dir, 'interfaces', 'private');
-s_last_mexdir = fullfile(s_root_dir, 'last', 'matlab', 'interfaces', 'private');
+s_last_mexdir = fullfile(s_root_dir, '.development', 'last', 'matlab', 'interfaces', 'private');
 s_base_mexdir = fullfile(s_base_dir, 'matlab', 'interfaces', 'private');
 mexdir_list = {s_mexdir, s_last_mexdir, s_base_mexdir};
 cellfun(@clean_mex, mexdir_list);
@@ -93,15 +94,15 @@ if exist(s_mex_interform, 'dir')
 end
 
 % `root_sub_list: directories/files to be copied under `root_dir`
-root_sub_list = {'fortran', 'last', 'setup.m'};
+root_sub_list = {'fortran', '.development/last', 'setup.m'};
 for il = 1 : length(root_sub_list)
     copyfile(fullfile(s_root_dir, root_sub_list{il}), fullfile(d_root_dir, root_sub_list{il}));
 end
 %!------------------------------------------------------------------------------------------------!%
-% Remove the last/matlab/tests directories under d_root_dir. This is IMPORTANT! Without this, the
-% test will mistakenly call scripts from there, because last/matlab/tests may be added to the path
-% by the corresponding setup.m. This problem occurred on 2022-02-18 and took two days to debug.
-d_last_matlab_test = fullfile(d_root_dir, 'last', 'matlab', 'tests');
+% Remove the .development/last/matlab/tests directories under d_root_dir. This is IMPORTANT! Without
+% this, the test will mistakenly call scripts from there, because last/matlab/tests may be added to
+% the path by the corresponding setup.m. This problem occurred on 2022-02-18 and took two days to debug.
+d_last_matlab_test = fullfile(d_root_dir, '.development', 'last', 'matlab', 'tests');
 if exist(d_last_matlab_test, 'dir')
     rmdir(d_last_matlab_test, 's');
 end
