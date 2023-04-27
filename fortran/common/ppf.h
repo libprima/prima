@@ -6,7 +6,7 @@
  */
 /******************************************************************************/
 /*
- * ppf.h defines the following preprocessing flags (the first value is default).
+ * ppf.h defines the following preprocessing macros (the first value is default).
  *
  * FORTRAN_STANDARD_            which Fortran standard to follow: 2008, 2018, 2023
  * RELEASED_                    released or not: 1, 0
@@ -21,7 +21,10 @@
  *
  * 0. USE THE DEFAULT IF UNSURE.
  *
- * 1. All the macros defined here have a trailing underscore. We avoid the following
+ * 1. The macros can be modified by the -D option of the compilers. For example,
+ *    -DDEBUGGING_=1 will set DEBUGGING_ to 1.
+ *
+ * 2. All the macros defined here have a trailing underscore. We avoid the following
  * patterns, because C and C++ reserve them for the implementation of the languages.
  * - Begins with two underscores
  * - Begins with underscore and uppercase letter
@@ -29,16 +32,16 @@
  * - Contains two consecutive underscores
  * See https://devblogs.microsoft.com/oldnewthing/20230109-00/?p=107685 for details.
  *
- * 2. Setting MAX_HIST_MEM_MB_ to a big value may lead failures due to large arrays.
+ * 3. Setting MAX_HIST_MEM_MB_ to a big value may lead failures due to large arrays.
  *
- * 3. If you change these flags, make sure that your compiler is supportive when
+ * 4. If you change these macros, make sure that your compiler is supportive when
  * changing INTEGER_KIND_ and REAL_PRECISION_.
  *
- * 4. Why not define these flags as parameters in the Fortran code, e.g.,
+ * 5. Why not define these macros as parameters in the Fortran code, e.g.,
  *
  * logical, parameter :: DEBUGGING_ == .false. ?
  *
- * Such a definition will work for DEBUGGING_, but not for the flags that
+ * Such a definition will work for DEBUGGING_, but not for the macros that
  * depend on the compiler. In addition, we can change the value of the macros
  * by the -D option of the compilers, which is impossible if we code them as
  * parameters in the Fortran code.
@@ -137,9 +140,8 @@
 /******************************************************************************/
 /* Will we compile the code with aggressive options (e.g., -Ofast for gfortran)?
  * Some debugging will be disabled if yes (1). Note:
- * 1. It is VALID to set AGGRESSIVE_OPTIONS_ to 0 and DEBUGGING_ to 1 at
- * the same time.
- * 2. When compiled with aggressive options, the code may behave unexpectedly */
+ * 1. It is OK to set AGGRESSIVE_OPTIONS_ = 0 and DEBUGGING_ = 1 simultaneously.
+ * 2. When compiled with aggressive options, the code may behave unexpectedly.*/
 #if !defined AGGRESSIVE_OPTIONS_
 #define AGGRESSIVE_OPTIONS_ 0
 #endif

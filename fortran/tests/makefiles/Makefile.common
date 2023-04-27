@@ -50,12 +50,6 @@ FFLAGSG := -g -O0
 SUFFIXO :=
 SUFFIXG := g
 AGGRESSIVE := 0
-#ifeq ($(FFLAGS),-g)  # This is the default.
-#	FFLAGSO :=
-#	FFLAGSG := -g -O0
-#	SUFFIXO :=
-#	SUFFIXG := g
-#endif
 ifeq ($(FFLAGS),-O)
 	FFLAGSO := $(FFLAGS)
 	FFLAGSG :=

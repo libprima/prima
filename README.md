@@ -57,7 +57,7 @@ For many practitioners, this has become an obstacle to exploiting these solvers 
 applications. Even worse, it has hindered researchers from exploring the wealth left by Professor
 Powell to us. In addition, it is
 [sensible to make the solvers available in more languages](https://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-23-23992),
-first by wrapping the Fortran code, and then by native implementations.
+first by [wrapping the Fortran code](https://www.pdfo.net), and then by providing native implementations.
 
 Before he passed, Professor Powell had asked me and
 [Professor Nick Gould](https://www.numerical.rl.ac.uk/people/nimg) to maintain his solvers.
