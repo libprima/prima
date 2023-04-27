@@ -3,8 +3,8 @@ function output = profile(varargin)
 %
 % Usage:
 %
-%   profile(solver, dimrange, nocompile_flag, sequential_flag, reverse_flag, problem_type, options)
-%   profile(solver, dimrange, reload_flag, reverse_flag, problem_type, options)
+%   profile(solver, dimrange, nocompile_flag, sequential_flag, reverse_flag, problem_type, competitor, options)
+%   profile(solver, dimrange, reload_flag, reverse_flag, problem_type, competitor, options)
 %
 % where
 % - `solver` is the name of the solver to test
@@ -16,12 +16,21 @@ function output = profile(varargin)
 % - `reverse_flag` (optional) is either 'reverse' or 'rev', which means to test the solvers in the reverse order
 % - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
 %   indicating the problem type to test
+% - `competitor` (optional) can be any of {'classical', 'base', 'last', 'single', 'quadruple'},
+%   indicating the name of a competitor solver to test (only for profiling)
+%   - 'classical' means to test the classical solvers
+%   - 'base' means to compare with the "base" version of the solver, located under the base/devbase directory
+%   - 'last' means to compare with the last version of the solver, located under the last/ directory
+%   - 'single' means to compare with the single precision version of the solver, namely the solver
+%     invoked with the 'single' flag set to true
+%   - 'quadruple' means to compare with the quadruple precision version of the solver, namely the solver
+%     invoked with the 'quadruple' flag set to true
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net).
 %
 % Started: October 2021
 %
-% Last Modified: Monday, February 12, 2022 PM09:19:19
+% Last Modified: Thursday, April 27, 2023 PM05:48:00
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 oldpath = path();  % Record the current path.
@@ -169,6 +178,21 @@ end
 setpath(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
 fprintf('\nCurrently in %s\n\n', pwd());
+
+if strcmpi(options.competitor, 'base')
+    % `devbase` a subdirectory of fullfile(s_root_dir, 'base'). It contains the "base" version of
+    % solvers used as a benchmark for the development of the current version of the solvers.
+    % It may not be the latest base version. To make sure that it is the one desired, we print the
+    % path of `devbase` here if the competitor is 'base'
+    base_dir_name = 'devbase';
+    mfilepath = fileparts(mfilename('fullpath'));  % Directory where this .m file resides.
+    root_dir = fileparts(fileparts(mfilepath));  % root directory of the project
+    devbase_dir = fullfile(root_dir, 'base', base_dir_name);
+    if isunix && ~ismac
+        [~, devbase_dir] = system(['realpath ', devbase_dir]);
+    end
+    fprintf('\nThe base version: %s\n', devbase_dir);
+end
 
 if ~isempty(exception)  % Rethrow any exception caught above.
     rethrow(exception);

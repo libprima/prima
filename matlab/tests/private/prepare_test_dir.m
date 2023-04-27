@@ -47,11 +47,14 @@ end
 
 % The following lines get the path for SOLVER_base
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-base_list = dir(fullfile(s_root_dir, 'base'));  % List of all the base directories.
-% The following line keeps only the directories with names that are numbers.
-base_list = base_list([base_list.isdir] & ~isnan(str2double({base_list.name})));
-[~, ind] = sort(str2double({base_list.name}), 'ascend');  % Sort the base directories by name.
-base_dir_name = base_list(ind(end)).name;  % The name of the latest base directory.
+% `devbase` a subdirectory of fullfile(s_root_dir, 'base'). It contains the "base" version of solvers
+% used as a benchmark for the development of the current version of the solvers.
+base_dir_name = 'devbase';
+devbase_dir = fullfile(s_root_dir, 'base', base_dir_name);
+if isunix && ~ismac
+    [~, devbase_dir] = system(['realpath ', devbase_dir]);
+end
+fprintf('\nThe base version: %s\n', devbase_dir);
 % Define `base_dir` as the `last` directory under the latest base directory. Indeed, the solvers in
 % fullfile(s_root_dir, 'base', base_dir_name) and fullfile(s_root_dir, 'base', base_dir_name, 'last')
 % are equivalent. We use the latter because the name of the solver there is SOLVER_last, which is
