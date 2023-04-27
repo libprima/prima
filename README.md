@@ -55,8 +55,8 @@ However, Professor Powell's implementation was done in [Fortran 77](./fortran/or
 and the code is nontrivial to understand or maintain, let alone extend.
 For many practitioners, this has become an obstacle to exploiting these solvers in their
 applications. Even worse, it has hindered researchers from exploring the wealth left by Professor
-Powell to us. In addition, it is
-[sensible to make the solvers available in languages other than Fortran](https://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-23-23992)
+Powell to us. By all means, it is
+[necessary to make the solvers available in languages other than Fortran](https://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-23-23992)
 as soon as possible, first wrapping the Fortran code, which is the objective of [PDFO](https://www.pdfo.net),
 and then providing native implementations, which is the mission of PRIMA.
 
