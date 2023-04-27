@@ -68,7 +68,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
-            cd(fullfile(root_dir, 'base/${{ matrix.version }}/matlab/tests'));
+            cd(fullfile(root_dir, '.development/base/${{ matrix.version }}/matlab/tests'));
             tz = 'Asia/Shanghai';
             dt = datetime('now', 'TimeZone', tz);
             DayMonth = day(dt);
