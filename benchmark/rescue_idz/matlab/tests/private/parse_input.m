@@ -12,7 +12,7 @@ function [solver, options] = parse_input(argin)
 % - `reverse_flag` (optional) is either 'reverse' or 'rev', which means to test the solvers in the reverse order
 % - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
 %   indicating the problem type to test
-% - `competitor` (optional) can be any of {'classical', 'archive', 'last', 'single', 'quadruple'},
+% - `competitor` (optional) can be any of {'classical', 'archiva', 'last', 'single', 'quadruple'},
 % indicating the name of a competitor solver to test (only for profiling)
 % - `options` (optional) is a structure containing options to pass to `isequiv`, `perfdata`, etc.
 %
@@ -50,7 +50,7 @@ sequential_flags = {'sequential', 'seq'};
 reverse_flags = {'reverse', 'rev'};
 reload_flags = {'reload', 'load'};
 problem_types = {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'};
-competitors = {'classical', 'archive', 'last', 'single', 'quadruple'};
+competitors = {'classical', 'archiva', 'last', 'single', 'quadruple'};
 
 % Default values.
 solver = '';
@@ -63,7 +63,7 @@ sequential = false;
 reverse = false;
 reload = false;
 problem_type = '';
-competitor = 'archive';
+competitor = 'archiva';
 
 if any(cellfun(@isstruct, argin))
     options = argin{find(cellfun(@isstruct, argin), 1)};

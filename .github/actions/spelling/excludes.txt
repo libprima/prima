@@ -68,11 +68,11 @@ ignore$
 ^\.github/dependabot.yml
 \.eps$
 \.pdf$
-^\.development/archive/
+^\.development/archiva/
 ^\.development/last/
 rescue_idz/last/
 fortran/original/
-^\Qbenchmark/rescue_idz/archive/230305/fortran/.keep\E$
-^\Qbenchmark/rescue_idz/archive/230305/last/fortran/.keep\E$
-^\Qbenchmark/rescue_idz/archive/230305/last/matlab/.keep\E$
-^\Qbenchmark/rescue_idz/archive/230305/matlab/.keep\E$
+^\Qbenchmark/rescue_idz/archiva/230305/fortran/.keep\E$
+^\Qbenchmark/rescue_idz/archiva/230305/last/fortran/.keep\E$
+^\Qbenchmark/rescue_idz/archiva/230305/last/matlab/.keep\E$
+^\Qbenchmark/rescue_idz/archiva/230305/matlab/.keep\E$

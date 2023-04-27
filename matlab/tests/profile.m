@@ -16,10 +16,10 @@ function output = profile(varargin)
 % - `reverse_flag` (optional) is either 'reverse' or 'rev', which means to test the solvers in the reverse order
 % - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
 %   indicating the problem type to test
-% - `competitor` (optional) can be any of {'classical', 'archive', 'last', 'single', 'quadruple'},
+% - `competitor` (optional) can be any of {'classical', 'archiva', 'last', 'single', 'quadruple'},
 %   indicating the name of a competitor solver to test (only for profiling)
 %   - 'classical' means to test the classical solvers
-%   - 'archive' means to compare with the "archive" version of the solver, located under the .development/archive/dev_arch directory
+%   - 'archiva' means to compare with the "archiva" version of the solver, located under the .development/archiva/dev_arch directory
 %   - 'last' means to compare with the last version of the solver, located under the .development/last/ directory
 %   - 'single' means to compare with the single precision version of the solver, namely the solver
 %     invoked with the 'single' flag set to true
@@ -179,19 +179,19 @@ setpath(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
 fprintf('\nCurrently in %s\n\n', pwd());
 
-if strcmpi(options.competitor, 'archive')
-    % `dev_arch` a subdirectory of fullfile(s_root_dir, 'archive'). It contains the "archive" version of
+if strcmpi(options.competitor, 'archiva')
+    % `dev_arch` a subdirectory of fullfile(s_root_dir, 'archiva'). It contains the "archiva" version of
     % solvers used as a benchmark for the development of the current version of the solvers.
-    % It may not be the latest archive version. To make sure that it is the one desired, we print the
-    % path of `dev_arch` here if the competitor is 'archive'
-    archive_dir_name = 'dev_arch';
+    % It may not be the latest archiva version. To make sure that it is the one desired, we print the
+    % path of `dev_arch` here if the competitor is 'archiva'
+    archiva_dir_name = 'dev_arch';
     mfilepath = fileparts(mfilename('fullpath'));  % Directory where this .m file resides.
     root_dir = fileparts(fileparts(mfilepath));  % root directory of the project
-    dev_arch_dir = fullfile(root_dir, '.development', 'archive', archive_dir_name);
+    dev_arch_dir = fullfile(root_dir, '.development', 'archiva', archiva_dir_name);
     if isunix && ~ismac
         [~, dev_arch_dir] = system(['realpath ', dev_arch_dir]);
     end
-    fprintf('\nThe archive version: %s\n', dev_arch_dir);
+    fprintf('\nThe archiva version: %s\n', dev_arch_dir);
 end
 
 if ~isempty(exception)  % Rethrow any exception caught above.

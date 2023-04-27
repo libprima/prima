@@ -13,7 +13,7 @@ profile_lincoa_small.yml:   - push
 
 primalib/PRIMA:
 profile_all.yml:    - cron: '0 16 * * *'
-verify_archive.yml:    - cron: '0 17 * * *'
+verify_archiva.yml:    - cron: '0 17 * * *'
 test_matlab.yml:    - cron: '0 1, * * *', push
 test_g95.yml:    - cron: '0 5 * * *'
 test_sunf95.yml:    - cron: '0 7 * * *'

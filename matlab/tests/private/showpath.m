@@ -20,7 +20,7 @@ for isol = 1 : length(solvers)
     solver = regexprep(solver, '_classical$', '');
     solver = regexprep(solver, '_single$', '');
     solver = regexprep(solver, '_quadruple$', '');
-    solver = regexprep(solver, '_archive$', '_last');
+    solver = regexprep(solver, '_archiva$', '_last');
     fprintf('\n%s: %s', solvers{isol}, which(solver));
 end
 fprintf('\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n');
