@@ -1,4 +1,4 @@
-name: Verification, base
+name: Verification, archive
 
 on:
   # Trigger the workflow on push or pull request
@@ -68,14 +68,14 @@ jobs:
 
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
-            cd(fullfile(root_dir, '.development/base/${{ matrix.version }}/matlab/tests'));
+            cd(fullfile(root_dir, '.development/archive/${{ matrix.version }}/matlab/tests'));
             tz = 'Asia/Shanghai';
             dt = datetime('now', 'TimeZone', tz);
             DayMonth = day(dt);
             options = struct();
             options.seed = 10000*mod(year(dt), 100) + 100*week(dt) + hour(dt);
             options.nr = 1; % Since the code will not change along the time, big nr is not needed.
-            options.no_classical = true;  % Starting from 20230212, we do not verify the classical version for the base.
+            options.no_classical = true;  % Starting from 20230212, we do not verify the classical version for the archive.
             options
             verify('${{ matrix.solver }}', '${{ matrix.dim }}', 'seq', options);  % Zaikun 20230328: Conduct the verification in sequential to avoid the debugging pain.
             delete([upper('${{ matrix.solver }}'), '_output.txt']);
