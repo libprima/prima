@@ -13,7 +13,14 @@ function [solver, options] = parse_input(argin)
 % - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
 %   indicating the problem type to test
 % - `competitor` (optional) can be any of {'classical', 'base', 'last', 'single', 'quadruple'},
-% indicating the name of a competitor solver to test (only for profiling)
+%   indicating the name of a competitor solver to test (only for profiling)
+%   - 'classical' means to test the classical solvers
+%   - 'base' means to compare with the "base" version of the solver, located under the base/devbase directory
+%   - 'last' means to compare with the last version of the solver, located under the last/ directory
+%   - 'single' means to compare with the single precision version of the solver, namely the solver
+%     invoked with the 'single' flag set to true
+%   - 'quadruple' means to compare with the quadruple precision version of the solver, namely the solver
+%     invoked with the 'quadruple' flag set to true
 % - `options` (optional) is a structure containing options to pass to `isequiv`, `perfdata`, etc.
 %
 % If the testing function is `verify`, then the following signatures are also supported:
@@ -38,7 +45,7 @@ function [solver, options] = parse_input(argin)
 %
 % Started: July 2020
 %
-% Last Modified: Monday, October 04, 2021 PM09:19:19
+% Last Modified: Thursday, April 27, 2023 PM05:48:00
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 callstack = dbstack;
