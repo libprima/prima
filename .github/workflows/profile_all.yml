@@ -24,7 +24,7 @@ jobs:
         os: [ubuntu-latest]
         dim: [all]
         solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]
-        competitor: [classical, archive]
+        competitor: [classical, archiva]
         with_optim_toolbox: [yes, no]
         ctol_indicator: [0, 1, 2]
         exclude:

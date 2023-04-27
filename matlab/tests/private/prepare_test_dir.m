@@ -45,23 +45,23 @@ if ~exist(d_matlab_dir, 'dir')
     mkdir(d_matlab_dir);
 end
 
-% The following lines get the path for SOLVER_archive
+% The following lines get the path for SOLVER_archiva
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% `dev_arch` a subdirectory of fullfile(s_root_dir, '.development', 'archive'). It contains the "archive"
+% `dev_arch` a subdirectory of fullfile(s_root_dir, '.development', 'archiva'). It contains the "archiva"
 % version of solvers used as a benchmark for the development of the current version of the solvers.
-archive_dir_name = 'dev_arch';
-dev_arch_dir = fullfile(s_root_dir, '.development', 'archive', archive_dir_name);
+archiva_dir_name = 'dev_arch';
+dev_arch_dir = fullfile(s_root_dir, '.development', 'archiva', archiva_dir_name);
 if isunix && ~ismac
     [~, dev_arch_dir] = system(['realpath ', dev_arch_dir]);
 end
-fprintf('\nThe archive version: %s\n', dev_arch_dir);
-% Define `archive_dir` as the `last` directory under the latest archive directory. Indeed, the solvers in
-% fullfile(s_root_dir, '.development', 'archive', archive_dir_name) and
-% fullfile(s_root_dir, '.development', 'archive', archive_dir_name, 'last')
+fprintf('\nThe archiva version: %s\n', dev_arch_dir);
+% Define `archiva_dir` as the `last` directory under the latest archiva directory. Indeed, the solvers in
+% fullfile(s_root_dir, '.development', 'archiva', archiva_dir_name) and
+% fullfile(s_root_dir, '.development', 'archiva', archiva_dir_name, 'last')
 % are equivalent. We use the latter because the name of the solver there is SOLVER_last, which is
 % convenient for the test.
-s_archive_dir = fullfile(s_root_dir, '.development', 'archive', archive_dir_name, 'last');
-d_archive_dir = fullfile(d_root_dir, '.development', 'archive', archive_dir_name, 'last');
+s_archiva_dir = fullfile(s_root_dir, '.development', 'archiva', archiva_dir_name, 'last');
+d_archiva_dir = fullfile(d_root_dir, '.development', 'archiva', archiva_dir_name, 'last');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -74,8 +74,8 @@ setup_tools = fullfile(s_root_dir, 'matlab', 'setup_tools');
 addpath(setup_tools);  % We use `clean_mex` from `setup_tools` to clean up the compiled MEX files.
 s_mexdir = fullfile(s_matlab_dir, 'interfaces', 'private');
 s_last_mexdir = fullfile(s_root_dir, '.development', 'last', 'matlab', 'interfaces', 'private');
-s_archive_mexdir = fullfile(s_archive_dir, 'matlab', 'interfaces', 'private');
-mexdir_list = {s_mexdir, s_last_mexdir, s_archive_mexdir};
+s_archiva_mexdir = fullfile(s_archiva_dir, 'matlab', 'interfaces', 'private');
+mexdir_list = {s_mexdir, s_last_mexdir, s_archiva_mexdir};
 cellfun(@clean_mex, mexdir_list);
 rmpath(setup_tools);  % Remove `setup_tools` from path since it has finishes its job.
 %%%!!!----------------------------------------------------------------------------------------!!!%%%
@@ -125,16 +125,16 @@ mkdir(prima_matlab_test);  % Necessary, because `setup.m` may try adding this di
 % `testprima` is needed by `pdv`.
 copyfile(fullfile(s_matlab_dir, 'tests', 'testprima.m'), fullfile(prima_matlab_test, 'testprima.m'));
 
-% `archive_sub_list`: directories/files to be copied under `archive_dir`
-archive_sub_list = {'matlab', 'fortran', 'setup.m'};
-for il = 1 : length(archive_sub_list)
-    copyfile(fullfile(s_archive_dir, archive_sub_list{il}), fullfile(d_archive_dir, archive_sub_list{il}));
+% `archiva_sub_list`: directories/files to be copied under `archiva_dir`
+archiva_sub_list = {'matlab', 'fortran', 'setup.m'};
+for il = 1 : length(archiva_sub_list)
+    copyfile(fullfile(s_archiva_dir, archiva_sub_list{il}), fullfile(d_archiva_dir, archiva_sub_list{il}));
 end
 %!------------------------------------------------------------------------------------------------!%
-% Remove the matlab/tests directories under d_archive_dir.
-d_archive_matlab_test = fullfile(d_archive_dir, 'matlab', 'tests');
-if exist(d_archive_matlab_test, 'dir')
-    rmdir(d_archive_matlab_test, 's');
+% Remove the matlab/tests directories under d_archiva_dir.
+d_archiva_matlab_test = fullfile(d_archiva_dir, 'matlab', 'tests');
+if exist(d_archiva_matlab_test, 'dir')
+    rmdir(d_archiva_matlab_test, 's');
 end
-mkdir(d_archive_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
+mkdir(d_archiva_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 %!------------------------------------------------------------------------------------------------!%

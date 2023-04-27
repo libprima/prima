@@ -141,7 +141,7 @@ to distribute this large amount of tests to several different Team accounts as f
 - [Tests](https://github.com/primalib/prima/actions) at [primalib/prima](https://github.com/primalib/prima)
 
     - [![Test MATLAB](https://github.com/primalib/prima/actions/workflows/test_matlab.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_matlab.yml)
-    - [![Verification, archive](https://github.com/primalib/prima/actions/workflows/verify_archive.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/verify_archive.yml)
+    - [![Verification, archiva](https://github.com/primalib/prima/actions/workflows/verify_archiva.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/verify_archiva.yml)
     - [![Plot performance profiles for all problems](https://github.com/primalib/prima/actions/workflows/profile_all.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_all.yml)
     - [![Plot performance profiles, single](https://github.com/primalib/prima/actions/workflows/profile_single.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_single.yml)
     - [![Plot performance profiles, quadruple](https://github.com/primalib/prima/actions/workflows/profile_quadruple.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_quadruple.yml)

@@ -73,7 +73,7 @@ jobs:
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
             % Remove unnecessary files to make sure that we are testing the correct version.
-            files = {'.development/archive', 'fortran', '.development/last', 'matlab'};
+            files = {'.development/archiva', 'fortran', '.development/last', 'matlab'};
             for ifile = 1 : length(files)
                 rmdir(fullfile(root_dir, files{ifile}), 's');
             end

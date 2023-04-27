@@ -388,7 +388,7 @@ if ischstr(solver) && ~strcmp(solver, 'fmincon') && ~strcmpi(solver, 'fminunc') 
     solver = regexprep(solver, '_classical$', '');
     solver = regexprep(solver, '_single$', '');
     solver = regexprep(solver, '_quadruple$', '');
-    solver = regexprep(solver, '_archive$', '_last');
+    solver = regexprep(solver, '_archiva$', '_last');
     solver = str2func(solver);
 end
 

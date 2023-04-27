@@ -507,9 +507,9 @@ if (ismember('cobyla', solvers) && fx1 == fx2 && norm(x1-x2)>0) ...
     fprintf('x1 changed to x2.\n');
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Zaikun 20220214: The following is only for base 2202.113954
+% Zaikun 20220214: The following is only for archiva 2202.113954
 % Without this, the following test fails:
-%%cd('base/2202.113954/matlab/tests');
+%%cd('archiva/2202.113954/matlab/tests');
 %%options=[]; options.yw=28; verify('cobyla', 'CHACONN1', 8, options);
 if ismember('cobyla', solvers) && norm(x1-x2)>0 && isfield(output1, 'constrviolation') && isfield(output2, 'constrviolation') && ...
         ((fx1 < fx2  && output1.constrviolation > output2.constrviolation) || ...

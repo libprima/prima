@@ -1,31 +1,31 @@
 - LINCOA
 
 1. SEGFAULT
-Version: archive 220208
+Version: archiva 220208
 Date: 20220209
 YW: 27
 %%%%%%
-cd('archive/220208/matlab/tests');
+cd('archiva/220208/matlab/tests');
 options = []; options.yw = 27; verify('lincoa', 'LSNNODOC', 0, options);
 %%%%%%
 Fix: blacklist 'LSNNODOC'
 
 2. SEGFAULT
-Version: archive 220208
+Version: archiva 220208
 Date: 20220213
 YW: 28
 %%%%%%
-cd('archive/220208/matlab/tests');
+cd('archiva/220208/matlab/tests');
 options = []; options.yw = 28; verify('lincoa', 'HS55', 13, options);
 %%%%%%
 Fix: blacklist 'HS55'
 
 3. SEGFAULT
-Version: archive 220227
+Version: archiva 220227
 Date: 20220306
 YW: 2211
 %%%%%%
-cd('archive/220227/matlab/tests');
+cd('archiva/220227/matlab/tests');
 options = []; options.yw = 2211; verify('lincoa', options);
 %%%%%%
 Fix: This seems to be caused by problem AVGASA or AVGASB; block them for the moment
@@ -34,47 +34,47 @@ Fix: This seems to be caused by problem AVGASA or AVGASB; block them for the mom
 - BOBYQA
 
 1. bobyqa returns an fx that does not match x.
-Version: archive 220208
+Version: archiva 220208
 Date: 20220209
 YW: 27
 Reproduce:
 %%%%%%
-cd('archive/220208/matlab/tests');
+cd('archiva/220208/matlab/tests');
 options = []; options.yw = 27; verify('bobyqa', 'STREG', 27, options);
 %%%%%%
 Fix: blacklist 'STREG'
 
 2. bobyqaN returns an fx that does not match x (Should be tested again when the modernization finishes).
-Version: archive 220513
+Version: archiva 220513
 Date: 20220514
 YW: 222017
 Parallel of sequential: Parallel
 Reproduce:
 %%%%%%
-cd('archive/220513/matlab/tests');
+cd('archiva/220513/matlab/tests');
 options = []; options.yw = 2222017; verify('bobyqa', 'PALMER3A', options);  % Cannot reproduce locally
 %%%%%%
 Fix: blacklist 'PALMER3A'
 
 2. bobyqaN returns an fx that does not match x (Should be tested again when the modernization finishes).
-Version: archive 220513
+Version: archiva 220513
 Date: 20220603
 YW: 222316
 Parallel of sequential: Parallel
 Reproduce:
 %%%%%%
-cd('archive/220513/matlab/tests'); options = []; options.yw = 222316; verify('bobyqa', 'HS4', options);  % Cannot reproduce locally
+cd('archiva/220513/matlab/tests'); options = []; options.yw = 222316; verify('bobyqa', 'HS4', options);  % Cannot reproduce locally
 %%%%%%
 Fix: blacklist 'HS4'
 
 2. bobyqaN returns an fx that does not match x (Should be tested again when the modernization finishes).
-Version: archive 220513
+Version: archiva 220513
 Date: 20220718
 YW: 222902
 Parallel of sequential: Parallel
 Reproduce:
 %%%%%%
-cd('archive/220513/matlab/tests'); options = []; options.yw = 222902; verify('bobyqa', 'PALMER4A', options);  % Cannot reproduce locally
+cd('archiva/220513/matlab/tests'); options = []; options.yw = 222902; verify('bobyqa', 'PALMER4A', options);  % Cannot reproduce locally
 %%%%%%
 Fix: blacklist 'PALMER4A'
 
@@ -83,11 +83,11 @@ Fix: blacklist 'PALMER4A'
 - COBYLA
 
 1. cobylan and cobyla selects different x for CHACONN1, 8; no one is better than the other
-Version: archive 220208
+Version: archiva 220208
 Date: 20220213
 YW: 28
 %%%%%%
-cd('archive/220208/matlab/tests');
+cd('archiva/220208/matlab/tests');
 options=[]; options.yw=28; verify('cobyla', 'CHACONN1', 8, options);
 %%%%%%
 Fix: for this version, ignore this kind of difference by modifying isequiv.m

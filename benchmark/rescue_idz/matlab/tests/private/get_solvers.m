@@ -4,16 +4,16 @@ function spaths = get_solvers(solvers, test_dir, options)
 % SOLVER, a member of {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'}.
 % SOLVER_last, the version SOLVER in the `last` directory.
 % SOLVER_classical|_single|_quadruple, the classical/single-precision/quadruple-precision version of SOLVER.
-% SOLVER_archive, the version of SOLVER in the `archive` directory under `last_xxxx`, which is equivalent
-% to the latest archive version of SOLVER.
+% SOLVER_archiva, the version of SOLVER in the `archiva` directory under `last_xxxx`, which is equivalent
+% to the latest archiva version of SOLVER.
 
 % We allow `solvers` to be the name of a particular solver.
 if isa(solvers, 'char') || isa(solvers, 'string')
     solvers = {solvers};
 end
 
-% We do not allow `solvers` to contain both XXXX_last and YYYY_archive even if XXXX and YYYY are different.
-assert(~(any(endsWith(solvers, '_last')) && any(endsWith(solvers, '_archive'))));
+% We do not allow `solvers` to contain both XXXX_last and YYYY_archiva even if XXXX and YYYY are different.
+assert(~(any(endsWith(solvers, '_last')) && any(endsWith(solvers, '_archiva'))));
 
 % `invoker` is the function that calls this function.
 callstack = dbstack;
@@ -34,19 +34,19 @@ solver_dir = fullfile(prima_dir, 'matlab', 'interfaces');
 % Path for SOLVER_last
 last_dir = fullfile(prima_dir, 'last');
 solverl_dir = fullfile(last_dir, 'matlab', 'interfaces');
-% The following lines get the path for SOLVER_archive
+% The following lines get the path for SOLVER_archiva
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-archive_list = dir(fullfile(prima_dir, 'archive'));  % List of all the archive directories.
+archiva_list = dir(fullfile(prima_dir, 'archiva'));  % List of all the archiva directories.
 % The following line keeps only the directories with names that are numbers.
-archive_list = archive_list([archive_list.isdir] & ~isnan(str2double({archive_list.name})));
-[~, ind] = sort(str2double({archive_list.name}), 'ascend');  % Sort the archive directories by name.
-archive_dir_name = archive_list(ind(end)).name;  % The name of the latest archive directory.
-% Define `archive_dir` as the `last` directory under the latest archive directory. Indeed, the solvers in
-% fullfile(prima_dir, 'archive', archive_dir_name) and fullfile(prima_dir, 'archive', archive_dir_name, 'last')
+archiva_list = archiva_list([archiva_list.isdir] & ~isnan(str2double({archiva_list.name})));
+[~, ind] = sort(str2double({archiva_list.name}), 'ascend');  % Sort the archiva directories by name.
+archiva_dir_name = archiva_list(ind(end)).name;  % The name of the latest archiva directory.
+% Define `archiva_dir` as the `last` directory under the latest archiva directory. Indeed, the solvers in
+% fullfile(prima_dir, 'archiva', archiva_dir_name) and fullfile(prima_dir, 'archiva', archiva_dir_name, 'last')
 % are equivalent. We use the latter because the name of the solver there is SOLVER_last, which is
 % convenient for the test.
-archive_dir = fullfile(prima_dir, 'archive', archive_dir_name, 'last');
-solvera_dir = fullfile(archive_dir, 'matlab', 'interfaces');
+archiva_dir = fullfile(prima_dir, 'archiva', archiva_dir_name, 'last');
+solvera_dir = fullfile(archiva_dir, 'matlab', 'interfaces');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Define `spaths`, a cell array of solver paths.
@@ -54,7 +54,7 @@ spaths = {solver_dir};
 if any(endsWith(solvers, '_last'))
     spaths = [spaths, {solverl_dir}];
 end
-if any(endsWith(solvers, '_archive'))
+if any(endsWith(solvers, '_archiva'))
     spaths = [spaths, {solvera_dir}];
 end
 
@@ -117,9 +117,9 @@ try
         % The following `cd` decides which version of the solver to compile.
         if endsWith(solver, '_last')
             cd(last_dir);  % Compile SOLVER_last
-        elseif endsWith(solver, '_archive')
-            solver = regexprep(solver, '_archive', '_last');  % Compile SOLVER_archive
-            cd(archive_dir);
+        elseif endsWith(solver, '_archiva')
+            solver = regexprep(solver, '_archiva', '_last');  % Compile SOLVER_archiva
+            cd(archiva_dir);
         else  % SOLVER or SOLVER_classical|_single|_quadruple
             cd(prima_dir);  % Compile SOLVER
         end
