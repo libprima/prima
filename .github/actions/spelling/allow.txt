@@ -793,7 +793,7 @@ expr
 falseloc
 fautomatic
 fbacktrace
-fbase
+farchive
 fbeg
 fbounds
 fcheck
@@ -1145,7 +1145,7 @@ jsav
 jsl
 jsu
 jwd
-kbase
+karchive
 khist
 kopt
 korig
@@ -1617,7 +1617,7 @@ severes
 sfixsq
 sfrac
 sgk
-shiftbase
+shiftarchive
 shortd
 showpath
 shs
@@ -1636,7 +1636,7 @@ smatv
 snan
 soldir
 solname
-solverb
+solvera
 solverl
 spaths
 spdiags
@@ -1858,7 +1858,7 @@ www
 wzsav
 xalt
 xargs
-xbase
+xarchive
 xbdi
 xcache
 xcauchy
@@ -1953,4 +1953,4 @@ NInequality
 gitlab
 href
 DEGENLPA
-devbase
+devarchive

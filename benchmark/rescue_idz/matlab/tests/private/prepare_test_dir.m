@@ -45,19 +45,19 @@ if ~exist(d_matlab_dir, 'dir')
     mkdir(d_matlab_dir);
 end
 
-% The following lines get the path for SOLVER_base
+% The following lines get the path for SOLVER_archive
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-base_list = dir(fullfile(s_root_dir, 'base'));  % List of all the base directories.
+archive_list = dir(fullfile(s_root_dir, 'archive'));  % List of all the archive directories.
 % The following line keeps only the directories with names that are numbers.
-base_list = base_list([base_list.isdir] & ~isnan(str2double({base_list.name})));
-[~, ind] = sort(str2double({base_list.name}), 'ascend');  % Sort the base directories by name.
-base_dir_name = base_list(ind(end)).name;  % The name of the latest base directory.
-% Define `base_dir` as the `last` directory under the latest base directory. Indeed, the solvers in
-% fullfile(s_root_dir, 'base', base_dir_name) and fullfile(s_root_dir, 'base', base_dir_name, 'last')
+archive_list = archive_list([archive_list.isdir] & ~isnan(str2double({archive_list.name})));
+[~, ind] = sort(str2double({archive_list.name}), 'ascend');  % Sort the archive directories by name.
+archive_dir_name = archive_list(ind(end)).name;  % The name of the latest archive directory.
+% Define `archive_dir` as the `last` directory under the latest archive directory. Indeed, the solvers in
+% fullfile(s_root_dir, 'archive', archive_dir_name) and fullfile(s_root_dir, 'archive', archive_dir_name, 'last')
 % are equivalent. We use the latter because the name of the solver there is SOLVER_last, which is
 % convenient for the test.
-s_base_dir = fullfile(s_root_dir, 'base', base_dir_name, 'last');
-d_base_dir = fullfile(d_root_dir, 'base', base_dir_name, 'last');
+s_archive_dir = fullfile(s_root_dir, 'archive', archive_dir_name, 'last');
+d_archive_dir = fullfile(d_root_dir, 'archive', archive_dir_name, 'last');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -70,8 +70,8 @@ setup_tools = fullfile(s_root_dir, 'matlab', 'setup_tools');
 addpath(setup_tools);  % We use `clean_mex` from `setup_tools` to clean up the compiled MEX files.
 s_mexdir = fullfile(s_matlab_dir, 'interfaces', 'private');
 s_last_mexdir = fullfile(s_root_dir, 'last', 'matlab', 'interfaces', 'private');
-s_base_mexdir = fullfile(s_base_dir, 'matlab', 'interfaces', 'private');
-mexdir_list = {s_mexdir, s_last_mexdir, s_base_mexdir};
+s_archive_mexdir = fullfile(s_archive_dir, 'matlab', 'interfaces', 'private');
+mexdir_list = {s_mexdir, s_last_mexdir, s_archive_mexdir};
 cellfun(@clean_mex, mexdir_list);
 rmpath(setup_tools);  % Remove `setup_tools` from path since it has finishes its job.
 %%%!!!----------------------------------------------------------------------------------------!!!%%%
@@ -121,16 +121,16 @@ mkdir(prima_matlab_test);  % Necessary, because `setup.m` may try adding this di
 % `testprima` is needed by `pdv`.
 copyfile(fullfile(s_matlab_dir, 'tests', 'testprima.m'), fullfile(prima_matlab_test, 'testprima.m'));
 
-% `base_sub_list`: directories/files to be copied under `base_dir`
-base_sub_list = {'matlab', 'fortran', 'setup.m'};
-for il = 1 : length(base_sub_list)
-    copyfile(fullfile(s_base_dir, base_sub_list{il}), fullfile(d_base_dir, base_sub_list{il}));
+% `archive_sub_list`: directories/files to be copied under `archive_dir`
+archive_sub_list = {'matlab', 'fortran', 'setup.m'};
+for il = 1 : length(archive_sub_list)
+    copyfile(fullfile(s_archive_dir, archive_sub_list{il}), fullfile(d_archive_dir, archive_sub_list{il}));
 end
 %!------------------------------------------------------------------------------------------------!%
-% Remove the matlab/tests directories under d_base_dir.
-d_base_matlab_test = fullfile(d_base_dir, 'matlab', 'tests');
-if exist(d_base_matlab_test, 'dir')
-    rmdir(d_base_matlab_test, 's');
+% Remove the matlab/tests directories under d_archive_dir.
+d_archive_matlab_test = fullfile(d_archive_dir, 'matlab', 'tests');
+if exist(d_archive_matlab_test, 'dir')
+    rmdir(d_archive_matlab_test, 's');
 end
-mkdir(d_base_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
+mkdir(d_archive_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 %!------------------------------------------------------------------------------------------------!%
