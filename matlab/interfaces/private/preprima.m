@@ -594,7 +594,7 @@ end
 inf_ineq = any(abs(Aineq) >= inf, 2) | (bineq <= -inf);
 if any(inf_ineq)
     wid = sprintf('%s:InfInequality', invoker);
-    wmsg = sprintf('%s: Aineq contains infinite values or bineq contains -Inf; the problem is considered as infeasible.', invoker);
+    wmsg = sprintf('%s: Aineq contains infinite values or bineq contains -Inf; the problem is considered infeasible.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -663,7 +663,7 @@ end
 inf_eq = any(abs(Aeq) >= inf, 2) | (abs(beq) >= inf);
 if any(inf_eq)
     wid = sprintf('%s:InfEquality', invoker);
-    wmsg = sprintf('%s: Aeq or beq contains infinite values; the problem is considered as infeasible.', invoker);
+    wmsg = sprintf('%s: Aeq or beq contains infinite values; the problem is considered infeasible.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
