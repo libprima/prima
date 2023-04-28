@@ -194,14 +194,14 @@ PRIMA has been finished by December 2022.**
 
 - An [interface](./matlab/interfaces/prima.m) is provided for [using the **modern** Fortran implementation under MATLAB](./README_mat.md).
   Interfaces for other languages will be available later.
-- A [pure MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/) is implemented. It was
+- <a name="newuoa_mat"></a>A [pure MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/) is implemented. It was
   generated straightforwardly (indeed, **automatically**) from an earlier version of the
   **modern** Fortran code (with the help of Mr. Galann Pennec).
 
 #### Python
 
 - The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
-- Our ultimate objective is to have a native Python implementation of PRIMA that does not depend on Fortran, similar to what we have done with NEWUOA in MATLAB as mentioned above.
+- Our ultimate objective is to have a native Python implementation of PRIMA that does not depend on Fortran, similar to what we have done with NEWUOA in MATLAB as [mentioned above](#newuoa_mat).
 
 #### Other languages
 
