@@ -2,9 +2,9 @@ function isequiv(solvers, options)
 %This function verifies that two solvers produce the same result on CUTEst problems.
 %
 % As an example:
-% options=[]; options.maxdi=20; options.nr=20; isequiv({'newuoa', 'newuoa_last'}, options)
+% options=[]; options.maxdi=20; options.nr=20; isequiv({'newuoa', 'newuoa_norma'}, options)
 %
-% verifies newuoa against newuoa_last on problems of at most 20 variables, 20 random runs for each problem.
+% verifies newuoa against newuoa_norma on problems of at most 20 variables, 20 random runs for each problem.
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net).
 %
@@ -354,24 +354,24 @@ prob.options = test_options;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BEGIN: Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % N.B.: In some tests, we may invoke this function with solvers{1} == solvers{2}. So do NOT assume
-% that one of the solvers is 'SOLVER' and the other is 'SOLVER_last'.
+% that one of the solvers is 'SOLVER' and the other is 'SOLVER_norma'.
 
 % Use function handle to avoid `feval`.
 solver1 = str2func(solvers{1});
 solver2 = str2func(solvers{2});
 
-if endsWith(solvers{1}, '_last')
-    package1 = @prima_last;
+if endsWith(solvers{1}, '_norma')
+    package1 = @prima_norma;
 else
     package1 = @prima;
 end
-if endsWith(solvers{2}, '_last')
-    package2 = @prima_last;
+if endsWith(solvers{2}, '_norma')
+    package2 = @prima_norma;
 else
     package2 = @prima;
 end
 
-tested_solver_name = regexprep(solvers{1}, '_last', '');
+tested_solver_name = regexprep(solvers{1}, '_norma', '');
 
 exception = [];
 try
@@ -458,7 +458,7 @@ end
 %minfhist = min(length(output1.fhist), length(output2.fhist));
 
 %% NEWUOA
-%if strcmpi(solvers{1}, 'newuoa_last') && strcmpi(solvers{2}, 'newuoa') && exitflag1 == 2 && exitflag2 ~=2 ...
+%if strcmpi(solvers{1}, 'newuoa_norma') && strcmpi(solvers{2}, 'newuoa') && exitflag1 == 2 && exitflag2 ~=2 ...
 %        && fx2 <= fx1 && output1.funcCount <= output2.funcCount ...
 %        && all(output2.fhist(end-minfhist+1:end-(output2.funcCount-output1.funcCount)) ...
 %        == output1.fhist(end-minfhist+(output2.funcCount-output1.funcCount)+1:end))
@@ -469,7 +469,7 @@ end
 %    output2.funcCount = output1.funcCount;
 %    fprintf('The original solver exits due to failure of the TR subproblem solver.\n');
 %end
-%if strcmpi(solvers{1}, 'newuoa') && strcmpi(solvers{2}, 'newuoa_last') && exitflag2 == 2 && exitflag1 ~=2 ...
+%if strcmpi(solvers{1}, 'newuoa') && strcmpi(solvers{2}, 'newuoa_norma') && exitflag2 == 2 && exitflag1 ~=2 ...
 %        && fx1 <= fx2 && output2.funcCount <= output1.funcCount ...
 %        && all(output1.fhist(end-minfhist+1:end-(output1.funcCount-output2.funcCount)) ...
 %        == output2.fhist(end-minfhist+(output1.funcCount-output2.funcCount)+1:end))

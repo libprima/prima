@@ -1637,7 +1637,7 @@ snan
 soldir
 solname
 solvera
-solverl
+solvern
 spaths
 spdiags
 speye
@@ -1955,3 +1955,4 @@ href
 DEGENLPA
 dev
 archiva
+norma
