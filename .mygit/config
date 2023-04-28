@@ -23,3 +23,6 @@
 [submodule ".github/scripts"]
 	url = git@github.com:equipez/github_actions_scripts.git
 	active = true
+[submodule ".development"]
+	url = git@github.com:libprima/prima_development.git
+	active = true
