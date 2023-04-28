@@ -1,7 +1,0 @@
-{
-    "source_dirs": ["../../../fsrc/common/", "../"],
-    "include_dirs": ["../../../fsrc/common/", "../", "../../../"],
-    "pp_suffixes": [".F90", ".F"],
-    "lowercase_intrinsics": true,
-    "debug_log": true
-}

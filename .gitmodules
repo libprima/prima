@@ -1,3 +1,9 @@
 [submodule ".github/scripts"]
 	path = .github/scripts
 	url = git@github.com:equipez/github_actions_scripts.git
+[submodule "prima_development"]
+	path = prima_development
+	url = git@github.com:libprima/prima_development.git
+[submodule ".development"]
+	path = .development
+	url = git@github.com:libprima/prima_development.git

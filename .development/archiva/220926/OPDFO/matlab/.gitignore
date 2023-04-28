@@ -1,9 +1,0 @@
-all_precisions.m
-all_variants.m
-.signature
-*.mexa*
-*.mexmac*
-*.mexw*
-*.mod
-*.o
-*.obj

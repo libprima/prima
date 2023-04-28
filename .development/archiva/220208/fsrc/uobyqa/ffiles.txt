@@ -1,4 +1,0 @@
-lagmax.f90
-trstep.f90
-uobyqb.f90
-uobyqa.f90

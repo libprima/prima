@@ -1,4 +1,0 @@
-param.f90
-noise.f90
-prob.f90
-datetime.f90

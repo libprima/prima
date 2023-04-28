@@ -63,7 +63,7 @@ sequential = false;
 reverse = false;
 reload = false;
 problem_type = '';
-competitor = 'archiva';
+competitor = 'norma';  % FOR TESTING !!!!!!
 
 if any(cellfun(@isstruct, argin))
     options = argin{find(cellfun(@isstruct, argin), 1)};
