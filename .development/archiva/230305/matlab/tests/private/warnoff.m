@@ -8,7 +8,7 @@ for isol = 1 : length(solvers)
     end
 end
 
-solvers = [solvers, 'prima', 'prima_last'];
+solvers = [solvers, 'prima', 'prima_norma'];
 
 cellfun(@(solver) warning('off', [solver, ':Debug']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ChkFunval']), solvers);

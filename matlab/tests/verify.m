@@ -46,7 +46,7 @@ exception = [];
 try
 
     % Define the solvers to test.
-    solvers = {solver, [solver, '_last']};  % Default order: run 'SOLVER' first
+    solvers = {solver, [solver, '_norma']};  % Default order: run 'SOLVER' first
     if isfield(options, 'reverse') && options.reverse
         solvers = solvers(end:-1:1);  % Reverse order
     end

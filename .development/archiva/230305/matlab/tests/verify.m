@@ -60,9 +60,9 @@ try
 
     % Define the solvers to test.
     if isfield(options, 'reverse') && options.reverse
-        solvers = {[solver, '_last'], solver};  % Reverse order: first run 'SOLVER_last', and then run 'SOLVER'
+        solvers = {[solver, '_norma'], solver};  % Reverse order: first run 'SOLVER_norma', and then run 'SOLVER'
     else
-        solvers = {solver, [solver, '_last']};  % Default order: first run 'SOLVER', and then run 'SOLVER_last'
+        solvers = {solver, [solver, '_norma']};  % Default order: first run 'SOLVER', and then run 'SOLVER_norma'
     end
 
     % Show current path information.

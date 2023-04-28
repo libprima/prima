@@ -52,12 +52,12 @@ archiva_list = dir(fullfile(s_root_dir, 'archiva'));  % List of all the archiva 
 archiva_list = archiva_list([archiva_list.isdir] & ~isnan(str2double({archiva_list.name})));
 [~, ind] = sort(str2double({archiva_list.name}), 'ascend');  % Sort the archiva directories by name.
 archiva_dir_name = archiva_list(ind(end)).name;  % The name of the latest archiva directory.
-% Define `archiva_dir` as the `last` directory under the latest archiva directory. Indeed, the solvers in
-% fullfile(s_root_dir, 'archiva', archiva_dir_name) and fullfile(s_root_dir, 'archiva', archiva_dir_name, 'last')
-% are equivalent. We use the latter because the name of the solver there is SOLVER_last, which is
+% Define `archiva_dir` as the `norma` directory under the latest archiva directory. Indeed, the solvers in
+% fullfile(s_root_dir, 'archiva', archiva_dir_name) and fullfile(s_root_dir, 'archiva', archiva_dir_name, 'norma')
+% are equivalent. We use the latter because the name of the solver there is SOLVER_norma, which is
 % convenient for the test.
-s_archiva_dir = fullfile(s_root_dir, 'archiva', archiva_dir_name, 'last');
-d_archiva_dir = fullfile(d_root_dir, 'archiva', archiva_dir_name, 'last');
+s_archiva_dir = fullfile(s_root_dir, 'archiva', archiva_dir_name, 'norma');
+d_archiva_dir = fullfile(d_root_dir, 'archiva', archiva_dir_name, 'norma');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -69,9 +69,9 @@ d_archiva_dir = fullfile(d_root_dir, 'archiva', archiva_dir_name, 'last');
 setup_tools = fullfile(s_root_dir, 'matlab', 'setup_tools');
 addpath(setup_tools);  % We use `clean_mex` from `setup_tools` to clean up the compiled MEX files.
 s_mexdir = fullfile(s_matlab_dir, 'interfaces', 'private');
-s_last_mexdir = fullfile(s_root_dir, 'last', 'matlab', 'interfaces', 'private');
+s_norma_mexdir = fullfile(s_root_dir, 'norma', 'matlab', 'interfaces', 'private');
 s_archiva_mexdir = fullfile(s_archiva_dir, 'matlab', 'interfaces', 'private');
-mexdir_list = {s_mexdir, s_last_mexdir, s_archiva_mexdir};
+mexdir_list = {s_mexdir, s_norma_mexdir, s_archiva_mexdir};
 cellfun(@clean_mex, mexdir_list);
 rmpath(setup_tools);  % Remove `setup_tools` from path since it has finishes its job.
 %%%!!!----------------------------------------------------------------------------------------!!!%%%
@@ -90,19 +90,19 @@ if exist(s_mex_interform, 'dir')
 end
 
 % `root_sub_list: directories/files to be copied under `root_dir`
-root_sub_list = {'fortran', 'last', 'setup.m'};
+root_sub_list = {'fortran', 'norma', 'setup.m'};
 for il = 1 : length(root_sub_list)
     copyfile(fullfile(s_root_dir, root_sub_list{il}), fullfile(d_root_dir, root_sub_list{il}));
 end
 %!------------------------------------------------------------------------------------------------!%
-% Remove the last/matlab/tests directories under d_root_dir. This is IMPORTANT! Without this, the
-% test will mistakenly call scripts from there, because last/matlab/tests may be added to the path
+% Remove the norma/matlab/tests directories under d_root_dir. This is IMPORTANT! Without this, the
+% test will mistakenly call scripts from there, because norma/matlab/tests may be added to the path
 % by the corresponding setup.m. This problem occurred on 2022-02-18 and took two days to debug.
-d_last_matlab_test = fullfile(d_root_dir, 'last', 'matlab', 'tests');
-if exist(d_last_matlab_test, 'dir')
-    rmdir(d_last_matlab_test, 's');
+d_norma_matlab_test = fullfile(d_root_dir, 'norma', 'matlab', 'tests');
+if exist(d_norma_matlab_test, 'dir')
+    rmdir(d_norma_matlab_test, 's');
 end
-mkdir(d_last_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
+mkdir(d_norma_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 %!------------------------------------------------------------------------------------------------!%
 
 % `matlab_sub_list`: directories/files to be copied under `matlab_dir`

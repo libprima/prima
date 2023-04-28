@@ -12,11 +12,13 @@ function [solver, options] = parse_input(argin)
 % - `reverse_flag` (optional) is either 'reverse' or 'rev', which means to test the solvers in the reverse order
 % - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
 %   indicating the problem type to test
-% - `competitor` (optional) can be any of {'classical', 'archiva', 'last', 'single', 'quadruple'},
+% - `competitor` (optional) can be any of {'classical', 'archiva', 'norma', 'single', 'quadruple'},
 %   indicating the name of a competitor solver to test (only for profiling)
 %   - 'classical' means to test the classical solvers
-%   - 'archiva' means to compare with the "archiva" version of the solver, located under the archiva/dev_arch directory
-%   - 'last' means to compare with the last version of the solver, located under the last/ directory
+%   - 'archiva' means to compare with the "archiva" version of the solver, located under the
+%     .development/archiva/dev_arch/ directory
+%   - 'norma' means to compare with the "norma" version of the solver, located under the
+%      .development/norma/ directory
 %   - 'single' means to compare with the single precision version of the solver, namely the solver
 %     invoked with the 'single' flag set to true
 %   - 'quadruple' means to compare with the quadruple precision version of the solver, namely the solver
@@ -57,7 +59,7 @@ sequential_flags = {'sequential', 'seq'};
 reverse_flags = {'reverse', 'rev'};
 reload_flags = {'reload', 'load'};
 problem_types = {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'};
-competitors = {'classical', 'archiva', 'last', 'single', 'quadruple'};
+competitors = {'classical', 'archiva', 'norma', 'single', 'quadruple'};
 
 % Default values.
 solver = '';
@@ -109,7 +111,7 @@ if any(cellfun(fun, argin))
     argin = argin(~cellfun(fun, argin));
 end
 
-% After last step, 1 <= length(argin) <= 3.
+% After previous steps, 1 <= length(argin) <= 3.
 wrong_input = (length(argin) < 1 || length(argin) > 3);
 
 if length(argin) == 3 && strcmp(invoker, 'verify')

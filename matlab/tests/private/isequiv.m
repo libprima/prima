@@ -2,9 +2,9 @@ function isequiv(solvers, options)
 %This function verifies that two solvers produce the same result on CUTEst problems.
 %
 % As an example:
-% options=[]; options.maxdi=20; options.nr=20; isequiv({'newuoa', 'newuoa_last'}, options)
+% options=[]; options.maxdi=20; options.nr=20; isequiv({'newuoa', 'newuoa_norma'}, options)
 %
-% verifies newuoa against newuoa_last on problems of at most 20 variables, 20 random runs for each problem.
+% verifies newuoa against newuoa_norma on problems of at most 20 variables, 20 random runs for each problem.
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net).
 %
@@ -380,31 +380,31 @@ prob.options = test_options;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BEGIN: Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % N.B.: In some tests, we may invoke this function with solvers{1} == solvers{2}. So do NOT assume
-% that one of the solvers is 'SOLVER' and the other is 'SOLVER_last'.
+% that one of the solvers is 'SOLVER' and the other is 'SOLVER_norma'.
 
 % Use function handle to avoid `feval`.
 solver1 = str2func(solvers{1});
 solver2 = str2func(solvers{2});
 
-if endsWith(solvers{1}, '_last')
-    package1 = @prima_last;
+if endsWith(solvers{1}, '_norma')
+    package1 = @prima_norma;
 else
     package1 = @prima;
 end
-if endsWith(solvers{2}, '_last')
-    package2 = @prima_last;
+if endsWith(solvers{2}, '_norma')
+    package2 = @prima_norma;
 else
     package2 = @prima;
 end
 
-tested_solver_name = regexprep(solvers{1}, '_last', '');
+tested_solver_name = regexprep(solvers{1}, '_norma', '');
 
 prob1 = prob;
 prob2 = prob;
 
 test_row_x = (rand > 0.5);
 test_row_bounds = (rand > 0.5);
-if ~endsWith(solvers{1}, '_last')
+if ~endsWith(solvers{1}, '_norma')
     if test_row_x
         prob1.x0 = prob1.x0';
         prob1.objective = @(x) prob1.objective(x');
@@ -417,7 +417,7 @@ if ~endsWith(solvers{1}, '_last')
         prob1.ub = prob1.ub';
     end
 end
-if ~endsWith(solvers{2}, '_last')
+if ~endsWith(solvers{2}, '_norma')
     if test_row_x
         prob2.x0 = prob2.x0';
         prob2.objective = @(x) prob2.objective(x');
@@ -467,7 +467,7 @@ end
 
 test_row_lineq = (rand > 0.5);
 test_row_leq = (rand > 0.5);
-if ~endsWith(solvers{2}, '_last')
+if ~endsWith(solvers{2}, '_norma')
     if test_row_lineq
         prob1.bineq = prob1.bineq';
     end
@@ -475,7 +475,7 @@ if ~endsWith(solvers{2}, '_last')
         prob1.beq = prob1.beq';
     end
 end
-if ~endsWith(solvers{2}, '_last')
+if ~endsWith(solvers{2}, '_norma')
     if test_row_lineq
         prob2.bineq = prob2.bineq';
     end

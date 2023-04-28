@@ -11,8 +11,8 @@ end
 
 solvers = regexprep(solvers, '_single', '');
 solvers = regexprep(solvers, '_quadruple', '');
-solvers = regexprep(solvers, '_archiva', '_last');
-solvers = [solvers, 'prima', 'prima_last'];
+solvers = regexprep(solvers, '_archiva', '_norma');
+solvers = [solvers, 'prima', 'prima_norma'];
 
 cellfun(@(solver) warning('off', [solver, ':Debug']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ChkFunval']), solvers);

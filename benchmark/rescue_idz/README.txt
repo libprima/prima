@@ -4,6 +4,6 @@ Tests: for SOLVER in {'bobyqa', 'newuoa', 'lincoa'},
 
 options = struct();
 options.classical = true or false;  % Test the classical version or not
-prof(SOLVER, 'last', options);
-prof(SOLVER, 'last', 'all', options);
-prof(SOLVER, 'last', DIM_RANGE, options);
+prof(SOLVER, 'norma', options);
+prof(SOLVER, 'norma', 'all', options);
+prof(SOLVER, 'norma', DIM_RANGE, options);

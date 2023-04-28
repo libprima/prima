@@ -46,9 +46,9 @@ end
 % It must be done BEFORE copying the files from `s_matlab_dir` to `d_matlab_dir`.
 setup_tools = fullfile(s_root_dir, 'matlab', 'setup_tools');
 addpath(setup_tools);  % We use `clean_mex` from `setup_tools` to clean up the compiled MEX files.
-s_last_mexdir = fullfile(s_root_dir, 'last', 'matlab', 'interfaces', 'private');
+s_norma_mexdir = fullfile(s_root_dir, 'norma', 'matlab', 'interfaces', 'private');
 s_mexdir = fullfile(s_matlab_dir, 'interfaces', 'private');
-mexdir_list = {s_last_mexdir, s_mexdir};
+mexdir_list = {s_norma_mexdir, s_mexdir};
 cellfun(@clean_mex, mexdir_list);
 rmpath(setup_tools);  % Remove `setup_tools` from path since it has finishes its job.
 %%%!!!----------------------------------------------------------------------------------------!!!%%%
@@ -67,19 +67,19 @@ if exist(s_mex_interform, 'dir')
 end
 
 % `root_sub_list: directories/files to be copied under `root_dir`
-root_sub_list = {'fortran', 'last', 'setup.m'};
+root_sub_list = {'fortran', 'norma', 'setup.m'};
 for il = 1 : length(root_sub_list)
     copyfile(fullfile(s_root_dir, root_sub_list{il}), fullfile(d_root_dir, root_sub_list{il}));
 end
 %!------------------------------------------------------------------------------------------------!%
-% Remove the last/matlab/tests directories under d_root_dir. This is IMPORTANT! Without this, the
-% test will mistakenly call scripts from there, because last/matlab/tests may be added to the path
+% Remove the norma/matlab/tests directories under d_root_dir. This is IMPORTANT! Without this, the
+% test will mistakenly call scripts from there, because norma/matlab/tests may be added to the path
 % by the corresponding setup.m. This problem occurred on 2022-02-18 and took two days to debug.
-d_last_matlab_test = fullfile(d_root_dir, 'last', 'matlab', 'tests');
-if exist(d_last_matlab_test, 'dir')
-    rmdir(d_last_matlab_test, 's');
+d_norma_matlab_test = fullfile(d_root_dir, 'norma', 'matlab', 'tests');
+if exist(d_norma_matlab_test, 'dir')
+    rmdir(d_norma_matlab_test, 's');
 end
-mkdir(d_last_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
+mkdir(d_norma_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 %!------------------------------------------------------------------------------------------------!%
 
 % `matlab_sub_list`: directories/files to be copied under `matlab_dir`

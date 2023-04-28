@@ -2,11 +2,11 @@ To modernize Powell's Fortran 77 code, do the following.
 Do things by small steps, and use verify.m to verify that the code
 behaves in the same way before and after the changes, e.g.,
 
-options=[]; options.maxdi=20; options.nr=20; verify({'newuoa', 'newuoa_last'}, options)
+options=[]; options.maxdi=20; options.nr=20; verify({'newuoa', 'newuoa_norma'}, options)
 
-verifies newuoa against newuoa_last on problems of at most 20 variables, 20 random runs for each
+verifies newuoa against newuoa_norma on problems of at most 20 variables, 20 random runs for each
 problem.
-NOTE that newuoa_last is the version of NEWUOA in `last`.
+NOTE that newuoa_norma is the version of NEWUOA in .development/norma/.
 
 0. Refactoring.
 

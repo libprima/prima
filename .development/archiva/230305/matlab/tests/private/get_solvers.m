@@ -15,8 +15,8 @@ invoker = callstack(2).name;  % The function that calls this function.
 isverify = strcmp(invoker, 'verify');  % Are we conducting verification?
 
 % Get the solver paths.
-last_dir = fullfile(prima_dir, 'last');
-solverl_dir = fullfile(last_dir, 'matlab', 'interfaces');
+norma_dir = fullfile(prima_dir, 'norma');
+solverl_dir = fullfile(norma_dir, 'matlab', 'interfaces');
 solver_dir = fullfile(prima_dir, 'matlab', 'interfaces');
 spaths = {solverl_dir, solver_dir};
 
@@ -35,7 +35,7 @@ try
 
     for is = 1 : length(solvers)
 
-        tested_solver_name = regexprep(solvers{is}, '_last', '');
+        tested_solver_name = regexprep(solvers{is}, '_norma', '');
 
         if compile_flag  % Compilation requested.
 
@@ -62,9 +62,9 @@ try
             setup(tested_solver_name, mexopt);
 
             if isverify
-                cd(last_dir);
+                cd(norma_dir);
                 clear('setup');  % Without this, the next line may not call the latest version of `setup`
-                setup([tested_solver_name, '_last'], mexopt);
+                setup([tested_solver_name, '_norma'], mexopt);
             end
 
         else  % No compilation. Set up the path only.
@@ -74,7 +74,7 @@ try
             setup('path');
 
             if isverify
-                cd(last_dir);
+                cd(norma_dir);
                 clear('setup');  % Without this, the next line may not call the latest version of `setup`
                 setup('path');
             end
