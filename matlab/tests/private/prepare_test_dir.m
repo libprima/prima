@@ -70,7 +70,7 @@ case 'norma'
 case 'archiva'
     s_dir_list = [s_dir_list, {archiva_dir}];
     if isunix && ~ismac
-        [~, archiva_dir] = system(['realpath ', archiva_dir]);  % archiva_dir may be a symlinl.
+        [~, archiva_dir] = system(['realpath ', archiva_dir]);  % archiva_dir may be a symlink.
     end
     fprintf('\nThe archiva directory: %s\n', archiva_dir);
     d_dir_list = [d_dir_list, {fullfile(test_dir, 'archiva')}];

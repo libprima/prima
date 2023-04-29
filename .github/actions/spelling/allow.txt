@@ -1956,3 +1956,5 @@ DEGENLPA
 dev
 archiva
 norma
+fdlist
+idir
