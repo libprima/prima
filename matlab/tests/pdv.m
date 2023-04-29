@@ -8,11 +8,18 @@ olddir = pwd();  % Record the current directory.
 
 matlab_implemented = {'newuoa'};  % Solvers that has a MATLAB implementation.
 
+% mfilepath: directory where this file resides
+mfilepath = fileparts(mfilename('fullpath'));
+
+% root_dir: root directory of the project
+root_dir = fileparts(fileparts(mfilepath));
+[~, root_dir_name] = fileparts(root_dir);
+
 % Prepare the test directory, i.e., `test_dir`.
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
-fake_solver_name = 'prima';
-options.competitor = 'prima';
+fake_solver_name = root_dir_name;
+options.competitor = root_dir_name;
 options.compile = true;
 test_dir = prepare_test_dir(fake_solver_name, funname, options);
 
@@ -21,7 +28,7 @@ exception = [];
 try
 
     % Go to the test directory.
-    solver_dir = fullfile(test_dir, 'prima');
+    solver_dir = fullfile(test_dir, root_dir_name);
     cd(solver_dir);
 
     % Compile the solvers.
