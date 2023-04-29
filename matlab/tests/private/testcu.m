@@ -68,18 +68,25 @@ maxip = 2^32 - 1;
 strict = 2;
 
 % Directories for recording the starting/ending of problems (tic/toc are unavailable in parfor).
-prob_start_time_dir = strtrim(fullfile(options.test_dir, [options.stamp, '_start_time']));
-prob_start_dir = strtrim(fullfile(options.test_dir, [options.stamp, '_start']));
-prob_end_time_dir = strtrim(fullfile(options.test_dir, [options.stamp, '_end_time']));
-prob_end_dir = strtrim(fullfile(options.test_dir, [options.stamp, '_end']));
-system(['rm -rf ', prob_start_time_dir, '; ', 'mkdir -p ', prob_start_time_dir]);
+stamp = options.stamp;
+prob_start_dir = strtrim(fullfile(options.test_dir, [stamp, '_start']));
+prob_start_time_dir = strtrim(fullfile(options.test_dir, [stamp, '_start_time']));
+prob_start_runs_dir = strtrim(fullfile(options.test_dir, [stamp, '_start_runs']));
+prob_end_dir = strtrim(fullfile(options.test_dir, [stamp, '_end']));
+prob_end_time_dir = strtrim(fullfile(options.test_dir, [stamp, '_end_time']));
+prob_end_runs_dir = strtrim(fullfile(options.test_dir, [stamp, '_end_runs']));
 system(['rm -rf ', prob_start_dir, '; ', 'mkdir -p ', prob_start_dir]);
-system(['rm -rf ', prob_end_time_dir, '; ', 'mkdir -p ', prob_end_time_dir]);
+system(['rm -rf ', prob_start_time_dir, '; ', 'mkdir -p ', prob_start_time_dir]);
+system(['rm -rf ', prob_start_runs_dir, '; ', 'mkdir -p ', prob_start_runs_dir]);
 system(['rm -rf ', prob_end_dir, '; ', 'mkdir -p ', prob_end_dir]);
-disp(['prob_start_time_dir = ', prob_start_time_dir]);
+system(['rm -rf ', prob_end_time_dir, '; ', 'mkdir -p ', prob_end_time_dir]);
+system(['rm -rf ', prob_end_runs_dir, '; ', 'mkdir -p ', prob_end_runs_dir]);
 disp(['prob_start_dir = ', prob_start_dir]);
-disp(['prob_end_time_dir = ', prob_end_time_dir]);
+disp(['prob_start_time_dir = ', prob_start_time_dir]);
+disp(['prob_start_runs_dir = ', prob_start_runs_dir]);
 disp(['prob_end_dir = ', prob_end_dir]);
+disp(['prob_end_time_dir = ', prob_end_time_dir]);
+disp(['prob_end_runs_dir = ', prob_end_runs_dir]);
 
 % Set options
 options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
@@ -164,14 +171,14 @@ end
 
 if sequential
     for ip = minip : maxip
+
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_start_dir, pname)]);
-
-        fprintf('\n%3d. \t%s:\n', ip, upper(pname));
+        fprintf('\n%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
 
         prob = macup(pname);
         orig_prob = prob;
@@ -190,6 +197,9 @@ if sequential
         rng(ip); permutations = get_perms(nr, length(prob.x0));
 
         for ir = 1 : nr
+            system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
+            fprintf('\n     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
+
             if have_eval_options
                 prob.objective = @(x) evalfun(prob.orig_objective, x, eval_options, ir);
                 if ~isempty(prob.orig_nonlcon)
@@ -211,12 +221,17 @@ if sequential
             for is = 1 : ns
                 [frec(ip, is, ir, :), crec(ip, is, ir, :)] = testsolv(solvers{is}, prob, options);
             end
+
+            system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
+            fprintf('\n     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
         end
 
         decup(prob);
+
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_end_dir, pname)]);
+        fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
 
@@ -229,8 +244,7 @@ else
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_start_dir, pname)]);
-
-        fprintf('\n%3d. \t%s:\n', ip, upper(pname));
+        fprintf('\n%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
 
         prob = macup(pname);
         orig_prob = prob;
@@ -249,6 +263,9 @@ else
         rng(ip); permutations = get_perms(nr, length(prob.x0));
 
         for ir = 1 : nr
+            system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
+            fprintf('\n     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
+
             if have_eval_options
                 prob.objective = @(x) evalfun(prob.orig_objective, x, eval_options, ir);
                 if ~isempty(prob.orig_nonlcon)
@@ -270,12 +287,17 @@ else
             for is = 1 : ns
                 [frec(ip, is, ir, :), crec(ip, is, ir, :)] = testsolv(solvers{is}, prob, options);
             end
+
+            system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
+            fprintf('\n     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
         end
 
         decup(prob);
+
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_end_dir, pname)]);
+        fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
 

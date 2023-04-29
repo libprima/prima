@@ -33,6 +33,7 @@ olddir = pwd();  % Record the current directory.
 
 % Parse the inputs.
 [solver, options] = parse_input(varargin);
+options.competitor = 'norma';
 
 
 % Prepare the test directory, i.e., `test_dir`.

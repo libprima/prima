@@ -1,6 +1,9 @@
 function clean_mex(directory, is_verbose)
 %CLEAN_MEX removes all the compiled MEX files in `directory`.
 
+callstack = dbstack;
+funname = callstack(1).name; % Name of the current function
+
 verbose = false;
 if nargin >= 2
     if islogical(is_verbose)
@@ -13,6 +16,14 @@ end
 if verbose
     fprintf('\nRemoving the compiled MEX files (if any) in the following directory:');
     fprintf('\n\n    %s\n\n', directory);
+end
+
+if ~exist(directory, 'dir')
+    if verbose
+        wid = sprintf('%s:DirNotFound', funname);
+        warning(wid, 'The directory does not exist. Nothing to do.');
+    end
+    return
 end
 
 % List  the compiled MEX files

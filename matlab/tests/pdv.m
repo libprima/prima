@@ -1,4 +1,4 @@
-function pdv
+function pdv()
 % PDV tests the Fortran solvers for all precision, debugging flags, and variants.
 
 oldpath = path();  % Record the current path.
@@ -12,6 +12,7 @@ matlab_implemented = {'newuoa'};  % Solvers that has a MATLAB implementation.
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 fake_solver_name = funname;
+options.competitor = funname;
 options.compile = true;
 test_dir = prepare_test_dir(fake_solver_name, funname, options);
 

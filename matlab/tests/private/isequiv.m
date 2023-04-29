@@ -162,13 +162,14 @@ disp(['prob_end_runs_dir = ', prob_end_runs_dir]);
 
 if sequential
     for ip = minip : maxip
+
         orig_warning_state = warnoff(solvers);
+
         pname = upper(plist{ip});
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_start_dir, pname)]);
         system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_start_runs_dir, pname)]);
-
         fprintf('\n%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
 
         prob = macup(pname);
@@ -177,20 +178,19 @@ if sequential
             % The following line compares the solvers on `prob`; ir is needed for the random seed, and
             % `prec` is the precision of the comparison (should be 0). The function will raise an error
             % if the solvers behave differently.
-            fprintf('\n%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
             system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
+            fprintf('\n     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
             compare(solvers, prob, ir, prec, single_test, options);
-            fprintf('\n%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
             system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
+            fprintf('\n     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
         end
 
         decup(prob);
 
-        fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
-
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_end_dir, pname)]);
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
+        fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
     end
@@ -203,7 +203,6 @@ else
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_start_dir, pname)]);
         system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
-
         fprintf('\n%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
 
         prob = macup(pname);
@@ -212,20 +211,19 @@ else
             % The following line compares the solvers on `prob`; ir is needed for the random seed, and
             % `prec` is the precision of the comparison (should be 0). The function will raise an error
             % if the solvers behave differently.
-            fprintf('\n%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
             system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
+            fprintf('\n     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
             compare(solvers, prob, ir, prec, single_test, options);
-            fprintf('\n%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
             system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
+            fprintf('\n     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
         end
 
         decup(prob);
 
-        fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
-
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_end_dir, pname)]);
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
+        fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
 
         warning(orig_warning_state); % Restore the behavior of displaying warnings
     end
