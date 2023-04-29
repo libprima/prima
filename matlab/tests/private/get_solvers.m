@@ -24,6 +24,13 @@ invoker = callstack(2).name;
 isverify = strcmp(invoker, 'verify');  % Are we conducting verification?
 isprofile = strcmp(invoker, 'profile');  % Are we profiling?
 
+% mfilepath: directory where this .m file resides.
+mfilepath = fileparts(mfilename('fullpath'));
+
+% root_dir: root directory of the project
+root_dir = fileparts(fileparts(fileparts(mfilepath)));
+[~, root_dir_name] = fileparts(root_dir);
+
 % Record the current path.
 oldpath = path();
 % Record the current directory
@@ -92,7 +99,7 @@ try
             solver_dir = fullfile(test_dir, 'archiva');
             solver = regexprep(solver, '_archiva', '_norma');
         else  % SOLVER or SOLVER_classical|_single|_quadruple
-            solver_dir = fullfile(test_dir, 'prima');
+            solver_dir = fullfile(test_dir, root_dir_name);
         end
 
         spaths{is} = fullfile(solver_dir, 'matlab', 'interfaces');

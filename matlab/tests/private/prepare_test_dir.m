@@ -61,7 +61,7 @@ archiva_dir = fullfile(root_dir, '.development', 'archiva', 'dev_arch', 'norma')
 s_dir_list = {root_dir};
 % d_dir_list: a list of directories to receive the directories copied from `s_dir_list`, "d" for
 % "destination".
-d_dir_list = {fullfile(test_dir, 'prima')};
+d_dir_list = {fullfile(test_dir, root_dir_name)};
 switch competitor
 case 'norma'
     s_dir_list = [s_dir_list, {norma_dir}];
