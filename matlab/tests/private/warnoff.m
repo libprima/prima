@@ -36,7 +36,9 @@ cellfun(@(solver) warning('off', [solver, ':FortranContradictClassical']), solve
 cellfun(@(solver) warning('off', [solver, ':FortranContradictPrecision']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ObjectiveFailure']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ConstraintFailure']), solvers);
-%cellfun(@(solver) warning('off', [solver, ':ClassicalUnavailable']), solvers);
+cellfun(@(solver) warning('off', [solver, ':X0IsRow']), solvers);
+cellfun(@(solver) warning('off', [solver, ':BeqIsRow']), solvers);
+cellfun(@(solver) warning('off', [solver, ':BineqIsRow']), solvers);
 %cellfun(@(solver) warning('off', ['FMXAPI:', upper(solver)]), solvers);
 
 return
