@@ -3,6 +3,8 @@
 	filemode = true
 	bare = false
 	logallrefupdates = true
+[submodule]
+	active = .
 [remote "origin"]
 	url = git@github.com:libprima/prima.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
@@ -20,9 +22,7 @@
 [branch "main"]
 	remote = origin
 	merge = refs/heads/main
-[submodule ".github/scripts"]
-	url = git@github.com:equipez/github_actions_scripts.git
-	active = true
 [submodule ".development"]
 	url = git@github.com:libprima/prima_development.git
-	active = true
+[submodule ".github/scripts"]
+	url = git@github.com:equipez/github_actions_scripts.git

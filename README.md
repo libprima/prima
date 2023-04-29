@@ -201,7 +201,7 @@ PRIMA has been finished by December 2022.**
 #### Python
 
 - The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
-- Our ultimate objective is to have a native Python implementation of PRIMA that does not depend on Fortran, similar to what we have done with NEWUOA in MATLAB as [mentioned above](#newuoa_mat).
+- Our ultimate objective is to have a native Python implementation of PRIMA **independent of Fortran**, similar to what we have done with NEWUOA in MATLAB as [mentioned above](#newuoa_mat).
 
 #### Other languages
 
