@@ -11,8 +11,8 @@ matlab_implemented = {'newuoa'};  % Solvers that has a MATLAB implementation.
 % Prepare the test directory, i.e., `test_dir`.
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
-fake_solver_name = funname;
-options.competitor = funname;
+fake_solver_name = 'prima';
+options.competitor = 'prima';
 options.compile = true;
 test_dir = prepare_test_dir(fake_solver_name, funname, options);
 
@@ -20,9 +20,9 @@ exception = [];
 
 try
 
-    % Go to the test directory. This is not really necessary. It will not affect the test, but any
-    % output (e.g., NEWUOA_output.txt, fort.6) will be dumped to `test_dir`.
-    cd(test_dir);
+    % Go to the test directory.
+    solver_dir = fullfile(test_dir, 'prima');
+    cd(solver_dir);
 
     % Compile the solvers.
     clear('setup');
