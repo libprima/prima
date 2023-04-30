@@ -1,9 +1,9 @@
-In 2020, Fortran 2008/2018 features are still not completely supported by
-compilers. Therefore, the Fortran code of this project keeps some pre-F2008
+In 2020, Fortran 2018 features are still not completely supported by
+compilers. Therefore, the Fortran code of this project keeps some pre-F2018
 features. They can be removed later (say, in 2025) if compilers implement
-Fortran 2008 better at that time.
+Fortran 2018 better at that time.
 
-The pre-F2008 features include the following.
+The pre-F2018 features include the following.
 
 1. (Must update) Since F2018, ERROR STOP statement can appear in a pure subprogram. Therefore,
 ERRSTOP can be implemented as pure subroutines. Consequently, all functions can be pure!

@@ -974,12 +974,6 @@ source_%: $(SRC_DIRS)
 		bash ../a9src ./ ; \
 	fi
 	@printf "Done.\n"
-## flsrc is not needed by Flang 15.0.3
-#@if echo $@ | grep -q "ftest" && ! type flang | grep -iq "bisheng\|AMD" ; then \
-#	printf "\nPreparing the source code for $@.\n" ; \
-#	bash ../flsrc ./ ; \
-#fi
-#@printf "Done.\n"
 
 # Adapt the header file for the test.
 # Zaikun 20230411: Instead of modifying the header file, we should use the -D option of the
