@@ -192,7 +192,7 @@ PRIMA has been finished by December 2022.**
 
 #### MATLAB
 
-- An [interface](./matlab/interfaces/prima.m) is provided for [using the **modern** Fortran implementation under MATLAB](./README_mat.md).
+- An [interface](./matlab/interfaces/prima.m) is provided for [using the **modern** Fortran implementation in MATLAB](./README_mat.md).
 - <a name="newuoa_mat"></a>A [pure MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/) is implemented. It was
   generated straightforwardly (indeed, **automatically**) from an earlier version of the
   **modern** Fortran code (with the help of Mr. Galann Pennec).
@@ -204,11 +204,11 @@ PRIMA has been finished by December 2022.**
 
 #### Other languages
 
-- Interfaces for using the modern Fortran implementation under other languages will be available later.
+- Interfaces for using the modern Fortran implementation in other languages will be available later.
 - Given the **modern** Fortran version, **native implementations** in other languages
 become **much easier**, because we now have a structured and modularized implementation as a reference.
-My team will implement the methods in other languages in this way. 
-This is the main motivation for developing the **modern** Fortran version first &mdash; 
+My team will implement the methods in other languages in this way.
+This is the main motivation for developing the **modern** Fortran version first &mdash;
 to provide a modernized reference implementation for the development in other languages.
 
 ### Bug fixes
