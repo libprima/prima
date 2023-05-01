@@ -8,6 +8,7 @@ __pycache__/
 
 # misc files for testing
 matlab/tests/testdata/
+*.mat
 core
 core.*
 *.cmdx
@@ -18,6 +19,7 @@ core.*
 *.mod
 *__genmod.f90
 flang_unparsed_file*.*90
+main
 *.o
 *.out
 *.output

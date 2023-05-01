@@ -204,7 +204,7 @@ PRIMA has been finished by December 2022.**
 
 #### Other languages
 
-- Interfaces for other languages will be available later.
+- Interfaces for using the modern Fortran implementation under other languages will be available later.
 - Given the **modern** Fortran version, **native implementations** in other languages
 become **much easier**, because we now have a structured and modularized implementation as a reference.
 My team will implement the methods in other languages in this way. 
