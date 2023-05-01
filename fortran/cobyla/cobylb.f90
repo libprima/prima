@@ -421,7 +421,7 @@ do tr = 1, maxtr
         ! Set JDROP_TR to the index of the vertex to be replaced with X. JDROP_TR = 0 means there
         ! is no good point to replace, and X will not be included into the simplex; in this case,
         ! the geometry of the simplex likely needs improvement, which will be handled below.
-        jdrop_tr = setdrop_tr(ximproved, d, sim, simi)
+        jdrop_tr = setdrop_tr(ximproved, d, delta, rho, sim, simi)
 
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced with D.
         ! UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides to discard X.

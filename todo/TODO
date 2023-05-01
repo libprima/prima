@@ -33,3 +33,7 @@ update as normal (if the denominator is 0 or NaN occurs, skip the update of H in
 Set IMPROVE_GEO and REDUCE_RHO to .FALSE. if TO_RESCUE is .TRUE. After a geometry step, set
 TO_RESCUE to .TRUE. if the denominator is bad, but perform the update as normal. If TO_RESCUE is
 .TRUE., invoke RESCUE, which can be regarded as a post-processing.
+
+12. Implement IPRINT for MATLAB, essentially writing a MEX version of output.f90.
+
+13. Change the macros in ppf.h to PRIMA_*.

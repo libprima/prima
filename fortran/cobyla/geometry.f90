@@ -92,7 +92,7 @@ adequate_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta *
 end function assess_geo
 
 
-function setdrop_tr(ximproved, d, sim, simi) result(jdrop)
+function setdrop_tr(ximproved, d, delta, rho, sim, simi) result(jdrop)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds (the index) of a current interpolation point to be replaced with the
 ! trust-region trial point. See (19)--(22) of the COBYLA paper.
@@ -114,6 +114,8 @@ implicit none
 ! Inputs
 logical, intent(in) :: ximproved
 real(RP), intent(in) :: d(:)    ! D(N)
+real(RP), intent(in) :: delta
+real(RP), intent(in) :: rho
 real(RP), intent(in) :: sim(:, :)   ! SIM(N, N+1)
 real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
 
@@ -139,6 +141,7 @@ n = int(size(sim, 1), kind(n))
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(delta >= rho .and. rho > 0, 'DELTA >= RHO > 0', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(all(maxval(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
@@ -218,14 +221,13 @@ else
     distsq(n + 1) = ZERO
 end if
 
-weight = distsq
-
-! Other possible definitions of WEIGHT. They work almost the same as the one above.
-! !weight = max(ONE, 25.0_RP * distsq / delta**2)
+weight = max(ONE, distsq / max(rho, TENTH * delta)**2)  ! Similar to Powell's NEWUOA code
+! Other possible definitions of WEIGHT.
+! !weight = distsq  ! Similar to Powell's LINCOA code, but WRONG
+! !weight = max(ONE, 25.0_RP * distsq / delta**2)  ! Similar to Powell's BOBYQA code, works well
 ! !weight = max(ONE, TEN * distsq / delta**2)
 ! !weight = max(ONE, 1.0E2_RP * distsq / delta**2)
-! !weight = max(ONE, distsq / max(rho, TENTH * delta)**2)
-! !weight = max(ONE, distsq / rho**2)
+! !weight = max(ONE, distsq / rho**2)  ! Similar to Powell's UOBYQA
 
 ! If 1 <= J <= N, SIMID(J) is the value of the J-th Lagrange function at D; the value of the
 ! (N+1)-th Lagrange function is 1 - SUM(SIMID). [SIMID, 1 - SUM(SIMID)] is the counterpart of
@@ -240,7 +242,8 @@ if (.not. ximproved) then
     score(n + 1) = -ONE
 end if
 
-if (any(score > 0)) then
+! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
+if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
     jdrop = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(jdrop))
     !!MATLAB: [~, jdrop] = max(score, [], 'omitnan');
 elseif (ximproved) then
