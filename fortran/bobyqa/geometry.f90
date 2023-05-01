@@ -157,7 +157,7 @@ elseif (ximproved) then
     ! polynomials (i.e., H), or they would be destroyed by the NaNs.
     knew = int(maxloc(distsq, dim=1), kind(knew))
 else
-    knew = 0  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE is positive.
+    knew = 0
 end if
 
 !====================!

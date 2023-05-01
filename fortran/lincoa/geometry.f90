@@ -76,6 +76,7 @@ if (DEBUGGING) then
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(delta >= rho .and. rho > 0, 'DELTA >= RHO > 0', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
@@ -112,9 +113,9 @@ end if
 
 weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA code
 ! Other possible definitions of WEIGHT.
+! !weight = distsq**2  ! Powell's code. WRONG.
 ! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2.5  ! Worse than power 3
 ! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! Worse than Powell 3
-! !weight = distsq**2  ! Powell's code.
 ! !weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
 ! !weight = (distsq / delta**2)**3  ! Not bad
 ! !weight = max(1.0_RP, 10.0_RP * distsq / rho**2)**3

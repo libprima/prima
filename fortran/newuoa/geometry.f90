@@ -81,8 +81,8 @@ if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(delta >= rho .and. rho > 0, 'DELTA >= RHO > 0', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(delta >= rho .and. rho > 0, 'DELTA >= RHO > 0', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
@@ -146,7 +146,7 @@ elseif (ximproved) then
     ! polynomials (i.e., H), or they would be destroyed by the NaNs.
     knew = int(maxloc(distsq, dim=1), kind(knew))
 else
-    knew = 0  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE exceeds one.
+    knew = 0
 end if
 
 !====================!

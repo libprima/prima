@@ -131,7 +131,6 @@ if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
-knew = 0
 ! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
 if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
     ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we exclude such K.
@@ -144,6 +143,8 @@ elseif (ximproved) then
     ! However, the updating subroutine will likely need to skip the update of the Lagrange
     ! polynomial, or they would be destroyed by the NaNs.
     knew = int(maxloc(distsq, dim=1), kind(knew))
+else
+    knew = 0
 end if
 
 !====================!
