@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, March 31, 2023 AM09:47:10
+! Last Modified: Tuesday, May 02, 2023 PM05:02:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,8 +132,8 @@ if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
-! Changing the following IF to `IF (ANY(SCORE > 0)) THEN` does not lead to a better performance.
-if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
+! The following IF works a bit better than `IF (ANY(SCORE > 0))` from Powell's BOBYQA and LINCOA code.
+if (any(score > 1) .or. (ximproved .and. any(score > 0))) then  ! Powell's UOBYQA and NEWUOA code
     ! See (7.5) of the NEWUOA paper for the definition of KNEW in this case.
     ! SCORE(K) is NaN implies ABS(DEN(K)) is NaN, but we want ABS(DEN) to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))

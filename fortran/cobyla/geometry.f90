@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:14:43
+! Last Modified: Tuesday, May 02, 2023 PM04:55:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -242,8 +242,9 @@ if (.not. ximproved) then
     score(n + 1) = -ONE
 end if
 
-! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
-if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
+! The following IF works a bit better than `IF (ANY(SCORE > 1) .OR. ANY(SCORE > 0) .AND. XIMPROVED)`
+! from Powell's UOBYQA and NEWUOA code.
+if (any(score > 0)) then  ! Powell's BOBYQA and LINCOA code
     jdrop = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(jdrop))
     !!MATLAB: [~, jdrop] = max(score, [], 'omitnan');
 elseif (ximproved) then

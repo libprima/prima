@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 21, 2023 PM10:57:53
+! Last Modified: Tuesday, May 02, 2023 PM04:55:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,9 +133,9 @@ if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
-!if (any(score > 0)) then  ! Powell's code
-! The following is Powell's NEWUOA code. It should NOT be used if WEIGHT is a power of DISTSQ.
-if (any(score > 1) .or. any(score > 0) .and. ximproved) then
+! The following IF works a bit better than `IF (ANY(SCORE > 1) .OR. ANY(SCORE > 0) .AND. XIMPROVED)`
+! from Powell's UOBYQA and NEWUOA code.
+if (any(score > 0)) then  ! Powell's BOBYQA and LINCOA code
     ! SCORE(K) is NaN implies ABS(DEN(K)) is NaN, but we want ABS(DEN) to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
