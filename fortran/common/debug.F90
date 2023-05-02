@@ -117,10 +117,10 @@ subroutine backtr()
 ! 1. The intrinsic is compiler-dependent and does not exist in all compilers. Indeed, it is not
 ! standard-conforming. Therefore, compilers may warn that a non-standard intrinsic is in use.
 ! 2. More seriously, if the compiler is instructed to conform to the standards (e.g., gfortran with
-! the option -std=f2018) while PRIMA_DEBUGGING is set to 1, then the compilation may FAIL when linking,
-! complaining that a subroutine cannot be found (e.g., backtrace for gfortran). In that case, we
-! must set PRIMA_DEBUGGING to 0 in ppf.h. This is also why in this subroutine we do not use the constant
-! DEBUGGING defined in the consts_mod module but use the macro PRIMA_DEBUGGING defined in ppf.h.
+! the option -std=f2018) while PRIMA_DEBUGGING is set to 1, then the compilation may FAIL when 
+! linking, complaining that a subroutine cannot be found (e.g., backtrace for gfortran). In that 
+! case, we must set PRIMA_DEBUGGING to 0 in ppf.h. This is also why in this subroutine we do not use 
+! the constant DEBUGGING defined in the consts_mod module but use the macro PRIMA_DEBUGGING in ppf.h.
 !--------------------------------------------------------------------------------------------------!
 #if PRIMA_DEBUGGING == 1
 
