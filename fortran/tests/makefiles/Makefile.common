@@ -639,7 +639,7 @@ XFORT := $(XFORT) -warn errors
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
 # and temporary arrays in the stack storage area. We enable them for small problems to verify that
 # we will not have stack overflows even in the worst case.
-# Zaikun 20220323: Not sure how it will work when DEBUGGING_ is 1, as the debugging facilities
+# Zaikun 20220323: Not sure how it will work when PRIMA_DEBUGGING is 1, as the debugging facilities
 # involve many automatic arrays.
 # About -fp-stack-check: According to Steve Lionel (Dr. Fortran), "drop -fp-stack-check - that does
 # nothing useful for you (it is for pre-SSE x87 32-bit code.)".
@@ -814,7 +814,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	$(eval IK := $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//")))
 	$(eval RP := $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//")))
 	$(eval QPAVLB := $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16))
-	$(eval EXTRA_FLAGS := -g -DDEBUGGING_=$(DBG) -DAGGRESSIVE_OPTIONS_=$(AGGRESSIVE) -DINTEGER_KIND_=$(IK) -DREAL_PRECISION_=$(RP) -DQP_AVAILABLE_=$(QPAVLB))
+	$(eval EXTRA_FLAGS := -g -DPRIMA_DEBUGGING=$(DBG) -DPRIMA_AGGRESSIVE_OPTIONS=$(AGGRESSIVE) -DPRIMA_INTEGER_KIND=$(IK) -DPRIMA_REAL_PRECISION=$(RP) -DPRIMA_QP_AVAILABLE=$(QPAVLB))
 	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
 	(if echo $@ | grep -q '9test'; then \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
@@ -984,11 +984,11 @@ source_%: $(SRC_DIRS)
 #header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
 #header_%: source_%
 #	@printf "\nPreparing the header file for the test.\n"
-#	$(SEDI) "s|^#define QP_AVAILABLE_ [0-9]*|#define QP_AVAILABLE_ $(QPAVLB)|" $(HEADERS)
-#	$(SEDI) "s|^#define INTEGER_KIND_ [0-9]*|#define INTEGER_KIND_ $(IK)|" $(HEADERS)
-#	$(SEDI) "s|^#define REAL_PRECISION_ [0-9]*|#define REAL_PRECISION_ $(RP)|" $(HEADERS)
-#	$(SEDI) "s|^#define DEBUGGING_ [0-9]*|#define DEBUGGING_ $(DBG)|" $(HEADERS)
-#	$(SEDI) "s|^#define AGGRESSIVE_OPTIONS_ [0-9]*|#define AGGRESSIVE_OPTIONS_ $(AGGRESSIVE)|" $(HEADERS)
+#	$(SEDI) "s|^#define PRIMA_QP_AVAILABLE [0-9]*|#define PRIMA_QP_AVAILABLE $(QPAVLB)|" $(HEADERS)
+#	$(SEDI) "s|^#define PRIMA_INTEGER_KIND [0-9]*|#define PRIMA_INTEGER_KIND $(IK)|" $(HEADERS)
+#	$(SEDI) "s|^#define PRIMA_REAL_PRECISION [0-9]*|#define PRIMA_REAL_PRECISION $(RP)|" $(HEADERS)
+#	$(SEDI) "s|^#define PRIMA_DEBUGGING [0-9]*|#define PRIMA_DEBUGGING $(DBG)|" $(HEADERS)
+#	$(SEDI) "s|^#define PRIMA_AGGRESSIVE_OPTIONS [0-9]*|#define PRIMA_AGGRESSIVE_OPTIONS $(AGGRESSIVE)|" $(HEADERS)
 #	@printf "Done.\n"
 
 

@@ -59,11 +59,11 @@ module consts_mod
 !    arrays, overflow can lead to Segmentation Faults!
 !--------------------------------------------------------------------------------------------------!
 
-#if INTEGER_KIND_ == 16
+#if PRIMA_INTEGER_KIND == 16
 use, intrinsic :: iso_fortran_env, only : INT16
-#elif INTEGER_KIND_ == 32
+#elif PRIMA_INTEGER_KIND == 32
 use, intrinsic :: iso_fortran_env, only : INT32
-#elif INTEGER_KIND_ == 64
+#elif PRIMA_INTEGER_KIND == 64
 use, intrinsic :: iso_fortran_env, only : INT64
 #endif
 
@@ -87,7 +87,7 @@ public :: ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 public :: MAXFUN_DIM_DFT, MAXHISTMEM, MIN_MAXFILT, MAXFILT_DFT, IPRINT_DFT
 
 
-logical, parameter :: DEBUGGING = (DEBUGGING_ == 1)  ! Whether we are in debugging mode
+logical, parameter :: DEBUGGING = (PRIMA_DEBUGGING == 1)  ! Whether we are in debugging mode
 integer, parameter :: IK_DFT = kind(0)  ! Default integer kind
 integer, parameter :: RP_DFT = kind(0.0)  ! Default real kind
 integer, parameter :: SP = REAL32  ! Kind for single precision
@@ -95,25 +95,25 @@ integer, parameter :: DP = REAL64  ! Kind for double precision
 integer, parameter :: QP = REAL128  ! Kind for quadruple precision
 
 ! Define the integer kind to be used in the Fortran code.
-#if INTEGER_KIND_  == 0
+#if PRIMA_INTEGER_KIND  == 0
 integer, parameter :: IK = IK_DFT
-#elif INTEGER_KIND_ == 16
+#elif PRIMA_INTEGER_KIND == 16
 integer, parameter :: IK = INT16
-#elif INTEGER_KIND_ == 32
+#elif PRIMA_INTEGER_KIND == 32
 integer, parameter :: IK = INT32
-#elif INTEGER_KIND_ == 64
+#elif PRIMA_INTEGER_KIND == 64
 integer, parameter :: IK = INT64
 #else
 integer, parameter :: IK = IK_DFT
 #endif
 ! Define the real kind to be used in the Fortran code.
-#if REAL_PRECISION_ == 0
+#if PRIMA_REAL_PRECISION == 0
 integer, parameter :: RP = RP_DFT
-#elif REAL_PRECISION_ == 32
+#elif PRIMA_REAL_PRECISION == 32
 integer, parameter :: RP = REAL32
-#elif REAL_PRECISION_ == 64
+#elif PRIMA_REAL_PRECISION == 64
 integer, parameter :: RP = REAL64
-#elif REAL_PRECISION_ == 128
+#elif PRIMA_REAL_PRECISION == 128
 integer, parameter :: RP = REAL128
 #else
 integer, parameter :: RP = REAL64  ! double precision
@@ -163,8 +163,8 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! IEEE Standard for Floating-Point Arithmetic (IEEE 754) is respected, particularly if addition and
 ! multiplication are commutative. However, as of 20220408, NAG nagfor does not ensure commutativity
 ! for REAL128. Indeed, Fortran standards do not enforce IEEE 754, so compilers are not guaranteed to
-! respect it. Hence we set SYMTOL_DFT to a nonzero number when RELEASED_ is 1, although we do not
-! intend to test symmetry in production. We set SYMTOL_DFT in the same way when DEBUGGING_ is 0.
+! respect it. Hence we set SYMTOL_DFT to a nonzero number when PRIMA_RELEASED is 1, although we do not
+! intend to test symmetry in production. We set SYMTOL_DFT in the same way when PRIMA_DEBUGGING is 0.
 ! Update 20221226: When gfortran 12 is invoked with aggressive optimization options, it is buggy
 ! with ALL() and ANY(). We set SYMTOL_DFT to REALMAX to signify this case and disable the check.
 ! Update 20221229: ifx 2023.0.0 20221201 cannot ensure symmetry even up to 100*EPS if invoked
@@ -173,13 +173,13 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! -O3 and if the floating-point numbers are in single precision.
 ! Update 20230316: HUAWEI BiSheng Compiler 2.1.0.B010 (flang) cannot ensure symmetry even up to
 ! 10*EPS if invoked with -Ofast and if the floating-point numbers are in single precision.
-#if (defined __GFORTRAN__ || defined __INTEL_COMPILER && REAL_PRECISION_ < 64) && AGGRESSIVE_OPTIONS_ == 1
+#if (defined __GFORTRAN__ || defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
 real(RP), parameter :: SYMTOL_DFT = REALMAX
-#elif (defined __INTEL_COMPILER && REAL_PRECISION_ < 64)
+#elif (defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64)
 real(RP), parameter :: SYMTOL_DFT = max(5.0E1 * EPS, 1.0E-10_RP)
-#elif (defined __FLANG && REAL_PRECISION_ < 64) && AGGRESSIVE_OPTIONS_ == 1
+#elif (defined __FLANG && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
 real(RP), parameter :: SYMTOL_DFT = max(1.0E2 * EPS, 1.0E-10_RP)
-#elif (defined __NAG_COMPILER_RELEASE && REAL_PRECISION_ > 64) || (RELEASED_ == 1) || (DEBUGGING_ == 0)
+#elif (defined __NAG_COMPILER_RELEASE && PRIMA_REAL_PRECISION > 64) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO
@@ -202,7 +202,7 @@ integer(IK), parameter :: IPRINT_DFT = 0
 integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
 ! Maximal amount of memory (Byte) allowed for XHIST, FHIST, CONHIST, CHIST, and the filters.
-integer, parameter :: MHM = MAX_HIST_MEM_MB_ * 10**6
+integer, parameter :: MHM = PRIMA_MAX_HIST_MEM_MB * 10**6
 ! Make sure that MAXHISTMEM does not exceed HUGE(0) to avoid overflow and memory errors.
 integer, parameter :: MAXHISTMEM = min(MHM, huge(0))
 

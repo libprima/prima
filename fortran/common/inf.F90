@@ -16,7 +16,7 @@ implicit none
 private
 public :: is_finite, is_posinf, is_neginf, is_inf
 
-#if QP_AVAILABLE_ == 1
+#if PRIMA_QP_AVAILABLE == 1
 
 interface is_finite
     module procedure is_finite_sp, is_finite_dp, is_finite_qp
@@ -123,7 +123,7 @@ y = (abs(x) > huge(x))
 end function is_inf_dp
 
 
-#if QP_AVAILABLE_ == 1
+#if PRIMA_QP_AVAILABLE == 1
 
 pure elemental function is_finite_qp(x) result(y)
 use, non_intrinsic :: consts_mod, only : QP

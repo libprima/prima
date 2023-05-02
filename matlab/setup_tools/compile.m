@@ -178,23 +178,23 @@ function prepare_header(header_file, precision, debug_flag)
 
 switch precision
 case {'s', 'single'}
-    rep_str(header_file, '#define REAL_PRECISION_ 64', '#define REAL_PRECISION_ 32');
-    rep_str(header_file, '#define REAL_PRECISION_ 128', '#define REAL_PRECISION_ 32');
-    rep_str(header_file, '#define QP_AVAILABLE_ 1', '#define QP_AVAILABLE_ 0');
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 64', '#define PRIMA_REAL_PRECISION 32');
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 128', '#define PRIMA_REAL_PRECISION 32');
+    rep_str(header_file, '#define PRIMA_QP_AVAILABLE 1', '#define PRIMA_QP_AVAILABLE 0');
 case {'q', 'quadruple'}
-    rep_str(header_file, '#define REAL_PRECISION_ 32', '#define REAL_PRECISION_ 128');
-    rep_str(header_file, '#define REAL_PRECISION_ 64', '#define REAL_PRECISION_ 128');
-    rep_str(header_file, '#define QP_AVAILABLE_ 0', '#define QP_AVAILABLE_ 1');
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 32', '#define PRIMA_REAL_PRECISION 128');
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 64', '#define PRIMA_REAL_PRECISION 128');
+    rep_str(header_file, '#define PRIMA_QP_AVAILABLE 0', '#define PRIMA_QP_AVAILABLE 1');
 otherwise
-    rep_str(header_file, '#define REAL_PRECISION_ 32', '#define REAL_PRECISION_ 64');
-    rep_str(header_file, '#define REAL_PRECISION_ 128', '#define REAL_PRECISION_ 64');
-    rep_str(header_file, '#define QP_AVAILABLE_ 1', '#define QP_AVAILABLE_ 0');
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 32', '#define PRIMA_REAL_PRECISION 64');
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 128', '#define PRIMA_REAL_PRECISION 64');
+    rep_str(header_file, '#define PRIMA_QP_AVAILABLE 1', '#define PRIMA_QP_AVAILABLE 0');
 end
 
 if debug_flag
-    rep_str(header_file, '#define DEBUGGING_ 0', '#define DEBUGGING_ 1');
+    rep_str(header_file, '#define PRIMA_DEBUGGING 0', '#define PRIMA_DEBUGGING 1');
 else
-    rep_str(header_file, '#define DEBUGGING_ 1', '#define DEBUGGING_ 0');
+    rep_str(header_file, '#define PRIMA_DEBUGGING 1', '#define PRIMA_DEBUGGING 0');
 end
 
 % PREPARE_HEADER ends
