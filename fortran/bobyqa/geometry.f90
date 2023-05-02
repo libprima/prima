@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 13, 2023 PM09:17:50
+! Last Modified: Tuesday, May 02, 2023 PM05:02:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -141,10 +141,9 @@ if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
-! For the first case below, NEWUOA checks ANY(SCORE>1) .OR. (XIMPROVED .AND. ANY(SCORE>0))
-! instead of ANY(SCORE > 0). This seems to improve the performance of BOBYQA very slightly.
-if (any(score > 1) .or. (ximproved .and. any(score > 0))) then  ! Condition in NEWUOA.
-    ! !if (any(score > 0)) then  ! Powell's original condition in BOBYQA.
+! The following IF works slightly better than `IF (ANY(SCORE > 0))` from Powell's BOBYQA and LINCOA
+! code.
+if (any(score > 1) .or. (ximproved .and. any(score > 0))) then  ! Powell's UOBYQA and NEWUOA code.
     ! See (6.1) of the BOBYQA paper for the definition of KNEW in this case.
     ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))

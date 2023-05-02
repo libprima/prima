@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 21, 2023 PM11:01:31
+! Last Modified: Tuesday, May 02, 2023 PM05:01:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,8 +131,9 @@ if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
-! Changing the IF below to `IF (ANY(SCORE>0)) THEN` does not render a better performance.
-if (any(score > 1) .or. (ximproved .and. any(score > 0))) then
+! It makes almost no difference if we change the IF below to `IF (ANY(SCORE>0))`, which is used
+! in Powell's BOBYQA and LINCOA code.
+if (any(score > 1) .or. (ximproved .and. any(score > 0))) then  ! Powell's UOBYQA and NEWUOA code
     ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
