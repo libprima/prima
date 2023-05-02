@@ -485,7 +485,7 @@ $(TESTS) $(TESTS_INT):
 	$(eval IK := $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//")))
 	$(eval RP := $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//")))
 	$(eval QPAVLB := $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16))
-	$(eval EXTRA_FLAGS := -DDEBUGGING_=$(DBG) -DINTEGER_KIND_=$(IK) -DREAL_PRECISION_=$(RP) -DQP_AVAILABLE_=$(QPAVLB))
+	$(eval EXTRA_FLAGS := -DPRIMA_DEBUGGING=$(DBG) -DPRIMA_INTEGER_KIND=$(IK) -DPRIMA_REAL_PRECISION=$(RP) -DPRIMA_QP_AVAILABLE=$(QPAVLB))
 	@($(FC1) $(EXTRA_FLAGS) -c $(SRC) && $(FC2) $(EXTRA_FLAGS) -c $(SRC)) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
 	| grep -v "Absoft ANSI 1610:" \
@@ -621,10 +621,10 @@ source_%: $(SRC_DIRS)
 #header_%: source_%
 #	@if [[ -z "$(FINTRFH)" ]] ; then printf "\nfintrf.h is not available. Skip the test.\n"; exit 0; fi
 #	@printf "\nPreparing the header file for the test.\n"
-#	$(SEDI) "0,/^#define QP_AVAILABLE_ [0-9]*/s//#define QP_AVAILABLE_ $(QPAVLB)/" $(HEADERS)
-#	$(SEDI) "0,/^#define INTEGER_KIND_ [0-9]*/s//#define INTEGER_KIND_ $(IK)/" $(HEADERS)
-#	$(SEDI) "0,/^#define REAL_PRECISION_ [0-9]*/s//#define REAL_PRECISION_ $(RP)/" $(HEADERS)
-#	$(SEDI) "0,/^#define DEBUGGING_ [0-9]*/s//#define DEBUGGING_ $(DBG)/" $(HEADERS)
+#	$(SEDI) "0,/^#define PRIMA_QP_AVAILABLE [0-9]*/s//#define PRIMA_QP_AVAILABLE $(QPAVLB)/" $(HEADERS)
+#	$(SEDI) "0,/^#define PRIMA_INTEGER_KIND [0-9]*/s//#define PRIMA_INTEGER_KIND $(IK)/" $(HEADERS)
+#	$(SEDI) "0,/^#define PRIMA_REAL_PRECISION [0-9]*/s//#define PRIMA_REAL_PRECISION $(RP)/" $(HEADERS)
+#	$(SEDI) "0,/^#define PRIMA_DEBUGGING [0-9]*/s//#define PRIMA_DEBUGGING $(DBG)/" $(HEADERS)
 #	@printf "Done.\n"
 
 

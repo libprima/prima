@@ -23,7 +23,7 @@ public :: safealloc
 
 interface cstyle_sizeof
     module procedure size_of_sp, size_of_dp
-#if QP_AVAILABLE_ == 1
+#if PRIMA_QP_AVAILABLE == 1
     module procedure size_of_qp
 #endif
 end interface cstyle_sizeof
@@ -33,7 +33,7 @@ interface safealloc
     module procedure alloc_ivector, alloc_imatrix
     module procedure alloc_rvector_sp, alloc_rmatrix_sp
     module procedure alloc_rvector_dp, alloc_rmatrix_dp
-#if QP_AVAILABLE_ == 1
+#if PRIMA_QP_AVAILABLE == 1
     module procedure alloc_rvector_qp, alloc_rmatrix_qp
 #endif
 end interface safealloc
@@ -74,7 +74,7 @@ y = int(storage_size(x) / 8, kind(y))
 end function size_of_dp
 
 
-#if QP_AVAILABLE_ == 1
+#if PRIMA_QP_AVAILABLE == 1
 
 pure function size_of_qp(x) result(y)
 !--------------------------------------------------------------------------------------------------!
@@ -234,7 +234,7 @@ call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname
 end subroutine alloc_rmatrix_dp
 
 
-#if QP_AVAILABLE_ == 1
+#if PRIMA_QP_AVAILABLE == 1
 
 subroutine alloc_rvector_qp(x, n)
 !--------------------------------------------------------------------------------------------------!
