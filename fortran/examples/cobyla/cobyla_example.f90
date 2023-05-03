@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, February 28, 2023 PM08:57:54
+! Last Modified: Wednesday, May 03, 2023 PM01:58:51
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -14,7 +14,8 @@ module calcfc_mod
 
 implicit none
 private
-public :: calcfc_chebyquad, calcfc_hexagon
+public :: RP, calcfc_chebyquad, calcfc_hexagon
+integer, parameter :: RP = kind(0.0D0)
 
 contains
 
@@ -22,30 +23,30 @@ subroutine calcfc_chebyquad(x, f, constr)
 ! The Chebyquad test problem (Fletcher, 1965)
 implicit none
 
-real(kind(0.0D0)), intent(in) :: x(:)
-real(kind(0.0D0)), intent(out) :: f
-real(kind(0.0D0)), intent(out) :: constr(:)
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: f
+real(RP), intent(out) :: constr(:)
 
 integer :: i, n
-real(kind(0.0D0)) :: y(size(x) + 1, size(x) + 1), tmp
+real(RP) :: y(size(x) + 1, size(x) + 1), tmp
 
 n = size(x)
 
-y(1:n, 1) = 1.0D0
-y(1:n, 2) = 2.0D0 * x - 1.0D0
+y(1:n, 1) = 1.0_RP
+y(1:n, 2) = 2.0_RP * x - 1.0_RP
 do i = 2, n
-    y(1:n, i + 1) = 2.0D0 * y(1:n, 2) * y(1:n, i) - y(1:n, i - 1)
+    y(1:n, i + 1) = 2.0_RP * y(1:n, 2) * y(1:n, i) - y(1:n, i - 1)
 end do
 
-f = 0.0D0
+f = 0.0_RP
 do i = 1, n + 1
-    tmp = sum(y(1:n, i)) / real(n, kind(0.0D0))
+    tmp = sum(y(1:n, i)) / real(n, RP)
     if (modulo(i, 2) /= 0) then
-        tmp = tmp + 1.0D0 / real(i * i - 2 * i, kind(0.0D0))
+        tmp = tmp + 1.0_RP / real(i * i - 2 * i, RP)
     end if
     f = f + tmp * tmp
 end do
-constr = 0.0D0  ! Without this line, compilers may complain that CONSTR is not set.
+constr = 0.0_RP  ! Without this line, compilers may complain that CONSTR is not set.
 end subroutine calcfc_chebyquad
 
 subroutine calcfc_hexagon(x, f, constr)
@@ -54,22 +55,22 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 character(len=*), parameter :: srname = 'CALCFC_HEXAGON'
-real(kind(1.0D0)), intent(in) :: x(:)
-real(kind(1.0D0)), intent(out) :: constr(:)
-real(kind(1.0D0)), intent(out) :: f
+real(kind(1.0_RP)), intent(in) :: x(:)
+real(kind(1.0_RP)), intent(out) :: constr(:)
+real(kind(1.0_RP)), intent(out) :: f
 
 call assert(size(x) == 9 .and. size(constr) == 14, 'SIZE(X) == 9, SIZE(CONSTR) == 14', srname)
 
-f = -0.5D0 * (x(1) * x(4) - x(2) * x(3) + x(3) * x(9) - x(5) * x(9) + x(5) * x(8) - x(6) * x(7))
-constr(1) = 1.0D0 - x(3)**2 - x(4)**2
-constr(2) = 1.0D0 - x(9)**2
-constr(3) = 1.0D0 - x(5)**2 - x(6)**2
-constr(4) = 1.0D0 - x(1)**2 - (x(2) - x(9))**2
-constr(5) = 1.0D0 - (x(1) - x(5))**2 - (x(2) - x(6))**2
-constr(6) = 1.0D0 - (x(1) - x(7))**2 - (x(2) - x(8))**2
-constr(7) = 1.0D0 - (x(3) - x(5))**2 - (x(4) - x(6))**2
-constr(8) = 1.0D0 - (x(3) - x(7))**2 - (x(4) - x(8))**2
-constr(9) = 1.0D0 - x(7)**2 - (x(8) - x(9))**2
+f = -0.5_RP * (x(1) * x(4) - x(2) * x(3) + x(3) * x(9) - x(5) * x(9) + x(5) * x(8) - x(6) * x(7))
+constr(1) = 1.0_RP - x(3)**2 - x(4)**2
+constr(2) = 1.0_RP - x(9)**2
+constr(3) = 1.0_RP - x(5)**2 - x(6)**2
+constr(4) = 1.0_RP - x(1)**2 - (x(2) - x(9))**2
+constr(5) = 1.0_RP - (x(1) - x(5))**2 - (x(2) - x(6))**2
+constr(6) = 1.0_RP - (x(1) - x(7))**2 - (x(2) - x(8))**2
+constr(7) = 1.0_RP - (x(3) - x(5))**2 - (x(4) - x(6))**2
+constr(8) = 1.0_RP - (x(3) - x(7))**2 - (x(4) - x(8))**2
+constr(9) = 1.0_RP - x(7)**2 - (x(8) - x(9))**2
 constr(10) = x(1) * x(4) - x(2) * x(3)
 constr(11) = x(3) * x(9)
 constr(12) = -x(5) * x(9)
@@ -87,31 +88,31 @@ program cobyla_exmp
 use cobyla_mod, only : cobyla
 
 ! The following line specifies which module provides CALCFC.
-use calcfc_mod, only : calcfc_chebyquad, calcfc_hexagon
+use calcfc_mod, only : RP, calcfc_chebyquad, calcfc_hexagon
 
 implicit none
 
-real(kind(0.0D0)) :: f
+real(RP) :: f
 integer, parameter :: n_chebyquad = 6
-real(kind(0.0D0)) :: x_chebyquad(n_chebyquad)
+real(RP) :: x_chebyquad(n_chebyquad)
 integer, parameter :: n_hexagon = 9
-real(kind(0.0D0)) :: x_hexagon(n_hexagon)
-real(kind(0.0D0)), allocatable :: constr(:)
+real(RP) :: x_hexagon(n_hexagon)
+real(RP), allocatable :: constr(:)
 integer :: m, i
 
 ! The following lines illustrates how to call the solver to solve the Chebyquad problem.
-x_chebyquad = [(real(i, kind(0.0D0)) / real(n_chebyquad + 1, kind(0.0D0)), i=1, n_chebyquad)] ! Starting point
+x_chebyquad = [(real(i, RP) / real(n_chebyquad + 1, RP), i=1, n_chebyquad)] ! Starting point
 m = 0  ! Dimension of constraints. M must the specified correctly, or the program will crash!
 call cobyla(calcfc_chebyquad, m, x_chebyquad, f)  ! This call will not print anything.
 
 ! In addition to the compulsory arguments, the following illustration specifies also CONSTR, RHOBEG,
 ! and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
-x_chebyquad = [(real(i, kind(0.0D0)) / real(n_chebyquad + 1, kind(0.0D0)), i=1, n_chebyquad)] ! Starting point
-call cobyla(calcfc_chebyquad, m, x_chebyquad, f, rhobeg=0.2D0 * x_chebyquad(1), iprint=1)
+x_chebyquad = [(real(i, RP) / real(n_chebyquad + 1, RP), i=1, n_chebyquad)] ! Starting point
+call cobyla(calcfc_chebyquad, m, x_chebyquad, f, rhobeg=0.2_RP * x_chebyquad(1), iprint=1)
 
 ! The following lines illustrates how to call the solver to solve the Hexagon problem.
-x_hexagon = 2.0D0  ! Starting point.
+x_hexagon = 2.0_RP  ! Starting point.
 m = 14  ! Dimension of constraints. M must the specified correctly, or the program will crash!
 call cobyla(calcfc_hexagon, m, x_hexagon, f)  ! This call will not print anything.
 
@@ -119,7 +120,7 @@ call cobyla(calcfc_hexagon, m, x_hexagon, f)  ! This call will not print anythin
 ! and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver. Note that CONSTR is an output, which will be set to
 ! the value of CONSTR(X_HEXAGON) when the solver returns.
-x_hexagon = 2.0D0  ! Starting point.
-call cobyla(calcfc_hexagon, m, x_hexagon, f, constr=constr, rhobeg=1.0D0, rhoend=1.0D-3, iprint=1)
+x_hexagon = 2.0_RP  ! Starting point.
+call cobyla(calcfc_hexagon, m, x_hexagon, f, constr=constr, rhobeg=1.0_RP, rhoend=1.0D-3, iprint=1)
 
 end program cobyla_exmp
