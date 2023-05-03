@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, February 28, 2023 PM09:06:13
+! Last Modified: Wednesday, May 03, 2023 PM02:02:09
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -14,7 +14,8 @@ module tetrahedron_mod
 
 implicit none
 private
-public :: calfun, setup
+public :: RP, calfun, setup
+integer, parameter :: RP = kind(0.0D0)
 
 contains
 
@@ -22,29 +23,29 @@ subroutine calfun(x, f)
 implicit none
 
 ! Inputs
-real(kind(0.0D0)), intent(in) :: x(:)
+real(RP), intent(in) :: x(:)
 
 ! Outputs
-real(kind(0.0D0)), intent(out) :: f
+real(RP), intent(out) :: f
 
 ! Local variables
 integer :: j
 integer, parameter :: np = 50
-real(kind(0.0D0)) :: theta(np), xp(np), yp(np), zp(np), xs, ys, zs, ss
-real(kind(0.0D0)) :: v12, v13, v14, v23, v24, v34, del1, del2, del3, del4, tmp
+real(RP) :: theta(np), xp(np), yp(np), zp(np), xs, ys, zs, ss
+real(RP) :: v12, v13, v14, v23, v24, v34, del1, del2, del3, del4, tmp
 
-theta = 4.0D0 * atan(1.0D0)*[(real(j - 1, kind(0.0D0)) / real(np - 1, kind(0.0D0)), j=1, np)]
-xp = cos(theta) * cos(2.0D0 * theta)
-yp = sin(theta) * cos(2.0D0 * theta)
-zp = sin(2.0D0 * theta)
-xp = xp - sum(xp) / real(np, kind(0.0D0))
-yp = yp - sum(yp) / real(np, kind(0.0D0))
-zp = zp - sum(zp) / real(np, kind(0.0D0))
-xs = minval([0.0D0, xp])
-ys = minval([0.0D0, yp])
-zs = minval([0.0D0, zp])
-ss = maxval([0.0D0, xp + yp + zp])
-f = (ss - xs - ys - zs)**3 / 6.0D0
+theta = 4.0_RP * atan(1.0_RP)*[(real(j - 1, RP) / real(np - 1, RP), j=1, np)]
+xp = cos(theta) * cos(2.0_RP * theta)
+yp = sin(theta) * cos(2.0_RP * theta)
+zp = sin(2.0_RP * theta)
+xp = xp - sum(xp) / real(np, RP)
+yp = yp - sum(yp) / real(np, RP)
+zp = zp - sum(zp) / real(np, RP)
+xs = minval([0.0_RP, xp])
+ys = minval([0.0_RP, yp])
+zs = minval([0.0_RP, zp])
+ss = maxval([0.0_RP, xp + yp + zp])
+f = (ss - xs - ys - zs)**3 / 6.0_RP
 
 v12 = x(1) * x(5) - x(4) * x(2)
 v13 = x(1) * x(8) - x(7) * x(2)
@@ -61,7 +62,7 @@ if (del3 <= 0) return
 del4 = -v12 * x(9) + v13 * x(6) - v23 * x(3)
 if (del4 <= 0) return
 tmp = (del1 + del2 + del3 + del4)**3 / (del1 * del2 * del3 * del4)
-f = min(tmp / 6.0D0, f)
+f = min(tmp / 6.0_RP, f)
 
 end subroutine calfun
 
@@ -69,31 +70,31 @@ end subroutine calfun
 subroutine setup(x0, A, b)
 implicit none
 
-real(kind(0.0D0)), intent(out) :: x0(:), A(:, :), b(:)
+real(RP), intent(out) :: x0(:), A(:, :), b(:)
 
 integer, parameter :: np = 50
 integer :: i, j
-real(kind(0.0D0)) :: theta(np), xp(np), yp(np), zp(np), xs, ys, zs, ss
+real(RP) :: theta(np), xp(np), yp(np), zp(np), xs, ys, zs, ss
 
-theta = 4.0D0 * atan(1.0D0)*[(real(j - 1, kind(0.0D0)) / real(np - 1, kind(0.0D0)), j=1, np)]
-xp = cos(theta) * cos(2.0D0 * theta)
-yp = sin(theta) * cos(2.0D0 * theta)
-zp = sin(2.0D0 * theta)
-xp = xp - sum(xp) / real(np, kind(0.0D0))
-yp = yp - sum(yp) / real(np, kind(0.0D0))
-zp = zp - sum(zp) / real(np, kind(0.0D0))
-xs = minval([0.0D0, xp])
-ys = minval([0.0D0, yp])
-zs = minval([0.0D0, zp])
-ss = maxval([0.0D0, xp + yp + zp])
+theta = 4.0_RP * atan(1.0_RP)*[(real(j - 1, RP) / real(np - 1, RP), j=1, np)]
+xp = cos(theta) * cos(2.0_RP * theta)
+yp = sin(theta) * cos(2.0_RP * theta)
+zp = sin(2.0_RP * theta)
+xp = xp - sum(xp) / real(np, RP)
+yp = yp - sum(yp) / real(np, RP)
+zp = zp - sum(zp) / real(np, RP)
+xs = minval([0.0_RP, xp])
+ys = minval([0.0_RP, yp])
+zs = minval([0.0_RP, zp])
+ss = maxval([0.0_RP, xp + yp + zp])
 
-x0(2:8) = 0.0D0
-x0(1) = 1.0D0 / xs
-x0(5) = 1.0D0 / ys
-x0(9) = 1.0D0 / zs
-x0(10:12) = 1.0D0 / ss
+x0(2:8) = 0.0_RP
+x0(1) = 1.0_RP / xs
+x0(5) = 1.0_RP / ys
+x0(9) = 1.0_RP / zs
+x0(10:12) = 1.0_RP / ss
 
-A = 0.0D0
+A = 0.0_RP
 do j = 1, np
     do i = 1, 4
         A(3 * i - 2, 4 * j + i - 4) = xp(j)
@@ -102,7 +103,7 @@ do j = 1, np
     end do
 end do
 
-b = 1.0D0
+b = 1.0_RP
 
 end subroutine setup
 
@@ -116,17 +117,15 @@ program lincoa_exmp
 use lincoa_mod, only : lincoa
 
 ! The following line specifies which module provides CALFUN.
-use tetrahedron_mod, only : calfun
-
-use tetrahedron_mod, only : setup
+use tetrahedron_mod, only : RP, calfun, setup
 
 implicit none
 
 integer, parameter :: n = 12
 integer, parameter :: np = 50
 integer :: nf
-real(kind(0.0D0)) :: x(n), f
-real(kind(0.0D0)) :: x0(n), A(n, 4 * np), b(4 * np)
+real(RP) :: x(n), f
+real(RP) :: x0(n), A(n, 4 * np), b(4 * np)
 
 ! Set up X0 (starting point), A, and b.
 call setup(x0, A, b)
@@ -139,6 +138,6 @@ call lincoa(calfun, x, f, A=A, b=b, nf=nf)  ! This call will not print anything.
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call lincoa(calfun, x, f, A=A, b=b, rhobeg=1.0D0, iprint=1, nf=nf)
+call lincoa(calfun, x, f, A=A, b=b, rhobeg=1.0_RP, iprint=1, nf=nf)
 
 end program lincoa_exmp

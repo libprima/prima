@@ -34,22 +34,17 @@ SOLVER_SRC := ../../$(SOLVER)
 ####################################################################################################
 # All the tests
 test:
-	$(MAKE) atest
 	$(MAKE) dtest
 	$(MAKE) ftest
 	$(MAKE) gtest
 	$(MAKE) itest
 	$(MAKE) ntest
 	$(MAKE) rtest
-	$(MAKE) stest
 	$(MAKE) vtest
 	$(MAKE) xtest
 
 ####################################################################################################
 # Here are the compilers to test.
-
-# Absoft af95
-atest: FC := af95 -m3
 
 # AMD AOCC Flang
 AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2> /dev/null | sort | tail -n 1)
@@ -74,9 +69,6 @@ vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard
 # ARM Flang
 RFORT := $(shell find -L /opt/arm -type f -executable -name armflang -print 2> /dev/null | sort | tail -n 1)
 rtest: FC := $(RFORT) -Wall -Wextra -std=f$(FSTD) -Mstandard
-
-# Oracle sunf95
-stest: FC := sunf95 -w3 -u -U
 
 # Intel ifx
 xtest: FC := ifx -warn all -stand f$(FS)
