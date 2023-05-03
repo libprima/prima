@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, May 03, 2023 AM08:10:12
+! Last Modified: Wednesday, May 03, 2023 AM08:24:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -223,7 +223,7 @@ end if
 
 weight = max(ONE, distsq / max(rho, TENTH * delta)**2)  ! Similar to Powell's NEWUOA code
 ! Other possible definitions of WEIGHT.
-! !weight = distsq  ! Similar to Powell's LINCOA code, but WRONG. See comments in LINCOA/geomtry.f90.
+! !weight = distsq  ! Similar to Powell's LINCOA code, but WRONG. See comments in LINCOA/geometry.f90.
 ! !weight = max(ONE, 25.0_RP * distsq / delta**2)  ! Similar to Powell's BOBYQA code, works well
 ! !weight = max(ONE, TEN * distsq / delta**2)
 ! !weight = max(ONE, 1.0E2_RP * distsq / delta**2)

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 03, 2023 AM08:21:41
+! Last Modified: Wednesday, May 03, 2023 AM08:23:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -126,7 +126,7 @@ weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA cod
 ! N.B.: If DISTSQ is the square of distances to the updated XOPT, then it is wrong to set WEIGHT to
 ! DISTSQ**2 or any power of DISTSQ. Why?
 !
-! Consider a scenario where XIMPROVE is TRUE and the new interpolation point XNEW is quite close to
+! Consider a scenario where XIMPROVED is TRUE and the new interpolation point XNEW is quite close to
 ! one of the existing points in the old XPT, e.g., XPT(:, J). In this case, the only appropriate
 ! value of KNEW is J; otherwise, the new interpolation problem will be close to degenerate and its
 ! KKT system will be close to singular due to the two close points in the updated interpolation set.
@@ -141,7 +141,7 @@ weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA cod
 ! For the order of DEN, note the DEN(K) is the denominator in the Sherman-Morrison-Woodbury update
 ! of the KKT matrix, and DEN(K) = det(new KKT matrix) / det(old KKT matrix), where "KKT matrix"
 ! refers to the coefficient matrix of the KKT system for the interpolation problem. See equations
-! (3.10)--(3.12) of the NEWAUOA paper for this matrix.
+! (3.10)--(3.12) of the NEWUOA paper for this matrix.
 !
 ! Similar arguments can be made if the interpolation is fully determined. Indeed, the usage of
 ! DISTSQ as the weight led to a problem in COBYLA during a test on 20230501, which is the very
