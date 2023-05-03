@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 03, 2023 AM08:18:12
+! Last Modified: Wednesday, May 03, 2023 AM08:21:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,12 +131,12 @@ weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA cod
 ! value of KNEW is J; otherwise, the new interpolation problem will be close to degenerate and its
 ! KKT system will be close to singular due to the two close points in the updated interpolation set.
 !
-! What KNEW will be generated if KNEW = MAXLOC(DISTSQ**p * ABS(DEN))?
-! 1. DISTSQ(J) = O(E**2), DEN(K) = O(1), and hence DISTSQ(J)*ABS(DEN(K)) = O(E**2).
-! 2. For any K /= J, DIST(K) = O(1), DEN(K) = O(E), and hence DISTSQ(K)*ABS(DEN(K)) = O(E).
-! Therefore, for any p > 1/2, KNEW /= J when E is small. Any analyzed above, this is inappropriate.
-! Note that small values of p (e.g., p <= 1/2) always performs poorly in our numerical experiments
-! for all Powell's methods.
+! What KNEW will be generated if KNEW = MAXLOC(DISTSQ**p * ABS(DEN))? Note the following.
+! 1. DISTSQ(J) = O(E**2) and DEN(K) = O(1);
+! 2. for any K /= J, DIST(K) = O(1) and DEN(K) = O(E).
+! Therefore, for any p > 1/2, KNEW /= J when E is small. As analyzed above, this is inappropriate.
+! In addition, small values of p (e.g., p <= 1/2) always performs poorly for all Powell's methods
+! in our numerical experiments.
 !
 ! For the order of DEN, note the DEN(K) is the denominator in the Sherman-Morrison-Woodbury update
 ! of the KKT matrix, and DEN(K) = det(new KKT matrix) / det(old KKT matrix), where "KKT matrix"
