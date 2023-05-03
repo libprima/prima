@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 02, 2023 PM04:55:28
+! Last Modified: Wednesday, May 03, 2023 AM08:18:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -122,6 +122,34 @@ weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA cod
 ! !weight = max(1.0_RP, 1.0E2 * distsq / rho**2)**3
 ! !weight = max(1.0_RP, 10.0_RP * distsq / delta**2)**3
 ! !weight = max(1.0_RP, 1.0E2_RP * distsq / delta**2)**3
+!--------------------------------------------------------------------------------------------------!
+! N.B.: If DISTSQ is the square of distances to the updated XOPT, then it is wrong to set WEIGHT to
+! DISTSQ**2 or any power of DISTSQ. Why?
+!
+! Consider a scenario where XIMPROVE is TRUE and the new interpolation point XNEW is quite close to
+! one of the existing points in the old XPT, e.g., XPT(:, J). In this case, the only appropriate
+! value of KNEW is J; otherwise, the new interpolation problem will be close to degenerate and its
+! KKT system will be close to singular due to the two close points in the updated interpolation set.
+!
+! What KNEW will be generated if KNEW = MAXLOC(DISTSQ**p * ABS(DEN))?
+! 1. DISTSQ(J) = O(E**2), DEN(K) = O(1), and hence DISTSQ(J)*ABS(DEN(K)) = O(E**2).
+! 2. For any K /= J, DIST(K) = O(1), DEN(K) = O(E), and hence DISTSQ(K)*ABS(DEN(K)) = O(E).
+! Therefore, for any p > 1/2, KNEW /= J when E is small. Any analyzed above, this is inappropriate.
+! Note that small values of p (e.g., p <= 1/2) always performs poorly in our numerical experiments
+! for all Powell's methods.
+!
+! For the order of DEN, note the DEN(K) is the denominator in the Sherman-Morrison-Woodbury update
+! of the KKT matrix, and DEN(K) = det(new KKT matrix) / det(old KKT matrix), where "KKT matrix"
+! refers to the coefficient matrix of the KKT system for the interpolation problem. See equations
+! (3.10)--(3.12) of the NEWAUOA paper for this matrix.
+!
+! Similar arguments can be made if the interpolation is fully determined. Indeed, the usage of
+! DISTSQ as the weight led to a problem in COBYLA during a test on 20230501, which is the very
+! motivation for the current comment.
+!
+! Note that Powell's LINCOA code sets DISTSQ to the square of the distance to the old XOPT, which
+! avoids this problem. However, such a DISTSQ itself seems not ideal, as mentioned above.
+!--------------------------------------------------------------------------------------------------!
 
 den = calden(kopt, bmat, d, xpt, zmat, idz)
 score = weight * abs(den)
