@@ -69,7 +69,7 @@ for is = 1 : length(solvers)
         mexopts{is}.quadruple = (isverify || endsWith(solvers{is}, '_quadruple') || ismember([solvers{is}, '_quadruple'], solvers));
 
         % Should we be verbose?
-        mexopts{is}.verbose = (isfield(options, 'verbose') && options.verbose)
+        mexopts{is}.verbose = (isfield(options, 'verbose') && options.verbose);
     end
 end
 
@@ -85,7 +85,6 @@ try
     compiler_options_modified = compile_flag && isfield(options, 'compiler_options') && ...
         (isa(options.compiler_options, 'char') || isa(options.compiler_options, 'string'));
     if compiler_options_modified
-        options.compiler_options
         set_compiler_options(options.compiler_options);
     end
 
