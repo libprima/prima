@@ -66,6 +66,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
+            options.verbose = true;
             if strcmp('${{ matrix.solver }}', 'bobyqa') || strcmp('${{ matrix.solver }}', 'lincoa'), options.nr = 4; end;
             options
             verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
