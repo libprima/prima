@@ -307,10 +307,12 @@ for more information.
 In the past years, while working on PRIMA, I have spotted a dozen of [bugs in reputable Fortran compilers](https://github.com/zequipe/test_compiler)
 and two [bugs in MATLAB](https://github.com/zequipe/test_matlab). Each of them represents days of **bitter** debugging, which finally led to the conclusion
 that it was not a problem in my code but a flaw in the Fortran compilers or in MATLAB. From a very unusual angle, this reflects how intensive
-the coding has been.
+the coding has been. 
 
 The bitterness behind this "fun" fact is exactly why I work on PRIMA: I hope that all
 the frustrations that I have experienced will not happen to any user of Powell's methods anymore.
+I hope I am the last one in the world to decode a maze of 244 GOTOs in 7939 lines of Fortran 77 code &mdash; 
+I have been doing this for three years and I do not want anyone else to do it again.
 
 
 ### Acknowledgment
