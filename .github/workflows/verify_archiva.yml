@@ -73,6 +73,7 @@ jobs:
             dt = datetime('now', 'TimeZone', tz);
             DayMonth = day(dt);
             options = struct();
+            options.verbose = true;
             options.seed = 10000*mod(year(dt), 100) + 100*week(dt) + hour(dt);
             options.nr = 1; % Since the code will not change along the time, big nr is not needed.
             options.no_classical = true;  % Starting from 20230212, we do not verify the classical version for the archiva.

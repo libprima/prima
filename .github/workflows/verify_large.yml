@@ -64,6 +64,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
+            options.verbose = true;
             options.nr = 5;
             if strcmp('${{ matrix.solver }}', 'lincoa'), options.nr = 1; end;
             options.no_classical = true;  % We do not test the classical mode on "large" problems.

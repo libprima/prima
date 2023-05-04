@@ -63,7 +63,9 @@ jobs:
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
 
             cd(fullfile(root_dir, 'matlab/tests'));
-            verify('${{ matrix.solver }}', '${{ matrix.dim }}');
+            options = struct();
+            options.verbose = true;
+            verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
 
