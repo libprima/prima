@@ -13,8 +13,10 @@ PREPROCF90="preproc.f90"
 PREPROC="$DIR/common/$PREPROCF90"
 LINALGF90="linalg.f90"
 LINALG="$DIR/common/$LINALGF90"
-OUTPUTF90="output.f90"
-OUTPUT="$DIR/common/$OUTPUTF90"
+CMN_OUTPUTF90="output.f90"
+CMN_OUTPUT="$DIR/common/$CMN_OUTPUTF90"
+MEX_OUTPUTF90="output.F90"
+MEX_OUTPUT="$DIR/common/$MEX_OUTPUTF90"
 DEBUGF90="debug.F90"
 DEBUG="$DIR/common/$DEBUGF90"
 NOISEF90="noise.f90"
@@ -31,7 +33,7 @@ if [[ -f "$GETACT" ]] ; then
     sed -i "s/,\s*back\s*=\s*\.true\.//" "$GETACT"
 fi
 
-for FILE in "$STRING" "$PREPROC" "$LINALG" "$OUTPUT" "$DEBUG" "$NOISE" "$FMXAPI" ; do
+for FILE in "$STRING" "$PREPROC" "$LINALG" "$CMN_OUTPUT" "$MEX_OUTPUT" "$DEBUG" "$NOISE" "$FMXAPI" ; do
     if [[ -f "$FILE" ]] ; then
         sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
     fi
