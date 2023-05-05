@@ -72,8 +72,8 @@ common_files = [list_files(common, filelist), fullfile(gateways, 'fmxapi.F'), fu
 copyfile(fullfile(gateways, 'debug.F'), common);
 
 % gateways/output.F contains output (i.e., printing) subroutines tailored for MEX. It replaces common/output.f.
-copyfile(fullfile(gateways, 'output.F'), common);
 delete(fullfile(common, 'output.f'));
+copyfile(fullfile(gateways, 'output.F'), common);
 % Replace "output.f" with "output.F" in `common_files`.
 common_files = replace(common_files, 'output.f', 'output.F');  % `replace` is available since R2016b.
 
