@@ -80,14 +80,20 @@ MEXGATE_DIR := $(TEST_DIR)/..
 # Source directories.
 SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR)
 
+# MEX_DEBUGF90 is the name of the MEX file that defines `debug_mod`, which has a common version
+# named CMN_DEBUGF90. We should use the MEX version in place of the common one when testing the MEX
+# gateways. Similar for MEX_OUTPUTF90 and CMN_OUTPUTF90.
+MEX_DEBUGF90 := debug.F90
+CMN_DEBUGF90 := debug.F90
+MEX_OUTPUTF90 := output.F90
+CMN_OUTPUTF90 := output.f90
+
 # Sources.
 COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
+COMMON_SRC := $(subst $(CMN_OUTPUTF90),$(MEX_OUTPUTF90),$(COMMON_SRC))  # Use MEX_OUTPUTF90 instead of CMN_OUTPUTF90.
 SOLVER_SRC := $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
 MEXGATE_SRC := fmxapi.F90 cbfun.F90 $(SOLVER)_mex.F90
 SRC := $(COMMON_SRC) $(SOLVER_SRC) $(MEXGATE_SRC)
-# DEBUGF90 is the name of the Fortran file that defines `debug_mod`, which has a Fortran version and
-# a MEX version. We should use the MEX version in place of the Fortran one when testing the MEX gateways.
-DEBUGF90 := debug.F90
 
 # Headers.
 # N.B.: If we define COMMON as "./common/", then, when adapting the header, sed will complain
@@ -580,7 +586,8 @@ source_%: $(SRC_DIRS)
 	@printf "\nMaking a copy of the source code for the test.\n"
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
 	@for SRC in $(MEXGATE_SRC); do cp $(MEXGATE_DIR)/"$$SRC" ./; done
-	@cp $(MEXGATE_DIR)/$(DEBUGF90) ./$(COMMON)  # Use the MEX version of debug.F90 instead of the Fortran version.
+	@rm -rf ./$(COMMON)/$(CMN_DEBUGF90) ./$(COMMON)/$(CMN_OUTPUTF90)  # Remove the common version of debug.*90 and output.*90.
+	@cp $(MEXGATE_DIR)/$(MEX_DEBUGF90) $(MEXGATE_DIR)/$(MEX_OUTPUTF90) ./$(COMMON)  # Use the MEX version of debug.*90 and output.*90 instead of the common version.
 	@cp $(FINTRFH) ./ && chmod 777 ./fintrf.h 2>/dev/null || : # The MathWorks header file for Fortran MEX. chmod is necessary.
 	@find ./ -type f \( \
 		-name "*.mod" \

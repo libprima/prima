@@ -14,8 +14,10 @@ LINGEO="$DIR/lincoa/geometry.f90"
 LINTR="$DIR/lincoa/trustregion.f90"
 LINUPD="$DIR/lincoa/update.f90"
 BOBTR="$DIR/bobyqa/trustregion.f90"
-OUTPUTF90="output.f90"
-OUTPUT="$DIR/common/$OUTPUTF90"
+CMN_OUTPUTF90="output.f90"
+CMN_OUTPUT="$DIR/common/$CMN_OUTPUTF90"
+MEX_OUTPUTF90="output.F90"
+MEX_OUTPUT="$DIR/common/$MEX_OUTPUTF90"
 DEBUGF90="debug.F90"
 DEBUG="$DIR/common/$DEBUGF90"
 
@@ -67,7 +69,7 @@ if [[ -f "$BOBTR" ]] ; then
 
 fi
 
-for FILE in "$OUTPUT" "$DEBUG" ; do
+for FILE in "$CMN_OUTPUT" "$MEX_OUTPUT" "$DEBUG" ; do
     if [[ -f "$FILE" ]] ; then
         sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
     fi
