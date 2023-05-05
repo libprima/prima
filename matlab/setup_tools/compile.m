@@ -68,16 +68,16 @@ filelist = 'ffiles.txt';
 % Common Fortran source files.
 common_files = [list_files(common, filelist), fullfile(gateways, 'fmxapi.F'), fullfile(gateways, 'cbfun.F')];
 
-% debug.F contains debugging subroutines tailored for MEX. It replaces debug.F under the common directory.
+% gateways/debug.F contains debugging subroutines tailored for MEX. It replaces common/debug.F.
 copyfile(fullfile(gateways, 'debug.F'), common);
 
-% output.F contains output (printing) subroutines tailored for MEX. It replaces output.f under the common directory.
+% gateways/output.F contains output (i.e., printing) subroutines tailored for MEX. It replaces common/output.f.
 copyfile(fullfile(gateways, 'output.F'), common);
 delete(fullfile(common, 'output.f'));
 % Replace "output.f" with "output.F" in `common_files`.
 common_files = replace(common_files, 'output.f', 'output.F');  % `replace` is available since R2016b.
 
-% ppf.h contains preprocessing directives. It is needed only when compiling the common files.
+% common/ppf.h contains preprocessing directives. It is needed only when compiling the common files.
 header_file = fullfile(common, 'ppf.h');
 header_file_bak = fullfile(common, 'ppf.bak');
 copyfile(header_file, header_file_bak);
