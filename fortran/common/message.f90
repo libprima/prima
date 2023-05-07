@@ -1,14 +1,15 @@
-module output_mod
+module message_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides some subroutines concerning output to terminal/files. Note that these output
-! operations are sequential in nature. In case parallelism is desirable (especially during
-! initialization), the subroutines may have to be modified or disabled.
+! This module provides some subroutines that print messages to terminal/files.
+!
+! N.B.: In case parallelism is desirable (especially during initialization), the subroutines may
+! have to be modified or disabled due to the IO operations.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and papers.
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 07, 2023 PM10:22:22
+! Last Modified: Sunday, May 07, 2023 PM10:42:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,6 +26,7 @@ subroutine retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: fprint_mod, only : fprint
 use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING, &
     & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT
@@ -163,6 +165,7 @@ subroutine rhomsg(solver, iprint, nf, f, rho, x, cstrv, constr, cpen)
 ! This subroutine prints messages when RHO is updated.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
+use, non_intrinsic :: fprint_mod, only : fprint
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
@@ -265,6 +268,7 @@ subroutine cpenmsg(solver, iprint, cpen)
 ! This subroutine prints a message when CPEN is updated.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, OUTUNIT, STDOUT
+use, non_intrinsic :: fprint_mod, only : fprint
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
@@ -314,6 +318,7 @@ subroutine fmsg(solver, iprint, nf, f, x, cstrv, constr)
 ! This subroutine prints messages at each iteration.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
+use, non_intrinsic :: fprint_mod, only : fprint
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
@@ -394,111 +399,4 @@ call fprint(message, funit, fname, 'append')
 end subroutine fmsg
 
 
-subroutine fprint(string, funit, fname, faction)
-use, non_intrinsic :: consts_mod, only : IK, OUTUNIT, STDIN, STDOUT, STDERR, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, warning
-use, non_intrinsic :: string_mod, only : num2str
-implicit none
-
-! Inputs
-character(len=*), intent(in) :: string
-integer, intent(in), optional :: funit
-character(len=*), intent(in), optional :: fname
-character(len=*), intent(in), optional :: faction
-
-! Local variables
-character(len=*), parameter :: srname = 'FPRINT'
-character(len=:), allocatable :: fname_loc
-character(len=:), allocatable :: fstat
-character(len=:), allocatable :: position
-integer :: funit_loc
-integer :: iostat
-logical :: fexist
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(OUTUNIT > 0 .and. all(OUTUNIT /= [STDIN, STDOUT, STDERR]), &
-        & 'OUTUNIT is positive and not STDIN, STDOUT, or STDERR', srname)
-    if (present(funit)) then
-        call assert(funit /= STDIN, 'The file unit is not STDIN', srname)
-        if (present(fname)) then
-            call assert(len(fname) == 0 .eqv. (funit == STDOUT .or. funit == STDERR), &
-                & 'The file name is empty if and only if the file unit is either STDOUT or STDERR', srname)
-        end if
-    end if
-    if (present(faction)) then
-        call assert(faction == 'write' .or. faction == 'w' .or. faction == 'append' .or. faction == 'a', &
-            & 'FACTION is either "write (w)" or "append (a)"', srname)
-    end if
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-! Decide the file storage unit.
-if (present(funit)) then
-    funit_loc = funit
-else
-    if (present(fname)) then
-        funit_loc = OUTUNIT  ! Print the message to the writing unit OUTUNIT.
-    else
-        funit_loc = STDOUT  ! Print the message to the standard out.
-    end if
-end if
-
-! Decide the file name.
-if (present(fname)) then
-    fname_loc = fname
-elseif (funit_loc /= STDOUT .and. funit_loc /= STDERR) then
-    fname_loc = 'fort.'//num2str(int(funit_loc, IK))
-else
-    fname_loc = ''
-end if
-
-if (DEBUGGING) then
-    call assert(len(fname_loc) == 0 .eqv. (funit_loc == STDOUT .or. funit_loc == STDERR), &
-        & 'The file name is empty if and only if the file unit is either STDOUT or STDERR', srname)
-end if
-
-! Open the file if necessary.
-iostat = 0
-if (len(fname_loc) > 0) then
-    ! Decide the position for OPEN. This is the only place where FACTION is used.
-    position = 'append'
-    if (present(faction)) then
-        select case (faction)
-        case ('write', 'w')
-            position = 'rewind'
-        case ('append', 'a')
-            position = 'append'
-        case default
-            call warning(srname, 'Unknown file action "'//faction//'"')
-        end select
-    end if
-    ! Check whether the file is already existing.
-    inquire (file=fname_loc, exist=fexist)
-    fstat = merge(tsource='old', fsource='new', mask=fexist)
-    ! Open the file.
-    open (unit=funit_loc, file=fname_loc, status=fstat, position=position, iostat=iostat, action='write')
-    if (iostat /= 0) then
-        call warning(srname, 'Failed to open file '//fname_loc)
-        return
-    end if
-end if
-
-! Print the string.
-write (funit_loc, '(1A)') string
-
-! Close the file if necessary
-if (len(fname_loc) > 0 .and. iostat == 0) then
-    close (funit_loc)
-end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-end subroutine fprint
-
-
-end module output_mod
+end module message_mod
