@@ -8,45 +8,15 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 07, 2023 PM02:20:16
+! Last Modified: Sunday, May 07, 2023 PM04:17:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: retmsg, rhomsg, fmsg, cpenmsg
 
-!!--------------------------------------------------------------------------------------------------!
-!! Formats.
-!! Separating spaces: 3 spaces.
-!character(len=*), parameter :: spaces = '3X'
-!! Format for F: 16 digits for base, 4 digits for exponent.
-!character(len=*), parameter :: ffmt = '1PE25.16E4'
-!character(len=*), parameter :: f_fmt = '(1A, '//ffmt//')'
-!! Format for CSTRV: the same as F.
-!character(len=*), parameter :: cstrv_fmt = f_fmt
-!! Format for X: 8 digits for base, 4 digits for exponent, 4 components in each line.
-!character(len=*), parameter :: xfmt = '/(1P, 4E19.8E4)'
-!character(len=*), parameter :: x_fmt = '(1A, '//xfmt//')'
-!! Format for CONSTR: the same as X.
-!character(len=*), parameter :: constr_fmt = x_fmt
-!! Format for integers: Use the minimum number of digits needed to print integers.
-!character(len=*), parameter :: ifmt = 'I0'
-!! Format for NF during the iterations.
-!character(len=*), parameter :: nf_fmt = '(/1A, '//ifmt//')'
-!! Format for RHO: 8 digits for base, 4 digits for exponent.
-!character(len=*), parameter :: rfmt = '1PE17.8E4'
-!! Format for RHO and NF when RHO is updated, with or without CPEN.
-!character(len=*), parameter :: rnf_fmt = '(/1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'
-!character(len=*), parameter :: rpnf_fmt = '(/1A, '//rfmt//', '//spaces//', 1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'
-!! Format for the constraint penalty parameter: the same as RHO.
-!character(len=*), parameter :: pfmt = rfmt
-!! Format for the constraint penalty parameter when it is updated.
-!character(len=*), parameter :: p_fmt = '(/1A, '//pfmt//')'
-!!--------------------------------------------------------------------------------------------------!
-
 
 contains
-
 
 
 subroutine retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
@@ -74,12 +44,20 @@ real(RP), intent(in), optional :: cstrv
 real(RP), intent(in), optional :: constr(:)
 
 ! Local variables
+character(len=*), parameter :: newline = new_line('')
 character(len=*), parameter :: srname = 'RETMSG'
-character(len=:), allocatable :: fstat  ! 'OLD' or 'NEW'
+character(len=:), allocatable :: constr_message
+character(len=:), allocatable :: cstrv_message
+character(len=:), allocatable :: f_message
 character(len=:), allocatable :: fout
-character(len=:), allocatable :: msg
-integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
+character(len=:), allocatable :: fstat
+character(len=:), allocatable :: message
+character(len=:), allocatable :: nf_message
+character(len=:), allocatable :: reason
+character(len=:), allocatable :: ret_message
+character(len=:), allocatable :: x_message
 integer :: funit ! File storage unit for the writing. Should be an integer of default kind.
+integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer(IK), parameter :: valid_exit_flags(11) = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_INF_MODEL, DAMAGING_ROUNDING, &
     & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT]
@@ -131,47 +109,58 @@ end if
 ! Decide the exit message.
 select case (info)
 case (FTARGET_ACHIEVED)
-    msg = 'the target function value is achieved.'
+    reason = 'the target function value is achieved.'
 case (MAXFUN_REACHED)
-    msg = 'the objective function has been evaluated MAXFUN times.'
+    reason = 'the objective function has been evaluated MAXFUN times.'
 case (MAXTR_REACHED)
-    msg = 'the maximal number of trust region iterations has been reached.'
+    reason = 'the maximal number of trust region iterations has been reached.'
 case (SMALL_TR_RADIUS)
-    msg = 'the trust region radius reaches its lower bound.'
+    reason = 'the trust region radius reaches its lower bound.'
 case (TRSUBP_FAILED)
-    msg = 'a trust region step has failed to reduce the quadratic model.'
+    reason = 'a trust region step has failed to reduce the quadratic model.'
 case (NAN_INF_X)
-    msg = 'NaN or Inf occurs in x.'
+    reason = 'NaN or Inf occurs in x.'
 case (NAN_INF_F)
-    msg = 'the objective function returns NaN/+Inf.'
+    reason = 'the objective function returns NaN/+Inf.'
 case (NAN_INF_MODEL)
-    msg = 'NaN or Inf occurs in the models.'
+    reason = 'NaN or Inf occurs in the models.'
 case (DAMAGING_ROUNDING)
-    msg = 'rounding errors are becoming damaging.'
+    reason = 'rounding errors are becoming damaging.'
 case (NO_SPACE_BETWEEN_BOUNDS)
-    msg = 'there is no space between the lower and upper bounds of variable.'
+    reason = 'there is no space between the lower and upper bounds of variable.'
 case (ZERO_LINEAR_CONSTRAINT)
-    msg = 'one of the linear constraints has a zero gradient'
+    reason = 'one of the linear constraints has a zero gradient'
 case default
-    msg = 'UNKNOWN EXIT FLAG'
+    reason = 'UNKNOWN EXIT FLAG'
 end select
+ret_message = 'Return from '//solver//' because '//strip(reason)//newline
+
+nf_message = 'At the return from '//solver//'   Number of function evaluations = '//num2str(nf)//newline
+
+f_message = 'Least function value = '//num2str(f)//newline
+
+x_message = 'The corresponding X is:'//newline//num2str(x)//newline
+
+if (is_constrained) then
+    cstrv_message = 'Constraint violation = '//num2str(cstrv_loc)//newline
+else
+    cstrv_message = ''
+end if
+
+if (is_constrained .and. present(constr)) then
+    constr_message = 'The constraint value is:'//newline//num2str(constr)//newline
+else
+    constr_message = ''
+end if
 
 ! Print the message.
 if (abs(iprint) >= 3) then
-    write (funit, '(1X)')
+    message = newline//newline//ret_message//nf_message//f_message//cstrv_message//x_message//constr_message//newline
+else
+    message = newline//ret_message//nf_message//f_message//cstrv_message//x_message//constr_message//newline
 end if
-write (funit, '(/1A)') 'Return from '//solver//' because '//strip(msg)
-write (funit, '(1A)') 'At the return from '//solver//'  Number of function evaluations = '//num2str(nf)
 
-write (funit, '(1A)') 'Least function value = '//num2str(f)
-if (is_constrained) then
-    write (funit, '(1A)') 'Constraint violation = '//num2str(cstrv_loc)
-end if
-write (funit, '(1A)') 'The corresponding X is:'//new_line('')//num2str(x)
-if (is_constrained .and. present(constr)) then
-    write (funit, '(1A)') 'The constraint value is:'//new_line('')//num2str(constr)
-end if
-write (funit, '(1X)')
+write (funit, '(1A)') message
 
 if (iprint < 0) then
     close (funit)
@@ -206,11 +195,18 @@ real(RP), intent(in), optional :: constr(:)
 real(RP), intent(in), optional :: cpen
 
 ! Local variables
+character(len=*), parameter :: newline = new_line('')
 character(len=*), parameter :: srname = 'RHOMSG'
-character(len=:), allocatable :: fstat  ! 'OLD' or 'NEW'
+character(len=:), allocatable :: constr_message
+character(len=:), allocatable :: cstrv_message
+character(len=:), allocatable :: f_message
 character(len=:), allocatable :: fout
-integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
+character(len=:), allocatable :: fstat
+character(len=:), allocatable :: message
+character(len=:), allocatable :: rp_message
+character(len=:), allocatable :: x_message
 integer :: funit ! Logical unit for the writing. Should be an integer of default kind.
+integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 logical :: fexist
 logical :: is_constrained
 real(RP) :: cstrv_loc
@@ -251,24 +247,36 @@ else
     cstrv_loc = ZERO
 end if
 
+if (present(cpen)) then
+    rp_message = 'New RHO = '//num2str(rho)//'   CPEN = '//num2str(cpen)//&
+        &'   Number of function evaluations = '//num2str(nf)//newline
+else
+    rp_message = 'New RHO = '//num2str(rho)//'   Number of function evaluations = '//num2str(nf)//newline
+end if
+
+f_message = 'Least function value = '//num2str(f)//newline
+
+if (is_constrained) then
+    cstrv_message = 'Constraint violation = '//num2str(cstrv_loc)//newline
+else
+    cstrv_message = ''
+end if
+
+x_message = 'The corresponding X is:'//newline//num2str(x)//newline
+
+if (is_constrained .and. present(constr)) then
+    constr_message = 'The constraint value is:'//newline//num2str(constr)//newline
+else
+    constr_message = ''
+end if
+
 ! Print the message.
 if (abs(iprint) >= 3) then
-    write (funit, '(1X)')
-end if
-if (present(cpen)) then
-    write (funit, '(/1A)') 'New RHO = '//num2str(rho)//'  CPEN = '//num2str(cpen)//&
-        &'  Number of function evaluations = '//num2str(nf)
+    message = newline//newline//rp_message//f_message//cstrv_message//x_message//constr_message//newline
 else
-    write (funit, '(/1A)') 'New RHO = '//num2str(rho)//'  Number of function evaluations = '//num2str(nf)
+    message = newline//rp_message//f_message//cstrv_message//x_message//constr_message//newline
 end if
-write (funit, '(1A)') 'Least function value = '//num2str(f)
-if (is_constrained) then
-    write (funit, '(1A)') 'Constraint violation = '//num2str(cstrv_loc)
-end if
-write (funit, '(1A)') 'The corresponding X is:'//new_line('')//num2str(x)
-if (is_constrained .and. present(constr)) then
-    write (funit, '(1A)') 'The constraint value is:'//new_line('')//num2str(constr)
-end if
+write (funit, '(1A)') message
 
 if (iprint < 0) then
     close (funit)
@@ -297,11 +305,13 @@ integer(IK), intent(in) :: iprint
 real(RP), intent(in), optional :: cpen
 
 ! Local variables
+character(len=*), parameter :: newline = new_line('')
 character(len=*), parameter :: srname = 'CPENMSG'
-character(len=:), allocatable :: fstat  ! 'OLD' or 'NEW'
 character(len=:), allocatable :: fout
-integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
+character(len=:), allocatable :: fstat
+character(len=:), allocatable :: message
 integer :: funit ! Logical unit for the writing. Should be an integer of default kind.
+integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 logical :: fexist
 
 if (abs(iprint) < 2) then
@@ -319,8 +329,11 @@ else  ! Print the message to a file named FOUT with the writing unit being OUTUN
         return
     end if
 end if
+
+message = newline//'Set CPEN to '//num2str(cpen)//newline
+
 ! Print the message.
-write (funit, '(/1A)') 'Set CPEN to '//num2str(cpen)
+write (funit, '(1A)') message
 if (iprint < 0) then
     close (funit)
 end if
@@ -348,11 +361,16 @@ real(RP), intent(in), optional :: cstrv
 real(RP), intent(in), optional :: constr(:)
 
 ! Local variables
+character(len=*), parameter :: newline = new_line('')
 character(len=*), parameter :: srname = 'FMSG'
-character(len=:), allocatable :: fstat  ! 'OLD' or 'NEW'
+character(len=:), allocatable :: constr_message
+character(len=:), allocatable :: f_message
 character(len=:), allocatable :: fout
-integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
+character(len=:), allocatable :: fstat
+character(len=:), allocatable :: message
+character(len=:), allocatable :: x_message
 integer :: funit ! Logical unit for the writing. Should be an integer of default kind.
+integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 logical :: fexist
 logical :: is_constrained
 real(RP) :: cstrv_loc
@@ -395,15 +413,22 @@ end if
 
 ! Print the message.
 if (is_constrained) then
-    write (funit, '(/1A)') 'Function number '//num2str(nf)//'  Function value = '//num2str(f)// &
-        & '  Constraint violation = '//num2str(cstrv_loc)
+    f_message = 'Function number '//num2str(nf)//'   Function value = '//num2str(f)// &
+        & '   Constraint violation = '//num2str(cstrv_loc)//newline
 else
-    write (funit, '(/1A)') 'Function number '//num2str(nf)//'  Function value = '//num2str(f)
+    f_message = 'Function number '//num2str(nf)//'   Function value = '//num2str(f)//newline
 end if
-write (funit, '(1A)') 'The corresponding X is:'//new_line('')//num2str(x)
+x_message = 'The corresponding X is:'//newline//num2str(x)//newline
 if (is_constrained .and. present(constr)) then
-    write (funit, '(1A)') 'The constraint value is:'//new_line('')//num2str(constr)
+    constr_message = 'The constraint value is:'//newline//num2str(constr)//newline
+else
+    constr_message = ''
 end if
+
+! Print the message.
+message = newline//f_message//x_message//constr_message
+
+write (funit, '(1A)') message
 
 if (iprint < 0) then
     close (OUTUNIT)
