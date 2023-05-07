@@ -71,7 +71,10 @@ common_files = [list_files(common, filelist), fullfile(gateways, 'fmxapi.F'), fu
 % gateways/debug.F contains debugging subroutines tailored for MEX. It replaces common/debug.F.
 copyfile(fullfile(gateways, 'debug.F'), common);
 
-% gateways/output.F contains output (i.e., printing) subroutines tailored for MEX. It replaces common/output.f.
+% gateways/output.F contains output (i.e., printing) subroutines tailored for MEX. It replaces
+% common/output.f.
+% N.B.: In the following, `delete` should not be called after `copyfile`, or it will not work on
+% Windows and macOS. On Windows, it is likely because of the case insensitivity of the file system.
 delete(fullfile(common, 'output.f'));
 copyfile(fullfile(gateways, 'output.F'), common);
 % Replace "output.f" with "output.F" in `common_files`.

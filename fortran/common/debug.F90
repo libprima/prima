@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Tuesday, April 11, 2023 PM10:38:31
+! Last Modified: Saturday, May 06, 2023 PM03:55:28
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -32,13 +32,12 @@ subroutine assert(condition, description, srname)
 ! (python -O), the Python `assert` will also be ignored. MATLAB does not behave in this way.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: string_mod, only : strip
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
-    call errstop(strip(srname), 'Assertion failed: '//strip(description))
+    call errstop(trim(adjustl(srname)), 'Assertion failed: '//trim(adjustl(description)))
 end if
 end subroutine assert
 
@@ -52,13 +51,12 @@ subroutine validate(condition, description, srname)
 ! In Python or C, VALIDATE can be implemented following the Fortran implementation below.
 ! N.B.: ASSERT checks the condition only when debugging, but VALIDATE does it always.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: string_mod, only : strip
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (.not. condition) then
-    call errstop(strip(srname), 'Validation failed: '//strip(description))
+    call errstop(trim(adjustl(srname)), 'Validation failed: '//trim(adjustl(description)))
 end if
 end subroutine validate
 
@@ -77,31 +75,29 @@ subroutine wassert(condition, description, srname)
 ! but WASSERT only raises a warning.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: string_mod, only : strip
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
     call backtr()
-    call warning(strip(srname), 'Assertion failed: '//strip(description))
+    call warning(trim(adjustl(srname)), 'Assertion failed: '//trim(adjustl(description)))
 end if
 end subroutine wassert
 
 
 subroutine errstop(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.' to STDERR, then stop.
+! This subroutine prints 'ERROR: '//STRIP(SRNAME)//': '//STRIP(MSG)//'.' to STDERR, then stop.
 ! It also calls BACKTR to print the backtrace.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : STDERR
-use, non_intrinsic :: string_mod, only : strip
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
 call backtr()
-write (STDERR, '(/1A/)') 'ERROR: '//strip(srname)//': '//strip(msg)//'.'
+write (STDERR, '(/1A/)') 'ERROR: '//trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
 error stop  ! This means to stop the whole program.
 ! N.B. (Zaikun 230410): We prefer ERROR STOP to STOP, as the former has been allowed in PURE
 ! procedures since F2018. Later, when F2018 is better supported, we should take advantage of this
@@ -117,9 +113,9 @@ subroutine backtr()
 ! 1. The intrinsic is compiler-dependent and does not exist in all compilers. Indeed, it is not
 ! standard-conforming. Therefore, compilers may warn that a non-standard intrinsic is in use.
 ! 2. More seriously, if the compiler is instructed to conform to the standards (e.g., gfortran with
-! the option -std=f2018) while PRIMA_DEBUGGING is set to 1, then the compilation may FAIL when 
-! linking, complaining that a subroutine cannot be found (e.g., backtrace for gfortran). In that 
-! case, we must set PRIMA_DEBUGGING to 0 in ppf.h. This is also why in this subroutine we do not use 
+! the option -std=f2018) while PRIMA_DEBUGGING is set to 1, then the compilation may FAIL when
+! linking, complaining that a subroutine cannot be found (e.g., backtrace for gfortran). In that
+! case, we must set PRIMA_DEBUGGING to 0 in ppf.h. This is also why in this subroutine we do not use
 ! the constant DEBUGGING defined in the consts_mod module but use the macro PRIMA_DEBUGGING in ppf.h.
 !--------------------------------------------------------------------------------------------------!
 #if PRIMA_DEBUGGING == 1
@@ -143,15 +139,14 @@ end subroutine backtr
 
 subroutine warning(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.' to STDERR.
+! This subroutine prints 'Warning: '//STRIP(SRNAME)//': '//STRIP(MSG)//'.' to STDERR.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : STDERR
-use, non_intrinsic :: string_mod, only : strip
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
-write (STDERR, '(/1A/)') 'Warning: '//strip(srname)//': '//strip(msg)//'.'
+write (STDERR, '(/1A/)') 'Warning: '//trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
 end subroutine warning
 
 

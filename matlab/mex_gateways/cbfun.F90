@@ -14,7 +14,7 @@ module cbfun_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:30:18
+! Last Modified: Friday, May 05, 2023 PM06:01:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -145,7 +145,8 @@ call fmxReadMPtr(poutput(2), constr_loc)
 ! MATLAB allocates dynamic memory to store the arrays in plhs (i.e., poutput) for mexCallMATLAB.
 ! MATLAB automatically deallocates the dynamic memory when you exit the MEX file. However, this
 ! subroutine will be called maybe thousands of times before that.
-! See https://www.mathworks.com/help/matlab/apiref/mexcallmatlab_fortran.html
+! See https://www.mathworks.com/help/matlab/apiref/mexcallmatlab_fortran.html  and
+! https://stackoverflow.com/questions/18660433/matlab-mex-file-with-mexcallmatlab-is-almost-300-times-slower-than-the-correspon
 do i = 1, size(poutput)
     call mxDestroyArray(poutput(i))
 end do
