@@ -11,7 +11,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 07, 2023 PM04:18:26
+! Last Modified: Sunday, May 07, 2023 PM05:24:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ subroutine retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 ! This subroutine prints messages at return.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, warning
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING, &
     & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT
@@ -52,19 +52,16 @@ character(len=*), parameter :: srname = 'RETMSG'
 character(len=:), allocatable :: constr_message
 character(len=:), allocatable :: cstrv_message
 character(len=:), allocatable :: f_message
-character(len=:), allocatable :: fout
-character(len=:), allocatable :: fstat
+character(len=:), allocatable :: fname
 character(len=:), allocatable :: message
 character(len=:), allocatable :: nf_message
 character(len=:), allocatable :: reason
 character(len=:), allocatable :: ret_message
 character(len=:), allocatable :: x_message
 integer :: funit ! File storage unit for the writing. Should be an integer of default kind.
-integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer(IK), parameter :: valid_exit_flags(11) = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_INF_MODEL, DAMAGING_ROUNDING, &
     & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT]
-logical :: fexist
 logical :: is_constrained
 real(RP) :: cstrv_loc
 
@@ -81,16 +78,10 @@ if (abs(iprint) < 1) then
     return  ! No printing
 elseif (iprint > 0) then
     funit = STDOUT  ! Print the message to the standard out.
+    fname = ''
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     funit = OUTUNIT
-    fout = strip(solver)//'_output.txt'
-    inquire (file=fout, exist=fexist)
-    fstat = merge(tsource='old', fsource='new', mask=fexist)
-    open (unit=funit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
-    if (iostat /= 0) then
-        call warning(srname, 'Failed to open file '//fout)
-        return
-    end if
+    fname = strip(solver)//'_output.txt'
 end if
 
 ! Decide whether the problem is truly constrained.
@@ -163,11 +154,7 @@ else
     message = newline//ret_message//nf_message//f_message//cstrv_message//x_message//constr_message//newline
 end if
 
-write (funit, '(1A)') message
-
-if (iprint < 0) then
-    close (funit)
-end if
+call fprint(message, funit, fname, 'append')
 
 !====================!
 !  Calculation ends  !
@@ -180,7 +167,6 @@ subroutine rhomsg(solver, iprint, nf, f, rho, x, cstrv, constr, cpen)
 ! This subroutine prints messages when RHO is updated.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
-use, non_intrinsic :: debug_mod, only : warning
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
@@ -199,18 +185,14 @@ real(RP), intent(in), optional :: cpen
 
 ! Local variables
 character(len=*), parameter :: newline = new_line('')
-character(len=*), parameter :: srname = 'RHOMSG'
 character(len=:), allocatable :: constr_message
 character(len=:), allocatable :: cstrv_message
 character(len=:), allocatable :: f_message
-character(len=:), allocatable :: fout
-character(len=:), allocatable :: fstat
+character(len=:), allocatable :: fname
 character(len=:), allocatable :: message
 character(len=:), allocatable :: rp_message
 character(len=:), allocatable :: x_message
 integer :: funit ! Logical unit for the writing. Should be an integer of default kind.
-integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
-logical :: fexist
 logical :: is_constrained
 real(RP) :: cstrv_loc
 
@@ -222,16 +204,10 @@ if (abs(iprint) < 2) then
     return  ! No printing
 elseif (iprint > 0) then
     funit = STDOUT  ! Print the message to the standard out.
+    fname = ''
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     funit = OUTUNIT
-    fout = strip(solver)//'_output.txt'
-    inquire (file=fout, exist=fexist)
-    fstat = merge(tsource='old', fsource='new', mask=fexist)
-    open (unit=funit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
-    if (iostat /= 0) then
-        call warning(srname, 'Failed to open file '//fout)
-        return
-    end if
+    fname = strip(solver)//'_output.txt'
 end if
 
 ! Decide whether the problem is truly constrained.
@@ -279,11 +255,8 @@ if (abs(iprint) >= 3) then
 else
     message = newline//rp_message//f_message//cstrv_message//x_message//constr_message//newline
 end if
-write (funit, '(1A)') message
 
-if (iprint < 0) then
-    close (funit)
-end if
+call fprint(message, funit, fname, 'append')
 
 !====================!
 !  Calculation ends  !
@@ -296,7 +269,6 @@ subroutine cpenmsg(solver, iprint, cpen)
 ! This subroutine prints a message when CPEN is updated.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, OUTUNIT, STDOUT
-use, non_intrinsic :: debug_mod, only : warning
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
@@ -309,37 +281,25 @@ real(RP), intent(in), optional :: cpen
 
 ! Local variables
 character(len=*), parameter :: newline = new_line('')
-character(len=*), parameter :: srname = 'CPENMSG'
-character(len=:), allocatable :: fout
-character(len=:), allocatable :: fstat
+character(len=:), allocatable :: fname
 character(len=:), allocatable :: message
 integer :: funit ! Logical unit for the writing. Should be an integer of default kind.
-integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
-logical :: fexist
 
 if (abs(iprint) < 2) then
     return  ! No printing
 elseif (iprint > 0) then
     funit = STDOUT  ! Print the message to the standard out.
+    fname = ''
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     funit = OUTUNIT
-    fout = strip(solver)//'_output.txt'
-    inquire (file=fout, exist=fexist)
-    fstat = merge(tsource='old', fsource='new', mask=fexist)
-    open (unit=funit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
-    if (iostat /= 0) then
-        call warning(srname, 'Failed to open file '//fout)
-        return
-    end if
+    fname = strip(solver)//'_output.txt'
 end if
 
 message = newline//'Set CPEN to '//num2str(cpen)//newline
 
 ! Print the message.
-write (funit, '(1A)') message
-if (iprint < 0) then
-    close (funit)
-end if
+call fprint(message, funit, fname, 'append')
+
 end subroutine cpenmsg
 
 
@@ -348,7 +308,6 @@ subroutine fmsg(solver, iprint, nf, f, x, cstrv, constr)
 ! This subroutine prints messages at each iteration.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
-use, non_intrinsic :: debug_mod, only : warning
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
@@ -365,16 +324,12 @@ real(RP), intent(in), optional :: constr(:)
 
 ! Local variables
 character(len=*), parameter :: newline = new_line('')
-character(len=*), parameter :: srname = 'FMSG'
 character(len=:), allocatable :: constr_message
 character(len=:), allocatable :: f_message
-character(len=:), allocatable :: fout
-character(len=:), allocatable :: fstat
+character(len=:), allocatable :: fname
 character(len=:), allocatable :: message
 character(len=:), allocatable :: x_message
 integer :: funit ! Logical unit for the writing. Should be an integer of default kind.
-integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
-logical :: fexist
 logical :: is_constrained
 real(RP) :: cstrv_loc
 
@@ -386,16 +341,10 @@ if (abs(iprint) < 3) then
     return  ! No printing
 elseif (iprint > 0) then
     funit = STDOUT  ! Print the message to the standard out.
+    fname = ''
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     funit = OUTUNIT
-    fout = strip(solver)//'_output.txt'
-    inquire (file=fout, exist=fexist)
-    fstat = merge(tsource='old', fsource='new', mask=fexist)
-    open (unit=funit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
-    if (iostat /= 0) then
-        call warning(srname, 'Failed to open file '//fout)
-        return
-    end if
+    fname = strip(solver)//'_output.txt'
 end if
 
 ! Decide whether the problem is truly constrained.
@@ -431,11 +380,7 @@ end if
 ! Print the message.
 message = newline//f_message//x_message//constr_message
 
-write (funit, '(1A)') message
-
-if (iprint < 0) then
-    close (OUTUNIT)
-end if
+call fprint(message, funit, fname, 'append')
 
 !====================!
 !  Calculation ends  !
@@ -443,114 +388,110 @@ end if
 end subroutine fmsg
 
 
-!subroutine fprint(string, funit, fname, faction)
-!use, non_intrinsic :: consts_mod, only : IK, OUTUNIT, STDIN, STDOUT, STDERR, DEBUGGING
-!use, non_intrinsic :: debug_mod, only : assert, warning
-!use, non_intrinsic :: string_mod, only : strip, num2str
-!implicit none
+subroutine fprint(string, funit, fname, faction)
+use, non_intrinsic :: consts_mod, only : IK, OUTUNIT, STDIN, STDOUT, STDERR, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert, warning
+use, non_intrinsic :: string_mod, only : num2str
+implicit none
 
-!! Inputs
-!character(len=*), intent(in) :: string
-!integer, intent(in), optional :: funit
-!character(len=*), intent(in), optional :: fname
-!character(len=*), intent(in), optional :: faction
+! Inputs
+character(len=*), intent(in) :: string
+integer, intent(in), optional :: funit
+character(len=*), intent(in), optional :: fname
+character(len=*), intent(in), optional :: faction
 
-!! Local variables
-!character(len=*), parameter :: srname = 'FPRINT'
-!character(len=:), allocatable :: fname_loc
-!character(len=:), allocatable :: fstat
-!character(len=:), allocatable :: position
-!integer :: funit_loc
-!integer :: iostat
-!logical :: fexist
+! Local variables
+character(len=*), parameter :: srname = 'FPRINT'
+character(len=:), allocatable :: fname_loc
+character(len=:), allocatable :: fstat
+character(len=:), allocatable :: position
+integer :: funit_loc
+integer :: iostat
+logical :: fexist
 
-!! Preconditions
-!if (DEBUGGING) then
-!    call assert(OUTUNIT > 0 .and. all(OUTUNIT /= [STDIN, STDOUT, STDERR]), &
-!        & 'OUTUNIT is positive and not STDIN, STDOUT, or STDERR', srname)
-!    if (present(funit)) then
-!        call assert(funit /= STDIN, 'The file unit is not STDIN', srname)
-!        if (present(fname)) then
-!            call assert(funit /= STDOUT .and. funit /= STDERR, &
-!                & 'If the file name is present, then the file unit is neither STDOUT nor STDERR', srname)
-!        end if
-!    end if
-!    if (present(fname)) then
-!        call assert(len(strip(fname)) > 0, 'The file name is nonempty and does not contain only spaces', srname)
-!    end if
-!    call assert(present(fname) .or. .not. present(faction), 'FACTION is present only if FNAME is specified', srname)
-!    if (present(faction)) then
-!        call assert(faction == 'write' .or. faction == 'w' .or. faction == 'append' .or. faction == 'a', &
-!            & 'FACTION is either "write (w)" or "append (a)"', srname)
-!    end if
-!end if
+! Preconditions
+if (DEBUGGING) then
+    call assert(OUTUNIT > 0 .and. all(OUTUNIT /= [STDIN, STDOUT, STDERR]), &
+        & 'OUTUNIT is positive and not STDIN, STDOUT, or STDERR', srname)
+    if (present(funit)) then
+        call assert(funit /= STDIN, 'The file unit is not STDIN', srname)
+        if (present(fname)) then
+            call assert(len(fname) == 0 .eqv. (funit == STDOUT .or. funit == STDERR), &
+                & 'The file name is empty if and only if the file unit is either STDOUT or STDERR', srname)
+        end if
+    end if
+    if (present(faction)) then
+        call assert(faction == 'write' .or. faction == 'w' .or. faction == 'append' .or. faction == 'a', &
+            & 'FACTION is either "write (w)" or "append (a)"', srname)
+    end if
+end if
 
-!!====================!
-!! Calculation starts !
-!!====================!
+!====================!
+! Calculation starts !
+!====================!
 
-!! Decide the file storage unit.
-!if (present(funit)) then
-!    funit_loc = funit
-!else
-!    if (present(fname)) then
-!        funit_loc = OUTUNIT  ! Print the message to the writing unit OUTUNIT.
-!    else
-!        funit_loc = STDOUT  ! Print the message to the standard out.
-!    end if
-!end if
+! Decide the file storage unit.
+if (present(funit)) then
+    funit_loc = funit
+else
+    if (present(fname)) then
+        funit_loc = OUTUNIT  ! Print the message to the writing unit OUTUNIT.
+    else
+        funit_loc = STDOUT  ! Print the message to the standard out.
+    end if
+end if
 
-!! Decide the file name.
-!if (present(fname)) then
-!    fname_loc = fname
-!elseif (funit_loc /= STDOUT .and. funit_loc /= STDERR) then
-!    fname_loc = 'fort.'//num2str(int(funit_loc, IK))
-!else
-!    fname_loc = ''
-!end if
+! Decide the file name.
+if (present(fname)) then
+    fname_loc = fname
+elseif (funit_loc /= STDOUT .and. funit_loc /= STDERR) then
+    fname_loc = 'fort.'//num2str(int(funit_loc, IK))
+else
+    fname_loc = ''
+end if
 
-!if (DEBUGGING) then
-!    call assert(len(fname_loc) > 0 .eqv. (funit_loc /= STDOUT .and. funit_loc /= STDERR), &
-!        & 'The file name is nonempty if and only if the file unit is neither STDOUT nor STDERR', srname)
-!end if
+if (DEBUGGING) then
+    call assert(len(fname_loc) == 0 .eqv. (funit_loc == STDOUT .or. funit_loc == STDERR), &
+        & 'The file name is empty if and only if the file unit is either STDOUT or STDERR', srname)
+end if
 
-!! Decide the position of printing.
-!position = 'append'
-!if (present(faction)) then
-!    select case (faction)
-!    case ('write', 'w')
-!        position = 'rewind'
-!    case ('append', 'a')
-!        position = 'append'
-!    case default
-!        call warning(srname, 'Unknown file action "'//faction//'"')
-!    end select
-!end if
+! Decide the position of printing.
+position = 'append'
+if (present(faction)) then
+    select case (faction)
+    case ('write', 'w')
+        position = 'rewind'
+    case ('append', 'a')
+        position = 'append'
+    case default
+        call warning(srname, 'Unknown file action "'//faction//'"')
+    end select
+end if
 
-!! Open the file if necessary.
-!iostat = 0
-!if (len(fname_loc) > 0) then
-!    inquire (file=fname_loc, exist=fexist)
-!    fstat = merge(tsource='old', fsource='new', mask=fexist)
-!    open (unit=funit_loc, file=fname_loc, status=fstat, position=position, iostat=iostat, action='write')
-!    if (iostat /= 0) then
-!        call warning(srname, 'Failed to open file '//fname_loc)
-!        return
-!    end if
-!end if
+! Open the file if necessary.
+iostat = 0
+if (len(fname_loc) > 0) then
+    inquire (file=fname_loc, exist=fexist)
+    fstat = merge(tsource='old', fsource='new', mask=fexist)
+    open (unit=funit_loc, file=fname_loc, status=fstat, position=position, iostat=iostat, action='write')
+    if (iostat /= 0) then
+        call warning(srname, 'Failed to open file '//fname_loc)
+        return
+    end if
+end if
 
-!! Print the string.
-!write (funit_loc, '(1A)') string
+! Print the string.
+write (funit_loc, '(1A)') string
 
-!! Close the file if necessary
-!if (len(fname_loc) > 0 .and. iostat == 0) then
-!    close (funit_loc)
-!end if
+! Close the file if necessary
+if (len(fname_loc) > 0 .and. iostat == 0) then
+    close (funit_loc)
+end if
 
-!!====================!
-!!  Calculation ends  !
-!!====================!
-!end subroutine fprint
+!====================!
+!  Calculation ends  !
+!====================!
+end subroutine fprint
 
 
 end module output_mod
