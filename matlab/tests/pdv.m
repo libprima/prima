@@ -64,15 +64,18 @@ try
             for idbg = 1 : length(debug_flags)
                 options.debug = debug_flags{idbg};
                 for ivar = 1 : length(variants)
-                    options.classical = strcmp(variants{ivar}, 'classical');
-                    options.output_xhist = true;
-                    options
-                    format long
-                    [x, f, exitflag, output] = solver(fun, x0, options)
-                    if (ismember(solvers{isol}, matlab_implemented))
-                        options_mat = options;
-                        options_mat.fortran = false;
-                        [x, f, exitflag, output] = solver(fun, x0, options_mat)
+                    for iprint = -4 : 4
+                        options.classical = strcmp(variants{ivar}, 'classical');
+                        options.output_xhist = true;
+                        options.iprint = iprint;
+                        options
+                        format long
+                        [x, f, exitflag, output] = solver(fun, x0, options)
+                        if (ismember(solvers{isol}, matlab_implemented))
+                            options_mat = options;
+                            options_mat.fortran = false;
+                            [x, f, exitflag, output] = solver(fun, x0, options_mat)
+                        end
                     end
                 end
             end
