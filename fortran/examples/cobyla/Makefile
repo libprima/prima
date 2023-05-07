@@ -39,9 +39,9 @@ test:
 	$(MAKE) gtest
 	$(MAKE) itest
 	$(MAKE) ntest
-	$(MAKE) rtest
 	$(MAKE) vtest
 	$(MAKE) xtest
+	$(MAKE) rtest
 
 ####################################################################################################
 # Here are the compilers to test.
@@ -76,7 +76,7 @@ xtest: FC := ifx -warn all -stand f$(FS)
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test
 %test: $(SOLVER)_example.f90 \
-	consts.o infos.o string.o debug.o memory.o inf.o infnan.o linalg.o powalg.o \
+	consts.o debug.o infos.o inf.o infnan.o string.o memory.o linalg.o powalg.o \
 	ratio.o redrho.o history.o selectx.o checkexit.o output.o preproc.o pintrf.o evaluate.o \
 	update.o initialize.o trustregion.o geometry.o cobylb.o cobyla.o
 	$(FC) $(FFLAGS) -o $@ $(SOLVER)_example.f90 *.o
