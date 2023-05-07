@@ -1,8 +1,8 @@
 consts.F90
+debug.F90
 infos.f90
 inf.F90
 infnan.F90
-debug.F90
 string.f90
 memory.F90
 linalg.f90
