@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, February 15, 2023 AM03:59:11
+! Last Modified: Sunday, May 07, 2023 PM04:12:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -190,7 +190,8 @@ else
                 ! that the results for different IK are the same.
                 rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
                 call setseed(rseed)
-                iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
+                !iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
+                iprint = 1
                 maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
                 if (rand() <= 0.2) then
                     maxfun = 0
