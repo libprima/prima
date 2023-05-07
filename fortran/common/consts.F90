@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, May 05, 2023 PM03:18:37
+! Last Modified: Monday, May 08, 2023 AM01:36:59
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -59,15 +59,8 @@ module consts_mod
 !    arrays, overflow can lead to Segmentation Faults!
 !--------------------------------------------------------------------------------------------------!
 
-#if PRIMA_INTEGER_KIND == 16
-use, intrinsic :: iso_fortran_env, only : INT16
-#elif PRIMA_INTEGER_KIND == 32
-use, intrinsic :: iso_fortran_env, only : INT32
-#elif PRIMA_INTEGER_KIND == 64
-use, intrinsic :: iso_fortran_env, only : INT64
-#endif
-
-use, intrinsic :: iso_fortran_env, only : REAL32, REAL64, REAL128  ! Unsupported kinds are negative.
+! Integer and real kinds. Unsupported kinds are negative.
+use, intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REAL32, REAL64, REAL128
 
 ! Standard IO units
 use, intrinsic :: iso_fortran_env, only : STDIN => INPUT_UNIT, STDOUT => OUTPUT_UNIT, STDERR => ERROR_UNIT
@@ -76,7 +69,7 @@ implicit none
 
 private
 public :: DEBUGGING
-public :: IK, IK_DFT
+public :: IK, INT32, IK_DFT
 public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: REALMIN, EPS, TINYCV, REALMAX, FUNCMAX, CONSTRMAX, BOUNDMAX

@@ -645,7 +645,7 @@ source_%: $(SRC_DIRS)
 cleanmisc:
 	@printf "\nCleaning up miscellaneous files ...\n"
 	@rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb *.out *__genmod.f90 || :
-	@rm -f *_fprint.txt || :
+	@rm -f *_output.txt || :
 	@printf "Done.\n"
 
 cleansrc:

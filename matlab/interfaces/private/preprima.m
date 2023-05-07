@@ -1416,23 +1416,8 @@ if isfield(options, 'iprint')
             warnings = [warnings, wmsg];
             validated = true;
         else
-            % In the non-classical mode, we set options.iprint = -options.iprint,
-            % meaning that the output will not be displayed on standard output
-            % but recorded in a text file SOLVER_output.txt, where SOLVER will
-            % be replaced by the solver name. We do not raise a warning since it
-            % is explained in the help information and since the user says quiet!
-            options.iprint = -options.iprint;
             validated = true;
         end
-    elseif options.iprint > 0 && options.fortran
-        % iprint > 0 is not supported when calling the Fortran code.
-        % This is because of I/O confliction between Fortran and MATLAB.
-        wid = sprintf('%s:IprintContradictFortran', invoker);
-        wmsg = sprintf('%s: iprint = %d but fortran = true; iprint is reset to %d and the output will be recorded in a .txt file.', invoker, options.iprint, -options.iprint);
-        options.iprint = -options.iprint;
-        warning(wid, '%s', wmsg);
-        warnings = [warnings, wmsg];
-        validated = true;
     elseif options.iprint ~= 0 && options.classical
         % In classical mode, a nonzero iprint = 0 is not supported.
         wid = sprintf('%s:IprintContradictClassical', invoker);

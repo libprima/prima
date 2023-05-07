@@ -14,12 +14,32 @@ module fprint_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 07, 2023 PM11:57:21
+! Last Modified: Monday, May 08, 2023 AM01:36:38
 !--------------------------------------------------------------------------------------------------!
 
+! N.B.: INT32_MEX is indeed INT32, i.e., the kind of INTEGER*4. We name it INT32_MEX instead of
+! INT32 so that it is easily locatable.
+use, non_intrinsic :: consts_mod, only : INT32_MEX => INT32
 implicit none
 private
 public :: fprint
+
+
+interface
+    function mexPrintf(message)
+    import :: INT32_MEX  ! Without IMPORT, INT32_MEX will not be available in this interface.
+    implicit none
+    integer(INT32_MEX) :: mexPrintf
+    character*(*), intent(in) :: message
+    end function mexPrintf
+
+    function mexEvalString(command)
+    import :: INT32_MEX  ! Without IMPORT, INT32_MEX will not be available in this interface.
+    implicit none
+    integer(INT32_MEX) :: mexEvalString
+    character*(*), intent(in) :: command
+    end function mexEvalString
+end interface
 
 
 contains
@@ -44,6 +64,7 @@ character(len=:), allocatable :: fstat
 character(len=:), allocatable :: position
 integer :: funit_loc
 integer :: iostat
+integer(INT32_MEX) :: k
 logical :: fexist
 
 ! Preconditions
@@ -93,8 +114,14 @@ if (DEBUGGING) then
 end if
 
 ! Open the file if necessary.
-iostat = 0
-if (len(fname_loc) > 0) then
+if (len(fname_loc) == 0) then
+    k = mexPrintf(string)
+    if (k < 0) then
+        call warning(srname, 'Failed to print the string to the standard output')
+        return
+    end if
+    k = mexEvalString("drawnow;")  ! Without this, the string printed above may not show immediately.
+else
     ! Decide the position for OPEN. This is the only place where FACTION is used.
     position = 'append'
     if (present(faction)) then
@@ -116,13 +143,9 @@ if (len(fname_loc) > 0) then
         call warning(srname, 'Failed to open file '//fname_loc)
         return
     end if
-end if
-
-! Print the string.
-write (funit_loc, '(1A)') string
-
-! Close the file if necessary
-if (len(fname_loc) > 0 .and. iostat == 0) then
+    ! Print the string.
+    write (funit_loc, '(1A)') string
+    ! Close the file if necessary
     close (funit_loc)
 end if
 

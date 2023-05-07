@@ -9,13 +9,14 @@ module message_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 07, 2023 PM10:42:14
+! Last Modified: Monday, May 08, 2023 AM01:27:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: retmsg, rhomsg, fmsg, cpenmsg
 
+character(len=3), parameter :: spaces = '   '
 
 contains
 
@@ -128,7 +129,7 @@ case default
 end select
 ret_message = newline//'Return from '//solver//' because '//strip(reason)
 
-nf_message = newline//'At the return from '//solver//'   Number of function evaluations = '//num2str(nf)
+nf_message = newline//'At the return from '//solver//spaces//'Number of function evaluations = '//num2str(nf)
 
 f_message = newline//'Least function value = '//num2str(f)
 
@@ -148,9 +149,9 @@ end if
 
 ! Print the message.
 if (abs(iprint) >= 2) then
-    message = newline//ret_message//nf_message//f_message//cstrv_message//x_message//constr_message
+    message = newline//ret_message//nf_message//f_message//cstrv_message//x_message//constr_message//newline
 else
-    message = ret_message//nf_message//f_message//cstrv_message//x_message//constr_message
+    message = ret_message//nf_message//f_message//cstrv_message//x_message//constr_message//newline
 end if
 call fprint(message, funit, fname, 'append')
 
@@ -226,10 +227,10 @@ else
 end if
 
 if (present(cpen)) then
-    rp_message = newline//'New RHO = '//num2str(rho)//'   CPEN = '//num2str(cpen)//&
-        &'   Number of function evaluations = '//num2str(nf)
+    rp_message = newline//'New RHO = '//num2str(rho)//spaces//'CPEN = '//num2str(cpen)//&
+        &spaces//'Number of function evaluations = '//num2str(nf)
 else
-    rp_message = newline//'New RHO = '//num2str(rho)//'   Number of function evaluations = '//num2str(nf)
+    rp_message = newline//'New RHO = '//num2str(rho)//spaces//'Number of function evaluations = '//num2str(nf)
 end if
 
 f_message = newline//'Least function value = '//num2str(f)
@@ -375,10 +376,10 @@ else
 end if
 
 if (is_constrained) then
-    f_message = newline//'Function number '//num2str(nf)//'   Function value = '//num2str(f)// &
-        & '   Constraint violation = '//num2str(cstrv_loc)
+    f_message = newline//'Function number '//num2str(nf)//spaces//'Function value = '//num2str(f)// &
+        & spaces//'Constraint violation = '//num2str(cstrv_loc)
 else
-    f_message = newline//'Function number '//num2str(nf)//'   Function value = '//num2str(f)
+    f_message = newline//'Function number '//num2str(nf)//spaces//'Function value = '//num2str(f)
 end if
 
 x_message = newline//'The corresponding X is:'//newline//num2str(x)

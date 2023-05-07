@@ -10,7 +10,7 @@ module fmxapi_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Monday, April 10, 2023 PM03:18:57
+! Last Modified: Monday, May 08, 2023 AM01:32:39
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -29,8 +29,10 @@ module fmxapi_mod
 ! involving macros, because the "&" may not appear at the correct position after macro expansion.
 ! This is why, for example, we define EID and MSG in the subroutines to avoid line continuation
 ! involving mexErrMsgIdAndTxt.
-
-use, non_intrinsic :: consts_mod, only : DP, RP
+! 6. INT32_MEX is indeed INT32, i.e., the kind of INTEGER*4. It is needed when using some MEX API
+! subroutines of MathWorks, e.g., mexCallMATLAB. We name it INT32_MEX instead of INT32 so that it
+! is easily locatable.
+use, non_intrinsic :: consts_mod, only : DP, RP, INT32_MEX => INT32
 implicit none
 private
 
@@ -65,16 +67,6 @@ public :: fmxWriteMPtr
 public :: fmxCallMATLAB
 public :: fmxIsDoubleScalar
 public :: fmxIsDoubleVector
-
-! Comments on INT32_MEX:
-! 1. INT32_MEX is indeed INT32, i.e., the kind of INTEGER*4. It is needed when using some MEX API
-! subroutines of MathWorks, e.g., mexCallMATLAB. We do not define it elsewhere (e.g., in consts_mod)
-! since it is needed only here. We name it INT32_MEX instead of INT32 so that it is easily locatable.
-! 2. For gfortran, SELECTED_REAL_KIND(K) returns INT32 with K = 5--9.
-! 3. In F2008, INT32 can be obtained by:
-!!use, intrinsic :: iso_fortran_env, only : INT32_MEX => INT32
-! 4. Do not write `use consts_mod, only : INT32_MEX => INT32`, as INT32 may not be defined.
-integer, parameter :: INT32_MEX = selected_int_kind(7)
 
 ! notComplex is used in mxCreateDoubleMatrix
 integer(INT32_MEX), parameter :: notComplex = 0
