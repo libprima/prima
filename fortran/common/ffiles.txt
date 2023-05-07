@@ -14,7 +14,8 @@ xinbd.f90
 history.f90
 selectx.f90
 checkexit.f90
-output.f90
+fprint.f90
+message.f90
 preproc.f90
 pintrf.f90
 evaluate.f90

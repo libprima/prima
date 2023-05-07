@@ -82,15 +82,15 @@ SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR)
 
 # MEX_DEBUGF90 is the name of the MEX file that defines `debug_mod`, which has a common version
 # named CMN_DEBUGF90. We should use the MEX version in place of the common one when testing the MEX
-# gateways. Similar for MEX_OUTPUTF90 and CMN_OUTPUTF90.
+# gateways. Similar for MEX_FPRINTF90 and CMN_FPRINTF90.
 MEX_DEBUGF90 := debug.F90
 CMN_DEBUGF90 := debug.F90
-MEX_OUTPUTF90 := output.F90
-CMN_OUTPUTF90 := output.f90
+MEX_FPRINTF90 := fprint.F90
+CMN_FPRINTF90 := fprint.f90
 
 # Sources.
 COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
-COMMON_SRC := $(subst $(CMN_OUTPUTF90),$(MEX_OUTPUTF90),$(COMMON_SRC))  # Use MEX_OUTPUTF90 instead of CMN_OUTPUTF90.
+COMMON_SRC := $(subst $(CMN_FPRINTF90),$(MEX_FPRINTF90),$(COMMON_SRC))  # Use MEX_FPRINTF90 instead of CMN_FPRINTF90.
 SOLVER_SRC := $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
 MEXGATE_SRC := fmxapi.F90 cbfun.F90 $(SOLVER)_mex.F90
 SRC := $(COMMON_SRC) $(SOLVER_SRC) $(MEXGATE_SRC)
@@ -589,8 +589,8 @@ source_%: $(SRC_DIRS)
 	@printf "\nMaking a copy of the source code for the test.\n"
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
 	@for SRC in $(MEXGATE_SRC); do cp $(MEXGATE_DIR)/"$$SRC" ./; done
-	@rm -rf ./$(COMMON)/$(CMN_DEBUGF90) ./$(COMMON)/$(CMN_OUTPUTF90)  # Remove the common version of debug.*90 and output.*90.
-	@cp $(MEXGATE_DIR)/$(MEX_DEBUGF90) $(MEXGATE_DIR)/$(MEX_OUTPUTF90) ./$(COMMON)  # Use the MEX version of debug.*90 and output.*90 instead of the common version.
+	@rm -rf ./$(COMMON)/$(CMN_DEBUGF90) ./$(COMMON)/$(CMN_FPRINTF90)  # Remove the common version of debug.*90 and fprint.*90.
+	@cp $(MEXGATE_DIR)/$(MEX_DEBUGF90) $(MEXGATE_DIR)/$(MEX_FPRINTF90) ./$(COMMON)  # Use the MEX version of debug.*90 and fprint.*90 instead of the common version.
 	@cp $(FINTRFH) ./ && chmod 777 ./fintrf.h 2>/dev/null || : # The MathWorks header file for Fortran MEX. chmod is necessary.
 	@find ./ -type f \( \
 		-name "*.mod" \
@@ -645,7 +645,7 @@ source_%: $(SRC_DIRS)
 cleanmisc:
 	@printf "\nCleaning up miscellaneous files ...\n"
 	@rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb *.out *__genmod.f90 || :
-	@rm -f *_output.txt || :
+	@rm -f *_fprint.txt || :
 	@printf "Done.\n"
 
 cleansrc:

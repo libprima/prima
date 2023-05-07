@@ -71,14 +71,13 @@ common_files = [list_files(common, filelist), fullfile(gateways, 'fmxapi.F'), fu
 % gateways/debug.F contains debugging subroutines tailored for MEX. It replaces common/debug.F.
 copyfile(fullfile(gateways, 'debug.F'), common);
 
-% gateways/output.F contains output (i.e., printing) subroutines tailored for MEX. It replaces
-% common/output.f.
+% gateways/fprint.F contains printing subroutines tailored for MEX. It replaces common/fprint.f.
 % N.B.: In the following, `delete` should not be called after `copyfile`, or it will not work on
 % Windows and macOS. On Windows, it is likely because of the case insensitivity of the file system.
-delete(fullfile(common, 'output.f'));
-copyfile(fullfile(gateways, 'output.F'), common);
-% Replace "output.f" with "output.F" in `common_files`.
-common_files = replace(common_files, 'output.f', 'output.F');  % `replace` is available since R2016b.
+delete(fullfile(common, 'fprint.f'));
+copyfile(fullfile(gateways, 'fprint.F'), common);
+% Replace "fprint.f" with "fprint.F" in `common_files`.
+common_files = replace(common_files, 'fprint.f', 'fprint.F');  % `replace` is available since R2016b.
 
 % common/ppf.h contains preprocessing directives. It is needed only when compiling the common files.
 header_file = fullfile(common, 'ppf.h');
