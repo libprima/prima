@@ -8,41 +8,41 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 07, 2023 PM12:23:30
+! Last Modified: Sunday, May 07, 2023 PM02:20:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: retmsg, rhomsg, fmsg, cpenmsg
 
-!--------------------------------------------------------------------------------------------------!
-! Formats.
-! Separating spaces: 3 spaces.
-character(len=*), parameter :: spaces = '3X'
-! Format for F: 16 digits for base, 4 digits for exponent.
-character(len=*), parameter :: ffmt = '1PE25.16E4'
-character(len=*), parameter :: f_fmt = '(1A, '//ffmt//')'
-! Format for CSTRV: the same as F.
-character(len=*), parameter :: cstrv_fmt = f_fmt
-! Format for X: 8 digits for base, 4 digits for exponent, 4 components in each line.
-character(len=*), parameter :: xfmt = '/(1P, 4E19.8E4)'
-character(len=*), parameter :: x_fmt = '(1A, '//xfmt//')'
-! Format for CONSTR: the same as X.
-character(len=*), parameter :: constr_fmt = x_fmt
-! Format for integers: Use the minimum number of digits needed to print integers.
-character(len=*), parameter :: ifmt = 'I0'
-! Format for NF during the iterations.
-character(len=*), parameter :: nf_fmt = '(/1A, '//ifmt//')'
-! Format for RHO: 8 digits for base, 4 digits for exponent.
-character(len=*), parameter :: rfmt = '1PE17.8E4'
-! Format for RHO and NF when RHO is updated, with or without CPEN.
-character(len=*), parameter :: rnf_fmt = '(/1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'
-character(len=*), parameter :: rpnf_fmt = '(/1A, '//rfmt//', '//spaces//', 1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'
-! Format for the constraint penalty parameter: the same as RHO.
-character(len=*), parameter :: pfmt = rfmt
-! Format for the constraint penalty parameter when it is updated.
-character(len=*), parameter :: p_fmt = '(/1A, '//pfmt//')'
-!--------------------------------------------------------------------------------------------------!
+!!--------------------------------------------------------------------------------------------------!
+!! Formats.
+!! Separating spaces: 3 spaces.
+!character(len=*), parameter :: spaces = '3X'
+!! Format for F: 16 digits for base, 4 digits for exponent.
+!character(len=*), parameter :: ffmt = '1PE25.16E4'
+!character(len=*), parameter :: f_fmt = '(1A, '//ffmt//')'
+!! Format for CSTRV: the same as F.
+!character(len=*), parameter :: cstrv_fmt = f_fmt
+!! Format for X: 8 digits for base, 4 digits for exponent, 4 components in each line.
+!character(len=*), parameter :: xfmt = '/(1P, 4E19.8E4)'
+!character(len=*), parameter :: x_fmt = '(1A, '//xfmt//')'
+!! Format for CONSTR: the same as X.
+!character(len=*), parameter :: constr_fmt = x_fmt
+!! Format for integers: Use the minimum number of digits needed to print integers.
+!character(len=*), parameter :: ifmt = 'I0'
+!! Format for NF during the iterations.
+!character(len=*), parameter :: nf_fmt = '(/1A, '//ifmt//')'
+!! Format for RHO: 8 digits for base, 4 digits for exponent.
+!character(len=*), parameter :: rfmt = '1PE17.8E4'
+!! Format for RHO and NF when RHO is updated, with or without CPEN.
+!character(len=*), parameter :: rnf_fmt = '(/1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'
+!character(len=*), parameter :: rpnf_fmt = '(/1A, '//rfmt//', '//spaces//', 1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'
+!! Format for the constraint penalty parameter: the same as RHO.
+!character(len=*), parameter :: pfmt = rfmt
+!! Format for the constraint penalty parameter when it is updated.
+!character(len=*), parameter :: p_fmt = '(/1A, '//pfmt//')'
+!!--------------------------------------------------------------------------------------------------!
 
 
 contains
@@ -161,7 +161,7 @@ if (abs(iprint) >= 3) then
     write (funit, '(1X)')
 end if
 write (funit, '(/1A)') 'Return from '//solver//' because '//strip(msg)
-write (funit, '(1A)') 'At the return from '//solver//'   Number of function evaluations = '//num2str(nf)
+write (funit, '(1A)') 'At the return from '//solver//'  Number of function evaluations = '//num2str(nf)
 
 write (funit, '(1A)') 'Least function value = '//num2str(f)
 if (is_constrained) then
@@ -189,7 +189,7 @@ subroutine rhomsg(solver, iprint, nf, f, rho, x, cstrv, constr, cpen)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
 use, non_intrinsic :: debug_mod, only : warning
-use, non_intrinsic :: string_mod, only : strip
+use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
 ! Compulsory inputs
@@ -256,17 +256,18 @@ if (abs(iprint) >= 3) then
     write (funit, '(1X)')
 end if
 if (present(cpen)) then
-    write (funit, rpnf_fmt) 'New RHO = ', rho, '  CPEN = ', cpen, 'Number of function evaluations = ', nf
+    write (funit, '(/1A)') 'New RHO = '//num2str(rho)//'  CPEN = '//num2str(cpen)//&
+        &'  Number of function evaluations = '//num2str(nf)
 else
-    write (funit, rnf_fmt) 'New RHO = ', rho, 'Number of function evaluations = ', nf
+    write (funit, '(/1A)') 'New RHO = '//num2str(rho)//'  Number of function evaluations = '//num2str(nf)
 end if
-write (funit, f_fmt) 'Least function value = ', f
+write (funit, '(1A)') 'Least function value = '//num2str(f)
 if (is_constrained) then
-    write (funit, cstrv_fmt) 'Constraint violation = ', cstrv_loc
+    write (funit, '(1A)') 'Constraint violation = '//num2str(cstrv_loc)
 end if
-write (funit, x_fmt) 'The corresponding X is:', x
+write (funit, '(1A)') 'The corresponding X is:'//new_line('')//num2str(x)
 if (is_constrained .and. present(constr)) then
-    write (funit, constr_fmt) 'The constraint value is:', constr
+    write (funit, '(1A)') 'The constraint value is:'//new_line('')//num2str(constr)
 end if
 
 if (iprint < 0) then
@@ -285,7 +286,7 @@ subroutine cpenmsg(solver, iprint, cpen)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, OUTUNIT, STDOUT
 use, non_intrinsic :: debug_mod, only : warning
-use, non_intrinsic :: string_mod, only : strip
+use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
 ! Compulsory inputs
@@ -319,7 +320,7 @@ else  ! Print the message to a file named FOUT with the writing unit being OUTUN
     end if
 end if
 ! Print the message.
-write (funit, p_fmt) 'Set CPEN to ', cpen
+write (funit, '(/1A)') 'Set CPEN to '//num2str(cpen)
 if (iprint < 0) then
     close (funit)
 end if
@@ -332,7 +333,7 @@ subroutine fmsg(solver, iprint, nf, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
 use, non_intrinsic :: debug_mod, only : warning
-use, non_intrinsic :: string_mod, only : strip
+use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
 ! Inputs
@@ -393,14 +394,15 @@ else
 end if
 
 ! Print the message.
-write (funit, nf_fmt) 'Function number ', nf
-write (funit, f_fmt) 'Function value = ', f
 if (is_constrained) then
-    write (funit, cstrv_fmt) 'Constraint violation = ', cstrv_loc
+    write (funit, '(/1A)') 'Function number '//num2str(nf)//'  Function value = '//num2str(f)// &
+        & '  Constraint violation = '//num2str(cstrv_loc)
+else
+    write (funit, '(/1A)') 'Function number '//num2str(nf)//'  Function value = '//num2str(f)
 end if
-write (funit, x_fmt) 'The corresponding X is:', x
+write (funit, '(1A)') 'The corresponding X is:'//new_line('')//num2str(x)
 if (is_constrained .and. present(constr)) then
-    write (funit, constr_fmt) 'The constraint value is:', constr
+    write (funit, '(1A)') 'The constraint value is:'//new_line('')//num2str(constr)
 end if
 
 if (iprint < 0) then

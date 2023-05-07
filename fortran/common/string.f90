@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, May 07, 2023 PM12:39:43
+! Last Modified: Sunday, May 07, 2023 PM01:57:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -154,7 +154,7 @@ else
     if (present(nexp)) then
         nexp_loc = int(nexp, IK)
     else
-        nexp_loc = int(ceiling(log10(real(range(x) + 0.1))), IK)  ! Use + 0.1 in case RANGE(X) = 10^k.
+        nexp_loc = ceiling(log10(real(range(x) + 0.1)), IK)  ! Use + 0.1 in case RANGE(X) = 10^k.
     end if
     nexp_loc = min(nexp_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0, IK))
     wx = ndgt_loc + nexp_loc + 5_IK
