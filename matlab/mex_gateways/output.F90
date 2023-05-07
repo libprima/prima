@@ -11,7 +11,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 07, 2023 PM05:24:16
+! Last Modified: Sunday, May 07, 2023 PM10:14:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -74,12 +74,12 @@ end if
 ! Calculation starts !
 !====================!
 
-if (abs(iprint) < 1) then
-    return  ! No printing
-elseif (iprint > 0) then
-    funit = STDOUT  ! Print the message to the standard out.
+if (abs(iprint) < 1) then  ! No printing
+    return
+elseif (iprint > 0) then  ! Print the message to the standard out.
+    funit = STDOUT
     fname = ''
-else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
+else  ! Print the message to a file named FNAME with the writing unit being OUTUNIT.
     funit = OUTUNIT
     fname = strip(solver)//'_output.txt'
 end if
@@ -100,7 +100,7 @@ else
     cstrv_loc = ZERO
 end if
 
-! Decide the exit message.
+! Decide the return message.
 select case (info)
 case (FTARGET_ACHIEVED)
     reason = 'the target function value is achieved.'
@@ -127,33 +127,32 @@ case (ZERO_LINEAR_CONSTRAINT)
 case default
     reason = 'UNKNOWN EXIT FLAG'
 end select
-ret_message = 'Return from '//solver//' because '//strip(reason)//newline
+ret_message = newline//'Return from '//solver//' because '//strip(reason)
 
-nf_message = 'At the return from '//solver//'   Number of function evaluations = '//num2str(nf)//newline
+nf_message = newline//'At the return from '//solver//'   Number of function evaluations = '//num2str(nf)
 
-f_message = 'Least function value = '//num2str(f)//newline
+f_message = newline//'Least function value = '//num2str(f)
 
-x_message = 'The corresponding X is:'//newline//num2str(x)//newline
+x_message = newline//'The corresponding X is:'//newline//num2str(x)
 
 if (is_constrained) then
-    cstrv_message = 'Constraint violation = '//num2str(cstrv_loc)//newline
+    cstrv_message = newline//'Constraint violation = '//num2str(cstrv_loc)
 else
     cstrv_message = ''
 end if
 
 if (is_constrained .and. present(constr)) then
-    constr_message = 'The constraint value is:'//newline//num2str(constr)//newline
+    constr_message = newline//'The constraint value is:'//newline//num2str(constr)
 else
     constr_message = ''
 end if
 
 ! Print the message.
-if (abs(iprint) >= 3) then
-    message = newline//newline//ret_message//nf_message//f_message//cstrv_message//x_message//constr_message//newline
+if (abs(iprint) >= 2) then
+    message = newline//ret_message//nf_message//f_message//cstrv_message//x_message//constr_message
 else
-    message = newline//ret_message//nf_message//f_message//cstrv_message//x_message//constr_message//newline
+    message = ret_message//nf_message//f_message//cstrv_message//x_message//constr_message
 end if
-
 call fprint(message, funit, fname, 'append')
 
 !====================!
@@ -200,12 +199,12 @@ real(RP) :: cstrv_loc
 ! Calculation starts !
 !====================!
 
-if (abs(iprint) < 2) then
-    return  ! No printing
-elseif (iprint > 0) then
-    funit = STDOUT  ! Print the message to the standard out.
+if (abs(iprint) < 2) then  ! No printing
+    return
+elseif (iprint > 0) then  ! Print the message to the standard out.
+    funit = STDOUT
     fname = ''
-else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
+else  ! Print the message to a file named FNAME with the writing unit being OUTUNIT.
     funit = OUTUNIT
     fname = strip(solver)//'_output.txt'
 end if
@@ -227,33 +226,33 @@ else
 end if
 
 if (present(cpen)) then
-    rp_message = 'New RHO = '//num2str(rho)//'   CPEN = '//num2str(cpen)//&
-        &'   Number of function evaluations = '//num2str(nf)//newline
+    rp_message = newline//'New RHO = '//num2str(rho)//'   CPEN = '//num2str(cpen)//&
+        &'   Number of function evaluations = '//num2str(nf)
 else
-    rp_message = 'New RHO = '//num2str(rho)//'   Number of function evaluations = '//num2str(nf)//newline
+    rp_message = newline//'New RHO = '//num2str(rho)//'   Number of function evaluations = '//num2str(nf)
 end if
 
-f_message = 'Least function value = '//num2str(f)//newline
+f_message = newline//'Least function value = '//num2str(f)
+
+x_message = newline//'The corresponding X is:'//newline//num2str(x)
 
 if (is_constrained) then
-    cstrv_message = 'Constraint violation = '//num2str(cstrv_loc)//newline
+    cstrv_message = newline//'Constraint violation = '//num2str(cstrv_loc)
 else
     cstrv_message = ''
 end if
 
-x_message = 'The corresponding X is:'//newline//num2str(x)//newline
-
 if (is_constrained .and. present(constr)) then
-    constr_message = 'The constraint value is:'//newline//num2str(constr)//newline
+    constr_message = newline//'The constraint value is:'//newline//num2str(constr)
 else
     constr_message = ''
 end if
 
 ! Print the message.
 if (abs(iprint) >= 3) then
-    message = newline//newline//rp_message//f_message//cstrv_message//x_message//constr_message//newline
+    message = newline//rp_message//f_message//cstrv_message//x_message//constr_message
 else
-    message = newline//rp_message//f_message//cstrv_message//x_message//constr_message//newline
+    message = rp_message//f_message//cstrv_message//x_message//constr_message
 end if
 
 call fprint(message, funit, fname, 'append')
@@ -285,21 +284,31 @@ character(len=:), allocatable :: fname
 character(len=:), allocatable :: message
 integer :: funit ! Logical unit for the writing. Should be an integer of default kind.
 
-if (abs(iprint) < 2) then
-    return  ! No printing
-elseif (iprint > 0) then
-    funit = STDOUT  ! Print the message to the standard out.
+!====================!
+! Calculation starts !
+!====================!
+
+if (abs(iprint) < 2) then  ! No printing
+    return
+elseif (iprint > 0) then  ! Print the message to the standard out.
+    funit = STDOUT
     fname = ''
-else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
+else  ! Print the message to a file named FNAME with the writing unit being OUTUNIT.
     funit = OUTUNIT
     fname = strip(solver)//'_output.txt'
 end if
 
-message = newline//'Set CPEN to '//num2str(cpen)//newline
-
 ! Print the message.
+if (abs(iprint) >= 3) then
+    message = newline//'Set CPEN to '//num2str(cpen)
+else
+    message = newline//newline//'Set CPEN to '//num2str(cpen)
+end if
 call fprint(message, funit, fname, 'append')
 
+!====================!
+!  Calculation ends  !
+!====================!
 end subroutine cpenmsg
 
 
@@ -337,12 +346,12 @@ real(RP) :: cstrv_loc
 ! Calculation starts !
 !====================!
 
-if (abs(iprint) < 3) then
-    return  ! No printing
-elseif (iprint > 0) then
-    funit = STDOUT  ! Print the message to the standard out.
+if (abs(iprint) < 3) then  ! No printing
+    return
+elseif (iprint > 0) then  ! Print the message to the standard out.
+    funit = STDOUT
     fname = ''
-else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
+else  ! Print the message to a file named FNAME with the writing unit being OUTUNIT.
     funit = OUTUNIT
     fname = strip(solver)//'_output.txt'
 end if
@@ -363,23 +372,23 @@ else
     cstrv_loc = ZERO
 end if
 
-! Print the message.
 if (is_constrained) then
-    f_message = 'Function number '//num2str(nf)//'   Function value = '//num2str(f)// &
-        & '   Constraint violation = '//num2str(cstrv_loc)//newline
+    f_message = newline//'Function number '//num2str(nf)//'   Function value = '//num2str(f)// &
+        & '   Constraint violation = '//num2str(cstrv_loc)
 else
-    f_message = 'Function number '//num2str(nf)//'   Function value = '//num2str(f)//newline
+    f_message = newline//'Function number '//num2str(nf)//'   Function value = '//num2str(f)
 end if
-x_message = 'The corresponding X is:'//newline//num2str(x)//newline
+
+x_message = newline//'The corresponding X is:'//newline//num2str(x)
+
 if (is_constrained .and. present(constr)) then
-    constr_message = 'The constraint value is:'//newline//num2str(constr)//newline
+    constr_message = newline//'The constraint value is:'//newline//num2str(constr)
 else
     constr_message = ''
 end if
 
 ! Print the message.
-message = newline//f_message//x_message//constr_message
-
+message = f_message//x_message//constr_message
 call fprint(message, funit, fname, 'append')
 
 !====================!
@@ -455,24 +464,25 @@ if (DEBUGGING) then
         & 'The file name is empty if and only if the file unit is either STDOUT or STDERR', srname)
 end if
 
-! Decide the position of printing.
-position = 'append'
-if (present(faction)) then
-    select case (faction)
-    case ('write', 'w')
-        position = 'rewind'
-    case ('append', 'a')
-        position = 'append'
-    case default
-        call warning(srname, 'Unknown file action "'//faction//'"')
-    end select
-end if
-
 ! Open the file if necessary.
 iostat = 0
 if (len(fname_loc) > 0) then
+    ! Decide the position for `OPEN`. This is the only place where FACTION is used.
+    position = 'append'
+    if (present(faction)) then
+        select case (faction)
+        case ('write', 'w')
+            position = 'rewind'
+        case ('append', 'a')
+            position = 'append'
+        case default
+            call warning(srname, 'Unknown file action "'//faction//'"')
+        end select
+    end if
+    ! Check whether the file is already existing.
     inquire (file=fname_loc, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
+    ! Open the file.
     open (unit=funit_loc, file=fname_loc, status=fstat, position=position, iostat=iostat, action='write')
     if (iostat /= 0) then
         call warning(srname, 'Failed to open file '//fname_loc)
