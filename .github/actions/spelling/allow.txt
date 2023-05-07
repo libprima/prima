@@ -1959,3 +1959,7 @@ norma
 fdlist
 idir
 worktree
+funit
+ndgt
+nexp
+sformat
