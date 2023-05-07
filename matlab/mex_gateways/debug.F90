@@ -17,7 +17,7 @@ module debug_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Tuesday, May 02, 2023 PM11:39:39
+! Last Modified: Saturday, May 06, 2023 PM03:56:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,13 +57,12 @@ subroutine assert(condition, description, srname)
 ! (python -O), the Python `assert` will also be ignored. MATLAB does not behave in this way.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: string_mod, only : strip
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
-    call errstop(strip(srname), 'Assertion failed: '//strip(description))
+    call errstop(trim(adjustl(srname)), 'Assertion failed: '//trim(adjustl(description)))
 end if
 end subroutine assert
 
@@ -77,13 +76,12 @@ subroutine validate(condition, description, srname)
 ! In Python or C, VALIDATE can be implemented following the Fortran implementation below.
 ! N.B.: ASSERT checks the condition only when debugging, but VALIDATE does it always.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: string_mod, only : strip
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (.not. condition) then
-    call errstop(strip(srname), 'Validation failed: '//strip(description))
+    call errstop(trim(adjustl(srname)), 'Validation failed: '//trim(adjustl(description)))
 end if
 end subroutine validate
 
@@ -102,24 +100,22 @@ subroutine wassert(condition, description, srname)
 ! but WASSERT only raises a warning.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: string_mod, only : strip
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
     call backtr()
-    call warning(strip(srname), 'Assertion failed: '//strip(description))
+    call warning(trim(adjustl(srname)), 'Assertion failed: '//trim(adjustl(description)))
 end if
 end subroutine wassert
 
 
 subroutine errstop(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.', then stop.
+! This subroutine prints 'ERROR: '//STRIP(SRNAME)//': '//STRIP(MSG)//'.', then stop.
 ! It also calls BACKTR to print the backtrace.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: string_mod, only : strip
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
@@ -128,8 +124,8 @@ character(len=:), allocatable :: eid
 character(len=:), allocatable :: emsg
 
 call backtr()
-eid = 'FMXAPI:'//strip(srname)
-emsg = strip(srname)//': '//strip(msg)//'.'
+eid = 'FMXAPI:'//trim(adjustl(srname))
+emsg = trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
 call mexErrMsgIdAndTxt(eid, emsg)
 end subroutine errstop
 
@@ -170,9 +166,8 @@ end subroutine backtr
 
 subroutine warning(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.'
+! This subroutine prints 'Warning: '//STRIP(SRNAME)//': '//STRIP(MSG)//'.'
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: string_mod, only : strip
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
@@ -180,8 +175,8 @@ character(len=*), intent(in) :: msg
 character(len=:), allocatable :: wid
 character(len=:), allocatable :: wmsg
 
-wid = 'FMXAPI:'//strip(srname)
-wmsg = strip(srname)//': '//strip(msg)//'.'
+wid = 'FMXAPI:'//trim(adjustl(srname))
+wmsg = trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
 call mexWarnMsgIdAndTxt(wid, wmsg)
 end subroutine warning
 

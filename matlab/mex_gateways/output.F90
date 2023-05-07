@@ -10,7 +10,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 03, 2023 PM04:10:22
+! Last Modified: Friday, May 05, 2023 PM04:41:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -413,6 +413,115 @@ end if
 !  Calculation ends  !
 !====================!
 end subroutine fmsg
+
+
+subroutine fprint(string, funit, fname, faction)
+use, non_intrinsic :: consts_mod, only : DEBUGGING, OUTUNIT, STDIN, STDOUT, STDERR
+use, non_intrinsic :: debug_mod, only : assert, warning
+use, non_intrinsic :: string_mod, only : strip, num2str
+implicit none
+
+! Inputs
+character(len=*), intent(in) :: string
+integer, intent(in), optional :: funit
+character(len=*), intent(in), optional :: fname
+character(len=*), intent(in), optional :: faction
+
+! Local variables
+character(len=*), parameter :: srname = 'FPRINT'
+character(len=:), allocatable :: fname_loc
+character(len=:), allocatable :: position
+integer :: fstat
+integer :: funit_loc
+integer :: iostat
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(OUTUNIT > 0 .and. all(OUTUNIT /= [STDIN, STDOUT, STDERR]), &
+        & 'OUTUNIT is positive and not STDIN, STDOUT, or STDERR', srname)
+    if (present(funit)) then
+        call assert(funit /= STDIN, 'The file unit is not STDIN', srname)
+        if (present(fname)) then
+            call assert(funit /= STDOUT .and. funit /= STDERR, &
+                & 'If the file name is present, then the file unit is neither STDOUT nor STDERR', srname)
+        end if
+    end if
+    if (present(fname)) then
+        call assert(len(strip(fname)) > 0, 'The file name is nonempty and does not contain only spaces', srname)
+    end if
+    call assert(present(fname) .or. .not. present(faction), 'FACTION is present only if FNAME is specified', srname)
+    if (present(faction)) then
+        call assert(faction == 'write' .or. faction='w' .or. faction == 'append' .or. faction='a', &
+            & 'FACTION is either "write (w)" or "append (a)"', srname)
+    end if
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Decide the file storage unit.
+if (present(funit)) then
+    funit_loc = funit
+else
+    if (present(fname)) then
+        funit_loc = OUTUNIT  ! Print the message to the writing unit OUTUNIT.
+    else
+        funit_loc = STDOUT  ! Print the message to the standard out.
+    end if
+end if
+
+! Decide the file name.
+if (present(fname)) then
+    fname_loc = fname
+elseif (funit_loc /= STDOUT .and. funit_loc /= STDERR) then
+    fname_loc = 'fort.'//num2str(funit_loc)
+else
+    fname_loc = ''
+end if
+
+if (DEBUGGING) then
+    call assert(len(fname_loc) > 0 .eqv. (funit_loc /= STDOUT .and. funit_loc /= STDERR), &
+        & 'The file name is nonempty if and only if the file unit is neither STDOUT nor STDERR', srname)
+end if
+
+! Decide the position of printing.
+position = 'append'
+if (present(faction)) then
+    select case (faction)
+    case ('write', 'w')
+        position = 'rewind'
+    case ('append', 'a')
+        position = 'append'
+    case default
+        call warning(srname, 'Unknown file action "'//faction//'"')
+    end select
+end if
+
+! Open the file if necessary.
+iostat = 0
+if (len(fname_loc) > 0) then
+    inquire (file=fname_loc, exist=fexist)
+    fstat = merge(tsource='old', fsource='new', mask=fexist)
+    open (unit=funit_loc, file=fname_loc, status=fstat, position=position, iostat=iostat, action='write')
+    if (iostat /= 0) then
+        call warning(srname, 'Failed to open file '//fname_loc)
+        return
+    end if
+end if
+
+! Print the string.
+write (funit_loc, '(1A)') string
+
+! Close the file if necessary
+if (len(fname_loc) > 0 .and. iostat == 0) then
+    close (funit_loc)
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+end subroutine fprint
 
 
 end module output_mod
