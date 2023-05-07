@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, May 07, 2023 PM12:26:00
+! Last Modified: Sunday, May 07, 2023 PM12:39:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -304,14 +304,14 @@ use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 integer(IK), intent(in) :: x
-character(len=*), parameter :: srnam = 'INT2STR'
+character(len=*), parameter :: srname = 'INT2STR'
 character(len=:), allocatable :: s
 character(len=MAX_NUM_STR_LEN) :: str
 write (str, *) x
 s = strip(str)
 if (DEBUGGING) then
-    call assert(len(s) > 0 .and. len(s) <= MAX_NUM_STR_LEN, '0 < LEN(S) <= MAX_NUM_STR_LEN', srnam)
-    call assert(str2int(s) == x, 'STR2INT(S) == X', srnam)
+    call assert(len(s) > 0 .and. len(s) <= MAX_NUM_STR_LEN, '0 < LEN(S) <= MAX_NUM_STR_LEN', srname)
+    call assert(str2int(s) == x, 'STR2INT(S) == X', srname)
 end if
 end function int2str
 
