@@ -572,6 +572,8 @@ $(TESTS) $(TESTS_INT):
     | grep -v "msg\s*=.*Large error occurs when converting " \
 	| grep -v ": warning #8236: Deferred character length in a data object or component declaration is an extension of Standard F95." \
 	| grep -v ": warning #6655: The f95 standard requires that the ALLOCATABLE attribute only be given to array objects." \
+	| grep -v " Fortran 95 does not allow this intrinsic procedure.\s*\[NEW_LINE\]" \
+	| grep -v "Fortran 95 does not allow type specification in an allocate statement" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
