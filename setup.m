@@ -149,7 +149,7 @@ create_all_variants(options);
 copy_shared_tools(tools, mexdir);
 
 % Check whether MEX is properly configured.
-fprintf('\nVerifying the set-up of MEX ... \n');
+fprintf('\nVerifying the setup of MEX ... \n');
 language = 'Fortran'; % Language to compile
 mex_well_conf = try_mex_setup(language);
 if mex_well_conf == 0
