@@ -1965,3 +1965,5 @@ nexp
 sformat
 drawnow
 SMBANK
+FSAN
+MESSAGEF
