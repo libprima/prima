@@ -1403,7 +1403,7 @@ validated = false;
 if isfield(options, 'iprint')
     if ~isintegerscalar(options.iprint) || abs(options.iprint) > 3
         wid = sprintf('%s:InvalidIprint', invoker);
-        wmsg = sprintf('%s: invalid iprint; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to %d.', invoker, options.iprint);
+        wmsg = sprintf('%s: invalid iprint; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to %d.', invoker, iprint);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif options.iprint > 0 && user_says_quiet
