@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, May 08, 2023 AM11:46:56
+! Last Modified: Monday, May 08, 2023 PM04:25:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -190,6 +190,7 @@ function real2str_vector(x, ndgt, nexp, nx) result(s)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, DP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: memory_mod, only : safealloc
 ! Inputs
 real(RP), intent(in) :: x(:)
 integer, intent(in), optional :: ndgt
@@ -260,7 +261,7 @@ end if
 
 m = ceiling(real(n) / real(nx_loc))  ! The number of rows
 slen = wx * n + len(spaces) * (n - 1) + (1 - len(spaces)) * (m - 1)  ! The length of the string
-allocate (character(len=slen) :: s)
+call safealloc(s, int(slen, IK))
 
 j = 0  ! J is the index of the last up-to-date character in S.
 do i = 1, n

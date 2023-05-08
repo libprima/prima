@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 08, 2023 AM01:36:59
+! Last Modified: Monday, May 08, 2023 PM04:23:12
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -69,8 +69,8 @@ implicit none
 
 private
 public :: DEBUGGING
-public :: IK, INT32, IK_DFT
-public :: RP, DP, SP, QP, RP_DFT
+public :: IK, IK_DFT, INT16, INT32, INT64
+public :: RP, RP_DFT, DP, SP, QP
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: REALMIN, EPS, TINYCV, REALMAX, FUNCMAX, CONSTRMAX, BOUNDMAX
 public :: SYMTOL_DFT

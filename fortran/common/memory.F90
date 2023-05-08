@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 11, 2023 PM09:24:12
+! Last Modified: Monday, May 08, 2023 PM04:09:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,6 +33,7 @@ interface safealloc
     module procedure alloc_ivector, alloc_imatrix
     module procedure alloc_rvector_sp, alloc_rmatrix_sp
     module procedure alloc_rvector_dp, alloc_rmatrix_dp
+    module procedure alloc_character
 #if PRIMA_QP_AVAILABLE == 1
     module procedure alloc_rvector_qp, alloc_rmatrix_qp
 #endif
@@ -404,6 +405,39 @@ call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)
 call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_imatrix
+
+
+subroutine alloc_character(x, n)
+!--------------------------------------------------------------------------------------------------!
+! Allocate space for an allocatable character X, whose length is N after allocation.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : IK
+use, non_intrinsic :: debug_mod, only : validate
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: n
+
+! Outputs
+character(:), allocatable, intent(out) :: x
+
+! Local variables
+integer :: alloc_status
+character(len=*), parameter :: srname = 'ALLOC_CHARACTER'
+
+! Preconditions (checked even not debugging)
+call validate(n >= 0, 'N >= 0', srname)
+
+! !if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
+! Allocate memory for X. Initialize X to a compiler-independent value.
+allocate (character(len=n) :: x, stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = repeat(' ', ncopies=n)  ! Costly if X is of a large size.
+
+! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+call validate(len(x) == n, 'LEN(X) == N', srname)
+end subroutine alloc_character
 
 
 end module memory_mod
