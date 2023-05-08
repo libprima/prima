@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, May 07, 2023 PM01:57:07
+! Last Modified: Monday, May 08, 2023 AM11:46:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -107,7 +107,7 @@ function real2str_scalar(x, ndgt, nexp) result(s)
 ! This function converts a real scalar to a string. Optionally, NDGT is the number of decimal
 ! digits to print, and NEXP is the number of digits in the exponent; they may be reduced if needed.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, DP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf, is_neginf
 implicit none
@@ -148,7 +148,8 @@ else
     if (present(ndgt)) then
         ndgt_loc = int(ndgt, IK)
     else
-        ndgt_loc = int(precision(x) + 1, IK)
+        ! By default, we print at most the same number of decimal digits as the double precision.
+        ndgt_loc = int(min(precision(x), precision(0.0_DP)), IK)
     end if
     ndgt_loc = min(ndgt_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0, IK))
     if (present(nexp)) then
@@ -187,7 +188,7 @@ function real2str_vector(x, ndgt, nexp, nx) result(s)
 ! digits to print, NEXP is the number of digits in the exponent, and NX is the number of entries
 ! printed per row; they may be reduced if needed.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, DP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 ! Inputs
 real(RP), intent(in) :: x(:)
@@ -237,7 +238,8 @@ end if
 if (present(ndgt)) then
     ndgt_loc = ndgt
 else
-    ndgt_loc = precision(x) + 1
+    ! By default, we print at most the same number of decimal digits as the double precision.
+    ndgt_loc = min(precision(x), precision(0.0_DP))
 end if
 ndgt_loc = min(ndgt_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0))
 
