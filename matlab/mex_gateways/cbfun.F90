@@ -4,17 +4,11 @@ module cbfun_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module evaluates callback functions received from MATLAB.
 !
-! Authors:
-!   Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
-!   and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
-!   Department of Applied Mathematics,
-!   The Hong Kong Polytechnic University
-!
-! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015)
+! Coded by Zaikun ZHANG (www.zhangzk.net)
 !
 ! Started in July 2020
 !
-! Last Modified: Friday, May 05, 2023 PM06:01:32
+! Last Modified: Monday, May 08, 2023 PM06:05:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

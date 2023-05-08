@@ -8,9 +8,11 @@ module fmxapi_mod
 ! 3. Define some user-friendly subroutines for interfacing Fortran with MATLAB. Note that we suppose
 ! that the REAL type used in the Fortran code is REAL(RP), and the INTEGER type is INTEGER(IK).
 !
+! Coded by Zaikun ZHANG (www.zhangzk.net)
+!
 ! Started in July 2020
 !
-! Last Modified: Monday, May 08, 2023 AM01:32:39
+! Last Modified: Monday, May 08, 2023 PM06:05:21
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:

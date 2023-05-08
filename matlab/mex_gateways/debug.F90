@@ -7,26 +7,20 @@ module debug_mod
 ! When interfacing Fortran code with MATLAB, we use this module to replace the one defined in
 ! fortran/common/debug.F90, in order to generate errors or warnings that are native to MATLAB.
 !
-! Authors:
-!   Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
-!   and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
-!   Department of Applied Mathematics,
-!   The Hong Kong Polytechnic University
-!
-! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015)
+! Coded by Zaikun ZHANG (www.zhangzk.net)
 !
 ! Started in July 2020
 !
-! Last Modified: Monday, May 08, 2023 AM10:06:25
+! Last Modified: Monday, May 08, 2023 PM06:07:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: assert, validate, wassert, backtr, warning, errstop
 
+
 ! Specify the interfaces of mexWarnMsgIdAndTxt and mexErrMsgIdAndTxt.
-! We may use those specified in fmxapi_mod. However, that would make debug.F90 depend on fmxapi.F90,
-! and make it impossible to use debug_mod in fmxapi.F90.
+! We cannot use those specified in fmxapi_mod. This is because fmxapi.F90 depends on debug.F90.
 interface
     subroutine mexErrMsgIdAndTxt(eid, emsg)
     implicit none

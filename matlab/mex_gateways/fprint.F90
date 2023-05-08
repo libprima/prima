@@ -10,11 +10,11 @@ module fprint_mod
 ! https://stackoverflow.com/questions/26271154/how-can-i-make-a-mex-function-printf-while-its-running
 ! https://www.mathworks.com/matlabcentral/answers/132527-in-mex-files-where-does-output-to-stdout-and-stderr-go
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and papers.
+! Coded by Zaikun ZHANG (www.zhangzk.net)
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 08, 2023 AM11:42:20
+! Last Modified: Monday, May 08, 2023 PM06:15:37
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: INT32_MEX is indeed INT32, i.e., the kind of INTEGER*4. We name it INT32_MEX instead of
@@ -25,6 +25,9 @@ private
 public :: fprint
 
 
+! Specify the interfaces of mexPrintf and mexString.
+! We may use those specified in fmxapi_mod. However, that would make fprint.F90 depend on fmxapi.F90,
+! and make it impossible to use fprint_mod in fmxapi.F90, which may become necessary in the future.
 interface
     function mexPrintf(message)
     import :: INT32_MEX  ! Without IMPORT, INT32_MEX will not be available in this interface.
@@ -116,7 +119,7 @@ end if
 ! Print the string.
 if (len(fname_loc) == 0) then
     ! N.B.: We append a trailing new line to the string to be printed. This is because mexPrintf
-    ! does not print a string to the standard output on a new line as of MATLAB R2023a. Ideally, we
+    ! does not print strings to the standard output on new lines as of MATLAB R2023a. Ideally, we
     ! should add a new line to the beginning of the string. However, this may lead to the phenomenon
     ! that messages printed by other functions are appended to the end of strings by FPRINT. Note
     ! that all the strings received by FPRINT from MESSAGE have a leading new line.
@@ -153,7 +156,7 @@ else
     end if
     ! Print the string.
     write (funit_loc, '(1A)') string
-    ! Close the file if necessary
+    ! Close the file.
     close (funit_loc)
 end if
 

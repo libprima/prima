@@ -7,6 +7,8 @@ CONSTSF90="consts.F90"
 CONSTS="$DIR/common/$CONSTSF90"
 MEMORYF90="memory.F90"
 MEMORY="$DIR/common/$MEMORYF90"
+STRINGF90="string.f90"
+STRING="$DIR/common/$STRINGF90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -14,13 +16,9 @@ if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
 fi
 
 if [[ -f "$CONSTS" ]] ; then
-    STR="use, intrinsic :: iso_fortran_env, only : REAL32, REAL64, REAL128"
-    sed -i "/$STR/d" "$CONSTS"
-    STR="use, intrinsic :: iso_fortran_env, only : INT16"
-    sed -i "/$STR/d" "$CONSTS"
-    STR="use, intrinsic :: iso_fortran_env, only : INT32"
-    sed -i "/$STR/d" "$CONSTS"
-    STR="use, intrinsic :: iso_fortran_env, only : INT64"
+    sed -i "/end module consts_mod/d" "$CONSTS"
+
+    STR="use, intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REAL32, REAL64, REAL128"
     sed -i "/$STR/d" "$CONSTS"
     OLD_STR="integer, parameter :: SP = REAL32"
     NEW_STR="integer, parameter :: SP = kind(0.0)"
@@ -43,18 +41,28 @@ if [[ -f "$CONSTS" ]] ; then
     OLD_STR="integer, parameter :: IK = INT16"
     NEW_STR="integer, parameter :: IK = selected_int_kind(4)"
     sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+    echo "integer, parameter :: INT16 = selected_int_kind(4)" >> "$CONSTS"
     OLD_STR="integer, parameter :: IK = INT32"
     NEW_STR="integer, parameter :: IK = selected_int_kind(7)"
     sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+    echo "integer, parameter :: INT32 = selected_int_kind(7)" >> "$CONSTS"
     OLD_STR="integer, parameter :: IK = INT64"
     NEW_STR="integer, parameter :: IK = selected_int_kind(14)"
     sed -i "s/$OLD_STR/$NEW_STR/" "$CONSTS"
+    echo "integer, parameter :: INT64 = selected_int_kind(14)" >> "$CONSTS"
+
+    echo "end module consts_mod" >> "$CONSTS"
 fi
 
 if [[ -f "$MEMORY" ]] ; then
     OLD_STR="y = int(storage_size(x) \/ 8, kind(y))"
     NEW_STR="y = int(8, kind(y))"
     sed -i "s/$OLD_STR/$NEW_STR/" "$MEMORY"
+fi
+
+if [[ -f "$STRING" ]] ; then
+    sed -i "/ndgt_loc = min(ndgt_loc, floor(real(MAX_NUM_STR_LEN - 5) \/ 2.0))/d" "$STRING"
+    sed -i "/nexp_loc = min(nexp_loc, floor(real(MAX_NUM_STR_LEN - 5) \/ 2.0))/d" "$STRING"
 fi
 
 exit 0

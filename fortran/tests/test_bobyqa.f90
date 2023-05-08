@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, April 10, 2023 PM03:38:40
+! Last Modified: Monday, May 08, 2023 PM05:51:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -221,15 +221,12 @@ else
                     & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
                     & xhist=xhist, ftarget=ftarget, iprint=iprint)
 
-                print *, 'Result: ', f, x
-
                 if (prob % probtype == 'u') then  ! Run the test without constraints
                     call safealloc(x_unc, n)
                     x_unc = x0
                     call bobyqa(noisy_calfun, x_unc, f_unc, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
                         & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, &
                         & iprint=iprint)
-                    print *, 'Result (unconstrained): ', f, x
                     call validate(all(abs(x - x_unc) <= 0), 'X == X_UNC', srname)
                     call validate(abs(f - f_unc) <= 0 .or. (is_neginf(f) .and. is_neginf(f_unc)), 'F == F_UNC', srname)
                 end if
