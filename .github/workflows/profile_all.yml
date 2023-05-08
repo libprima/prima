@@ -12,7 +12,6 @@ on:
 
 env:
   GFORTRAN_VERSION: 12
-  MATLAB_RELEASE: latest
 
 jobs:
   test:
@@ -22,6 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
+        matlab: [latest]
         dim: [all]
         solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]
         competitor: [classical, archiva]
@@ -82,14 +82,14 @@ jobs:
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox == 'yes' }}
         uses: matlab-actions/setup-matlab@v2-beta
         with:
-          release: ${{ env.MATLAB_RELEASE }}
+          release: ${{ matrix.matlab }}
           products: Optimization_Toolbox
 
       - name: Set up MATLAB without optimization toolbox
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox != 'yes' }}
         uses: matlab-actions/setup-matlab@v2-beta
         with:
-          release: ${{ env.MATLAB_RELEASE }}
+          release: ${{ matrix.matlab }}
 
       - name: Conduct the test
         uses: matlab-actions/run-command@v1.1.3
