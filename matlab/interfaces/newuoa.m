@@ -91,9 +91,9 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %       -1, -2, -3: the same information as 1, 2, 3 will be printed, not to
 %          the screen but to a file named NEWUOA_output.txt; the file will be
 %          created if it does not exist; the new output will be appended to
-%          the end of this file if it already exists. Note that iprint = -3
-%          can be costly in terms of time and space.
-%       Note:
+%          the end of this file if it already exists. 
+%       Note that iprint = +/-3 can be costly in terms of time and/or space.
+%       N.B.:
 %       When classical = true, only iprint = 0 is supported;
 %       When fortran = true, only iprint = 0, -1, -2, -3 are supported
 %       (due to I/O confliction between Fortran and MATLAB);

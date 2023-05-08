@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, April 10, 2023 PM03:12:07
+! Last Modified: Monday, May 08, 2023 PM03:14:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -171,8 +171,8 @@ subroutine cobyla(calcfc, m, x, f, &
 !   3: in addition to 2, each function evaluation with its variables will be printed to the screen;
 !   -1, -2, -3: the same information as 1, 2, 3 will be printed, not to the screen but to a file
 !      named COBYLA_output.txt; the file will be created if it does not exist; the new output will
-!      be appended to the end of this file if it already exists. Note that IPRINT = -3 can be costly
-!      in terms of time and space.
+!      be appended to the end of this file if it already exists.
+!   Note that IPRINT = +/-3 can be costly in terms of time and/or space.
 !
 ! ETA1, ETA2, GAMMA1, GAMMA2
 !   Input, REAL(RP) scalars, default: ETA1 = 0.1, ETA2 = 0.7, GAMMA1 = 0.5, and GAMMA2 = 2.

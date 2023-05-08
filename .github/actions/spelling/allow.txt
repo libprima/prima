@@ -1964,3 +1964,4 @@ ndgt
 nexp
 sformat
 drawnow
+SMBANK

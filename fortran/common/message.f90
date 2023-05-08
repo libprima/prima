@@ -2,14 +2,17 @@ module message_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides some subroutines that print messages to terminal/files.
 !
-! N.B.: In case parallelism is desirable (especially during initialization), the subroutines may
+! N.B.:
+! 1. In case parallelism is desirable (especially during initialization), the subroutines may
 ! have to be modified or disabled due to the IO operations.
+! 2. IPRINT indicates the level of verbosity, which increases with the absolute value of IPRINT.
+! IPRINT = +/-3 can be expensive due to high IO operations.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and papers.
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 08, 2023 AM11:55:32
+! Last Modified: Monday, May 08, 2023 PM03:06:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
