@@ -38,7 +38,7 @@ if nargin < 3
     nrun = 1; % Number of runs with randomly perturbed x0
     perturb = 0; % Magnitude of perturbation on x0
 else
-    perturb = 1e-15;
+    perturb = eps;
 end
 
 options.debug = true;
@@ -86,112 +86,97 @@ else
     clflag_list = {true, false}; % clflag: call the solvers in classical mode (true) or not (false)
 end
 
-pass = true; % All tests are successful or not
-
 for irun = 1 : nrun
     fprintf ('\n');
     if (nrun > 1)
         fprintf ('Test %d:\n\n', irun);
     end
-    try
-        for itype = 1 : length(type_list)
-            type = type_list{itype};
-            fprintf ('Testing %s problems ...\n', strrep(type, '-', ' '));
-            success = true; % The current test is successful or not
-            for isolver = 1 : length(solver_list{itype})
-                solver = solver_list{itype}{isolver};
-                for ifun = 1 : length(fun_list)
-                    for iclflag = 1 : length(clflag_list)
-                        clflag = clflag_list{iclflag};
-                        fun = fun_list{ifun};
-                        x0 = x0_list{ifun};
-                        if ~strcmp(solver, 'cobyla') || ~strcmp(func2str(fun), 'chebquad')
-                            % The result of cobyla on chebquad is sensitive to x0, so we do not perturb x0
-                            r = abs(sin(1e3*sum(double([solver, func2str(fun), type]))*irun*(1:length(x0))'));
-                            % Introduce a tiny perturbation to the experiments.
-                            % We use a deterministic permutation so that
-                            % experiments can be easily repeated when necessary.
-                            x0 = x0 + perturb*r;
-                        end
-                        %xopt = xopt_list{ifun}{itype};
-    				    fopt = fopt_list{ifun}{itype};
-                        n = length(x0);
+    for itype = 1 : length(type_list)
+        type = type_list{itype};
+        fprintf ('Testing %s problems ...\n', strrep(type, '-', ' '));
+        for isolver = 1 : length(solver_list{itype})
+            solver = solver_list{itype}{isolver};
+            for ifun = 1 : length(fun_list)
+                for iclflag = 1 : length(clflag_list)
+                    clflag = clflag_list{iclflag};
+                    fun = fun_list{ifun};
+                    x0 = x0_list{ifun};
+                    if ~strcmp(solver, 'cobyla') || ~strcmp(func2str(fun), 'chebquad')
+                        % The result of cobyla on chebquad is sensitive to x0, so we do not perturb x0
+                        r = abs(sin(1e3*sum(double([solver, func2str(fun), type]))*irun*(1:length(x0))'));
+                        % Introduce a tiny perturbation to the experiments.
+                        % We use a deterministic permutation so that
+                        % experiments can be easily repeated when necessary.
+                        x0 = x0 + perturb*max(norm(x0), 1)*r/norm(r);
+                    end
+                    %xopt = xopt_list{ifun}{itype};
+                    fopt = fopt_list{ifun}{itype};
+                    n = length(x0);
 
-                        problem = struct();
-                        problem.objective = fun;
-                        problem.x0 = x0;
-                        options.solver = solver;
-                        options.classical = clflag;
-                        problem.options = options;
+                    problem = struct();
+                    problem.objective = fun;
+                    problem.x0 = x0;
+                    options.solver = solver;
+                    options.classical = clflag;
+                    problem.options = options;
+                    if ~release  % 20230508: Test the newly implemented iprint.
+                        problem.options.iprint = round(4*(2*rand() - 1));
+                    end
 
-                        switch type
-                        case 'unconstrained'
-                            [x, fx] = prima(fun, x0, options);
-                        case 'bound-constrained' % 0 <= x <= 0.5
-                            lb = -0.5*ones(n,1);
-                            ub = 0.5*ones(n,1);
-                            [x, fx] = prima(fun, x0, [], [], [], [], lb, ub, options);
-                            problem.lb = lb;
-                            problem.ub = ub;
-                        case 'linearly-constrained' % simplex
-                            Aineq = ones(1, n);
-                            bineq = 1;
-                            lb = zeros(n,1);
-                            [x, fx] = prima(fun, x0, Aineq, bineq, [], [], lb, [], options);
-                            problem.Aineq = Aineq;
-                            problem.bineq = bineq;
-                            problem.lb = lb;
-                        case 'nonlinearly-constrained' % intersection of the unit ball and the positive orthant
-                            nonlcon = @(x) ballcon(x, zeros(n,1), 1);
-                            lb = zeros(n,1);
-                            [x, fx] = prima(fun, x0, [], [], [], [], lb, [], nonlcon, options);
-                            problem.lb = lb;
-                            problem.nonlcon = nonlcon;
-                        end
+                    switch type
+                    case 'unconstrained'
+                        [x, fx] = prima(fun, x0, options);
+                    case 'bound-constrained' % 0 <= x <= 0.5
+                        lb = -0.5*ones(n,1);
+                        ub = 0.5*ones(n,1);
+                        [x, fx] = prima(fun, x0, [], [], [], [], lb, ub, options);
+                        problem.lb = lb;
+                        problem.ub = ub;
+                    case 'linearly-constrained' % simplex
+                        Aineq = ones(1, n);
+                        bineq = 1;
+                        lb = zeros(n,1);
+                        [x, fx] = prima(fun, x0, Aineq, bineq, [], [], lb, [], options);
+                        problem.Aineq = Aineq;
+                        problem.bineq = bineq;
+                        problem.lb = lb;
+                    case 'nonlinearly-constrained' % intersection of the unit ball and the positive orthant
+                        nonlcon = @(x) ballcon(x, zeros(n,1), 1);
+                        lb = zeros(n,1);
+                        [x, fx] = prima(fun, x0, [], [], [], [], lb, [], nonlcon, options);
+                        problem.lb = lb;
+                        problem.nonlcon = nonlcon;
+                    end
 
-                        xs = prima(problem);
+                    xs = prima(problem);
 
-                        if strcmp(solver, 'cobyla') % The precision of cobyla is lower
-                            prec = max(1e3*precision, 1e-2);
+                    if strcmp(solver, 'cobyla') % The precision of cobyla is lower
+                        prec = max(1e3*precision, 1e-2);
+                    else
+                        prec = precision;
+                    end
+                    if ~release
+                        fprintf('\nsolver = %s,\tfun = %s,\t\tfx = %.16e,\t\tfopt = %.16e\n', solver, func2str(fun), fx, fopt);
+                    end
+                    if (norm(x-xs) > 0) || ((fx-fopt)/max(1, abs(fopt)) > prec) || (~release && abs(fx-fopt)/max(1, abs(fopt)) > prec)
+                        fprintf ('Required precision = %.2e,\t\tactual precision = %.2e\n', prec, abs(fx-fopt)/max(1, abs(fopt)));
+                        if clflag
+                            error('prima (classical mode) FAILED a test on %s problem: solver = ''%s'', objective function = ''%s''.\n', type, solver, func2str(fun));
                         else
-                            prec = precision;
-                        end
-                        if ~release
-                            fprintf('\nsolver = %s,\tfun = %s,\t\tfx = %.16e,\t\tfopt = %.16e', solver, func2str(fun), fx, fopt);
-                        end
-                        if (norm(x-xs) > 0) || ((fx-fopt)/max(1, abs(fopt)) > prec) || (~release && abs(fx-fopt)/max(1, abs(fopt)) > prec)
-                            success = false;
-                            if clflag
-                                fprintf('\n**** prima (classical mode) FAILED a test on %s problem: solver = ''%s'', objective function = ''%s''.\n', type, solver, func2str(fun));
-                            else
-                                fprintf('\n**** prima FAILED a test on %s problem: solver = ''%s'', objective function = ''%s''.\n', type, solver, func2str(fun));
-                            end
-                            fprintf ('Required precision = %.2e,\t\tactual precision = %.2e\n', prec, abs(fx-fopt)/max(1, abs(fopt)));
+                            error('prima FAILED a test on %s problem: solver = ''%s'', objective function = ''%s''.\n', type, solver, func2str(fun));
                         end
                     end
                 end
             end
-            if success
-                if ~release
-                    fprintf('\n\n');
-                end
-                fprintf ('Succeed.\n\n');
-    		else
-            	pass = false;
-                fprintf ('\n');
-            end
         end
-    catch exception
-        fprintf('\nERROR occurred during the test:\n\n');
-        rethrow(exception);
+
+        if ~release
+            fprintf('\n\n');
+        end
+        fprintf ('Succeed.\n\n');
     end
 
-    if pass
-        fprintf('All tests were successful.\n\n');
-    else
-        fprintf('Some tests FAILED.\n\n');
-        break;
-    end
+    fprintf('All tests were successful.\n\n');
 end
 
 % Recover the warning behavior
