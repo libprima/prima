@@ -12,7 +12,6 @@ on:
 
 env:
   GFORTRAN_VERSION: 12
-  MATLAB_RELEASE: latest
 
 jobs:
   test:
@@ -22,8 +21,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
+        matlab: [latest]
         solver: [newuoa, cobyla, bobyqa, uobyqa]  # With the blacklist, there is no large problem for lincoa
-        #dim: [small, big, large]
         dim: [large]
     steps:
       - name: Check out repository
@@ -51,7 +50,7 @@ jobs:
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
         uses: matlab-actions/setup-matlab@v2-beta
         with:
-          release: ${{ env.MATLAB_RELEASE }}
+          release: ${{ matrix.matlab }}
 
       - name: Conduct the test
         uses: matlab-actions/run-command@v1.1.3

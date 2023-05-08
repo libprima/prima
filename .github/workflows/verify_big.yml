@@ -12,7 +12,6 @@ on:
 
 env:
   GFORTRAN_VERSION: 12
-  MATLAB_RELEASE: latest
 
 jobs:
   test:
@@ -22,6 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
+        matlab: [latest]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         #dim: [small, big]
         dim: [big]
@@ -51,7 +51,7 @@ jobs:
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
         uses: matlab-actions/setup-matlab@v2-beta
         with:
-          release: ${{ env.MATLAB_RELEASE }}
+          release: ${{ matrix.matlab }}
 
       # BOBYQA often takes too much time for the big problems due to the quadruple precision. So we
       # set nr to 5 (default is 10).

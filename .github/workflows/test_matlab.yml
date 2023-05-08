@@ -91,6 +91,13 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'
 
+      - name: Cache MATLAB
+        id: cache-matlab
+        uses: actions/cache@v3.3.1
+        with:
+          path: ${{ runner.tool_cache }}/MATLAB
+          key: ${{ matrix.os }}-${{ matrix.matlab }}
+
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2-beta
         with:
