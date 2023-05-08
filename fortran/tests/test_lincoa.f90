@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, April 10, 2023 PM03:38:27
+! Last Modified: Monday, May 08, 2023 PM05:51:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -281,15 +281,12 @@ else
                     & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
                     & xhist=xhist, chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
-                print *, 'Result: ', f, cstrv, x
-
                 if (prob % probtype == 'u') then  ! Run the test without constraints
                     call safealloc(x_unc, n)
                     x_unc = x0
                     call lincoa(noisy_calfun, x_unc, f_unc, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
                         & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, &
                         & iprint=iprint)
-                    print *, 'Result (unconstrained): ', f, cstrv, x
                     call validate(all(abs(x - x_unc) <= 0), 'X == X_UNC', srname)
                     call validate(abs(f - f_unc) <= 0 .or. (is_neginf(f) .and. is_neginf(f_unc)), 'F == F_UNC', srname)
                 end if

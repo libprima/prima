@@ -12,7 +12,7 @@ module fprint_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 07, 2023 PM11:55:59
+! Last Modified: Monday, May 08, 2023 PM06:15:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -119,7 +119,7 @@ end if
 ! Print the string.
 write (funit_loc, '(1A)') string
 
-! Close the file if necessary
+! Close the file if necessary.
 if (len(fname_loc) > 0 .and. iostat == 0) then
     close (funit_loc)
 end if

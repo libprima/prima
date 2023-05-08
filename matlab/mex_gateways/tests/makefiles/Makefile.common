@@ -564,7 +564,9 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "Warning: ‘\.wmsg’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.emsg’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.msg’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.fout’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.reason’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.fname’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.fstat’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
     | grep -v "msg\s*=.*fmxIsDoubleVector: An invalid shape type" \
     | grep -v "msg\s*=.*fmxCallMATLAB: MEX fails to call a MATLAB function" \

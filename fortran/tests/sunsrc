@@ -14,12 +14,18 @@ LINGEO="$DIR/lincoa/geometry.f90"
 LINTR="$DIR/lincoa/trustregion.f90"
 LINUPD="$DIR/lincoa/update.f90"
 BOBTR="$DIR/bobyqa/trustregion.f90"
-CMN_OUTPUTF90="output.f90"
-CMN_OUTPUT="$DIR/common/$CMN_OUTPUTF90"
-MEX_OUTPUTF90="output.F90"
-MEX_OUTPUT="$DIR/common/$MEX_OUTPUTF90"
+CMN_FPRINTF90="fprint.f90"
+CMN_FPRINT="$DIR/common/$CMN_FPRINTF90"
+MEX_FPRINTF90="fprint.F90"
+MEX_FPRINT="$DIR/common/$MEX_FPRINTF90"
 DEBUGF90="debug.F90"
 DEBUG="$DIR/common/$DEBUGF90"
+MEMORYF90="memory.F90"
+MEMORY="$DIR/common/$MEMORYF90"
+STRINGF90="string.f90"
+STRING="$DIR/common/$STRINGF90"
+MESSAGEF90="message.f90"
+MESSAGE="$DIR/common/$MESSAGEF90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -69,11 +75,32 @@ if [[ -f "$BOBTR" ]] ; then
 
 fi
 
-for FILE in "$CMN_OUTPUT" "$MEX_OUTPUT" "$DEBUG" ; do
+for FILE in "$CMN_FPRINT" "$MEX_FPRINT" "$DEBUG" ; do
     if [[ -f "$FILE" ]] ; then
         sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
     fi
 done
+
+if [[ -f "$STRING" ]] ; then
+    sed -i "s/character(len=:), allocatable/character(len=1024)/" "$STRING"
+    sed -i "/LEN(S) <= MAX_NUM_STR_LEN/d" "$STRING"
+    sed -i "s/write (str, sformat) x/write (*,*) sformat; write (str, *) x/" "$STRING"
+    sed -i "/character(len=\*), parameter :: newline/d" "$STRING"
+    sed -i "s|newline|achar(10)|g" "$STRING"
+fi
+
+if [[ -f "$MEMORY" ]] ; then
+    sed -i "s/character(len=:), allocatable/character(len=1024)/" "$MEMORY"
+    sed -i "/allocate (character/d" "$MEMORY"
+    sed -i "/call validate(allocated(x), 'X is allocated', srname)/d" "$MEMORY"
+    sed -i "s/integer :: alloc_status/integer :: alloc_status = 0/" "$MEMORY"
+fi
+
+# sunf95 encounters internal errors when handling message.f90.
+# In addition, message.f90 does not work due to the changes to string.f90, especially to real2str_vector.
+cd "$DIR" && grep -R 'call .*msg' | sed 's|:.*$||' | grep -v 'debug.F90\|fmxapi.F90' | xargs sed -i "s|call .*msg.*$|write(*,*) solver|" && cd - || exit 1
+cd "$DIR" && grep -R 'use.*message_mod' | sed 's|:.*$||' | xargs sed -i "/use.*message_mod/d" && cd - || exit 1
+printf "module message_mod \n end module message_mod" > "$MESSAGE"
 
 if [[ -f "$DEBUG" ]] ; then
     sed -i "s|^error stop|stop|" "$DEBUG"

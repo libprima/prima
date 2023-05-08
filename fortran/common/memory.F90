@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 08, 2023 PM04:09:23
+! Last Modified: Monday, May 08, 2023 PM06:30:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -419,7 +419,7 @@ implicit none
 integer(IK), intent(in) :: n
 
 ! Outputs
-character(:), allocatable, intent(out) :: x
+character(len=:), allocatable, intent(out) :: x
 
 ! Local variables
 integer :: alloc_status

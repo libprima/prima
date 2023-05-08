@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, May 08, 2023 PM04:25:02
+! Last Modified: Monday, May 08, 2023 PM09:57:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -163,7 +163,7 @@ else
         & //int2str(int(MAX_NUM_STR_LEN, IK)), srname)
     sformat = '(1PE'//int2str(wx)//'.'//int2str(ndgt_loc)//'E'//int2str(nexp_loc)//')'
     write (str, sformat) x
-    s = trim(str)  ! Remove the trailing spaces, but keep the leading spaces, if any.
+    s = trim(str)  ! Remove the trailing spaces, but keep the leading ones, if any.
 end if
 
 !====================!
@@ -199,7 +199,7 @@ integer, intent(in), optional :: nx
 ! Outputs
 character(len=:), allocatable :: s
 ! Local variables
-character(len=*), parameter :: srname = 'REAL2STR_MATRIX'
+character(len=*), parameter :: srname = 'REAL2STR_VECTOR'
 character(len=2), parameter :: spaces = '  '  ! The spaces between two entries in a row
 integer :: i
 integer :: j

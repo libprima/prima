@@ -12,7 +12,7 @@ module message_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 08, 2023 PM03:06:44
+! Last Modified: Monday, May 08, 2023 PM08:15:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -137,7 +137,7 @@ nf_message = newline//'At the return from '//solver//spaces//'Number of function
 f_message = newline//'Least function value = '//num2str(f)
 
 if (size(x) <= 2) then
-    x_message = newline//'The corresponding X is: '//num2str(x)
+    x_message = newline//'The corresponding X is: '//num2str(x)  ! Printed in one line
 else
     x_message = newline//'The corresponding X is:'//newline//num2str(x)
 end if
@@ -150,7 +150,7 @@ end if
 
 if (is_constrained .and. present(constr)) then
     if (size(constr) <= 2) then
-        constr_message = newline//'The constraint value is: '//num2str(constr)
+        constr_message = newline//'The constraint value is: '//num2str(constr)  ! Printed in one line
     else
         constr_message = newline//'The constraint value is:'//newline//num2str(constr)
     end if
@@ -238,8 +238,8 @@ else
 end if
 
 if (present(cpen)) then
-    rp_message = newline//'New RHO = '//num2str(rho)//spaces//'CPEN = '//num2str(cpen)//&
-        &spaces//'Number of function evaluations = '//num2str(nf)
+    rp_message = newline//'New RHO = '//num2str(rho)//spaces//'CPEN = '//num2str(cpen)// &
+        & spaces//'Number of function evaluations = '//num2str(nf)
 else
     rp_message = newline//'New RHO = '//num2str(rho)//spaces//'Number of function evaluations = '//num2str(nf)
 end if
@@ -247,7 +247,7 @@ end if
 f_message = newline//'Least function value = '//num2str(f)
 
 if (size(x) <= 2) then
-    x_message = newline//'The corresponding X is: '//num2str(x)
+    x_message = newline//'The corresponding X is: '//num2str(x)  ! Printed in one line
 else
     x_message = newline//'The corresponding X is:'//newline//num2str(x)
 end if
@@ -260,7 +260,7 @@ end if
 
 if (is_constrained .and. present(constr)) then
     if (size(constr) <= 2) then
-        constr_message = newline//'The constraint value is: '//num2str(constr)
+        constr_message = newline//'The constraint value is: '//num2str(constr)  ! Printed in one line
     else
         constr_message = newline//'The constraint value is:'//newline//num2str(constr)
     end if
@@ -402,14 +402,14 @@ else
 end if
 
 if (size(x) <= 2) then
-    x_message = newline//'The corresponding X is: '//num2str(x)
+    x_message = newline//'The corresponding X is: '//num2str(x)  ! Printed in one line
 else
     x_message = newline//'The corresponding X is:'//newline//num2str(x)
 end if
 
 if (is_constrained .and. present(constr)) then
     if (size(constr) <= 2) then
-        constr_message = newline//'The constraint value is: '//num2str(constr)
+        constr_message = newline//'The constraint value is: '//num2str(constr)  ! Printed in one line
     else
         constr_message = newline//'The constraint value is:'//newline//num2str(constr)
     end if

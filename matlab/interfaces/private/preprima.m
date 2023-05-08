@@ -1416,6 +1416,12 @@ if isfield(options, 'iprint')
             warnings = [warnings, wmsg];
             validated = true;
         else
+            % In the non-classical mode, we set options.iprint = -options.iprint,
+            % meaning that the output will not be displayed on standard output
+            % but recorded in a text file SOLVER_output.txt, where SOLVER will
+            % be replaced by the solver name. We do not raise a warning since it
+            % is explained in the help information and since the user says quiet!
+            options.iprint = -options.iprint;
             validated = true;
         end
     elseif options.iprint ~= 0 && options.classical
