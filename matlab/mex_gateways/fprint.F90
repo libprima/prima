@@ -14,7 +14,7 @@ module fprint_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 08, 2023 AM01:36:38
+! Last Modified: Monday, May 08, 2023 AM11:42:20
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: INT32_MEX is indeed INT32, i.e., the kind of INTEGER*4. We name it INT32_MEX instead of
@@ -113,14 +113,22 @@ if (DEBUGGING) then
         & 'The file name is empty if and only if the file unit is either STDOUT or STDERR', srname)
 end if
 
-! Open the file if necessary.
+! Print the string.
 if (len(fname_loc) == 0) then
-    k = mexPrintf(string)
-    if (k < 0) then
-        call warning(srname, 'Failed to print the string to the standard output')
+    ! N.B.: We append a trailing new line to the string to be printed. This is because mexPrintf
+    ! does not print a string to the standard output on a new line as of MATLAB R2023a. Ideally, we
+    ! should add a new line to the beginning of the string. However, this may lead to the phenomenon
+    ! that messages printed by other functions are appended to the end of strings by FPRINT. Note
+    ! that all the strings received by FPRINT from MESSAGE have a leading new line.
+    k = mexPrintf(string//new_line(''))
+    if (k /= len(string) + 1) then
+        call warning(srname, 'mexPrintf failed to print a string to the standard output')
         return
     end if
-    k = mexEvalString("drawnow;")  ! Without this, the string printed above may not show immediately.
+    k = mexEvalString('drawnow;')  ! Without this, the string printed above may not show immediately.
+    if (k /= 0) then
+        call warning(srname, 'Failed to call mexEvalString(''drawnow;'')')
+    end if
 else
     ! Decide the position for OPEN. This is the only place where FACTION is used.
     position = 'append'
