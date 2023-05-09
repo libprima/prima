@@ -128,15 +128,11 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 %          the screen but to a file named SOLVER_output.txt; the file will be
 %          created if it does not exist; the new output will be appended to
 %          the end of this file if it already exists.
-%       Note that iprint = +/-3 can be costly in terms of time and/or space.
-%       When quiet = true (see below), setting iprint = 1, 2, or 3 is
-%       the same as setting it to -1, -2, or -3, respectively.
 %       N.B.:
-%       When classical = true, only iprint = 0 is supported;
-%       When fortran = true, only iprint = 0, -1, -2, -3 are supported
-%       (due to I/O confliction between Fortran and MATLAB);
-%       When quiet = true (see below), setting iprint = 1, 2, or 3 is
-%       the same as setting it to -1, -2, or -3, respectively.
+%          iprint = +/-3 can be costly in terms of time and/or space.
+%          When quiet = true (see below), setting iprint = 1, 2, or 3 is
+%          the same as setting it to -1, -2, or -3, respectively.
+%          When classical = true, only iprint = 0 is supported.
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
 %       if this flag is set to false or not set, then it affects nothing;
 %       if it is set to true and iprint = 1, 2, or 3, the effect is the
