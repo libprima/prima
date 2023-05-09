@@ -66,6 +66,13 @@ jobs:
         id: check_matlab
         run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
 
+      - name: Cache MATLAB
+        id: cache-matlab
+        uses: actions/cache@v3.3.1
+        with:
+          path: ${{ runner.tool_cache }}/MATLAB
+          key: ${{ matrix.os }}-${{ matrix.matlab }}-${{ with_optim_toolbox }}
+
       - name: Set up MATLAB with optimization toolbox
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox == 'yes' }}
         uses: matlab-actions/setup-matlab@v2-beta

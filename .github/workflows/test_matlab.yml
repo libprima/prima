@@ -113,10 +113,10 @@ jobs:
               options = struct();
               options.debug=true;
               setup(options);
-              testprima(false, 1.0e-10, 10);
+              testprima(false, 1.0e-10, 100);
               setup
               setup path
-              testprima(false, 1.0e-10, 10);
+              testprima(false, 1.0e-10, 100);
               setup cobyla
               setup uobyqa
               setup newuoa
