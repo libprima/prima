@@ -862,10 +862,10 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'redrat' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'redrho' USEd at (1) is not referenced" \
-	| grep -v "common/linalg.f90:[0-9]*:.*pivot.*may be used uninitialized in this function" \
-	| grep -v "common/linalg.f90:[0-9]*:.*rank.*may be used uninitialized in this function" \
-	| grep -v "common/preproc.f90:22:.*min_maxfun.*may be used uninitialized in this function" \
-	| grep -v "common/preproc.f90:22:.*unit_memo.*may be used uninitialized in this function" \
+	| grep -v "common/linalg.f90:[0-9]*:.*pivot.*may be used uninitialized" \
+	| grep -v "common/linalg.f90:[0-9]*:.*rank.*may be used uninitialized" \
+	| grep -v "common/preproc.f90:22:.*min_maxfun.*may be used uninitialized" \
+	| grep -v "common/preproc.f90:22:.*unit_memo.*may be used uninitialized" \
 	| grep -v "Compiling file\|Module subprogram name" \
 	| grep -v "An allocatable array function '.*' is an extended feature" \
 	| grep -v "An allocatable dummy array\ '.*' is an extended feature" \
@@ -917,24 +917,24 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___powisf2" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvdi3" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvsi3" \
-	| grep -v "‘cos_seed.dim\[0\].ubound’ may be used uninitialized in this function" \
+	| grep -v "‘cos_seed.dim\[0\].ubound’ may be used uninitialized" \
 	| grep -v "Warning: ‘\.min_maxfun_str’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.direction_loc’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.msg’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.reason’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.fname’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.fstat’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.constr_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.cstrv_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.f_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.fname_loc’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.nf_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.position’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.ret_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.rp_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.sformat’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.x_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.constr_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.cstrv_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.f_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.fname_loc’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.nf_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.position’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.ret_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.rp_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.sformat’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.x_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.noise_type_loc’ may be used uninitialized.*\[-Wmaybe-uninitialized\\]" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"

@@ -22,7 +22,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         compiler: [gcc]
         version: [9, 11, 12]  # Too expensive to test all versions
-        ikind: [i2, i8]
+        ikind: [i4, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [small]
         exclude:

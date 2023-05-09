@@ -23,7 +23,7 @@ jobs:
         # As of 202301, ifx is not available on macOS.
         #os: [ubuntu-latest, macos-latest]
         os: [ubuntu-latest]
-        ikind: [i2, i8]
+        ikind: [i4, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]

@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, May 07, 2023 PM10:14:12
+! Last Modified: Tuesday, May 09, 2023 AM09:49:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,7 +133,7 @@ if (test_bigprob) then
         call setseed(rseed)
         m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         call construct(prob, probname, n, m)
-        iprint = 2
+        iprint = 3
         if (int(n) + 500 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else

@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, May 08, 2023 PM05:51:12
+! Last Modified: Tuesday, May 09, 2023 AM09:49:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -137,7 +137,7 @@ if (test_bigprob) then
         m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         call construct(prob, probname, n, m)
         npt = max(n + 2_IK, int(5.0 * rand() * real(n, RP), kind(npt)))
-        iprint = 2
+        iprint = 3
         if (int(npt) + 800 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else
@@ -217,8 +217,7 @@ else
                 if (rand() <= 0.2) then
                     npt = 0
                 end if
-                !iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
-                iprint = 2
+                iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
                 maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
                 if (rand() <= 0.2) then
                     maxfun = 0
