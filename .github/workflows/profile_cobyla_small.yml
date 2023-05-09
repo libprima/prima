@@ -62,7 +62,7 @@ jobs:
         uses: actions/cache@v3.3.1
         with:
           path: ${{ runner.tool_cache }}/MATLAB
-          key: ${{ matrix.os }}-${{ matrix.matlab }}-${{ with_optim_toolbox }}
+          key: ${{ matrix.os }}-${{ matrix.matlab }}-${{ matrix.with_optim_toolbox }}
 
       - name: Set up MATLAB with optimization toolbox
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox == 'yes' }}
