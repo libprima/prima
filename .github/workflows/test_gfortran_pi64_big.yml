@@ -53,13 +53,13 @@ jobs:
             export FS=18
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make gtest
 
-      - name: Store artifacts
-        uses: actions/upload-artifact@v3.1.2
-        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
-        # Note that `$TEST_DIR` does not work on Windows, where its equivalent is `$env:TEST_DIR`.
-        # In the following, we enquire `$TEST_DIR` by using the `env` context, which is platform independent.
-        with:
-          path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
+      # - name: Store artifacts
+      #   uses: actions/upload-artifact@v3.1.2
+      #   if: always()  # Always run even if the workflow is canceled manually or due to overtime.
+      #   # Note that `$TEST_DIR` does not work on Windows, where its equivalent is `$env:TEST_DIR`.
+      #   # In the following, we enquire `$TEST_DIR` by using the `env` context, which is platform independent.
+      #   with:
+      #     path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
         shell: bash  # Important; otherwise, `rm -rf` will not work on Windows.
