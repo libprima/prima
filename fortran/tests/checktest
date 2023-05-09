@@ -24,7 +24,7 @@ WARNINGS="$(grep -i "warning\|Remark\|Questionable\|attention\|F[0-9]*-W\|F[0-9]
     | grep -vi "maybe due to overflow, or the input is not an integer" \
     | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
 
-ERRORS="$(grep -i "error\|fail\|exception\|invalid\|bad\|overflow\|segmentation\|fault\|illegal\|F[0-9]*-S\|F[0-9]*-F\|F[0-9]*-E\|Could\ not\ resolve\|not\ defined\|Cannot connect to licence server (error 113)" "$LOGFILE" \
+ERRORS="$(grep -i "error\|fail\|violation\|exception\|invalid\|bad\|overflow\|segmentation\|fault\|illegal\|F[0-9]*-S\|F[0-9]*-F\|F[0-9]*-E\|Could\ not\ resolve\|not\ defined\|Cannot connect to licence server (error 113)" "$LOGFILE" \
     | grep -vi "default" \
     | grep -vi "[0-9]\s*error" \
     | grep -vi "[0-9a-z]bad\|bad[0-9a-z]" \
@@ -43,6 +43,7 @@ ERRORS="$(grep -i "error\|fail\|exception\|invalid\|bad\|overflow\|segmentation\
     | grep -vi "BAD_TRSTEP" \
     | grep -vi "moderr\|errorid\|errormsg\|errstop" \
     | grep -vi "berr\|erres" \
+    | grep -vi "constraint\ violation" \
     | grep -vi "Warning: TRSTEP: Assertion failed: D is initialized." \
 	| grep -vi "Warning: UOBYQA: Invalid\|Warning: NEWUOA: Invalid\|Warning: BOBYQA: Invalid\|Warning: LINCOA: Invalid\|Warning: COBYLA: Invalid" \
     | grep -vi "maybe due to overflow, or the input is not an integer" \

@@ -20,7 +20,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        #ikind: [i2, i4, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
     steps:

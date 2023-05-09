@@ -21,7 +21,7 @@ jobs:
       matrix:
         # Windows does not work. On Windows, the options for ifort/ifx starts with "/" instead of "-".
         os: [ubuntu-latest, macos-latest]
-        ikind: [i2, i8]
+        ikind: [i4, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]

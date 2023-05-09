@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, May 08, 2023 PM05:51:23
+! Last Modified: Tuesday, May 09, 2023 AM09:49:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,7 +125,7 @@ if (test_bigprob) then
         rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
         call setseed(rseed)
         npt = max(n + 2_IK, int(5.0 * rand() * real(n, RP), kind(npt)))
-        iprint = 2
+        iprint = 3
         if (int(npt) + 800 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else
@@ -184,8 +184,7 @@ else
                 if (rand() <= 0.2) then
                     npt = 0
                 end if
-                !iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
-                iprint = 2
+                iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
                 maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
                 if (rand() <= 0.2) then
                     maxfun = 0
