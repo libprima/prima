@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ikind: [i4, i8]
+        ikind: [i2, i8]
         # For COBYLA, Flang (HUAWEI BiSheng Compiler 2.1.0) raises a false positive SIGSEG in testsuite/prob.f90
         #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         solver: [newuoa, lincoa, bobyqa, uobyqa]
