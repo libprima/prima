@@ -63,7 +63,6 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.matlab }}
 
       - name: Set up MATLAB
-      - name: Set up MATLAB
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
         uses: matlab-actions/setup-matlab@v2-beta
         with:
