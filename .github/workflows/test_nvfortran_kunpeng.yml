@@ -44,11 +44,11 @@ jobs:
           export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make vtest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make vtest
 
-      - name: Store artifacts
-        uses: actions/upload-artifact@v3.1.2
-        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
-        with:
-          path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
+      # - name: Store artifacts
+      #   uses: actions/upload-artifact@v3.1.2
+      #   if: always()  # Always run even if the workflow is canceled manually or due to overtime.
+      #   with:
+      #     path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
         run: rm -rf ${{ env.TEST_DIR }}
