@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ikind: [i4]
+        ikind: [i2]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [small, big]
 

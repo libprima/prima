@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 08, 2023 PM06:30:08
+! Last Modified: Tuesday, May 09, 2023 AM11:42:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -410,13 +410,17 @@ end subroutine alloc_imatrix
 subroutine alloc_character(x, n)
 !--------------------------------------------------------------------------------------------------!
 ! Allocate space for an allocatable character X, whose length is N after allocation.
+! N.B.: Here, we implement only the version with N being the default integer, even if IK = INT16. It
+! is unsafe to use INT16 as the length of a character variable. It may cause overflow in real2str,
+! as a double-precision vector of length ~3500 would be printed as a string longer than 65536.
+! On most modern platforms, the default integer kind is INT32, which is enough for printing
+! double-precision vectors of size ~ 10^8, being sufficient for this project.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : IK
 use, non_intrinsic :: debug_mod, only : validate
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: n
+integer, intent(in) :: n
 
 ! Outputs
 character(len=:), allocatable, intent(out) :: x

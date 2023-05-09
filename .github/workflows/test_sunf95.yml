@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        ikind: [i4, i8]
+        ikind: [i2, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         # As of 20230213, -fast fails often; seems due to stack overflow. How to force sunf95 to use
         # heap only?

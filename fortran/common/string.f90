@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, May 08, 2023 PM09:57:04
+! Last Modified: Tuesday, May 09, 2023 AM11:42:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -259,9 +259,14 @@ else
     nx_loc = max(1, min(floor(real(MAX_WIDTH + len(spaces)) / (real(wx) + len(spaces))), size(x)))
 end if
 
+! Calculate the length of the printed string S.
+! N.B.: Here, SLEN should not be an INT16 integer, because a double-precision vector of length
+! ~3500 would be printed as a string longer than 65536. On most modern platforms, the default
+! integer kind is INT32, which is enough for printing double-precision vectors of size ~ 10^8,
+! being sufficient for this project.
 m = ceiling(real(n) / real(nx_loc))  ! The number of rows
-slen = wx * n + len(spaces) * (n - 1) + (1 - len(spaces)) * (m - 1)  ! The length of the string
-call safealloc(s, int(slen, IK))
+slen = wx * n + len(spaces) * (n - 1) + (1 - len(spaces)) * (m - 1)
+call safealloc(s, slen)
 
 j = 0  ! J is the index of the last up-to-date character in S.
 do i = 1, n
