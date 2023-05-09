@@ -534,10 +534,10 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'redrat' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'redrho' USEd at (1) is not referenced" \
-	| grep -v "common/linalg.f90:[0-9]*:.*pivot.*may be used uninitialized in this function" \
-	| grep -v "common/linalg.f90:[0-9]*:.*rank.*may be used uninitialized in this function" \
-	| grep -v "common/preproc.f90:22:.*min_maxfun.*may be used uninitialized in this function" \
-	| grep -v "common/preproc.f90:22:.*unit_memo.*may be used uninitialized in this function" \
+	| grep -v "common/linalg.f90:[0-9]*:.*pivot.*may be used uninitialized" \
+	| grep -v "common/linalg.f90:[0-9]*:.*rank.*may be used uninitialized" \
+	| grep -v "common/preproc.f90:22:.*min_maxfun.*may be used uninitialized" \
+	| grep -v "common/preproc.f90:22:.*unit_memo.*may be used uninitialized" \
 	| grep -v "W-0173-PGI Fortran extension: nonstandard use of data type length specifier" \
 	| grep -v "[0-9]\s*inform,\s*[0-9]*\s*warnings,\s*[0-9]\s*severes,\s*[0-9]\s*fatal for" \
 	| grep -v "Warning: GNU Extension: Nonstandard type declaration INTEGER\*[1-9].*" \
@@ -567,17 +567,17 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "Warning: ‘\.reason’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.fname’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.fstat’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.constr_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.cstrv_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.f_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.fname_loc’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.nf_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.position’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.ret_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.rp_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.sformat’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.x_message’ may be used uninitialized in this function.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.constr_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.cstrv_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.f_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.fname_loc’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.nf_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.position’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.ret_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.rp_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.sformat’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: ‘\.x_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
     | grep -v "msg\s*=.*fmxIsDoubleVector: An invalid shape type" \
     | grep -v "msg\s*=.*fmxCallMATLAB: MEX fails to call a MATLAB function" \
     | grep -v "wid\s*=.*LargeConversionError" \
