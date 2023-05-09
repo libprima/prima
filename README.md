@@ -381,6 +381,12 @@ it provides a good introduction to Powell's methods.
 In case of problems, [open a GitHub issue](https://github.com/libprima/prima/issues) or [contact
 Zaikun Zhang](https://www.zhangzk.net).
 
+
+### Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=libprima/prima&type=Date)](https://star-history.com/#libprima/prima&Date)
+
+
 <!--### Star history-->
 
 <!--[![Star History Chart](https://api.star-history.com/svg?repos=libprima/prima&type=Date)](https://star-history.com/#libprima/prima&Date)-->
