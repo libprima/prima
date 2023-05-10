@@ -316,7 +316,7 @@ function [x, fx, exitflag, output] = prima_norma(varargin)
 %
 % 2. Warnings that may be raised by prima_norma
 % 2.1. All the  warnings are considered to be public, i.e., they are
-% desigened to be shown to the users.
+% designed to be shown to the users.
 % 2.2. Warnings are displayed without the call stack trace.
 %
 % 3. probinfo
