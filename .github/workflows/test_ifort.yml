@@ -60,6 +60,9 @@ jobs:
           if [[ -f "test_cobyla.f90" ]] ; then
               $SEDI 's|bign = 120|bign = 80|g' test_cobyla.f90
           fi
+          if [[ -f "test_newuoa.f90" ]] ; then
+              $SEDI 's|bign = 400|bign = 380|g' test_newuoa.f90
+          fi
           if [[ -f "test_bobyqa.f90" ]] ; then
               $SEDI 's|bign = 400|bign = 380|g' test_bobyqa.f90
           fi
