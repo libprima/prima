@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, May 03, 2023 AM08:24:29
+! Last Modified: Wednesday, May 10, 2023 PM08:34:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -235,9 +235,7 @@ weight = max(ONE, distsq / max(rho, TENTH * delta)**2)  ! Similar to Powell's NE
 simid = matprod(simi, d)
 score = weight * abs([simid, ONE - sum(simid)])
 
-! If XIMPROVED is FALSE (the new D does not render a "better" X), we set SCORE(N+1) = -1 to avoid
-! JDROP = N+1. This is not really needed if WEIGHT is defined to DISTSQ to some power, in which case
-! SCORE(N+1) = 0. We keep the code for robustness (in case the definition of WEIGHT changes later).
+! If XIMPROVED = FALSE (D does not render a better X), set SCORE(N+1) = -1 to avoid JDROP = N+1.
 if (.not. ximproved) then
     score(n + 1) = -ONE
 end if
