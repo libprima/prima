@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 03, 2023 AM08:07:34
+! Last Modified: Wednesday, May 10, 2023 PM08:38:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -127,6 +127,7 @@ weight = max(ONE, distsq / rho**2)**4
 vlag = calvlag(pl, d, xpt(:, kopt), kopt)
 score = weight * abs(vlag)
 
+! If the new F is not better than FVAL(KOPT), we set SCORE(KOPT) = -1 to avoid KNEW = KOPT.
 if (.not. ximproved) then
     score(kopt) = -ONE
 end if
