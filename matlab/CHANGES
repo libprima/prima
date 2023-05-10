@@ -61,7 +61,11 @@
     consistent with the behavior of fmincon. We raise warnings "INVOKER:X0IsRow", "INVOKER:BineqIsRow",
     or "INVOKER:BeqIsRow" if they are rows.
 
-19. testprima: perturb is changed to eps;
+19. `iprint` is fully implemented. The MATLAB version behaves exactly as the Fortran version
+    regarding iprint, except if `classical` is true, in which case the MATLAB version does not
+    support a nonzero iprint.
+
+20. testprima: perturb is changed to eps;
     the perturbation of x0 is changed to
     ```
         x0 = x0 + perturb*max(norm(x0), 1)*r/norm(r);
@@ -73,5 +77,6 @@
             problem.options.iprint = round(4*(2*rand() - 1));
         end
     ```
+
 
 Check other changes by comparing the matlab interfaces (vimdiff).
