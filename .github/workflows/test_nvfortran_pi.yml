@@ -45,7 +45,7 @@ jobs:
           # 4B. Thus we have to disable the extensive tests, trying only the simple example.
           #cd "$ROOT_DIR"/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make vtest_${{ matrix.ikind }}.${{ matrix.solver }}
           printf "\n\n********************************************************************************"
-          printf "\nExtensive tests are skipped due to the unavailability of `date_and_time() and `random_number`."
+          printf "\nExtensive tests are skipped due to the unavailability of date_and_time() and random_number."
           printf "\nSee the comments in the yml file.\nCheck whether they are available now."
           printf "\n********************************************************************************\n\n"
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make vtest
