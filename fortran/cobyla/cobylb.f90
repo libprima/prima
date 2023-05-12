@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, May 12, 2023 AM08:02:39
+! Last Modified: Friday, May 12, 2023 PM06:50:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -366,7 +366,7 @@ do tr = 1, maxtr
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
-        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        call fmsg(solver, 'Trust region', iprint, nf, delta, f, x, cstrv, constr)
         ! Save X, F, CONSTR, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
         ! Save X, F, CONSTR, CSTRV into the filter.
@@ -546,7 +546,7 @@ do tr = 1, maxtr
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
-        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        call fmsg(solver, 'Geometry', iprint, nf, delta, f, x, cstrv, constr)
         ! Save X, F, CONSTR, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
         ! Save X, F, CONSTR, CSTRV into the filter.
@@ -580,7 +580,7 @@ do tr = 1, maxtr
         delta = max(delta, rho)
         cpen = min(cpen, fcratio(fval, conmat)) ! The 2nd (out of 2) update of CPEN. It may become 0
         ! Print a message about the reduction of RHO according to IPRINT.
-        call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
+        call rhomsg(solver, iprint, nf, delta, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding in UPDATEPOLE.
         if (subinfo == DAMAGING_ROUNDING) then

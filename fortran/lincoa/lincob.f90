@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 15, 2023 PM09:00:15
+! Last Modified: Friday, May 12, 2023 PM06:49:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -385,7 +385,7 @@ do tr = 1, maxtr
         cstrv = maximum([ZERO, constr])
 
         ! Print a message about the function evaluation according to IPRINT.
-        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        call fmsg(solver, 'Trust region', iprint, nf, delta, f, x, cstrv, constr)
         ! Save X, F, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
         ! Save X, F, CSTRV into the filter.
@@ -534,7 +534,7 @@ do tr = 1, maxtr
         cstrv = maximum([ZERO, constr])
 
         ! Print a message about the function evaluation according to IPRINT.
-        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        call fmsg(solver, 'Geometry', iprint, nf, delbar, f, x, cstrv, constr)
         ! Save X, F, CSTRV into the history.
         call savehist(nf, x, xhist, f, fhist, cstrv, chist)
         ! Save X, F, CSTRV into the filter.
@@ -589,7 +589,7 @@ do tr = 1, maxtr
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
-        call rhomsg(solver, iprint, nf, fval(kopt), rho, xbase + xpt(:, kopt), cstrv, constr)
+        call rhomsg(solver, iprint, nf, delta, fval(kopt), rho, xbase + xpt(:, kopt), cstrv, constr)
         ! DNORMSAV is corresponding to the latest function evaluations with the current RHO.
         ! Update it after reducing RHO.
         dnormsav = REALMAX
@@ -616,7 +616,8 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     constr = matprod(x, A_orig) - b_orig
     cstrv = maximum([ZERO, constr])
     ! Print a message about the function evaluation according to IPRINT.
-    call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+    ! Zaikun 20230512: DELTA has been updated. RHO only indicative here. TO BE IMPROVED.
+    call fmsg(solver, 'Trust region', iprint, nf, rho, f, x, cstrv, constr)
     ! Save X, F, CSTRV into the history.
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
     ! Save X, F, CSTRV into the filter.

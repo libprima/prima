@@ -12,7 +12,7 @@ module message_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 08, 2023 PM08:15:50
+! Last Modified: Friday, May 12, 2023 PM11:43:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,8 +53,6 @@ real(RP), intent(in), optional :: constr(:)
 character(len=*), parameter :: newline = new_line('')
 character(len=*), parameter :: srname = 'RETMSG'
 character(len=:), allocatable :: constr_message
-character(len=:), allocatable :: cstrv_message
-character(len=:), allocatable :: f_message
 character(len=:), allocatable :: fname
 character(len=:), allocatable :: message
 character(len=:), allocatable :: nf_message
@@ -132,10 +130,6 @@ case default
 end select
 ret_message = newline//'Return from '//solver//' because '//strip(reason)
 
-nf_message = newline//'At the return from '//solver//spaces//'Number of function evaluations = '//num2str(nf)
-
-f_message = newline//'Least function value = '//num2str(f)
-
 if (size(x) <= 2) then
     x_message = newline//'The corresponding X is: '//num2str(x)  ! Printed in one line
 else
@@ -143,9 +137,10 @@ else
 end if
 
 if (is_constrained) then
-    cstrv_message = newline//'Constraint violation = '//num2str(cstrv_loc)
+    nf_message = newline//'Number of function values = '//num2str(nf)//spaces// &
+        & 'Least value of F = '//num2str(f)//spaces//'Constraint violation = '//num2str(cstrv_loc)
 else
-    cstrv_message = ''
+    nf_message = newline//'Number of function values = '//num2str(nf)//spaces//'Least value of F = '//num2str(f)
 end if
 
 if (is_constrained .and. present(constr)) then
@@ -160,9 +155,9 @@ end if
 
 ! Print the message.
 if (abs(iprint) >= 2) then
-    message = newline//ret_message//nf_message//f_message//cstrv_message//x_message//constr_message//newline
+    message = newline//ret_message//nf_message//x_message//constr_message//newline
 else
-    message = ret_message//nf_message//f_message//cstrv_message//x_message//constr_message//newline
+    message = ret_message//nf_message//x_message//constr_message//newline
 end if
 call fprint(message, funit, fname, 'append')
 
@@ -172,7 +167,7 @@ call fprint(message, funit, fname, 'append')
 end subroutine retmsg
 
 
-subroutine rhomsg(solver, iprint, nf, f, rho, x, cstrv, constr, cpen)
+subroutine rhomsg(solver, iprint, nf, delta, f, rho, x, cstrv, constr, cpen)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints messages when RHO is updated.
 !--------------------------------------------------------------------------------------------------!
@@ -185,6 +180,7 @@ implicit none
 character(len=*), intent(in) :: solver
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: nf
+real(RP), intent(in) :: delta
 real(RP), intent(in) :: f
 real(RP), intent(in) :: rho
 real(RP), intent(in) :: x(:)
@@ -197,11 +193,10 @@ real(RP), intent(in), optional :: cpen
 ! Local variables
 character(len=*), parameter :: newline = new_line('')
 character(len=:), allocatable :: constr_message
-character(len=:), allocatable :: cstrv_message
-character(len=:), allocatable :: f_message
 character(len=:), allocatable :: fname
 character(len=:), allocatable :: message
-character(len=:), allocatable :: rp_message
+character(len=:), allocatable :: nf_message
+character(len=:), allocatable :: rho_message
 character(len=:), allocatable :: x_message
 integer :: funit ! Logical unit for the writing. Should be an integer of default kind.
 logical :: is_constrained
@@ -238,13 +233,11 @@ else
 end if
 
 if (present(cpen)) then
-    rp_message = newline//'New RHO = '//num2str(rho)//spaces//'CPEN = '//num2str(cpen)// &
-        & spaces//'Number of function evaluations = '//num2str(nf)
+    rho_message = newline//'New RHO = '//num2str(rho)//spaces//'Delta = '//num2str(delta)//spaces// &
+        & 'CPEN = '//num2str(cpen)
 else
-    rp_message = newline//'New RHO = '//num2str(rho)//spaces//'Number of function evaluations = '//num2str(nf)
+    rho_message = newline//'New RHO = '//num2str(rho)//spaces//'Delta = '//num2str(delta)
 end if
-
-f_message = newline//'Least function value = '//num2str(f)
 
 if (size(x) <= 2) then
     x_message = newline//'The corresponding X is: '//num2str(x)  ! Printed in one line
@@ -253,9 +246,10 @@ else
 end if
 
 if (is_constrained) then
-    cstrv_message = newline//'Constraint violation = '//num2str(cstrv_loc)
+    nf_message = newline//'Number of function values = '//num2str(nf)//spaces// &
+        & 'Least value of F = '//num2str(f)//spaces//'Constraint violation = '//num2str(cstrv_loc)
 else
-    cstrv_message = ''
+    nf_message = newline//'Number of function values = '//num2str(nf)//spaces//'Least value of F = '//num2str(f)
 end if
 
 if (is_constrained .and. present(constr)) then
@@ -270,9 +264,9 @@ end if
 
 ! Print the message.
 if (abs(iprint) >= 3) then
-    message = newline//rp_message//f_message//cstrv_message//x_message//constr_message
+    message = newline//rho_message//nf_message//x_message//constr_message
 else
-    message = rp_message//f_message//cstrv_message//x_message//constr_message
+    message = rho_message//nf_message//x_message//constr_message
 end if
 
 call fprint(message, funit, fname, 'append')
@@ -333,9 +327,9 @@ call fprint(message, funit, fname, 'append')
 end subroutine cpenmsg
 
 
-subroutine fmsg(solver, iprint, nf, f, x, cstrv, constr)
+subroutine fmsg(solver, state, iprint, nf, delta, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints messages at each iteration.
+! This subroutine prints messages for each evaluation of the objective function.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
 use, non_intrinsic :: fprint_mod, only : fprint
@@ -344,8 +338,12 @@ implicit none
 
 ! Compulsory inputs
 character(len=*), intent(in) :: solver
+! `state` is a string indicating the solver's state when the function evaluation is invoked. Its
+! value can be 'Initialization', 'Trust region', 'Geometry', or 'Rescue'.
+character(len=*), intent(in) :: state
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: nf
+real(RP), intent(in) :: delta
 real(RP), intent(in) :: f
 real(RP), intent(in) :: x(:)
 
@@ -356,9 +354,10 @@ real(RP), intent(in), optional :: constr(:)
 ! Local variables
 character(len=*), parameter :: newline = new_line('')
 character(len=:), allocatable :: constr_message
-character(len=:), allocatable :: f_message
+character(len=:), allocatable :: delta_message
 character(len=:), allocatable :: fname
 character(len=:), allocatable :: message
+character(len=:), allocatable :: nf_message
 character(len=:), allocatable :: x_message
 integer :: funit ! Logical unit for the writing. Should be an integer of default kind.
 logical :: is_constrained
@@ -394,11 +393,13 @@ else
     cstrv_loc = ZERO
 end if
 
+delta_message = newline//state//' step with radius = '//num2str(delta)
+
 if (is_constrained) then
-    f_message = newline//'Function number '//num2str(nf)//spaces//'Function value = '//num2str(f)// &
+    nf_message = newline//'Function number '//num2str(nf)//spaces//'F = '//num2str(f)// &
         & spaces//'Constraint violation = '//num2str(cstrv_loc)
 else
-    f_message = newline//'Function number '//num2str(nf)//spaces//'Function value = '//num2str(f)
+    nf_message = newline//'Function number '//num2str(nf)//spaces//'F = '//num2str(f)
 end if
 
 if (size(x) <= 2) then
@@ -418,7 +419,7 @@ else
 end if
 
 ! Print the message.
-message = f_message//x_message//constr_message
+message = delta_message//nf_message//x_message//constr_message
 call fprint(message, funit, fname, 'append')
 
 !====================!

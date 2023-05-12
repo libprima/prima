@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Wednesday, November 30, 2022 AM12:41:21
+! Last Modified: Friday, May 12, 2023 PM06:51:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,7 +131,7 @@ do k = 1, 2_IK * n + 1_IK
     call evaluate(calfun, x, f)
 
     ! Print a message about the function evaluation according to IPRINT.
-    call fmsg(solver, iprint, k, f, x)
+    call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x)
     ! Save X and F into the history.
     call savehist(k, x, xhist, f, fhist)
 
@@ -180,7 +180,7 @@ if (info == INFO_DFT) then
         call evaluate(calfun, x, f)
 
         ! Print a message about the function evaluation according to IPRINT.
-        call fmsg(solver, iprint, k, f, x)
+        call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x)
         ! Save X and F into the history.
         call savehist(k, x, xhist, f, fhist)
 

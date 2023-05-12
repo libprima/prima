@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, April 11, 2023 AM11:11:14
+! Last Modified: Friday, May 12, 2023 PM06:53:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -165,7 +165,7 @@ do k = 1, n + 1_IK
     end if
 
     ! Print a message about the function/constraint evaluation according to IPRINT.
-    call fmsg(solver, iprint, k, f, x, cstrv, constr)
+    call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x, cstrv, constr)
     ! Save X, F, CONSTR, CSTRV into the history.
     call savehist(k, x, xhist, f, fhist, cstrv, chist, constr, conhist)
 
