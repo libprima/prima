@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, April 03, 2023 PM04:32:32
+! Last Modified: Friday, May 12, 2023 PM06:53:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -198,7 +198,7 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     call evaluate(calfun, x, f)
 
     ! Print a message about the function evaluation according to IPRINT.
-    call fmsg(solver, iprint, k, f, x)
+    call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x)
     ! Save X, F into the history.
     call savehist(k, x, xhist, f, fhist)
 
@@ -251,7 +251,7 @@ if (info == INFO_DFT) then
         call evaluate(calfun, x, f)
 
         ! Print a message about the function evaluation according to IPRINT.
-        call fmsg(solver, iprint, k, f, x)
+        call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x)
         ! Save X, F into the history.
         call savehist(k, x, xhist, f, fhist)
 

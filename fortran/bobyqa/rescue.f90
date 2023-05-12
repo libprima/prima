@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, March 22, 2023 AM12:55:18
+! Last Modified: Friday, May 12, 2023 PM06:47:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -477,7 +477,7 @@ if (nprov > 0) then
         nf = nf + 1_IK
 
         ! Print a message about the function evaluation according to IPRINT.
-        call fmsg(solver, iprint, nf, f, x)
+        call fmsg(solver, 'Rescue', iprint, nf, delta, f, x)
         ! Save X, F into the history.
         call savehist(nf, x, xhist, f, fhist)
 

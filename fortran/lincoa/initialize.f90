@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 12, 2023 AM08:03:28
+! Last Modified: Friday, May 12, 2023 PM06:53:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -208,7 +208,7 @@ do k = 1, npt
     cstrv = maximum([ZERO, constr])
 
     ! Print a message about the function evaluation according to IPRINT.
-    call fmsg(solver, iprint, k, f, x, cstrv, constr)
+    call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x, cstrv, constr)
     ! Save X, F, CSTRV into the history.
     call savehist(k, x, xhist, f, fhist, cstrv, chist)
 

@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 15, 2023 PM05:10:29
+! Last Modified: Friday, May 12, 2023 PM06:49:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -308,7 +308,7 @@ do tr = 1, maxtr
         nf = nf + 1_IK
 
         ! Print a message about the function evaluation according to IPRINT.
-        call fmsg(solver, iprint, nf, f, x)
+        call fmsg(solver, 'Trust region', iprint, nf, delta, f, x)
         ! Save X, F into the history.
         call savehist(nf, x, xhist, f, fhist)
 
@@ -492,7 +492,7 @@ do tr = 1, maxtr
             nf = nf + 1_IK
 
             ! Print a message about the function evaluation according to IPRINT.
-            call fmsg(solver, iprint, nf, f, x)
+            call fmsg(solver, 'Geometry', iprint, nf, delbar, f, x)
             ! Save X, F into the history.
             call savehist(nf, x, xhist, f, fhist)
 
@@ -537,7 +537,7 @@ do tr = 1, maxtr
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
-        call rhomsg(solver, iprint, nf, fval(kopt), rho, xbase + xpt(:, kopt))
+        call rhomsg(solver, iprint, nf, delta, fval(kopt), rho, xbase + xpt(:, kopt))
         ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
         ! the current RHO. Update them after reducing RHO.
         dnormsav = REALMAX
@@ -565,7 +565,8 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
-    call fmsg(solver, iprint, nf, f, x)
+    ! Zaikun 20230512: DELTA has been updated. RHO only indicative here. TO BE IMPROVED.
+    call fmsg(solver, 'Trust region', iprint, nf, rho, f, x)
     ! Save X, F into the history.
     call savehist(nf, x, xhist, f, fhist)
 end if
