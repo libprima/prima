@@ -46,3 +46,10 @@ predicted reduction by the model for the step that leads to the corresponding fu
 ghist: an array of size N-by-NF, each column being the model gradient at the trust region center
 when the corresponding function evaluation is invoked
 jachist (only for COBYLA): similar to ghist, but for the Jacobian matrix of the nonlinear constraints.
+N.B.: Similar to fhist, we always output statehist, radhist, and rathist, since they are 1D arrays.
+In addition, we may use statehist and radhist to improve fmsg, invoking it uniformly by
+```
+    call fmsg(solver, statehist(nf), iprint, nf, radhist(nf), f, x, [optional inputs])
+```
+To this end, we will need to modify fmsg so that it can translate the state index (0, 1, 2, 3) to
+the state name as mentioned above.
