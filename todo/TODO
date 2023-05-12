@@ -34,6 +34,15 @@ Set IMPROVE_GEO and REDUCE_RHO to .FALSE. if TO_RESCUE is .TRUE. After a geometr
 TO_RESCUE to .TRUE. if the denominator is bad, but perform the update as normal. If TO_RESCUE is
 .TRUE., invoke RESCUE, which can be regarded as a post-processing.
 
-12. Implement IPRINT for MATLAB, essentially writing a MEX version of output.f90.
-
-13. Change the macros in ppf.h to PRIMA_*.
+12. Output more history information in the way of outputting fhist, xhist, etc. This can include:
+statehist: an array of length NF, each element indicating the state of the solver when the
+corresponding function evaluation is invoked: 0 for initialization, 1 for trust region step, 2 for
+geometry step, 3 for rescue.
+radhist: an array of length NF, each element being the radius used by the solver for producing the X
+where the corresponding function evaluation is invoked. Note that trust region step and geometry
+step have different radii.
+rathist: an array of length NF, each element being the ratio of the actual reduction to the
+predicted reduction by the model for the step that leads to the corresponding function evaluation
+ghist: an array of size N-by-NF, each column being the model gradient at the trust region center
+when the corresponding function evaluation is invoked
+jachist (only for COBYLA): similar to ghist, but for the Jacobian matrix of the nonlinear constraints.
