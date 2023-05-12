@@ -23,7 +23,7 @@
 9. Test whether the scaling threshold in the trust-region subproblem solvers can be improved.
 
 10. For NEWUOA, BOBYQA, LINCOA, implement the trust-redundant subroutine solvers using hmul.
-Update 202303: This is not doable (cleanly) because we scale the data before starting the TR
+Update 20230301: This is not doable (cleanly) because we scale the data before starting the TR
 calculation.
 
 11. What about invoking RESCUE in the following way?

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, May 10, 2023 PM08:34:26
+! Last Modified: Friday, May 12, 2023 AM08:03:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -344,7 +344,7 @@ else
     jdrop = 0
 end if
 
-! Zaikun 230202: What if we consider VETA and VSIG together? The following attempts do not work well.
+! Zaikun 20230202: What if we consider VETA and VSIG together? The following attempts do not work well.
 !jdrop = maxval(sum(sim(:, 1:n)**2, dim=1) * sum(simi**2, dim=2)) ! Condition number
 !jdrop = maxval(sum(sim(:, 1:n)**2, dim=1)**2 * sum(simi**2, dim=2)) ! Condition number times distance
 

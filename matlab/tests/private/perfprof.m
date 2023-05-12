@@ -191,7 +191,7 @@ output.cut_ratio = cut_ratio;  % Needed if we re-plot the profiles by loading th
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 axis([0 cut_ratio 0 1]);
-% Zaikun 230406: It seems that the following setting does not take effects.
+% Zaikun 20230406: It seems that the following setting does not take effects.
 yticks(0 : 0.1 : 1);
 yticklabels({'0', '', '0.2', '', '0.4', '', '0.6', '', '0.8', '', '1'});
 grid on;

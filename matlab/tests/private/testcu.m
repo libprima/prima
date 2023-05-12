@@ -836,7 +836,7 @@ blacklist = [blacklist, {'HS67'}];
 
 switch(lower(solver))
 case 'uobyqa'
-    % With the following blacklist, there is no unconstrained problem in CUTEst (as of 230130) with
+    % With the following blacklist, there is no unconstrained problem in CUTEst (as of 20230130) with
     % dimension between 51 and 100.
     blacklist = [blacklist, { ...
         'ARGTRIGLS', ...
@@ -913,7 +913,7 @@ case 'cobyla'
     % test but become more challenging with some perturbations or variations. The excessive time may
     % be also a result of infinite cycling encountered by the classical version of cobyla.
     % The number following the problem is the time in seconds taken by cobyla in a "plain" test on
-    % 230130, which tested all linearly and nonlinearly constrained problems with at most 100
+    % 20230130, which tested all linearly and nonlinearly constrained problems with at most 100
     % variables and 10000 constraints. Bound-constrained or unconstrained problems were not tested.
     blacklist = [blacklist, { ...
         'ACOPP30' , ...
@@ -930,7 +930,7 @@ case 'cobyla'
         'CVXQP1', ...       % 54
         'DALLASS', ...      % 3 (it takes a long time on GitHub Actions)
         'DECONVBNE', ...
-        'DECONVC', ...      % In a test on 230328, the classical cobyla encountered infinite cycling.
+        'DECONVC', ...      % In a test on 20230328, the classical cobyla encountered infinite cycling.
         'DECONVNE', ...
         'DIAMON2D', ...     % 1415
         'DIAMON3D', ...     % 3703
