@@ -82,7 +82,7 @@ try  % We use `try ... catch ...` in order to restore `allprec_file` in case of 
     fprintf(fid, ' returns a cell array containing the names of all the precisions available for the\n');
     fprintf(fid, '%% Fortran solvers in this package.\n');
     fprintf(fid, '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n');
-    fprintf(fid, '%% This file is created automatically by \n%% %s.m at %s.\n', mfilename, datestr(datetime(), 'yymmdd.HH:MM:SS'));
+    fprintf(fid, '%% This file is created automatically by \n%% %s.m at %s.\n', mfilename, datestr(datetime(), 'yyyymmdd.HH:MM:SS'));
     fprintf(fid, '%% NEVER EDIT IT, OR THE EARTH WILL EXPLODE.\n');
     fprintf(fid, '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n');
     fprintf(fid, '%s', precision_list_string);

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 12, 2023 PM10:29:56
+! Last Modified: Friday, May 12, 2023 AM08:03:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -187,7 +187,7 @@ do k = 1, npt
     end if
     ! Powell's implementation contains the following procedure that shifts every infeasible point if
     ! necessary so that its constraint violation is at least 0.2*RHOBEG. According to a test on
-    ! 230209, it does not evidently improve the performance of LINCOA. Indeed, it worsens a bit the
+    ! 20230209, it does not evidently improve the performance of LINCOA. Indeed, it worsens a bit the
     ! performance in the early stage. Thus we decided to remove it.
     !----------------------------------------------------------------------------------------------!
     !mincv = 0.2_RP * rhobeg

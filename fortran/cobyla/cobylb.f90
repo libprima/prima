@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, April 15, 2023 PM05:05:57
+! Last Modified: Friday, May 12, 2023 AM08:02:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -407,7 +407,7 @@ do tr = 1, maxtr
         ! ADEQUATE_GEO == TRUE as a prerequisite for reducing DELTA? The argument would be that the
         ! bad (small) value of RATIO may be because of a bad geometry (and hence a bad model) rather
         ! than an improperly large DELTA, and it might be good to try improving the geometry first
-        ! without reducing DELTA. However, according to a test on 230206, it does not improve the
+        ! without reducing DELTA. However, according to a test on 20230206, it does not improve the
         ! performance if we skip the update of DELTA when ADEQUATE_GEO is FALSE and RATIO < 0.1.
         ! Therefore, we choose to update DELTA without checking ADEQUATE_GEO.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
