@@ -1968,3 +1968,8 @@ FSAN
 MESSAGEF
 NVDIR
 NVBIN
+ghist
+jachist
+radhist
+rathist
+statehist
