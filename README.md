@@ -25,7 +25,7 @@
 ### What
 
 PRIMA is a package for **solving general nonlinear optimization problems without using derivatives**.
-It provides the reference implementation of Powell's derivative-free optimization methods, i.e., COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
+It provides the reference implementation of Powell's renowned derivative-free optimization methods, i.e., COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 The "P" in the name stands for [**P**owell](https://www.zhangzk.net/powell.html),
 and "RIMA" is an acronym for "**R**eference **I**mplementation with **M**odernization and **A**melioration".
 
@@ -51,8 +51,8 @@ see Section 1 of [a recent paper on Powell's solvers](https://arxiv.org/pdf/2302
 as well as the Google searches of [COBYLA](https://www.google.com/search?q=cobyla)
 and [BOBYQA](https://www.google.com/search?q=bobyqa).
 
-However, Professor Powell's implementation was done in [Fortran 77](./fortran/original)
-and the code is nontrivial to understand or maintain, let alone extend.
+However, Professor Powell's implementation was done in [Fortran 77](./fortran/original).
+The code is nontrivial to understand or maintain, let alone extend.
 For many practitioners, this has become an obstacle to exploiting these solvers in their
 applications. Even worse, it has hindered researchers from exploring the wealth left by Professor
 Powell to us. By all means, it is
@@ -200,7 +200,7 @@ PRIMA has been finished by December 2022.**
 #### Python
 
 - The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
-- Our ultimate objective is to have a native Python implementation of PRIMA **independent of Fortran**, similar to what we have done with NEWUOA in MATLAB as [mentioned above](#newuoa_mat).
+- My ultimate objective is to have a native Python implementation of PRIMA **independent of Fortran**, similar to what we have done with NEWUOA in MATLAB as [mentioned above](#newuoa_mat).
 
 #### Other languages
 
