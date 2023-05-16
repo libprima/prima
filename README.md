@@ -363,8 +363,8 @@ arXiv:2302.13246, 2023
 linear inequality constraints without using derivatives of the objective
 function. Powell did not publish a paper to introduce the algorithm.
 
-- The paper [5] introduces [the PDFO package](https://www.pdfo.net) rather than PRIMA. Nevertheless,
-it provides a good introduction to Powell's methods.
+- [The paper [5]](https://arxiv.org/pdf/2302.13246.pdf) introduces [the PDFO package](https://www.pdfo.net)
+rather than PRIMA. Nevertheless, it provides a good introduction to Powell's methods.
 
 
 ### Mirrors
