@@ -1973,3 +1973,4 @@ jachist
 radhist
 rathist
 statehist
+Hanzomon
