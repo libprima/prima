@@ -12,7 +12,7 @@ module fprint_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 08, 2023 PM06:15:46
+! Last Modified: Wednesday, May 17, 2023 PM06:04:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,7 +41,10 @@ character(len=:), allocatable :: fname_loc
 character(len=:), allocatable :: fstat
 character(len=:), allocatable :: position
 integer :: funit_loc
+integer :: i
 integer :: iostat
+integer :: j
+integer :: slen
 logical :: fexist
 
 ! Preconditions
@@ -117,7 +120,22 @@ if (len(fname_loc) > 0) then
 end if
 
 ! Print the string.
-write (funit_loc, '(1A)') string
+! `WRITE (FUNIT_LOC, '(A)') STRING` would do what we want, but it causes "Buffer overflow on output"
+! if string is long.This did occur with NAG Fortran Compiler R7.1(Hanzomon) Build 7122. To avoid
+! this problem, we print the string line by line, separated by NEW_LINE('').
+i = 1
+slen = len(string)
+do while (.true.)
+    j = index(string(i:slen), new_line(''))
+    if (j == 0) then  ! No more NEW_LINE('') in the string.
+        exit
+    end if
+    write (funit_loc, '(A)') string(i:i + j - 2)
+    i = i + j
+end do
+if (string(i:slen) /= '') then
+    write (funit_loc, '(A)') string(i:slen)
+end if
 
 ! Close the file if necessary.
 if (len(fname_loc) > 0 .and. iostat == 0) then
