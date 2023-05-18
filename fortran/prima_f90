@@ -1,5 +1,8 @@
 !--------------------------------------------------------------------------------------------------!
 ! PRIMA: Reference Implementation for Powell's methods with Modernization and Amelioration
+! N.B.:
+! 1. This file is not ready for any use before it is re-named to "prima.f90".
+  2. The current version of the package does not need this file.
 !--------------------------------------------------------------------------------------------------!
 
 module prima
@@ -40,9 +43,9 @@ use, non_intrinsic :: uobyqa_mod, only : uobyqa
 use, non_intrinsic :: newuoa_mod, only : newuoa
 use, non_intrinsic :: bobyqa_mod, only : bobyqa
 use, non_intrinsic :: lincoa_mod, only : lincoa
-use, non_intrinsic :: consts_mod, only : RP, IK
-use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, FTARGET_ACHIEVED, MAXFUN_REACHED,&
-    & MAXTR_REACHED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING, &
+use, non_intrinsic :: consts_mod, only : PRIMA_RP => RP, PRIMA_IK => IK
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, FTARGET_ACHIEVED, TRSUBP_FAILED,&
+    & MAXFUN_REACHED, MAXTR_REACHED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING, &
     & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT
 
 implicit none
@@ -50,7 +53,7 @@ implicit none
 private
 
 public :: cobyla, uobyqa, newuoa, bobyqa, lincoa
-public :: RP, IK
+public :: PRIMA_RP, PRIMA_IK
 public :: INFO_DFT, SMALL_TR_RADIUS, FTARGET_ACHIEVED, TRSUBP_FAILED, MAXFUN_REACHED, MAXTR_REACHED,&
     & NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING, NO_SPACE_BETWEEN_BOUNDS, &
     & ZERO_LINEAR_CONSTRAINT
