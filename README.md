@@ -305,10 +305,18 @@ for more information.
 
 [Michael James David Powell FRS](https://en.wikipedia.org/wiki/Michael_J._D._Powell) was
 ["a British numerical analyst who was among the pioneers of computational mathematics"](https://royalsocietypublishing.org/doi/full/10.1098/rsbm.2017.0023).
-He was the inventor/early contributor of quasi-Newton method, trust region method, augmented
-Lagrangian method, and SQP method. Each of them is a pillar of modern numerical optimization.
-He also made significant contributions
+He was the inventor/early contributor of
+[quasi-Newton method](https://en.wikipedia.org/wiki/Quasi-Newton_method),
+[trust region method](https://en.wikipedia.org/wiki/Trust_region),
+[augmented Lagrangian method](https://en.wikipedia.org/wiki/Augmented_Lagrangian_method),
+and [SQP method](https://en.wikipedia.org/wiki/Sequential_quadratic_programming).
+Each of them is a pillar of modern numerical optimization. He also made significant contributions
 to [approximation theory and methods](https://www.cambridge.org/highereducation/books/approximation-theory-and-methods/66FD8CD6F18FE1ED499A8CA9A05F2A5A#overview).
+
+Among numerous honors, Powell was one of the first two recipients of the
+[Dantzig Prize](https://en.wikipedia.org/wiki/Dantzig_Prize)
+from the Mathematical Programming Society (MOS) and Society for Industrial and Applied Mathematics (SIAM).
+This is considered the highest award in optimization.
 
 
 ### A "fun" fact
