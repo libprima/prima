@@ -14,7 +14,7 @@ module fprint_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 18, 2023 AM11:13:14
+! Last Modified: Thursday, May 18, 2023 PM12:16:14
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: INT32_MEX is indeed INT32, i.e., the kind of INTEGER*4. We name it INT32_MEX instead of
@@ -134,6 +134,7 @@ if (len(fname_loc) == 0) then
     ! that all the strings received by FPRINT from MESSAGE have a leading newline.
     i = 1
     j = index(string, newline)  ! Index of the first newline in the string.
+    k = 0  ! Number of characters printed.
     slen = len(string)
     do while (j >= i)  ! J < I: No more newline in the string.
         k = k + mexPrintf(string(i:j))  ! Print the string up to the current newline.
