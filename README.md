@@ -68,8 +68,8 @@ Few people remember [who translated *Elements*](https://en.wikipedia.org/wiki/Eu
 but it is a job that must be done.
 
 PRIMA aims to provide the reference implementation of Powell's methods in modern languages,
-including [**modern** Fortran](https://fortran-lang.org) (F2008 or newer), MATLAB, Python, C++, and
-probably Julia and R. It will be a faithful implementation, in the sense that the code will be
+including [**modern** Fortran](https://fortran-lang.org) (F2008 or newer), MATLAB, Python, C++,
+Julia, and R. It will be a faithful implementation, in the sense that the code will be
 mathematically equivalent to Powell’s, except for the
 [bug fixes](#bug-fixes) and [improvements](#improvements) made intentionally.
 
