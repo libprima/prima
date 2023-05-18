@@ -14,7 +14,7 @@ module fprint_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 18, 2023 AM10:52:42
+! Last Modified: Thursday, May 18, 2023 AM11:13:14
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: INT32_MEX is indeed INT32, i.e., the kind of INTEGER*4. We name it INT32_MEX instead of
@@ -143,7 +143,6 @@ if (len(fname_loc) == 0) then
     k = k + mexPrintf(string(i:slen)//newline)
     if (k /= slen + 1) then
         call warning(srname, 'mexPrintf failed to print a string to the standard output')
-        return
     end if
 
     if (mexEvalString('drawnow;') /= 0) then  ! Ensure the printed string is displayed immediately.
