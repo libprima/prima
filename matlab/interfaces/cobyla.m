@@ -515,7 +515,7 @@ function [constr, m_nlcineq, m_nlceq] = cobyla_con(x, Aineq, bineq, Aeq, beq, lb
 cineq = [lb(lb>-inf) - x(lb>-inf); x(ub<inf) - ub(ub<inf)];
 ceq = [];
 if ~isempty(Aineq)
-    cineq = [Aineq*x - bineq; cineq];
+    cineq = [cineq; Aineq*x - bineq];
 end
 if ~isempty(Aeq)
     ceq = [ceq; Aeq*x - beq];
