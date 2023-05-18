@@ -14,7 +14,7 @@ module fprint_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 17, 2023 PM07:25:24
+! Last Modified: Thursday, May 18, 2023 AM10:52:42
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: INT32_MEX is indeed INT32, i.e., the kind of INTEGER*4. We name it INT32_MEX instead of
@@ -61,6 +61,7 @@ character(len=*), intent(in), optional :: fname
 character(len=*), intent(in), optional :: faction
 
 ! Local variables
+character(len=*), parameter :: newline = new_line('')
 character(len=*), parameter :: srname = 'FPRINT'
 character(len=:), allocatable :: fname_loc
 character(len=:), allocatable :: fstat
@@ -120,19 +121,32 @@ if (DEBUGGING) then
 end if
 
 ! Print the string.
+! N.B.: `mexPrintf(string//newline)` or `WRITE (FUNIT_LOC, '(A)') STRING` would do what we want,
+! but it causes "Buffer overflow on output" if string is long. This did occur with NAG Fortran
+! Compiler R7.1(Hanzomon) Build 7122.To avoid this problem, we print the string line by line,
+! separated by newlines.
 if (len(fname_loc) == 0) then
-    ! N.B.: We append a trailing new line to the string to be printed. This is because mexPrintf
+    ! Print the string to the standard output using mexPrintf.
+    ! N.B.: We append a trailing newline to the string to be printed. This is because mexPrintf
     ! does not print strings to the standard output on new lines as of MATLAB R2023a. Ideally, we
-    ! should add a new line to the beginning of the string. However, this may lead to the phenomenon
+    ! should add a newline to the beginning of the string. However, this may lead to the phenomenon
     ! that messages printed by other functions are appended to the end of strings by FPRINT. Note
-    ! that all the strings received by FPRINT from MESSAGE have a leading new line.
-    k = mexPrintf(string//new_line(''))
-    if (k /= len(string) + 1) then
+    ! that all the strings received by FPRINT from MESSAGE have a leading newline.
+    i = 1
+    j = index(string, newline)  ! Index of the first newline in the string.
+    slen = len(string)
+    do while (j >= i)  ! J < I: No more newline in the string.
+        k = k + mexPrintf(string(i:j))  ! Print the string up to the current newline.
+        i = j + 1  ! Index of the character after the current newline.
+        j = i + index(string(i:slen), newline) - 1  ! Index of the next newline.
+    end do
+    k = k + mexPrintf(string(i:slen)//newline)
+    if (k /= slen + 1) then
         call warning(srname, 'mexPrintf failed to print a string to the standard output')
         return
     end if
-    k = mexEvalString('drawnow;')  ! Without this, the string printed above may not show immediately.
-    if (k /= 0) then
+
+    if (mexEvalString('drawnow;') /= 0) then  ! Ensure the printed string is displayed immediately.
         call warning(srname, 'Failed to call mexEvalString(''drawnow;'')')
     end if
 else
@@ -158,17 +172,14 @@ else
         return
     end if
 
-    ! Print the string.
-    ! `WRITE (FUNIT_LOC, '(A)') STRING` would do what we want, but it causes "Buffer overflow on
-    ! output" if string is long.This did occur with NAG Fortran Compiler R7.1(Hanzomon) Build 7122.
-    ! To avoid this problem, we print the string line by line, separated by newlines.
+    ! Print the string to a file using WRITE.
     i = 1
-    j = index(string, new_line(''))  ! Index of the first newline in the string.
+    j = index(string, newline)  ! Index of the first newline in the string.
     slen = len(string)
     do while (j >= i)  ! J < I: No more newline in the string.
         write (funit_loc, '(A)') string(i:j - 1)  ! Print the string before the current newline.
         i = j + 1  ! Index of the character after the current newline.
-        j = i + index(string(i:slen), new_line('')) - 1  ! Index of the next newline.
+        j = i + index(string(i:slen), newline) - 1  ! Index of the next newline.
     end do
     if (string(i:slen) /= '') then  ! Print the string after the last newline.
         write (funit_loc, '(A)') string(i:slen)

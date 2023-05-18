@@ -12,7 +12,7 @@ module fprint_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 17, 2023 PM07:27:32
+! Last Modified: Thursday, May 18, 2023 AM10:49:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,6 +36,7 @@ character(len=*), intent(in), optional :: fname
 character(len=*), intent(in), optional :: faction
 
 ! Local variables
+character(len=*), parameter :: newline = new_line('')
 character(len=*), parameter :: srname = 'FPRINT'
 character(len=:), allocatable :: fname_loc
 character(len=:), allocatable :: fstat
@@ -120,16 +121,16 @@ if (len(fname_loc) > 0) then
 end if
 
 ! Print the string.
-! `WRITE (FUNIT_LOC, '(A)') STRING` would do what we want, but it causes "Buffer overflow on output"
-! if string is long.This did occur with NAG Fortran Compiler R7.1(Hanzomon) Build 7122. To avoid
-! this problem, we print the string line by line, separated by newlines.
+! N.B.: `WRITE (FUNIT_LOC, '(A)') STRING` would do what we want, but it causes "Buffer overflow on
+! output" if string is long. This did occur with NAG Fortran Compiler R7.1(Hanzomon) Build 7122.
+! To avoid this problem, we print the string line by line, separated by newlines.
 i = 1
-j = index(string, new_line(''))  ! Index of the first newline in the string.
+j = index(string, newline)  ! Index of the first newline in the string.
 slen = len(string)
 do while (j >= i)  ! J < I: No more newline in the string.
     write (funit_loc, '(A)') string(i:j - 1)  ! Print the string before the current newline.
     i = j + 1  ! Index of the character after the current newline.
-    j = i + index(string(i:slen), new_line('')) - 1  ! Index of the next newline.
+    j = i + index(string(i:slen), newline) - 1  ! Index of the next newline.
 end do
 if (string(i:slen) /= '') then  ! Print the string after the last newline.
     write (funit_loc, '(A)') string(i:slen)
