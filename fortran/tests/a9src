@@ -40,6 +40,8 @@ fi
 for FILE in "$PREPROC" "$LINALG" "$CMN_FPRINT" "$MEX_FPRINT" "$DEBUG" "$NOISE" "$FMXAPI" ; do
     if [[ -f "$FILE" ]] ; then
         sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
+        sed -i "/character(len=\*), parameter :: newline/d" "$FILE"
+        sed -i "s|newline|achar(10)|g" "$FILE"
     fi
 done
 

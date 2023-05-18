@@ -78,6 +78,8 @@ fi
 for FILE in "$CMN_FPRINT" "$MEX_FPRINT" "$DEBUG" ; do
     if [[ -f "$FILE" ]] ; then
         sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
+        sed -i "/character(len=\*), parameter :: newline/d" "$FILE"
+        sed -i "s|newline|achar(10)|g" "$FILE"
     fi
 done
 
