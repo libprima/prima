@@ -11,6 +11,7 @@
     - [Other languages](#other-languages)
 - [Bug fixes](#bug-fixes)
 - [Improvements](#improvements)
+- [Who was Powell?](#who-was-powell)
 - [A "fun" fact](#a-fun-fact)
 - [Acknowledgment](#acknowledgment)
 - [References](#references)
@@ -35,9 +36,7 @@ the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at t
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
 The current version is ready to be [used in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md).
 If you want to use the above-mentioned methods in Python, see the [website](https://www.pdfo.net)
-and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead
-([Py-BOBYQA](https://numericalalgorithmsgroup.github.io/pybobyqa/) is also highly recommended if
-you intend to solve bound-constrained problems).
+and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead.
 
 PRIMA was initiated by [Zaikun Zhang](https://www.zhangzk.net) in July 2020, based on
 the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang.
@@ -300,6 +299,16 @@ for more information.
 
 - UOBYQA on unconstrained CUTEst problems of at most 100 variables
 <img src="./benchmark/latest/uobyqa.png" style="width:26em;"/>
+
+
+### Who was Powell?
+
+[Michael James David Powell FRS](https://en.wikipedia.org/wiki/Michael_J._D._Powell) was
+["a British numerical analyst who was among the pioneers of computational mathematics"](https://royalsocietypublishing.org/doi/full/10.1098/rsbm.2017.0023).
+He was the inventor/early contributor of quasi-Newton method, trust region method, augmented
+Lagrangian method, and SQP method. Each of them is a pillar of modern numerical optimization.
+He also made significant contributions
+to [approximation theory and methods](https://www.cambridge.org/highereducation/books/approximation-theory-and-methods/66FD8CD6F18FE1ED499A8CA9A05F2A5A#overview).
 
 
 ### A "fun" fact
