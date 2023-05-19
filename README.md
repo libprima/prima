@@ -194,7 +194,8 @@ PRIMA has been finished by December 2022.**
 - An [interface](./matlab/interfaces/prima.m) is provided for [using the **modern** Fortran implementation in MATLAB](./README_mat.md).
 - <a name="newuoa_mat"></a>A [pure MATLAB version of NEWUOA](./matlab/interfaces/+newuoa_mat/) is implemented. It was
   generated straightforwardly (indeed, **automatically**) from an earlier version of the
-  **modern** Fortran code (with the help of Mr. Galann Pennec).
+  **modern** Fortran code (with the help of Mr. Galann Pennec). The other four solvers will be
+  implemented in MATLAB similarly.
 
 #### Python
 
