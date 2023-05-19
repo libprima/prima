@@ -91,6 +91,9 @@ for idbg = 1 : length(debug_flags)
         prepare_header(header_file, precisions{iprc}, debug_flags{idbg});
         work_dir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
         prepare_work_dir(work_dir);
+        % Keep a copy of the modified header file in the working directory for debugging purposes.
+        % It is NOT used during the compilation. Removing it does not affect the compilation.
+        copyfile(header_file, fullfile(work_dir, 'ppf.h'));
         cd(work_dir);
         % We can NOT write the loop below as `mex(mex_options{:}, '-c', common_files{:});`
         % Because such a command may not respect the order of common_files{:}, which is critical here.

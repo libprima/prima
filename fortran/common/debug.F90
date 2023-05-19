@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Friday, May 12, 2023 AM08:02:17
+! Last Modified: Friday, May 19, 2023 PM12:09:28
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -97,7 +97,7 @@ character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
 call backtr()
-write (STDERR, '(/1A/)') 'ERROR: '//trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
+write (STDERR, '(/A/)') 'ERROR: '//trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
 error stop  ! This means to stop the whole program.
 ! N.B. (Zaikun 20230410): We prefer ERROR STOP to STOP, as the former has been allowed in PURE
 ! procedures since F2018. Later, when F2018 is better supported, we should take advantage of this
@@ -146,7 +146,7 @@ implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
-write (STDERR, '(/1A/)') 'Warning: '//trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
+write (STDERR, '(/A/)') 'Warning: '//trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
 end subroutine warning
 
 

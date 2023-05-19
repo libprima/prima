@@ -128,7 +128,7 @@ if (test_bigprob) then
         x = noisy(prob % x0)
         orig_calfun => prob % calfun
 
-        print '(/1A, I0, 1A, I0, 1A, I0)', strip(probname)//': N = ', n, ', MAXFUN = ', maxfun, ', Random test ', irand
+        print '(/A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ', MAXFUN = ', maxfun, ', Random test ', irand
         call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
             & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
 
@@ -176,7 +176,7 @@ else
                 x = noisy(prob % x0)
                 orig_calfun => prob % calfun
 
-                print '(/1A, I0, 1A, I0)', strip(probname)//': N = ', n, ', Random test ', irand
+                print '(/A, I0, A, I0)', strip(probname)//': N = ', n, ', Random test ', irand
                 call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
                     & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
 

@@ -161,7 +161,7 @@ if (test_bigprob) then
         call safealloc(bineq, int(size(prob % bineq), IK))
         bineq = prob % bineq
 
-        print '(/1A, I0, 1A, I0, 1A, I0, 1A, I0, 1A, I0)', &
+        print '(/A, I0, A, I0, A, I0, A, I0, A, I0)', &
            & strip(probname)//': N = ', n, ' NPT = ', npt, ' M = ', size(Aineq, 2), ', MAXFUN = ', maxfun, ', Random test ', irand
 
         call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=Aineq, b=bineq, &
@@ -271,7 +271,7 @@ else
                     bineq = prob % bineq
                 end if
 
-                print '(/1A, I0, 1A, I0, 1A, I0, 1A, I0)', strip(probname)//': N = ', n, ' NPT = ', npt, &
+                print '(/A, I0, A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ' NPT = ', npt, &
                     & ' M = ', size(Aineq, 2), ', Random test ', irand
 
                 call safealloc(x, n)
