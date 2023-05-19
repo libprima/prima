@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Tuesday, December 13, 2022 PM12:54:25
+! Last Modified: Friday, May 19, 2023 PM12:54:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -49,7 +49,7 @@ pure elemental function moderatef(f) result(y)
 ! This function moderates the function value of a MINIMIZATION problem. It replaces NaN and any
 ! value above FUNCMAX by FUNCMAX.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, FUNCMAX
+use, non_intrinsic :: consts_mod, only : RP, REALMAX, FUNCMAX
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
@@ -62,8 +62,8 @@ y = f
 if (is_nan(f)) then
     y = FUNCMAX
 end if
-y = min(FUNCMAX, y)
-! We may moderate huge negative function values, but we decide not to.
+y = max(-REALMAX, min(FUNCMAX, y))
+! We may moderate huge negative function values as follows, but we decide not to.
 !y = max(-FUNCMAX, min(FUNCMAX, y))
 end function moderatef
 
@@ -131,9 +131,6 @@ else
     ! Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
     ! finite value. This is naive. Better approaches surely exist.
     f = moderatef(f)
-
-    ! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
-    !f = max(-FUNCMAX, f)
 end if
 
 
@@ -199,8 +196,6 @@ else
     ! finite value. This is naive, and better approaches surely exist.
     f = moderatef(f)
     constr = moderatec(constr)
-    ! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
-    !f = max(-FUNCMAX, f)
 
     ! Evaluate the constraint violation for constraints CONSTR(X) >= 0.
     cstrv = maxval([-constr, ZERO])
