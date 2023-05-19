@@ -153,7 +153,7 @@ if (test_bigprob) then
         x = noisy(prob % x0)
         orig_calcfc => prob % calcfc
 
-        print '(/1A, I0, 1A, I0, 1A, I0, 1A, I0)', &
+        print '(/A, I0, A, I0, A, I0, A, I0)', &
             & strip(probname)//': N = ', n, ' M = ', m, ', MAXFUN = ', maxfun, ', Random test ', irand
         call cobyla(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxfilt=maxfilt,&
             & maxhist=maxhist, fhist=fhist, xhist=xhist, chist=chist, conhist=conhist,&
@@ -229,7 +229,7 @@ else
                 x0 = noisy(prob % x0)
                 orig_calcfc => prob % calcfc
 
-                print '(/1A, I0, 1A, I0, 1A, I0)', strip(probname)//': N = ', n, ' M = ', m, ', Random test ', irand
+                print '(/A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ' M = ', m, ', Random test ', irand
 
                 call safealloc(x, n)
                 x = x0

@@ -47,11 +47,11 @@ for is = 1 : length(solvers)
     if compile_flag
         % Do we compile the debugged version?
         % Yes if we are in verification or if options.debug is true.
-        mexopt.debug = isverify || (isfield(options, 'debug') && options.debug);
+        mexopts{is}.debug = isverify || (isfield(options, 'debug') && options.debug);
 
         % Do we compile ONLY the debugging version?
         % Yes if we are profiling and options.debug is true.
-        mexopt.debug_only = isprofile && (isfield(options, 'debug') && options.debug);
+        mexopts{is}.debug_only = isprofile && (isfield(options, 'debug') && options.debug);
 
         % Do we compile the classical version?
         % Yes if we are in verification (unless options.no_classical = true) or if the solver name
