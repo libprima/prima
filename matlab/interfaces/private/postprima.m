@@ -676,9 +676,10 @@ if options.debug && ~options.classical
         end
         % Due to the moderated extreme barrier (implemented when options.classical is false),
         % all function values that are NaN or larger than funcmax are replaced by funcmax.
-        if (funx ~= funx) || (funx > funcmax)
-            funx = funcmax;
-        end
+        % In addition, all function values that are smaller than -realmax() are replaced by -realmax().
+        funx(isnan(funx) | funx > funcmax) = funcmax;
+        funx(funx < -realmax()) = -realmax();
+
         %if (funx ~= fx) && ~(isnan(fx) && isnan(funx))
         % It seems that COBYLA can return fx ~= fun(x) due to rounding errors. Therefore, we cannot
         % use "fx ~= funx" to check COBYLA.
@@ -686,6 +687,9 @@ if options.debug && ~options.classical
         % Zaikun 20220930: It seems that BOBYQA can also return fx ~= fun(x) if RESCUE is invoked.
         if ~(isnan(fx) && isnan(funx)) && ~((fx == funx) || (abs(funx-fx) <= bobyqa_prec*max(1, abs(fx)) && strcmp(solver, 'bobyqa')) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
             % Public/unexpected error
+            fx
+            funx
+            keyboard
             error(sprintf('%s:InvalidFx', invoker), ...
                 '%s: UNEXPECTED ERROR: %s returns an fx that does not match x.', invoker, solver);
         end
@@ -700,7 +704,9 @@ if options.debug && ~options.classical
             end
             % Due to the moderated extreme barrier (implemented when options.classical is false),
             % all function values that are NaN or above funcmax are replaced by funcmax.
+            % In addition, all function values that are smaller than -realmax() are replaced by -realmax().
             fhistx(fhistx ~= fhistx | fhistx > funcmax) = funcmax;
+            fhistx(fhistx < -realmax()) = -realmax();
             if any(~(isnan(fhist) & isnan(fhistx)) & ~((fhist == fhistx) ...
                     | (abs(fhistx-fhist) <= lincoa_prec*max(1, abs(fhist)) & strcmp(solver, 'lincoa'))  ...
                     | (abs(fhistx-fhist) <= cobyla_prec*max(1, abs(fhist)) & strcmp(solver, 'cobyla'))))

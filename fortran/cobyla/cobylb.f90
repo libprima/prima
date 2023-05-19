@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, May 12, 2023 PM06:50:30
+! Last Modified: Friday, May 19, 2023 PM03:27:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -660,6 +660,8 @@ real(RP) :: r
 real(RP) :: cmax(size(conmat, 1))
 real(RP) :: cmin(size(conmat, 1))
 real(RP) :: denom
+real(RP) :: fmax
+real(RP) :: fmin
 character(len=*), parameter :: srname = 'FCRATIO'
 
 ! Preconditions
@@ -674,9 +676,11 @@ end if
 
 cmin = minval(conmat, dim=2)
 cmax = maxval(conmat, dim=2)
-if (any(cmin < HALF * cmax)) then
+fmin = minval(fval)
+fmax = maxval(fval)
+if (any(cmin < HALF * cmax) .and. fmin < fmax) then
     denom = minval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
-    r = (maxval(fval) - minval(fval)) / denom
+    r = (fmax - fmin) / denom
 else
     r = ZERO
 end if
