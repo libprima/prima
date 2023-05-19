@@ -62,7 +62,7 @@ jobs:
       # BOBYQA often takes too much time for the big problems due to the quadruple precision. So we
       # set nr to 5 (default is 10).
       - name: Conduct the test
-        uses: matlab-actions/run-command@v1.1.3
+        uses: matlab-actions/run-command@v1.2.0
         with:
           command: |
             ver;
