@@ -29,7 +29,7 @@ subroutine initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x
 ! Size of local arrays: REAL(RP)*(M+N)
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -251,7 +251,7 @@ subroutine initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cf
 ! Size of local arrays: REAL(RP)*N
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite

@@ -49,7 +49,7 @@ subroutine trsapp(delta, gopt_in, hq_in, pq_in, tol, xpt, crvmin, s, info)
 ! Size of local arrays: REAL(RP)*(4+6*N)
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, REALMIN, ZERO, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite

@@ -26,7 +26,7 @@ subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt)
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
@@ -109,7 +109,7 @@ subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zma
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): PQINC
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
@@ -212,7 +212,7 @@ subroutine tryqalt(idz, bmat, fval, xopt, xpt, zmat, qalt_better, gopt, pq, hq, 
 ! if the recent few (three) alternative models are more accurate in predicting the function value of
 ! XOPT + D, i.e., if ALL(QALT_BETTER) = TRUE.
 !--------------------------------------------------------------------------------------------------!
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
@@ -311,7 +311,7 @@ subroutine updateres(ximproved, amat, b, delta, dnorm, xopt, rescon)
 ! we only need to evaluate the constraints that are nearly active.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite

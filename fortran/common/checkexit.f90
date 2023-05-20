@@ -27,7 +27,7 @@ function checkexit_unc(maxfun, nf, f, ftarget, x) result(info)
 ! This module checks whether to exit the solver in the unconstrained case.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_inf
@@ -102,7 +102,7 @@ function checkexit_con(maxfun, nf, cstrv, ctol, f, ftarget, x) result(info)
 ! This module checks whether to exit the solver in the constrained case.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_inf

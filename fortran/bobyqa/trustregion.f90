@@ -52,7 +52,7 @@ subroutine trsbox(delta, gopt_in, hq_in, pq_in, sl, su, xopt, xpt, crvmin, d)
 ! The arrays S and HS hold the current search direction and the change in the gradient of Q along S.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, HALF, REALMIN, EPS, REALMAX, &
     & DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert

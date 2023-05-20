@@ -90,7 +90,7 @@ subroutine rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, 
 !   PTSAUX(2, IQ)*e_IQ in the cases IQ=0 or  IP=0, respectively.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -600,7 +600,7 @@ subroutine updateh_rsc(knew, beta, vlag_in, bmat, zmat, info)
 ! column of H are not stored as they are unnecessary for the calculation.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite

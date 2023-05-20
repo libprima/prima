@@ -176,7 +176,7 @@ subroutine bobyqa(calfun, x, f, &
 !   !--------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, BOUNDMAX, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, MAXFUN_DIM_DFT, IPRINT_DFT
 use, non_intrinsic :: debug_mod, only : assert, warning

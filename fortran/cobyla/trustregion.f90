@@ -68,7 +68,7 @@ function trstlp(A_in, b_in, delta) result(d)
 ! Size of local arrays: INTEGER(IK)*(M+1) + REAL(RP)*(1+M+N+N^2)
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, REALMIN, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
@@ -160,7 +160,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 ! Size of local arrays: REAL(RP)*(4*MCON+6*N) (MCON = M+1 or M)
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, REALMAX, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite

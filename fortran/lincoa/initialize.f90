@@ -39,7 +39,7 @@ subroutine initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, r
 ! INFO = NAN_INF_F: return because F is either NaN or +Inf
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -273,7 +273,7 @@ subroutine inith(ij, xpt, idz, bmat, zmat, info)
 ! This subroutine initializes [IDZ, BMAT, ZMAT] which represents the matrix H in (3.12) of the
 ! NEWUOA paper (see also (2.7) of the BOBYQA paper).
 !--------------------------------------------------------------------------------------------------!
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite

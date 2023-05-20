@@ -18,7 +18,7 @@ subroutine bobyqa(calfun, x, f, &
     & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, maxhist, honour_x0, info)
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT

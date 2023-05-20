@@ -1107,7 +1107,7 @@ subroutine updateh(knew, kref, d, xpt, idz, bmat, zmat, info)
 ! Size of local arrays: REAL(RP)*(4+4*N+2*NPT)
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
@@ -1496,7 +1496,7 @@ function calvlag_lfqint(kref, bmat, d, xpt, zmat, idz) result(vlag)
 ! Size of local arrays: REAL(RP)*(2*NPT+2*N)
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite
@@ -1592,7 +1592,7 @@ function calbeta(kref, bmat, d, xpt, zmat, idz) result(beta)
 ! Size of local arrays: REAL(RP)*(3*NPT+4*N)
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
@@ -1717,7 +1717,7 @@ function calden(kref, bmat, d, xpt, zmat, idz) result(den)
 ! trust region.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
