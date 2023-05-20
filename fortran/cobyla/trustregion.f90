@@ -370,20 +370,6 @@ do iter = 1, maxiter
             frac = minval(fracmult(1:nact))  ! FRACMULT(NACT+1:MCON) may contain garbage.
             vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac * vmultd(1:nact))
 
-            ! Zaikun 20210811: Powell's code includes the following, which is IMPOSSIBLE TO REACH.
-            !--------------------------------------------------------------------------------------!
-            ! !if (icon < nact) then
-            ! !    do k = icon, nact-1
-            ! !        hypt = sqrt(zdota(k+1)**2+inprod(z(:, k), A(:, iact(k+1)))**2)
-            ! !        grot = planerot([zdota(k+1), inprod(z(:, k), A(:, iact(k+1)))])
-            ! !        z(:, [k, k+1]) = matprod(z(:, [k+1, k]), transpose(grot))
-            ! !        zdota([k, k+1]) = [hypt, (zdota(k+1) / hypt) * zdota(k)]
-            ! !    end do
-            ! !    iact(icon:nact) = [iact(icon+1:nact), iact(icon)]
-            ! !    vmultc(icon:nact) = [vmultc(icon+1:nact), vmultc(icon)]
-            ! !end if
-            !--------------------------------------------------------------------------------------!
-
             ! Reorder the active constraints so that the one to be replaced is at the end of the list.
             ! Exit if the new value of ZDOTA(NACT) is not acceptable. Powell's condition for the
             ! following IF: .NOT. ABS(ZDOTA(NACT)) > 0. Note that it is different from
