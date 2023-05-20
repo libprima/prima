@@ -80,6 +80,8 @@ for FILE in "$CMN_FPRINT" "$MEX_FPRINT" "$DEBUG" ; do
         sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
         sed -i "/character(len=\*), parameter :: newline/d" "$FILE"
         sed -i "s|newline|achar(10)|g" "$FILE"
+        sed -i "s|funit_loc = -1|funit_loc = 42|g" "$FILE"
+        sed -i "s|newunit|unit|g" "$FILE"
     fi
 done
 

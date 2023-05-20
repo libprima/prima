@@ -12,7 +12,7 @@ module message_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, May 12, 2023 PM11:43:41
+! Last Modified: Sunday, May 21, 2023 AM01:54:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ subroutine retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints messages at return.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, STDOUT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: fprint_mod, only : fprint
 use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
@@ -80,8 +80,7 @@ if (abs(iprint) < 1) then  ! No printing
 elseif (iprint > 0) then  ! Print the message to the standard out.
     funit = STDOUT
     fname = ''
-else  ! Print the message to a file named FNAME with the writing unit being OUTUNIT.
-    funit = OUTUNIT
+else  ! Print the message to a file named FNAME.
     fname = strip(solver)//'_output.txt'
 end if
 
@@ -159,7 +158,11 @@ if (abs(iprint) >= 2) then
 else
     message = ret_message//nf_message//x_message//constr_message//newline
 end if
-call fprint(message, funit, fname, 'append')
+if (len(fname) > 0) then
+    call fprint(message, fname=fname, faction='append')
+else
+    call fprint(message, funit=funit, faction='append')
+end if
 
 !====================!
 !  Calculation ends  !
@@ -171,7 +174,7 @@ subroutine rhomsg(solver, iprint, nf, delta, f, rho, x, cstrv, constr, cpen)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints messages when RHO is updated.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, STDOUT
 use, non_intrinsic :: fprint_mod, only : fprint
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
@@ -211,8 +214,7 @@ if (abs(iprint) < 2) then  ! No printing
 elseif (iprint > 0) then  ! Print the message to the standard out.
     funit = STDOUT
     fname = ''
-else  ! Print the message to a file named FNAME with the writing unit being OUTUNIT.
-    funit = OUTUNIT
+else  ! Print the message to a file named FNAME.
     fname = strip(solver)//'_output.txt'
 end if
 
@@ -268,8 +270,11 @@ if (abs(iprint) >= 3) then
 else
     message = rho_message//nf_message//x_message//constr_message
 end if
-
-call fprint(message, funit, fname, 'append')
+if (len(fname) > 0) then
+    call fprint(message, fname=fname, faction='append')
+else
+    call fprint(message, funit=funit, faction='append')
+end if
 
 !====================!
 !  Calculation ends  !
@@ -281,7 +286,7 @@ subroutine cpenmsg(solver, iprint, cpen)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints a message when CPEN is updated.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, OUTUNIT, STDOUT
+use, non_intrinsic :: consts_mod, only : RP, IK, STDOUT
 use, non_intrinsic :: fprint_mod, only : fprint
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
@@ -308,8 +313,7 @@ if (abs(iprint) < 2) then  ! No printing
 elseif (iprint > 0) then  ! Print the message to the standard out.
     funit = STDOUT
     fname = ''
-else  ! Print the message to a file named FNAME with the writing unit being OUTUNIT.
-    funit = OUTUNIT
+else  ! Print the message to a file named FNAME.
     fname = strip(solver)//'_output.txt'
 end if
 
@@ -319,7 +323,11 @@ if (abs(iprint) >= 3) then
 else
     message = newline//newline//'Set CPEN to '//num2str(cpen)
 end if
-call fprint(message, funit, fname, 'append')
+if (len(fname) > 0) then
+    call fprint(message, fname=fname, faction='append')
+else
+    call fprint(message, funit=funit, faction='append')
+end if
 
 !====================!
 !  Calculation ends  !
@@ -331,7 +339,7 @@ subroutine fmsg(solver, state, iprint, nf, delta, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints messages for each evaluation of the objective function.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, OUTUNIT, STDOUT
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, STDOUT
 use, non_intrinsic :: fprint_mod, only : fprint
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
@@ -372,8 +380,7 @@ if (abs(iprint) < 3) then  ! No printing
 elseif (iprint > 0) then  ! Print the message to the standard out.
     funit = STDOUT
     fname = ''
-else  ! Print the message to a file named FNAME with the writing unit being OUTUNIT.
-    funit = OUTUNIT
+else  ! Print the message to a file named FNAME.
     fname = strip(solver)//'_output.txt'
 end if
 
@@ -420,7 +427,11 @@ end if
 
 ! Print the message.
 message = delta_message//nf_message//x_message//constr_message
-call fprint(message, funit, fname, 'append')
+if (len(fname) > 0) then
+    call fprint(message, fname=fname, faction='append')
+else
+    call fprint(message, funit=funit, faction='append')
+end if
 
 !====================!
 !  Calculation ends  !

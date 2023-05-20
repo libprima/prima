@@ -14,7 +14,7 @@ module fprint_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, May 18, 2023 PM12:16:14
+! Last Modified: Sunday, May 21, 2023 AM01:38:50
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: INT32_MEX is indeed INT32, i.e., the kind of INTEGER*4. We name it INT32_MEX instead of
@@ -49,7 +49,7 @@ contains
 
 
 subroutine fprint(string, funit, fname, faction)
-use, non_intrinsic :: consts_mod, only : IK, OUTUNIT, STDIN, STDOUT, STDERR, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, STDIN, STDOUT, STDERR, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: string_mod, only : num2str
 implicit none
@@ -76,8 +76,6 @@ logical :: fexist
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(OUTUNIT > 0 .and. all(OUTUNIT /= [STDIN, STDOUT, STDERR]), &
-        & 'OUTUNIT is positive and not STDIN, STDOUT, or STDERR', srname)
     if (present(funit)) then
         call assert(funit /= STDIN, 'The file unit is not STDIN', srname)
         if (present(fname)) then
@@ -100,7 +98,7 @@ if (present(funit)) then
     funit_loc = funit
 else
     if (present(fname)) then
-        funit_loc = OUTUNIT  ! Print the message to the writing unit OUTUNIT.
+        funit_loc = -1  ! This value will not be used.
     else
         funit_loc = STDOUT  ! Print the message to the standard out.
     end if
@@ -166,7 +164,11 @@ else
     inquire (file=fname_loc, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
     ! Open the file.
-    open (unit=funit_loc, file=fname_loc, status=fstat, position=position, iostat=iostat, action='write')
+    if (present(funit)) then
+        open (unit=funit_loc, file=fname_loc, status=fstat, position=position, iostat=iostat, action='write')
+    else
+        open (newunit=funit_loc, file=fname_loc, status=fstat, position=position, iostat=iostat, action='write')
+    end if
     if (iostat /= 0) then
         call warning(srname, 'Failed to open file '//fname_loc)
         return

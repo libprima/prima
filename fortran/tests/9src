@@ -9,6 +9,10 @@ MEMORYF90="memory.F90"
 MEMORY="$DIR/common/$MEMORYF90"
 STRINGF90="string.f90"
 STRING="$DIR/common/$STRINGF90"
+CMN_FPRINTF90="fprint.f90"
+CMN_FPRINT="$DIR/common/$CMN_FPRINTF90"
+MEX_FPRINTF90="fprint.F90"
+MEX_FPRINT="$DIR/common/$MEX_FPRINTF90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -64,5 +68,12 @@ if [[ -f "$STRING" ]] ; then
     sed -i "/ndgt_loc = min(ndgt_loc, floor(real(MAX_NUM_STR_LEN - 5) \/ 2.0))/d" "$STRING"
     sed -i "/nexp_loc = min(nexp_loc, floor(real(MAX_NUM_STR_LEN - 5) \/ 2.0))/d" "$STRING"
 fi
+
+for FILE in "$CMN_FPRINT" "$MEX_FPRINT" ; do
+    if [[ -f "$FILE" ]] ; then
+        sed -i "s|funit_loc = -1|funit_loc = 42|g" "$FILE"
+        sed -i "s|newunit|unit|g" "$FILE"
+    fi
+done
 
 exit 0

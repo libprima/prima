@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, May 19, 2023 AM02:59:19
+! Last Modified: Sunday, May 21, 2023 AM01:46:27
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -74,7 +74,7 @@ public :: RP, RP_DFT, DP, SP, QP
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: REALMIN, EPS, TINYCV, REALMAX, FUNCMAX, CONSTRMAX, BOUNDMAX
 public :: SYMTOL_DFT
-public :: OUTUNIT, STDIN, STDOUT, STDERR
+public :: STDIN, STDOUT, STDERR
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, CWEIGHT_DFT
 public :: ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 public :: MAXFUN_DIM_DFT, MAXHISTMEM, MIN_MAXFILT, MAXFILT_DFT, IPRINT_DFT
@@ -177,9 +177,6 @@ real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO
 #endif
-
-! Output unit, can be any integer between 9 and 99; used in output.f90
-integer, parameter :: OUTUNIT = 42
 
 ! Some default values
 real(RP), parameter :: RHOBEG_DFT = ONE
