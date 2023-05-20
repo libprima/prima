@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, May 19, 2023 PM03:40:44
+! Last Modified: Saturday, May 20, 2023 AM09:06:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -109,7 +109,7 @@ function real2str_scalar(x, ndgt, nexp) result(s)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, DP, IK, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
-use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf, is_neginf
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 implicit none
 ! Inputs
 real(RP), intent(in) :: x
