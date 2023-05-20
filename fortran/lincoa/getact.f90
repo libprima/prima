@@ -76,7 +76,7 @@ subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 ! See Section 3 of Powell (2015) for more information.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite

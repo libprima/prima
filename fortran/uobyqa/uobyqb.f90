@@ -43,7 +43,7 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
 !   XBASE + XOPT + D is the vector of variables for the next call of CALFUN.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert

@@ -45,7 +45,7 @@ subroutine trstep(amat, delta, gopt_in, hq_in, pq_in, rescon, xpt, iact, nact, q
 ! RESACT holds the residuals of the active constraints, which may be positive.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TWO, HALF, EPS, REALMIN, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan

@@ -75,7 +75,7 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 !   XBASE + XOPT + D is the vector of variables for the next call of CALFUN.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
@@ -615,7 +615,7 @@ function errbd(crvmin, d, gopt, hq, moderrsav, pq, rho, sl, su, xopt, xpt) resul
 ! paragraphs surrounding (6.8)--(6.11).
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite

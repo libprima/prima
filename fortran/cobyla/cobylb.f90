@@ -37,7 +37,7 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ft
 ! arguments in subroutine COBYLA.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, REALMAX, &
     & DEBUGGING, MIN_MAXFILT

@@ -85,7 +85,7 @@ xtest: FC := ifx -warn all -stand f$(FS)
 	./$@
 	@$(MAKE) clean
 
-# Compile the Fortran code providing generic modules
+# Compile the Fortran code providing common modules
 %.o: $(COMMON)/%.*90 $(HEADERS)
 	$(FC) $(FFLAGS) -c -o $@ $<
 

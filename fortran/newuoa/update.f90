@@ -26,7 +26,7 @@ subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt)
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
@@ -118,7 +118,7 @@ subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zma
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): PQINC
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
@@ -221,7 +221,7 @@ subroutine tryqalt(idz, bmat, fval, ratio, xopt, xpt, zmat, itest, gopt, hq, pq)
 ! the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf

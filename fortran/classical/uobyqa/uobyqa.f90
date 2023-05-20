@@ -17,7 +17,7 @@ subroutine uobyqa(calfun, x, f, &
     & nf, rhobeg, rhoend, ftarget, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, maxhist, info)
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS

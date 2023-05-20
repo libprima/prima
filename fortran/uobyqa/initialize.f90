@@ -26,7 +26,7 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, kopt, nf, fhist, 
 ! See Section 4 of the UOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -228,7 +228,7 @@ subroutine initq(fval, xpt, pq, info)
 ! triangular part of the Hessian, column by column. See Section 4 of the UOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
@@ -338,7 +338,7 @@ subroutine initl(xpt, pl, info)
 ! PL(N+1 : NPT-1, K) containing the upper triangular part of the Hessian, column by column.
 ! See Section 4 of the UOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite

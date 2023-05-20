@@ -25,7 +25,7 @@ subroutine update(knew, d, f, moderr, kopt, fval, pl, pq, xpt)
 ! See Section 4 of the UOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf

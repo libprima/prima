@@ -30,7 +30,7 @@ subroutine updateh(knew, kopt, d, xpt, bmat, zmat, info)
 ! column of H are not stored as they are unnecessary for the calculation.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
@@ -185,7 +185,7 @@ subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt)
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
@@ -272,7 +272,7 @@ subroutine updateq(knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, go
 ! List of local arrays (including function-output arrays; likely to be stored on the stack): PQINC
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
@@ -373,7 +373,7 @@ subroutine tryqalt(bmat, fval, ratio, sl, su, xopt, xpt, zmat, itest, gopt, hq, 
 ! the BOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf

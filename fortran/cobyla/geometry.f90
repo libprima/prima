@@ -28,7 +28,7 @@ function assess_geo(delta, factor_alpha, factor_beta, sim, simi) result(adequate
 ! Size of local arrays: REAL(RP)*(2*N)
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
@@ -103,7 +103,7 @@ function setdrop_tr(ximproved, d, delta, rho, sim, simi) result(jdrop)
 ! Note that UPDATEXFC should be revised accordingly.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: linalg_mod, only : matprod, isinv
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
@@ -278,7 +278,7 @@ function setdrop_geo(delta, factor_alpha, factor_beta, sim, simi) result(jdrop)
 ! Size of local arrays: REAL(RP)*(2*N)
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
@@ -370,7 +370,7 @@ function geostep(jdrop, cpen, conmat, cval, delta, fval, factor_gamma, simi) res
 ! and A
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf, is_neginf

@@ -46,7 +46,7 @@ subroutine shiftbase_lfqint(kopt, xbase, xpt, zmat, bmat, pq, hq, idz)
 ! Size of local arrays: REAL(RP)*(4*N*NPT+NPT-N), LARGE!
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
@@ -184,7 +184,7 @@ subroutine shiftbase_qint(kopt, pl, pq, xbase, xpt)
 ! below (40) of the UOBYQA paper.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite

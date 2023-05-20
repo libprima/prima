@@ -28,7 +28,7 @@ subroutine updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, 
 ! Size of local arrays: REAL(RP)*N
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
@@ -203,7 +203,7 @@ subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 ! *_OLD. Should we allocate SIMI_TEST? Yes, it is needed quite rarely!)
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: infos_mod, only : DAMAGING_ROUNDING, INFO_DFT
 use, non_intrinsic :: debug_mod, only : assert
@@ -356,7 +356,7 @@ function findpole(cpen, cval, fval) result(jopt)
 ! Size of local arrays: REAL(RP)*(N+1)
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : IK, RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf

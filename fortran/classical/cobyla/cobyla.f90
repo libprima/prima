@@ -19,7 +19,7 @@ subroutine cobyla(calcfc, m, x, f, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, conhist, maxhist, maxfilt, info)
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT

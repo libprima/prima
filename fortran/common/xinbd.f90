@@ -17,7 +17,7 @@ function xinbd(xbase, step, xl, xu, sl, su) result(x)
 ! 3. SL = XL - XBASE, SU = XU - XBASE;
 ! 4. X should be between XL and XU.
 !--------------------------------------------------------------------------------------------------!
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : trueloc

@@ -50,7 +50,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! See Section 2 of the NEWUOA paper for more information about these variables.
 !--------------------------------------------------------------------------------------------------!
 
-! Generic modules
+! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert

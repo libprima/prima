@@ -94,7 +94,7 @@ subroutine evaluatef(calfun, x, f)
 ! This function evaluates CALFUN at X, setting F to the objective function value. Nan/Inf are
 ! handled by a moderated extreme barrier.
 !--------------------------------------------------------------------------------------------------!
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
@@ -153,7 +153,7 @@ subroutine evaluatefc(calcfc, x, f, constr, cstrv)
 ! constraint value, and CSTRV to the constraint violation. Nan/Inf are handled by a moderated
 ! extreme barrier.
 !--------------------------------------------------------------------------------------------------!
-! Generic modules
+! Common modules
 use, non_intrinsic :: consts_mod, only : RP, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
