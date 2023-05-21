@@ -400,7 +400,7 @@ In case of problems, [open a GitHub issue](https://github.com/libprima/prima/iss
 Zaikun Zhang](https://www.zhangzk.net).
 
 
-### <a href="https://api.star-history.com/svg?repos=libprima/prima&type=Date">Star history</a>
+### <a href="https://star-history.com/#libprima/prima&Date">Star history</a>
 
 <img src="https://api.star-history.com/svg?repos=libprima/prima&type=Date">
 
