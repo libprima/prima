@@ -142,6 +142,10 @@ fi
 printf "Tests to make:%s\n\n" "$COMP_LIST"
 
 for COMP in $COMP_LIST; do
+    if [[ "$COMP" == 'g' ]] ; then
+        export FS=18  # Without this, gfortran does not work properly with `error stop code`.
+        printf "****** Testing gfortran with -std=f20%s ... ******\n" "$FS"
+    fi
     if [[ $TEST_ALL == 'Y' && $ARM32 != 'Y' ]] ; then
         make  "$COMP"test."$SOLVER"
     else

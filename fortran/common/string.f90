@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, May 20, 2023 AM09:06:17
+! Last Modified: Sunday, May 21, 2023 PM12:52:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -142,8 +142,8 @@ end if
 !====================!
 
 if (.not. is_finite(x)) then
-    write (str, *) x  ! Remove the leading and trailing spaces, if any.
-    s = strip(str)
+    write (str, *) x
+    s = strip(str)  ! Remove the leading and trailing spaces, if any.
 else
     if (present(ndgt)) then
         ndgt_loc = int(ndgt, IK)

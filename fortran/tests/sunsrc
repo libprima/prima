@@ -107,7 +107,7 @@ cd "$DIR" && grep -R 'use.*message_mod' | sed 's|:.*$||' | xargs sed -i "/use.*m
 printf "module message_mod \n end module message_mod" > "$MESSAGE"
 
 if [[ -f "$DEBUG" ]] ; then
-    sed -i "s|^error stop|stop|" "$DEBUG"
+    sed -i "s|^\s*error stop|stop|" "$DEBUG"
 fi
 
 exit 0

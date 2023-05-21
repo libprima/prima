@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, May 08, 2023 PM04:39:57
+! Last Modified: Sunday, May 21, 2023 PM12:25:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,6 +41,7 @@ subroutine getseed(seed)
 ! This subroutine gets the current random seed, saving it in SEED.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: debug_mod, only : errstop
+use, non_intrinsic :: infos_mod, only : MEMORY_ALLOCATION_FAILS
 implicit none
 
 ! Output
@@ -61,7 +62,7 @@ call random_seed(size=n)
 !    only implemented for INTEGER(IK), which may differ from the default integer.
 allocate (seed(1:n), stat=alloc_status)
 if (.not. (alloc_status == 0 .and. allocated(seed))) then
-    call errstop(srname, 'Memory allocation fails.')
+    call errstop(srname, 'Memory allocation fails', MEMORY_ALLOCATION_FAILS)
 end if
 
 call random_seed(get=seed)
@@ -75,6 +76,7 @@ subroutine setseed0(seed)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DP
 use, non_intrinsic :: debug_mod, only : errstop
+use, non_intrinsic :: infos_mod, only : MEMORY_ALLOCATION_FAILS
 implicit none
 
 integer, intent(in) :: seed
@@ -92,13 +94,13 @@ call random_seed(size=n)
 if (allocated(seed_to_put)) deallocate (seed_to_put)
 allocate (seed_to_put(1:n), stat=alloc_status)
 if (.not. (alloc_status == 0 .and. allocated(seed_to_put))) then
-    call errstop(srname, 'Memory allocation fails.')
+    call errstop(srname, 'Memory allocation fails', MEMORY_ALLOCATION_FAILS)
 end if
 
 if (allocated(cos_seed)) deallocate (cos_seed)
 allocate (cos_seed(1:n), stat=alloc_status)
 if (.not. (alloc_status == 0 .and. allocated(cos_seed))) then
-    call errstop(srname, 'Memory allocation fails.')
+    call errstop(srname, 'Memory allocation fails', MEMORY_ALLOCATION_FAILS)
 end if
 
 ! Some compilers cannot guarantee ABS(COS) <= 1 when the variable is huge. This may cause overflow.
@@ -126,6 +128,7 @@ subroutine setseed1(seed)
 ! random seeds that are saved before.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: debug_mod, only : errstop
+use, non_intrinsic :: infos_mod, only : MEMORY_ALLOCATION_FAILS
 implicit none
 
 integer, intent(in), optional :: seed(:)
@@ -141,7 +144,7 @@ if (present(seed)) then
     if (allocated(seed_to_put)) deallocate (seed_to_put)
     allocate (seed_to_put(1:n), stat=alloc_status)
     if (.not. (alloc_status == 0 .and. allocated(seed_to_put))) then
-        call errstop(srname, 'Memory allocation fails.')
+        call errstop(srname, 'Memory allocation fails', MEMORY_ALLOCATION_FAILS)
     end if
 
     seed_to_put = 1

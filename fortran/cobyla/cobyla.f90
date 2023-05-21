@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, May 08, 2023 PM03:14:00
+! Last Modified: Sunday, May 21, 2023 PM05:47:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -237,6 +237,7 @@ use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_neginf, is_posinf
+use, non_intrinsic :: infos_mod, only : INVALID_INPUT
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 use, non_intrinsic :: selectx_mod, only : isbetter
@@ -320,7 +321,7 @@ n = int(size(x), kind(n))
 if (present(constr0)) then
     if (size(constr0) /= m) then
         if (DEBUGGING) then
-            call errstop(srname, 'SIZE(CONSTR0) /= M. Exiting')
+            call errstop(srname, 'SIZE(CONSTR0) /= M. Exiting', INVALID_INPUT)
         else
             call warning(srname, 'SIZE(CONSTR0) /= M. Exiting')
             return
