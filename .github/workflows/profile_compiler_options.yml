@@ -28,7 +28,7 @@ jobs:
         competitor: [classical]
           #with_optim_toolbox: [yes, no]
         solver: [cobylan]
-        compiler_options: [-O1]
+        compiler_options: [-O0]
         with_optim_toolbox: [no]
         exclude:
           - solver: cobylan
