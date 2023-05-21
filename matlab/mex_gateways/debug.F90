@@ -11,7 +11,7 @@ module debug_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Friday, May 19, 2023 AM11:58:16
+! Last Modified: Sunday, May 21, 2023 PM05:46:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -105,7 +105,7 @@ end if
 end subroutine wassert
 
 
-subroutine errstop(srname, msg)
+subroutine errstop(srname, msg, code)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints 'ERROR: '//STRIP(SRNAME)//': '//STRIP(MSG)//'.', then stop.
 ! It also calls BACKTR to print the backtrace.
@@ -113,13 +113,20 @@ subroutine errstop(srname, msg)
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
+integer, intent(in), optional :: code
 
+character(len=128) :: code_str
 character(len=:), allocatable :: eid
 character(len=:), allocatable :: emsg
 
 call backtr()
 eid = 'FMXAPI:'//trim(adjustl(srname))
-emsg = trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
+if (present(code)) then
+    write (code_str, '(I0)') code
+    emsg = trim(adjustl(srname))//': '//trim(adjustl(msg))//'. The error code is '//trim(adjustl(code_str))//'.'
+else
+    emsg = trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
+end if
 call mexErrMsgIdAndTxt(eid, emsg)
 end subroutine errstop
 
@@ -136,8 +143,8 @@ subroutine backtr
 ! linking, complaining that a subroutine cannot be found (e.g., backtrace for gfortran). In that
 ! case, we must set PRIMA_DEBUGGING to 0 in ppf.h. This is also why in this subroutine we do not use
 ! the constant DEBUGGING defined in the consts_mod module but use the macro PRIMA_DEBUGGING in ppf.h.
-!
-! Zaikun 20220412: MEX does not print the line numbers in the backtrace even with the '-g' option.
+! 3. Zaikun 2020412/20230521: Even with the `-g` option, MEX does not always print the line numbers
+! in the backtrace when calling `backtrace`. No idea why.
 !--------------------------------------------------------------------------------------------------!
 #if PRIMA_DEBUGGING == 1
 

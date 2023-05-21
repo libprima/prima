@@ -53,7 +53,8 @@ dtest: FC := $(AFLANG) -Wall -Wextra -std=f$(FSTD) -Mstandard
 # Flang
 ftest: FC := flang -Wall -Wextra -std=f$(FSTD) -Mstandard
 
-# GNU gfortran
+# GNU gfortran: due to `error stop` and `backtrace`, we must either compile wit no `-std` or
+# use `-std=f20xy -fall-intrinsics` with xy >= 18.
 gtest: FC := gfortran -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
 
 # Intel ifort
@@ -76,7 +77,7 @@ xtest: FC := ifx -warn all -stand f$(FS)
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test
 %test: $(SOLVER)_example.f90 \
-	consts.o debug.o infos.o inf.o infnan.o memory.o string.o linalg.o powalg.o \
+	consts.o infos.o debug.o inf.o infnan.o memory.o string.o linalg.o powalg.o \
 	ratio.o redrho.o history.o checkexit.o fprint.o message.o preproc.o pintrf.o evaluate.o \
 	shiftbase.o \
 	initialize.o update.o trustregion.o geometry.o uobyqb.o uobyqa.o
