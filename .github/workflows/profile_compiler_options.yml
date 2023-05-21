@@ -23,13 +23,10 @@ jobs:
         os: [ubuntu-latest]
         matlab: [latest]
         dim: [all]
-          #solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]
-          #compiler_options: [-O0, -O1, -O2, -O3, -Ofast -fno-stack-arrays, -ffast-math]
+        solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]
+        compiler_options: [-O0, -O1, -O2, -O3, -Ofast -fno-stack-arrays, -ffast-math]
         competitor: [classical]
-          #with_optim_toolbox: [yes, no]
-        solver: [cobylan]
-        compiler_options: [-O0]
-        with_optim_toolbox: [no]
+        with_optim_toolbox: [yes, no]
         exclude:
           - solver: cobylan
             with_optim_toolbox: yes
