@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Sunday, May 21, 2023 PM06:17:45
+! Last Modified: Sunday, May 21, 2023 PM06:20:58
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -102,7 +102,7 @@ integer, intent(in), optional :: code
 call backtr()
 write (STDERR, '(/A/)') 'ERROR: '//trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
 if (present(code)) then
-    error stop code  ! For gfortran, complile with either `-std=f2018` or no `-std` at all.
+    error stop code  ! For gfortran, compile with either `-std=f2018` or no `-std` at all.
 else
     error stop
 end if
