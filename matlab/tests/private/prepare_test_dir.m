@@ -49,12 +49,17 @@ if ~exist(test_dir, 'dir')
     mkdir(test_dir);
 end
 
-% norma_dir: subdirectory of that contains the "norma" version of solvers used as the reference
+% norma_dir: directory that contains the "norma" version of solvers used as the reference
 % implementation for the development of the current version of the solvers.
 norma_dir = fullfile(root_dir, '.development', 'norma');
 
-% dev_arch: a subdirectory of fullfile(root_dir, '.development', 'archiva'). It contains the "archiva"
-% version of solvers used as a benchmark for the development of the current version of the solvers.
+% archiva_dir: directory that contains the "archiva" version of solvers used as a benchmark
+% for the development of the current version of the solvers. This version is contained in
+% fullfile(root_dir, '.development', 'archiva', 'dev_arch'), and an equivalent version is in
+% fullfile(root_dir, '.development', 'archiva', 'dev_arch', 'norma'), which is the "norma" version
+% of the "archiva" version. We use the latter because the name of the solver there is SOLVER_norma,
+% which is convenient for the test. Consequently, when we compiler the archiva version, the solver
+% name is SOLVER_norma. See get_solvers.m for details.
 archiva_dir = fullfile(root_dir, '.development', 'archiva', 'dev_arch', 'norma');
 
 % s_dir_list: a list of directories to be copied to `test_dir`, "s" for "source".
