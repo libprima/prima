@@ -1,5 +1,5 @@
-This directory contains tests for the modernized and improved Fortran implementation of Powell's
-derivative-free optimization solvers.
+This directory contains tests for verifying the MEX gateways of the modernized and improved Fortran
+implementation of Powell's derivative-free optimization solvers.
 
 The major tests are:
 
@@ -15,9 +15,6 @@ SOLVER is cobyla, uobyqa, newuoa, bobyqa, or lincoa.
 For example, try
 
 make clean && make gtest_i2.cobyla
-
-N.B.: The scripts in this directory are written for testing and developing purposes. They do NOT
-intend to illustrate the usage of the package. For such illustrations, see the "examples" directory.
 
 Coded by Zaikun ZHANG (www.zhangzk.net).
 

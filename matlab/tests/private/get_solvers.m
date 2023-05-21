@@ -97,6 +97,8 @@ try
             solver_dir = fullfile(test_dir, 'norma');
         elseif endsWith(solver, '_archiva')
             solver_dir = fullfile(test_dir, 'archiva');
+            % The archiva solver name is SOLVER_norma. See the comments on archiva_dir in
+            % prepare_test_dir.m for details.
             solver = regexprep(solver, '_archiva', '_norma');
         else  % SOLVER or SOLVER_classical|_single|_quadruple
             solver_dir = fullfile(test_dir, root_dir_name);
