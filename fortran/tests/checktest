@@ -45,6 +45,7 @@ ERRORS="$(grep -i "error\|fail\|violation\|exception\|invalid\|bad\|overflow\|se
     | grep -vi "The error code is" \
     | grep -vi "berr\|erres" \
     | grep -vi "violation = " \
+    | grep -vi "int violation" \
     | grep -vi "Warning: TRSTEP: Assertion failed: D is initialized." \
 	| grep -vi "Warning: UOBYQA: Invalid\|Warning: NEWUOA: Invalid\|Warning: BOBYQA: Invalid\|Warning: LINCOA: Invalid\|Warning: COBYLA: Invalid" \
     | grep -vi "maybe due to overflow, or the input is not an integer" \
