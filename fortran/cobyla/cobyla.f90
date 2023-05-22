@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, May 21, 2023 PM05:47:54
+! Last Modified: Monday, May 22, 2023 AM10:39:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

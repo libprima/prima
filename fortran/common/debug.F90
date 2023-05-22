@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Sunday, May 21, 2023 PM06:20:58
+! Last Modified: Monday, May 22, 2023 AM10:40:11
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -99,7 +99,13 @@ character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 integer, intent(in), optional :: code
 
+! `backtr` prints a backtrace. As of gfortran 12.1.0, even without calling `backtrace`, a backtrace
+! is printed when the program is stopped by an error stop. Therefore, here, we do not call `backtr`
+! if the compiler is gfortran.
+#if !defined __GFORTRAN__
 call backtr()
+#endif
+
 write (STDERR, '(/A/)') 'ERROR: '//trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
 if (present(code)) then
     error stop code  ! For gfortran, compile with either `-std=f2018` or no `-std` at all.
@@ -128,8 +134,9 @@ subroutine backtr()
 ! in ppf.h. This is also why in this subroutine we do not use the constant DEBUGGING defined in the
 ! consts_mod module but use the macro PRIMA_DEBUGGING in ppf.h.
 ! 3. As of gfortran 12.1.0, even without calling `backtrace`, a backtrace is printed when the
-! program is stopped by an error stop. However, we also want to print a backtrace in the case of
-! `wassert`, where `backtrace` is still needed as error stop is not involved.
+! program is stopped by an error stop. Therefore, in `errstop`, we do not call `backtr` if the
+! compiler is gfortran. However, we cannot remove `backtrace` in `backtr`, because `backtr` is
+! also invoked in `wassert`, where `backtrace` is still needed as error stop is not involved.
 !--------------------------------------------------------------------------------------------------!
 #if PRIMA_DEBUGGING == 1
 
