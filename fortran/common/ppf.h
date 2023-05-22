@@ -59,10 +59,12 @@
 
 /******************************************************************************/
 /* Which Fortran standard to follow?
- * N.B.: The value of PRIMA_FORTRAN_STANDARD is NOT used in the code. We define
- * it only for the purpose of a record. */
+ * N.B.: 1. The value of PRIMA_FORTRAN_STANDARD is NOT used in the code. We
+ * define it only for the purpose of a record.
+ * 2. With gfortran, due to `error stop` and `backtrace`, we must either compile
+ * with no `-std` or use `-std=f20xy -fall-intrinsics` with xy >= 18. */
 #if !defined PRIMA_FORTRAN_STANDARD
-#define PRIMA_FORTRAN_STANDARD 2008 /* Default to 2018 later (in 2028?).      */
+#define PRIMA_FORTRAN_STANDARD 2008  /* Default to 2018 later (in 2025?).     */
 #endif
 /******************************************************************************/
 
