@@ -12,13 +12,9 @@ TEST_ALL="N"
 CLEAN="N"
 
 # sunf95 is case sensitive. Put it as the first.
-# ifx encounters internal errors when compiling BOBYQA. Disable xtest for now.
-# Disable ntest and atest for now, since they encounter internal/licensing errors randomly
+# Disable atest for now, since it encounters licensing errors randomly
 printf "\n****** ATEST is disabled ******\n"
-#printf "\n****** XTEST is disabled ******\n"
-#printf "\n****** NTEST is disabled ******\n"
-#COMPILER_LIST=(sunf95 gfortran g95 ifort nvfortran flang aflang)
-#CLIST=(s g 9 i v f d)
+# N.B.: () defines an array
 COMPILER_LIST=(sunf95 gfortran nagfor g95 ifort nvfortran flang aflang ifx)
 CLIST=(s g n 9 i v f d x)
 COMP_LIST=""
