@@ -1,5 +1,6 @@
 function test_dir = prepare_test_dir(solver, test_name, test_options)
-%PREPARE_TEST_DIR prepares a copy of the package in `test_dir` for the test named `test_name`.
+%PREPARE_TEST_DIR prepares a copy of the package in `test_dir` for the solver named `solver and test
+% named `test_name`,  with options in `test_options`, which specifies the competitor etc.
 
 if verLessThan('matlab', '9.10') && ispc
     callstack = dbstack;
@@ -10,12 +11,15 @@ end
 fprintf('\nPreparing the testing directory for test ''%s'' ...\n', test_name);
 fprintf('\nThe solver: %s\n', solver);
 
+% competitor: the competitor solver to be tested against. It can be 'norma', 'archiva', 'classical',
+% 'single', or 'quadruple'.
 competitor = '';
 if isfield(test_options, 'competitor')
     competitor = test_options.competitor;
     fprintf('\nThe competitor: %s\n', test_options.competitor);
 end
 
+% compile: whether to compile the MEX files.
 compile = ~isfield(test_options, 'compile') || test_options.compile;
 fprintf('\nCompile: %d\n', compile);
 
