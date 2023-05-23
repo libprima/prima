@@ -1,0 +1,43 @@
+name: CMake build / nagfor
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 19 * * *'
+  # Trigger the workflow manually
+  workflow_dispatch:
+
+jobs:
+
+  test:
+    name: CMake build with nagfor
+    runs-on: [self-hosted, nagfor]
+    continue-on-error: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.5.3
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+
+      - name: Miscellaneous setup
+        run: bash .github/scripts/misc_setup
+
+      - name: Conduct the test
+        run: |
+          export PATH=$PATH:"~/local/bin"
+          source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
+          # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
+          FFLAGS=-O$(($(date +%-d) % 5))
+          FFLAGS=${FFLAGS/O0/g}
+          FFLAGS=${FFLAGS/O4/fast}
+          export FFLAGS
+          export FC=nagfor
+          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
+          cmake --build . --target install --parallel 4
+          cmake --build . --target examples --parallel 4
+          ctest --output-on-failure -V

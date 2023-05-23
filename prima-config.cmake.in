@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/prima-targets.cmake")
+
+get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
+if (NOT "Fortran" IN_LIST languages)
+  message(SEND_ERROR "Fortran language must be enabled to use PRIMA")
+endif ()

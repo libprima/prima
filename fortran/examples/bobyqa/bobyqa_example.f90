@@ -10,7 +10,7 @@
 
 
 !-------------------------------- THE MODULE THAT IMPLEMENTS CALFUN -------------------------------!
-module calfun_bobyqa_mod
+module calfun_mod
 
 implicit none
 private
@@ -47,7 +47,7 @@ end do
 
 end subroutine calfun
 
-end module calfun_bobyqa_mod
+end module calfun_mod
 
 
 !---------------------------------------- THE MAIN PROGRAM ----------------------------------------!
@@ -57,7 +57,7 @@ program bobyqa_exmp
 use bobyqa_mod, only : bobyqa
 
 ! The following line specifies which module provides CALFUN.
-use calfun_bobyqa_mod, only : RP, calfun
+use calfun_mod, only : RP, calfun
 
 implicit none
 
