@@ -896,6 +896,7 @@ funname
 funx
 fval
 fwrite
+fvdsrc
 frdsrc
 gaussian
 gca
