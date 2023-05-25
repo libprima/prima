@@ -895,8 +895,8 @@ funcon
 funname
 funx
 fval
-fvdsrc
 fwrite
+frdsrc
 gaussian
 gca
 gcc
