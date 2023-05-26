@@ -23,7 +23,7 @@ jobs:
         os: [ubuntu-latest]
         matlab: [latest]
         dim: [small]
-        solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]
+        solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa, prima]
         competitor: [single]
 
     steps:
