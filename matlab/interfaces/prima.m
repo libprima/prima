@@ -252,7 +252,7 @@ function [x, fx, exitflag, output] = prima(varargin)
 %       min cos(x) s.t. 2 * x <= 3
 %   starting from x0 = -1 with at most 50 function evaluations.
 %
-%   See also UOBYQA, NEWUOA, BOBYQA, LINCOA, COBYLA.
+%   See also uobyqa, newuoa, bobyqa, lincoa, cobyla.
 %
 %   See www.libprima.net for more information.
 %

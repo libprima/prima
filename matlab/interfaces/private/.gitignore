@@ -5,6 +5,7 @@ all_variants.m
 all_solvers.m
 dbgstr.m
 get_mexname.m
+package_info.m
 .signature
 
 *.mexa64*

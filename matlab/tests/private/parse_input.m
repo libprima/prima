@@ -52,7 +52,7 @@ function [solver, options] = parse_input(argin)
 
 callstack = dbstack;
 invoker = callstack(2).name;  % The function that calls this function.
-known_solvers = {'cobyla','uobyqa','newuoa','bobyqa','lincoa'};
+known_solvers = {'cobyla','uobyqa','newuoa','bobyqa','lincoa', 'prima'};
 known_sizes = {'small', 'big', 'large', 'all'};
 nocompile_flags = {'nocompile', 'ncp'};
 sequential_flags = {'sequential', 'seq'};
@@ -197,7 +197,7 @@ if isempty(prob)
     options.maxdim = maxdim;
 
     % Revise the dimension range for COBYLA and UOBYQA.
-    if strcmpi(solver, 'cobyla') || strcmpi(solver, 'uobyqa')
+    if strcmpi(solver, 'cobyla') || strcmpi(solver, 'uobyqa') || strcmpi(solver, 'prima')
         if options.maxdim == 50
             options.maxdim = 20;
         end

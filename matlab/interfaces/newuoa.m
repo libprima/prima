@@ -152,7 +152,7 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %       min cos(x)
 %   starting from x0 = -1 with at most 50 function evaluations.
 %
-%   See also prima, UOBYQA, BOBYQA, LINCOA, COBYLA.
+%   See also prima, uobyqa, bobyqa, lincoa, cobyla.
 %
 %   See www.libprima.net for more information.
 %

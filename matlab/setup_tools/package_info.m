@@ -18,7 +18,7 @@ function information = package_info(request)
 % package_info starts
 
 % Who is calling this function? Is it a correct invoker?
-invoker_list = {'prima', 'preprima'};
+invoker_list = {'prima', 'preprima', 'parse_input'};
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1 || ~ismember(callstack(2).name, invoker_list))
@@ -43,11 +43,11 @@ maintainer = 'Zaikun Zhang';
 
 credits = {'Tom M. Ragonneau', 'Zaikun Zhang'};
 
-license = 'LGPLv3+';
+license = 'BSD-3-Clause license';
 
-version = '0.9';
+version = '0.4';
 
-date = 'January, 2023';
+date = 'May, 2023';
 
 status = 'Development';
 
