@@ -54,7 +54,7 @@ else
     % Decide which solver(s) to compile.
     if ismember(solver, all_solvers())
         solver_list = {solver};
-    elseif strcmpi(solver, 'ALL')
+    elseif strcmpi(solver, 'all') || strcmpi(solver, package_info('name'))
         solver_list = all_solvers();
     else
         fprintf('\nUnknown solver ''%s'' to compile.\n\n', solver);

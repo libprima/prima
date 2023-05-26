@@ -31,8 +31,6 @@ nr = 5;
 ctol = 1e-10;  % A point is considered feasible if its constraint violation is less than ctol.
 ctol_multiple = 1;  % The real ctol to use is ctol*ctol_multiple.
 cpenalty = 1e10;  % The penalty to use when the constraint violation is greater than ctol.
-%ctol = 1e-8;
-%cpenalty = 1e8;
 type = 'ubln'; % The default types of problems to test
 mindim = 1; % The default minimal dimension of problems to test
 if any(startsWith(solvers, 'cobyla'))
@@ -438,7 +436,11 @@ for k = 1 : nf - nhist
 end
 xhist(:, nf - nhist + 1 : nf) = output.xhist(:, 1 : nhist);
 
-if (nf >= 1)
+if (nf <= 0)
+    % Sometimes PRIMA may return nf = 0, e.g., when it detects infeasibility.
+    fval_history = prob.f0;
+    cv_history = prob.constrv0;
+else
     % Use xhist and the original data of the problem to get fval_history and cv_history. Do NOT use
     % the information returned by the solver, as the solver may change the data (e.g., lincoa
     % may modify the right-hand side of linear constraints when x0 is infeasible; in addition, it
@@ -461,10 +463,6 @@ if (nf >= 1)
     %fval_history(nf+2:maxfun) = fval_history(nf);
     %cv_history(nf+2:maxfun) = cv_history(nf);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-else
-    % Sometimes PRIMA may return nf = 0, e.g., when it detects infeasibility.
-    fval_history = prob.f0;
-    cv_history = prob.constrv0;
 end
 
 cv_history(isnan(cv_history)) = Inf;
