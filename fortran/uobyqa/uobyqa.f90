@@ -94,11 +94,6 @@ subroutine uobyqa(calfun, x, f, &
 !   Input, INTEGER(IK) scalar, default: MAXFUN_DIM_DFT*N with MAXFUN_DIM_DFT defined in the module
 !   CONSTS_MOD (see common/consts.F90). MAXFUN is the maximal number of calls of CALFUN.
 !
-! NPT
-!   Input, INTEGER(IK) scalar, default: 2N + 1.
-!   NPT is the number of interpolation conditions for each trust region model. Its value must be in
-!   the interval [N+2, (N+1)(N+2)/2].
-!
 ! IPRINT
 !   Input, INTEGER(IK) scalar, default: 0.
 !   The value of IPRINT should be set to 0, 1, -1, 2, -2, 3, or -3, which controls how much
