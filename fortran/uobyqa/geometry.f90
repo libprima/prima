@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 10, 2023 PM08:38:05
+! Last Modified: Monday, May 29, 2023 PM06:53:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -269,7 +269,7 @@ gg = sum(g**2)
 ghg = inprod(g, matprod(h, g))
 
 ! Calculate the Cauchy step as a backup. Powell's code does not have this, and D may be 0 or NaN.
-if (gg > 0) then
+if (gg > 0 .and. is_finite(gg)) then
     dcauchy = (delbar / sqrt(gg)) * g
     if (ghg < 0) then
         dcauchy = -dcauchy
