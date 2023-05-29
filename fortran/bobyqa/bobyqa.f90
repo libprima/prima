@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 08, 2023 PM03:13:19
+! Last Modified: Monday, May 29, 2023 PM07:24:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -155,6 +155,13 @@ subroutine bobyqa(calfun, x, f, &
 !   MAXHIST will be reset to a smaller value if the memory needed exceeds MAXHISTMEM defined in
 !   CONSTS_MOD (see consts.F90 under the directory named "common").
 !   Use *HIST with caution! (N.B.: the algorithm is NOT designed for large problems).
+!
+! HONOUR_X0
+!  Input, LOGICAL scalar, default: .true. if RHOBEG is absent, and .false. if RHOBEG is present.
+!  HONOUR_X0 indicates whether to respect the user-defined X0 or not. The BOBYQA algorithm requires
+!  that the distance between X0 and the inactive bounds is at least RHOBEG. X0 or RHOBEG is revised
+!  if this requirement is not met. If HONOUR_X0 == TRUE, revise RHOBEG if needed; otherwise, revise
+!  X0 if needed. See the PREPROC subroutine for more information.
 !
 ! INFO
 !   Output, INTEGER(IK) scalar.
