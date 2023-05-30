@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 31, 2023 AM12:35:53
+! Last Modified: Wednesday, May 31, 2023 AM12:56:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -295,7 +295,7 @@ real(RP) :: denabs
 real(RP) :: distsq(size(xpt, 2))
 real(RP) :: glag(size(xpt, 1))
 real(RP) :: gstp(size(xpt, 1))
-real(RP) :: normg
+real(RP) :: gnorm
 real(RP) :: pglag(size(xpt, 1))
 real(RP) :: pgstp(size(xpt, 1))
 real(RP) :: pqlag(size(xpt, 2))
@@ -382,9 +382,9 @@ den = calden(kopt, bmat, s, xpt, zmat, idz)  ! Indeed, only DEN(KNEW) is needed.
 denabs = abs(den(knew))
 
 ! Replace S with a steepest ascent step from XOPT if the latter provides a larger value of DENABS.
-normg = norm(glag)
-if (normg > EPS .and. is_finite(normg)) then
-    gstp = (delbar / normg) * glag
+gnorm = norm(glag)
+if (gnorm > EPS .and. is_finite(gnorm)) then
+    gstp = (delbar / gnorm) * glag
     if (inprod(gstp, hess_mul(gstp, xpt, pqlag)) < 0) then  ! <GSTP, HESS_LAG*GSTP> is negative
         gstp = -gstp
     end if
@@ -415,9 +415,9 @@ feasible = (cstrv <= 0)
 ! In the following, NORMG > EPS prevents floating point exception, and it implies NACT < N.
 pglag = matprod(qfac(:, nact + 1:n), matprod(glag, qfac(:, nact + 1:n)))
 !!MATLAB: pglag = qfac(:, nact+1:n) * (glag' * qfac(:, nact+1:n))';
-normg = norm(pglag)
-if (nact > 0 .and. normg > EPS .and. is_finite(normg)) then
-    pgstp = (delbar / normg) * pglag
+gnorm = norm(pglag)
+if (nact > 0 .and. gnorm > EPS .and. is_finite(gnorm)) then
+    pgstp = (delbar / gnorm) * pglag
     if (inprod(pgstp, hess_mul(pgstp, xpt, pqlag)) < 0) then  ! <PGSTP, HESS_LAG*PGSTP> is negative.
         pgstp = -pgstp
     end if
