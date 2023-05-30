@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 30, 2023 PM02:36:34
+! Last Modified: Tuesday, May 30, 2023 PM02:50:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -389,7 +389,8 @@ if (any(is_inf(glag))) then
     glag = sign(ONE, glag)  !!MATLAB: glag = sign(glag);
 end if
 normg = norm(glag)
-if (normg > EPS) then
+if (normg > 0) then
+!if (normg > EPS) then
     gstp = (delbar / normg) * glag
     if (inprod(gstp, hess_mul(gstp, xpt, pqlag)) < 0) then  ! <GSTP, HESS_LAG*GSTP> is negative
         gstp = -gstp
