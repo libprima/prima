@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 03, 2023 PM02:02:09
+! Last Modified: Tuesday, May 30, 2023 PM06:28:30
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -121,23 +121,21 @@ use tetrahedron_mod, only : RP, calfun, setup
 
 implicit none
 
-integer, parameter :: n = 12
-integer, parameter :: np = 50
-integer :: nf
-real(RP) :: x(n), f
-real(RP) :: x0(n), A(n, 4 * np), b(4 * np)
+integer, parameter :: n = 12, np = 50
+integer :: nf, info
+real(RP) :: f, cstrv, x(n), x0(n), A(n, 4 * np), b(4 * np)
 
 ! Set up X0 (starting point), A, and b.
 call setup(x0, A, b)
 
 ! The following lines illustrates how to call the solver.
 x = x0
-call lincoa(calfun, x, f, A=A, b=b, nf=nf)  ! This call will not print anything.
+call lincoa(calfun, x, f, cstrv, A, b)  ! This call will not print anything.
 
 ! In addition to the compulsory arguments, the following illustration specifies also RHOBEG and
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call lincoa(calfun, x, f, A=A, b=b, rhobeg=1.0_RP, iprint=1, nf=nf)
+call lincoa(calfun, x, f, cstrv, A, b, rhobeg=1.0_RP, iprint=1, nf=nf, info=info)
 
 end program lincoa_exmp

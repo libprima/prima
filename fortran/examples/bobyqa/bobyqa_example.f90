@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 03, 2023 PM02:00:36
+! Last Modified: Tuesday, May 30, 2023 PM06:26:48
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -61,12 +61,9 @@ use calfun_mod, only : RP, calfun
 
 implicit none
 
-integer :: i
 integer, parameter :: n = 20
-integer :: nf
-real(RP) :: x(n)
-real(RP) :: f
-real(RP) :: x0(n), lb(n), ub(n), angle
+integer :: i, nf, info
+real(RP) :: f, x(n), x0(n), lb(n), ub(n), angle
 
 ! Define the starting point.
 do i = 1, n / 2
@@ -85,7 +82,7 @@ call bobyqa(calfun, x, f, lb, ub)  ! This call will not print anything.
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call bobyqa(calfun, x, f, lb, ub, rhobeg=1.0D-1, iprint=2, nf=nf)
+call bobyqa(calfun, x, f, lb, ub, rhobeg=1.0D-1, iprint=1, nf=nf, info=info)
 
 
 end program bobyqa_exmp
