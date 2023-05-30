@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 30, 2023 AM10:33:59
+! Last Modified: Tuesday, May 30, 2023 PM01:57:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -259,7 +259,7 @@ subroutine geostep(iact, idz, knew, kopt, nact, amat, bmat, delbar, qfac, rescon
 ! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_inf
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc, norm
 use, non_intrinsic :: powalg_mod, only : hess_mul, omega_col, calden
 
@@ -390,8 +390,15 @@ den = calden(kopt, bmat, s, xpt, zmat, idz)  ! Indeed, only DEN(KNEW) is needed.
 denabs = abs(den(knew))
 
 ! Replace S with a steepest ascent step from XOPT if the latter provides a larger value of DENABS.
+! Before doing so, we handle the non-finite values in GLAG to avoid floating-point exceptions.
+glag(trueloc(is_nan(glag))) = ZERO
+if (any(is_inf(glag))) then
+    glag(trueloc(is_finite(glag))) = ZERO
+    glag = sign(ONE, glag)  !!MATLAB: glag = sign(glag);
+end if
 normg = norm(glag)
 if (normg > 0) then
+!if (normg > EPS) then
     gstp = (delbar / normg) * glag
     if (inprod(gstp, hess_mul(gstp, xpt, pqlag)) < 0) then  ! <GSTP, HESS_LAG*GSTP> is negative
         gstp = -gstp
@@ -423,6 +430,11 @@ feasible = (cstrv <= 0)
 ! small and leads to good feasibility. **This strategy is critical for the performance of LINCOA.**
 pglag = matprod(qfac(:, nact + 1:n), matprod(glag, qfac(:, nact + 1:n)))
 !!MATLAB: pglag = qfac(:, nact+1:n) * (glag' * qfac(:, nact+1:n))';
+pglag(trueloc(is_nan(pglag))) = ZERO
+if (any(is_inf(pglag))) then
+    pglag(trueloc(is_finite(pglag))) = ZERO
+    pglag = sign(ONE, pglag)  !!MATLAB: pglag = sign(pglag);
+end if
 normg = norm(pglag)
 if (nact > 0 .and. nact < n .and. normg > EPS) then  ! EPS prevents floating point exception.
     pgstp = (delbar / normg) * pglag
