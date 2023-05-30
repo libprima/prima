@@ -10,7 +10,7 @@
 
 
 !-------------------------------- THE MODULE THAT IMPLEMENTS CALFUN -------------------------------!
-module calfun_mod
+module calfun_newuoa_mod
 
 implicit none
 private
@@ -47,7 +47,7 @@ do i = 1, n + 1
 end do
 end subroutine calfun
 
-end module calfun_mod
+end module calfun_newuoa_mod
 
 
 !---------------------------------------- THE MAIN PROGRAM ----------------------------------------!
@@ -57,7 +57,7 @@ program newuoa_exmp
 use newuoa_mod, only : newuoa
 
 ! The following line specifies which module provides CALFUN.
-use calfun_mod, only : RP, calfun
+use calfun_newuoa_mod, only : RP, calfun
 
 implicit none
 

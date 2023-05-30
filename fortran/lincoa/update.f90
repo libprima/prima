@@ -1,4 +1,4 @@
-module update_mod
+module update_lincoa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the updates when XPT(:, KNEW) becomes XNEW = XOPT + D.
 !
@@ -388,4 +388,4 @@ end if
 end subroutine updateres
 
 
-end module update_mod
+end module update_lincoa_mod

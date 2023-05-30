@@ -1,4 +1,4 @@
-module trustregion_mod
+module trustregion_newuoa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region calculations of NEWUOA.
 !
@@ -552,4 +552,4 @@ end if
 end function trrad
 
 
-end module trustregion_mod
+end module trustregion_newuoa_mod

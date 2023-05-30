@@ -1,4 +1,4 @@
-module initialize_mod
+module initialize_bobyqa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the initialization of BOBYQA, described in Section 2 of the BOBYQA paper.
 !
@@ -547,4 +547,4 @@ end if
 end subroutine inith
 
 
-end module initialize_mod
+end module initialize_bobyqa_mod

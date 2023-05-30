@@ -1,4 +1,4 @@
-module trustregion_mod
+module trustregion_uobyqa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region calculations of UOBYQA.
 !
@@ -646,4 +646,4 @@ end if
 end function trrad
 
 
-end module trustregion_mod
+end module trustregion_uobyqa_mod

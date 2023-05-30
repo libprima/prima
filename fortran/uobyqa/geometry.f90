@@ -1,4 +1,4 @@
-module geometry_mod
+module geometry_uobyqa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines concerning the geometry-improving of the interpolation set XPT.
 !
@@ -439,4 +439,4 @@ end if
 end function geostep
 
 
-end module geometry_mod
+end module geometry_uobyqa_mod

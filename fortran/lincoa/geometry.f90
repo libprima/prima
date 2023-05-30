@@ -1,4 +1,4 @@
-module geometry_mod
+module geometry_lincoa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines concerning the geometry-improving of the interpolation set XPT.
 !
@@ -470,4 +470,4 @@ end if
 end subroutine geostep
 
 
-end module geometry_mod
+end module geometry_lincoa_mod

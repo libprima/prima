@@ -1,4 +1,4 @@
-module geometry_mod
+module geometry_newuoa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines concerning the geometry-improving of the interpolation set XPT.
 !
@@ -873,4 +873,4 @@ f = inprod(args, par)
 end function circle_fun_bigden
 
 
-end module geometry_mod
+end module geometry_newuoa_mod

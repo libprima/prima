@@ -55,10 +55,10 @@ use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
 
 ! Solver-specific modules
-use, non_intrinsic :: geometry_mod, only : assess_geo, setdrop_geo, setdrop_tr, geostep
-use, non_intrinsic :: initialize_mod, only : initxfc, initfilt
-use, non_intrinsic :: trustregion_mod, only : trstlp, trrad
-use, non_intrinsic :: update_mod, only : updatexfc, updatepole
+use, non_intrinsic :: geometry_cobyla_mod, only : assess_geo, setdrop_geo, setdrop_tr, geostep
+use, non_intrinsic :: initialize_cobyla_mod, only : initxfc, initfilt
+use, non_intrinsic :: trustregion_cobyla_mod, only : trstlp, trrad
+use, non_intrinsic :: update_cobyla_mod, only : updatexfc, updatepole
 
 implicit none
 
@@ -684,8 +684,8 @@ use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isinv
 
 ! Solver-specific modules
-use, non_intrinsic :: trustregion_mod, only : trstlp
-use, non_intrinsic :: update_mod, only : findpole, updatepole
+use, non_intrinsic :: trustregion_cobyla_mod, only : trstlp
+use, non_intrinsic :: update_cobyla_mod, only : findpole, updatepole
 
 implicit none
 
