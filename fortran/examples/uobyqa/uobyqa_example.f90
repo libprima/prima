@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 03, 2023 PM02:22:34
+! Last Modified: Tuesday, May 30, 2023 PM06:33:27
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -61,20 +61,18 @@ use calfun_mod, only : RP, calfun
 
 implicit none
 
-integer :: i
 integer, parameter :: n = 6
-real(RP) :: x(n)
-real(RP) :: f
-integer :: nf
+integer :: i, nf, info
+real(RP) :: f, x(n)
 
 ! The following lines illustrates how to call the solver to solve the Chebyquad problem.
 x = [(real(i, RP) / real(n + 1, RP), i=1, n)]  ! Starting point
-call uobyqa(calfun, x, f, nf=nf)  ! This call will not print anything.
+call uobyqa(calfun, x, f)  ! This call will not print anything.
 
 ! In addition to the compulsory arguments, the following illustration specifies also RHOBEG and IPRINT,
 ! which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will take their
 ! default values coded in the solver.
 x = [(real(i, RP) / real(n + 1, RP), i=1, n)]  ! Starting point
-call uobyqa(calfun, x, f, rhobeg=0.2_RP * x(1), iprint=1, nf=nf)
+call uobyqa(calfun, x, f, rhobeg=0.2_RP * x(1), iprint=1, nf=nf, info=info)
 
 end program uobyqa_exmp
