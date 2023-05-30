@@ -22,8 +22,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         matlab: [latest]
-          #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        solver: [lincoa]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         dim: [small]
     steps:
       - name: Check out repository
@@ -72,7 +71,6 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
             options.verbose = true;
-            options.list={'DALLASS', 'TOINTPSP'}
             verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
