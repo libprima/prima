@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 10, 2023 PM08:35:18
+! Last Modified: Tuesday, May 30, 2023 AM10:33:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,6 +40,9 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric
 use, non_intrinsic :: powalg_mod, only : calden
+
+use, non_intrinsic :: fprint_mod, only : fprint
+use, non_intrinsic :: string_mod, only : num2str
 
 implicit none
 
@@ -151,6 +154,7 @@ weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA cod
 ! avoids this problem. However, such a DISTSQ itself seems not ideal, as mentioned above.
 !--------------------------------------------------------------------------------------------------!
 
+call fprint('156 '//num2str(d))
 den = calden(kopt, bmat, d, xpt, zmat, idz)
 score = weight * abs(den)
 
@@ -258,6 +262,9 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isorth, maximum, trueloc, norm
 use, non_intrinsic :: powalg_mod, only : hess_mul, omega_col, calden
+
+use, non_intrinsic :: fprint_mod, only : fprint
+use, non_intrinsic :: string_mod, only : num2str
 
 implicit none
 
@@ -378,6 +385,7 @@ if (any(vlagabs > vlagabs(knew))) then
 end if
 ! Set S to the step corresponding to VLAGABS(K), and calculate DENABS for it.
 s = stplen(k) * (xpt(:, k) - xopt)
+call fprint('386 '//num2str(s))
 den = calden(kopt, bmat, s, xpt, zmat, idz)  ! Indeed, only DEN(KNEW) is needed.
 denabs = abs(den(knew))
 
@@ -388,6 +396,7 @@ if (normg > 0) then
     if (inprod(gstp, hess_mul(gstp, xpt, pqlag)) < 0) then  ! <GSTP, HESS_LAG*GSTP> is negative
         gstp = -gstp
     end if
+    call fprint('397 '//num2str(gstp))
     den = calden(kopt, bmat, gstp, xpt, zmat, idz)  ! Indeed, only DEN(KNEW) is needed.
     if (abs(den(knew)) > denabs .or. is_nan(denabs)) then
         denabs = abs(den(knew))
@@ -428,6 +437,7 @@ if (nact > 0 .and. nact < n .and. normg > EPS) then  ! EPS prevents floating poi
     cvtol = min(0.01_RP * norm(pgstp), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
     take_pgstp = .false.
     if (cstrv <= cvtol) then
+        call fprint('438 '//num2str(pgstp))
         den = calden(kopt, bmat, pgstp, xpt, zmat, idz)  ! Indeed, only DEN(KNEW) is needed.
         take_pgstp = (abs(den(knew)) > TENTH * denabs)
     end if
