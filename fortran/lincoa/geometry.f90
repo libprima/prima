@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, May 30, 2023 PM02:32:22
+! Last Modified: Tuesday, May 30, 2023 PM02:33:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -382,7 +382,7 @@ den = calden(kopt, bmat, s, xpt, zmat, idz)  ! Indeed, only DEN(KNEW) is needed.
 denabs = abs(den(knew))
 
 ! Replace S with a steepest ascent step from XOPT if the latter provides a larger value of DENABS.
-! Before doing so, we handle the non-finite values in GLAG to avoid floating-point exceptions.
+! Before doing so, we handle non-finite values in GLAG to avoid floating-point exceptions.
 glag(trueloc(is_nan(glag))) = ZERO
 if (any(is_inf(glag))) then
     glag(trueloc(is_finite(glag))) = ZERO
@@ -421,7 +421,7 @@ feasible = (cstrv <= 0)
 ! small and leads to good feasibility. **This strategy is critical for the performance of LINCOA.**
 pglag = matprod(qfac(:, nact + 1:n), matprod(glag, qfac(:, nact + 1:n)))
 !!MATLAB: pglag = qfac(:, nact+1:n) * (glag' * qfac(:, nact+1:n))';
-! Handle the non-finite values in PGLAG to avoid floating-point exceptions.
+! Handle non-finite values in PGLAG to avoid floating-point exceptions.
 pglag(trueloc(is_nan(pglag))) = ZERO
 if (any(is_inf(pglag))) then
     pglag(trueloc(is_finite(pglag))) = ZERO
