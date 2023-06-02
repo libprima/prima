@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 12, 2023 PM11:41:00
+! Last Modified: Friday, June 02, 2023 PM03:42:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -365,12 +365,10 @@ end if
 ! K+1 of Q (as well as rows K and K+1 of R). This makes sure that the entires of the update RDIAG
 ! are all positive if it is the case for the original RDIAG.
 do k = i, n - 1_IK
-    !hypt = hypotenuse(Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1)))
-    !hypt = sqrt(Rdiag(k + 1)**2 + inprod(Q(:, k), A(:, k + 1))**2)
     G = planerot([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
     Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
-
-    ! Powell's code updates RDIAG in the following way.
+    ! Powell's code updates RDIAG in the following way:
+    ! !HYPT = SQRT(RDIAG(K + 1)**2 + INPROD(Q(:, K), A(:, K + 1))**2)
     ! !RDIAG([K, K + 1_IK]) = [HYPT, (RDIAG(K + 1) / HYPT) * RDIAG(K)]
     ! Note that RDIAG(N) inherits all rounding in RDIAG(I:N-1) and Q(:, I:N-1) and hence contain
     ! significant errors. Thus we may modify Powell's code to set only RDIAG(K) = HYPT here and then

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, April 15, 2023 PM02:42:37
+! Last Modified: Friday, June 02, 2023 PM04:03:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -418,8 +418,8 @@ do iter = 1, maxiter
         end if
     else  ! ICON <= NACT
         ! Delete the constraint with the index IACT(ICON) from the active set, which is done by
-        ! reordering IACT(ICONT:NACT) into [IACT(ICON+1:NACT), IACT(ICON)] and then reduce NACT to
-        ! NACT - 1. In theory, ICON > 0.
+        ! reordering IACT(ICONT:NACT) into [IACT(ICON+1:NACT), IACT(ICON)] by pairwise exchanges
+        ! and then reduce NACT to NACT - 1. In theory, ICON > 0.
         call validate(icon > 0, 'ICON > 0', srname)
         call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), icon)  ! QREXC does nothing if ICON==NACT.
         ! Indeed, it suffices to pass Z(:, 1:NACT) to QREXC as follows.

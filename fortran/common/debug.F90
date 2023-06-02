@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Wednesday, May 31, 2023 AM12:27:05
+! Last Modified: Wednesday, May 31, 2023 AM03:29:08
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -109,8 +109,8 @@ call backtr()
 write (STDERR, '(/A/)') 'ERROR: '//trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
 if (present(code)) then
     ! N.B.: In Fortran 2008, stop code must be a scalar default character or integer CONSTANT
-    ! expression, but Fortran 2018 leverages the requirement on constancy. gfortran is strict in
-    ! this aspect. Consequently, for gfortran, compile with either `-std=f2018` or no `-std` at all.
+    ! expression, but Fortran 2018 lifts the requirement on constancy. gfortran is strict in this
+    ! aspect. Consequently, for gfortran, compile with either `-std=f2018` or no `-std` at all.
     error stop code
 else
     error stop

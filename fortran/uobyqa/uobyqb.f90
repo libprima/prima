@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 12, 2023 PM06:44:37
+! Last Modified: Friday, June 02, 2023 PM05:14:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -119,13 +119,13 @@ real(RP) :: delbar
 real(RP) :: delta
 real(RP) :: distsq((size(x) + 1) * (size(x) + 2) / 2)
 real(RP) :: dnorm
-real(RP) :: dnormsav(2)  ! Powell's implementation: DNORMSAV(3)
+real(RP) :: dnorm_rec(2)  ! Powell's implementation: DNORM_REC(3)
 real(RP) :: fval(size(distsq))
 real(RP) :: g(size(x))
 real(RP) :: gamma3
 real(RP) :: h(size(x), size(x))
 real(RP) :: moderr
-real(RP) :: moderrsav(size(dnormsav))
+real(RP) :: moderr_rec(size(dnorm_rec))
 real(RP) :: pl(size(distsq) - 1, size(distsq))
 real(RP) :: pq(size(distsq) - 1)
 real(RP) :: qred
@@ -187,8 +187,8 @@ delta = rho
 shortd = .false.
 ratio = -ONE
 ddmove = -ONE
-dnormsav = REALMAX
-moderrsav = REALMAX
+dnorm_rec = REALMAX
+moderr_rec = REALMAX
 knew_tr = 0
 knew_geo = 0
 
@@ -249,13 +249,13 @@ do tr = 1, maxtr
             exit
         end if
 
-        ! Update DNORMSAV and MODERRSAV.
-        ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
-        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+        ! Update DNORM_REC and MODERR_REC.
+        ! DNORM_REC records the DNORM of the latest 3 function evaluations with the current RHO.
+        dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
         ! MODERR is the error of the current model in predicting the change in F due to D.
-        ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
+        ! MODERR_REC records the prediction errors of the latest 3 models with the current RHO.
         moderr = f - fval(kopt) + qred
-        moderrsav = [moderrsav(2:size(moderrsav)), moderr]
+        moderr_rec = [moderr_rec(2:size(moderr_rec)), moderr]
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(fval(kopt) - f, qred, eta1)
@@ -293,7 +293,7 @@ do tr = 1, maxtr
     ! 2. If an iteration sets IMPROVE_GEO = TRUE, it must also reduce DELTA or set DELTA to RHO.
 
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
-    accurate_mod = all(abs(moderrsav) <= 0.125_RP * crvmin * rho**2) .and. all(dnormsav <= rho)
+    accurate_mod = all(abs(moderr_rec) <= 0.125_RP * crvmin * rho**2) .and. all(dnorm_rec <= rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
@@ -401,14 +401,14 @@ do tr = 1, maxtr
             exit
         end if
 
-        ! Update DNORMSAV and MODERRSAV.
-        ! DNORMSAV contains the DNORM of the latest 3 function evaluations with the current RHO.
+        ! Update DNORM_REC and MODERR_REC.
+        ! DNORM_REC records the DNORM of the latest 3 function evaluations with the current RHO.
         dnorm = min(delbar, norm(d))   ! In theory, DNORM = DELBAR in this case.
-        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+        dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
         ! MODERR is the error of the current model in predicting the change in F due to D.
-        ! MODERRSAV is the prediction errors of the latest 3 models with the current RHO.
+        ! MODERR_REC records the prediction errors of the latest 3 models with the current RHO.
         moderr = f - fval(kopt) - quadinc(pq, d, xpt(:, kopt))  ! QUADINC = Q(XOPT + D) - Q(XOPT)
-        moderrsav = [moderrsav(2:size(moderrsav)), moderr]
+        moderr_rec = [moderr_rec(2:size(moderr_rec)), moderr]
 
         ! Update PL, PQ, XPT, FVAL, and KOPT so that XPT(:, KNEW_GEO) becomes XOPT + D.
         call update(knew_geo, d, f, moderr, kopt, fval, pl, pq, xpt)
@@ -426,10 +426,10 @@ do tr = 1, maxtr
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, delta, fval(kopt), rho, xbase + xpt(:, kopt))
-        ! DNORMSAV and MODERRSAV are corresponding to the latest 3 function evaluations with
+        ! DNORM_REC and MODERR_REC are corresponding to the latest 3 function evaluations with
         ! the current RHO. Update them after reducing RHO.
-        dnormsav = REALMAX
-        moderrsav = REALMAX
+        dnorm_rec = REALMAX
+        moderr_rec = REALMAX
     end if
 
     ! Shifting XBASE to the best point so far, and make the corresponding changes to the gradients
