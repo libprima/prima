@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, May 19, 2023 PM03:27:28
+! Last Modified: Friday, June 02, 2023 PM05:10:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -385,8 +385,8 @@ do tr = 1, maxtr
         ! In theory, PREREM >= 0, but this can fail due to rounding errors.
         !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')
 
-        !dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
-        !moderrsav = [moderrsav(2:size(moderrsav)), maxval(abs([f - fval(n + 1) + preref, cstrv - cval(n + 1) + prerec]))]
+        !dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
+        !moderr_rec = [moderr_rec(2:size(moderr_rec)), maxval(abs([f - fval(n + 1) + preref, cstrv - cval(n + 1) + prerec]))]
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(actrem, prerem, eta1)
@@ -491,8 +491,8 @@ do tr = 1, maxtr
     ! in the UOBYQA paper and the discussions about Box 14 in the NEWUOA paper. This strategy is
     ! crucial for the performance of the solvers. However, as of 20221111, we have not managed to
     ! make it work in COBYLA. As in NEWUOA, we recorded the errors of the recent models, and set
-    ! REDUCE_RHO to true if they are small (e.g., ALL(ABS(MODERRSAV) <= 0.1 * MAXVAL(ABS(A))*RHO) or
-    ! ALL(ABS(MODERRSAV) <= RHO**2)) when SHORTD is TRUE. It made little impact on the performance.
+    ! REDUCE_RHO to true if they are small (e.g., ALL(ABS(MODERR_REC) <= 0.1 * MAXVAL(ABS(A))*RHO) or
+    ! ALL(ABS(MODERR_REC) <= RHO**2)) when SHORTD is TRUE. It made little impact on the performance.
 
 
     ! Since COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously, the following

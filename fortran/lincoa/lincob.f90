@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 12, 2023 PM06:49:39
+! Last Modified: Friday, June 02, 2023 PM05:11:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -172,7 +172,7 @@ real(RP) :: delbar
 real(RP) :: delta
 real(RP) :: distsq(npt)
 real(RP) :: dnorm
-real(RP) :: dnormsav(4)  ! Powell's implementation uses 5
+real(RP) :: dnorm_rec(4)  ! Powell's implementation uses 5
 real(RP) :: ffilt(maxfilt)
 real(RP) :: fval(npt), cval(npt)
 real(RP) :: galt(size(x))
@@ -297,7 +297,7 @@ rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
 rho = rhobeg
 delta = rho
 ratio = -ONE
-dnormsav = REALMAX
+dnorm_rec = REALMAX
 shortd = .false.
 qalt_better = .false.
 knew_tr = 0
@@ -346,16 +346,16 @@ do tr = 1, maxtr
     ! !SHORTD = (DNORM < HALF * RHO)
     !------------------------------------------------------------------------------------------!
 
-    ! DNORMSAV saves the DNORM of last few (five) trust-region iterations. It will be used to
+    ! DNORM_REC records the DNORM of last few (five) trust-region iterations. It will be used to
     ! decide whether we should improve the geometry of the interpolation set or reduce RHO when
     ! SHORTD is TRUE. Note that it does not record the geometry steps.
-    dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+    dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
 
-    ! In some cases, we reset DNORMSAV to REALMAX. This indicates a preference of improving the
+    ! In some cases, we reset DNORM_REC to REALMAX. This indicates a preference of improving the
     ! geometry of the interpolation set to reducing RHO in the subsequent three or more
     ! iterations. This is important for the performance of LINCOA.
     if (delta > rho .or. .not. shortd) then  ! Another possibility: IF (DELTA > RHO) THEN
-        dnormsav = REALMAX
+        dnorm_rec = REALMAX
     end if
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
@@ -460,9 +460,9 @@ do tr = 1, maxtr
     ! verify a curvature condition that really indicates that recent models are sufficiently
     ! accurate. Here, however, we are not really sure whether they are accurate or not. Therefore,
     ! ACCURATE_MOD is not the best name, but we keep it to align with the other solvers.
-    accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= 0.2 * rho)
-    ! Powell's version (note that size(dnormsav) = 5 in his implementation):
-    !accurate_mod = all(dnormsav <= HALF * rho) .or. all(dnormsav(3:size(dnormsav)) <= TENTH * rho)
+    accurate_mod = all(dnorm_rec <= HALF * rho) .or. all(dnorm_rec(3:size(dnorm_rec)) <= 0.2 * rho)
+    ! Powell's version (note that size(dnorm_rec) = 5 in his implementation):
+    !accurate_mod = all(dnorm_rec <= HALF * rho) .or. all(dnorm_rec(3:size(dnorm_rec)) <= TENTH * rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
@@ -590,9 +590,9 @@ do tr = 1, maxtr
         delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, delta, fval(kopt), rho, xbase + xpt(:, kopt), cstrv, constr)
-        ! DNORMSAV is corresponding to the latest function evaluations with the current RHO.
+        ! DNORM_REC is corresponding to the latest function evaluations with the current RHO.
         ! Update it after reducing RHO.
-        dnormsav = REALMAX
+        dnorm_rec = REALMAX
     end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
 
     ! Shift XBASE if XOPT may be too far from XBASE.
