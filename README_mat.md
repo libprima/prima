@@ -3,7 +3,7 @@ This is the README file for using PRIMA under MATLAB.
 ## Prerequisites
 
 PRIMA supports MATLAB R2018a and later releases. To use PRIMA, you need first
-set up the [MEX](https://www.mathworks.com/help/matlab/ref/mex.html) of your
+set up the [MEX](https://www.mathworks.com/help/matlab/ref/mex.html) of your MATLAB.
 **The setup of MEX is a pure MATLAB usage problem and it has nothing to do with PRIMA.**
 
 To see whether your MEX is ready, run the following code in MATLAB:
@@ -25,7 +25,7 @@ MathWorks about "[how to set up MEX](https://www.mathworks.com/help/matlab/ref/m
 
 ## Installation
 
-Download and decompress the source code package of PRIMA, 
+Download and decompress the source code package of PRIMA,
 or clone it from [GitHub](https://github.com/libprima/prima) or [Gitee](https://gitee.com/zaikunzhang/prima).
 You will obtain a folder containing setup.m. Place this folder at the location where you
 want PRIMA to be installed. In MATLAB, change the directory to this folder,
