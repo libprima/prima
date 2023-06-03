@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 15, 2023 PM02:42:58
+! Last Modified: Saturday, June 03, 2023 PM01:30:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -121,6 +121,7 @@ npt = int(size(xpt, 2), kind(npt))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(delta > 0, 'DELTA > 0', srname)
     call assert(size(gopt_in) == n, 'SIZE(GOPT) = N', srname)
     call assert(size(hq_in, 1) == n .and. issymmetric(hq_in), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq_in) == npt, 'SIZE(PQ) = NPT', srname)

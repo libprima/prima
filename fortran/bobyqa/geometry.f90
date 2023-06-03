@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 10, 2023 PM08:38:42
+! Last Modified: Saturday, June 03, 2023 PM01:31:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -277,8 +277,7 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N+2', srname)
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(knew /= kopt, 'KNEW /= KOPT', srname)
