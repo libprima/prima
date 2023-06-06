@@ -351,7 +351,7 @@ ifeq ($(TESTDIM),small)
 	AFLANG := $(AFLANG) -Mstack_arrays
 endif
 # Strangely, with `-Mchkptr`, the compiler may not print the error message of `-Mbounds` anymore.
-DFORT := $(AFLANG) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds #-Kieee #-Mchkptr
+DFORT := $(AFLANG) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mrecursive #-Kieee #-Mchkptr
 
 dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
 	FCO := $(DFORT) $(FFLAGSO)
@@ -380,7 +380,7 @@ FFORT := $(FFORT) -pedantic-errors -Werror
 ifeq ($(TESTDIM),small)
 	FFORT := $(FFORT) -Mstack_arrays
 endif
-FFORT := $(FFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkptr #-Kieee
+FFORT := $(FFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mrecursive -Mchkptr #-Kieee
 
 ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
 	FCO := $(FFORT) $(FFLAGSO)
@@ -430,7 +430,7 @@ else
 endif
 # -fsanitize=leak,address does not work with gdb.
 FSAN := $(shell if [[ $$(gfortran -dumpversion | sed 's|\..*||') -gt 9 ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
-GFORT := $(GFORT) -std=f$(GFSTD) -fall-intrinsics \
+GFORT := $(GFORT) -std=f$(GFSTD) -fall-intrinsics -frecursive \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion -Wuninitialized -Wmaybe-uninitialized \
 	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \
 	-Wuse-without-only -Wunused-parameter -Wreturn-type \
@@ -462,19 +462,16 @@ gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d
 	FCF := $(GFORT) -Wno-function-elimination -ffpe-trap=zero,invalid $(GFF)
 
 # Intel ifort
-# -standard-semantics: enforce the compiler to behave according to the current standard (F2018 as of Dec 2021).
-#  See https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/compiler-reference/compiler-options/compiler-option-details/language-options/standard-semantics.html
-#  Option standard-semantics enables option fpscomp logicals and the following settings for option
-#  assume: byterecl, failed_images, fpe_summary, ieee_compares, ieee_fpe_flags (if the fp-model
-#  option setting is strict or precise), minus0, nan_compares, noold_inquire_recl,
-#  noold_ldout_format, noold_ldout_zero, noold_maxminloc, noold_unit_star, noold_xor,
-#  protect_parens, realloc_lhs1, recursion, std_intent_in, std_minus0_rounding1, std_mod_proc_name,
-#  and std_value1.
-#  We impose -assume norecursion, because -standard-semantics will enable -assume recursion, which
-#  will cause a warning; due to -warn errors, the compilation will abort. See
-#  https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/language-reference/a-to-z-reference/q-to-r/recursive-and-non-recursive.html
+# -standard-semantics: enforce the compiler to behave according to the current standard (F2018 as of June 2023).
+# See https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/compiler-reference/compiler-options/compiler-option-details/language-options/standard-semantics.html
+# Option standard-semantics enables option fpscomp logicals and the following settings for option
+# assume: byterecl, failed_images, fpe_summary, ieee_compares, ieee_fpe_flags (if the fp-model
+# option setting is strict or precise), minus0, nan_compares, noold_inquire_recl,
+# noold_ldout_format, noold_ldout_zero, noold_maxminloc, noold_unit_star, noold_xor,
+# protect_parens, realloc_lhs1, recursion, std_intent_in, std_minus0_rounding1, std_mod_proc_name,
+# and std_value1.
 IFORT := ifort
-IFORT := $(IFORT) -warn errors #-diag-error-limit 1
+IFORT := $(IFORT) -warn all -debug extended -warn errors -traceback -debug-parameters all #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
 # and temporary arrays in the stack storage area. We enable them for small problems to verify that
@@ -486,8 +483,7 @@ ifeq ($(TESTDIM),small)
 else
 	IFORT := $(IFORT) -auto -heap-arrays
 endif
-IFORT := $(IFORT) -stand f$(FS) -standard-semantics -assume norecursion -u -warn all -debug extended -fimplicit-none \
-	-traceback -debug-parameters all
+IFORT := $(IFORT) -standard-semantics -assume recursion -fimplicit-none
 
 itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
 	FCO := $(IFORT) $(FFLAGSO) -fp-trap=divzero
@@ -520,7 +516,7 @@ itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d
 NFORT := nagfor
 NFORT := $(NFORT) -I $(TESTSUITE_DIR)
 NFORT := $(NFORT) -colour=error:red,warn:magenta,info:cyan
-NFORT := $(NFORT) -f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
+NFORT := $(NFORT) -f$(FSTD) -recursive -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=constant_coindexing -Warn=subnormal #-Warn=allocation
 
 ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
@@ -554,7 +550,7 @@ ifeq ($(TESTDIM),small)
 else
 	VFORT := $(VFORT) -Mnostack_arrays
 endif
-VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr -Mchkstk -traceback
+VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk -Mchkptr -Mchkstk -traceback
 
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
 	FCO := $(VFORT) $(FFLAGSO) #-Ktrap=divz #-Kieee
@@ -586,7 +582,7 @@ ifeq ($(TESTDIM),small)
 else
 	RFORT := $(RFORT) -fno-stack-arrays
 endif
-RFORT := $(RFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkptr #-Kieee
+RFORT := $(RFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkptr #-Kieee
 
 rtest_i2_r4_d1_tst_c rtest_i4_r4_d1_tst_c rtest_i8_r4_d1_tst_c rtest_i2_r4_d0_tst_c rtest_i4_r4_d0_tst_c rtest_i8_r4_d0_tst_c: \
 	FCO := $(RFORT) $(FFLAGSO)
@@ -640,7 +636,7 @@ stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d
 
 # Intel ifx
 XFORT := ifx
-XFORT := $(XFORT) -warn errors
+XFORT := $(XFORT) -warn all -debug extended -warn errors -traceback -debug-parameters all #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
 # and temporary arrays in the stack storage area. We enable them for small problems to verify that
@@ -654,8 +650,7 @@ ifeq ($(TESTDIM),small)
 else
 	XFORT := $(XFORT) -auto -heap-arrays
 endif
-XFORT := $(XFORT) -stand f$(FS) -warn all -debug extended -fimplicit-none \
-	-traceback -debug-parameters all
+XFORT := $(XFORT) -standard-semantics -assume recursion -fimplicit-none
 
 xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
 	FCO := $(XFORT) $(FFLAGSO) -fp-trap=divzero
