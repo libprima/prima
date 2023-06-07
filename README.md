@@ -14,7 +14,7 @@
 - [Who was Powell?](#who-was-powell)
 - [A "fun" fact](#a-fun-fact)
 - [Acknowledgment](#acknowledgment)
-- [References](#references)
+- [Citing PRIMA](#citing-prima)
 - [Mirrors](#mirrors)
     - [Gitee](https://gitee.com/libprima/prima)
     - [GitHub](https://github.com/libprima/prima)
@@ -352,26 +352,42 @@ and PolyU 153066/21P) and [The Hong Kong Polytechnic University](https://www.pol
 in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA).
 
 
-### References
+### Citing PRIMA
 
-[1] M. J. D. Powell, A direct search optimization method that models the
+If you use PRIMA, please cite the following paper. Note that PRIMA contains [bug fixes](#bug-fixes)
+and [improvements](#improvements) that do not exist in Powell's original code.
+
+[1] Z. Zhang, PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration, available at https://github.com/libprima/prima, 2023
+
+```bibtex
+@misc{Zhang_2023,
+    title        = {PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration},
+    author       = {Zhang, Z.},
+    howpublished = {https://github.com/libprima/prima},
+    year         = 2023
+}
+```
+
+In addition, Powell’s methods can be cited as follows.
+
+[2] M. J. D. Powell, A direct search optimization method that models the
 objective and constraint functions by linear interpolation, In Advances
 in *Optimization and Numerical Analysis*, *eds.* S. Gomez and J. P. Hennart,
 pages 51--67, Springer Verlag, Dordrecht, Netherlands, 1994
 
-[2] M. J. D. Powell, UOBYQA: unconstrained optimization by quadratic
+[3] M. J. D. Powell, UOBYQA: unconstrained optimization by quadratic
 approximation, *Math. Program.*, 92(B):555--582, 2002
 
-[3] M. J. D. Powell, The NEWUOA software for unconstrained optimization
+[4] M. J. D. Powell, The NEWUOA software for unconstrained optimization
 without derivatives, In *Large-Scale Nonlinear Optimization*, *eds.* G. Di Pillo
 and M. Roma, pages 255--297, Springer, New York, US, 2006
 
-[4] M. J. D. Powell, The BOBYQA algorithm for bound constrained
+[5] M. J. D. Powell, The BOBYQA algorithm for bound constrained
 optimization without derivatives, Technical Report DAMTP 2009/NA06,
 Department of Applied Mathematics and Theoretical Physics, Cambridge
 University, Cambridge, UK, 2009
 
-[5] T. M. Ragonneau and Z. Zhang,
+[6] T. M. Ragonneau and Z. Zhang,
 [PDFO: a cross-platform package for Powell's derivative-free optimization solvers](https://arxiv.org/pdf/2302.13246.pdf),
 arXiv:2302.13246, 2023
 
@@ -382,7 +398,7 @@ arXiv:2302.13246, 2023
 linear inequality constraints without using derivatives of the objective
 function. Powell did not publish a paper to introduce the algorithm.
 
-- [The paper [5]](https://arxiv.org/pdf/2302.13246.pdf) introduces [the PDFO package](https://www.pdfo.net)
+- [The paper [6]](https://arxiv.org/pdf/2302.13246.pdf) introduces [the PDFO package](https://www.pdfo.net)
 rather than PRIMA. Nevertheless, it provides a good introduction to Powell's methods.
 
 
