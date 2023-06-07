@@ -74,7 +74,7 @@ mathematically equivalent to Powell’s, except for the
 [bug fixes](#bug-fixes) and [improvements](#improvements) made intentionally.
 
 The focus is to implement these methods in a **structured** and **modularized** way so that they
-are **understandable**, **maintainable**, **extendable**, **fault tolerant**, and **future proof**.
+are **understandable**, **maintainable**, **extendable**, **fault-tolerant**, and **future-proof**.
 The code will **have no GOTO** (of course)
 and will **use matrix-vector procedures instead of loops** whenever possible.
 In doing so, PRIMA codes the algorithms **in a way that we would present them on a blackboard**.
