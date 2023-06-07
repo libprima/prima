@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, May 10, 2023 PM08:35:36
+! Last Modified: Wednesday, June 07, 2023 PM09:05:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -377,11 +377,7 @@ d = xpt(:, knew) - x
 dd = inprod(d, d)
 gd = hess_mul(d, xpt, pqlag)  ! GD = MATPROD(XPT, PQLAG * MATPROD(D, XPT))
 
-!--------------------------------------------------------------------------------------------------!
 gc = bmat(:, knew) + hess_mul(x, xpt, pqlag) ! GC = BMAT(:,KNEW) + MATPROD(XPT,PQLAG*MATPROD(X,XPT))
-! The following is mathematically equivalent to the last but seems to work numerically better (why?)
-!gc = Ax_plus_y(xpt, pqlag * matprod(x, xpt), bmat(:, knew))
-!--------------------------------------------------------------------------------------------------!
 
 ! Scale D and GD, with a sign change if needed. Set S to another vector in the initial 2-D subspace.
 gg = inprod(gc, gc)

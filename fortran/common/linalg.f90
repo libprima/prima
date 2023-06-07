@@ -39,14 +39,13 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, April 10, 2023 PM03:23:39
+! Last Modified: Wednesday, June 07, 2023 PM09:08:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: inprod, matprod, outprod ! Mathematically, INPROD = DOT_PRODUCT, MATPROD = MATMUL
 public :: r1update, r2update, symmetrize
-public :: Ax_plus_y
 public :: eye
 public :: diag
 public :: hypotenuse, planerot
@@ -1722,53 +1721,6 @@ if (DEBUGGING) then
     call assert(issymmetric(A), 'A is symmetrized', srname)
 end if
 end subroutine symmetrize
-
-
-function Ax_plus_y(A, x, y) result(z)
-!--------------------------------------------------------------------------------------------------!
-! z = A*x + y (imagine x, y, and z as columns)
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
-
-! Inputs
-real(RP), intent(in) :: A(:, :)
-real(RP), intent(in) :: x(:)
-real(RP), intent(in) :: y(:)
-! Outputs
-real(RP) :: z(size(y))
-! Local variables
-character(len=*), parameter :: srname = 'AX_PLUS_Y'
-integer(IK) :: j
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(x) == size(A, 2) .and. size(y) == size(A, 1), 'SIZE(A) == [SIZE(Y), SIZE(X)]', &
-        & srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-!--------------------------------------------------------------------------------------------------!
-! In BIGLAG of NEWUOA, the following loop works numerically better than Z = MATPROD(A, X) + Y. Why?
-!--------------------------------------------------------------------------------------------------!
-z = y
-do j = 1, int(size(A, 2), kind(j))
-    z = z + A(:, j) * x(j)
-end do
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(z) == size(x), 'SIZE(Z) == SIZE(X)', srname)
-end if
-end function Ax_plus_y
 
 
 pure function isminor0(x, ref) result(is_minor)
