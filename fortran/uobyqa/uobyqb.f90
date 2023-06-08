@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, June 02, 2023 PM05:14:28
+! Last Modified: Thursday, June 08, 2023 AM09:10:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -222,7 +222,7 @@ do tr = 1, maxtr
     shortd = (dnorm < HALF * rho)
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
-    ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
+    ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(pq, d, xpt(:, kopt))  ! QRED = Q(XOPT) - Q(XOPT + D)
 
     if (shortd .or. .not. qred > 0) then
