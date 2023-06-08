@@ -357,13 +357,13 @@ in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/a
 If you use PRIMA, please cite it as follows. Note that PRIMA contains [bug fixes](#bug-fixes)
 and [improvements](#improvements) that do not exist in Powell's original implementation of the solvers.
 
-[1] Z. Zhang, PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration, available at https://github.com/libprima/prima, 2023
+[1] Z. Zhang, PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration, available at http://www.libprima.net, 2023
 
 ```bibtex
 @misc{Zhang_2023,
     title        = {PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration},
     author       = {Zhang, Z.},
-    howpublished = {available at https://github.com/libprima/prima},
+    howpublished = {available at http://www.libprima.net},
     year         = {2023}
 }
 ```

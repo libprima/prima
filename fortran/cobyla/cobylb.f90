@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, June 08, 2023 AM09:38:37
+! Last Modified: Thursday, June 08, 2023 AM10:21:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -285,9 +285,6 @@ do tr = 1, maxtr
     ! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
     ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
-    ! Does the interpolation set have acceptable geometry? It affects IMPROVE_GEO and REDUCE_RHO.
-    adequate_geo = assess_geo(delta, factor_alpha, factor_beta, sim, simi)
-
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
     ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
@@ -322,43 +319,33 @@ do tr = 1, maxtr
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     preref = inprod(d, A(:, m + 1))  ! Can be negative.
 
-    if (shortd .or. .not. max(prerec, preref) > 0) then
-        !! Reduce DELTA if D is short or D fails to render MAX(PREREC, PREREF) > 0. The latter can
-        !! only happen due to rounding errors. This seems quite important for performance.
-        !delta = TENTH * delta
-        !if (delta <= gamma3 * rho) then
-        !    delta = rho  ! Set DELTA to RHO when it is close to or below.
-        !end if
-    else
-        ! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
-        ! optimal vertex. See the discussions around equation (9) of the COBYLA paper.
-        ! This is the first (out of two) place where CPEN is updated. It can change CPEN only when
-        ! PREREC > 0 > PREREF, in which case PREREM is guaranteed positive after the update.
-        ! If PREREC = 0 or PREREF > 0, then PREREM is currently positive, so CPEN needs no update.
-        ! However, as in Powell's implementation, if PREREC > 0 = PREREF = CPEN, then CPEN will
-        ! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
-        ! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
-        !if ((.not. shortd) .and. prerec > 0 .and. preref < 0) then
-        if (prerec > 0 .and. preref < 0) then
-            ! In Powell's code, CPEN is increased to 2*BARMU if and only if it is currently less
-            ! than 1.5*BARMU, a very "Powellful" scheme. In our implementation, however, we set CPEN
-            ! directly to the maximum between its current value and 2*BARMU while handling possible
-            ! overflow. This simplifies the scheme without worsening the performance of COBYLA.
-            barmu = -preref / prerec  ! PREREF + BARMU * PREREC = 0
-            cpen = max(cpen, min(TWO * barmu, REALMAX))  ! The 1st (out of 2) update of CPEN.
-            if (findpole(cpen, cval, fval) <= n) then
-                call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-                ! Check whether to exit due to damaging rounding in UPDATEPOLE.
-                if (subinfo == DAMAGING_ROUNDING) then
-                    info = subinfo
-                    exit  ! Better action to take? Geometry step, or simply continue?
-                end if
-                cycle
-                ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
-                ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
-                ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
-                ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
+    ! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
+    ! optimal vertex. See the discussions around equation (9) of the COBYLA paper.
+    ! This is the first (out of two) place where CPEN is updated. It can change CPEN only when
+    ! PREREC > 0 > PREREF, in which case PREREM is guaranteed positive after the update.
+    ! If PREREC = 0 or PREREF > 0, then PREREM is currently positive, so CPEN needs no update.
+    ! However, as in Powell's implementation, if PREREC > 0 = PREREF = CPEN, then CPEN will
+    ! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
+    ! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
+    if ((.not. shortd) .and. prerec > 0 .and. preref < 0) then
+        ! Powell's code defines BARMU = -PREREF / PREREC, and CPEN is increased to 2*BARMU if and
+        ! only if it is currently less than 1.5*BARMU, a very "Powellful" scheme. In our
+        ! implementation, however, we set CPEN directly to the maximum between its current value and
+        ! 2*BARMU while handling possible overflow. This simplifies the scheme without worsening the
+        ! performance of COBYLA.
+        cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))  ! The 1st (out of 2) update of CPEN.
+        if (findpole(cpen, cval, fval) <= n) then
+            call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+            ! Check whether to exit due to damaging rounding in UPDATEPOLE.
+            if (subinfo == DAMAGING_ROUNDING) then
+                info = subinfo
+                exit  ! Better action to take? Geometry step, or simply continue?
             end if
+            cycle
+            ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
+            ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
+            ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
+            ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
         end if
     end if
 
@@ -440,7 +427,6 @@ do tr = 1, maxtr
         !    end if
         !end if
 
-        x = sim(:, n + 1) + d
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc, x, f, constr, cstrv)
