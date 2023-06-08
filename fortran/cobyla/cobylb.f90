@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, June 08, 2023 PM09:37:56
+! Last Modified: Friday, June 09, 2023 AM01:37:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -286,6 +286,9 @@ do tr = 1, maxtr
         info = subinfo
         exit  ! Better action to take? Geometry step, or simply continue?
     end if
+
+    ! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
+    ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
     ! Does the interpolation set have acceptable geometry? It affects IMPROVE_GEO and REDUCE_RHO.
     adequate_geo = assess_geo(delta, factor_alpha, factor_beta, sim, simi)
@@ -648,7 +651,6 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_neginf, is_posinf, is_nan
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, isinv
-use, non_intrinsic :: string_mod, only : num2str
 
 ! Solver-specific modules
 use, non_intrinsic :: trustregion_mod, only : trstlp
@@ -683,8 +685,6 @@ real(RP) :: preref
 real(RP), parameter :: itol = ONE
 logical :: shortd
 
-integer(IK) :: i
-
 ! Sizes
 m = int(size(conmat, 1), kind(m))
 n = int(size(sim, 1), kind(n))
@@ -716,9 +716,10 @@ end if
 info = INFO_DFT
 cpen = cpen_in
 
-i = 0_IK
 do while (.true.)
-    i = i + 1_IK
+    ! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
+    ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
+
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
     ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
@@ -762,30 +763,27 @@ do while (.true.)
     ! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
     ! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
 
-    if ((.not. shortd) .and. prerec > 0 .and. preref < 0) then
-        ! Powell's code defines BARMU = -PREREF / PREREC, and CPEN is increased to 2*BARMU if and
-        ! only if it is currently less than 1.5*BARMU, a very "Powellful" scheme. In our
-        ! implementation, however, we set CPEN directly to the maximum between its current value and
-        ! 2*BARMU while handling possible overflow. This simplifies the scheme without worsening the
-        ! performance of COBYLA.
-        cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))  ! The 1st (out of 2) update of CPEN.
+    if (shortd .or. .not. (prerec > 0 .and. preref < 0)) exit
 
-        if (findpole(cpen, cval, fval) <= n) then
-            call updatepole(cpen, conmat, cval, fval, sim, simi, info)
-            ! Check whether to exit due to damaging rounding in UPDATEPOLE.
-            if (info == DAMAGING_ROUNDING) then
-                exit  ! Better action to take? Geometry step, or simply continue?
-            end if
-            ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
-            ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
-            ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
-            ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
-        else
-            exit
-        end if
-    else
-        exit
+    ! Powell's code defines BARMU = -PREREF / PREREC, and CPEN is increased to 2*BARMU if and
+    ! only if it is currently less than 1.5*BARMU, a very "Powellful" scheme. In our
+    ! implementation, however, we set CPEN directly to the maximum between its current value and
+    ! 2*BARMU while handling possible overflow. This simplifies the scheme without worsening the
+    ! performance of COBYLA.
+    cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))  ! The 1st (out of 2) update of CPEN.
+
+    if (findpole(cpen, cval, fval) == n + 1) exit
+
+    ! TODO: move the following lines to the beginning of the loop; do not return info
+    call updatepole(cpen, conmat, cval, fval, sim, simi, info)
+    ! Check whether to exit due to damaging rounding in UPDATEPOLE.
+    if (info == DAMAGING_ROUNDING) then
+        exit  ! Better action to take? Geometry step, or simply continue?
     end if
+    ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
+    ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
+    ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
+    ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
 end do
 
 !====================!
