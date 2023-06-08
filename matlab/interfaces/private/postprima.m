@@ -576,7 +576,11 @@ if options.debug && ~options.classical
     % Check whether fx is 'optimal'
     fhistf = fhist;
     if ismember(solver, all_solvers('with_constraints'))
-        fhistf = fhistf(chist <= max(cstrv_returned, 0));
+        if strcmp(options.precision, 'double')
+            fhistf = fhistf(chist <= max(cstrv_returned, 0));
+        else
+            fhistf = fhistf(chist <= max(cstrv_returned*(1 - eps), 0));
+        end
     end
     minf = min([fhistf, fx]);
     % Why excluding the case with options.precision = 'quadruple' in the following? Consider two
