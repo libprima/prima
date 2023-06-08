@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, June 09, 2023 AM01:37:03
+! Last Modified: Friday, June 09, 2023 AM07:52:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -674,6 +674,7 @@ integer(IK), intent(out) :: info
 
 ! Intermediate variables
 character(len=*), parameter :: srname = 'getcpen'
+integer(IK) :: iter
 integer(IK) :: m
 integer(IK) :: n
 real(RP) :: A(size(sim, 1), size(conmat, 1) + 1)
@@ -716,9 +717,20 @@ end if
 info = INFO_DFT
 cpen = cpen_in
 
-do while (.true.)
+do while (.true.)!iter = 1, n
     ! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
     ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
+
+    ! TODO: move the following lines to the beginning of the loop; do not return info
+    call updatepole(cpen, conmat, cval, fval, sim, simi, info)
+    ! Check whether to exit due to damaging rounding in UPDATEPOLE.
+    if (info == DAMAGING_ROUNDING) then
+        exit  ! Better action to take? Geometry step, or simply continue?
+    end if
+    ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
+    ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
+    ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
+    ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
 
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
@@ -773,17 +785,6 @@ do while (.true.)
     cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))  ! The 1st (out of 2) update of CPEN.
 
     if (findpole(cpen, cval, fval) == n + 1) exit
-
-    ! TODO: move the following lines to the beginning of the loop; do not return info
-    call updatepole(cpen, conmat, cval, fval, sim, simi, info)
-    ! Check whether to exit due to damaging rounding in UPDATEPOLE.
-    if (info == DAMAGING_ROUNDING) then
-        exit  ! Better action to take? Geometry step, or simply continue?
-    end if
-    ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
-    ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
-    ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
-    ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
 end do
 
 !====================!
