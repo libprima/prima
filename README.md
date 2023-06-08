@@ -364,7 +364,7 @@ and [improvements](#improvements) that do not exist in Powell's original impleme
     title        = {PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration},
     author       = {Zhang, Z.},
     howpublished = {available at https://github.com/libprima/prima},
-    year         = 2023
+    year         = {2023}
 }
 ```
 
