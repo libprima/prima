@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, June 08, 2023 AM10:21:44
+! Last Modified: Thursday, June 08, 2023 PM12:13:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,7 +39,7 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ft
 
 ! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, REALMAX, &
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, TENTH, REALMAX, &
     & DEBUGGING, MIN_MAXFILT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
@@ -57,7 +57,7 @@ use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
 use, non_intrinsic :: geometry_mod, only : assess_geo, setdrop_geo, setdrop_tr, geostep
 use, non_intrinsic :: initialize_mod, only : initxfc, initfilt
 use, non_intrinsic :: trustregion_mod, only : trstlp, trrad
-use, non_intrinsic :: update_mod, only : updatexfc, updatepole, findpole
+use, non_intrinsic :: update_mod, only : updatexfc, updatepole
 
 implicit none
 
@@ -121,7 +121,6 @@ real(RP) :: A(size(x), size(constr) + 1)
 ! approximate gradient for the objective function.
 real(RP) :: actrem
 real(RP) :: b(size(constr) + 1)
-real(RP) :: barmu
 real(RP) :: cfilt(min(max(maxfilt, 1_IK), maxfun))
 real(RP) :: confilt(size(constr), size(cfilt))
 real(RP) :: conmat(size(constr), size(x) + 1)
@@ -282,75 +281,81 @@ info = MAXTR_REACHED
 ! REDUCE_RHO - Will we reduce rho after the trust-region iteration?
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
+    !! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
+    !! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
+
+    !! Calculate the linear approximations to the objective and constraint functions, placing minus
+    !! the objective function gradient after the constraint gradients in the array A.
+    !! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
+    !A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+    !!!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
+    !A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
+
+    !! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
+    !! We set it to -FVAL(N + 1) following Powell's code.
+    !b = [-conmat(:, n + 1), -fval(n + 1)]
+    !! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
+    !d = trstlp(A, b, delta)
+    !dnorm = min(delta, norm(d))
+
+    !! Is the trust-region trial step short? N.B.: we compare DNORM with RHO, not DELTA.
+    !! Powell's code especially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
+    !! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.
+    !! Note that LINCOA has a slightly more sophisticated way of defining SHORTD, taking into account
+    !! whether D causes a change to the active set. Should we try the same here?
+    !shortd = (dnorm < TENTH * rho)
+
+    !! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
+    !! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
+    !! 1. B(1:M) = -CONMAT(:, N + 1), and hence MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]) is the
+    !! L-infinity violation of the linearized constraints corresponding to D. When D = 0, the
+    !! violation is MAXVAL([B(1:M), ZERO]) = CVAL(N+1). PREREC is the reduction of this violation
+    !! achieved by D, which is nonnegative in theory; PREREC = 0 iff B(1:M) <= 0, i.e., the
+    !! trust-region center satisfies the linearized constraints.
+    !! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
+    !! 3. Due to 2, in theory, MAX(PREREC, PREREF) > 0 if SHORTD is FALSE.
+    !! 4. In the code, MAX(PREREC, PREREF) is the counterpart of QRED in UOBYQA/NEWUOA/BOBYQA/LINCOA.
+    !prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+    !preref = inprod(d, A(:, m + 1))  ! Can be negative.
+
+    !! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
+    !! optimal vertex. See the discussions around equation (9) of the COBYLA paper.
+    !! This is the first (out of two) place where CPEN is updated. It can change CPEN only when
+    !! PREREC > 0 > PREREF, in which case PREREM is guaranteed positive after the update.
+    !! If PREREC = 0 or PREREF > 0, then PREREM is currently positive, so CPEN needs no update.
+    !! However, as in Powell's implementation, if PREREC > 0 = PREREF = CPEN, then CPEN will
+    !! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
+    !! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
+    !if ((.not. shortd) .and. prerec > 0 .and. preref < 0) then
+    !    ! Powell's code defines BARMU = -PREREF / PREREC, and CPEN is increased to 2*BARMU if and
+    !    ! only if it is currently less than 1.5*BARMU, a very "Powellful" scheme. In our
+    !    ! implementation, however, we set CPEN directly to the maximum between its current value and
+    !    ! 2*BARMU while handling possible overflow. This simplifies the scheme without worsening the
+    !    ! performance of COBYLA.
+    !    cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))  ! The 1st (out of 2) update of CPEN.
+    !    if (findpole(cpen, cval, fval) <= n) then
+    !        call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+    !        ! Check whether to exit due to damaging rounding in UPDATEPOLE.
+    !        if (subinfo == DAMAGING_ROUNDING) then
+    !            info = subinfo
+    !            exit  ! Better action to take? Geometry step, or simply continue?
+    !        end if
+    !        cycle
+    !        ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
+    !        ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
+    !        ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
+    !        ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
+    !    end if
+    !end if
+
     ! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
     ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
-    ! Calculate the linear approximations to the objective and constraint functions, placing minus
-    ! the objective function gradient after the constraint gradients in the array A.
-    ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
-    A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
-    !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
-    A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
-
-    ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
-    ! We set it to -FVAL(N + 1) following Powell's code.
-    b = [-conmat(:, n + 1), -fval(n + 1)]
-    ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
-    d = trstlp(A, b, delta)
-    dnorm = min(delta, norm(d))
-
-    ! Is the trust-region trial step short? N.B.: we compare DNORM with RHO, not DELTA.
-    ! Powell's code especially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
-    ! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.
-    ! Note that LINCOA has a slightly more sophisticated way of defining SHORTD, taking into account
-    ! whether D causes a change to the active set. Should we try the same here?
-    shortd = (dnorm < TENTH * rho)
-
-    ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
-    ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
-    ! 1. B(1:M) = -CONMAT(:, N + 1), and hence MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]) is the
-    ! L-infinity violation of the linearized constraints corresponding to D. When D = 0, the
-    ! violation is MAXVAL([B(1:M), ZERO]) = CVAL(N+1). PREREC is the reduction of this violation
-    ! achieved by D, which is nonnegative in theory; PREREC = 0 iff B(1:M) <= 0, i.e., the
-    ! trust-region center satisfies the linearized constraints.
-    ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
-    ! 3. Due to 2, in theory, MAX(PREREC, PREREF) > 0 if SHORTD is FALSE.
-    ! 4. In the code, MAX(PREREC, PREREF) is the counterpart of QRED in UOBYQA/NEWUOA/BOBYQA/LINCOA.
-    prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
-    preref = inprod(d, A(:, m + 1))  ! Can be negative.
-
-    ! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
-    ! optimal vertex. See the discussions around equation (9) of the COBYLA paper.
-    ! This is the first (out of two) place where CPEN is updated. It can change CPEN only when
-    ! PREREC > 0 > PREREF, in which case PREREM is guaranteed positive after the update.
-    ! If PREREC = 0 or PREREF > 0, then PREREM is currently positive, so CPEN needs no update.
-    ! However, as in Powell's implementation, if PREREC > 0 = PREREF = CPEN, then CPEN will
-    ! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
-    ! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
-    if ((.not. shortd) .and. prerec > 0 .and. preref < 0) then
-        ! Powell's code defines BARMU = -PREREF / PREREC, and CPEN is increased to 2*BARMU if and
-        ! only if it is currently less than 1.5*BARMU, a very "Powellful" scheme. In our
-        ! implementation, however, we set CPEN directly to the maximum between its current value and
-        ! 2*BARMU while handling possible overflow. This simplifies the scheme without worsening the
-        ! performance of COBYLA.
-        cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))  ! The 1st (out of 2) update of CPEN.
-        if (findpole(cpen, cval, fval) <= n) then
-            call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-            ! Check whether to exit due to damaging rounding in UPDATEPOLE.
-            if (subinfo == DAMAGING_ROUNDING) then
-                info = subinfo
-                exit  ! Better action to take? Geometry step, or simply continue?
-            end if
-            cycle
-            ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
-            ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
-            ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
-            ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
-        end if
+    cpen = getcpen(conmat, cpen, cval, delta, fval, rho, sim, simi, subinfo)
+    if (subinfo == DAMAGING_ROUNDING) then
+        info = subinfo
+        exit  ! Better action to take? Geometry step, or simply continue?
     end if
-
-    ! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
-    ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
     ! Does the interpolation set have acceptable geometry? It affects IMPROVE_GEO and REDUCE_RHO.
     adequate_geo = assess_geo(delta, factor_alpha, factor_beta, sim, simi)
@@ -700,6 +705,160 @@ if (DEBUGGING) then
 end if
 
 end subroutine cobylb
+
+
+function getcpen(conmat, cpen_in, cval, delta, fval, rho, sim, simi, info) result(cpen)
+!--------------------------------------------------------------------------------------------------!
+! This function gets the penalty parameter CPEN so that PREREM = PREREF + CPEN * PREREC > 0.
+!--------------------------------------------------------------------------------------------------!
+
+! Common modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TENTH, REALMAX, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite, is_neginf, is_posinf, is_nan
+use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, isinv
+
+! Solver-specific modules
+use, non_intrinsic :: trustregion_mod, only : trstlp
+use, non_intrinsic :: update_mod, only : findpole, updatepole
+
+implicit none
+
+! Inputs
+real(RP), intent(inout) :: conmat(:, :)
+real(RP), intent(in) :: cpen_in
+real(RP), intent(inout) :: cval(:)
+real(RP), intent(in) :: delta
+real(RP), intent(inout) :: fval(:)
+real(RP), intent(in) :: rho
+real(RP), intent(inout) :: sim(:, :)
+real(RP), intent(inout) :: simi(:, :)
+
+! Outputs
+real(RP) :: cpen
+integer(IK), intent(out) :: info
+
+! Intermediate variables
+character(len=*), parameter :: srname = 'getcpen'
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: A(size(sim, 1), size(conmat, 1) + 1)
+real(RP) :: b(size(conmat, 1) + 1)
+real(RP) :: d(size(sim, 1))
+real(RP) :: dnorm
+real(RP) :: prerec
+real(RP) :: preref
+real(RP), parameter :: itol = ONE
+logical :: shortd
+
+! Sizes
+m = int(size(conmat, 1), kind(m))
+n = int(size(sim, 1), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(m >= 0, 'M >= 0', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(cpen_in >= 0, 'CPEN >= 0', srname)
+    call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
+    call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
+    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(all(is_finite(sim)), 'SIM is finite', srname)
+    call assert(all(maxval(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
+    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
+    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
+    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    call assert(delta >= rho .and. rho > 0, 'DELTA >= RHO > 0', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+info = INFO_DFT
+cpen = cpen_in
+
+do while (.true.)
+    ! Calculate the linear approximations to the objective and constraint functions, placing minus
+    ! the objective function gradient after the constraint gradients in the array A.
+    ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
+    A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+    !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
+    A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
+
+    ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
+    ! We set it to -FVAL(N + 1) following Powell's code.
+    b = [-conmat(:, n + 1), -fval(n + 1)]
+    ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
+    d = trstlp(A, b, delta)
+    dnorm = min(delta, norm(d))
+
+    ! Is the trust-region trial step short? N.B.: we compare DNORM with RHO, not DELTA.
+    ! Powell's code especially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
+    ! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.
+    ! Note that LINCOA has a slightly more sophisticated way of defining SHORTD, taking into account
+    ! whether D causes a change to the active set. Should we try the same here?
+    shortd = (dnorm < TENTH * rho)
+
+    ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
+    ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
+    ! 1. B(1:M) = -CONMAT(:, N + 1), and hence MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]) is the
+    ! L-infinity violation of the linearized constraints corresponding to D. When D = 0, the
+    ! violation is MAXVAL([B(1:M), ZERO]) = CVAL(N+1). PREREC is the reduction of this violation
+    ! achieved by D, which is nonnegative in theory; PREREC = 0 iff B(1:M) <= 0, i.e., the
+    ! trust-region center satisfies the linearized constraints.
+    ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
+    ! 3. Due to 2, in theory, MAX(PREREC, PREREF) > 0 if SHORTD is FALSE.
+    ! 4. In the code, MAX(PREREC, PREREF) is the counterpart of QRED in UOBYQA/NEWUOA/BOBYQA/LINCOA.
+    prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+    preref = inprod(d, A(:, m + 1))  ! Can be negative.
+
+    ! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
+    ! optimal vertex. See the discussions around equation (9) of the COBYLA paper.
+    ! This is the first (out of two) place where CPEN is updated. It can change CPEN only when
+    ! PREREC > 0 > PREREF, in which case PREREM is guaranteed positive after the update.
+    ! If PREREC = 0 or PREREF > 0, then PREREM is currently positive, so CPEN needs no update.
+    ! However, as in Powell's implementation, if PREREC > 0 = PREREF = CPEN, then CPEN will
+    ! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
+    ! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
+    if ((.not. shortd) .and. prerec > 0 .and. preref < 0) then
+        ! Powell's code defines BARMU = -PREREF / PREREC, and CPEN is increased to 2*BARMU if and
+        ! only if it is currently less than 1.5*BARMU, a very "Powellful" scheme. In our
+        ! implementation, however, we set CPEN directly to the maximum between its current value and
+        ! 2*BARMU while handling possible overflow. This simplifies the scheme without worsening the
+        ! performance of COBYLA.
+        cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))  ! The 1st (out of 2) update of CPEN.
+        if (findpole(cpen, cval, fval) <= n) then
+            call updatepole(cpen, conmat, cval, fval, sim, simi, info)
+            ! Check whether to exit due to damaging rounding in UPDATEPOLE.
+            if (info == DAMAGING_ROUNDING) then
+                exit  ! Better action to take? Geometry step, or simply continue?
+            end if
+            cycle
+            ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
+            ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
+            ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
+            ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
+        end if
+    end if
+end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(cpen >= cpen_in, 'CPEN >= CPEN_IN', srname)
+    call assert(preref + cpen * prerec >= 0 .or. is_nan(preref) .or. is_nan(prerec), &
+        & 'PREREF + CPEN*PREREC >= 0 unless PREREF or PREREM is NaN', srname)
+end if
+end function getcpen
 
 
 function fcratio(fval, conmat) result(r)

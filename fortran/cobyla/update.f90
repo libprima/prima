@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, March 08, 2023 PM03:09:19
+! Last Modified: Thursday, June 08, 2023 AM11:58:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -244,9 +244,9 @@ n = int(size(sim, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(cpen >= 0, 'CPEN >= 0', srname)
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
+    call assert(cpen >= 0, 'CPEN >= 0', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
     call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
@@ -365,8 +365,8 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: cpen
-real(RP), intent(inout) :: cval(:)  ! CVAL(N+1)
-real(RP), intent(inout) :: fval(:)  ! FVAL(N+1)
+real(RP), intent(in) :: cval(:)  ! CVAL(N+1)
+real(RP), intent(in) :: fval(:)  ! FVAL(N+1)
 
 ! Outputs
 integer(IK) :: jopt

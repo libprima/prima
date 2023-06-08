@@ -1983,3 +1983,5 @@ Mrecursive
 frecursive
 bibtex
 howpublished
+REREF
+getcpen
