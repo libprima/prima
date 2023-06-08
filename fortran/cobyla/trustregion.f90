@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Friday, June 02, 2023 PM04:03:22
+! Last Modified: Thursday, June 08, 2023 AM11:59:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,6 +103,7 @@ if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(size(A_in, 1) >= 1 .and. size(A_in, 2) >= 1, 'SIZE(A) >= [1, 1]', srname)
     call assert(size(b_in) == size(A_in, 2), 'SIZE(B) == size(A, 2)', srname)
+    call assert(delta > 0, 'DELTA > 0', srname)
 end if
 
 !====================!
