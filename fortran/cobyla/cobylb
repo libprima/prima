@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, June 09, 2023 PM12:06:27
+! Last Modified: Friday, June 09, 2023 AM10:23:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 use, non_intrinsic :: ratio_mod, only : redrat
@@ -115,7 +115,6 @@ logical :: evaluated(size(x) + 1)
 logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
-logical :: trfail
 logical :: ximproved
 real(RP) :: A(size(x), size(constr) + 1)
 ! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is minus the
@@ -247,7 +246,6 @@ end if
 ! run-time error that they are undefined. The values will not be used: when SHORTD = FALSE, they
 ! will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is TRUE
 ! regardless of ACTREM or PREREM. Similar for PREREC, PREREF, PREREM, RATIO, and JDROP_TR.
-! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
 rho = rhobeg
 delta = rhobeg
 cpen = ZERO
@@ -255,8 +253,6 @@ prerec = -REALMAX
 preref = -REALMAX
 prerem = -REALMAX
 actrem = -REALMAX
-shortd = .false.
-trfail = .false.
 ratio = -ONE
 jdrop_tr = 0
 jdrop_geo = 0
@@ -326,20 +322,49 @@ do tr = 1, maxtr
     ! achieved by D, which is nonnegative in theory; PREREC = 0 iff B(1:M) <= 0, i.e., the
     ! trust-region center satisfies the linearized constraints.
     ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
-    ! 3. Due to 2, in theory, MAXIMUM([PREREC, PREREF]) > 0 if SHORTD is FALSE.
-    ! 4. In the code, MAXIMUM([PREREC, PREREF]) corresponds to QRED in UOBYQA/NEWUOA/BOBYQA/LINCOA.
+    ! 3. Due to 2, in theory, MAX(PREREC, PREREF) > 0 if SHORTD is FALSE.
+    ! 4. In the code, MAX(PREREC, PREREF) is the counterpart of QRED in UOBYQA/NEWUOA/BOBYQA/LINCOA.
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     preref = inprod(d, A(:, m + 1))  ! Can be negative.
-    trfail = (.not. maximum([prerec, preref]) > 0)
 
-    if (shortd .or. trfail) then
-        ! Reduce DELTA if D is short or D fails to render MAXIMUM([PREREC, PREREF]) > 0.
-        ! The latter can only happen due to rounding errors. This seems important for performance.
+    if (shortd .or. .not. max(prerec, preref) > 0) then
+        ! Reduce DELTA if D is short or D fails to render MAX(PREREC, PREREF) > 0. The latter can
+        ! only happen due to rounding errors. This seems quite important for performance.
         delta = TENTH * delta
         if (delta <= gamma3 * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
+        !! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
+        !! optimal vertex. See the discussions around equation (9) of the COBYLA paper.
+        !! This is the first (out of two) place where CPEN is updated. It can change CPEN only when
+        !! PREREC > 0 > PREREF, in which case PREREM is guaranteed positive after the update.
+        !! If PREREC = 0 or PREREF > 0, then PREREM is currently positive, so CPEN needs no update.
+        !! However, as in Powell's implementation, if PREREC > 0 = PREREF = CPEN, then CPEN will
+        !! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
+        !! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
+        !if (prerec > 0 .and. preref < 0) then
+        !    ! In Powell's code, CPEN is increased to 2*BARMU if and only if it is currently less
+        !    ! than 1.5*BARMU, a very "Powellful" scheme. In our implementation, however, we set CPEN
+        !    ! directly to the maximum between its current value and 2*BARMU while handling possible
+        !    ! overflow. This simplifies the scheme without worsening the performance of COBYLA.
+        !    barmu = -preref / prerec  ! PREREF + BARMU * PREREC = 0
+        !    cpen = max(cpen, min(TWO * barmu, REALMAX))  ! The 1st (out of 2) update of CPEN.
+        !    if (findpole(cpen, cval, fval) <= n) then
+        !        call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+        !        ! Check whether to exit due to damaging rounding in UPDATEPOLE.
+        !        if (subinfo == DAMAGING_ROUNDING) then
+        !            info = subinfo
+        !            exit  ! Better action to take? Geometry step, or simply continue?
+        !        end if
+        !        cycle
+        !        ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
+        !        ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
+        !        ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
+        !        ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
+        !    end if
+        !end if
+
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc, x, f, constr, cstrv)
@@ -418,7 +443,7 @@ do tr = 1, maxtr
             info = subinfo
             exit
         end if
-    end if  ! End of IF (SHORTD .OR. TRFAIL). The normal trust-region calculation ends.
+    end if  ! End of IF (SHORTD .OR. .NOT. MAX(PREREC, PREREF) > 0). The normal trust-region calculation ends.
 
 
     !----------------------------------------------------------------------------------------------!
@@ -432,33 +457,33 @@ do tr = 1, maxtr
     ! most N invocations of GEOSTEP.
 
     ! BAD_TRSTEP: Is the last trust-region step bad?
-    bad_trstep = (shortd .or. trfail .or. ratio <= 0 .or. jdrop_tr == 0)
+    bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
     ! IMPROVE_GEO: Should we take a geometry step to improve the geometry of the interpolation set?
     improve_geo = (bad_trstep .and. .not. adequate_geo)
     ! REDUCE_RHO: Should we enhance the resolution by reducing RHO?
     reduce_rho = (bad_trstep .and. adequate_geo .and. max(delta, dnorm) <= rho)
 
     ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
-    call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO are not both TRUE', srname)
+    !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO are not both TRUE', srname)
 
-    ! If SHORTD or TRFAIL is TRUE, then either IMPROVE_GEO or REDUCE_RHO is TRUE unless ADEQUATE_GEO
-    ! is TRUE and MAX(DELTA, DNORM) > RHO.
-    call assert((.not. (shortd .or. trfail)) .or. (improve_geo .or. reduce_rho .or. &
-        & (adequate_geo .and. max(delta, dnorm) > rho)), 'If SHORTD or TRFAIL is TRUE, then &
-        & either IMPROVE_GEO or REDUCE_RHO is TRUE unless ADEQUATE_GEO is TRUE and MAX(DELTA, DNORM) > RHO', srname)
+    ! If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO
+    ! is TRUE unless ADEQUATE_GEO is TRUE and MAX(DELTA, DNORM) > RHO.
+    !call assert((.not. shortd .and. max(prerec, preref) > 0) .or. (improve_geo .or. reduce_rho .or. &
+    !    & (adequate_geo .and. max(delta, dnorm) > rho)), 'If SHORTD is TRUE or MAX(PREREC, PREREF) > 0 is FALSE, then&
+    !    & either IMPROVE_GEO or REDUCE_RHO is TRUE unless ADEQUATE_GEO is TRUE and MAX(DELTA, DNORM) > RHO', srname)
     !----------------------------------------------------------------------------------------------!
 
     ! Comments on BAD_TRSTEP:
     ! 1. Powell's definition of BAD_TRSTEP is as follows. The one used above seems to work better,
     ! especially for linearly constrained problems due to the factor TENTH (= ETA1).
     ! !bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
-    ! Besides, Powell did not check MAXIMUM([PREREC, PREREF]) > 0 in BAD_TRSTEP, which is reasonable
-    ! to do but has little impact upon the performance.
+    ! Besides, Powell did not check MAX(PREREC, PREREF) > 0 in BAD_TRSTEP, which is reasonable to do
+    ! but has little impact upon the performance.
     ! 2. NEWUOA/BOBYQA/LINCOA would define BAD_TRSTEP, IMPROVE_GEO, and REDUCE_RHO as follows. Two
     ! different thresholds are used in BAD_TRSTEP. It outperforms Powell's version.
-    ! !bad_trstep = (shortd .or. trfail .or. ratio <= eta1 .or. jdrop_tr == 0)
+    ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= eta1 .or. jdrop_tr == 0)
     ! !improve_geo = bad_trstep .and. .not. adequate_geo
-    ! !bad_trstep = (shortd .or. trfail .or. ratio <= 0 .or. jdrop_tr == 0)
+    ! !bad_trstep = (shortd .or. (.not. max(prerec, preref) > 0) .or. ratio <= 0 .or. jdrop_tr == 0)
     ! !reduce_rho = bad_trstep .and. adequate_geo .and. max(delta, dnorm) <= rho
     ! 3. Theoretically, JDROP_TR > 0 when ACTREM > 0 (guaranteed by RATIO > 0). However, in Powell's
     ! implementation, JDROP_TR may be 0 even RATIO > 0 due to NaN. The modernized code has rectified
@@ -736,8 +761,8 @@ do while (.true.) !iter = 1, n
     ! achieved by D, which is nonnegative in theory; PREREC = 0 iff B(1:M) <= 0, i.e., the
     ! trust-region center satisfies the linearized constraints.
     ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
-    ! 3. Due to 2, in theory, MAXIMUM([PREREC, PREREF]) > 0 if SHORTD is FALSE.
-    ! 4. In the code, MAXIMUM([PREREC, PREREF]) corresponds to QRED in UOBYQA/NEWUOA/BOBYQA/LINCOA.
+    ! 3. Due to 2, in theory, MAX(PREREC, PREREF) > 0 if SHORTD is FALSE.
+    ! 4. In the code, MAX(PREREC, PREREF) is the counterpart of QRED in UOBYQA/NEWUOA/BOBYQA/LINCOA.
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     preref = inprod(d, A(:, m + 1))  ! Can be negative.
 
@@ -772,7 +797,7 @@ if (DEBUGGING) then
     call assert((cpen > 0 .and. m > 0) .or. cpen == 0, 'either CPEN > 0 and M > 0 or CPEN == 0', srname)
 !    call fprint(num2str(preref)//num2str(prerec)//num2str(cpen)//num2str(preref + cpen * prerec))
 !    call assert(preref + cpen * prerec >= 0 .or. is_nan(preref) .or. is_nan(prerec) .or. &
-!        & maximum([prerec, preref]) <= 0, 'PREREF + CPEN*PREREC >= 0 unless MAXIMUM([PREREM, PREREF]) is not positive', srname)
+!        & max(prerec, preref) <= 0, 'PREREF + CPEN*PREREC >= 0 unless MAX(PREREM, PREREF) is not positive', srname)
 end if
 end function getcpen
 
