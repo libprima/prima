@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 08, 2023 AM09:10:13
+! Last Modified: Friday, June 09, 2023 PM12:05:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -111,6 +111,7 @@ logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
 logical :: small_trrad
+logical :: trfail
 logical :: ximproved
 real(RP) :: crvmin
 real(RP) :: d(size(x))
@@ -185,6 +186,7 @@ call initl(xpt, pl)
 rho = rhobeg
 delta = rho
 shortd = .false.
+trfail = .false.
 ratio = -ONE
 ddmove = -ONE
 dnorm_rec = REALMAX
@@ -224,8 +226,9 @@ do tr = 1, maxtr
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(pq, d, xpt(:, kopt))  ! QRED = Q(XOPT) - Q(XOPT + D)
+    trfail = (.not. qred > 0)
 
-    if (shortd .or. .not. qred > 0) then
+    if (shortd .or. trfail) then
         ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
         delta = TENTH * delta
         if (delta <= gamma3 * rho) then
@@ -279,7 +282,7 @@ do tr = 1, maxtr
             ! Update PL, PQ, XPT, FVAL, and KOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
             call update(knew_tr, d, f, moderr, kopt, fval, pl, pq, xpt)
         end if
-    end if
+    end if  ! End of IF (SHORTD .OR. TRFAIL). The normal trust-region calculation ends.
 
 
     !----------------------------------------------------------------------------------------------!
@@ -333,37 +336,37 @@ do tr = 1, maxtr
 
     ! IMPROVE_GEO and REDUCE_RHO are defined as follows.
     ! N.B.: If SHORTD is TRUE at the very first iteration, then REDUCE_RHO will be set to TRUE.
-    ! Powell's code does not have (.NOT. QRED>0) in BAD_TRSTEP; it terminates if QRED > 0 fails.
+    ! Powell's code does not have TRFAIL in BAD_TRSTEP; it terminates if TRFAIL is TRUE.
 
     ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad? For UOBYQA, it is CRITICAL to
     ! include DMOVE <= 4.0_RP*RHO**2 in the definition of BAD_TRSTEP for IMPROVE_GEO.
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= eta1 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
-    !bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= eta1 .or. knew_tr == 0)  ! Works poorly!
+    bad_trstep = (shortd .or. trfail .or. (ratio <= eta1 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    !bad_trstep = (shortd .or. trfail .or. ratio <= eta1 .or. knew_tr == 0)  ! Works poorly!
     improve_geo = bad_trstep .and. .not. adequate_geo
     ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
-    bad_trstep = (shortd .or. (.not. qred > 0) .or. ratio <= 0 .or. knew_tr == 0)  ! Performs better than the below from Powell.
-    !bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    bad_trstep = (shortd .or. trfail .or. ratio <= 0 .or. knew_tr == 0)  ! Performs better than the below from Powell.
+    !bad_trstep = (shortd .or. trfail .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
 
     ! Equivalently, REDUCE_RHO can be set as follows. It shows that REDUCE_RHO is TRUE in two cases.
-    ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    ! !bad_trstep = (shortd .or. trfail .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
     ! !reduce_rho = (shortd .and. accurate_mod) .or. (bad_trstep .and. close_itpset .and. small_trrad)
 
     ! With REDUCE_RHO properly defined, we can also set IMPROVE_GEO as follows.
-    ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= eta1 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    ! !bad_trstep = (shortd .or. trfail .or. (ratio <= eta1 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
     ! !improve_geo = bad_trstep .and. (.not. reduce_rho) .and. (.not. close_itpset)
 
     ! With IMPROVE_GEO properly defined, we can also set REDUCE_RHO as follows.
-    ! !bad_trstep = (shortd .or. (.not. qred > 0) .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
+    ! !bad_trstep = (shortd .or. trfail .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
     ! !reduce_rho = bad_trstep .and. (.not. improve_geo) .and. small_trrad
 
     ! UOBYQA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
     !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO and REDUCE_RHO are not both TRUE', srname)
     !
-    ! If SHORTD is TRUE or QRED > 0 is FALSE, then either IMPROVE_GEO or REDUCE_RHO is TRUE unless
-    ! CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE.
-    !call assert((.not. shortd .and. qred > 0) .or. (improve_geo .or. reduce_rho .or. &
-    !    & (close_itpset .and. .not. small_trrad)), 'If SHORTD is TRUE or QRED > 0 is FALSE, then either&
+    ! If SHORTD or TRFAIL is TRUE, then either IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET
+    ! is TRUE but SMALL_TRRAD is FALSE.
+    !call assert((.not. (shortd .or. trfail)) .or. (improve_geo .or. reduce_rho .or. &
+    !    & (close_itpset .and. .not. small_trrad)), 'If SHORTD or TRFAIL is TRUE, then either &
     !    & IMPROVE_GEO or REDUCE_RHO is TRUE unless CLOSE_ITPSET is TRUE but SMALL_TRRAD is FALSE', srname)
     !----------------------------------------------------------------------------------------------!
 
@@ -412,7 +415,7 @@ do tr = 1, maxtr
 
         ! Update PL, PQ, XPT, FVAL, and KOPT so that XPT(:, KNEW_GEO) becomes XOPT + D.
         call update(knew_geo, d, f, moderr, kopt, fval, pl, pq, xpt)
-    end if
+    end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
     if (reduce_rho) then
         if (rho <= rhoend) then
@@ -430,7 +433,7 @@ do tr = 1, maxtr
         ! the current RHO. Update them after reducing RHO.
         dnorm_rec = REALMAX
         moderr_rec = REALMAX
-    end if
+    end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
 
     ! Shifting XBASE to the best point so far, and make the corresponding changes to the gradients
     ! of the Lagrange functions and the quadratic model. Powell's implementation does this each time
@@ -438,7 +441,7 @@ do tr = 1, maxtr
     if (sum(xpt(:, kopt)**2) >= 1.0E3_RP * delta**2) then
         call shiftbase(kopt, pl, pq, xbase, xpt)
     end if
-end do
+end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return, possibly after another Newton-Raphson step, if it is too short to have been tried before.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
