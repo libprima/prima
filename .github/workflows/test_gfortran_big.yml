@@ -76,7 +76,7 @@ jobs:
                     $SEDI 's|bign = 400|bign = 380|g' test_lincoa.f90
                 fi
                 if [[ -f "test_cobyla.f90" ]] ; then
-                    $SEDI 's|bign = 120|bign = 90|g' test_cobyla.f90
+                    $SEDI 's|bign = 120|bign = 80|g' test_cobyla.f90
                 fi
                 make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi

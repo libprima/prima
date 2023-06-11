@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, June 12, 2023 AM04:09:43
+! Last Modified: Monday, June 12, 2023 AM05:11:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -275,7 +275,7 @@ end if
 ! code simply initializes CPEN to 0.
 rho = rhobeg
 delta = rhobeg
-cpen = max(cpenmin, fcratio(fval, conmat))  ! Powell's code: CPEN = ZERO
+cpen = max(cpenmin, fcratio(conmat, fval))  ! Powell's code: CPEN = ZERO
 prerec = -REALMAX
 preref = -REALMAX
 prerem = -REALMAX
@@ -307,7 +307,7 @@ info = MAXTR_REACHED
 ! REDUCE_RHO - Will we reduce rho after the trust-region iteration?
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
-    ! Get the penalty parameter CPEN so that PREREM = PREREF + CPEN * PREREC > 0.
+    ! Increase the penalty parameter CPEN, if needed, so that PREREM = PREREF + CPEN * PREREC > 0.
     ! This is the first (out of two) update of CPEN. CPEN increases or remains the same.
     cpen = getcpen(conmat, cpen, cval, delta, fval, rho, sim, simi)
 
@@ -574,7 +574,7 @@ do tr = 1, maxtr
         delta = max(delta, rho)
         ! The second (out of two) update of CPEN. CPEN decreases or remains the same.
         ! Powell's code: CPEN = MIN(CPEN, FCRATIO(FVAL, CONMAT)), which may set CPEN to 0.
-        cpen = max(cpenmin, min(cpen, fcratio(fval, conmat)))
+        cpen = max(cpenmin, min(cpen, fcratio(conmat, fval)))
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, delta, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         ! Switch the best vertex of the current simplex to SIM(:, N + 1).
@@ -720,8 +720,9 @@ fval = fval_in
 sim = sim_in
 simi = simi_in
 
-! Initialize INFO, PREREF, and PREREC, which are needed in the postconditions.
+! Initialize INFO, SHORTD, PREREF, and PREREC, which are needed in the postconditions.
 info = INFO_DFT
+shortd = .false.
 preref = ZERO
 prerec = ZERO
 
@@ -791,20 +792,19 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(cpen >= cpen_in .and. cpen > 0, 'CPEN >= CPEN_IN and CPEN > 0', srname)
-!    call assert(preref + cpen * prerec >= 0 .or. shortd .or. .not. (prerec >= 0 .and. is_finite(preref)), &
-!        & 'PREREF + CPEN*PREREC >= 0 unless D is short or PREREC is not nonnegative or PREREF is not finite', srname)
+    !write (16, *) cpen, preref, prerec, preref + cpen * prerec, shortd, info
+    !close (16)
+    !call assert(preref + cpen * prerec > 0 .or. shortd .or. info == DAMAGING_ROUNDING .or. &
+    !    & .not. (prerec >= 0) .or. .not. is_finite(preref), &
+    !    & 'PREREF + CPEN*PREREC > 0 unless D is short or the rounding is damaging', srname)
 end if
 end function getcpen
 
 
-function fcratio(fval, conmat) result(r)
+function fcratio(conmat, fval) result(r)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates the ratio between the "typical change" of F and that of CONSTR.
 ! See equations (12)--(13) in Section 3 of the COBYLA paper for the definition of the ratio.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: CMAX(M), CMIN(M)
-! Size of local arrays: REAL(RP)*(2*M)
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, ZERO, HALF, DEBUGGING
@@ -812,8 +812,8 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: fval(:)     ! FVAL(N+1)
 real(RP), intent(in) :: conmat(:, :)    ! CONMAT(M, N+1)
+real(RP), intent(in) :: fval(:)     ! FVAL(N+1)
 
 ! Outputs
 real(RP) :: r
