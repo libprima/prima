@@ -1,3 +1,12 @@
+! TODO:
+! 1. Use CPENMIN to ensure CPEN > 0. Modify pre/postconditions about CPEN to reflect this.
+! 2. In findpole, remove the case that CPEN <= 0.
+! 3. Define trfail = (.not. prerem > 0).
+! 4. Remove the revision of PREREM and ACTREM when CPEN == 0.
+! 5. Do not return INFO in GETCPEN.
+! 6. When should UPDATEPOLE be called? Not at the end of initialization. At the beginning of the
+!    loop in GETCPEN. After GETCPEN, before calculating the trust-region step.
+!
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of COBYLA.
@@ -16,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, June 09, 2023 PM12:06:27
+! Last Modified: Sunday, June 11, 2023 PM03:43:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -136,21 +145,32 @@ real(RP) :: gamma3
 real(RP) :: prerec  ! Predicted reduction in constraint violation
 real(RP) :: preref  ! Predicted reduction in objective Function
 real(RP) :: prerem  ! Predicted reduction in merit function
+real(RP) :: ratio  ! Reduction ratio: ACTREM/PREREM
 real(RP) :: rho
 real(RP) :: sim(size(x), size(x) + 1)
 real(RP) :: simi(size(x), size(x))
 real(RP) :: xfilt(size(x), size(cfilt))
-! N.B.: FACTOR_ALPHA, FACTOR_BETA, FACTOR_GAMMA, and FACTOR_DELTA are four factors that COBYLB uses
+! CPENMIN is the The minimum penalty parameter for the L-infinity constraint violation in the merit
+! function. Note that CPENMIN = 0 in Powell's implementation, which allows CPEN to be 0. Here, we
+! take a positive CPENMIN so that CPEN is always positive. This avoids the situation where PREREM
+! becomes 0 when PREREF = 0 = CPEN. This brings two advantages as follows.
+! 1. If the trust-region subproblem solver works correctly, then PREREM > 0 is guaranteed. This is
+! because, in theory, PREREC >= 0, PREREF > 0 if PREREC = 0, and the definition of CPEN in GETCPEN
+! ensures that PREREM > 0.
+! 2. There is no need to revise ACTREM and PREREM when CPEN = 0 and F = FVAL(N+1). Powell's code
+! revises ACTREM to CVAL(N + 1) - CSTRV and PREREM to PREREC in this case, which is crucial for
+! feasibility problems. See lines 312--314 of Powell's cobylb.f code.
+!real(RP), parameter :: cpenmin = EPS
+! FACTOR_ALPHA, FACTOR_BETA, FACTOR_GAMMA, and FACTOR_DELTA are four factors that COBYLB uses
 ! when managing the simplex. Note the following.
 ! 1. FACTOR_ALPHA < FACTOR_GAMMA < 1 < FACTOR_DELTA <= FACTOR_BETA.
 ! 2. FACTOR_DELTA has nothing to do with DELTA, which is the trust-region radius.
 ! 3. FACTOR_GAMMA has nothing to do with GAMMA1 and GAMMA2, which are the contracting/expanding
-!    factors for updating the trust-region radius DELTA.
+! factors for updating the trust-region radius DELTA.
 real(RP), parameter :: factor_alpha = QUART  ! The factor alpha in the COBYLA paper
 real(RP), parameter :: factor_beta = 2.1_RP  ! The factor beta in the COBYLA paper
 real(RP), parameter :: factor_delta = 1.1_RP  ! The factor delta in the COBYLA paper
 real(RP), parameter :: factor_gamma = HALF  ! The factor gamma in the COBYLA paper
-real(RP) :: ratio  ! Reduction ratio: ACTREM/PREREM
 
 ! Sizes
 m = int(size(constr), kind(m))
@@ -170,6 +190,8 @@ if (DEBUGGING) then
     call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
+    call assert(ctol >= 0, 'CTOL >= 0', srname)
+    call assert(cweight >= 0, 'CWEIGHT >= 0', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
     call assert(maxfilt >= min(MIN_MAXFILT, maxfun) .and. maxfilt <= maxfun, &
         & 'MIN(MIN_MAXFILT, MAXFUN) <= MAXFILT <= MAXFUN', srname)
@@ -248,9 +270,13 @@ end if
 ! will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is TRUE
 ! regardless of ACTREM or PREREM. Similar for PREREC, PREREF, PREREM, RATIO, and JDROP_TR.
 ! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
+! Our initialization of CPEN differs from Powell's in two ways. First, we uses the ratio defined in
+! (13) of Powell's COBYLA paper to initialize CPEN. Second, we impose CPEN >= CPENMIN > 0. Powell's
+! code simply initializes CPEN to 0.
 rho = rhobeg
 delta = rhobeg
 cpen = ZERO
+!cpen = max(cpenmin, fcratio(fval, conmat))  ! Powell's code: CPEN = ZERO
 prerec = -REALMAX
 preref = -REALMAX
 prerem = -REALMAX
@@ -285,7 +311,11 @@ info = MAXTR_REACHED
 ! REDUCE_RHO - Will we reduce rho after the trust-region iteration?
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
+    ! The first (out of two) update of CPEN. CPEN increases or remains the same.
     cpen = getcpen(conmat, cpen, cval, delta, fval, rho, sim, simi, subinfo)
+
+    !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+    !! Check whether to exit due to damaging rounding in UPDATEPOLE.
     if (subinfo == DAMAGING_ROUNDING) then
         info = subinfo
         exit  ! Better action to take? Geometry step, or simply continue?
@@ -312,7 +342,7 @@ do tr = 1, maxtr
     dnorm = min(delta, norm(d))
 
     ! Is the trust-region trial step short? N.B.: we compare DNORM with RHO, not DELTA.
-    ! Powell's code especially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
+    ! Powell's code essentially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
     ! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.
     ! Note that LINCOA has a slightly more sophisticated way of defining SHORTD, taking into account
     ! whether D causes a change to the active set. Should we try the same here?
@@ -330,6 +360,9 @@ do tr = 1, maxtr
     ! 4. In the code, MAXIMUM([PREREC, PREREF]) corresponds to QRED in UOBYQA/NEWUOA/BOBYQA/LINCOA.
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     preref = inprod(d, A(:, m + 1))  ! Can be negative.
+    ! Evaluate PREREM, which is the predicted reduction in the merit function.
+    ! In theory, PREREM >= 0 and it is 0 iff CPEN = 0 = PREREF. This may not be true numerically.
+    prerem = preref + cpen * prerec
     trfail = (.not. maximum([prerec, preref]) > 0)
 
     if (shortd .or. trfail) then
@@ -352,9 +385,7 @@ do tr = 1, maxtr
         ! Save X, F, CONSTR, CSTRV into the filter.
         call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
 
-        ! Evaluate PREREM and ACTREM, which are the predicted and actual reductions in the merit
-        ! function respectively.
-        prerem = preref + cpen * prerec  ! Theoretically nonnegative; is 0 if CPEN = 0 = PREREF.
+        ! Evaluate ACTREM, which is the actual reduction in the merit function.
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
         if (cpen <= 0 .and. abs(f - fval(n + 1)) <= 0) then
             ! CPEN <= 0 indeed means CPEN == 0, while ABS(A - B) <= 0 indeed means A == B.
@@ -362,11 +393,6 @@ do tr = 1, maxtr
             actrem = cval(n + 1) - cstrv
         end if
 
-        ! In theory, PREREM >= 0, but this can fail due to rounding errors.
-        !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')
-
-        !dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
-        !moderr_rec = [moderr_rec(2:size(moderr_rec)), maxval(abs([f - fval(n + 1) + preref, cstrv - cval(n + 1) + prerec]))]
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(actrem, prerem, eta1)
@@ -439,13 +465,13 @@ do tr = 1, maxtr
     reduce_rho = (bad_trstep .and. adequate_geo .and. max(delta, dnorm) <= rho)
 
     ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
-    call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO are not both TRUE', srname)
+    ! !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO are not both TRUE', srname)
 
     ! If SHORTD or TRFAIL is TRUE, then either IMPROVE_GEO or REDUCE_RHO is TRUE unless ADEQUATE_GEO
     ! is TRUE and MAX(DELTA, DNORM) > RHO.
-    call assert((.not. (shortd .or. trfail)) .or. (improve_geo .or. reduce_rho .or. &
-        & (adequate_geo .and. max(delta, dnorm) > rho)), 'If SHORTD or TRFAIL is TRUE, then &
-        & either IMPROVE_GEO or REDUCE_RHO is TRUE unless ADEQUATE_GEO is TRUE and MAX(DELTA, DNORM) > RHO', srname)
+    ! !call assert((.not. (shortd .or. trfail)) .or. (improve_geo .or. reduce_rho .or. &
+    ! !    & (adequate_geo .and. max(delta, dnorm) > rho)), 'If SHORTD or TRFAIL is TRUE, then &
+    ! !    & either IMPROVE_GEO or REDUCE_RHO is TRUE unless ADEQUATE_GEO is TRUE and MAX(DELTA, DNORM) > RHO', srname)
     !----------------------------------------------------------------------------------------------!
 
     ! Comments on BAD_TRSTEP:
@@ -558,7 +584,10 @@ do tr = 1, maxtr
         delta = HALF * rho
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
-        cpen = min(cpen, fcratio(fval, conmat)) ! The 2nd (out of 2) update of CPEN. It may become 0
+        ! The second (out of two) update of CPEN. CPEN decreases or remains the same.
+        ! Powell's code: CPEN = MIN(CPEN, FCRATIO(FVAL, CONMAT)), which may set CPEN to 0.
+        cpen = min(cpen, fcratio(fval, conmat))
+        !cpen = max(cpenmin, min(cpen, fcratio(fval, conmat)))
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, delta, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
@@ -634,12 +663,12 @@ use, non_intrinsic :: update_mod, only : findpole, updatepole
 implicit none
 
 ! Inputs
-real(RP), intent(inout) :: conmat(:, :)
 real(RP), intent(in) :: cpen_in
-real(RP), intent(inout) :: cval(:)
 real(RP), intent(in) :: delta
-real(RP), intent(inout) :: fval(:)
 real(RP), intent(in) :: rho
+real(RP), intent(inout) :: conmat(:, :)
+real(RP), intent(inout) :: cval(:)
+real(RP), intent(inout) :: fval(:)
 real(RP), intent(inout) :: sim(:, :)
 real(RP), intent(inout) :: simi(:, :)
 
@@ -649,9 +678,10 @@ integer(IK), intent(out) :: info
 
 ! Intermediate variables
 character(len=*), parameter :: srname = 'getcpen'
-integer(IK) :: iter
+!integer(IK) :: iter
 integer(IK) :: m
 integer(IK) :: n
+logical :: shortd
 real(RP) :: A(size(sim, 1), size(conmat, 1) + 1)
 real(RP) :: b(size(conmat, 1) + 1)
 real(RP) :: d(size(sim, 1))
@@ -659,7 +689,6 @@ real(RP) :: dnorm
 real(RP) :: prerec
 real(RP) :: preref
 real(RP), parameter :: itol = ONE
-logical :: shortd
 
 ! Sizes
 m = int(size(conmat, 1), kind(m))
@@ -669,7 +698,7 @@ n = int(size(sim, 1), kind(n))
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    call assert((cpen_in > 0 .and. m > 0) .or. cpen_in == 0, 'either CPEN > 0 and M > 0 or CPEN == 0', srname)
+    call assert(cpen_in >= 0, 'CPEN >= 0', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
     call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
@@ -691,21 +720,20 @@ end if
 
 info = INFO_DFT
 cpen = cpen_in
+preref = ZERO
+prerec = ZERO
+
+! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
+! place. This is because the update of CPEN does not decrease CPEN, and hence it can
+! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
+! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
 
 do while (.true.) !iter = 1, n
-    ! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
-    ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
-
-    ! TODO: move the following lines to the beginning of the loop; do not return info
     call updatepole(cpen, conmat, cval, fval, sim, simi, info)
     ! Check whether to exit due to damaging rounding in UPDATEPOLE.
     if (info == DAMAGING_ROUNDING) then
-        exit  ! Better action to take? Geometry step, or simply continue?
+        exit
     end if
-    ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
-    ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
-    ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
-    ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
 
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
@@ -768,11 +796,9 @@ end do
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(cpen >= cpen_in, 'CPEN >= CPEN_IN', srname)
-    call assert((cpen > 0 .and. m > 0) .or. cpen == 0, 'either CPEN > 0 and M > 0 or CPEN == 0', srname)
-!    call fprint(num2str(preref)//num2str(prerec)//num2str(cpen)//num2str(preref + cpen * prerec))
-!    call assert(preref + cpen * prerec >= 0 .or. is_nan(preref) .or. is_nan(prerec) .or. &
-!        & maximum([prerec, preref]) <= 0, 'PREREF + CPEN*PREREC >= 0 unless MAXIMUM([PREREM, PREREF]) is not positive', srname)
+    call assert(cpen >= cpen_in .and. cpen >= 0, 'CPEN >= CPEN_IN and CPEN >= 0', srname)
+!    call assert(preref + cpen * prerec >= 0 .or. shortd .or. .not. (prerec >= 0 .and. is_finite(preref)), &
+!        & 'PREREF + CPEN*PREREC >= 0 unless D is short or PREREC is not nonnegative or PREREF is not finite', srname)
 end if
 end function getcpen
 
@@ -822,6 +848,9 @@ fmin = minval(fval)
 fmax = maxval(fval)
 if (any(cmin < HALF * cmax) .and. fmin < fmax) then
     denom = minval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
+    ! Powell mentioned the following alternative in Section 4 of his COBYLA paper. According to a
+    ! test on 20230610, it does not make much difference to the performance.
+    ! !denom = maxval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
     r = (fmax - fmin) / denom
 else
     r = ZERO
