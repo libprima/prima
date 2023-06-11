@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, June 08, 2023 AM11:58:39
+! Last Modified: Monday, June 12, 2023 AM04:06:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -246,7 +246,7 @@ n = int(size(sim, 1), kind(n))
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(cpen >= 0, 'CPEN >= 0', srname)
+    call assert(cpen > 0, 'CPEN > 0', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
     call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
@@ -382,7 +382,7 @@ n = int(size(fval) - 1, kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(cpen >= 0, 'CPEN >= 0', srname)
+    call assert(cpen > 0, 'CPEN > 0', srname)
     call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
         & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
@@ -397,14 +397,11 @@ end if
 jopt = int(size(fval), kind(jopt))  ! We use N + 1 as the default value of JOPT.
 phi = fval + cpen * cval
 phimin = minval(phi)
-if (phimin < phi(jopt)) then  ! We keep JOPT = N + 1 unless there is a strictly better choice.
-    jopt = int(minloc(phi, dim=1), kind(jopt))
-end if
-if (cpen <= 0 .and. any(cval < cval(jopt) .and. phi <= phimin)) then
-    ! (CPEN <= 0) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN).
-    ! We code in this way to avoid equality comparison of real numbers.
+! Essentially, JOPT = MINLOC(PHI). However, we keep JOPT = N + 1 unless there is a strictly better
+! choice. When there are multiple choices, we choose the JOPT with the smallest value of CVAL.
+if (phimin < phi(jopt) .or. any(cval < cval(jopt) .and. phi <= phi(jopt))) then
     jopt = int(minloc(cval, mask=(phi <= phimin), dim=1), kind(jopt))
-    !!MATLAB: cmin = min(cval(phi <= phimin)); jopt = find(phi <= phimin & ~(cval > cmin), 1, 'first');
+    !!MATLAB: cmin = min(cval(phi <= phimin)); jopt = find(phi <= phimin & cval <= cmin, 1, 'first');
 end if
 
 !====================!
@@ -414,6 +411,8 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(jopt >= 1 .and. jopt <= n + 1, '1 <= JOPT <= N+1', srname)
+    call assert(jopt == n + 1 .or. phi(jopt) < phi(n + 1) .or. (phi(jopt) <= phi(n + 1) .and. cval(jopt) < cval(n + 1)), &
+        & 'JOPT = N+1 unless PHI(JOPT) < PHI(N+1) or PHI(JOPT) <= PHI(N+1) and CVAL(JOPT) < CVAL(N+1)', srname)
 end if
 end function findpole
 

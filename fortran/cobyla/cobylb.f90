@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, June 11, 2023 PM11:25:19
+! Last Modified: Monday, June 12, 2023 AM04:09:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -48,7 +48,7 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ft
 
 ! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, TENTH, REALMAX, &
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, TENTH, EPS, REALMAX, &
     & DEBUGGING, MIN_MAXFILT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
@@ -160,7 +160,7 @@ real(RP) :: xfilt(size(x), size(cfilt))
 ! 2. There is no need to revise ACTREM and PREREM when CPEN = 0 and F = FVAL(N+1). Powell's code
 ! revises ACTREM to CVAL(N + 1) - CSTRV and PREREM to PREREC in this case, which is crucial for
 ! feasibility problems. See lines 312--314 of Powell's cobylb.f code.
-!real(RP), parameter :: cpenmin = EPS
+real(RP), parameter :: cpenmin = EPS
 ! FACTOR_ALPHA, FACTOR_BETA, FACTOR_GAMMA, and FACTOR_DELTA are four factors that COBYLB uses
 ! when managing the simplex. Note the following.
 ! 1. FACTOR_ALPHA < FACTOR_GAMMA < 1 < FACTOR_DELTA <= FACTOR_BETA.
@@ -275,8 +275,7 @@ end if
 ! code simply initializes CPEN to 0.
 rho = rhobeg
 delta = rhobeg
-cpen = ZERO
-!cpen = max(cpenmin, fcratio(fval, conmat))  ! Powell's code: CPEN = ZERO
+cpen = max(cpenmin, fcratio(fval, conmat))  ! Powell's code: CPEN = ZERO
 prerec = -REALMAX
 preref = -REALMAX
 prerem = -REALMAX
@@ -329,7 +328,6 @@ do tr = 1, maxtr
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
-
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
     ! We set it to -FVAL(N + 1) following Powell's code.
     b = [-conmat(:, n + 1), -fval(n + 1)]
@@ -359,7 +357,7 @@ do tr = 1, maxtr
     ! Evaluate PREREM, which is the predicted reduction in the merit function.
     ! In theory, PREREM >= 0 and it is 0 iff CPEN = 0 = PREREF. This may not be true numerically.
     prerem = preref + cpen * prerec
-    trfail = (.not. maximum([prerec, preref]) > 0)
+    trfail = (.not. prerem > 0)
 
     if (shortd .or. trfail) then
         ! Reduce DELTA if D is short or D fails to render MAXIMUM([PREREC, PREREF]) > 0.
@@ -383,12 +381,6 @@ do tr = 1, maxtr
 
         ! Evaluate ACTREM, which is the actual reduction in the merit function.
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
-        if (cpen <= 0 .and. abs(f - fval(n + 1)) <= 0) then
-            ! CPEN <= 0 indeed means CPEN == 0, while ABS(A - B) <= 0 indeed means A == B.
-            prerem = prerec
-            actrem = cval(n + 1) - cstrv
-        end if
-
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(actrem, prerem, eta1)
@@ -582,8 +574,7 @@ do tr = 1, maxtr
         delta = max(delta, rho)
         ! The second (out of two) update of CPEN. CPEN decreases or remains the same.
         ! Powell's code: CPEN = MIN(CPEN, FCRATIO(FVAL, CONMAT)), which may set CPEN to 0.
-        cpen = min(cpen, fcratio(fval, conmat))
-        !cpen = max(cpenmin, min(cpen, fcratio(fval, conmat)))
+        cpen = max(cpenmin, min(cpen, fcratio(fval, conmat)))
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, delta, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         ! Switch the best vertex of the current simplex to SIM(:, N + 1).
@@ -701,7 +692,7 @@ n = int(size(sim, 1), kind(n))
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(cpen_in >= 0, 'CPEN >= 0', srname)
+    call assert(cpen_in > 0, 'CPEN > 0', srname)
     call assert(size(conmat_in, 1) == m .and. size(conmat_in, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat_in) .or. is_neginf(conmat_in)), 'CONMAT does not contain NaN/-Inf', srname)
     call assert(size(cval_in) == n + 1 .and. .not. any(cval_in < 0 .or. is_nan(cval_in) .or. is_posinf(cval_in)), &
@@ -734,6 +725,15 @@ info = INFO_DFT
 preref = ZERO
 prerec = ZERO
 
+! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
+! optimal vertex. See the discussions around equation (9) of the COBYLA paper.
+! This is the first (out of two) place where CPEN is updated. It can change CPEN only when
+! PREREC > 0 > PREREF, in which case PREREM is guaranteed positive after the update.
+! If PREREC = 0 or PREREF > 0, then PREREM is currently positive, so CPEN needs no update.
+! However, as in Powell's implementation, if PREREC > 0 = PREREF = CPEN, then CPEN will
+! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
+! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
+
 ! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
 ! place. This is because the update of CPEN does not decrease CPEN, and hence it can
 ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
@@ -753,42 +753,20 @@ do iter = 1, n + 1_IK
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
-
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
     ! We set it to -FVAL(N + 1) following Powell's code.
     b = [-conmat(:, n + 1), -fval(n + 1)]
+
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
     d = trstlp(A, b, delta)
     dnorm = min(delta, norm(d))
 
     ! Is the trust-region trial step short? N.B.: we compare DNORM with RHO, not DELTA.
-    ! Powell's code especially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
-    ! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.
-    ! Note that LINCOA has a slightly more sophisticated way of defining SHORTD, taking into account
-    ! whether D causes a change to the active set. Should we try the same here?
     shortd = (dnorm < TENTH * rho)
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
-    ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
-    ! 1. B(1:M) = -CONMAT(:, N + 1), and hence MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]) is the
-    ! L-infinity violation of the linearized constraints corresponding to D. When D = 0, the
-    ! violation is MAXVAL([B(1:M), ZERO]) = CVAL(N+1). PREREC is the reduction of this violation
-    ! achieved by D, which is nonnegative in theory; PREREC = 0 iff B(1:M) <= 0, i.e., the
-    ! trust-region center satisfies the linearized constraints.
-    ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
-    ! 3. Due to 2, in theory, MAXIMUM([PREREC, PREREF]) > 0 if SHORTD is FALSE.
-    ! 4. In the code, MAXIMUM([PREREC, PREREF]) corresponds to QRED in UOBYQA/NEWUOA/BOBYQA/LINCOA.
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     preref = inprod(d, A(:, m + 1))  ! Can be negative.
-
-    ! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
-    ! optimal vertex. See the discussions around equation (9) of the COBYLA paper.
-    ! This is the first (out of two) place where CPEN is updated. It can change CPEN only when
-    ! PREREC > 0 > PREREF, in which case PREREM is guaranteed positive after the update.
-    ! If PREREC = 0 or PREREF > 0, then PREREM is currently positive, so CPEN needs no update.
-    ! However, as in Powell's implementation, if PREREC > 0 = PREREF = CPEN, then CPEN will
-    ! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
-    ! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
 
     if (shortd .or. .not. (prerec > 0 .and. preref < 0)) then
         exit
@@ -812,7 +790,7 @@ end do
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(cpen >= cpen_in .and. cpen >= 0, 'CPEN >= CPEN_IN and CPEN >= 0', srname)
+    call assert(cpen >= cpen_in .and. cpen > 0, 'CPEN >= CPEN_IN and CPEN > 0', srname)
 !    call assert(preref + cpen * prerec >= 0 .or. shortd .or. .not. (prerec >= 0 .and. is_finite(preref)), &
 !        & 'PREREF + CPEN*PREREC >= 0 unless D is short or PREREC is not nonnegative or PREREF is not finite', srname)
 end if
