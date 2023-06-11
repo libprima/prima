@@ -6,6 +6,7 @@
 ! 5. Do not return INFO in GETCPEN.
 ! 6. When should UPDATEPOLE be called? Not at the end of initialization. At the beginning of the
 !    loop in GETCPEN. After GETCPEN, before calculating the trust-region step.
+! 7. Revise the comment about MAXIMUM(PREREF, PREREC). It may need to be replaced with PREREM.
 !
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
@@ -25,7 +26,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, June 11, 2023 PM03:43:40
+! Last Modified: Sunday, June 11, 2023 PM04:02:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -294,12 +295,9 @@ jdrop_geo = 0
 ! T. M. Ragonneau's thesis: "Model-Based Derivative-Free Optimization Methods and Software".
 gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
 
-! MAXTR is the maximal number of trust-region iterations. Normally, each trust-region iteration
-! takes 1 or 2 function evaluations except for the following cases:
-! 1. the update of CPEN alters the optimal vertex;
-! 2. the trust-region step is short or fails to reduce either the linearized objective or the
-! linearized constraint violation but the geometry step is not invoked.
-! The following MAXTR is unlikely to be reached.
+! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
+! function evaluations unless the trust-region step is short or the trust-region subproblem solver
+! fails but the geometry step is not invoked. Thus the following MAXTR is unlikely to be reached.
 maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
 info = MAXTR_REACHED
 
