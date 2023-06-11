@@ -26,7 +26,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, June 11, 2023 PM04:02:25
+! Last Modified: Sunday, June 11, 2023 PM05:27:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -309,18 +309,17 @@ info = MAXTR_REACHED
 ! REDUCE_RHO - Will we reduce rho after the trust-region iteration?
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
-    ! The first (out of two) update of CPEN. CPEN increases or remains the same.
-    cpen = getcpen(conmat, cpen, cval, delta, fval, rho, sim, simi, subinfo)
+    ! Get the penalty parameter CPEN so that PREREM = PREREF + CPEN * PREREC > 0.
+    ! This is the first (out of two) update of CPEN. CPEN increases or remains the same.
+    cpen = getcpen(conmat, cpen, cval, delta, fval, rho, sim, simi)
 
-    !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-    !! Check whether to exit due to damaging rounding in UPDATEPOLE.
+    ! Switch the best vertex of the current simplex to SIM(:, N + 1).
+    call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+    ! Check whether to exit due to damaging rounding in UPDATEPOLE.
     if (subinfo == DAMAGING_ROUNDING) then
         info = subinfo
         exit  ! Better action to take? Geometry step, or simply continue?
     end if
-
-    ! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
-    ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
     ! Does the interpolation set have acceptable geometry? It affects IMPROVE_GEO and REDUCE_RHO.
     adequate_geo = assess_geo(delta, factor_alpha, factor_beta, sim, simi)
@@ -588,6 +587,7 @@ do tr = 1, maxtr
         !cpen = max(cpenmin, min(cpen, fcratio(fval, conmat)))
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, delta, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
+        ! Switch the best vertex of the current simplex to SIM(:, N + 1).
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding in UPDATEPOLE.
         if (subinfo == DAMAGING_ROUNDING) then
@@ -642,9 +642,10 @@ end if
 end subroutine cobylb
 
 
-function getcpen(conmat, cpen_in, cval, delta, fval, rho, sim, simi, info) result(cpen)
+function getcpen(conmat_in, cpen_in, cval_in, delta, fval_in, rho, sim_in, simi_in) result(cpen)
 !--------------------------------------------------------------------------------------------------!
 ! This function gets the penalty parameter CPEN so that PREREM = PREREF + CPEN * PREREC > 0.
+! See the discussions around equation (9) of the COBYLA paper.
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
@@ -661,31 +662,36 @@ use, non_intrinsic :: update_mod, only : findpole, updatepole
 implicit none
 
 ! Inputs
+real(RP), intent(in) :: conmat_in(:, :)
 real(RP), intent(in) :: cpen_in
+real(RP), intent(in) :: cval_in(:)
 real(RP), intent(in) :: delta
+real(RP), intent(in) :: fval_in(:)
 real(RP), intent(in) :: rho
-real(RP), intent(inout) :: conmat(:, :)
-real(RP), intent(inout) :: cval(:)
-real(RP), intent(inout) :: fval(:)
-real(RP), intent(inout) :: sim(:, :)
-real(RP), intent(inout) :: simi(:, :)
+real(RP), intent(in) :: sim_in(:, :)
+real(RP), intent(in) :: simi_in(:, :)
 
 ! Outputs
 real(RP) :: cpen
-integer(IK), intent(out) :: info
 
 ! Intermediate variables
 character(len=*), parameter :: srname = 'getcpen'
+integer(IK) :: info
 !integer(IK) :: iter
 integer(IK) :: m
 integer(IK) :: n
 logical :: shortd
-real(RP) :: A(size(sim, 1), size(conmat, 1) + 1)
-real(RP) :: b(size(conmat, 1) + 1)
-real(RP) :: d(size(sim, 1))
+real(RP) :: A(size(sim_in, 1), size(conmat_in, 1) + 1)
+real(RP) :: b(size(conmat_in, 1) + 1)
+real(RP) :: conmat(size(conmat_in, 1), size(conmat_in, 2))
+real(RP) :: cval(size(cval_in))
+real(RP) :: d(size(sim_in, 1))
 real(RP) :: dnorm
+real(RP) :: fval(size(fval_in))
 real(RP) :: prerec
 real(RP) :: preref
+real(RP) :: sim(size(sim_in, 1), size(sim_in, 2))
+real(RP) :: simi(size(simi_in, 1), size(simi_in, 2))
 real(RP), parameter :: itol = ONE
 
 ! Sizes
@@ -697,18 +703,18 @@ if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(cpen_in >= 0, 'CPEN >= 0', srname)
-    call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
-    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
-    call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
+    call assert(size(conmat_in, 1) == m .and. size(conmat_in, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
+    call assert(.not. any(is_nan(conmat_in) .or. is_neginf(conmat_in)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(size(cval_in) == n + 1 .and. .not. any(cval_in < 0 .or. is_nan(cval_in) .or. is_posinf(cval_in)), &
         & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
-    call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+    call assert(size(fval_in) == n + 1 .and. .not. any(is_nan(fval_in) .or. is_posinf(fval_in)), &
         & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
-    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
-    call assert(all(is_finite(sim)), 'SIM is finite', srname)
-    call assert(all(maxval(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
-    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
-    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    call assert(size(sim_in, 1) == n .and. size(sim_in, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(all(is_finite(sim_in)), 'SIM is finite', srname)
+    call assert(all(maxval(abs(sim_in(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
+    call assert(size(simi_in, 1) == n .and. size(simi_in, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
+    call assert(all(is_finite(simi_in)), 'SIMI is finite', srname)
+    call assert(isinv(sim_in(:, 1:n), simi_in, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
     call assert(delta >= rho .and. rho > 0, 'DELTA >= RHO > 0', srname)
 end if
 
@@ -716,8 +722,16 @@ end if
 ! Calculation starts !
 !====================!
 
-info = INFO_DFT
+! Copy the inputs.
+conmat = conmat_in
 cpen = cpen_in
+cval = cval_in
+fval = fval_in
+sim = sim_in
+simi = simi_in
+
+! Initialize INFO, PREREF, and PREREC, which are needed in the postconditions.
+info = INFO_DFT
 preref = ZERO
 prerec = ZERO
 
@@ -727,6 +741,7 @@ prerec = ZERO
 ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
 
 do while (.true.) !iter = 1, n
+    ! Switch the best vertex of the current simplex to SIM(:, N + 1).
     call updatepole(cpen, conmat, cval, fval, sim, simi, info)
     ! Check whether to exit due to damaging rounding in UPDATEPOLE.
     if (info == DAMAGING_ROUNDING) then
