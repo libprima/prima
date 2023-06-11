@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, June 03, 2023 PM01:34:59
+! Last Modified: Monday, June 12, 2023 AM02:44:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -409,7 +409,7 @@ if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(delta > 0, 'DELTA > 0', srname)
-    call assert(cpen >= 0, 'CPEN >= 0', srname)
+    call assert(cpen > 0, 'CPEN > 0', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
