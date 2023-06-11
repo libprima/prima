@@ -1985,3 +1985,6 @@ bibtex
 howpublished
 REREF
 getcpen
+cpenmin
+postconditions
+trfail
