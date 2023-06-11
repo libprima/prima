@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, April 11, 2023 AM10:16:10
+! Last Modified: Sunday, June 11, 2023 PM03:13:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -83,6 +83,9 @@ maxfilt = int(size(ffilt), kind(maxfilt))
 if (DEBUGGING) then
     ! Check the size of X.
     call assert(n >= 1, 'N >= 1', srname)
+    ! Check CWEIGHT and CTOL
+    call assert(cweight >= 0, 'CWEIGHT >= 0', srname)
+    call assert(ctol >= 0, 'CTOL >= 0', srname)
     ! Check NFILT
     call assert(nfilt >= 0 .and. nfilt <= maxfilt, '0 <= NFILT <= MAXFILT', srname)
     ! Check the sizes of XFILT, FFILT, CFILT.
