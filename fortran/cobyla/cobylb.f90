@@ -3,10 +3,9 @@
 ! 2. In findpole, remove the case that CPEN <= 0.
 ! 3. Define trfail = (.not. prerem > 0).
 ! 4. Remove the revision of PREREM and ACTREM when CPEN == 0.
-! 5. Do not return INFO in GETCPEN.
-! 6. When should UPDATEPOLE be called? Not at the end of initialization. At the beginning of the
+! 5. When should UPDATEPOLE be called? Not at the end of initialization. At the beginning of the
 !    loop in GETCPEN. After GETCPEN, before calculating the trust-region step.
-! 7. Revise the comment about MAXIMUM(PREREF, PREREC). It may need to be replaced with PREREM.
+! 6. Revise the comment about MAXIMUM(PREREF, PREREC). It may need to be replaced with PREREM.
 !
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
@@ -26,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, June 11, 2023 PM05:27:39
+! Last Modified: Sunday, June 11, 2023 PM11:25:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -677,7 +676,7 @@ real(RP) :: cpen
 ! Intermediate variables
 character(len=*), parameter :: srname = 'getcpen'
 integer(IK) :: info
-!integer(IK) :: iter
+integer(IK) :: iter
 integer(IK) :: m
 integer(IK) :: n
 logical :: shortd
@@ -740,7 +739,7 @@ prerec = ZERO
 ! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
 ! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
 
-do while (.true.) !iter = 1, n
+do iter = 1, n + 1_IK
     ! Switch the best vertex of the current simplex to SIM(:, N + 1).
     call updatepole(cpen, conmat, cval, fval, sim, simi, info)
     ! Check whether to exit due to damaging rounding in UPDATEPOLE.
@@ -791,7 +790,9 @@ do while (.true.) !iter = 1, n
     ! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
     ! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
 
-    if (shortd .or. .not. (prerec > 0 .and. preref < 0)) exit
+    if (shortd .or. .not. (prerec > 0 .and. preref < 0)) then
+        exit
+    end if
 
     ! Powell's code defines BARMU = -PREREF / PREREC, and CPEN is increased to 2*BARMU if and
     ! only if it is currently less than 1.5*BARMU, a very "Powellful" scheme. In our
@@ -800,7 +801,9 @@ do while (.true.) !iter = 1, n
     ! performance of COBYLA.
     cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))  ! The 1st (out of 2) update of CPEN.
 
-    if (findpole(cpen, cval, fval) == n + 1) exit
+    if (findpole(cpen, cval, fval) == n + 1) then
+        exit
+    end if
 end do
 
 !====================!
