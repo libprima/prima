@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, May 12, 2023 PM06:53:13
+! Last Modified: Sunday, June 11, 2023 PM05:39:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,13 +36,10 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatef, moderatec
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
-use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
+use, non_intrinsic :: infos_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : eye, inv, isinv
 use, non_intrinsic :: message_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
-
-! Solver-specific modules
-use, non_intrinsic :: update_mod, only : updatepole
 
 implicit none
 
@@ -200,9 +197,6 @@ nf = int(count(evaluated), kind(nf))
 if (all(evaluated)) then
     ! Initialize SIMI to the inverse of SIM(:, 1:N).
     simi = inv(sim(:, 1:n))
-    ! Switch the optimal vertex (located by FINDPOLE) to SIM(:, N+1), which Powell called the "pole
-    ! position". We call UPDATEPOLE with CPEN = ZERO, which is the initial value of CPEN.
-    call updatepole(ZERO, conmat, cval, fval, sim, simi, subinfo)
 end if
 
 !====================!
@@ -229,9 +223,8 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(all(maxval(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
-    call assert(all(is_finite(simi)) .or. subinfo == DAMAGING_ROUNDING, 'SIMI is finite', srname)
-    call assert(isinv(sim(:, 1:n), simi, itol) .or. any(.not. evaluated) .or. &
-        & info == DAMAGING_ROUNDING, 'SIMI = SIM(:, 1:N)^{-1} unless the rounding is damaging', srname)
+    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
+    call assert(isinv(sim(:, 1:n), simi, itol) .or. any(.not. evaluated), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
 
 end subroutine initxfc
