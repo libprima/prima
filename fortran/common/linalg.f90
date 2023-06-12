@@ -2776,7 +2776,7 @@ function eigmin_sym_trid(td, tn, tol) result(eig_min)
 ! The bisection algorithm for eigenvalues (not only the smallest) of symmetric tridiagonal matrices
 ! can be found in
 ! Barth, Martin, and Wilkinson, Calculation of the eigenvalues of a symmetric tridiagonal matrix by
-! the method of bisection, Numerische Mathematik 9, 386-- 393 (1967).
+! the method of bisection, Numerische Mathematik 9, 386--393 (1967).
 ! The algorithm is based on the sign changes of the Sturm sequence {P_i(LAMBDA)} defined in (1)--(2)
 ! of the above mentioned paper (P_i(LAMBDA) is the determinant of the i-th principle submatrix of
 ! the matrix minus LAMBDA*I), or the number of negative values of the Sturm-ratio sequence
