@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, June 12, 2023 AM11:21:28
+! Last Modified: Monday, June 12, 2023 PM12:13:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -636,11 +636,11 @@ function getcpen(conmat_in, cpen_in, cval_in, delta, fval_in, rho, sim_in, simi_
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TENTH, REALMAX, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_neginf, is_posinf, is_nan
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, isinv
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, isinv
 
 ! Solver-specific modules
 use, non_intrinsic :: trustregion_mod, only : trstlp
@@ -672,7 +672,6 @@ real(RP) :: b(size(conmat_in, 1) + 1)
 real(RP) :: conmat(size(conmat_in, 1), size(conmat_in, 2))
 real(RP) :: cval(size(cval_in))
 real(RP) :: d(size(sim_in, 1))
-real(RP) :: dnorm
 real(RP) :: fval(size(fval_in))
 real(RP) :: prerec
 real(RP) :: preref
@@ -751,7 +750,6 @@ do iter = 1, n + 1_IK
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
     d = trstlp(A, b, delta)
-    dnorm = min(delta, norm(d))
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
