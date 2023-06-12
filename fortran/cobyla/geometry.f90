@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, June 12, 2023 AM02:44:51
+! Last Modified: Monday, June 12, 2023 AM10:07:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -362,7 +362,7 @@ end function setdrop_geo
 function geostep(jdrop, cpen, conmat, cval, delta, fval, factor_gamma, simi) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates a geometry step so that the geometry of the interpolation set is improved
-! when SIM(:, JDRO_GEO) is replaced with SIM(:, N+1) + D.
+! when SIM(:, JDRO_GEO) is replaced with SIM(:, N+1) + D. See (15)--(17) of the COBYLA paper.
 !--------------------------------------------------------------------------------------------------!
 ! List of local arrays (including function-output arrays; likely to be stored on the stack):
 ! REAL(RP) :: D(N), A(N, M+1)
@@ -435,6 +435,9 @@ vsigj = ONE / sqrt(sum(simi(jdrop, :)**2))
 ! the COBYLA paper. This also explains why this subroutine does not replace DELTA with
 ! DELBAR = MAX(MIN(TENTH * SQRT(MAXVAL(DISTSQ)), HALF * DELTA), RHO) as in NEWUOA.
 d = factor_gamma * delta * (vsigj * simi(jdrop, :))
+
+! The code below chooses the direction of D according to an approximation of the merit function.
+! See (17) of the COBYLA paper and  line 225 of Powell's cobylb.f.
 
 ! Calculate the coefficients of the linear approximations to the objective and constraint functions,
 ! placing minus the objective function gradient after the constraint gradients in the array A.
