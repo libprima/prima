@@ -1,12 +1,3 @@
-! TODO:
-! 1. Use CPENMIN to ensure CPEN > 0. Modify pre/postconditions about CPEN to reflect this.
-! 2. In findpole, remove the case that CPEN <= 0.
-! 3. Define trfail = (.not. prerem > 0).
-! 4. Remove the revision of PREREM and ACTREM when CPEN == 0.
-! 5. When should UPDATEPOLE be called? Not at the end of initialization. At the beginning of the
-!    loop in GETCPEN. After GETCPEN, before calculating the trust-region step.
-! 6. Revise the comment about MAXIMUM(PREREF, PREREC). It may need to be replaced with PREREM.
-!
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of COBYLA.
@@ -25,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, June 12, 2023 AM10:17:25
+! Last Modified: Monday, June 12, 2023 AM11:21:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -363,7 +354,7 @@ do tr = 1, maxtr
     ! Evaluate PREREM, which is the predicted reduction in the merit function.
     ! In theory, PREREM >= 0 and it is 0 iff CPEN = 0 = PREREF. This may not be true numerically.
     prerem = preref + cpen * prerec
-    trfail = (.not. prerem > 0)
+    trfail = (.not. prerem > 1.0E-5_RP * min(cpen, ONE) * rho**2)  ! PREREM is tiny/negative or NaN.
 
     if (shortd .or. trfail) then
         ! Reduce DELTA if D is short or D fails to render PREREM > 0. The latter can happen due to
