@@ -26,6 +26,7 @@ STRINGF90="string.f90"
 STRING="$DIR/common/$STRINGF90"
 MESSAGEF90="message.f90"
 MESSAGE="$DIR/common/$MESSAGEF90"
+COBYLB="$DIR/cobyla/cobylb.f90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -108,6 +109,10 @@ printf "module message_mod \n end module message_mod" > "$MESSAGE"
 
 if [[ -f "$DEBUG" ]] ; then
     sed -i "s|^\s*error stop|stop|" "$DEBUG"
+fi
+
+if [[ -f "$COBYLB" ]] ; then
+    sed -i -e '/call assert(cpen >= cpen_in/,+3d' "$COBYLB"
 fi
 
 exit 0
