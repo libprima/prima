@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 13, 2023 AM01:06:18
+! Last Modified: Tuesday, June 13, 2023 AM01:19:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -234,9 +234,7 @@ call initq(ij, fval, xpt, gopt, hq, pq)
 call inith(ij, xpt, bmat, zmat)
 
 ! After initializing GOPT, HQ, PQ, BMAT, ZMAT, one can also choose to return if these arrays contain
-! NaN. We do not do it here. If such a model is harmful, then it will probably lead to other returns
-! (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the code will continue to run
-! and possibly recovers by geometry steps.
+! NaN. We do not do it here. The code will continue to run and possibly recovers by geometry steps.
 
 ! Set some more initial values.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that

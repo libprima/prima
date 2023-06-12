@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, June 13, 2023 AM01:03:23
+! Last Modified: Tuesday, June 13, 2023 AM01:20:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -206,10 +206,8 @@ call inith(ij, xpt, idz, bmat, zmat)
 ! Initialize GOPT, HQ, and PQ.
 call initq(ij, fval, xpt, gopt, hq, pq)
 
-! After initializing BMAT, ZMAT, GOPT, HQ, PQ, one can also choose to return if these arrays contain
-! NaN. We do not do it here. If such a model is harmful, then it will probably lead to other returns
-! (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the code will continue to run
-! and possibly recovers by geometry steps.
+! After initializing GOPT, HQ, PQ, BMAT, ZMAT, one can also choose to return if these arrays contain
+! NaN. We do not do it here. The code will continue to run and possibly recovers by geometry steps.
 
 ! Set some more initial values.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
