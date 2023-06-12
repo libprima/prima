@@ -111,6 +111,7 @@ if [[ -f "$DEBUG" ]] ; then
     sed -i "s|^\s*error stop|stop|" "$DEBUG"
 fi
 
+# sunf95 is buggy with MAX. It does not ensure MAX(A, B) >= A even with both A and B being finite.
 if [[ -f "$COBYLB" ]] ; then
     sed -i -e '/call assert(cpen >= cpen_in/,+3d' "$COBYLB"
 fi
