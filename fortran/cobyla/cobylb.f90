@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, June 12, 2023 PM12:13:48
+! Last Modified: Monday, June 12, 2023 PM04:46:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -141,16 +141,16 @@ real(RP) :: rho
 real(RP) :: sim(size(x), size(x) + 1)
 real(RP) :: simi(size(x), size(x))
 real(RP) :: xfilt(size(x), size(cfilt))
-! CPENMIN is the The minimum penalty parameter for the L-infinity constraint violation in the merit
-! function. Note that CPENMIN = 0 in Powell's implementation, which allows CPEN to be 0. Here, we
-! take a positive CPENMIN so that CPEN is always positive. This avoids the situation where PREREM
-! becomes 0 when PREREF = 0 = CPEN. This brings two advantages as follows.
-! 1. If the trust-region subproblem solver works correctly, then PREREM > 0 is guaranteed. This is
-! because, in theory, PREREC >= 0, PREREF > 0 if PREREC = 0, and the definition of CPEN in GETCPEN
-! ensures that PREREM > 0.
-! 2. There is no need to revise ACTREM and PREREM when CPEN = 0 and F = FVAL(N+1). Powell's code
-! revises ACTREM to CVAL(N + 1) - CSTRV and PREREM to PREREC in this case, which is crucial for
-! feasibility problems. See lines 312--314 of Powell's cobylb.f code.
+! CPENMIN is the minimum of the penalty parameter CPEN for the L-infinity constraint violation in
+! the merit function. Note that CPENMIN = 0 in Powell's implementation, which allows CPEN to be 0.
+! Here, we take CPENMIN > 0 so that CPEN is always positive. This avoids the situation where PREREM
+! becomes 0 when PREREF = 0 = CPEN. It brings two advantages as follows.
+! 1. If the trust-region subproblem solver works correctly and the trust-region center is not
+! optimal for the subproblem, then PREREM > 0 is guaranteed. This is because, in theory, PREREC >= 0
+! and MAX(PREREC, PREREF) > 0 , and the definition of CPEN in GETCPEN ensures that PREREM > 0.
+! 2. There is no need to revise ACTREM and PREREM when CPEN = 0 and F = FVAL(N+1) as in lines
+! 312--314 of Powell's cobylb.f code. Powell's code revises ACTREM to CVAL(N + 1) - CSTRV and PREREM
+! to PREREC in this case, which is crucial for feasibility problems.
 real(RP), parameter :: cpenmin = EPS
 ! FACTOR_ALPHA, FACTOR_BETA, FACTOR_GAMMA, and FACTOR_DELTA are four factors that COBYLB uses
 ! when managing the simplex. Note the following.
@@ -257,9 +257,9 @@ end if
 
 ! Set some more initial values.
 ! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
-! run-time error that they are undefined. The values will not be used: when SHORTD = FALSE, they
-! will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is TRUE
-! regardless of ACTREM or PREREM. Similar for PREREC, PREREF, PREREM, RATIO, and JDROP_TR.
+! run-time error that they are undefined. But their values will not be used: when SHORTD = FALSE,
+! they will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is
+! TRUE regardless of ACTREM or PREREM. Similar for PREREC, PREREF, PREREM, RATIO, and JDROP_TR.
 ! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
 ! Our initialization of CPEN differs from Powell's in two ways. First, we uses the ratio defined in
 ! (13) of Powell's COBYLA paper to initialize CPEN. Second, we impose CPEN >= CPENMIN > 0. Powell's
@@ -299,7 +299,7 @@ info = MAXTR_REACHED
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Increase the penalty parameter CPEN, if needed, so that PREREM = PREREF + CPEN * PREREC > 0.
-    ! This is the first (out of two) update of CPEN. CPEN increases or remains the same.
+    ! This is the first (out of two) update of CPEN, where CPEN increases or remains the same.
     ! N.B.: CPEN and the merit function PHI = FVAL + CPEN*CVAL are used at three places only.
     ! 1. In FINDPOLE/UPDATEPOLE, deciding the optimal vertex of the current simplex.
     ! 2. After the trust-region trial step, calculating the reduction radio.
@@ -351,6 +351,7 @@ do tr = 1, maxtr
     ! 3. Due to 2, in theory, MAXIMUM([PREREC, PREREF]) > 0 if SHORTD is FALSE.
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     preref = inprod(d, A(:, m + 1))  ! Can be negative.
+
     ! Evaluate PREREM, which is the predicted reduction in the merit function.
     ! In theory, PREREM >= 0 and it is 0 iff CPEN = 0 = PREREF. This may not be true numerically.
     prerem = preref + cpen * prerec
@@ -394,7 +395,7 @@ do tr = 1, maxtr
         ! Powell's code (see the definition of REDUCE_RHO below). Our implementation aligns with
         ! UOBYQA/NEWUOA/BOBYQA/LINCOA and improves the performance of COBYLA.
         ! 3. The same as Powell's code, we do not reduce RHO unless ADEQUATE_GEO is TRUE. This is
-        ! also Powell updated RHO in UOBYQA/NEWUOA/BOBYQA/LINCOA. What about we also use
+        ! also how Powell updated RHO in UOBYQA/NEWUOA/BOBYQA/LINCOA. What about we also use
         ! ADEQUATE_GEO == TRUE as a prerequisite for reducing DELTA? The argument would be that the
         ! bad (small) value of RATIO may be because of a bad geometry (and hence a bad model) rather
         ! than an improperly large DELTA, and it might be good to try improving the geometry first
@@ -569,7 +570,7 @@ do tr = 1, maxtr
         delta = HALF * rho
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
-        ! The second (out of two) update of CPEN. CPEN decreases or remains the same.
+        ! The second (out of two) update of CPEN, where CPEN decreases or remains the same.
         ! Powell's code: CPEN = MIN(CPEN, FCRATIO(FVAL, CONMAT)), which may set CPEN to 0.
         cpen = max(cpenmin, min(cpen, fcratio(conmat, fval)))
         ! Print a message about the reduction of RHO according to IPRINT.
@@ -744,8 +745,6 @@ do iter = 1, n + 1_IK
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
-    ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
-    ! We set it to -FVAL(N + 1) following Powell's code.
     b = [-conmat(:, n + 1), -fval(n + 1)]
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.

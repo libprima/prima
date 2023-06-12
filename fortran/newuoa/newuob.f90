@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, June 12, 2023 AM11:09:08
+! Last Modified: Monday, June 12, 2023 PM04:40:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -213,9 +213,9 @@ call initq(ij, fval, xpt, gopt, hq, pq)
 
 ! Set some more initial values.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
-! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
-! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
-! Similar for KNEW_TR.
+! RATIO is undefined. But its value will not be used: when SHORTD = FALSE, its value will be
+! overwritten; when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of
+! RATIO. Similar for KNEW_TR.
 ! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
 rho = rhobeg
 delta = rho
