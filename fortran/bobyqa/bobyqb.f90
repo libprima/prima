@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 12, 2023 PM04:41:24
+! Last Modified: Tuesday, June 13, 2023 AM01:06:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -261,6 +261,8 @@ itest = 0
 ! Then TRRAD will update DELTA to GAMMA2*RHO. If GAMMA3 >= GAMMA2, then DELTA will be reset to RHO,
 ! which is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
 ! T. M. Ragonneau's thesis: "Model-Based Derivative-Free Optimization Methods and Software".
+! According to test on 20230613, for BOBYQA, this Powellful updating scheme of DELTA works better
+! than setting directly DELTA = MAX(NEW_DELTA, RHO).
 gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
@@ -530,15 +532,15 @@ do tr = 1, maxtr
         end if
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
-    ! The calculations with the current value of RHO are complete. Update RHO and DELTA.
+    ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm
+    ! by reducing RHO; update DELTA at the same time.
     if (reduce_rho) then
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
             exit
         end if
-        delta = HALF * rho
+        delta = max(HALF * rho, redrho(rho, rhoend))
         rho = redrho(rho, rhoend)
-        delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, delta, fval(kopt), rho, xbase + xpt(:, kopt))
         ! DNORM_REC and MODERR_REC are corresponding to the latest 3 function evaluations with

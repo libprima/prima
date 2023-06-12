@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, June 12, 2023 PM04:41:45
+! Last Modified: Tuesday, June 13, 2023 AM01:03:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -314,6 +314,8 @@ iact = linspace(1_IK, m, m)
 ! Then TRRAD will update DELTA to GAMMA2*RHO. If GAMMA3 >= GAMMA2, then DELTA will be reset to RHO,
 ! which is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
 ! T. M. Ragonneau's thesis: "Model-Based Derivative-Free Optimization Methods and Software".
+! According to test on 20230613, for LINCOA, this Powellful updating scheme of DELTA works evidently
+! better than setting directly DELTA = MAX(NEW_DELTA, RHO).
 gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
@@ -589,9 +591,8 @@ do tr = 1, maxtr
             info = SMALL_TR_RADIUS
             exit
         end if
-        delta = HALF * rho
+        delta = max(HALF * rho, redrho(rho, rhoend))
         rho = redrho(rho, rhoend)
-        delta = max(delta, rho)
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, delta, fval(kopt), rho, xbase + xpt(:, kopt), cstrv, constr)
         ! DNORM_REC is corresponding to the latest function evaluations with the current RHO.

@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, June 12, 2023 PM10:49:42
+! Last Modified: Tuesday, June 13, 2023 AM01:06:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -261,7 +261,7 @@ end if
 ! they will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is
 ! TRUE regardless of ACTREM or PREREM. Similar for PREREC, PREREF, PREREM, RATIO, and JDROP_TR.
 ! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
-! Our initialization of CPEN differs from Powell's in two ways. First, we uses the ratio defined in
+! Our initialization of CPEN differs from Powell's in two ways. First, we use the ratio defined in
 ! (13) of Powell's COBYLA paper to initialize CPEN. Second, we impose CPEN >= CPENMIN > 0. Powell's
 ! code simply initializes CPEN to 0.
 rho = rhobeg
@@ -282,6 +282,8 @@ jdrop_geo = 0
 ! Then TRRAD will update DELTA to GAMMA2*RHO. If GAMMA3 >= GAMMA2, then DELTA will be reset to RHO,
 ! which is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
 ! T. M. Ragonneau's thesis: "Model-Based Derivative-Free Optimization Methods and Software".
+! According to test on 20230613, for COBYLA, this Powellful updating scheme of DELTA works slightly
+! better than setting directly DELTA = MAX(NEW_DELTA, RHO).
 gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
 
 ! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes 1 or 2
@@ -567,9 +569,8 @@ do tr = 1, maxtr
             info = SMALL_TR_RADIUS
             exit
         end if
-        delta = HALF * rho
+        delta = max(HALF * rho, redrho(rho, rhoend))
         rho = redrho(rho, rhoend)
-        delta = max(delta, rho)
         ! The second (out of two) update of CPEN, where CPEN decreases or remains the same.
         ! Powell's code: CPEN = MIN(CPEN, FCRATIO(FVAL, CONMAT)), which may set CPEN to 0.
         cpen = max(cpenmin, min(cpen, fcratio(conmat, fval)))
