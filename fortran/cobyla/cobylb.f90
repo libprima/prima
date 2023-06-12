@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, June 12, 2023 PM04:46:04
+! Last Modified: Monday, June 12, 2023 PM09:20:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -266,7 +266,7 @@ end if
 ! code simply initializes CPEN to 0.
 rho = rhobeg
 delta = rhobeg
-cpen = max(cpenmin, fcratio(conmat, fval))  ! Powell's code: CPEN = ZERO
+cpen = max(cpenmin, min(1.0E3_RP, fcratio(conmat, fval)))  ! Powell's code: CPEN = ZERO
 prerec = -REALMAX
 preref = -REALMAX
 prerem = -REALMAX
