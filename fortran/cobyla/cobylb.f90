@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, June 12, 2023 AM05:11:23
+! Last Modified: Monday, June 12, 2023 AM10:17:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -55,7 +55,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 use, non_intrinsic :: ratio_mod, only : redrat
@@ -309,6 +309,12 @@ info = MAXTR_REACHED
 do tr = 1, maxtr
     ! Increase the penalty parameter CPEN, if needed, so that PREREM = PREREF + CPEN * PREREC > 0.
     ! This is the first (out of two) update of CPEN. CPEN increases or remains the same.
+    ! N.B.: CPEN and the merit function PHI = FVAL + CPEN*CVAL are used at three places only.
+    ! 1. In FINDPOLE/UPDATEPOLE, deciding the optimal vertex of the current simplex.
+    ! 2. After the trust-region trial step, calculating the reduction radio.
+    ! 3. In GEOSTEP, deciding the direction of the geometry step.
+    ! They do not appear explicitly in the trust-region subproblem, though the trust-region center
+    ! (i.e., the current optimal vertex) is defined by them.
     cpen = getcpen(conmat, cpen, cval, delta, fval, rho, sim, simi)
 
     ! Switch the best vertex of the current simplex to SIM(:, N + 1).
@@ -331,11 +337,12 @@ do tr = 1, maxtr
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
     ! We set it to -FVAL(N + 1) following Powell's code.
     b = [-conmat(:, n + 1), -fval(n + 1)]
+
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
     d = trstlp(A, b, delta)
     dnorm = min(delta, norm(d))
 
-    ! Is the trust-region trial step short? N.B.: we compare DNORM with RHO, not DELTA.
+    ! Is the trust-region trial step short? Note that we compare DNORM with RHO, not DELTA.
     ! Powell's code essentially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
     ! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.
     ! Note that LINCOA has a slightly more sophisticated way of defining SHORTD, taking into account
@@ -351,7 +358,6 @@ do tr = 1, maxtr
     ! trust-region center satisfies the linearized constraints.
     ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
     ! 3. Due to 2, in theory, MAXIMUM([PREREC, PREREF]) > 0 if SHORTD is FALSE.
-    ! 4. In the code, MAXIMUM([PREREC, PREREF]) corresponds to QRED in UOBYQA/NEWUOA/BOBYQA/LINCOA.
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     preref = inprod(d, A(:, m + 1))  ! Can be negative.
     ! Evaluate PREREM, which is the predicted reduction in the merit function.
@@ -360,8 +366,8 @@ do tr = 1, maxtr
     trfail = (.not. prerem > 0)
 
     if (shortd .or. trfail) then
-        ! Reduce DELTA if D is short or D fails to render MAXIMUM([PREREC, PREREF]) > 0.
-        ! The latter can only happen due to rounding errors. This seems important for performance.
+        ! Reduce DELTA if D is short or D fails to render PREREM > 0. The latter can happen due to
+        ! rounding errors. This seems important for performance.
         delta = TENTH * delta
         if (delta <= gamma3 * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
@@ -466,8 +472,8 @@ do tr = 1, maxtr
     ! 1. Powell's definition of BAD_TRSTEP is as follows. The one used above seems to work better,
     ! especially for linearly constrained problems due to the factor TENTH (= ETA1).
     ! !bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
-    ! Besides, Powell did not check MAXIMUM([PREREC, PREREF]) > 0 in BAD_TRSTEP, which is reasonable
-    ! to do but has little impact upon the performance.
+    ! Besides, Powell did not check PREREM > 0 in BAD_TRSTEP, which is reasonable to do but has
+    ! little impact upon the performance.
     ! 2. NEWUOA/BOBYQA/LINCOA would define BAD_TRSTEP, IMPROVE_GEO, and REDUCE_RHO as follows. Two
     ! different thresholds are used in BAD_TRSTEP. It outperforms Powell's version.
     ! !bad_trstep = (shortd .or. trfail .or. ratio <= eta1 .or. jdrop_tr == 0)
@@ -670,7 +676,6 @@ integer(IK) :: info
 integer(IK) :: iter
 integer(IK) :: m
 integer(IK) :: n
-logical :: shortd
 real(RP) :: A(size(sim_in, 1), size(conmat_in, 1) + 1)
 real(RP) :: b(size(conmat_in, 1) + 1)
 real(RP) :: conmat(size(conmat_in, 1), size(conmat_in, 2))
@@ -720,26 +725,22 @@ fval = fval_in
 sim = sim_in
 simi = simi_in
 
-! Initialize INFO, SHORTD, PREREF, and PREREC, which are needed in the postconditions.
+! Initialize INFO, PREREF, and PREREC, which are needed in the postconditions.
 info = INFO_DFT
-shortd = .false.
 preref = ZERO
 prerec = ZERO
 
-! Increase CPEN if necessary to ensure PREREM > 0. Branch back if this change alters the
-! optimal vertex. See the discussions around equation (9) of the COBYLA paper.
-! This is the first (out of two) place where CPEN is updated. It can change CPEN only when
-! PREREC > 0 > PREREF, in which case PREREM is guaranteed positive after the update.
-! If PREREC = 0 or PREREF > 0, then PREREM is currently positive, so CPEN needs no update.
-! However, as in Powell's implementation, if PREREC > 0 = PREREF = CPEN, then CPEN will
-! remain zero, leaving PREREM = 0. If CPEN = 0 and PREREC > 0 > PREREF, then CPEN will
-! become positive; if CPEN = 0, PREREC > 0, and PREREF > 0, then CPEN will remain zero.
-
-! N.B.: The CYCLE can occur at most N times before a new function evaluation takes
-! place. This is because the update of CPEN does not decrease CPEN, and hence it can
-! make vertex J (J <= N) become the new optimal vertex only if CVAL(J) < CVAL(N+1),
-! which can happen at most N times. See the paragraph below (9) in the COBYLA paper.
-
+! Increase CPEN if necessary to ensure PREREM > 0. Branch back for the next loop if this change
+! alters the optimal vertex of the current simplex. Note the following.
+! 1. In each loop, CPEN is changed only if PREREC > 0 > PREREF, in which case PREREM is guaranteed
+! positive after the update. Note that PREREC >= 0 and MAX(PREREC, PREREF) > 0 in theory. If this
+! holds numerically as well, then CPEN is not changed only if PREREC = 0 or PREREF >= 0, in which
+! case PREREM is currently positive, explaining why CPEN needs no update.
+! 2. Even without an upper bound for the loop counter, the loop can occur at most N+1 times. This is
+! because the update of CPEN does not decrease CPEN, and hence it can make vertex J (J <= N) become
+! the new optimal vertex only if CVAL(J) is less than CVAL(N+1), which can happen at most N times.
+! See the paragraph below (9) in the COBYLA paper. After the "correct" optimal vertex is found,
+! one more loop is needed to calculate CPEN, and hence the loop can occur at most N+1 times.
 do iter = 1, n + 1_IK
     ! Switch the best vertex of the current simplex to SIM(:, N + 1).
     call updatepole(cpen, conmat, cval, fval, sim, simi, info)
@@ -750,7 +751,6 @@ do iter = 1, n + 1_IK
 
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
-    ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
@@ -762,14 +762,11 @@ do iter = 1, n + 1_IK
     d = trstlp(A, b, delta)
     dnorm = min(delta, norm(d))
 
-    ! Is the trust-region trial step short? N.B.: we compare DNORM with RHO, not DELTA.
-    shortd = (dnorm < TENTH * rho)
-
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     preref = inprod(d, A(:, m + 1))  ! Can be negative.
 
-    if (shortd .or. .not. (prerec > 0 .and. preref < 0)) then
+    if (.not. (prerec > 0 .and. preref < 0)) then
         exit
     end if
 
@@ -778,7 +775,7 @@ do iter = 1, n + 1_IK
     ! implementation, however, we set CPEN directly to the maximum between its current value and
     ! 2*BARMU while handling possible overflow. This simplifies the scheme without worsening the
     ! performance of COBYLA.
-    cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))  ! The 1st (out of 2) update of CPEN.
+    cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))
 
     if (findpole(cpen, cval, fval) == n + 1) then
         exit
@@ -792,11 +789,9 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(cpen >= cpen_in .and. cpen > 0, 'CPEN >= CPEN_IN and CPEN > 0', srname)
-    !write (16, *) cpen, preref, prerec, preref + cpen * prerec, shortd, info
-    !close (16)
-    !call assert(preref + cpen * prerec > 0 .or. shortd .or. info == DAMAGING_ROUNDING .or. &
-    !    & .not. (prerec >= 0) .or. .not. is_finite(preref), &
-    !    & 'PREREF + CPEN*PREREC > 0 unless D is short or the rounding is damaging', srname)
+    call assert(preref + cpen * prerec > 0 .or. info == DAMAGING_ROUNDING .or. &
+        & .not. (prerec >= 0 .and. max(prerec, preref) > 0) .or. .not. is_finite(preref), &
+        & 'PREREF + CPEN*PREREC > 0 unless D is short or the rounding is damaging', srname)
 end if
 end function getcpen
 
