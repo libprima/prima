@@ -284,7 +284,7 @@ do tr = 1, maxtr
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-    trfail = (.not. qred > 1.0E-5_RP * rho**2)  ! QRED is tiny/negative or NaN
+    trfail = (.not. qred > 1.0E-5_RP * rho**2)  ! QRED is tiny/negative or NaN.
 
     ! When D is short, make a choice between reducing RHO and improving the geometry depending
     ! on whether or not our work with the current RHO seems complete. RHO is reduced if the
