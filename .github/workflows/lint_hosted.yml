@@ -38,15 +38,8 @@ jobs:
         with:
           compiler: gcc
 
-      - name: Install ifort
-        uses: awvwgk/setup-fortran@main
-        with:
-          compiler: intel-classic
-
-      - name: Install ifx
-        uses: awvwgk/setup-fortran@main
-        with:
-          compiler: intel
+      - name: Install Intel oneAPI
+        run: bash .github/scripts/install_oneapi_linux.sh
 
       - name: Install AOCC
         run: bash .github/scripts/install_aocc
