@@ -192,7 +192,7 @@ if sequential
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
         fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
 
-        warning(orig_warning_state); % Restore the behavior of displaying warnings
+        warning(orig_warning_state);  % Restore the behavior of displaying warnings
     end
 else
     parfor ip = minip : maxip
@@ -225,7 +225,7 @@ else
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
         fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
 
-        warning(orig_warning_state); % Restore the behavior of displaying warnings
+        warning(orig_warning_state);  % Restore the behavior of displaying warnings
     end
 end
 
@@ -258,13 +258,12 @@ if isfield(options, 'yw')
 elseif isfield(options, 'seed')
     yw = options.seed;
 else
-    tz = 'Asia/Shanghai';  % Specify the timezone for reproducibility.
-    dt = datetime('now', 'TimeZone', tz);
-    yw = 100*mod(year(dt), 100) + week(dt);
+    yw = year_week('Asia/Shanghai');
 end
 fprintf('\nYW = %d\n', yw);
-rseed = max(0, min(2^32, yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir)))))));
-rng(rseed);
+rseed = max(0, min(2^32 - 1,  sum(pname) + n + ir + yw));  % A random seed defined by the current test and yw
+orig_rng_state = rng();  % Save the current random number generator settings
+rng(rseed);  % Set the random seed for reproducibility
 prob.x0 = x0 + 0.5*randn(size(x0));
 test_options = struct();
 test_options.rhobeg = 1 + 0.5*(2*rand-1);
@@ -323,7 +322,6 @@ if test_options.classical
 end
 
 call_by_package = (rand < 0.5);  % Call by the package instead of the solver
-%call_by_package = true;  % Call by the package instead of the solver
 call_by_structure = (rand < 0.5);  % Pass the problem by a structure
 if mod(ir, 50) == 0 && ~isempty(dir('*_output.txt'))
     delete('*_output.txt');
@@ -365,9 +363,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if 1 <= ir && ir <= 20
     test_options.chkfunval = false;  % The checking would fail due to noise.
-    prob.objective = @(x) noisyfeval(objective, x);
+    prob.objective = @(x) tough_feval(objective, x, rseed);
     if ~isempty(nonlcon)
-        prob.nonlcon = @(x) noisyceval(nonlcon, x);
+        prob.nonlcon = @(x) tough_ceval(nonlcon, x, rseed);
     end
 else
     prob.objective  = objective;
@@ -533,6 +531,8 @@ catch exception
     % Do nothing for the moment
 end
 
+rng(orig_rng_state);  % Restore the random number generator state
+
 if ~isempty(exception)
     if endsWith(exception.identifier, 'ConstraintFailureAtX0') && (strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla'))
         % In this case, error is expected.
@@ -647,45 +647,73 @@ return
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function f = noisy(f, x, noise_level)
-if nargin < 3
-    noise_level = 2e-1;
+function f = tough(f, x, random_seed, noise_level, with_failure)
+% This function contaminates f for the TOUGH test.
+if nargin < 4
+    noise_level = 2e-1;  % The noise level.
 end
-r = cos(1.0D6 * sin(1.0D6 * (abs(f) + 1.0D0) * cos(1.0D6 * sum(abs(x)))));
-f = f*(1+noise_level*r);
-if (r > 0.9)
-    error('Function evaluation fails!');
-elseif (r > 0.75)
-    f = inf;
-elseif (r > 0.5)
+if nargin < 5
+    with_failure = true;  % Whether to fail the function evaluation randomly.
+end
+
+% Set the random seed.
+orig_rng_state = rng();
+rseed = max(0, min(2^32 - 1, random_seed + sum(num2str(f, 16)) + sum(num2str(x, 16), 'all')));
+rng(rseed);
+
+% Contaminate f. The value will be further modified below.
+f = f * (1 + noise_level * randn());
+
+% Generate a random number to decide how to modify f.
+r = 2 * rand() - 1;
+
+% Restore the random seed. Do this before the possible invocation of `error`.
+rng(orig_rng_state);
+
+if r > 0.9
+    if with_failure
+        error('Function evaluation fails!');
+    else
+        f = NaN;
+    end
+elseif r > 0.8
     f = NaN;
-elseif (r < - 0.999)
+elseif r > 0.6
+    f = Inf;
+elseif r < - 0.9
     f = -1e30;
 end
+
 return
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function f = noisyfeval(func, x, noise_level)
-if nargin < 3
+function f = tough_feval(func, x, random_seed, noise_level, with_failure)
+if nargin < 4
     noise_level = 2e-1;
 end
+if nargin < 5
+    with_failure = true;
+end
 f = func(x);
-f = noisy(f, x, noise_level);
+f = tough(f, x, random_seed, noise_level, with_failure);
 return
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [cineq, ceq] = noisyceval(con, x, noise_level)
-if nargin < 3
+function [cineq, ceq] = tough_ceval(con, x, random_seed, noise_level, with_failure)
+if nargin < 4
     noise_level = 2e-1;
+end
+if nargin < 5
+    with_failure = true;
 end
 [cineq, ceq] = con(x);
 for i = 1 : length(cineq)
-    cineq(i) = noisy(cineq(i), x, noise_level);
+    cineq(i) = tough(cineq(i), x, random_seed, noise_level, with_failure);
 end
 for i = 1 : length(ceq)
-    ceq(i) = noisy(ceq(i), x, noise_level);
+    ceq(i) = tough(ceq(i), x, random_seed, noise_level, with_failure);
 end
 return
 
