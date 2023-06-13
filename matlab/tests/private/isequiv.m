@@ -362,6 +362,8 @@ if 13 <= ir && ir <= 15
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if 1 <= ir && ir <= 20
+    % The TOUGH tests
+    % We must pass the random seed `rseed` to `tough_feval` and `tough_ceval` to ensure reproducibility.
     test_options.chkfunval = false;  % The checking would fail due to noise.
     prob.objective = @(x) tough_feval(objective, x, rseed);
     if ~isempty(nonlcon)
@@ -662,14 +664,15 @@ rseed = max(0, min(2^32 - 1, random_seed + sum(num2str(f, 16)) + sum(num2str(x, 
 rng(rseed);
 
 % Contaminate f. The value will be further modified below.
-f = f * (1 + noise_level * randn());
+f = f * (1 + noise_level * randn);
 
 % Generate a random number to decide how to modify f.
-r = 2 * rand() - 1;
+r = 2 * rand - 1;
 
 % Restore the random seed. Do this before the possible invocation of `error`.
 rng(orig_rng_state);
 
+% Modify the value of f to make it "tough".
 if r > 0.9
     if with_failure
         error('Function evaluation fails!');
@@ -680,7 +683,7 @@ elseif r > 0.8
     f = NaN;
 elseif r > 0.6
     f = Inf;
-elseif r < - 0.9
+elseif r < -0.9
     f = -1e30;
 end
 
@@ -709,12 +712,8 @@ if nargin < 5
     with_failure = true;
 end
 [cineq, ceq] = con(x);
-for i = 1 : length(cineq)
-    cineq(i) = tough(cineq(i), x, random_seed, noise_level, with_failure);
-end
-for i = 1 : length(ceq)
-    ceq(i) = tough(ceq(i), x, random_seed, noise_level, with_failure);
-end
+cineq = arrayfun(@(c) tough(c, x, random_seed, noise_level, with_failure), cineq);
+ceq = arrayfun(@(c) tough(c, x, random_seed, noise_level, with_failure), ceq);
 return
 
 

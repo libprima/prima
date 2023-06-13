@@ -1988,3 +1988,4 @@ getcpen
 cpenmin
 postconditions
 trfail
+ceval
