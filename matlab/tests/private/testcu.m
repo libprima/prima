@@ -779,9 +779,8 @@ else
     [cineq, ceq] = con(x);
 end
 options.ir = ir;
-afun = @(f) evalf(f, x, options);
-cineq = arrayfun(afun, cineq);
-ceq = arrayfun(afun, ceq);
+cineq = arrayfun(@(f) evalf(f, x, options), cineq);
+ceq = arrayfun(@(f) evalf(f, x, options), ceq);
 return
 
 
