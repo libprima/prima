@@ -650,7 +650,12 @@ return
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function f = tough(f, x, random_seed, noise_level, with_failure)
-% This function contaminates f for the TOUGH test.
+%This function contaminates f for the TOUGH test.
+% f is the function value to be contaminated.
+% x is the value of the decision variable corresponding to f; it is used when defining the random seed.
+% random_seed is a seed provided by the caller in order to ensure reproducibility. The random seed
+% used internally (see `rseed` below) will be defined by random_seed, f, and x.
+
 if nargin < 4
     noise_level = 2e-1;  % The noise level.
 end
