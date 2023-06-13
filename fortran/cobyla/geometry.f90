@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, June 12, 2023 AM10:07:54
+! Last Modified: Tuesday, June 13, 2023 PM08:48:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -345,8 +345,8 @@ else
 end if
 
 ! Zaikun 20230202: What if we consider VETA and VSIG together? The following attempts do not work well.
-!jdrop = maxval(sum(sim(:, 1:n)**2, dim=1) * sum(simi**2, dim=2)) ! Condition number
-!jdrop = maxval(sum(sim(:, 1:n)**2, dim=1)**2 * sum(simi**2, dim=2)) ! Condition number times distance
+! !jdrop = maxloc(sum(sim(:, 1:n)**2, dim=1) * sum(simi**2, dim=2)) ! Condition number
+! !jdrop = maxloc(sum(sim(:, 1:n)**2, dim=1)**2 * sum(simi**2, dim=2)) ! Condition number times distance
 
 !====================!
 !  Calculation ends  !
