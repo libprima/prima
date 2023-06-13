@@ -1,4 +1,4 @@
-name: Lint the Fortran code and the MEX gateways on GitHub hosted runners
+name: Lint the Fortran code on GitHub hosted runners
 
 on:
   # Trigger the workflow on push or pull request
@@ -14,7 +14,7 @@ on:
 jobs:
 
   test:
-    name: Lint the Fortran code and the MEX gateways
+    name: Lint the Fortran code
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
