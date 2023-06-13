@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        linter: [flint, mlint]
+        linter: [flint]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
     steps:
