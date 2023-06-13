@@ -32,6 +32,9 @@ jobs:
       - name: Miscellaneous setup
         run: bash .github/scripts/misc_setup
 
+      - name: Install AOCC
+        run: bash .github/scripts/install_aocc
+
       - name: Install gfortran
         uses: awvwgk/setup-fortran@main
         id: setup-fortran
@@ -40,12 +43,6 @@ jobs:
 
       - name: Install Intel oneAPI
         run: bash .github/scripts/install_oneapi_linux.sh
-
-      - name: Install AOCC
-        run: bash .github/scripts/install_aocc
-
-      - name: Install Flang
-        run: bash .github/scripts/install_flang
 
       - name: Install g95
         run: bash .github/scripts/install_g95
@@ -56,6 +53,12 @@ jobs:
       - name: Install Oracle sunf95
         run: bash .github/scripts/install_sunf95
 
+      # Install Flang after AOCC, to make sure that flang is this one, while AOCC flang will be
+      # known as aflang.
+      - name: Install Flang
+        run: bash .github/scripts/install_flang
+
       - name: Conduct the test
         run: |
+          type gfortran ifort ifx aflang g95 nvfortran sunf95 flang
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./${{ matrix.linter }} --all
