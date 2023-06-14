@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 12, 2023 PM06:47:46
+! Last Modified: Wednesday, June 14, 2023 PM06:17:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -455,6 +455,8 @@ if (nprov > 0) then
 
         ! Update XPT(:, KPT) to the new point. It contains at most two nonzeros XP and XQ at the IP
         ! and IQ entries.
+        xp = ZERO
+        xq = ZERO
         xpt(:, kpt) = ZERO
         if (ip > 0 .and. iq > 0) then
             xp = ptsaux(1, ip)
