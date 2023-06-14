@@ -438,7 +438,7 @@ GFORT := $(GFORT) -std=f$(GFSTD) -fall-intrinsics -frecursive \
 	-Wuse-without-only -Wunused-parameter -Wreturn-type \
 	$(FSAN) \
 	-fPIC -fimplicit-none -fbacktrace -fcheck=all \
-	-ftrapv \
+	-ftrapv
 	#-finit-real=nan -finit-integer=-9999999 \  # This will hide some warnings on uninitialized variables.
 	#-Wrealloc-lhs -Wrealloc-lhs-all
 
@@ -495,22 +495,22 @@ itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_ts
 	FCF := $(IFORT)  -fp-trap=divzero $(IFF)
 
 itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
-	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow#,invalid,underflow,denormal
 itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
-	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow#,invalid,underflow,denormal
 itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
-	FCF := $(IFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags -fp-trap=divzero,overflow $(IFF)
+	FCF := $(IFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags -fp-trap=divzero,overflow $(IFF)
 
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
-	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow#invalid,underflow,denormal
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
-	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow#,invalid,underflow,denormal
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
-	FCF := $(IFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags -fp-trap=divzero,overflow $(IFF)
+	FCF := $(IFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags -fp-trap=divzero,overflow $(IFF)
 
 # NAG nagfor
 # In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.
@@ -662,27 +662,27 @@ xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_ts
 	FCF := $(XFORT) -fp-trap=divzero $(XFF)
 
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
-	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
-	FCG := $(XFORT) $(FFLAGSG) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCG := $(XFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
-	FCF := $(XFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCF := $(XFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow $(XFF)
 
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
-	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
-	FCG := $(XFORT) $(FFLAGSG) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCG := $(XFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
-	FCF := $(XFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCF := $(XFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow $(XFF)
 
 # G95
