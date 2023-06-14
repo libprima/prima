@@ -582,6 +582,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "warning #8162: The f95 standard requires that the argument of the ALLOCATED inquiry intrinsic function shall be an allocatable array." \
 	| grep -v "This intrinsic function in an initialization expression is not standard Fortran 95\s*\[NEW_LINE\]" \
 	| grep -v "Fortran 95 does not allow type specification in an allocate statement" \
+	| grep -v "ipo: warning #11021: unresolved __ehdr_start" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"

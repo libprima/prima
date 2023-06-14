@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 03, 2023 PM01:30:43
+! Last Modified: Thursday, June 15, 2023 AM02:09:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -179,9 +179,10 @@ else
     scaled = .false.
 end if
 
-! The initial values of IACT, DREDSQ, and GGSAV are unused but to entertain Fortran compilers.
+! The initial values of IACT, DIACT, DREDSQ, and GGSAV are unused but to entertain Fortran compilers.
 ! TODO: Check that GGSAV has been initialized before used.
 iact = 0
+diact = ZERO
 dredsq = ZERO
 ggsav = ZERO
 
