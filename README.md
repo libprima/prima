@@ -113,6 +113,7 @@ The tests are automated by
 each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the test will be canceled automatically). In other words,
 PRIMA has been verified by more than 200,000 hours (or **more than 20 years**) of randomized tests.
+**Code must be battle-tested before becoming software.**
 
 Since each GitHub Team account can only run at most 60 GitHub Actions workflows concurrently, I have
 to distribute this large amount of tests to several different Team accounts as follows.
