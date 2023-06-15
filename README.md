@@ -108,7 +108,7 @@ behave properly even if they are invoked with improper inputs or encounter failu
 The tests are automated by
 [GitHub Actions](https://docs.github.com/en/actions). As of June 2023, more than
 42,000 "workflows" have been successfully run by GitHub Actions. Normally, each workflow consists of \~ 5
-([sometimes more than 150](https://github.com/primalib/prima/actions/runs/4345972852))
+([sometimes more than 150](https://github.com/primalib/prima/actions/runs/5260791888))
 **randomized** tests,
 each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the test will be canceled automatically). In other words,
