@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, June 15, 2023 PM08:24:11
+! Last Modified: Thursday, June 15, 2023 PM08:59:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -589,6 +589,8 @@ end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the last trust-region step if it has not been tried yet.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
+    ! Zaikun 20230615: UPDATEXFC or UPDATEPOLE is not called since the last trust-region step. Hence
+    ! SIM(:, N + 1) remains unchanged. Otherwise, SIM(:, N + 1) + D would not make sense.
     x = sim(:, n + 1) + d
     call evaluate(calcfc, x, f, constr, cstrv)
     nf = nf + 1_IK
