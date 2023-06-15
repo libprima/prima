@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 13, 2023 AM01:03:05
+! Last Modified: Thursday, June 15, 2023 PM08:11:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -613,7 +613,7 @@ do tr = 1, maxtr
     end if
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
-! Return from the calculation, after trying the Newton-Raphson step if it has not been tried before.
+! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xpt(:, kopt) + d)
     call evaluate(calfun, x, f)
@@ -621,7 +621,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     constr = matprod(x, A_orig) - b_orig
     cstrv = maximum([ZERO, constr])
     ! Print a message about the function evaluation according to IPRINT.
-    ! Zaikun 20230512: DELTA has been updated. RHO only indicative here. TO BE IMPROVED.
+    ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
     call fmsg(solver, 'Trust region', iprint, nf, rho, f, x, cstrv, constr)
     ! Save X, F, CSTRV into the history.
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)

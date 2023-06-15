@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, June 13, 2023 PM08:36:35
+! Last Modified: Thursday, June 15, 2023 PM08:24:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -586,6 +586,21 @@ do tr = 1, maxtr
     end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
 
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
+
+! Return from the calculation, after trying the last trust-region step if it has not been tried yet.
+if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
+    x = sim(:, n + 1) + d
+    call evaluate(calcfc, x, f, constr, cstrv)
+    nf = nf + 1_IK
+    ! Print a message about the function evaluation according to IPRINT.
+    ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
+    ! Print a message about the function/constraint evaluation according to IPRINT.
+    call fmsg(solver, 'Trust region', iprint, nf, rho, f, x, cstrv, constr)
+    ! Save X, F, CONSTR, CSTRV into the history.
+    call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
+    ! Save X, F, CONSTR, CSTRV into the filter.
+    call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
+end if
 
 ! Return the best calculated values of the variables.
 ! N.B. SELECTX and FINDPOLE choose X by different standards. One cannot replace the other.
