@@ -19,7 +19,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        linter: [flint]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
     steps:
@@ -61,4 +60,4 @@ jobs:
       - name: Conduct the test
         run: |
           type gfortran ifort ifx aflang g95 nvfortran sunf95 flang
-          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./${{ matrix.linter }} --all
+          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all
