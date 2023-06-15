@@ -1994,3 +1994,4 @@ fprint
 mdash
 segfaults
 slen
+ehdr

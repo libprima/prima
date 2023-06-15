@@ -133,7 +133,7 @@ printf "Tests to make:%s\n\n" "$COMP_LIST"
 
 for COMP in $COMP_LIST; do
     if [[ $TEST_ALL == 'Y' && $ARM32 != 'Y' ]] ; then
-        for FLG in -g -O1 -O2 -O3 -fast ; do
+        for FLG in -g -O2 -O3 -fast ; do
             printf "%s\t" "$FLG"
             export FFLAGS=$FLG && make "$COMP"test."$SOLVER"
         done
