@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 13, 2023 AM01:04:34
+! Last Modified: Thursday, June 15, 2023 PM08:12:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -199,7 +199,7 @@ knew_geo = 0
 ! Then TRRAD will update DELTA to GAMMA2*RHO. If GAMMA3 >= GAMMA2, then DELTA will be reset to RHO,
 ! which is not reasonable as D is very successful. See paragraph two of Sec. 5.2.5 in
 ! T. M. Ragonneau's thesis: "Model-Based Derivative-Free Optimization Methods and Software".
-! According to test on 20230613, for UOBYQA, this Powellful updating scheme of DELTA works better 
+! According to test on 20230613, for UOBYQA, this Powellful updating scheme of DELTA works better
 ! than setting directly DELTA = MAX(NEW_DELTA, RHO).
 gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
 
@@ -444,13 +444,13 @@ do tr = 1, maxtr
     end if
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
-! Return, possibly after another Newton-Raphson step, if it is too short to have been tried before.
+! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xpt(:, kopt) + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
-    ! Zaikun 20230512: DELTA has been updated. RHO only indicative here. TO BE IMPROVED.
+    ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
     call fmsg(solver, 'Trust region', iprint, nf, rho, f, x)
     ! Save X, F into the history.
     call savehist(nf, x, xhist, f, fhist)
