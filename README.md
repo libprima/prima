@@ -333,7 +333,7 @@ the coding has been.
 The bitterness behind this "fun" fact is exactly why I work on PRIMA: I hope that all
 the frustrations that I have experienced will not happen to any user of Powell's methods anymore.
 I hope I am the last one in the world to decode a maze of 244 GOTOs in 7939 lines of Fortran 77 code &mdash;
-I have been doing this for three years and I do not want anyone else to do it again.
+I did this for three years and I do not want anyone else to do it again.
 
 
 ### Acknowledgment
