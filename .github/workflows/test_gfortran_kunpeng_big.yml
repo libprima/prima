@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.5.3
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }}  # This forces checkout to use SSH, not HTTPS
           submodules: recursive
