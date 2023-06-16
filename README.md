@@ -41,6 +41,8 @@ and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) i
 PRIMA was initiated by [Zaikun Zhang](https://www.zhangzk.net) in July 2020, based on
 the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang.
 
+See [Zaikun Zhang's talk](https://raw.githubusercontent.com/ztalks/20230603-siopt23/main/202306-siopt23.pdf) on PRIMA at [SIAM Conference on Optimization 2023](https://www.siam.org/conferences/cm/conference/op23) for more information.
+
 
 ### Why
 
