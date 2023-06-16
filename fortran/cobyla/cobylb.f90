@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, June 15, 2023 PM08:59:06
+! Last Modified: Friday, June 16, 2023 PM02:15:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -772,7 +772,7 @@ do iter = 1, n + 1_IK
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     preref = inprod(d, A(:, m + 1))  ! Can be negative.
 
-    if (.not. (prerec > 0 .and. preref < 0)) then
+    if (.not. (prerec > 0 .and. preref < 0)) then  ! PREPC == 0 or PREREF >= 0 or either is NaN.
         exit
     end if
 
