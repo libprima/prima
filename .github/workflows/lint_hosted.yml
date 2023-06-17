@@ -51,6 +51,7 @@ jobs:
           sudo rm -rf "$MATLABROOT"/* || exit 3  # Remove MATLAB, or the runner will run out of space.
           # mlints uses `locate` to find fintrf.h
           sudo apt update && sudo apt install mlocate -y && sudo updatedb
+          locate '/extern/include/fintrf.h' || exit 4
 
       - name: Install AOCC
         run: bash .github/scripts/install_aocc
