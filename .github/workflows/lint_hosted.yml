@@ -46,12 +46,14 @@ jobs:
         run: |
           MATLABROOT=${{steps.set-up-matlab.outputs.matlabroot}}
           # fintrf.h must be located under a directory "extern/include/", or mlint cannot find it.
-          mkdir -p "$ROOT_DIR"/fortran/common/extern/include/
-          cp "$MATLABROOT"/extern/include/fintrf.h "$ROOT_DIR"/fortran/common/extern/include/ || exit 2
-          sudo rm -rf "$MATLABROOT"/* || exit 3  # Remove MATLAB, or the runner will run out of space.
-          # mlints uses `locate` to find fintrf.h
+          mkdir -p ~/extern/include/
+          cp "$MATLABROOT"/extern/include/fintrf.h ~/extern/include/ || exit 2
+          sudo chmod 777 ~/extern/include/fintrf.h || exit 3
+          # Remove MATLAB, or the runner will run out of space.
+          sudo rm -rf "$MATLABROOT"/* || exit 4
+          # mlint uses `locate` to find fintrf.h
           sudo apt update && sudo apt install mlocate -y && sudo updatedb
-          locate '/extern/include/fintrf.h' || exit 4
+          locate '/extern/include/fintrf.h' || exit 5
 
       - name: Install AOCC
         run: bash .github/scripts/install_aocc
