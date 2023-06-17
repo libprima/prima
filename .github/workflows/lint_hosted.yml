@@ -45,9 +45,11 @@ jobs:
         if: ${{ matrix.linter == 'mlint' }}
         run: |
           MATLABROOT=${{steps.set-up-matlab.outputs.matlabroot}}
-          cp "$MATLABROOT"/extern/include/fintrf.h "$ROOT_DIR"/fortran/common || exit 2
+          # fintrf.h must be located under a directory "extern/include/", or mlint cannot find it.
+          mkdir -p "$ROOT_DIR"/fortran/common/extern/include/
+          cp "$MATLABROOT"/extern/include/fintrf.h "$ROOT_DIR"/fortran/common/extern/include/ || exit 2
           sudo rm -rf "$MATLABROOT"/* || exit 3  # Remove MATLAB, or the runner will run out of space.
-          mkdir -p "$MATLABROOT"/extern/include/ && cp "$ROOT_DIR"/fortran/common/fintrf.h "$MATLABROOT"/extern/include/ || exit 4
+          sudo updatedb  # Without this, fintrf.h will not be found.
 
       - name: Install AOCC
         run: bash .github/scripts/install_aocc
