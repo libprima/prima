@@ -45,7 +45,7 @@ jobs:
         if: ${{ matrix.linter == 'mlint' }}
         run: |
           (cp ${{steps.set-up-matlab.outputs.matlabroot}}/extern/include/fintrf.h "$ROOT_DIR"/fortran/common) && (printf "Succeed!\n\n" || printf "Fail!\n\n" && exit 2)
-          sudo rm -rf ${{steps.set-up-matlab.outputs.matlabroot} || exit 3  # Remove MATLAB, or the runner will run out of space.
+          sudo rm -rf ${{steps.set-up-matlab.outputs.matlabroot}} || exit 3  # Remove MATLAB, or the runner will run out of space.
 
       - name: Install AOCC
         run: bash .github/scripts/install_aocc
