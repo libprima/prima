@@ -49,7 +49,8 @@ jobs:
           mkdir -p "$ROOT_DIR"/fortran/common/extern/include/
           cp "$MATLABROOT"/extern/include/fintrf.h "$ROOT_DIR"/fortran/common/extern/include/ || exit 2
           sudo rm -rf "$MATLABROOT"/* || exit 3  # Remove MATLAB, or the runner will run out of space.
-          sudo updatedb  # Without this, fintrf.h will not be found.
+          # mlints uses `locate` to find fintrf.h
+          sudo apt update && sudo apt install mlocate -y && sudo updatedb
 
       - name: Install AOCC
         run: bash .github/scripts/install_aocc

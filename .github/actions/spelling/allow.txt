@@ -1996,3 +1996,4 @@ segfaults
 slen
 ehdr
 METHANL
+updatedb
