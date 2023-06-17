@@ -35,7 +35,7 @@ jobs:
         run: |
           source ~/.bashrc
           export PATH=$PATH:"~/local/bin"
-          source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n" && exit 2
+          source ~/local/bin/nag_licensing || (echo "\n\nNAG licensing failed.\n\n" && exit 2)
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }}
           if [[ $(($(date +%d) % 2)) == 0 ]] ; then
               bash ./flint -n

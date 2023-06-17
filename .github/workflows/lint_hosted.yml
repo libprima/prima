@@ -15,12 +15,14 @@ jobs:
 
   test:
     name: Lint the Fortran code
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         linter: [flint, mlint]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        matlab: [latest]
 
     steps:
       - name: Checkout repository
@@ -58,24 +60,24 @@ jobs:
       - name: Install Flang
         run: bash .github/scripts/install_flang
 
-      - name: Cache MATLAB
+      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
         if: ${{ matrix.linter == 'mlint' }}
         uses: actions/cache@v3.3.1
         with:
           path: ${{ runner.tool_cache }}/MATLAB
-          key: ${{ matrix.os }}
+          key: ${{ matrix.os }}-${{ matrix.matlab }}
 
       - name: Set up MATLAB
         if: ${{ matrix.linter == 'mlint' }}
         uses: matlab-actions/setup-matlab@v2-beta
         with:
-          release: latest
+          release: ${{ matrix.matlab }}
 
       - name: Conduct the test
         run: |
           type gfortran ifort ifx aflang g95 nvfortran sunf95 flang
           if [[ ${{ matrix.linter }} == "mlint" ]] ; then
               printf "Copy fintrf to %s ...\n\n" "$ROOT_DIR"/fortran/common
-              cp $(dirname $(which matlab))/../extern/include/fintrf.h "$ROOT_DIR"/fortran/common && printf "Succeed!\n\n" || printf "Fail!\n\n" && exit 2
+              (cp $(dirname $(which matlab))/../extern/include/fintrf.h "$ROOT_DIR"/fortran/common) && (printf "Succeed!\n\n" || printf "Fail!\n\n" && exit 2)
           fi
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./${{ matrix.linter }} --all
