@@ -1,4 +1,4 @@
-name: Lint the Fortran code and the MEX gateways
+name: Lint the Fortran code and the MEX gateways with nagfor
 
 on:
   # Trigger the workflow on push or pull request
@@ -14,8 +14,8 @@ on:
 jobs:
 
   test:
-    name: Lint the Fortran code and the MEX gateways
-    runs-on: [self-hosted, linter]
+    name: Lint the Fortran code and the MEX gateways with nagfor
+    runs-on: [self-hosted, nagfor]
     strategy:
       fail-fast: false
       matrix:
@@ -35,10 +35,10 @@ jobs:
         run: |
           source ~/.bashrc
           export PATH=$PATH:"~/local/bin"
-          source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
+          source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n" && exit 2
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }}
           if [[ $(($(date +%d) % 2)) == 0 ]] ; then
-              bash ./flint --all
+              bash ./flint -n
           else
-              bash ./mlint --all
+              bash ./mlint -n
           fi
