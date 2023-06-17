@@ -125,7 +125,7 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Check Spelling](https://github.com/libprima/prima/actions/workflows/spelling.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/spelling.yml)
     - [![Test Absoft](https://github.com/libprima/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_absoft.yml)
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
-    - [![Lint the Fortran code and the MEX gateways](https://github.com/libprima/prima/actions/workflows/lint.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint.yml)
+    - [![Lint the Fortran code and the MEX gateways with nagfor](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml)
     - [![Lint the Fortran code and the MEX gateways on GitHub hosted runners](https://github.com/libprima/prima/actions/workflows/lint_hosted.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint_hosted.yml)
     - [![Plot performance profiles for PRIMA, small](https://github.com/libprima/prima/actions/workflows/profile_prima_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_prima_small.yml)
 
