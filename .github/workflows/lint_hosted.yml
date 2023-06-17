@@ -15,14 +15,12 @@ jobs:
 
   test:
     name: Lint the Fortran code
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         linter: [flint, mlint]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        matlab: [latest]
 
     steps:
       - name: Checkout repository
@@ -39,7 +37,7 @@ jobs:
         if: ${{ matrix.linter == 'mlint' }}
         uses: matlab-actions/setup-matlab@v2-beta
         with:
-          release: ${{ matrix.matlab }}
+          release: latest
 
       - name: Get fintrf.h and remove MATLAB
         if: ${{ matrix.linter == 'mlint' }}
