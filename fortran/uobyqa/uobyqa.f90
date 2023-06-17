@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 08, 2023 PM03:16:08
+! Last Modified: Saturday, June 17, 2023 AM10:47:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -147,7 +147,7 @@ subroutine uobyqa(calfun, x, f, &
 !   !--------------------------------------------------------------------------!
 !   The following case(s) should NEVER occur unless there is a bug.
 !   NAN_INF_F: the objective function returns NaN or +Inf;
-!   TRSUBP_FAILED: a trust region step failed to reduce the model;
+!   TRSUBP_FAILED: a trust region step has failed to reduce the model;
 !   !--------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 

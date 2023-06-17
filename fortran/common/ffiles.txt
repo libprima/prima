@@ -7,7 +7,6 @@ memory.F90
 string.f90
 linalg.f90
 univar.f90
-rand.f90
 ratio.f90
 redrho.f90
 xinbd.f90
