@@ -8,7 +8,7 @@ module cbfun_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Monday, May 08, 2023 PM06:05:04
+! Last Modified: Sunday, June 18, 2023 PM04:13:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,7 +52,7 @@ character(len=*), parameter :: srname = 'EVALCB_F'
 integer :: i
 mwPointer :: pinput(1), poutput(1)
 
-! Associate the input with INPUT.
+! Associate the input with PINPUT.
 call fmxWriteMPtr(x, pinput(1))
 
 ! Call the MATLAB function.
