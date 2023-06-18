@@ -12,7 +12,7 @@ if [[ -z "$FINTRFH" ]] ; then
 fi
 
 # Parse inputs.
-if ! [[ $# -eq 0 || $# -eq 1 ]] ; then
+if [[ $# -gt 2 ]] ; then
     printf "Usage: mlint [--compiler_name [-all]] or mlint -c|--clean\n"
     exit 2
 fi
@@ -131,9 +131,17 @@ fi
 
 printf "Tests to make:%s\n\n" "$COMP_LIST"
 
+if [[ $TEST_ALL == 'Y' ]] ; then
+    FLG_LIST="-g -O1 -O2 -O3 -fast"
+else
+    FLG_LIST="-g -O2 -fast"
+fi
+
+printf "Flags to test: %s\n\n" "$FLG_LIST"
+
 for COMP in $COMP_LIST; do
     if [[ $TEST_ALL == 'Y' && $ARM32 != 'Y' ]] ; then
-        for FLG in -g -O1 -O2 -O3 -fast ; do
+        for FLG in $FLG_LIST ; do
             printf "%s\t" "$FLG"
             export FFLAGS=$FLG && make "$COMP"test."$SOLVER"
         done
@@ -144,7 +152,7 @@ for COMP in $COMP_LIST; do
             TESTS="i2_r16_d1 i8_r4_d0"
         fi
         for TEST in $TESTS ; do
-            for FLG in -g -O2 -fast ; do
+            for FLG in $FLG_LIST ; do
                 printf "%s\t" "$FLG"
                 export FFLAGS=$FLG
                 INFO="$(make "$COMP"test_"$TEST"_tst."$SOLVER" 2>&1 \
