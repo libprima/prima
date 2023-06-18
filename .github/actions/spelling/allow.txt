@@ -1999,3 +1999,5 @@ METHANL
 updatedb
 mlocate
 TOINTQOR
+doi
+zenodo
