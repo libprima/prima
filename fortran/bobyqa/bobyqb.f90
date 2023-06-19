@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 15, 2023 PM08:12:28
+! Last Modified: Tuesday, June 20, 2023 AM06:04:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -347,7 +347,8 @@ do tr = 1, maxtr
         ! improve the performance, especially when pursing high-precision solutions..
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
-        if (ximproved .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
+        !if (ximproved .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
+        if (.true.) then
             ! Below are some alternatives conditions for calling RESCUE. They perform fairly well.
             ! !if (.false.) then  ! Do not call RESCUE at all.
             ! !if (ximproved .and. .not. any(den > 0.25_RP * maxval(vlag(1:npt)**2))) then
@@ -478,7 +479,8 @@ do tr = 1, maxtr
         ! KNEW_GEO, the step D will become improper as it was chosen according to the old KNEW_GEO.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
-        if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
+        !if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
+        if (.true.) then
             call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then

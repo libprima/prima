@@ -5,8 +5,8 @@ on:
   push:
   pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
-  schedule:
-    - cron: '0 17 * * *'
+  #schedule:
+  #  - cron: '0 17 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
 
@@ -50,7 +50,7 @@ jobs:
           # Remove MATLAB, or the runner will run out of space.
           sudo rm -rf "$MATLABROOT"/* || exit 4
           # mlint uses `locate` to find fintrf.h
-          sudo apt update && sudo apt install mlocate -y && sudo updatedb
+         sudo apt update && sudo apt install mlocate -y && sudo updatedb
           locate '/extern/include/fintrf.h' || exit 5
 
       - name: Install AOCC
