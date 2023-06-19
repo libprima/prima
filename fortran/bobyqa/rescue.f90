@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 20, 2023 AM06:03:21
+! Last Modified: Tuesday, June 20, 2023 AM06:14:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -403,15 +403,14 @@ do iter = 1, npt**2
     ! point will be ranked lower if it fails to fulfill MAXVAL(DEN) > C*MAXVAL(VLAG(1:NPT)**2).
     ! Even if KORIG cannot satisfy this condition for now, it may validate the inequality in future
     ! attempts, as BMAT and ZMAT will be updated.
-    if (is_finite(sum(abs(vlag))) .and. any(den > 5.0E-2_RP * maxval(vlag(1:npt)**2))) then
+    if (.not. (is_finite(sum(abs(vlag))) .and. any(den > 5.0E-2_RP * maxval(vlag(1:npt)**2)))) then
         ! The above condition works a bit better than Powell's version below due to the factor 0.05.
-        ! !if (any(den > 1.0E-2_RP * maxval(vlag(1:npt)**2))) then  ! Powell' code
-        kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), kind(kprov))
-        !!MATLAB: [~, kprov] = max(den, [], 'omitnan');
-    else
+        ! !IF (.NOT. (ANY(DEN > 1.0E-2_RP * MAXVAL(VLAG(1:NPT)**2)))) THEN  ! Powell' code
         score(korig) = -score(korig) - scoreinc
         cycle
     end if
+    kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), kind(kprov))
+    !!MATLAB: [~, kprov] = max(den, [], 'omitnan');
 
     ! Update BMAT, ZMAT, VLAG, and PTSID to exchange the KPROV-th and KORIG-th provisional points.
     ! After the exchanging, the KORIG-th original point will replace the KORIG-th provisional point.
