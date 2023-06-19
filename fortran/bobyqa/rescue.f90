@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 14, 2023 PM06:17:41
+! Last Modified: Tuesday, June 20, 2023 AM06:03:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -140,6 +140,7 @@ character(len=*), parameter :: srname = 'RESCUE'
 integer(IK) :: ij(2, max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1))
 integer(IK) :: ip
 integer(IK) :: iq
+integer(IK) :: iter
 integer(IK) :: k
 integer(IK) :: kbase
 integer(IK) :: korig
@@ -302,19 +303,26 @@ ptsid(kopt) = ZERO
 ! BOBYQA paper). The latter seem to work better in a test on 20221125.
 !score = sum(xpt**2, dim=1)  ! Powell's BOBYQA code
 score = sqrt(sum(xpt**2, dim=1))  ! Powell's BOBYQA paper
-score(kopt) = ZERO  ! Set SCORE(KOPT) to 0 so that KOPT will be skipped when we choose KORIG below.
+! In theory, SCORE(KOPT) = 0. Make sure this so that KOPT will be skipped when we choose KORIG below.
+score(kopt) = ZERO
 scoreinc = maxval(score)
 
 ! NPROV is the number of provisional points that has not yet been replaced with original points.
 nprov = npt - 1_IK
 
-! The following loop runs for at most NPT^2 times: for each value of NPROV, we need at most NPT
-! loops to find an original point that can safely replace a provisional point; if such a pair of
-! origin and provisional points are found, then NPROV will de reduced by 1; otherwise, SCORE will
-! become all zero or negative, and the loop will exit.
-do while (any(score > 0) .and. nprov > 1)   ! Retain at least one provisional point.
-! !do while (any(score > 0) .and. nprov > 0)  ! Powell's code. It may not take any provisional point.
-! !do while (any(score > 0) .and. nprov > 2)  ! Retain at least two provisional points.
+! Even without an upper bound for the loop counter, the following loop runs for at most NPT^2 times:
+! for each value of NPROV, we need at most NPT loops to find an original point that can safely
+! replace a provisional point; if such a pair of origin and provisional points are found, then NPROV
+! will de reduced by 1; otherwise, SCORE will become all zero or negative, and the loop will exit.
+! Originally, it is a WHILE loop, but we change it to a DO loop to avoid infinite cycling.
+! !DO WHILE (ANY(SCORE > 0) .AND. NPROV > 1)   ! WHILE version.
+do iter = 1, npt**2
+    ! !IF (ALL(SCORE <= 0) .AND. NPROV <= 0)  ! Powell's code. It may not take any provisional point.
+    ! !IF (ALL(SCORE <= 0) .AND. NPROV <= 2)  ! Retain at least two provisional points.
+    if (all(score <= 0) .or. nprov <= 1) then   ! Retain at least one provisional point.
+        exit
+    end if
+
     ! Pick the index KORIG of an original point that has not yet replaced one of the provisional
     ! points, giving attention to the closeness to XOPT and to previous tries with KORIG.
     korig = int(minloc(score, mask=(score > 0), dim=1), kind(korig))
