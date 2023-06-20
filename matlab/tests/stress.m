@@ -32,7 +32,7 @@ if isfield(options, 'n')
 else
     switch solver_name
     case 'uobyqa'
-        n = 300;
+        n = 250;
     case 'newuoa'
         n = 1000;
     case 'bobyqa'
