@@ -8,7 +8,8 @@ end
 % Set up the solver
 old_directory = pwd();
 cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
-setup(solver);
+opt.debug = true;
+setup(solver, opt);
 cd(old_directory);
 solver_name = solver;
 solver = str2func(solver);
@@ -31,7 +32,7 @@ if isfield(options, 'n')
 else
     switch solver_name
     case 'uobyqa'
-        n = 500;
+        n = 300;
     case 'newuoa'
         n = 1000;
     case 'bobyqa'
@@ -63,6 +64,7 @@ test_options.maxfun = 500* n;
 test_options.rhobeg = 1;
 test_options.rhoend = 1.0e-7;
 test_options.iprint = 2;
+test_options.debug = true;
 
 % Generate the problem
 problem = stress_problem(n, problem_type, random_seed);
