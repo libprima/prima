@@ -1,0 +1,65 @@
+name: Stress test on large problems
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 10 * * *'
+  # Trigger the workflow manually
+  workflow_dispatch:
+
+env:
+  GFORTRAN_VERSION: 12
+
+jobs:
+  test:
+    name: Stress test of PRIMA on large problem.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        matlab: [latest]
+        solver: [cobyla, uobyqa, newuoa, bobyqa, lincoa]
+        test: [normal, tough]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3.5.3
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+
+      - name: Link gfortran for MATLAB on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
+
+      - name: Check MATLAB
+        id: check_matlab
+        run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
+
+      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
+        uses: actions/cache@v3.3.1
+        with:
+          path: ${{ runner.tool_cache }}/MATLAB
+          key: ${{ matrix.os }}-${{ matrix.matlab }}-yes
+
+      - name: Set up MATLAB with optimization toolbox
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
+        uses: matlab-actions/setup-matlab@v2-beta
+        with:
+          release: ${{ matrix.matlab }}
+          products: Optimization_Toolbox
+
+      - name: Conduct the test
+        uses: matlab-actions/run-command@v1.2.0
+        with:
+          command: |
+            ver;
+            root_dir = pwd();
+            cd(fullfile(root_dir, 'matlab/tests'));
+            options = struct();
+            options.tough = strcmp('${{ matrix.test }}', 'tough');
+            stress('${{ matrix.solver }}', options);

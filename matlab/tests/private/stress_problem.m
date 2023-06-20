@@ -14,15 +14,21 @@ rng(random_seed);
 
 % Set the starting point
 problem.x0 = -ones(n, 1);
-problem.objective = @(x) chrosen(x);
+problem.objective = @chrosen;
 
 % Set the bound constraints
+problem.lb = [];
+problem.ub = [];
 if strcmp(problem_type, 'b') || (ismember(problem_type, {'l', 'n'}) && rand > 0.5)
     problem.lb = problem.x0 - abs(randn(n, 1));
     problem.ub = problem.x0 + abs(randn(n, 1));
 end
 
 % Set the linear constraints
+problem.Aeq = zeros(0, n);
+problem.beq = zeros(0, 1);
+problem.Aineq = zeros(0, n);
+problem.bineq = zeros(0, 1);
 if strcmp(problem_type, 'l') || (strcmp(problem_type, 'n') && rand > 0.5)
     Aeq = hilb(n);
     ind = randperm(n);
@@ -38,6 +44,7 @@ if strcmp(problem_type, 'l') || (strcmp(problem_type, 'n') && rand > 0.5)
 end
 
 % Set the nonlinear constraints
+problem.nonlcon = [];
 if strcmp(problem_type, 'n')
     problem.nonlcon = @nonlcon;
 end

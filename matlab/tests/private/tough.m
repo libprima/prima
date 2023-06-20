@@ -16,6 +16,13 @@ end
 orig_rng_state = rng();
 rng(random_seed);
 
+% Copy the problem options
+if isfield(problem, 'options')
+    tough_problem.options = problem.options;
+else
+    tough_problem.options = [];
+end
+
 % Set the starting point
 x0 = problem.x0;
 n = length(x0);
