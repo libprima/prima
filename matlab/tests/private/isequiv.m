@@ -365,10 +365,11 @@ if 1 <= ir && ir <= 20
     % The TOUGH tests
     % We must pass the random seed `rseed` to `tough_feval` and `tough_ceval` to ensure reproducibility.
     test_options.chkfunval = false;  % The checking would fail due to noise.
-    prob.objective = @(x) tough_feval(objective, x, rseed);
-    if ~isempty(nonlcon)
-        prob.nonlcon = @(x) tough_ceval(nonlcon, x, rseed);
-    end
+    prob = tough(prob, rseed);
+    %prob.objective = @(x) tough_feval(objective, x, rseed);
+    %if ~isempty(nonlcon)
+    %    prob.nonlcon = @(x) tough_ceval(nonlcon, x, rseed);
+    %end
 else
     prob.objective  = objective;
     prob.nonlcon = nonlcon;
@@ -645,84 +646,6 @@ end
 %diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), ...
 %    abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]);
 
-return
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function f = tough(f, x, random_seed, noise_level, with_failure)
-%This function contaminates f for the TOUGH test.
-% f is the function value to be contaminated.
-% x is the value of the decision variable corresponding to f; it is used when defining the random seed.
-% random_seed is a seed provided by the caller in order to ensure reproducibility. The random seed
-% used internally (see `rseed` below) will be defined by random_seed, f, and x.
-
-if nargin < 4
-    noise_level = 2e-1;  % The noise level.
-end
-if nargin < 5
-    with_failure = true;  % Whether to fail the function evaluation randomly.
-end
-
-% Set the random seed.
-orig_rng_state = rng();
-rseed = max(0, min(2^32 - 1, random_seed + sum(num2str(f, 16)) + sum(num2str(x, 16), 'all')));
-rng(rseed);
-
-% Contaminate f. The value will be further modified below.
-f = f * (1 + noise_level * randn);
-
-% Generate a random number to decide how to modify f.
-r = 2 * rand - 1;
-
-% Restore the random seed. Do this before the possible invocation of `error`.
-rng(orig_rng_state);
-
-% Modify the value of f to make it "tough".
-if r > 0.9
-    if with_failure
-        error('Function evaluation fails!');
-    else
-        f = NaN;
-    end
-elseif r > 0.8
-    f = NaN;
-elseif r > 0.6
-    f = Inf;
-elseif r < -0.9
-    f = -1e30;
-end
-
-return
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function f = tough_feval(func, x, random_seed, noise_level, with_failure)
-%This function evaluates the function func at x for the TOUGH test.
-if nargin < 4
-    noise_level = 2e-1;
-end
-if nargin < 5
-    with_failure = true;
-end
-f = func(x);
-f = tough(f, x, random_seed, noise_level, with_failure);
-return
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [cineq, ceq] = tough_ceval(con, x, random_seed, noise_level, with_failure)
-%This function evaluates the constraint function con at x for the TOUGH test. Here, following the
-% convention of MATLAB, the constraint function is assumed to be of the form [cineq, ceq] = con(x),
-% and the constraint is cineq <= 0 and ceq == 0.
-if nargin < 4
-    noise_level = 2e-1;
-end
-if nargin < 5
-    with_failure = true;
-end
-[cineq, ceq] = con(x);
-cineq = arrayfun(@(c) tough(c, x, random_seed, noise_level, with_failure), cineq);
-ceq = arrayfun(@(c) tough(c, x, random_seed, noise_level, with_failure), ceq);
 return
 
 
