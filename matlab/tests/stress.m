@@ -5,12 +5,13 @@ if nargin < 2
     options = struct();
 end
 
-if isa(solver, 'char') || isa(solver, 'string')
-    solver_name = solver;
-    solver = str2func(solver);
-else
-    solver_name = func2str(solver);
-end
+% Set up the solver
+old_directory = pwd();
+cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
+setup(solver);
+cd(old_directory);
+solver_name = solver;
+solver = str2func(solver);
 
 % Set the random seed using solver name. We ALTER THE SEED weekly to test the solvers as much as possible.
 if isfield(options, 'yw')
