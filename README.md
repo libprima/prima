@@ -161,6 +161,7 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Test RESCUE and IDZ, modernized](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_modernized.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_modernized.yml)
 
 - [Tests](https://github.com/equipez/prima/actions) at [equipez/prima](https://github.com/equipez/prima)
+    - [![Stress test on large problems](https://github.com/equipez/prima/actions/workflows/stress_test.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/stress_test.yml)
     - [![Test gfortran on Kunpeng, small](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_small.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_small.yml)
     - [![Test gfortran on Kunpeng, big](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_big.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng_big.yml)
     - [![Test Flang on Kunpeng](https://github.com/equipez/prima/actions/workflows/test_flang_kunpeng.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_flang_kunpeng.yml)
