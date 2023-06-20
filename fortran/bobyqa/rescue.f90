@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 20, 2023 PM03:47:23
+! Last Modified: Tuesday, June 20, 2023 PM05:02:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -557,7 +557,7 @@ if (kopt /= kbase) then
 end if
 
 !--------------------------------------------------------------------------------------------------!
-! Zaikun 20221123: What if we rebuild the model? It seems to worsen the performance of BOBYQA.
+! Zaikun 20221123: What if we rebuild the model? It seems to worsen the performance of BOBYQA. Why?
 ! !hq = ZERO
 ! !pq = omega_mul(1_IK, zmat, fval - fval(kopt))
 ! !gopt = matprod(bmat(:, 1:npt), fval - fval(kopt)) + hess_mul(xpt(:, kopt), xpt, pq)
@@ -566,11 +566,15 @@ end if
 !--------------------------------------------------------------------------------------------------!
 ! Zaikun 20221123: Shouldn't we correct the models using the new [BMAT, ZMAT]?!
 ! In this way, we do not even need the quadratic model received by RESCUE is an interpolant.
-!real(RP) :: qval(size(xpt, 2))
-!qval = [(quadinc(xpt(:, k) - xpt(:, kopt), xpt, gopt, pq, hq), k=1, npt)]
-!pq = pq + omega_mul(1_IK, zmat, fval - qval - fval(kopt))
-!gopt = gopt + matprod(bmat(:, 1:npt), fval - qval - fval(kopt)) + hess_mul(xpt(:, kopt), xpt, pq)
+! !real(RP) :: qval(size(xpt, 2))
+! !qval = [(quadinc(xpt(:, k) - xpt(:, kopt), xpt, gopt, pq, hq), k=1, npt)]
+! !pq = pq + omega_mul(1_IK, zmat, fval - qval - fval(kopt))
+! !gopt = gopt + matprod(bmat(:, 1:npt), fval - qval - fval(kopt)) + hess_mul(xpt(:, kopt), xpt, pq)
 !--------------------------------------------------------------------------------------------------!
+
+!====================!
+!  Calculation ends  !
+!====================!
 
 ! Postconditions
 if (DEBUGGING) then
