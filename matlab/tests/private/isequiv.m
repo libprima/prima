@@ -363,13 +363,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if 1 <= ir && ir <= 20
     % The TOUGH tests
-    % We must pass the random seed `rseed` to `tough_feval` and `tough_ceval` to ensure reproducibility.
+    % We must pass the random seed `rseed` to `tough` to ensure reproducibility.
     test_options.chkfunval = false;  % The checking would fail due to noise.
     prob = tough(prob, rseed);
-    %prob.objective = @(x) tough_feval(objective, x, rseed);
-    %if ~isempty(nonlcon)
-    %    prob.nonlcon = @(x) tough_ceval(nonlcon, x, rseed);
-    %end
 else
     prob.objective  = objective;
     prob.nonlcon = nonlcon;
