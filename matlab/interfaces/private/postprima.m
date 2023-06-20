@@ -651,7 +651,7 @@ if options.debug && ~options.classical
                 constrviolation, cstrv, constrviolation - cstrv, (constrviolation - cstrv) / max(1, abs(cstrv)), cobyla_prec)
             constrviolation
             cstrv
-            (constrviolation - cstrv) / max(1, abs(cstrv)))
+            (constrviolation - cstrv) / max(1, abs(cstrv))
             cobyla_prec
             error(sprintf('%s:InvalidConstrViolation', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
