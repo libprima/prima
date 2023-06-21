@@ -1,5 +1,5 @@
 function stress(solver, options)
-% STRESS  Stress test for the solver on problems of dimension n, which is supposed to be large.
+% STRESS  Stress test for the solver on problems large dimensions.
 
 if nargin < 2
     options = struct();
@@ -14,8 +14,8 @@ cd(old_directory);
 solver_name = solver;
 solver = str2func(solver);
 
-% Whether this is a TOUGH test
-tough_test = isfield(options, 'tough') && options.tough;  % Whether this is a TOUGH test
+% Whether to conduct a TOUGH test
+tough_test = isfield(options, 'tough') && options.tough;
 
 % Set the random seed using solver name. We ALTER THE SEED weekly to test the solvers as much as possible.
 if isfield(options, 'yw')
@@ -26,7 +26,7 @@ else
     yw = year_week('Asia/Shanghai');
 end
 fprintf('\nYW = %d\n', yw);
-% Define the random seed yw
+% Define the random seed by yw
 random_seed = yw;
 
 % Set the dimension of the problem
@@ -44,7 +44,7 @@ else
         case 'lincoa'
             n = 400; %500;
         case 'cobyla'
-            n = 250; %400;
+            n = 300; %250; %400;
         end
     else
         switch solver_name
@@ -55,7 +55,7 @@ else
         case 'bobyqa'
             n = 800; %500;
         case 'lincoa'
-            n = 300; %500;
+            n = 400; %300; %500;
         case 'cobyla'
             n = 150; %250;
         end
@@ -64,9 +64,7 @@ end
 
 % Set the type of the problem
 switch solver_name
-case 'uobyqa'
-    problem_type = 'u';
-case 'newuoa'
+case {'uobyqa', 'newuoa'}
     problem_type = 'u';
 case 'bobyqa'
     problem_type = 'b';
@@ -89,7 +87,6 @@ problem = stress_problem(n, problem_type, random_seed);
 problem.options = test_options;
 original_problem = problem;
 if tough_test
-    fprintf('\nConduct a TOUGH test.\n');
     problem = tough(original_problem, random_seed);
 end
 
@@ -101,6 +98,8 @@ else
 end
 
 tic;
+% For TOUGH tests, cobyla raises an error if the constraint evaluation fails at the starting point.
+% In that case, we modify the random seed and redo the test.
 redo = true;
 while redo
     exception = [];
@@ -108,7 +107,7 @@ while redo
         solver(problem);
     catch exception
     end
-    if isempty(exception) || ~tough_test
+    if isempty(exception) || ~tough_test || ~strcmp(solver_name, 'cobyla')
         redo = false;
     else
         redo = strcmp(exception.identifier, 'cobyla:ConstraintFailureAtX0');
