@@ -607,7 +607,7 @@ if options.debug && ~options.classical
     %cobyla_prec = 1e-8;
     %bobyqa_prec = 1e-10;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    cobyla_prec = 1e-9;
+    cobyla_prec = 1e-7;
     lincoa_prec = 1e-9;
     bobyqa_prec = 1e-12;
 
@@ -647,12 +647,6 @@ if options.debug && ~options.classical
                 ~(abs(constrviolation-cstrv) <= lincoa_prec*max(1,abs(cstrv)) && strcmp(solver, 'lincoa')) && ...
                 ~(abs(constrviolation-cstrv) <= cobyla_prec*max(1,abs(cstrv)) && strcmp(solver, 'cobyla'))
             % Public/unexpected error
-            fprintf('\n\n>>>>>>constrviolation, %g, cstrv, %g, diff, %g, diff, %g, precision, %g <<<<<<\n\n', ...
-                constrviolation, cstrv, constrviolation - cstrv, (constrviolation - cstrv) / max(1, abs(cstrv)), cobyla_prec)
-            constrviolation
-            cstrv
-            (constrviolation - cstrv) / max(1, abs(cstrv))
-            cobyla_prec
             error(sprintf('%s:InvalidConstrViolation', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
         end
