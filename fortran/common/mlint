@@ -132,7 +132,7 @@ fi
 printf "Tests to make:%s\n\n" "$COMP_LIST"
 
 if [[ $TEST_ALL == 'Y' ]] ; then
-    FLG_LIST="-g -O1 -O2 -O3 -fast"
+    FLG_LIST="-g -O2 -O3 -fast"
 else
     FLG_LIST="-g -O2 -fast"
 fi

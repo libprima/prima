@@ -14,6 +14,9 @@ cd(old_directory);
 solver_name = solver;
 solver = str2func(solver);
 
+% Whether this is a TOUGH test
+tough_test = isfield(options, 'tough') && options.tough;  % Whether this is a TOUGH test
+
 % Set the random seed using solver name. We ALTER THE SEED weekly to test the solvers as much as possible.
 if isfield(options, 'yw')
     yw = options.yw;
@@ -30,17 +33,32 @@ random_seed = yw;
 if isfield(options, 'n')
     n = options.n;
 else
-    switch solver_name
-    case 'uobyqa'
-        n = 250;
-    case 'newuoa'
-        n = 1000;
-    case 'bobyqa'
-        n = 1000;
-    case 'lincoa'
-        n = 1000;
-    case 'cobyla'
-        n = 500;
+    if tough_test
+        switch solver_name
+        case 'uobyqa'
+            n = 120;
+        case 'newuoa'
+            n = 1000;
+        case 'bobyqa'
+            n = 1000;
+        case 'lincoa'
+            n = 800;
+        case 'cobyla'
+            n = 400;
+        end
+    else
+        switch solver_name
+        case 'uobyqa'
+            n = 120;
+        case 'newuoa'
+            n = 500;
+        case 'bobyqa'
+            n = 500;
+        case 'lincoa'
+            n = 500;
+        case 'cobyla'
+            n = 250;
+        end
     end
 end
 
@@ -60,7 +78,7 @@ end
 
 % Set the options for the test
 test_options = struct();
-test_options.maxfun = 500* n;
+test_options.maxfun = 500 * n;
 test_options.rhobeg = 1;
 test_options.rhoend = 1.0e-7;
 test_options.iprint = 2;
@@ -70,7 +88,6 @@ test_options.debug = true;
 problem = stress_problem(n, problem_type, random_seed);
 problem.options = test_options;
 original_problem = problem;
-tough_test = isfield(options, 'tough') && options.tough;  % Whether this is a TOUGH test
 if tough_test
     fprintf('\nConduct a TOUGH test.\n');
     problem = tough(original_problem, random_seed);
@@ -78,7 +95,7 @@ end
 
 % Conduct the test
 if tough_test
-    fprintf('\n>>>>>> TOUGH Test starts <<<<<<\n');
+    fprintf('\n>>>>>> TOUGH test starts <<<<<<\n');
 else
     fprintf('\n>>>>>> Test starts <<<<<<\n');
 end
@@ -108,7 +125,7 @@ if ~isempty(exception)
 end
 
 if tough_test
-    fprintf('\n>>>>>> TOUGH Test ends <<<<<<\n\n');
+    fprintf('\n>>>>>> TOUGH test ends <<<<<<\n\n');
 else
     fprintf('\n>>>>>> Test ends <<<<<<\n\n');
 end
