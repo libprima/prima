@@ -36,28 +36,28 @@ else
     if tough_test
         switch solver_name
         case 'uobyqa'
-            n = 120;
+            n = 200; %120;
         case 'newuoa'
-            n = 1000;
+            n = 1500; %1000;
         case 'bobyqa'
-            n = 1000;
+            n = 1500; %1000;
         case 'lincoa'
-            n = 800;
+            n = 400; %500;
         case 'cobyla'
-            n = 400;
+            n = 250; %400;
         end
     else
         switch solver_name
         case 'uobyqa'
-            n = 120;
+            n = 200; %120;
         case 'newuoa'
-            n = 500;
+            n = 800; %500;
         case 'bobyqa'
-            n = 500;
+            n = 800; %500;
         case 'lincoa'
-            n = 500;
+            n = 300; %500;
         case 'cobyla'
-            n = 250;
+            n = 150; %250;
         end
     end
 end
@@ -80,7 +80,7 @@ end
 test_options = struct();
 test_options.maxfun = 200 * n;
 test_options.rhobeg = 1;
-test_options.rhoend = 1.0e-7;  % In this test, the solvers normally exit with RHO reaching RHOEND
+test_options.rhoend = 1.0e-7;  % In this test, the solvers normally exit with RHO reaching RHOEND, except for UOBYQA
 test_options.iprint = 2;
 test_options.debug = true;
 
