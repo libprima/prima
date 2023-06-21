@@ -13,7 +13,7 @@ orig_rng_state = rng();
 rng(random_seed);
 
 % Set the starting point
-problem.x0 = -ones(n, 1);
+problem.x0 = randn(n, 1);
 problem.objective = @chrosen;
 
 % Set the bound constraints
@@ -57,7 +57,7 @@ return
 
 
 function f = chrosen(x)  % the subroutine defining the objective function
-alpha = 2;
+alpha = 4;
 f = sum((x(1:end-1)-1).^2 + alpha*(x(2:end)-x(1:end-1).^2).^2);
 return
 
