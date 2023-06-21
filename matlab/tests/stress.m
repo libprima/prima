@@ -36,24 +36,24 @@ else
     if tough_test
         switch solver_name
         case 'uobyqa'
-            n = 200; %120;
+            n = 160; %200; %120;
         case 'newuoa'
-            n = 1500; %1000;
+            n = 1200; %1500; %1000;
         case 'bobyqa'
-            n = 1500; %1000;
+            n = 1200; %1500; %1000;
         case 'lincoa'
-            n = 400; %500;
+            n = 300; %400; %500;
         case 'cobyla'
             n = 300; %250; %400;
         end
     else
         switch solver_name
         case 'uobyqa'
-            n = 200; %120;
+            n = 160; %200; %120;
         case 'newuoa'
-            n = 800; %500;
+            n = 650; %800; %500;
         case 'bobyqa'
-            n = 800; %500;
+            n = 650; %800; %500;
         case 'lincoa'
             n = 400; %300; %500;
         case 'cobyla'
