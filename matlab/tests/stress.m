@@ -78,9 +78,9 @@ end
 
 % Set the options for the test
 test_options = struct();
-test_options.maxfun = 500 * n;
+test_options.maxfun = 200 * n;
 test_options.rhobeg = 1;
-test_options.rhoend = 1.0e-7;
+test_options.rhoend = 1.0e-7;  % In this test, the solvers normally exit with RHO reaching RHOEND
 test_options.iprint = 2;
 test_options.debug = true;
 
