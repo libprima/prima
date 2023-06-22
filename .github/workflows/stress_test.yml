@@ -12,13 +12,14 @@ on:
 
 env:
   GFORTRAN_VERSION: 12
+  TIMEOUT_MINUTES: 3
 
 jobs:
   test:
     name: Stress test of PRIMA on large problem.
     runs-on: ${{ matrix.os }}
     continue-on-error: true
-    timeout-minutes: 1
+    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
     strategy:
       fail-fast: false
       matrix:
@@ -75,12 +76,20 @@ jobs:
           https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
           > jobs.json
           status=$(jq '.jobs[0].conclusion' jobs.json)
+          end_time=$(date -u -d "$completed_at" +%s)
+          duration=$((end_time - start_time))
+          timeout_seconds=$((${{ env.TIMEOUT_MINUTES }} * 60 - 60)) # 6 hours in seconds (minus 60)
           if [[ "$status" == "failure" ]]; then
              echo "Workflow failed before timeout"
              exit 1
           elif [[ "$status" == "cancelled" ]]; then
+          if [[ $duration -ge $timeout_seconds ]]; then
              echo "Workflow timed out but considered successful"
-             exit 0
+                 exit 0
+             else
+                 echo "Workflow was cancelled due to other reasons"
+                 exit 2
+             fi
           else
              echo "Workflow completed successfully"
              exit 0
