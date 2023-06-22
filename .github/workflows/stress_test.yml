@@ -61,7 +61,7 @@ jobs:
             options.tough = strcmp('${{ matrix.test }}', 'tough');
             stress('${{ matrix.solver }}', options);
 
-  checkfailure:
+  check_status
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     needs: test
